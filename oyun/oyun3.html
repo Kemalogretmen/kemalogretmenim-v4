@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toplama Macerası - Kemal Öğretmen</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* === TEMEL DEĞİŞKENLER === */
+        :root { 
+            --ana-renk: #673ab7; 
+            --ikinci-renk: #0ea5e9; 
+            --vurgu: #f97316; 
+            --arkaplan: #f8fafc;
+            --dogru: #22c55e;
+            --yanlis: #ef4444;
+        }
+        body { font-family: 'Nunito', sans-serif; background-color: var(--arkaplan); margin: 0; padding: 0; color: #334155; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* === NAVBAR (DÜZELTİLMİŞ TAM MENÜ) === */
+        .navbar { background-color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-family: 'Fredoka', sans-serif; font-size: 24px; font-weight: 600; color: var(--ana-renk); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; align-items: center; gap: 5px; } 
+        .nav-link { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; padding: 10px 12px; border-radius: 10px; transition: 0.3s; }
+        .nav-link:hover { background-color: #f1f5f9; color: var(--ana-renk); }
+        
+        .dropdown { position: relative; display: inline-block; }
+        .dropbtn { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; padding: 10px 12px; border-radius: 10px; transition: 0.3s; background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; display: flex; align-items: center; gap: 5px;}
+        .dropdown:hover .dropbtn { background-color: #f1f5f9; color: var(--ana-renk); }
+        .dropdown-content { display: none; position: absolute; background-color: white; min-width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 15px; top: 100%; left: 0; overflow: hidden; z-index: 1001; }
+        .dropdown-content a { color: #64748b; padding: 12px 20px; text-decoration: none; display: block; font-weight: 700; border-bottom: 1px solid #f1f5f9; transition: 0.2s; font-size: 14px;}
+        .dropdown-content a:hover { background-color: #f8fafc; color: var(--ana-renk); padding-left: 25px; }
+        .dropdown:hover .dropdown-content { display: block; }
+        .hamburger { display: none; font-size: 28px; cursor: pointer; color: var(--ana-renk); }
+
+        /* MOBİL UYUM */
+        @media (max-width: 1024px) {
+            .hamburger { display: block; }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%; background-color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); padding: 20px 0; gap: 10px; max-height: 80vh; overflow-y: auto; }
+            .nav-links.aktif { display: flex; }
+            .nav-link, .dropbtn { width: 90%; text-align: left; padding: 15px; font-size: 18px; border-bottom: 1px solid #f1f5f9; }
+            .dropdown { width: 100%; text-align: center; }
+            .dropdown-content { position: relative; width: 90%; margin: 0 auto; box-shadow: none; border-left: 4px solid var(--ikinci-renk); background: #f8fafc; }
+        }
+
+        /* === OYUN ALANI TASARIMI === */
+        .icerik-kapsayici { flex: 1; max-width: 900px; margin: 40px auto; width: 90%; padding: 30px; background: white; border-radius: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+        .oyun-baslik { text-align: center; font-family: 'Fredoka', sans-serif; color: var(--ana-renk); margin-bottom: 30px; border-bottom: 2px dashed #e2e8f0; padding-bottom: 20px; }
+
+        /* Ayarlar Ekranı */
+        .ayarlar-panel { background: #f0fdf4; padding: 30px; border-radius: 20px; border: 2px solid #bbf7d0; text-align: center; }
+        .secim-btn { background: white; border: 2px solid #cbd5e1; padding: 15px 25px; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: bold; color: #475569; margin: 5px; transition: 0.2s; }
+        .secim-btn:hover { border-color: var(--ikinci-renk); color: var(--ikinci-renk); }
+        .secim-btn.secili { background: var(--ikinci-renk); color: white; border-color: var(--ikinci-renk); transform: scale(1.05); box-shadow: 0 5px 15px rgba(14,165,233,0.3); }
+        
+        .basla-btn { background: var(--ana-renk); color: white; border: none; padding: 18px 40px; font-size: 20px; border-radius: 50px; cursor: pointer; margin-top: 30px; font-weight: bold; box-shadow: 0 10px 20px rgba(103,58,183,0.3); transition: 0.3s; width: 100%; max-width: 300px; }
+        .basla-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(103,58,183,0.4); }
+        .basla-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        /* Oyun Ekranı */
+        .oyun-sahnesi { display: none; flex-direction: column; align-items: center; }
+        .puan-tablosu { display: flex; gap: 20px; margin-bottom: 30px; font-weight: bold; font-size: 18px; background: #f8fafc; padding: 10px 20px; border-radius: 50px; border: 1px solid #e2e8f0; }
+        
+        /* Soru Kutusu */
+        .soru-karti { 
+            background: white; border: 4px solid var(--ikinci-renk); border-radius: 25px; padding: 30px 50px; 
+            font-family: 'Fredoka', sans-serif; font-size: 64px; color: #334155; position: relative; 
+            box-shadow: 0 15px 30px rgba(14,165,233,0.15); margin-bottom: 30px;
+            display: flex; flex-direction: column; align-items: flex-end; min-width: 250px;
+        }
+        
+        .soru-satir { display: flex; align-items: center; justify-content: flex-end; width: 100%; }
+        .islem-cizgisi { width: 100%; height: 4px; background: var(--ikinci-renk); margin: 10px 0; border-radius: 10px; }
+        .arti-isareti { position: absolute; left: 20px; bottom: 110px; color: var(--vurgu); font-size: 40px; }
+        
+        /* Cevap Kutusu */
+        .cevap-gosterge { 
+            width: 100%; height: 80px; background: #f1f5f9; border-radius: 15px; border: 3px dashed #cbd5e1; 
+            display: flex; align-items: center; justify-content: center; color: var(--ana-renk); 
+            font-size: 64px; margin-top: 5px; 
+        }
+        .cevap-gosterge.dogru { background: #dcfce7; border-color: var(--dogru); color: var(--dogru); }
+        .cevap-gosterge.yanlis { background: #fee2e2; border-color: var(--yanlis); color: var(--yanlis); animation: titret 0.4s; }
+
+        @keyframes titret { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-10px);} 75% {transform: translateX(10px);} }
+
+        /* Tuş Takımı */
+        .tus-takimi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 320px; width: 100%; }
+        .tus { 
+            background: white; border: 2px solid #e2e8f0; border-radius: 15px; padding: 15px; 
+            font-size: 28px; font-weight: bold; color: #475569; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 0 #cbd5e1; font-family: 'Fredoka', sans-serif;
+        }
+        .tus:active { transform: translateY(4px); box-shadow: none; }
+        .tus:hover { border-color: var(--ikinci-renk); color: var(--ikinci-renk); }
+        
+        .tus.sil { background: #fee2e2; color: var(--yanlis); border-color: #fecaca; box-shadow: 0 4px 0 #fca5a5; }
+        .tus.onay { background: #dcfce7; color: var(--dogru); border-color: #86efac; box-shadow: 0 4px 0 #4ade80; grid-column: span 3; }
+
+        footer { background-color: #1e293b; color: white; text-align: center; padding: 40px 20px; border-top-left-radius: 50px; border-top-right-radius: 50px; margin-top: auto; }
+        .sosyal { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+        .sosyal a { color: white; font-size: 24px; background: rgba(255,255,255,0.1); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.3s; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/index.html" class="logo">
+            <img src="/gorseller/logo.png" style="width: 50px; height: auto; margin-right: 10px;" alt="Logo"> 
+            Kemal Öğretmenim
+        </a>
+        <div class="hamburger" onclick="menuAcKapat()"><i class="fas fa-bars"></i></div>
+        <div class="nav-links" id="menuLinks">
+            <div class="dropdown">
+                <button class="dropbtn">1. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="/1_sinif/okuma_anlama/1_okuma_anlama.html">📖 Okuma-Anlama</a>
+                    <a href="/1_sinif/turkce/turkce.html">📝 Türkçe</a>
+                    <a href="/1_sinif/matematik/matematik.html">🔢 Matematik</a>
+                    <a href="/1_sinif/hayat_bilgisi/hayat_bilgisi.html">🌱 Hayat Bilgisi</a>
+                    <a href="/1_sinif/oyun/oyunlar.html">🎮 Oyunlar</a>
+                </div>
+            </div>
+            
+            <div class="dropdown">
+                <button class="dropbtn">2. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="/2_sinif/okuma_anlama/okuma_anlama.html">📖 Okuma-Anlama</a>
+                    <a href="/2_sinif/turkce/turkce.html">📝 Türkçe</a>
+                    <a href="/2_sinif/matematik/matematik.html">🔢 Matematik</a>
+                    <a href="/2_sinif/hayat_bilgisi/hayat_bilgisi.html">🌱 Hayat Bilgisi</a>
+                    <a href="/2_sinif/oyun/oyunlar.html">🎮 Oyunlar</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button class="dropbtn">3. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="/3_sinif/okuma_anlama/okuma_anlama.html">📖 Okuma-Anlama</a>
+                    <a href="/3_sinif/turkce/turkce.html">📝 Türkçe</a>
+                    <a href="/3_sinif/matematik/matematik.html">🔢 Matematik</a>
+                    <a href="/3_sinif/hayat_bilgisi/hayat_bilgisi.html">🌱 Hayat Bilgisi</a>
+                    <a href="/3_sinif/fen_bilimleri/fen_bilimleri.html">🔬 Fen Bilimleri</a>
+                    <a href="/3_sinif/oyun/oyunlar.html">🎮 Oyunlar</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button class="dropbtn">4. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="/4_sinif/okuma_anlama/okuma_anlama.html">📖 Okuma-Anlama</a>
+                    <a href="/4_sinif/turkce/turkce.html">📝 Türkçe</a>
+                    <a href="/4_sinif/matematik/matematik.html">🔢 Matematik</a>
+                    <a href="/4_sinif/fen_bilimleri/fen_bilimleri.html">🔬 Fen Bilimleri</a>
+                    <a href="/4_sinif/sosyal_bilgiler/sosyal_bilgiler.html">🌍 Sosyal Bilgiler</a>
+                    <a href="/4_sinif/oyun/oyunlar.html">🎮 Oyunlar</a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <button class="dropbtn">Ortaokul <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="/5_sinif/matematik/matematik.html">🔢 5. Sınıf Matematik</a>
+                    <a href="/5_sinif/fen_bilimleri/fen_bilimleri.html">🔬 5. Sınıf Fen</a>
+                    <a href="/6_sinif/matematik/matematik.html">🔢 6. Sınıf Matematik</a>
+                    <a href="/6_sinif/fen_bilimleri/fen_bilimleri.html">🔬 6. Sınıf Fen</a>
+                    <a href="/7_sinif/matematik/matematik.html">🔢 7. Sınıf Matematik</a>
+                    <a href="/7_sinif/fen_bilimleri/fen_bilimleri.html">🔬 7. Sınıf Fen</a>
+                </div>
+            </div>
+
+            <a href="/hakkimda.html" class="nav-link">Hakkımda</a>
+            <a href="/iletisim.html" class="nav-link">İletişim</a>
+        </div>
+    </nav>
+
+    <main class="icerik-kapsayici">
+        <h1 class="oyun-baslik">➕ Toplama Macerası</h1>
+
+        <div id="ekran-ayarlar" class="ayarlar-panel">
+            <h3>Sınıfını Seç 👇</h3>
+            <div id="secim-sinif">
+                <button class="secim-btn" onclick="ayarSec('sinif', 1, this)">1. Sınıf (20'ye kadar)</button>
+                <button class="secim-btn" onclick="ayarSec('sinif', 2, this)">2. Sınıf (100'e kadar)</button>
+                <button class="secim-btn" onclick="ayarSec('sinif', 3, this)">3. Sınıf (3 Basamaklı)</button>
+                <button class="secim-btn" onclick="ayarSec('sinif', 4, this)">4. Sınıf (5 Basamaklı)</button>
+            </div>
+
+            <h3 style="margin-top:25px;">İşlem Türü 👇</h3>
+            <div id="secim-tur">
+                <button class="secim-btn" onclick="ayarSec('tur', 'altalta', this)">Alt Alta ⬇️</button>
+                <button class="secim-btn" onclick="ayarSec('tur', 'yanyana', this)">Yan Yana ➡️</button>
+            </div>
+
+            <button id="btn-basla" class="basla-btn" onclick="oyunuBaslat()" disabled>Maceraya Başla! 🚀</button>
+        </div>
+
+        <div id="ekran-oyun" class="oyun-sahnesi">
+            <div class="puan-tablosu">
+                <span style="color:var(--dogru)">Doğru: <span id="skor-dogru">0</span></span>
+                <span style="color:#cbd5e1">|</span>
+                <span style="color:var(--vurgu)">Soru: <span id="skor-soru">1</span>/10</span>
+            </div>
+
+            <div class="soru-karti">
+                <div class="arti-isareti" id="islem-ikonu">+</div>
+                
+                <div id="panel-altalta" style="display:none; flex-direction: column; align-items: flex-end;">
+                    <div class="soru-satir" id="sayi1-alt">0</div>
+                    <div class="soru-satir" id="sayi2-alt">0</div>
+                    <div class="islem-cizgisi"></div>
+                    <div class="cevap-gosterge" id="cevap-ekrani-alt">?</div>
+                </div>
+
+                <div id="panel-yanyana" style="display:none; align-items: center; gap: 15px;">
+                    <span id="sayi1-yan">0</span> + <span id="sayi2-yan">0</span> = 
+                    <div class="cevap-gosterge" id="cevap-ekrani-yan" style="min-width: 100px; padding: 0 10px;">?</div>
+                </div>
+            </div>
+
+            <div class="tus-takimi">
+                <button class="tus" onclick="tusBas(1)">1</button>
+                <button class="tus" onclick="tusBas(2)">2</button>
+                <button class="tus" onclick="tusBas(3)">3</button>
+                <button class="tus" onclick="tusBas(4)">4</button>
+                <button class="tus" onclick="tusBas(5)">5</button>
+                <button class="tus" onclick="tusBas(6)">6</button>
+                <button class="tus" onclick="tusBas(7)">7</button>
+                <button class="tus" onclick="tusBas(8)">8</button>
+                <button class="tus" onclick="tusBas(9)">9</button>
+                <button class="tus sil" onclick="tusSil()"><i class="fas fa-backspace"></i></button>
+                <button class="tus" onclick="tusBas(0)">0</button>
+                <button class="tus onay" onclick="kontrolEt()">KONTROL ET ✅</button>
+            </div>
+        </div>
+
+        <div id="ekran-sonuc" class="ayarlar-panel" style="display:none;">
+            <h2 id="sonuc-baslik" style="font-size:36px; color:var(--ana-renk);"></h2>
+            <p style="font-size:20px; color:#475569;">Toplam Puanın:</p>
+            <div style="font-size:48px; font-weight:bold; color:var(--dogru); margin:10px 0;" id="sonuc-puan"></div>
+            <button class="basla-btn" onclick="location.reload()">Tekrar Oyna 🔄</button>
+        </div>
+
+    </main>
+
+    <footer>
+        <div class="sosyal">
+            <a href="https://instagram.com/kemalkogretmenim" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://youtube.com/@kemalkogretmenim" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://twitter.com/kemalkogretmen" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+        </div>
+        <p style="color: #94a3b8;">© 2026 Kemal Öğretmen - Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <script>
+        // --- NAVBAR KODU ---
+        function menuAcKapat() {
+            var x = document.getElementById("menuLinks");
+            x.classList.toggle("aktif");
+        }
+
+        // --- OYUN DEĞİŞKENLERİ ---
+        let ayarlar = { sinif: null, tur: null };
+        let soruSayaci = 1;
+        let dogruSayisi = 0;
+        let anlikCevap = "";
+        let dogruCevap = 0;
+
+        function ayarSec(tip, deger, btn) {
+            ayarlar[tip] = deger;
+            // Buton görselliği
+            let grup = btn.parentElement.children;
+            for(let i=0; i<grup.length; i++) grup[i].classList.remove('secili');
+            btn.classList.add('secili');
+            
+            // Başla butonu kontrolü
+            if(ayarlar.sinif && ayarlar.tur) {
+                document.getElementById('btn-basla').disabled = false;
+            }
+        }
+
+        function oyunuBaslat() {
+            document.getElementById('ekran-ayarlar').style.display = 'none';
+            document.getElementById('ekran-oyun').style.display = 'flex';
+            
+            if(ayarlar.tur === 'altalta') {
+                document.getElementById('panel-altalta').style.display = 'flex';
+                document.getElementById('islem-ikonu').style.display = 'block';
+            } else {
+                document.getElementById('panel-yanyana').style.display = 'flex';
+                document.getElementById('islem-ikonu').style.display = 'none';
+            }
+            yeniSoru();
+        }
+
+        function yeniSoru() {
+            anlikCevap = "";
+            ekraniGuncelle();
+            
+            let s1, s2;
+            // Sınıf seviyesine göre sayı üretimi
+            if(ayarlar.sinif === 1) { // Toplam 20'yi geçmesin
+                s1 = Math.floor(Math.random() * 10) + 1;
+                s2 = Math.floor(Math.random() * (20 - s1));
+            } else if(ayarlar.sinif === 2) { // Toplam 100'e kadar
+                s1 = Math.floor(Math.random() * 50) + 10;
+                s2 = Math.floor(Math.random() * 40) + 1;
+            } else if(ayarlar.sinif === 3) { // 3. Sınıf (3 basamaklı)
+                s1 = Math.floor(Math.random() * 400) + 100;
+                s2 = Math.floor(Math.random() * 400) + 100;
+            } else { // 4. SINIF MANTIĞI EKLENDİ
+                // 5 basamaklı sayı üretimi (10000 - 99999 arası)
+                // Toplam 1 milyonu geçmeyecek (zaten 5+5 basamak max 200bin eder)
+                s1 = Math.floor(Math.random() * 90000) + 10000;
+                s2 = Math.floor(Math.random() * 90000) + 10000;
+            }
+
+            dogruCevap = s1 + s2;
+
+            // Ekrana Yazdır
+            if(ayarlar.tur === 'altalta') {
+                document.getElementById('sayi1-alt').innerText = s1;
+                document.getElementById('sayi2-alt').innerText = s2;
+            } else {
+                document.getElementById('sayi1-yan').innerText = s1;
+                document.getElementById('sayi2-yan').innerText = s2;
+            }
+        }
+
+        // --- PEDAGOJİK TUŞ TAKIMI MANTIĞI ---
+        function tusBas(rakam) {
+            // Cevap uzunluk kontrolü (sayı çok uzamasın)
+            if (anlikCevap.length >= 7) return; 
+
+            if (ayarlar.tur === 'altalta') {
+                // ALT ALTA İÇİN ÖZEL MANTIK (SAĞDAN SOLA):
+                // Önce 5 bastı -> 5
+                // Sonra 2 bastı -> 25 
+                anlikCevap = rakam.toString() + anlikCevap;
+            } else {
+                // YAN YANA İÇİN KLASİK MANTIK (SOLDAN SAĞA):
+                anlikCevap = anlikCevap + rakam.toString();
+            }
+            ekraniGuncelle();
+        }
+
+        function tusSil() {
+            if (ayarlar.tur === 'altalta') {
+                // Baştaki rakamı sil (en son ekleneni, yani sağdakini)
+                anlikCevap = anlikCevap.substring(1);
+            } else {
+                // Sondaki rakamı sil
+                anlikCevap = anlikCevap.slice(0, -1);
+            }
+            ekraniGuncelle();
+        }
+
+        function ekraniGuncelle() {
+            let gorunenText = anlikCevap === "" ? "?" : anlikCevap;
+            
+            if(ayarlar.tur === 'altalta') {
+                document.getElementById('cevap-ekrani-alt').innerText = gorunenText;
+                document.getElementById('cevap-ekrani-alt').className = "cevap-gosterge";
+            } else {
+                document.getElementById('cevap-ekrani-yan').innerText = gorunenText;
+                document.getElementById('cevap-ekrani-yan').className = "cevap-gosterge";
+            }
+        }
+
+        function kontrolEt() {
+            if(anlikCevap === "") return;
+
+            let ekranID = ayarlar.tur === 'altalta' ? 'cevap-ekrani-alt' : 'cevap-ekrani-yan';
+            let kutu = document.getElementById(ekranID);
+
+            if(parseInt(anlikCevap) === dogruCevap) {
+                // DOĞRU
+                kutu.classList.add('dogru');
+                kutu.innerHTML = '<i class="fas fa-check"></i> ' + anlikCevap;
+                dogruSayisi++;
+                document.getElementById('skor-dogru').innerText = dogruSayisi;
+                
+                setTimeout(() => {
+                    if(soruSayaci < 10) {
+                        soruSayaci++;
+                        document.getElementById('skor-soru').innerText = soruSayaci;
+                        yeniSoru();
+                    } else {
+                        oyunBitti();
+                    }
+                }, 1000);
+            } else {
+                // YANLIŞ
+                kutu.classList.add('yanlis');
+                setTimeout(() => {
+                    kutu.classList.remove('yanlis');
+                    anlikCevap = ""; // Yanlışsa silinsin mi? Evet silinsin.
+                    ekraniGuncelle();
+                }, 800);
+            }
+        }
+
+        function oyunBitti() {
+            document.getElementById('ekran-oyun').style.display = 'none';
+            document.getElementById('ekran-sonuc').style.display = 'block';
+            document.getElementById('sonuc-puan').innerText = dogruSayisi * 10 + " Puan";
+            
+            let mesaj = "";
+            if(dogruSayisi === 10) mesaj = "Mükemmelsin! 🏆";
+            else if(dogruSayisi > 7) mesaj = "Harikasın! 🌟";
+            else mesaj = "Güzel Çaba! 👏";
+            
+            document.getElementById('sonuc-baslik').innerText = mesaj;
+        }
+    </script>
+</body>
+</html>

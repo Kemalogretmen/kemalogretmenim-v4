@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hakkımda — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .about-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 50px;
+      align-items: start;
+    }
+
+    /* Sol kart */
+    .about-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 40px 28px;
+      text-align: center;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 90px;
+    }
+    .about-avatar {
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 6px solid var(--border);
+      box-shadow: 0 10px 30px rgba(108,61,237,.2);
+      margin: 0 auto 20px;
+      display: block;
+    }
+    .about-name   { font-family:var(--font-display); font-size:26px; font-weight:800; color:var(--navy); }
+    .about-title  { font-size:14px; color:var(--slate); font-weight:600; margin:6px 0 20px; }
+    .about-badge  {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 50px;
+      margin-bottom: 24px;
+    }
+
+    .about-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .ast {
+      background: #FAFAFF;
+      border-radius: var(--r-sm);
+      padding: 12px 8px;
+      border: 2px solid var(--border);
+    }
+    .ast-n { font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--purple); display:block; }
+    .ast-l { font-size:10px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.4px; }
+
+    /* Sağ içerik */
+    .about-content { }
+    .about-section {
+      background: white;
+      border-radius: var(--r-lg);
+      padding: 32px;
+      border: 2px solid var(--border);
+      margin-bottom: 22px;
+    }
+    .about-section h2 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--purple);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .about-section p {
+      font-size: 16px;
+      line-height: 1.85;
+      color: var(--slate);
+    }
+
+    /* Değerler */
+    .values-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .values-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      font-size: 15px;
+      color: var(--slate);
+      line-height: 1.6;
+    }
+    .val-em {
+      font-size: 22px;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: #F0EBFF;
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width:860px) {
+      .about-layout { grid-template-columns:1fr; }
+      .about-card   { position:static; max-width:400px; margin:0 auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <h1 class="page-header-title">Merhaba, Ben <span>Kemal Öğretmen!</span></h1>
+    <p class="page-header-sub">21 yıldır öğrencilerimi geleceğe hazırlayan bir eğitimciyim.</p>
+  </header>
+
+  <section class="section">
+    <div class="about-layout">
+
+      <!-- Sol: Profil Kartı -->
+      <div class="about-card">
+        <img
+          src="/gorseller/profil.jpg"
+          alt="Kemal Öğretmen"
+          class="about-avatar"
+          onerror="this.src='https://placehold.co/180/6C3DED/white?text=K'"
+        >
+        <div class="about-name" id="aboutIsim">Kemal Öğretmen</div>
+        <div class="about-title" id="aboutUnvan">21 Yıllık Öğretmen &amp; İçerik Üreticisi</div>
+        <div class="about-badge">✓ Sınıf Öğretmeni</div>
+        <div class="about-stats" id="aboutStats">
+          <div class="ast"><span class="ast-n">21+</span><span class="ast-l">Yıl</span></div>
+          <div class="ast"><span class="ast-n">5K+</span><span class="ast-l">Öğrenci</span></div>
+          <div class="ast"><span class="ast-n">200+</span><span class="ast-l">İçerik</span></div>
+        </div>
+      </div>
+
+      <!-- Sağ: İçerik -->
+      <div class="about-content">
+
+        <div class="about-section">
+          <h2>👨‍🏫 Hakkımda</h2>
+          <p id="aboutMetin">
+            Öğretmenlik hayatımın 21. yılında, her sabah sınıfa aynı inançla giriyorum:
+            <strong>Akla ve bilime dayanan, sorgulayan, sorumluluk alan, özgüvenli bireyler yetiştirmek.</strong>
+          </p>
+          <br>
+          <p>
+            Cumhuriyetimizin temel değerlerinden ve Gazi Mustafa Kemal Atatürk'ün
+            <em>"Hayatta en hakiki mürşit ilimdir"</em> sözünden ilham alarak;
+            çağın gerektirdiği teknoloji ve yapay zekâ okuryazarlığını eğitimle buluşturuyorum.
+          </p>
+          <br>
+          <p>
+            Amacım, öğrenmeyi ezberden çıkarıp merakla, denemeyle ve keyifle ilerleyen bir yolculuğa dönüştürmek.
+            Çünkü biliyorum ki güçlü bir gelecek, değerlerine bağlı ve çağın farkında bireylerle mümkündür.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h2>🌟 Eğitim Felsefem</h2>
+          <ul class="values-list">
+            <li>
+              <span class="val-em">🧠</span>
+              <span><strong>Anlayarak Öğrenme:</strong> Ezber yerine gerçek kavrayışı hedefliyorum. Her konu, öğrencinin zihninde anlam kazanana kadar işlenmeye devam ediyor.</span>
+            </li>
+            <li>
+              <span class="val-em">🎮</span>
+              <span><strong>Oyunla Öğrenme:</strong> Eğlence olmadan kalıcı öğrenme olmaz. Oyunlar ve interaktif aktivitelerle dersi hayata döküyorum.</span>
+            </li>
+            <li>
+              <span class="val-em">🤖</span>
+              <span><strong>Teknoloji Entegrasyonu:</strong> Yapay zekâ okuryazarlığı artık temel bir beceri. Öğrencilerimi dijital çağa hazırlıyorum.</span>
+            </li>
+            <li>
+              <span class="val-em">❤️</span>
+              <span><strong>Sevgi Temelli Yaklaşım:</strong> Her çocuk değerlidir ve öğrenebilir. Güven, saygı ve sevgi — eğitimin temeli bu üç değer.</span>
+            </li>
+            <li>
+              <span class="val-em">🔬</span>
+              <span><strong>Bilimsel Düşünce:</strong> Sorgulamak, araştırmak, denemek... Sınıfımda bilimsel yöntemi içselleştiren bir nesil yetiştiriyorum.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="about-section">
+          <h2>📬 İletişim</h2>
+          <p>Sorularınız, önerileriniz veya iş birliği teklifleriniz için benimle iletişime geçebilirsiniz.</p>
+          <div style="margin-top:20px;">
+            <a href="/iletisim.html" class="btn btn-primary">Mesaj Gönder →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/site.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const data = window.kemalSite ? window.kemalSite.getData() : null;
+      if (!data || !data.hakkimda) return;
+      const h = data.hakkimda;
+      if (h.isim)  document.getElementById('aboutIsim').textContent  = h.isim;
+      if (h.unvan) document.getElementById('aboutUnvan').textContent = h.unvan;
+      if (h.metin) document.getElementById('aboutMetin').textContent = h.metin;
+      if (h.istatistikler && h.istatistikler.length) {
+        document.getElementById('aboutStats').innerHTML = h.istatistikler
+          .map(s => `<div class="ast"><span class="ast-n">${s.sayi}</span><span class="ast-l">${s.etiket}</span></div>`)
+          .join('');
+      }
+    });
+  </script>
+</body>
+</html>

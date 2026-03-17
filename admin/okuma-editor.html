@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📝 Okuma Metni Editörü — Kemal Öğretmenim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+    :root {
+      --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
+      --coral:#FF6052;--yellow:#FFD93D;--teal:#00C9B1;
+      --navy:#1A1040;--slate:#64748B;--muted:#94A3B8;
+      --bg:#F5F0FF;--white:#fff;--border:#E2D9FF;
+      --success:#10B981;--danger:#EF4444;--warn:#F59E0B;
+      --r-sm:10px;--r-md:16px;--r-lg:22px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--navy);}
+
+    /* ── LOGIN ── */
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#F2EAFF,#FFF5F4);}
+    .login-box{background:white;border-radius:24px;padding:48px 40px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(108,61,237,.18);text-align:center;border:2px solid var(--border);}
+    .login-icon{font-size:56px;display:block;margin-bottom:14px;}
+    .login-title{font-family:'Baloo 2',cursive;font-size:26px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+    .login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+    .login-input{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:14px;outline:none;}
+    .login-input:focus{border-color:var(--purple);}
+    .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+    .login-err{color:var(--danger);font-size:13px;font-weight:700;margin-top:8px;display:none;}
+
+    /* ── LAYOUT ── */
+    .app{display:none;min-height:100vh;}
+    .topbar{background:white;border-bottom:2px solid var(--border);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .topbar-title{font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:var(--purple);}
+    .topbar-links{display:flex;gap:10px;}
+    .topbar-link{padding:8px 16px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;transition:all .2s;border:2px solid transparent;}
+    .topbar-link.active{background:var(--purple);color:white;}
+    .topbar-link:not(.active){background:var(--bg);color:var(--slate);border-color:var(--border);}
+    .topbar-link:hover:not(.active){border-color:var(--purple);color:var(--purple);}
+    .logout-btn{padding:8px 14px;background:rgba(239,68,68,.1);border:none;border-radius:50px;color:var(--danger);font-weight:800;font-size:13px;cursor:pointer;}
+
+    .main{max-width:1100px;margin:0 auto;padding:28px 24px;}
+
+    /* ── METİN LİSTESİ ── */
+    #panelList{display:none;}
+    .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+    .list-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:var(--navy);}
+    .btn-yeni{padding:12px 24px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;}
+    .btn-yeni:hover{background:var(--purple-dark);transform:translateY(-1px);}
+
+    .metin-table{background:white;border-radius:var(--r-lg);border:2px solid var(--border);overflow:hidden;}
+    .mt-head{display:grid;grid-template-columns:2fr 80px 120px 100px 100px;gap:0;background:#F8F6FF;border-bottom:2px solid var(--border);}
+    .mt-head div,.mt-row div{padding:13px 16px;font-size:13px;}
+    .mt-head div{font-weight:800;color:var(--slate);text-transform:uppercase;letter-spacing:.4px;}
+    .mt-row{display:grid;grid-template-columns:2fr 80px 120px 100px 100px;border-bottom:1px solid var(--border);transition:background .15s;}
+    .mt-row:last-child{border-bottom:none;}
+    .mt-row:hover{background:#FAFAFF;}
+    .mt-baslik{font-weight:800;color:var(--navy);font-size:14px;}
+    .mt-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;}
+    .badge-aktif{background:#DCFCE7;color:#15803D;}
+    .badge-pasif{background:#FEE2E2;color:#DC2626;}
+    .badge-tam{background:#EFF7FF;color:#0876C8;}
+    .badge-kw{background:#F5EAFF;color:#7D3C98;}
+    .mt-actions{display:flex;gap:6px;align-items:center;}
+    .btn-edit{padding:6px 14px;background:var(--purple);color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
+    .btn-del{padding:6px 12px;background:rgba(239,68,68,.1);color:var(--danger);border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
+    .btn-edit:hover{background:var(--purple-dark);}
+    .btn-del:hover{background:rgba(239,68,68,.2);}
+    .loading-txt{text-align:center;padding:40px;color:var(--muted);font-size:15px;}
+
+    /* ── EDİTÖR ── */
+    #panelEdit{display:block;}
+    .edit-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+    .back-btn{background:none;border:2px solid var(--border);border-radius:50px;padding:9px 18px;font-weight:800;font-size:13px;cursor:pointer;color:var(--slate);transition:all .2s;}
+    .back-btn:hover{border-color:var(--purple);color:var(--purple);}
+    .edit-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;color:var(--navy);}
+
+    .edit-grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;}
+
+    .kart{background:white;border-radius:var(--r-lg);padding:24px;border:2px solid var(--border);margin-bottom:22px;}
+    .kart-title{font-family:'Baloo 2',cursive;font-size:17px;font-weight:800;color:var(--purple);margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+
+    label{display:block;font-size:13px;font-weight:800;color:var(--slate);margin-bottom:7px;}
+    input[type="text"],input[type="number"],input[type="color"],select,textarea{
+      width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;
+      font-family:'Nunito',sans-serif;font-size:14px;color:var(--navy);
+      background:#FAFAFF;outline:none;transition:border-color .2s;margin-bottom:14px;
+    }
+    input[type="color"]{height:44px;padding:4px 8px;cursor:pointer;}
+    input:focus,select:focus,textarea:focus{border-color:var(--purple);background:white;}
+    textarea{min-height:260px;resize:vertical;font-size:15px;line-height:1.7;}
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+    /* Kelime sayacı */
+    .kw-bar{background:#F0EBFF;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border:2px solid var(--border);}
+    .kw-label{font-size:13px;color:var(--slate);font-weight:700;}
+    .kw-count{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;color:var(--purple);}
+
+    /* Mod seçimi */
+    .mod-secimi{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+    .mod-kart{
+      border:3px solid var(--border);border-radius:var(--r-md);padding:16px;
+      cursor:pointer;transition:all .25s;text-align:center;
+    }
+    .mod-kart:hover,.mod-kart.active{border-color:var(--purple);background:#F0EBFF;}
+    .mod-kart.active{border-color:var(--purple-dark);}
+    .mod-em{font-size:28px;display:block;margin-bottom:6px;}
+    .mod-lbl{font-size:13px;font-weight:800;color:var(--navy);}
+    .mod-sub{font-size:11px;color:var(--slate);}
+    
+    .mod-options{display:none;padding:14px;background:#F8F6FF;border-radius:var(--r-sm);border:2px solid var(--border);margin-bottom:14px;}
+    .mod-options.show{display:block;}
+    .slider-row{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+    input[type="range"]{flex:1;height:6px;border:none;background:var(--border);border-radius:6px;accent-color:var(--purple);padding:0;margin-bottom:0;}
+    .slider-val{font-weight:800;font-size:14px;color:var(--purple);min-width:50px;text-align:right;}
+
+    /* Yazı önizleme */
+    .metin-preview{
+      border:2px solid var(--border);border-radius:var(--r-md);padding:20px;
+      background:#FAFAFF;min-height:80px;margin-bottom:14px;
+    }
+
+    /* ── SORULAR ── */
+    .soru-list{display:flex;flex-direction:column;gap:14px;}
+    .soru-item{background:#FAFAFF;border-radius:var(--r-md);padding:16px;border:2px solid var(--border);}
+    .soru-item-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .soru-no-badge{background:var(--purple);color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+    .soru-item input[type="text"]{margin-bottom:10px;}
+    .sik-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .sik-harf{width:28px;height:28px;background:var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--slate);flex-shrink:0;}
+    .sik-row input[type="text"]{flex:1;margin-bottom:0;padding:9px 12px;}
+    .sik-row input[type="radio"]{width:18px;height:18px;margin:0;flex-shrink:0;accent-color:var(--teal);}
+    .sik-row .sik-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;}
+    .sik-row .sik-del:hover{color:var(--danger);}
+    .btn-sik-ekle{background:none;border:2px dashed var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;margin-top:4px;transition:all .2s;}
+    .btn-sik-ekle:hover{border-color:var(--purple);color:var(--purple);}
+    .btn-soru-sil{background:rgba(239,68,68,.08);border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;color:var(--danger);cursor:pointer;margin-top:8px;}
+    .btn-soru-ekle{display:flex;align-items:center;gap:8px;padding:13px 22px;background:none;border:2px dashed var(--border);border-radius:50px;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;width:100%;justify-content:center;transition:all .2s;margin-top:8px;}
+    .btn-soru-ekle:hover{border-color:var(--purple);color:var(--purple);}
+
+    /* ── KAYDET ── */
+    .kaydet-bar{position:sticky;bottom:0;background:white;border-top:2px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
+    .btn-kaydet{padding:14px 36px;background:linear-gradient(135deg,var(--teal),var(--teal-dark,#00A891));color:white;border:none;border-radius:50px;font-weight:800;font-size:15px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;}
+    .btn-kaydet:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,201,177,.4);}
+    .btn-taslak{padding:12px 22px;background:var(--bg);border:2px solid var(--border);border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;color:var(--slate);}
+    .kaydet-durum{font-size:14px;font-weight:700;color:var(--success);display:none;}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:80px;right:24px;padding:13px 22px;border-radius:14px;font-weight:800;font-size:14px;color:white;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;transform:translateY(10px);pointer-events:none;}
+    .toast.show{opacity:1;transform:translateY(0);}
+    .toast.success{background:var(--success);}
+    .toast.error{background:var(--danger);}
+
+    @media(max-width:900px){
+      .edit-grid{grid-template-columns:1fr;}
+      .mt-head,.mt-row{grid-template-columns:2fr 80px 100px;} 
+      .mt-head div:nth-child(4),.mt-head div:nth-child(5),
+      .mt-row div:nth-child(4),.mt-row div:nth-child(5){display:none;}
+    }
+    @media(max-width:640px){
+      .form-row-2,.form-row-3{grid-template-columns:1fr;}
+      .mod-secimi{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <span class="login-icon">📝</span>
+      <div class="login-title">Okuma Editörü</div>
+      <p class="login-sub">Kemal Öğretmenim — Metin Yönetimi</p>
+      <input class="login-input" type="password" id="loginPass" placeholder="Şifre…" autocomplete="current-password">
+      <button class="login-btn" onclick="doLogin()">Giriş →</button>
+      <div class="login-err" id="loginErr">❌ Hatalı şifre</div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="app" id="app">
+    <div class="topbar">
+      <div class="topbar-title">📝 Okuma Editörü</div>
+      <div class="topbar-links">
+        <a href="/admin/index.html" class="topbar-link">⚙️ Site Yönetimi</a>
+        <a href="/admin/okuma-sonuclari.html" class="topbar-link">📊 Sonuçlar</a>
+        <a href="/hizli-okuma/index.html" target="_blank" class="topbar-link">🌐 Okuma Sayfası</a>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Çıkış 🚪</button>
+    </div>
+
+    <div class="main">
+
+      <!-- ── LİSTE PANELİ ── -->
+      <div id="panelList">
+        <div class="list-header">
+          <div class="list-title">📚 Tüm Metinler</div>
+          <button class="btn-yeni" onclick="editAc(null)">+ Yeni Metin</button>
+        </div>
+        <div class="metin-table">
+          <div class="mt-head">
+            <div>Başlık</div>
+            <div>Sınıf</div>
+            <div>Mod</div>
+            <div>Durum</div>
+            <div>İşlemler</div>
+          </div>
+          <div id="metinListesi"><div class="loading-txt">⏳ Yükleniyor…</div></div>
+        </div>
+      </div>
+
+      <!-- ── EDİTÖR PANELİ ── -->
+      <div id="panelEdit">
+        <div class="edit-header">
+          <button class="back-btn" onclick="listeye()">← Listeye Dön</button>
+          <div class="edit-title" id="editTitle">Yeni Metin</div>
+        </div>
+
+        <div class="edit-grid">
+
+          <!-- SOL: Metin -->
+          <div>
+            <div class="kart">
+              <div class="kart-title">📄 Metin Bilgileri</div>
+              <label>Başlık *</label>
+              <input type="text" id="fBaslik" placeholder="Metnin başlığı…">
+
+              <div class="form-row-2">
+                <div>
+                  <label>Sınıf Düzeyi *</label>
+                  <select id="fSinif">
+                    <option value="">Seç…</option>
+                    <option value="1">1. Sınıf</option>
+                    <option value="2">2. Sınıf</option>
+                    <option value="3">3. Sınıf</option>
+                    <option value="4">4. Sınıf</option>
+                    <option value="5">5. Sınıf</option>
+                    <option value="6">6. Sınıf</option>
+                    <option value="7">7. Sınıf</option>
+                    <option value="8">8. Sınıf</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Durum</label>
+                  <select id="fAktif">
+                    <option value="true">✅ Yayında</option>
+                    <option value="false">⏸️ Taslak</option>
+                  </select>
+                </div>
+              </div>
+
+              <label>Metin İçeriği *</label>
+              <div class="kw-bar">
+                <span class="kw-label">📊 Kelime Sayısı</span>
+                <span class="kw-count" id="kwCount">0</span>
+              </div>
+              <textarea id="fIcerik" placeholder="Metni buraya yaz ya da yapıştır…" oninput="kelimeSay()"></textarea>
+            </div>
+
+            <!-- ANLAMA SORULARI -->
+            <div class="kart">
+              <div class="kart-title">❓ Anlama Soruları <span style="font-size:12px;color:var(--muted);font-family:'Nunito',sans-serif;">(İsteğe bağlı · 3-5 şık)</span></div>
+              <div class="soru-list" id="soruList"></div>
+              <button class="btn-soru-ekle" onclick="soruEkle()">+ Soru Ekle</button>
+            </div>
+          </div>
+
+          <!-- SAĞ: Ayarlar -->
+          <div>
+            <div class="kart">
+              <div class="kart-title">🖥️ Görüntüleme Modu</div>
+              <div class="mod-secimi">
+                <div class="mod-kart active" id="modTamKart" onclick="modSec('tam')">
+                  <span class="mod-em">📄</span>
+                  <div class="mod-lbl">Metnin Tamamı</div>
+                  <div class="mod-sub">Metin sayfalı gösterilir</div>
+                </div>
+                <div class="mod-kart" id="modKwKart" onclick="modSec('kelime')">
+                  <span class="mod-em">⚡</span>
+                  <div class="mod-lbl">Kelime Kelime</div>
+                  <div class="mod-sub">Tek kelime gösterilir</div>
+                </div>
+              </div>
+
+              <!-- TAM METİN seçenekleri -->
+              <div class="mod-options show" id="optTam">
+                <label>🎯 Hedeflenen Okuma Hızı (kelime/dk)</label>
+                <div class="slider-row">
+                  <input type="range" id="fHedefHiz" min="10" max="300" step="5" value="80" oninput="document.getElementById('hedefHizVal').textContent=this.value+' k/dk'">
+                  <span class="slider-val" id="hedefHizVal">80 k/dk</span>
+                </div>
+                <div style="font-size:12px;color:var(--muted);">Bu değer karne hesabında referans olarak kullanılır.</div>
+              </div>
+
+              <!-- KELIME KELIME seçenekleri -->
+              <div class="mod-options" id="optKelime">
+                <label>İlerleme Modu</label>
+                <div style="display:flex;gap:10px;margin-bottom:14px;">
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:700;margin-bottom:0;">
+                    <input type="radio" name="ilerMod" id="ilerOto" value="oto" checked onchange="ilerModDegis()" style="width:18px;height:18px;margin:0;"> Otomatik
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:700;margin-bottom:0;">
+                    <input type="radio" name="ilerMod" id="ilerTikla" value="tikla" onchange="ilerModDegis()" style="width:18px;height:18px;margin:0;"> Tıklayarak
+                  </label>
+                </div>
+                <div id="otoOptions">
+                  <label>⏱️ Kelime Ekran Süresi</label>
+                  <div class="slider-row">
+                    <input type="range" id="fKelimeMs" min="150" max="1500" step="50" value="500" oninput="kelimeMsDegis()">
+                    <span class="slider-val" id="kelimeMsVal">500ms</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--muted);" id="kelimeMsAcik">Her kelime ekranda 0.5 sn kalır.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="kart">
+              <div class="kart-title">🎨 Yazı Ayarları</div>
+              <div class="form-row-2">
+                <div>
+                  <label>Yazı Tipi</label>
+                  <select id="fYaziTipi">
+                    <option value="Nunito">Nunito (Normal)</option>
+                    <option value="Georgia,serif">Georgia (Serif)</option>
+                    <option value="Courier New,monospace">Courier (Mono)</option>
+                    <option value="Arial,sans-serif">Arial</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Yazı Boyutu</label>
+                  <select id="fYaziBoyutu">
+                    <option value="14">14px (Küçük)</option>
+                    <option value="16">16px</option>
+                    <option value="18" selected>18px (Normal)</option>
+                    <option value="20">20px</option>
+                    <option value="22">22px (Büyük)</option>
+                    <option value="24">24px</option>
+                    <option value="28">28px (Çok Büyük)</option>
+                  </select>
+                </div>
+              </div>
+              <label>Yazı Rengi</label>
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                <input type="color" id="fYaziRengi" value="#1A1040" style="width:60px;flex-shrink:0;">
+                <input type="text" id="fYaziRengiTxt" value="#1A1040" placeholder="#000000" oninput="renkTxtDegis()" style="flex:1;margin-bottom:0;">
+              </div>
+              <label>Önizleme</label>
+              <div class="metin-preview" id="metin-preview">Yazı önizleme metni burada görünür…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main -->
+
+    <!-- Kaydet Bar (editörde) -->
+    <div class="kaydet-bar" id="kaydetBar" style="display:none;">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-kaydet" onclick="kaydet(true)">💾 Yayınla</button>
+        <button class="btn-taslak" onclick="kaydet(false)">Taslak Kaydet</button>
+        <div class="kaydet-durum" id="kaydetDurum">✅ Kaydedildi!</div>
+      </div>
+      <div style="font-size:13px;color:var(--muted);" id="editingId"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://mwxcvlyrkptxrwgkmqum.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY';
+  const PASS_KEY     = 'kemal_admin_pass';
+  const DEFAULT_PASS = 'kemal2026';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let editingId = null;
+  let mevcut_mod = 'tam';
+
+  /* ── GİRİŞ ── */
+  function getPass(){ return localStorage.getItem(PASS_KEY) || DEFAULT_PASS; }
+  function doLogin(){
+    const v = document.getElementById('loginPass').value;
+    if(v === getPass()){
+      sessionStorage.setItem('editor_auth','1');
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('app').style.display='block';
+      editAc(null); // yeni metin formu açık başla
+    } else {
+      document.getElementById('loginErr').style.display='block';
+      document.getElementById('loginPass').value='';
+    }
+  }
+  document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+  function doLogout(){ sessionStorage.removeItem('editor_auth'); location.reload(); }
+  if(sessionStorage.getItem('editor_auth')==='1'){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+  }
+
+  /* ── PANEL GEÇİŞ ── */
+  function listeye(){
+    document.getElementById('panelEdit').style.display='none';
+    document.getElementById('panelList').style.display='block';
+    document.getElementById('kaydetBar').style.display='none';
+    loadMetinler();
+  }
+  function editAc(metin){
+    document.getElementById('panelList').style.display='none';
+    document.getElementById('panelEdit').style.display='block';
+    document.getElementById('kaydetBar').style.display='flex';
+    formDoldur(metin);
+  }
+
+  /* ── METİN LİSTESİ ── */
+  async function loadMetinler(){
+    const wrap = document.getElementById('metinListesi');
+    wrap.innerHTML = '<div class="loading-txt">⏳ Yükleniyor…</div>';
+    const { data, error } = await sb
+      .from('metinler')
+      .select('id,baslik,sinif,goruntuleme_modu,aktif,kelime_sayisi,olusturma_tarihi')
+      .order('olusturma_tarihi',{ascending:false});
+    if(error || !data?.length){
+      wrap.innerHTML='<div class="loading-txt">📭 Henüz metin eklenmemiş.</div>'; return;
+    }
+    wrap.innerHTML = data.map(m=>`
+      <div class="mt-row">
+        <div><div class="mt-baslik">${esc(m.baslik)}</div><div style="font-size:11px;color:var(--muted);">${m.kelime_sayisi||0} kelime</div></div>
+        <div><span class="mt-badge badge-aktif">${m.sinif}. Sınıf</span></div>
+        <div><span class="mt-badge ${m.goruntuleme_modu==='kelime'?'badge-kw':'badge-tam'}">${m.goruntuleme_modu==='kelime'?'⚡ Kelime':'📄 Tam'}</span></div>
+        <div><span class="mt-badge ${m.aktif?'badge-aktif':'badge-pasif'}">${m.aktif?'Yayında':'Taslak'}</span></div>
+        <div class="mt-actions">
+          <button class="btn-edit" onclick="metinYukle('${m.id}')">Düzenle</button>
+          <button class="btn-del"  onclick="metinSil('${m.id}','${esc(m.baslik)}')">Sil</button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function metinYukle(id){
+    toast('⏳ Yükleniyor…');
+    const {data:m} = await sb.from('metinler').select('*').eq('id',id).single();
+    const {data:sorular} = await sb.from('sorular').select('id,soru_metni,sira,secenekler(id,secenek_metni,dogru_mu,sira)').eq('metin_id',id).order('sira');
+    m.sorular = (sorular||[]).map(s=>({...s, secenekler:(s.secenekler||[]).sort((a,b)=>a.sira-b.sira)}));
+    editAc(m);
+  }
+
+  async function metinSil(id, baslik){
+    if(!confirm(`"${baslik}" metnini silmek istiyor musunuz?\nBu işlem geri alınamaz!`)) return;
+    const {error} = await sb.from('metinler').delete().eq('id',id);
+    if(error){ toast('❌ Silme hatası','error'); return; }
+    toast('🗑️ Metin silindi','success');
+    loadMetinler();
+  }
+
+  /* ── FORM ── */
+  function formDoldur(m){
+    editingId = m?.id || null;
+    document.getElementById('editTitle').textContent = m ? `Düzenle: ${m.baslik}` : 'Yeni Metin';
+    document.getElementById('editingId').textContent = m ? `ID: ${m.id.slice(0,8)}…` : '';
+
+    document.getElementById('fBaslik').value      = m?.baslik || '';
+    document.getElementById('fSinif').value       = m?.sinif || '';
+    document.getElementById('fAktif').value       = m?.aktif !== undefined ? String(m.aktif) : 'true';
+    document.getElementById('fIcerik').value      = m?.icerik || '';
+    document.getElementById('fYaziTipi').value    = m?.yazi_tipi || 'Nunito';
+    document.getElementById('fYaziBoyutu').value  = m?.yazi_boyutu || 18;
+    document.getElementById('fYaziRengi').value   = m?.yazi_rengi || '#1A1040';
+    document.getElementById('fYaziRengiTxt').value= m?.yazi_rengi || '#1A1040';
+    document.getElementById('fHedefHiz').value    = m?.hedef_hiz || 80;
+    document.getElementById('hedefHizVal').textContent = (m?.hedef_hiz||80)+' k/dk';
+    document.getElementById('fKelimeMs').value    = m?.kelime_ms || 500;
+    document.getElementById('fKelimeMs').dispatchEvent(new Event('input'));
+
+    modSec(m?.goruntuleme_modu || 'tam');
+    if(m?.tikla_mod) document.getElementById('ilerTikla').checked = true;
+    else document.getElementById('ilerOto').checked = true;
+    ilerModDegis();
+    kelimeSay();
+    onizlemeGuncelle();
+
+    // Sorular
+    const soruList = document.getElementById('soruList');
+    soruList.innerHTML = '';
+    (m?.sorular || []).forEach(s => soruItemEkle(s));
+  }
+
+  function kelimeSay(){
+    const v = document.getElementById('fIcerik').value.trim();
+    const n = v ? v.split(/\s+/).filter(w=>w.length>0).length : 0;
+    document.getElementById('kwCount').textContent = n;
+    onizlemeGuncelle();
+  }
+
+  function onizlemeGuncelle(){
+    const prev = document.getElementById('metin-preview');
+    prev.style.fontFamily  = document.getElementById('fYaziTipi').value;
+    prev.style.fontSize    = document.getElementById('fYaziBoyutu').value + 'px';
+    prev.style.color       = document.getElementById('fYaziRengi').value;
+    prev.textContent = document.getElementById('fIcerik').value.slice(0,150) || 'Yazı önizleme burada görünür…';
+  }
+
+  // Yazı tipi/boyut değişince önizlemeyi güncelle
+  ['fYaziTipi','fYaziBoyutu'].forEach(id => 
+    document.getElementById(id).addEventListener('change', onizlemeGuncelle));
+
+  function renkTxtDegis(){
+    const v = document.getElementById('fYaziRengiTxt').value;
+    if(/^#[0-9A-Fa-f]{6}$/.test(v)){
+      document.getElementById('fYaziRengi').value = v;
+      onizlemeGuncelle();
+    }
+  }
+  document.getElementById('fYaziRengi').addEventListener('input', function(){
+    document.getElementById('fYaziRengiTxt').value = this.value;
+    onizlemeGuncelle();
+  });
+
+  function modSec(mod){
+    mevcut_mod = mod;
+    document.getElementById('modTamKart').classList.toggle('active', mod==='tam');
+    document.getElementById('modKwKart').classList.toggle('active', mod==='kelime');
+    document.getElementById('optTam').classList.toggle('show', mod==='tam');
+    document.getElementById('optKelime').classList.toggle('show', mod==='kelime');
+  }
+
+  function ilerModDegis(){
+    const oto = document.getElementById('ilerOto').checked;
+    document.getElementById('otoOptions').style.display = oto ? 'block' : 'none';
+  }
+
+  function kelimeMsDegis(){
+    const v = parseInt(document.getElementById('fKelimeMs').value);
+    document.getElementById('kelimeMsVal').textContent = v + 'ms';
+    document.getElementById('kelimeMsAcik').textContent = `Her kelime ekranda ${(v/1000).toFixed(1)} sn kalır.`;
+  }
+
+  /* ── SORULAR ── */
+  let soruSayac = 0;
+  function soruEkle(data=null){
+    soruSayac++;
+    const id = 'soru_' + soruSayac;
+    soruItemEkle(data, id);
+  }
+
+  function soruItemEkle(data=null, forcedId=null){
+    const soruList = document.getElementById('soruList');
+    const id = forcedId || ('soru_' + (++soruSayac));
+    const div = document.createElement('div');
+    div.className = 'soru-item';
+    div.id = id;
+    const sikler = data?.secenekler || [
+      {secenek_metni:'',dogru_mu:true},
+      {secenek_metni:'',dogru_mu:false},
+      {secenek_metsi:'',dogru_mu:false}
+    ];
+    const harfler = ['A','B','C','D','E'];
+    div.innerHTML = `
+      <div class="soru-item-header">
+        <span class="soru-no-badge">${soruList.children.length+1}</span>
+        <input type="text" placeholder="Soru metnini yaz…" value="${esc(data?.soru_metni||'')}" class="soru-input" style="flex:1;margin-bottom:0;">
+      </div>
+      <div class="sik-list">
+        ${sikler.map((s,i)=>`
+          <div class="sik-row" data-sik="${i}">
+            <span class="sik-harf">${harfler[i]||i+1}</span>
+            <input type="text" placeholder="Şık ${harfler[i]||i+1}…" value="${esc(s.secenek_metni||'')}">
+            <input type="radio" name="dogru_${id}" title="Doğru cevap" ${s.dogru_mu?'checked':''}>
+            <button class="sik-del" onclick="sikSil(this)" title="Şıkkı Sil">✕</button>
+          </div>`).join('')}
+      </div>
+      <button class="btn-sik-ekle" onclick="sikEkle('${id}')">+ Şık Ekle</button>
+      <button class="btn-soru-sil" onclick="document.getElementById('${id}').remove(); soruNolaraGuncelle()">🗑️ Soruyu Sil</button>`;
+    soruList.appendChild(div);
+    soruNolaraGuncelle();
+  }
+
+  function sikEkle(soruId){
+    const item   = document.getElementById(soruId);
+    const sikList= item.querySelector('.sik-list');
+    const n      = sikList.children.length;
+    if(n >= 5){ toast('En fazla 5 şık eklenebilir.','error'); return; }
+    const harfler = ['A','B','C','D','E'];
+    const row = document.createElement('div');
+    row.className = 'sik-row';
+    row.innerHTML = `
+      <span class="sik-harf">${harfler[n]||n+1}</span>
+      <input type="text" placeholder="Şık ${harfler[n]||n+1}…">
+      <input type="radio" name="dogru_${soruId}" title="Doğru cevap">
+      <button class="sik-del" onclick="sikSil(this)">✕</button>`;
+    sikList.appendChild(row);
+  }
+
+  function sikSil(btn){
+    const row  = btn.closest('.sik-row');
+    const list = row.closest('.sik-list');
+    if(list.children.length <= 2){ toast('En az 2 şık olmalı.','error'); return; }
+    row.remove();
+    // Harf yenile
+    const harfler=['A','B','C','D','E'];
+    list.querySelectorAll('.sik-harf').forEach((h,i)=>h.textContent=harfler[i]||i+1);
+  }
+
+  function soruNolaraGuncelle(){
+    document.querySelectorAll('#soruList .soru-item').forEach((item,i)=>{
+      const badge = item.querySelector('.soru-no-badge');
+      if(badge) badge.textContent = i+1;
+    });
+  }
+
+  /* ── KAYDET ── */
+  async function kaydet(aktif){
+    const baslik   = document.getElementById('fBaslik').value.trim();
+    const sinif    = parseInt(document.getElementById('fSinif').value);
+    const icerik   = document.getElementById('fIcerik').value.trim();
+    if(!baslik||!sinif||!icerik){ toast('Başlık, sınıf ve metin zorunlu!','error'); return; }
+
+    const ks = icerik.split(/\s+/).filter(w=>w.length>0).length;
+    const tikla = document.getElementById('ilerTikla').checked;
+
+    const metinData = {
+      baslik,
+      icerik,
+      sinif,
+      aktif: aktif !== undefined ? aktif : document.getElementById('fAktif').value==='true',
+      goruntuleme_modu: mevcut_mod,
+      hedef_hiz: parseInt(document.getElementById('fHedefHiz').value),
+      kelime_ms: parseInt(document.getElementById('fKelimeMs').value),
+      tikla_mod: tikla,
+      yazi_tipi: document.getElementById('fYaziTipi').value,
+      yazi_boyutu: parseInt(document.getElementById('fYaziBoyutu').value),
+      yazi_rengi: document.getElementById('fYaziRengi').value,
+      kelime_sayisi: ks
+    };
+
+    let metinId = editingId;
+    if(metinId){
+      const {error} = await sb.from('metinler').update(metinData).eq('id',metinId);
+      if(error){ toast('❌ Güncelleme hatası: '+error.message,'error'); return; }
+    } else {
+      const {data,error} = await sb.from('metinler').insert(metinData).select().single();
+      if(error){ toast('❌ Kayıt hatası: '+error.message,'error'); return; }
+      metinId = data.id;
+      editingId = metinId;
+      document.getElementById('editingId').textContent = `ID: ${metinId.slice(0,8)}…`;
+    }
+
+    // Soruları kaydet
+    await soruKaydet(metinId);
+
+    document.getElementById('kaydetDurum').style.display='block';
+    setTimeout(()=>document.getElementById('kaydetDurum').style.display='none',3000);
+    toast(aktif ? '✅ Yayınlandı!' : '💾 Taslak kaydedildi!','success');
+  }
+
+  async function soruKaydet(metinId){
+    // Önce eski soruları sil (cascade ile şıklar da silinir)
+    await sb.from('sorular').delete().eq('metin_id', metinId);
+
+    const soruItems = document.querySelectorAll('#soruList .soru-item');
+    if(!soruItems.length) return;
+
+    for(let i=0; i<soruItems.length; i++){
+      const item = soruItems[i];
+      const soruMetni = item.querySelector('.soru-input')?.value?.trim();
+      if(!soruMetni) continue;
+
+      const {data:soruData,error} = await sb.from('sorular').insert({
+        metin_id: metinId, soru_metni: soruMetni, sira: i+1
+      }).select().single();
+      if(error || !soruData) continue;
+
+      const sikRows = item.querySelectorAll('.sik-row');
+      const radioName = `dogru_${item.id}`;
+      const secenekler = [];
+
+      sikRows.forEach((row,j)=>{
+        const txt   = row.querySelector('input[type="text"]')?.value?.trim();
+        const radio = row.querySelector(`input[type="radio"]`);
+        if(txt) secenekler.push({
+          soru_id: soruData.id, secenek_metni: txt, dogru_mu: radio?.checked||false, sira: j+1
+        });
+      });
+
+      if(secenekler.length) await sb.from('secenekler').insert(secenekler);
+    }
+  }
+
+  /* ── TOAST & YARDIMCI ── */
+  let tt;
+  function toast(msg,type='success'){
+    const el=document.getElementById('toast');
+    el.textContent=msg; el.className='toast '+type+' show';
+    clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2800);
+  }
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // Başlangıçta editör aç
+  editAc(null);
+</script>
+</body>
+</html>

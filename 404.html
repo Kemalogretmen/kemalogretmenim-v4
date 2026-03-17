@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Sayfa Bulunamadı | Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .err-page {
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .err-emoji { font-size: 100px; display:block; margin-bottom:24px; animation: floatB 3s ease-in-out infinite; }
+    .err-title { font-family:var(--font-display); font-size: 80px; font-weight:800; color:var(--purple); line-height:1; }
+    .err-sub   { font-size:22px; font-weight:700; color:var(--navy); margin:12px 0 8px; }
+    .err-desc  { font-size:15px; color:var(--slate); margin-bottom:32px; }
+    .err-btns  { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <div class="err-page">
+    <div>
+      <span class="err-emoji">🔍</span>
+      <div class="err-title">404</div>
+      <div class="err-sub">Aradığın sayfa bulunamadı!</div>
+      <p class="err-desc">Bu sayfa taşınmış, silinmiş ya da hiç var olmamış olabilir.</p>
+      <div class="err-btns">
+        <a href="/index.html" class="btn btn-primary">🏠 Ana Sayfaya Dön</a>
+        <a href="/iletisim.html" class="btn btn-coral">📬 Bana Ulaş</a>
+      </div>
+    </div>
+  </div>
+  <script src="/js/site.js"></script>
+</body>
+</html>

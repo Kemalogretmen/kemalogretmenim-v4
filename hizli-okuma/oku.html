@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📖 Okuma Ekranı — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background:#0F0A2E; }
+
+    /* ─── TAM METİN MODU ─── */
+    #tamMetinEkran {
+      min-height: 100vh;
+      padding: 0;
+      display: none;
+      flex-direction: column;
+      background: #F8F5FF;
+    }
+
+    .okuma-topbar {
+      background: white;
+      border-bottom: 2px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top:0; z-index:100;
+    }
+    .okuma-kullanici { font-size:14px; font-weight:700; color:var(--slate); }
+    .okuma-kullanici strong { color:var(--purple); }
+    .sayac-display {
+      background: rgba(108,61,237,.08);
+      border: 2px solid rgba(108,61,237,.15);
+      border-radius: var(--r-sm);
+      padding: 6px 14px;
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      color: rgba(108,61,237,.4);
+      letter-spacing: 1px;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .kitap-wrapper {
+      flex: 1;
+      max-width: 780px;
+      width: 100%;
+      margin: 32px auto;
+      padding: 0 24px;
+    }
+    .kitap-baslik {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--navy);
+      text-align: center;
+      margin-bottom: 28px;
+      padding-bottom: 18px;
+      border-bottom: 2px dashed var(--border);
+    }
+    .kitap-metin {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 40px 44px;
+      box-shadow: 0 10px 40px rgba(108,61,237,.08);
+      border: 1px solid var(--border);
+      line-height: 2.0;
+    }
+    /* Metin içeriği — stil JS'den uygulanır */
+
+    .bitti-alani {
+      text-align: center;
+      padding: 40px 24px 60px;
+    }
+    .bitti-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 44px;
+      background: linear-gradient(135deg,var(--teal),var(--teal-dark));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0,201,177,.4);
+      transition: all .25s;
+    }
+    .bitti-btn:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,201,177,.5); }
+
+    /* ─── KELIME KELIME MODU ─── */
+    #kelimeEkran {
+      display: none;
+      min-height: 100vh;
+      background: #0F0A2E;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .kk-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kk-meta { font-size:13px; color:rgba(255,255,255,.4); font-weight:700; }
+    .kk-meta strong { color:rgba(255,255,255,.7); }
+    .kk-sayac { font-size:18px; color:rgba(255,255,255,.3); font-weight:800; font-family:var(--font-display); }
+
+    .kk-kelime-wrap {
+      text-align: center;
+      padding: 0 40px;
+    }
+    .kk-kelime {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: clamp(42px,8vw,90px);
+      font-weight: 800;
+      color: white;
+      line-height: 1.1;
+      animation: kelimeGelsin .15s ease both;
+    }
+    @keyframes kelimeGelsin {
+      from { opacity:0; transform:scale(.8) translateY(12px); }
+      to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+
+    .kk-progress-wrap {
+      position: absolute;
+      bottom: 60px; left: 40px; right: 40px;
+    }
+    .kk-progress-bar {
+      height: 4px;
+      background: rgba(255,255,255,.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .kk-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg,var(--purple),var(--teal));
+      border-radius: 4px;
+      transition: width .3s ease;
+    }
+    .kk-progress-txt {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 13px;
+      color: rgba(255,255,255,.3);
+      font-weight:700;
+    }
+
+    .kk-click-hint {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: rgba(255,255,255,.2);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* Hazır Ekranı */
+    #hazirEkran {
+      display: none;
+      min-height: 100vh;
+      background: #0F0A2E;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      text-align: center;
+      padding: 40px;
+    }
+    .hazir-em { font-size: 80px; animation:floatB 2s ease-in-out infinite; }
+    .hazir-title { font-family:var(--font-display); font-size:32px; font-weight:800; color:white; }
+    .hazir-sub { font-size:16px; color:rgba(255,255,255,.55); max-width:420px; line-height:1.7; }
+    .hazir-kullanici { background:rgba(255,255,255,.08); border-radius:var(--r-md); padding:14px 24px; color:rgba(255,255,255,.8); font-weight:700; font-size:15px; }
+    .hazir-basla-btn {
+      padding:16px 44px; background:linear-gradient(135deg,var(--purple),var(--purple-light));
+      color:white; border:none; border-radius:50px; font-family:var(--font-body);
+      font-size:18px; font-weight:800; cursor:pointer;
+      box-shadow:0 6px 20px rgba(108,61,237,.5); transition:all .25s;
+      animation:pulseGlow 2s ease-in-out infinite;
+    }
+    .hazir-basla-btn:hover { transform:translateY(-3px) scale(1.04); }
+
+    @media(max-width:640px) {
+      .kitap-metin { padding:24px 20px; }
+      .kitap-baslik { font-size:22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── HAZIR EKRANI ─── -->
+  <div id="hazirEkran" style="display:flex;">
+    <span class="hazir-em">📖</span>
+    <div class="hazir-title" id="hazirBaslik">Metin Yükleniyor…</div>
+    <div class="hazir-kullanici" id="hazirKullanici">—</div>
+    <p class="hazir-sub" id="hazirBilgi">Hazır olduğunda başla butonuna bas.</p>
+    <button class="hazir-basla-btn" id="hazirBtn" onclick="okumaBaslat()" disabled>⏳ Yükleniyor…</button>
+  </div>
+
+  <!-- ─── TAM METİN MODU ─── -->
+  <div id="tamMetinEkran">
+    <div class="okuma-topbar">
+      <div class="okuma-kullanici" id="tamMetinKullanici">👤 —</div>
+      <div class="sayac-display" id="sayacDisplay">00:00</div>
+    </div>
+    <div class="kitap-wrapper">
+      <div class="kitap-baslik" id="tamMetinBaslik">—</div>
+      <div class="kitap-metin" id="tamMetinIcerik"></div>
+    </div>
+    <div class="bitti-alani">
+      <button class="bitti-btn" onclick="okumaBitti()">✅ Okumam Bitti!</button>
+    </div>
+  </div>
+
+  <!-- ─── KELIME KELIME MODU ─── -->
+  <div id="kelimeEkran" onclick="kelimeTikla()">
+    <div class="kk-top">
+      <div class="kk-meta" id="kkMeta">—</div>
+      <div class="kk-sayac" id="kkSayac">00:00</div>
+    </div>
+    <div class="kk-kelime-wrap">
+      <span class="kk-kelime" id="kkKelime">●</span>
+    </div>
+    <div class="kk-progress-wrap">
+      <div class="kk-progress-bar">
+        <div class="kk-progress-fill" id="kkProgress" style="width:0%"></div>
+      </div>
+      <div class="kk-progress-txt" id="kkProgressTxt">0 / 0 kelime</div>
+    </div>
+    <div class="kk-click-hint" id="kkHint">herhangi bir yere tıkla →</div>
+  </div>
+
+  <script>
+    const metin    = JSON.parse(sessionStorage.getItem('okuma_metin') || 'null');
+    const kullanici = JSON.parse(sessionStorage.getItem('okuma_kullanici') || 'null');
+
+    if (!metin || !kullanici) {
+      window.location.href = '/hizli-okuma/index.html';
+    }
+
+    // Sayaç
+    let sayacMs   = 0;
+    let sayacTimer = null;
+    let baslangic  = null;
+
+    // Kelime kelime değişkenler
+    let kelimeler    = [];
+    let kelimeIndex  = 0;
+    let kelimeTimer  = null;
+    let kkBaslangic  = null;
+
+    /* ─── HAZIR EKRANI ─── */
+    const mod = metin.goruntuleme_modu;
+    const soruSayisi = (metin.sorular || []).length;
+
+    document.getElementById('hazirBaslik').textContent = metin.baslik;
+    document.getElementById('hazirKullanici').textContent =
+      `👤 ${kullanici.ad} ${kullanici.soyad} · ${kullanici.sinif}/${kullanici.sube}`;
+
+    const modLabel = mod === 'kelime'
+      ? (metin.tikla_mod ? '⚡ Kelime Kelime (Tıklayarak)' : `⚡ Kelime Kelime (Otomatik · ${metin.kelime_ms||500}ms)`)
+      : '📄 Tam Metin';
+
+    document.getElementById('hazirBilgi').innerHTML =
+      `<strong>${modLabel}</strong><br>${metin.kelime_sayisi || '?'} kelime · ` +
+      `${soruSayisi > 0 ? soruSayisi+' anlama sorusu' : 'Anlama sorusu yok'}` +
+      `<br><br>Hazır olduğunda başla butonuna bas!`;
+
+    const btn = document.getElementById('hazirBtn');
+    btn.textContent = '🚀 Okumaya Başla!';
+    btn.disabled = false;
+
+    /* ─── OKUMA BAŞLAT ─── */
+    function okumaBaslat() {
+      document.getElementById('hazirEkran').style.display = 'none';
+
+      if (mod === 'tam') {
+        baslatTamMetin();
+      } else {
+        baslatKelimeKelime();
+      }
+    }
+
+    /* ─── TAM METİN MODU ─── */
+    function baslatTamMetin() {
+      const ekran = document.getElementById('tamMetinEkran');
+      ekran.style.display = 'flex';
+
+      // Kullanıcı bilgisi
+      document.getElementById('tamMetinKullanici').innerHTML =
+        `👤 <strong>${kullanici.ad} ${kullanici.soyad}</strong>`;
+      document.getElementById('tamMetinBaslik').textContent = metin.baslik;
+
+      // Metin stilini uygula
+      const icerik = document.getElementById('tamMetinIcerik');
+      icerik.style.fontFamily   = metin.yazi_tipi || 'Nunito';
+      icerik.style.fontSize     = (metin.yazi_boyutu || 18) + 'px';
+      icerik.style.color        = metin.yazi_rengi || '#1A1040';
+      icerik.innerHTML = (metin.icerik || '').replace(/\n/g, '<br>');
+
+      // Sayaç başlat
+      baslangic = Date.now();
+      sayacTimer = setInterval(sayacGuncelle, 1000);
+    }
+
+    function sayacGuncelle() {
+      sayacMs = Date.now() - baslangic;
+      document.getElementById('sayacDisplay').textContent = msFormatla(sayacMs);
+    }
+
+    /* ─── KELIME KELIME MODU ─── */
+    function baslatKelimeKelime() {
+      kelimeler = (metin.icerik || '').trim().split(/\s+/).filter(w => w.length > 0);
+      kelimeIndex = 0;
+
+      const ekran = document.getElementById('kelimeEkran');
+      ekran.style.display = 'flex';
+      ekran.style.alignItems = 'center';
+      ekran.style.justifyContent = 'center';
+
+      document.getElementById('kkMeta').innerHTML =
+        `📖 <strong>${metin.baslik}</strong>`;
+
+      if (!metin.tikla_mod) {
+        document.getElementById('kkHint').style.display = 'none';
+        ekran.style.cursor = 'default';
+      }
+
+      kkBaslangic = Date.now();
+      // Sayaç
+      sayacTimer = setInterval(() => {
+        sayacMs = Date.now() - kkBaslangic;
+        document.getElementById('kkSayac').textContent = msFormatla(sayacMs);
+      }, 1000);
+
+      kelimeGoster();
+
+      if (!metin.tikla_mod) {
+        // Otomatik mod
+        const aralik = metin.kelime_ms || 500;
+        kelimeTimer = setInterval(() => {
+          kelimeIndex++;
+          if (kelimeIndex >= kelimeler.length) {
+            clearInterval(kelimeTimer);
+            clearInterval(sayacTimer);
+            setTimeout(kkBitti, 600);
+          } else {
+            kelimeGoster();
+          }
+        }, aralik);
+      }
+    }
+
+    function kelimeGoster() {
+      const el = document.getElementById('kkKelime');
+      el.style.animation = 'none';
+      el.offsetHeight; // reflow
+      el.style.animation = 'kelimeGelsin .15s ease both';
+
+      // Kelime stilini uygula
+      el.style.fontFamily = metin.yazi_tipi || 'Nunito';
+      el.style.color      = metin.yazi_rengi || 'white';
+
+      el.textContent = kelimeler[kelimeIndex] || '';
+
+      // İlerleme
+      const pct = Math.round(((kelimeIndex+1) / kelimeler.length) * 100);
+      document.getElementById('kkProgress').style.width = pct + '%';
+      document.getElementById('kkProgressTxt').textContent =
+        `${kelimeIndex+1} / ${kelimeler.length} kelime`;
+    }
+
+    function kelimeTikla() {
+      if (!metin.tikla_mod) return; // Sadece tıklama modunda
+      kelimeIndex++;
+      if (kelimeIndex >= kelimeler.length) {
+        clearInterval(sayacTimer);
+        setTimeout(kkBitti, 600);
+      } else {
+        kelimeGoster();
+      }
+    }
+
+    function kkBitti() {
+      // Son kelime gösterildi, süre hesapla ve devam et
+      sayacMs = Date.now() - kkBaslangic;
+      okumaBitirVeDevamEt(sayacMs);
+    }
+
+    /* ─── OKUMA BİTTİ ─── */
+    function okumaBitti() {
+      clearInterval(sayacTimer);
+      sayacMs = Date.now() - baslangic;
+      okumaBitirVeDevamEt(sayacMs);
+    }
+
+    function okumaBitirVeDevamEt(sureMilisaniye) {
+      const sureSaniye = sureMilisaniye / 1000;
+      const kelimeSayisi = metin.kelime_sayisi ||
+        (metin.icerik || '').trim().split(/\s+/).filter(w=>w.length>0).length;
+      const wpm = Math.round((kelimeSayisi / sureSaniye) * 60);
+
+      sessionStorage.setItem('okuma_sure_sn', sureSaniye.toFixed(1));
+      sessionStorage.setItem('okuma_wpm', wpm);
+
+      const soruSayisi = (metin.sorular || []).length;
+      if (soruSayisi > 0) {
+        window.location.href = '/hizli-okuma/sorular.html';
+      } else {
+        window.location.href = '/hizli-okuma/karne.html';
+      }
+    }
+
+    /* ─── YARDIMCI ─── */
+    function msFormatla(ms) {
+      const sn = Math.floor(ms / 1000);
+      const dk = Math.floor(sn / 60);
+      const sn2 = sn % 60;
+      return String(dk).padStart(2,'0') + ':' + String(sn2).padStart(2,'0');
+    }
+  </script>
+</body>
+</html>

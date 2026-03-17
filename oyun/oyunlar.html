@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 Oyunlar ve Etkinlikler — 1. Sınıf | Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+
+    /* ─── SAYFA BAŞLIĞI ─── */
+    .games-hero {
+      background: linear-gradient(145deg, #1A1040 0%, #3B1F8C 50%, #6C3DED 100%);
+      padding: 56px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .games-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .games-hero-em {
+      font-size: 72px;
+      display: block;
+      margin-bottom: 16px;
+      animation: floatB 3s ease-in-out infinite;
+      position: relative;
+      z-index: 1;
+    }
+    .games-hero h1 {
+      font-size: clamp(28px, 5vw, 46px);
+      font-weight: 800;
+      color: white;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .games-hero p {
+      color: rgba(255,255,255,.65);
+      font-size: 15px;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
+    }
+    /* Floating stars */
+    .star-bg {
+      position: absolute;
+      font-size: var(--fs, 22px);
+      animation: sparkle var(--dur, 3s) ease-in-out infinite;
+      animation-delay: var(--d, 0s);
+      opacity: 0;
+    }
+
+    /* ─── OYUN KATEGORİ FİLTRESİ ─── */
+    .filter-bar {
+      max-width: 1100px;
+      margin: 40px auto 0;
+      padding: 0 32px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .filter-btn {
+      padding: 9px 20px;
+      border-radius: 50px;
+      border: 2px solid var(--border);
+      background: white;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--slate);
+      cursor: pointer;
+      transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--purple);
+      background: var(--purple);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* ─── OYUN KARTLARI GRID ─── */
+    .games-grid {
+      max-width: 1100px;
+      margin: 30px auto 0;
+      padding: 0 32px 70px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 22px;
+    }
+
+    /* ─── OYUN KARTI ─── */
+    .game-card {
+      background: white;
+      border-radius: var(--r-lg);
+      border: 2px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+    }
+    .game-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: var(--shadow-md);
+      border-color: transparent;
+    }
+    .game-card[data-hidden="true"] { display: none; }
+
+    /* Üst renkli bant */
+    .gc-banner {
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .gc-banner-em {
+      font-size: 56px;
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,.2));
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .game-card:hover .gc-banner-em { transform: scale(1.25) rotate(10deg); }
+
+    /* Parıltı efekti */
+    .gc-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Gradient renkleri — data-color ile */
+    .game-card[data-color="purple"] .gc-banner  { background: linear-gradient(135deg,#4A1FD0,#9B72F5); }
+    .game-card[data-color="coral"]  .gc-banner  { background: linear-gradient(135deg,#C0392B,#FF6052); }
+    .game-card[data-color="orange"] .gc-banner  { background: linear-gradient(135deg,#E65100,#FF9F43); }
+    .game-card[data-color="green"]  .gc-banner  { background: linear-gradient(135deg,#00856A,#55EFC4); }
+    .game-card[data-color="yellow"] .gc-banner  { background: linear-gradient(135deg,#F5C800,#FFD93D); }
+    .game-card[data-color="blue"]   .gc-banner  { background: linear-gradient(135deg,#0B64CA,#74B9FF); }
+    .game-card[data-color="pink"]   .gc-banner  { background: linear-gradient(135deg,#AD1457,#F48FB1); }
+
+    /* Kategori rozeti */
+    .gc-category {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: rgba(0,0,0,.3);
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      z-index: 3;
+    }
+
+    /* Alt içerik */
+    .gc-body {
+      padding: 18px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    .gc-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.25;
+    }
+    .gc-subtitle {
+      font-size: 12px;
+      color: var(--slate);
+      font-weight: 600;
+      font-style: italic;
+    }
+    .gc-play {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #F0EBFF;
+    }
+    .gc-play-lbl {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--purple);
+    }
+    .gc-play-arrow {
+      width: 32px; height: 32px;
+      background: var(--purple);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-size: 14px;
+      transition: all .25s;
+    }
+    .game-card:hover .gc-play-arrow {
+      background: var(--coral);
+      transform: translateX(4px);
+    }
+
+    /* Boş durum */
+    .empty-filter {
+      display: none;
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--slate);
+    }
+    .empty-filter.show { display: block; }
+    .empty-filter span { font-size: 60px; display:block; margin-bottom:16px; }
+
+    @media (max-width:640px) {
+      .games-grid { padding: 0 16px 50px; }
+      .filter-bar { padding: 0 16px; }
+      .games-grid { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
+      .gc-banner  { height: 90px; }
+      .gc-banner-em { font-size: 44px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar + Footer: site.js tarafından enjekte edilir -->
+
+  <!-- ─── SAYFA BAŞLIĞI ─── -->
+  <div class="games-hero">
+    <span class="star-bg" style="--fs:20px;--dur:2.5s;--d:.3s; top:15%; left:8%;">⭐</span>
+    <span class="star-bg" style="--fs:16px;--dur:3s;--d:1s;   top:70%; left:5%;">✨</span>
+    <span class="star-bg" style="--fs:18px;--dur:2.8s;--d:.7s; top:20%; right:7%;">🌟</span>
+    <span class="star-bg" style="--fs:14px;--dur:3.3s;--d:1.4s;bottom:15%; right:5%;">⭐</span>
+    <span class="games-hero-em">🎮</span>
+    <h1>1. Sınıf Oyunlar &amp; Etkinlikler</h1>
+    <p>Oyna, eğlen, öğren — en iyi kombinasyon!</p>
+  </div>
+
+  <!-- ─── FİLTRE ─── -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filterGames('tümü', this)">Tümü</button>
+    <button class="filter-btn" onclick="filterGames('matematik', this)">🔢 Matematik</button>
+    <button class="filter-btn" onclick="filterGames('hayat', this)">🌱 Hayat Bilgisi</button>
+    <button class="filter-btn" onclick="filterGames('strateji', this)">♟️ Strateji</button>
+  </div>
+
+  <!-- ─── OYUN KARTLARI ─── -->
+  <div class="games-grid" id="gamesGrid">
+
+    <a href="kizma_birader.html" class="game-card" data-color="orange" data-cat="strateji">
+      <div class="gc-banner">
+        <span class="gc-category">♟️ Strateji</span>
+        <span class="gc-banner-em">😤</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">KIZMA BİRADER</div>
+        <div class="gc-subtitle">"Eğlenceli Toplama Oyunu"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oyun1.html" class="game-card" data-color="purple" data-cat="matematik">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">🎵</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">BEŞER RİTMİK SAYMA</div>
+        <div class="gc-subtitle">"Ritmik Saymalar"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oyun2.html" class="game-card" data-color="coral" data-cat="matematik">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">🔢</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">RİTMİK SAYMA OYUNU</div>
+        <div class="gc-subtitle">"Saymaya Hazır Ol!"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oyun3.html" class="game-card" data-color="green" data-cat="matematik">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">🧮</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">TOPLAMA İŞLEMLERİ</div>
+        <div class="gc-subtitle">"Rekor Kırma Zamanı!"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oyun4.html" class="game-card" data-color="blue" data-cat="strateji">
+      <div class="gc-banner">
+        <span class="gc-category">♟️ Strateji</span>
+        <span class="gc-banner-em">🏆</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">HALAT ÇEKME</div>
+        <div class="gc-subtitle">"Rakibinle Yarış!"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oyun5.html" class="game-card" data-color="yellow" data-cat="matematik">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">➕</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">TOPLAMA TESTİ</div>
+        <div class="gc-subtitle">"Toplama İşlemleri"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oyun6.html" class="game-card" data-color="green" data-cat="hayat">
+      <div class="gc-banner">
+        <span class="gc-category">🌱 Hayat Bilgisi</span>
+        <span class="gc-banner-em">🌍</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">ÜLKEMİZİN KAYNAKLARI</div>
+        <div class="gc-subtitle">"Hayat Bilgisi Testi"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Buraya yeni oyun kartları eklemek için şablonu kopyala -->
+
+    <div class="empty-filter" id="emptyFilter">
+      <span>🔍</span>
+      <p>Bu kategoride henüz oyun yok. Yakında ekleniyor!</p>
+    </div>
+
+  </div>
+
+  <script src="/js/site.js"></script>
+  <script>
+    function filterGames(cat, btn) {
+      // Tüm butonlardan active kaldır
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      let visible = 0;
+      document.querySelectorAll('.game-card').forEach(card => {
+        const match = cat === 'tümü' || card.dataset.cat === cat;
+        card.dataset.hidden = match ? 'false' : 'true';
+        if (match) visible++;
+      });
+
+      // Boş mesajı
+      document.getElementById('emptyFilter').classList.toggle('show', visible === 0);
+    }
+  </script>
+</body>
+</html>

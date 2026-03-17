@@ -1,0 +1,153 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>Okuma Serüveni</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Andika&family=Varela+Round&display=swap');
+            * { box-sizing: border-box; }
+            body, html { margin:0; padding:0; height:100%; width:100%; font-family: 'Varela Round', sans-serif; background:#fff; overflow:hidden; }
+            .scr { display:none; height:100vh; height:100dvh; width:100%; position:fixed; top:0; left:0; flex-direction:column; align-items:center; z-index:999; background:#fff; }
+            .scr.on { display:flex; }
+            
+            #reading-content { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; overflow: hidden; }
+            #wb { margin:auto; font-weight:bold; color:#333; text-align:center; padding:0 10px; line-height:1.2; }
+            #fb { text-align:left; line-height:1.6; width: 95%; max-width:850px; height: 75vh; margin: auto; overflow-y:auto; padding:20px; border:6px solid #f0f4f8; border-radius:20px; background:#fff; }
+            
+            .tm { font-size:24px; color:#94a3b8; font-weight:bold; padding:15px; text-align:center; }
+            .btn { background:#673ab7; color:white; border:none; padding:15px 45px; font-size:22px; border-radius:50px; cursor:pointer; font-weight:bold; transition:0.2s; box-shadow:0 6px 0 #4527a0; text-decoration:none; display:inline-block; text-align:center; box-sizing:border-box;}
+            .btn:disabled { background:#e2e8f0 !important; color:#94a3b8 !important; box-shadow:none !important; cursor:not-allowed; }
+            
+            .quiz-card { background:white; padding:20px; border-radius:25px; box-shadow:0 10px 40px rgba(0,0,0,0.1); width:90%; max-width:600px; margin:auto; }
+            .ob { display:block; width:100%; padding:12px; margin:8px 0; border:2px solid #e2e8f0; border-radius:15px; background:white; font-size:18px; cursor:pointer; text-align:left; font-family:inherit;}
+            .ob.sel { background:#ede7f6; border-color:#673ab7; color:#673ab7; font-weight:bold; }
+            
+            .kn { width: 95%; max-width: 500px; padding: 15px; margin: auto; background: #fff; border: 4px solid #673ab7; border-radius: 25px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow-y: auto; max-height: 98vh; }
+            .stat-group { margin-bottom: 10px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
+            .stat-group h4 { background: #f1f5f9; margin: 0; padding: 8px; color: #475569; font-size: 14px; text-align: left; padding-left: 15px; border-bottom: 1px solid #e2e8f0; font-weight: 700; text-transform: uppercase; }
+            .sl { display: flex; justify-content: space-between; align-items: center; font-size: 15px; padding: 8px 15px; border-bottom: 1px solid #f8fafc; color: #333; }
+            .sl:last-child { border-bottom: none; }
+            .sl-mini-grid { display: flex; justify-content: space-around; padding: 10px; background: #fdfdfd; font-weight: bold; font-size: 14px; }
+            
+            .name-in { padding:15px; border:4px solid #673ab7; border-radius:20px; font-size:20px; text-align:center; width:80%; max-width:300px; margin:15px 0; outline:none; }
+            
+            @media print { .btn { display: none; } .kn { border: 2px solid #000; box-shadow: none; } }
+        </style>
+        </head>
+        <body>
+            <div id="s1" class="scr on" style="justify-content:center;">
+                <h1 style="color:#673ab7; margin:0; font-size:36px; font-weight:800;">Okuma Serüveni 🚀</h1>
+                <p style="color:#666; font-size:14px; margin-top:5px;">Lütfen Adınızı ve Soyadınızı yazınız</p>
+                <input type="text" id="nIn" class="name-in" placeholder="Örn: Serkan Erdem">
+                <button id="sBt" class="btn" disabled>BAŞLA ▶</button>
+                <a href="/index.html" class="btn" style="background:#94a3b8; font-size:16px; padding:10px 25px; margin-top:15px; box-shadow:0 5px 0 #64748b;">🏠 Ana Sayfaya Dön</a>
+            </div>
+
+            <div id="s2" class="scr">
+                <div class="tm" id="tm">00:00</div>
+                <div id="reading-content"><div id="word-area" style="width:100%;"></div></div>
+                <div style="padding:10px; text-align:center;"><button id="nb" class="btn"></button></div>
+            </div>
+
+            <div id="s3" class="scr" style="justify-content:center;">
+                <div class="quiz-card"><h3 id="qt"></h3><div id="qo"></div><button id="xb" class="btn" style="width:100%; margin-top:15px;">İleri ➔</button></div>
+            </div>
+
+            <div id="s4" class="scr" style="justify-content:center;">
+                <div class="kn">
+                    <h2 id="knT" style="color:#673ab7; margin:5px 0 10px 0; font-size:22px;"></h2>
+                    <div id="rs" style="text-align:left;"></div>
+                    <div style="background:#fff7ed; padding:10px; border-radius:12px; border:2px dashed #f97316; margin:10px 0; text-align:center;">
+                        <p id="rf" style="font-size:15px; line-height:1.4; color:#7c2d12; margin:0; font-weight:600;"></p>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button class="btn" onclick="window.print()" style="font-size:16px; background:#0ea5e9; width:100%; padding:12px; margin:0; box-shadow:0 4px 0 #0284c7;">📄 Karnemi Kaydet</button>
+                        <button class="btn" onclick="location.reload()" style="font-size:16px; background:#f97316; width:100%; padding:12px; margin:0; box-shadow:0 4px 0 #c2410c;">↺ Tekrar Oku</button>
+                        <a href="/index.html" class="btn" style="font-size:16px; background:#64748b; width:100%; padding:12px; margin:0; box-shadow:0 4px 0 #475569;">🏠 Ana Sayfaya Dön</a>
+                    </div>
+                </div>
+            </div>
+
+            <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+            <form id="gForm" method="POST" target="hidden_iframe" style="display:none;"></form>
+
+            <script>
+                const c = JSON.parse(decodeURIComponent("%7B%22m%22%3A%22full%22%2C%22s%22%3A%22auto%22%2C%22z%22%3A%2240%22%2C%22f%22%3A%22'Segoe%20UI'%2C%20sans-serif%22%2C%22v%22%3A1500%2C%22tw%22%3A20%2C%22w%22%3A%5B%22TATLI%22%2C%22P%C4%B0%C5%9EMANLIK%22%2C%22%C5%9Eehir%22%2C%22Koleji%22%2C%221-B%22%2C%22s%C4%B1n%C4%B1f%C4%B1nda%22%2C%22okuyan%22%2C%22Mete%2C%22%2C%22renkli%22%2C%22%C5%9Fekerleri%22%2C%22%C3%A7ok%22%2C%22severdi.%22%2C%22Bir%22%2C%22g%C3%BCn%22%2C%22mutfakta%22%2C%22g%C3%B6rd%C3%BC%C4%9F%C3%BC%22%2C%22%C5%9Fekerlerden%22%2C%22fazla%22%2C%22fazla%22%2C%22yedi.%22%2C%22Ak%C5%9Fam%22%2C%22olunca%22%2C%22karn%C4%B1%22%2C%22a%C4%9Fr%C4%B1maya%22%2C%22ba%C5%9Flad%C4%B1.%22%2C%22Yata%C4%9F%C4%B1nda%22%2C%22karn%C4%B1n%C4%B1%22%2C%22tutuyordu.%22%2C%22Annesi%22%2C%22odaya%22%2C%22geldi.%22%2C%22%E2%80%94%22%2C%22Ne%22%2C%22oldu%22%2C%22o%C4%9Flum%3F%22%2C%22dedi.%22%2C%22%E2%80%94%22%2C%22Karn%C4%B1m%22%2C%22a%C4%9Fr%C4%B1yor%E2%80%A6%22%2C%22diye%22%2C%22cevap%22%2C%22verdi%22%2C%22Mete.%22%2C%22Annesi%22%2C%22ona%22%2C%22sar%C4%B1ld%C4%B1%22%2C%22ve%22%2C%22%C5%9F%C3%B6yle%22%2C%22dedi%3A%22%2C%22%E2%80%94%22%2C%22Her%22%2C%22%C5%9Feyin%22%2C%22fazlas%C4%B1%22%2C%22zarard%C4%B1r.%22%2C%22Mete%22%2C%22hatas%C4%B1n%C4%B1%22%2C%22anlad%C4%B1.%22%2C%22%E2%80%94%22%2C%22Bir%22%2C%22daha%22%2C%22%C3%A7ok%22%2C%22%C5%9Feker%22%2C%22yemeyece%C4%9Fim.%22%2C%22Az%22%2C%22yiyece%C4%9Fim.%22%2C%22dedi.%22%2C%22O%22%2C%22g%C3%BCnden%22%2C%22sonra%22%2C%22Mete%22%2C%22sa%C4%9Fl%C4%B1%C4%9F%C4%B1na%22%2C%22dikkat%22%2C%22etti.%22%2C%22%C3%87%C3%BCnk%C3%BC%22%2C%22sa%C4%9Fl%C4%B1kl%C4%B1%22%2C%22olmak%2C%22%2C%22en%22%2C%22g%C3%BCzel%22%2C%22mutluluktur.%22%5D%2C%22fullHtml%22%3A%22%3Cdiv%20style%3D%5C%22text-align%3A%20center%3B%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23ff2600%5C%22%3ETATLI%20P%C4%B0%C5%9EMANLIK%3C%2Ffont%3E%3C%2Fspan%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%20%26nbsp%3B%C5%9Eehir%20Koleji%201-B%20s%C4%B1n%C4%B1f%C4%B1nda%20okuyan%20Mete%2C%20renkli%20%C5%9Fekerleri%20%C3%A7ok%20severdi.%26nbsp%3B%3C%2Fspan%3E%3C%2Ffont%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%20color%3A%20rgb(0%2C%200%2C%200)%3B%5C%22%3EBir%20g%C3%BCn%20mutfakta%20g%C3%B6rd%C3%BC%C4%9F%C3%BC%20%C5%9Fekerlerden%20fazla%20fazla%20yedi.%3C%2Fspan%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3EAk%C5%9Fam%20olunca%20karn%C4%B1%20a%C4%9Fr%C4%B1maya%20ba%C5%9Flad%C4%B1.%20Yata%C4%9F%C4%B1nda%20karn%C4%B1n%C4%B1%20tutuyordu.%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%20%26nbsp%3BAnnesi%20odaya%20geldi.%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%3Cb%3E%20%E2%80%94%26nbsp%3BNe%20oldu%20o%C4%9Flum%3F%3C%2Fb%3E%20dedi.%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%20color%3A%20rgb(0%2C%200%2C%200)%3B%5C%22%3E%26nbsp%3B%20%3Cb%3E%E2%80%94%20Karn%C4%B1m%20a%C4%9Fr%C4%B1yor%E2%80%A6%3C%2Fb%3E%20diye%20cevap%20verdi%20Mete.%3C%2Fspan%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%20%26nbsp%3BAnnesi%20ona%20sar%C4%B1ld%C4%B1%20ve%20%C5%9F%C3%B6yle%20dedi%3A%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%26nbsp%3B%3Cb%3E%E2%80%94%20Her%20%C5%9Feyin%20fazlas%C4%B1%20zarard%C4%B1r.%3C%2Fb%3E%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%20%26nbsp%3BMete%20hatas%C4%B1n%C4%B1%20anlad%C4%B1.%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%20%3Cb%3E%E2%80%94%26nbsp%3BBir%20daha%20%C3%A7ok%20%C5%9Feker%20yemeyece%C4%9Fim.%20Az%20yiyece%C4%9Fim.%3C%2Fb%3E%20dedi.%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%3Cdiv%20style%3D%5C%22text-align%3A%20left%3B%5C%22%3E%3Cfont%20color%3D%5C%22%23000000%5C%22%3E%3Cspan%20style%3D%5C%22caret-color%3A%20rgb(255%2C%2038%2C%200)%3B%5C%22%3E%26nbsp%3B%20%26nbsp%3BO%20g%C3%BCnden%20sonra%20Mete%20sa%C4%9Fl%C4%B1%C4%9F%C4%B1na%20dikkat%20etti.%20%C3%87%C3%BCnk%C3%BC%20sa%C4%9Fl%C4%B1kl%C4%B1%20olmak%2C%20en%20g%C3%BCzel%20mutluluktur.%3C%2Fspan%3E%3C%2Ffont%3E%3C%2Fdiv%3E%22%2C%22q%22%3A%5B%7B%22t%22%3A%22Okudu%C4%9Fun%20metnin%20ad%C4%B1%20neydi%3F%22%2C%22o%22%3A%5B%22Tatl%C4%B1%20A%C5%9Fk%C4%B1na%22%2C%22Tatl%C4%B1%20Pi%C5%9Fmaniye%22%2C%22Tatl%C4%B1%20Pi%C5%9Fmanl%C4%B1k%22%5D%2C%22c%22%3A2%7D%2C%7B%22t%22%3A%22Mete%20mutfakta%20ne%20g%C3%B6r%C3%BCp%20fazla%20fazla%20yiyor%3F%22%2C%22o%22%3A%5B%22Renkli%20%C5%9Fekler%22%2C%22Lahana%22%2C%22Brokoli%22%5D%2C%22c%22%3A0%7D%2C%7B%22t%22%3A%22Karn%C4%B1%20a%C4%9Fr%C4%B1yan%20Mete'nin%20yan%C4%B1na%20kim%20geliyor%3F%22%2C%22o%22%3A%5B%22Annesi%22%2C%22Babas%C4%B1%22%2C%22Dedesi%22%5D%2C%22c%22%3A0%7D%2C%7B%22t%22%3A%22Mete'nin%20annesi%20karn%C4%B1%20a%C4%9Fr%C4%B1yan%20Mete'ye%20ne%20s%C3%B6ylemi%C5%9F%3F%22%2C%22o%22%3A%5B%22Karn%C4%B1n%20iyile%C5%9Fsin%20yar%C4%B1n%20yine%20yersin.%22%2C%22Her%20%C5%9Feyin%20fazlas%C4%B1%20zarar.%22%2C%22Ekmek%20yersen%20ge%C3%A7er.%22%5D%2C%22c%22%3A1%7D%2C%7B%22t%22%3A%22Mete%20annesine%20ne%20s%C3%B6z%20vermi%C5%9F%3F%22%2C%22o%22%3A%5B%22Bir%20daha%20fazla%20%C5%9Feker%20yemece%C4%9Fine.%22%2C%22Kitap%20okuyaca%C4%9F%C4%B1na.%22%2C%22Erken%20uyuyaca%C4%9F%C4%B1na.%22%5D%2C%22c%22%3A0%7D%5D%2C%22formUrl%22%3A%22https%3A%2F%2Fdocs.google.com%2Fforms%2Fd%2Fe%2F1FAIpQLSe1ep5t3AJnDKMQqwe2sWnfCOcniruAwTnvjwBi6YQHmy5GmA%2FformResponse%22%2C%22textTitle%22%3A%22TATLI%20P%C4%B0%C5%9EMANLIK%22%2C%22gIds%22%3A%7B%22name%22%3A%22entry.1988276794%22%2C%22time%22%3A%22entry.1939787797%22%2C%22wpm%22%3A%22entry.1579217315%22%2C%22cor%22%3A%22entry.805749654%22%2C%22wrn%22%3A%22entry.1821560368%22%2C%22pct%22%3A%22entry.1581261404%22%2C%22titleId%22%3A%22entry.428466239%22%7D%7D")); 
+                let i=0, qi=0, st, et, ti, ai, ans=Array(c.q.length).fill(null), sn="";
+                const nIn=document.getElementById('nIn'), sBt=document.getElementById('sBt');
+                
+                nIn.addEventListener('input', () => { const val = nIn.value.trim(); sBt.disabled = !(val.includes(' ') && val.length > 3); });
+                
+                sBt.onclick = () => { sn = nIn.value.trim(); show('s2'); st=Date.now(); ti=setInterval(upT, 1000); const area=document.getElementById('word-area'), nb=document.getElementById('nb'); if(c.m==='word'){ area.innerHTML='<div id="wb" style="font-size:'+c.z+'px; font-family:'+c.f+'"></div>'; if(c.s==='auto') { nb.style.display='none'; upW(); ai=setInterval(upW, c.v); } else { nb.innerText="SONRAKİ ➔"; nb.onclick=upW; upW(); } } else { area.innerHTML='<div id="fb" style="font-size:'+c.z+'px; font-family:'+c.f+'">'+c.fullHtml+'</div>'; nb.innerText="OKUMAM BİTTİ ✅"; nb.onclick=fin; } };
+                function show(id){ document.querySelectorAll('.scr').forEach(x=>x.classList.remove('on')); document.getElementById(id).classList.add('on'); }
+                function upT(){ let s=Math.floor((Date.now()-st)/1000); document.getElementById('tm').innerText=Math.floor(s/60).toString().padStart(2,'0')+":"+(s%60).toString().padStart(2,'0'); }
+                function upW(){ const b=document.getElementById('wb'); if(!b) return; if(i>=c.w.length){ fin(); return; } b.innerText=c.w[i]; i++; }
+                function fin(){ clearInterval(ti); if(ai) clearInterval(ai); et=Date.now(); if(c.q.length > 0) { show('s3'); loadQ(); } else { res(); } }
+                function loadQ(){ const q=c.q[qi]; document.getElementById('qt').innerText=q.t; let h=''; q.o.forEach((o,x)=>{ h+='<button class="ob '+(ans[qi]===x?'sel':'')+'" onclick="sv('+x+')">'+String.fromCharCode(65+x)+') '+o+'</button>'; }); document.getElementById('qo').innerHTML=h; document.getElementById('xb').innerText=qi===c.q.length-1?'BİTİR 🏁':'İLERİ ➔'; }
+                window.sv=(x)=>{ans[qi]=x; loadQ();};
+                document.getElementById('xb').onclick=()=>{ if(ans[qi]===null) return alert('Lütfen seçim yapalım!'); qi++; if(qi>=c.q.length) res(); else loadQ(); };
+                
+                const feedbacks = {
+                    champion: [ "Muhteşem! Hem yıldırım gibi hızlısın hem de her şeyi harika anlamışsın. Tam bir okuma şampiyonusun! 🏆🚀", "İnanılmazsın! Okuduğunu bu kadar hızlı ve doğru anlaman gurur verici. Geleceğin profesörü! 🌟📖", "Tebrikler! Hem hız hem de anlama konusunda sınıfın yıldızısın. Benim akıllı öğrencim! ✨🧠", "Harika bir performans! Okuma hızın ve dikkatin parmak ısırtıyor. Alkışlar senin için! 👏⚡" ],
+                    careful: [ "Anlama oranın harika! Çok dikkatlisin. Biraz daha hızlı okuma çalışmalarıyla seni kimse tutamaz! 🦉📚", "Tam bir dedektif gibi her soruyu doğru bildin! Okuma hızımız da pratikle artacak, pes etmek yok! 🔍💪", "Harikasın! Okuduğunu çok iyi anlıyorsun. Tekerleme çalışmalarıyla hızına hız katacağız! 🗣️✨", "Dikkatin ve anlama başarın beni çok mutlu etti. Okuma hızını da geliştireceğinden hiç şüphem yok! 🎯📈" ],
+                    speedster: [ "Vay canına, rüzgar gibi hızlı okuyorsun! Ama bir dahaki sefere metnin anlamını kaçırmamak için biraz yavaşlayalım, anlaştık mı? ⚡👀", "Gözlerim hızına yetişemedi! Çok hızlısın. Şimdi bu hızı dikkatle birleştirip soruları da doğru yapma zamanı! 🚀🤔", "Okuma hızın süper! Fakat okumanın asıl amacı anlamaktır. Bir dahaki sefere daha dikkatli okuyalım olur mu? 💡📖", "Uçak gibi hızlısın! Bir sonraki okumanda acele etmeden, kelimelerin tadını çıkararak oku, başarı %100 olacak! ✈️🎯" ],
+                    developing: [ "Güzel çaba! Pes etmeden okuduğun için seninle gurur duyuyorum. Birlikte çalışarak çok daha iyi olacağız! 🌱💪", "Okuma serüvenimiz devam ediyor! Her gün biraz daha kitap okuyarak hem hızlanacağız hem de daha iyi anlayacağız. Sihir pratiktedir! ✨📚", "Bugün güzel bir çalışma yaptık. Unutma, en büyük şampiyonlar en çok pratik yapanlardır. Okumaya devam! 🌟📖", "Çabanı çok takdir ettim! Hata yapmak öğrenmenin bir parçasıdır. Bir dahaki sefere çok daha iyi olacaksın, sana inanıyorum! ❤️🚀" ],
+                    no_question: [ "Harikasın! Hedeflediğimiz hıza ulaştın. Çok seri okuyorsun, seninle gurur duyuyorum! 🚀👏", "Okuma performansın çok iyi! Ritimli ve akıcı okuman beni çok mutlu etti. 🌟📖", "Tebrikler! Belirlediğimiz sürede harika bir okuma gerçekleştirdin. 🏆⚡" ]
+                };
+
+                function getRandomFeedback(category) { const options = feedbacks[category]; return options[Math.floor(Math.random() * options.length)]; }
+
+                function res(){
+                    show('s4'); 
+                    let cor=0, emp=0; c.q.forEach((q,x)=>{ if(ans[x]===null) emp++; else if(ans[x]===q.c) cor++; });
+                    let wrg = c.q.length - cor - emp;
+                    let sec = Math.floor((et-st)/1000);
+                    let wpm = Math.round((c.w.length/(sec||1))*60);
+                    let sc = (c.q.length > 0) ? Math.round((cor/c.q.length)*100) : 100;
+                    
+                    document.getElementById('knT').innerText = "Sevgili " + sn + ", İşte Karnen";
+                    
+                    let html = '<div class="stat-group"><h4>📖 Okuma Performansı</h4>';
+                    html += '<div class="sl"><span>Metin Uzunluğu:</span> <b>' + c.w.length + ' Kelime</b></div>';
+                    html += '<div class="sl"><span>Okuma Süresi:</span> <b>' + sec + ' sn</b></div>';
+                    html += '<div class="sl"><span>Senin Hızın:</span> <b style="color:#673ab7">' + wpm + ' Kelime/Dk</b></div>';
+                    html += '<div class="sl"><span>Hedef Hız:</span> <b>' + c.tw + ' Kelime/Dk</b></div></div>';
+                    
+                    if(c.q.length > 0) {
+                        html += '<div class="stat-group"><h4>🧠 Anlama Performansı</h4>';
+                        html += '<div class="sl"><span>Anlama Puanı:</span> <b style="color:#0ea5e9">' + sc + ' / 100</b></div>';
+                        html += '<div class="sl"><span>Toplam Soru:</span> <b>' + c.q.length + ' Adet</b></div>';
+                        html += '<div class="sl-mini-grid"><span style="color:#22c55e">✅ ' + cor + ' D</span><span style="color:#ef4444">❌ ' + wrg + ' Y</span><span style="color:#f97316">⭕ ' + emp + ' B</span></div></div>';
+                    }
+                    document.getElementById('rs').innerHTML = html;
+
+                    let cat = "";
+                    if(c.q.length === 0) cat = "no_question";
+                    else if(wpm >= c.tw && sc >= 80) cat = "champion";
+                    else if(wpm < c.tw && sc >= 80) cat = "careful";
+                    else if(wpm >= c.tw && sc < 80) cat = "speedster";
+                    else cat = "developing";
+
+                    document.getElementById('rf').innerHTML = "<b>" + sn + ",</b> " + getRandomFeedback(cat);
+
+                    if(c.formUrl && c.gIds.name) {
+                        const form = document.getElementById('gForm');
+                        form.action = c.formUrl;
+                        form.innerHTML = ''; 
+                        
+                        // YENİ: Veri paketine Metin Başlığı'nı ekliyoruz
+                        const data = {}; 
+                        data[c.gIds.name] = sn; 
+                        data[c.gIds.time] = sec; 
+                        data[c.gIds.wpm] = wpm; 
+                        data[c.gIds.cor] = cor; 
+                        data[c.gIds.wrn] = wrg; 
+                        data[c.gIds.pct] = sc;
+                        // Metin Başlığını da gönder
+                        if(c.gIds.titleId) {
+                            data[c.gIds.titleId] = c.textTitle;
+                        }
+
+                        for(let key in data) { const input = document.createElement('input'); input.type = 'hidden'; input.name = key; input.value = data[key]; form.appendChild(input); }
+                        form.submit();
+                    }
+                }
+            </script>
+        </body>
+        </html>

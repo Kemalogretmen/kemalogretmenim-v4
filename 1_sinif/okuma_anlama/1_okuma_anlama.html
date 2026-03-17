@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📖 1. Sınıf Okuma-Anlama — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+
+    /* ─── SAYFA BAŞLIĞI ─── */
+    .reading-hero {
+      background: linear-gradient(145deg, #1A1040 0%, #2D1478 50%, #4A1FD0 100%);
+      padding: 52px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .reading-hero::before {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      background: rgba(255,255,255,.04);
+      border-radius: 50%;
+      top: -80px; left: -60px;
+    }
+    .reading-hero::after {
+      content: '';
+      position: absolute;
+      width: 200px; height: 200px;
+      background: rgba(255,221,61,.07);
+      border-radius: 50%;
+      bottom: -40px; right: 10%;
+    }
+    .rh-em { font-size: 64px; display: block; margin-bottom: 14px; animation: floatB 3.5s ease-in-out infinite; position: relative; z-index: 1; }
+    .rh-h1 { font-size: clamp(26px,4.5vw,44px); font-weight:800; color:white; margin-bottom:8px; position:relative; z-index:1; }
+    .rh-sub { color:rgba(255,255,255,.6); font-size:15px; font-weight:600; position:relative; z-index:1; }
+
+    /* ─── ARAMA & FİLTRE ─── */
+    .tools-bar {
+      max-width: 1100px;
+      margin: 36px auto 0;
+      padding: 0 32px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 12px 16px 12px 44px;
+      border: 2px solid var(--border);
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--navy);
+      background: white;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .search-wrap input:focus { border-color: var(--purple); }
+    .search-icon {
+      position: absolute;
+      left: 16px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      pointer-events: none;
+    }
+    .count-badge {
+      background: var(--purple);
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 8px 18px;
+      border-radius: 50px;
+      white-space: nowrap;
+    }
+
+    /* ─── METİN KARTLARI ─── */
+    .texts-grid {
+      max-width: 1100px;
+      margin: 26px auto 0;
+      padding: 0 32px 70px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .text-card {
+      background: white;
+      border-radius: var(--r-lg);
+      border: 2px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all .35s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+    }
+    .text-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--purple);
+    }
+    .text-card[data-hidden="true"] { display: none; }
+
+    /* Üst görsel alanı */
+    .tc-visual {
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #F0EBFF, #E8F4FF);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .tc-visual img {
+      height: 80px;
+      width: 80px;
+      object-fit: contain;
+      position: relative;
+      z-index: 2;
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .tc-visual .tc-em {
+      font-size: 52px;
+      position: relative;
+      z-index: 2;
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.12));
+    }
+    .text-card:hover .tc-em,
+    .text-card:hover .tc-visual img {
+      transform: scale(1.2) rotate(-5deg);
+    }
+
+    /* Renk varyantı */
+    .text-card:nth-child(4n+1) .tc-visual { background: linear-gradient(135deg,#F0EBFF,#E0D4FF); }
+    .text-card:nth-child(4n+2) .tc-visual { background: linear-gradient(135deg,#FFF0EC,#FFE4E0); }
+    .text-card:nth-child(4n+3) .tc-visual { background: linear-gradient(135deg,#ECFDF5,#D1FAE5); }
+    .text-card:nth-child(4n+4) .tc-visual { background: linear-gradient(135deg,#FFF8E1,#FFECB3); }
+
+    /* Sıra numarası */
+    .tc-num {
+      position: absolute;
+      top: 10px; left: 12px;
+      background: rgba(108,61,237,.15);
+      color: var(--purple);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 8px;
+      z-index: 3;
+    }
+
+    /* Kart alt içerik */
+    .tc-body {
+      padding: 16px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .tc-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.3;
+    }
+    .tc-sub {
+      font-size: 12px;
+      color: var(--slate);
+      font-style: italic;
+      font-weight: 600;
+    }
+    .tc-read {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid #F0EBFF;
+    }
+    .tc-read-lbl {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--purple);
+    }
+    .tc-read-btn {
+      width: 28px; height: 28px;
+      background: var(--purple);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px;
+      transition: all .2s;
+    }
+    .text-card:hover .tc-read-btn { background: var(--coral); transform: scale(1.15); }
+
+    /* ─── SAYFALAMA ─── */
+    .pagination-wrap {
+      max-width: 1100px;
+      margin: 0 auto 60px;
+      padding: 0 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .pg-btn {
+      min-width: 40px; height: 40px;
+      padding: 0 14px;
+      border: 2px solid var(--border);
+      background: white;
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--slate);
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .pg-btn:hover, .pg-btn.active {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+      transform: translateY(-2px);
+    }
+    .pg-info {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 0 6px;
+    }
+
+    /* Boş arama */
+    .no-results {
+      display: none;
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--slate);
+    }
+    .no-results.show { display: block; }
+    .no-results span { font-size:60px; display:block; margin-bottom:16px; }
+
+    @media (max-width:640px) {
+      .tools-bar, .texts-grid, .pagination-wrap { padding: 0 16px; }
+      .texts-grid { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── SAYFA BAŞLIĞI ─── -->
+  <div class="reading-hero">
+    <span class="rh-em">📖</span>
+    <h1 class="rh-h1">1. Sınıf Okuma-Anlama</h1>
+    <p class="rh-sub">Harika metinler seni bekliyor — oku, anla, keşfet!</p>
+  </div>
+
+  <!-- ─── ARAMA & SAYAÇ ─── -->
+  <div class="tools-bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Metin ara… (Örn: Atatürk, Deniz…)" oninput="handleSearch()">
+    </div>
+    <span class="count-badge" id="countBadge">📚 13 Metin</span>
+  </div>
+
+  <!-- ─── METİN KARTLARI ─── -->
+  <div class="texts-grid" id="textsGrid">
+
+    <a href="metin16.html" class="text-card" data-title="BEYAZ ÖNLÜKLÜ MİSAFİR">
+      <div class="tc-visual">
+        <span class="tc-num">#16</span>
+        <span class="tc-em">🏥</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">BEYAZ ÖNLÜKLÜ MİSAFİR</div>
+        <div class="tc-sub">"14 Mart Tıp Bayramı"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin15.html" class="text-card" data-title="İSTİKLAL MARŞI">
+      <div class="tc-visual">
+        <span class="tc-num">#15</span>
+        <img src="/gorseller/istiklal.png" alt="İstiklal Marşı" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="tc-em" style="display:none;">🇹🇷</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">İSTİKLAL MARŞI</div>
+        <div class="tc-sub">"İstiklal Marşı'nın Kabulü"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin14.html" class="text-card" data-title="MAVİ GÖZLÜ KAHRAMAN">
+      <div class="tc-visual">
+        <span class="tc-num">#14</span>
+        <img src="/gorseller/ata.png" alt="Atatürk" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="tc-em" style="display:none;">⭐</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">MAVİ GÖZLÜ KAHRAMAN</div>
+        <div class="tc-sub">"Mustafa Kemal Atatürk"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin13.html" class="text-card" data-title="TATLI PİŞMANLIK">
+      <div class="tc-visual">
+        <span class="tc-num">#13</span>
+        <span class="tc-em">🍬</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">TATLI PİŞMANLIK</div>
+        <div class="tc-sub">"Mete'nin Hikayesi"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin12.html" class="text-card" data-title="YAĞMURLU GÜN">
+      <div class="tc-visual">
+        <span class="tc-num">#12</span>
+        <span class="tc-em">🌧️</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">YAĞMURLU GÜN</div>
+        <div class="tc-sub">"Öykü'nün Bir Günü"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin11.html" class="text-card" data-title="AYLA'NIN PEMBE UÇURTMASI">
+      <div class="tc-visual">
+        <span class="tc-num">#11</span>
+        <img src="/gorseller/kite.png" alt="Uçurtma" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="tc-em" style="display:none;">🪁</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">AYLA'NIN PEMBE UÇURTMASI</div>
+        <div class="tc-sub">"Pembe Uçurtma Uçuyor"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin10.html" class="text-card" data-title="SEVİMLİ YUNUS YUMİ">
+      <div class="tc-visual">
+        <span class="tc-num">#10</span>
+        <span class="tc-em">🐬</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">SEVİMLİ YUNUS YUMİ</div>
+        <div class="tc-sub">"Yunus Kahraman Oluyor"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin9.html" class="text-card" data-title="SİNEK KUŞU">
+      <div class="tc-visual">
+        <span class="tc-num">#9</span>
+        <span class="tc-em">🦜</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">SİNEK KUŞU</div>
+        <div class="tc-sub">"Bir Kuş Tanıyorum"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin5.html" class="text-card" data-title="AY YILDIZLI BAYRAK">
+      <div class="tc-visual">
+        <span class="tc-num">#5</span>
+        <img src="/gorseller/bayrak.gif" alt="Bayrak" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="tc-em" style="display:none;">🇹🇷</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">AY YILDIZLI BAYRAK</div>
+        <div class="tc-sub">"Bayrak"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin6.html" class="text-card" data-title="MUSTAFA KEMAL ATATÜRK">
+      <div class="tc-visual">
+        <span class="tc-num">#6</span>
+        <img src="/gorseller/ataturk.png" alt="Atatürk" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="tc-em" style="display:none;">⭐</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">MUSTAFA KEMAL</div>
+        <div class="tc-sub">"Atatürk"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin7.html" class="text-card" data-title="NASIL BAŞARILI OLURUZ">
+      <div class="tc-visual">
+        <span class="tc-num">#7</span>
+        <span class="tc-em">🧠</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">NASIL BAŞARILI OLURUZ?</div>
+        <div class="tc-sub">"Başarı Hikayesi"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin8.html" class="text-card" data-title="ZÜRAFALAR">
+      <div class="tc-visual">
+        <span class="tc-num">#8</span>
+        <img src="/gorseller/zurafa.png" alt="Zürafa" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="tc-em" style="display:none;">🦒</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">ZÜRAFALARI TANIYALIM</div>
+        <div class="tc-sub">"Hayvanları Tanıyalım"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="metin1.html" class="text-card" data-title="DENİZDEKİ SÜRPRİZ">
+      <div class="tc-visual">
+        <span class="tc-num">#1</span>
+        <span class="tc-em">⛵</span>
+      </div>
+      <div class="tc-body">
+        <div class="tc-title">DENİZDEKİ SÜRPRİZ</div>
+        <div class="tc-sub">"Macera Başlıyor"</div>
+        <div class="tc-read">
+          <span class="tc-read-lbl">📖 Oku</span>
+          <span class="tc-read-btn">→</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="no-results" id="noResults">
+      <span>🔍</span>
+      <p>Aradığın metni bulamadım. Farklı bir kelime dene!</p>
+    </div>
+
+  </div>
+
+  <!-- ─── SAYFALAMA ─── -->
+  <div class="pagination-wrap" id="paginationWrap"></div>
+
+  <script src="/js/site.js"></script>
+  <script>
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let allCards = [];
+    let filteredCards = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+      allCards = Array.from(document.querySelectorAll('.text-card'));
+      filteredCards = [...allCards];
+      renderPage(1);
+    });
+
+    function handleSearch() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      filteredCards = allCards.filter(card => {
+        const title = (card.dataset.title || '').toLowerCase();
+        return !q || title.includes(q);
+      });
+      currentPage = 1;
+      renderPage(1);
+    }
+
+    function renderPage(page) {
+      currentPage = page;
+      const start = (page - 1) * PAGE_SIZE;
+      const end   = start + PAGE_SIZE;
+
+      // Hepsini gizle
+      allCards.forEach(c => c.dataset.hidden = 'true');
+
+      // Sadece bu sayfadakileri göster
+      filteredCards.slice(start, end).forEach(c => c.dataset.hidden = 'false');
+
+      // Sayaç
+      document.getElementById('countBadge').textContent = `📚 ${filteredCards.length} Metin`;
+
+      // Boş mesaj
+      document.getElementById('noResults').classList.toggle('show', filteredCards.length === 0);
+
+      // Sayfalama
+      renderPagination();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderPagination() {
+      const wrap = document.getElementById('paginationWrap');
+      const total = Math.ceil(filteredCards.length / PAGE_SIZE);
+      if (total <= 1) { wrap.innerHTML = ''; return; }
+
+      let html = '';
+      if (currentPage > 1) html += `<button class="pg-btn" onclick="renderPage(${currentPage-1})">‹ Önceki</button>`;
+
+      for (let i = 1; i <= total; i++) {
+        html += `<button class="pg-btn ${i===currentPage?'active':''}" onclick="renderPage(${i})">${i}</button>`;
+      }
+      html += `<span class="pg-info">${currentPage}/${total}</span>`;
+      if (currentPage < total) html += `<button class="pg-btn" onclick="renderPage(${currentPage+1})">Sonraki ›</button>`;
+
+      wrap.innerHTML = html;
+    }
+  </script>
+</body>
+</html>

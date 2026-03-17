@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1. Sınıf Ritmik Sayma Oyunu - Kemal Öğretmen</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* === TEMEL AYARLAR === */
+        :root { --ana-renk: #673ab7; --ikinci-renk: #0ea5e9; --vurgu: #f97316; --arkaplan: #f8fafc; }
+        body { font-family: 'Nunito', sans-serif; background-color: var(--arkaplan); margin: 0; padding: 0; color: #334155; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* === NAVBAR (ÜST MENÜ) AYARLARI === */
+        .navbar { background-color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo { font-family: 'Fredoka', sans-serif; font-size: 24px; font-weight: 600; color: var(--ana-renk); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+        
+        .nav-links { display: flex; align-items: center; gap: 5px; } 
+        .nav-link { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; padding: 10px 12px; border-radius: 10px; transition: 0.3s; }
+        .nav-link:hover { background-color: #f1f5f9; color: var(--ana-renk); }
+
+        /* AÇILIR MENÜ */
+        .dropdown { position: relative; display: inline-block; }
+        .dropbtn { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; padding: 10px 12px; border-radius: 10px; transition: 0.3s; background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; display: flex; align-items: center; gap: 5px;}
+        .dropdown:hover .dropbtn { background-color: #f1f5f9; color: var(--ana-renk); }
+        .dropdown-content { display: none; position: absolute; background-color: white; min-width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 15px; top: 100%; left: 0; overflow: hidden; z-index: 1001; }
+        .dropdown-content a { color: #64748b; padding: 12px 20px; text-decoration: none; display: block; font-weight: 700; border-bottom: 1px solid #f1f5f9; transition: 0.2s; font-size: 14px;}
+        .dropdown-content a:hover { background-color: #f8fafc; color: var(--ana-renk); padding-left: 25px; }
+        .dropdown:hover .dropdown-content { display: block; }
+
+        /* HAMBURGER MENÜ (MOBİL İÇİN) */
+        .hamburger { display: none; font-size: 28px; cursor: pointer; color: var(--ana-renk); }
+
+        /* TELEFON EKRANI AYARLARI */
+        @media (max-width: 1024px) {
+            .hamburger { display: block; }
+            .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%; background-color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); padding: 20px 0; gap: 10px; max-height: 80vh; overflow-y: auto; }
+            .nav-links.aktif { display: flex; }
+            .nav-link, .dropbtn { width: 90%; text-align: left; padding: 15px; font-size: 18px; border-bottom: 1px solid #f1f5f9; }
+            .dropdown { width: 100%; text-align: center; }
+            .dropdown-content { position: relative; width: 90%; margin: 0 auto; box-shadow: none; border-left: 4px solid var(--ikinci-renk); background: #f8fafc; }
+        }
+
+        /* === İÇERİK ALANI === */
+        .icerik-kapsayici { flex: 1; max-width: 1100px; margin: 40px auto; width: 90%; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .sayfa-basligi { font-family: 'Fredoka', sans-serif; font-size: 32px; color: var(--ana-renk); text-align: center; margin-top: 0; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px dashed #e2e8f0; }
+        
+        /* Oyun Alanı Ortalama */
+        .oyun-alani { display: flex; justify-content: center; width: 100%; }
+
+        /* === ALT BİLGİ (FOOTER) === */
+        footer { background-color: #1e293b; color: white; text-align: center; padding: 40px 20px; border-top-left-radius: 50px; border-top-right-radius: 50px; margin-top: auto; }
+        .sosyal { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
+        .sosyal a { color: white; font-size: 24px; background: rgba(255,255,255,0.1); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.3s; text-decoration: none; }
+        .sosyal a:hover { background: var(--vurgu); transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/index.html" class="logo">
+            <img src="/gorseller/logo.png" style="width: 50px; height: auto; margin-right: 10px;" alt="Logo"> 
+            Kemal Öğretmenim
+        </a>
+
+        <div class="hamburger" onclick="menuAcKapat()">
+            <i class="fas fa-bars"></i>
+        </div>
+        
+        <div class="nav-links" id="menuLinks">
+            <div class="dropdown">
+                <button class="dropbtn">1. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
+                <div class="dropdown-content">
+                    <a href="/1_sinif/okuma_anlama/1_okuma_anlama.html">📖 Okuma-Anlama</a>
+                    <a href="/1_sinif/turkce/turkce.html">📝 Türkçe</a>
+                    <a href="/1_sinif/matematik/matematik.html">🔢 Matematik</a>
+                    <a href="/1_sinif/hayat_bilgisi/hayat_bilgisi.html">🌱 Hayat Bilgisi</a>
+                    <a href="/1_sinif/oyun/oyunlar.html">🎮 Oyunlar</a>
+                </div>
+            </div>
+            
+            <div class="dropdown"><button class="dropbtn">2. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="#">📖 Hazırlanıyor...</a></div></div>
+            <div class="dropdown"><button class="dropbtn">3. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="#">📖 Hazırlanıyor...</a></div></div>
+            <div class="dropdown"><button class="dropbtn">4. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="#">📖 Hazırlanıyor...</a></div></div>
+            <div class="dropdown"><button class="dropbtn">Ortaokul <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="#">📖 Hazırlanıyor...</a></div></div>
+
+            <a href="/hakkimda.html" class="nav-link">Hakkımda</a>
+            <a href="/iletisim.html" class="nav-link">İletişim</a>
+        </div>
+    </nav>
+
+    <main class="icerik-kapsayici">
+        
+        <h1 class="sayfa-basligi">🌟 1. Sınıf Hayat Bilgisi Oyunu 🌟</h1>
+
+        <div class="oyun-alani">
+        <iframe style="max-width:100%" src="https://wordwall.net/tr/embed/c21d43b9bd3647298213dcb572f47ae4?themeId=49&templateId=30&fontStackId=2" width="1000" height="760" frameborder="0" allowfullscreen></iframe>    </div>
+    </main>
+
+    <footer>
+         <div class="sosyal">
+            <a href="https://instagram.com/kemalkogretmenim" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://youtube.com/@kemalkogretmenim" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="https://twitter.com/kemalkogretmen" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+        </div>
+        <p style="color: #94a3b8;">© 2026 Kemal Öğretmen - Tüm Hakları Saklıdır.</p>
+    </footer>
+
+    <script>
+        function menuAcKapat() {
+            var x = document.getElementById("menuLinks");
+            if (x.classList.contains("aktif")) {
+                x.classList.remove("aktif");
+            } else {
+                x.classList.add("aktif");
+            }
+        }
+    </script>
+</body>
+</html>

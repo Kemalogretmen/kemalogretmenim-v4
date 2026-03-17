@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏆 Okuma Karnem — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { background:linear-gradient(145deg,#0F0A2E,#1A1040); }
+
+    .karne-wrap { max-width:800px; margin:0 auto; padding:40px 24px 80px; }
+
+    /* ── Üst başlık ── */
+    .karne-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .karne-logo {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin-bottom: 16px;
+    }
+    .karne-logo-em { font-size: 44px; }
+    .karne-logo-txt { font-family:var(--font-display); font-size:22px; font-weight:800; color:rgba(255,255,255,.7); }
+    .karne-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px,5vw,44px);
+      font-weight: 800;
+      color: white;
+      margin-bottom: 6px;
+    }
+    .karne-sub { font-size:15px; color:rgba(255,255,255,.5); font-weight:600; }
+
+    /* ── Karne kartı (beyaz, print-friendly) ── */
+    .karne-kart {
+      background: white;
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.4);
+    }
+
+    /* Karne üst bant */
+    .karne-top-bant {
+      background: linear-gradient(135deg,#1A1040,#4A1FD0,#6C3DED);
+      padding: 32px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .karne-ogrenci h2 { font-family:var(--font-display); font-size:26px; font-weight:800; margin-bottom:4px; }
+    .karne-ogrenci p  { font-size:14px; color:rgba(255,255,255,.65); }
+    .karne-tarih { text-align:right; font-size:13px; color:rgba(255,255,255,.5); }
+    .karne-tarih strong { color:white; display:block; font-size:16px; font-family:var(--font-display); }
+
+    /* Karne gövde */
+    .karne-govde { padding: 32px; }
+
+    /* Metin bilgisi */
+    .karne-metin-bilgi {
+      background: #F0EBFF;
+      border-radius: var(--r-md);
+      padding: 14px 20px;
+      margin-bottom: 28px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .kmb-em  { font-size:24px; }
+    .kmb-lbl { font-size:12px; color:var(--slate); font-weight:700; }
+    .kmb-val { font-family:var(--font-display); font-size:17px; font-weight:800; color:var(--navy); }
+
+    /* ── Bölüm başlığı ── */
+    .bolum-baslik {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bolum-bolme {
+      border-top: 2px dashed var(--border);
+      margin: 28px 0;
+    }
+
+    /* ── Hız Ölçer ── */
+    .hiz-seksiyon {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 8px;
+    }
+    .hiz-kutu {
+      background: #FAFAFF;
+      border: 2px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px;
+      text-align: center;
+    }
+    .hiz-kutu-lbl { font-size:12px; color:var(--slate); font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .hiz-sayi  { font-family:var(--font-display); font-size:42px; font-weight:800; line-height:1; }
+    .hiz-birim { font-size:12px; color:var(--slate); font-weight:700; }
+    .hiz-star  { font-size:24px; margin-top:6px; display:block; }
+
+    /* Hız bar */
+    .hiz-bar-wrap { margin-top:20px; }
+    .hiz-bar-labels {
+      display: flex; justify-content: space-between;
+      font-size:11px; font-weight:700; color:var(--slate); margin-bottom:6px;
+    }
+    .hiz-bar-bg {
+      height: 14px;
+      background: #F0EBFF;
+      border-radius: 14px;
+      position: relative;
+      overflow: visible;
+    }
+    .hiz-bar-fill {
+      height: 100%;
+      border-radius: 14px;
+      transition: width 1.5s ease;
+    }
+    .hiz-bar-hedef {
+      position: absolute;
+      top: -4px; bottom: -4px;
+      width: 3px;
+      background: var(--navy);
+      border-radius: 3px;
+    }
+    .hiz-bar-hedef::after {
+      content: 'Hedef';
+      position: absolute;
+      top: -22px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--navy);
+      white-space: nowrap;
+    }
+
+    /* ── Anlama Skoru ── */
+    .anlama-row { display:flex; align-items:center; gap:20px; margin-bottom:16px; }
+    .anlama-daire {
+      width: 100px; height: 100px;
+      border-radius: 50%;
+      display: flex; align-items:center; justify-content:center;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .anlama-yuzde { font-family:var(--font-display); font-size:26px; font-weight:800; line-height:1; }
+    .anlama-lbl   { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
+
+    .anlama-detay { flex:1; }
+    .anlama-soru-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(150px,1fr));
+      gap: 10px;
+      margin-top:10px;
+    }
+    .anlama-kutu {
+      padding: 10px 14px;
+      border-radius: var(--r-sm);
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .anlama-kutu.dogru  { background:#DCFCE7; color:#15803D; }
+    .anlama-kutu.yanlis { background:#FEE2E2; color:#DC2626; }
+
+    /* Soru detay */
+    .soru-detay-list { margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+    .soru-detay-item {
+      background:#FAFAFF; border-radius:var(--r-sm); padding:14px 16px;
+      border-left:4px solid var(--border);
+    }
+    .soru-detay-item.dogru  { border-color:var(--teal); }
+    .soru-detay-item.yanlis { border-color:var(--coral); }
+    .sdi-soru  { font-size:14px; font-weight:800; color:var(--navy); margin-bottom:6px; }
+    .sdi-sec   { font-size:12px; color:var(--slate); }
+    .sdi-sec.dogru  { color:var(--teal); font-weight:800; }
+    .sdi-sec.yanlis { color:var(--coral); }
+
+    /* ── AI Dönüt ── */
+    .donut-kart {
+      background: linear-gradient(135deg,#F0EBFF,#FFF5EC);
+      border: 2px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      margin-top:8px;
+    }
+    .donut-baslik {
+      display:flex; align-items:center; gap:10px;
+      font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--purple);
+      margin-bottom:14px;
+    }
+    .donut-metin {
+      font-size:15px; color:var(--slate); line-height:1.85;
+    }
+    .donut-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--purple); color:white;
+      font-size:11px; font-weight:800;
+      padding:4px 12px; border-radius:20px; margin-top:14px;
+    }
+
+    /* ── Alt butonlar ── */
+    .karne-govde-alt { padding:0 32px 32px; }
+    .karne-altbtnlar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .kbtn {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:13px 24px; border-radius:50px;
+      font-family:var(--font-body); font-weight:800; font-size:14px;
+      cursor:pointer; border:none; text-decoration:none;
+      transition:all .2s;
+    }
+    .kbtn-pdf   { background:linear-gradient(135deg,#E65100,#FF9F43); color:white; box-shadow:0 4px 14px rgba(230,81,0,.35); }
+    .kbtn-tekrar{ background:linear-gradient(135deg,var(--purple),var(--purple-light)); color:white; box-shadow:0 4px 14px rgba(108,61,237,.35); }
+    .kbtn-liste { background:white; border:2px solid var(--border)!important; color:var(--slate); }
+    .kbtn-anasayfa { background:var(--navy); color:white; }
+    .kbtn:hover { transform:translateY(-2px); }
+
+    /* ── PRINT / PDF STİLLERİ ── */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm 14mm;
+      }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: white !important; font-size: 12px !important; }
+
+      /* Sadece karne kartı kalsın */
+      .karne-header, .karne-govde-alt,
+      .navbar, .announce-bar, .site-footer { display: none !important; }
+
+      .karne-wrap { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
+      .karne-kart { box-shadow: none !important; border-radius: 0 !important; border: none !important; }
+      .karne-top-bant { padding: 18px 20px !important; }
+      .karne-ogrenci h2 { font-size: 18px !important; }
+      .karne-govde { padding: 16px 20px !important; }
+
+      /* Hız kutuları A4'e sığsın */
+      .hiz-seksiyon { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+      .hiz-sayi { font-size: 26px !important; }
+      .hiz-kutu { padding: 12px !important; }
+
+      /* Anlama bölümü */
+      .anlama-row { flex-direction: row !important; }
+      .anlama-daire { width: 80px !important; height: 80px !important; }
+      .anlama-yuzde { font-size: 20px !important; }
+
+      /* Soru detayları küçült */
+      .soru-detay-item { padding: 8px 12px !important; }
+      .sdi-soru { font-size: 12px !important; }
+      .sdi-sec  { font-size: 11px !important; }
+
+      /* Dönüt kart */
+      .donut-kart { padding: 14px 16px !important; }
+      .donut-metin { font-size: 12px !important; line-height: 1.6 !important; }
+
+      /* Sayfa sonu yönetimi */
+      .karne-metin-bilgi { page-break-after: avoid; }
+      .bolum-baslik { page-break-after: avoid; }
+      .donut-kart { page-break-inside: avoid; }
+      .hiz-seksiyon { page-break-inside: avoid; }
+
+      /* Hız bar renkleri */
+      .hiz-bar-fill { -webkit-print-color-adjust: exact; }
+      .anlama-daire { -webkit-print-color-adjust: exact; }
+      .karne-top-bant { -webkit-print-color-adjust: exact; }
+    }
+
+    @media(max-width:600px) {
+      .hiz-seksiyon { grid-template-columns:1fr; }
+      .karne-top-bant { flex-direction:column; }
+      .anlama-row { flex-direction:column; }
+      .karne-govde { padding:20px; }
+      .karne-govde-alt { padding:0 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="karne-wrap">
+
+    <div class="karne-header">
+      <div class="karne-logo">
+        <span class="karne-logo-em">🌟</span>
+        <span class="karne-logo-txt">Kemal Öğretmenim</span>
+      </div>
+      <div class="karne-title">Okuma Karnen Hazır! 🎉</div>
+      <div class="karne-sub" id="karneSubTitle">Tebrikler, okumayı tamamladın!</div>
+    </div>
+
+    <div class="karne-kart" id="karneKart">
+
+      <!-- Üst bant -->
+      <div class="karne-top-bant">
+        <div class="karne-ogrenci">
+          <h2 id="karneAd">—</h2>
+          <p id="karneSinifSube">—</p>
+        </div>
+        <div class="karne-tarih">
+          <strong id="karneTarih">—</strong>
+          Okuma Karnesi
+        </div>
+      </div>
+
+      <div class="karne-govde">
+
+        <!-- Metin bilgisi -->
+        <div class="karne-metin-bilgi">
+          <span class="kmb-em">📖</span>
+          <div>
+            <div class="kmb-lbl">Okunan Metin</div>
+            <div class="kmb-val" id="karneMetinAdi">—</div>
+          </div>
+        </div>
+
+        <!-- ── OKUMA HIZI ── -->
+        <div class="bolum-baslik">📊 Okuma Hızı Değerlendirmesi</div>
+
+        <div class="hiz-seksiyon">
+          <div class="hiz-kutu">
+            <div class="hiz-kutu-lbl">Okuduğun Hız</div>
+            <div class="hiz-sayi" id="karneWpm" style="color:var(--purple)">—</div>
+            <div class="hiz-birim">kelime / dakika</div>
+            <span class="hiz-star" id="karneWpmStar">⭐</span>
+          </div>
+          <div class="hiz-kutu">
+            <div class="hiz-kutu-lbl">Sınıf Hedefi</div>
+            <div class="hiz-sayi" id="karneHedef" style="color:var(--coral)">—</div>
+            <div class="hiz-birim">kelime / dakika</div>
+            <span class="hiz-star">🎯</span>
+          </div>
+        </div>
+
+        <div class="hiz-bar-wrap" id="hizBarWrap">
+          <div class="hiz-bar-labels">
+            <span>Başlangıç</span>
+            <span id="hizBarOrta">—</span>
+            <span>İleri Seviye</span>
+          </div>
+          <div class="hiz-bar-bg">
+            <div class="hiz-bar-fill" id="hizBarFill" style="width:0%"></div>
+            <div class="hiz-bar-hedef" id="hizBarHedef"></div>
+          </div>
+        </div>
+
+        <div class="bolum-bolme"></div>
+
+        <!-- ── ANLAMA ── -->
+        <div id="anlamaSeksiyon">
+          <div class="bolum-baslik">🧠 Anlama Değerlendirmesi</div>
+          <div class="anlama-row">
+            <div class="anlama-daire" id="anlamaDaire">
+              <span class="anlama-yuzde" id="anlamaYuzde">—</span>
+              <span class="anlama-lbl">Anlama</span>
+            </div>
+            <div class="anlama-detay">
+              <div class="anlama-soru-row" id="anlamaSoruRow"></div>
+            </div>
+          </div>
+          <div class="soru-detay-list" id="soruDetayList"></div>
+        </div>
+
+        <div class="bolum-bolme" id="anlamaBolme"></div>
+
+        <!-- ── YZ DESTEKLİ DÖNÜT ── -->
+        <div class="bolum-baslik">🤖 Kişisel Dönütün</div>
+        <div class="donut-kart">
+          <div class="donut-baslik">
+            <span>💡</span>
+            <span id="donutBaslik">Değerlendirme Hazırlanıyor…</span>
+          </div>
+          <div class="donut-metin" id="donutMetin">…</div>
+          <div class="donut-badge">🤖 Yapay Zeka Destekli Kişisel Değerlendirme</div>
+        </div>
+
+      </div><!-- /karne-govde -->
+
+      <div class="karne-govde-alt">
+        <div class="karne-altbtnlar">
+          <button class="kbtn kbtn-pdf" onclick="karnePDF()">🖨️ PDF İndir</button>
+          <button class="kbtn kbtn-tekrar" onclick="window.location.href='/hizli-okuma/oku.html'">🔄 Tekrar Oku</button>
+          <a href="/hizli-okuma/index.html" class="kbtn kbtn-liste">📚 Metin Listesi</a>
+          <a href="/index.html" class="kbtn kbtn-anasayfa">🏠 Ana Sayfa</a>
+        </div>
+      </div>
+
+    </div><!-- /karne-kart -->
+  </div>
+
+  <script src="/js/site.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://mwxcvlyrkptxrwgkmqum.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Sınıf normaları (Türk eğitim sistemine göre dk. kelime hedefleri)
+    const NORMLAR = {
+      1:{min:40,hedef:70, iyi:90,  maksimum:180},
+      2:{min:60,hedef:90, iyi:110, maksimum:200},
+      3:{min:80,hedef:110,iyi:130, maksimum:220},
+      4:{min:100,hedef:130,iyi:155,maksimum:240},
+      5:{min:120,hedef:150,iyi:175,maksimum:260},
+      6:{min:140,hedef:165,iyi:195,maksimum:280},
+      7:{min:155,hedef:185,iyi:215,maksimum:300},
+      8:{min:170,hedef:200,iyi:235,maksimum:320},
+    };
+
+    const metin     = JSON.parse(sessionStorage.getItem('okuma_metin')    || 'null');
+    const kullanici = JSON.parse(sessionStorage.getItem('okuma_kullanici')|| 'null');
+    const sureSn    = parseFloat(sessionStorage.getItem('okuma_sure_sn')  || '0');
+    const wpm       = parseInt(sessionStorage.getItem('okuma_wpm')        || '0');
+    const cevaplar  = JSON.parse(sessionStorage.getItem('okuma_cevaplar') || 'null');
+
+    if (!metin || !kullanici) { window.location.href = '/hizli-okuma/index.html'; }
+
+    /* ─── VERİYİ DOLDUR ─── */
+    const sinif   = kullanici.sinif;
+    const norm    = NORMLAR[sinif] || NORMLAR[4];
+    const hedefWpm= metin.hedef_hiz || norm.hedef;
+    const ks      = metin.kelime_sayisi || 0;
+    const tarih   = new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+
+    // Üst kısım
+    document.getElementById('karneAd').textContent          = `${kullanici.ad} ${kullanici.soyad}`;
+    document.getElementById('karneSinifSube').textContent   = `${sinif}. Sınıf / ${kullanici.sube} Şubesi`;
+    document.getElementById('karneTarih').textContent       = tarih;
+    document.getElementById('karneMetinAdi').textContent    = metin.baslik;
+
+    // WPM
+    document.getElementById('karneWpm').textContent    = wpm;
+    document.getElementById('karneHedef').textContent  = hedefWpm;
+
+    // Yıldız
+    const yildiz = wpm >= hedefWpm * 1.2 ? '🌟🌟🌟' : wpm >= hedefWpm ? '⭐⭐⭐' : wpm >= hedefWpm*.7 ? '⭐⭐' : '⭐';
+    document.getElementById('karneWpmStar').textContent = yildiz;
+
+    // Bar
+    const barMax = norm.maksimum;
+    const fillPct = Math.min(100, Math.round((wpm / barMax) * 100));
+    const hedefPct = Math.min(98, Math.round((hedefWpm / barMax) * 100));
+    document.getElementById('hizBarOrta').textContent = `${hedefWpm} k/dk`;
+    document.getElementById('hizBarHedef').style.left = hedefPct + '%';
+    document.getElementById('hizBarFill').style.width = '0%';
+    document.getElementById('hizBarFill').style.background =
+      wpm >= hedefWpm ? 'linear-gradient(90deg,#00C9B1,#55EFC4)' :
+      wpm >= hedefWpm*.7 ? 'linear-gradient(90deg,#FFD93D,#FF9F43)' :
+      'linear-gradient(90deg,#FF6052,#FF9F43)';
+    setTimeout(() => {
+      document.getElementById('hizBarFill').style.width = fillPct + '%';
+    }, 400);
+
+    // Anlama
+    if (cevaplar) {
+      const { dogru, yanlis, detay } = cevaplar;
+      const toplam  = dogru + yanlis;
+      const yuzde   = toplam > 0 ? Math.round((dogru / toplam) * 100) : 0;
+
+      // Daire rengi
+      const daire = document.getElementById('anlamaDaire');
+      const dColor = yuzde>=80 ? '#00C9B1' : yuzde>=60 ? '#FFD93D' : '#FF6052';
+      daire.style.background = `conic-gradient(${dColor} ${yuzde*3.6}deg, #F0EBFF 0deg)`;
+      daire.style.boxShadow = `0 0 0 8px #F0EBFF, 0 6px 20px rgba(0,0,0,.1)`;
+      document.getElementById('anlamaYuzde').textContent = yuzde + '%';
+      document.getElementById('anlamaYuzde').style.color = dColor;
+      document.getElementById('anlamaBolme').style.display = 'block';
+
+      document.getElementById('anlamaSoruRow').innerHTML = `
+        <div class="anlama-kutu dogru">✅ ${dogru} Doğru</div>
+        <div class="anlama-kutu yanlis">❌ ${yanlis} Yanlış</div>
+        <div class="anlama-kutu dogru" style="background:#EFF7FF;color:var(--purple);">📊 ${yuzde}% Başarı</div>`;
+
+      // Soru detayı
+      if (detay && detay.length > 0) {
+        document.getElementById('soruDetayList').innerHTML = detay.map((d,i) => `
+          <div class="soru-detay-item ${d.isDogu?'dogru':'yanlis'}">
+            <div class="sdi-soru">${i+1}. ${escHtml(d.soru)}</div>
+            <div class="sdi-sec ${d.isDogu?'dogru':'yanlis'}">
+              ${d.isDogu ? '✅' : '❌'} Cevabın: ${escHtml(d.secilenMetin)}
+              ${!d.isDogu ? `<br>✅ Doğru Cevap: ${escHtml(d.dogruMetin)}` : ''}
+            </div>
+          </div>`).join('');
+      }
+
+      // Supabase'e kaydet
+      kaydetSonuc({ dogru, yanlis, toplam, yuzde });
+    } else {
+      document.getElementById('anlamaSeksiyon').innerHTML =
+        '<div style="text-align:center;color:var(--muted);padding:20px;">Bu metin için anlama sorusu eklenmemiş.</div>';
+      document.getElementById('anlamaBolme').style.display = 'none';
+      kaydetSonuc({ dogru:0, yanlis:0, toplam:0, yuzde:0 });
+    }
+
+    // Kişisel dönüt oluştur
+    olusturDonut();
+
+    /* ─── SUPABASE KAYDET ─── */
+    async function kaydetSonuc({ dogru, yanlis, toplam, yuzde }) {
+      try {
+        await sb.from('sonuclar').insert({
+          ad: kullanici.ad,
+          soyad: kullanici.soyad,
+          sinif: kullanici.sinif,
+          sube: kullanici.sube,
+          metin_id: metin.id,
+          metin_adi: metin.baslik,
+          okuma_suresi_sn: parseFloat(sureSn),
+          kelime_sayisi: ks,
+          dakika_kelime: wpm,
+          hedef_hiz: hedefWpm,
+          dogru_sayisi: dogru,
+          yanlis_sayisi: yanlis,
+          toplam_soru: toplam,
+          anlama_yuzdesi: yuzde
+        });
+      } catch(e) { console.warn('Kayıt hatası:', e); }
+
+      // SessionStorage temizle
+      ['okuma_metin','okuma_kullanici','okuma_sure_sn','okuma_wpm','okuma_cevaplar']
+        .forEach(k => sessionStorage.removeItem(k));
+    }
+
+    /* ─── KİŞİSEL DÖNÜT ─── */
+    function olusturDonut() {
+      const ad = kullanici.ad;
+      const norm2 = NORMLAR[sinif] || NORMLAR[4];
+      const hizOran = wpm / hedefWpm;
+      const anlamaYuzde = cevaplar ? Math.round((cevaplar.dogru/(cevaplar.dogru+cevaplar.yanlis))*100) : -1;
+
+      // Hız seviyesi
+      let hizSeviye, hizMsg;
+      if      (hizOran >= 1.4) { hizSeviye='süper';  hizMsg=`${wpm} k/dk ile hedefin çok üzerinde okudun — bu gerçekten etkileyici! Hız konusunda sınıfın yıldızı olabilirsin.`; }
+      else if (hizOran >= 1.15){ hizSeviye='iyi';    hizMsg=`${wpm} k/dk ile ${sinif}. sınıf hedefinin üzerinde okudun. Harika bir çaba!`; }
+      else if (hizOran >= 0.85){ hizSeviye='normal'; hizMsg=`${wpm} k/dk ile beklenen düzeye yaklaştın. Hedefe ${Math.max(0,hedefWpm-wpm)} kelime kaldı — az çalışmayla ulaşırsın.`; }
+      else if (hizOran >= 0.6) { hizSeviye='yavas';  hizMsg=`${wpm} k/dk şu an için normal, ama hedefin ${hedefWpm} k/dk. Düzenli okuma pratiği hızını hızla artıracak.`; }
+      else                     { hizSeviye='cokYavas';hizMsg=`${wpm} k/dk ile biraz yavaş kaldın. Merak etme! Her gün 10 dakika yüksek sesle okumak hızını büyük ölçüde artırır.`; }
+
+      // Anlama yorumu
+      let anlamaMsg = '';
+      if (anlamaYuzde < 0) {
+        anlamaMsg = 'Bu metin için anlama sorusu eklenmemiş.';
+      } else if (anlamaYuzde >= 85) {
+        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı — mükemmel! Okuduğunu mükemmel kavramışsın.`;
+      } else if (anlamaYuzde >= 65) {
+        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı — iyisin! Birkaç noktayı kaçırdın ama genel kavrayışın güçlü.`;
+      } else if (anlamaYuzde >= 45) {
+        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı. Metni okurken bazı önemli detayları atlamış olabilirsin. İkinci okumada daha dikkatli olursan anlaman artacak.`;
+      } else {
+        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı. Endişelenme — hız odaklı okurken anlama zaman alır. Yavaşlayarak ve cümleleri kafanda tekrarlayarak okumayı dene.`;
+      }
+
+      // Genel yorum ve öneri
+      const templates = {
+        superIyi: [
+          `${ad}, bu performans gerçekten harika! Hem hız hem anlama bir arada — mükemmel bir kombinasyon. Bu seviyeyi korumak için daha uzun ve zorlu metinleri deneyebilirsin.`,
+          `${ad} tebrikler! Hem hız hem de anlama bölümünde üst düzey bir performans sergilemişsin. Bir sonraki adım olarak farklı türlerde metinler okumayı deneyebilirsin.`,
+        ],
+        hizliAnlamaDusuk: [
+          `${ad}, okuma hızın çok iyi! Ama hızlı gittiğinde bazı detayları kaçırıyorsun. Biraz yavaşlayarak oku — kalite, hızdan daha önemli.`,
+          `${ad}, hız konusunda kesinlikle yeteneklisin! Anlama puanını yükseltmek için her paragraftan sonra 2 saniye dur ve okuduğunu aklında özetle.`,
+        ],
+        yavasAnlamaIyi: [
+          `${ad}, anlama bölümünde çok başarılısın — okuduğunu gerçekten anlıyorsun! Şimdi sıra hızını biraz artırmada. Her gün 10-15 dakika zamanlı okuma egzersizi yapabilirsin.`,
+          `${ad}, dikkatli okuma alışkanlığın anlama puanına yansıdı. Harika! Hızını artırmak için göz egzersizleri ve bol okuma pratiği seni hedefe ulaştıracak.`,
+        ],
+        orta: [
+          `${ad}, bu okuma seninle ilgili güzel şeyler söylüyor. Düzenli çalışarak hem hızını hem de anlama becerinini geliştirebilirsin. Her gün biraz okuma, büyük fark yaratır!`,
+          `${ad}, ilk adımı attın ve bu en önemli adım! Şimdi düzenlilikle devam etmek gerekiyor. Kitaplık, gazete, web siteleri — her şey okuma pratiğine sayılır.`,
+        ],
+        guc: [
+          `${ad}, bugün okumak için masaya oturmuşsun — bu tek başına bir başarı! Gelişim doğrusal olmaz, dalgalanmalar normal. Önemli olan bırakmamak. Sen yapabilirsin!`,
+          `${ad}, her büyük okuyucu başlangıçta bu noktadaydı. Tutarlı çalışmayla okuma hızı ve anlama becerisi gelişir. Öğretmeninden yardım istemeyi unutma!`,
+        ]
+      };
+
+      let key;
+      if      (hizSeviye==='süper' && anlamaYuzde>=70)   key='superIyi';
+      else if (hizSeviye==='iyi'   && anlamaYuzde>=70)   key='superIyi';
+      else if ((hizSeviye==='süper'||hizSeviye==='iyi') && anlamaYuzde>=0 && anlamaYuzde<60) key='hizliAnlamaDusuk';
+      else if ((hizSeviye==='yavas'||hizSeviye==='cokYavas') && (anlamaYuzde>=70||anlamaYuzde<0)) key='yavasAnlamaIyi';
+      else if (hizSeviye==='normal') key='orta';
+      else key='guc';
+
+      const t = templates[key];
+      const genel = t[Math.floor(Math.random() * t.length)];
+
+      const rozetler = { süper:'🌟', iyi:'⭐', normal:'👏', yavas:'💪', cokYavas:'🌱' };
+      document.getElementById('donutBaslik').textContent = 
+        `${rozetler[hizSeviye]||'💡'} ${ad} için Değerlendirme`;
+      document.getElementById('donutMetin').innerHTML =
+        `<strong>Okuma Hızı:</strong> ${hizMsg}<br><br>` +
+        `<strong>Anlama:</strong> ${anlamaMsg}<br><br>` +
+        `<strong>Genel:</strong> ${genel}`;
+    }
+
+    /* ─── PDF ─── */
+    function karnePDF() {
+      window.print();
+    }
+
+    function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

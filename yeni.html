@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌟 Yeni İçerikler — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .new-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+    .new-card {
+      background: white;
+      border-radius: var(--r-lg);
+      padding: 28px;
+      border: 2px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      position: relative;
+      overflow: hidden;
+    }
+    .new-card::before {
+      content: 'YENİ';
+      position: absolute;
+      top: 16px; right: -28px;
+      background: var(--coral);
+      color: white;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px 36px;
+      transform: rotate(45deg);
+      letter-spacing: 1px;
+    }
+    .new-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-md); }
+
+    .nc-date {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .nc-emoji { font-size: 46px; animation: floatB 3s ease-in-out infinite; }
+    .nc-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--navy); }
+    .nc-desc  { font-size: 14px; color: var(--slate); line-height: 1.6; flex: 1; }
+    .nc-btn   {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background: var(--purple);
+      color: white;
+      border-radius: 50px;
+      font-weight: 800;
+      font-size: 13px;
+      align-self: flex-start;
+      transition: all .2s;
+    }
+    .nc-btn:hover { background: var(--purple-dark); transform: translateX(3px); }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--slate);
+    }
+    .empty-state .em { font-size: 80px; display: block; margin-bottom: 20px; }
+    .empty-state h3  { font-family: var(--font-display); font-size: 28px; color: var(--navy); margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div style="font-size:60px;margin-bottom:16px;animation:floatB 3s ease-in-out infinite;">🌟</div>
+    <h1 class="page-header-title">Yeni <span>İçerikler</span></h1>
+    <p class="page-header-sub">En son eklenen ders materyalleri, oyunlar ve etkinlikler burada!</p>
+  </header>
+
+  <section class="section">
+    <div id="newContent">
+      <!-- JS ile doldurulur -->
+      <div class="empty-state">
+        <span class="em">⏳</span>
+        <h3>Yükleniyor…</h3>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/site.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const data    = window.kemalSite ? window.kemalSite.getData() : null;
+      const items   = data && data.yeniIcerikler
+                        ? data.yeniIcerikler.filter(i => i.aktif)
+                        : [];
+      const wrapper = document.getElementById('newContent');
+
+      if (!items.length) {
+        wrapper.innerHTML = `
+          <div class="empty-state">
+            <span class="em">✨</span>
+            <h3>Çok Yakında!</h3>
+            <p>Yeni içerikler ekleniyor. Takipte kal!</p>
+          </div>`;
+        return;
+      }
+
+      function formatDate(str) {
+        if (!str) return '';
+        const d = new Date(str);
+        return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+      }
+
+      wrapper.innerHTML = `<div class="new-grid">` +
+        items.map(i => `
+          <a href="${i.link}" class="new-card">
+            <span class="nc-date">${formatDate(i.tarih)}</span>
+            <span class="nc-emoji">${i.emoji || '📄'}</span>
+            <div class="nc-title">${i.baslik}</div>
+            <p class="nc-desc">${i.aciklama}</p>
+            <span class="nc-btn">İncele →</span>
+          </a>`).join('') +
+        `</div>`;
+    });
+  </script>
+</body>
+</html>

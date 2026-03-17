@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📖 Hızlı Okuma — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .ho-hero {
+      background: linear-gradient(145deg,#1A1040,#3B1F8C,#6C3DED);
+      padding:52px 32px; text-align:center; position:relative; overflow:hidden;
+    }
+    .ho-hero::before { content:''; position:absolute; width:350px; height:350px; background:rgba(255,255,255,.04); border-radius:50%; top:-100px; left:-80px; }
+    .ho-hero-em { font-size:68px; display:block; margin-bottom:14px; animation:floatB 3s ease-in-out infinite; position:relative; z-index:1; }
+    .ho-hero h1 { font-size:clamp(26px,4.5vw,44px); font-weight:800; color:white; margin-bottom:8px; position:relative; z-index:1; }
+    .ho-hero p  { color:rgba(255,255,255,.6); font-size:15px; font-weight:600; position:relative; z-index:1; }
+
+    /* Steps */
+    .steps-wrap { max-width:960px; margin:0 auto; padding:40px 32px; }
+
+    /* Step indicator */
+    .step-indicator { display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:36px; }
+    .si-item { display:flex; align-items:center; gap:0; }
+    .si-dot { width:36px; height:36px; border-radius:50%; background:var(--border); color:var(--muted); font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; transition:all .3s; }
+    .si-dot.active { background:var(--purple); color:white; box-shadow:0 4px 12px rgba(108,61,237,.4); }
+    .si-dot.done   { background:var(--teal);   color:white; }
+    .si-line { width:60px; height:3px; background:var(--border); transition:background .3s; }
+    .si-line.done { background:var(--teal); }
+
+    /* ── ADIM 1: Sınıf Seç ── */
+    #step1 .step-title { font-family:var(--font-display); font-size:26px; font-weight:800; color:var(--navy); text-align:center; margin-bottom:24px; }
+    .sinif-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; max-width:600px; margin:0 auto; }
+    .sinif-btn {
+      aspect-ratio:1; border:3px solid var(--border); border-radius:var(--r-lg);
+      background:white; cursor:pointer; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:6px;
+      transition:all .3s cubic-bezier(.34,1.56,.64,1); font-family:var(--font-body);
+    }
+    .sinif-btn:hover, .sinif-btn.active {
+      border-color:var(--purple); background:#F0EBFF;
+      transform:translateY(-4px) scale(1.04); box-shadow:var(--shadow-sm);
+    }
+    .sinif-btn-num { font-family:var(--font-display); font-size:32px; font-weight:800; color:var(--navy); }
+    .sinif-btn-lbl { font-size:11px; font-weight:700; color:var(--slate); text-transform:uppercase; }
+    .sinif-btn[data-s="1"]:hover, .sinif-btn[data-s="1"].active { border-color:#FF6B6B; background:#FFF0F0; }
+    .sinif-btn[data-s="2"]:hover, .sinif-btn[data-s="2"].active { border-color:#FF9F43; background:#FFF5EC; }
+    .sinif-btn[data-s="3"]:hover, .sinif-btn[data-s="3"].active { border-color:#00C9B1; background:#ECFDF5; }
+    .sinif-btn[data-s="4"]:hover, .sinif-btn[data-s="4"].active { border-color:#4D9FF5; background:#EFF7FF; }
+    .sinif-btn[data-s="5"]:hover, .sinif-btn[data-s="5"].active { border-color:var(--purple); background:#F0EBFF; }
+    .sinif-btn[data-s="6"]:hover, .sinif-btn[data-s="6"].active { border-color:#8E44AD; background:#F5EAFF; }
+    .sinif-btn[data-s="7"]:hover, .sinif-btn[data-s="7"].active { border-color:#E91E63; background:#FDE8EF; }
+    .sinif-btn[data-s="8"]:hover, .sinif-btn[data-s="8"].active { border-color:#1A1040; background:#F0EBFF; }
+
+    /* ── ADIM 2: Metin Seç ── */
+    .metin-header { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+    .back-btn { background:none; border:2px solid var(--border); border-radius:var(--r-sm); padding:8px 14px; font-weight:700; font-size:14px; cursor:pointer; color:var(--slate); transition:all .2s; }
+    .back-btn:hover { border-color:var(--purple); color:var(--purple); }
+    .metin-title { font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--navy); }
+
+    .metin-list { display:flex; flex-direction:column; gap:14px; }
+    .metin-card {
+      background:white; border:2px solid var(--border); border-radius:var(--r-lg);
+      padding:20px 24px; cursor:pointer; display:flex; align-items:center;
+      gap:18px; transition:all .3s cubic-bezier(.34,1.56,.64,1);
+    }
+    .metin-card:hover { border-color:var(--purple); transform:translateX(6px); box-shadow:var(--shadow-sm); }
+    .mc-em { font-size:36px; width:52px; text-align:center; flex-shrink:0; }
+    .mc-body { flex:1; }
+    .mc-title  { font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--navy); margin-bottom:4px; }
+    .mc-meta   { font-size:13px; color:var(--slate); display:flex; gap:14px; flex-wrap:wrap; }
+    .mc-badge  { background:#F0EBFF; color:var(--purple); padding:3px 10px; border-radius:20px; font-weight:800; font-size:11px; }
+    .mc-arrow  { font-size:22px; color:var(--purple); transition:transform .2s; }
+    .metin-card:hover .mc-arrow { transform:translateX(4px); }
+
+    .no-metin { text-align:center; padding:60px 20px; color:var(--slate); }
+    .no-metin span { font-size:60px; display:block; margin-bottom:14px; }
+
+    /* ── ADIM 3: Giriş ── */
+    .giris-card { background:white; border:2px solid var(--border); border-radius:var(--r-xl); padding:36px; max-width:560px; margin:0 auto; }
+    .giris-metin-info { background:#F0EBFF; border-radius:var(--r-md); padding:16px 20px; margin-bottom:28px; display:flex; align-items:center; gap:12px; }
+    .gmi-em { font-size:28px; }
+    .gmi-title { font-family:var(--font-display); font-size:16px; font-weight:800; color:var(--purple); }
+    .gmi-sub   { font-size:12px; color:var(--slate); }
+
+    .giris-form-title { font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--navy); margin-bottom:22px; }
+    .form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .fg { margin-bottom:16px; }
+    .fg label { display:block; font-size:13px; font-weight:800; color:var(--slate); margin-bottom:7px; }
+    .fg input, .fg select {
+      width:100%; padding:13px 16px; border:2px solid var(--border);
+      border-radius:var(--r-sm); font-family:var(--font-body); font-size:15px;
+      color:var(--navy); background:var(--cream); outline:none; transition:border-color .2s;
+    }
+    .fg input:focus, .fg select:focus { border-color:var(--purple); background:white; }
+
+    .start-btn {
+      width:100%; padding:16px; background:linear-gradient(135deg,var(--purple),var(--purple-light));
+      color:white; border:none; border-radius:50px; font-family:var(--font-body);
+      font-size:16px; font-weight:800; cursor:pointer; transition:all .25s;
+      box-shadow:0 4px 15px rgba(108,61,237,.4);
+    }
+    .start-btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(108,61,237,.5); }
+
+    .loading { text-align:center; padding:40px; color:var(--slate); font-weight:700; font-size:15px; }
+    .loading span { font-size:40px; display:block; margin-bottom:12px; animation:floatB 1.5s ease-in-out infinite; }
+
+    @media(max-width:640px) {
+      .sinif-grid { grid-template-columns:repeat(4,1fr); gap:10px; }
+      .steps-wrap { padding:28px 16px; }
+      .form-row-2 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ho-hero">
+    <span class="ho-hero-em">📖</span>
+    <h1>Hızlı Okuma Merkezi</h1>
+    <p>Sınıfını seç → Metni bul → Okumaya başla!</p>
+  </div>
+
+  <div class="steps-wrap">
+
+    <!-- Adım Göstergesi -->
+    <div class="step-indicator">
+      <div class="si-item">
+        <div class="si-dot active" id="dot1">1</div>
+      </div>
+      <div class="si-line" id="line1"></div>
+      <div class="si-item">
+        <div class="si-dot" id="dot2">2</div>
+      </div>
+      <div class="si-line" id="line2"></div>
+      <div class="si-item">
+        <div class="si-dot" id="dot3">3</div>
+      </div>
+    </div>
+
+    <!-- ADIM 1: Sınıf Seç -->
+    <div id="step1">
+      <div class="step-title">🎒 Hangi sınıftasın?</div>
+      <div class="sinif-grid">
+        <button class="sinif-btn" data-s="1" onclick="sinifSec(1,this)">
+          <span class="sinif-btn-num">1</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="2" onclick="sinifSec(2,this)">
+          <span class="sinif-btn-num">2</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="3" onclick="sinifSec(3,this)">
+          <span class="sinif-btn-num">3</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="4" onclick="sinifSec(4,this)">
+          <span class="sinif-btn-num">4</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="5" onclick="sinifSec(5,this)">
+          <span class="sinif-btn-num">5</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="6" onclick="sinifSec(6,this)">
+          <span class="sinif-btn-num">6</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="7" onclick="sinifSec(7,this)">
+          <span class="sinif-btn-num">7</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+        <button class="sinif-btn" data-s="8" onclick="sinifSec(8,this)">
+          <span class="sinif-btn-num">8</span>
+          <span class="sinif-btn-lbl">Sınıf</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ADIM 2: Metin Seç -->
+    <div id="step2" style="display:none;">
+      <div class="metin-header">
+        <button class="back-btn" onclick="geriyeDon(1)">← Geri</button>
+        <div class="metin-title" id="step2Title">📚 Metinler</div>
+      </div>
+      <div id="metinListesi" class="metin-list">
+        <div class="loading"><span>⏳</span>Metinler yükleniyor…</div>
+      </div>
+    </div>
+
+    <!-- ADIM 3: Bilgi Girişi -->
+    <div id="step3" style="display:none;">
+      <div class="metin-header">
+        <button class="back-btn" onclick="geriyeDon(2)">← Geri</button>
+        <div class="metin-title">📝 Bilgilerini Gir</div>
+      </div>
+
+      <div class="giris-card">
+        <div class="giris-metin-info" id="seciliMetinInfo">
+          <span class="gmi-em">📖</span>
+          <div>
+            <div class="gmi-title" id="seciliMetinAdi">Metin Seçildi</div>
+            <div class="gmi-sub" id="seciliMetinMeta">—</div>
+          </div>
+        </div>
+
+        <div class="giris-form-title">👤 Okuyucu Bilgileri</div>
+
+        <div class="form-row-2">
+          <div class="fg">
+            <label>Ad *</label>
+            <input type="text" id="kullanici_ad" placeholder="Adınız" autocomplete="off" maxlength="30">
+          </div>
+          <div class="fg">
+            <label>Soyad *</label>
+            <input type="text" id="kullanici_soyad" placeholder="Soyadınız" autocomplete="off" maxlength="30">
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="fg">
+            <label>Sınıf *</label>
+            <select id="kullanici_sinif">
+              <option value="">Seç…</option>
+              <option value="1">1. Sınıf</option>
+              <option value="2">2. Sınıf</option>
+              <option value="3">3. Sınıf</option>
+              <option value="4">4. Sınıf</option>
+              <option value="5">5. Sınıf</option>
+              <option value="6">6. Sınıf</option>
+              <option value="7">7. Sınıf</option>
+              <option value="8">8. Sınıf</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Şube *</label>
+            <select id="kullanici_sube">
+              <option value="">Seç…</option>
+              <option value="A">A Şubesi</option>
+              <option value="B">B Şubesi</option>
+              <option value="C">C Şubesi</option>
+              <option value="D">D Şubesi</option>
+              <option value="E">E Şubesi</option>
+              <option value="F">F Şubesi</option>
+              <option value="G">G Şubesi</option>
+              <option value="H">H Şubesi</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="start-btn" onclick="okumaBaslat()">🚀 Okumaya Başla!</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/js/site.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://mwxcvlyrkptxrwgkmqum.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let seciliSinif = null;
+    let seciliMetin = null;
+
+    /* ── Adım 1 → 2: Sınıf Seç ── */
+    async function sinifSec(sinif, el) {
+      document.querySelectorAll('.sinif-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      seciliSinif = sinif;
+
+      // Step geçişi
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = 'block';
+      document.getElementById('step2Title').textContent = `📚 ${sinif}. Sınıf Metinleri`;
+
+      // Step gösterge
+      setStep(2);
+
+      // Sınıf seçiliyse giriş formunda da ayarla
+      document.getElementById('kullanici_sinif').value = sinif;
+
+      // Metinleri çek
+      await loadMetinler(sinif);
+    }
+
+    async function loadMetinler(sinif) {
+      const list = document.getElementById('metinListesi');
+      list.innerHTML = '<div class="loading"><span>⏳</span>Metinler yükleniyor…</div>';
+
+      const { data, error } = await sb
+        .from('metinler')
+        .select('id,baslik,sinif,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif')
+        .eq('sinif', sinif)
+        .eq('aktif', true)
+        .order('olusturma_tarihi', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        list.innerHTML = `
+          <div class="no-metin">
+            <span>📭</span>
+            <p>Bu sınıf için henüz metin eklenmemiş.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = data.map(m => {
+        const mod = m.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+        const hiz = m.hedef_hiz ? ` · Hedef: ${m.hedef_hiz} k/dk` : '';
+        const kw  = m.kelime_sayisi ? ` · ${m.kelime_sayisi} kelime` : '';
+        return `
+          <div class="metin-card" onclick="metinSec('${m.id}')">
+            <span class="mc-em">📖</span>
+            <div class="mc-body">
+              <div class="mc-title">${escHtml(m.baslik)}</div>
+              <div class="mc-meta">
+                <span class="mc-badge">${mod}</span>
+                <span>${kw}${hiz}</span>
+              </div>
+            </div>
+            <span class="mc-arrow">→</span>
+          </div>`;
+      }).join('');
+    }
+
+    /* ── Adım 2 → 3: Metin Seç ── */
+    async function metinSec(metinId) {
+      // Tam metni ve soruları çek
+      const { data: metin, error } = await sb
+        .from('metinler')
+        .select('*')
+        .eq('id', metinId)
+        .single();
+
+      if (error || !metin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
+
+      // Soruları çek (varsa)
+      const { data: sorularData } = await sb
+        .from('sorular')
+        .select('id, soru_metni, sira, secenekler(id, secenek_metni, dogru_mu, sira)')
+        .eq('metin_id', metinId)
+        .order('sira');
+
+      metin.sorular = (sorularData || []).map(s => ({
+        ...s,
+        secenekler: (s.secenekler || []).sort((a,b) => a.sira - b.sira)
+      }));
+
+      seciliMetin = metin;
+      sessionStorage.setItem('okuma_metin', JSON.stringify(metin));
+
+      // Bilgilendirme paneli
+      const mod = metin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+      document.getElementById('seciliMetinAdi').textContent = metin.baslik;
+      document.getElementById('seciliMetinMeta').textContent =
+        `${mod} · ${metin.kelime_sayisi || '?'} kelime · ${metin.sorular.length} anlama sorusu`;
+
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('step3').style.display = 'block';
+      setStep(3);
+    }
+
+    /* ── Okumayı Başlat ── */
+    function okumaBaslat() {
+      const ad    = document.getElementById('kullanici_ad').value.trim();
+      const soyad = document.getElementById('kullanici_soyad').value.trim();
+      const sinif = document.getElementById('kullanici_sinif').value;
+      const sube  = document.getElementById('kullanici_sube').value;
+
+      if (!ad || !soyad || !sinif || !sube) {
+        alert('Lütfen tüm alanları doldurun!');
+        return;
+      }
+
+      sessionStorage.setItem('okuma_kullanici', JSON.stringify({ ad, soyad, sinif: parseInt(sinif), sube }));
+      window.location.href = '/hizli-okuma/oku.html';
+    }
+
+    /* ── Geri ── */
+    function geriyeDon(adim) {
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('step3').style.display = 'none';
+      document.getElementById('step' + adim).style.display = 'block';
+      setStep(adim);
+    }
+
+    /* ── Step Gösterge ── */
+    function setStep(n) {
+      [1,2,3].forEach(i => {
+        const dot  = document.getElementById('dot'+i);
+        dot.className = 'si-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+      });
+      [1,2].forEach(i => {
+        const line = document.getElementById('line'+i);
+        line.className = 'si-line' + (i < n ? ' done' : '');
+      });
+    }
+
+    function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  </script>
+</body>
+</html>

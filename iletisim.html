@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İletişim — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* Sol: Info */
+    .contact-info {
+      background: linear-gradient(145deg, var(--purple), var(--purple-dark));
+      color: white;
+      border-radius: var(--r-xl);
+      padding: 44px 36px;
+      box-shadow: var(--shadow-lg);
+      position: sticky;
+      top: 90px;
+    }
+    .contact-info h2 { font-family:var(--font-display); font-size:30px; font-weight:800; margin-bottom:12px; }
+    .contact-info p  { font-size:15px; color:rgba(255,255,255,.75); line-height:1.7; margin-bottom:32px; }
+
+    .cinfo-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .cinfo-icon {
+      width: 50px; height: 50px;
+      background: rgba(255,255,255,.15);
+      border-radius: var(--r-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .cinfo-lbl { font-size:12px; color:rgba(255,255,255,.55); font-weight:700; text-transform:uppercase; margin-bottom:2px; }
+    .cinfo-val { font-size:15px; color:white; font-weight:700; }
+
+    /* Sağ: Form */
+    .contact-form-card {
+      background: white;
+      border-radius: var(--r-xl);
+      padding: 44px;
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .contact-form-card h3 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 28px;
+    }
+
+    .form-group { margin-bottom: 20px; }
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--r-sm);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--navy);
+      background: var(--cream);
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 4px rgba(108,61,237,.1);
+      background: white;
+    }
+    .form-textarea { min-height: 140px; resize: vertical; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .form-submit {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all .25s cubic-bezier(.34,1.56,.64,1);
+      box-shadow: 0 4px 15px rgba(108,61,237,.4);
+    }
+    .form-submit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(108,61,237,.5);
+    }
+
+    .success-msg {
+      display: none;
+      background: #ECFDF5;
+      border: 2px solid #10B981;
+      border-radius: var(--r-md);
+      padding: 20px;
+      text-align: center;
+      color: #065F46;
+      font-weight: 700;
+      margin-top: 16px;
+      font-size: 15px;
+    }
+
+    @media (max-width:860px) {
+      .contact-layout { grid-template-columns:1fr; }
+      .contact-info   { position:static; }
+      .form-row       { grid-template-columns:1fr; }
+      .contact-form-card { padding:28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <div style="font-size:60px;margin-bottom:14px;animation:floatB 3s ease-in-out infinite;">📬</div>
+    <h1 class="page-header-title"><span>İletişim</span></h1>
+    <p class="page-header-sub">Sorularınız, önerileriniz veya iş birliği teklifleri için benimle iletişime geçin.</p>
+  </header>
+
+  <section class="section">
+    <div class="contact-layout">
+
+      <!-- Sol: Bilgi -->
+      <div class="contact-info">
+        <h2>📩 Merhaba!</h2>
+        <p>Öğrencilerim, veliler veya iş birliği yapmak isteyen herkese kapım açık. En kısa sürede geri dönüş yapıyorum.</p>
+
+        <div class="cinfo-row">
+          <div class="cinfo-icon">📧</div>
+          <div>
+            <div class="cinfo-lbl">E-posta</div>
+            <div class="cinfo-val">iletisim@kemalogretmenim.com.tr</div>
+          </div>
+        </div>
+
+        <div class="cinfo-row">
+          <div class="cinfo-icon">📸</div>
+          <div>
+            <div class="cinfo-lbl">Instagram</div>
+            <div class="cinfo-val">@kemalkogretmenim</div>
+          </div>
+        </div>
+
+        <div class="cinfo-row">
+          <div class="cinfo-icon">▶️</div>
+          <div>
+            <div class="cinfo-lbl">YouTube</div>
+            <div class="cinfo-val">@kemalkogretmenim</div>
+          </div>
+        </div>
+
+        <div class="cinfo-row">
+          <div class="cinfo-icon">🐦</div>
+          <div>
+            <div class="cinfo-lbl">Twitter / X</div>
+            <div class="cinfo-val">@kemalkogretmen</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sağ: Form -->
+      <div class="contact-form-card">
+        <h3>✉️ Mesaj Gönder</h3>
+        <form id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="adSoyad">Ad Soyad *</label>
+              <input class="form-input" type="text" id="adSoyad" name="adSoyad" placeholder="Adınız ve soyadınız" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="email">E-posta *</label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="ornek@mail.com" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="konu">Konu</label>
+            <select class="form-select" id="konu" name="konu">
+              <option value="">Konu seçin (isteğe bağlı)</option>
+              <option value="İçerik Önerisi">İçerik Önerisi</option>
+              <option value="Teknik Sorun">Teknik Sorun</option>
+              <option value="İş Birliği">İş Birliği Teklifi</option>
+              <option value="Veli Mesajı">Veli Mesajı</option>
+              <option value="Diğer">Diğer</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="mesaj">Mesajınız *</label>
+            <textarea class="form-textarea" id="mesaj" name="mesaj" placeholder="Mesajınızı buraya yazın…" required></textarea>
+          </div>
+          <button type="submit" class="form-submit">📨 Mesajı Gönder</button>
+          <div class="success-msg" id="successMsg">
+            ✅ Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağım.
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="/js/site.js"></script>
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      // Formspree veya başka servis bağlandıktan sonra gerçek gönderimi etkinleştir.
+      // Şimdilik başarı mesajını göster:
+      document.getElementById('successMsg').style.display = 'block';
+      this.reset();
+      setTimeout(() => document.getElementById('successMsg').style.display = 'none', 5000);
+    });
+  </script>
+</body>
+</html>

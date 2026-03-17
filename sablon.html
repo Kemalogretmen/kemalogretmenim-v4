@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ✏️ 1. Sayfa başlığını ve emoji'yi değiştir -->
+  <title>📄 Sayfa Başlığı — Kemal Öğretmenim</title>
+
+  <!-- Paylaşılan CSS — değiştirme! -->
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    /* ================================================
+       ÖZEL STİLLER
+       Bu sayfaya özel CSS buraya gelir.
+       style.css'teki değişkenleri kullanabilirsin:
+       var(--purple), var(--coral), var(--yellow) vs.
+       ================================================ */
+
+
+  </style>
+</head>
+<body>
+
+  <!--
+    ┌─────────────────────────────────────────────────────┐
+    │  NAVBAR + FOOTER                                    │
+    │  Bunları yazmana gerek yok!                         │
+    │  /js/site.js otomatik enjekte ediyor.               │
+    └─────────────────────────────────────────────────────┘
+  -->
+
+  <!-- ─── SAYFA BAŞLIĞI ───────────────────────────────────
+       İki seçenek var: sade veya renkli.
+       Birini kullan, diğerini sil.
+  ─────────────────────────────────────────────────────── -->
+
+  <!-- SEÇENEK A: Sade Sayfa Başlığı (hakkimda, iletisim gibi) -->
+  <header class="page-header">
+    <!-- ✏️ Emoji, başlık ve açıklamayı değiştir -->
+    <div style="font-size:60px; margin-bottom:14px; animation:floatB 3s ease-in-out infinite;">📄</div>
+    <h1 class="page-header-title">Sayfa <span>Başlığı</span></h1>
+    <p class="page-header-sub">Bu sayfanın kısa açıklaması buraya gelir.</p>
+  </header>
+
+  <!--
+  SEÇENEK B: Koyu Renkli Hero Başlık (oyunlar, okuma anlama gibi)
+  Kullanmak istersen bu yorum blokunu kaldır, SEÇENEK A'yı sil:
+
+  <div style="
+    background: linear-gradient(145deg, #1A1040, #6C3DED);
+    padding: 56px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  ">
+    <span style="font-size:68px; display:block; margin-bottom:14px; animation:floatB 3s ease-in-out infinite;">📄</span>
+    <h1 style="font-size:clamp(26px,5vw,46px); font-weight:800; color:white; margin-bottom:8px;">Sayfa Başlığı</h1>
+    <p style="color:rgba(255,255,255,.6); font-size:15px; font-weight:600;">Kısa açıklama.</p>
+  </div>
+  -->
+
+
+  <!-- ─── ANA İÇERİK ──────────────────────────────────────
+       Tüm sayfa içeriği bu <section> içine gelir.
+  ─────────────────────────────────────────────────────── -->
+  <section class="section">
+
+    <!--
+    ════════════════════════════════════════════════
+    HAZIR BÖLÜM ŞABLONLARl — Kopyala & Yapıştır
+    ════════════════════════════════════════════════
+
+    ── BAŞLIK BÖLÜMÜ ──
+    <div class="section-header">
+      <span class="sec-tag">Etiket</span>          ← Küçük renkli rozet
+      <h2 class="sec-title">Ana <span>Başlık</span></h2>
+      <p class="sec-sub">Açıklama metni buraya.</p>
+    </div>
+
+    sec-tag renk seçenekleri: (varsayılan=mor)
+      <span class="sec-tag coral">Turuncu</span>
+      <span class="sec-tag teal">Yeşil</span>
+      <span class="sec-tag yellow">Sarı</span>
+
+
+    ── KART GRID ──
+    <div class="grade-grid">
+
+      <div class="grade-card" data-g="1">   ← data-g: 1-7 arası (renk için)
+        <div class="gc-top">
+          <div class="gc-num">1</div>
+          <div>
+            <div class="gc-label">Başlık</div>
+            <div class="gc-sub">Alt başlık 📚</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="LINK" class="subj-link"><span class="subj-em">📖</span> Bağlantı</a>
+          <a href="LINK" class="subj-link"><span class="subj-em">🔢</span> Bağlantı 2</a>
+        </div>
+      </div>
+
+    </div>
+
+
+    ── HIZLI ERİŞİM KARTLARI ──
+    <div class="quick-grid">
+
+      <a href="LINK" class="qcard" data-c="purple">   ← data-c: purple / coral / teal / yellow
+        <span class="qcard-em">🚀</span>
+        <div class="qcard-title">Kart Başlığı</div>
+        <p class="qcard-desc">Kısa açıklama metni.</p>
+        <span class="qcard-btn">Git →</span>
+      </a>
+
+    </div>
+
+
+    ── BUTON ──
+    <a href="LINK" class="btn btn-primary">Mor Buton →</a>
+    <a href="LINK" class="btn btn-coral">Turuncu Buton →</a>
+
+
+    ── BASİT METİN BLOĞU ──
+    <div style="
+      background:white; border-radius:var(--r-lg);
+      padding:32px; border:2px solid var(--border);
+    ">
+      <h2 style="font-family:var(--font-display);font-size:24px;color:var(--purple);margin-bottom:14px;">
+        📝 Başlık
+      </h2>
+      <p style="color:var(--slate);line-height:1.8;font-size:15px;">
+        İçerik metni buraya...
+      </p>
+    </div>
+
+
+    ════════════════════════════════════════════════
+    OYUN / BUTON KARTLARI — oyunlar.html benzeri
+    ════════════════════════════════════════════════
+
+    Oyunlar gibi kart eklemek için oyunlar.html'deki
+    .game-card yapısını kopyala. Örnek:
+
+    <a href="oyun.html" class="game-card" data-color="purple" data-cat="matematik"
+       style="text-decoration:none; display:flex; flex-direction:column;
+              background:white; border-radius:20px; border:2px solid #EAE3FF;
+              overflow:hidden; transition:all .3s;">
+      ...
+    </a>
+
+
+    ════════════════════════════════════════════════
+    METİN LİSTESİ — 1_okuma_anlama.html benzeri
+    ════════════════════════════════════════════════
+
+    Metin listesi için 1_okuma_anlama.html'deki
+    .text-card yapısını ve sayfalama JS'ini kopyala.
+
+    ════════════════════════════════════════════════
+    -->
+
+    <!-- ✏️ BURADAN BAŞLA: Kendi içeriğini yaz / şablon seçeneklerinden kopyala -->
+    <div style="
+      background: white;
+      border-radius: var(--r-lg);
+      padding: 40px;
+      border: 2px dashed var(--border);
+      text-align: center;
+      color: var(--muted);
+    ">
+      <div style="font-size:60px; margin-bottom:16px;">✏️</div>
+      <h2 style="font-family:var(--font-display);font-size:26px;color:var(--slate);margin-bottom:10px;">
+        Boş Şablon
+      </h2>
+      <p style="font-size:15px; line-height:1.7;">
+        Bu şablonu kopyalayıp kendi sayfanı oluştur.<br>
+        Yukarıdaki yorum bloklarından istediğin bölümü kopyalayabilirsin.
+      </p>
+    </div>
+
+  </section>
+
+
+  <!-- ─── PAYLAŞILAN JS (NAVBAR + FOOTER) ─── -->
+  <script src="/js/site.js"></script>
+
+  <script>
+    // ================================================
+    // SAYFA'YA ÖZEL JAVASCRIPT BURAYA GELİR
+    // ================================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // Sayfa yüklendiğinde çalışacak kodlar
+    });
+  </script>
+
+</body>
+</html>

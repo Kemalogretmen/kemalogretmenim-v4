@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌟 Kemal Öğretmenim — Eğitim Sevgi ile Başlar</title>
+  <meta name="description" content="1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik ve fen bilimleri içerikleri.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ─── ANA SAYFA ÖZEL STILLER ─── */
+
+    /* Konu kartları band */
+    .subjects-band {
+      background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+      padding: 50px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .subjects-band::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .subjects-row {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    .subj-pill {
+      background: rgba(255,255,255,.15);
+      border: 2px solid rgba(255,255,255,.25);
+      border-radius: var(--r-md);
+      padding: 18px 14px;
+      text-align: center;
+      text-decoration: none;
+      color: white;
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      backdrop-filter: blur(10px);
+    }
+    .subj-pill:hover {
+      background: rgba(255,255,255,.25);
+      transform: translateY(-6px) scale(1.04);
+      border-color: var(--yellow);
+    }
+    .subj-pill-em  { font-size: 34px; display:block; margin-bottom:8px; }
+    .subj-pill-lbl { font-weight:800; font-size:13px; line-height:1.3; }
+
+    /* Öne Çıkanlar Haberleri */
+    .haberler-section {
+      background: white;
+      border-bottom: 3px solid var(--border);
+      padding: 0;
+    }
+    .haberler-baslik-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+    }
+    .haberler-etiket {
+      background: var(--purple);
+      color: white;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .haberler-ticker {
+      flex: 1;
+      overflow: hidden;
+      padding: 0 16px;
+    }
+    .haberler-ticker-track {
+      display: flex;
+      animation: tickerScroll 30s linear infinite;
+      white-space: nowrap;
+    }
+    .haberler-ticker-track:hover { animation-play-state: paused; }
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate);
+      padding: 10px 32px 10px 0;
+      text-decoration: none;
+      transition: color .2s;
+      flex-shrink: 0;
+    }
+    .ticker-item:hover { color: var(--purple); }
+    .ticker-sep { color: var(--muted); font-size: 14px; margin-right: 32px; }
+    @keyframes tickerScroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .haberler-cards-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+    .haberler-cards {
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scroll-snap-type: x mandatory;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .haberler-cards::-webkit-scrollbar { display: none; }
+
+    .haber-card {
+      flex: 0 0 calc(33.333% - 1px);
+      min-width: 280px;
+      border-right: 1px solid var(--border);
+      padding: 20px 24px;
+      scroll-snap-align: start;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: background .2s;
+      cursor: pointer;
+    }
+    .haber-card:last-child { border-right: none; }
+    .haber-card:hover { background: #F9F7FF; }
+    .haber-card-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .haber-em {
+      width: 48px; height: 48px;
+      border-radius: var(--r-sm);
+      background: var(--purple);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .haber-em.coral  { background: var(--coral); }
+    .haber-em.teal   { background: var(--teal); }
+    .haber-em.yellow { background: var(--yellow); }
+    .haber-em.navy   { background: var(--navy); }
+    .haber-cat  { font-size: 11px; font-weight: 800; color: var(--purple); text-transform: uppercase; letter-spacing: .5px; }
+    .haber-tarih { font-size: 11px; color: var(--muted); }
+    .haber-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1.35;
+    }
+    .haber-desc {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.55;
+      flex: 1;
+    }
+    .haber-devami {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .haber-nav {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .haber-nav-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+    }
+    .haber-nav-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .haber-dots { display: flex; gap: 6px; }
+    .haber-dot  { width: 7px; height: 7px; border-radius: 50%; background: var(--border); cursor: pointer; transition: all .2s; }
+    .haber-dot.aktif { background: var(--purple); transform: scale(1.3); }
+
+    @media(max-width:900px) {
+      .haber-card { flex: 0 0 calc(50% - 1px); min-width: 240px; }
+    }
+    @media(max-width:600px) {
+      .haber-card { flex: 0 0 90%; }
+    }
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 22px;
+    }
+    .why-card {
+      background: white;
+      border-radius: var(--r-lg);
+      padding: 32px 26px;
+      border: 2px solid var(--border);
+      transition: all .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .why-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 4px;
+      background: var(--grad, linear-gradient(90deg,var(--purple),var(--purple-light)));
+    }
+    .why-card:hover { transform:translateY(-6px); box-shadow:var(--shadow-md); }
+    .why-icon { font-size:48px; margin-bottom:16px; display:block; animation:floatB 4s ease-in-out infinite; }
+    .why-title { font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--navy); margin-bottom:8px; }
+    .why-desc  { font-size:14px; color:var(--slate); line-height:1.65; }
+
+    /* Oyun / aktivite banner */
+    .games-banner {
+      background: linear-gradient(135deg, #FFD93D, #FF9F43);
+      border-radius: var(--r-xl);
+      padding: 50px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 30px;
+      overflow: hidden;
+      position: relative;
+    }
+    .games-banner::before {
+      content: '🎮';
+      position: absolute;
+      font-size: 200px;
+      right: -30px;
+      top: -30px;
+      opacity: .12;
+    }
+    .games-banner h2 { font-size: clamp(24px,4vw,40px); font-weight:800; color:var(--navy); margin-bottom:10px; }
+    .games-banner p  { font-size:16px; color:rgba(26,16,64,.75); max-width:460px; }
+    .games-links { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+    .game-chip {
+      background: white;
+      border-radius: 50px;
+      padding: 10px 20px;
+      font-weight:800;
+      font-size:14px;
+      color:var(--navy);
+      text-decoration:none;
+      transition: all .25s;
+      box-shadow:0 4px 12px rgba(0,0,0,.12);
+    }
+    .game-chip:hover { transform:translateY(-3px) scale(1.04); box-shadow:0 8px 20px rgba(0,0,0,.18); }
+
+    @media (max-width:680px) {
+      .games-banner { flex-direction:column; text-align:center; padding:36px 24px; }
+      .games-links  { justify-content:center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar ve Footer js/site.js tarafından enjekte edilir -->
+
+  <!-- ─── HERO ─── -->
+  <section class="hero">
+    <!-- Arkaplan blob'ları -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <!-- Dekoratif yıldızlar -->
+    <span class="star-el" style="--sz:24px;--dur:2.2s;--delay:.3s; top:12%; left:8%;">⭐</span>
+    <span class="star-el" style="--sz:18px;--dur:3s;--delay:1s;   top:70%; left:6%;">✨</span>
+    <span class="star-el" style="--sz:20px;--dur:2.5s;--delay:.8s; top:25%; right:5%;">🌟</span>
+    <span class="star-el" style="--sz:16px;--dur:3.2s;--delay:1.5s;bottom:20%; right:8%;">⭐</span>
+    <span class="star-el" style="--sz:22px;--dur:2.8s;--delay:.5s; bottom:30%; left:3%;">✦</span>
+
+    <div class="hero-inner">
+      <!-- Sol: Metin -->
+      <div>
+        <div class="hero-eyebrow">
+          <span>🎓</span> 21 Yıllık Öğretmen
+        </div>
+        <h1 class="hero-h1">
+          Geleceği <span class="c-purple">Kodlayan</span><br>
+          Bireyler <span class="c-coral">Yetiştiriyoruz</span>
+        </h1>
+        <p class="hero-p">
+          Sevgili Öğrencilerim ve Değerli Veliler,<br>
+          Her sabah sınıfa aynı inançla giriyorum: <strong>Akla ve bilime dayanan, sorgulayan, özgüvenli bireyler yetiştirmek.</strong>
+        </p>
+        <p class="hero-p">
+          Atatürk'ün <em>"Hayatta en hakiki mürşit ilimdir"</em> sözünden ilham alarak; teknoloji ve yapay zekâ okuryazarlığını eğitimle buluşturuyorum.
+        </p>
+        <span class="hero-sig">Saygılarımla,<br>Kemal Öğretmen</span>
+        <div class="hero-stats">
+          <div class="hstat">
+            <span class="hstat-n" id="statYil">21+</span>
+            <span class="hstat-l">Yıl Deneyim</span>
+          </div>
+          <div class="hstat">
+            <span class="hstat-n" id="statOgrenci">500+</span>
+            <span class="hstat-l">Öğrenci</span>
+          </div>
+          <div class="hstat">
+            <span class="hstat-n" id="statIcerik">200+</span>
+            <span class="hstat-l">İçerik</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sağ: Görsel -->
+      <div class="hero-visual">
+        <div class="hero-img-frame">
+          <img src="/gorseller/ana-resim.png" alt="Kemal Öğretmen - Dijital Eğitim" class="hero-img-main"
+               onerror="this.src='https://placehold.co/460x380/6C3DED/white?text=Kemal+Öğretmen'">
+          <span class="fl fl-1">🚀</span>
+          <span class="fl fl-2">📚</span>
+          <span class="fl fl-3">✏️</span>
+          <span class="fl fl-4">⭐</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── ÖNE ÇIKANLAR / HABERLER ─── -->
+  <div class="haberler-section" id="haberlerSection">
+    <!-- Ticker bar -->
+    <div class="haberler-baslik-bar">
+      <span class="haberler-etiket">🔔 GÜNCEL</span>
+      <div class="haberler-ticker">
+        <div class="haberler-ticker-track" id="tickerTrack">
+          <!-- JS ile doldurulur -->
+        </div>
+      </div>
+    </div>
+    <!-- Haber kartları -->
+    <div class="haberler-cards-wrap">
+      <div class="haberler-cards" id="haberCards">
+        <!-- JS ile doldurulur -->
+      </div>
+    </div>
+    <div class="haber-nav">
+      <div class="haber-dots" id="haberDots"></div>
+      <button class="haber-nav-btn" id="haberGeri" onclick="haberKaydır(-1)">←</button>
+      <button class="haber-nav-btn" id="haberIleri" onclick="haberKaydır(1)">→</button>
+    </div>
+  </div>
+
+  <!-- ─── KONU BANDINDA HIZLI ERİŞİM ─── -->
+  <div class="subjects-band">
+    <div class="subjects-row">
+      <a href="/1_sinif/okuma_anlama/1_okuma_anlama.html" class="subj-pill">
+        <span class="subj-pill-em">📖</span>
+        <span class="subj-pill-lbl">Okuma<br>Anlama(Eski)</span>
+      </a>
+      <a href="/1_sinif/matematik/matematik.html" class="subj-pill">
+        <span class="subj-pill-em">🔢</span>
+        <span class="subj-pill-lbl">Matematik</span>
+      </a>
+      <a href="/1_sinif/turkce/turkce.html" class="subj-pill">
+        <span class="subj-pill-em">📝</span>
+        <span class="subj-pill-lbl">Türkçe</span>
+      </a>
+      <a href="/3_sinif/fen_bilimleri/fen_bilimleri.html" class="subj-pill">
+        <span class="subj-pill-em">🔬</span>
+        <span class="subj-pill-lbl">Fen<br>Bilimleri</span>
+      </a>
+      <a href="/1_sinif/hayat_bilgisi/hayat_bilgisi.html" class="subj-pill">
+        <span class="subj-pill-em">🌱</span>
+        <span class="subj-pill-lbl">Hayat<br>Bilgisi</span>
+      </a>
+      <a href="/4_sinif/sosyal_bilgiler/sosyal_bilgiler.html" class="subj-pill">
+        <span class="subj-pill-em">🌍</span>
+        <span class="subj-pill-lbl">Sosyal<br>Bilgiler</span>
+      </a>
+      <a href="/oyun/oyunlar.html" class="subj-pill">
+        <span class="subj-pill-em">🎮</span>
+        <span class="subj-pill-lbl">Eğitim<br>Oyunları</span>
+      </a>
+      <a href="/sinav.html" class="subj-pill">
+        <span class="subj-pill-em">📋</span>
+        <span class="subj-pill-lbl">Sınav<br>Hazırlık</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── SINIF KARTLARI ─── -->
+  <section class="section">
+    <div class="section-header">
+      <span class="sec-tag">Sınıflara Göre</span>
+      <h2 class="sec-title">Sınıfını <span>Seç, Keşfet!</span></h2>
+      <p class="sec-sub">Her sınıf için özenle hazırlanmış interaktif içerikler seni bekliyor.</p>
+    </div>
+
+    <div class="grade-grid">
+
+      <div class="grade-card" data-g="1">
+        <div class="gc-top">
+          <div class="gc-num">1</div>
+          <div>
+            <div class="gc-label">1. Sınıf</div>
+            <div class="gc-sub">İlk adımlar başlıyor! 🌱</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="/1_sinif/turkce/turkce.html"               class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/1_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/1_sinif/hayat_bilgisi/hayat_bilgisi.html"  class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
+        </div>
+      </div>
+
+      <div class="grade-card" data-g="2">
+        <div class="gc-top">
+          <div class="gc-num">2</div>
+          <div>
+            <div class="gc-label">2. Sınıf</div>
+            <div class="gc-sub">Büyüyoruz! 📚</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="/2_sinif/turkce/turkce.html"               class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/2_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/2_sinif/hayat_bilgisi/hayat_bilgisi.html"  class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
+        </div>
+      </div>
+
+      <div class="grade-card" data-g="3">
+        <div class="gc-top">
+          <div class="gc-num">3</div>
+          <div>
+            <div class="gc-label">3. Sınıf</div>
+            <div class="gc-sub">Keşfetme zamanı! 🔬</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="/3_sinif/turkce/turkce.html"                class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/3_sinif/matematik/matematik.html"           class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/3_sinif/hayat_bilgisi/hayat_bilgisi.html"   class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
+          <a href="/3_sinif/fen_bilimleri/fen_bilimleri.html"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
+        </div>
+      </div>
+
+      <div class="grade-card" data-g="4">
+        <div class="gc-top">
+          <div class="gc-num">4</div>
+          <div>
+            <div class="gc-label">4. Sınıf</div>
+            <div class="gc-sub">Dünyayı anlıyoruz! 🌍</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="/4_sinif/turkce/turkce.html"                class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/4_sinif/matematik/matematik.html"           class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/4_sinif/sosyal_bilgiler/sosyal_bilgiler.html" class="subj-link"><span class="subj-em">🌍</span> Sosyal Bilgiler</a>
+          <a href="/4_sinif/fen_bilimleri/fen_bilimleri.html"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
+        </div>
+      </div>
+
+      <div class="grade-card" data-g="5">
+        <div class="gc-top">
+          <div class="gc-num" style="font-size:14px;">5-6</div>
+          <div>
+            <div class="gc-label">5-6. Sınıf</div>
+            <div class="gc-sub">Ortaokula hoş geldin! 🎒</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="/5_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> 5. Sınıf Mat</a>
+          <a href="/5_sinif/fen_bilimleri/fen_bilimleri.html"  class="subj-link"><span class="subj-em">🔬</span> 5. Sınıf Fen</a>
+          <a href="/6_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> 6. Sınıf Mat</a>
+          <a href="/6_sinif/fen_bilimleri/fen_bilimleri.html"  class="subj-link"><span class="subj-em">🔬</span> 6. Sınıf Fen</a>
+        </div>
+      </div>
+
+      <div class="grade-card" data-g="7">
+        <div class="gc-top">
+          <div class="gc-num" style="font-size:20px;">7</div>
+          <div>
+            <div class="gc-label">7. Sınıf</div>
+            <div class="gc-sub">Zirveye çıkıyoruz! 🏆</div>
+          </div>
+        </div>
+        <div class="gc-subjects">
+          <a href="/7_sinif/fen_bilimleri/matematik.html"       class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/7_sinif/fen_bilimleri/fen_bilimleri.html"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── HIZLI ERİŞİM KARTLARI ─── -->
+  <section class="section" style="padding-top:0;">
+    <div class="section-header">
+      <span class="sec-tag coral">Öne Çıkanlar</span>
+      <h2 class="sec-title">Hızlı <span>Erişim</span></h2>
+      <p class="sec-sub">En çok tercih edilen içeriklere hemen ulaş!</p>
+    </div>
+    <div class="quick-grid" id="quickGrid">
+      <!-- JS ile doldurulur -->
+    </div>
+  </section>
+
+  <!-- ─── NEDEN KEMAL ÖĞRETMEN ─── -->
+  <section class="section" style="padding-top:0;">
+    <div class="section-header">
+      <span class="sec-tag teal">Felsefem</span>
+      <h2 class="sec-title">Neden <span>Farklıyız?</span></h2>
+    </div>
+    <div class="why-grid">
+      <div class="why-card" style="--grad:linear-gradient(90deg,var(--purple),var(--purple-light));">
+        <span class="why-icon">🧠</span>
+        <div class="why-title">Ezber Değil, Anlayış</div>
+        <p class="why-desc">Öğrencilerin konuyu gerçekten anlaması için sorgulayıcı ve araştırmacı bir yaklaşım benimsiyorum.</p>
+      </div>
+      <div class="why-card" style="--grad:linear-gradient(90deg,var(--coral),#FF9A4A);">
+        <span class="why-icon">🎮</span>
+        <div class="why-title">Oyunla Öğrenme</div>
+        <p class="why-desc">Eğlenceli oyunlar ve interaktif aktivitelerle öğrenme sürecini keyifli bir yolculuğa dönüştürüyorum.</p>
+      </div>
+      <div class="why-card" style="--grad:linear-gradient(90deg,var(--teal),var(--mint));">
+        <span class="why-icon">🤖</span>
+        <div class="why-title">Teknoloji Okuryazarlığı</div>
+        <p class="why-desc">Çağımızın gerektirdiği yapay zekâ ve teknoloji okuryazarlığını eğitimle birleştiriyorum.</p>
+      </div>
+      <div class="why-card" style="--grad:linear-gradient(90deg,var(--yellow-dark),#FFB800);">
+        <span class="why-icon">❤️</span>
+        <div class="why-title">Sevgi ile Eğitim</div>
+        <p class="why-desc">Her çocuğun öğrenme potansiyeline inanıyor, özgüvenli ve mutlu bireyler yetiştiriyorum.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── OYUNLAR BANNER ─── -->
+  <div class="section" style="padding-top:0;">
+    <div class="games-banner">
+      <div>
+        <h2>🎮 Oyna, Öğren, Eğlen!</h2>
+        <p>Her sınıf için özel tasarlanmış eğitim oyunlarıyla hem eğlen hem öğren. Sıkıcı çalışma yok — sadece macera!</p>
+        <div class="games-links">
+          <a href="/oyun/oyunlar.html"  class="game-chip">Eğlenceli Oyunlar 🚀</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/site.js"></script>
+  <script>
+    const RENKLER = ['purple','coral','teal','yellow','navy'];
+    const EMOJI_FALLBACK = ['📖','🎮','🔢','🔬','🌟','📝','🌱','⭐'];
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const data = window.kemalSite ? window.kemalSite.getData() : null;
+
+      /* ── HABERLER ── */
+      const haberler = (data && data.onecikarlar ? data.onecikarlar : []).filter(h => h.aktif);
+      const cards    = document.getElementById('haberCards');
+      const ticker   = document.getElementById('tickerTrack');
+      const dots     = document.getElementById('haberDots');
+
+      const DEFAULT_HABERLER = [
+        { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün' },
+        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', link:'/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
+        { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
+      ];
+
+      const liste = haberler.length ? haberler : DEFAULT_HABERLER;
+
+      // Kartlar
+      cards.innerHTML = liste.map((h, i) => {
+        const renk = h.renk || RENKLER[i % RENKLER.length];
+        const tarihStr = h.tarih ? new Date(h.tarih).toLocaleDateString('tr-TR', {day:'numeric',month:'long'}) : (h.tarih||'');
+        return `
+          <a href="${h.link||'#'}" class="haber-card">
+            <div class="haber-card-top">
+              <div class="haber-em ${renk}">${h.emoji||EMOJI_FALLBACK[i%8]}</div>
+              <div>
+                <div class="haber-cat">Öne Çıkan</div>
+                <div class="haber-tarih">${tarihStr}</div>
+              </div>
+            </div>
+            <div class="haber-title">${h.baslik}</div>
+            <div class="haber-desc">${h.aciklama||''}</div>
+            <div class="haber-devami">Devamını Gör →</div>
+          </a>`;
+      }).join('');
+
+      // Ticker
+      const tickerItems = [...liste, ...liste].map(h =>
+        `<a href="${h.link||'#'}" class="ticker-item">${h.emoji||'📌'} ${h.baslik}<span class="ticker-sep">|</span></a>`
+      ).join('');
+      ticker.innerHTML = tickerItems;
+
+      // Dots
+      const visible = Math.ceil(cards.offsetWidth / 300) || 3;
+      const pageCount = Math.ceil(liste.length / visible);
+      dots.innerHTML = Array.from({length: pageCount}, (_,i) =>
+        `<div class="haber-dot ${i===0?'aktif':''}" onclick="haberSayfaGit(${i})"></div>`
+      ).join('');
+
+      /* ── HIZLI ERİŞİM KARTLARI ── */
+      const quickCards  = data && data.hizliErisim ? data.hizliErisim.filter(c => c.aktif) : [];
+      const grid = document.getElementById('quickGrid');
+      if (!grid) return;
+
+      if (quickCards.length === 0) {
+        grid.innerHTML = `
+          <a href="/hizli-okuma/index.html" class="qcard" data-c="purple">
+            <span class="qcard-em">📖</span>
+            <div class="qcard-title">Hızlı Okuma</div>
+            <p class="qcard-desc">Sınıfına göre metin seç, oku, karnen çıksın!</p>
+            <span class="qcard-btn">Okumaya Başla →</span>
+          </a>
+          <a href="/oyunlar.html" class="qcard" data-c="coral">
+            <span class="qcard-em">🎮</span>
+            <div class="qcard-title">Eğitim Oyunları</div>
+            <p class="qcard-desc">Eğlenceli oyunlarla öğren, keşfet!</p>
+            <span class="qcard-btn">Oyunlara Git →</span>
+          </a>
+          <a href="/3_sinif/okuma_anlama/okuma_anlama.html" class="qcard" data-c="teal">
+            <span class="qcard-em">📚</span>
+            <div class="qcard-title">3. ve 4. Sınıflar</div>
+            <p class="qcard-desc">İleri düzey okuma çalışmaları ve özel metinler.</p>
+            <span class="qcard-btn">Keşfet →</span>
+          </a>`;
+        return;
+      }
+
+      grid.innerHTML = quickCards.map(c => `
+        <a href="${c.link}" class="qcard" data-c="${c.renk}">
+          <span class="qcard-em">${c.emoji}</span>
+          <div class="qcard-title">${c.baslik}</div>
+          <p class="qcard-desc">${c.aciklama}</p>
+          <span class="qcard-btn">Git →</span>
+        </a>`).join('');
+    });
+
+    /* ── HABER KAYDIRMA ── */
+    let haberSayfa = 0;
+    function haberKaydır(yon) {
+      const cards  = document.getElementById('haberCards');
+      const w = cards.querySelector('.haber-card')?.offsetWidth || 300;
+      const visible = Math.floor(cards.offsetWidth / w) || 1;
+      const total = cards.querySelectorAll('.haber-card').length;
+      const maxPage = Math.ceil(total / visible) - 1;
+      haberSayfa = Math.max(0, Math.min(maxPage, haberSayfa + yon));
+      cards.scrollTo({ left: haberSayfa * w * visible, behavior: 'smooth' });
+      document.querySelectorAll('.haber-dot').forEach((d,i) => d.classList.toggle('aktif', i===haberSayfa));
+    }
+    function haberSayfaGit(i) { haberSayfa = i - 1; haberKaydır(1); }
+
+    // İstatistik sayaçları
+    function animCount(el, target, suffix) {
+      let cur = 0;
+      const step = Math.ceil(parseInt(target)/40);
+      const t = setInterval(() => {
+        cur = Math.min(cur + step, parseInt(target));
+        el.textContent = cur + suffix;
+        if (cur >= parseInt(target)) clearInterval(t);
+      }, 30);
+    }
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          animCount(document.getElementById('statYil'),     '21', '+');
+          animCount(document.getElementById('statOgrenci'), '500', '+');
+          animCount(document.getElementById('statIcerik'),  '200', '+');
+          obs.disconnect();
+        }
+      });
+    });
+    const statEl = document.querySelector('.hero-stats');
+    if (statEl) obs.observe(statEl);
+  </script>
+</body>
+</html>
