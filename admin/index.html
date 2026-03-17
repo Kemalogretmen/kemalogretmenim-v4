@@ -335,6 +335,10 @@
         <span class="em">🔗</span><span>Ekstra Menü</span>
       </button>
 
+      <button class="side-btn" onclick="window.location='/admin/oyunlar-admin.html'" id="btn-oyunlar">
+        <span class="em">🎮</span><span>Oyunlar Yönetimi</span>
+      </button>
+
       <span class="nav-section-lbl">Araçlar</span>
       <button class="side-btn" onclick="showPanel('sifre')" id="btn-sifre">
         <span class="em">🔑</span><span>Şifre Değiştir</span>
@@ -426,7 +430,7 @@
           </p>
           <div id="badgeList" style="display:flex;flex-direction:column;gap:12px;"></div>
           <div style="margin-top:20px;">
-            <button class="btn-save" onclick="saveBadges()">💾 Kaydet</button>
+            <button class="btn-save" onclick="saveBadges(true)">💾 Kaydet</button>
           </div>
         </div>
       </div>
@@ -813,7 +817,7 @@ const GRADE_DEFS = [
   { key:'3sinif', label:'3. Sınıf', em:'📘' },
   { key:'4sinif', label:'4. Sınıf', em:'📙' },
   { key:'ortaokul', label:'Ortaokul', em:'🎒' },
-  { key:'HizliOkuma', label:'Hızlı Okuma', em:'📖' },
+  { key:'hizliokuma', label:'Hızlı Okuma', em:'📖' },
   { key:'oyunlar', label:'Oyunlar', em:'🔮' }
 ];
 
@@ -832,16 +836,21 @@ function renderBadges(d) {
     </div>`).join('');
 }
 
-function previewBadge() {}
+function previewBadge() {
+  // Anında kaydet (toggle'a her basışta)
+  saveBadges(false);
+}
 
-function saveBadges() {
+function saveBadges(showToast = true) {
   const d = loadData();
   d.menuBadges = {};
   GRADE_DEFS.forEach(g => {
     const el = document.getElementById('badge_' + g.key);
     if (el) d.menuBadges[g.key] = el.checked;
   });
-  saveData(d); renderBadges(d);
+  localStorage.setItem('kemal_site_data', JSON.stringify(d));
+  if (showToast) { updateStats(d); toast('✅ Rozetler güncellendi!', 'success'); }
+  renderBadges(d);
 }
 
 /* ─── HIZLI ERİŞİM ─────────────────────────────── */

@@ -58,23 +58,101 @@
     .back-btn:hover { border-color:var(--purple); color:var(--purple); }
     .metin-title { font-family:var(--font-display); font-size:22px; font-weight:800; color:var(--navy); }
 
-    .metin-list { display:flex; flex-direction:column; gap:14px; }
-    .metin-card {
-      background:white; border:2px solid var(--border); border-radius:var(--r-lg);
-      padding:20px 24px; cursor:pointer; display:flex; align-items:center;
-      gap:18px; transition:all .3s cubic-bezier(.34,1.56,.64,1);
+    /* Metin listesi — 2 sütunlu grid */
+    .metin-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
     }
-    .metin-card:hover { border-color:var(--purple); transform:translateX(6px); box-shadow:var(--shadow-sm); }
-    .mc-em { font-size:36px; width:52px; text-align:center; flex-shrink:0; }
-    .mc-body { flex:1; }
-    .mc-title  { font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--navy); margin-bottom:4px; }
-    .mc-meta   { font-size:13px; color:var(--slate); display:flex; gap:14px; flex-wrap:wrap; }
-    .mc-badge  { background:#F0EBFF; color:var(--purple); padding:3px 10px; border-radius:20px; font-weight:800; font-size:11px; }
-    .mc-arrow  { font-size:22px; color:var(--purple); transition:transform .2s; }
-    .metin-card:hover .mc-arrow { transform:translateX(4px); }
+    .metin-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    .metin-card:hover {
+      border-color: var(--purple);
+      transform: translateY(-3px) scale(1.01);
+      box-shadow: 0 8px 20px rgba(108,61,237,.12);
+    }
+    .mc-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .mc-no {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--muted);
+      background: var(--bg,#F5F0FF);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mc-em { font-size: 28px; }
+    .mc-body { flex: 1; min-width: 0; }
+    .mc-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mc-meta   { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .mc-badge  { padding: 2px 8px; border-radius: 20px; font-weight: 800; font-size: 10px; }
+    .badge-tam { background: #EFF7FF; color: #185FA5; }
+    .badge-kw  { background: #F5EAFF; color: #7D3C98; }
+    .mc-chip   { font-size: 10px; font-weight: 700; color: var(--muted); }
+    .mc-arrow  { font-size: 18px; color: var(--purple); transition: transform .2s; flex-shrink: 0; }
+    .metin-card:hover .mc-arrow { transform: translateX(4px); }
+
+    /* Sayfalama */
+    .metin-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .mp-btn {
+      padding: 8px 14px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      font-family: var(--font-body);
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all .2s;
+      color: var(--slate);
+    }
+    .mp-btn:hover:not(:disabled) { border-color: var(--purple); color: var(--purple); }
+    .mp-btn.active { background: var(--purple); color: white; border-color: var(--purple); }
+    .mp-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .mp-info { font-size: 12px; color: var(--muted); font-weight: 700; padding: 0 4px; }
 
     .no-metin { text-align:center; padding:60px 20px; color:var(--slate); }
     .no-metin span { font-size:60px; display:block; margin-bottom:14px; }
+
+    @media(max-width:580px) {
+      .metin-grid { grid-template-columns: 1fr; }
+      .mc-title { white-space: normal; }
+    }
 
     /* ── ADIM 3: Giriş ── */
     .giris-card { background:white; border:2px solid var(--border); border-radius:var(--r-xl); padding:36px; max-width:560px; margin:0 auto; }
@@ -283,18 +361,38 @@
       await loadMetinler(sinif);
     }
 
+    let tumMetinler = [];
+    let aktifSayfa  = 1;
+    const SAYFA_BOYUT = 10;
+
     async function loadMetinler(sinif) {
       const list = document.getElementById('metinListesi');
       list.innerHTML = '<div class="loading"><span>⏳</span>Metinler yükleniyor…</div>';
+      aktifSayfa = 1;
 
+      // sinif sütunu VEYA siniflar dizisi içinde eşleşen metinleri çek
       const { data, error } = await sb
         .from('metinler')
-        .select('id,baslik,sinif,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif')
-        .eq('sinif', sinif)
+        .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif')
         .eq('aktif', true)
         .order('olusturma_tarihi', { ascending: false });
 
-      if (error || !data || data.length === 0) {
+      if (error) {
+        list.innerHTML = `<div class="no-metin"><span>⚠️</span><p>Yüklenemedi.</p></div>`;
+        return;
+      }
+
+      // İstemci tarafında filtrele: sinif sütunu veya siniflar dizisi eşleşsin
+      tumMetinler = (data || []).filter(m => {
+        const sf = m.siniflar && m.siniflar.length ? m.siniflar : (m.sinif ? [m.sinif] : []);
+        return sf.includes(sinif);
+      });
+
+      renderMetinSayfasi(list);
+    }
+
+    function renderMetinSayfasi(list) {
+      if (!tumMetinler.length) {
         list.innerHTML = `
           <div class="no-metin">
             <span>📭</span>
@@ -303,23 +401,57 @@
         return;
       }
 
-      list.innerHTML = data.map(m => {
-        const mod = m.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
-        const hiz = m.hedef_hiz ? ` · Hedef: ${m.hedef_hiz} k/dk` : '';
-        const kw  = m.kelime_sayisi ? ` · ${m.kelime_sayisi} kelime` : '';
+      const topSayfa  = Math.ceil(tumMetinler.length / SAYFA_BOYUT);
+      const baslangic = (aktifSayfa - 1) * SAYFA_BOYUT;
+      const sayfa     = tumMetinler.slice(baslangic, baslangic + SAYFA_BOYUT);
+
+      const EMOJILER = ['📖','📚','✏️','🌟','📝','🔖','📓','🗒️','📃','🌈'];
+
+      const kartHTML = sayfa.map((m, i) => {
+        const mod    = m.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+        const modCls = m.goruntuleme_modu === 'kelime' ? 'badge-kw' : 'badge-tam';
+        const hiz    = m.hedef_hiz    ? `${m.hedef_hiz} k/dk` : '';
+        const kw     = m.kelime_sayisi ? `${m.kelime_sayisi} kelime` : '';
+        const em     = EMOJILER[(baslangic + i) % EMOJILER.length];
         return `
           <div class="metin-card" onclick="metinSec('${m.id}')">
-            <span class="mc-em">📖</span>
+            <div class="mc-left">
+              <div class="mc-no">${baslangic + i + 1}</div>
+              <span class="mc-em">${em}</span>
+            </div>
             <div class="mc-body">
               <div class="mc-title">${escHtml(m.baslik)}</div>
               <div class="mc-meta">
-                <span class="mc-badge">${mod}</span>
-                <span>${kw}${hiz}</span>
+                <span class="mc-badge ${modCls}">${mod}</span>
+                ${kw ? `<span class="mc-chip">📊 ${kw}</span>` : ''}
+                ${hiz ? `<span class="mc-chip">🎯 ${hiz}</span>` : ''}
               </div>
             </div>
             <span class="mc-arrow">→</span>
           </div>`;
       }).join('');
+
+      // Sayfalama HTML
+      let pgHTML = '';
+      if (topSayfa > 1) {
+        pgHTML = `<div class="metin-pagination">`;
+        pgHTML += `<button class="mp-btn" onclick="sayfaDegis(${aktifSayfa-1})" ${aktifSayfa===1?'disabled':''}>← Önceki</button>`;
+        for (let i = 1; i <= topSayfa; i++) {
+          pgHTML += `<button class="mp-btn ${i===aktifSayfa?'active':''}" onclick="sayfaDegis(${i})">${i}</button>`;
+        }
+        pgHTML += `<button class="mp-btn" onclick="sayfaDegis(${aktifSayfa+1})" ${aktifSayfa===topSayfa?'disabled':''}>Sonraki →</button>`;
+        pgHTML += `<span class="mp-info">${tumMetinler.length} metin · Sayfa ${aktifSayfa}/${topSayfa}</span>`;
+        pgHTML += `</div>`;
+      }
+
+      list.innerHTML = `<div class="metin-grid">${kartHTML}</div>${pgHTML}`;
+    }
+
+    function sayfaDegis(s) {
+      aktifSayfa = s;
+      const list = document.getElementById('metinListesi');
+      renderMetinSayfasi(list);
+      list.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     /* ── Adım 2 → 3: Metin Seç ── */

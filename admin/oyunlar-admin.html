@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 Oyunlar Yönetimi — Kemal Öğretmenim</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap');
+    :root{
+      --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
+      --coral:#FF6052;--teal:#00C9B1;--navy:#1A1040;
+      --slate:#64748B;--muted:#94A3B8;--bg:#F5F0FF;
+      --white:#fff;--border:#E2D9FF;--success:#10B981;--danger:#EF4444;
+      --r-sm:10px;--r-md:16px;--r-lg:22px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--navy);}
+
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;}
+    .login-box{background:white;border-radius:24px;padding:44px;max-width:360px;width:100%;text-align:center;border:2px solid var(--border);box-shadow:0 20px 60px rgba(108,61,237,.15);}
+    .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
+    .login-input:focus{border-color:var(--purple);}
+    .login-btn{width:100%;padding:13px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:15px;cursor:pointer;}
+
+    .app{display:none;}
+    .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .topbar-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--purple);}
+    .topbar-links{display:flex;gap:8px;}
+    .t-link{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);}
+    .t-link:hover{border-color:var(--purple);color:var(--purple);}
+    .logout-btn{padding:7px 14px;background:rgba(239,68,68,.1);border:none;border-radius:50px;color:var(--danger);font-weight:800;font-size:13px;cursor:pointer;}
+
+    .main{max-width:1100px;margin:0 auto;padding:24px 20px;}
+
+    .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+    .page-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;}
+    .btn-yeni{padding:11px 22px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s;}
+    .btn-yeni:hover{background:var(--purple-dark);transform:translateY(-1px);}
+
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+
+    .kart{background:white;border-radius:var(--r-lg);padding:22px;border:2px solid var(--border);margin-bottom:20px;}
+    .kart-title{font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;color:var(--purple);margin-bottom:16px;}
+    label{display:block;font-size:13px;font-weight:800;color:var(--slate);margin-bottom:6px;}
+    input[type="text"],input[type="url"],select,textarea{
+      width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:10px;
+      font-family:'Nunito',sans-serif;font-size:14px;color:var(--navy);background:#FAFAFF;
+      outline:none;transition:border-color .2s;margin-bottom:12px;
+    }
+    textarea{min-height:100px;resize:vertical;}
+    input:focus,select:focus,textarea:focus{border-color:var(--purple);background:white;}
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+    .tip-secim{display:flex;gap:10px;margin-bottom:14px;}
+    .tip-btn{flex:1;padding:10px;border:2px solid var(--border);border-radius:10px;background:white;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;text-align:center;}
+    .tip-btn:hover,.tip-btn.active{border-color:var(--purple);background:#F0EBFF;color:var(--purple);}
+
+    .iframe-preview{border:2px solid var(--border);border-radius:10px;padding:12px;background:#FAFAFF;margin-bottom:12px;min-height:60px;font-size:13px;color:var(--muted);}
+    .iframe-preview iframe{width:100%;border-radius:8px;}
+
+    .btn-ekle{width:100%;padding:13px;background:linear-gradient(135deg,var(--teal),#00A891);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s;}
+    .btn-ekle:hover{transform:translateY(-1px);}
+
+    /* Oyun kartları */
+    .filtre-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+    .f-btn{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;border:2px solid var(--border);background:white;cursor:pointer;transition:all .2s;}
+    .f-btn:hover,.f-btn.active{background:var(--purple);color:white;border-color:var(--purple);}
+
+    .oyun-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .oyun-kart{background:white;border-radius:var(--r-lg);border:2px solid var(--border);overflow:hidden;transition:all .25s;}
+    .oyun-kart:hover{box-shadow:0 8px 24px rgba(0,0,0,.1);transform:translateY(-3px);}
+    .ok-header{padding:14px 16px;display:flex;align-items:center;gap:12px;}
+    .ok-em{font-size:32px;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .ok-info{flex:1;}
+    .ok-title{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:var(--navy);}
+    .ok-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .ok-badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;}
+    .ok-badge.kat{background:#F0EBFF;color:var(--purple);}
+    .ok-badge.sinif{background:#EFF7FF;color:#185FA5;}
+    .ok-badge.seviye{background:#DCFCE7;color:#15803D;}
+    .ok-badge.pasif{background:#FEE2E2;color:#DC2626;}
+    .ok-meta{padding:0 16px 14px;font-size:12px;color:var(--muted);}
+    .ok-actions{display:flex;border-top:1px solid var(--border);}
+    .ok-btn{flex:1;padding:10px;border:none;background:none;font-weight:800;font-size:13px;cursor:pointer;transition:background .15s;}
+    .ok-btn:hover{background:var(--bg);}
+    .ok-btn.edit{color:var(--purple);}
+    .ok-btn.del{color:var(--danger);border-left:1px solid var(--border);}
+    .ok-btn.toggle{color:var(--teal);border-left:1px solid var(--border);}
+
+    .bos{text-align:center;padding:60px;color:var(--muted);}
+    .bos span{font-size:52px;display:block;margin-bottom:14px;}
+    .loading-txt{text-align:center;padding:40px;color:var(--muted);}
+
+    .toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:14px;font-weight:800;font-size:14px;color:white;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;transform:translateY(10px);pointer-events:none;}
+    .toast.show{opacity:1;transform:translateY(0);}
+    .toast.success{background:var(--success);}
+    .toast.error{background:var(--danger);}
+
+    @media(max-width:800px){.grid-2{grid-template-columns:1fr;}.form-row-2{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:52px;margin-bottom:12px;">🎮</div>
+    <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;margin-bottom:6px;">Oyunlar Yönetimi</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:22px;">Kemal Öğretmenim</p>
+    <input class="login-input" type="password" id="loginPass" placeholder="Şifre…">
+    <button class="login-btn" onclick="doLogin()">Giriş →</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-title">🎮 Oyunlar Yönetimi</div>
+    <div class="topbar-links">
+      <a href="/admin/index.html" class="t-link">⚙️ Site Yönetimi</a>
+      <a href="/oyun/oyunlar.html" target="_blank" class="t-link">🌐 Oyunlar Sayfası</a>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Çıkış 🚪</button>
+  </div>
+
+  <div class="main">
+    <div class="page-header">
+      <div class="page-title">🎮 Tüm Oyunlar</div>
+    </div>
+
+    <div class="grid-2">
+
+      <!-- SOL: Ekle / Düzenle -->
+      <div>
+        <div class="kart">
+          <div class="kart-title" id="formTitle">➕ Yeni Oyun Ekle</div>
+          <input type="hidden" id="editId">
+
+          <!-- Oyun tipi -->
+          <label>Oyun Tipi</label>
+          <div class="tip-secim">
+            <button class="tip-btn active" id="tipLink" onclick="tipSec('link')">🔗 Sayfa Linki</button>
+            <button class="tip-btn" id="tipIframe" onclick="tipSec('iframe')">📦 Iframe Kodu</button>
+          </div>
+
+          <div id="linkAlan">
+            <label>Oyun URL'si *</label>
+            <input type="text" id="fUrl" placeholder="/oyun/oyun1.html veya https://…">
+          </div>
+          <div id="iframeAlan" style="display:none;">
+            <label>Iframe Kodu *</label>
+            <textarea id="fIframe" placeholder='<iframe src="https://wordwall.net/…" width="500" height="380" frameborder="0" allowfullscreen></iframe>' oninput="iframeOnizle()"></textarea>
+            <div class="iframe-preview" id="iframePreview">Kodu yapıştırınca oyun önizlemesi burada görünür…</div>
+          </div>
+
+          <label>Oyun Adı *</label>
+          <input type="text" id="fAd" placeholder="Örn: Kelime Bulmaca">
+
+          <label>Açıklama</label>
+          <input type="text" id="fAciklama" placeholder="Kısa bir açıklama…">
+
+          <div class="form-row-2">
+            <div>
+              <label>Kategori</label>
+              <select id="fKategori">
+                <option value="Genel">Genel</option>
+                <option value="Türkçe">Türkçe</option>
+                <option value="Matematik">Matematik</option>
+                <option value="Fen">Fen Bilimleri</option>
+                <option value="Sosyal">Sosyal Bilgiler</option>
+                <option value="Hayat Bilgisi">Hayat Bilgisi</option>
+                <option value="Strateji">Strateji</option>
+                <option value="Hafıza">Hafıza</option>
+                <option value="Bulmaca">Bulmaca</option>
+              </select>
+            </div>
+            <div>
+              <label>Seviye</label>
+              <select id="fSeviye">
+                <option value="Tümü">Tümü</option>
+                <option value="Kolay">🟢 Kolay</option>
+                <option value="Orta">🟡 Orta</option>
+                <option value="Zor">🔴 Zor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div>
+              <label>Sınıf Düzeyi</label>
+              <select id="fSinif">
+                <option value="Tümü">Tümü</option>
+                <option value="1">1. Sınıf</option><option value="2">2. Sınıf</option>
+                <option value="3">3. Sınıf</option><option value="4">4. Sınıf</option>
+                <option value="5">5. Sınıf</option><option value="6">6. Sınıf</option>
+                <option value="7">7. Sınıf</option><option value="8">8. Sınıf</option>
+              </select>
+            </div>
+            <div>
+              <label>İkon Emoji</label>
+              <input type="text" id="fEmoji" placeholder="🎮" maxlength="4">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;">
+            <button class="btn-ekle" onclick="kaydetOyun()">💾 Kaydet</button>
+            <button style="padding:12px 18px;border:2px solid var(--border);border-radius:50px;background:white;font-weight:800;font-size:13px;cursor:pointer;" onclick="formSifirla()">✕ İptal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ: Listele -->
+      <div>
+        <div class="kart">
+          <div class="kart-title">📋 Oyun Listesi <span id="oyunSayi" style="font-size:13px;color:var(--muted);font-weight:700;"></span></div>
+          <div class="filtre-bar">
+            <button class="f-btn active" data-k="" onclick="filtreKat('',this)">Tümü</button>
+            <button class="f-btn" data-k="Türkçe" onclick="filtreKat('Türkçe',this)">Türkçe</button>
+            <button class="f-btn" data-k="Matematik" onclick="filtreKat('Matematik',this)">Matematik</button>
+            <button class="f-btn" data-k="Fen" onclick="filtreKat('Fen',this)">Fen</button>
+            <button class="f-btn" data-k="Strateji" onclick="filtreKat('Strateji',this)">Strateji</button>
+          </div>
+          <div id="oyunListe"><div class="loading-txt">Yükleniyor…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PASS_KEY='kemal_admin_pass'; const DEFAULT_PASS='kemal2026';
+const OYUN_KEY='kemal_oyunlar';
+
+function getPass(){ return localStorage.getItem(PASS_KEY)||DEFAULT_PASS; }
+function doLogin(){
+  const v=document.getElementById('loginPass').value;
+  if(v===getPass()){ sessionStorage.setItem('oyun_auth','1'); document.getElementById('loginScreen').style.display='none'; document.getElementById('app').style.display='block'; renderOyunlar(); }
+  else alert('Hatalı şifre!');
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+});
+function doLogout(){ sessionStorage.removeItem('oyun_auth'); location.reload(); }
+if(sessionStorage.getItem('oyun_auth')==='1'){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.addEventListener('DOMContentLoaded',renderOyunlar);
+}
+
+function getOyunlar(){ try{ const r=localStorage.getItem(OYUN_KEY); return r?JSON.parse(r):[]; }catch(e){return[];} }
+function saveOyunlar(d){ localStorage.setItem(OYUN_KEY,JSON.stringify(d)); }
+
+let aktifKat='';
+let oyunTip='link';
+
+function tipSec(t){
+  oyunTip=t;
+  document.getElementById('tipLink').classList.toggle('active',t==='link');
+  document.getElementById('tipIframe').classList.toggle('active',t==='iframe');
+  document.getElementById('linkAlan').style.display=t==='link'?'block':'none';
+  document.getElementById('iframeAlan').style.display=t==='iframe'?'block':'none';
+}
+
+function iframeOnizle(){
+  const kod=document.getElementById('fIframe').value.trim();
+  const prev=document.getElementById('iframePreview');
+  if(kod.startsWith('<iframe')){
+    prev.innerHTML=kod;
+    const ifr=prev.querySelector('iframe');
+    if(ifr){ifr.style.width='100%';ifr.style.height='220px';}
+  } else { prev.textContent='Kodu yapıştırınca oyun önizlemesi burada görünür…'; }
+}
+
+function kaydetOyun(){
+  const ad=document.getElementById('fAd').value.trim();
+  const kat=document.getElementById('fKategori').value;
+  const sev=document.getElementById('fSeviye').value;
+  const sinif=document.getElementById('fSinif').value;
+  const emoji=document.getElementById('fEmoji').value.trim()||'🎮';
+  const aciklama=document.getElementById('fAciklama').value.trim();
+
+  let url=''; let iframe=''; let tip=oyunTip;
+  if(tip==='link'){
+    url=document.getElementById('fUrl').value.trim();
+    if(!url){toast('URL zorunludur!','error');return;}
+  } else {
+    iframe=document.getElementById('fIframe').value.trim();
+    if(!iframe){toast('Iframe kodu zorunludur!','error');return;}
+    // İframe için otomatik bir oyun sayfası oluştur
+    url='/oyun/oyun_iframe_'+Date.now()+'.html';
+  }
+  if(!ad){toast('Oyun adı zorunludur!','error');return;}
+
+  const editId=document.getElementById('editId').value;
+  const d=getOyunlar();
+
+  if(editId){
+    const idx=d.findIndex(o=>o.id===editId);
+    if(idx>-1){ d[idx]={...d[idx],ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:d[idx].aktif}; }
+    toast('✅ Güncellendi!','success');
+  } else {
+    d.unshift({id:'oyun_'+Date.now(),ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:true});
+    toast('✅ Oyun eklendi!','success');
+  }
+
+  saveOyunlar(d);
+  formSifirla();
+  renderOyunlar();
+}
+
+function formSifirla(){
+  ['fAd','fUrl','fIframe','fAciklama','fEmoji','editId'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fKategori').value='Genel';
+  document.getElementById('fSeviye').value='Tümü';
+  document.getElementById('fSinif').value='Tümü';
+  document.getElementById('formTitle').textContent='➕ Yeni Oyun Ekle';
+  document.getElementById('iframePreview').textContent='Kodu yapıştırınca oyun önizlemesi burada görünür…';
+  tipSec('link');
+}
+
+function editOyun(id){
+  const d=getOyunlar();
+  const o=d.find(x=>x.id===id);
+  if(!o) return;
+  document.getElementById('editId').value=id;
+  document.getElementById('fAd').value=o.ad;
+  document.getElementById('fUrl').value=o.url||'';
+  document.getElementById('fIframe').value=o.iframe||'';
+  document.getElementById('fAciklama').value=o.aciklama||'';
+  document.getElementById('fEmoji').value=o.emoji||'🎮';
+  document.getElementById('fKategori').value=o.kat||'Genel';
+  document.getElementById('fSeviye').value=o.sev||'Tümü';
+  document.getElementById('fSinif').value=o.sinif||'Tümü';
+  document.getElementById('formTitle').textContent='✏️ Oyunu Düzenle';
+  tipSec(o.tip||'link');
+  window.scrollTo(0,0);
+}
+
+function silOyun(id){
+  if(!confirm('Bu oyunu silmek istiyor musunuz?')) return;
+  const d=getOyunlar().filter(o=>o.id!==id);
+  saveOyunlar(d);
+  renderOyunlar();
+  toast('🗑️ Silindi','success');
+}
+
+function toggleOyun(id){
+  const d=getOyunlar();
+  const o=d.find(x=>x.id===id);
+  if(o) o.aktif=!o.aktif;
+  saveOyunlar(d);
+  renderOyunlar();
+  toast(o?.aktif?'✅ Yayına alındı':'⏸️ Durduruldu','success');
+}
+
+function filtreKat(k,btn){
+  aktifKat=k;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOyunlar();
+}
+
+function renderOyunlar(){
+  let d=getOyunlar();
+  if(aktifKat) d=d.filter(o=>o.kat===aktifKat);
+  document.getElementById('oyunSayi').textContent=`(${d.length})`;
+  const wrap=document.getElementById('oyunListe');
+  if(!d.length){wrap.innerHTML='<div class="bos"><span>📭</span><p>Henüz oyun eklenmedi.</p></div>';return;}
+  wrap.innerHTML=d.map(o=>`
+    <div class="oyun-kart" style="margin-bottom:12px;">
+      <div class="ok-header">
+        <div class="ok-em" style="background:#F0EBFF;">${o.emoji||'🎮'}</div>
+        <div class="ok-info">
+          <div class="ok-title">${esc(o.ad)}</div>
+          <div class="ok-badges">
+            ${o.kat?`<span class="ok-badge kat">${o.kat}</span>`:''}
+            ${o.sinif&&o.sinif!=='Tümü'?`<span class="ok-badge sinif">${o.sinif}. Sınıf</span>`:''}
+            ${o.sev&&o.sev!=='Tümü'?`<span class="ok-badge seviye">${o.sev}</span>`:''}
+            ${!o.aktif?`<span class="ok-badge pasif">Pasif</span>`:''}
+            <span class="ok-badge" style="background:#F5F5F5;color:#666;">${o.tip==='iframe'?'📦 Iframe':'🔗 Link'}</span>
+          </div>
+        </div>
+      </div>
+      ${o.aciklama?`<div class="ok-meta">${esc(o.aciklama)}</div>`:''}
+      <div class="ok-actions">
+        <button class="ok-btn edit" onclick="editOyun('${o.id}')">✏️ Düzenle</button>
+        <button class="ok-btn toggle" onclick="toggleOyun('${o.id}')">${o.aktif?'⏸️ Durdur':'▶️ Yayınla'}</button>
+        <button class="ok-btn del" onclick="silOyun('${o.id}')">🗑️ Sil</button>
+      </div>
+    </div>`).join('');
+}
+
+let tt;
+function toast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast '+type+' show';
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2600);
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

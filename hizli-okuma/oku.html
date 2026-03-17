@@ -310,7 +310,12 @@
       icerik.style.fontFamily   = metin.yazi_tipi || 'Nunito';
       icerik.style.fontSize     = (metin.yazi_boyutu || 18) + 'px';
       icerik.style.color        = metin.yazi_rengi || '#1A1040';
-      icerik.innerHTML = (metin.icerik || '').replace(/\n/g, '<br>');
+      // icerik_html varsa onu kullan (biçimlendirme korunur), yoksa düz metni göster
+      if (metin.icerik_html && metin.icerik_html.trim()) {
+        icerik.innerHTML = metin.icerik_html;
+      } else {
+        icerik.innerHTML = (metin.icerik || '').replace(/\n/g, '<br>');
+      }
 
       // Sayaç başlat
       baslangic = Date.now();
@@ -324,7 +329,9 @@
 
     /* ─── KELIME KELIME MODU ─── */
     function baslatKelimeKelime() {
-      kelimeler = (metin.icerik || '').trim().split(/\s+/).filter(w => w.length > 0);
+      // Kelimeler için düz metni kullan (HTML taglerini temizle)
+      const duzMetin = metin.icerik || (metin.icerik_html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim();
+      kelimeler = duzMetin.trim().split(/\s+/).filter(w => w.length > 0);
       kelimeIndex = 0;
 
       const ekran = document.getElementById('kelimeEkran');
@@ -410,8 +417,9 @@
 
     function okumaBitirVeDevamEt(sureMilisaniye) {
       const sureSaniye = sureMilisaniye / 1000;
+      const duzMetinKw = metin.icerik || (metin.icerik_html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim();
       const kelimeSayisi = metin.kelime_sayisi ||
-        (metin.icerik || '').trim().split(/\s+/).filter(w=>w.length>0).length;
+        duzMetinKw.trim().split(/\s+/).filter(w=>w.length>0).length;
       const wpm = Math.round((kelimeSayisi / sureSaniye) * 60);
 
       sessionStorage.setItem('okuma_sure_sn', sureSaniye.toFixed(1));
