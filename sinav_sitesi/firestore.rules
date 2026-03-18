@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function examDoc(examId) {
+      return get(/databases/$(database)/documents/exams/$(examId));
+    }
+
+    function examIsPublished(examId) {
+      return exists(/databases/$(database)/documents/exams/$(examId))
+        && examDoc(examId).data.published == true;
+    }
+
+    function validGrade(g) {
+      return g is int && g >= 1 && g <= 8;
+    }
+
+    function validOptCount(n) {
+      return n is int && n >= 2 && n <= 6;
+    }
+
+    function validTitle(t, maxLen) {
+      return t is string && t.size() >= 1 && t.size() <= maxLen;
+    }
+
+    function validSube(s) {
+      return s is string && s in ['A','B','C','D','E','F','G','H'];
+    }
+
+    function validAnswer(a) {
+      return a is string && a in ['A','B','C','D','E','F'];
+    }
+
+    function validExamCreate() {
+      return validTitle(request.resource.data.title, 140)
+        && validGrade(request.resource.data.grade)
+        && validTitle(request.resource.data.subject, 60)
+        && request.resource.data.duration is int
+        && request.resource.data.duration >= 0
+        && request.resource.data.duration <= 240
+        && request.resource.data.questionCount is int
+        && request.resource.data.questionCount >= 1
+        && request.resource.data.questionCount <= 500
+        && validOptCount(request.resource.data.optionCount)
+        && request.resource.data.negativeMarking is bool
+        && request.resource.data.published is bool
+        && request.resource.data.createdAt == request.time;
+    }
+
+    function validExamUpdate() {
+      return validTitle(request.resource.data.title, 140)
+        && validGrade(request.resource.data.grade)
+        && validTitle(request.resource.data.subject, 60)
+        && request.resource.data.duration is int
+        && request.resource.data.duration >= 0
+        && request.resource.data.duration <= 240
+        && request.resource.data.questionCount is int
+        && request.resource.data.questionCount >= 1
+        && request.resource.data.questionCount <= 500
+        && validOptCount(request.resource.data.optionCount)
+        && request.resource.data.negativeMarking is bool
+        && request.resource.data.published is bool
+        && request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function validQuestionWrite() {
+      return request.resource.data.examId is string
+        && request.resource.data.examId.size() >= 1
+        && exists(/databases/$(database)/documents/exams/$(request.resource.data.examId))
+        && request.resource.data.order is int
+        && request.resource.data.order >= 0
+        && request.resource.data.order <= 5000
+        && validAnswer(request.resource.data.correctAnswer)
+        && (
+          (request.resource.data.imageUrl is string
+            && request.resource.data.imageUrl.size() >= 1
+            && request.resource.data.imageUrl.size() <= 2048)
+          || (request.resource.data.imageData is string
+            && request.resource.data.imageData.size() >= 1
+            && request.resource.data.imageData.size() <= 900000)
+        );
+    }
+
+    function resultKeysOk() {
+      return request.resource.data.keys().hasOnly([
+        'firstName','lastName','grade','sube',
+        'subject','examTitle','examId',
+        'correct','wrong','blank','netCorrect','score','total',
+        'negativeMarking','elapsed','date'
+      ]);
+    }
+
+    function validResultCreate() {
+      return resultKeysOk()
+        && validTitle(request.resource.data.firstName, 40)
+        && validTitle(request.resource.data.lastName, 40)
+        && validGrade(request.resource.data.grade)
+        && validSube(request.resource.data.sube)
+        && validTitle(request.resource.data.subject, 60)
+        && validTitle(request.resource.data.examTitle, 140)
+        && request.resource.data.examId is string
+        && request.resource.data.examId.size() >= 1
+        && examIsPublished(request.resource.data.examId)
+        && request.resource.data.correct is int
+        && request.resource.data.wrong is int
+        && request.resource.data.blank is int
+        && request.resource.data.total is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.wrong >= 0
+        && request.resource.data.blank >= 0
+        && request.resource.data.total > 0
+        && request.resource.data.total <= 500
+        && (request.resource.data.correct + request.resource.data.wrong + request.resource.data.blank) == request.resource.data.total
+        && request.resource.data.negativeMarking is bool
+        && request.resource.data.netCorrect is int
+        && request.resource.data.netCorrect >= 0
+        && request.resource.data.netCorrect <= request.resource.data.correct
+        && (
+          request.resource.data.negativeMarking == true
+          || request.resource.data.netCorrect == request.resource.data.correct
+        )
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 100
+        && request.resource.data.elapsed is int
+        && request.resource.data.elapsed >= 0
+        && request.resource.data.elapsed <= 14400
+        && request.resource.data.date == request.time;
+    }
+
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    match /exams/{examId} {
+      allow read: if isAdmin() || resource.data.published == true;
+      allow create: if isAdmin() && validExamCreate();
+      allow update: if isAdmin() && validExamUpdate();
+      allow delete: if isAdmin();
+    }
+
+    match /questions/{questionId} {
+      allow read: if isAdmin() || examIsPublished(resource.data.examId);
+      allow create, update: if isAdmin() && validQuestionWrite();
+      allow delete: if isAdmin();
+    }
+
+    match /results/{resultId} {
+      allow create: if validResultCreate();
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
+

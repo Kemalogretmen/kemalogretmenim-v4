@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sınav Sistemi — Kemal Öğretmenim</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
+  --navy:#0F172A;--slate:#475569;--muted:#94A3B8;
+  --border:#E2E8F0;--cream:#F8F6FF;--white:#fff;
+  --green:#10B981;--red:#EF4444;--yellow:#F59E0B;
+  --r-sm:8px;--r:12px;--r-lg:16px;--r-xl:24px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.08);
+  --sh:0 4px 12px rgba(0,0,0,.08);
+  --sh-lg:0 10px 30px rgba(0,0,0,.12);
+  --fd:'Nunito',sans-serif;--fb:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:100vh}
+
+/* NAV */
+.navbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1.5px solid var(--border);box-shadow:var(--sh-sm)}
+.nav-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;min-height:64px;gap:0}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;margin-right:16px;cursor:pointer}
+.nav-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--purple),var(--purple-l));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(108,61,237,.3)}
+.nav-logo-text{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--navy);line-height:1.2}
+.nav-logo-text span{color:var(--purple)}
+.nav-grades{display:flex;align-items:center;gap:3px;flex:1;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.nav-grades::-webkit-scrollbar{display:none}
+.gtab{padding:7px 13px;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;border:2px solid transparent;background:transparent;color:var(--slate);font-family:var(--fb)}
+.gtab:hover{background:var(--cream);color:var(--navy)}
+.nav-links{display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:12px}
+.nav-link{padding:7px 13px;border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--slate);text-decoration:none;transition:all .18s}
+.nav-link:hover{color:var(--purple);background:rgba(108,61,237,.07)}
+.nav-admin{padding:7px 16px;background:var(--purple);color:#fff;border-radius:50px;font-size:13px;font-weight:700;text-decoration:none;transition:all .18s;margin-left:6px}
+.nav-admin:hover{background:var(--purple-d);transform:translateY(-1px)}
+
+/* HERO */
+.hero{max-width:1280px;margin:0 auto;padding:70px 24px 50px;text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,61,237,.1);color:var(--purple);font-size:13px;font-weight:700;padding:8px 18px;border-radius:50px;margin-bottom:24px;border:1.5px solid rgba(108,61,237,.2)}
+.hero h1{font-family:var(--fd);font-size:clamp(30px,5vw,54px);font-weight:900;color:var(--navy);line-height:1.15;margin-bottom:18px}
+.hero h1 span{color:var(--purple)}
+.hero p{font-size:17px;color:var(--slate);max-width:580px;margin:0 auto 36px;line-height:1.7}
+.hero-stats{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;margin-bottom:44px}
+.hs-n{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--purple)}
+.hs-l{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+
+/* GRADE CARDS HERO */
+.grade-hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:860px;margin:0 auto}
+.ghc{border-radius:var(--r-xl);padding:26px 12px;text-align:center;cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--sh);position:relative;overflow:hidden}
+.ghc:hover{transform:translateY(-6px) scale(1.03);box-shadow:var(--sh-lg)}
+.ghc::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.1);opacity:0;transition:opacity .2s}
+.ghc:hover::after{opacity:1}
+.ghc-num{font-family:var(--fd);font-size:40px;font-weight:900;color:#fff;line-height:1;text-shadow:0 3px 10px rgba(0,0,0,.2)}
+.ghc-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+
+/* GRADE SECTION */
+.grade-section{max-width:1280px;margin:0 auto;padding:0 24px 60px;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.grade-banner{border-radius:var(--r-xl);padding:24px 30px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.grade-banner h2{font-family:var(--fd);font-size:26px;font-weight:900;color:#fff}
+.grade-banner p{color:rgba(255,255,255,.75);font-size:13px;margin-top:2px}
+.back-btn{padding:8px 18px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
+.back-btn:hover{background:rgba(255,255,255,.3)}
+
+/* SUBJECT FILTERS */
+.subj-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.sf-btn{padding:8px 16px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--white);color:var(--slate);transition:all .18s;font-family:var(--fb)}
+.sf-btn:hover{border-color:var(--purple);color:var(--purple)}
+.sf-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+
+/* EXAM GRID (İKİLİ SÜTUN) */
+.exam-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
+.ec{background:var(--white);border-radius:var(--r-lg);border:1.5px solid var(--border);overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--sh-sm);display:flex;flex-direction:column}
+.ec:hover{transform:translateY(-3px);box-shadow:var(--sh);border-color:rgba(108,61,237,.3)}
+.ec-head{height:96px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:0 12px}
+.ec-sub{font-size:10px;font-weight:800;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.5px}
+.ec-title{font-family:var(--fd);font-size:15px;font-weight:800;color:#fff;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.2);line-height:1.3}
+.ec-body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:10px}
+.ec-meta{display:flex;gap:10px;flex-wrap:wrap}
+.ec-mi{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
+.ec-btn{width:100%;padding:8px;border-radius:var(--r-sm);border:none;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;background:rgba(108,61,237,.07);color:var(--purple)}
+.ec-btn:hover{background:var(--purple);color:#fff}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.pg{width:36px;height:36px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-weight:700;font-size:13px;color:var(--slate);transition:all .18s;font-family:var(--fb);display:flex;align-items:center;justify-content:center}
+.pg:hover{border-color:var(--purple);color:var(--purple)}
+.pg.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.pg:disabled{opacity:.3;cursor:not-allowed}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;animation:fadeUp .2s ease}
+.modal-box{background:var(--white);border-radius:var(--r-xl);padding:30px;width:100%;max-width:440px;box-shadow:var(--sh-lg);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.modal-box h3{font-family:var(--fd);font-size:21px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.modal-sub{font-size:14px;color:var(--slate);margin-bottom:22px;line-height:1.5}
+.exam-info-box{background:var(--cream);border-radius:var(--r);padding:14px;margin-bottom:18px;border:1.5px solid var(--border)}
+.eib-title{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:8px}
+.eib-row{display:flex;gap:12px;flex-wrap:wrap}
+.eib-item{font-size:12px;color:var(--slate);display:flex;align-items:center;gap:4px}
+.neg-warn{font-size:12px;color:var(--red);font-weight:700;display:flex;align-items:center;gap:5px;background:#FEF2F2;padding:8px 10px;border-radius:var(--r-sm);margin-top:8px;border:1px solid #FECACA}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px}
+.fi,.fs{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:var(--r-sm);font-family:var(--fb);font-size:14px;color:var(--navy);background:var(--cream);outline:none;transition:all .2s;-webkit-appearance:none}
+.fi:focus,.fs:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,61,237,.1);background:var(--white)}
+.fi[readonly]{opacity:.7;cursor:default}
+.err-msg{color:var(--red);font-size:12px;font-weight:600;margin-top:8px;display:none;padding:8px 12px;background:#FEF2F2;border-radius:var(--r-sm)}
+.btn-row{display:flex;gap:10px;margin-top:4px}
+.btn{padding:11px 22px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--fb);font-size:14px;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;box-shadow:0 4px 15px rgba(108,61,237,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(108,61,237,.4)}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--slate)}
+.btn-outline:hover{border-color:var(--purple);color:var(--purple)}
+.btn-full{width:100%;flex:1}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-state-icon{font-size:48px;margin-bottom:14px;display:block}
+.empty-state h3{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--navy);margin-bottom:8px}
+.empty-state p{font-size:14px}
+
+/* SPINNER */
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOADING SCREEN */
+#loadScreen{position:fixed;inset:0;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9998}
+#loadScreen p{font-weight:600;color:var(--slate);font-size:14px}
+
+/* FOOTER */
+footer{background:var(--navy);color:rgba(255,255,255,.4);text-align:center;padding:22px;font-size:13px}
+footer a{color:rgba(255,255,255,.6);text-decoration:none}
+footer a:hover{color:#fff}
+
+/* RESPONSIVE (Telefonda otomatik tek sütun) */
+@media(max-width:768px){
+  .grade-hero-grid{grid-template-columns:repeat(4,1fr);gap:10px}
+  .ghc{padding:18px 8px}.ghc-num{font-size:30px}
+  .exam-grid{grid-template-columns:1fr}
+  .nav-inner{padding:0 14px}
+  .hero{padding:40px 16px 36px}
+  .hero-stats{gap:20px}
+  .grade-section{padding:0 14px 40px}
+  .grade-banner{padding:18px 20px}
+  .modal-box{padding:22px}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .ghc-num{font-size:24px}.ghc-lbl{font-size:9px}
+  .nav-links{display:none}
+  .hero h1{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<div id="loadScreen">
+  <div class="spinner" style="margin:0"></div>
+  <p>Yükleniyor...</p>
+</div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo" id="navLogo">
+      <div class="nav-logo-icon">📚</div>
+      <div class="nav-logo-text">Kemal <span>Öğretmenim</span></div>
+    </div>
+    <div class="nav-grades" id="navGrades"></div>
+    <div class="nav-links">
+      <a href="https://kemalogretmenim.com.tr/hakkimda.html" class="nav-link" target="_blank">Hakkımda</a>
+      <a href="https://kemalogretmenim.com.tr/iletisim.html" class="nav-link" target="_blank">İletişim</a>
+      <a href="admin.html" class="nav-admin">⚙️ Yönetim</a>
+    </div>
+  </div>
+</nav>
+
+<div id="heroSection">
+  <div class="hero">
+    <div class="hero-badge">🎓 Kemal Öğretmenim Sınav Platformu</div>
+    <h1>Başarıya Giden Yol<br><span>Buradan Başlıyor</span></h1>
+    <p>Sınıfını seç, sınavını bul ve başarına doğru ilk adımı at. Her sınıf için özel hazırlanmış sorularla kendini test et.</p>
+    <div class="hero-stats">
+      <div><div class="hs-n" id="statExams">—</div><div class="hs-l">Sınav</div></div>
+      <div><div class="hs-n" id="statQ">—</div><div class="hs-l">Soru</div></div>
+      <div><div class="hs-n">8</div><div class="hs-l">Sınıf</div></div>
+    </div>
+    <div class="grade-hero-grid" id="gradeCardsHero"></div>
+  </div>
+</div>
+
+<div id="gradeSection" style="display:none">
+  <div class="grade-section">
+    <div class="grade-banner" id="gradeBanner">
+      <div>
+        <h2 id="gradeBannerTitle"></h2>
+        <p id="gradeBannerSub">Yayınlanan sınavlar aşağıda listeleniyor</p>
+      </div>
+      <button class="back-btn" onclick="showHero()">← Tüm Sınıflar</button>
+    </div>
+    <div class="subj-filters" id="subjFilters"></div>
+    <div id="examGrid"></div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</div>
+
+<div id="studentModal" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <h3>✏️ Sınava Başla</h3>
+    <p class="modal-sub">Bilgilerini doğru gir — sonuçların sana özel kaydedilecek.</p>
+    <div class="exam-info-box" id="eibContent"></div>
+    <div class="form-row">
+      <div class="fg"><label>Ad *</label><input class="fi" id="fnInput" placeholder="Adınız" type="text" autocomplete="given-name"></div>
+      <div class="fg"><label>Soyad *</label><input class="fi" id="lnInput" placeholder="Soyadınız" type="text" autocomplete="family-name"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>Sınıf</label><input class="fi" id="gradeInput" readonly></div>
+      <div class="fg"><label>Şube *</label>
+        <select class="fs" id="subeSelect">
+          <option value="">Şube seçin</option>
+          <option>A</option><option>B</option><option>C</option><option>D</option>
+          <option>E</option><option>F</option><option>G</option><option>H</option>
+        </select>
+      </div>
+    </div>
+    <div class="err-msg" id="modalErr">⚠️ Lütfen tüm alanları eksiksiz doldurun.</div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="closeModal()">İptal</button>
+      <button class="btn btn-primary btn-full" onclick="startExam()">İleri →</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 <a href="https://kemalogretmenim.com.tr" target="_blank">Kemal Öğretmenim</a> — Sınav Platformu</p>
+</footer>
+
+<script type="module">
+import { db } from "./js/firebase.js";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const GRADES=[1,2,3,4,5,6,7,8];
+const SUBJECTS={
+  1:['Tümü','Türkçe','Matematik','Hayat Bilgisi','Deneme'],
+  2:['Tümü','Türkçe','Matematik','Hayat Bilgisi','Deneme'],
+  3:['Tümü','Türkçe','Matematik','Hayat Bilgisi','Fen Bilimleri','Deneme'],
+  4:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  5:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  6:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  7:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  8:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler']
+};
+const GC=[null,
+  {bg:'linear-gradient(135deg,#FF6B6B,#FF8E53)'},
+  {bg:'linear-gradient(135deg,#FF8E53,#FFA726)'},
+  {bg:'linear-gradient(135deg,#FFA726,#FFCC02)'},
+  {bg:'linear-gradient(135deg,#4CAF50,#66BB6A)'},
+  {bg:'linear-gradient(135deg,#26A69A,#26C6DA)'},
+  {bg:'linear-gradient(135deg,#29B6F6,#42A5F5)'},
+  {bg:'linear-gradient(135deg,#5C6BC0,#7E57C2)'},
+  {bg:'linear-gradient(135deg,#AB47BC,#EC407A)'}
+];
+
+let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:10,selExam:null}; // Sayfada 10 sınav ayarı
+
+function fmtDate(ts){
+  if(!ts)return'—';
+  const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);
+  return d.toLocaleDateString('tr-TR');
+}
+function capitalize(s){return s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');}
+
+function initUI(){
+  const nav=document.getElementById('navGrades');
+  nav.innerHTML=GRADES.map(g=>`<button class="gtab" id="gtab${g}" onclick="window.selectGrade(${g})">${g}. Sınıf</button>`).join('');
+  document.getElementById('gradeCardsHero').innerHTML=GRADES.map(g=>`
+    <div class="ghc" style="background:${GC[g].bg}" onclick="window.selectGrade(${g})">
+      <div class="ghc-num">${g}</div>
+      <div class="ghc-lbl">Sınıf</div>
+    </div>`).join('');
+}
+
+window.selectGrade=async function(g){
+  S.grade=g;S.subject='Tümü';S.page=1;
+  GRADES.forEach(x=>{const t=document.getElementById(`gtab${x}`);if(!t)return;t.style.background='';t.style.color='';t.style.borderColor='';});
+  const at=document.getElementById(`gtab${g}`);
+  if(at){at.style.background=GC[g].bg;at.style.color='#fff';at.style.borderColor='transparent';}
+  document.getElementById('heroSection').style.display='none';
+  document.getElementById('gradeSection').style.display='block';
+  const bn=document.getElementById('gradeBanner');
+  bn.style.background=GC[g].bg;
+  document.getElementById('gradeBannerTitle').textContent=`${g}. Sınıf Sınavları`;
+  renderSubjects(g);
+  await loadExams(g);
+};
+
+window.showHero=function(){
+  document.getElementById('heroSection').style.display='block';
+  document.getElementById('gradeSection').style.display='none';
+  GRADES.forEach(x=>{const t=document.getElementById(`gtab${x}`);if(!t)return;t.style.background='';t.style.color='';t.style.borderColor='';});
+  S.grade=null;
+  window.scrollTo({top:0,behavior:'smooth'});
+};
+
+document.getElementById('navLogo').addEventListener('click',()=>window.showHero());
+
+function renderSubjects(g){
+  const ss=SUBJECTS[g]||['Tümü'];
+  document.getElementById('subjFilters').innerHTML=ss.map(s=>`<button class="sf-btn ${s===S.subject?'active':''}" onclick="window.filterSub('${s}')">${s}</button>`).join('');
+}
+
+window.filterSub=function(s){
+  S.subject=s;S.page=1;
+  renderSubjects(S.grade);
+  applyFilter();
+};
+
+async function loadExams(g){
+  const grid=document.getElementById('examGrid');
+  grid.innerHTML='<div class="spinner"></div>';
+  try{
+    let snap;
+    try{
+      snap=await getDocs(query(collection(db,'exams'),where('grade','==',g),where('published','==',true),orderBy('createdAt','desc')));
+    }catch(e1){
+      try{
+        snap=await getDocs(query(collection(db,'exams'),where('grade','==',g),where('published','==',true)));
+      }catch(e2){
+        // Son çare: sadece published çek, sınıfı JS'te filtrele (index gereksinimini azaltır)
+        const psnap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
+        snap={docs:psnap.docs.filter(d=>d.data()?.grade===g)};
+      }
+    }
+    S.exams=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    applyFilter();
+  }catch(e){
+    grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">⚠️</span><h3>Yükleme Hatası</h3><p>Sınavlar yüklenemedi, lütfen sayfayı yenileyin.</p></div>';
+  }
+}
+
+function applyFilter(){
+  S.filtered=S.subject==='Tümü'?[...S.exams]:S.exams.filter(e=>e.subject===S.subject);
+  renderGrid();renderPagination();
+}
+
+function renderGrid(){
+  const grid=document.getElementById('examGrid');
+  const gc=GC[S.grade];
+  const start=(S.page-1)*S.perPage;
+  const items=S.filtered.slice(start,start+S.perPage);
+  if(!items.length){
+    grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">📭</span><h3>Sınav Bulunamadı</h3><p>Bu alanda henüz sınav yayınlanmamış.</p></div>';
+    return;
+  }
+  grid.innerHTML=`<div class="exam-grid">${items.map(e=>`
+    <div class="ec" onclick="window.openModal('${e.id}')">
+      <div class="ec-head" style="background:${gc.bg}">
+        <div class="ec-sub">${e.subject||''}</div>
+        <div class="ec-title">${e.title}</div>
+      </div>
+      <div class="ec-body">
+        <div class="ec-meta">
+          <span class="ec-mi">📝 ${e.questionCount||'?'} soru</span>
+          <span class="ec-mi">📚 ${e.subject||'—'}</span>
+          <span class="ec-mi">⏱ ${e.duration?e.duration+' dk':'Sınırsız'}</span>
+          <span class="ec-mi">📅 ${fmtDate(e.createdAt)}</span>
+        </div>
+        <button class="ec-btn">Sınava Gir →</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderPagination(){
+  const total=S.filtered.length,totalPg=Math.ceil(total/S.perPage);
+  const pg=document.getElementById('pagination');
+  if(totalPg<=1){pg.innerHTML='';return;}
+  let h=`<button class="pg" onclick="window.goPage(${S.page-1})" ${S.page===1?'disabled':''}>‹</button>`;
+  for(let i=1;i<=totalPg;i++) h+=`<button class="pg ${i===S.page?'active':''}" onclick="window.goPage(${i})">${i}</button>`;
+  h+=`<button class="pg" onclick="window.goPage(${S.page+1})" ${S.page===totalPg?'disabled':''}>›</button>`;
+  pg.innerHTML=h;
+}
+
+window.goPage=function(p){
+  const tp=Math.ceil(S.filtered.length/S.perPage);
+  if(p<1||p>tp)return;
+  S.page=p;renderGrid();renderPagination();
+  document.getElementById('gradeSection').scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+window.openModal=function(examId){
+  const exam=S.exams.find(e=>e.id===examId)||S.filtered.find(e=>e.id===examId);
+  if(!exam)return;
+  S.selExam=exam;
+  document.getElementById('eibContent').innerHTML=`
+    <div class="eib-title">${exam.title}</div>
+    <div class="eib-row">
+      <span class="eib-item">📝 ${exam.questionCount} soru</span>
+      <span class="eib-item">📚 ${exam.subject}</span>
+      <span class="eib-item">⏱ ${exam.duration ? exam.duration + ' dakika' : 'Sınırsız'}</span>
+    </div>
+    ${exam.negativeMarking?'<div class="neg-warn">⚠️ Bu sınavda her 3 yanlış, 1 doğruyu götürecektir!</div>':''}`;
+  document.getElementById('gradeInput').value=`${S.grade}. Sınıf`;
+  document.getElementById('fnInput').value='';
+  document.getElementById('lnInput').value='';
+  document.getElementById('subeSelect').value='';
+  document.getElementById('modalErr').style.display='none';
+  document.getElementById('studentModal').style.display='flex';
+  setTimeout(()=>document.getElementById('fnInput').focus(),100);
+};
+
+window.closeModal=function(){document.getElementById('studentModal').style.display='none';};
+document.getElementById('studentModal').addEventListener('click',function(e){if(e.target===this)window.closeModal();});
+
+// Sınav Başlat butonuna tıklandığında bilgileri alıp Sınav ekranına (sinav.html) yönlendirir.
+// O asıl sınav kuralları ve son "BAŞLAT" butonu sinav.html içindeki Uyarı Ekranında çıkacaktır.
+window.startExam=function(){
+  const fn=document.getElementById('fnInput').value.trim();
+  const ln=document.getElementById('lnInput').value.trim();
+  const sube=document.getElementById('subeSelect').value;
+  const err=document.getElementById('modalErr');
+  if(!fn||!ln||!sube){err.textContent='⚠️ Lütfen adınızı, soyadınızı ve şubenizi girin.';err.style.display='block';return;}
+  if(fn.length<2||ln.length<2){err.textContent='⚠️ Ad ve soyad en az 2 karakter olmalıdır.';err.style.display='block';return;}
+  const student={firstName:capitalize(fn),lastName:capitalize(ln),grade:S.grade,sube};
+  sessionStorage.setItem('sinav_student',JSON.stringify(student));
+  sessionStorage.setItem('sinav_examId',S.selExam.id);
+  window.location.href=`sinav.html?examId=${S.selExam.id}`;
+};
+
+async function loadStats(){
+  try{
+    const snap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
+    const exams=snap.docs.map(d=>d.data());
+    document.getElementById('statExams').textContent=exams.length+'+';
+    document.getElementById('statQ').textContent=exams.reduce((s,e)=>s+(e.questionCount||0),0)+'+';
+  }catch{}
+}
+
+const urlG=new URLSearchParams(window.location.search).get('grade');
+
+initUI();
+loadStats();
+if(urlG) window.selectGrade(parseInt(urlG));
+document.getElementById('loadScreen').style.display='none';
+</script>
+</body>
+</html>

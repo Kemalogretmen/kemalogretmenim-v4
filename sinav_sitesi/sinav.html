@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sınav — Kemal Öğretmenim</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
+  --navy:#0F172A;--slate:#475569;--muted:#94A3B8;
+  --border:#E2E8F0;--cream:#F8F6FF;--white:#fff;
+  --green:#10B981;--red:#EF4444;--yellow:#F59E0B;--amber:#D97706;
+  --r-sm:8px;--r:12px;--r-lg:16px;--r-xl:24px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.08);--sh:0 4px 12px rgba(0,0,0,.08);--sh-lg:0 10px 30px rgba(0,0,0,.15);
+  --fd:'Nunito',sans-serif;--fb:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:100vh}
+
+/* LOADING */
+#screenLoad{position:fixed;inset:0;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999}
+#screenLoad p{font-weight:600;color:var(--slate);font-size:14px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;margin:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* WARNING SCREEN */
+#screenWarn{display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px}
+.warn-card{background:rgba(255,255,255,.06);backdrop-filter:blur(16px);border:1.5px solid rgba(255,255,255,.12);border-radius:var(--r-xl);padding:40px;max-width:520px;width:100%}
+.warn-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.warn-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--purple),var(--purple-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 18px rgba(108,61,237,.4)}
+.warn-logo-text{font-family:var(--fd);font-size:18px;font-weight:800;color:#fff}
+.warn-exam-title{font-family:var(--fd);font-size:24px;font-weight:900;color:#fff;text-align:center;margin-bottom:6px}
+.warn-exam-sub{text-align:center;color:rgba(255,255,255,.6);font-size:14px;margin-bottom:24px}
+.warn-meta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+.wm-item{background:rgba(255,255,255,.1);padding:10px 16px;border-radius:var(--r);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.warn-neg{background:#7F1D1D;border:1.5px solid #EF4444;border-radius:var(--r);padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px}
+.warn-neg-icon{font-size:22px;flex-shrink:0}
+.warn-neg-txt{font-size:13px;color:#FCA5A5;line-height:1.6;font-weight:600}
+.warn-neg-txt strong{color:#fff}
+.warn-rules{background:rgba(255,255,255,.06);border-radius:var(--r);padding:14px 16px;margin-bottom:24px}
+.warn-rule{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13px;color:rgba(255,255,255,.7);line-height:1.5}
+.warn-rule:last-child{margin-bottom:0}
+.warn-rule-dot{width:6px;height:6px;background:var(--purple-l);border-radius:50%;flex-shrink:0;margin-top:6px}
+.warn-start-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;border:none;border-radius:50px;font-family:var(--fd);font-size:17px;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(108,61,237,.4)}
+.warn-start-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(108,61,237,.5)}
+
+/* EXAM SCREEN */
+#screenExam{display:none;height:100vh;overflow:hidden;flex-direction:column}
+.exam-topbar{background:var(--navy);color:#fff;padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.etb-left{display:flex;align-items:center;gap:10px;min-width:0}
+.etb-grade-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;color:#fff;white-space:nowrap;flex-shrink:0}
+.etb-title{font-size:13px;font-weight:600;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.etb-center{display:flex;align-items:center;gap:6px}
+.etb-timer{font-family:var(--fd);font-size:16px;font-weight:800;color:rgba(255,255,255,.5);transition:all .5s;min-width:70px;text-align:center}
+.etb-timer.warn{color:var(--yellow)!important;font-size:18px}
+.etb-timer.danger{color:var(--red)!important;font-size:18px;animation:blink 1s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.etb-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.etb-qprog{font-size:13px;font-weight:700;color:rgba(255,255,255,.7);white-space:nowrap}
+.exam-body{flex:1;display:flex;overflow:hidden}
+.exam-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:#F8FAFC}
+.exam-q-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 32px;min-height:0}
+.exam-q-num{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px;text-align:center}
+.exam-q-img{max-width:100%;max-height:340px;object-fit:contain;border-radius:var(--r);box-shadow:var(--sh);background:var(--white);padding:8px;display:block}
+.exam-answers{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;padding:0 10px}
+.ans-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border:2px solid #CBD5E0;border-radius:40px;background:var(--white);cursor:pointer;font-size:14px;font-weight:700;transition:all .18s;font-family:var(--fb);color:var(--navy)}
+.ans-btn:hover{border-color:var(--purple);color:var(--purple)}
+.ans-btn.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple-d)}
+.ans-circle{width:28px;height:28px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+.exam-navrow{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0}
+.exam-nav-btn{width:42px;height:42px;border-radius:50%;border:2px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .18s;color:var(--navy)}
+.exam-nav-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
+.exam-nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.finish-btn{padding:10px 22px;background:var(--red);color:#fff;border:none;border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
+.finish-btn:hover{background:#DC2626;transform:scale(1.03)}
+
+/* OPTIC PANEL */
+.optic-panel{width:260px;flex-shrink:0;background:var(--white);border-left:1.5px solid var(--border);display:flex;flex-direction:column}
+.op-head{padding:12px 14px;border-bottom:1.5px solid var(--border);flex-shrink:0}
+.op-head-title{font-family:var(--fd);font-size:14px;font-weight:800;color:var(--navy)}
+.op-stats{display:flex;gap:8px;margin-top:6px}
+.op-stat{flex:1;text-align:center;background:var(--cream);border-radius:6px;padding:5px}
+.op-stat-n{font-family:var(--fd);font-size:16px;font-weight:800}
+.op-stat-l{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.op-body{flex:1;overflow-y:auto;padding:8px}
+.op-row{display:flex;align-items:center;gap:5px;padding:3px;border-radius:6px;cursor:pointer;transition:background .12s}
+.op-row:hover,.op-row.cur{background:#EEF2FF}
+.op-qnum{width:22px;text-align:right;font-size:10px;color:var(--muted);flex-shrink:0;font-weight:600}
+.op-bubbles{display:flex;gap:3px;flex:1;flex-wrap:wrap}
+.op-bub{width:24px;height:24px;border-radius:50%;border:1.5px solid #CBD5E0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;cursor:pointer;transition:all .12s}
+.op-bub:hover{border-color:var(--purple)}
+.op-bub.sel{background:var(--purple);border-color:var(--purple);color:#fff}
+.op-bub.correct{background:var(--green);border-color:var(--green);color:#fff}
+.op-bub.wrong{background:var(--red);border-color:var(--red);color:#fff}
+.op-bub.blank{background:#E2E8F0;border-color:#CBD5E0;color:var(--muted)}
+
+/* Mobile optic toggle */
+.optic-fab{display:none;position:fixed;bottom:80px;right:16px;z-index:200;width:52px;height:52px;border-radius:50%;background:var(--navy);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:var(--sh-lg);align-items:center;justify-content:center;flex-direction:column;gap:1px}
+.optic-fab-count{font-size:10px;font-weight:700;line-height:1}
+.optic-drawer{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--white);border-radius:20px 20px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.15);max-height:55vh;overflow:hidden;flex-direction:column;transform:translateY(100%);transition:transform .3s ease}
+.optic-drawer.open{transform:translateY(0)}
+.od-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0}
+.od-close{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.od-close span{font-family:var(--fd);font-size:14px;font-weight:800}
+.od-close button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--slate)}
+.od-content{overflow-y:auto;flex:1;padding:8px}
+.od-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:4px}
+.od-item{text-align:center}
+.od-item-q{font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600}
+.od-bubble{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
+.od-bubble.sel{background:var(--purple);border-color:var(--purple);color:#fff}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px}
+.modal-box{background:var(--white);border-radius:var(--r-xl);padding:28px;width:100%;max-width:380px;box-shadow:var(--sh-lg);text-align:center;animation:popIn .22s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.modal-box h3{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--navy);margin-bottom:10px}
+.modal-box p{font-size:14px;color:var(--slate);line-height:1.6;margin-bottom:6px}
+.modal-warn{color:var(--red);font-weight:700;font-size:14px;margin:10px 0}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.btn{padding:11px 20px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--fb);font-size:14px;font-weight:700;transition:all .18s;flex:1}
+.btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:#DC2626}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--slate)}
+.btn-outline:hover{border-color:var(--purple);color:var(--purple)}
+
+/* TIMEOUT SCREEN */
+#screenTimeout{display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px}
+.timeout-card{text-align:center;max-width:400px;width:100%}
+.timeout-icon{font-size:64px;margin-bottom:20px;display:block;animation:shake .5s ease}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-5deg)}75%{transform:rotate(5deg)}}
+.timeout-card h2{font-family:var(--fd);font-size:28px;font-weight:900;color:#fff;margin-bottom:12px}
+.timeout-card p{font-size:15px;color:rgba(255,255,255,.6);line-height:1.7;margin-bottom:28px}
+.timeout-btn{padding:14px 36px;background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;border:none;border-radius:50px;font-family:var(--fd);font-size:16px;font-weight:800;cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(108,61,237,.4)}
+.timeout-btn:hover{transform:translateY(-2px)}
+
+/* KARNE */
+#screenKarne{display:none;min-height:100vh;background:var(--cream)}
+.karne-topbar{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ktb-left h2{font-family:var(--fd);font-size:18px;font-weight:800}
+.ktb-left p{font-size:13px;color:rgba(255,255,255,.6);margin-top:2px}
+.print-btn{padding:8px 18px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
+.print-btn:hover{background:rgba(255,255,255,.25)}
+.karne-body{max-width:900px;margin:0 auto;padding:28px 24px}
+.karne-header{background:var(--white);border-radius:var(--r-xl);padding:24px;margin-bottom:20px;border:2px solid var(--border);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.karne-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;color:#fff}
+.karne-student-info{flex:1}
+.karne-student-info h3{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--navy)}
+.karne-student-info p{font-size:14px;color:var(--slate);margin-top:2px}
+.karne-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.km-item{font-size:12px;color:var(--muted);background:var(--cream);padding:4px 10px;border-radius:50px;font-weight:600}
+.karne-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.ks-card{background:var(--white);border-radius:var(--r-lg);padding:18px;text-align:center;border:2px solid var(--border)}
+.ks-n{font-family:var(--fd);font-size:32px;font-weight:900}
+.ks-l{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.karne-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+.karne-card{background:var(--white);border-radius:var(--r-lg);padding:22px;border:2px solid var(--border)}
+.karne-card h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px}
+.karne-feedback{background:var(--white);border-radius:var(--r-lg);padding:24px;margin-bottom:20px;border:2px solid var(--border)}
+.karne-feedback h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.feedback-body{font-size:15px;color:var(--slate);line-height:1.8}
+.quote-box{margin-top:16px;padding:14px 16px;background:var(--cream);border-left:4px solid var(--purple);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;color:var(--slate);font-style:italic;line-height:1.6}
+.karne-optic{background:var(--white);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;border:2px solid var(--border)}
+.karne-optic h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px}
+.ko-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.ko-leg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--slate)}
+.ko-dot{width:14px;height:14px;border-radius:50%}
+.ko-grid{display:flex;flex-wrap:wrap;gap:6px}
+.ko-item{text-align:center;cursor:pointer;transition:all .18s}
+.ko-item:hover{transform:scale(1.1)}
+.ko-num{font-size:9px;color:var(--muted);margin-bottom:3px;font-weight:600}
+.ko-bub{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
+/* TOAST */
+#toastWrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:11px 16px;border-radius:var(--r);font-size:13px;font-weight:600;box-shadow:var(--sh-lg);animation:slideR .25s ease;max-width:280px}
+@keyframes slideR{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-success{background:#059669;color:#fff}
+.toast-error{background:var(--red);color:#fff}
+
+/* SCORE BAR */
+.sb-label{display:flex;justify-content:space-between;margin-bottom:5px;font-size:13px;font-weight:600}
+.sb-track{height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin-bottom:12px}
+.sb-fill{height:100%;border-radius:5px;transition:width 1s ease}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .exam-topbar{padding:0 14px}
+  .etb-title{display:none}
+  .optic-panel{display:none}
+  .optic-fab{display:flex}
+  .optic-drawer{display:flex}
+  .exam-q-wrap{padding:14px 16px}
+  .exam-answers{gap:8px;margin-top:14px}
+  .ans-btn{padding:9px 14px;font-size:13px}
+  .exam-navrow{padding:10px 14px}
+  .karne-stats{grid-template-columns:repeat(2,1fr)}
+  .karne-grid{grid-template-columns:1fr}
+  .karne-header{gap:14px}
+  .karne-body{padding:16px 14px}
+}
+@media(max-width:480px){
+  .karne-stats{grid-template-columns:repeat(2,1fr)}
+  .warn-card{padding:24px 20px}
+}
+
+/* PRINT */
+@media print{
+  #screenWarn,#screenExam,#screenTimeout,#screenLoad{display:none!important}
+  #screenKarne{display:block!important}
+  .karne-topbar .print-btn{display:none}
+  .karne-optic .ko-item{cursor:default}
+  body{background:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .karne-body{max-width:100%;padding:16px}
+  .karne-feedback{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div id="screenLoad">
+  <div class="spinner"></div>
+  <p id="loadTxt">Sınav yükleniyor...</p>
+</div>
+
+<div id="screenWarn" style="display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);display:none;align-items:center;justify-content:center;padding:20px">
+  <div class="warn-card">
+    <div class="warn-logo">
+      <div class="warn-logo-icon">📚</div>
+      <div class="warn-logo-text">Kemal Öğretmenim</div>
+    </div>
+    <div class="warn-exam-title" id="warnTitle"></div>
+    <div class="warn-exam-sub" id="warnSub"></div>
+    <div class="warn-meta" id="warnMeta"></div>
+    <div id="warnNeg" style="display:none" class="warn-neg">
+      <div class="warn-neg-icon">⚠️</div>
+      <div class="warn-neg-txt">
+        <strong>DİKKAT: Bu sınavda puan kesintisi uygulanmaktadır!</strong><br>
+        Her <strong>3 yanlış cevap</strong>, 1 doğru cevabı silecektir. Bilmediğin sorularda boş bırakmayı tercih edebilirsin.
+      </div>
+    </div>
+    <div class="warn-rules">
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span id="warnTimeRule">Sınav süresi dolduğunda sınav otomatik olarak sonlanacaktır.</span></div>
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sınav ekranını kapatma veya sayfa yenileme sınav kaydını silebilir.</span></div>
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sessiz, dikkat dağınıklığından uzak bir ortamda sınava gir.</span></div>
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sağdaki optik alanda veya şık butonlarından cevabını işaretleyebilirsin.</span></div>
+    </div>
+    <button class="warn-start-btn" onclick="beginExam()">🚀 BAŞLAT</button>
+  </div>
+</div>
+
+<div id="screenExam" style="display:none;height:100vh;overflow:hidden;flex-direction:column">
+  <div class="exam-topbar">
+    <div class="etb-left">
+      <div class="etb-grade-badge" id="topGradeBadge"></div>
+      <div class="etb-title" id="topTitle"></div>
+    </div>
+    <div class="etb-center">
+      <div class="etb-timer" id="examTimer">00:00</div>
+    </div>
+    <div class="etb-right">
+      <div class="etb-qprog" id="qProg">0 / 0</div>
+    </div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-main" id="examMain">
+      <div class="exam-q-wrap">
+        <div class="exam-q-num" id="qNum"></div>
+        <img class="exam-q-img" id="qImg" src="" alt="Soru görseli">
+        <div class="exam-answers" id="examAnswers"></div>
+      </div>
+    </div>
+    <div class="optic-panel" id="opticPanel">
+      <div class="op-head">
+        <div class="op-head-title">📋 Optik Cevap Kağıdı</div>
+        <div class="op-stats">
+          <div class="op-stat"><div class="op-stat-n" id="opStatCevap" style="color:var(--green)">0</div><div class="op-stat-l">Cevaplanan</div></div>
+          <div class="op-stat"><div class="op-stat-n" id="opStatBos" style="color:var(--muted)">0</div><div class="op-stat-l">Boş</div></div>
+        </div>
+      </div>
+      <div class="op-body" id="opticBody"></div>
+    </div>
+  </div>
+  <div class="exam-navrow">
+    <button class="exam-nav-btn" id="btnPrev" onclick="prevQ()">‹</button>
+    <button class="finish-btn" onclick="showFinishConfirm()">Sınavı Bitir</button>
+    <button class="exam-nav-btn" id="btnNext" onclick="nextQ()">›</button>
+  </div>
+</div>
+
+<button class="optic-fab" id="opticFab" onclick="toggleDrawer()">
+  <span>📋</span>
+  <span class="optic-fab-count" id="fabCount">0</span>
+</button>
+
+<div class="optic-drawer" id="opticDrawer">
+  <div class="od-handle"></div>
+  <div class="od-close">
+    <span>📋 Optik Cevap Kağıdı</span>
+    <button onclick="toggleDrawer()">✕</button>
+  </div>
+  <div class="od-content"><div class="od-grid" id="drawerGrid"></div></div>
+</div>
+
+<div id="screenTimeout" style="display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px">
+  <div class="timeout-card">
+    <span class="timeout-icon">⏰</span>
+    <h2>Süre Doldu!</h2>
+    <p>Üzgünüm, sınav için belirlenen süre dolduğundan sınavın otomatik olarak sonlandırıldı. Aşağıdan karne sonuçlarını görüntüleyebilirsin.</p>
+    <button class="timeout-btn" onclick="showKarne()">📊 Karnemi Görüntüle</button>
+  </div>
+</div>
+
+<div id="screenKarne" style="display:none">
+  <div class="karne-topbar">
+    <div class="ktb-left">
+      <h2>📊 Sınav Karnesi</h2>
+      <p id="karneDate"></p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="print-btn" onclick="window.print()">🖨️ PDF Çıktı Al</button>
+      <button class="print-btn" onclick="window.location.href='index.html'">← Ana Sayfa</button>
+    </div>
+  </div>
+  <div class="karne-body">
+    <div class="karne-header">
+      <div class="karne-avatar" id="karneAvatar">🎓</div>
+      <div class="karne-student-info">
+        <h3 id="karneStudentName"></h3>
+        <p id="karneStudentDetail"></p>
+        <div class="karne-meta" id="karneMeta"></div>
+      </div>
+    </div>
+    <div class="karne-stats" id="karneStats"></div>
+    <div class="karne-grid">
+      <div class="karne-card">
+        <h4>📈 Sonuç Özeti</h4>
+        <div id="scoreBars"></div>
+      </div>
+      <div class="karne-card" style="display:flex;align-items:center;justify-content:center">
+        <canvas id="donutChart" width="200" height="200" style="max-width:200px;max-height:200px"></canvas>
+      </div>
+    </div>
+    <div class="karne-feedback">
+      <h4>💬 Değerlendirme</h4>
+      <div class="feedback-body" id="feedbackBody"></div>
+    </div>
+    <div class="karne-optic">
+      <h4>🔍 Soru İnceleme</h4>
+      <div class="ko-legend">
+        <div class="ko-leg"><div class="ko-dot" style="background:var(--green)"></div>Doğru</div>
+        <div class="ko-leg"><div class="ko-dot" style="background:var(--red)"></div>Yanlış</div>
+        <div class="ko-leg"><div class="ko-dot" style="background:var(--border)"></div>Boş</div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Yanlış veya boş bıraktığın soruya tıklayarak soruyu inceleyebilirsin.</p>
+      <div class="ko-grid" id="karneOptic"></div>
+    </div>
+  </div>
+</div>
+
+<div id="modalWrap"></div>
+<div id="toastWrap"></div>
+
+<script type="module">
+import { db } from "./js/firebase.js";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  doc,
+  getDoc,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const GC=[null,
+  {bg:'linear-gradient(135deg,#FF6B6B,#FF8E53)',color:'#FF6B6B'},
+  {bg:'linear-gradient(135deg,#FF8E53,#FFA726)',color:'#FF8E53'},
+  {bg:'linear-gradient(135deg,#FFA726,#FFCC02)',color:'#FFA726'},
+  {bg:'linear-gradient(135deg,#4CAF50,#66BB6A)',color:'#4CAF50'},
+  {bg:'linear-gradient(135deg,#26A69A,#26C6DA)',color:'#26A69A'},
+  {bg:'linear-gradient(135deg,#29B6F6,#42A5F5)',color:'#29B6F6'},
+  {bg:'linear-gradient(135deg,#5C6BC0,#7E57C2)',color:'#5C6BC0'},
+  {bg:'linear-gradient(135deg,#AB47BC,#EC407A)',color:'#AB47BC'}
+];
+
+let P={exam:null,questions:[],student:null,answers:{},curQ:0,timeLeft:0,timer:null,started:false,result:null,OPTS:[]};
+
+function toast(msg,type='success'){
+  const el=document.createElement('div');el.className=`toast toast-${type}`;el.textContent=msg;
+  document.getElementById('toastWrap').appendChild(el);setTimeout(()=>el.remove(),3000);
+}
+
+function showScreen(id){
+  ['screenLoad','screenWarn','screenExam','screenTimeout','screenKarne'].forEach(s=>{
+    const el=document.getElementById(s);
+    el.style.display='none';
+  });
+  const el=document.getElementById(id);
+  if(id==='screenWarn'||id==='screenTimeout') el.style.display='flex';
+  else if(id==='screenExam') el.style.display='flex';
+  else el.style.display='block';
+}
+
+// ===== LOAD =====
+async function init(){
+  const student=JSON.parse(sessionStorage.getItem('sinav_student')||'null');
+  const examId=new URLSearchParams(window.location.search).get('examId')||sessionStorage.getItem('sinav_examId');
+  if(!student||!examId){window.location.href='index.html';return;}
+  P.student=student;
+  try{
+    document.getElementById('loadTxt').textContent='Sınav soruları yükleniyor...';
+    // Load exam (single doc, no index needed)
+    const examSnap = await getDoc(doc(db, "exams", examId));
+    if (!examSnap.exists()) {
+      toast("Sınav bulunamadı", "error");
+      setTimeout(() => (window.location.href = "index.html"), 2000);
+      return;
+    }
+    P.exam = { id: examSnap.id, ...examSnap.data() };
+
+    // Load questions
+    let qsnap;
+    try {
+      qsnap = await getDocs(
+        query(
+          collection(db, "questions"),
+          where("examId", "==", examId),
+          orderBy("order", "asc")
+        )
+      );
+      P.questions = qsnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      // Composite index may be missing; fallback to unordered fetch + JS sort
+      const fallbackSnap = await getDocs(
+        query(collection(db, "questions"), where("examId", "==", examId))
+      );
+      P.questions = fallbackSnap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }
+
+    if(!P.questions.length){toast('Bu sınavda soru bulunamadı','error');setTimeout(()=>window.location.href='index.html',2000);return;}
+    const oc=P.exam.optionCount||4;
+    P.OPTS=['A','B','C','D','E','F'].slice(0,oc);
+    P.timeLeft=P.exam.duration>0?P.exam.duration*60:0;
+    renderWarning();
+    showScreen('screenWarn');
+  }catch(e){
+    console.error(e);
+    document.getElementById('loadTxt').textContent='Hata oluştu, lütfen geri dönün.';
+    setTimeout(()=>window.location.href='index.html',3000);
+  }
+}
+
+// ===== WARNING =====
+function renderWarning(){
+  const ex=P.exam,st=P.student;
+  document.getElementById('warnTitle').textContent=ex.title;
+  document.getElementById('warnSub').textContent=`${st.firstName} ${st.lastName} — ${st.grade}. Sınıf ${st.sube} Şubesi`;
+  document.getElementById('warnMeta').innerHTML=`
+    <div class="wm-item">📝 ${ex.questionCount} Soru</div>
+    <div class="wm-item">⏱ ${ex.duration ? ex.duration + ' Dakika' : 'Sınırsız'}</div>
+    <div class="wm-item">📚 ${ex.subject}</div>
+    <div class="wm-item">🔡 ${P.OPTS.length} Şık</div>`;
+  if(ex.negativeMarking) document.getElementById('warnNeg').style.display='flex';
+  document.getElementById('warnTimeRule').textContent= ex.duration > 0 ? `Sınav süresi ${ex.duration} dakikadır. Süre dolduğunda sınav otomatik sonlanır.` : 'Bu sınavda süre sınırı bulunmamaktadır.';
+}
+
+window.beginExam=function(){renderExamUI();showScreen('screenExam');startTimer();};
+
+// ===== EXAM UI =====
+function renderExamUI(){
+  const ex=P.exam,g=P.student.grade;
+  const gc=GC[g]||GC[5];
+  const badge=document.getElementById('topGradeBadge');
+  badge.textContent=`${g}. Sınıf — ${ex.subject}`;badge.style.background=gc.bg;
+  document.getElementById('topTitle').textContent=ex.title;
+  renderQuestion(0);
+  renderOptic();
+}
+
+function renderQuestion(i){
+  const qs=P.questions;
+  if(i<0||i>=qs.length)return;
+  P.curQ=i;
+  const q=qs[i];const curAns=P.answers[i];
+  document.getElementById('qNum').textContent=`Soru ${i+1} / ${qs.length}`;
+  const img=document.getElementById('qImg');
+  img.src=q.imageUrl||q.imageData||'';
+  document.getElementById('examAnswers').innerHTML=P.OPTS.map(opt=>`
+    <button class="ans-btn ${curAns===opt?'selected':''}" onclick="pickAns('${opt}')">
+      <div class="ans-circle">${opt}</div>${opt} şıkkı
+    </button>`).join('');
+  document.getElementById('qProg').textContent=`${i+1} / ${qs.length}`;
+  document.getElementById('btnPrev').disabled=i===0;
+  document.getElementById('btnNext').disabled=i===qs.length-1;
+  // Update optic current row
+  document.querySelectorAll('.op-row').forEach((r,j)=>r.classList.toggle('cur',j===i));
+  updateOpticStats();
+}
+
+function renderOptic(){
+  const n=P.questions.length;
+  let html='';
+  for(let i=0;i<n;i++){
+    const ca=P.answers[i];
+    html+=`<div class="op-row ${i===P.curQ?'cur':''}" onclick="goQ(${i})">
+      <div class="op-qnum">${i+1}</div>
+      <div class="op-bubbles">${P.OPTS.map(o=>`<div class="op-bub ${ca===o?'sel':''}" onclick="event.stopPropagation();opticPick(${i},'${o}')">${o}</div>`).join('')}</div>
+    </div>`;
+  }
+  document.getElementById('opticBody').innerHTML=html;
+  renderMobileDrawer();
+  updateOpticStats();
+}
+
+function updateOpticStats(){
+  const n=P.questions.length;
+  const ans=Object.keys(P.answers).length;
+  document.getElementById('opStatCevap').textContent=ans;
+  document.getElementById('opStatBos').textContent=n-ans;
+  document.getElementById('fabCount').textContent=`${ans}/${n}`;
+}
+
+function renderMobileDrawer(){
+  const n=P.questions.length;
+  let html='';
+  for(let i=0;i<n;i++){
+    const ca=P.answers[i];
+    html+=`<div class="od-item">
+      <div class="od-item-q">${i+1}</div>
+      <div class="od-bubble ${ca?'sel':''}" onclick="goQ(${i});toggleDrawer()" style="${ca?'':'border-color:#CBD5E0'}">${ca||''}</div>
+    </div>`;
+  }
+  document.getElementById('drawerGrid').innerHTML=html;
+}
+
+window.pickAns=function(opt){
+  P.answers[P.curQ]=opt;
+  document.querySelectorAll('.ans-btn').forEach((b,i)=>b.classList.toggle('selected',P.OPTS[i]===opt));
+  updateOpticRow(P.curQ);
+  updateOpticStats();
+  renderMobileDrawer();
+};
+
+window.opticPick=function(qi,opt){
+  P.answers[qi]=opt;
+  updateOpticRow(qi);
+  updateOpticStats();
+  renderMobileDrawer();
+  if(qi===P.curQ){
+    document.querySelectorAll('.ans-btn').forEach((b,i)=>b.classList.toggle('selected',P.OPTS[i]===opt));
+  }
+};
+
+function updateOpticRow(qi){
+  const rows=document.querySelectorAll('.op-row');
+  if(rows[qi]){
+    const ca=P.answers[qi];
+    rows[qi].querySelectorAll('.op-bub').forEach((b,i)=>b.classList.toggle('sel',P.OPTS[i]===ca));
+  }
+}
+
+window.goQ=function(i){renderQuestion(i);};
+window.prevQ=function(){if(P.curQ>0)renderQuestion(P.curQ-1);};
+window.nextQ=function(){if(P.curQ<P.questions.length-1)renderQuestion(P.curQ+1);};
+
+window.toggleDrawer=function(){
+  const d=document.getElementById('opticDrawer');
+  d.classList.toggle('open');
+};
+
+// ===== TIMER =====
+function startTimer(){
+  if(P.exam.duration<=0) {
+    document.getElementById('examTimer').textContent = 'Sınırsız';
+    return;
+  }
+  P.started=true;
+  P.timer=setInterval(()=>{
+    P.timeLeft--;
+    updateTimerUI();
+    if(P.timeLeft<=0){
+      clearInterval(P.timer);
+      timeUp();
+    }
+  },1000);
+  updateTimerUI();
+}
+
+function updateTimerUI(){
+  const t=document.getElementById('examTimer');
+  const mins=Math.floor(P.timeLeft/60),secs=P.timeLeft%60;
+  t.textContent=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+  
+  // Sınıfı sıfırlayıp süreye göre tekrar ekliyoruz
+  t.className='etb-timer'; 
+  if(P.timeLeft<=60) t.classList.add('danger');
+  else if(P.timeLeft<=120) t.classList.add('warn');
+}
+
+function timeUp(){
+  clearInterval(P.timer);
+  // Auto-submit
+  calcResult();
+  showScreen('screenTimeout');
+}
+
+// ===== FINISH =====
+window.showFinishConfirm=function(){
+  const n=P.questions.length,ans=Object.keys(P.answers).length,blank=n-ans;
+  const blankList=[];
+  for(let i=0;i<n;i++)if(!P.answers[i])blankList.push(i+1);
+  const mins=Math.floor(P.timeLeft/60),secs=P.timeLeft%60;
+  const timeStr=P.exam.duration>0?`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`:'—';
+  
+  const el=document.createElement('div');el.className='modal-overlay';el.id='finishModal1';
+  el.innerHTML=`<div class="modal-box">
+    <h3>⚠️ Sınavı Bitir</h3>
+    <p>Sınavı bitirmek istediğinden emin misin?</p>
+    ${P.exam.duration>0?`<p style="margin-top:8px">⏱ Kalan süre: <strong>${timeStr}</strong></p>`:''}
+    ${blank>0?`<p class="modal-warn">⭕ ${blank} soru boş bırakıldı${blankList.length<=10?' ('+blankList.join(', ')+')':`— Sorular: ${blankList.join(', ')}`}</p>`:'<p style="color:var(--green);font-weight:700;margin-top:8px">✅ Tüm sorular cevaplandı</p>'}
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="document.getElementById('finishModal1').remove()">← Sınava Dön</button>
+      <button class="btn btn-red" onclick="document.getElementById('finishModal1').remove();showFinishConfirm2()">Devam Et</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+};
+
+window.showFinishConfirm2=function(){
+  const el=document.createElement('div');el.className='modal-overlay';el.id='finishModal2';
+  el.innerHTML=`<div class="modal-box">
+    <h3>🔴 Emin misin?</h3>
+    <p>Sınavı bitirmek istediğinden gerçekten emin misin?<br>Bu işlem geri alınamaz.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="document.getElementById('finishModal2').remove()">← Sınava Dön</button>
+      <button class="btn btn-red" onclick="document.getElementById('finishModal2').remove();finishExam()">Sınavı Bitir ✓</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+};
+
+window.showKarne=function(){renderKarne();showScreen('screenKarne');};
+
+function calcResult(){
+  clearInterval(P.timer);
+  const qs=P.questions,ans=P.answers;
+  let correct=0,wrong=0,blank=0;
+  qs.forEach((q,i)=>{const a=ans[i];if(!a)blank++;else if(a===q.correctAnswer)correct++;else wrong++;});
+  let netCorrect=correct;
+  if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
+  const total=qs.length;
+  const score=Math.round(netCorrect/total*100);
+  const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
+  P.result={firstName:P.student.firstName,lastName:P.student.lastName,grade:P.student.grade,sube:P.student.sube,subject:P.exam.subject,examTitle:P.exam.title,examId:P.exam.id,correct,wrong,blank,netCorrect,score,total,negativeMarking:P.exam.negativeMarking,answers:{...ans},elapsed,date:new Date().toLocaleDateString('tr-TR'),questions:qs};
+  return P.result;
+}
+
+window.finishExam=function(){
+  clearInterval(P.timer);
+  const r=calcResult();
+  
+  // Veritabanına kaydet
+  addDoc(collection(db,'results'),{
+    firstName:r.firstName,lastName:r.lastName,grade:r.grade,sube:r.sube,
+    subject:r.subject,examTitle:r.examTitle,examId:r.examId,
+    correct:r.correct,wrong:r.wrong,blank:r.blank,netCorrect:r.netCorrect,
+    score:r.score,total:r.total,negativeMarking:r.negativeMarking||false,
+    elapsed:r.elapsed,date:serverTimestamp()
+  }).catch(()=>{});
+  
+  renderKarne();
+  showScreen('screenKarne');
+};
+
+// ===== KARNE =====
+function renderKarne(){
+  const r=P.result;if(!r)return;
+  const g=r.grade,gc=GC[g]||GC[5];
+  
+  // Tarih
+  document.getElementById('karneDate').textContent=r.date;
+  
+  // Öğrenci Bilgileri
+  const av=document.getElementById('karneAvatar');
+  av.style.background=gc.bg;av.textContent='🎓';
+  document.getElementById('karneStudentName').textContent=`${r.firstName} ${r.lastName}`;
+  document.getElementById('karneStudentDetail').textContent=`${r.grade}. Sınıf ${r.sube} Şubesi`;
+  document.getElementById('karneMeta').innerHTML=`
+    <span class="km-item">📝 ${r.examTitle}</span>
+    <span class="km-item">📚 ${r.subject}</span>
+    <span class="km-item">⏱ ${fmtElapsed(r.elapsed)}</span>
+    ${r.negativeMarking?'<span class="km-item" style="background:#FEF2F2;color:var(--red)">⚠️ Puan Kesintili</span>':''}`;
+  
+  // İstatistikler
+  const scoreColor=r.score>=70?'var(--green)':r.score>=50?'var(--yellow)':'var(--red)';
+  document.getElementById('karneStats').innerHTML=`
+    <div class="ks-card"><div class="ks-n" style="color:var(--green)">${r.correct}</div><div class="ks-l">Doğru (D)</div></div>
+    <div class="ks-card"><div class="ks-n" style="color:var(--red)">${r.wrong}</div><div class="ks-l">Yanlış (Y)</div></div>
+    <div class="ks-card"><div class="ks-n" style="color:var(--muted)">${r.blank}</div><div class="ks-l">Boş (B)</div></div>
+    <div class="ks-card"><div class="ks-n" style="color:${scoreColor}">${r.score}%</div><div class="ks-l">Başarı (%)</div></div>`;
+  
+  // İlerleme Barları
+  const dPct=Math.round(r.correct/r.total*100);
+  const yPct=Math.round(r.wrong/r.total*100);
+  const bPct=Math.round(r.blank/r.total*100);
+  document.getElementById('scoreBars').innerHTML=`
+    <div class="sb-label"><span>✅ Doğru</span><span>${r.correct} soru (${dPct}%)</span></div>
+    <div class="sb-track"><div class="sb-fill" style="width:${dPct}%;background:var(--green)"></div></div>
+    <div class="sb-label"><span>❌ Yanlış</span><span>${r.wrong} soru (${yPct}%)</span></div>
+    <div class="sb-track"><div class="sb-fill" style="width:${yPct}%;background:var(--red)"></div></div>
+    <div class="sb-label"><span>⭕ Boş</span><span>${r.blank} soru (${bPct}%)</span></div>
+    <div class="sb-track"><div class="sb-fill" style="width:${bPct}%;background:var(--muted)"></div></div>
+    ${r.negativeMarking?`<div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:8px;font-size:13px;font-weight:600;color:var(--red)">⚠️ Net puan hesaplaması: ${r.correct}D - ${Math.floor(r.wrong/3)}Y = <strong>${r.netCorrect} Net Doğru</strong></div>`:''}`;
+  
+  // Yuvarlak Grafik (Donut Chart)
+  setTimeout(()=>{
+    const ctx=document.getElementById('donutChart').getContext('2d');
+    new Chart(ctx,{type:'doughnut',data:{
+      labels:['Doğru','Yanlış','Boş'],
+      datasets:[{data:[r.correct,r.wrong,r.blank],backgroundColor:['#10B981','#EF4444','#CBD5E0'],borderWidth:3,borderColor:'#fff',hoverBorderColor:'#fff'}]
+    },options:{responsive:true,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} soru`}}}}});
+  },100);
+  
+  // Akıllı ve Samimi Dönüt
+  const fb=generateFeedback(r.firstName,r.grade,r.subject,r.score,r.correct,r.wrong,r.blank,r.total);
+  document.getElementById('feedbackBody').innerHTML=`<p>${fb.text}</p><div class="quote-box">"${fb.quote}"</div>`;
+  
+  // Karne Optik (Geri Bildirim)
+  const koHtml=r.questions.map((q,i)=>{
+    const ua=r.answers[i];const ca=q.correctAnswer;
+    const isC=ua&&ua===ca,isW=ua&&ua!==ca,isB=!ua;
+    const clr=isC?'var(--green)':isW?'var(--red)':'var(--border)';
+    const txt=isC?ca:isW?ua:'—';
+    return `<div class="ko-item" onclick="showQuestionModal(${i})" title="${i+1}. Soru${isB?' (Boş)':isW?' — Doğru: '+ca+' / Verilen: '+ua:' — Doğru'}" >
+      <div class="ko-num">${i+1}</div>
+      <div class="ko-bub" style="background:${clr};color:${isB?'var(--muted)':'#fff'}">${txt}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('karneOptic').innerHTML=koHtml;
+  
+  document.getElementById('karneDate').textContent=`Tarih: ${r.date}`;
+}
+
+function fmtElapsed(s){if(!s)return'—';const m=Math.floor(s/60),sec=s%60;return`${m}dk ${sec}s`;}
+
+// Karnede Soru İnceleme Modeli
+window.showQuestionModal=function(i){
+  const r=P.result;if(!r)return;
+  const q=r.questions[i];const ua=r.answers[i];const ca=q.correctAnswer;
+  const isC=ua&&ua===ca,isB=!ua;
+  const statusBg=isB?'#64748B':isC?'#10B981':'#EF4444';
+  const statusTxt=isB?'Boş bırakıldı':isC?'Doğru cevap!':'Yanlış cevap';
+  const el=document.createElement('div');el.className='modal-overlay';
+  el.innerHTML=`<div class="modal-box" style="max-width:600px;padding:0;overflow:hidden;text-align:left">
+    <div style="background:${statusBg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between">
+      <div style="color:#fff;font-weight:700;font-size:14px">${i+1}. Soru — ${statusTxt}${ua&&!isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong> / Verilen: <strong>'+ua+'</strong>':isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong>':''}</div>
+      <button onclick="this.closest('.modal-overlay').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>
+    </div>
+    <div style="padding:16px;background:#f8fafc;max-height:65vh;overflow-y:auto">
+      <img src="${q.imageData}" style="max-width:100%;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.1)">
+    </div>
+    <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:center">
+      ${i>0?`<button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove();window.showQuestionModal(${i-1})">‹ Önceki</button>`:''}
+      <button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove()">Kapat</button>
+      ${i<r.questions.length-1?`<button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove();window.showQuestionModal(${i+1})">Sonraki ›</button>`:''}
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+};
+
+// ===== AKILLI DÖNÜT MOTORU (AI Olmayan) =====
+function generateFeedback(name,grade,subject,score,correct,wrong,blank,total){
+  const isYoung=grade<=4;const isMid=grade===5||grade===6;const isUpper=grade>=7;
+  let text='',quote='';
+  // Her öğrenciye biraz farklı gelmesi için isminin ilk harfine göre bir matematiksel rastgelelik
+  const varIdx=(name.charCodeAt(0)+score)%3; 
+  
+  if(score>=85){
+    if(isYoung){
+      const v=[
+        `Sevgili ${name}, bu sınavda gerçekten harika bir iş çıkardın! ${total} sorudan ${correct} tanesini doğru cevapladın. Bu sonuç, ne kadar dikkatli ve özenli çalıştığının en güzel kanıtı. Sınıfının gururu olduğunu söylesem abartmış olmam. Böyle devam et ve her zaman meraklı, çalışkan bir öğrenci olmayı sürdür. Seni çok tebrik ediyorum! 🌟`,
+        `Sevgili ${name}, bravo! ${subject} sınavında gösterdiğin bu başarı gerçekten takdire değer. ${correct} doğru cevapla çok güzel bir sonuç elde ettin. Derslere gösterdiğin özen ve çaba bu tabloyu ortaya koydu. Devam et, sen başarabilirsin! 🎉`,
+        `Süper ${name}! Bu sınavdaki performansın gerçekten etkileyici. ${total} sorudan ${correct} tanesini başarıyla cevaplayarak harika bir skor yakaladın. Öğrenmeyi seven, araştıran ve çalışmaktan kaçınmayan bir öğrenci olduğun açıkça görülüyor. ✨`
+      ];text=v[varIdx];
+      quote=['Başarı, her gün tekrarlanan küçük çabaların toplamıdır. — Aristoteles','Öğrenmek için hiçbir zaman ne çok erken ne de çok geç vardır.','Çalışmak, başarıya giden en kısa yoldur.'][varIdx];
+    }else if(isMid){
+      const v=[
+        `Tebrikler ${name}! ${subject} sınavında ${score}% başarı oranıyla gerçekten güzel bir performans sergiyledin. ${correct} doğru cevabın gösteriyor ki konulara hakimiyetin oldukça iyi. Bu başarını korumak ve daha da ilerletmek için çalışmalarına aynı kararlılıkla devam et.`,
+        `Harika iş ${name}! ${total} sorudan ${correct} doğruya ulaşmak kolay değil ve bunu başardın. ${subject} konularını ne kadar iyi özümsediğin bu sonuçla ortada. Şimdi sıra bu başarıyı daha da ileriye taşımakta.`,
+        `Çok iyi ${name}! ${score}% başarı oranın, ${subject} alanındaki güçlü kavrayışının göstergesi. Doğrularına bakıldığında, konulara ne kadar hakim olduğun görülüyor. Bu çalışma temposunu devam ettirirsen başarılar seni takip edecek.`
+      ];text=v[varIdx];
+      quote=['Zekâ, çok çalışmanın ödülüdür. — Leonardo da Vinci','Başarı, hazırlık ve fırsatın buluştuğu andır. — Seneca','Çalışmak, düşünmek ve başarmak — bu üçü birbirini takip eder. — Mustafa Kemal Atatürk'][varIdx];
+    }else{
+      const v=[
+        `${name}, ${subject} sınavındaki %${score} başarın takdire değer. ${correct} doğru cevap, konulara olan hakimiyetini açıkça ortaya koyuyor. ${wrong>0?`Ancak ${wrong} yanlış cevabın var; bu soruları gözden geçirip hangi konularda eksiklik olduğunu belirlersen çok daha iyi sonuçlar alabilirsin.`:'Yanlış cevabın yok, bu gerçekten etkileyici!'} Akademik başarı için bu çabayı sürdür.`,
+        `${name}, bu sınavdaki performansın oldukça başarılı. ${score}% oranla ${total} sorudan ${correct} doğruya ulaştın. ${blank>0?`${blank} soruyu boş bıraktın — bu soruları bir daha gözden geçirmen faydalı olacaktır.`:'Tüm soruları cevaplaman da ayrıca olumlu.'} Başarının sürekli olması için bu sistematik çalışma yaklaşımını koru.`,
+        `${name}, son derece güçlü bir ${subject} sınavı geçirdin. %${score} başarı oranın, hazırlandığın açıkça belli. ${wrong>0?`${wrong} yanlış üzerinde tekrar çalışarak başarını pekiştirebilirsin.`:'Hata payın son derece düşük, bu disiplinin sonucu.'}`
+      ];text=v[varIdx];
+      quote=['Hayatta en hakiki mürşit ilimdir. — Mustafa Kemal Atatürk','Başarı, her düştüğünde bir kez daha kalkmaktır. — Winston Churchill','Zor işler zamanla kolaylaşır, ama kolayca başarılan şeyler kalıcı olmaz.'][varIdx];
+    }
+  }else if(score>=60){
+    if(isYoung){
+      const v=[
+        `Aferin ${name}! Bu sınavda ${correct} soruyu doğru cevapladın, bu güzel bir başarı! Bazı sorularda küçük hatalar yaptın ama bu çok normal. Önemli olan hatalardan ders çıkarmak ve daha çok çalışmak. Sen yapabilirsin! 💪`,
+        `Bravo ${name}! ${subject} sınavında iyi bir performans gösterdin. Bazı sorular seni zorlamış olabilir ama endişelenme — her gün biraz daha öğrenerek çok daha iyisini yapabilirsin. Çalışmaya devam et! 🌟`,
+        `Güzel iş ${name}! ${correct} doğru cevabınla bu sınavı tamamladın. Öğrenmek bazen zor olabilir ama sen hiçbir zaman vazgeçmemelisin. Her çalıştığında daha güçlü olduğunu hissedeceksin. 🚀`
+      ];text=v[varIdx];
+      quote=['Her büyük yolculuk küçük adımlarla başlar.','Çalışmak başarının anahtarıdır.','Düşme, kalk ve devam et!'][varIdx];
+    }else if(isMid){
+      const v=[
+        `${name}, ${subject} sınavında genel itibarıyla iyi bir performans sergiyledin. ${correct} doğru ile ${score}% bir başarı oranı yakaladın. ${wrong>0?`${wrong} yanlış cevabın oldu; bu konuları tekrar etmeni ve eksiklerini gidermeni tavsiye ederim.`:''} Biraz daha özverili çalışmayla bu başarıyı kolayca üst seviyelere taşıyabilirsin.`,
+        `Fena değil ${name}! ${score}% başarı oranı, doğru yolda olduğunu gösteriyor. Ancak daha iyisini yapabilecek kapasitede olduğunu da biliyorum. ${blank>0?`${blank} soruyu boş bıraktın — bu soruları çözmeye çalışmak puanını artırabilirdi.`:''} Konuları daha düzenli tekrar edersen sonuçların çok daha iyi olacak.`,
+        `${name}, bu sınav sonucun ortalama üzerinde ve olumlu. ${correct} doğru ile sınavı tamamladın. Dikkatini artırarak ve eksik gördüğün konulara daha fazla vakit ayırarak sonuçlarını belirgin biçimde iyileştirebilirsin.`
+      ];text=v[varIdx];
+      quote=['Başarı şansa bağlı değil, çalışmaya bağlıdır. — Oprah Winfrey','İlerlemenin sırrı, başlamaktır. — Mark Twain','Dün neredeydik? Bugün neredeyiz? Yarın nerede olacağız? Bu soruların cevabı, çalışmaktır. — Atatürk'][varIdx];
+    }else{
+      const v=[
+        `${name}, ${subject} sınavında %${score} ile orta üzeri bir başarı yakaladın. ${correct} doğru cevap, konulara belirli bir hakimiyetin olduğunu gösteriyor. Ancak ${wrong>0?`${wrong} yanlış ve `:''}${blank>0?`${blank} boş soru`:'eksiklerine'} bakıldığında, geliştirmeye açık alanların mevcut. Bu konuları sistematik biçimde tekrar edersen çok daha güçlü bir performans sergileyebilirsin.`,
+        `${name}, bu sınavda dengeli bir performans gösterdin. ${score}% başarı oranın, bazı konularda sağlam olduğunu ama bazılarında daha fazla çalışman gerektiğini ortaya koyuyor. Zamanını etkili yönetmek ve konuları dönemsel tekrar etmek sonuçlarını ciddi ölçüde iyileştirecektir.`,
+        `${name}, ${score}% ile sınavı tamamlaman, temel kavramlara hakim olduğunu gösteriyor. Daha iyi bir sonuç için hatalı ve boş bıraktığın soruları tek tek incele ve bu konulardaki eksiklerini gider. Sistematik çalışma her zaman meyvesini verir.`
+      ];text=v[varIdx];
+      quote=['Başarı, hazırlık ile fırsatın buluşmasıdır.','Bir şeyi gerçekten öğrenmek istiyorsan, onu başkasına öğret. — Richard Feynman','Zorluklar, büyümenin kaçınılmaz bir parçasıdır. — Paulo Coelho'][varIdx];
+    }
+  }else{
+    if(isYoung){
+      const v=[
+        `Sevgili ${name}, bu sınav biraz zor gelmiş olabilir ve bu çok normal! ${correct} soruyu doğru cevapladın, bu da bir başlangıç. Öğrenmek bazen zamanla gelir. Birlikte daha çok çalışırsak bir sonraki sınavda çok daha iyi olacaksın. Hiçbir zaman vazgeçme! ❤️`,
+        `${name}, bu sefer sınav seni biraz zorladı. Ama unutma — her hata seni bir adım daha ileriye taşır. Çalışmaya devam edersen bir sonraki sınavda çok daha güçlü olacaksın! Seninle gurur duyuyorum. 🌈`,
+        `${name}, bu sınavda biraz güçlük çektin ama bu seni engellemeyecek. Her öğrenci bazen zorlanır — önemli olan pes etmemek. Devam et, çalış ve bir sonraki sınav çok daha iyi geçecek! 💡`
+      ];text=v[varIdx];
+      quote=['Her şeyin bir başlangıcı vardır.','Küçük adımlar büyük sonuçlara ulaştırır.','Çalışmak, en güzel yatırımdır.'][varIdx];
+    }else if(isMid){
+      const v=[
+        `${name}, bu sınavda beklediğinden düşük bir sonuç çıktı. ${score}% ile sınavı tamamladın ve ${blank>0?`${blank} soruyu boş bıraktın.`:''} Bu sonucu bir uyarı olarak değerlendir ve ${subject} konularına daha sistematik ve düzenli bir çalışma programıyla yaklaş. Her gün küçük bir ilerleme, zamanla büyük fark yaratır.`,
+        `${name}, bu sınavda zorlandığın belli oluyor. Ancak bu bir son değil; aksine, nerelere odaklanman gerektiğini gösteren önemli bir geri bildirim. ${wrong>0?`${wrong} yanlış cevabın oldu`:''}${blank>0?` ve ${blank} soruyu boş bıraktın`:''}. Bu soruları tek tek gözden geçirerek çalışmana devam et.`,
+        `${name}, bu sınav sonucu mevcut performansının bir fotoğrafı — ve fotoğraf değiştirilebilir. Konuları anlamadan ezberlemenin işe yaramadığını fark etmek önemli bir adım. Kavramsal öğrenmeye odaklan ve düzenli tekrar yap.`
+      ];text=v[varIdx];
+      quote=['Düşmek başarısızlık değildir. Düştükten sonra kalkmamak başarısızlıktır. — Konfüçyüs','Her ustanın bir acemi dönemi vardı.','Güçlük, seni daha güçlü yapar.'][varIdx];
+    }else{
+      const v=[
+        `${name}, bu sınavda beklentilerin altında bir performans sergilendiği görülüyor. %${score} başarı oranı, ${subject} konularında önemli eksiklikler olduğuna işaret ediyor. Bu sonucu ciddiye alman ve çalışma yöntemini gözden geçirmen gerekiyor. Hangi konularda sorun yaşadığını belirlemek, hedefli bir çalışma programı oluşturmak için kritik önem taşıyor.`,
+        `${name}, bu sınav sonucu gerçekçi bir tablo ortaya koyuyor. ${correct} doğru, ${wrong} yanlış ve ${blank} boş ile tamamlanan bu sınav; konulara yeterince zaman ayrılmadığını ya da bazı kavramların netleştirilmesi gerektiğini gösteriyor. Şimdi yapılacak en doğru şey, eksik konuları sistematik biçimde çalışmak ve bir sonraki sınavda bu tabloyu değiştirmek.`,
+        `${name}, bu sonuç senin kapasiteni yansıtmıyor — ya da yansıtmaması gerekiyor. %${score} bir sınav puanı, ${subject} alanında daha fazla çalışman gerektiğini net biçimde gösteriyor. Düzenli tekrar, soru çözme pratiği ve konuları anlamlandırma üzerine odaklanırsan bu tabloyu hızla değiştirebilirsin.`
+      ];text=v[varIdx];
+      quote=['Hayatta en hakiki mürşit ilimdir. — Mustafa Kemal Atatürk','Bir dahi, %1 ilham ve %99 ter dökmektir. — Thomas Edison','Zor yollar güzel manzaralara çıkar.'][varIdx];
+    }
+  }
+  return{text,quote};
+}
+
+init();
+</script>
+</body>
+</html>
