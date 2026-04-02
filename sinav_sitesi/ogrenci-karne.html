@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sınav Karne Merkezi — Kemal Öğretmenim</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root{
+      --navy:#13243d;--green:#0f5d4e;--green-2:#15715f;--blue:#3457d5;--blue-2:#4f6bf0;
+      --green-soft:#e9f7f2;--blue-soft:#edf2ff;--card:#ffffff;--bg:#f4f4fb;--border:#dce4ec;
+      --slate:#62748b;--muted:#94a3b8;--ok:#1f9d68;--bad:#e55252;--blank:#cbd5e1;--amber:#f59e0b;
+      --shadow:0 18px 44px rgba(19,36,61,.08);--fd:'Nunito',sans-serif;--fb:'Outfit',sans-serif;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--fb);background:linear-gradient(180deg,#eef2ff 0%,#f7f8ff 38%,#f6f5fb 100%);color:var(--navy);min-height:100vh}
+    .loading-state,.error-state{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .state-card{max-width:480px;width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:28px;padding:36px 32px;box-shadow:var(--shadow);text-align:center}
+    .state-card strong{display:block;font-family:var(--fd);font-size:26px;font-weight:900;margin-bottom:10px}
+    .state-card p{font-size:14px;line-height:1.8;color:var(--slate)}
+    .spinner{width:42px;height:42px;border-radius:50%;border:4px solid #d7e2ff;border-top-color:var(--blue);margin:0 auto 18px;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .app{display:none}
+    .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:18px 24px;background:rgba(247,248,255,.9);backdrop-filter:blur(14px);border-bottom:1px solid rgba(220,228,236,.92)}
+    .topbar-title h1{font-family:var(--fd);font-size:28px;font-weight:900}
+    .topbar-title p{font-size:13px;color:var(--slate);margin-top:6px;line-height:1.6}
+    .topbar-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .topbar-btn{border:none;border-radius:999px;padding:12px 18px;font-family:var(--fd);font-size:13px;font-weight:800;cursor:pointer;transition:transform .18s,box-shadow .18s}
+    .topbar-btn:hover{transform:translateY(-1px)}
+    .btn-back{background:#eef2ff;color:#4338ca}
+    .btn-excel{background:#ecfdf5;color:#047857}
+    .btn-print{background:linear-gradient(135deg,var(--blue),var(--blue-2));color:#fff;box-shadow:0 14px 24px rgba(79,107,240,.18)}
+
+    .screen-only{}
+    .page-wrap{max-width:1180px;margin:0 auto;padding:22px 16px 42px}
+    .filter-card{background:var(--card);border:1.5px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+    .filter-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+    .filter-head h2{font-family:var(--fd);font-size:22px;font-weight:900}
+    .filter-head p{font-size:13px;line-height:1.7;color:var(--slate);max-width:720px}
+    .filter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .fg label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900;margin-bottom:6px}
+    .fg select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:16px;background:#fff;font-family:var(--fb);font-size:14px;color:var(--navy)}
+    .filter-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px}
+    .filter-meta{font-size:13px;line-height:1.7;color:var(--slate)}
+    .clear-btn{border:none;border-radius:999px;padding:11px 16px;background:#f5f3ff;color:#6d28d9;font-family:var(--fd);font-size:13px;font-weight:800;cursor:pointer}
+
+    .empty-report{display:none;background:var(--card);border:1.5px solid var(--border);border-radius:28px;padding:38px;box-shadow:var(--shadow);text-align:center;color:var(--slate);font-size:15px;line-height:1.8}
+
+    .report-wrap{display:none}
+    .sheet{position:relative;display:flex;flex-direction:column;min-height:1040px;background:var(--card);border:1.5px solid var(--border);border-radius:30px;box-shadow:var(--shadow);padding:28px 30px 20px;margin-bottom:20px;overflow:hidden}
+    .sheet::before,.sheet::after{content:"";position:absolute;width:40px;height:40px;border:4px solid rgba(21,113,95,.55)}
+    .sheet::before{top:18px;left:18px;border-right:none;border-bottom:none}
+    .sheet::after{top:18px;right:18px;border-left:none;border-bottom:none}
+    .sheet-bottom-left,.sheet-bottom-right{content:"";position:absolute;width:40px;height:40px;border:4px solid rgba(245,158,11,.55);bottom:18px}
+    .sheet-bottom-left{left:18px;border-top:none;border-right:none}
+    .sheet-bottom-right{right:18px;border-top:none;border-left:none}
+    .sheet-main{flex:1}
+
+    .report-mast{display:grid;grid-template-columns:1.3fr .9fr;gap:16px;align-items:stretch;margin-bottom:16px}
+    .brand-bar{background:linear-gradient(135deg,#123a34,#16624f);border-radius:24px;padding:20px 22px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .brand-title{font-family:var(--fd);font-size:34px;font-weight:900;line-height:1}
+    .brand-sub{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.68);margin-top:8px}
+    .brand-line{height:8px;width:180px;border-radius:999px;background:rgba(255,255,255,.14);margin-top:10px}
+    .brand-avatar{display:flex;align-items:center;gap:12px}
+    .brand-avatar .avatar{width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#ffeed6,#fff);border:3px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:28px}
+    .brand-pill{padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.12);font-size:12px;font-weight:800}
+
+    .hero-row{display:grid;grid-template-columns:1.12fr .88fr;gap:16px;margin-bottom:16px}
+    .hero-card{background:linear-gradient(135deg,#2940be 0%,#5068ee 100%);border-radius:24px;padding:20px 22px;color:#fff;min-height:205px}
+    .hero-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.72);font-weight:900}
+    .hero-card h2{font-family:var(--fd);font-size:38px;line-height:1.05;font-weight:900;margin-top:8px;max-width:520px}
+    .hero-card p{font-size:14px;line-height:1.8;color:rgba(255,255,255,.84);margin-top:14px;max-width:560px}
+    .hero-chip{display:inline-flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.15);margin-top:18px;font-size:12px;font-weight:800}
+    .student-card{background:#fff;border:1.5px solid var(--border);border-radius:24px;padding:20px 22px}
+    .student-top{display:flex;align-items:center;gap:14px}
+    .student-photo{width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#60a5fa,#2563eb);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px}
+    .student-name{font-family:var(--fd);font-size:26px;font-weight:900}
+    .student-meta{font-size:13px;color:var(--slate);margin-top:4px}
+    .student-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+    .student-chip{padding:7px 10px;border-radius:999px;background:var(--blue-soft);font-size:12px;font-weight:800;color:#4259b8}
+    .student-score-box{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+    .student-score-kicker{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
+    .student-score{font-family:var(--fd);font-size:54px;font-weight:900;line-height:1;color:#2854df;margin-top:8px}
+    .student-score-note{font-size:13px;line-height:1.7;color:var(--slate);margin-top:8px}
+
+    .metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+    .metric-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px 16px;text-align:center}
+    .metric-card strong{display:block;font-family:var(--fd);font-size:32px;font-weight:900}
+    .metric-card span{display:block;margin-top:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900}
+
+    .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    .panel-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px}
+    .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .panel-head h3{font-family:var(--fd);font-size:20px;font-weight:900}
+    .panel-head p{font-size:12px;line-height:1.7;color:var(--slate);margin-top:4px}
+    .chart-box{height:220px}
+    .compare-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .compare-card{background:#f8fbff;border:1px solid #e0e8ff;border-radius:18px;padding:14px}
+    .compare-card strong{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#4661c7;margin-bottom:8px}
+    .compare-card p{font-size:14px;line-height:1.7;color:var(--slate)}
+
+    .section-headline{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+    .section-headline h3{font-family:var(--fd);font-size:22px;font-weight:900}
+    .section-headline p{font-size:13px;line-height:1.7;color:var(--slate);max-width:760px}
+    .history-table-wrap{overflow:auto;border:1.5px solid var(--border);border-radius:20px;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:#f8fbff;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding:12px 10px;text-align:left;border-bottom:1px solid var(--border)}
+    tbody td{padding:12px 10px;border-bottom:1px solid #edf2f7;font-size:12px;color:var(--navy)}
+    tbody tr:last-child td{border-bottom:none}
+    .score-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:var(--blue-soft);color:#2c4ac9;font-weight:900}
+    .delta-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;font-weight:900}
+    .delta-pill.good{background:#ecfdf5;color:#047857}
+    .delta-pill.warn{background:#fff7ed;color:#c2410c}
+    .mini-btn{border:none;border-radius:999px;padding:8px 11px;background:var(--blue-soft);color:#2645be;font-size:12px;font-weight:800;cursor:pointer}
+
+    .selected-top{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:14px}
+    .selected-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px}
+    .selected-title{font-family:var(--fd);font-size:26px;font-weight:900}
+    .selected-meta{font-size:13px;line-height:1.7;color:var(--slate);margin-top:6px}
+    .selected-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .selected-btn{border:none;border-radius:999px;padding:10px 14px;background:#f5f3ff;color:#6d28d9;font-size:12px;font-weight:900;cursor:pointer}
+    .selected-benchmark{display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#123a34,#196451);color:#fff}
+    .benchmark-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:800}
+    .benchmark-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+    .benchmark-item{padding:12px;border-radius:18px;background:rgba(255,255,255,.08)}
+    .benchmark-item strong{display:block;font-family:var(--fd);font-size:28px;font-weight:900}
+    .benchmark-item span{display:block;margin-top:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.72);font-weight:900}
+
+    .matrix-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+    .matrix-head h3{font-family:var(--fd);font-size:22px;font-weight:900}
+    .matrix-head p{font-size:13px;line-height:1.7;color:var(--slate);max-width:760px}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;font-weight:800;color:var(--slate)}
+    .legend span{display:inline-flex;align-items:center;gap:6px}
+    .dot{width:12px;height:12px;border-radius:50%}
+    .dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.dot.blank{background:var(--blank)}
+    .matrix-wrap{display:flex;flex-direction:column;gap:12px}
+    .matrix-card{border:1.5px solid var(--border);border-radius:20px;overflow:hidden;background:#fff}
+    .matrix-card-head{background:linear-gradient(135deg,#123a34,#196451);padding:10px 14px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .matrix-card-head strong{font-family:var(--fd);font-size:18px;font-weight:900}
+    .matrix-card-head span{font-size:12px;font-weight:800;color:rgba(255,255,255,.76)}
+    .matrix-card-body{padding:12px 14px}
+    .matrix-row{display:grid;grid-template-columns:180px 1fr;gap:12px;align-items:start;padding:8px 0;border-bottom:1px dashed #e7edf3}
+    .matrix-row:last-child{border-bottom:none}
+    .matrix-label{font-family:var(--fd);font-size:18px;font-weight:900;color:var(--navy)}
+    .matrix-sub{font-size:12px;color:var(--slate);margin-top:4px}
+    .matrix-cells{display:flex;flex-wrap:wrap;gap:6px}
+    .q-cell{width:28px;display:flex;flex-direction:column;align-items:center;gap:3px}
+    .q-cell-num{font-size:10px;color:var(--slate);font-weight:800}
+    .q-bubble{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff}
+    .q-bubble.ok{background:var(--ok)}.q-bubble.bad{background:var(--bad)}.q-bubble.blank{background:var(--blank);color:#64748b}
+
+    .footer-note{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+    .footer-brand{font-size:12px;line-height:1.7;color:var(--slate)}
+    .footer-brand strong{display:block;color:var(--navy);font-family:var(--fd);font-size:15px}
+    .footer-center{font-size:11px;line-height:1.8;color:var(--muted);text-align:center;max-width:520px;margin:0 auto}
+    .footer-page{font-size:12px;font-weight:900;color:var(--navy);white-space:nowrap}
+
+    @media(max-width:1100px){
+      .filter-grid,.metric-grid{grid-template-columns:repeat(2,1fr)}
+      .report-mast,.hero-row,.chart-row,.selected-top{grid-template-columns:1fr}
+      .compare-strip,.benchmark-grid{grid-template-columns:1fr}
+    }
+    @media(max-width:720px){
+      .topbar{flex-direction:column;padding:16px}
+      .topbar-actions{width:100%}
+      .topbar-btn{flex:1}
+      .filter-grid,.metric-grid{grid-template-columns:1fr}
+      .sheet{padding:22px 18px 18px}
+      .brand-title{font-size:28px}
+      .hero-card h2{font-size:30px}
+      .student-score{font-size:46px}
+      .matrix-row{grid-template-columns:1fr}
+      .matrix-label{font-size:16px}
+      .footer-note{flex-direction:column;align-items:flex-start}
+    }
+
+    @page{size:A4;margin:10mm}
+    @media print{
+      body{background:#fff}
+      .screen-only,.topbar,.filter-card{display:none!important}
+      .page-wrap{max-width:none;padding:0}
+      .report-wrap{display:block!important}
+      .sheet{box-shadow:none;border:none;border-radius:0;min-height:277mm;padding:14mm 12mm 10mm;margin:0;break-after:page}
+      .sheet:last-child{break-after:auto}
+      .panel-card,.metric-card,.compare-card,.history-table-wrap,.matrix-card,.selected-card{break-inside:avoid}
+    }
+  </style>
+</head>
+<body>
+  <div class="loading-state" id="loadingState">
+    <div class="state-card">
+      <div class="spinner"></div>
+      <strong>Karne Merkezi Hazırlanıyor</strong>
+      <p id="loadingText">Sınav verileri ve filtre seçenekleri yükleniyor...</p>
+    </div>
+  </div>
+
+  <div class="error-state" id="errorState" style="display:none">
+    <div class="state-card">
+      <strong id="errorTitle">Erişim Sağlanamadı</strong>
+      <p id="errorDetail">Bu ekranı kullanmak için sınav yönetim panelinden yetkili hesapla giriş yapman gerekiyor.</p>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+    <div class="topbar screen-only">
+      <div class="topbar-title">
+        <h1>📚 Sınav Karne Merkezi</h1>
+        <p>Öğrenci, sınıf, ders ve sınav filtreleriyle profesyonel analiz raporu üret; yazdır, PDF al ve Excel dışa aktar.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn btn-back" id="backBtn">← Sınav Paneli</button>
+        <button class="topbar-btn btn-excel" id="excelBtn">📥 Excel İndir</button>
+        <button class="topbar-btn btn-print" id="printBtn">🖨️ Yazdır / PDF</button>
+      </div>
+    </div>
+
+    <div class="page-wrap">
+      <section class="filter-card screen-only">
+        <div class="filter-head">
+          <div>
+            <h2>Filtreli Karne Oluştur</h2>
+            <p>Önce sınıf ve öğrenciyi seç, ardından istersen raporu ders veya tek bir sınav düzeyinde daralt. Boş bırakılan filtreler öğrencinin tüm kayıtlarını birlikte analiz eder.</p>
+          </div>
+        </div>
+        <div class="filter-grid">
+          <div class="fg">
+            <label>Sınıf</label>
+            <select id="gradeFilter"></select>
+          </div>
+          <div class="fg">
+            <label>Öğrenci</label>
+            <select id="studentFilter"></select>
+          </div>
+          <div class="fg">
+            <label>Ders</label>
+            <select id="subjectFilter"></select>
+          </div>
+          <div class="fg">
+            <label>Sınav</label>
+            <select id="examFilter"></select>
+          </div>
+        </div>
+        <div class="filter-foot">
+          <div class="filter-meta" id="filterMeta">Tüm filtreler yüklendiğinde karne otomatik güncellenir.</div>
+          <button class="clear-btn" id="clearFiltersBtn">Filtreleri Temizle</button>
+        </div>
+      </section>
+
+      <div class="empty-report" id="emptyReport">
+        Seçili filtrelerde rapor oluşturacak kayıt bulunamadı. Farklı öğrenci, ders veya sınav seçerek tekrar deneyebilirsin.
+      </div>
+
+      <div class="report-wrap" id="reportWrap">
+        <section class="sheet">
+          <span class="sheet-bottom-left"></span>
+          <span class="sheet-bottom-right"></span>
+          <div class="sheet-main">
+            <div class="report-mast">
+              <div class="brand-bar">
+                <div>
+                  <div class="brand-title">Sınav Karnesi</div>
+                  <div class="brand-sub" id="reportYear">2025 - 2026 Öğretim Yılı</div>
+                  <div class="brand-line"></div>
+                </div>
+                <div class="brand-avatar">
+                  <div class="avatar">🎓</div>
+                  <div class="brand-pill" id="reportCountPill">0 sınav</div>
+                </div>
+              </div>
+              <div class="student-card">
+                <div class="student-top">
+                  <div class="student-photo">🧿</div>
+                  <div>
+                    <div class="student-name" id="heroStudentName">—</div>
+                    <div class="student-meta" id="heroStudentMeta">—</div>
+                  </div>
+                </div>
+                <div class="student-chips" id="heroStudentChips"></div>
+                <div class="student-score-box">
+                  <div class="student-score-kicker">Seçili Raporun Ortalama Başarı Yüzdesi</div>
+                  <div class="student-score" id="heroScore">%0</div>
+                  <div class="student-score-note" id="heroScoreNote">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-row">
+              <div class="hero-card">
+                <div class="hero-kicker">Sınav Yolculuğu</div>
+                <h2 id="heroHeadline">Öğrenci Başarı İlerlemesi</h2>
+                <p id="heroDescription">—</p>
+                <div class="hero-chip" id="heroComparisonPill">—</div>
+              </div>
+              <div class="student-card">
+                <div class="student-score-kicker">Filtre Özeti</div>
+                <div class="student-score" id="filterSummaryScore">%0</div>
+                <div class="student-score-note" id="filterSummaryText">—</div>
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <div class="metric-card"><strong id="metricExamCount">0</strong><span>Toplam Sınav</span></div>
+              <div class="metric-card"><strong id="metricAvgScore">%0</strong><span>Ortalama Başarı</span></div>
+              <div class="metric-card"><strong id="metricAvgBenchmark">%0</strong><span>Katılım Ortalaması</span></div>
+              <div class="metric-card"><strong id="metricAvgPercentile">%0</strong><span>Ort. Yüzdelik Dilim</span></div>
+            </div>
+
+            <div class="chart-row">
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div>
+                    <h3>📍 Sınav Bazlı Başarı Grafiği</h3>
+                    <p>Öğrencinin filtreye giren sınavlardaki başarı yüzdesi ve net ilerleyişi</p>
+                  </div>
+                </div>
+                <div class="chart-box"><canvas id="progressChart"></canvas></div>
+              </div>
+              <div class="panel-card">
+                <div class="panel-head">
+                  <div>
+                    <h3>📊 Katılımcı Kıyaslama Grafiği</h3>
+                    <p>Öğrencinin skoru ile aynı sınava giren grubun ortalama başarısının karşılaştırması</p>
+                  </div>
+                </div>
+                <div class="chart-box"><canvas id="benchmarkChart"></canvas></div>
+              </div>
+            </div>
+
+            <div class="panel-card">
+              <div class="panel-head">
+                <div>
+                  <h3>🧭 Değerlendirme Özeti</h3>
+                  <p>Rapor, ölçüt referanslı gelişim izleme ile norm referanslı grup karşılaştırmasını birlikte sunar.</p>
+                </div>
+              </div>
+              <div class="compare-strip" id="compareStrip"></div>
+            </div>
+          </div>
+
+          <div class="footer-note">
+            <div class="footer-brand">
+              <strong>By Kemal Öğretmen</strong>
+              kemalogretmenim.com.tr
+            </div>
+            <div class="footer-center">
+              Bu karne, kemalogretmenim.com.tr üzerindeki sınav değerlendirme altyapısı tarafından otomatik oluşturulan profesyonel öğrenci analiz raporudur.
+            </div>
+            <div class="footer-page">Sayfa: 1 / 2</div>
+          </div>
+        </section>
+
+        <section class="sheet">
+          <span class="sheet-bottom-left"></span>
+          <span class="sheet-bottom-right"></span>
+          <div class="sheet-main">
+            <div class="section-headline">
+              <div>
+                <h3>🗂️ Sınav Geçmişi ve Kıyaslama Tablosu</h3>
+                <p>Her satır öğrencinin ilgili sınav performansını, aynı sınava katılan öğrencilerin ortalamasını ve yüzdelik dilimini birlikte gösterir.</p>
+              </div>
+            </div>
+            <div class="history-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tarih</th>
+                    <th>Sınav</th>
+                    <th>Ders</th>
+                    <th>Başarı</th>
+                    <th>Katılım Ort.</th>
+                    <th>Fark</th>
+                    <th>Yüzdelik</th>
+                    <th class="screen-only">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="selected-top" style="margin-top:14px">
+              <div class="selected-card">
+                <div class="selected-title" id="selectedExamTitle">Seçili Sınav</div>
+                <div class="selected-meta" id="selectedExamMeta">—</div>
+                <div class="selected-actions screen-only">
+                  <button class="selected-btn" id="selectedExamAction">📄 Tek Sınav Karnesi Aç</button>
+                </div>
+              </div>
+              <div class="selected-card selected-benchmark">
+                <div class="benchmark-pill" id="selectedBenchmarkPill">Katılımcı kıyası</div>
+                <div class="benchmark-grid">
+                  <div class="benchmark-item"><strong id="selectedScoreValue">%0</strong><span>Öğrenci Skoru</span></div>
+                  <div class="benchmark-item"><strong id="selectedBenchmarkValue">%0</strong><span>Katılım Ort.</span></div>
+                  <div class="benchmark-item"><strong id="selectedPercentileValue">%0</strong><span>Yüzdelik Dilim</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="matrix-head">
+              <div>
+                <h3>🔎 Soru Bazlı Kompakt Değerlendirme</h3>
+                <p>Uzun dikey liste yerine, bölüm bazlı ve soru numarası hizalı kompakt matris kullanılır. Doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri görünür.</p>
+              </div>
+              <div class="legend">
+                <span><i class="dot ok"></i> Doğru</span>
+                <span><i class="dot bad"></i> Yanlış</span>
+                <span><i class="dot blank"></i> Boş</span>
+              </div>
+            </div>
+
+            <div class="matrix-wrap" id="matrixWrap"></div>
+          </div>
+
+          <div class="footer-note">
+            <div class="footer-brand">
+              <strong>By Kemal Öğretmen</strong>
+              kemalogretmenim.com.tr
+            </div>
+            <div class="footer-center">
+              Bu karne, kemalogretmenim.com.tr üzerindeki sınav değerlendirme altyapısı tarafından otomatik oluşturulan profesyonel öğrenci analiz raporudur.
+            </div>
+            <div class="footer-page">Sayfa: 2 / 2</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/sinav_sitesi/js/ogrenci-karne.js"></script>
+</body>
+</html>

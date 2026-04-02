@@ -343,10 +343,10 @@
       const detay = sorular.map((s, i) => {
         const secilen = cevaplar[i];
         const dogruSec = (s.secenekler || []).find(sec => sec.dogru_mu);
-        const isDogu = dogruSec && secilen === dogruSec.id;
+        const isDogru = dogruSec && secilen === dogruSec.id;
         if (secilen === null) {
           yanlis++;
-        } else if (isDogu) {
+        } else if (isDogru) {
           dogru++;
         } else {
           yanlis++;
@@ -355,7 +355,7 @@
           soru: s.soru_metni,
           secilen,
           dogruId: dogruSec?.id,
-          isDogu,
+          isDogru,
           secilenMetin: (s.secenekler||[]).find(sec=>sec.id===secilen)?.secenek_metni || '—',
           dogruMetin:   dogruSec?.secenek_metni || '—'
         };

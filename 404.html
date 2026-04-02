@@ -34,6 +34,18 @@
       </div>
     </div>
   </div>
+  <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script>
+    (function() {
+      if (!window.kemalSiteRoutes) {
+        return;
+      }
+      const redirect = window.kemalSiteRoutes.getLegacyRedirectPath(window.location.pathname);
+      if (redirect && redirect !== window.location.pathname) {
+        window.location.replace(redirect);
+      }
+    })();
+  </script>
 </body>
 </html>

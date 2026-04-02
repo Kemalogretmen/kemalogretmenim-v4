@@ -197,6 +197,21 @@
     @media(max-width:640px) {
       .kitap-metin { padding:24px 20px; }
       .kitap-baslik { font-size:22px; }
+      .okuma-topbar{padding:10px 14px;gap:10px;flex-wrap:wrap;}
+      .sayac-display{font-size:16px;}
+      .kitap-wrapper{margin:18px auto;padding:0 14px;}
+      .bitti-alani{padding:28px 14px 42px;}
+      .bitti-btn{width:100%;justify-content:center;padding:16px 22px;font-size:16px;}
+      .kk-top{padding:12px 16px;gap:12px;flex-wrap:wrap;}
+      .kk-progress-wrap{left:16px;right:16px;bottom:48px;}
+      .kk-click-hint{bottom:16px;max-width:calc(100% - 24px);text-align:center;}
+    }
+    @media(orientation:landscape) and (max-width:900px){
+      .kitap-wrapper{max-width:100%;padding:0 18px;margin:18px auto;}
+      .kitap-metin{padding:24px 24px;max-height:58vh;overflow:auto;}
+      .bitti-alani{padding:20px 18px 28px;}
+      .kk-kelime{font-size:clamp(34px,7vw,72px);}
+      .kk-progress-wrap{bottom:28px;}
     }
   </style>
 </head>
@@ -244,202 +259,6 @@
     <div class="kk-click-hint" id="kkHint">herhangi bir yere tıkla →</div>
   </div>
 
-  <script>
-    const metin    = JSON.parse(sessionStorage.getItem('okuma_metin') || 'null');
-    const kullanici = JSON.parse(sessionStorage.getItem('okuma_kullanici') || 'null');
-
-    if (!metin || !kullanici) {
-      window.location.href = '/hizli-okuma/index.html';
-    }
-
-    // Sayaç
-    let sayacMs   = 0;
-    let sayacTimer = null;
-    let baslangic  = null;
-
-    // Kelime kelime değişkenler
-    let kelimeler    = [];
-    let kelimeIndex  = 0;
-    let kelimeTimer  = null;
-    let kkBaslangic  = null;
-
-    /* ─── HAZIR EKRANI ─── */
-    const mod = metin.goruntuleme_modu;
-    const soruSayisi = (metin.sorular || []).length;
-
-    document.getElementById('hazirBaslik').textContent = metin.baslik;
-    document.getElementById('hazirKullanici').textContent =
-      `👤 ${kullanici.ad} ${kullanici.soyad} · ${kullanici.sinif}/${kullanici.sube}`;
-
-    const modLabel = mod === 'kelime'
-      ? (metin.tikla_mod ? '⚡ Kelime Kelime (Tıklayarak)' : `⚡ Kelime Kelime (Otomatik · ${metin.kelime_ms||500}ms)`)
-      : '📄 Tam Metin';
-
-    document.getElementById('hazirBilgi').innerHTML =
-      `<strong>${modLabel}</strong><br>${metin.kelime_sayisi || '?'} kelime · ` +
-      `${soruSayisi > 0 ? soruSayisi+' anlama sorusu' : 'Anlama sorusu yok'}` +
-      `<br><br>Hazır olduğunda başla butonuna bas!`;
-
-    const btn = document.getElementById('hazirBtn');
-    btn.textContent = '🚀 Okumaya Başla!';
-    btn.disabled = false;
-
-    /* ─── OKUMA BAŞLAT ─── */
-    function okumaBaslat() {
-      document.getElementById('hazirEkran').style.display = 'none';
-
-      if (mod === 'tam') {
-        baslatTamMetin();
-      } else {
-        baslatKelimeKelime();
-      }
-    }
-
-    /* ─── TAM METİN MODU ─── */
-    function baslatTamMetin() {
-      const ekran = document.getElementById('tamMetinEkran');
-      ekran.style.display = 'flex';
-
-      // Kullanıcı bilgisi
-      document.getElementById('tamMetinKullanici').innerHTML =
-        `👤 <strong>${kullanici.ad} ${kullanici.soyad}</strong>`;
-      document.getElementById('tamMetinBaslik').textContent = metin.baslik;
-
-      // Metin stilini uygula
-      const icerik = document.getElementById('tamMetinIcerik');
-      icerik.style.fontFamily   = metin.yazi_tipi || 'Nunito';
-      icerik.style.fontSize     = (metin.yazi_boyutu || 18) + 'px';
-      icerik.style.color        = metin.yazi_rengi || '#1A1040';
-      // icerik_html varsa onu kullan (biçimlendirme korunur), yoksa düz metni göster
-      if (metin.icerik_html && metin.icerik_html.trim()) {
-        icerik.innerHTML = metin.icerik_html;
-      } else {
-        icerik.innerHTML = (metin.icerik || '').replace(/\n/g, '<br>');
-      }
-
-      // Sayaç başlat
-      baslangic = Date.now();
-      sayacTimer = setInterval(sayacGuncelle, 1000);
-    }
-
-    function sayacGuncelle() {
-      sayacMs = Date.now() - baslangic;
-      document.getElementById('sayacDisplay').textContent = msFormatla(sayacMs);
-    }
-
-    /* ─── KELIME KELIME MODU ─── */
-    function baslatKelimeKelime() {
-      // Kelimeler için düz metni kullan (HTML taglerini temizle)
-      const duzMetin = metin.icerik || (metin.icerik_html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim();
-      kelimeler = duzMetin.trim().split(/\s+/).filter(w => w.length > 0);
-      kelimeIndex = 0;
-
-      const ekran = document.getElementById('kelimeEkran');
-      ekran.style.display = 'flex';
-      ekran.style.alignItems = 'center';
-      ekran.style.justifyContent = 'center';
-
-      document.getElementById('kkMeta').innerHTML =
-        `📖 <strong>${metin.baslik}</strong>`;
-
-      if (!metin.tikla_mod) {
-        document.getElementById('kkHint').style.display = 'none';
-        ekran.style.cursor = 'default';
-      }
-
-      kkBaslangic = Date.now();
-      // Sayaç
-      sayacTimer = setInterval(() => {
-        sayacMs = Date.now() - kkBaslangic;
-        document.getElementById('kkSayac').textContent = msFormatla(sayacMs);
-      }, 1000);
-
-      kelimeGoster();
-
-      if (!metin.tikla_mod) {
-        // Otomatik mod
-        const aralik = metin.kelime_ms || 500;
-        kelimeTimer = setInterval(() => {
-          kelimeIndex++;
-          if (kelimeIndex >= kelimeler.length) {
-            clearInterval(kelimeTimer);
-            clearInterval(sayacTimer);
-            setTimeout(kkBitti, 600);
-          } else {
-            kelimeGoster();
-          }
-        }, aralik);
-      }
-    }
-
-    function kelimeGoster() {
-      const el = document.getElementById('kkKelime');
-      el.style.animation = 'none';
-      el.offsetHeight; // reflow
-      el.style.animation = 'kelimeGelsin .15s ease both';
-
-      // Kelime stilini uygula
-      el.style.fontFamily = metin.yazi_tipi || 'Nunito';
-      el.style.color      = metin.yazi_rengi || 'white';
-
-      el.textContent = kelimeler[kelimeIndex] || '';
-
-      // İlerleme
-      const pct = Math.round(((kelimeIndex+1) / kelimeler.length) * 100);
-      document.getElementById('kkProgress').style.width = pct + '%';
-      document.getElementById('kkProgressTxt').textContent =
-        `${kelimeIndex+1} / ${kelimeler.length} kelime`;
-    }
-
-    function kelimeTikla() {
-      if (!metin.tikla_mod) return; // Sadece tıklama modunda
-      kelimeIndex++;
-      if (kelimeIndex >= kelimeler.length) {
-        clearInterval(sayacTimer);
-        setTimeout(kkBitti, 600);
-      } else {
-        kelimeGoster();
-      }
-    }
-
-    function kkBitti() {
-      // Son kelime gösterildi, süre hesapla ve devam et
-      sayacMs = Date.now() - kkBaslangic;
-      okumaBitirVeDevamEt(sayacMs);
-    }
-
-    /* ─── OKUMA BİTTİ ─── */
-    function okumaBitti() {
-      clearInterval(sayacTimer);
-      sayacMs = Date.now() - baslangic;
-      okumaBitirVeDevamEt(sayacMs);
-    }
-
-    function okumaBitirVeDevamEt(sureMilisaniye) {
-      const sureSaniye = sureMilisaniye / 1000;
-      const duzMetinKw = metin.icerik || (metin.icerik_html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim();
-      const kelimeSayisi = metin.kelime_sayisi ||
-        duzMetinKw.trim().split(/\s+/).filter(w=>w.length>0).length;
-      const wpm = Math.round((kelimeSayisi / sureSaniye) * 60);
-
-      sessionStorage.setItem('okuma_sure_sn', sureSaniye.toFixed(1));
-      sessionStorage.setItem('okuma_wpm', wpm);
-
-      const soruSayisi = (metin.sorular || []).length;
-      if (soruSayisi > 0) {
-        window.location.href = '/hizli-okuma/sorular.html';
-      } else {
-        window.location.href = '/hizli-okuma/karne.html';
-      }
-    }
-
-    /* ─── YARDIMCI ─── */
-    function msFormatla(ms) {
-      const sn = Math.floor(ms / 1000);
-      const dk = Math.floor(sn / 60);
-      const sn2 = sn % 60;
-      return String(dk).padStart(2,'0') + ':' + String(sn2).padStart(2,'0');
-    }
-  </script>
+  <script src="/js/okuma-screen.js"></script>
 </body>
 </html>

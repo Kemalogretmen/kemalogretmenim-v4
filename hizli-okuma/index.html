@@ -331,19 +331,75 @@
 
   </div>
 
+  <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
   <script>
-    const SUPABASE_URL = 'https://mwxcvlyrkptxrwgkmqum.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sbConfig = window.kemalSiteStore.getReadingConfig
+      ? window.kemalSiteStore.getReadingConfig()
+      : window.kemalSiteStore.getConfig();
+    const sb = supabase.createClient(sbConfig.supabaseUrl, sbConfig.supabaseAnonKey);
+    const METIN_CACHE_KEY = 'kemal_okuma_metin_cache_v1';
+    const METIN_DETAIL_CACHE_PREFIX = 'kemal_okuma_metin_detay_';
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedMetinId = urlParams.get('metinId') || urlParams.get('textId') || urlParams.get('metin') || '';
 
     let seciliSinif = null;
     let seciliMetin = null;
 
+    function normalizeGradeList(metin) {
+      const raw = Array.isArray(metin.siniflar) && metin.siniflar.length
+        ? metin.siniflar
+        : (metin.sinif !== undefined && metin.sinif !== null ? [metin.sinif] : []);
+      return raw
+        .map(v => parseInt(v, 10))
+        .filter(v => Number.isFinite(v));
+    }
+
+    function saveMetinCache(list) {
+      try {
+        localStorage.setItem(METIN_CACHE_KEY, JSON.stringify(list || []));
+      } catch (error) {}
+    }
+
+    function getMetinCache() {
+      try {
+        const raw = localStorage.getItem(METIN_CACHE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveMetinDetailCache(metin) {
+      if (!metin || !metin.id) return;
+      try {
+        localStorage.setItem(METIN_DETAIL_CACHE_PREFIX + metin.id, JSON.stringify(metin));
+      } catch (error) {}
+    }
+
+    function getMetinDetailCache(metinId) {
+      try {
+        const raw = localStorage.getItem(METIN_DETAIL_CACHE_PREFIX + metinId);
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function getCachedMetinById(metinId) {
+      const listed = getMetinCache().find(item => item.id === metinId);
+      return listed || getMetinDetailCache(metinId);
+    }
+
+    function setSinifButtonState(sinif) {
+      document.querySelectorAll('.sinif-btn').forEach(button => {
+        button.classList.toggle('active', parseInt(button.dataset.s, 10) === parseInt(sinif, 10));
+      });
+    }
+
     /* ── Adım 1 → 2: Sınıf Seç ── */
-    async function sinifSec(sinif, el) {
-      document.querySelectorAll('.sinif-btn').forEach(b => b.classList.remove('active'));
-      el.classList.add('active');
+    async function sinifSec(sinif) {
+      setSinifButtonState(sinif);
       seciliSinif = sinif;
 
       // Step geçişi
@@ -378,14 +434,22 @@
         .order('olusturma_tarihi', { ascending: false });
 
       if (error) {
-        list.innerHTML = `<div class="no-metin"><span>⚠️</span><p>Yüklenemedi.</p></div>`;
+        const cached = getMetinCache();
+        tumMetinler = cached.filter(m => normalizeGradeList(m).includes(parseInt(sinif, 10)));
+        if (tumMetinler.length) {
+          renderMetinSayfasi(list);
+          list.insertAdjacentHTML('afterbegin', '<div style="margin-bottom:14px;padding:12px 14px;border:1.5px solid #FCD34D;background:#FFF7ED;border-radius:14px;color:#9A3412;font-size:13px;font-weight:700;">⚠️ Canlı veritabanına ulaşılamadı. Son kaydedilmiş metin listesi gösteriliyor.</div>');
+          return;
+        }
+        list.innerHTML = `<div class="no-metin"><span>⚠️</span><p>Metinler şu an yüklenemedi. Lütfen biraz sonra tekrar deneyin.</p></div>`;
         return;
       }
 
+      saveMetinCache(data || []);
+
       // İstemci tarafında filtrele: sinif sütunu veya siniflar dizisi eşleşsin
       tumMetinler = (data || []).filter(m => {
-        const sf = m.siniflar && m.siniflar.length ? m.siniflar : (m.sinif ? [m.sinif] : []);
-        return sf.includes(sinif);
+        return normalizeGradeList(m).includes(parseInt(sinif, 10));
       });
 
       renderMetinSayfasi(list);
@@ -463,7 +527,11 @@
         .eq('id', metinId)
         .single();
 
-      if (error || !metin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
+      let selectedMetin = metin;
+      if (error || !selectedMetin) {
+        selectedMetin = getMetinDetailCache(metinId);
+      }
+      if (!selectedMetin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
 
       // Soruları çek (varsa)
       const { data: sorularData } = await sb
@@ -472,19 +540,21 @@
         .eq('metin_id', metinId)
         .order('sira');
 
-      metin.sorular = (sorularData || []).map(s => ({
+      selectedMetin.sorular = (sorularData || selectedMetin.sorular || []).map(s => ({
         ...s,
         secenekler: (s.secenekler || []).sort((a,b) => a.sira - b.sira)
       }));
 
-      seciliMetin = metin;
-      sessionStorage.setItem('okuma_metin', JSON.stringify(metin));
+      seciliMetin = selectedMetin;
+      document.getElementById('kullanici_sinif').value = seciliSinif || normalizeGradeList(selectedMetin)[0] || '';
+      saveMetinDetailCache(selectedMetin);
+      sessionStorage.setItem('okuma_metin', JSON.stringify(selectedMetin));
 
       // Bilgilendirme paneli
-      const mod = metin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
-      document.getElementById('seciliMetinAdi').textContent = metin.baslik;
+      const mod = selectedMetin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+      document.getElementById('seciliMetinAdi').textContent = selectedMetin.baslik;
       document.getElementById('seciliMetinMeta').textContent =
-        `${mod} · ${metin.kelime_sayisi || '?'} kelime · ${metin.sorular.length} anlama sorusu`;
+        `${mod} · ${selectedMetin.kelime_sayisi || '?'} kelime · ${selectedMetin.sorular.length} anlama sorusu`;
 
       document.getElementById('step2').style.display = 'none';
       document.getElementById('step3').style.display = 'block';
@@ -529,6 +599,44 @@
     }
 
     function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function resolveSharedMetin(metinId) {
+      const { data, error } = await sb
+        .from('metinler')
+        .select('id, baslik, sinif, siniflar, aktif')
+        .eq('id', metinId)
+        .maybeSingle();
+
+      if (!error && data) {
+        return data;
+      }
+
+      return getCachedMetinById(metinId);
+    }
+
+    async function handleSharedMetinLink() {
+      if (!sharedMetinId) {
+        return;
+      }
+
+      const sharedMetin = await resolveSharedMetin(sharedMetinId);
+      if (!sharedMetin || sharedMetin.aktif === false) {
+        alert('Paylaşılan okuma bağlantısı artık aktif değil veya bulunamadı.');
+        return;
+      }
+
+      const grades = normalizeGradeList(sharedMetin);
+      const targetGrade = grades[0];
+      if (!targetGrade) {
+        alert('Bu metin için sınıf bilgisi bulunamadı.');
+        return;
+      }
+
+      await sinifSec(targetGrade);
+      await metinSec(sharedMetin.id);
+    }
+
+    handleSharedMetinLink();
   </script>
 </body>
 </html>

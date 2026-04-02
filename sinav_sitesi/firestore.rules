@@ -94,7 +94,7 @@ service cloud.firestore {
         'firstName','lastName','grade','sube',
         'subject','examTitle','examId',
         'correct','wrong','blank','netCorrect','score','total',
-        'negativeMarking','elapsed','date'
+        'negativeMarking','elapsed','date','answerDetails'
       ]);
     }
 
@@ -133,6 +133,8 @@ service cloud.firestore {
         && request.resource.data.elapsed is int
         && request.resource.data.elapsed >= 0
         && request.resource.data.elapsed <= 14400
+        && request.resource.data.answerDetails is list
+        && request.resource.data.answerDetails.size() == request.resource.data.total
         && request.resource.data.date == request.time;
     }
 
@@ -160,4 +162,3 @@ service cloud.firestore {
     }
   }
 }
-

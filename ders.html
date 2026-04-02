@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ders Merkezi | Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .subject-hero {
+      --subject-color: #6C3DED;
+      background: linear-gradient(135deg, var(--subject-color), #1A1040 78%);
+      position: relative;
+      overflow: hidden;
+      padding: 72px 32px 56px;
+      color: white;
+    }
+    .subject-hero::before,
+    .subject-hero::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      filter: blur(8px);
+    }
+    .subject-hero::before {
+      width: 320px;
+      height: 320px;
+      top: -120px;
+      left: -80px;
+    }
+    .subject-hero::after {
+      width: 260px;
+      height: 260px;
+      bottom: -120px;
+      right: -40px;
+    }
+    .subject-hero-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.35fr .85fr;
+      gap: 28px;
+      align-items: center;
+    }
+    .subject-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      margin-bottom: 22px;
+    }
+    .subject-title {
+      font-size: clamp(34px, 5vw, 60px);
+      font-weight: 800;
+      line-height: 1.03;
+      margin-bottom: 18px;
+    }
+    .subject-lead {
+      font-size: 17px;
+      line-height: 1.8;
+      color: rgba(255,255,255,.82);
+      max-width: 700px;
+      margin-bottom: 24px;
+    }
+    .subject-cta-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .subject-cta-row .btn {
+      box-shadow: none;
+    }
+    .subject-cta-row .btn-secondary {
+      background: rgba(255,255,255,.14);
+      color: white;
+      border: 2px solid rgba(255,255,255,.18);
+    }
+    .subject-cta-row .btn-secondary:hover {
+      background: rgba(255,255,255,.22);
+      transform: translateY(-2px);
+    }
+    .subject-focus-card {
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: var(--r-xl);
+      padding: 28px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 24px 40px rgba(17, 10, 45, .2);
+    }
+    .subject-focus-card h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .subject-focus-card p {
+      color: rgba(255,255,255,.8);
+      line-height: 1.75;
+      margin-bottom: 18px;
+    }
+    .subject-checks {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+    .subject-checks li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: white;
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .subject-checks li span {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.16);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .subject-support-grid {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+    .subject-note-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+    .subject-note-card h3 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+    .subject-note-card p {
+      color: var(--slate);
+      line-height: 1.75;
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+    .subject-note-card ul {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+    .subject-note-card li {
+      display: flex;
+      gap: 10px;
+      color: var(--slate);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .subject-note-card li::before {
+      content: '•';
+      color: var(--purple);
+      font-size: 20px;
+      line-height: 1;
+      margin-top: -1px;
+    }
+    .subject-empty {
+      max-width: 820px;
+      margin: 80px auto;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 40px 32px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .subject-empty .em {
+      font-size: 72px;
+      display: block;
+      margin-bottom: 14px;
+    }
+    .subject-doc-grid {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+    .subject-doc-card {
+      position: relative;
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    }
+    .subject-doc-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 8px;
+      background: var(--doc-color, #6C3DED);
+    }
+    .subject-doc-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--doc-color, var(--purple));
+      box-shadow: 0 18px 36px rgba(82, 45, 172, .14);
+    }
+    .subject-doc-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .subject-doc-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #F4F0FF;
+      color: var(--doc-color, var(--purple));
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .subject-doc-pages {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--slate);
+      background: #F8F6FF;
+      border-radius: 999px;
+      padding: 6px 10px;
+      flex-shrink: 0;
+    }
+    .subject-doc-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: var(--navy);
+      margin-bottom: 10px;
+      line-height: 1.15;
+    }
+    .subject-doc-desc {
+      font-size: 14px;
+      color: var(--slate);
+      line-height: 1.75;
+      min-height: 74px;
+      margin-bottom: 16px;
+    }
+    .subject-doc-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .subject-doc-meta span {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--slate);
+      background: #F8F6FF;
+      border-radius: 999px;
+      padding: 5px 9px;
+    }
+    .subject-doc-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--doc-color, var(--purple));
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 10px 20px rgba(82, 45, 172, .18);
+    }
+    .subject-doc-state {
+      max-width: 820px;
+      margin: 0 auto;
+      background: white;
+      border: 2px dashed var(--border);
+      border-radius: var(--r-xl);
+      padding: 30px 24px;
+      text-align: center;
+      color: var(--slate);
+      box-shadow: var(--shadow-sm);
+    }
+    .subject-doc-state span {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 900px) {
+      .subject-hero { padding: 56px 20px 42px; }
+      .subject-hero-inner,
+      .subject-support-grid { grid-template-columns: 1fr; }
+      .subject-focus-card,
+      .subject-note-card { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="subject-hero" id="subjectHero">
+    <div class="subject-hero-inner">
+      <div>
+        <div class="subject-pill" id="subjectRibbon">✨ Ders Merkezi</div>
+        <h1 class="subject-title" id="subjectTitle">Ders Merkezi</h1>
+        <p class="subject-lead" id="subjectLead">Sınıf ve ders bilgisine göre yönlendirme hazırlanıyor.</p>
+        <div class="subject-cta-row">
+          <a href="/index.html" class="btn btn-primary" id="subjectPrimary">Ana Sayfaya Dön</a>
+          <a href="/siniflar/ortaokul.html" class="btn btn-secondary" id="subjectSecondary">Sınıf Paneli</a>
+        </div>
+      </div>
+      <div class="subject-focus-card">
+        <h2 id="subjectFocusTitle">Odak Alanı</h2>
+        <p id="subjectFocusText">Bu ders için güncel bağlantılar tek merkezde toplanıyor.</p>
+        <ul class="subject-checks" id="subjectChecks"></ul>
+      </div>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="section-header">
+      <span class="sec-tag">Hemen Başla</span>
+      <h2 class="sec-title">Kısa <span>Yollar</span></h2>
+      <p class="sec-sub">Sınıf paneli, hızlı okuma, oyunlar ve güncel içeriklere bu merkezden hızlıca geçebilirsin.</p>
+    </div>
+    <div class="quick-grid" id="subjectActions"></div>
+  </section>
+
+  <section class="section" style="padding-top:0;" id="subjectDocsSection">
+    <div class="section-header">
+      <span class="sec-tag">Ders Dokümanları</span>
+      <h2 class="sec-title" id="subjectDocsTitle">PDF <span>Arşivi</span></h2>
+      <p class="sec-sub" id="subjectDocsLead">Bu sınıf ve derse özel yüklenen çalışma yaprakları, mini denemeler ve notlar burada listelenir.</p>
+    </div>
+    <div class="subject-doc-state" id="subjectDocsState">
+      <span>⏳</span>
+      <p>Bu dersin dokümanları yükleniyor…</p>
+    </div>
+    <div class="subject-doc-grid" id="subjectDocsGrid" style="display:none;"></div>
+  </section>
+
+  <section class="section" style="padding-top:0;">
+    <div class="subject-support-grid">
+      <div class="subject-note-card">
+        <h3>Bu Merkez Neden Var?</h3>
+        <p id="subjectReason">Eski menü bağlantıları kaybolmasın ve tüm dersler düzenli bir rotada toplansın diye bu sayfa hazırlanmıştır.</p>
+        <ul id="subjectSupport"></ul>
+      </div>
+      <div class="subject-note-card">
+        <h3>Önerilen İlerleme</h3>
+        <p id="subjectPlan">Önce sınıf panelinden ders yapını gözden geçir, sonra hızlı okuma veya oyunlarla konuyu pekiştir.</p>
+        <ul id="subjectPlanSteps">
+          <li>Sınıf panelini aç ve o sınıfa ait genel akışı gör.</li>
+          <li>Hızlı okuma ile dikkat ve akıcılığı destekle.</li>
+          <li>Oyunlar ve yeni içeriklerle dersi tekrar et.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script src="/js/dokuman-store.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      const params = new URLSearchParams(window.location.search);
+      const grade = params.get('sinif');
+      const subject = params.get('ders');
+      const routeHelper = window.kemalSiteRoutes;
+      const data = routeHelper ? routeHelper.getSubjectPageData(grade, subject) : null;
+
+      if (!data) {
+        document.title = 'Ders Bulunamadı | Kemal Öğretmenim';
+        document.body.innerHTML = `
+          <div class="subject-empty">
+            <span class="em">🧭</span>
+            <h1 style="font-family:var(--font-display);font-size:34px;margin-bottom:10px;">Aradığın ders yolu bulunamadı</h1>
+            <p style="color:var(--slate);line-height:1.8;margin-bottom:20px;">Bağlantı güncellenmiş olabilir. Ana sayfaya veya sınıf panellerine dönerek devam edebilirsin.</p>
+            <a href="/index.html" class="btn btn-primary">Ana Sayfaya Dön</a>
+          </div>`;
+        return;
+      }
+
+      document.title = data.title + ' | Kemal Öğretmenim';
+      document.getElementById('subjectHero').style.setProperty('--subject-color', data.color);
+      document.getElementById('subjectRibbon').textContent = data.icon + ' ' + data.ribbon;
+      document.getElementById('subjectTitle').textContent = data.title;
+      document.getElementById('subjectLead').textContent = data.description;
+      document.getElementById('subjectDocsTitle').innerHTML = data.gradeLabel + ' <span>' + data.title.replace(data.gradeLabel + ' ', '') + ' PDF Arşivi</span>';
+      document.getElementById('subjectDocsLead').textContent = data.gradeLabel + ' ' + data.title.replace(data.gradeLabel + ' ', '') + ' için yüklenen PDF dokümanlar yalnızca bu ders sayfasında listelenir.';
+      document.getElementById('subjectFocusTitle').textContent = data.icon + ' ' + data.gradeLabel + ' için odak alanı';
+      document.getElementById('subjectFocusText').textContent = data.focus;
+      document.getElementById('subjectPrimary').href = data.panelHref;
+      document.getElementById('subjectPrimary').textContent = '🏠 ' + data.panelLabel;
+      document.getElementById('subjectSecondary').href = '/index.html';
+      document.getElementById('subjectSecondary').textContent = '← Ana Sayfaya Dön';
+
+      document.getElementById('subjectChecks').innerHTML = data.features.map(function(item, index) {
+        return '<li><span>' + (index + 1) + '</span><div>' + item + '</div></li>';
+      }).join('');
+
+      document.getElementById('subjectActions').innerHTML = data.actions.map(function(action) {
+        return `
+          <a href="${action.href}" class="qcard" data-c="${action.tone}">
+            <span class="qcard-em">${action.emoji}</span>
+            <div class="qcard-title">${action.label}</div>
+            <p class="qcard-desc">${action.description}</p>
+            <span class="qcard-btn">Git →</span>
+          </a>`;
+      }).join('');
+
+      document.getElementById('subjectReason').textContent = data.title + ' için eski ve yeni bağlantılar artık tek bir merkezde toplanıyor.';
+      document.getElementById('subjectSupport').innerHTML = data.support.map(function(item) {
+        return '<li>' + item + '</li>';
+      }).join('');
+
+      document.getElementById('subjectPlan').textContent = data.title + ' çalışırken düzenli akış için sınıf paneli, hızlı okuma ve oyunlar arasında geçiş yapabilirsin.';
+      document.getElementById('subjectPlanSteps').innerHTML = `
+        <li>${data.panelLabel} üzerinden sınıfın genel ders akışını aç.</li>
+        <li>Hızlı okuma ve oyunlar ile dersi tekrar ederek pekiştir.</li>
+        <li>Yeni içerikler eklendikçe aynı merkezden güncel bağlantıları takip et.</li>`;
+
+      const docsState = document.getElementById('subjectDocsState');
+      const docsGrid = document.getElementById('subjectDocsGrid');
+      try {
+        const documents = await window.kemalDocumentStore.listDocumentsBySubject(grade, subject);
+        if (!documents.length) {
+          docsState.innerHTML = `
+            <span>📭</span>
+            <p>Bu ders için henüz yayınlanmış bir doküman yok. Yeni PDF yüklendiğinde burada otomatik görünecek.</p>`;
+          docsGrid.style.display = 'none';
+          return;
+        }
+
+        docsGrid.innerHTML = documents.map(function(item) {
+          return `
+            <a href="${item.viewerUrl}" class="subject-doc-card" style="--doc-color:${item.kapak_renk || data.color}">
+              <div class="subject-doc-head">
+                <span class="subject-doc-badge">📚 ${item.sinifLabel} · ${item.dersLabel}</span>
+                <span class="subject-doc-pages">${item.sayfa_sayisi || '?'} sayfa</span>
+              </div>
+              <div class="subject-doc-title">${item.baslik}</div>
+              <p class="subject-doc-desc">${item.aciklama || 'Bu doküman açıldığında flipbook görünümünde görüntülenir; sayfa üstünde çizim, not alma ve çıktı alma araçlarıyla birlikte gelir.'}</p>
+              <div class="subject-doc-meta">
+                <span>📄 ${item.dosya_adi || 'PDF'}</span>
+                <span>✨ Sayfa bazlı not alma</span>
+                <span>🖨️ Yazdır / İndir</span>
+              </div>
+              <span class="subject-doc-cta">Dokümanı Aç →</span>
+            </a>`;
+        }).join('');
+        docsState.style.display = 'none';
+        docsGrid.style.display = 'grid';
+      } catch (error) {
+        docsState.innerHTML = `
+          <span>⚠️</span>
+          <p>Dokümanlar şu anda yüklenemedi. Lütfen daha sonra tekrar dene.</p>`;
+        docsGrid.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

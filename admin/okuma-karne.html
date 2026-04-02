@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Okuma Karne Merkezi — Kemal Öğretmenim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#1c1917;--slate:#1e293b;--stone:#292524;--amber:#b45309;--amber-lt:#f59e0b;--amber-pale:#fef3c7;
+      --sage:#2d6a4f;--sage-lt:#52b788;--sage-pale:#d8f3dc;--rose:#9f1239;--rose-lt:#e11d48;--rose-pale:#ffe4e6;
+      --sky:#0369a1;--sky-pale:#e0f2fe;--gray-50:#fafaf9;--gray-100:#f5f5f4;--gray-200:#e7e5e4;--gray-300:#d6d3d1;
+      --gray-400:#a8a29e;--gray-500:#78716c;--gray-600:#57534e;--bg:#f1ede8;--text:var(--ink);--muted:var(--gray-500);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#F2EAFF,#FFF5F4)}
+    .login-box{background:#fff;border-radius:24px;padding:44px 36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(108,61,237,.18);text-align:center;border:2px solid #e2d9ff}
+    .login-input{width:100%;padding:13px 16px;border:2px solid #e2d9ff;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none}
+    .login-input:focus{border-color:#6C3DED}
+    .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#6C3DED,#9B72F5);color:#fff;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer}
+    .login-help{font-size:12px;color:#94A3B8;margin:-2px 0 16px}
+    .login-err{display:none;margin-top:14px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);border-radius:10px;font-size:13px;color:#EF4444;font-weight:700}
+    .app{display:none}
+    .topbar{background:#fff;border-bottom:2px solid #e7e5e4;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .topbar-title{font-family:'Nunito',sans-serif;font-size:20px;font-weight:900;color:#6C3DED}
+    .topbar-links{display:flex;gap:10px;flex-wrap:wrap}
+    .topbar-link{padding:8px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:#f5f0ff;color:#64748B;border:2px solid #e2d9ff;transition:all .2s}
+    .topbar-link:hover{border-color:#6C3DED;color:#6C3DED}
+    .logout-btn{padding:8px 14px;background:rgba(239,68,68,.1);border:none;border-radius:50px;color:#EF4444;font-weight:800;font-size:13px;cursor:pointer}
+
+    .panel-wrap{background:linear-gradient(145deg,var(--stone) 0%,#3b2f2b 40%,var(--slate) 100%);padding:32px 20px 44px;position:relative;overflow:hidden}
+    .panel-wrap::before{content:'';position:absolute;top:-80px;right:-40px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(180,83,9,0.18) 0%,transparent 70%)}
+    .panel-wrap::after{content:'';position:absolute;bottom:-50px;left:-30px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(45,106,79,0.2) 0%,transparent 70%)}
+    .panel-ornament{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)}
+    .panel-title{color:#fff;font-family:'Cormorant Garamond',serif;font-size:30px;text-align:center;margin-bottom:4px;position:relative;z-index:1;letter-spacing:.5px}
+    .panel-title em{color:var(--amber-lt);font-style:normal}
+    .panel-subtitle{color:rgba(255,255,255,.45);text-align:center;font-size:12px;margin-bottom:28px;position:relative;z-index:1;letter-spacing:1.5px;text-transform:uppercase}
+    .panel{background:#fff;border-radius:18px;padding:28px 32px;max-width:980px;margin:0 auto;box-shadow:0 24px 80px rgba(0,0,0,.35);position:relative;z-index:1;border-top:4px solid var(--amber-lt)}
+    .panel-section{margin-bottom:22px}
+    .panel-section:last-child{margin-bottom:0}
+    .section-label{font-size:10.5px;text-transform:uppercase;letter-spacing:2px;color:var(--gray-400);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .section-label::after{content:'';flex:1;height:1px;background:var(--gray-200)}
+    .upload-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .upload-zone{border:2px dashed var(--gray-300);border-radius:14px;padding:20px 16px;text-align:center;transition:all .25s;cursor:pointer;background:var(--gray-50)}
+    .upload-zone:hover{border-color:var(--amber-lt);background:#fffbf0}
+    .upload-zone.active{border-color:var(--sage-lt);background:#f0fdf4;border-style:solid}
+    .upload-zone input[type=file]{display:none}
+    .uz-tag{display:inline-block;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:7px;text-transform:uppercase}
+    .new-tag{background:var(--slate);color:#fff}.old-tag{background:var(--rose);color:#fff}.db-tag{background:var(--sage);color:#fff}
+    .uz-icon{font-size:28px;margin-bottom:6px}.uz-text{font-size:12.5px;color:var(--gray-600);font-weight:600}.uz-hint{font-size:11px;color:var(--gray-400);margin-top:3px}
+    .merge-badge{background:linear-gradient(135deg,#1e293b,#3b2f2b);color:#fff;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;text-align:center;margin-top:10px;display:none;border-left:4px solid var(--amber-lt)}
+    .merge-badge.visible{display:block}
+    .input-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
+    .form-group label{display:block;font-size:11.5px;font-weight:700;color:var(--gray-600);margin-bottom:6px;letter-spacing:.3px}
+    .form-group input,.form-group select{width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:var(--text);background:#fff;transition:border-color .2s}
+    .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--amber-lt);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
+    .input-relative{position:relative}
+    .sug-list{display:none;position:absolute;background:#fff;border:1.5px solid var(--amber-lt);border-top:none;border-radius:0 0 10px 10px;max-height:200px;overflow-y:auto;z-index:999;width:100%;box-shadow:0 12px 28px rgba(0,0,0,.12)}
+    .sug-list.open{display:block}
+    .sug-item{padding:8px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text);border-bottom:1px solid var(--gray-100);transition:background .12s}
+    .sug-item:hover{background:var(--amber-pale);color:var(--amber)}
+    .sug-item mark{background:transparent;color:var(--amber);font-weight:800}
+    .sug-item .sug-src{font-size:10px;color:var(--gray-400);margin-left:6px}
+    .photo-btn{display:flex;align-items:center;gap:10px;border:1.5px dashed var(--gray-300);border-radius:10px;padding:9px 14px;cursor:pointer;transition:all .2s;background:var(--gray-50)}
+    .photo-btn:hover{border-color:var(--amber-lt);background:var(--amber-pale)}
+    .photo-btn input{display:none}
+    .photo-btn span{font-size:13px;font-weight:600;color:var(--gray-500)}
+    #photo-preview{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--amber-lt);display:none}
+    .btn-row{display:flex;gap:12px;flex-wrap:wrap}
+    .btn{flex:1;min-width:110px;padding:12px 16px;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:7px;letter-spacing:.2px}
+    .btn:active{transform:scale(.97)}
+    .btn-create{background:var(--slate);color:#fff}.btn-create:hover{background:#0f172a}
+    .btn-pdf{background:var(--rose-lt);color:#fff}.btn-pdf:hover{background:var(--rose)}
+    .btn-jpg{background:var(--amber);color:#fff}.btn-jpg:hover{background:#92400e}
+    .btn-png{background:var(--sage);color:#fff}.btn-png:hover{background:#1b4332}
+    .btn:disabled{opacity:.35;cursor:not-allowed}
+    .status-bar{background:var(--gray-100);border-radius:10px;padding:10px 16px;font-size:12.5px;color:var(--gray-500);font-weight:600;min-height:40px;display:flex;align-items:center;gap:8px;border-left:3px solid var(--gray-300)}
+    .status-bar.ok{background:#f0fdf4;color:var(--sage);border-left-color:var(--sage-lt)}
+    .status-bar.err{background:#fff1f2;color:var(--rose-lt);border-left-color:var(--rose-lt)}
+    .preview-area{background:#ddd8d0;padding:30px 20px 50px}
+    .karne-stack{display:flex;flex-direction:column;align-items:center;gap:24px;max-width:220mm;margin:0 auto}
+    .karne-page{width:210mm;background:#fff;position:relative;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:0 8px 40px rgba(0,0,0,.22);display:none}
+    #page1,#page2{min-height:297mm}
+    .p1-bg,.p2-bg{position:absolute;inset:0;pointer-events:none;z-index:0}
+    .p1-bg{background:radial-gradient(ellipse 60% 40% at 2% 2%,rgba(180,83,9,.05) 0%,transparent 100%),radial-gradient(ellipse 50% 50% at 98% 5%,rgba(45,106,79,.04) 0%,transparent 100%),radial-gradient(ellipse 80% 30% at 50% 100%,rgba(30,41,59,.04) 0%,transparent 100%)}
+    .p2-bg{background:radial-gradient(ellipse 70% 50% at 100% 0%,rgba(45,106,79,.06) 0%,transparent 100%),radial-gradient(ellipse 50% 60% at 0% 95%,rgba(180,83,9,.05) 0%,transparent 100%)}
+    .p1-stripe,.p2-stripe{position:absolute;top:0;left:0;right:0;height:6px;z-index:2}
+    .p1-stripe{background:linear-gradient(90deg,var(--amber) 0%,var(--amber-lt) 50%,var(--sage-lt) 100%)}
+    .p2-stripe{background:linear-gradient(90deg,var(--sage-lt) 0%,var(--sage) 50%,var(--amber) 100%)}
+    .p2-sideline{position:absolute;top:20mm;bottom:20mm;left:7mm;width:3px;background:linear-gradient(180deg,var(--sage-lt),var(--amber-lt),var(--slate));border-radius:2px;z-index:1;opacity:.35}
+    .p1-corner,.p2-corner{position:absolute;pointer-events:none;z-index:1}
+    .p1-tl{top:0;left:0;width:48px;height:48px;border-top:5px solid var(--amber);border-left:5px solid var(--amber)}
+    .p1-tr{top:0;right:0;width:48px;height:48px;border-top:5px solid var(--amber);border-right:5px solid var(--amber)}
+    .p1-bl{bottom:0;left:0;width:48px;height:48px;border-bottom:3px solid var(--sage-lt);border-left:3px solid var(--sage-lt)}
+    .p1-br{bottom:0;right:0;width:48px;height:48px;border-bottom:3px solid var(--sage-lt);border-right:3px solid var(--sage-lt)}
+    .p2-tl{top:0;left:0;width:44px;height:44px;border-top:3px solid var(--sage-lt);border-left:3px solid var(--sage-lt)}
+    .p2-tr{top:0;right:0;width:44px;height:44px;border-top:3px solid var(--sage-lt);border-right:3px solid var(--sage-lt)}
+    .p2-bl{bottom:0;left:0;width:44px;height:44px;border-bottom:5px solid var(--amber);border-left:5px solid var(--amber)}
+    .p2-br{bottom:0;right:0;width:44px;height:44px;border-bottom:5px solid var(--amber);border-right:5px solid var(--amber)}
+    .p1-content,.p2-content{position:relative;z-index:2;padding:10mm 12mm 8mm 12mm;display:flex;flex-direction:column;min-height:297mm}
+    .p1-header{display:grid;grid-template-columns:1fr auto;margin-bottom:8px;background:linear-gradient(135deg,var(--stone) 0%,#2c3e50 55%,var(--slate) 100%);border-radius:14px;overflow:hidden;box-shadow:0 6px 24px rgba(28,25,23,.25)}
+    .p1-header-main{padding:14px 18px;display:flex;flex-direction:column;justify-content:center}
+    .p1-header-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:#fff;line-height:1;margin-bottom:4px;letter-spacing:.3px}
+    .p1-header-title span{color:var(--amber-lt)}
+    .p1-header-sub{color:rgba(255,255,255,.45);font-size:9.5px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase}
+    .p1-header-side{padding:14px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:105px;background:rgba(255,255,255,.04);border-left:1px solid rgba(255,255,255,.1)}
+    .photo-ring{width:66px;height:66px;border-radius:50%;border:2.5px solid var(--amber-lt);overflow:hidden;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .photo-ring img{width:100%;height:100%;object-fit:cover}
+    .no-photo-icon{font-size:24px;color:rgba(255,255,255,.3)}
+    .header-tags{display:flex;flex-direction:column;gap:4px;align-items:center}
+    .htag{background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);border-radius:20px;padding:2px 9px;font-size:9px;color:rgba(255,255,255,.85);font-weight:700;white-space:nowrap}
+    .htag.merged{background:rgba(159,18,57,.3);border-color:rgba(159,18,57,.5)}
+    .student-bar{display:flex;align-items:center;justify-content:space-between;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:9px 14px;margin-bottom:8px;border-left:4px solid var(--amber-lt)}
+    .student-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--stone);font-weight:700}
+    .meta-chips{display:flex;gap:7px;flex-wrap:wrap}
+    .mchip{background:#fff;border:1.5px solid var(--gray-200);border-radius:20px;padding:3px 11px;font-size:10px;font-weight:700;color:var(--gray-600);display:flex;align-items:center;gap:4px}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+    .scard{border-radius:10px;padding:9px 10px;display:flex;flex-direction:column;align-items:center;text-align:center;border:1.5px solid transparent}
+    .scard1{background:linear-gradient(145deg,#fffbeb,#fef3c7);border-color:#fde68a}.scard2{background:linear-gradient(145deg,#f0fdf4,#dcfce7);border-color:#bbf7d0}.scard3{background:linear-gradient(145deg,#fff1f2,#ffe4e6);border-color:#fecdd3}.scard4{background:linear-gradient(145deg,#eff6ff,#dbeafe);border-color:#bfdbfe}
+    .sval{font-size:21px;font-weight:900;line-height:1;margin-bottom:2px}.scard1 .sval{color:var(--amber)}.scard2 .sval{color:var(--sage)}.scard3 .sval{color:var(--rose-lt)}.scard4 .sval{color:var(--sky)}
+    .slbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--gray-500)}
+    .prog-row{display:flex;gap:7px;margin-bottom:8px}
+    .pcard{flex:1;background:#fff;border:1.5px solid var(--gray-200);border-radius:10px;padding:9px 11px;display:flex;align-items:center;gap:9px}
+    .pcard-icon{font-size:20px}.pcard-body{flex:1}.pc-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray-400)}.pc-val{font-size:15px;font-weight:900;color:var(--stone)}.pc-sub{font-size:8.5px;color:var(--gray-500);font-weight:600}
+    .pbar-outer{width:100%;height:4px;background:var(--gray-200);border-radius:2px;margin-top:4px;overflow:hidden}.pbar-inner{height:100%;border-radius:2px}
+    .moti-strip{display:flex;gap:8px;margin-bottom:8px;align-items:center;background:linear-gradient(135deg,var(--amber-pale),#fef9ee);border:1.5px solid #fde68a;border-radius:10px;padding:8px 13px;border-left:4px solid var(--amber-lt)}
+    .moti-icon{font-size:18px}.moti-text{font-size:11px;font-weight:700;color:var(--amber);font-style:italic;line-height:1.35}
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .chart-box{background:#fff;border:1.5px solid var(--gray-200);border-radius:12px;padding:9px 11px 7px}
+    .chart-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray-400);margin-bottom:5px;display:flex;align-items:center;gap:5px}
+    .cdot{width:7px;height:7px;border-radius:50%}.chart-box canvas{height:125px !important}
+    .table-wrap{background:#fff;border:1.5px solid var(--gray-200);border-radius:12px;overflow:hidden;flex:1}
+    .table-bar{padding:7px 13px;display:flex;align-items:center;justify-content:space-between}
+    .p1-table-bar{background:linear-gradient(135deg,var(--stone),var(--slate))}.p2-table-bar{background:linear-gradient(135deg,var(--sage),#1b4332)}
+    .table-bar-title{color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px}
+    .legend{display:flex;gap:8px;align-items:center}.leg{display:flex;align-items:center;gap:3px;font-size:9px;color:rgba(255,255,255,.65);font-weight:700}.leg span{width:6px;height:6px;border-radius:50%;display:inline-block}
+    table{width:100%;border-collapse:collapse;font-size:10px}
+    thead th{background:var(--gray-50);color:var(--slate);font-weight:800;padding:6px 9px;text-align:center;border-bottom:1.5px solid var(--gray-200);font-size:9px;text-transform:uppercase;letter-spacing:.8px}
+    thead th:first-child,tbody td:first-child{text-align:left}
+    tbody tr{border-bottom:1px solid var(--gray-100)}tbody tr:last-child{border-bottom:none}tbody tr:nth-child(even){background:var(--gray-50)}
+    tbody td{padding:5px 9px;text-align:center;color:var(--text);vertical-align:middle}tbody td:first-child{font-weight:700}
+    .spill,.pbadge{display:inline-block;border-radius:20px;padding:1.5px 8px;font-weight:800;font-size:10px}
+    .spill-norm{background:var(--sky-pale);color:var(--sky)}.spill-hi{background:var(--sage-pale);color:var(--sage)}.spill-lo{background:var(--rose-pale);color:var(--rose-lt)}
+    .pbadge{color:#fff}.pbg{background:var(--sage)}.pby{background:var(--amber)}.pbr{background:var(--rose-lt)}
+    .wbar-wrap{width:36px;background:var(--gray-200);border-radius:2px;height:4px;display:inline-block;vertical-align:middle;overflow:hidden;margin-left:4px}.wbar{height:100%;border-radius:2px}
+    .src-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-left:3px;vertical-align:middle}
+    .p1-footer,.p2-footer{margin-top:auto;padding-top:7px;border-top:1.5px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between}
+    .foot-brand .fb-name,.p2-footer-txt .ft-main{font-size:11px;font-weight:800;color:var(--stone)}.foot-brand .fb-sub,.p2-footer-txt .ft-sub{font-size:8.5px;color:var(--gray-400);font-weight:600}
+    .foot-links{text-align:right}.foot-links div,.p2-footer-right div{font-size:9px;color:var(--gray-500);font-weight:700;line-height:1.7}
+    .foot-links .fa{color:var(--rose-lt)}.foot-links .fw{color:var(--sage)}
+    .byline{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:7px;color:rgba(0,0,0,.09);font-weight:600;letter-spacing:.5px;white-space:nowrap;z-index:10}
+    .p2-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;background:linear-gradient(135deg,var(--sage) 0%,#1b4332 50%,var(--stone) 100%);border-radius:14px;padding:12px 18px;box-shadow:0 6px 20px rgba(28,25,23,.2)}
+    .p2-header-left{display:flex;align-items:center;gap:12px}
+    .p2-cont-badge{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;padding:5px 12px;font-size:10px;font-weight:800;color:rgba(255,255,255,.9);letter-spacing:1px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+    .p2-cont-badge::before{content:'◀';font-size:8px;opacity:.7}
+    .p2-header-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:#fff;font-weight:700}.p2-header-name span{color:var(--amber-lt)}
+    .p2-page-num{font-size:11px;font-weight:800;color:rgba(255,255,255,.6);letter-spacing:1px}.p2-page-num strong{color:var(--amber-lt);font-size:16px}
+    .p2-summary-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+    .p2-scard{background:#fff;border:1.5px solid var(--gray-200);border-radius:10px;padding:9px 12px;display:flex;align-items:center;gap:10px;border-left:4px solid transparent}
+    .p2-scard1{border-left-color:var(--amber-lt)}.p2-scard2{border-left-color:var(--sage-lt)}.p2-scard3{border-left-color:var(--sky)}
+    .p2-scard-icon{font-size:20px}.p2-scard-body .pc-label{font-size:8px}.p2-scard-body .pc-val{font-size:14px}
+    .eval-section{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .eval-card,.teacher-note{background:#fff;border:1.5px solid var(--gray-200);border-radius:12px;overflow:hidden}
+    .eval-card-head{padding:7px 13px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px}
+    .amber-head{background:linear-gradient(135deg,var(--amber),var(--amber-lt));color:#fff}.sage-head{background:linear-gradient(135deg,var(--sage),var(--sage-lt));color:#fff}
+    .eval-card-body,.teacher-note-body{padding:10px 13px}
+    .eval-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--gray-100);font-size:10.5px}.eval-row:last-child{border-bottom:none}
+    .eval-row-label{font-weight:600;color:var(--gray-600)}.eval-row-val{font-weight:800;color:var(--stone)}
+    .teacher-note-head{background:linear-gradient(135deg,var(--slate),#2c3e50);padding:7px 13px;color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px}
+    .note-lines{display:flex;flex-direction:column;gap:10px}.note-line{height:1px;background:var(--gray-200);position:relative}
+    .note-line::before{content:attr(data-lbl);position:absolute;left:0;top:-14px;font-size:8px;color:var(--gray-400);font-weight:600;letter-spacing:.5px}
+    .p2-footer-left{display:flex;align-items:center;gap:10px}.p2-footer-seal{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--sage-lt));display:flex;align-items:center;justify-content:center;font-size:16px}
+    @media(max-width:980px){.upload-grid{grid-template-columns:1fr}.input-row{grid-template-columns:1fr}.topbar{padding:14px 16px;height:auto;align-items:flex-start;gap:10px;flex-wrap:wrap}.topbar-links{width:100%;overflow:auto;padding-bottom:4px}}
+    @media(max-width:600px){.panel{padding:22px 18px}.student-bar,.prog-row,.charts-grid,.p2-summary-strip,.eval-section,.stats-grid{display:block}.student-bar{gap:12px}.stats-grid,.prog-row,.charts-grid,.p2-summary-strip,.eval-section{display:grid;grid-template-columns:1fr;gap:8px}}
+  </style>
+</head>
+<body>
+  <div class="login-screen" id="loginScreen">
+    <div class="login-box">
+      <div style="font-size:52px;margin-bottom:12px;">📘</div>
+      <div style="font-family:'Nunito',sans-serif;font-size:24px;font-weight:900;margin-bottom:6px;">Okuma Karne Merkezi</div>
+      <p style="font-size:13px;color:#94A3B8;margin-bottom:14px;">Kemal Öğretmenim — Yönetim Paneli</p>
+      <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-posta adresi" autocomplete="username">
+      <input class="login-input" type="password" id="loginPass" placeholder="Şifre…" autocomplete="current-password">
+      <div class="login-help">Okuma veritabanı oturumunla giriş yap. İstersen girişten sonra Excel dosyası da ekleyebilirsin.</div>
+      <button class="login-btn" onclick="doLogin()">Giriş →</button>
+      <div class="login-err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <div class="app" id="app">
+    <div class="topbar">
+      <div class="topbar-title">📘 Okuma Karne Merkezi</div>
+      <div class="topbar-links">
+        <a href="/admin/index.html" class="topbar-link">⚙️ Site Yönetimi</a>
+        <a href="/admin/okuma-editor.html" class="topbar-link">📝 Metin Editörü</a>
+        <a href="/admin/okuma-sonuclari.html" class="topbar-link">📊 Okuma Sonuçları</a>
+        <a href="/hizli-okuma/index.html" target="_blank" class="topbar-link">🌐 Okuma Sayfası</a>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Çıkış 🚪</button>
+    </div>
+
+    <div class="panel-wrap">
+      <div class="panel-ornament"></div>
+      <div class="panel-title">📚 Okuma Karnesi <em>Pro</em></div>
+      <div class="panel-subtitle">Excel + Veritabanı Birleşik Karne Sistemi</div>
+
+      <div class="panel">
+        <div class="panel-section">
+          <div class="section-label">1. Veri Kaynakları</div>
+          <div class="upload-grid">
+            <div class="upload-zone" id="uz-new" onclick="document.getElementById('file-new').click()">
+              <div class="uz-tag new-tag">Yeni Format</div>
+              <div class="uz-icon" id="uz-new-icon">📊</div>
+              <div class="uz-text" id="uz-new-text">Ad · Soyad · WPM · Hedef</div>
+              <div class="uz-hint">.xlsx · .csv</div>
+              <input type="file" id="file-new" accept=".xlsx,.xls,.csv" multiple>
+            </div>
+            <div class="upload-zone" id="uz-old" onclick="document.getElementById('file-old').click()">
+              <div class="uz-tag old-tag">Eski Format</div>
+              <div class="uz-icon" id="uz-old-icon">📋</div>
+              <div class="uz-text" id="uz-old-text">Öğrenci Adı Soyadı · Hikaye</div>
+              <div class="uz-hint">.xlsx · .csv</div>
+              <input type="file" id="file-old" accept=".xlsx,.xls,.csv" multiple>
+            </div>
+            <div class="upload-zone" id="uz-db" onclick="veritabaniYukle()">
+              <div class="uz-tag db-tag">Veritabanı</div>
+              <div class="uz-icon" id="uz-db-icon">🗄️</div>
+              <div class="uz-text" id="uz-db-text">Canlı okuma kayıtları</div>
+              <div class="uz-hint">Supabase sonuç tablosundan yükle</div>
+            </div>
+          </div>
+          <div class="merge-badge" id="merge-badge">⚡ Birden fazla kaynak aktif — karne verileri aynı öğrenci üzerinden birleştirilecek</div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-label">2. Öğrenci ve Fotoğraf</div>
+          <div class="input-row">
+            <div class="form-group">
+              <label>Öğrenci Adı Soyadı</label>
+              <div class="input-relative">
+                <input type="text" id="search-input" placeholder="Yazmaya başlayın..." autocomplete="off">
+                <div class="sug-list" id="sug-list"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Sınıf / Şube</label>
+              <select id="class-filter"><option value="">Tüm Sınıflar</option></select>
+            </div>
+            <div class="form-group">
+              <label>Fotoğraf (isteğe bağlı)</label>
+              <label class="photo-btn" onclick="document.getElementById('photo-input').click()">
+                <img id="photo-preview" src="" alt="">
+                <span id="photo-label">📷 Fotoğraf Yükle</span>
+                <input type="file" id="photo-input" accept="image/*">
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="section-label">3. Oluştur ve İndir</div>
+          <div class="btn-row">
+            <button class="btn btn-create" onclick="buildKarne()">📋 Karne Oluştur</button>
+            <button class="btn btn-pdf" id="btn-pdf" onclick="downloadPDF()" disabled>📄 PDF İndir</button>
+            <button class="btn btn-jpg" id="btn-jpg" onclick="downloadJPEG()" disabled>🖼️ JPEG İndir</button>
+            <button class="btn btn-png" id="btn-png" onclick="downloadPNG()" disabled>🎨 PNG İndir</button>
+          </div>
+        </div>
+
+        <div class="status-bar" id="status-bar">⏳ Giriş sonrası veritabanı otomatik yüklenir. İstersen Excel de ekleyebilirsin.</div>
+      </div>
+    </div>
+
+    <div class="preview-area">
+      <div class="karne-stack" id="karne-stack">
+        <div class="karne-page" id="page1">
+          <div class="p1-stripe"></div>
+          <div class="p1-bg"></div>
+          <div class="p1-corner p1-tl"></div><div class="p1-corner p1-tr"></div><div class="p1-corner p1-bl"></div><div class="p1-corner p1-br"></div>
+          <div class="p1-content">
+            <div class="p1-header">
+              <div class="p1-header-main">
+                <div class="p1-header-title">🌿 Okuma <span>Karnesi</span></div>
+                <div class="p1-header-sub" id="k1-sub">2025–2026 Öğretim Yılı · Kemal Öğretmen</div>
+              </div>
+              <div class="p1-header-side">
+                <div class="photo-ring">
+                  <div class="no-photo-icon" id="k1-nophoto">👤</div>
+                  <img id="k1-photo" src="" alt="" style="display:none">
+                </div>
+                <div class="header-tags">
+                  <div class="htag" id="k1-metin-tag">— Metin</div>
+                  <div class="htag merged" id="k1-merged-tag" style="display:none">⚡ Birleşik</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="student-bar">
+              <div class="student-name" id="k1-name">Öğrenci Adı Soyadı</div>
+              <div class="meta-chips">
+                <div class="mchip" id="k1-sinif">📚 —</div>
+                <div class="mchip" id="k1-tarih">📅 —</div>
+                <div class="mchip" id="k1-sure">⏱️ —</div>
+              </div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="scard scard1"><div class="sval" id="k1-avghiz">—</div><div class="slbl">Ort. Okuma Hızı</div><div style="font-size:7.5px;color:var(--gray-400);margin-top:1px">kelime/dakika</div></div>
+              <div class="scard scard2"><div class="sval" id="k1-maxhiz">—</div><div class="slbl">En Yüksek Hız</div><div style="font-size:7.5px;color:var(--gray-400);margin-top:1px">kelime/dakika</div></div>
+              <div class="scard scard3"><div class="sval" id="k1-avganlama">—</div><div class="slbl">Ort. Anlama</div><div style="font-size:7.5px;color:var(--gray-400);margin-top:1px">başarı yüzdesi</div></div>
+              <div class="scard scard4"><div class="sval" id="k1-doran">—</div><div class="slbl">Doğru Oranı</div><div style="font-size:7.5px;color:var(--gray-400);margin-top:1px">tüm sorulardan</div></div>
+            </div>
+
+            <div class="prog-row">
+              <div class="pcard">
+                <div class="pcard-icon">⚡</div>
+                <div class="pcard-body">
+                  <div class="pc-label">Hız Gelişimi</div>
+                  <div class="pc-val" id="k1-hizgel">—</div>
+                  <div class="pc-sub" id="k1-hizgel-sub">İlk → Son</div>
+                  <div class="pbar-outer"><div class="pbar-inner" id="k1-hizbar" style="width:0%;background:var(--amber-lt)"></div></div>
+                </div>
+              </div>
+              <div class="pcard">
+                <div class="pcard-icon">🎯</div>
+                <div class="pcard-body">
+                  <div class="pc-label">Anlama Ortalaması</div>
+                  <div class="pc-val" id="k1-anlamagel">—</div>
+                  <div class="pc-sub">Tüm metinlerin ortalaması</div>
+                  <div class="pbar-outer"><div class="pbar-inner" id="k1-anlamabar" style="width:0%;background:var(--sage-lt)"></div></div>
+                </div>
+              </div>
+              <div class="pcard">
+                <div class="pcard-icon">📖</div>
+                <div class="pcard-body">
+                  <div class="pc-label">Okunan Metin</div>
+                  <div class="pc-val" id="k1-metingel">—</div>
+                  <div class="pc-sub" id="k1-metingel-sub">adet tamamlandı</div>
+                  <div class="pbar-outer"><div class="pbar-inner" id="k1-metinbar" style="width:0%;background:var(--sky)"></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="moti-strip">
+              <div class="moti-icon">💛</div>
+              <div class="moti-text" id="k1-moti">"Okumak, yeni dünyalar keşfetmektir!"</div>
+            </div>
+
+            <div class="charts-grid">
+              <div class="chart-box">
+                <div class="chart-lbl"><div class="cdot" style="background:var(--amber)"></div>Okuma Hızı Gelişimi (Kelime/Dk)</div>
+                <canvas id="k1-speed"></canvas>
+              </div>
+              <div class="chart-box">
+                <div class="chart-lbl"><div class="cdot" style="background:var(--sage-lt)"></div>Anlama Başarısı (%)</div>
+                <canvas id="k1-anlama"></canvas>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="table-bar p1-table-bar">
+                <span class="table-bar-title">📖 Okunan Metinler Detayı</span>
+                <div class="legend">
+                  <div class="leg"><span style="background:var(--sage)"></span>%80+</div>
+                  <div class="leg"><span style="background:var(--amber)"></span>%60–79</div>
+                  <div class="leg"><span style="background:var(--rose-lt)"></span>%60–</div>
+                </div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metin / Hikaye Adı</th>
+                    <th>Hız</th>
+                    <th>Hedef</th>
+                    <th>Süre</th>
+                    <th>D / Y</th>
+                    <th>Anlama</th>
+                    <th>Tarih</th>
+                  </tr>
+                </thead>
+                <tbody id="k1-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="p1-footer">
+              <div class="foot-brand"><div class="fb-name">✍️ Kemal Öğretmen</div><div class="fb-sub">Okuma Eğitimi Sistemi</div></div>
+              <div style="font-size:8.5px;color:var(--gray-400);font-style:italic;font-weight:600" id="k1-sayfa-bilgi">Sayfa 1</div>
+              <div class="foot-links">
+                <div class="fa">📷 @kemalkogretmenim</div>
+                <div class="fw">🌐 www.kemalogretmenim.com.tr</div>
+              </div>
+            </div>
+          </div>
+          <div class="byline">By Kemal Öğretmen</div>
+        </div>
+
+        <div class="karne-page" id="page2">
+          <div class="p2-stripe"></div>
+          <div class="p2-bg"></div>
+          <div class="p2-sideline"></div>
+          <div class="p2-corner p2-tl"></div><div class="p2-corner p2-tr"></div><div class="p2-corner p2-bl"></div><div class="p2-corner p2-br"></div>
+          <div class="p2-content">
+            <div class="p2-header">
+              <div class="p2-header-left">
+                <div class="p2-cont-badge">Devam Sayfası</div>
+                <div class="p2-header-name" id="k2-name">Öğrenci <span>Adı Soyadı</span></div>
+              </div>
+              <div class="p2-header-right">
+                <div class="p2-page-num">Sayfa <strong>2</strong> / 2</div>
+                <div style="font-size:9px;color:rgba(255,255,255,.4);font-weight:600;letter-spacing:1px">2025–2026</div>
+              </div>
+            </div>
+
+            <div class="p2-summary-strip">
+              <div class="p2-scard p2-scard1"><div class="p2-scard-icon">📚</div><div class="p2-scard-body"><div class="pc-label">Toplam Metin</div><div class="pc-val" id="k2-toplam">—</div><div class="pc-sub">adet okundu</div></div></div>
+              <div class="p2-scard p2-scard2"><div class="p2-scard-icon">⚡</div><div class="p2-scard-body"><div class="pc-label">Ortalama WPM</div><div class="pc-val" id="k2-avgwpm">—</div><div class="pc-sub">kelime/dakika</div></div></div>
+              <div class="p2-scard p2-scard3"><div class="p2-scard-icon">🎯</div><div class="p2-scard-body"><div class="pc-label">Anlama Başarısı</div><div class="pc-val" id="k2-avganlama">—</div><div class="pc-sub">ortalama yüzde</div></div></div>
+            </div>
+
+            <div class="table-wrap">
+              <div class="table-bar p2-table-bar">
+                <span class="table-bar-title">Metinler Listesi (Devam)</span>
+                <div class="legend">
+                  <div class="leg"><span style="background:var(--sage)"></span>%80+</div>
+                  <div class="leg"><span style="background:var(--amber)"></span>%60–79</div>
+                  <div class="leg"><span style="background:var(--rose-lt)"></span>%60–</div>
+                </div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Metin / Hikaye Adı</th>
+                    <th>Hız</th>
+                    <th>Hedef</th>
+                    <th>Süre</th>
+                    <th>D / Y</th>
+                    <th>Anlama</th>
+                    <th>Tarih</th>
+                  </tr>
+                </thead>
+                <tbody id="k2-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="eval-section">
+              <div class="eval-card">
+                <div class="eval-card-head amber-head">📊 Okuma Analizi</div>
+                <div class="eval-card-body">
+                  <div class="eval-row"><span class="eval-row-label">En hızlı okunan metin</span><span class="eval-row-val" id="k2-en-hizli-metin">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">En yüksek anlama puanı</span><span class="eval-row-val" id="k2-en-yuksek-anlama">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">Toplam okuma süresi</span><span class="eval-row-val" id="k2-toplam-sure">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">Doğru cevap sayısı</span><span class="eval-row-val" id="k2-toplam-dogru">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">Yanlış cevap sayısı</span><span class="eval-row-val" id="k2-toplam-yanlis">—</span></div>
+                </div>
+              </div>
+              <div class="eval-card">
+                <div class="eval-card-head sage-head">🏆 Başarı Değerlendirmesi</div>
+                <div class="eval-card-body">
+                  <div class="eval-row"><span class="eval-row-label">%80 üzeri metin sayısı</span><span class="eval-row-val" id="k2-basarili">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">%60–79 arası metin</span><span class="eval-row-val" id="k2-orta">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">%60 altı metin</span><span class="eval-row-val" id="k2-dusuk">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">Hedefe ulaşılan metin</span><span class="eval-row-val" id="k2-hedefe">—</span></div>
+                  <div class="eval-row"><span class="eval-row-label">Genel başarı durumu</span><span class="eval-row-val" id="k2-genel-durum">—</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="teacher-note">
+              <div class="teacher-note-head">✍️ Öğretmen Notu</div>
+              <div class="teacher-note-body">
+                <div class="note-lines">
+                  <div class="note-line" data-lbl="Güçlü yönler:"></div>
+                  <div class="note-line"></div>
+                  <div class="note-line" data-lbl="Gelişim alanları:"></div>
+                  <div class="note-line"></div>
+                  <div class="note-line" data-lbl="Öneri:"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="p2-footer">
+              <div class="p2-footer-left">
+                <div class="p2-footer-seal">📚</div>
+                <div class="p2-footer-txt">
+                  <div class="ft-main">✍️ Kemal Öğretmen</div>
+                  <div class="ft-sub">Bu karne öğrencinin bireysel okuma gelişimini yansıtmaktadır.</div>
+                </div>
+              </div>
+              <div class="p2-footer-right">
+                <div style="color:var(--rose-lt)">📷 @kemalkogretmenim</div>
+                <div style="color:var(--sage-lt)">🌐 www.kemalogretmenim.com.tr</div>
+              </div>
+            </div>
+          </div>
+          <div class="byline">By Kemal Öğretmen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/site-data.js"></script>
+  <script>window.kemalAdminScope='reading';</script>
+  <script src="/js/admin-auth.js"></script>
+  <script src="/js/okuma-karne-merkezi.js"></script>
+</body>
+</html>

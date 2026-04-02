@@ -64,6 +64,9 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .snav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.5);font-size:13px;font-weight:600;transition:all .18s;margin-bottom:2px;font-family:var(--fb)}
 .snav-item:hover{background:rgba(255,255,255,.07);color:#fff}
 .snav-item.active{background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;box-shadow:0 3px 12px rgba(108,61,237,.3)}
+.sidebar-links-head{padding:14px 12px 6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.28)}
+.snav-link{color:rgba(255,255,255,.72)}
+.snav-link:hover{color:#fff}
 .sidebar-foot{padding:10px 8px;border-top:1px solid rgba(255,255,255,.08)}
 .main-area{margin-left:230px;flex:1;min-width:0}
 .page-pad{padding:28px 32px;max-width:1100px}
@@ -89,15 +92,27 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .pdf-layout{display:flex;gap:18px;align-items:flex-start}
 .pdf-main{flex:1;min-width:0}
 .pdf-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:8px;flex-wrap:wrap}
-.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:var(--r-sm);background:#525659;overflow:auto;max-height:560px;cursor:crosshair;user-select:none}
-#pdfCanvas{display:block}
+.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--white);overflow:auto;max-height:560px;cursor:crosshair;user-select:none}
+#pdfCanvas{display:block;background:var(--white)}
 #cropCanvas{position:absolute;top:0;left:0}
 
 /* Q PANEL */
-.q-panel{width:270px;flex-shrink:0;max-height:660px;overflow-y:auto}
-.q-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r-sm);margin-bottom:6px;background:var(--white)}
+.q-panel{width:290px;flex-shrink:0;max-height:660px;overflow-y:auto}
+.q-list{display:flex;flex-direction:column;gap:8px}
+.q-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);background:var(--white);box-shadow:var(--sh-sm)}
 .q-thumb{width:72px;height:44px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#f8f9fa;flex-shrink:0}
 .ans-badge{padding:3px 11px;border-radius:20px;background:var(--purple);color:#fff;font-weight:700;font-size:12px}
+.q-handle{width:34px;height:44px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:10px;background:#F8FAFC;color:var(--muted);font-size:16px;cursor:grab;flex-shrink:0}
+.q-handle:active{cursor:grabbing}
+.q-order{min-width:18px;padding-top:4px;font-weight:800;color:var(--muted);font-size:12px;font-family:var(--fd)}
+.q-meta{flex:1;min-width:0}
+.q-answer-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px}
+.q-answer-chip{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:12px;font-weight:800;color:var(--slate);cursor:pointer;transition:all .18s}
+.q-answer-chip:hover{border-color:var(--purple);color:var(--purple)}
+.q-answer-chip.active{background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 8px 16px rgba(108,61,237,.18)}
+.q-remove-btn{background:none;border:none;cursor:pointer;color:var(--red);font-size:18px;padding:2px 4px;line-height:1}
+.sortable-ghost{opacity:.45;background:#F5F3FF}
+.sortable-chosen{box-shadow:var(--sh-lg);border-color:rgba(108,61,237,.32)}
 
 /* TABLE */
 .data-table{width:100%;border-collapse:collapse}
@@ -159,6 +174,12 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .occ:hover{border-color:var(--purple);color:var(--purple)}
 .occ.sel{background:var(--purple);border-color:var(--purple);color:#fff}
 
+/* SECTION EDITOR */
+.section-editor{display:flex;flex-direction:column;gap:12px}
+.section-row{display:grid;grid-template-columns:minmax(0,1.6fr) 110px 110px auto;gap:10px;align-items:end;padding:14px;border:1px solid var(--border);border-radius:var(--r);background:#F8FAFC}
+.section-note{padding:12px 14px;border-radius:var(--r);background:#EEF2FF;color:var(--purple);font-size:12px;font-weight:600;line-height:1.6}
+.section-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#EEF2FF;color:var(--purple);font-size:11px;font-weight:800}
+
 /* MAIN FOOTER */
 .main-footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px}
 .main-footer a{color:var(--purple);text-decoration:none;font-family:var(--fd);font-weight:700;font-size:12px}
@@ -170,15 +191,17 @@ h1,h2,h3,h4{font-family:var(--fd)}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
 <script type="module">
-import { db, auth } from "./js/firebase.js";
+import { app, db } from "./js/firebase.js";
 import {
   collection,
   addDoc,
   getDocs,
   doc,
   getDoc,
+  updateDoc,
   deleteDoc,
   query,
   where,
@@ -186,6 +209,7 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
+  getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
@@ -204,21 +228,27 @@ const SUBJECTS_BY_GRADE={
 };
 const ALL_SUBJECTS=['Türkçe','Matematik','Hayat Bilgisi','Fen Bilimleri','Sosyal Bilgiler','Deneme','Agisler'];
 const ALL_OPTS=['A','B','C','D','E','F'];
+const auth=getAuth(app);
 
 let authReady=false;
 let currentUser=null;
 let currentUserIsAdmin=false;
-let A={
-  page:'create',step:1,
-  grade:null,subject:null,examName:'',
-  optionCount:4,negativeMarking:false,
-  questions:[],
-  pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,
-  pubTitle:'',pubDur:30,
-  exams:[],results:[],
-  rf:{grade:'',subject:'',name:'',examId:'',sube:''},
-  draftImg:null,draftAns:null
-};
+let questionSortables=[];
+function createInitialState(overrides={}){
+  return Object.assign({
+    page:'create',step:1,
+    grade:null,subject:null,examName:'',
+    optionCount:4,negativeMarking:false,
+    questionSections:[],
+    questions:[],
+    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,
+    pubTitle:'',pubDur:30,editExamId:null,
+    exams:[],results:[],
+    rf:{grade:'',subject:'',name:'',examId:'',sube:''},
+    draftImg:null,draftAns:null
+  },overrides);
+}
+let A=createInitialState();
 const appEl=()=>document.getElementById('app');
 
 /* ── UTILS ── */
@@ -235,7 +265,177 @@ function hideLoad(){const el=document.getElementById('ld');if(el)el.style.displa
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fmtDate(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleDateString('tr-TR');}catch{return'';}}
 function fmtDT(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return'';}}
+function buildExamShareUrl(examId){return`${window.location.origin}/sinav_sitesi/index.html?examId=${encodeURIComponent(examId)}`;}
+function normalizeKeyPart(value){
+  return String(value||'').trim().toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+}
+function buildStudentKey(source){
+  return[
+    normalizeKeyPart(source?.firstName),
+    normalizeKeyPart(source?.lastName),
+    normalizeKeyPart(source?.grade),
+    normalizeKeyPart(source?.sube)
+  ].filter(Boolean).join('|');
+}
+function getResultStudentKey(result){
+  return result?.studentKey||buildStudentKey(result);
+}
+async function copyText(text,successMsg='Kopyalandı'){
+  try{
+    await navigator.clipboard.writeText(text);
+    toast(successMsg,'success');
+    return true;
+  }catch{
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text;
+      ta.style.position='fixed';
+      ta.style.top='-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      const copied=document.execCommand('copy');
+      ta.remove();
+      if(!copied) throw new Error('copy-failed');
+      toast(successMsg,'success');
+      return true;
+    }catch{
+      toast('Bağlantı kopyalanamadı','error');
+      return false;
+    }
+  }
+}
 function getOPTS(){return ALL_OPTS.slice(0,A.optionCount);}
+function syncQuestionOrder(){A.questions=A.questions.map((q,index)=>({...q,order:index}));}
+function destroyQuestionSortables(){questionSortables.forEach(instance=>instance?.destroy?.());questionSortables=[];}
+function shouldUseSections(subject){return subject==='Deneme'||subject==='Agisler';}
+function toSectionNumber(value){
+  const num=parseInt(value,10);
+  return Number.isFinite(num)?num:'';
+}
+function normalizeSectionDraft(section,index){
+  return{
+    id:section?.id||`sec-${index+1}`,
+    label:String(section?.label||section?.title||'').trim(),
+    start:toSectionNumber(section?.start),
+    end:toSectionNumber(section?.end)
+  };
+}
+function cloneQuestionSections(sections){
+  return Array.isArray(sections)?sections.map((section,index)=>normalizeSectionDraft(section,index)):[];
+}
+function findSectionLabel(questionNo,sections=A.questionSections){
+  const list=Array.isArray(sections)?sections:[];
+  for(const section of list){
+    const start=toSectionNumber(section?.start);
+    const end=toSectionNumber(section?.end);
+    const label=String(section?.label||'').trim();
+    if(!label||start===''||end==='') continue;
+    if(questionNo>=start&&questionNo<=end) return label;
+  }
+  return '';
+}
+function getQuestionSectionLabel(index){
+  return String(A.questions[index]?.sectionTitle||findSectionLabel(index+1)).trim();
+}
+function prepareQuestionSections(totalQuestions,sections=A.questionSections){
+  if(!shouldUseSections(A.subject)) return{sections:[],assignments:{}};
+  const rows=cloneQuestionSections(sections).filter(section=>section.label||section.start!==''||section.end!=='');
+  if(!rows.length) return{sections:[],assignments:{}};
+  const assignments={};
+  const normalized=rows.map((section,index)=>{
+    const label=String(section.label||'').trim();
+    const start=toSectionNumber(section.start);
+    const end=toSectionNumber(section.end);
+    if(!label) throw new Error(`${index+1}. bölüm için ders adı girin.`);
+    if(start===''||end==='') throw new Error(`${label} bölümü için başlangıç ve bitiş soru numaralarını girin.`);
+    if(start<1||end<1||start>totalQuestions||end>totalQuestions){
+      throw new Error(`${label} bölümü 1 ile ${totalQuestions} arasındaki sorulara atanmalıdır.`);
+    }
+    if(end<start) throw new Error(`${label} bölümünde bitiş soru numarası başlangıçtan küçük olamaz.`);
+    for(let questionNo=start;questionNo<=end;questionNo++){
+      if(assignments[questionNo]){
+        throw new Error(`${questionNo}. soru hem ${assignments[questionNo]} hem de ${label} bölümüne atanmış görünüyor.`);
+      }
+      assignments[questionNo]=label;
+    }
+    return{label,start,end};
+  });
+  return{sections:normalized,assignments};
+}
+function deriveQuestionSectionsFromQuestions(questions){
+  const derived=[];
+  let current=null;
+  (questions||[]).forEach((question,index)=>{
+    const label=String(question?.sectionTitle||'').trim();
+    if(!label){
+      current=null;
+      return;
+    }
+    if(current&&current.label===label&&current.end===index){
+      current.end=index+1;
+      return;
+    }
+    current={id:`derived-${derived.length+1}`,label,start:index+1,end:index+1};
+    derived.push(current);
+  });
+  return cloneQuestionSections(derived);
+}
+function getExamStatus(exam){
+  if(exam?.status) return exam.status;
+  if(exam?.published===true) return 'active';
+  if(exam?.published===false) return 'paused';
+  return 'draft';
+}
+function getExamStatusMeta(status){
+  if(status==='active') return {label:'Yayında',icon:'🟢',bg:'#DCFCE7',color:'#166534'};
+  if(status==='paused') return {label:'Pasif',icon:'⏸',bg:'#FEF3C7',color:'#92400E'};
+  return {label:'Beklemede',icon:'🕒',bg:'#E2E8F0',color:'#334155'};
+}
+function resetBuilderState(nextPage='create'){
+  A=createInitialState({
+    page:nextPage,
+    exams:A.exams||[],
+    results:A.results||[],
+    rf:{...(A.rf||{grade:'',subject:'',name:'',examId:'',sube:''})}
+  });
+  window.A=A;
+}
+function renderAnswerEditor(index,current){
+  return getOPTS().map(opt=>`
+    <button type="button" class="q-answer-chip ${current===opt?'active':''}" onclick="W.setQuestionAnswer(${index},'${opt}')">${opt}</button>
+  `).join('');
+}
+function initQuestionSortables(){
+  destroyQuestionSortables();
+  if(typeof Sortable==='undefined') return;
+  ['qList','previewQuestionList'].forEach(id=>{
+    const list=document.getElementById(id);
+    if(!list) return;
+    questionSortables.push(new Sortable(list,{
+      animation:180,
+      handle:'.q-handle',
+      ghostClass:'sortable-ghost',
+      chosenClass:'sortable-chosen',
+      onEnd(evt){
+        if(evt.oldIndex==null||evt.newIndex==null||evt.oldIndex===evt.newIndex) return;
+        const [moved]=A.questions.splice(evt.oldIndex,1);
+        A.questions.splice(evt.newIndex,0,moved);
+        syncQuestionOrder();
+        refreshQuestionPanels();
+        toast('Soru sırası güncellendi','success');
+      }
+    }));
+  });
+}
+function afterCreateRender(){
+  requestAnimationFrame(()=>{
+    initQuestionSortables();
+    if(A.step===3){
+      if(A.pdfDoc) setTimeout(()=>renderPage(A.pdfPage),40);
+      else if(A.imgLoaded) setTimeout(()=>renderImageOnCanvas(),40);
+    }
+  });
+}
 
 /* ── LOGIN ── */
 function renderLogin(){
@@ -304,7 +504,14 @@ function renderNotAuthorized(){
 
 /* ── SHELL ── */
 function renderShell(content){
-  const nav=[{id:'create',icon:'📝',label:'Sınav Oluştur'},{id:'exams',icon:'📚',label:'Yayınlanan Sınavlar'},{id:'results',icon:'📊',label:'Sonuçlar'}];
+  const nav=[{id:'create',icon:'📝',label:'Sınav Oluştur'},{id:'exams',icon:'📚',label:'Sınavlar'},{id:'results',icon:'📊',label:'Sonuçlar'}];
+  const quickLinks=[
+    {icon:'🧭',label:'Site Admin',href:'/admin/index.html'},
+    {icon:'📝',label:'Okuma Editörü',href:'/admin/okuma-editor.html'},
+    {icon:'📈',label:'Okuma Sonuçları',href:'/admin/okuma-sonuclari.html'},
+    {icon:'📘',label:'Okuma Karnesi',href:'/admin/okuma-karne.html'},
+    {icon:'🎮',label:'Oyunlar Admin',href:'/admin/oyunlar-admin.html'}
+  ];
   appEl().innerHTML=`
   <div class="admin-wrap">
 	    <div class="sidebar">
@@ -320,6 +527,8 @@ function renderShell(content){
 	      </div>
 	      <div class="sidebar-nav">
 	        ${nav.map(n=>`<div class="snav-item ${A.page===n.id?'active':''}" onclick="W.nav('${n.id}')"><span style="font-size:15px">${n.icon}</span>${n.label}</div>`).join('')}
+          <div class="sidebar-links-head">Diğer Paneller</div>
+          ${quickLinks.map(link=>`<div class="snav-item snav-link" onclick="window.location='${link.href}'"><span style="font-size:15px">${link.icon}</span>${link.label}</div>`).join('')}
 	      </div>
       <div class="sidebar-foot">
         <div class="snav-item" onclick="window.open('index.html','_blank')"><span>🏠</span>Öğrenci Sayfası</div>
@@ -348,8 +557,8 @@ function renderCreate(){
   else if(A.step===3) body=renderStep3();
   else if(A.step===4) body=renderStep4();
   return`<div class="page-pad">
-    <h2 style="font-size:20px;margin-bottom:3px">Yeni Sınav Oluştur</h2>
-    <p class="text-sm text-muted" style="margin-bottom:22px">PDF veya görsel yükle, soruları kırp ve sınavı yayınla</p>
+    <h2 style="font-size:20px;margin-bottom:3px">${A.editExamId?'Sınavı Düzenle':'Yeni Sınav Oluştur'}</h2>
+    <p class="text-sm text-muted" style="margin-bottom:22px">${A.editExamId?'Mevcut sınava soru ekleyebilir, silebilir ve doğru cevapları güncelleyebilirsin.':'PDF veya görsel yükle, soruları kırp ve sınavı yayınla'}</p>
     <div class="step-row">${sh}</div>
     ${body}
   </div>`;
@@ -447,7 +656,7 @@ function renderStep3(){
     <div class="q-panel">
       <div class="card p-4">
         <strong style="display:block;margin-bottom:10px;font-family:var(--fd)">Eklenen Sorular (<span id="qCount">${A.questions.length}</span>)</strong>
-        <div id="qList">${renderQList()}</div>
+        <div id="qList" class="q-list">${renderQList()}</div>
       </div>
     </div>
   </div>`;
@@ -457,31 +666,82 @@ function renderQList(){
   if(!A.questions.length) return'<p class="text-sm text-muted text-center" style="padding:20px 0">Henüz soru eklenmedi</p>';
   return A.questions.map((q,i)=>`
     <div class="q-item">
-      <span style="font-weight:800;color:var(--muted);min-width:18px;font-size:12px;font-family:var(--fd)">${i+1}</span>
+      <button class="q-handle" type="button" title="Soru sırasını değiştir">⋮⋮</button>
+      <span class="q-order">${i+1}</span>
       <img class="q-thumb" src="${q.img}" alt="">
-      <div style="flex:1"><div class="text-xs text-muted">Cevap</div><span class="ans-badge">${q.ans}</span></div>
-      <button onclick="W.removeQ(${i})" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:18px;padding:2px 4px;line-height:1" title="Kaldır">×</button>
+      <div class="q-meta">
+        <div class="text-xs text-muted">Doğru cevap</div>
+        <span class="ans-badge">${q.ans}</span>
+        ${getQuestionSectionLabel(i)?`<div style="margin-top:8px"><span class="section-tag">📚 ${esc(getQuestionSectionLabel(i))}</span></div>`:''}
+        <div class="q-answer-row">${renderAnswerEditor(i,q.ans)}</div>
+      </div>
+      <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır">×</button>
     </div>`).join('');
 }
-function refreshQPanel(){
-  const ql=document.getElementById('qList');const qc=document.getElementById('qCount');const nb=document.getElementById('nextBtn3');
+function renderPreviewQuestionList(){
+  if(!A.questions.length) return'<p class="text-sm text-muted text-center" style="padding:20px 0">Henüz soru eklenmedi</p>';
+  return A.questions.map((q,i)=>`
+    <div class="q-item">
+      <button class="q-handle" type="button" title="Soru sırasını değiştir">⋮⋮</button>
+      <span class="q-order">${i+1}.</span>
+      <img class="q-thumb" src="${q.img}" alt="">
+      <div class="q-meta">
+        <div class="text-xs text-muted">Mini önizleme</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <span class="ans-badge">${q.ans}</span>
+          ${getQuestionSectionLabel(i)?`<span class="section-tag">📚 ${esc(getQuestionSectionLabel(i))}</span>`:''}
+          <span class="text-xs text-muted">Farklı bir cevaba tıklayarak güncelleyebilirsiniz</span>
+        </div>
+        <div class="q-answer-row">${renderAnswerEditor(i,q.ans)}</div>
+      </div>
+      <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır">🗑</button>
+    </div>`).join('');
+}
+function refreshQuestionPanels(){
+  const ql=document.getElementById('qList');const qc=document.getElementById('qCount');const nb=document.getElementById('nextBtn3');const pl=document.getElementById('previewQuestionList');
   if(ql) ql.innerHTML=renderQList();
+  if(pl) pl.innerHTML=renderPreviewQuestionList();
   if(qc) qc.textContent=A.questions.length;
   if(nb){nb.disabled=A.questions.length===0;nb.textContent=`Devam Et (${A.questions.length} soru) →`;}
+  initQuestionSortables();
+}
+
+function renderSectionEditor(){
+  const rows=A.questionSections.length?A.questionSections.map((section,index)=>`
+    <div class="section-row">
+      <div>
+        <label class="form-label">Ders / Bölüm Başlığı</label>
+        <input class="form-input" type="text" value="${esc(section.label)}" placeholder="Örn: Türkçe" oninput="W.updateSectionField(${index},'label',this.value)">
+      </div>
+      <div>
+        <label class="form-label">Başlangıç</label>
+        <input class="form-input" type="number" min="1" max="${A.questions.length}" value="${section.start!==''?section.start:''}" placeholder="1" oninput="W.updateSectionField(${index},'start',this.value)">
+      </div>
+      <div>
+        <label class="form-label">Bitiş</label>
+        <input class="form-input" type="number" min="1" max="${A.questions.length}" value="${section.end!==''?section.end:''}" placeholder="${A.questions.length}" oninput="W.updateSectionField(${index},'end',this.value)">
+      </div>
+      <button class="btn btn-red" type="button" style="height:42px" onclick="W.removeSection(${index})">Sil</button>
+    </div>
+  `).join(''):'<div class="text-sm text-muted" style="padding:4px 0 8px">Henüz ders başlığı eklenmedi. İstersen aşağıdan soru aralıkları tanımlayabilirsin.</div>';
+  return`<div class="card p-6 mb-4">
+    <strong style="display:block;font-size:15px;margin-bottom:8px;font-family:var(--fd)">🏷️ Soru Üstü Ders Başlıkları</strong>
+    <p class="text-sm text-muted" style="margin-bottom:14px">Deneme ve Agisler sınavlarında belirli soru aralıklarına ders başlığı vererek öğrencinin üst kısımda hangi derste olduğunu görmesini sağlayabilirsin.</p>
+    <div class="section-editor">${rows}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
+      <button class="btn btn-outline" type="button" onclick="W.addSection()">+ Bölüm Ekle</button>
+      <span class="text-xs text-muted" style="align-self:center">Toplam soru: ${A.questions.length}. Boşta kalan sorularda başlık gösterilmez.</span>
+    </div>
+    <div class="section-note" style="margin-top:14px">Örnek kullanım: 1-10 Türkçe, 11-20 Matematik, 21-25 Hayat Bilgisi, 26-30 Fen Bilimleri.</div>
+  </div>`;
 }
 
 function renderStep4(){
-  const prev=A.questions.map((q,i)=>`
-    <div class="flex items-center gap-8" style="padding:8px 10px;border-bottom:1px solid var(--border)">
-      <span style="font-weight:800;color:var(--muted);min-width:22px;font-size:12px;font-family:var(--fd)">${i+1}.</span>
-      <img src="${q.img}" style="height:48px;max-width:100px;object-fit:contain;border:1px solid var(--border);border-radius:4px">
-      <span class="ans-badge">${q.ans}</span>
-      <button onclick="W.removeQ(${i});W.reRenderStep4()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--red);font-size:14px;font-weight:700">🗑 Kaldır</button>
-    </div>`).join('');
   const title=A.pubTitle||A.examName;
+  const editing=!!A.editExamId;
   return`<div style="max-width:680px">
     <div class="card p-6 mb-4">
-      <strong style="display:block;font-size:15px;margin-bottom:16px;font-family:var(--fd)">📋 Sınav Bilgileri</strong>
+      <strong style="display:block;font-size:15px;margin-bottom:16px;font-family:var(--fd)">${editing?'🛠 Düzenleme Özeti':'📋 Sınav Bilgileri'}</strong>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
         <div>
           <label class="form-label">Sınav Başlığı</label>
@@ -500,13 +760,18 @@ function renderStep4(){
         <span>${A.negativeMarking?'⚠️ Puan kesintili':'✅ Puan kesintisiz'}</span>
       </div>
     </div>
+    ${shouldUseSections(A.subject)?renderSectionEditor():''}
     <div class="card mb-4" style="max-height:320px;overflow-y:auto">
       <div style="padding:13px 15px;border-bottom:1px solid var(--border);font-family:var(--fd);font-weight:700">Sorular Önizleme</div>
-      <div>${prev}</div>
+      <div id="previewQuestionList" class="q-list" style="padding:12px">${renderPreviewQuestionList()}</div>
     </div>
-    <div class="flex gap-10 justify-between">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between">
       <button class="btn btn-outline" onclick="W.prevStep()">← Geri</button>
-      <button class="btn btn-green btn-lg" onclick="W.publish()">🚀 Sınavı Yayınla</button>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end">
+        <button class="btn btn-outline" onclick="W.saveAs('draft')">🕒 Beklemede Kaydet</button>
+        <button class="btn btn-outline" onclick="W.saveAs('paused')">⏸ Pasif Kaydet</button>
+        <button class="btn btn-green btn-lg" onclick="W.saveAs('active')">${editing?'🚀 Güncelle ve Yayınla':'🚀 Sınavı Yayınla'}</button>
+      </div>
     </div>
   </div>`;
 }
@@ -515,24 +780,44 @@ function renderStep4(){
 function renderAdminExams(){
   const gOpts=GRADES.map(g=>`<option value="${g}">${g}. Sınıf</option>`).join('');
   const cards=!A.exams.length?
-    '<div class="text-center text-muted p-8" style="padding:40px">Henüz yayınlanmış sınav bulunmuyor</div>':
-    A.exams.map(e=>`
+    '<div class="text-center text-muted p-8" style="padding:40px">Henüz sınav bulunmuyor</div>':
+    A.exams.map(e=>{
+      const status=getExamStatus(e);
+      const meta=getExamStatusMeta(status);
+      const primaryAction=status==='active'
+        ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
+        : `<button class="btn btn-sm btn-green" onclick="W.setExamStatus('${e.id}','active')">🚀 Aktif Et</button>`;
+      const secondaryAction=status==='draft'
+        ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
+        : `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','draft')">🕒 Beklet</button>`;
+      const shareAction=status==='active'
+        ? `<button class="btn btn-sm btn-outline" onclick="W.copyExamLink('${e.id}')">🔗 Link Kopyala</button>`
+        : '';
+      return `
       <div class="card flex items-center gap-12 p-4" style="margin-bottom:10px">
         <div style="width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0;font-family:var(--fd)" class="gc-${e.grade}">${e.grade}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:14px;font-family:var(--fd)">${esc(e.title)}</div>
           <div class="text-sm text-muted" style="margin-top:2px">${e.grade}. Sınıf &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
-          <div class="text-xs text-muted" style="margin-top:2px">📅 ${fmtDate(e.createdAt)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:11px;font-weight:800">${meta.icon} ${meta.label}</span>
+            <span class="text-xs text-muted">📅 ${fmtDate(e.createdAt)}</span>
+            ${e.updatedAt?`<span class="text-xs text-muted">✏️ ${fmtDate(e.updatedAt)} güncellendi</span>`:''}
+          </div>
         </div>
-        <div class="flex gap-8">
+        <div class="flex gap-8" style="flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-sm btn-primary" onclick="W.editExam('${e.id}')">✏️ Düzenle</button>
+          ${primaryAction}
+          ${secondaryAction}
+          ${shareAction}
           <button class="btn btn-sm btn-outline" onclick="W.showResults('${e.id}')">📊 Sonuçlar</button>
           <button class="btn btn-sm btn-red" onclick="W.delExam('${e.id}')">🗑 Sil</button>
         </div>
-      </div>`).join('');
+      </div>`;}).join('');
   return`<div class="page-pad">
     <div class="flex justify-between items-center mb-6" style="flex-wrap:wrap;gap:12px">
       <div>
-        <h2 style="font-size:20px;margin-bottom:2px">Yayınlanan Sınavlar</h2>
+        <h2 style="font-size:20px;margin-bottom:2px">Sınavlar</h2>
         <p class="text-sm text-muted">${A.exams.length} sınav listeleniyor</p>
       </div>
       <select class="form-input" style="width:150px" onchange="W.loadExamsFilter(this.value)">
@@ -566,7 +851,11 @@ function renderAdminResults(){
       </td>
       <td style="font-size:11px;color:var(--muted)">${fmtDT(r.date)}</td>
       <td>
-        <button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>
+        <div class="flex gap-8" style="flex-wrap:wrap">
+          <button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>
+          <button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>
+          <button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>
+        </div>
       </td>
     </tr>`;}).join('');
   return`<div class="page-pad">
@@ -710,17 +999,16 @@ function removeCropModal(){const el=document.getElementById('cropModal');if(el)e
 /* ── FIREBASE ── */
 async function fbLoadExams(gf){
   try{
-    const q=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf)),where('published','==',true),orderBy('createdAt','desc')):
-      query(collection(db,'exams'),where('published','==',true),orderBy('createdAt','desc'));
+    const q=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf)),orderBy('createdAt','desc')):
+      query(collection(db,'exams'),orderBy('createdAt','desc'));
     const snap=await getDocs(q);return snap.docs.map(d=>({id:d.id,...d.data()}));
   }catch(e1){
     try{
-      const q2=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf)),where('published','==',true)):query(collection(db,'exams'),where('published','==',true));
+      const q2=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf))):query(collection(db,'exams'));
       const snap=await getDocs(q2);
       return snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
     }catch(e2){
-      // Son çare: published çek, sınıf filtresini JS'te uygula
-      const psnap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
+      const psnap=await getDocs(collection(db,'exams'));
       const g=gf?parseInt(gf):null;
       const docs=g?psnap.docs.filter(d=>d.data()?.grade===g):psnap.docs;
       return docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
@@ -732,7 +1020,7 @@ async function fbLoadResults(rf){
   try{
     const q=query(collection(db,'results'),orderBy('date','desc'));
     const snap=await getDocs(q);
-    let res=snap.docs.map(d=>({id:d.id,...d.data()}));
+    let res=snap.docs.map(d=>({id:d.id,...d.data()})).map(r=>({...r,studentKey:getResultStudentKey(r)}));
     if(rf.grade) res=res.filter(r=>r.grade==rf.grade);
     if(rf.sube) res=res.filter(r=>r.sube===rf.sube);
     if(rf.subject) res=res.filter(r=>r.subject===rf.subject);
@@ -741,7 +1029,7 @@ async function fbLoadResults(rf){
     return res;
   }catch{
     const snap=await getDocs(collection(db,'results'));
-    return snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.date?.seconds||0)-(a.date?.seconds||0));
+    return snap.docs.map(d=>({id:d.id,...d.data()})).map(r=>({...r,studentKey:getResultStudentKey(r)})).sort((a,b)=>(b.date?.seconds||0)-(a.date?.seconds||0));
   }
 }
 
@@ -772,20 +1060,10 @@ const W={
   async copyUid(){
     const uid=currentUser?.uid||'';
     if(!uid){toast('UID bulunamadı','error');return;}
-    try{
-      await navigator.clipboard.writeText(uid);
-      toast('UID kopyalandı','success');
-    }catch{
-      const ta=document.createElement('textarea');
-      ta.value=uid;
-      ta.style.position='fixed';
-      ta.style.top='-1000px';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      toast('UID kopyalandı','success');
-    }
+    await copyText(uid,'UID kopyalandı');
+  },
+  async copyExamLink(id){
+    await copyText(buildExamShareUrl(id),'Sınav bağlantısı kopyalandı');
   },
   async refreshAdmin(){
     if(!currentUser){return;}
@@ -806,15 +1084,43 @@ const W={
   },
   async nav(page,opts={}){
     if(!currentUserIsAdmin){toast('Yetkiniz yok','error');return;}
+    if(page==='create'&&A.page!=='create'){
+      resetBuilderState('create');
+    }
     A.page=page;
     if(page==='exams'){showLoad();A.exams=await fbLoadExams('');hideLoad();}
     if(page==='results'){Object.assign(A.rf,opts);showLoad();A.results=await fbLoadResults(A.rf);hideLoad();}
     render();
   },
-  setGrade(g){A.grade=g;A.subject=null;setContent(renderCreate());},
-  setSubject(s){A.subject=s;setContent(renderCreate());},
+  setGrade(g){A.grade=g;A.subject=null;A.questionSections=[];setContent(renderCreate());},
+  setSubject(s){
+    A.subject=s;
+    if(!shouldUseSections(s)) A.questionSections=[];
+    setContent(renderCreate());
+  },
   setOptCount(n){A.optionCount=n;setContent(renderCreate());},
   toggleNeg(){A.negativeMarking=!A.negativeMarking;setContent(renderCreate());},
+  setQuestionAnswer(i,ans){
+    if(!A.questions[i]) return;
+    A.questions[i].ans=ans;
+    refreshQuestionPanels();
+  },
+  updateSectionField(index,key,value){
+    if(!A.questionSections[index]) return;
+    A.questionSections[index][key]=key==='label'?String(value||''):toSectionNumber(value);
+    refreshQuestionPanels();
+  },
+  addSection(){
+    const nextStart=A.questionSections.length
+      ? ((toSectionNumber(A.questionSections[A.questionSections.length-1].end)||0)+1)
+      : 1;
+    A.questionSections.push(normalizeSectionDraft({label:'',start:nextStart<=A.questions.length?nextStart:'',end:nextStart<=A.questions.length?nextStart:''},A.questionSections.length));
+    this.reRenderStep4();
+  },
+  removeSection(index){
+    A.questionSections.splice(index,1);
+    this.reRenderStep4();
+  },
   nextStep(){
     if(A.step===2){
       const v=document.getElementById('eName')?.value?.trim();
@@ -822,12 +1128,26 @@ const W={
       A.examName=v;
     }
     A.step++;
-    if(A.step===3){setContent(renderCreate());if(A.pdfDoc)setTimeout(()=>renderPage(A.pdfPage),80);}
-    else setContent(renderCreate());
+    setContent(renderCreate());
+    afterCreateRender();
   },
-  prevStep(){A.step--;setContent(renderCreate());if(A.step===3&&A.pdfDoc)setTimeout(()=>renderPage(A.pdfPage),80);},
-  reRenderStep4(){setContent(renderCreate());},
-  removeQ(i){A.questions.splice(i,1);refreshQPanel();},
+  prevStep(){A.step--;setContent(renderCreate());afterCreateRender();},
+  reRenderStep4(){setContent(renderCreate());afterCreateRender();},
+  removeQ(i){
+    A.questions.splice(i,1);
+    syncQuestionOrder();
+    if(A.step===4&&A.questions.length===0){
+      A.step=3;
+      setContent(renderCreate());
+      afterCreateRender();
+      return;
+    }
+    if(A.step===4){
+      this.reRenderStep4();
+      return;
+    }
+    refreshQuestionPanels();
+  },
   setDraftAns(a){
     A.draftAns=a;
     const opts=document.getElementById('ansOpts');
@@ -837,10 +1157,11 @@ const W={
   closeCropModal(){removeCropModal();A.draftImg=null;A.draftAns=null;},
   confirmQ(){
     if(!A.draftAns){toast('Cevap seçin','error');return;}
-    A.questions.push({img:A.draftImg,ans:A.draftAns});
+    A.questions.push({img:A.draftImg,ans:A.draftAns,order:A.questions.length});
+    syncQuestionOrder();
     removeCropModal();A.draftImg=null;A.draftAns=null;
     toast(`✓ Soru ${A.questions.length} eklendi!`,'success');
-    refreshQPanel();
+    refreshQuestionPanels();
   },
   async loadFile(inp){await loadFile(inp);},
   async prevPage(){if(A.pdfPage>1){A.pdfPage--;await renderPage(A.pdfPage);}},
@@ -857,32 +1178,144 @@ const W={
     else if(A.imgLoaded)renderImageOnCanvas();
   },
   async publish(){
+    await this.saveAs('active');
+  },
+  async saveAs(targetStatus){
     const t=(document.getElementById('pubTitle')?.value||A.pubTitle||A.examName).trim();
     if(!t){toast('Başlık girin','error');return;}
     if(!A.questions.length){toast('En az 1 soru ekleyin','error');return;}
-    
-    showLoad('Sınav yayınlanıyor, lütfen bekleyin...');
+    syncQuestionOrder();
+    let sectionData;
     try{
-      const er=await addDoc(collection(db,'exams'),{
+      sectionData=prepareQuestionSections(A.questions.length);
+    }catch(error){
+      toast(error.message,'error');
+      return;
+    }
+
+    const isEdit=!!A.editExamId;
+    const actionLabel=targetStatus==='active'
+      ? (isEdit?'Sınav güncelleniyor...':'Sınav yayınlanıyor...')
+      : targetStatus==='paused'
+        ? 'Sınav pasif olarak kaydediliyor...'
+        : 'Sınav beklemede kaydediliyor...';
+
+    showLoad(actionLabel);
+    try{
+      const payload={
         title:t,grade:A.grade,subject:A.subject,
         duration:A.pubDur,questionCount:A.questions.length,
         optionCount:A.optionCount,negativeMarking:A.negativeMarking,
-        published:true,createdAt:serverTimestamp()
-      });
-      
+        questionSections:sectionData.sections,
+        published:targetStatus==='active',
+        status:targetStatus,
+        updatedAt:serverTimestamp()
+      };
+
+      let examId=A.editExamId;
+      if(examId){
+        await updateDoc(doc(db,'exams',examId),payload);
+        const existingQuestions=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
+        for(const qd of existingQuestions.docs){
+          await deleteDoc(doc(db,'questions',qd.id));
+        }
+      }else{
+        const er=await addDoc(collection(db,'exams'),Object.assign({},payload,{createdAt:serverTimestamp()}));
+        examId=er.id;
+      }
+
       for(let i=0;i<A.questions.length;i++){
         await addDoc(collection(db,'questions'),{
-          examId:er.id,imageData:A.questions[i].img,correctAnswer:A.questions[i].ans,order:i
+          examId:examId,
+          imageData:A.questions[i].img,
+          correctAnswer:A.questions[i].ans,
+          sectionTitle:sectionData.assignments[i+1]||'',
+          order:A.questions[i].order??i
         });
       }
-      
-      toast('🎉 Sınav başarıyla yayınlandı!','success');
-      A={page:'exams',step:1,grade:null,subject:null,examName:'',optionCount:4,negativeMarking:false,questions:[],pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,pubTitle:'',pubDur:30,exams:[],results:[],rf:{grade:'',subject:'',name:'',examId:'',sube:''},draftImg:null,draftAns:null};
+
+      const successText=targetStatus==='active'
+        ? (isEdit?'🎉 Sınav güncellendi ve yayınlandı!':'🎉 Sınav başarıyla yayınlandı!')
+        : targetStatus==='paused'
+          ? '⏸ Sınav pasif olarak kaydedildi.'
+          : '🕒 Sınav beklemede kaydedildi.';
+      toast(successText,'success');
+      resetBuilderState('exams');
       A.exams=await fbLoadExams('');
       hideLoad();render();
     }catch(e){hideLoad();toast('Hata: '+e.message,'error');}
   },
   async loadExamsFilter(gf){showLoad();A.exams=await fbLoadExams(gf);hideLoad();setContent(renderAdminExams());},
+  async editExam(id){
+    showLoad('Sınav düzenleme ekranı hazırlanıyor...');
+    try{
+      const examSnap=await getDoc(doc(db,'exams',id));
+      if(!examSnap.exists()) throw new Error('Sınav kaydı bulunamadı.');
+      const exam={id:examSnap.id,...examSnap.data()};
+      let qdocs=[];
+      try{
+        const orderedSnap=await getDocs(query(collection(db,'questions'),where('examId','==',id),orderBy('order','asc')));
+        qdocs=orderedSnap.docs;
+      }catch(error){
+        const fallbackSnap=await getDocs(query(collection(db,'questions'),where('examId','==',id)));
+        qdocs=fallbackSnap.docs.sort((a,b)=>(a.data().order??0)-(b.data().order??0));
+      }
+      A=createInitialState({
+        page:'create',
+        step:4,
+        editExamId:id,
+        grade:exam.grade||null,
+        subject:exam.subject||null,
+        examName:exam.title||'',
+        optionCount:exam.optionCount||4,
+        negativeMarking:!!exam.negativeMarking,
+        questionSections:cloneQuestionSections(exam.questionSections),
+        pubTitle:exam.title||'',
+        pubDur:exam.duration||0,
+        questions:qdocs.map((qd,index)=>{
+          const data=qd.data()||{};
+          return {
+            id:qd.id,
+            img:data.imageData||data.imageUrl||'',
+            ans:data.correctAnswer||'A',
+            sectionTitle:data.sectionTitle||'',
+            order:data.order??index
+          };
+        }),
+        exams:A.exams||[],
+        results:A.results||[],
+        rf:{...(A.rf||{grade:'',subject:'',name:'',examId:'',sube:''})}
+      });
+      if(shouldUseSections(A.subject)&&!A.questionSections.length){
+        A.questionSections=deriveQuestionSectionsFromQuestions(A.questions);
+      }
+      window.A=A;
+      hideLoad();
+      render();
+      toast('✏️ Sınav düzenleme modunda açıldı.','success');
+    }catch(e){
+      hideLoad();
+      toast('Hata: '+e.message,'error');
+    }
+  },
+  async setExamStatus(id,status){
+    const meta=getExamStatusMeta(status);
+    showLoad('Sınav durumu güncelleniyor...');
+    try{
+      await updateDoc(doc(db,'exams',id),{
+        status:status,
+        published:status==='active',
+        updatedAt:serverTimestamp()
+      });
+      A.exams=A.exams.map(exam=>exam.id===id?{...exam,status:status,published:status==='active'}:exam);
+      hideLoad();
+      setContent(renderAdminExams());
+      toast(`${meta.icon} Sınav ${meta.label.toLowerCase()} durumuna alındı.`,'success');
+    }catch(e){
+      hideLoad();
+      toast('Durum güncellenemedi: '+e.message,'error');
+    }
+  },
   async delExam(id){
     if(!confirm('Bu sınavı ve tüm sorularını silmek istiyor musunuz?\n\nBu işlem geri alınamaz!'))return;
     showLoad('Siliniyor...');
@@ -908,18 +1341,75 @@ const W={
       setContent(renderAdminResults());
     }catch(e){toast('Silme hatası: '+e.message,'error');}
   },
+  openResultKarne(id){
+    const result=A.results.find(item=>item.id===id);
+    if(!result){
+      toast('Karne verisi bulunamadı','error');
+      return;
+    }
+    if(!result.examId){
+      toast('Bu kayıt için sınav bağlantısı eksik','error');
+      return;
+    }
+    localStorage.setItem('kemal_exam_admin_karne_result_v1',JSON.stringify(result));
+    window.open(`/sinav_sitesi/sinav.html?examId=${encodeURIComponent(result.examId)}&adminKarne=1`,'_blank');
+  },
+  openStudentKarne(id){
+    const result=A.results.find(item=>item.id===id);
+    if(!result){
+      toast('Öğrenci verisi bulunamadı','error');
+      return;
+    }
+    const payload={
+      firstName:result.firstName||'',
+      lastName:result.lastName||'',
+      grade:result.grade||'',
+      sube:result.sube||'',
+      studentKey:getResultStudentKey(result),
+      focusResultId:result.id
+    };
+    localStorage.setItem('kemal_exam_student_report_target_v1',JSON.stringify(payload));
+    window.open('/sinav_sitesi/ogrenci-karne.html','_blank');
+  },
   exportXlsx(){
     if(!A.results.length){toast('Dışa aktarılacak kayıt yok','error');return;}
-    const data=A.results.map(r=>({
+    const summary=A.results.map(r=>({
       'Ad':r.firstName,'Soyad':r.lastName,
       'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+      'Öğrenci Anahtarı':getResultStudentKey(r),
       'Ders':r.subject||'—','Sınav':r.examTitle||'—',
       'Doğru':r.correct,'Yanlış':r.wrong,'Boş':r.blank,
+      'Net':r.netCorrect??'—',
       'Başarı (%)':r.score,'Tarih':fmtDT(r.date)
     }));
-    const ws=XLSX.utils.json_to_sheet(data);
-    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sonuçlar');
-    XLSX.writeFile(wb,'sinav_sonuclari.xlsx');
+    const detailRows=[];
+    A.results.forEach(r=>{
+      const details=Array.isArray(r.answerDetails)?r.answerDetails:[];
+      if(!details.length){
+        detailRows.push({
+          'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+          'Öğrenci Anahtarı':getResultStudentKey(r),
+          'Ders':r.subject||'—','Sınav':r.examTitle||'—','Soru No':'—',
+          'Sonuç':'Detay yok','Verilen Cevap':'—','Doğru Cevap':'—'
+        });
+        return;
+      }
+      details.forEach(item=>{
+        const outcome=item.outcome==='D'?'Doğru':item.outcome==='Y'?'Yanlış':'Boş';
+        detailRows.push({
+          'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+          'Öğrenci Anahtarı':getResultStudentKey(r),
+          'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,
+          'Sonuç':outcome,'Verilen Cevap':item.selectedAnswer||'Boş','Doğru Cevap':item.correctAnswer||'—'
+        });
+      });
+    });
+    const ws=XLSX.utils.json_to_sheet(summary);
+    const wsDetail=XLSX.utils.json_to_sheet(detailRows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Özet');
+    XLSX.utils.book_append_sheet(wb,wsDetail,'Soru Detay');
+    XLSX.writeFile(wb,'sinav_sonuclari_detayli.xlsx');
     toast('📥 Excel indiriliyor...','success');
   }
 };
@@ -950,10 +1440,9 @@ function render(){
   }
   if(!currentUser){renderLogin();return;}
   if(!currentUserIsAdmin){renderNotAuthorized();return;}
-  if(A.page==='create') renderShell(renderCreate());
+  if(A.page==='create'){renderShell(renderCreate());afterCreateRender();}
   else if(A.page==='exams') renderShell(renderAdminExams());
   else if(A.page==='results') renderShell(renderAdminResults());
-  if(A.step===3&&A.pdfDoc) setTimeout(()=>renderPage(A.pdfPage),80);
 }
 render();
 </script>

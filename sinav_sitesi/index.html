@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sınav Sistemi — Kemal Öğretmenim</title>
+<link rel="stylesheet" href="/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -21,41 +22,30 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:100vh}
 
-/* NAV */
-.navbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1.5px solid var(--border);box-shadow:var(--sh-sm)}
-.nav-inner{max-width:1280px;margin:0 auto;padding:0 24px;display:flex;align-items:center;min-height:64px;gap:0}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;margin-right:16px;cursor:pointer}
-.nav-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--purple),var(--purple-l));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(108,61,237,.3)}
-.nav-logo-text{font-family:var(--fd);font-size:16px;font-weight:800;color:var(--navy);line-height:1.2}
-.nav-logo-text span{color:var(--purple)}
-.nav-grades{display:flex;align-items:center;gap:3px;flex:1;overflow-x:auto;scrollbar-width:none;padding:2px 0}
-.nav-grades::-webkit-scrollbar{display:none}
-.gtab{padding:7px 13px;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;border:2px solid transparent;background:transparent;color:var(--slate);font-family:var(--fb)}
-.gtab:hover{background:var(--cream);color:var(--navy)}
-.nav-links{display:flex;align-items:center;gap:4px;flex-shrink:0;margin-left:12px}
-.nav-link{padding:7px 13px;border-radius:var(--r-sm);font-size:13px;font-weight:600;color:var(--slate);text-decoration:none;transition:all .18s}
-.nav-link:hover{color:var(--purple);background:rgba(108,61,237,.07)}
-.nav-admin{padding:7px 16px;background:var(--purple);color:#fff;border-radius:50px;font-size:13px;font-weight:700;text-decoration:none;transition:all .18s;margin-left:6px}
-.nav-admin:hover{background:var(--purple-d);transform:translateY(-1px)}
-
 /* HERO */
-.hero{max-width:1280px;margin:0 auto;padding:70px 24px 50px;text-align:center}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,61,237,.1);color:var(--purple);font-size:13px;font-weight:700;padding:8px 18px;border-radius:50px;margin-bottom:24px;border:1.5px solid rgba(108,61,237,.2)}
-.hero h1{font-family:var(--fd);font-size:clamp(30px,5vw,54px);font-weight:900;color:var(--navy);line-height:1.15;margin-bottom:18px}
-.hero h1 span{color:var(--purple)}
-.hero p{font-size:17px;color:var(--slate);max-width:580px;margin:0 auto 36px;line-height:1.7}
-.hero-stats{display:flex;justify-content:center;gap:32px;flex-wrap:wrap;margin-bottom:44px}
-.hs-n{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--purple)}
-.hs-l{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.exam-hero{max-width:1280px;margin:0 auto;padding:68px 24px 56px;display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,440px);gap:44px;align-items:center}
+.exam-hero-copy{text-align:left}
+.exam-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,61,237,.1);color:var(--purple);font-size:13px;font-weight:700;padding:8px 18px;border-radius:50px;margin-bottom:20px;border:1.5px solid rgba(108,61,237,.2)}
+.exam-hero-title{font-family:var(--fd);font-size:clamp(38px,5vw,72px);font-weight:900;color:var(--navy);line-height:1.03;margin-bottom:18px;letter-spacing:-0.02em}
+.exam-hero-title span{display:block;color:var(--purple)}
+.exam-hero-text{font-size:20px;color:var(--slate);max-width:620px;line-height:1.7}
+.exam-hero-stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:30px}
+.exam-hero-stat{min-width:132px;padding:18px 18px 16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(108,61,237,.12);border-radius:20px;box-shadow:var(--sh-sm);backdrop-filter:blur(8px)}
+.exam-stat-number{font-family:var(--fd);font-size:34px;font-weight:900;color:var(--purple);line-height:1}
+.exam-stat-label{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin-top:8px}
 
-/* GRADE CARDS HERO */
-.grade-hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:860px;margin:0 auto}
-.ghc{border-radius:var(--r-xl);padding:26px 12px;text-align:center;cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--sh);position:relative;overflow:hidden}
-.ghc:hover{transform:translateY(-6px) scale(1.03);box-shadow:var(--sh-lg)}
-.ghc::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.1);opacity:0;transition:opacity .2s}
-.ghc:hover::after{opacity:1}
-.ghc-num{font-family:var(--fd);font-size:40px;font-weight:900;color:#fff;line-height:1;text-shadow:0 3px 10px rgba(0,0,0,.2)}
-.ghc-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+/* GRADE PANEL */
+.exam-grade-panel{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.74));border:1.5px solid rgba(108,61,237,.12);border-radius:32px;padding:28px;box-shadow:var(--sh-lg);backdrop-filter:blur(12px)}
+.exam-grade-panel-title{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--navy);text-align:center}
+.exam-grade-panel-text{font-size:14px;color:var(--slate);text-align:center;line-height:1.7;margin:10px auto 22px;max-width:320px}
+.exam-grade-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.exam-grade-card{border:none;border-radius:28px;padding:16px 12px 18px;min-height:152px;text-align:center;cursor:pointer;transition:transform .24s cubic-bezier(.34,1.56,.64,1),box-shadow .24s ease,filter .24s ease;box-shadow:var(--sh);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;align-items:center;color:#fff;font-family:var(--fb)}
+.exam-grade-card:hover{transform:translateY(-6px) scale(1.03);box-shadow:var(--sh-lg);filter:saturate(1.06)}
+.exam-grade-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 48%,rgba(255,255,255,.08));opacity:.9}
+.exam-grade-card > *{position:relative;z-index:1}
+.exam-grade-card-label{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 12px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.exam-grade-card-num{font-family:var(--fd);font-size:64px;font-weight:900;line-height:1;text-shadow:0 4px 14px rgba(0,0,0,.14)}
+.exam-grade-card-action{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.92)}
 
 /* GRADE SECTION */
 .grade-section{max-width:1280px;margin:0 auto;padding:0 24px 60px;animation:fadeUp .3s ease}
@@ -132,64 +122,64 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 #loadScreen{position:fixed;inset:0;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9998}
 #loadScreen p{font-weight:600;color:var(--slate);font-size:14px}
 
-/* FOOTER */
-footer{background:var(--navy);color:rgba(255,255,255,.4);text-align:center;padding:22px;font-size:13px}
-footer a{color:rgba(255,255,255,.6);text-decoration:none}
-footer a:hover{color:#fff}
+/* ESKI FOOTER stilleri korundu ama bu sayfada kullanılmıyor */
+.exam-footer{background:var(--navy);color:rgba(255,255,255,.4);text-align:center;padding:22px;font-size:13px}
+.exam-footer a{color:rgba(255,255,255,.6);text-decoration:none}
+.exam-footer a:hover{color:#fff}
+
+body.sinav-home-page .nav-logo img{display:block!important}
+body.sinav-home-page .site-footer{margin-top:40px}
 
 /* RESPONSIVE (Telefonda otomatik tek sütun) */
 @media(max-width:768px){
-  .grade-hero-grid{grid-template-columns:repeat(4,1fr);gap:10px}
-  .ghc{padding:18px 8px}.ghc-num{font-size:30px}
+  .exam-hero{grid-template-columns:1fr;gap:24px;padding:40px 16px 36px}
+  .exam-hero-copy{text-align:center}
+  .exam-hero-title{font-size:44px}
+  .exam-hero-text{font-size:17px;max-width:none}
+  .exam-hero-stats{justify-content:center}
+  .exam-grade-panel{padding:22px 18px;border-radius:24px}
+  .exam-grade-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .exam-grade-card{min-height:144px}
+  .exam-grade-card-num{font-size:56px}
   .exam-grid{grid-template-columns:1fr}
-  .nav-inner{padding:0 14px}
-  .hero{padding:40px 16px 36px}
-  .hero-stats{gap:20px}
   .grade-section{padding:0 14px 40px}
   .grade-banner{padding:18px 20px}
   .modal-box{padding:22px}
   .form-row{grid-template-columns:1fr}
 }
 @media(max-width:480px){
-  .ghc-num{font-size:24px}.ghc-lbl{font-size:9px}
-  .nav-links{display:none}
-  .hero h1{font-size:26px}
+  .exam-hero-title{font-size:34px}
+  .exam-grade-card{min-height:130px;padding:14px 10px 16px}
+  .exam-grade-card-num{font-size:46px}
+  .exam-grade-card-label{font-size:10px;padding:5px 10px}
+  .exam-grade-card-action{font-size:11px}
 }
 </style>
 </head>
-<body>
+<body class="sinav-home-page">
 
 <div id="loadScreen">
   <div class="spinner" style="margin:0"></div>
   <p>Yükleniyor...</p>
 </div>
 
-<nav class="navbar">
-  <div class="nav-inner">
-    <div class="nav-logo" id="navLogo">
-      <div class="nav-logo-icon">📚</div>
-      <div class="nav-logo-text">Kemal <span>Öğretmenim</span></div>
-    </div>
-    <div class="nav-grades" id="navGrades"></div>
-    <div class="nav-links">
-      <a href="https://kemalogretmenim.com.tr/hakkimda.html" class="nav-link" target="_blank">Hakkımda</a>
-      <a href="https://kemalogretmenim.com.tr/iletisim.html" class="nav-link" target="_blank">İletişim</a>
-      <a href="admin.html" class="nav-admin">⚙️ Yönetim</a>
-    </div>
-  </div>
-</nav>
-
 <div id="heroSection">
-  <div class="hero">
-    <div class="hero-badge">🎓 Kemal Öğretmenim Sınav Platformu</div>
-    <h1>Başarıya Giden Yol<br><span>Buradan Başlıyor</span></h1>
-    <p>Sınıfını seç, sınavını bul ve başarına doğru ilk adımı at. Her sınıf için özel hazırlanmış sorularla kendini test et.</p>
-    <div class="hero-stats">
-      <div><div class="hs-n" id="statExams">—</div><div class="hs-l">Sınav</div></div>
-      <div><div class="hs-n" id="statQ">—</div><div class="hs-l">Soru</div></div>
-      <div><div class="hs-n">8</div><div class="hs-l">Sınıf</div></div>
+  <div class="exam-hero">
+    <div class="exam-hero-copy">
+      <div class="exam-hero-badge">🎓 Kemal Öğretmenim Sınav Platformu</div>
+      <h1 class="exam-hero-title">Başarıya Giden Yol <span>Buradan Başlıyor</span></h1>
+      <p class="exam-hero-text">Sınıfını seç, sınavını bul ve başarına doğru ilk adımı at. Her sınıf için özel hazırlanmış sorularla kendini test et.</p>
+      <div class="exam-hero-stats">
+        <div class="exam-hero-stat"><div class="exam-stat-number" id="statExams">—</div><div class="exam-stat-label">Sınav</div></div>
+        <div class="exam-hero-stat"><div class="exam-stat-number" id="statQ">—</div><div class="exam-stat-label">Soru</div></div>
+        <div class="exam-hero-stat"><div class="exam-stat-number">8</div><div class="exam-stat-label">Sınıf</div></div>
+      </div>
     </div>
-    <div class="grade-hero-grid" id="gradeCardsHero"></div>
+    <div class="exam-grade-panel">
+      <h2 class="exam-grade-panel-title">Sınıfını Seç</h2>
+      <p class="exam-grade-panel-text">Kartlardan uygun sınıf seviyeni seç. İstersen üst bardaki sınıf menülerinden de doğrudan ilgili alana geçebilirsin.</p>
+      <div class="exam-grade-grid" id="gradeCardsHero"></div>
+    </div>
   </div>
 </div>
 
@@ -235,15 +225,15 @@ footer a:hover{color:#fff}
   </div>
 </div>
 
-<footer>
-  <p>© 2026 <a href="https://kemalogretmenim.com.tr" target="_blank">Kemal Öğretmenim</a> — Sınav Platformu</p>
-</footer>
-
+<script src="/js/site-data.js"></script>
+<script src="/js/site.js"></script>
 <script type="module">
 import { db } from "./js/firebase.js";
 import {
   collection,
+  doc,
   getDocs,
+  getDoc,
   query,
   where,
   orderBy,
@@ -279,22 +269,38 @@ function fmtDate(ts){
   return d.toLocaleDateString('tr-TR');
 }
 function capitalize(s){return s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');}
+function openExamModal(exam){
+  if(!exam)return;
+  S.selExam=exam;
+  S.grade=exam.grade||S.grade;
+  document.getElementById('eibContent').innerHTML=`
+    <div class="eib-title">${exam.title}</div>
+    <div class="eib-row">
+      <span class="eib-item">📝 ${exam.questionCount} soru</span>
+      <span class="eib-item">📚 ${exam.subject}</span>
+      <span class="eib-item">⏱ ${exam.duration ? exam.duration + ' dakika' : 'Sınırsız'}</span>
+    </div>
+    ${exam.negativeMarking?'<div class="neg-warn">⚠️ Bu sınavda her 3 yanlış, 1 doğruyu götürecektir!</div>':''}`;
+  document.getElementById('gradeInput').value=`${exam.grade||S.grade}. Sınıf`;
+  document.getElementById('fnInput').value='';
+  document.getElementById('lnInput').value='';
+  document.getElementById('subeSelect').value='';
+  document.getElementById('modalErr').style.display='none';
+  document.getElementById('studentModal').style.display='flex';
+  setTimeout(()=>document.getElementById('fnInput').focus(),100);
+}
 
 function initUI(){
-  const nav=document.getElementById('navGrades');
-  nav.innerHTML=GRADES.map(g=>`<button class="gtab" id="gtab${g}" onclick="window.selectGrade(${g})">${g}. Sınıf</button>`).join('');
   document.getElementById('gradeCardsHero').innerHTML=GRADES.map(g=>`
-    <div class="ghc" style="background:${GC[g].bg}" onclick="window.selectGrade(${g})">
-      <div class="ghc-num">${g}</div>
-      <div class="ghc-lbl">Sınıf</div>
-    </div>`).join('');
+    <button type="button" class="exam-grade-card" style="background:${GC[g].bg}" onclick="window.selectGrade(${g})">
+      <span class="exam-grade-card-label">${g}. Sınıf</span>
+      <span class="exam-grade-card-num">${g}</span>
+      <span class="exam-grade-card-action">Sınavları Gör</span>
+    </button>`).join('');
 }
 
 window.selectGrade=async function(g){
   S.grade=g;S.subject='Tümü';S.page=1;
-  GRADES.forEach(x=>{const t=document.getElementById(`gtab${x}`);if(!t)return;t.style.background='';t.style.color='';t.style.borderColor='';});
-  const at=document.getElementById(`gtab${g}`);
-  if(at){at.style.background=GC[g].bg;at.style.color='#fff';at.style.borderColor='transparent';}
   document.getElementById('heroSection').style.display='none';
   document.getElementById('gradeSection').style.display='block';
   const bn=document.getElementById('gradeBanner');
@@ -307,12 +313,9 @@ window.selectGrade=async function(g){
 window.showHero=function(){
   document.getElementById('heroSection').style.display='block';
   document.getElementById('gradeSection').style.display='none';
-  GRADES.forEach(x=>{const t=document.getElementById(`gtab${x}`);if(!t)return;t.style.background='';t.style.color='';t.style.borderColor='';});
   S.grade=null;
   window.scrollTo({top:0,behavior:'smooth'});
 };
-
-document.getElementById('navLogo').addEventListener('click',()=>window.showHero());
 
 function renderSubjects(g){
   const ss=SUBJECTS[g]||['Tümü'];
@@ -400,22 +403,7 @@ window.goPage=function(p){
 window.openModal=function(examId){
   const exam=S.exams.find(e=>e.id===examId)||S.filtered.find(e=>e.id===examId);
   if(!exam)return;
-  S.selExam=exam;
-  document.getElementById('eibContent').innerHTML=`
-    <div class="eib-title">${exam.title}</div>
-    <div class="eib-row">
-      <span class="eib-item">📝 ${exam.questionCount} soru</span>
-      <span class="eib-item">📚 ${exam.subject}</span>
-      <span class="eib-item">⏱ ${exam.duration ? exam.duration + ' dakika' : 'Sınırsız'}</span>
-    </div>
-    ${exam.negativeMarking?'<div class="neg-warn">⚠️ Bu sınavda her 3 yanlış, 1 doğruyu götürecektir!</div>':''}`;
-  document.getElementById('gradeInput').value=`${S.grade}. Sınıf`;
-  document.getElementById('fnInput').value='';
-  document.getElementById('lnInput').value='';
-  document.getElementById('subeSelect').value='';
-  document.getElementById('modalErr').style.display='none';
-  document.getElementById('studentModal').style.display='flex';
-  setTimeout(()=>document.getElementById('fnInput').focus(),100);
+  openExamModal(exam);
 };
 
 window.closeModal=function(){document.getElementById('studentModal').style.display='none';};
@@ -445,12 +433,47 @@ async function loadStats(){
   }catch{}
 }
 
-const urlG=new URLSearchParams(window.location.search).get('grade');
+async function loadExamById(examId){
+  try{
+    const snap=await getDoc(doc(db,'exams',examId));
+    if(!snap.exists()) return null;
+    const exam={id:snap.id,...snap.data()};
+    if(exam.status&&exam.status!=='active') return null;
+    if(exam.published===false) return null;
+    return exam;
+  }catch{
+    return null;
+  }
+}
 
-initUI();
-loadStats();
-if(urlG) window.selectGrade(parseInt(urlG));
-document.getElementById('loadScreen').style.display='none';
+async function handleSharedExamLink(examId){
+  const exam=await loadExamById(examId);
+  if(!exam){
+    alert('Paylaşılan sınav bağlantısı artık aktif değil veya bulunamadı.');
+    return;
+  }
+  if(Number.isFinite(parseInt(exam.grade,10))){
+    await window.selectGrade(parseInt(exam.grade,10));
+  }
+  openExamModal(exam);
+}
+
+async function initPage(){
+  const urlParams=new URLSearchParams(window.location.search);
+  const urlG=urlParams.get('grade');
+  const urlExamId=urlParams.get('examId')||urlParams.get('sinavId');
+  initUI();
+  await loadStats();
+  if(urlExamId){
+    await handleSharedExamLink(urlExamId);
+  }else if(urlG){
+    const gradeNum=parseInt(urlG,10);
+    if(Number.isFinite(gradeNum)) await window.selectGrade(gradeNum);
+  }
+  document.getElementById('loadScreen').style.display='none';
+}
+
+initPage();
 </script>
 </body>
 </html>

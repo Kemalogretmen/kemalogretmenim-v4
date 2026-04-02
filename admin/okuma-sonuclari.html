@@ -23,6 +23,8 @@
     .login-input{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
     .login-input:focus{border-color:var(--purple);}
     .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+    .login-help{font-size:12px;color:var(--muted);margin:-2px 0 16px;}
+    .login-err{display:none;margin-top:14px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);border-radius:10px;font-size:13px;color:var(--danger);font-weight:700;}
 
     /* LAYOUT */
     .app{display:none;}
@@ -63,6 +65,16 @@
     .tablo-header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:2px solid var(--border);}
     .tablo-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--navy);}
     .tablo-count{font-size:13px;color:var(--muted);font-weight:700;}
+    .mobil-kart-list{display:none;padding:14px;gap:12px;flex-direction:column;background:#fff;}
+    .mobil-sonuc-kart{border:2px solid var(--border);border-radius:18px;padding:16px;background:#FAFAFF;}
+    .msk-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+    .msk-title{font-weight:800;color:var(--navy);font-size:15px;}
+    .msk-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+    .msk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .msk-item{padding:10px 12px;background:white;border-radius:12px;border:1px solid var(--border);}
+    .msk-item span{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-bottom:4px;text-transform:uppercase;}
+    .msk-item strong{font-size:13px;color:var(--navy);}
+    .msk-footer{margin-top:12px;font-size:12px;color:var(--slate);font-weight:700;}
 
     /* Checkbox seçme */
     .th,.td{padding:12px 16px;font-size:13px;}
@@ -84,6 +96,9 @@
     .an-o{background:#FFF8E1;color:#D97706;}
     .an-d{background:#FEE2E2;color:#DC2626;}
     .an-y{background:#F0EBFF;color:var(--slate);}
+    .islem-grup{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-start;}
+    .btn-karne-row{padding:5px 12px;background:#EEF4FF;color:#2563EB;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
+    .btn-karne-row:hover{background:#2563EB;color:white;}
     .btn-sil-row{padding:5px 12px;background:rgba(239,68,68,.1);color:var(--danger);border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
     .btn-sil-row:hover{background:var(--danger);color:white;}
     input[type="checkbox"]{width:18px;height:18px;accent-color:var(--purple);cursor:pointer;}
@@ -107,6 +122,16 @@
       .tablo-thead,.tablo-satir{grid-template-columns:36px 2fr 70px 100px 100px 90px;}
       .th:nth-child(3),.td:nth-child(3){display:none;}
     }
+    @media(max-width:680px){
+      .topbar{padding:14px 16px;height:auto;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+      .topbar-links{width:100%;overflow:auto;padding-bottom:4px;}
+      .main{padding:18px 14px 24px;}
+      .stat-row{grid-template-columns:1fr;}
+      .filter-bar{padding:16px;gap:10px;}
+      .fb-group,.fb-group.grow{width:100%;min-width:0;}
+      .tablo-thead,.tablo-tbody{display:none;}
+      .mobil-kart-list{display:flex;}
+    }
   </style>
 </head>
 <body>
@@ -115,9 +140,12 @@
     <div class="login-box">
       <div style="font-size:52px;margin-bottom:12px;">📊</div>
       <div style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;margin-bottom:6px;">Okuma Sonuçları</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:24px;">Kemal Öğretmenim — Veri Yönetimi</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Kemal Öğretmenim — Veri Yönetimi</p>
+      <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-posta adresi" autocomplete="username">
       <input class="login-input" type="password" id="loginPass" placeholder="Şifre…" autocomplete="current-password">
+      <div class="login-help">Okuma veritabanı Supabase Auth hesabınla giriş yap.</div>
       <button class="login-btn" onclick="doLogin()">Giriş →</button>
+      <div class="login-err" id="loginErr"></div>
     </div>
   </div>
 
@@ -127,6 +155,7 @@
       <div class="topbar-links">
         <a href="/admin/index.html" class="topbar-link">⚙️ Site Yönetimi</a>
         <a href="/admin/okuma-editor.html" class="topbar-link">📝 Metin Editörü</a>
+        <a href="/admin/okuma-karne.html" class="topbar-link">📘 Karne Merkezi</a>
         <a href="/hizli-okuma/index.html" target="_blank" class="topbar-link">🌐 Okuma Sayfası</a>
       </div>
       <button class="logout-btn" onclick="doLogout()">Çıkış 🚪</button>
@@ -197,6 +226,7 @@
         <div class="tablo-tbody" id="tabloGovde">
           <div class="loading-txt">⏳ Yükleniyor…</div>
         </div>
+        <div class="mobil-kart-list" id="mobilKartList"></div>
       </div>
 
     </div>
@@ -204,194 +234,8 @@
 
   <div class="toast" id="toast"></div>
 
-<script>
-  const SUPABASE_URL = 'https://mwxcvlyrkptxrwgkmqum.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY';
-  const PASS_KEY     = 'kemal_admin_pass';
-  const DEFAULT_PASS = 'kemal2026';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  let tumVeri = [];
-  let filtreli = [];
-
-  /* ── GİRİŞ ── */
-  function getPass(){ return localStorage.getItem(PASS_KEY) || DEFAULT_PASS; }
-  function doLogin(){
-    const v = document.getElementById('loginPass').value;
-    if(v === getPass()){
-      sessionStorage.setItem('sonuclar_auth','1');
-      document.getElementById('loginScreen').style.display='none';
-      document.getElementById('app').style.display='block';
-      loadData();
-    } else {
-      alert('Hatalı şifre!');
-      document.getElementById('loginPass').value='';
-    }
-  }
-  document.addEventListener('DOMContentLoaded', ()=>{
-    document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
-  });
-  function doLogout(){ sessionStorage.removeItem('sonuclar_auth'); location.reload(); }
-  if(sessionStorage.getItem('sonuclar_auth')==='1'){
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    document.addEventListener('DOMContentLoaded', loadData);
-  }
-
-  /* ── VERİ ── */
-  async function loadData(){
-    const {data,error} = await sb
-      .from('sonuclar')
-      .select('*')
-      .order('olusturma_tarihi',{ascending:false});
-
-    if(error){ toast('❌ Veri yüklenemedi','error'); return; }
-    tumVeri = data || [];
-    filtreli = [...tumVeri];
-    istatistikGuncelle();
-    render();
-  }
-
-  function istatistikGuncelle(){
-    const d = filtreli.length ? filtreli : tumVeri;
-    document.getElementById('sToplam').textContent = d.length;
-    const ortWpm  = d.length ? Math.round(d.reduce((a,r)=>a+(r.dakika_kelime||0),0)/d.length) : 0;
-    const ortAnl  = d.filter(r=>r.toplam_soru>0).length
-      ? Math.round(d.filter(r=>r.toplam_soru>0).reduce((a,r)=>a+(r.anlama_yuzdesi||0),0) / d.filter(r=>r.toplam_soru>0).length)
-      : 0;
-    const enIyi   = d.length ? Math.max(...d.map(r=>r.dakika_kelime||0)) : 0;
-    document.getElementById('sOrtWpm').textContent     = ortWpm + ' k/dk';
-    document.getElementById('sOrtAnlama').textContent  = ortAnl + '%';
-    document.getElementById('sEnIyi').textContent      = enIyi + ' k/dk';
-  }
-
-  /* ── FİLTRE ── */
-  function uygula(){
-    const ad    = document.getElementById('fAd').value.trim().toLowerCase();
-    const sinif = document.getElementById('fSinif').value;
-    const sube  = document.getElementById('fSube').value;
-    const metin = document.getElementById('fMetin').value.trim().toLowerCase();
-
-    filtreli = tumVeri.filter(r => {
-      const adMatch    = !ad    || `${r.ad} ${r.soyad}`.toLowerCase().includes(ad);
-      const sinifMatch = !sinif || String(r.sinif) === sinif;
-      const subeMatch  = !sube  || r.sube === sube;
-      const metinMatch = !metin || (r.metin_adi||'').toLowerCase().includes(metin);
-      return adMatch && sinifMatch && subeMatch && metinMatch;
-    });
-
-    istatistikGuncelle();
-    render();
-  }
-
-  function filtreTemizle(){
-    ['fAd','fMetin'].forEach(id=>document.getElementById(id).value='');
-    ['fSinif','fSube'].forEach(id=>document.getElementById(id).value='');
-    filtreli=[...tumVeri];
-    istatistikGuncelle();
-    render();
-  }
-
-  /* ── RENDER ── */
-  function render(){
-    const tbody = document.getElementById('tabloGovde');
-    document.getElementById('tabloCount').textContent = filtreli.length + ' kayıt';
-
-    if(!filtreli.length){
-      tbody.innerHTML='<div class="bos-durum"><span>📭</span><p>Sonuç bulunamadı.</p></div>';
-      return;
-    }
-
-    tbody.innerHTML = filtreli.map(r=>{
-      const wpm = r.dakika_kelime||0;
-      const anl = r.toplam_soru>0 ? (r.anlama_yuzdesi||0) : -1;
-      const hizClass = wpm>=100 ? 'hiz-y' : wpm>=60 ? 'hiz-n' : 'hiz-d';
-      const anlClass = anl<0 ? 'an-y' : anl>=75 ? 'an-g' : anl>=50 ? 'an-o' : 'an-d';
-      const anlTxt   = anl<0 ? '—' : anl+'%';
-      const sure = r.okuma_suresi_sn ? formatSure(r.okuma_suresi_sn) : '—';
-      const tarih = r.olusturma_tarihi ? new Date(r.olusturma_tarihi).toLocaleDateString('tr-TR') : '—';
-      return `
-        <div class="tablo-satir" id="row_${r.id}">
-          <div class="td"><input type="checkbox" class="row-cb" value="${r.id}"></div>
-          <div class="td bold">${esc(r.ad)} ${esc(r.soyad)}</div>
-          <div class="td">${r.sinif||'?'}/${r.sube||'?'}</div>
-          <div class="td"><span class="hiz-badge ${hizClass}">${wpm}</span></div>
-          <div class="td"><span class="anlama-badge ${anlClass}">${anlTxt}</span></div>
-          <div class="td">${esc(r.metin_adi||'—')}</div>
-          <div class="td">${sure}</div>
-          <div class="td">${tarih}</div>
-          <div class="td"><button class="btn-sil-row" onclick="tekSil('${r.id}')">Sil</button></div>
-        </div>`;
-    }).join('');
-  }
-
-  function formatSure(sn){
-    const s = Math.round(sn);
-    const dk = Math.floor(s/60), sn2 = s%60;
-    return dk>0 ? `${dk}dk ${sn2}sn` : `${s}sn`;
-  }
-
-  /* ── SİL ── */
-  async function tekSil(id){
-    if(!confirm('Bu kaydı silmek istediğinizden emin misiniz?')) return;
-    const {error} = await sb.from('sonuclar').delete().eq('id',id);
-    if(error){ toast('❌ Silinemedi','error'); return; }
-    tumVeri = tumVeri.filter(r=>r.id!==id);
-    filtreli = filtreli.filter(r=>r.id!==id);
-    istatistikGuncelle(); render();
-    toast('🗑️ Kayıt silindi','success');
-  }
-
-  async function topluSil(){
-    const ids = [...document.querySelectorAll('.row-cb:checked')].map(cb=>cb.value);
-    if(!ids.length){ toast('Önce satır seçin','error'); return; }
-    if(!confirm(`${ids.length} kaydı silmek istiyor musunuz?`)) return;
-    const {error} = await sb.from('sonuclar').delete().in('id',ids);
-    if(error){ toast('❌ Silme hatası','error'); return; }
-    tumVeri  = tumVeri.filter(r=>!ids.includes(r.id));
-    filtreli = filtreli.filter(r=>!ids.includes(r.id));
-    istatistikGuncelle(); render();
-    toast(`✅ ${ids.length} kayıt silindi`,'success');
-  }
-
-  function hepsiniSecToggle(){
-    const checked = document.getElementById('hepsiniSec').checked;
-    document.querySelectorAll('.row-cb').forEach(cb=>cb.checked=checked);
-    document.querySelectorAll('.tablo-satir').forEach(r=>r.classList.toggle('secili',checked));
-  }
-
-  /* ── EXCEL ── */
-  function excelIndir(){
-    if(!filtreli.length){ toast('Veri yok','error'); return; }
-    const baslik = ['Ad','Soyad','Sınıf','Şube','Metin','WPM','Hedef WPM','Süre (sn)','Doğru','Yanlış','Toplam Soru','Anlama %','Tarih'];
-    const satirlar = filtreli.map(r=>[
-      r.ad, r.soyad, r.sinif, r.sube, r.metin_adi,
-      r.dakika_kelime, r.hedef_hiz, r.okuma_suresi_sn,
-      r.dogru_sayisi, r.yanlis_sayisi, r.toplam_soru, r.anlama_yuzdesi,
-      r.olusturma_tarihi ? new Date(r.olusturma_tarihi).toLocaleString('tr-TR') : ''
-    ]);
-    const csv = [baslik, ...satirlar]
-      .map(row => row.map(cell => `"${(cell??'').toString().replace(/"/g,'""')}"`).join(';'))
-      .join('\n');
-    const bom   = '\uFEFF';
-    const blob  = new Blob([bom+csv],{type:'text/csv;charset=utf-8;'});
-    const url   = URL.createObjectURL(blob);
-    const a     = document.createElement('a');
-    a.href = url;
-    a.download = 'okuma_sonuclari_' + new Date().toISOString().split('T')[0] + '.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast('✅ Excel (CSV) indirildi','success');
-  }
-
-  /* ── YARDIMCI ── */
-  let tt;
-  function toast(msg,type='success'){
-    const el=document.getElementById('toast');
-    el.textContent=msg; el.className='toast '+type+' show';
-    clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2800);
-  }
-  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-</script>
+<script src="/js/site-data.js"></script>
+<script src="/js/admin-auth.js"></script>
+<script src="/js/okuma-sonuclari-app.js"></script>
 </body>
 </html>

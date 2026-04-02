@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <style>
     body { background:linear-gradient(145deg,#0F0A2E,#1A1040); }
 
@@ -407,271 +408,23 @@
 
       <div class="karne-govde-alt">
         <div class="karne-altbtnlar">
-          <button class="kbtn kbtn-pdf" onclick="karneIndir()" id="indirBtn">📸 Resim İndir</button>
-          <button class="kbtn kbtn-tekrar" onclick="window.location.href='/hizli-okuma/oku.html'">🔄 Tekrar Oku</button>
+          <button class="kbtn kbtn-pdf" onclick="karnePdfIndir()" id="indirBtn">📄 PDF İndir</button>
+          <button class="kbtn kbtn-tekrar" onclick="tekrarOku()">🔄 Tekrar Oku</button>
           <a href="/hizli-okuma/index.html" class="kbtn kbtn-liste">📚 Metin Listesi</a>
           <a href="/index.html" class="kbtn kbtn-anasayfa">🏠 Ana Sayfa</a>
+        </div>
+        <div class="karne-marka">
+          <span>Hazırlayan: Kemal Öğretmenim</span>
+          <span class="karne-marka-sep">•</span>
+          <a href="/hizli-okuma/index.html">Hızlı Okuma Merkezi</a>
         </div>
       </div>
 
     </div><!-- /karne-kart -->
   </div>
 
+  <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
-  <script>
-    const SUPABASE_URL = 'https://mwxcvlyrkptxrwgkmqum.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY';
-    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Sınıf normaları (Türk eğitim sistemine göre dk. kelime hedefleri)
-    const NORMLAR = {
-      1:{min:40,hedef:70, iyi:90,  maksimum:180},
-      2:{min:60,hedef:90, iyi:110, maksimum:200},
-      3:{min:80,hedef:110,iyi:130, maksimum:220},
-      4:{min:100,hedef:130,iyi:155,maksimum:240},
-      5:{min:120,hedef:150,iyi:175,maksimum:260},
-      6:{min:140,hedef:165,iyi:195,maksimum:280},
-      7:{min:155,hedef:185,iyi:215,maksimum:300},
-      8:{min:170,hedef:200,iyi:235,maksimum:320},
-    };
-
-    const metin     = JSON.parse(sessionStorage.getItem('okuma_metin')    || 'null');
-    const kullanici = JSON.parse(sessionStorage.getItem('okuma_kullanici')|| 'null');
-    const sureSn    = parseFloat(sessionStorage.getItem('okuma_sure_sn')  || '0');
-    const wpm       = parseInt(sessionStorage.getItem('okuma_wpm')        || '0');
-    const cevaplar  = JSON.parse(sessionStorage.getItem('okuma_cevaplar') || 'null');
-
-    if (!metin || !kullanici) { window.location.href = '/hizli-okuma/index.html'; }
-
-    /* ─── VERİYİ DOLDUR ─── */
-    const sinif   = kullanici.sinif;
-    const norm    = NORMLAR[sinif] || NORMLAR[4];
-    const hedefWpm= metin.hedef_hiz || norm.hedef;
-    const ks      = metin.kelime_sayisi || 0;
-    const tarih   = new Date().toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
-
-    // Üst kısım
-    document.getElementById('karneAd').textContent          = `${kullanici.ad} ${kullanici.soyad}`;
-    document.getElementById('karneSinifSube').textContent   = `${sinif}. Sınıf / ${kullanici.sube} Şubesi`;
-    document.getElementById('karneTarih').textContent       = tarih;
-    document.getElementById('karneMetinAdi').textContent    = metin.baslik;
-
-    // WPM
-    document.getElementById('karneWpm').textContent    = wpm;
-    document.getElementById('karneHedef').textContent  = hedefWpm;
-
-    // Yıldız
-    const yildiz = wpm >= hedefWpm * 1.2 ? '🌟🌟🌟' : wpm >= hedefWpm ? '⭐⭐⭐' : wpm >= hedefWpm*.7 ? '⭐⭐' : '⭐';
-    document.getElementById('karneWpmStar').textContent = yildiz;
-
-    // Bar
-    const barMax = norm.maksimum;
-    const fillPct = Math.min(100, Math.round((wpm / barMax) * 100));
-    const hedefPct = Math.min(98, Math.round((hedefWpm / barMax) * 100));
-    document.getElementById('hizBarOrta').textContent = `${hedefWpm} k/dk`;
-    document.getElementById('hizBarHedef').style.left = hedefPct + '%';
-    document.getElementById('hizBarFill').style.width = '0%';
-    document.getElementById('hizBarFill').style.background =
-      wpm >= hedefWpm ? 'linear-gradient(90deg,#00C9B1,#55EFC4)' :
-      wpm >= hedefWpm*.7 ? 'linear-gradient(90deg,#FFD93D,#FF9F43)' :
-      'linear-gradient(90deg,#FF6052,#FF9F43)';
-    setTimeout(() => {
-      document.getElementById('hizBarFill').style.width = fillPct + '%';
-    }, 400);
-
-    // Anlama
-    if (cevaplar) {
-      const { dogru, yanlis, detay } = cevaplar;
-      const toplam  = dogru + yanlis;
-      const yuzde   = toplam > 0 ? Math.round((dogru / toplam) * 100) : 0;
-
-      // Daire rengi
-      const daire = document.getElementById('anlamaDaire');
-      const dColor = yuzde>=80 ? '#00C9B1' : yuzde>=60 ? '#FFD93D' : '#FF6052';
-      daire.style.background = `conic-gradient(${dColor} ${yuzde*3.6}deg, #F0EBFF 0deg)`;
-      daire.style.boxShadow = `0 0 0 8px #F0EBFF, 0 6px 20px rgba(0,0,0,.1)`;
-      document.getElementById('anlamaYuzde').textContent = yuzde + '%';
-      document.getElementById('anlamaYuzde').style.color = dColor;
-      document.getElementById('anlamaBolme').style.display = 'block';
-
-      document.getElementById('anlamaSoruRow').innerHTML = `
-        <div class="anlama-kutu dogru">✅ ${dogru} Doğru</div>
-        <div class="anlama-kutu yanlis">❌ ${yanlis} Yanlış</div>
-        <div class="anlama-kutu dogru" style="background:#EFF7FF;color:var(--purple);">📊 ${yuzde}% Başarı</div>`;
-
-      // Soru detayı
-      if (detay && detay.length > 0) {
-        document.getElementById('soruDetayList').innerHTML = detay.map((d,i) => `
-          <div class="soru-detay-item ${d.isDogu?'dogru':'yanlis'}">
-            <div class="sdi-soru">${i+1}. ${escHtml(d.soru)}</div>
-            <div class="sdi-sec ${d.isDogu?'dogru':'yanlis'}">
-              ${d.isDogu ? '✅' : '❌'} Cevabın: ${escHtml(d.secilenMetin)}
-              ${!d.isDogu ? `<br>✅ Doğru Cevap: ${escHtml(d.dogruMetin)}` : ''}
-            </div>
-          </div>`).join('');
-      }
-
-      // Supabase'e kaydet
-      kaydetSonuc({ dogru, yanlis, toplam, yuzde });
-    } else {
-      document.getElementById('anlamaSeksiyon').innerHTML =
-        '<div style="text-align:center;color:var(--muted);padding:20px;">Bu metin için anlama sorusu eklenmemiş.</div>';
-      document.getElementById('anlamaBolme').style.display = 'none';
-      kaydetSonuc({ dogru:0, yanlis:0, toplam:0, yuzde:0 });
-    }
-
-    // Kişisel dönüt oluştur
-    olusturDonut();
-
-    /* ─── SUPABASE KAYDET ─── */
-    async function kaydetSonuc({ dogru, yanlis, toplam, yuzde }) {
-      try {
-        await sb.from('sonuclar').insert({
-          ad: kullanici.ad,
-          soyad: kullanici.soyad,
-          sinif: kullanici.sinif,
-          sube: kullanici.sube,
-          metin_id: metin.id,
-          metin_adi: metin.baslik,
-          okuma_suresi_sn: parseFloat(sureSn),
-          kelime_sayisi: ks,
-          dakika_kelime: wpm,
-          hedef_hiz: hedefWpm,
-          dogru_sayisi: dogru,
-          yanlis_sayisi: yanlis,
-          toplam_soru: toplam,
-          anlama_yuzdesi: yuzde
-        });
-      } catch(e) { console.warn('Kayıt hatası:', e); }
-
-      // SessionStorage temizle
-      ['okuma_metin','okuma_kullanici','okuma_sure_sn','okuma_wpm','okuma_cevaplar']
-        .forEach(k => sessionStorage.removeItem(k));
-    }
-
-    /* ─── KİŞİSEL DÖNÜT ─── */
-    function olusturDonut() {
-      const ad = kullanici.ad;
-      const norm2 = NORMLAR[sinif] || NORMLAR[4];
-      const hizOran = wpm / hedefWpm;
-      const anlamaYuzde = cevaplar ? Math.round((cevaplar.dogru/(cevaplar.dogru+cevaplar.yanlis))*100) : -1;
-
-      // Hız seviyesi
-      let hizSeviye, hizMsg;
-      if      (hizOran >= 1.4) { hizSeviye='süper';  hizMsg=`${wpm} k/dk ile hedefin çok üzerinde okudun — bu gerçekten etkileyici! Hız konusunda sınıfın yıldızı olabilirsin.`; }
-      else if (hizOran >= 1.15){ hizSeviye='iyi';    hizMsg=`${wpm} k/dk ile ${sinif}. sınıf hedefinin üzerinde okudun. Harika bir çaba!`; }
-      else if (hizOran >= 0.85){ hizSeviye='normal'; hizMsg=`${wpm} k/dk ile beklenen düzeye yaklaştın. Hedefe ${Math.max(0,hedefWpm-wpm)} kelime kaldı — az çalışmayla ulaşırsın.`; }
-      else if (hizOran >= 0.6) { hizSeviye='yavas';  hizMsg=`${wpm} k/dk şu an için normal, ama hedefin ${hedefWpm} k/dk. Düzenli okuma pratiği hızını hızla artıracak.`; }
-      else                     { hizSeviye='cokYavas';hizMsg=`${wpm} k/dk ile biraz yavaş kaldın. Merak etme! Her gün 10 dakika yüksek sesle okumak hızını büyük ölçüde artırır.`; }
-
-      // Anlama yorumu
-      let anlamaMsg = '';
-      if (anlamaYuzde < 0) {
-        anlamaMsg = 'Bu metin için anlama sorusu eklenmemiş.';
-      } else if (anlamaYuzde >= 85) {
-        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı — mükemmel! Okuduğunu mükemmel kavramışsın.`;
-      } else if (anlamaYuzde >= 65) {
-        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı — iyisin! Birkaç noktayı kaçırdın ama genel kavrayışın güçlü.`;
-      } else if (anlamaYuzde >= 45) {
-        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı. Metni okurken bazı önemli detayları atlamış olabilirsin. İkinci okumada daha dikkatli olursan anlaman artacak.`;
-      } else {
-        anlamaMsg = `Anlama bölümünde %${anlamaYuzde} başarı. Endişelenme — hız odaklı okurken anlama zaman alır. Yavaşlayarak ve cümleleri kafanda tekrarlayarak okumayı dene.`;
-      }
-
-      // Genel yorum ve öneri
-      const templates = {
-        superIyi: [
-          `${ad}, bu performans gerçekten harika! Hem hız hem anlama bir arada — mükemmel bir kombinasyon. Bu seviyeyi korumak için daha uzun ve zorlu metinleri deneyebilirsin.`,
-          `${ad} tebrikler! Hem hız hem de anlama bölümünde üst düzey bir performans sergilemişsin. Bir sonraki adım olarak farklı türlerde metinler okumayı deneyebilirsin.`,
-        ],
-        hizliAnlamaDusuk: [
-          `${ad}, okuma hızın çok iyi! Ama hızlı gittiğinde bazı detayları kaçırıyorsun. Biraz yavaşlayarak oku — kalite, hızdan daha önemli.`,
-          `${ad}, hız konusunda kesinlikle yeteneklisin! Anlama puanını yükseltmek için her paragraftan sonra 2 saniye dur ve okuduğunu aklında özetle.`,
-        ],
-        yavasAnlamaIyi: [
-          `${ad}, anlama bölümünde çok başarılısın — okuduğunu gerçekten anlıyorsun! Şimdi sıra hızını biraz artırmada. Her gün 10-15 dakika zamanlı okuma egzersizi yapabilirsin.`,
-          `${ad}, dikkatli okuma alışkanlığın anlama puanına yansıdı. Harika! Hızını artırmak için göz egzersizleri ve bol okuma pratiği seni hedefe ulaştıracak.`,
-        ],
-        orta: [
-          `${ad}, bu okuma seninle ilgili güzel şeyler söylüyor. Düzenli çalışarak hem hızını hem de anlama becerinini geliştirebilirsin. Her gün biraz okuma, büyük fark yaratır!`,
-          `${ad}, ilk adımı attın ve bu en önemli adım! Şimdi düzenlilikle devam etmek gerekiyor. Kitaplık, gazete, web siteleri — her şey okuma pratiğine sayılır.`,
-        ],
-        guc: [
-          `${ad}, bugün okumak için masaya oturmuşsun — bu tek başına bir başarı! Gelişim doğrusal olmaz, dalgalanmalar normal. Önemli olan bırakmamak. Sen yapabilirsin!`,
-          `${ad}, her büyük okuyucu başlangıçta bu noktadaydı. Tutarlı çalışmayla okuma hızı ve anlama becerisi gelişir. Öğretmeninden yardım istemeyi unutma!`,
-        ]
-      };
-
-      let key;
-      if      (hizSeviye==='süper' && anlamaYuzde>=70)   key='superIyi';
-      else if (hizSeviye==='iyi'   && anlamaYuzde>=70)   key='superIyi';
-      else if ((hizSeviye==='süper'||hizSeviye==='iyi') && anlamaYuzde>=0 && anlamaYuzde<60) key='hizliAnlamaDusuk';
-      else if ((hizSeviye==='yavas'||hizSeviye==='cokYavas') && (anlamaYuzde>=70||anlamaYuzde<0)) key='yavasAnlamaIyi';
-      else if (hizSeviye==='normal') key='orta';
-      else key='guc';
-
-      const t = templates[key];
-      const genel = t[Math.floor(Math.random() * t.length)];
-
-      const rozetler = { süper:'🌟', iyi:'⭐', normal:'👏', yavas:'💪', cokYavas:'🌱' };
-      document.getElementById('donutBaslik').textContent = 
-        `${rozetler[hizSeviye]||'💡'} ${ad} için Değerlendirme`;
-      document.getElementById('donutMetin').innerHTML =
-        `<strong>Okuma Hızı:</strong> ${hizMsg}<br><br>` +
-        `<strong>Anlama:</strong> ${anlamaMsg}<br><br>` +
-        `<strong>Genel:</strong> ${genel}`;
-    }
-
-    /* ─── PNG İNDİR ─── */
-    async function karneIndir() {
-      const btn = document.getElementById('indirBtn');
-      btn.textContent = '⏳ Hazırlanıyor…';
-      btn.disabled = true;
-
-      // İndirilecek alan: sadece karne kartı
-      const hedef = document.getElementById('karneKart');
-
-      // Geçici olarak alt butonları gizle
-      const altBar = document.querySelector('.karne-govde-alt');
-      const marka  = document.querySelector('.karne-marka');
-      if (altBar) altBar.style.display = 'none';
-
-      // Marka alanını görünür yap
-      if (marka) marka.style.display = 'flex';
-
-      try {
-        const canvas = await html2canvas(hedef, {
-          scale: 2,           // 2x çözünürlük — net görünüm
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          removeContainer: true
-        });
-
-        // PNG olarak indir
-        const link = document.createElement('a');
-        const ad   = document.getElementById('karneAd')?.textContent || 'karne';
-        const tarih = new Date().toLocaleDateString('tr-TR').replace(/\./g, '-');
-        link.download = `karne_${ad.replace(/\s+/g,'_')}_${tarih}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-
-        btn.textContent = '✅ İndirildi!';
-        setTimeout(() => {
-          btn.textContent = '📸 Resim İndir';
-          btn.disabled = false;
-        }, 2000);
-      } catch(e) {
-        console.error(e);
-        btn.textContent = '❌ Hata oluştu';
-        btn.disabled = false;
-      } finally {
-        // Gizlenenleri geri aç
-        if (altBar) altBar.style.display = '';
-      }
-    }
-
-    function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  </script>
+  <script src="/js/karne-app.js"></script>
 </body>
 </html>

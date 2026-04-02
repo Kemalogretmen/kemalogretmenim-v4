@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>⚙️ Yönetim Paneli — Kemal Öğretmenim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -66,14 +67,29 @@
     .sidebar {
       width: 260px;
       background: var(--navy);
-      min-height: 100vh;
+      height: 100vh;
       padding: 28px 20px;
       position: fixed;
       left:0; top:0;
       display: flex;
       flex-direction: column;
       gap: 6px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(155,114,245,.65) rgba(255,255,255,.08);
     }
+    .sidebar::-webkit-scrollbar { width: 10px; }
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255,255,255,.06);
+      border-radius: 999px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(155,114,245,.75);
+      border-radius: 999px;
+      border: 2px solid rgba(26,16,64,.8);
+    }
+    .sidebar::-webkit-scrollbar-thumb:hover { background: rgba(155,114,245,.95); }
     .sidebar-logo {
       font-family:'Baloo 2',cursive;
       font-size:18px; font-weight:800;
@@ -282,6 +298,15 @@
       .stats-row { grid-template-columns:1fr 1fr; }
       .form-row, .form-row-3 { grid-template-columns:1fr; }
     }
+    @media (max-width:640px) {
+      .main-area { padding:16px; }
+      .card { padding:22px; }
+      .topbar { flex-direction:column; align-items:flex-start; gap:12px; }
+      .stats-row { grid-template-columns:1fr; }
+      .sidebar { position:sticky; top:0; min-height:auto; height:auto; z-index:999; }
+      .dashboard { display:block; }
+      .main-area { margin-left:0; }
+    }
   </style>
 </head>
 <body>
@@ -291,11 +316,12 @@
     <div class="login-box">
       <span class="login-icon">🔐</span>
       <div class="login-title">Yönetim Paneli</div>
-      <p class="login-sub">Kemal Öğretmenim — Site Yönetimi</p>
+      <p class="login-sub">Kemal Öğretmenim — Supabase yönetici girişi</p>
+      <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-postası" autocomplete="username">
       <input class="login-input" type="password" id="loginPass" placeholder="Şifrenizi girin…" autocomplete="current-password">
       <button class="login-btn" onclick="doLogin()">Giriş Yap →</button>
       <div class="login-err" id="loginErr">❌ Hatalı şifre. Lütfen tekrar deneyin.</div>
-      <p style="margin-top:20px;font-size:12px;color:var(--muted);">Varsayılan şifre: <code>kemal2026</code></p>
+      <p style="margin-top:20px;font-size:12px;color:var(--muted);">Giriş, Supabase Auth üzerinde tanımlı yönetici hesabıyla yapılır.</p>
     </div>
   </div>
 
@@ -337,6 +363,21 @@
 
       <button class="side-btn" onclick="window.location='/admin/oyunlar-admin.html'" id="btn-oyunlar">
         <span class="em">🎮</span><span>Oyunlar Yönetimi</span>
+      </button>
+      <button class="side-btn" onclick="window.location='/admin/okuma-editor.html'" id="btn-okuma-editor">
+        <span class="em">📝</span><span>Okuma Metinleri</span>
+      </button>
+      <button class="side-btn" onclick="window.location='/admin/dokuman-yonetimi.html'" id="btn-dokuman-yonetimi">
+        <span class="em">📚</span><span>Doküman Yönetimi</span>
+      </button>
+      <button class="side-btn" onclick="window.location='/admin/okuma-sonuclari.html'" id="btn-okuma-sonuclar">
+        <span class="em">📊</span><span>Okuma Sonuçları</span>
+      </button>
+      <button class="side-btn" onclick="window.location='/admin/okuma-karne.html'" id="btn-okuma-karne">
+        <span class="em">📘</span><span>Okuma Karne Merkezi</span>
+      </button>
+      <button class="side-btn" onclick="window.location='/sinav_sitesi/admin.html'" id="btn-sinav-admin">
+        <span class="em">🧪</span><span>Sınav Yönetimi</span>
       </button>
 
       <span class="nav-section-lbl">Araçlar</span>
@@ -390,6 +431,11 @@
             <button class="btn-add" onclick="showPanel('yeni')">🌟 Yeni İçerik Ekle</button>
             <button class="btn-add" onclick="showPanel('badges')">🔔 Rozet Ayarla</button>
             <button class="btn-add" onclick="showPanel('hizli')">⚡ Kart Düzenle</button>
+            <button class="btn-add" onclick="window.location='/admin/okuma-editor.html'">📝 Okuma Editörü</button>
+            <button class="btn-add" onclick="window.location='/admin/dokuman-yonetimi.html'">📚 Doküman Yönetimi</button>
+            <button class="btn-add" onclick="window.location='/admin/okuma-sonuclari.html'">📊 Okuma Sonuçları</button>
+            <button class="btn-add" onclick="window.location='/admin/okuma-karne.html'">📘 Okuma Karnesi</button>
+            <button class="btn-add" onclick="window.location='/sinav_sitesi/admin.html'">🧪 Sınav Yönetimi</button>
           </div>
         </div>
         <div class="card">
@@ -401,6 +447,10 @@
             <li>🌟 <strong>Yeni İçerikler:</strong> "Yeni İçerikler" sayfasında listelenecek içerikleri yönet.</li>
             <li>👤 <strong>Hakkımda:</strong> Profil bilgilerini ve istatistikleri güncelle.</li>
             <li>🔗 <strong>Ekstra Menü:</strong> Üst menüye yeni bağlantılar ekle.</li>
+            <li>📝 <strong>Okuma Metinleri:</strong> Ayrı editör ekranından zengin metin ve soruları yönet.</li>
+            <li>📚 <strong>Doküman Yönetimi:</strong> PDF yükleyip sınıf ve ders bazında yayınla, aktif/pasif durumunu kontrol et.</li>
+            <li>📘 <strong>Okuma Karnesi:</strong> Excel veya veritabanı sonuçlarından öğrenci bazlı karne üret.</li>
+            <li>🧪 <strong>Sınav Sistemi:</strong> Firebase tabanlı sınav yönetimine tek panelden geçiş yap.</li>
           </ul>
         </div>
       </div>
@@ -494,7 +544,7 @@
           <div class="form-row">
             <div>
               <label>Link (URL)</label>
-              <input type="url" id="yeniLink" placeholder="/3_sinif/fen_bilimleri/fen_bilimleri.html">
+              <input type="url" id="yeniLink" placeholder="/ders.html?sinif=3&ders=fen-bilimleri">
             </div>
             <div>
               <label>Tarih</label>
@@ -598,9 +648,9 @@
       <!-- ══ ŞİFRE DEĞİŞTİR ══ -->
       <div class="panel" id="panel-sifre">
         <div class="card" style="max-width:440px;">
-          <div class="card-title">🔑 Şifre Değiştir</div>
-          <label>Mevcut Şifre</label>
-          <input type="password" id="sifreMevcut">
+          <div class="card-title">🔑 Yönetici Hesabı</div>
+          <label>Giriş E-postası</label>
+          <input type="text" id="adminEmailDisplay" readonly>
           <label>Yeni Şifre</label>
           <input type="password" id="sifreYeni">
           <label>Yeni Şifre (Tekrar)</label>
@@ -629,495 +679,8 @@
   <!-- Toast Bildirimi -->
   <div class="toast" id="toast"></div>
 
-<script>
-/* ─── VERİ YÖNETİMİ ─────────────────────────────── */
-const DATA_KEY  = 'kemal_site_data';
-const PASS_KEY  = 'kemal_admin_pass';
-const DEFAULT_PASS = 'kemal2026';
-
-function loadData() {
-  try {
-    const raw = localStorage.getItem(DATA_KEY);
-    if (!raw) return getDefaults();
-    return JSON.parse(raw);
-  } catch(e) { return getDefaults(); }
-}
-
-function saveData(d) {
-  localStorage.setItem(DATA_KEY, JSON.stringify(d));
-  updateStats(d);
-  toast('✅ Kaydedildi!', 'success');
-}
-
-function getDefaults() {
-  return {
-    menuBadges: {},
-    duyurular: [
-      { id:1, metin:'🎉 Yeni 1. Sınıf Okuma Çalışmaları eklendi!', aktif:true },
-      { id:2, metin:'📖 Hızlı Okuma sistemi artık yayında!', aktif:true }
-    ],
-    onecikarlar: [
-      { id:1, baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku, karnen çıksın!', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'2026-03-17', aktif:true },
-      { id:2, baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası!', link:'/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'2026-03-15', aktif:true }
-    ],
-    yeniIcerikler: [
-      { id:1, baslik:'1. Sınıf Hızlı Okuma', aciklama:'Yeni metinler eklendi.', link:'/hizli-okuma/index.html', emoji:'🚀', tarih:'2026-03-10', aktif:true }
-    ],
-    hizliErisim: [
-      { id:1, baslik:'Hızlı Okuma', aciklama:'Sınıfına göre metin seç!', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', aktif:true },
-      { id:2, baslik:'Eğitim Oyunları', aciklama:'Eğlenceli oyunlarla öğren!', link:'/oyunlar.html', emoji:'🎮', renk:'coral', aktif:true }
-    ],
-    hakkimda: {
-      isim:'Kemal Öğretmen', unvan:'21 Yıllık Öğretmen',
-      metin:'Öğretmenlik hayatımın 21. yılında, her sabah sınıfa aynı inançla giriyorum.',
-      istatistikler:[
-        { sayi:'21+', etiket:'Yıl Deneyim' },
-        { sayi:'500+', etiket:'Öğrenci' },
-        { sayi:'200+', etiket:'İçerik' }
-      ]
-    },
-    ekMenuler: []
-  };
-}
-
-/* ─── GİRİŞ ─────────────────────────────────────── */
-function getAdminPass() {
-  return localStorage.getItem(PASS_KEY) || DEFAULT_PASS;
-}
-
-function doLogin() {
-  const val = document.getElementById('loginPass').value;
-  if (val === getAdminPass()) {
-    sessionStorage.setItem('kemal_admin_auth', '1');
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'flex';
-    initDashboard();
-  } else {
-    document.getElementById('loginErr').style.display = 'block';
-    document.getElementById('loginPass').value = '';
-    document.getElementById('loginPass').focus();
-  }
-}
-
-document.getElementById('loginPass').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
-
-function doLogout() {
-  sessionStorage.removeItem('kemal_admin_auth');
-  location.reload();
-}
-
-// Oturum kontrolü
-if (sessionStorage.getItem('kemal_admin_auth') === '1') {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'flex';
-  window.addEventListener('DOMContentLoaded', initDashboard);
-}
-
-/* ─── PANEL NAVİGASYONU ─────────────────────────── */
-let currentPanel = 'overview';
-function showPanel(id) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.side-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-  const btn = document.getElementById('btn-' + id);
-  if (btn) btn.classList.add('active');
-  currentPanel = id;
-  const titles = {
-    overview:'📊 Genel Bakış', duyurular:'📢 Duyurular', badges:'🔔 YENİ Rozetleri',
-    hizli:'⚡ Hızlı Erişim', onecikarlar:'📰 Öne Çıkanlar', yeni:'🌟 Yeni İçerikler',
-    hakkimda:'👤 Hakkımda', menuler:'🔗 Ekstra Menü', sifre:'🔑 Şifre Değiştir', yedek:'💾 Yedek / Sıfırla'
-  };
-  document.getElementById('panelTitle').textContent = titles[id] || '';
-  renderCurrentPanel();
-}
-
-/* ─── BAŞLAT ─────────────────────────────────────── */
-function initDashboard() {
-  const d = loadData();
-  updateStats(d);
-  renderDuyurular(d);
-  renderBadges(d);
-  renderHizli(d);
-  renderOnec(d);
-  renderYeni(d);
-  renderHakkimda(d);
-  renderMenuler(d);
-  document.getElementById('yeniTarih').value = new Date().toISOString().split('T')[0];
-  document.getElementById('onecTarih').value = new Date().toISOString().split('T')[0];
-}
-
-function renderCurrentPanel() {
-  const d = loadData();
-  const fns = {
-    duyurular:   ()=>renderDuyurular(d),
-    badges:      ()=>renderBadges(d),
-    hizli:       ()=>renderHizli(d),
-    onecikarlar: ()=>renderOnec(d),
-    yeni:        ()=>renderYeni(d),
-    hakkimda:    ()=>renderHakkimda(d),
-    menuler:     ()=>renderMenuler(d)
-  };
-  if (fns[currentPanel]) fns[currentPanel]();
-}
-
-function updateStats(d) {
-  document.getElementById('sDuyuru').textContent = (d.duyurular||[]).filter(x=>x.aktif).length;
-  document.getElementById('sYeni').textContent   = (d.yeniIcerikler||[]).filter(x=>x.aktif).length;
-  document.getElementById('sHizli').textContent  = (d.hizliErisim||[]).filter(x=>x.aktif).length;
-  document.getElementById('sBadge').textContent  = Object.values(d.menuBadges||{}).filter(Boolean).length;
-}
-
-/* ─── DUYURULAR ─────────────────────────────────── */
-function renderDuyurular(d) {
-  const list = d.duyurular || [];
-  document.getElementById('duyuruCount').textContent = list.filter(x=>x.aktif).length;
-  document.getElementById('duyuruList').innerHTML = list.length ? list.map((item,i) => `
-    <div class="item-row">
-      <span class="item-em">📢</span>
-      <div class="item-info">
-        <div class="item-name">${escHtml(item.metin)}</div>
-      </div>
-      <div class="item-actions">
-        <button class="btn-toggle ${item.aktif?'on':'off'}" onclick="toggleDuyuru(${i})">${item.aktif?'Açık':'Kapalı'}</button>
-        <button class="btn-danger" onclick="delDuyuru(${i})">Sil</button>
-      </div>
-    </div>`).join('') : '<p style="color:var(--muted);font-size:14px;">Henüz duyuru eklenmedi.</p>';
-}
-
-function addDuyuru() {
-  const metin = document.getElementById('newDuyuruMetin').value.trim();
-  if (!metin) { toast('Duyuru metni boş olamaz!','error'); return; }
-  const d = loadData();
-  d.duyurular = d.duyurular || [];
-  d.duyurular.unshift({ id: Date.now(), metin, aktif: true });
-  saveData(d);
-  document.getElementById('newDuyuruMetin').value = '';
-  renderDuyurular(d);
-}
-
-function toggleDuyuru(i) {
-  const d = loadData();
-  d.duyurular[i].aktif = !d.duyurular[i].aktif;
-  saveData(d); renderDuyurular(d);
-}
-
-function delDuyuru(i) {
-  if (!confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')) return;
-  const d = loadData();
-  d.duyurular.splice(i,1);
-  saveData(d); renderDuyurular(d);
-}
-
-/* ─── ROZETLER ─────────────────────────────────── */
-const GRADE_DEFS = [
-  { key:'1sinif', label:'1. Sınıf', em:'📕' },
-  { key:'2sinif', label:'2. Sınıf', em:'📗' },
-  { key:'3sinif', label:'3. Sınıf', em:'📘' },
-  { key:'4sinif', label:'4. Sınıf', em:'📙' },
-  { key:'ortaokul', label:'Ortaokul', em:'🎒' },
-  { key:'hizliokuma', label:'Hızlı Okuma', em:'📖' },
-  { key:'oyunlar', label:'Oyunlar', em:'🔮' }
-];
-
-function renderBadges(d) {
-  const badges = d.menuBadges || {};
-  document.getElementById('badgeList').innerHTML = GRADE_DEFS.map(g => `
-    <div class="item-row">
-      <span class="item-em">${g.em}</span>
-      <div class="item-info"><div class="item-name">${g.label}</div></div>
-      <label class="toggle">
-        <input type="checkbox" id="badge_${g.key}" ${badges[g.key] ? 'checked' : ''}
-               onchange="previewBadge()">
-        <span class="slider"></span>
-      </label>
-      ${badges[g.key] ? `<span class="badge-preview">YENİ</span>` : ''}
-    </div>`).join('');
-}
-
-function previewBadge() {
-  // Anında kaydet (toggle'a her basışta)
-  saveBadges(false);
-}
-
-function saveBadges(showToast = true) {
-  const d = loadData();
-  d.menuBadges = {};
-  GRADE_DEFS.forEach(g => {
-    const el = document.getElementById('badge_' + g.key);
-    if (el) d.menuBadges[g.key] = el.checked;
-  });
-  localStorage.setItem('kemal_site_data', JSON.stringify(d));
-  if (showToast) { updateStats(d); toast('✅ Rozetler güncellendi!', 'success'); }
-  renderBadges(d);
-}
-
-/* ─── HIZLI ERİŞİM ─────────────────────────────── */
-function renderHizli(d) {
-  const list = d.hizliErisim || [];
-  document.getElementById('hizliCount').textContent = list.length;
-  document.getElementById('hizliList').innerHTML = list.length ? list.map((c,i) => `
-    <div class="item-row">
-      <span class="item-em">${c.emoji}</span>
-      <div class="item-info">
-        <div class="item-name">${escHtml(c.baslik)}</div>
-        <div class="item-sub">${escHtml(c.link)}</div>
-      </div>
-      <div class="item-actions">
-        <button class="btn-toggle ${c.aktif?'on':'off'}" onclick="toggleHizli(${i})">${c.aktif?'Açık':'Kapalı'}</button>
-        <button class="btn-danger" onclick="delHizli(${i})">Sil</button>
-      </div>
-    </div>`).join('') : '<p style="color:var(--muted);font-size:14px;">Henüz kart eklenmedi.</p>';
-}
-
-function addHizli() {
-  const baslik    = document.getElementById('hizliBaslik').value.trim();
-  const emoji     = document.getElementById('hizliEmoji').value.trim() || '📄';
-  const aciklama  = document.getElementById('hizliAciklama').value.trim();
-  const link      = document.getElementById('hizliLink').value.trim();
-  const renk      = document.getElementById('hizliRenk').value;
-  if (!baslik || !link) { toast('Başlık ve link zorunludur!','error'); return; }
-  const d = loadData();
-  d.hizliErisim = d.hizliErisim || [];
-  d.hizliErisim.push({ id:Date.now(), baslik, emoji, aciklama, link, renk, aktif:true });
-  saveData(d);
-  ['hizliBaslik','hizliEmoji','hizliAciklama','hizliLink'].forEach(id => document.getElementById(id).value = '');
-  renderHizli(d);
-}
-
-function toggleHizli(i) {
-  const d = loadData(); d.hizliErisim[i].aktif = !d.hizliErisim[i].aktif;
-  saveData(d); renderHizli(d);
-}
-function delHizli(i) {
-  if (!confirm('Bu kartı silmek istediğinizden emin misiniz?')) return;
-  const d = loadData(); d.hizliErisim.splice(i,1);
-  saveData(d); renderHizli(d);
-}
-
-/* ─── ÖNE ÇIKANLAR ─────────────────────────────── */
-function renderOnec(d) {
-  const list = d.onecikarlar || [];
-  document.getElementById('onecCount').textContent = list.filter(x=>x.aktif).length;
-  document.getElementById('onecList').innerHTML = list.length ? list.map((item,i) => `
-    <div class="item-row">
-      <span class="item-em">${item.emoji||'📌'}</span>
-      <div class="item-info">
-        <div class="item-name">${escHtml(item.baslik)}</div>
-        <div class="item-sub">${item.tarih||''} · ${escHtml(item.link||'')}</div>
-      </div>
-      <div class="item-actions">
-        <button class="btn-toggle ${item.aktif?'on':'off'}" onclick="toggleOnec(${i})">${item.aktif?'Açık':'Kapalı'}</button>
-        <button class="btn-danger" onclick="delOnec(${i})">Sil</button>
-      </div>
-    </div>`).join('') : '<p style="color:var(--muted);font-size:14px;">Henüz öne çıkan eklenmedi.</p>';
-}
-
-function addOnec() {
-  const baslik   = document.getElementById('onecBaslik').value.trim();
-  const emoji    = document.getElementById('onecEmoji').value.trim() || '📌';
-  const aciklama = document.getElementById('onecAciklama').value.trim();
-  const link     = document.getElementById('onecLink').value.trim();
-  const renk     = document.getElementById('onecRenk').value;
-  const tarih    = document.getElementById('onecTarih').value;
-  if (!baslik || !link) { toast('Başlık ve link zorunludur!','error'); return; }
-  const d = loadData();
-  d.onecikarlar = d.onecikarlar || [];
-  d.onecikarlar.unshift({ id:Date.now(), baslik, emoji, aciklama, link, renk, tarih, aktif:true });
-  saveData(d);
-  ['onecBaslik','onecEmoji','onecAciklama','onecLink'].forEach(id => document.getElementById(id).value='');
-  renderOnec(d);
-}
-function toggleOnec(i) {
-  const d = loadData(); d.onecikarlar[i].aktif = !d.onecikarlar[i].aktif;
-  saveData(d); renderOnec(d);
-}
-function delOnec(i) {
-  if (!confirm('Bu öne çıkanı silmek istiyor musunuz?')) return;
-  const d = loadData(); d.onecikarlar.splice(i,1);
-  saveData(d); renderOnec(d);
-}
-
-/* ─── YENİ İÇERİKLER ─────────────────────────────── */
-function renderYeni(d) {
-  const list = d.yeniIcerikler || [];
-  document.getElementById('yeniCount').textContent = list.filter(x=>x.aktif).length;
-  document.getElementById('yeniList').innerHTML = list.length ? list.map((item,i) => `
-    <div class="item-row">
-      <span class="item-em">${item.emoji}</span>
-      <div class="item-info">
-        <div class="item-name">${escHtml(item.baslik)}</div>
-        <div class="item-sub">${item.tarih || ''} · ${escHtml(item.link)}</div>
-      </div>
-      <div class="item-actions">
-        <button class="btn-toggle ${item.aktif?'on':'off'}" onclick="toggleYeni(${i})">${item.aktif?'Açık':'Kapalı'}</button>
-        <button class="btn-danger" onclick="delYeni(${i})">Sil</button>
-      </div>
-    </div>`).join('') : '<p style="color:var(--muted);font-size:14px;">Henüz içerik eklenmedi.</p>';
-}
-
-function addYeni() {
-  const baslik   = document.getElementById('yeniBaslik').value.trim();
-  const emoji    = document.getElementById('yeniEmoji').value.trim() || '📄';
-  const aciklama = document.getElementById('yeniAciklama').value.trim();
-  const link     = document.getElementById('yeniLink').value.trim();
-  const tarih    = document.getElementById('yeniTarih').value;
-  if (!baslik || !link) { toast('Başlık ve link zorunludur!','error'); return; }
-  const d = loadData();
-  d.yeniIcerikler = d.yeniIcerikler || [];
-  d.yeniIcerikler.unshift({ id:Date.now(), baslik, emoji, aciklama, link, tarih, aktif:true });
-  saveData(d);
-  ['yeniBaslik','yeniEmoji','yeniAciklama','yeniLink'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('yeniTarih').value = new Date().toISOString().split('T')[0];
-  renderYeni(d);
-}
-
-function toggleYeni(i) {
-  const d = loadData(); d.yeniIcerikler[i].aktif = !d.yeniIcerikler[i].aktif;
-  saveData(d); renderYeni(d);
-}
-function delYeni(i) {
-  if (!confirm('Bu içeriği silmek istediğinizden emin misiniz?')) return;
-  const d = loadData(); d.yeniIcerikler.splice(i,1);
-  saveData(d); renderYeni(d);
-}
-
-/* ─── HAKKIMDA ─────────────────────────────────── */
-function renderHakkimda(d) {
-  const h = d.hakkimda || {};
-  document.getElementById('hmIsim').value  = h.isim  || '';
-  document.getElementById('hmUnvan').value = h.unvan || '';
-  document.getElementById('hmMetin').value = h.metin || '';
-  renderStats(h.istatistikler || []);
-}
-
-function renderStats(stats) {
-  document.getElementById('hmStatList').innerHTML = stats.map((s,i) => `
-    <div style="display:flex;gap:10px;align-items:center;">
-      <input type="text" placeholder="Sayı (Örn: 21+)" value="${escHtml(s.sayi)}" 
-             oninput="updateStat(${i},'sayi',this.value)" style="flex:1;margin-bottom:0;">
-      <input type="text" placeholder="Etiket (Örn: Yıl)" value="${escHtml(s.etiket)}"
-             oninput="updateStat(${i},'etiket',this.value)" style="flex:1;margin-bottom:0;">
-      <button class="btn-danger" onclick="delStat(${i})">✕</button>
-    </div>`).join('');
-}
-
-function updateStat(i, key, val) {
-  const d = loadData();
-  if (d.hakkimda && d.hakkimda.istatistikler && d.hakkimda.istatistikler[i]) {
-    d.hakkimda.istatistikler[i][key] = val;
-    localStorage.setItem(DATA_KEY, JSON.stringify(d));
-  }
-}
-
-function addStat() {
-  const d = loadData();
-  d.hakkimda = d.hakkimda || {};
-  d.hakkimda.istatistikler = d.hakkimda.istatistikler || [];
-  d.hakkimda.istatistikler.push({ sayi:'', etiket:'' });
-  localStorage.setItem(DATA_KEY, JSON.stringify(d));
-  renderStats(d.hakkimda.istatistikler);
-}
-
-function delStat(i) {
-  const d = loadData();
-  d.hakkimda.istatistikler.splice(i,1);
-  localStorage.setItem(DATA_KEY, JSON.stringify(d));
-  renderStats(d.hakkimda.istatistikler);
-}
-
-function saveHakkimda() {
-  const d = loadData();
-  d.hakkimda = d.hakkimda || {};
-  d.hakkimda.isim  = document.getElementById('hmIsim').value.trim();
-  d.hakkimda.unvan = document.getElementById('hmUnvan').value.trim();
-  d.hakkimda.metin = document.getElementById('hmMetin').value.trim();
-  saveData(d);
-}
-
-/* ─── EKSTRA MENÜLER ─────────────────────────────── */
-function renderMenuler(d) {
-  const list = d.ekMenuler || [];
-  document.getElementById('menuList').innerHTML = list.length ? list.map((m,i) => `
-    <div class="item-row">
-      <span class="item-em">🔗</span>
-      <div class="item-info">
-        <div class="item-name">${escHtml(m.ad)}</div>
-        <div class="item-sub">${escHtml(m.url)}</div>
-      </div>
-      <div class="item-actions">
-        <button class="btn-danger" onclick="delMenu(${i})">Sil</button>
-      </div>
-    </div>`).join('') : '<p style="color:var(--muted);font-size:14px;">Henüz ekstra bağlantı eklenmedi.</p>';
-}
-
-function addMenu() {
-  const ad  = document.getElementById('menuAd').value.trim();
-  const url = document.getElementById('menuUrl').value.trim();
-  if (!ad || !url) { toast('Ad ve URL zorunludur!','error'); return; }
-  const d = loadData();
-  d.ekMenuler = d.ekMenuler || [];
-  d.ekMenuler.push({ id:Date.now(), ad, url });
-  saveData(d);
-  document.getElementById('menuAd').value = '';
-  document.getElementById('menuUrl').value = '';
-  renderMenuler(d);
-}
-
-function delMenu(i) {
-  if (!confirm('Bu bağlantıyı silmek istediğinizden emin misiniz?')) return;
-  const d = loadData(); d.ekMenuler.splice(i,1);
-  saveData(d); renderMenuler(d);
-}
-
-/* ─── ŞİFRE DEĞİŞTİR ─────────────────────────────── */
-function changePassword() {
-  const cur  = document.getElementById('sifreMevcut').value;
-  const nw   = document.getElementById('sifreYeni').value;
-  const nw2  = document.getElementById('sifreYeniTekrar').value;
-  if (cur !== getAdminPass())        { toast('Mevcut şifre hatalı!','error'); return; }
-  if (nw.length < 6)                 { toast('Yeni şifre en az 6 karakter olmalı!','error'); return; }
-  if (nw !== nw2)                    { toast('Yeni şifreler eşleşmiyor!','error'); return; }
-  localStorage.setItem(PASS_KEY, nw);
-  toast('✅ Şifre güncellendi!','success');
-  ['sifreMevcut','sifreYeni','sifreYeniTekrar'].forEach(id => document.getElementById(id).value='');
-}
-
-/* ─── YEDEK ─────────────────────────────────────── */
-function exportData() {
-  const d    = loadData();
-  const blob = new Blob([JSON.stringify(d, null, 2)], { type:'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = 'kemalogretmenim_yedek_' + new Date().toISOString().split('T')[0] + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('✅ Yedek indirildi!','success');
-}
-
-function resetConfirm() {
-  if (confirm('TÜM içerik verileri silinecek ve varsayılana dönülecektir. Emin misiniz?')) {
-    localStorage.removeItem(DATA_KEY);
-    toast('Veriler sıfırlandı. Sayfa yenileniyor…','success');
-    setTimeout(() => location.reload(), 1500);
-  }
-}
-
-/* ─── YARDIMCILAR ─────────────────────────────────── */
-function escHtml(str) {
-  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-let toastTimer;
-function toast(msg, type='success') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = 'toast ' + type + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
-}
-</script>
+<script src="/js/site-data.js"></script>
+<script src="/js/admin-auth.js"></script>
+<script src="/js/admin-dashboard.js"></script>
 </body>
 </html>

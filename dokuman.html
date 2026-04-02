@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doküman Görüntüleyici | Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/541/fabric.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <style>
+    :root{
+      --viewer-purple:#6C3DED;
+      --viewer-purple-soft:#F2EBFF;
+      --viewer-navy:#1A1040;
+      --viewer-border:#E2D9FF;
+      --viewer-card:#fff;
+      --viewer-slate:#64748B;
+      --viewer-success:#10B981;
+      --viewer-danger:#EF4444;
+      --viewer-shadow:0 24px 54px rgba(95,69,188,.12);
+    }
+    body.viewer-page{
+      background:
+        radial-gradient(circle at top left, rgba(108,61,237,.14), transparent 34%),
+        radial-gradient(circle at top right, rgba(0,201,177,.12), transparent 28%),
+        linear-gradient(180deg,#F6F2FF 0%,#FBF9FF 100%);
+      min-height:100vh;
+    }
+    .viewer-shell{max-width:1480px;margin:0 auto;padding:32px 20px 48px;}
+    .viewer-hero{
+      background:linear-gradient(135deg,#1A1040 0%,#4A1FD0 58%,#7B58F6 100%);
+      border-radius:32px;
+      padding:28px;
+      color:white;
+      box-shadow:0 24px 60px rgba(44,23,121,.22);
+      margin-bottom:22px;
+      position:relative;
+      overflow:hidden;
+    }
+    .viewer-hero::before,.viewer-hero::after{
+      content:'';
+      position:absolute;
+      border-radius:50%;
+      background:rgba(255,255,255,.08);
+    }
+    .viewer-hero::before{width:260px;height:260px;left:-70px;top:-120px;}
+    .viewer-hero::after{width:220px;height:220px;right:-60px;bottom:-110px;}
+    .viewer-hero-inner{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+    .viewer-pill{
+      display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;
+      background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);font-size:13px;font-weight:800;margin-bottom:14px;
+    }
+    .viewer-title{font-family:var(--font-display);font-size:clamp(28px,4vw,48px);font-weight:800;line-height:1.05;margin-bottom:12px;}
+    .viewer-desc{max-width:760px;font-size:15px;line-height:1.8;color:rgba(255,255,255,.8);}
+    .viewer-top-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .viewer-top-actions a,.viewer-top-actions button{
+      padding:10px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:800;font-size:13px;text-decoration:none;
+    }
+    .viewer-top-actions a{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.16);}
+    .viewer-top-actions button{background:white;color:var(--viewer-purple);}
+
+    .viewer-toolbar{
+      background:rgba(255,255,255,.82);
+      backdrop-filter:blur(18px);
+      border:2px solid rgba(226,217,255,.9);
+      border-radius:26px;
+      padding:18px;
+      display:grid;
+      grid-template-columns:minmax(0,1.9fr) minmax(280px,.8fr) minmax(280px,.8fr);
+      gap:14px;
+      box-shadow:0 18px 44px rgba(92,63,182,.12);
+      margin-bottom:22px;
+    }
+    .tool-card{background:white;border:2px solid var(--viewer-border);border-radius:20px;padding:16px;position:relative;overflow:visible;}
+    .tool-card h3{font-family:var(--font-display);font-size:18px;color:var(--viewer-navy);margin-bottom:12px;}
+    .tool-card p{font-size:13px;color:var(--viewer-slate);line-height:1.7;margin-bottom:12px;}
+    .tool-grid{display:flex;flex-wrap:wrap;gap:10px;}
+    .tool-grid.tools{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(56px,1fr));
+      gap:10px;
+      overflow:visible;
+    }
+    .tool-btn{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+      min-height:54px;
+      border-radius:16px;
+      border:2px solid var(--viewer-border);
+      background:#FBF9FF;
+      color:var(--viewer-slate);
+      cursor:pointer;
+      transition:all .2s;
+      box-shadow:0 8px 18px rgba(95,69,188,.04);
+      z-index:1;
+    }
+    .tool-btn svg{width:22px;height:22px;display:block;}
+    .tool-btn:hover,.tool-btn.active{
+      border-color:var(--viewer-purple);
+      background:var(--viewer-purple-soft);
+      color:var(--viewer-purple);
+      transform:translateY(-1px);
+      z-index:2;
+    }
+    .tool-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .tool-label{font-size:12px;color:var(--viewer-slate);font-weight:800;min-width:72px;}
+    .tool-input{flex:1;min-width:120px;}
+    .tool-value{font-size:12px;font-weight:800;color:var(--viewer-purple);min-width:42px;text-align:right;}
+    .zoom-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;}
+    .zoom-btn{
+      width:42px;height:42px;border-radius:12px;border:2px solid var(--viewer-border);
+      background:#FBF9FF;color:var(--viewer-slate);display:inline-flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all .2s;
+    }
+    .zoom-btn:hover:not(:disabled){border-color:var(--viewer-purple);background:var(--viewer-purple-soft);color:var(--viewer-purple);}
+    .zoom-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .zoom-btn svg{width:18px;height:18px;display:block;}
+    .zoom-pill{
+      min-width:72px;height:42px;border-radius:12px;background:#F7F3FF;color:var(--viewer-purple);
+      display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;padding:0 12px;
+    }
+    .tool-note{
+      display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#FAF8FF;color:var(--viewer-slate);
+      font-size:12px;font-weight:700;margin-top:12px;border:1px solid rgba(226,217,255,.8);
+    }
+    .tool-tooltip{
+      position:fixed;
+      left:0;
+      top:0;
+      transform:translate(-9999px,-9999px);
+      padding:7px 11px;
+      border-radius:10px;
+      background:rgba(26,16,64,.96);
+      color:white;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+      pointer-events:none;
+      z-index:99999;
+      opacity:0;
+      transition:opacity .12s ease;
+      box-shadow:0 14px 30px rgba(26,16,64,.22);
+    }
+    .tool-tooltip.show{opacity:1;}
+    .action-btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-height:50px;padding:0 16px;border-radius:16px;border:2px solid var(--viewer-border);
+      background:#FBF9FF;color:var(--viewer-slate);cursor:pointer;font-weight:800;font-size:13px;transition:all .2s;
+    }
+    .action-btn svg{width:20px;height:20px;display:block;}
+    .action-btn:hover:not(:disabled){border-color:var(--viewer-purple);color:var(--viewer-purple);background:var(--viewer-purple-soft);}
+    .action-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .action-btn.danger:hover:not(:disabled){border-color:#FCA5A5;color:var(--viewer-danger);background:#FFF1F2;}
+
+    .viewer-stage{
+      background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(248,244,255,.95));
+      border:2px solid var(--viewer-border);
+      border-radius:30px;
+      padding:18px;
+      box-shadow:var(--viewer-shadow);
+    }
+    .viewer-status{
+      display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;
+      padding:8px 6px 18px;color:var(--viewer-slate);font-weight:700;font-size:13px;
+    }
+    .viewer-status strong{color:var(--viewer-purple);}
+    .shortcut-strip{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin:-4px 0 16px;padding:10px 12px;border-radius:18px;border:1px solid rgba(226,217,255,.9);
+      background:rgba(255,255,255,.76);
+    }
+    .shortcut-pill{
+      display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;
+      color:var(--viewer-slate);font-size:12px;font-weight:800;line-height:1.55;
+    }
+    .shortcut-pill strong{color:var(--viewer-purple);}
+    .shortcut-help-btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-height:42px;padding:0 14px;border-radius:14px;border:2px solid var(--viewer-border);
+      background:#FBF9FF;color:var(--viewer-slate);cursor:pointer;font-size:12px;font-weight:900;transition:all .2s;
+    }
+    .shortcut-help-btn:hover{border-color:var(--viewer-purple);background:var(--viewer-purple-soft);color:var(--viewer-purple);}
+    .book-frame{
+      background:
+        linear-gradient(180deg,#F8F5FF,#F1ECFF),
+        repeating-linear-gradient(90deg,rgba(255,255,255,.22),rgba(255,255,255,.22) 8px,transparent 8px,transparent 16px);
+      border-radius:24px;
+      border:2px solid rgba(226,217,255,.7);
+      padding:18px 14px;
+      min-height:720px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+      margin-bottom:16px;
+      perspective:2600px;
+    }
+    .book-frame.is-pannable{cursor:grab;}
+    .book-frame.is-pannable.is-panning{cursor:grabbing;}
+    .book-loading,.book-empty{text-align:center;color:var(--viewer-slate);}
+    .book-loading span,.book-empty span{font-size:58px;display:block;margin-bottom:12px;}
+    .book-viewport{
+      position:relative;
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      touch-action:auto;
+    }
+    .book-frame.is-pannable .book-viewport{touch-action:none;}
+    .book-pan-layer{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      will-change:transform;
+      transition:transform .18s ease-out;
+    }
+    .book-scale-layer{
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transform-origin:center center;
+      will-change:transform;
+      transition:transform .18s ease-out;
+    }
+    #bookRoot{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform-style:preserve-3d;
+    }
+    #bookRoot.is-spread::before{opacity:.55;}
+    #bookRoot::before{
+      content:'';
+      position:absolute;
+      left:50%;
+      top:3%;
+      bottom:3%;
+      width:18px;
+      transform:translateX(-50%);
+      border-radius:999px;
+      background:linear-gradient(180deg,rgba(39,18,105,.1),rgba(39,18,105,.03),rgba(39,18,105,.1));
+      filter:blur(2px);
+      z-index:0;
+      pointer-events:none;
+    }
+    .flip-page{
+      position:absolute;
+      left:50%;
+      top:50%;
+      background:linear-gradient(180deg,#fff,#FCFBFF);
+      box-shadow:
+        0 26px 42px rgba(31,18,78,.18),
+        inset 0 0 0 1px rgba(226,217,255,.6);
+      overflow:hidden;
+      border-radius:16px;
+      transform:translate(-50%,-50%) rotateY(0deg) scale(.985);
+      transform-origin:center center;
+      transform-style:preserve-3d;
+      backface-visibility:hidden;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .28s ease, transform .28s ease, box-shadow .28s ease;
+    }
+    .flip-page.is-active{
+      opacity:1;
+      pointer-events:auto;
+      transform:translate(-50%,-50%) scale(1);
+      box-shadow:
+        0 36px 58px rgba(31,18,78,.22),
+        inset 0 0 0 2px rgba(108,61,237,.18);
+      z-index:3;
+    }
+    .flip-page.is-active.is-spread-left{
+      transform:translate(calc(-100% - 12px),-50%) scale(1);
+      box-shadow:
+        0 26px 46px rgba(31,18,78,.18),
+        inset 0 0 0 2px rgba(108,61,237,.12);
+    }
+    .flip-page.is-active.is-spread-right{
+      transform:translate(12px,-50%) scale(1);
+      box-shadow:
+        0 26px 46px rgba(31,18,78,.18),
+        inset 0 0 0 2px rgba(108,61,237,.12);
+    }
+    .flip-page.is-animating{
+      opacity:1;
+      pointer-events:none;
+    }
+    .flip-page.flip-in-next{z-index:5;animation:flipInNext .58s cubic-bezier(.2,.82,.25,1) both;}
+    .flip-page.flip-out-next{z-index:4;animation:flipOutNext .58s cubic-bezier(.2,.82,.25,1) both;}
+    .flip-page.flip-in-prev{z-index:5;animation:flipInPrev .58s cubic-bezier(.2,.82,.25,1) both;}
+    .flip-page.flip-out-prev{z-index:4;animation:flipOutPrev .58s cubic-bezier(.2,.82,.25,1) both;}
+    .page-surface{
+      position:relative;
+      width:100%;
+      height:100%;
+      background:white;
+    }
+    .page-pdf-canvas,.page-annotation-canvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+    .page-annotation-canvas{z-index:2;}
+    .page-footer{
+      position:absolute;right:16px;bottom:14px;z-index:3;
+      background:rgba(255,255,255,.88);border:1px solid rgba(226,217,255,.8);border-radius:999px;
+      padding:5px 10px;font-size:12px;font-weight:800;color:var(--viewer-slate);
+    }
+    .page-turn-layer{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      display:none;
+      pointer-events:none;
+      z-index:28;
+      perspective:3200px;
+    }
+    .page-turn-layer.is-active{display:block;}
+    .page-turn-sheet{
+      position:absolute;
+      inset:0;
+      transform-style:preserve-3d;
+      border-radius:16px;
+    }
+    .page-turn-layer.is-next .page-turn-sheet{
+      transform-origin:left center;
+      animation:pageTurnNext .96s cubic-bezier(.18,.76,.14,1) both;
+    }
+    .page-turn-layer.is-prev .page-turn-sheet{
+      transform-origin:right center;
+      animation:pageTurnPrev .96s cubic-bezier(.18,.76,.14,1) both;
+    }
+    .page-turn-face{
+      position:absolute;
+      inset:0;
+      border-radius:16px;
+      background-size:100% 100%;
+      background-position:center;
+      background-repeat:no-repeat;
+      backface-visibility:hidden;
+      overflow:hidden;
+      box-shadow:0 24px 48px rgba(23,14,64,.18);
+      border:1px solid rgba(226,217,255,.82);
+    }
+    .page-turn-face::after{
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+    }
+    .page-turn-front::after{
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 24%, rgba(26,16,64,.14) 100%);
+    }
+    .page-turn-back{
+      transform:rotateY(180deg);
+      box-shadow:0 18px 40px rgba(23,14,64,.12);
+    }
+    .page-turn-back::after{
+      background:
+        linear-gradient(90deg, rgba(26,16,64,.2) 0%, rgba(255,255,255,.04) 36%, rgba(255,255,255,.16) 100%);
+    }
+    .page-turn-edge{
+      position:absolute;
+      top:0;
+      bottom:0;
+      width:24px;
+      right:-12px;
+      border-radius:999px;
+      background:linear-gradient(90deg, rgba(255,255,255,.88), rgba(26,16,64,.12));
+      filter:blur(1px);
+      opacity:.8;
+      transform:translateZ(1px);
+    }
+    .page-turn-layer.is-prev .page-turn-edge{
+      left:-12px;
+      right:auto;
+      background:linear-gradient(90deg, rgba(26,16,64,.12), rgba(255,255,255,.88));
+    }
+    .page-turn-shadow{
+      position:absolute;
+      inset:-4%;
+      border-radius:22px;
+      opacity:0;
+      filter:blur(18px);
+      background:
+        radial-gradient(circle at center, rgba(22,13,62,.2), rgba(22,13,62,0) 68%);
+    }
+    .page-turn-layer.is-next .page-turn-shadow{animation:pageTurnShadowNext .96s ease both;}
+    .page-turn-layer.is-prev .page-turn-shadow{animation:pageTurnShadowPrev .96s ease both;}
+    @keyframes flipInNext{
+      0%{opacity:.38;transform:translate(-50%,-50%) rotateY(74deg) translateX(32px) scale(.96);}
+      100%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
+    }
+    @keyframes flipOutNext{
+      0%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
+      100%{opacity:.05;transform:translate(-50%,-50%) rotateY(-74deg) translateX(-32px) scale(.97);}
+    }
+    @keyframes flipInPrev{
+      0%{opacity:.38;transform:translate(-50%,-50%) rotateY(-74deg) translateX(-32px) scale(.96);}
+      100%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
+    }
+    @keyframes flipOutPrev{
+      0%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
+      100%{opacity:.05;transform:translate(-50%,-50%) rotateY(74deg) translateX(32px) scale(.97);}
+    }
+    @keyframes pageTurnNext{
+      0%{transform:rotateY(0deg) scale(1);}
+      18%{transform:rotateY(-18deg) scale(1.002);}
+      58%{transform:rotateY(-112deg) scale(1.004);}
+      100%{transform:rotateY(-178deg) scale(1);}
+    }
+    @keyframes pageTurnPrev{
+      0%{transform:rotateY(0deg) scale(1);}
+      18%{transform:rotateY(18deg) scale(1.002);}
+      58%{transform:rotateY(112deg) scale(1.004);}
+      100%{transform:rotateY(178deg) scale(1);}
+    }
+    @keyframes pageTurnShadowNext{
+      0%{opacity:0;transform:translateX(0) scaleX(.7);}
+      26%{opacity:.18;transform:translateX(-6%) scaleX(1.06);}
+      60%{opacity:.26;transform:translateX(-10%) scaleX(1.18);}
+      100%{opacity:0;transform:translateX(-16%) scaleX(.92);}
+    }
+    @keyframes pageTurnShadowPrev{
+      0%{opacity:0;transform:translateX(0) scaleX(.7);}
+      26%{opacity:.18;transform:translateX(6%) scaleX(1.06);}
+      60%{opacity:.26;transform:translateX(10%) scaleX(1.18);}
+      100%{opacity:0;transform:translateX(16%) scaleX(.92);}
+    }
+    .viewer-pager{
+      display:grid;
+      grid-template-columns:auto minmax(0,1fr) auto;
+      gap:12px;
+      align-items:center;
+      padding:14px;
+      border-radius:22px;
+      border:2px solid var(--viewer-border);
+      background:rgba(255,255,255,.88);
+    }
+    .pager-btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-height:52px;padding:0 18px;border-radius:16px;border:2px solid var(--viewer-border);
+      background:#FBF9FF;color:var(--viewer-slate);font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;
+    }
+    .pager-btn svg{width:18px;height:18px;display:block;}
+    .pager-btn:hover:not(:disabled){border-color:var(--viewer-purple);color:var(--viewer-purple);background:var(--viewer-purple-soft);}
+    .pager-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .pager-center{display:grid;gap:10px;}
+    .pager-slider-row{display:flex;align-items:center;gap:12px;}
+    .pager-slider-label{font-size:12px;font-weight:800;color:var(--viewer-slate);min-width:64px;}
+    #pageSlider{
+      width:100%;
+      accent-color:var(--viewer-purple);
+      cursor:pointer;
+    }
+    .pager-jump-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .pager-chip{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#F7F3FF;color:var(--viewer-slate);font-size:12px;font-weight:800;
+    }
+    .pager-jump{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    .pager-jump label{margin:0;font-size:12px;color:var(--viewer-slate);font-weight:800;}
+    .pager-jump input{
+      width:84px;padding:9px 10px;border-radius:12px;border:2px solid var(--viewer-border);
+      background:white;color:var(--viewer-navy);font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;
+    }
+    .pager-jump button{
+      min-height:42px;padding:0 14px;border-radius:12px;border:none;background:var(--viewer-purple);color:white;font-weight:800;cursor:pointer;
+    }
+    .pager-view-switch{
+      display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    .view-mode-btn{
+      min-height:42px;padding:0 14px;border-radius:12px;border:2px solid var(--viewer-border);
+      background:#FBF9FF;color:var(--viewer-slate);font-weight:900;font-size:12px;cursor:pointer;transition:all .2s;
+    }
+    .view-mode-btn:hover,.view-mode-btn.active{
+      border-color:var(--viewer-purple);background:var(--viewer-purple-soft);color:var(--viewer-purple);
+    }
+    .shortcut-modal{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;
+      background:rgba(15,11,37,.52);backdrop-filter:blur(6px);z-index:9998;
+    }
+    .shortcut-modal.open{display:flex;}
+    .shortcut-panel{
+      width:min(760px,100%);background:white;border:2px solid var(--viewer-border);border-radius:28px;
+      box-shadow:0 30px 80px rgba(21,15,58,.28);overflow:hidden;
+    }
+    .shortcut-panel-head{
+      display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 22px 16px;
+      background:linear-gradient(135deg,#1A1040 0%,#4A1FD0 68%,#7B58F6 100%);color:white;
+    }
+    .shortcut-panel-head h3{font-family:var(--font-display);font-size:28px;line-height:1.05;margin-bottom:8px;}
+    .shortcut-panel-head p{font-size:14px;line-height:1.7;color:rgba(255,255,255,.82);}
+    .shortcut-close{
+      width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.12);color:white;cursor:pointer;font-size:20px;font-weight:900;flex-shrink:0;
+    }
+    .shortcut-grid{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px 22px 24px;
+    }
+    .shortcut-card{
+      border:2px solid var(--viewer-border);border-radius:20px;padding:16px 16px 14px;background:#FCFBFF;
+    }
+    .shortcut-card h4{font-family:var(--font-display);font-size:18px;color:var(--viewer-navy);margin-bottom:12px;}
+    .shortcut-list{display:grid;gap:10px;}
+    .shortcut-item{
+      display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;color:var(--viewer-slate);font-size:13px;font-weight:800;
+    }
+    .shortcut-key{
+      display:inline-flex;align-items:center;justify-content:center;min-width:46px;min-height:34px;padding:0 10px;
+      border-radius:12px;background:#F2EBFF;color:var(--viewer-purple);font-size:12px;font-weight:900;border:1px solid rgba(108,61,237,.14);
+    }
+    @media (max-width:1280px){
+      .viewer-toolbar{grid-template-columns:1fr 1fr;}
+    }
+    @media (max-width:860px){
+      .viewer-toolbar{grid-template-columns:1fr;}
+      .viewer-pager{grid-template-columns:1fr;justify-items:stretch;}
+      .pager-btn{width:100%;}
+      .pager-jump-row{justify-content:flex-start;}
+      .shortcut-grid{grid-template-columns:1fr;}
+    }
+    @media (max-width:760px){
+      .viewer-shell{padding:18px 12px 32px;}
+      .viewer-hero{padding:22px 18px;border-radius:24px;}
+      .book-frame{min-height:540px;padding:10px;}
+      .viewer-top-actions{width:100%;}
+      .tool-grid.tools{grid-template-columns:repeat(4,minmax(0,1fr));}
+      .zoom-controls{width:100%;}
+    }
+  </style>
+</head>
+<body class="viewer-page">
+  <div class="viewer-shell">
+    <section class="viewer-hero">
+      <div class="viewer-hero-inner">
+        <div>
+          <div class="viewer-pill" id="viewerPill">📚 Ders Dokümanı</div>
+          <h1 class="viewer-title" id="viewerTitle">Doküman yükleniyor…</h1>
+          <p class="viewer-desc" id="viewerDesc">PDF hazırlanıyor, ardından not alma araçları açılacak.</p>
+        </div>
+        <div class="viewer-top-actions">
+          <a href="/index.html" id="backSubjectLink">← Derse Dön</a>
+          <button type="button" id="downloadBtn">PDF İndir</button>
+          <button type="button" id="printBtn">Yazdır</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="viewer-toolbar">
+      <div class="tool-card">
+        <h3>Araçlar</h3>
+        <p>İkonların üstüne gelince araç adını görürsün. Seçili araçta tooltip görünmez.</p>
+        <div class="tool-grid tools" id="toolButtons"></div>
+      </div>
+      <div class="tool-card">
+        <h3>Biçim</h3>
+        <div class="tool-row" style="margin-bottom:12px;">
+          <span class="tool-label">Renk</span>
+          <input class="tool-input" type="color" id="colorInput" value="#FF6052">
+        </div>
+        <div class="tool-row">
+          <span class="tool-label">Kalınlık</span>
+          <input class="tool-input" type="range" id="sizeInput" min="1" max="24" step="1" value="4">
+          <span class="tool-value" id="sizeValue">4 px</span>
+        </div>
+        <div class="tool-row" style="margin-top:12px;">
+          <span class="tool-label">Yakınlık</span>
+          <div class="zoom-controls">
+            <button class="zoom-btn" type="button" id="zoomOutBtn" aria-label="Uzaklaştır">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+            </button>
+            <div class="zoom-pill" id="zoomValue">%100</div>
+            <button class="zoom-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">
+              1:1
+            </button>
+            <button class="zoom-btn" type="button" id="zoomInBtn" aria-label="Yakınlaştır">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="tool-note">Yakınlaştırınca el aracını seçip PDF alanını sürükleyebilirsin.</div>
+      </div>
+      <div class="tool-card">
+        <h3>Geçmiş</h3>
+        <div class="tool-grid">
+          <button class="action-btn" type="button" id="undoBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
+            <span>Geri Al</span>
+          </button>
+          <button class="action-btn" type="button" id="redoBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M4 20a8 8 0 0 1 8-8h8"/></svg>
+            <span>İleri Al</span>
+          </button>
+          <button class="action-btn" type="button" id="deleteSelectionBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+            <span>Seçileni Sil</span>
+          </button>
+          <button class="action-btn danger" type="button" id="clearPageBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M8.5 8.5 3 14a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L15.5 15.5"/><path d="m14 5 5 5"/></svg>
+            <span>Sayfayı Temizle</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="viewer-stage">
+      <div class="viewer-status">
+        <div id="viewerStatusLeft">Hazırlanıyor…</div>
+        <div id="viewerStatusRight"><strong id="pageCounter">0 / 0</strong></div>
+      </div>
+      <div class="shortcut-strip">
+        <div class="shortcut-pill" id="shortcutStatusPill">
+          <span>⌨️</span>
+          <strong>Kısayollar</strong>
+          <span>Yükleniyor…</span>
+        </div>
+        <button class="shortcut-help-btn" type="button" id="shortcutHelpBtn">⌨️ Tüm Kısayollar</button>
+      </div>
+      <div class="book-frame" id="bookFrame">
+        <div class="book-viewport" id="bookViewport">
+          <div class="book-pan-layer" id="bookPanLayer">
+            <div class="book-scale-layer" id="bookScaleLayer">
+              <div id="bookRoot">
+                <div class="book-loading" id="bookLoading">
+                  <span>📖</span>
+                  <p>Doküman hazırlanıyor…</p>
+                </div>
+              </div>
+              <div class="page-turn-layer" id="pageTurnLayer" aria-hidden="true">
+                <div class="page-turn-shadow"></div>
+                <div class="page-turn-sheet" id="pageTurnSheet">
+                  <div class="page-turn-face page-turn-front" id="pageTurnFront"></div>
+                  <div class="page-turn-face page-turn-back" id="pageTurnBack"></div>
+                  <div class="page-turn-edge"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="viewer-pager">
+        <button class="pager-btn" type="button" id="prevPageBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          <span>Önceki</span>
+        </button>
+        <div class="pager-center">
+          <div class="pager-slider-row">
+            <span class="pager-slider-label">İlerleme</span>
+            <input type="range" id="pageSlider" min="1" max="1" value="1">
+          </div>
+          <div class="pager-jump-row">
+            <span class="pager-chip" id="pageChip">Sayfa 1 / 1</span>
+            <div class="pager-jump">
+              <label for="pageJumpInput">Sayfaya git</label>
+              <input type="number" id="pageJumpInput" min="1" value="1">
+              <button type="button" id="jumpPageBtn">Git</button>
+            </div>
+            <div class="pager-view-switch">
+              <button class="view-mode-btn active" type="button" id="viewSingleBtn">Tek Sayfa</button>
+              <button class="view-mode-btn" type="button" id="viewSpreadBtn">Çift Sayfa</button>
+            </div>
+          </div>
+        </div>
+        <button class="pager-btn" type="button" id="nextPageBtn">
+          <span>Sonraki</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </section>
+
+  </div>
+  <div class="tool-tooltip" id="toolTooltip" aria-hidden="true"></div>
+  <div class="shortcut-modal" id="shortcutModal" aria-hidden="true">
+    <div class="shortcut-panel" role="dialog" aria-modal="true" aria-labelledby="shortcutModalTitle">
+      <div class="shortcut-panel-head">
+        <div>
+          <h3 id="shortcutModalTitle">Klavye Kısayolları</h3>
+          <p>Flipbook içinde araç değiştirirken, sayfa gezerken ve yakınlaştırırken tek tuşla daha hızlı ilerleyebilirsin.</p>
+        </div>
+        <button class="shortcut-close" type="button" id="shortcutCloseBtn" aria-label="Kısayol panelini kapat">×</button>
+      </div>
+      <div class="shortcut-grid" id="shortcutGrid"></div>
+    </div>
+  </div>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script src="/js/dokuman-store.js"></script>
+  <script src="/js/dokuman-viewer.js"></script>
+</body>
+</html>

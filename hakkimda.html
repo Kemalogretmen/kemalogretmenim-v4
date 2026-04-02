@@ -206,10 +206,11 @@
     </div>
   </section>
 
+  <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const data = window.kemalSite ? window.kemalSite.getData() : null;
+    document.addEventListener('DOMContentLoaded', async function() {
+      const data = window.kemalSite ? await window.kemalSite.getDataAsync() : null;
       if (!data || !data.hakkimda) return;
       const h = data.hakkimda;
       if (h.isim)  document.getElementById('aboutIsim').textContent  = h.isim;

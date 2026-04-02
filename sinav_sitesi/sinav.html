@@ -12,12 +12,21 @@
   --navy:#0F172A;--slate:#475569;--muted:#94A3B8;
   --border:#E2E8F0;--cream:#F8F6FF;--white:#fff;
   --green:#10B981;--red:#EF4444;--yellow:#F59E0B;--amber:#D97706;
+  --page-bg:#F8FAFC;--panel-bg:rgba(255,255,255,.92);--panel-surface:#fff;
+  --stage-bg:#FFFFFF;--stage-border:#D7E0F3;--stage-grid:rgba(148,163,184,.16);
+  --cursor-pencil:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath fill='%236C3DED' d='M20.7 3.3a2.5 2.5 0 0 1 3.5 3.5l-2 2-3.5-3.5 2-2Z'/%3E%3Cpath fill='%23F97316' d='m17.8 4.8 5.4 5.4-10.7 10.7-6.2 1 1-6.2L17.8 4.8Z'/%3E%3Cpath fill='%230F172A' d='m6.3 16.7 5 5-5.7.9.7-5.9Z'/%3E%3C/svg%3E");
   --r-sm:8px;--r:12px;--r-lg:16px;--r-xl:24px;
   --sh-sm:0 1px 3px rgba(0,0,0,.08);--sh:0 4px 12px rgba(0,0,0,.08);--sh-lg:0 10px 30px rgba(0,0,0,.15);
   --fd:'Nunito',sans-serif;--fb:'Outfit',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:100vh}
+body.theme-dark{
+  --navy:#E2E8F0;--slate:#CBD5E1;--muted:#94A3B8;
+  --border:#334155;--cream:#020617;--white:#0F172A;
+  --page-bg:#020617;--panel-bg:rgba(15,23,42,.92);--panel-surface:#111827;
+  --stage-bg:#040B16;--stage-border:#334155;--stage-grid:rgba(148,163,184,.12);
+}
 
 /* LOADING */
 #screenLoad{position:fixed;inset:0;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999}
@@ -59,22 +68,70 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 .etb-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .etb-qprog{font-size:13px;font-weight:700;color:rgba(255,255,255,.7);white-space:nowrap}
+.theme-toggle{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-family:var(--fb);font-size:12px;font-weight:800;cursor:pointer;transition:all .18s}
+.theme-toggle:hover{background:rgba(255,255,255,.16)}
 .exam-body{flex:1;display:flex;overflow:hidden}
-.exam-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:#F8FAFC}
-.exam-q-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 32px;min-height:0}
-.exam-q-num{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px;text-align:center}
-.exam-q-img{max-width:100%;max-height:340px;object-fit:contain;border-radius:var(--r);box-shadow:var(--sh);background:var(--white);padding:8px;display:block}
-.exam-answers{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;padding:0 10px}
-.ans-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border:2px solid #CBD5E0;border-radius:40px;background:var(--white);cursor:pointer;font-size:14px;font-weight:700;transition:all .18s;font-family:var(--fb);color:var(--navy)}
+.exam-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--page-bg)}
+.exam-q-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 32px;min-height:0;gap:14px}
+.exam-q-num{font-size:13px;font-weight:600;color:var(--muted);text-align:center}
+.exam-section-banner{display:none;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:linear-gradient(135deg,#EFF6FF,#E0F2FE);border:1.5px solid #BFDBFE;color:#1D4ED8;font-size:13px;font-weight:800;box-shadow:0 8px 18px rgba(37,99,235,.08)}
+.exam-section-banner .section-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#2563EB}
+.question-media-shell{width:min(100%,960px);display:flex;flex-direction:column;align-items:center;gap:12px}
+.drawing-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;width:100%;padding:12px 14px;background:var(--panel-bg);border:1.5px solid var(--border);border-radius:20px;box-shadow:var(--sh-sm);backdrop-filter:blur(14px)}
+.tool-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px solid var(--border);border-radius:999px;background:var(--panel-surface);font-family:var(--fb);font-size:13px;font-weight:700;color:var(--slate);cursor:pointer;transition:all .18s}
+.tool-btn:hover{border-color:var(--purple);color:var(--purple)}
+.tool-btn.active{background:#EEF2FF;border-color:var(--purple);color:var(--purple-d);box-shadow:0 6px 18px rgba(108,61,237,.12)}
+.toolbar-divider{width:1px;height:24px;background:var(--border)}
+.color-swatches{display:flex;align-items:center;gap:8px}
+.color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.color-swatch:hover{transform:translateY(-1px)}
+.color-swatch.active{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+.toolbar-label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.size-wrap{display:flex;align-items:center;gap:8px}
+.size-wrap input{accent-color:var(--purple)}
+.size-value{min-width:38px;font-size:12px;font-weight:700;color:var(--slate)}
+.zoom-wrap{flex:1 1 240px;justify-content:center;min-width:220px}
+.zoom-wrap input{flex:1;min-width:140px}
+.question-status-strip{width:min(100%,960px);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--panel-bg);border:1.5px solid var(--border);border-radius:18px;box-shadow:var(--sh-sm);backdrop-filter:blur(12px)}
+.status-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 520px}
+.status-pill{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:999px;background:var(--panel-surface);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--slate);line-height:1.45}
+.status-pill strong{font-family:var(--fd);font-size:12px;font-weight:900;color:var(--navy)}
+.status-pill.is-active{background:#EEF2FF;border-color:#C4B5FD;color:#5B21B6}
+.status-pill.is-success{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+.status-pill.is-warning{background:#FFF7ED;border-color:#FED7AA;color:#9A3412}
+.status-pill.is-muted{background:#F8FAFC;border-color:var(--border);color:var(--muted)}
+.status-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mini-action-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-family:var(--fb);font-size:12px;font-weight:800;cursor:pointer;transition:all .18s}
+.mini-action-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
+.mini-action-btn:disabled{opacity:.45;cursor:not-allowed}
+.exam-media-stage{position:relative;width:min(100%,960px);height:clamp(380px,50vh,580px);padding:12px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden;user-select:none;touch-action:none}
+.exam-media-stage.mode-pencil{cursor:var(--cursor-pencil) 6 24,crosshair}
+.exam-media-stage.mode-eraser{cursor:cell}
+.exam-media-stage.mode-select{cursor:default}
+.exam-media-stage.mode-select.can-pan{cursor:grab}
+.exam-media-stage.mode-select.is-dragging{cursor:grabbing}
+.stage-workspace{position:relative;width:100%;height:100%;border:1.5px solid var(--stage-border);border-radius:20px;overflow:hidden;background:
+  repeating-linear-gradient(0deg,transparent 0 35px,var(--stage-grid) 35px 36px),
+  repeating-linear-gradient(90deg,transparent 0 35px,var(--stage-grid) 35px 36px),
+  var(--stage-bg)}
+.question-transform-layer{position:absolute;inset:0;transform:translate3d(var(--question-pan-x,0px),var(--question-pan-y,0px),0) scale(var(--question-zoom,1));transform-origin:center center;transition:transform .16s ease;will-change:transform}
+.exam-q-img{position:absolute;inset:24px;max-width:calc(100% - 48px);max-height:calc(100% - 48px);margin:auto;object-fit:contain;border-radius:var(--r);display:block}
+.exam-media-stage.is-dragging .question-transform-layer{transition:none}
+.draw-canvas{position:absolute;inset:0;pointer-events:none;z-index:2}
+.question-hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
+.exam-answers{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:0 10px}
+.ans-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border:2px solid #CBD5E0;border-radius:40px;background:var(--panel-surface);cursor:pointer;font-size:14px;font-weight:700;transition:all .18s;font-family:var(--fb);color:var(--navy)}
 .ans-btn:hover{border-color:var(--purple);color:var(--purple)}
 .ans-btn.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple-d)}
 .ans-circle{width:28px;height:28px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
-.exam-navrow{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0}
-.exam-nav-btn{width:42px;height:42px;border-radius:50%;border:2px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .18s;color:var(--navy)}
-.exam-nav-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple)}
-.exam-nav-btn:disabled{opacity:.3;cursor:not-allowed}
-.finish-btn{padding:10px 22px;background:var(--red);color:#fff;border:none;border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
-.finish-btn:hover{background:#DC2626;transform:scale(1.03)}
+.exam-navrow{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:14px 24px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.exam-nav-main{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:520px;margin:0 auto}
+.exam-nav-btn{min-height:56px;padding:0 20px;border:none;border-radius:18px;background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:800;font-family:var(--fd);transition:transform .18s,box-shadow .18s,opacity .18s;box-shadow:0 12px 24px rgba(108,61,237,.22)}
+.exam-nav-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 16px 26px rgba(108,61,237,.28)}
+.exam-nav-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.finish-btn{display:inline-flex;align-items:center;gap:9px;padding:12px 18px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:16px;font-family:var(--fb);font-size:14px;font-weight:800;cursor:pointer;transition:transform .18s,box-shadow .18s,filter .18s;box-shadow:0 14px 26px rgba(220,38,38,.26)}
+.finish-btn:hover{transform:translateY(-1px);box-shadow:0 18px 30px rgba(220,38,38,.32);filter:saturate(1.05)}
+.finish-icon{font-size:15px}
 
 /* OPTIC PANEL */
 .optic-panel{width:260px;flex-shrink:0;background:var(--white);border-left:1.5px solid var(--border);display:flex;flex-direction:column}
@@ -112,6 +169,34 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .od-bubble{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
 .od-bubble.sel{background:var(--purple);border-color:var(--purple);color:#fff}
 
+body.theme-dark .drawing-toolbar,
+body.theme-dark .exam-navrow,
+body.theme-dark .optic-panel,
+body.theme-dark .optic-drawer,
+body.theme-dark .op-head,
+body.theme-dark .od-close{
+  background:var(--panel-surface);
+  border-color:var(--border);
+}
+body.theme-dark .tool-btn,
+body.theme-dark .mini-action-btn,
+body.theme-dark .ans-btn,
+body.theme-dark .op-stat,
+body.theme-dark .od-bubble{
+  background:#111827;
+  border-color:var(--border);
+  color:var(--navy);
+}
+body.theme-dark .status-pill{background:#111827;border-color:var(--border)}
+body.theme-dark .op-row:hover,
+body.theme-dark .op-row.cur,
+body.theme-dark .ans-btn.selected,
+body.theme-dark .tool-btn.active{background:rgba(108,61,237,.16)}
+body.theme-dark .question-hint,
+body.theme-dark .op-qnum,
+body.theme-dark .toolbar-label,
+body.theme-dark .size-value{color:var(--muted)}
+
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px}
 .modal-box{background:var(--white);border-radius:var(--r-xl);padding:28px;width:100%;max-width:380px;box-shadow:var(--sh-lg);text-align:center;animation:popIn .22s ease}
@@ -119,6 +204,13 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .modal-box h3{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--navy);margin-bottom:10px}
 .modal-box p{font-size:14px;color:var(--slate);line-height:1.6;margin-bottom:6px}
 .modal-warn{color:var(--red);font-weight:700;font-size:14px;margin:10px 0}
+.modal-good{color:var(--green);font-weight:700;font-size:14px;margin:10px 0}
+.modal-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0 10px}
+.metric-chip{padding:12px 10px;border-radius:16px;background:#F8FAFC;border:1px solid var(--border)}
+.metric-chip strong{display:block;font-family:var(--fd);font-size:22px;font-weight:900;color:var(--navy);margin-bottom:2px}
+.metric-chip span{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.modal-note{margin-top:10px;padding:14px 16px;border-radius:16px;background:#FFF7ED;border:1px solid #FED7AA;color:#9A3412;font-size:13px;font-weight:600;line-height:1.7;text-align:left}
+.modal-note strong{color:#7C2D12}
 .modal-btns{display:flex;gap:10px;margin-top:20px}
 .btn{padding:11px 20px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--fb);font-size:14px;font-weight:700;transition:all .18s;flex:1}
 .btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff}
@@ -127,6 +219,20 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .btn-red:hover{background:#DC2626}
 .btn-outline{background:transparent;border:2px solid var(--border);color:var(--slate)}
 .btn-outline:hover{border-color:var(--purple);color:var(--purple)}
+
+/* LIGHTBOX */
+.image-lightbox{position:fixed;inset:0;background:rgba(15,23,42,.94);display:none;align-items:center;justify-content:center;z-index:700;overflow:hidden}
+.image-lightbox.open{display:flex}
+.lb-close{position:absolute;top:18px;right:18px;width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:24px;cursor:pointer;z-index:2}
+.lb-close:hover{background:rgba(255,255,255,.18)}
+.lb-hint{position:absolute;top:24px;left:24px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);font-size:12px;font-weight:600;z-index:2}
+.lb-stage{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none}
+.lb-stage.dragging{cursor:grabbing}
+.lb-img{max-width:min(92vw,1200px);max-height:86vh;object-fit:contain;will-change:transform;transform-origin:center center;user-select:none}
+.lb-controls{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);z-index:2}
+.lb-btn{width:40px;height:40px;border:none;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:20px;cursor:pointer}
+.lb-btn:hover{background:rgba(255,255,255,.22)}
+.lb-scale{min-width:62px;text-align:center;color:#fff;font-size:12px;font-weight:700}
 
 /* TIMEOUT SCREEN */
 #screenTimeout{display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px}
@@ -145,7 +251,7 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .ktb-left p{font-size:13px;color:rgba(255,255,255,.6);margin-top:2px}
 .print-btn{padding:8px 18px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
 .print-btn:hover{background:rgba(255,255,255,.25)}
-.karne-body{max-width:900px;margin:0 auto;padding:28px 24px}
+.karne-body{max-width:1080px;margin:0 auto;padding:28px 24px}
 .karne-header{background:var(--white);border-radius:var(--r-xl);padding:24px;margin-bottom:20px;border:2px solid var(--border);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
 .karne-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;color:#fff}
 .karne-student-info{flex:1}
@@ -153,6 +259,18 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .karne-student-info p{font-size:14px;color:var(--slate);margin-top:2px}
 .karne-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
 .km-item{font-size:12px;color:var(--muted);background:var(--cream);padding:4px 10px;border-radius:50px;font-weight:600}
+.karne-spotlight{background:linear-gradient(135deg,#0F172A,#1E3A8A,#2563EB);border-radius:var(--r-xl);padding:24px 26px;margin-bottom:20px;color:#fff;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:18px;box-shadow:0 24px 40px rgba(30,64,175,.18)}
+.ksp-title{font-family:var(--fd);font-size:14px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.68);margin-bottom:10px}
+.ksp-headline{font-family:var(--fd);font-size:34px;font-weight:900;line-height:1.05;margin-bottom:10px}
+.ksp-text{font-size:14px;line-height:1.7;color:rgba(255,255,255,.84);max-width:560px}
+.ksp-score-panel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;gap:16px}
+.ksp-score-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.16);font-size:12px;font-weight:800;width:max-content}
+.ksp-score-value{font-family:var(--fd);font-size:56px;font-weight:900;line-height:1;color:#fff}
+.ksp-score-sub{font-size:13px;color:rgba(255,255,255,.74);line-height:1.6}
+.ksp-mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ks-mini{padding:12px 10px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.ks-mini strong{display:block;font-family:var(--fd);font-size:20px;font-weight:900;color:#fff}
+.ks-mini span{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.64);text-transform:uppercase;letter-spacing:.06em}
 .karne-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
 .ks-card{background:var(--white);border-radius:var(--r-lg);padding:18px;text-align:center;border:2px solid var(--border)}
 .ks-n{font-family:var(--fd);font-size:32px;font-weight:900}
@@ -160,10 +278,29 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .karne-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
 .karne-card{background:var(--white);border-radius:var(--r-lg);padding:22px;border:2px solid var(--border)}
 .karne-card h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px}
+.chart-card{display:flex;flex-direction:column;justify-content:center;align-items:center}
+.chart-title-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.chart-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:12px;font-weight:800}
+.chart-frame{position:relative;width:100%;overflow:hidden}
+.chart-frame canvas{display:block!important;width:100%!important;height:100%!important}
+.chart-frame-donut{width:min(100%,220px);height:220px;max-width:220px;max-height:220px}
+.chart-frame-bars{height:280px;min-height:280px;max-height:280px}
 .karne-feedback{background:var(--white);border-radius:var(--r-lg);padding:24px;margin-bottom:20px;border:2px solid var(--border)}
 .karne-feedback h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .feedback-body{font-size:15px;color:var(--slate);line-height:1.8}
 .quote-box{margin-top:16px;padding:14px 16px;background:var(--cream);border-left:4px solid var(--purple);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;color:var(--slate);font-style:italic;line-height:1.6}
+.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.insight-card{padding:16px;border-radius:18px;background:#F8FAFC;border:1px solid var(--border)}
+.insight-card h5{font-family:var(--fd);font-size:13px;font-weight:900;color:var(--navy);margin-bottom:8px}
+.insight-card p{font-size:13px;color:var(--slate);line-height:1.7}
+.section-list{display:flex;flex-direction:column;gap:12px}
+.section-item{padding:14px;border-radius:18px;background:#F8FAFC;border:1px solid var(--border)}
+.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+.section-head strong{font-family:var(--fd);font-size:15px;font-weight:900;color:var(--navy)}
+.section-range{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.section-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--slate);margin-bottom:8px}
+.section-bar{height:10px;border-radius:999px;background:#E2E8F0;overflow:hidden}
+.section-bar-fill{height:100%;border-radius:999px;background:linear-gradient(135deg,#2563EB,#38BDF8)}
 .karne-optic{background:var(--white);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;border:2px solid var(--border)}
 .karne-optic h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px}
 .ko-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
@@ -191,21 +328,48 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 @media(max-width:768px){
   .exam-topbar{padding:0 14px}
   .etb-title{display:none}
+  .theme-toggle span:last-child{display:none}
   .optic-panel{display:none}
   .optic-fab{display:flex}
   .optic-drawer{display:flex}
   .exam-q-wrap{padding:14px 16px}
-  .exam-answers{gap:8px;margin-top:14px}
+  .question-media-shell{width:100%}
+  .drawing-toolbar{justify-content:flex-start}
+  .toolbar-divider{display:none}
+  .question-status-strip{padding:10px 12px}
+  .status-pills,.status-actions{width:100%}
+  .exam-media-stage{width:100%;height:clamp(320px,48vh,460px)}
+  .exam-answers{gap:8px}
   .ans-btn{padding:9px 14px;font-size:13px}
-  .exam-navrow{padding:10px 14px}
+  .exam-navrow{padding:12px 14px}
+  .exam-nav-main{max-width:none;width:100%}
+  .finish-btn{margin-left:auto}
+  .karne-spotlight{grid-template-columns:1fr}
+  .ksp-mini-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
   .karne-stats{grid-template-columns:repeat(2,1fr)}
   .karne-grid{grid-template-columns:1fr}
   .karne-header{gap:14px}
   .karne-body{padding:16px 14px}
+  .chart-frame-bars{height:250px;min-height:250px;max-height:250px}
+  .insight-grid{grid-template-columns:1fr}
+  .lb-hint{left:14px;right:68px;top:14px}
+  .lb-controls{bottom:18px}
 }
 @media(max-width:480px){
+  .modal-metrics{grid-template-columns:1fr}
   .karne-stats{grid-template-columns:repeat(2,1fr)}
   .warn-card{padding:24px 20px}
+  .tool-btn{padding:8px 12px}
+  .exam-nav-btn{min-height:52px;font-size:15px}
+  .finish-btn{width:100%;justify-content:center}
+  .exam-section-banner{width:100%;justify-content:center;text-align:center;flex-wrap:wrap}
+  .zoom-wrap{min-width:100%}
+  .mini-action-btn{flex:1;justify-content:center}
+  .exam-media-stage{height:clamp(300px,44vh,420px)}
+  .ksp-headline{font-size:28px}
+  .ksp-mini-stats{grid-template-columns:1fr}
+  .chart-frame-bars{height:220px;min-height:220px;max-height:220px}
+  .lb-hint{font-size:11px;padding:8px 12px}
 }
 
 /* PRINT */
@@ -249,6 +413,11 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sessiz, dikkat dağınıklığından uzak bir ortamda sınava gir.</span></div>
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sağdaki optik alanda veya şık butonlarından cevabını işaretleyebilirsin.</span></div>
     </div>
+    <div class="warn-rules">
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span id="warnShortcutAnswers">Klavye ile cevap işaretleme kullanabilirsin.</span></div>
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sol ve sağ ok tuşları ile sorular arasında geçiş yapabilirsin.</span></div>
+      <div class="warn-rule"><div class="warn-rule-dot"></div><span>K kalem, S seçim, L silgi; + ve - ile yakınlaştırma, 0 ile yakınlaştırmayı sıfırlama yapar.</span></div>
+    </div>
     <button class="warn-start-btn" onclick="beginExam()">🚀 BAŞLAT</button>
   </div>
 </div>
@@ -263,6 +432,7 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
       <div class="etb-timer" id="examTimer">00:00</div>
     </div>
     <div class="etb-right">
+      <button class="theme-toggle" type="button" id="themeToggle" onclick="toggleTheme()"><span>🌙</span><span>Karanlık</span></button>
       <div class="etb-qprog" id="qProg">0 / 0</div>
     </div>
   </div>
@@ -270,7 +440,46 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
     <div class="exam-main" id="examMain">
       <div class="exam-q-wrap">
         <div class="exam-q-num" id="qNum"></div>
-        <img class="exam-q-img" id="qImg" src="" alt="Soru görseli">
+        <div class="exam-section-banner" id="questionSectionBanner"></div>
+        <div class="question-media-shell">
+          <div class="drawing-toolbar" id="drawingToolbar">
+            <button class="tool-btn" type="button" data-draw-tool="pencil" onclick="setDrawTool('pencil')" title="Kalem aracı (K)">✏️ Kalem</button>
+            <button class="tool-btn" type="button" data-draw-tool="select" onclick="setDrawTool('select')" title="Seçim aracı (S)">🖱️ Seçim</button>
+            <button class="tool-btn" type="button" data-draw-tool="eraser" onclick="setDrawTool('eraser')" title="Silgi aracı (L)">⬜ Silgi</button>
+            <div class="toolbar-divider"></div>
+            <span class="toolbar-label">Renk</span>
+            <div class="color-swatches">
+              <button class="color-swatch" type="button" data-draw-color="#EF4444" style="background:#EF4444" onclick="setDrawColor('#EF4444')" aria-label="Kırmızı"></button>
+              <button class="color-swatch" type="button" data-draw-color="#2563EB" style="background:#2563EB" onclick="setDrawColor('#2563EB')" aria-label="Mavi"></button>
+              <button class="color-swatch" type="button" data-draw-color="#0F172A" style="background:#0F172A" onclick="setDrawColor('#0F172A')" aria-label="Siyah"></button>
+              <button class="color-swatch" type="button" data-draw-color="#10B981" style="background:#10B981" onclick="setDrawColor('#10B981')" aria-label="Yeşil"></button>
+              <button class="color-swatch" type="button" data-draw-color="#F97316" style="background:#F97316" onclick="setDrawColor('#F97316')" aria-label="Turuncu"></button>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="size-wrap">
+              <span class="toolbar-label">Kalınlık</span>
+              <input id="brushSize" type="range" min="1" max="8" value="3" oninput="setBrushSize(this.value)">
+              <span class="size-value" id="brushSizeValue">3px</span>
+            </div>
+            <div class="toolbar-divider"></div>
+            <div class="size-wrap zoom-wrap">
+              <span class="toolbar-label">Yakınlaştır</span>
+              <input id="zoomRange" type="range" min="80" max="220" value="100" step="5" oninput="setQuestionZoom(this.value)">
+              <span class="size-value" id="zoomValue">%100</span>
+            </div>
+            <button class="tool-btn" type="button" onclick="resetQuestionZoom()" title="Yakınlaştırmayı sıfırla (0)">↺ Zoom</button>
+            <button class="tool-btn" type="button" onclick="openImageLightbox()" title="Soruyu tam ekranda aç">🔍 Tam Ekran</button>
+            <button class="tool-btn" type="button" onclick="clearCurrentDrawing()" title="Bu sorudaki çizimleri temizle">🗑️ Temizle</button>
+          </div>
+          <div class="exam-media-stage" id="mediaStage">
+            <div class="stage-workspace" id="stageWorkspace">
+              <div class="question-transform-layer" id="questionTransformLayer">
+                <img class="exam-q-img" id="qImg" src="" alt="Soru görseli">
+                <canvas class="draw-canvas" id="drawCanvas" aria-hidden="true"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="exam-answers" id="examAnswers"></div>
       </div>
     </div>
@@ -286,9 +495,11 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
     </div>
   </div>
   <div class="exam-navrow">
-    <button class="exam-nav-btn" id="btnPrev" onclick="prevQ()">‹</button>
-    <button class="finish-btn" onclick="showFinishConfirm()">Sınavı Bitir</button>
-    <button class="exam-nav-btn" id="btnNext" onclick="nextQ()">›</button>
+    <div class="exam-nav-main">
+      <button class="exam-nav-btn" id="btnPrev" onclick="prevQ()" title="Önceki soru (Sol ok)"><span>◀</span><span>Önceki Soru</span></button>
+      <button class="exam-nav-btn" id="btnNext" onclick="nextQ()" title="Sonraki soru (Sağ ok)"><span>Sonraki Soru</span><span>▶</span></button>
+    </div>
+    <button class="finish-btn" onclick="showFinishConfirm()"><span class="finish-icon">⚠️</span><span>Sınavı Bitir</span></button>
   </div>
 </div>
 
@@ -304,6 +515,20 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
     <button onclick="toggleDrawer()">✕</button>
   </div>
   <div class="od-content"><div class="od-grid" id="drawerGrid"></div></div>
+</div>
+
+<div class="image-lightbox" id="imageLightbox" aria-hidden="true">
+  <button class="lb-close" type="button" onclick="closeImageLightbox()">×</button>
+  <div class="lb-hint">Yakınlaştırmak için iki parmağını açabilir, fare tekerleğini kullanabilir veya alttaki düğmeleri deneyebilirsin.</div>
+  <div class="lb-stage" id="lightboxStage">
+    <img class="lb-img" id="lightboxImg" src="" alt="Büyütülmüş soru görseli">
+  </div>
+  <div class="lb-controls">
+    <button class="lb-btn" type="button" onclick="zoomLightbox(-0.25)">−</button>
+    <div class="lb-scale" id="lightboxScale">100%</div>
+    <button class="lb-btn" type="button" onclick="zoomLightbox(0.25)">＋</button>
+    <button class="tool-btn" type="button" onclick="resetLightbox()">Sıfırla</button>
+  </div>
 </div>
 
 <div id="screenTimeout" style="display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px">
@@ -323,7 +548,7 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <button class="print-btn" onclick="window.print()">🖨️ PDF Çıktı Al</button>
-      <button class="print-btn" onclick="window.location.href='index.html'">← Ana Sayfa</button>
+      <button class="print-btn" id="karneBackBtn" onclick="window.location.href='index.html'">← Ana Sayfa</button>
     </div>
   </div>
   <div class="karne-body">
@@ -335,14 +560,37 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
         <div class="karne-meta" id="karneMeta"></div>
       </div>
     </div>
+    <div class="karne-spotlight" id="karneSpotlight"></div>
     <div class="karne-stats" id="karneStats"></div>
     <div class="karne-grid">
       <div class="karne-card">
         <h4>📈 Sonuç Özeti</h4>
         <div id="scoreBars"></div>
       </div>
-      <div class="karne-card" style="display:flex;align-items:center;justify-content:center">
-        <canvas id="donutChart" width="200" height="200" style="max-width:200px;max-height:200px"></canvas>
+      <div class="karne-card chart-card">
+        <div class="chart-title-row">
+          <h4 style="margin-bottom:0">🎯 Cevap Dağılımı</h4>
+          <span class="chart-pill" id="karneStatusBadge"></span>
+        </div>
+        <div class="chart-frame chart-frame-donut">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="karne-grid">
+      <div class="karne-card">
+        <div class="chart-title-row">
+          <h4 style="margin-bottom:0">📚 Ders Bazlı Analiz</h4>
+          <span class="chart-pill">Grafikli Özet</span>
+        </div>
+        <div class="chart-frame chart-frame-bars">
+          <canvas id="sectionChart"></canvas>
+        </div>
+      </div>
+      <div class="karne-card">
+        <h4>🧭 Güçlü ve Gelişebilir Alanlar</h4>
+        <div class="insight-grid" id="karneInsights"></div>
+        <div class="section-list" id="karneSectionList"></div>
       </div>
     </div>
     <div class="karne-feedback">
@@ -390,14 +638,935 @@ const GC=[null,
   {bg:'linear-gradient(135deg,#AB47BC,#EC407A)',color:'#AB47BC'}
 ];
 
-let P={exam:null,questions:[],student:null,answers:{},curQ:0,timeLeft:0,timer:null,started:false,result:null,OPTS:[]};
+let P={
+  exam:null,
+  questions:[],
+  student:null,
+  answers:{},
+  curQ:0,
+  timeLeft:0,
+  timer:null,
+  started:false,
+  result:null,
+  OPTS:[],
+  drawings:{},
+  drawingTool:'pencil',
+  brushColor:'#EF4444',
+  brushSize:3,
+  questionZoom:100,
+  questionPanX:0,
+  questionPanY:0,
+  uiBound:false,
+  stageGesture:null,
+  ignoreStageClick:false,
+  lightbox:{
+    scale:1,
+    x:0,
+    y:0,
+    dragging:false,
+    dragOriginX:0,
+    dragOriginY:0,
+    pinchDistance:0,
+    startScale:1
+  }
+};
+let donutChartInstance=null;
+let sectionChartInstance=null;
+const ADMIN_KARNE_STORAGE_KEY='kemal_exam_admin_karne_result_v1';
+const EXAM_THEME_STORAGE_KEY='kemal_exam_theme_v1';
+const EXAM_TOOL_PREFS_STORAGE_KEY='kemal_exam_tool_prefs_v1';
+
+function getSearchParams(){
+  return new URLSearchParams(window.location.search);
+}
+
+function isAdminKarneMode(){
+  return getSearchParams().get('adminKarne')==='1';
+}
+
+function formatStoredResultDate(value){
+  if(!value) return new Date().toLocaleDateString('tr-TR');
+  if(typeof value.toDate==='function') return value.toDate().toLocaleDateString('tr-TR');
+  if(typeof value==='object'&&typeof value.seconds==='number') return new Date(value.seconds*1000).toLocaleDateString('tr-TR');
+  if(typeof value==='string'){
+    const parsed=new Date(value);
+    return Number.isNaN(parsed.getTime())?value:parsed.toLocaleDateString('tr-TR');
+  }
+  const parsed=new Date(value);
+  return Number.isNaN(parsed.getTime())?new Date().toLocaleDateString('tr-TR'):parsed.toLocaleDateString('tr-TR');
+}
+
+function buildAnswerMap(answerDetails){
+  const answers={};
+  (Array.isArray(answerDetails)?answerDetails:[]).forEach(item=>{
+    const questionNo=parseInt(item?.questionNo,10);
+    const selected=String(item?.selectedAnswer||'').trim();
+    if(Number.isFinite(questionNo)&&questionNo>0&&selected) answers[questionNo-1]=selected;
+  });
+  return answers;
+}
+
+function normalizeKeyPart(value){
+  return String(value||'')
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'');
+}
+
+function buildStudentKey(source){
+  const firstName=source?.firstName||source?.ad||'';
+  const lastName=source?.lastName||source?.soyad||'';
+  const grade=source?.grade||source?.sinif||'';
+  const sube=source?.sube||'';
+  return [
+    normalizeKeyPart(firstName),
+    normalizeKeyPart(lastName),
+    normalizeKeyPart(grade),
+    normalizeKeyPart(sube)
+  ].filter(Boolean).join('|');
+}
+
+function getResultQuestionEntries(result){
+  const details=Array.isArray(result?.answerDetails)?result.answerDetails:[];
+  if(details.length){
+    return details.map((item,index)=>{
+      const question=result?.questions?.[index]||{};
+      const questionNo=parseInt(item?.questionNo,10)||index+1;
+      const selectedAnswer=String(item?.selectedAnswer||result?.answers?.[questionNo-1]||'').trim();
+      const correctAnswer=String(item?.correctAnswer||question?.correctAnswer||'').trim();
+      const sectionTitle=String(
+        item?.sectionTitle||
+        question?.sectionTitle||
+        getSectionLabelFromConfig(questionNo,result?.questionSections)||
+        result?.subject||
+        'Genel'
+      ).trim();
+      const outcome=item?.outcome||(selectedAnswer?(selectedAnswer===correctAnswer?'D':'Y'):'B');
+      return{
+        index,
+        questionNo,
+        sectionTitle,
+        selectedAnswer,
+        correctAnswer,
+        outcome,
+        imageUrl:question?.imageUrl||question?.imageData||'',
+        hasVisual:!!(question?.imageUrl||question?.imageData)
+      };
+    });
+  }
+  const questions=Array.isArray(result?.questions)?result.questions:[];
+  return questions.map((question,index)=>{
+    const questionNo=index+1;
+    const selectedAnswer=String(result?.answers?.[index]||'').trim();
+    const correctAnswer=String(question?.correctAnswer||'').trim();
+    const sectionTitle=getQuestionSectionDisplay(question,index,result?.subject,result?.questionSections)||'Genel';
+    const outcome=selectedAnswer?(selectedAnswer===correctAnswer?'D':'Y'):'B';
+    return{
+      index,
+      questionNo,
+      sectionTitle,
+      selectedAnswer,
+      correctAnswer,
+      outcome,
+      imageUrl:question?.imageUrl||question?.imageData||'',
+      hasVisual:!!(question?.imageUrl||question?.imageData)
+    };
+  });
+}
 
 function toast(msg,type='success'){
   const el=document.createElement('div');el.className=`toast toast-${type}`;el.textContent=msg;
   document.getElementById('toastWrap').appendChild(el);setTimeout(()=>el.remove(),3000);
 }
 
+function escHtml(value){
+  return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function wait(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+async function withRetry(task,attempts=2,delay=500){
+  let lastError;
+  for(let i=0;i<attempts;i++){
+    try{
+      return await task();
+    }catch(error){
+      lastError=error;
+      if(i<attempts-1) await wait(delay);
+    }
+  }
+  throw lastError;
+}
+
+function showLoadError(title,detail){
+  const backHref=isAdminKarneMode()?'admin.html':'index.html';
+  const backLabel=isAdminKarneMode()?'Sınav Paneline Dön':'Sınav Sayfasına Dön';
+  const load=document.getElementById('screenLoad');
+  load.innerHTML=`
+    <div style="max-width:420px;text-align:center;padding:24px">
+      <div style="font-size:52px;line-height:1;margin-bottom:14px">⚠️</div>
+      <h2 style="font-family:var(--fd);font-size:26px;font-weight:900;color:var(--navy);margin-bottom:10px">${title}</h2>
+      <p style="font-size:15px;color:var(--slate);line-height:1.7;margin-bottom:20px">${detail}</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" type="button" onclick="window.location.reload()">Yeniden Dene</button>
+        <button class="btn btn-outline" type="button" onclick="window.location.href='${backHref}'">${backLabel}</button>
+      </div>
+    </div>`;
+}
+
+async function loadExamBundle(examId){
+  const examSnap=await withRetry(()=>getDoc(doc(db,'exams',examId)),2,650);
+  if(!examSnap.exists()) return null;
+  const exam={id:examSnap.id,...examSnap.data()};
+
+  let questions=[];
+  try{
+    const orderedSnap=await withRetry(()=>getDocs(
+      query(
+        collection(db,'questions'),
+        where('examId','==',examId),
+        orderBy('order','asc')
+      )
+    ),2,650);
+    questions=orderedSnap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(error){
+    const fallbackSnap=await withRetry(()=>getDocs(
+      query(collection(db,'questions'),where('examId','==',examId))
+    ),2,650);
+    questions=fallbackSnap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(a.order??0)-(b.order??0));
+  }
+
+  return{exam,questions};
+}
+
+async function openAdminKarne(){
+  let storedResult=null;
+  try{
+    storedResult=JSON.parse(localStorage.getItem(ADMIN_KARNE_STORAGE_KEY)||'null');
+  }catch(error){
+    storedResult=null;
+  }
+
+  if(!storedResult?.examId){
+    showLoadError('Karne verisi bulunamadı','Yönetim panelinden tekrar "Karne" düğmesine tıklayarak raporu yeniden açabilirsin.');
+    return;
+  }
+
+  try{
+    document.getElementById('loadTxt').textContent='Sınav karnesi hazırlanıyor...';
+    let bundle=null;
+    try{
+      bundle=await loadExamBundle(storedResult.examId);
+    }catch(error){
+      bundle=null;
+    }
+    const answers=buildAnswerMap(storedResult.answerDetails);
+    const fallbackExam={
+      id:storedResult.examId,
+      title:storedResult.examTitle||'Sınav',
+      subject:storedResult.subject||'Genel',
+      grade:storedResult.grade||'',
+      duration:0,
+      optionCount:4,
+      negativeMarking:!!storedResult.negativeMarking,
+      questionSections:Array.isArray(storedResult.questionSections)?storedResult.questionSections:[]
+    };
+    const exam=bundle?.exam?Object.assign({},fallbackExam,bundle.exam):fallbackExam;
+    const questions=Array.isArray(bundle?.questions)?bundle.questions:[];
+    if(!questions.length&&!(Array.isArray(storedResult.answerDetails)&&storedResult.answerDetails.length)){
+      showLoadError('Soru verisi bulunamadı','Bu kayıt için soru bazlı veri bulunamadı. Yeni sınav sonuçlarında bu detaylar kalıcı olarak saklanacaktır.');
+      return;
+    }
+
+    P.exam=exam;
+    P.questions=questions;
+    P.student={
+      firstName:storedResult.firstName||'',
+      lastName:storedResult.lastName||'',
+      grade:storedResult.grade||exam.grade||'',
+      sube:storedResult.sube||''
+    };
+    P.answers=answers;
+    P.OPTS=['A','B','C','D','E','F'].slice(0,exam.optionCount||4);
+    P.result={
+      firstName:storedResult.firstName||'',
+      lastName:storedResult.lastName||'',
+      grade:storedResult.grade||exam.grade||'',
+      sube:storedResult.sube||'',
+      subject:storedResult.subject||exam.subject||'',
+      examTitle:storedResult.examTitle||exam.title||'',
+      examId:storedResult.examId,
+      studentKey:storedResult.studentKey||buildStudentKey(storedResult),
+      correct:Number(storedResult.correct||0),
+      wrong:Number(storedResult.wrong||0),
+      blank:Number(storedResult.blank||0),
+      netCorrect:typeof storedResult.netCorrect==='number'?storedResult.netCorrect:Number(storedResult.netCorrect||storedResult.correct||0),
+      score:Number(storedResult.score||0),
+      total:Number(storedResult.total||questions.length||(storedResult.answerDetails||[]).length||0),
+      negativeMarking:typeof storedResult.negativeMarking==='boolean'?storedResult.negativeMarking:!!exam.negativeMarking,
+      answers:answers,
+      answerDetails:Array.isArray(storedResult.answerDetails)?storedResult.answerDetails:[],
+      questionSections:Array.isArray(storedResult.questionSections)&&storedResult.questionSections.length
+        ? storedResult.questionSections
+        : Array.isArray(exam.questionSections)?exam.questionSections:[],
+      elapsed:Number(storedResult.elapsed||0),
+      date:formatStoredResultDate(storedResult.date),
+      questions:questions
+    };
+    renderKarne();
+    showScreen('screenKarne');
+  }catch(error){
+    console.error(error);
+    showLoadError('Karne yüklenemedi','Veri alınırken beklenmeyen bir hata oluştu. Lütfen birkaç saniye sonra tekrar deneyin.');
+  }
+}
+
+function getQuestionKey(i=P.curQ){
+  const q=P.questions[i];
+  return q?.id||`q-${i}`;
+}
+
+function getSectionLabelFromConfig(questionNo,sections){
+  const list=Array.isArray(sections)?sections:[];
+  for(const section of list){
+    const label=String(section?.label||section?.title||'').trim();
+    const start=parseInt(section?.start,10);
+    const end=parseInt(section?.end,10);
+    if(!label||!Number.isFinite(start)||!Number.isFinite(end)) continue;
+    if(questionNo>=start&&questionNo<=end) return label;
+  }
+  return '';
+}
+
+function getQuestionSectionTitle(question,index,sections=P.exam?.questionSections){
+  return String(question?.sectionTitle||getSectionLabelFromConfig(index+1,sections)||'').trim();
+}
+
+function getQuestionSectionDisplay(question,index,subject=P.exam?.subject,sections=P.exam?.questionSections){
+  return getQuestionSectionTitle(question,index,sections)||String(subject||'').trim();
+}
+
+function buildSectionSummary(result){
+  const buckets=[];
+  const byLabel=new Map();
+  getResultQuestionEntries(result).forEach((entry,index)=>{
+    const label=entry.sectionTitle||result.subject||'Genel';
+    let bucket=byLabel.get(label);
+    if(!bucket){
+      bucket={label,total:0,correct:0,wrong:0,blank:0,start:index+1,end:index+1};
+      byLabel.set(label,bucket);
+      buckets.push(bucket);
+    }
+    bucket.total+=1;
+    bucket.end=entry.questionNo;
+    if(bucket.total===1) bucket.start=entry.questionNo;
+    const outcome=entry.outcome;
+    if(outcome==='D') bucket.correct+=1;
+    else if(outcome==='Y') bucket.wrong+=1;
+    else bucket.blank+=1;
+  });
+  return buckets.map(bucket=>Object.assign(bucket,{
+    score:bucket.total?Math.round(bucket.correct/bucket.total*100):0
+  }));
+}
+
+function getScoreMeta(score){
+  if(score>=85) return{label:'Mükemmel Gidiş',icon:'🏆',bg:'#DCFCE7',color:'#166534',headline:'çok güçlü bir performans'};
+  if(score>=70) return{label:'Çok İyi',icon:'🌟',bg:'#DBEAFE',color:'#1D4ED8',headline:'oldukça dengeli bir sonuç'};
+  if(score>=55) return{label:'Gelişime Açık',icon:'📘',bg:'#FEF3C7',color:'#92400E',headline:'iyi bir temel oluşturan bir sonuç'};
+  return{label:'Daha Çok Tekrar',icon:'🧩',bg:'#FEE2E2',color:'#B91C1C',headline:'ek tekrarlarla güçlenebilecek bir sonuç'};
+}
+
+function getBarColor(score){
+  if(score>=85) return '#10B981';
+  if(score>=70) return '#2563EB';
+  if(score>=55) return '#F59E0B';
+  return '#EF4444';
+}
+
+function getFinishSummary(){
+  const total=P.questions.length;
+  const answered=Object.keys(P.answers).length;
+  const blank=total-answered;
+  const blankList=[];
+  for(let i=0;i<total;i++) if(!P.answers[i]) blankList.push(i+1);
+  const mins=Math.floor(P.timeLeft/60);
+  const secs=P.timeLeft%60;
+  return{
+    total,
+    answered,
+    blank,
+    blankList,
+    timeText:P.exam.duration>0?`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`:'Sınırsız'
+  };
+}
+
+function closeFinishModals(){
+  ['finishModal1','finishModal2'].forEach(id=>document.getElementById(id)?.remove());
+}
+window.closeFinishModals=closeFinishModals;
+
+function getQuestionDrawing(i=P.curQ){
+  const key=getQuestionKey(i);
+  if(!P.drawings[key]) P.drawings[key]={strokes:[]};
+  return P.drawings[key];
+}
+
+function persistDrawingPrefs(){
+  try{
+    localStorage.setItem(EXAM_TOOL_PREFS_STORAGE_KEY,JSON.stringify({
+      drawingTool:P.drawingTool,
+      brushColor:P.brushColor,
+      brushSize:P.brushSize
+    }));
+  }catch(error){}
+}
+
+function restoreDrawingPrefs(){
+  try{
+    const stored=JSON.parse(localStorage.getItem(EXAM_TOOL_PREFS_STORAGE_KEY)||'null');
+    const allowedTools=['pencil','select','eraser'];
+    const allowedColors=['#EF4444','#2563EB','#0F172A','#10B981','#F97316'];
+    const brushSize=parseInt(stored?.brushSize,10);
+    if(allowedTools.includes(stored?.drawingTool)) P.drawingTool=stored.drawingTool;
+    if(allowedColors.includes(stored?.brushColor)) P.brushColor=stored.brushColor;
+    if(Number.isFinite(brushSize)&&brushSize>=1&&brushSize<=8) P.brushSize=brushSize;
+  }catch(error){}
+}
+
+function getBlankQuestionCount(){
+  return P.questions.reduce((count,_question,index)=>count+(P.answers[index]?0:1),0);
+}
+
+function hasPanOffset(){
+  return Math.abs(P.questionPanX||0)>.5||Math.abs(P.questionPanY||0)>.5;
+}
+
+function findNextBlankQuestionIndex(startIndex=P.curQ){
+  const total=P.questions.length;
+  if(!total) return-1;
+  for(let step=1;step<=total;step++){
+    const index=(startIndex+step)%total;
+    if(!P.answers[index]) return index;
+  }
+  return-1;
+}
+
+function syncCurrentAnswerButtons(){
+  const currentAnswer=P.answers[P.curQ]||'';
+  document.querySelectorAll('.ans-btn').forEach((button,index)=>{
+    button.classList.toggle('selected',P.OPTS[index]===currentAnswer);
+  });
+}
+
+function setAnswerForQuestion(index,answer,{allowToggle=true}={}){
+  const normalizedAnswer=String(answer||'').trim().toUpperCase();
+  const currentAnswer=String(P.answers[index]||'').trim().toUpperCase();
+  if(!normalizedAnswer){
+    delete P.answers[index];
+  }else if(allowToggle&&currentAnswer===normalizedAnswer){
+    delete P.answers[index];
+  }else{
+    P.answers[index]=normalizedAnswer;
+  }
+  updateOpticRow(index);
+  updateOpticStats();
+  renderMobileDrawer();
+  if(index===P.curQ) syncCurrentAnswerButtons();
+  renderQuestionStatus();
+}
+
+function getToolStatusMeta(){
+  if(P.drawingTool==='pencil'){
+    return{
+      tone:'is-active',
+      icon:'✏️',
+      label:'Kalem aktif',
+      detail:'Soru üstüne ya da boş çalışma alanına not alabilirsin.'
+    };
+  }
+  if(P.drawingTool==='eraser'){
+    return{
+      tone:'is-warning',
+      icon:'🧽',
+      label:'Silgi aktif',
+      detail:'Çizgilerin üzerinden geçerek işaretlerini temizleyebilirsin.'
+    };
+  }
+  return{
+    tone:P.questionZoom>100?'is-success':'is-muted',
+    icon:'🖐️',
+    label:'Seçim aktif',
+    detail:P.questionZoom>100
+      ? 'Yakınlaştırılmış soruyu tutup sürükleyerek istediğin bölgeye gidebilirsin.'
+      : 'Yakınlaştırdığında soruyu sürükleyerek gezebilirsin.'
+  };
+}
+
+function renderQuestionStatus(){
+  const toolStatus=document.getElementById('toolStatusPill');
+  const answerStatus=document.getElementById('answerStatusPill');
+  const blankStatus=document.getElementById('blankStatusPill');
+  const shortcutStatus=document.getElementById('shortcutStatusPill');
+  const hintText=document.getElementById('questionHintText');
+  const nextBlankButton=document.getElementById('nextBlankBtn');
+  const centerButton=document.getElementById('centerStageBtn');
+  const clearAnswerButton=document.getElementById('clearAnswerBtn');
+  const blankCount=getBlankQuestionCount();
+  const currentAnswer=String(P.answers[P.curQ]||'').trim();
+  const toolMeta=getToolStatusMeta();
+  const lastOption=P.OPTS[P.OPTS.length-1]||'D';
+
+  if(toolStatus){
+    toolStatus.className=`status-pill ${toolMeta.tone}`;
+    toolStatus.innerHTML=`<span>${toolMeta.icon}</span><strong>${toolMeta.label}</strong><span>${toolMeta.detail}</span>`;
+  }
+  if(answerStatus){
+    answerStatus.className=`status-pill ${currentAnswer?'is-success':'is-warning'}`;
+    answerStatus.innerHTML=currentAnswer
+      ? `<span>✅</span><strong>Bu soruda cevabın ${currentAnswer}</strong><span>Aynı şıkka tekrar tıklayarak cevabı kaldırabilirsin.</span>`
+      : `<span>⭕</span><strong>Bu soru şu an boş</strong><span>Şıkları tıklayabilir veya klavyeden A-${lastOption} ile işaretleyebilirsin.</span>`;
+  }
+  if(blankStatus){
+    blankStatus.className=`status-pill ${blankCount?'is-warning':'is-success'}`;
+    blankStatus.innerHTML=blankCount
+      ? `<span>🧭</span><strong>${blankCount} boş soru kaldı</strong><span>İstersen tek tuşla sıradaki boş soruya gidebilirsin.</span>`
+      : '<span>🎉</span><strong>Tüm sorular işaretlendi</strong><span>Son kontrolden sonra sınavı güvenle bitirebilirsin.</span>';
+  }
+  if(shortcutStatus){
+    shortcutStatus.innerHTML=`<span>⌨️</span><strong>Kısayollar</strong><span>A-${lastOption} şık · ← → geçiş · K / S / L araç · + / - zoom · G boş soru</span>`;
+  }
+  if(hintText){
+    hintText.textContent=toolMeta.detail;
+  }
+  if(nextBlankButton) nextBlankButton.disabled=!blankCount;
+  if(centerButton) centerButton.disabled=!hasPanOffset();
+  if(clearAnswerButton) clearAnswerButton.disabled=!currentAnswer;
+}
+
+function syncDrawingToolbar(){
+  document.querySelectorAll('[data-draw-tool]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.drawTool===P.drawingTool);
+  });
+  document.querySelectorAll('[data-draw-color]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.drawColor===P.brushColor);
+  });
+  const sizeInput=document.getElementById('brushSize');
+  const sizeValue=document.getElementById('brushSizeValue');
+  if(sizeInput) sizeInput.value=String(P.brushSize);
+  if(sizeValue) sizeValue.textContent=`${P.brushSize}px`;
+  const zoomInput=document.getElementById('zoomRange');
+  const zoomValue=document.getElementById('zoomValue');
+  if(zoomInput) zoomInput.value=String(P.questionZoom);
+  if(zoomValue) zoomValue.textContent=`%${P.questionZoom}`;
+  const stage=document.getElementById('mediaStage');
+  if(stage){
+    stage.classList.remove('mode-pencil','mode-eraser','mode-select');
+    stage.classList.add(`mode-${P.drawingTool}`);
+    stage.classList.toggle('can-pan',P.drawingTool==='select'&&P.questionZoom>100);
+    stage.style.setProperty('--question-zoom',String((P.questionZoom||100)/100));
+    stage.style.setProperty('--question-pan-x',`${P.questionPanX||0}px`);
+    stage.style.setProperty('--question-pan-y',`${P.questionPanY||0}px`);
+  }
+  renderQuestionStatus();
+}
+
+function getQuestionPanLimits(){
+  const workspace=document.getElementById('stageWorkspace');
+  const img=document.getElementById('qImg');
+  if(!workspace||!img) return{maxX:0,maxY:0};
+  const workspaceWidth=workspace.clientWidth||0;
+  const workspaceHeight=workspace.clientHeight||0;
+  const baseWidth=img.offsetWidth||0;
+  const baseHeight=img.offsetHeight||0;
+  const scale=(P.questionZoom||100)/100;
+  if(!workspaceWidth||!workspaceHeight||!baseWidth||!baseHeight||scale<=1){
+    return{maxX:0,maxY:0};
+  }
+  return{
+    maxX:Math.max(0,(baseWidth*scale-workspaceWidth)/2),
+    maxY:Math.max(0,(baseHeight*scale-workspaceHeight)/2)
+  };
+}
+
+function clampQuestionPan(){
+  const limits=getQuestionPanLimits();
+  P.questionPanX=Math.max(-limits.maxX,Math.min(limits.maxX,P.questionPanX||0));
+  P.questionPanY=Math.max(-limits.maxY,Math.min(limits.maxY,P.questionPanY||0));
+}
+
+function updateQuestionTransform(){
+  clampQuestionPan();
+  syncDrawingToolbar();
+}
+
+function drawStoredStroke(ctx,stroke,width,height){
+  if(!stroke?.points?.length) return;
+  const points=stroke.points.map(point=>({x:point.x*width,y:point.y*height}));
+  ctx.save();
+  ctx.lineJoin='round';
+  ctx.lineCap='round';
+  ctx.lineWidth=stroke.size;
+  if(stroke.tool==='eraser'){
+    ctx.globalCompositeOperation='destination-out';
+    ctx.strokeStyle='rgba(0,0,0,1)';
+    ctx.fillStyle='rgba(0,0,0,1)';
+  }else{
+    ctx.globalCompositeOperation='source-over';
+    ctx.strokeStyle=stroke.color;
+    ctx.fillStyle=stroke.color;
+  }
+  if(points.length===1){
+    ctx.beginPath();
+    ctx.arc(points[0].x,points[0].y,Math.max(stroke.size/2,1),0,Math.PI*2);
+    ctx.fill();
+  }else{
+    ctx.beginPath();
+    ctx.moveTo(points[0].x,points[0].y);
+    for(let i=1;i<points.length;i++) ctx.lineTo(points[i].x,points[i].y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function redrawDrawingCanvas(){
+  const canvas=document.getElementById('drawCanvas');
+  if(!canvas) return;
+  const width=parseFloat(canvas.style.width)||0;
+  const height=parseFloat(canvas.style.height)||0;
+  if(!width||!height) return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const drawing=getQuestionDrawing();
+  drawing.strokes.forEach(stroke=>drawStoredStroke(ctx,stroke,width,height));
+}
+
+function syncDrawingSurface(){
+  const workspace=document.getElementById('stageWorkspace');
+  const canvas=document.getElementById('drawCanvas');
+  if(!workspace||!canvas) return;
+  const rect=workspace.getBoundingClientRect();
+  if(!rect.width||!rect.height) return;
+  const dpr=window.devicePixelRatio||1;
+  canvas.style.left='0px';
+  canvas.style.top='0px';
+  canvas.style.width=`${rect.width}px`;
+  canvas.style.height=`${rect.height}px`;
+  canvas.width=Math.round(rect.width*dpr);
+  canvas.height=Math.round(rect.height*dpr);
+  clampQuestionPan();
+  syncDrawingToolbar();
+  redrawDrawingCanvas();
+}
+
+function getCanvasPoint(event){
+  const canvas=document.getElementById('drawCanvas');
+  if(!canvas) return null;
+  const rect=canvas.getBoundingClientRect();
+  const clientX=event.clientX;
+  const clientY=event.clientY;
+  if(clientX==null||clientY==null) return null;
+  if(clientX<rect.left||clientX>rect.right||clientY<rect.top||clientY>rect.bottom) return null;
+  return{
+    x:clientX-rect.left,
+    y:clientY-rect.top,
+    width:rect.width,
+    height:rect.height
+  };
+}
+
+function beginStageGesture(event){
+  const stage=document.getElementById('mediaStage');
+  if(P.drawingTool==='select'){
+    if(P.questionZoom<=100) return;
+    P.stageGesture={
+      pointerId:event.pointerId,
+      tool:'select',
+      moved:false,
+      originX:event.clientX,
+      originY:event.clientY,
+      startPanX:P.questionPanX,
+      startPanY:P.questionPanY
+    };
+    stage?.classList.add('is-dragging');
+    stage?.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+    return;
+  }
+  const point=getCanvasPoint(event);
+  if(!point) return;
+  P.stageGesture={pointerId:event.pointerId,tool:P.drawingTool,moved:false,stroke:null};
+  const stroke={
+    tool:P.drawingTool,
+    color:P.brushColor,
+    size:P.brushSize,
+    points:[{x:point.x/point.width,y:point.y/point.height}]
+  };
+  P.stageGesture.stroke=stroke;
+  getQuestionDrawing().strokes.push(stroke);
+  redrawDrawingCanvas();
+  P.ignoreStageClick=false;
+  stage?.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
+}
+
+function moveStageGesture(event){
+  if(!P.stageGesture||P.stageGesture.pointerId!==event.pointerId) return;
+  if(P.stageGesture.tool==='select'){
+    const dx=event.clientX-P.stageGesture.originX;
+    const dy=event.clientY-P.stageGesture.originY;
+    if(!P.stageGesture.moved) P.stageGesture.moved=Math.hypot(dx,dy)>2;
+    P.questionPanX=P.stageGesture.startPanX+dx;
+    P.questionPanY=P.stageGesture.startPanY+dy;
+    updateQuestionTransform();
+    event.preventDefault();
+    return;
+  }
+  const point=getCanvasPoint(event);
+  if(!point) return;
+  const stroke=P.stageGesture.stroke;
+  const nextPoint={x:point.x/point.width,y:point.y/point.height};
+  const lastPoint=stroke.points[stroke.points.length-1];
+  if(!P.stageGesture.moved){
+    const dx=(nextPoint.x-lastPoint.x)*point.width;
+    const dy=(nextPoint.y-lastPoint.y)*point.height;
+    P.stageGesture.moved=Math.hypot(dx,dy)>3;
+  }
+  stroke.points.push(nextPoint);
+  redrawDrawingCanvas();
+  event.preventDefault();
+}
+
+function finishStageGesture(event){
+  if(!P.stageGesture||P.stageGesture.pointerId!==event.pointerId) return;
+  const stage=document.getElementById('mediaStage');
+  if(P.stageGesture.tool==='select'){
+    stage?.classList.remove('is-dragging');
+    clampQuestionPan();
+    syncDrawingToolbar();
+    P.stageGesture=null;
+    return;
+  }
+  const { stroke, moved, tool }=P.stageGesture;
+  if(stroke&&!moved){
+    const drawing=getQuestionDrawing();
+    if(drawing.strokes[drawing.strokes.length-1]===stroke){
+      drawing.strokes.pop();
+      redrawDrawingCanvas();
+    }
+  }else if(tool!=='select'&&moved){
+    P.ignoreStageClick=true;
+  }
+  stage?.classList.remove('is-dragging');
+  P.stageGesture=null;
+}
+
+function setLightboxScale(value){
+  P.lightbox.scale=Math.max(1,Math.min(4.5,value));
+  if(P.lightbox.scale===1){
+    P.lightbox.x=0;
+    P.lightbox.y=0;
+  }
+  const img=document.getElementById('lightboxImg');
+  const scaleLabel=document.getElementById('lightboxScale');
+  if(img) img.style.transform=`translate(${P.lightbox.x}px, ${P.lightbox.y}px) scale(${P.lightbox.scale})`;
+  if(scaleLabel) scaleLabel.textContent=`${Math.round(P.lightbox.scale*100)}%`;
+}
+
+function getTouchDistance(touches){
+  if(touches.length<2) return 0;
+  const dx=touches[0].clientX-touches[1].clientX;
+  const dy=touches[0].clientY-touches[1].clientY;
+  return Math.hypot(dx,dy);
+}
+
+function isTypingTarget(target){
+  if(!target) return false;
+  const tag=target.tagName;
+  return target.isContentEditable||tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
+}
+
+function isExamScreenVisible(){
+  return document.getElementById('screenExam')?.style.display==='flex';
+}
+
+function handleExamKeydown(event){
+  const lightbox=document.getElementById('imageLightbox');
+  const lightboxOpen=!!lightbox&&lightbox.classList.contains('open');
+  const finishModal=document.getElementById('finishModal1')||document.getElementById('finishModal2');
+  const genericModal=!finishModal?document.querySelector('.modal-overlay'):null;
+  const drawer=document.getElementById('opticDrawer');
+
+  if(event.key==='Escape'){
+    if(lightboxOpen){
+      window.closeImageLightbox?.();
+      event.preventDefault();
+      return;
+    }
+    if(finishModal){
+      closeFinishModals();
+      event.preventDefault();
+      return;
+    }
+    if(genericModal){
+      genericModal.remove();
+      event.preventDefault();
+      return;
+    }
+    if(drawer?.classList.contains('open')){
+      window.toggleDrawer?.();
+      event.preventDefault();
+      return;
+    }
+  }
+
+  if(!isExamScreenVisible()||lightboxOpen||finishModal||genericModal) return;
+  if(event.metaKey||event.ctrlKey||event.altKey||isTypingTarget(event.target)) return;
+
+  const key=event.key;
+  const upper=key.length===1?key.toUpperCase():key;
+
+  if(key==='ArrowLeft'){
+    window.prevQ?.();
+    event.preventDefault();
+    return;
+  }
+  if(key==='ArrowRight'){
+    window.nextQ?.();
+    event.preventDefault();
+    return;
+  }
+  if(key==='Delete'||key==='Backspace'){
+    window.clearCurrentAnswer?.();
+    event.preventDefault();
+    return;
+  }
+  if(key==='+'||key==='='){
+    window.setQuestionZoom?.((P.questionZoom||100)+10);
+    event.preventDefault();
+    return;
+  }
+  if(key==='-'||key==='_'){
+    window.setQuestionZoom?.((P.questionZoom||100)-10);
+    event.preventDefault();
+    return;
+  }
+  if(key==='0'){
+    window.resetQuestionZoom?.();
+    event.preventDefault();
+    return;
+  }
+  if(upper==='K'){
+    window.setDrawTool?.('pencil');
+    event.preventDefault();
+    return;
+  }
+  if(upper==='S'){
+    window.setDrawTool?.('select');
+    event.preventDefault();
+    return;
+  }
+  if(upper==='L'){
+    window.setDrawTool?.('eraser');
+    event.preventDefault();
+    return;
+  }
+  if(upper==='G'){
+    window.goToNextBlankQuestion?.();
+    event.preventDefault();
+    return;
+  }
+  if(P.OPTS.includes(upper)){
+    window.pickAns?.(upper);
+    event.preventDefault();
+  }
+}
+
+function bindExamInteractions(){
+  if(P.uiBound) return;
+  P.uiBound=true;
+  const stage=document.getElementById('mediaStage');
+  const img=document.getElementById('qImg');
+  const lightbox=document.getElementById('imageLightbox');
+  const lightboxStage=document.getElementById('lightboxStage');
+
+  stage.addEventListener('pointerdown',beginStageGesture);
+  stage.addEventListener('pointermove',moveStageGesture);
+  stage.addEventListener('pointerup',finishStageGesture);
+  stage.addEventListener('pointercancel',finishStageGesture);
+  img.addEventListener('load',()=>requestAnimationFrame(syncDrawingSurface));
+  window.addEventListener('resize',()=>requestAnimationFrame(syncDrawingSurface));
+  document.addEventListener('keydown',handleExamKeydown);
+
+  lightbox.addEventListener('click',event=>{
+    if(event.target===lightbox||event.target===lightboxStage) closeImageLightbox();
+  });
+  lightboxStage.addEventListener('wheel',event=>{
+    event.preventDefault();
+    zoomLightbox(event.deltaY<0?0.2:-0.2);
+  },{ passive:false });
+  lightboxStage.addEventListener('mousedown',event=>{
+    if(P.lightbox.scale<=1||event.button!==0) return;
+    P.lightbox.dragging=true;
+    P.lightbox.dragOriginX=event.clientX-P.lightbox.x;
+    P.lightbox.dragOriginY=event.clientY-P.lightbox.y;
+    lightboxStage.classList.add('dragging');
+  });
+  window.addEventListener('mousemove',event=>{
+    if(!P.lightbox.dragging) return;
+    P.lightbox.x=event.clientX-P.lightbox.dragOriginX;
+    P.lightbox.y=event.clientY-P.lightbox.dragOriginY;
+    setLightboxScale(P.lightbox.scale);
+  });
+  window.addEventListener('mouseup',()=>{
+    P.lightbox.dragging=false;
+    lightboxStage.classList.remove('dragging');
+  });
+  lightboxStage.addEventListener('touchstart',event=>{
+    if(event.touches.length===2){
+      P.lightbox.pinchDistance=getTouchDistance(event.touches);
+      P.lightbox.startScale=P.lightbox.scale;
+      P.lightbox.dragging=false;
+    }else if(event.touches.length===1&&P.lightbox.scale>1){
+      P.lightbox.dragging=true;
+      P.lightbox.dragOriginX=event.touches[0].clientX-P.lightbox.x;
+      P.lightbox.dragOriginY=event.touches[0].clientY-P.lightbox.y;
+    }
+  },{ passive:false });
+  lightboxStage.addEventListener('touchmove',event=>{
+    if(event.touches.length===2){
+      const distance=getTouchDistance(event.touches);
+      if(P.lightbox.pinchDistance){
+        setLightboxScale(P.lightbox.startScale*(distance/P.lightbox.pinchDistance));
+      }
+      event.preventDefault();
+      return;
+    }
+    if(event.touches.length===1&&P.lightbox.dragging&&P.lightbox.scale>1){
+      P.lightbox.x=event.touches[0].clientX-P.lightbox.dragOriginX;
+      P.lightbox.y=event.touches[0].clientY-P.lightbox.dragOriginY;
+      setLightboxScale(P.lightbox.scale);
+      event.preventDefault();
+    }
+  },{ passive:false });
+  lightboxStage.addEventListener('touchend',event=>{
+    if(event.touches.length<2) P.lightbox.pinchDistance=0;
+    if(event.touches.length===0) P.lightbox.dragging=false;
+  });
+}
+
 function showScreen(id){
+  if(id!=='screenExam') closeImageLightbox(true);
   ['screenLoad','screenWarn','screenExam','screenTimeout','screenKarne'].forEach(s=>{
     const el=document.getElementById(s);
     el.style.display='none';
@@ -410,43 +1579,27 @@ function showScreen(id){
 
 // ===== LOAD =====
 async function init(){
+  if(isAdminKarneMode()){
+    await openAdminKarne();
+    return;
+  }
   const student=JSON.parse(sessionStorage.getItem('sinav_student')||'null');
-  const examId=new URLSearchParams(window.location.search).get('examId')||sessionStorage.getItem('sinav_examId');
+  const examId=getSearchParams().get('examId')||sessionStorage.getItem('sinav_examId');
   if(!student||!examId){window.location.href='index.html';return;}
   P.student=student;
   try{
     document.getElementById('loadTxt').textContent='Sınav soruları yükleniyor...';
-    // Load exam (single doc, no index needed)
-    const examSnap = await getDoc(doc(db, "exams", examId));
-    if (!examSnap.exists()) {
-      toast("Sınav bulunamadı", "error");
-      setTimeout(() => (window.location.href = "index.html"), 2000);
+    const bundle=await loadExamBundle(examId);
+    if(!bundle||!bundle.exam){
+      showLoadError('Sınav bulunamadı','Bu sınava ait kayıt yüklenemedi. Ana sınav sayfasına dönüp yeniden deneyebilirsin.');
       return;
     }
-    P.exam = { id: examSnap.id, ...examSnap.data() };
-
-    // Load questions
-    let qsnap;
-    try {
-      qsnap = await getDocs(
-        query(
-          collection(db, "questions"),
-          where("examId", "==", examId),
-          orderBy("order", "asc")
-        )
-      );
-      P.questions = qsnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    } catch (e) {
-      // Composite index may be missing; fallback to unordered fetch + JS sort
-      const fallbackSnap = await getDocs(
-        query(collection(db, "questions"), where("examId", "==", examId))
-      );
-      P.questions = fallbackSnap.docs
-        .map((d) => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    P.exam=bundle.exam;
+    P.questions=bundle.questions;
+    if(!P.questions.length){
+      showLoadError('Soru bulunamadı','Bu sınav için henüz soru yüklenmemiş görünüyor. Lütfen daha sonra tekrar deneyin veya sınav sayfasına dönün.');
+      return;
     }
-
-    if(!P.questions.length){toast('Bu sınavda soru bulunamadı','error');setTimeout(()=>window.location.href='index.html',2000);return;}
     const oc=P.exam.optionCount||4;
     P.OPTS=['A','B','C','D','E','F'].slice(0,oc);
     P.timeLeft=P.exam.duration>0?P.exam.duration*60:0;
@@ -454,14 +1607,14 @@ async function init(){
     showScreen('screenWarn');
   }catch(e){
     console.error(e);
-    document.getElementById('loadTxt').textContent='Hata oluştu, lütfen geri dönün.';
-    setTimeout(()=>window.location.href='index.html',3000);
+    showLoadError('Sınav yüklenemedi','İnternet bağlantısı kısa süreli kesilmiş olabilir. Aşağıdaki düğmeyle yeniden deneyebilir veya sınav sayfasına dönebilirsin.');
   }
 }
 
 // ===== WARNING =====
 function renderWarning(){
   const ex=P.exam,st=P.student;
+  const lastOption=P.OPTS[P.OPTS.length-1]||'D';
   document.getElementById('warnTitle').textContent=ex.title;
   document.getElementById('warnSub').textContent=`${st.firstName} ${st.lastName} — ${st.grade}. Sınıf ${st.sube} Şubesi`;
   document.getElementById('warnMeta').innerHTML=`
@@ -471,17 +1624,21 @@ function renderWarning(){
     <div class="wm-item">🔡 ${P.OPTS.length} Şık</div>`;
   if(ex.negativeMarking) document.getElementById('warnNeg').style.display='flex';
   document.getElementById('warnTimeRule').textContent= ex.duration > 0 ? `Sınav süresi ${ex.duration} dakikadır. Süre dolduğunda sınav otomatik sonlanır.` : 'Bu sınavda süre sınırı bulunmamaktadır.';
+  document.getElementById('warnShortcutAnswers').textContent=`Klavye ile A-${lastOption} arası tuşlarla cevap işaretleyebilirsin. Aynı şıkkı tekrar seçerek işareti kaldırabilir, Delete veya Backspace ile mevcut cevabı temizleyebilirsin.`;
 }
 
 window.beginExam=function(){renderExamUI();showScreen('screenExam');startTimer();};
 
 // ===== EXAM UI =====
 function renderExamUI(){
+  restoreDrawingPrefs();
+  bindExamInteractions();
   const ex=P.exam,g=P.student.grade;
   const gc=GC[g]||GC[5];
   const badge=document.getElementById('topGradeBadge');
   badge.textContent=`${g}. Sınıf — ${ex.subject}`;badge.style.background=gc.bg;
   document.getElementById('topTitle').textContent=ex.title;
+  syncDrawingToolbar();
   renderQuestion(0);
   renderOptic();
 }
@@ -490,12 +1647,24 @@ function renderQuestion(i){
   const qs=P.questions;
   if(i<0||i>=qs.length)return;
   P.curQ=i;
+  P.questionPanX=0;
+  P.questionPanY=0;
   const q=qs[i];const curAns=P.answers[i];
   document.getElementById('qNum').textContent=`Soru ${i+1} / ${qs.length}`;
+  const sectionBanner=document.getElementById('questionSectionBanner');
+  const sectionTitle=getQuestionSectionTitle(q,i);
+  if(sectionTitle){
+    sectionBanner.style.display='inline-flex';
+    sectionBanner.innerHTML=`<span class="section-kicker">Ders</span><span>${escHtml(sectionTitle)}</span>`;
+  }else{
+    sectionBanner.style.display='none';
+    sectionBanner.innerHTML='';
+  }
   const img=document.getElementById('qImg');
   img.src=q.imageUrl||q.imageData||'';
+  img.alt=`${i+1}. soru görseli`;
   document.getElementById('examAnswers').innerHTML=P.OPTS.map(opt=>`
-    <button class="ans-btn ${curAns===opt?'selected':''}" onclick="pickAns('${opt}')">
+    <button class="ans-btn ${curAns===opt?'selected':''}" onclick="pickAns('${opt}')" title="${opt} şıkkı (${opt} tuşu)">
       <div class="ans-circle">${opt}</div>${opt} şıkkı
     </button>`).join('');
   document.getElementById('qProg').textContent=`${i+1} / ${qs.length}`;
@@ -503,6 +1672,8 @@ function renderQuestion(i){
   document.getElementById('btnNext').disabled=i===qs.length-1;
   // Update optic current row
   document.querySelectorAll('.op-row').forEach((r,j)=>r.classList.toggle('cur',j===i));
+  syncDrawingToolbar();
+  if(img.complete) requestAnimationFrame(syncDrawingSurface);
   updateOpticStats();
 }
 
@@ -527,6 +1698,7 @@ function updateOpticStats(){
   document.getElementById('opStatCevap').textContent=ans;
   document.getElementById('opStatBos').textContent=n-ans;
   document.getElementById('fabCount').textContent=`${ans}/${n}`;
+  renderQuestionStatus();
 }
 
 function renderMobileDrawer(){
@@ -543,21 +1715,11 @@ function renderMobileDrawer(){
 }
 
 window.pickAns=function(opt){
-  P.answers[P.curQ]=opt;
-  document.querySelectorAll('.ans-btn').forEach((b,i)=>b.classList.toggle('selected',P.OPTS[i]===opt));
-  updateOpticRow(P.curQ);
-  updateOpticStats();
-  renderMobileDrawer();
+  setAnswerForQuestion(P.curQ,opt);
 };
 
 window.opticPick=function(qi,opt){
-  P.answers[qi]=opt;
-  updateOpticRow(qi);
-  updateOpticStats();
-  renderMobileDrawer();
-  if(qi===P.curQ){
-    document.querySelectorAll('.ans-btn').forEach((b,i)=>b.classList.toggle('selected',P.OPTS[i]===opt));
-  }
+  setAnswerForQuestion(qi,opt);
 };
 
 function updateOpticRow(qi){
@@ -571,6 +1733,140 @@ function updateOpticRow(qi){
 window.goQ=function(i){renderQuestion(i);};
 window.prevQ=function(){if(P.curQ>0)renderQuestion(P.curQ-1);};
 window.nextQ=function(){if(P.curQ<P.questions.length-1)renderQuestion(P.curQ+1);};
+
+window.setDrawTool=function(tool){
+  P.drawingTool=tool;
+  persistDrawingPrefs();
+  syncDrawingToolbar();
+};
+
+window.setDrawColor=function(color){
+  P.brushColor=color;
+  persistDrawingPrefs();
+  syncDrawingToolbar();
+};
+
+window.setBrushSize=function(size){
+  P.brushSize=parseInt(size,10)||3;
+  persistDrawingPrefs();
+  syncDrawingToolbar();
+};
+
+window.setQuestionZoom=function(value){
+  P.questionZoom=Math.max(80,Math.min(220,parseInt(value,10)||100));
+  if(P.questionZoom<=100){
+    P.questionPanX=0;
+    P.questionPanY=0;
+  }
+  updateQuestionTransform();
+  requestAnimationFrame(syncDrawingSurface);
+};
+
+window.resetQuestionZoom=function(){
+  P.questionZoom=100;
+  P.questionPanX=0;
+  P.questionPanY=0;
+  updateQuestionTransform();
+  requestAnimationFrame(syncDrawingSurface);
+};
+
+window.centerQuestionStage=function(){
+  if(P.questionZoom===100&&!hasPanOffset()) return;
+  P.questionPanX=0;
+  P.questionPanY=0;
+  updateQuestionTransform();
+  requestAnimationFrame(syncDrawingSurface);
+};
+
+window.clearCurrentAnswer=function(){
+  if(!P.answers[P.curQ]){
+    toast('Bu soruda kaldırılacak bir cevap bulunmuyor.','error');
+    return;
+  }
+  setAnswerForQuestion(P.curQ,'',{allowToggle:false});
+  toast('Bu sorudaki cevap temizlendi.');
+};
+
+window.goToNextBlankQuestion=function(){
+  const blankCount=getBlankQuestionCount();
+  if(!blankCount){
+    toast('Tüm sorular zaten cevaplanmış görünüyor.');
+    return;
+  }
+  const nextIndex=findNextBlankQuestionIndex(P.curQ);
+  if(nextIndex<0){
+    toast('Boş soru bulunamadı.','error');
+    return;
+  }
+  if(nextIndex===P.curQ&&!P.answers[P.curQ]){
+    toast('Şu anda boş bıraktığın sorunun üzerindesin.');
+    return;
+  }
+  renderQuestion(nextIndex);
+  toast(`${nextIndex+1}. boş soruya geçildi.`);
+};
+
+function applyTheme(theme){
+  const nextTheme=theme==='dark'?'dark':'light';
+  document.body.classList.toggle('theme-dark',nextTheme==='dark');
+  try{
+    localStorage.setItem(EXAM_THEME_STORAGE_KEY,nextTheme);
+  }catch(error){}
+  const toggle=document.getElementById('themeToggle');
+  if(toggle){
+    toggle.innerHTML=nextTheme==='dark'
+      ? '<span>☀️</span><span>Aydınlık</span>'
+      : '<span>🌙</span><span>Karanlık</span>';
+  }
+}
+
+window.toggleTheme=function(){
+  applyTheme(document.body.classList.contains('theme-dark')?'light':'dark');
+};
+
+window.clearCurrentDrawing=function(){
+  const drawing=getQuestionDrawing();
+  if(!drawing.strokes.length){
+    toast('Bu soru için silinecek çizim bulunmuyor.','error');
+    return;
+  }
+  drawing.strokes=[];
+  redrawDrawingCanvas();
+  toast('Bu sorudaki çizimler temizlendi.');
+};
+
+window.openImageLightbox=function(){
+  const src=document.getElementById('qImg')?.src;
+  if(!src) return;
+  const lightbox=document.getElementById('imageLightbox');
+  document.getElementById('lightboxImg').src=src;
+  resetLightbox();
+  lightbox.classList.add('open');
+  lightbox.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+};
+
+window.closeImageLightbox=function(silent=false){
+  const lightbox=document.getElementById('imageLightbox');
+  if(!lightbox) return;
+  lightbox.classList.remove('open');
+  lightbox.setAttribute('aria-hidden','true');
+  P.lightbox.dragging=false;
+  P.lightbox.pinchDistance=0;
+  document.getElementById('lightboxStage')?.classList.remove('dragging');
+  document.body.style.overflow='';
+  if(!silent) document.getElementById('lightboxImg').src='';
+};
+
+window.resetLightbox=function(){
+  P.lightbox.x=0;
+  P.lightbox.y=0;
+  setLightboxScale(1);
+};
+
+window.zoomLightbox=function(delta){
+  setLightboxScale(P.lightbox.scale+delta);
+};
 
 window.toggleDrawer=function(){
   const d=document.getElementById('opticDrawer');
@@ -615,39 +1911,49 @@ function timeUp(){
 
 // ===== FINISH =====
 window.showFinishConfirm=function(){
-  const n=P.questions.length,ans=Object.keys(P.answers).length,blank=n-ans;
-  const blankList=[];
-  for(let i=0;i<n;i++)if(!P.answers[i])blankList.push(i+1);
-  const mins=Math.floor(P.timeLeft/60),secs=P.timeLeft%60;
-  const timeStr=P.exam.duration>0?`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`:'—';
-  
+  closeFinishModals();
+  const summary=getFinishSummary();
+  const blankPreview=summary.blankList.length<=12?summary.blankList.join(', '):`${summary.blankList.slice(0,12).join(', ')} ...`;
   const el=document.createElement('div');el.className='modal-overlay';el.id='finishModal1';
   el.innerHTML=`<div class="modal-box">
-    <h3>⚠️ Sınavı Bitir</h3>
-    <p>Sınavı bitirmek istediğinden emin misin?</p>
-    ${P.exam.duration>0?`<p style="margin-top:8px">⏱ Kalan süre: <strong>${timeStr}</strong></p>`:''}
-    ${blank>0?`<p class="modal-warn">⭕ ${blank} soru boş bırakıldı${blankList.length<=10?' ('+blankList.join(', ')+')':`— Sorular: ${blankList.join(', ')}`}</p>`:'<p style="color:var(--green);font-weight:700;margin-top:8px">✅ Tüm sorular cevaplandı</p>'}
+    <h3>🧠 Son Kontrolünü Yap</h3>
+    <p>Sınavı hemen bitirmek yerine cevaplarını ve boş bıraktığın soruları yeniden kontrol etmek, sınav başarını yükseltmek için çok önemlidir.</p>
+    <div class="modal-metrics">
+      <div class="metric-chip"><strong>${summary.blank}</strong><span>Boş Soru</span></div>
+      <div class="metric-chip"><strong>${summary.answered}</strong><span>Cevaplanan</span></div>
+      <div class="metric-chip"><strong>${summary.timeText}</strong><span>Kalan Süre</span></div>
+    </div>
+    ${summary.blank>0?`<p class="modal-warn">⭕ ${summary.blank} soru hâlâ boş görünüyor${blankPreview?` (${blankPreview})`:''}</p>`:'<p class="modal-good">✅ Tüm sorular cevaplandı. İstersen son kez gözden geçirip sonra bitirebilirsin.</p>'}
+    <div class="modal-note"><strong>Öneri:</strong> Kalan süreyi kullanarak işaretlemelerini tekrar kontrol etmen, boş soruları gözden geçirmen ve dikkat hatalarını fark etmen sınav başarın için faydalı olur.</div>
     <div class="modal-btns">
-      <button class="btn btn-outline" onclick="document.getElementById('finishModal1').remove()">← Sınava Dön</button>
-      <button class="btn btn-red" onclick="document.getElementById('finishModal1').remove();showFinishConfirm2()">Devam Et</button>
+      <button class="btn btn-outline" onclick="closeFinishModals()">Vazgeç</button>
+      <button class="btn btn-red" onclick="showFinishFinalConfirm()">Bitir</button>
     </div>
   </div>`;
   document.body.appendChild(el);
-  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  el.addEventListener('click',e=>{if(e.target===el)closeFinishModals();});
 };
 
-window.showFinishConfirm2=function(){
+window.showFinishFinalConfirm=function(){
+  const summary=getFinishSummary();
+  document.getElementById('finishModal1')?.remove();
   const el=document.createElement('div');el.className='modal-overlay';el.id='finishModal2';
   el.innerHTML=`<div class="modal-box">
-    <h3>🔴 Emin misin?</h3>
-    <p>Sınavı bitirmek istediğinden gerçekten emin misin?<br>Bu işlem geri alınamaz.</p>
+    <h3>⚠️ Sınavınız Bitiriliyor</h3>
+    <p>Sınavın bitirildiğinde cevapların kaydedilecek ve sonuç ekranına geçilecektir. Bitirme konusunda emin misin?</p>
+    <div class="modal-metrics">
+      <div class="metric-chip"><strong>${summary.total}</strong><span>Toplam Soru</span></div>
+      <div class="metric-chip"><strong>${summary.blank}</strong><span>Boş Kalan</span></div>
+      <div class="metric-chip"><strong>${summary.timeText}</strong><span>Kalan Süre</span></div>
+    </div>
+    <div class="modal-note"><strong>Son karar:</strong> Bu adımdan sonra sınav ekranına geri dönülmez ve doğrudan sonuç sayfası açılır.</div>
     <div class="modal-btns">
-      <button class="btn btn-outline" onclick="document.getElementById('finishModal2').remove()">← Sınava Dön</button>
-      <button class="btn btn-red" onclick="document.getElementById('finishModal2').remove();finishExam()">Sınavı Bitir ✓</button>
+      <button class="btn btn-outline" onclick="closeFinishModals()">Vazgeç</button>
+      <button class="btn btn-red" onclick="closeFinishModals();finishExam()">Bitir</button>
     </div>
   </div>`;
   document.body.appendChild(el);
-  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  el.addEventListener('click',e=>{if(e.target===el)closeFinishModals();});
 };
 
 window.showKarne=function(){renderKarne();showScreen('screenKarne');};
@@ -656,13 +1962,27 @@ function calcResult(){
   clearInterval(P.timer);
   const qs=P.questions,ans=P.answers;
   let correct=0,wrong=0,blank=0;
-  qs.forEach((q,i)=>{const a=ans[i];if(!a)blank++;else if(a===q.correctAnswer)correct++;else wrong++;});
+  const studentKey=buildStudentKey(P.student);
+  const answerDetails=qs.map((q,i)=>{
+    const a=ans[i];
+    const sectionTitle=getQuestionSectionDisplay(q,i,P.exam.subject,P.exam.questionSections);
+    if(!a){
+      blank++;
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
+    }
+    if(a===q.correctAnswer){
+      correct++;
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
+    }
+    wrong++;
+    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
+  });
   let netCorrect=correct;
   if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
   const total=qs.length;
   const score=Math.round(netCorrect/total*100);
   const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
-  P.result={firstName:P.student.firstName,lastName:P.student.lastName,grade:P.student.grade,sube:P.student.sube,subject:P.exam.subject,examTitle:P.exam.title,examId:P.exam.id,correct,wrong,blank,netCorrect,score,total,negativeMarking:P.exam.negativeMarking,answers:{...ans},elapsed,date:new Date().toLocaleDateString('tr-TR'),questions:qs};
+  P.result={firstName:P.student.firstName,lastName:P.student.lastName,grade:P.student.grade,sube:P.student.sube,studentKey,subject:P.exam.subject,examTitle:P.exam.title,examId:P.exam.id,correct,wrong,blank,netCorrect,score,total,negativeMarking:P.exam.negativeMarking,answers:{...ans},answerDetails,questionSections:Array.isArray(P.exam.questionSections)?P.exam.questionSections:[],elapsed,date:new Date().toLocaleDateString('tr-TR'),questions:qs};
   return P.result;
 }
 
@@ -672,11 +1992,13 @@ window.finishExam=function(){
   
   // Veritabanına kaydet
   addDoc(collection(db,'results'),{
-    firstName:r.firstName,lastName:r.lastName,grade:r.grade,sube:r.sube,
+    firstName:r.firstName,lastName:r.lastName,grade:r.grade,sube:r.sube,studentKey:r.studentKey,
     subject:r.subject,examTitle:r.examTitle,examId:r.examId,
     correct:r.correct,wrong:r.wrong,blank:r.blank,netCorrect:r.netCorrect,
     score:r.score,total:r.total,negativeMarking:r.negativeMarking||false,
-    elapsed:r.elapsed,date:serverTimestamp()
+    elapsed:r.elapsed,answerDetails:r.answerDetails||[],
+    questionSections:r.questionSections||[],
+    date:serverTimestamp()
   }).catch(()=>{});
   
   renderKarne();
@@ -687,6 +2009,23 @@ window.finishExam=function(){
 function renderKarne(){
   const r=P.result;if(!r)return;
   const g=r.grade,gc=GC[g]||GC[5];
+  const questionEntries=getResultQuestionEntries(r);
+  const scoreMeta=getScoreMeta(r.score);
+  const sectionSummary=buildSectionSummary(r);
+  const totalQuestions=r.total||questionEntries.length||0;
+  const completionRate=totalQuestions?Math.round(((totalQuestions-r.blank)/totalQuestions)*100):0;
+  const strongest=[...sectionSummary].sort((a,b)=>b.score-a.score||b.correct-a.correct)[0]||null;
+  const focus=[...sectionSummary].sort((a,b)=>a.score-b.score||b.blank-a.blank)[0]||null;
+  const backBtn=document.getElementById('karneBackBtn');
+  if(backBtn){
+    if(isAdminKarneMode()){
+      backBtn.textContent='← Sınav Paneli';
+      backBtn.onclick=()=>{window.location.href='admin.html';};
+    }else{
+      backBtn.textContent='← Ana Sayfa';
+      backBtn.onclick=()=>{window.location.href='index.html';};
+    }
+  }
   
   // Tarih
   document.getElementById('karneDate').textContent=r.date;
@@ -701,6 +2040,24 @@ function renderKarne(){
     <span class="km-item">📚 ${r.subject}</span>
     <span class="km-item">⏱ ${fmtElapsed(r.elapsed)}</span>
     ${r.negativeMarking?'<span class="km-item" style="background:#FEF2F2;color:var(--red)">⚠️ Puan Kesintili</span>':''}`;
+  document.getElementById('karneSpotlight').innerHTML=`
+    <div>
+      <div class="ksp-title">Genel Görünüm</div>
+      <div class="ksp-headline">${scoreMeta.headline}</div>
+      <div class="ksp-text">${escHtml(r.firstName)} için hazırlanan bu ayrıntılı karne; başarı yüzdesini, net durumunu, ders bazlı performansı ve soru inceleme alanlarını birlikte gösterir. ${strongest?`Bugünkü en güçlü alanı <strong>${escHtml(strongest.label)}</strong>.`:''} ${focus&&focus.score<strongest?.score?`Tekrar önceliği olarak <strong>${escHtml(focus.label)}</strong> bölümü öne çıkıyor.`:''}</div>
+    </div>
+    <div class="ksp-score-panel">
+      <div>
+        <span class="ksp-score-badge">${scoreMeta.icon} ${scoreMeta.label}</span>
+        <div class="ksp-score-value">%${r.score}</div>
+        <div class="ksp-score-sub">${totalQuestions} soruda ${r.correct} doğru, ${r.wrong} yanlış ve ${r.blank} boş ile sınav tamamlandı.</div>
+      </div>
+      <div class="ksp-mini-stats">
+        <div class="ks-mini"><strong>${r.netCorrect}</strong><span>Net</span></div>
+        <div class="ks-mini"><strong>%${completionRate}</strong><span>Tamamlama</span></div>
+        <div class="ks-mini"><strong>${sectionSummary.length}</strong><span>Bölüm</span></div>
+      </div>
+    </div>`;
   
   // İstatistikler
   const scoreColor=r.score>=70?'var(--green)':r.score>=50?'var(--yellow)':'var(--red)';
@@ -711,9 +2068,9 @@ function renderKarne(){
     <div class="ks-card"><div class="ks-n" style="color:${scoreColor}">${r.score}%</div><div class="ks-l">Başarı (%)</div></div>`;
   
   // İlerleme Barları
-  const dPct=Math.round(r.correct/r.total*100);
-  const yPct=Math.round(r.wrong/r.total*100);
-  const bPct=Math.round(r.blank/r.total*100);
+  const dPct=totalQuestions?Math.round(r.correct/totalQuestions*100):0;
+  const yPct=totalQuestions?Math.round(r.wrong/totalQuestions*100):0;
+  const bPct=totalQuestions?Math.round(r.blank/totalQuestions*100):0;
   document.getElementById('scoreBars').innerHTML=`
     <div class="sb-label"><span>✅ Doğru</span><span>${r.correct} soru (${dPct}%)</span></div>
     <div class="sb-track"><div class="sb-fill" style="width:${dPct}%;background:var(--green)"></div></div>
@@ -721,29 +2078,102 @@ function renderKarne(){
     <div class="sb-track"><div class="sb-fill" style="width:${yPct}%;background:var(--red)"></div></div>
     <div class="sb-label"><span>⭕ Boş</span><span>${r.blank} soru (${bPct}%)</span></div>
     <div class="sb-track"><div class="sb-fill" style="width:${bPct}%;background:var(--muted)"></div></div>
-    ${r.negativeMarking?`<div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:8px;font-size:13px;font-weight:600;color:var(--red)">⚠️ Net puan hesaplaması: ${r.correct}D - ${Math.floor(r.wrong/3)}Y = <strong>${r.netCorrect} Net Doğru</strong></div>`:''}`;
+    <div class="sb-label"><span>🧩 Tamamlama</span><span>%${completionRate}</span></div>
+    <div class="sb-track"><div class="sb-fill" style="width:${completionRate}%;background:#2563EB"></div></div>
+    ${r.negativeMarking?`<div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:8px;font-size:13px;font-weight:600;color:var(--red)">⚠️ Net puan hesaplaması: ${r.correct}D - ${Math.floor(r.wrong/3)}Y = <strong>${r.netCorrect} Net Doğru</strong></div>`:`<div style="margin-top:12px;padding:10px;background:#EFF6FF;border-radius:8px;font-size:13px;font-weight:600;color:#1D4ED8">📌 Bu sınavda net puanın doğrudan doğru sayın üzerinden hesaplandı: <strong>${r.netCorrect} net</strong></div>`}`;
+  const statusBadge=document.getElementById('karneStatusBadge');
+  statusBadge.textContent=`${scoreMeta.icon} ${scoreMeta.label}`;
+  statusBadge.style.background=scoreMeta.bg;
+  statusBadge.style.color=scoreMeta.color;
   
   // Yuvarlak Grafik (Donut Chart)
   setTimeout(()=>{
     const ctx=document.getElementById('donutChart').getContext('2d');
-    new Chart(ctx,{type:'doughnut',data:{
+    if(donutChartInstance) donutChartInstance.destroy();
+    donutChartInstance=new Chart(ctx,{type:'doughnut',data:{
       labels:['Doğru','Yanlış','Boş'],
       datasets:[{data:[r.correct,r.wrong,r.blank],backgroundColor:['#10B981','#EF4444','#CBD5E0'],borderWidth:3,borderColor:'#fff',hoverBorderColor:'#fff'}]
     },options:{responsive:true,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} soru`}}}}});
+    const sectionCtx=document.getElementById('sectionChart').getContext('2d');
+    if(sectionChartInstance) sectionChartInstance.destroy();
+    sectionChartInstance=new Chart(sectionCtx,{
+      type:'bar',
+      data:{
+        labels:sectionSummary.map(item=>item.label),
+        datasets:[{
+          label:'Başarı (%)',
+          data:sectionSummary.map(item=>item.score),
+          backgroundColor:sectionSummary.map(item=>getBarColor(item.score)),
+          borderRadius:10,
+          borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        indexAxis:'y',
+        scales:{
+          x:{beginAtZero:true,max:100,grid:{color:'rgba(148,163,184,.18)'},ticks:{callback:value=>value+'%'}},
+          y:{grid:{display:false}}
+        },
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:context=>`${context.raw}% başarı`}}
+        }
+      }
+    });
   },100);
   
   // Akıllı ve Samimi Dönüt
   const fb=generateFeedback(r.firstName,r.grade,r.subject,r.score,r.correct,r.wrong,r.blank,r.total);
-  document.getElementById('feedbackBody').innerHTML=`<p>${fb.text}</p><div class="quote-box">"${fb.quote}"</div>`;
+  const sectionCoach=focus&&sectionSummary.length>1
+    ? `<br><br><strong>Ders bazlı öneri:</strong> ${escHtml(focus.label)} bölümünde ${focus.total} soruda %${focus.score} başarı görülüyor. Bu bölümdeki yanlış ve boş soruları yeniden incelemek sonraki sınavlarda belirgin fark oluşturabilir.`
+    : '';
+  document.getElementById('feedbackBody').innerHTML=`<p>${fb.text}${sectionCoach}</p><div class="quote-box">"${fb.quote}"</div>`;
+  document.getElementById('karneInsights').innerHTML=`
+    <div class="insight-card">
+      <h5>🌟 En Güçlü Alan</h5>
+      <p>${strongest?`<strong>${escHtml(strongest.label)}</strong> bölümünde ${strongest.total} soruda %${strongest.score} başarı elde edildi.`:'Henüz bölüm bazlı veri bulunmuyor.'}</p>
+    </div>
+    <div class="insight-card">
+      <h5>🎯 Kontrol Önceliği</h5>
+      <p>${focus?`Bir sonraki çalışmada <strong>${escHtml(focus.label)}</strong> bölümündeki ${focus.wrong} yanlış ve ${focus.blank} boş soruya öncelik vermek faydalı olur.`:'Genel tekrar ile başarıyı daha da güçlendirebilirsin.'}</p>
+    </div>
+    <div class="insight-card">
+      <h5>⏱️ Süre Kullanımı</h5>
+      <p>${P.exam.duration>0?`Sınavı ${fmtElapsed(r.elapsed)} sürede tamamladın. Kalan süreyi son kontrolde kullanmak, dikkat hatalarını azaltabilir.`:'Bu sınav sınırsız süreliydi; sakin ve kontrollü ilerlemen olumlu.'}</p>
+    </div>
+    <div class="insight-card">
+      <h5>📌 Net Değerlendirme</h5>
+      <p>${r.negativeMarking?`Yanlış götürme uygulandığı için net puanın <strong>${r.netCorrect}</strong> olarak hesaplandı.`:`Bu sınavda net puanın doğrudan doğru sayına eşit: <strong>${r.netCorrect}</strong>.`}</p>
+    </div>`;
+  document.getElementById('karneSectionList').innerHTML=sectionSummary.map(section=>`
+    <div class="section-item">
+      <div class="section-head">
+        <div>
+          <strong>${escHtml(section.label)}</strong>
+          <div class="section-range">Sorular ${section.start}-${section.end}</div>
+        </div>
+        <span class="chart-pill" style="background:${scoreMeta.bg};color:${getBarColor(section.score)}">%${section.score}</span>
+      </div>
+      <div class="section-meta">
+        <span>✅ ${section.correct} doğru</span>
+        <span>❌ ${section.wrong} yanlış</span>
+        <span>⭕ ${section.blank} boş</span>
+      </div>
+      <div class="section-bar"><div class="section-bar-fill" style="width:${section.score}%;background:${getBarColor(section.score)}"></div></div>
+    </div>
+  `).join('');
   
   // Karne Optik (Geri Bildirim)
-  const koHtml=r.questions.map((q,i)=>{
-    const ua=r.answers[i];const ca=q.correctAnswer;
-    const isC=ua&&ua===ca,isW=ua&&ua!==ca,isB=!ua;
+  const koHtml=questionEntries.map((entry,i)=>{
+    const ua=entry.selectedAnswer;const ca=entry.correctAnswer;
+    const isC=entry.outcome==='D',isW=entry.outcome==='Y',isB=entry.outcome==='B';
     const clr=isC?'var(--green)':isW?'var(--red)':'var(--border)';
     const txt=isC?ca:isW?ua:'—';
-    return `<div class="ko-item" onclick="showQuestionModal(${i})" title="${i+1}. Soru${isB?' (Boş)':isW?' — Doğru: '+ca+' / Verilen: '+ua:' — Doğru'}" >
-      <div class="ko-num">${i+1}</div>
+    const sectionTitle=entry.sectionTitle;
+    return `<div class="ko-item" onclick="showQuestionModal(${i})" title="${entry.questionNo}. Soru${sectionTitle?' — '+escHtml(sectionTitle):''}${isB?' (Boş)':isW?' — Doğru: '+ca+' / Verilen: '+ua:' — Doğru'}" >
+      <div class="ko-num">${entry.questionNo}</div>
       <div class="ko-bub" style="background:${clr};color:${isB?'var(--muted)':'#fff'}">${txt}</div>
     </div>`;
   }).join('');
@@ -757,23 +2187,41 @@ function fmtElapsed(s){if(!s)return'—';const m=Math.floor(s/60),sec=s%60;retur
 // Karnede Soru İnceleme Modeli
 window.showQuestionModal=function(i){
   const r=P.result;if(!r)return;
-  const q=r.questions[i];const ua=r.answers[i];const ca=q.correctAnswer;
-  const isC=ua&&ua===ca,isB=!ua;
+  const entries=getResultQuestionEntries(r);
+  const entry=entries[i];
+  if(!entry) return;
+  const q=r.questions[i]||{};
+  const ua=entry.selectedAnswer;const ca=entry.correctAnswer;
+  const isC=entry.outcome==='D',isB=entry.outcome==='B';
   const statusBg=isB?'#64748B':isC?'#10B981':'#EF4444';
   const statusTxt=isB?'Boş bırakıldı':isC?'Doğru cevap!':'Yanlış cevap';
+  const sectionTitle=entry.sectionTitle||getQuestionSectionTitle(q,i,r.questionSections);
+  const visual=entry.imageUrl||q.imageUrl||q.imageData||'';
+  const bodyHtml=visual
+    ? `<img src="${visual}" style="max-width:100%;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.1)">`
+    : `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
+         <div style="font-size:13px;color:var(--slate);line-height:1.8">
+           <div><strong>Soru No:</strong> ${entry.questionNo}</div>
+           <div><strong>Bölüm:</strong> ${escHtml(sectionTitle||r.subject||'Genel')}</div>
+           <div><strong>Verilen Cevap:</strong> ${ua||'Boş'}</div>
+           <div><strong>Doğru Cevap:</strong> ${ca||'—'}</div>
+           <div><strong>Durum:</strong> ${isB?'Boş':isC?'Doğru':'Yanlış'}</div>
+           <div style="margin-top:10px;color:var(--muted)">Bu eski kayıtta soru görseli saklanmadığı için özet bilgi gösteriliyor.</div>
+         </div>
+       </div>`;
   const el=document.createElement('div');el.className='modal-overlay';
   el.innerHTML=`<div class="modal-box" style="max-width:600px;padding:0;overflow:hidden;text-align:left">
     <div style="background:${statusBg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between">
-      <div style="color:#fff;font-weight:700;font-size:14px">${i+1}. Soru — ${statusTxt}${ua&&!isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong> / Verilen: <strong>'+ua+'</strong>':isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong>':''}</div>
+      <div style="color:#fff;font-weight:700;font-size:14px">${entry.questionNo}. Soru${sectionTitle?' — <strong>'+escHtml(sectionTitle)+'</strong>':''} — ${statusTxt}${ua&&!isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong> / Verilen: <strong>'+ua+'</strong>':isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong>':''}</div>
       <button onclick="this.closest('.modal-overlay').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>
     </div>
     <div style="padding:16px;background:#f8fafc;max-height:65vh;overflow-y:auto">
-      <img src="${q.imageData}" style="max-width:100%;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.1)">
+      ${bodyHtml}
     </div>
     <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:center">
       ${i>0?`<button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove();window.showQuestionModal(${i-1})">‹ Önceki</button>`:''}
       <button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove()">Kapat</button>
-      ${i<r.questions.length-1?`<button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove();window.showQuestionModal(${i+1})">Sonraki ›</button>`:''}
+      ${i<entries.length-1?`<button class="btn btn-outline" style="flex:none;padding:8px 16px;font-size:13px" onclick="this.closest('.modal-overlay').remove();window.showQuestionModal(${i+1})">Sonraki ›</button>`:''}
     </div>
   </div>`;
   document.body.appendChild(el);
@@ -860,6 +2308,11 @@ function generateFeedback(name,grade,subject,score,correct,wrong,blank,total){
   return{text,quote};
 }
 
+try{
+  applyTheme(localStorage.getItem(EXAM_THEME_STORAGE_KEY)||'light');
+}catch(error){
+  applyTheme('light');
+}
 init();
 </script>
 </body>

@@ -202,6 +202,139 @@
     @media(max-width:600px) {
       .haber-card { flex: 0 0 90%; }
     }
+
+    .platform-strip {
+      position: relative;
+      z-index: 3;
+      margin-top: -42px;
+      padding: 0 32px;
+    }
+    .platform-strip-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .platform-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(234,227,255,.9);
+      border-radius: 28px;
+      padding: 24px 22px;
+      text-decoration: none;
+      color: var(--navy);
+      box-shadow: 0 18px 40px rgba(108,61,237,.12);
+      transition: transform .28s, box-shadow .28s, border-color .28s;
+    }
+    .platform-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 24px 50px rgba(108,61,237,.18);
+      border-color: rgba(108,61,237,.28);
+    }
+    .platform-card::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 5px;
+      background: var(--card-grad);
+    }
+    .platform-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--badge-color);
+      background: var(--badge-bg);
+    }
+    .platform-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: var(--icon-bg);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+    }
+    .platform-title {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      line-height: 1.05;
+    }
+    .platform-desc {
+      color: var(--slate);
+      line-height: 1.7;
+      font-size: 14px;
+      min-height: 72px;
+      margin-bottom: 16px;
+    }
+    .platform-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .platform-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--slate);
+      background: #F8F6FF;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+    .platform-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--navy);
+    }
+    .platform-card.reading {
+      --card-grad: linear-gradient(90deg, var(--purple), var(--purple-light));
+      --badge-bg: #F0EBFF;
+      --badge-color: var(--purple);
+      --icon-bg: linear-gradient(135deg, #E8DEFF, #F7F2FF);
+    }
+    .platform-card.exams {
+      --card-grad: linear-gradient(90deg, var(--coral), #FF9F43);
+      --badge-bg: #FFF0EC;
+      --badge-color: #D35400;
+      --icon-bg: linear-gradient(135deg, #FFE3D9, #FFF2E9);
+    }
+    .platform-card.games {
+      --card-grad: linear-gradient(90deg, var(--teal), #55EFC4);
+      --badge-bg: #E9FFFA;
+      --badge-color: #00856A;
+      --icon-bg: linear-gradient(135deg, #D9FFF6, #EDFFFB);
+    }
+    @media(max-width:980px) {
+      .platform-strip { margin-top: 0; padding: 32px 18px 0; }
+      .platform-strip-inner { grid-template-columns: 1fr; }
+      .platform-desc { min-height: 0; }
+    }
     .why-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -336,6 +469,55 @@
     </div>
   </section>
 
+  <section class="platform-strip">
+    <div class="platform-strip-inner">
+      <a href="/hizli-okuma/index.html" class="platform-card reading">
+        <div class="platform-top">
+          <span class="platform-badge">📖 Öne Çıkan Sistem</span>
+          <span class="platform-icon">🚀</span>
+        </div>
+        <div class="platform-title">Hızlı Okuma</div>
+        <p class="platform-desc">Sınıfa göre metni seç, süreyi takip et, karneni al. Sitenin en hızlı gelişim alanını tek merkezde toplar.</p>
+        <div class="platform-meta">
+          <span class="platform-chip">⏱ Akıcılık</span>
+          <span class="platform-chip">🧠 Anlama</span>
+          <span class="platform-chip">📄 Karne</span>
+        </div>
+        <span class="platform-cta">Başlat →</span>
+      </a>
+
+      <a href="/sinav_sitesi/index.html" class="platform-card exams">
+        <div class="platform-top">
+          <span class="platform-badge">📝 Güçlü Takip</span>
+          <span class="platform-icon">🎯</span>
+        </div>
+        <div class="platform-title">Sınavlar</div>
+        <p class="platform-desc">Sınıfa uygun sınavı seç, çöz ve gelişim alanlarını daha net gör. Özellikle ortaokul akışında merkezi rol oynar.</p>
+        <div class="platform-meta">
+          <span class="platform-chip">📚 Sınıf bazlı</span>
+          <span class="platform-chip">📈 Takip</span>
+          <span class="platform-chip">✅ Ölçme</span>
+        </div>
+        <span class="platform-cta">Sınavlara Git →</span>
+      </a>
+
+      <a href="/oyun/oyunlar.html" class="platform-card games">
+        <div class="platform-top">
+          <span class="platform-badge">🎮 Oyunla Pekiştir</span>
+          <span class="platform-icon">🕹️</span>
+        </div>
+        <div class="platform-title">Oyunlar</div>
+        <p class="platform-desc">Dersleri sıkmadan tekrar ettiren eğitsel oyunlarla çocukların motivasyonunu yüksek tutar ve öğrenmeyi canlı bırakır.</p>
+        <div class="platform-meta">
+          <span class="platform-chip">🎉 Motivasyon</span>
+          <span class="platform-chip">🔁 Tekrar</span>
+          <span class="platform-chip">🏆 Eğlence</span>
+        </div>
+        <span class="platform-cta">Oyunları Aç →</span>
+      </a>
+    </div>
+  </section>
+
   <!-- ─── ÖNE ÇIKANLAR / HABERLER ─── -->
   <div class="haberler-section" id="haberlerSection">
     <!-- Ticker bar -->
@@ -367,23 +549,23 @@
         <span class="subj-pill-em">📖</span>
         <span class="subj-pill-lbl">Okuma<br>Anlama(Eski)</span>
       </a>
-      <a href="/1_sinif/matematik/matematik.html" class="subj-pill">
+      <a href="/ders.html?sinif=1&ders=matematik" class="subj-pill">
         <span class="subj-pill-em">🔢</span>
         <span class="subj-pill-lbl">Matematik</span>
       </a>
-      <a href="/1_sinif/turkce/turkce.html" class="subj-pill">
+      <a href="/ders.html?sinif=1&ders=turkce" class="subj-pill">
         <span class="subj-pill-em">📝</span>
         <span class="subj-pill-lbl">Türkçe</span>
       </a>
-      <a href="/3_sinif/fen_bilimleri/fen_bilimleri.html" class="subj-pill">
+      <a href="/ders.html?sinif=3&ders=fen-bilimleri" class="subj-pill">
         <span class="subj-pill-em">🔬</span>
         <span class="subj-pill-lbl">Fen<br>Bilimleri</span>
       </a>
-      <a href="/1_sinif/hayat_bilgisi/hayat_bilgisi.html" class="subj-pill">
+      <a href="/ders.html?sinif=1&ders=hayat-bilgisi" class="subj-pill">
         <span class="subj-pill-em">🌱</span>
         <span class="subj-pill-lbl">Hayat<br>Bilgisi</span>
       </a>
-      <a href="/4_sinif/sosyal_bilgiler/sosyal_bilgiler.html" class="subj-pill">
+      <a href="/ders.html?sinif=4&ders=sosyal-bilgiler" class="subj-pill">
         <span class="subj-pill-em">🌍</span>
         <span class="subj-pill-lbl">Sosyal<br>Bilgiler</span>
       </a>
@@ -391,7 +573,7 @@
         <span class="subj-pill-em">🎮</span>
         <span class="subj-pill-lbl">Eğitim<br>Oyunları</span>
       </a>
-      <a href="/sinav.html" class="subj-pill">
+      <a href="/sinav_sitesi/index.html" class="subj-pill">
         <span class="subj-pill-em">📋</span>
         <span class="subj-pill-lbl">Sınav<br>Hazırlık</span>
       </a>
@@ -417,9 +599,9 @@
           </div>
         </div>
         <div class="gc-subjects">
-          <a href="/1_sinif/turkce/turkce.html"               class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
-          <a href="/1_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
-          <a href="/1_sinif/hayat_bilgisi/hayat_bilgisi.html"  class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
+          <a href="/ders.html?sinif=1&ders=turkce"               class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/ders.html?sinif=1&ders=matematik"          class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/ders.html?sinif=1&ders=hayat-bilgisi"  class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
         </div>
       </div>
 
@@ -432,9 +614,9 @@
           </div>
         </div>
         <div class="gc-subjects">
-          <a href="/2_sinif/turkce/turkce.html"               class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
-          <a href="/2_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
-          <a href="/2_sinif/hayat_bilgisi/hayat_bilgisi.html"  class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
+          <a href="/ders.html?sinif=2&ders=turkce"               class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/ders.html?sinif=2&ders=matematik"          class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/ders.html?sinif=2&ders=hayat-bilgisi"  class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
         </div>
       </div>
 
@@ -447,10 +629,10 @@
           </div>
         </div>
         <div class="gc-subjects">
-          <a href="/3_sinif/turkce/turkce.html"                class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
-          <a href="/3_sinif/matematik/matematik.html"           class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
-          <a href="/3_sinif/hayat_bilgisi/hayat_bilgisi.html"   class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
-          <a href="/3_sinif/fen_bilimleri/fen_bilimleri.html"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
+          <a href="/ders.html?sinif=3&ders=turkce"                class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/ders.html?sinif=3&ders=matematik"           class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/ders.html?sinif=3&ders=hayat-bilgisi"   class="subj-link"><span class="subj-em">🌱</span> Hayat Bilgisi</a>
+          <a href="/ders.html?sinif=3&ders=fen-bilimleri"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
         </div>
       </div>
 
@@ -463,10 +645,10 @@
           </div>
         </div>
         <div class="gc-subjects">
-          <a href="/4_sinif/turkce/turkce.html"                class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
-          <a href="/4_sinif/matematik/matematik.html"           class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
-          <a href="/4_sinif/sosyal_bilgiler/sosyal_bilgiler.html" class="subj-link"><span class="subj-em">🌍</span> Sosyal Bilgiler</a>
-          <a href="/4_sinif/fen_bilimleri/fen_bilimleri.html"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
+          <a href="/ders.html?sinif=4&ders=turkce"                class="subj-link"><span class="subj-em">📝</span> Türkçe</a>
+          <a href="/ders.html?sinif=4&ders=matematik"           class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/ders.html?sinif=4&ders=sosyal-bilgiler" class="subj-link"><span class="subj-em">🌍</span> Sosyal Bilgiler</a>
+          <a href="/ders.html?sinif=4&ders=fen-bilimleri"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
         </div>
       </div>
 
@@ -479,10 +661,10 @@
           </div>
         </div>
         <div class="gc-subjects">
-          <a href="/5_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> 5. Sınıf Mat</a>
-          <a href="/5_sinif/fen_bilimleri/fen_bilimleri.html"  class="subj-link"><span class="subj-em">🔬</span> 5. Sınıf Fen</a>
-          <a href="/6_sinif/matematik/matematik.html"          class="subj-link"><span class="subj-em">🔢</span> 6. Sınıf Mat</a>
-          <a href="/6_sinif/fen_bilimleri/fen_bilimleri.html"  class="subj-link"><span class="subj-em">🔬</span> 6. Sınıf Fen</a>
+          <a href="/ders.html?sinif=5&ders=matematik"          class="subj-link"><span class="subj-em">🔢</span> 5. Sınıf Mat</a>
+          <a href="/ders.html?sinif=5&ders=fen-bilimleri"  class="subj-link"><span class="subj-em">🔬</span> 5. Sınıf Fen</a>
+          <a href="/ders.html?sinif=6&ders=matematik"          class="subj-link"><span class="subj-em">🔢</span> 6. Sınıf Mat</a>
+          <a href="/ders.html?sinif=6&ders=fen-bilimleri"  class="subj-link"><span class="subj-em">🔬</span> 6. Sınıf Fen</a>
         </div>
       </div>
 
@@ -495,8 +677,8 @@
           </div>
         </div>
         <div class="gc-subjects">
-          <a href="/7_sinif/fen_bilimleri/matematik.html"       class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
-          <a href="/7_sinif/fen_bilimleri/fen_bilimleri.html"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
+          <a href="/ders.html?sinif=7&ders=matematik"       class="subj-link"><span class="subj-em">🔢</span> Matematik</a>
+          <a href="/ders.html?sinif=7&ders=fen-bilimleri"   class="subj-link"><span class="subj-em">🔬</span> Fen Bilimleri</a>
         </div>
       </div>
 
@@ -558,23 +740,74 @@
     </div>
   </div>
 
+  <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
   <script>
     const RENKLER = ['purple','coral','teal','yellow','navy'];
     const EMOJI_FALLBACK = ['📖','🎮','🔢','🔬','🌟','📝','🌱','⭐'];
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const data = window.kemalSite ? window.kemalSite.getData() : null;
+    document.addEventListener('DOMContentLoaded', async function() {
+      const data = window.kemalSite ? await window.kemalSite.getDataAsync() : null;
+
+      function tarihDegeri(item) {
+        const raw = item && item.tarih ? String(item.tarih) : '';
+        const value = raw ? Date.parse(raw) : 0;
+        return Number.isNaN(value) ? 0 : value;
+      }
+
+      function formatTarih(raw) {
+        if (!raw) return '';
+        const value = Date.parse(raw);
+        if (Number.isNaN(value)) return raw;
+        return new Date(value).toLocaleDateString('tr-TR', { day:'numeric', month:'long' });
+      }
+
+      function guncelListeOlustur(siteData) {
+        const oneCikanlar = siteData && siteData.onecikarlar
+          ? siteData.onecikarlar.filter(h => h.aktif).map(h => ({
+              baslik: h.baslik,
+              aciklama: h.aciklama || '',
+              link: h.link || '#',
+              emoji: h.emoji || '📌',
+              renk: h.renk || 'purple',
+              tarih: h.tarih || '',
+            }))
+          : [];
+
+        const yeniIcerikler = siteData && siteData.yeniIcerikler
+          ? siteData.yeniIcerikler.filter(i => i.aktif).map((i, index) => ({
+              baslik: i.baslik,
+              aciklama: i.aciklama || 'Yeni içerik yayında.',
+              link: i.link || '#',
+              emoji: i.emoji || '🌟',
+              renk: ['yellow','teal','coral','purple'][index % 4],
+              tarih: i.tarih || '',
+            }))
+          : [];
+
+        const birlesik = [...oneCikanlar, ...yeniIcerikler];
+        const gorulen = new Set();
+
+        return birlesik
+          .filter(item => {
+            const key = (item.link || '') + '|' + (item.baslik || '');
+            if (!item.baslik || gorulen.has(key)) return false;
+            gorulen.add(key);
+            return true;
+          })
+          .sort((a, b) => tarihDegeri(b) - tarihDegeri(a))
+          .slice(0, 8);
+      }
 
       /* ── HABERLER ── */
-      const haberler = (data && data.onecikarlar ? data.onecikarlar : []).filter(h => h.aktif);
+      const haberler = guncelListeOlustur(data);
       const cards    = document.getElementById('haberCards');
       const ticker   = document.getElementById('tickerTrack');
       const dots     = document.getElementById('haberDots');
 
       const DEFAULT_HABERLER = [
         { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün' },
-        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', link:'/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
+        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', link:'/oyun/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
         { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
       ];
 
@@ -583,7 +816,7 @@
       // Kartlar
       cards.innerHTML = liste.map((h, i) => {
         const renk = h.renk || RENKLER[i % RENKLER.length];
-        const tarihStr = h.tarih ? new Date(h.tarih).toLocaleDateString('tr-TR', {day:'numeric',month:'long'}) : (h.tarih||'');
+        const tarihStr = formatTarih(h.tarih);
         return `
           <a href="${h.link||'#'}" class="haber-card">
             <div class="haber-card-top">
@@ -625,17 +858,17 @@
             <p class="qcard-desc">Sınıfına göre metin seç, oku, karnen çıksın!</p>
             <span class="qcard-btn">Okumaya Başla →</span>
           </a>
-          <a href="/oyunlar.html" class="qcard" data-c="coral">
+          <a href="/oyun/oyunlar.html" class="qcard" data-c="coral">
             <span class="qcard-em">🎮</span>
             <div class="qcard-title">Eğitim Oyunları</div>
             <p class="qcard-desc">Eğlenceli oyunlarla öğren, keşfet!</p>
             <span class="qcard-btn">Oyunlara Git →</span>
           </a>
-          <a href="/3_sinif/okuma_anlama/okuma_anlama.html" class="qcard" data-c="teal">
-            <span class="qcard-em">📚</span>
-            <div class="qcard-title">3. ve 4. Sınıflar</div>
-            <p class="qcard-desc">İleri düzey okuma çalışmaları ve özel metinler.</p>
-            <span class="qcard-btn">Keşfet →</span>
+          <a href="/sinav_sitesi/index.html" class="qcard" data-c="teal">
+            <span class="qcard-em">📝</span>
+            <div class="qcard-title">Sınav Merkezi</div>
+            <p class="qcard-desc">Sınıfını seç, sınavını çöz ve gelişimini takip et.</p>
+            <span class="qcard-btn">Sınavlara Git →</span>
           </a>`;
         return;
       }

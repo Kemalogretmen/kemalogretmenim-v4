@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Doküman Yönetimi — Kemal Öğretmenim</title>
+  <script>
+    window.kemalAdminScope = 'documents';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+
+    :root {
+      --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
+      --coral:#FF6052;--teal:#00C9B1;--navy:#1A1040;
+      --slate:#64748B;--muted:#94A3B8;--bg:#F5F0FF;
+      --white:#fff;--border:#E2D9FF;--success:#10B981;--danger:#EF4444;--warn:#F59E0B;
+      --r-sm:10px;--r-md:16px;--r-lg:22px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--navy);}
+
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#F2EAFF,#FFF5F4);}
+    .login-box{background:white;border-radius:24px;padding:44px 36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(108,61,237,.18);text-align:center;border:2px solid var(--border);}
+    .login-icon{font-size:52px;display:block;margin-bottom:12px;}
+    .login-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;margin-bottom:6px;}
+    .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
+    .login-input:focus{border-color:var(--purple);}
+    .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+    .login-help{font-size:12px;color:var(--muted);margin:-2px 0 16px;}
+    .login-err{display:none;margin-top:14px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);border-radius:10px;font-size:13px;color:var(--danger);font-weight:700;}
+
+    .app{display:none;min-height:100vh;}
+    .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+    .topbar-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--purple);}
+    .topbar-links{display:flex;gap:8px;flex-wrap:wrap;}
+    .topbar-link{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);transition:all .2s;}
+    .topbar-link:hover{border-color:var(--purple);color:var(--purple);}
+    .logout-btn{padding:7px 14px;background:rgba(239,68,68,.1);border:none;border-radius:50px;color:var(--danger);font-weight:800;font-size:13px;cursor:pointer;}
+    .main{max-width:1280px;margin:0 auto;padding:24px 20px;}
+
+    #panelList{display:block;}
+    #panelEdit{display:none;}
+
+    .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+    .list-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;}
+    .list-sub{font-size:14px;color:var(--slate);}
+    .btn-main{padding:11px 22px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;}
+    .btn-main:hover{background:var(--purple-dark);transform:translateY(-1px);}
+    .btn-ghost{padding:10px 18px;background:white;color:var(--slate);border:2px solid var(--border);border-radius:50px;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;}
+    .btn-ghost:hover{border-color:var(--purple);color:var(--purple);}
+
+    .filter-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px;}
+    .panel{background:white;border-radius:var(--r-lg);border:2px solid var(--border);padding:20px;}
+    .panel + .panel{margin-top:18px;}
+
+    label{display:block;font-size:13px;font-weight:800;color:var(--slate);margin-bottom:6px;}
+    input[type="text"],input[type="number"],input[type="color"],input[type="file"],select,textarea{
+      width:100%;padding:11px 13px;border:2px solid var(--border);border-radius:10px;
+      font-family:'Nunito',sans-serif;font-size:14px;color:var(--navy);background:#FAFAFF;
+      outline:none;transition:border-color .2s;margin-bottom:12px;
+    }
+    textarea{min-height:110px;resize:vertical;}
+    input:focus,select:focus,textarea:focus{border-color:var(--purple);background:white;}
+    input[type="color"]{height:44px;padding:3px 8px;cursor:pointer;}
+
+    .doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;}
+    .doc-card{background:white;border-radius:var(--r-lg);border:2px solid var(--border);padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 24px rgba(107,61,237,.06);}
+    .doc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+    .doc-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#F0EBFF;color:var(--purple);font-size:11px;font-weight:800;}
+    .doc-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;}
+    .doc-status.on{background:#DCFCE7;color:#15803D;}
+    .doc-status.off{background:#FEE2E2;color:#DC2626;}
+    .doc-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--navy);line-height:1.25;}
+    .doc-desc{font-size:13px;color:var(--slate);line-height:1.65;min-height:40px;}
+    .doc-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);}
+    .doc-meta span{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:#F8F6FF;}
+    .doc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;}
+    .doc-actions button,.doc-actions a{flex:1;text-align:center;text-decoration:none;padding:10px 14px;border-radius:10px;border:none;font-weight:800;font-size:13px;cursor:pointer;transition:all .2s;}
+    .btn-edit{background:var(--purple);color:white;}
+    .btn-edit:hover{background:var(--purple-dark);}
+    .btn-open{background:#ECFDF5;color:#047857;}
+    .btn-open:hover{background:var(--success);color:white;}
+    .btn-delete{background:rgba(239,68,68,.1);color:var(--danger);}
+    .btn-delete:hover{background:var(--danger);color:white;}
+    .empty-box{padding:60px 24px;text-align:center;color:var(--muted);}
+    .empty-box span{font-size:58px;display:block;margin-bottom:14px;}
+
+    .edit-header{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+    .edit-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;}
+    .edit-grid{display:grid;grid-template-columns:minmax(0,1.35fr) 340px;gap:20px;align-items:start;}
+    .help-card{background:#F8F6FF;border:2px solid var(--border);border-radius:var(--r-md);padding:16px;}
+    .help-card p{font-size:13px;color:var(--slate);line-height:1.7;}
+    .pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#F0EBFF;color:var(--purple);font-size:11px;font-weight:800;}
+    .file-box{padding:16px;border:2px dashed var(--border);border-radius:14px;background:#FAFAFF;}
+    .file-box strong{display:block;font-size:14px;margin-bottom:6px;}
+    .file-box p{font-size:12px;color:var(--slate);line-height:1.6;}
+    .switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:2px solid var(--border);border-radius:12px;background:#FAFAFF;margin-bottom:12px;}
+    .switch-copy strong{display:block;font-size:14px;}
+    .switch-copy span{font-size:12px;color:var(--muted);}
+    .toggle{position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#E2E8F0;border-radius:999px;transition:.3s;}
+    .slider::before{content:'';position:absolute;height:22px;width:22px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 2px 4px rgba(0,0,0,.18);}
+    .toggle input:checked + .slider{background:var(--purple);}
+    .toggle input:checked + .slider::before{transform:translateX(24px);}
+    .status-line{font-size:13px;font-weight:700;color:var(--muted);}
+    .save-bar{position:sticky;bottom:0;background:white;border-top:2px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
+    .save-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .btn-save{padding:13px 28px;background:linear-gradient(135deg,var(--teal),#00A891);color:white;border:none;border-radius:50px;font-weight:800;font-size:15px;cursor:pointer;transition:all .2s;}
+    .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,201,177,.35);}
+    .btn-secondary{padding:11px 18px;background:var(--bg);border:2px solid var(--border);border-radius:50px;font-weight:800;font-size:13px;cursor:pointer;color:var(--slate);}
+    .hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:-6px;margin-bottom:12px;}
+
+    .toast{position:fixed;bottom:80px;right:20px;padding:12px 20px;border-radius:14px;font-weight:800;font-size:14px;color:white;z-index:9999;opacity:0;transition:opacity .3s,transform .3s;transform:translateY(10px);pointer-events:none;}
+    .toast.show{opacity:1;transform:translateY(0);}
+    .toast.success{background:var(--success);}
+    .toast.error{background:var(--danger);}
+
+    @media(max-width:980px){
+      .edit-grid{grid-template-columns:1fr;}
+      .filter-bar{grid-template-columns:1fr 1fr;}
+    }
+    @media(max-width:640px){
+      .topbar{padding:10px 14px;height:auto;align-items:flex-start;gap:10px;flex-direction:column;}
+      .main{padding:16px 12px;}
+      .filter-bar{grid-template-columns:1fr;}
+      .save-bar{padding:12px;flex-direction:column;align-items:stretch;}
+      .save-actions{width:100%;}
+      .btn-save,.btn-secondary,.btn-main,.btn-ghost{justify-content:center;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <span class="login-icon">📚</span>
+    <div class="login-title">Doküman Yönetimi</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Kemal Öğretmenim — PDF yayın yönetimi</p>
+    <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-posta adresi" autocomplete="username">
+    <input class="login-input" type="password" id="loginPass" placeholder="Şifre…" autocomplete="current-password">
+    <div class="login-help">Şimdilik herkese açık çalışır, ileride kullanıcı girişine kapatılabilir.</div>
+    <button class="login-btn" onclick="doLogin()">Giriş →</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="topbar-title">📚 Ders Dokümanları</div>
+    <div class="topbar-links">
+      <a href="/admin/index.html" class="topbar-link">⚙️ Site Yönetimi</a>
+      <a href="/admin/okuma-editor.html" class="topbar-link">📝 Okuma Editörü</a>
+      <a href="/sinav_sitesi/admin.html" class="topbar-link">🧪 Sınav Yönetimi</a>
+      <a href="/index.html" target="_blank" class="topbar-link">🌐 Siteyi Aç</a>
+      <button class="logout-btn" onclick="doLogout()">Çıkış Yap</button>
+    </div>
+  </div>
+
+  <main class="main">
+    <section id="panelList">
+      <div class="list-header">
+        <div>
+          <h1 class="list-title">Ders Dokümanları</h1>
+          <p class="list-sub">1. Sınıf → Türkçe gibi ders kırılımlarında yayınlanacak PDF içerikleri buradan yönet.</p>
+        </div>
+        <button class="btn-main" onclick="yeniDokuman()">+ Yeni Doküman</button>
+      </div>
+
+      <div class="panel">
+        <div class="filter-bar">
+          <div>
+            <label>Sınıf Filtresi</label>
+            <select id="filterGrade" onchange="uygulaFiltre()">
+              <option value="">Tüm sınıflar</option>
+              <option value="1">1. Sınıf</option>
+              <option value="2">2. Sınıf</option>
+              <option value="3">3. Sınıf</option>
+              <option value="4">4. Sınıf</option>
+              <option value="5">5. Sınıf</option>
+              <option value="6">6. Sınıf</option>
+              <option value="7">7. Sınıf</option>
+              <option value="8">8. Sınıf</option>
+            </select>
+          </div>
+          <div>
+            <label>Ders Filtresi</label>
+            <select id="filterSubject" onchange="uygulaFiltre()"></select>
+          </div>
+          <div>
+            <label>Durum</label>
+            <select id="filterStatus" onchange="uygulaFiltre()">
+              <option value="">Tümü</option>
+              <option value="active">Sadece aktif</option>
+              <option value="inactive">Sadece pasif</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end;">
+            <button class="btn-ghost" style="width:100%;" onclick="filtreTemizle()">Filtreleri Temizle</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div id="documentGrid" class="doc-grid"></div>
+      </div>
+    </section>
+
+    <section id="panelEdit">
+      <div class="edit-header">
+        <button class="btn-ghost" onclick="listeye()">← Listeye Dön</button>
+        <div>
+          <h1 class="edit-title" id="editTitle">Yeni Doküman</h1>
+          <div class="status-line" id="editStatus">Yeni bir PDF yükleyip sınıf ve dersle eşleştirebilirsin.</div>
+        </div>
+      </div>
+
+      <div class="edit-grid">
+        <div>
+          <div class="panel">
+            <div class="pill-row">
+              <span class="pill">📄 PDF yükleme</span>
+              <span class="pill">🎯 Sınıf + ders eşleştirme</span>
+              <span class="pill">👀 Aktif / pasif yayın</span>
+            </div>
+
+            <label>Doküman Başlığı</label>
+            <input type="text" id="fBaslik" placeholder="Örn: 1. Sınıf Türkçe Çalışma Yaprağı 12">
+
+            <label>Açıklama</label>
+            <textarea id="fAciklama" placeholder="Bu doküman öğrencinin listede göreceği kısa tanıtım metni."></textarea>
+
+            <div class="file-box">
+              <strong>PDF Dosyası</strong>
+              <p id="fileInfo">Henüz bir dosya seçilmedi. Yeni kayıt için PDF zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.</p>
+              <input type="file" id="fPdf" accept="application/pdf">
+            </div>
+            <div class="hint">Maksimum dosya boyutu şu an için 50 MB olacak şekilde tasarlandı.</div>
+          </div>
+
+          <div class="panel">
+            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;color:var(--purple);margin-bottom:12px;">Yayın Ayarları</h2>
+            <label>Sınıf</label>
+            <select id="fSinif"></select>
+
+            <label>Ders</label>
+            <select id="fDers"></select>
+
+            <label>Sıralama</label>
+            <input type="number" id="fSiralama" min="0" step="1" placeholder="0">
+
+            <label>Kart Rengi</label>
+            <input type="color" id="fKapakRenk" value="#6C3DED">
+
+            <div class="switch-row">
+              <div class="switch-copy">
+                <strong>Aktif Yayın</strong>
+                <span>Kapalıysa kullanıcı listesinde görünmez.</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="fAktif" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div class="switch-copy">
+                <strong>İleride Oturum Gerekli</strong>
+                <span>Şimdilik kapalı tutuyoruz; kullanıcı girişi geldiğinde açılabilecek hazır alan.</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="fOturumGerekli" disabled>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="help-card">
+              <p>Bu modül okuma ve sınav sisteminden bağımsız çalışır. Yüklediğin PDF, seçtiğin sınıf ve ders altında listelenir. Örneğin <strong>1. Sınıf + Türkçe</strong> seçersen belge doğrudan o ders sayfasında görünür.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;color:var(--purple);margin-bottom:12px;">Kayıt Özeti</h2>
+            <div class="status-line" id="summaryTitle">Henüz başlık girilmedi.</div>
+            <div class="hint" id="summaryRoute">Sınıf ve ders seçildiğinde yayın yolu burada görünür.</div>
+            <div class="hint" id="summaryMeta">Dosya seçildiğinde sayfa sayısı ve boyut bilgisi hesaplanır.</div>
+          </div>
+          <div class="panel">
+            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;color:var(--purple);margin-bottom:12px;">Hızlı İşlemler</h2>
+            <button class="btn-main" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="viewerAc()">Önizlemeyi Aç</button>
+            <button class="btn-ghost" style="width:100%;" onclick="linkKopyala()">Görüntüleme Linkini Kopyala</button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="save-bar">
+        <div class="status-line" id="saveHint">Kaydedince belge ilgili ders sayfasında listelenmeye hazır olur.</div>
+        <div class="save-actions">
+          <button class="btn-secondary" onclick="listeye()">Vazgeç</button>
+          <button class="btn-save" onclick="kaydet()">Kaydet</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/site-data.js"></script>
+<script src="/js/admin-auth.js"></script>
+<script src="/js/dokuman-store.js"></script>
+<script src="/js/dokuman-yonetimi-app.js"></script>
+</body>
+</html>
