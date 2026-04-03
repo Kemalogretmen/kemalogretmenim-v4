@@ -2,12 +2,14 @@
   'use strict';
 
   const CONFIG = {
-    supabaseUrl: 'https://spaquvxaldxgjieqmzio.supabase.co',
-    supabaseAnonKey: 'sb_publishable_60Rg38eHmnV2UMXW7GYmPw_F-QBWhEz',
+    supabaseUrl: 'https://mwxcvlyrkptxrwgkmqum.supabase.co',
+    supabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
     readingSupabaseUrl: 'https://mwxcvlyrkptxrwgkmqum.supabase.co',
     readingSupabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
     documentSupabaseUrl: 'https://mwxcvlyrkptxrwgkmqum.supabase.co',
     documentSupabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
+    legacySiteSettingsUrl: 'https://spaquvxaldxgjieqmzio.supabase.co',
+    legacySiteSettingsAnonKey: 'sb_publishable_60Rg38eHmnV2UMXW7GYmPw_F-QBWhEz',
     siteSettingsTable: 'site_settings',
     siteSettingsRowKey: 'site_content',
     cacheKey: 'kemal_site_data',
@@ -206,18 +208,41 @@
     };
   }
 
-  async function fetchRemoteData() {
-    const url =
-      CONFIG.supabaseUrl +
+  function buildSettingsUrl(baseUrl) {
+    return (
+      baseUrl +
       '/rest/v1/' +
       CONFIG.siteSettingsTable +
       '?key=eq.' +
       encodeURIComponent(CONFIG.siteSettingsRowKey) +
-      '&select=value_json,updated_at&limit=1';
+      '&select=value_json,updated_at&limit=1'
+    );
+  }
 
-    const response = await fetch(url, {
+  function isMeaningfulSiteData(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return false;
+    }
+    return Object.keys(normalizeSiteData(value)).some(function(key) {
+      const entry = value[key];
+      if (Array.isArray(entry)) {
+        return entry.length > 0;
+      }
+      if (entry && typeof entry === 'object') {
+        return Object.keys(entry).length > 0;
+      }
+      return Boolean(entry);
+    });
+  }
+
+  async function fetchSiteDataFrom(baseUrl, anonKey) {
+    const response = await fetch(buildSettingsUrl(baseUrl), {
       method: 'GET',
-      headers: buildHeaders(),
+      headers: {
+        apikey: anonKey,
+        Authorization: 'Bearer ' + anonKey,
+        'Content-Type': 'application/json',
+      },
     });
 
     if (!response.ok) {
@@ -225,11 +250,44 @@
     }
 
     const rows = await response.json();
-    if (!Array.isArray(rows) || !rows.length || !rows[0].value_json) {
-      return getCachedData();
+    if (!Array.isArray(rows) || !rows.length) {
+      return null;
     }
 
-    return setCachedData(rows[0].value_json);
+    return rows[0].value_json || null;
+  }
+
+  async function fetchRemoteData() {
+    let primaryValue = null;
+    try {
+      primaryValue = await fetchSiteDataFrom(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+      if (isMeaningfulSiteData(primaryValue)) {
+        return setCachedData(primaryValue);
+      }
+    } catch (error) {
+      primaryValue = null;
+    }
+
+    if (
+      CONFIG.legacySiteSettingsUrl &&
+      CONFIG.legacySiteSettingsAnonKey &&
+      CONFIG.legacySiteSettingsUrl !== CONFIG.supabaseUrl
+    ) {
+      try {
+        const legacyValue = await fetchSiteDataFrom(CONFIG.legacySiteSettingsUrl, CONFIG.legacySiteSettingsAnonKey);
+        if (isMeaningfulSiteData(legacyValue)) {
+          return setCachedData(legacyValue);
+        }
+      } catch (error) {
+        return getCachedData();
+      }
+    }
+
+    if (primaryValue && typeof primaryValue === 'object') {
+      return setCachedData(primaryValue);
+    }
+
+    return getCachedData();
   }
 
   async function saveRemoteData(data, accessToken) {
@@ -303,6 +361,14 @@
         supabaseUrl: CONFIG.documentSupabaseUrl || CONFIG.readingSupabaseUrl || CONFIG.supabaseUrl,
         supabaseAnonKey: CONFIG.documentSupabaseAnonKey || CONFIG.readingSupabaseAnonKey || CONFIG.supabaseAnonKey,
       };
+    },
+    getLegacySiteConfig: function() {
+      return CONFIG.legacySiteSettingsUrl
+        ? {
+          supabaseUrl: CONFIG.legacySiteSettingsUrl,
+          supabaseAnonKey: CONFIG.legacySiteSettingsAnonKey,
+        }
+        : null;
     },
     getDefaults: function() {
       return normalizeSiteData(DEFAULT_SITE_DATA);

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎮 Oyunlar Yönetimi — Kemal Öğretmenim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap');
     :root{
@@ -21,6 +22,8 @@
     .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
     .login-input:focus{border-color:var(--purple);}
     .login-btn{width:100%;padding:13px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:15px;cursor:pointer;}
+    .login-help{font-size:12px;color:var(--muted);margin:-2px 0 14px;}
+    .login-err{display:none;margin-top:14px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);border-radius:10px;font-size:13px;color:var(--danger);font-weight:700;}
 
     .app{display:none;}
     .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -106,8 +109,11 @@
     <div style="font-size:52px;margin-bottom:12px;">🎮</div>
     <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;margin-bottom:6px;">Oyunlar Yönetimi</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:22px;">Kemal Öğretmenim</p>
+    <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-postası" autocomplete="username">
     <input class="login-input" type="password" id="loginPass" placeholder="Şifre…">
+    <div class="login-help">Bu ekran ortak Supabase yönetici hesabını kullanır.</div>
     <button class="login-btn" onclick="doLogin()">Giriş →</button>
+    <div class="login-err" id="loginErr"></div>
   </div>
 </div>
 
@@ -227,25 +233,58 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="/js/site-data.js"></script>
+<script src="/js/admin-auth.js"></script>
 <script>
-const PASS_KEY='kemal_admin_pass'; const DEFAULT_PASS='kemal2026';
 const OYUN_KEY='kemal_oyunlar';
 
-function getPass(){ return localStorage.getItem(PASS_KEY)||DEFAULT_PASS; }
-function doLogin(){
-  const v=document.getElementById('loginPass').value;
-  if(v===getPass()){ sessionStorage.setItem('oyun_auth','1'); document.getElementById('loginScreen').style.display='none'; document.getElementById('app').style.display='block'; renderOyunlar(); }
-  else alert('Hatalı şifre!');
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const password=document.getElementById('loginPass').value;
+  const errorEl=document.getElementById('loginErr');
+  if(!email || !password){
+    errorEl.style.display='block';
+    errorEl.textContent='❌ E-posta ve şifre alanlarını doldurun.';
+    return;
+  }
+  try{
+    await window.kemalAdminAuth.signIn(email,password);
+    errorEl.style.display='none';
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    renderOyunlar();
+  }catch(error){
+    errorEl.style.display='block';
+    errorEl.textContent='❌ ' + window.kemalAdminAuth.humanizeError(error);
+    document.getElementById('loginPass').value='';
+  }
 }
+
+async function doLogout(){
+  try{
+    await window.kemalAdminAuth.signOut();
+  }finally{
+    location.reload();
+  }
+}
+
+async function initAuth(){
+  const session=await window.kemalAdminAuth.getSession().catch(()=>null);
+  if(session){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    renderOyunlar();
+    return;
+  }
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('app').style.display='none';
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  initAuth();
 });
-function doLogout(){ sessionStorage.removeItem('oyun_auth'); location.reload(); }
-if(sessionStorage.getItem('oyun_auth')==='1'){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('app').style.display='block';
-  document.addEventListener('DOMContentLoaded',renderOyunlar);
-}
 
 function getOyunlar(){ try{ const r=localStorage.getItem(OYUN_KEY); return r?JSON.parse(r):[]; }catch(e){return[];} }
 function saveOyunlar(d){ localStorage.setItem(OYUN_KEY,JSON.stringify(d)); }
