@@ -27,17 +27,26 @@
   }
 
   function getScopedConfig() {
+    return getConfigForScope(getAuthScope());
+  }
+
+  function getConfigForScope(scope) {
     const store = window.kemalSiteStore;
     if (!store) {
       throw new Error('kemalSiteStore bulunamadi.');
     }
-    if (getAuthScope() === 'reading' && typeof store.getReadingConfig === 'function') {
+    if (scope === 'reading' && typeof store.getReadingConfig === 'function') {
       return store.getReadingConfig();
     }
-    if (getAuthScope() === 'documents' && typeof store.getDocumentsConfig === 'function') {
+    if (scope === 'documents' && typeof store.getDocumentsConfig === 'function') {
       return store.getDocumentsConfig();
     }
     return store.getConfig();
+  }
+
+  function getProjectRef(url) {
+    const match = String(url || '').match(/^https:\/\/([^.]+)\.supabase\.co/i);
+    return match ? match[1] : 'bilinmeyen-proje';
   }
 
   function ensureSupabase() {
@@ -72,8 +81,26 @@
   function humanizeError(error) {
     const message = error && error.message ? error.message : '';
     if (message.includes('Invalid login credentials')) {
-      if (getAuthScope() === 'reading') {
-        return 'Bu e-posta/şifre okuma veritabani projesinde tanimli bir Auth kullanicisiyla eslesmiyor. Aynı kullaniciyi mwxcvlyrkptxrwgkmqum projesinde de olusturmaniz gerekir.';
+      const scope = getAuthScope();
+      if (scope === 'reading') {
+        const readingRef = getProjectRef(getConfigForScope('reading').supabaseUrl);
+        return 'Bu panel okuma veritabani projesini kullanir (' + readingRef + '). E-posta/sifre bu projedeki Auth kullanicisiyla eslesmiyor.';
+      }
+      if (scope === 'documents') {
+        const documentRef = getProjectRef(getConfigForScope('documents').supabaseUrl);
+        return 'Bu panel dokuman projesini kullanir (' + documentRef + '). E-posta/sifre bu projedeki Auth kullanicisiyla eslesmiyor.';
+      }
+
+      const siteRef = getProjectRef(getConfigForScope('default').supabaseUrl);
+      const readingConfig = window.kemalSiteStore && typeof window.kemalSiteStore.getReadingConfig === 'function'
+        ? window.kemalSiteStore.getReadingConfig()
+        : null;
+      const readingRef = readingConfig && readingConfig.supabaseUrl
+        ? getProjectRef(readingConfig.supabaseUrl)
+        : '';
+
+      if (readingRef && readingRef !== siteRef) {
+        return 'Bu panel ana site projesindeki Auth hesabini bekler (' + siteRef + '). Hesabi sadece okuma projesinde (' + readingRef + ') olusturduysan burada giris yapamazsin. Ayni e-posta/sifreyi ana site projesinde de Authentication > Users altinda eklemelisin.';
       }
       return 'E-posta veya şifre hatalı görünüyor.';
     }
