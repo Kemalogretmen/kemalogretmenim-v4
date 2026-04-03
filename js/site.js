@@ -5,6 +5,28 @@
 (function() {
   'use strict';
 
+  function hasRecoveryRedirectPayload() {
+    const path = String(window.location && window.location.pathname ? window.location.pathname : '');
+    const isHomePage = path === '/' || path === '/index.html' || path.endsWith('/index.html');
+    if (!isHomePage) {
+      return false;
+    }
+
+    const combined = String(window.location.search || '') + '&' + String(window.location.hash || '').replace(/^#/, '');
+    return (
+      combined.includes('type=recovery') ||
+      combined.includes('access_token=') ||
+      combined.includes('refresh_token=') ||
+      combined.includes('token_hash=') ||
+      combined.includes('code=')
+    );
+  }
+
+  if (hasRecoveryRedirectPayload()) {
+    window.location.replace('/admin/reset-password.html' + String(window.location.search || '') + String(window.location.hash || ''));
+    return;
+  }
+
   const GRADE_META = {
     '1': {
       label: '1. Sınıf',
