@@ -207,6 +207,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth,
@@ -243,7 +244,8 @@ function createInitialState(overrides={}){
     questions:[],
     pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,
     pubTitle:'',pubDur:30,editExamId:null,
-    exams:[],results:[],
+    exams:[],results:[],appeals:[],
+    appealInspect:null,
     rf:{grade:'',subject:'',name:'',examId:'',sube:''},
     draftImg:null,draftAns:null
   },overrides);
@@ -380,6 +382,138 @@ function deriveQuestionSectionsFromQuestions(questions){
   });
   return cloneQuestionSections(derived);
 }
+function buildResultAnswerMap(result){
+  const map={};
+  const details=Array.isArray(result?.answerDetails)?result.answerDetails:[];
+  details.forEach((item,index)=>{
+    const questionNo=parseInt(item?.questionNo,10)||index+1;
+    map[questionNo]=String(item?.selectedAnswer||'').trim().toUpperCase();
+  });
+  return map;
+}
+function calculateRevisedResultSnapshot(result,examMeta,questions){
+  const totalQuestions=questions.length;
+  const details=Array.isArray(result?.answerDetails)?result.answerDetails:[];
+  if(!totalQuestions||!details.length) return null;
+  if((parseInt(result?.total,10)||0)!==totalQuestions) return null;
+  if(details.length!==totalQuestions) return null;
+  const selectedMap=buildResultAnswerMap(result);
+  let correct=0,wrong=0,blank=0;
+  const answerDetails=questions.map((question,index)=>{
+    const questionNo=index+1;
+    const selectedAnswer=String(selectedMap[questionNo]||'').trim().toUpperCase();
+    const correctAnswer=String(question?.correctAnswer||'').trim().toUpperCase();
+    const sectionTitle=String(question?.sectionTitle||findSectionLabel(questionNo,examMeta.questionSections)||examMeta.subject||'').trim();
+    let outcome='B';
+    if(selectedAnswer) outcome=selectedAnswer===correctAnswer?'D':'Y';
+    if(outcome==='D') correct++;
+    else if(outcome==='Y') wrong++;
+    else blank++;
+    return{
+      questionNo,
+      questionId:question?.id||'',
+      order:question?.order??index,
+      sectionTitle,
+      selectedAnswer,
+      correctAnswer,
+      outcome
+    };
+  });
+  let netCorrect=correct;
+  if(examMeta.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
+  const score=totalQuestions?Math.round(netCorrect/totalQuestions*100):0;
+  return{
+    examTitle:examMeta.title||result.examTitle||'',
+    subject:examMeta.subject||result.subject||'',
+    grade:examMeta.grade??result.grade,
+    correct,
+    wrong,
+    blank,
+    netCorrect,
+    score,
+    total:totalQuestions,
+    negativeMarking:!!examMeta.negativeMarking,
+    answerDetails,
+    questionSections:Array.isArray(examMeta.questionSections)?examMeta.questionSections:[]
+  };
+}
+async function recalculateExamResults(examId,examMeta,questions){
+  const snap=await getDocs(query(collection(db,'results'),where('examId','==',examId)));
+  let updated=0,skipped=0,batchCount=0;
+  let batch=writeBatch(db);
+  for(const resultDoc of snap.docs){
+    const nextData=calculateRevisedResultSnapshot(resultDoc.data(),examMeta,questions);
+    if(!nextData){skipped++;continue;}
+    batch.update(resultDoc.ref,nextData);
+    updated++;
+    batchCount++;
+    if(batchCount>=350){
+      await batch.commit();
+      batch=writeBatch(db);
+      batchCount=0;
+    }
+  }
+  if(batchCount) await batch.commit();
+  return{total:snap.size,updated,skipped};
+}
+function getAppealStatusMeta(status){
+  if(status==='partial') return{label:'Kısmi İnceleme',icon:'🧩',bg:'#EDE9FE',color:'#6D28D9'};
+  if(status==='accepted_corrected') return{label:'Haklı Bulundu Düzeltildi',icon:'✅',bg:'#DCFCE7',color:'#166534'};
+  if(status==='corrected_no_score_change') return{label:'Düzeltildi Sonuç Aynı',icon:'🛠',bg:'#DBEAFE',color:'#1D4ED8'};
+  if(status==='accepted') return{label:'Haklı',icon:'✅',bg:'#DCFCE7',color:'#166534'};
+  if(status==='rejected') return{label:'Reddedildi',icon:'⛔',bg:'#FEE2E2',color:'#B91C1C'};
+  return{label:'İncelemede',icon:'🕵️',bg:'#FEF3C7',color:'#92400E'};
+}
+function buildAppealQuestionReviewMap(appeal){
+  const map=new Map();
+  (Array.isArray(appeal?.questionReviews)?appeal.questionReviews:[]).forEach(review=>{
+    const questionNo=parseInt(review?.questionNo,10);
+    if(Number.isFinite(questionNo)&&questionNo>0) map.set(questionNo,review);
+  });
+  return map;
+}
+function getAppealQuestionNumbers(appeal){
+  return(Array.isArray(appeal?.questionNos)?appeal.questionNos:[])
+    .map(value=>parseInt(value,10))
+    .filter(Number.isFinite)
+    .filter(value=>value>0)
+    .sort((a,b)=>a-b);
+}
+function deriveAppealStatus(appeal){
+  const questionNos=getAppealQuestionNumbers(appeal);
+  if(!questionNos.length) return appeal?.status||'pending';
+  const reviewMap=buildAppealQuestionReviewMap(appeal);
+  let pending=0,accepted=0,rejected=0,correctedNoChange=0;
+  questionNos.forEach(questionNo=>{
+    const status=reviewMap.get(questionNo)?.status||'pending';
+    if(status==='accepted_corrected') accepted++;
+    else if(status==='corrected_no_score_change') correctedNoChange++;
+    else if(status==='rejected') rejected++;
+    else pending++;
+  });
+  if(pending===questionNos.length) return 'pending';
+  if(pending>0) return 'partial';
+  if(rejected===questionNos.length) return 'rejected';
+  if((accepted+correctedNoChange)>0&&rejected===0) return 'accepted';
+  return 'partial';
+}
+function upsertAppealQuestionReview(appeal,review){
+  const list=(Array.isArray(appeal?.questionReviews)?appeal.questionReviews:[])
+    .filter(item=>parseInt(item?.questionNo,10)!==review.questionNo);
+  list.push(review);
+  return list.sort((a,b)=>(parseInt(a?.questionNo,10)||0)-(parseInt(b?.questionNo,10)||0));
+}
+function buildExamAppealSummary(appeals){
+  const summary={};
+  (appeals||[]).forEach(appeal=>{
+    const examId=appeal?.examId;
+    if(!examId) return;
+    if(!summary[examId]) summary[examId]={total:0,pending:0};
+    summary[examId].total+=1;
+    if(deriveAppealStatus(appeal)==='pending'||deriveAppealStatus(appeal)==='partial') summary[examId].pending+=1;
+  });
+  return summary;
+}
 function getExamStatus(exam){
   if(exam?.status) return exam.status;
   if(exam?.published===true) return 'active';
@@ -396,6 +530,7 @@ function resetBuilderState(nextPage='create'){
     page:nextPage,
     exams:A.exams||[],
     results:A.results||[],
+    appeals:A.appeals||[],
     rf:{...(A.rf||{grade:'',subject:'',name:'',examId:'',sube:''})}
   });
   window.A=A;
@@ -778,12 +913,14 @@ function renderStep4(){
 
 /* ── EXAMS LIST ── */
 function renderAdminExams(){
+  const appealSummary=buildExamAppealSummary(A.appeals);
   const gOpts=GRADES.map(g=>`<option value="${g}">${g}. Sınıf</option>`).join('');
   const cards=!A.exams.length?
     '<div class="text-center text-muted p-8" style="padding:40px">Henüz sınav bulunmuyor</div>':
     A.exams.map(e=>{
       const status=getExamStatus(e);
       const meta=getExamStatusMeta(status);
+      const appealMeta=appealSummary[e.id]||{total:0,pending:0};
       const primaryAction=status==='active'
         ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
         : `<button class="btn btn-sm btn-green" onclick="W.setExamStatus('${e.id}','active')">🚀 Aktif Et</button>`;
@@ -801,6 +938,7 @@ function renderAdminExams(){
           <div class="text-sm text-muted" style="margin-top:2px">${e.grade}. Sınıf &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
             <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:11px;font-weight:800">${meta.icon} ${meta.label}</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${appealMeta.total?'#FFF7ED':'#F8FAFC'};color:${appealMeta.total?'#9A3412':'#64748B'};font-size:11px;font-weight:800">${appealMeta.total?'📝 '+appealMeta.total+' itiraz':'💬 İtiraz yok'}${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}</span>
             <span class="text-xs text-muted">📅 ${fmtDate(e.createdAt)}</span>
             ${e.updatedAt?`<span class="text-xs text-muted">✏️ ${fmtDate(e.updatedAt)} güncellendi</span>`:''}
           </div>
@@ -810,6 +948,7 @@ function renderAdminExams(){
           ${primaryAction}
           ${secondaryAction}
           ${shareAction}
+          <button class="btn btn-sm btn-outline" onclick="W.showExamAppeals('${e.id}')">📝 İtirazlar</button>
           <button class="btn btn-sm btn-outline" onclick="W.showResults('${e.id}')">📊 Sonuçlar</button>
           <button class="btn btn-sm btn-red" onclick="W.delExam('${e.id}')">🗑 Sil</button>
         </div>
@@ -1033,6 +1172,26 @@ async function fbLoadResults(rf){
   }
 }
 
+async function fbLoadAppeals(){
+  try{
+    const snap=await getDocs(query(collection(db,'resultAppeals'),orderBy('createdAt','desc')));
+    return snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch{
+    const snap=await getDocs(collection(db,'resultAppeals'));
+    return snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+  }
+}
+
+async function fbLoadExamQuestions(examId){
+  try{
+    const orderedSnap=await getDocs(query(collection(db,'questions'),where('examId','==',examId),orderBy('order','asc')));
+    return orderedSnap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch{
+    const fallbackSnap=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
+    return fallbackSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order??0)-(b.order??0));
+  }
+}
+
 /* ── WINDOW HANDLERS ── */
 const W={
   async login(){
@@ -1088,7 +1247,13 @@ const W={
       resetBuilderState('create');
     }
     A.page=page;
-    if(page==='exams'){showLoad();A.exams=await fbLoadExams('');hideLoad();}
+    if(page==='exams'){
+      showLoad();
+      const [exams,appeals]=await Promise.all([fbLoadExams(''),fbLoadAppeals()]);
+      A.exams=exams;
+      A.appeals=appeals;
+      hideLoad();
+    }
     if(page==='results'){Object.assign(A.rf,opts);showLoad();A.results=await fbLoadResults(A.rf);hideLoad();}
     render();
   },
@@ -1224,14 +1389,28 @@ const W={
         examId=er.id;
       }
 
+      const writtenQuestions=[];
       for(let i=0;i<A.questions.length;i++){
-        await addDoc(collection(db,'questions'),{
+        const questionPayload={
           examId:examId,
           imageData:A.questions[i].img,
           correctAnswer:A.questions[i].ans,
           sectionTitle:sectionData.assignments[i+1]||'',
           order:A.questions[i].order??i
-        });
+        };
+        const questionRef=await addDoc(collection(db,'questions'),questionPayload);
+        writtenQuestions.push({id:questionRef.id,...questionPayload});
+      }
+
+      let recalcSummary=null;
+      if(isEdit){
+        recalcSummary=await recalculateExamResults(examId,{
+          title:t,
+          grade:A.grade,
+          subject:A.subject,
+          negativeMarking:A.negativeMarking,
+          questionSections:sectionData.sections
+        },writtenQuestions);
       }
 
       const successText=targetStatus==='active'
@@ -1241,11 +1420,26 @@ const W={
           : '🕒 Sınav beklemede kaydedildi.';
       toast(successText,'success');
       resetBuilderState('exams');
-      A.exams=await fbLoadExams('');
+      const [exams,appeals]=await Promise.all([fbLoadExams(''),fbLoadAppeals()]);
+      A.exams=exams;
+      A.appeals=appeals;
       hideLoad();render();
+      if(recalcSummary?.updated){
+        toast(`♻️ ${recalcSummary.updated} öğrenci sonucu yeni cevap anahtarına göre güncellendi.`,'success');
+      }
+      if(recalcSummary?.skipped){
+        toast(`ℹ️ ${recalcSummary.skipped} eski sonuç kaydı soru sayısı uyuşmadığı için otomatik güncellenemedi.`,'info');
+      }
     }catch(e){hideLoad();toast('Hata: '+e.message,'error');}
   },
-  async loadExamsFilter(gf){showLoad();A.exams=await fbLoadExams(gf);hideLoad();setContent(renderAdminExams());},
+  async loadExamsFilter(gf){
+    showLoad();
+    const [exams,appeals]=await Promise.all([fbLoadExams(gf),fbLoadAppeals()]);
+    A.exams=exams;
+    A.appeals=appeals;
+    hideLoad();
+    setContent(renderAdminExams());
+  },
   async editExam(id){
     showLoad('Sınav düzenleme ekranı hazırlanıyor...');
     try{
@@ -1370,6 +1564,363 @@ const W={
     };
     localStorage.setItem('kemal_exam_student_report_target_v1',JSON.stringify(payload));
     window.open('/sinav_sitesi/ogrenci-karne.html','_blank');
+  },
+  async openResultKarneById(id){
+    let result=A.results.find(item=>item.id===id)||null;
+    if(!result){
+      try{
+        const snap=await getDoc(doc(db,'results',id));
+        if(!snap.exists()) throw new Error('Sonuç kaydı bulunamadı.');
+        result={id:snap.id,...snap.data()};
+      }catch(error){
+        toast(error.message||'Sonuç kaydı açılamadı','error');
+        return;
+      }
+    }
+    localStorage.setItem('kemal_exam_admin_karne_result_v1',JSON.stringify(result));
+    window.open(`/sinav_sitesi/sinav.html?examId=${encodeURIComponent(result.examId)}&adminKarne=1`,'_blank');
+  },
+  closeExamAppeals(){
+    document.getElementById('examAppealsModal')?.remove();
+  },
+  closeAppealInspect(){
+    A.appealInspect=null;
+    document.getElementById('appealInspectModal')?.remove();
+  },
+  showExamAppeals(examId){
+    const exam=A.exams.find(item=>item.id===examId);
+    if(!exam){
+      toast('Sınav bulunamadı','error');
+      return;
+    }
+    const appeals=[...(A.appeals||[])]
+      .filter(item=>item.examId===examId)
+      .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    this.closeExamAppeals();
+    const body=!appeals.length
+      ? `<div style="padding:28px;border:1px dashed var(--border);border-radius:18px;text-align:center;color:var(--muted);font-size:14px;line-height:1.8">Bu sınav için henüz öğrenci itirazı bulunmuyor.</div>`
+      : appeals.map(appeal=>{
+          const meta=getAppealStatusMeta(deriveAppealStatus(appeal));
+          const questionNos=getAppealQuestionNumbers(appeal);
+          return `
+            <div style="border:1px solid var(--border);border-radius:18px;padding:16px 18px;background:#fff;margin-bottom:12px">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div>
+                  <div style="font-family:var(--fd);font-size:18px;font-weight:900">${esc(appeal.firstName||'')} ${esc(appeal.lastName||'')}</div>
+                  <div class="text-sm text-muted" style="margin-top:4px">${appeal.grade||'—'}. Sınıf ${appeal.sube?esc(appeal.sube)+' Şubesi':''} · ${fmtDT(appeal.createdAt)}</div>
+                </div>
+                <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:12px;font-weight:900">${meta.icon} ${meta.label}</span>
+              </div>
+              <div style="margin-top:12px;font-size:13px;color:var(--slate);line-height:1.8">
+                <div><strong>İtiraz edilen sorular:</strong> ${questionNos.length?questionNos.join(', '):'—'}</div>
+                <div><strong>Sonuç Kaydı:</strong> ${esc(appeal.resultId||'—')}</div>
+                ${appeal.reviewedAt?`<div><strong>Son işlem:</strong> ${fmtDT(appeal.reviewedAt)}</div>`:''}
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+                <button class="btn btn-sm btn-outline" onclick="W.inspectAppeal('${appeal.id}')">🔎 İncele</button>
+                <button class="btn btn-sm btn-outline" onclick="W.openResultKarneById('${appeal.resultId}')">📄 Sonucu Aç</button>
+                <button class="btn btn-sm btn-primary" onclick="W.closeExamAppeals();W.editExam('${examId}')">✏️ Sınavı Düzenle</button>
+                <button class="btn btn-sm btn-outline" onclick="W.setAppealStatus('${appeal.id}','pending','${examId}')">🕵️ İncelemede</button>
+                <button class="btn btn-sm btn-red" onclick="W.deleteAppeal('${appeal.id}','${examId}')">🗑 Sil</button>
+              </div>
+            </div>`;
+        }).join('');
+    const el=document.createElement('div');
+    el.className='modal-overlay';
+    el.id='examAppealsModal';
+    el.innerHTML=`<div class="modal-box" style="max-width:860px;padding:0;overflow:hidden">
+      <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:var(--fd);font-size:22px;font-weight:900">📝 İtiraz Edilen Sorular</div>
+          <div class="text-sm text-muted" style="margin-top:4px">${esc(exam.title)} · ${appeals.length} kayıt</div>
+        </div>
+        <button class="btn btn-outline" onclick="W.closeExamAppeals()">Kapat</button>
+      </div>
+      <div style="padding:18px;max-height:75vh;overflow-y:auto;background:#F8FAFC">${body}</div>
+    </div>`;
+    document.body.appendChild(el);
+    el.addEventListener('click',event=>{if(event.target===el)W.closeExamAppeals();});
+  },
+  renderAppealInspectModal(){
+    const ctx=A.appealInspect;
+    if(!ctx) return;
+    const questionNo=ctx.questionNos[ctx.currentIndex]||ctx.questionNos[0];
+    const question=ctx.questions[questionNo-1]||{};
+    const detail=ctx.detailMap.get(questionNo)||{};
+    const reviewMap=buildAppealQuestionReviewMap(ctx.appeal);
+    const review=reviewMap.get(questionNo)||null;
+    const reviewMeta=getAppealStatusMeta(review?.status||'pending');
+    const imageSrc=question?.imageData||question?.imageUrl||'';
+    const selectedAnswer=ctx.selectedAnswer||String(question?.correctAnswer||detail?.correctAnswer||'A').trim().toUpperCase();
+    const optionCount=ctx.exam?.optionCount||4;
+    const answerButtons=ALL_OPTS.slice(0,optionCount).map(opt=>`
+      <button class="ans-opt ${selectedAnswer===opt?'sel':''}" type="button" onclick="W.selectAppealCorrectAnswer('${opt}')">${opt}</button>
+    `).join('');
+    const questionList=ctx.questionNos.map((itemQuestionNo,index)=>{
+      const itemDetail=ctx.detailMap.get(itemQuestionNo)||{};
+      const itemReview=reviewMap.get(itemQuestionNo)||null;
+      const itemMeta=getAppealStatusMeta(itemReview?.status||'pending');
+      return `
+        <button type="button" onclick="W.selectAppealInspectQuestion(${index})" style="width:100%;text-align:left;padding:14px 15px;border-radius:16px;border:1.5px solid ${index===ctx.currentIndex?'#8B5CF6':'var(--border)'};background:${index===ctx.currentIndex?'#F5F3FF':'#fff'};cursor:pointer;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <strong style="font-family:var(--fd);font-size:16px;color:var(--navy)">${itemQuestionNo}. Soru</strong>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:${itemMeta.bg};color:${itemMeta.color};font-size:11px;font-weight:900">${itemMeta.icon} ${itemMeta.label}</span>
+          </div>
+          <div style="font-size:12px;color:var(--slate);line-height:1.7">
+            ${itemDetail.sectionTitle?`${esc(itemDetail.sectionTitle)} · `:''}Doğru: <strong>${esc(itemDetail.correctAnswer||question?.correctAnswer||'—')}</strong> · Verilen: <strong>${esc(itemDetail.selectedAnswer||'Boş')}</strong>
+          </div>
+          ${itemReview?.message?`<div style="font-size:11px;color:#64748B;line-height:1.6">${esc(itemReview.message)}</div>`:''}
+        </button>`;
+    }).join('');
+    let el=document.getElementById('appealInspectModal');
+    if(!el){
+      el=document.createElement('div');
+      el.className='modal-overlay';
+      el.id='appealInspectModal';
+      document.body.appendChild(el);
+      el.addEventListener('click',event=>{if(event.target===el)W.closeAppealInspect();});
+    }
+    el.innerHTML=`<div class="modal-box" style="width:min(1180px,calc(100vw - 24px));max-width:1180px;padding:0;overflow:hidden;max-height:calc(100vh - 24px);display:flex;flex-direction:column">
+      <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:var(--fd);font-size:22px;font-weight:900">🔎 İtiraz İncelemesi</div>
+          <div class="text-sm text-muted" style="margin-top:4px">${esc(ctx.appeal.examTitle||ctx.exam?.title||'Sınav')} · ${ctx.questionNos.length} soru</div>
+        </div>
+        <button class="btn btn-outline" onclick="W.closeAppealInspect()">Kapat</button>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(250px,320px) minmax(0,1fr);gap:0;flex:1;min-height:0;overflow:hidden">
+        <div style="padding:18px;background:#F8FAFC;border-right:1px solid var(--border);overflow-y:auto;min-height:0;display:flex;flex-direction:column;gap:10px">
+          ${questionList}
+        </div>
+        <div style="padding:18px;background:#fff;overflow-y:auto;min-height:0">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div>
+              <div style="font-family:var(--fd);font-size:26px;font-weight:900">${questionNo}. Soru</div>
+              <div class="text-sm text-muted" style="margin-top:4px">${esc(detail.sectionTitle||question.sectionTitle||ctx.appeal.subject||'Genel')} · Öğrenci: ${esc(ctx.appeal.firstName||'')} ${esc(ctx.appeal.lastName||'')}</div>
+            </div>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:${reviewMeta.bg};color:${reviewMeta.color};font-size:12px;font-weight:900">${reviewMeta.icon} ${reviewMeta.label}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px">
+            <div style="padding:12px;border-radius:16px;background:#F8FAFC;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.06em">Verilen</div><div style="font-family:var(--fd);font-size:26px;font-weight:900;color:#1E293B;margin-top:6px">${esc(detail.selectedAnswer||'Boş')}</div></div>
+            <div style="padding:12px;border-radius:16px;background:#F8FAFC;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.06em">Mevcut Doğru</div><div style="font-family:var(--fd);font-size:26px;font-weight:900;color:#2563EB;margin-top:6px">${esc(detail.correctAnswer||question.correctAnswer||'—')}</div></div>
+            <div style="padding:12px;border-radius:16px;background:#F8FAFC;border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.06em">Durum</div><div style="font-family:var(--fd);font-size:18px;font-weight:900;color:#0F172A;margin-top:10px">${detail.outcome==='D'?'Doğru':detail.outcome==='Y'?'Yanlış':'Boş'}</div></div>
+          </div>
+          ${review?.message?`<div style="margin-bottom:14px;padding:12px 14px;border-radius:16px;background:#F8FAFC;border:1px solid var(--border);font-size:13px;line-height:1.8;color:var(--slate)"><strong style="color:var(--navy)">Son karar notu:</strong> ${esc(review.message)}</div>`:''}
+          <div style="border:1px solid var(--border);border-radius:18px;background:#F8FAFC;padding:14px;margin-bottom:16px">
+            ${imageSrc
+              ? `<img src="${imageSrc}" alt="${questionNo}. soru" style="width:100%;max-height:min(48vh,520px);object-fit:contain;border-radius:14px;background:#fff;border:1px solid var(--border)">`
+              : `<div style="padding:24px;border:1px dashed var(--border);border-radius:14px;background:#fff;color:var(--muted);font-size:14px;line-height:1.8">Bu soru için görsel verisi bulunamadı.</div>`
+            }
+          </div>
+          <div style="padding:16px;border-radius:18px;background:#F8FAFC;border:1px solid var(--border);position:sticky;bottom:0;z-index:2">
+            <div style="font-family:var(--fd);font-size:18px;font-weight:900;margin-bottom:8px">Cevap Anahtarı İncelemesi</div>
+            <p class="text-sm text-muted" style="margin-bottom:12px;line-height:1.8">Doğru cevabı aşağıdan seç. Eğer seçtiğin cevap öğrencinin verdiği cevapla aynıysa sistem bu soruyu otomatik olarak <strong>Haklı bulundu düzeltildi</strong> olarak işaretler. Cevap anahtarında değişiklik yapmayacaksan bu soru için <strong>Reddet</strong> seçeneğini kullan.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">${answerButtons}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-green" type="button" onclick="W.applyAppealCorrection()">✅ Düzeltmeyi Uygula</button>
+                <button class="btn btn-red" type="button" onclick="W.rejectAppealQuestion()">⛔ Reddet</button>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-outline" type="button" onclick="W.selectAppealInspectQuestion(${Math.max(0,ctx.currentIndex-1)})" ${ctx.currentIndex===0?'disabled':''}>‹ Önceki</button>
+                <button class="btn btn-outline" type="button" onclick="W.selectAppealInspectQuestion(${Math.min(ctx.questionNos.length-1,ctx.currentIndex+1)})" ${ctx.currentIndex===ctx.questionNos.length-1?'disabled':''}>Sonraki ›</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+  async inspectAppeal(appealId){
+    const appeal=A.appeals.find(item=>item.id===appealId);
+    if(!appeal){
+      toast('İtiraz kaydı bulunamadı','error');
+      return;
+    }
+    showLoad('İtiraz edilen sorular hazırlanıyor...');
+    try{
+      const [resultSnap,questions,examSnap]=await Promise.all([
+        getDoc(doc(db,'results',appeal.resultId)),
+        fbLoadExamQuestions(appeal.examId),
+        getDoc(doc(db,'exams',appeal.examId))
+      ]);
+      if(!resultSnap.exists()) throw new Error('Sonuç kaydı bulunamadı.');
+      if(!examSnap.exists()) throw new Error('Sınav kaydı bulunamadı.');
+      const result={id:resultSnap.id,...resultSnap.data()};
+      const exam={id:examSnap.id,...examSnap.data()};
+      const detailMap=new Map((Array.isArray(result.answerDetails)?result.answerDetails:[]).map(item=>[parseInt(item?.questionNo,10),{...item}]));
+      const questionNos=getAppealQuestionNumbers(appeal);
+      A.appealInspect={
+        appealId,
+        appeal:{...appeal},
+        exam,
+        result,
+        questions:[...questions],
+        detailMap,
+        questionNos,
+        currentIndex:0,
+        selectedAnswer:String(questions[questionNos[0]-1]?.correctAnswer||detailMap.get(questionNos[0])?.correctAnswer||'A').trim().toUpperCase()
+      };
+      this.renderAppealInspectModal();
+    }catch(error){
+      toast(error.message||'İtiraz detayları açılamadı','error');
+    }finally{
+      hideLoad();
+    }
+  },
+  selectAppealInspectQuestion(index){
+    if(!A.appealInspect) return;
+    const nextIndex=Math.max(0,Math.min(A.appealInspect.questionNos.length-1,index));
+    const questionNo=A.appealInspect.questionNos[nextIndex];
+    const detail=A.appealInspect.detailMap.get(questionNo)||{};
+    const question=A.appealInspect.questions[questionNo-1]||{};
+    A.appealInspect.currentIndex=nextIndex;
+    A.appealInspect.selectedAnswer=String(question.correctAnswer||detail.correctAnswer||'A').trim().toUpperCase();
+    this.renderAppealInspectModal();
+  },
+  selectAppealCorrectAnswer(answer){
+    if(!A.appealInspect) return;
+    A.appealInspect.selectedAnswer=String(answer||'').trim().toUpperCase();
+    this.renderAppealInspectModal();
+  },
+  async persistAppealQuestionReview(appeal,review){
+    const questionReviews=upsertAppealQuestionReview(appeal,review);
+    const nextAppeal={
+      ...appeal,
+      questionReviews,
+      status:deriveAppealStatus({...appeal,questionReviews}),
+      reviewedBy:currentUser?.uid||'',
+      reviewedAt:{seconds:Math.floor(Date.now()/1000)}
+    };
+    await updateDoc(doc(db,'resultAppeals',appeal.id),{
+      questionReviews,
+      status:nextAppeal.status,
+      reviewedAt:serverTimestamp(),
+      reviewedBy:currentUser?.uid||''
+    });
+    A.appeals=A.appeals.map(item=>item.id===appeal.id?nextAppeal:item);
+    if(A.appealInspect?.appeal?.id===appeal.id) A.appealInspect.appeal=nextAppeal;
+    setContent(renderAdminExams());
+    return nextAppeal;
+  },
+  async applyAppealCorrection(){
+    const ctx=A.appealInspect;
+    if(!ctx) return;
+    const questionNo=ctx.questionNos[ctx.currentIndex];
+    const question=ctx.questions[questionNo-1];
+    if(!question){
+      toast('Soru kaydı bulunamadı','error');
+      return;
+    }
+    const nextAnswer=String(ctx.selectedAnswer||'').trim().toUpperCase();
+    const currentAnswer=String(question.correctAnswer||'').trim().toUpperCase();
+    if(!nextAnswer){
+      toast('Lütfen doğru cevabı seçin.','error');
+      return;
+    }
+    if(nextAnswer===currentAnswer){
+      toast('Seçtiğiniz cevap mevcut anahtarla aynı. Hata yoksa bu soru için Reddet seçeneğini kullanın.','info');
+      return;
+    }
+    showLoad('Cevap anahtarı güncelleniyor...');
+    try{
+      await updateDoc(doc(db,'questions',question.id),{correctAnswer:nextAnswer});
+      ctx.questions[questionNo-1]={...question,correctAnswer:nextAnswer};
+      const recalcSummary=await recalculateExamResults(ctx.exam.id,{
+        title:ctx.exam.title,
+        grade:ctx.exam.grade,
+        subject:ctx.exam.subject,
+        negativeMarking:ctx.exam.negativeMarking,
+        questionSections:Array.isArray(ctx.exam.questionSections)?ctx.exam.questionSections:[]
+      },ctx.questions);
+      const updatedResult=calculateRevisedResultSnapshot(ctx.result,ctx.exam,ctx.questions);
+      if(updatedResult){
+        ctx.result={...ctx.result,...updatedResult};
+        ctx.detailMap=new Map(updatedResult.answerDetails.map(item=>[parseInt(item.questionNo,10),{...item}]));
+        A.results=A.results.map(item=>item.id===ctx.result.id?{...item,...updatedResult}:item);
+      }
+      const latestDetail=ctx.detailMap.get(questionNo)||{};
+      const studentAnswer=String(latestDetail.selectedAnswer||'').trim().toUpperCase();
+      const reviewStatus=studentAnswer&&studentAnswer===nextAnswer?'accepted_corrected':'corrected_no_score_change';
+      const reviewMessage=reviewStatus==='accepted_corrected'
+        ? 'Haklı bulundu, cevap anahtarı düzeltildi ve öğrenci sonucu güncellendi.'
+        : 'Cevap anahtarı düzeltildi ancak bu öğrencinin verdiği cevap yeni anahtarla da uyuşmuyor.';
+      await this.persistAppealQuestionReview(ctx.appeal,{
+        questionNo,
+        status:reviewStatus,
+        previousCorrectAnswer:currentAnswer,
+        updatedCorrectAnswer:nextAnswer,
+        studentAnswer:studentAnswer||'',
+        reviewedAt:Date.now(),
+        reviewedBy:currentUser?.uid||'',
+        message:reviewMessage,
+        studentNoticeState:'queued'
+      });
+      ctx.selectedAnswer=nextAnswer;
+      this.renderAppealInspectModal();
+      toast(reviewStatus==='accepted_corrected'
+        ? 'Soru haklı bulundu ve cevap anahtarı düzeltildi.'
+        : 'Cevap anahtarı düzeltildi; bu öğrencinin sonucu değişmedi.',reviewStatus==='accepted_corrected'?'success':'info');
+      if(recalcSummary?.updated){
+        toast(`♻️ ${recalcSummary.updated} öğrenci sonucu yeniden hesaplandı.`,'success');
+      }
+    }catch(error){
+      toast('Cevap anahtarı güncellenemedi: '+error.message,'error');
+    }finally{
+      hideLoad();
+    }
+  },
+  async rejectAppealQuestion(){
+    const ctx=A.appealInspect;
+    if(!ctx) return;
+    const questionNo=ctx.questionNos[ctx.currentIndex];
+    const detail=ctx.detailMap.get(questionNo)||{};
+    try{
+      await this.persistAppealQuestionReview(ctx.appeal,{
+        questionNo,
+        status:'rejected',
+        previousCorrectAnswer:String(detail.correctAnswer||ctx.questions[questionNo-1]?.correctAnswer||'').trim().toUpperCase(),
+        updatedCorrectAnswer:String(detail.correctAnswer||ctx.questions[questionNo-1]?.correctAnswer||'').trim().toUpperCase(),
+        studentAnswer:String(detail.selectedAnswer||'').trim().toUpperCase(),
+        reviewedAt:Date.now(),
+        reviewedBy:currentUser?.uid||'',
+        message:'İtiraz incelendi, cevap anahtarında değişiklik gerekmedi.',
+        studentNoticeState:'queued'
+      });
+      this.renderAppealInspectModal();
+      toast(`${questionNo}. soru için itiraz reddedildi.`,'success');
+    }catch(error){
+      toast('İtiraz reddedilemedi: '+error.message,'error');
+    }
+  },
+  async setAppealStatus(appealId,status,examId){
+    const labels={pending:'İncelemede',accepted:'haklı',rejected:'reddedildi'};
+    try{
+      await updateDoc(doc(db,'resultAppeals',appealId),{
+        status,
+        reviewedAt:serverTimestamp(),
+        reviewedBy:currentUser?.uid||''
+      });
+      A.appeals=A.appeals.map(item=>item.id===appealId?{...item,status,reviewedBy:currentUser?.uid||'',reviewedAt:{seconds:Math.floor(Date.now()/1000)}}:item);
+      toast(`İtiraz durumu ${labels[status]||status} olarak güncellendi.`,'success');
+      this.showExamAppeals(examId);
+      setContent(renderAdminExams());
+    }catch(error){
+      toast('İtiraz durumu güncellenemedi: '+error.message,'error');
+    }
+  },
+  async deleteAppeal(appealId,examId){
+    if(!confirm('Bu itiraz kaydını silmek istiyor musunuz?')) return;
+    try{
+      await deleteDoc(doc(db,'resultAppeals',appealId));
+      A.appeals=A.appeals.filter(item=>item.id!==appealId);
+      toast('İtiraz kaydı silindi.','success');
+      this.closeAppealInspect();
+      this.showExamAppeals(examId);
+      setContent(renderAdminExams());
+    }catch(error){
+      toast('İtiraz kaydı silinemedi: '+error.message,'error');
+    }
   },
   exportXlsx(){
     if(!A.results.length){toast('Dışa aktarılacak kayıt yok','error');return;}

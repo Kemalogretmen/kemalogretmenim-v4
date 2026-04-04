@@ -14,6 +14,10 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/exams/$(examId));
     }
 
+    function resultDoc(resultId) {
+      return get(/databases/$(database)/documents/results/$(resultId));
+    }
+
     function examIsPublished(examId) {
       return exists(/databases/$(database)/documents/exams/$(examId))
         && examDoc(examId).data.published == true;
@@ -94,7 +98,8 @@ service cloud.firestore {
         'firstName','lastName','grade','sube',
         'subject','examTitle','examId',
         'correct','wrong','blank','netCorrect','score','total',
-        'negativeMarking','elapsed','date','answerDetails'
+        'negativeMarking','elapsed','date','answerDetails',
+        'studentKey','questionSections'
       ]);
     }
 
@@ -135,7 +140,37 @@ service cloud.firestore {
         && request.resource.data.elapsed <= 14400
         && request.resource.data.answerDetails is list
         && request.resource.data.answerDetails.size() == request.resource.data.total
+        && request.resource.data.studentKey is string
+        && request.resource.data.studentKey.size() <= 160
+        && request.resource.data.questionSections is list
         && request.resource.data.date == request.time;
+    }
+
+    function validAppealCreate() {
+      return request.resource.data.keys().hasOnly([
+        'resultId','examId','examTitle','subject','grade','sube',
+        'firstName','lastName','studentKey',
+        'questionNos','status','createdAt'
+      ])
+        && request.resource.data.resultId is string
+        && request.resource.data.resultId.size() >= 1
+        && exists(/databases/$(database)/documents/results/$(request.resource.data.resultId))
+        && request.resource.data.examId is string
+        && request.resource.data.examId == resultDoc(request.resource.data.resultId).data.examId
+        && examIsPublished(request.resource.data.examId)
+        && validTitle(request.resource.data.examTitle, 140)
+        && validTitle(request.resource.data.subject, 60)
+        && validGrade(request.resource.data.grade)
+        && validSube(request.resource.data.sube)
+        && validTitle(request.resource.data.firstName, 40)
+        && validTitle(request.resource.data.lastName, 40)
+        && request.resource.data.studentKey is string
+        && request.resource.data.studentKey.size() <= 160
+        && request.resource.data.questionNos is list
+        && request.resource.data.questionNos.size() >= 1
+        && request.resource.data.questionNos.size() <= 60
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
     }
 
     match /admins/{uid} {
@@ -158,6 +193,11 @@ service cloud.firestore {
 
     match /results/{resultId} {
       allow create: if validResultCreate();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /resultAppeals/{appealId} {
+      allow create: if validAppealCreate();
       allow read, update, delete: if isAdmin();
     }
   }

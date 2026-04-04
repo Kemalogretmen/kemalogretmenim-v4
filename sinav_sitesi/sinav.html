@@ -182,7 +182,8 @@ body.theme-dark .tool-btn,
 body.theme-dark .mini-action-btn,
 body.theme-dark .ans-btn,
 body.theme-dark .op-stat,
-body.theme-dark .od-bubble{
+body.theme-dark .od-bubble,
+body.theme-dark .appeal-chip{
   background:#111827;
   border-color:var(--border);
   color:var(--navy);
@@ -251,6 +252,8 @@ body.theme-dark .size-value{color:var(--muted)}
 .ktb-left p{font-size:13px;color:rgba(255,255,255,.6);margin-top:2px}
 .print-btn{padding:8px 18px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
 .print-btn:hover{background:rgba(255,255,255,.25)}
+.appeal-btn{padding:8px 18px;background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
+.appeal-btn:hover{background:#FEE2E2}
 .karne-body{max-width:1080px;margin:0 auto;padding:28px 24px}
 .karne-header{background:var(--white);border-radius:var(--r-xl);padding:24px;margin-bottom:20px;border:2px solid var(--border);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
 .karne-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;color:#fff}
@@ -311,6 +314,16 @@ body.theme-dark .size-value{color:var(--muted)}
 .ko-item:hover{transform:scale(1.1)}
 .ko-num{font-size:9px;color:var(--muted);margin-bottom:3px;font-weight:600}
 .ko-bub{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.appeal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:18px 0 6px}
+.appeal-chip{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-family:var(--fb);font-size:13px;font-weight:800;color:var(--navy);transition:all .18s}
+.appeal-chip small{font-size:11px;font-weight:700;color:var(--muted)}
+.appeal-chip:hover{border-color:var(--purple);transform:translateY(-1px)}
+.appeal-chip.selected{background:#EEF2FF;border-color:#8B5CF6;color:#4C1D95;box-shadow:0 10px 18px rgba(108,61,237,.12)}
+.appeal-chip.is-wrong{background:#FFF5F5;border-color:#FECACA}
+.appeal-chip.is-blank{background:#F8FAFC;border-color:#CBD5E1}
+.appeal-chip.selected.is-wrong,.appeal-chip.selected.is-blank,.appeal-chip.selected.is-correct{background:#EEF2FF;border-color:#8B5CF6}
+.appeal-count{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:#EFF6FF;color:#1D4ED8;font-size:12px;font-weight:800}
+.appeal-scroll-area{max-height:min(46vh,420px);overflow-y:auto;padding-right:4px;margin-top:14px}
 
 /* TOAST */
 #toastWrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
@@ -547,6 +560,7 @@ body.theme-dark .size-value{color:var(--muted)}
       <p id="karneDate"></p>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
+      <button class="appeal-btn" id="appealResultBtn" type="button" onclick="showAppealModal()" style="display:none">⚖️ Sonuca İtiraz Et</button>
       <button class="print-btn" onclick="window.print()">🖨️ PDF Çıktı Al</button>
       <button class="print-btn" id="karneBackBtn" onclick="window.location.href='index.html'">← Ana Sayfa</button>
     </div>
@@ -659,6 +673,7 @@ let P={
   uiBound:false,
   stageGesture:null,
   ignoreStageClick:false,
+  appealSelection:[],
   lightbox:{
     scale:1,
     x:0,
@@ -896,6 +911,7 @@ async function openAdminKarne(){
     P.answers=answers;
     P.OPTS=['A','B','C','D','E','F'].slice(0,exam.optionCount||4);
     P.result={
+      resultId:storedResult.id||storedResult.resultId||'',
       firstName:storedResult.firstName||'',
       lastName:storedResult.lastName||'',
       grade:storedResult.grade||exam.grade||'',
@@ -1902,10 +1918,14 @@ function updateTimerUI(){
   else if(P.timeLeft<=120) t.classList.add('warn');
 }
 
-function timeUp(){
+async function timeUp(){
   clearInterval(P.timer);
-  // Auto-submit
-  calcResult();
+  const result=calcResult();
+  try{
+    await persistResultRecord(result);
+  }catch(error){
+    console.error(error);
+  }
   showScreen('screenTimeout');
 }
 
@@ -1982,27 +2002,138 @@ function calcResult(){
   const total=qs.length;
   const score=Math.round(netCorrect/total*100);
   const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
-  P.result={firstName:P.student.firstName,lastName:P.student.lastName,grade:P.student.grade,sube:P.student.sube,studentKey,subject:P.exam.subject,examTitle:P.exam.title,examId:P.exam.id,correct,wrong,blank,netCorrect,score,total,negativeMarking:P.exam.negativeMarking,answers:{...ans},answerDetails,questionSections:Array.isArray(P.exam.questionSections)?P.exam.questionSections:[],elapsed,date:new Date().toLocaleDateString('tr-TR'),questions:qs};
+  P.result={resultId:'',firstName:P.student.firstName,lastName:P.student.lastName,grade:P.student.grade,sube:P.student.sube,studentKey,subject:P.exam.subject,examTitle:P.exam.title,examId:P.exam.id,correct,wrong,blank,netCorrect,score,total,negativeMarking:P.exam.negativeMarking,answers:{...ans},answerDetails,questionSections:Array.isArray(P.exam.questionSections)?P.exam.questionSections:[],elapsed,date:new Date().toLocaleDateString('tr-TR'),questions:qs};
   return P.result;
 }
 
-window.finishExam=function(){
+async function persistResultRecord(result){
+  if(result?.resultId) return result.resultId;
+  const resultRef=await addDoc(collection(db,'results'),{
+    firstName:result.firstName,lastName:result.lastName,grade:result.grade,sube:result.sube,studentKey:result.studentKey,
+    subject:result.subject,examTitle:result.examTitle,examId:result.examId,
+    correct:result.correct,wrong:result.wrong,blank:result.blank,netCorrect:result.netCorrect,
+    score:result.score,total:result.total,negativeMarking:result.negativeMarking||false,
+    elapsed:result.elapsed,answerDetails:result.answerDetails||[],
+    questionSections:result.questionSections||[],
+    date:serverTimestamp()
+  });
+  result.resultId=resultRef.id;
+  return resultRef.id;
+}
+
+window.finishExam=async function(){
   clearInterval(P.timer);
   const r=calcResult();
-  
-  // Veritabanına kaydet
-  addDoc(collection(db,'results'),{
-    firstName:r.firstName,lastName:r.lastName,grade:r.grade,sube:r.sube,studentKey:r.studentKey,
-    subject:r.subject,examTitle:r.examTitle,examId:r.examId,
-    correct:r.correct,wrong:r.wrong,blank:r.blank,netCorrect:r.netCorrect,
-    score:r.score,total:r.total,negativeMarking:r.negativeMarking||false,
-    elapsed:r.elapsed,answerDetails:r.answerDetails||[],
-    questionSections:r.questionSections||[],
-    date:serverTimestamp()
-  }).catch(()=>{});
-  
+
+  try{
+    await persistResultRecord(r);
+  }catch(error){
+    console.error(error);
+    toast('Sonuç kaydı oluşturulamadı. Karne görüntülendi ancak itiraz gönderimi bu oturumda kapalı olabilir.','error');
+  }
+
   renderKarne();
   showScreen('screenKarne');
+};
+
+function closeAppealModal(){
+  document.getElementById('appealModal')?.remove();
+}
+window.closeAppealModal=closeAppealModal;
+
+function syncAppealSelectionUI(){
+  const selectedSet=new Set(P.appealSelection||[]);
+  document.querySelectorAll('[data-appeal-question]').forEach(button=>{
+    const questionNo=parseInt(button.dataset.appealQuestion,10);
+    button.classList.toggle('selected',selectedSet.has(questionNo));
+  });
+  const countEl=document.getElementById('appealSelectedCount');
+  const submitBtn=document.getElementById('appealSubmitBtn');
+  const selectedCount=selectedSet.size;
+  if(countEl) countEl.textContent=selectedCount?`${selectedCount} soru seçildi`:'Henüz soru seçilmedi';
+  if(submitBtn) submitBtn.disabled=!selectedCount;
+}
+
+window.toggleAppealQuestion=function(questionNo){
+  const nextSelection=new Set(P.appealSelection||[]);
+  if(nextSelection.has(questionNo)) nextSelection.delete(questionNo);
+  else nextSelection.add(questionNo);
+  P.appealSelection=[...nextSelection].sort((a,b)=>a-b);
+  syncAppealSelectionUI();
+};
+
+window.showAppealModal=function(){
+  if(isAdminKarneMode()) return;
+  const r=P.result;
+  if(!r?.resultId){
+    toast('Bu sonuç kaydı henüz hazır görünmüyor. Lütfen birkaç saniye sonra tekrar dene.','error');
+    return;
+  }
+  P.appealSelection=[];
+  const entries=getResultQuestionEntries(r);
+  const appealOptions=entries.map(entry=>{
+    const tone=entry.outcome==='Y'?'is-wrong':entry.outcome==='B'?'is-blank':'is-correct';
+    const label=entry.outcome==='D'?'Doğru görünüyor':entry.outcome==='Y'?'Yanlış görünüyor':'Boş görünüyor';
+    return `<button type="button" class="appeal-chip ${tone}" data-appeal-question="${entry.questionNo}" onclick="toggleAppealQuestion(${entry.questionNo})">
+      <span>${entry.questionNo}. Soru</span>
+      <small>${label}${entry.sectionTitle?` · ${escHtml(entry.sectionTitle)}`:''}</small>
+    </button>`;
+  }).join('');
+  closeAppealModal();
+  const el=document.createElement('div');
+  el.className='modal-overlay';
+  el.id='appealModal';
+  el.innerHTML=`<div class="modal-box" style="max-width:760px;max-height:calc(100vh - 40px);overflow-y:auto">
+    <h3>⚖️ Sonuca İtiraz Et</h3>
+    <p>İncelenmesini istediğin soruları seçip gönder. Bu kayıt yönetici panelinde ilgili sınavın altında görüntülenecektir.</p>
+    <div class="appeal-count" id="appealSelectedCount">Henüz soru seçilmedi</div>
+    <div class="appeal-scroll-area"><div class="appeal-grid">${appealOptions}</div></div>
+    <div class="modal-note"><strong>Not:</strong> Özellikle yanlış veya boş göründüğünü düşündüğün soruları seçebilirsin. Gerekli inceleme sonrası cevap anahtarı düzeltilirse sınav sonucun otomatik olarak güncellenir.</div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" type="button" onclick="closeAppealModal()">Vazgeç</button>
+      <button class="btn btn-primary" type="button" id="appealSubmitBtn" onclick="submitAppeal()" disabled>Gönder</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click',event=>{if(event.target===el)closeAppealModal();});
+  syncAppealSelectionUI();
+};
+
+window.submitAppeal=async function(){
+  const r=P.result;
+  const questionNos=[...(P.appealSelection||[])].sort((a,b)=>a-b);
+  if(!r?.resultId){
+    toast('Sonuç kaydı bulunamadı.','error');
+    return;
+  }
+  if(!questionNos.length){
+    toast('Lütfen en az bir soru seç.','error');
+    return;
+  }
+  const submitBtn=document.getElementById('appealSubmitBtn');
+  if(submitBtn) submitBtn.disabled=true;
+  try{
+    await addDoc(collection(db,'resultAppeals'),{
+      resultId:r.resultId,
+      examId:r.examId,
+      examTitle:r.examTitle,
+      subject:r.subject,
+      grade:r.grade,
+      sube:r.sube||'',
+      firstName:r.firstName,
+      lastName:r.lastName,
+      studentKey:r.studentKey||buildStudentKey(r),
+      questionNos,
+      status:'pending',
+      createdAt:serverTimestamp()
+    });
+    closeAppealModal();
+    toast('İtirazın yönetime gönderildi. İnceleme sonrası gerekli düzeltme yapılacaktır.','success');
+  }catch(error){
+    console.error(error);
+    if(submitBtn) submitBtn.disabled=false;
+    toast('İtiraz gönderilemedi. Lütfen tekrar dene.','error');
+  }
 };
 
 // ===== KARNE =====
@@ -2017,6 +2148,7 @@ function renderKarne(){
   const strongest=[...sectionSummary].sort((a,b)=>b.score-a.score||b.correct-a.correct)[0]||null;
   const focus=[...sectionSummary].sort((a,b)=>a.score-b.score||b.blank-a.blank)[0]||null;
   const backBtn=document.getElementById('karneBackBtn');
+  const appealBtn=document.getElementById('appealResultBtn');
   if(backBtn){
     if(isAdminKarneMode()){
       backBtn.textContent='← Sınav Paneli';
@@ -2025,6 +2157,9 @@ function renderKarne(){
       backBtn.textContent='← Ana Sayfa';
       backBtn.onclick=()=>{window.location.href='index.html';};
     }
+  }
+  if(appealBtn){
+    appealBtn.style.display=!isAdminKarneMode()&&!!r.resultId?'inline-flex':'none';
   }
   
   // Tarih
