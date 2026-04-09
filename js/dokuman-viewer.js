@@ -2,7 +2,7 @@
   'use strict';
 
   const STORAGE_PREFIX = 'kemal_dokuman_annotations_v1_';
-  const SHAPE_TOOLS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star'];
+  const SHAPE_TOOLS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star', 'checkmark', 'cross'];
   const TOOL_DEFS = [
     {
       key: 'select',
@@ -129,6 +129,22 @@
           '<path d="m12 4 2.3 4.7 5.2.8-3.7 3.7.9 5.1L12 16l-4.7 2.3.9-5.1-3.7-3.7 5.2-.8z"/>' +
         '</svg>',
     },
+    {
+      key: 'checkmark',
+      label: 'Tik',
+      icon:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M4 13l5 5L20 7"/>' +
+        '</svg>',
+    },
+    {
+      key: 'cross',
+      label: 'Çarpı',
+      icon:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M6 6l12 12M18 6 6 18"/>' +
+        '</svg>',
+    },
   ];
   const TOOL_SHORTCUTS = {
     V: 'select',
@@ -143,6 +159,8 @@
     Q: 'square',
     O: 'circle',
     Y: 'star',
+    K: 'checkmark',
+    X: 'cross',
   };
   const SHORTCUT_SECTIONS = [
     {
@@ -160,6 +178,9 @@
         { key: 'Shift + A', label: 'Çift yönlü ok' },
         { key: 'R', label: 'Dikdörtgen' },
         { key: 'O', label: 'Daire' },
+        { key: 'Y', label: 'Yıldız' },
+        { key: 'K', label: 'Tik (✓)' },
+        { key: 'X', label: 'Çarpı (✗)' },
       ],
     },
     {
@@ -193,6 +214,7 @@
     },
   ];
   const VIEW_MODE_STORAGE_KEY = 'kemal_dokuman_view_mode';
+  const PAGE_TURN_DURATION = 920;
 
   const state = {
     documentId: '',
@@ -228,6 +250,7 @@
     isRebuilding: false,
     flipAudioContext: null,
     flipNoiseBuffer: null,
+    resizeTimer: null,
   };
 
   function qs(id) {
@@ -390,6 +413,10 @@
     return qs('pageTurnSheet');
   }
 
+  function getPageTurnShadow() {
+    return qs('pageTurnShadow');
+  }
+
   function getPageTurnFront() {
     return qs('pageTurnFront');
   }
@@ -515,6 +542,7 @@
   function updatePageTurnLayerSize() {
     const layer = getPageTurnLayer();
     const sheet = getPageTurnSheet();
+    const shadow = getPageTurnShadow();
     if (!layer || !sheet) {
       return;
     }
@@ -525,6 +553,28 @@
     layer.style.height = height;
     sheet.style.width = width;
     sheet.style.height = height;
+    if (shadow) {
+      shadow.style.width = width;
+      shadow.style.height = height;
+    }
+  }
+
+  function setPageTurnPosition(slot) {
+    const layer = getPageTurnLayer();
+    if (!layer) {
+      return;
+    }
+
+    let leftValue = '50%';
+    if (slot === 'left') {
+      leftValue = 'calc(50% - ' + ((state.pageWidth / 2) + 2) + 'px)';
+    } else if (slot === 'right') {
+      leftValue = 'calc(50% + ' + ((state.pageWidth / 2) + 2) + 'px)';
+    }
+
+    layer.style.left = leftValue;
+    layer.style.top = '50%';
+    layer.style.transform = 'translate(-50%,-50%)';
   }
 
   function clearPageTurnLayer() {
@@ -537,10 +587,15 @@
       return;
     }
 
+    if (state.flipTimer) {
+      window.clearTimeout(state.flipTimer);
+      state.flipTimer = null;
+    }
     layer.className = 'page-turn-layer';
     sheet.className = 'page-turn-sheet';
     front.style.backgroundImage = '';
     back.style.backgroundImage = '';
+    setPageTurnPosition('center');
   }
 
   function createFlipNoiseBuffer(context) {
@@ -608,7 +663,7 @@
     }
   }
 
-  function animatePageTurn(fromState, toState, direction) {
+  function animatePageTurn(fromState, toState, direction, slot) {
     const layer = getPageTurnLayer();
     const sheet = getPageTurnSheet();
     const front = getPageTurnFront();
@@ -618,15 +673,13 @@
       return;
     }
 
+    clearPageTurnLayer();
+    updatePageTurnLayerSize();
+    setPageTurnPosition(slot || 'center');
     front.style.backgroundImage = 'url("' + compositePageImage(fromState) + '")';
     back.style.backgroundImage = 'url("' + compositePageImage(toState) + '")';
     layer.className = 'page-turn-layer is-active ' + (direction === 'prev' ? 'is-prev' : 'is-next');
-    sheet.className = 'page-turn-sheet ' + (direction === 'prev' ? 'turn-prev' : 'turn-next');
     playPageTurnSound();
-
-    if (state.flipTimer) {
-      window.clearTimeout(state.flipTimer);
-    }
 
     state.flipTimer = window.setTimeout(function() {
       clearPageTurnLayer();
@@ -634,7 +687,7 @@
       applyToolToAllPages();
       updateBookTransform();
       state.flipTimer = null;
-    }, 980);
+    }, PAGE_TURN_DURATION);
   }
 
   function getActivePageState() {
@@ -963,6 +1016,44 @@
       );
     }
 
+    if (tool === 'checkmark') {
+      const cx = (start.x + end.x) / 2;
+      const cy = (start.y + end.y) / 2;
+      const w = Math.max(24, Math.abs(dx));
+      const h = Math.max(16, Math.abs(dy));
+      return new window.fabric.Polyline([
+        { x: cx - w * 0.46, y: cy },
+        { x: cx - w * 0.06, y: cy + h * 0.46 },
+        { x: cx + w * 0.46, y: cy - h * 0.46 },
+      ], Object.assign({}, baseOptions, {
+        fill: 'rgba(0,0,0,0)',
+        strokeLineCap: 'round',
+        strokeLineJoin: 'round',
+      }));
+    }
+
+    if (tool === 'cross') {
+      const cx = (start.x + end.x) / 2;
+      const cy = (start.y + end.y) / 2;
+      const r = Math.max(16, Math.max(Math.abs(dx), Math.abs(dy)) / 2) * 0.46;
+      const line1 = new window.fabric.Line([cx - r, cy - r, cx + r, cy + r], Object.assign({}, baseOptions, {
+        strokeLineCap: 'round',
+        selectable: false,
+        evented: false,
+      }));
+      const line2 = new window.fabric.Line([cx + r, cy - r, cx - r, cy + r], Object.assign({}, baseOptions, {
+        strokeLineCap: 'round',
+        selectable: false,
+        evented: false,
+      }));
+      return new window.fabric.Group([line1, line2], {
+        fill: 'transparent',
+        strokeUniform: true,
+        hasControls: true,
+        objectCaching: false,
+      });
+    }
+
     return null;
   }
 
@@ -1168,13 +1259,6 @@
     tooltip.classList.add('show');
   }
 
-  function clearFlipClasses(wrapper) {
-    if (!wrapper) {
-      return;
-    }
-    wrapper.classList.remove('is-animating', 'flip-in-next', 'flip-out-next', 'flip-in-prev', 'flip-out-prev');
-  }
-
   function createPageShell(pageNumber) {
     const shell = document.createElement('div');
     shell.className = 'flip-page';
@@ -1259,23 +1343,21 @@
   }
 
   function getResponsivePageWidth(baseWidth) {
-    const viewportWidth = Math.max(320, window.innerWidth || 1280);
+    const frame = getBookFrame();
+    const viewportWidth = Math.max(
+      320,
+      (frame && frame.clientWidth ? frame.clientWidth : (window.innerWidth || 1280)) - 28
+    );
     if (state.viewMode === 'spread') {
-      if (viewportWidth < 760) {
-        return Math.min(baseWidth, Math.max(170, (viewportWidth - 56) / 2));
-      }
-      if (viewportWidth < 1180) {
-        return Math.min(baseWidth, Math.max(250, (viewportWidth - 140) / 2));
-      }
-      return Math.min(baseWidth, Math.max(320, (viewportWidth - 280) / 2));
+      return Math.min(baseWidth, Math.max(168, (viewportWidth - 12) / 2));
     }
     if (viewportWidth < 760) {
-      return Math.min(430, viewportWidth - 82);
+      return Math.min(430, viewportWidth - 24);
     }
     if (viewportWidth < 1180) {
-      return Math.min(560, viewportWidth - 180);
+      return Math.min(600, viewportWidth - 44);
     }
-    return Math.min(720, viewportWidth - 320);
+    return Math.min(760, viewportWidth - 64);
   }
 
   function showPage(pageNumber, initial) {
@@ -1284,7 +1366,11 @@
     const direction = targetPage >= previousPage ? 'next' : 'prev';
     const previousState = state.pages.get(previousPage) || null;
     const targetState = state.pages.get(targetPage) || null;
+    const previousVisiblePages = getVisiblePagesFor(previousPage);
     const visiblePages = getVisiblePagesFor(targetPage);
+    let flipFromState = null;
+    let flipToState = null;
+    let flipSlot = 'center';
 
     state.currentPage = targetPage;
     state.lastPage = previousPage;
@@ -1304,7 +1390,24 @@
       pageState.canvas.renderAll();
     });
 
-    if (!initial && state.viewMode === 'single' && previousState && targetState && previousState !== targetState) {
+    if (!initial) {
+      if (state.viewMode === 'spread') {
+        if (direction === 'next') {
+          flipFromState = state.pages.get(previousVisiblePages[previousVisiblePages.length - 1]) || null;
+          flipToState = state.pages.get(visiblePages[0]) || null;
+          flipSlot = 'right';
+        } else {
+          flipFromState = state.pages.get(previousVisiblePages[0]) || null;
+          flipToState = state.pages.get(visiblePages[visiblePages.length - 1]) || state.pages.get(visiblePages[0]) || null;
+          flipSlot = 'left';
+        }
+      } else {
+        flipFromState = previousState;
+        flipToState = targetState;
+      }
+    }
+
+    if (!initial && flipFromState && flipToState && flipFromState !== flipToState) {
       state.isFlipping = true;
     } else {
       state.isFlipping = false;
@@ -1315,8 +1418,8 @@
     updateBookTransform();
     refreshStatus(initial ? 'Doküman hazır.' : '');
 
-    if (!initial && state.viewMode === 'single' && previousState && targetState && previousState !== targetState) {
-      animatePageTurn(previousState, targetState, direction);
+    if (!initial && flipFromState && flipToState && flipFromState !== flipToState) {
+      animatePageTurn(flipFromState, flipToState, direction, flipSlot);
     }
   }
 
@@ -1371,7 +1474,7 @@
     const baseViewport = firstPage.getViewport({ scale: 1 });
     state.pageWidth = getResponsivePageWidth(baseViewport.width);
     state.pageHeight = state.pageWidth * (baseViewport.height / baseViewport.width);
-    state.bookWidth = state.viewMode === 'spread' ? (state.pageWidth * 2) + 24 : state.pageWidth;
+    state.bookWidth = state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth;
     state.bookHeight = state.pageHeight;
 
     const root = qs('bookRoot');
@@ -1742,8 +1845,56 @@
       }
     });
 
-    window.addEventListener('resize', updateBookTransform);
+    window.addEventListener('resize', function() {
+      if (state.resizeTimer) {
+        window.clearTimeout(state.resizeTimer);
+      }
+      state.resizeTimer = window.setTimeout(function() {
+        state.resizeTimer = null;
+        if (state.pageCount && !state.isFlipping && !state.isRebuilding) {
+          buildBook(state.focusPage || state.currentPage).catch(function() {
+            updateBookTransform();
+          });
+          return;
+        }
+        updateBookTransform();
+      }, 140);
+    });
     window.addEventListener('scroll', hideToolTooltip, true);
+
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let swipeActive = false;
+    const bookFrame = getBookFrame();
+
+    if (bookFrame) {
+      bookFrame.addEventListener('touchstart', function(event) {
+        if (state.tool === 'pan' || state.zoom > 1) {
+          return;
+        }
+        const touch = event.changedTouches[0];
+        swipeStartX = touch.clientX;
+        swipeStartY = touch.clientY;
+        swipeActive = true;
+      }, { passive: true });
+
+      bookFrame.addEventListener('touchend', function(event) {
+        if (!swipeActive) {
+          return;
+        }
+        swipeActive = false;
+        const touch = event.changedTouches[0];
+        const dx = touch.clientX - swipeStartX;
+        const dy = touch.clientY - swipeStartY;
+        if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+          if (dx < 0) {
+            goToPage(state.currentPage + getPageStep());
+          } else {
+            goToPage(state.currentPage - getPageStep());
+          }
+        }
+      }, { passive: true });
+    }
   }
 
   async function loadDocument() {
@@ -1766,6 +1917,18 @@
     qs('backSubjectLink').href = '/ders.html?sinif=' + encodeURIComponent(documentRow.sinif) + '&ders=' + encodeURIComponent(documentRow.ders);
     qs('backSubjectLink').textContent = '← ' + documentRow.dersLabel + ' dersine dön';
     document.title = documentRow.baslik + ' | Kemal Öğretmenim';
+
+    if (window.kemalCalismaKagidiStore && qs('worksheetBtn')) {
+      try {
+        const hasWorksheet = await window.kemalCalismaKagidiStore.hasPublishedWorksheet(state.documentId);
+        if (hasWorksheet) {
+          qs('worksheetBtn').href = '/calisma-kagidi.html?id=' + encodeURIComponent(state.documentId);
+          qs('worksheetBtn').style.display = 'inline-flex';
+        }
+      } catch (error) {
+        qs('worksheetBtn').style.display = 'none';
+      }
+    }
   }
 
   async function init() {

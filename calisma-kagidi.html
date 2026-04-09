@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Çalışma Kağıdı | Kemal Öğretmenim</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+
+    :root{
+      --purple:#6C3DED;
+      --teal:#00C9B1;
+      --navy:#1A1040;
+      --slate:#64748B;
+      --muted:#94A3B8;
+      --border:#E2D9FF;
+      --success:#10B981;
+      --danger:#EF4444;
+      --shadow:0 20px 54px rgba(88,58,180,.12);
+    }
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:
+      radial-gradient(circle at top left, rgba(108,61,237,.12), transparent 28%),
+      radial-gradient(circle at top right, rgba(0,201,177,.10), transparent 24%),
+      linear-gradient(180deg,#F8F5FF 0%,#F7F2FF 100%);
+      color:var(--navy);}
+
+    .worksheet-shell{max-width:1520px;margin:0 auto;padding:24px 18px 40px;}
+    .hero{background:linear-gradient(135deg,#1A1040 0%,#4A1FD0 52%,#7E61F6 100%);border-radius:30px;padding:26px;color:white;box-shadow:0 24px 64px rgba(32,18,101,.24);margin-bottom:18px;position:relative;overflow:hidden;}
+    .hero::before,.hero::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.08);}
+    .hero::before{width:240px;height:240px;right:-80px;top:-100px;}
+    .hero::after{width:170px;height:170px;left:-60px;bottom:-80px;}
+    .hero-inner{position:relative;z-index:1;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+    .hero-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:800;margin-bottom:14px;}
+    .hero h1{font-family:'Baloo 2',cursive;font-size:clamp(28px,4vw,44px);line-height:1.05;margin-bottom:12px;}
+    .hero p{max-width:760px;font-size:14px;line-height:1.75;color:rgba(255,255,255,.82);}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;}
+    .hero-actions a{display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.12);color:white;text-decoration:none;font-weight:800;font-size:13px;}
+
+    .layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px;align-items:start;}
+    .panel{background:white;border:2px solid var(--border);border-radius:24px;box-shadow:var(--shadow);}
+    .side-panel{position:sticky;top:18px;display:grid;gap:16px;}
+    .card-head{padding:18px 18px 0;}
+    .card-head h2{font-family:'Baloo 2',cursive;font-size:20px;color:var(--purple);margin-bottom:4px;}
+    .card-head p{font-size:12px;color:var(--slate);line-height:1.6;}
+    .card-body{padding:16px 18px 18px;display:grid;gap:12px;}
+    label{display:block;font-size:12px;font-weight:800;color:var(--slate);margin-bottom:6px;}
+    input[type="text"],input[type="number"],textarea,select{
+      width:100%;padding:11px 12px;border-radius:12px;border:2px solid var(--border);background:#FBFAFF;font-family:'Nunito',sans-serif;font-size:14px;color:var(--navy);outline:none;
+    }
+    input:focus,textarea:focus,select:focus{border-color:var(--purple);background:white;}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .muted{font-size:12px;color:var(--muted);line-height:1.6;}
+    .primary-btn{padding:13px 18px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--teal),#12B097);color:white;font-weight:800;font-size:14px;cursor:pointer;}
+    .primary-btn:disabled{opacity:.55;cursor:not-allowed;}
+    .stats{display:flex;gap:8px;flex-wrap:wrap;}
+    .stat{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;background:#F5F3FF;color:#7C3AED;font-size:11px;font-weight:800;}
+    .result-card{padding:16px;border-radius:18px;background:linear-gradient(135deg,#ECFDF5,#F0FDF4);border:2px solid #BBF7D0;display:none;}
+    .result-score{font-family:'Baloo 2',cursive;font-size:34px;color:#166534;line-height:1;}
+    .result-copy{font-size:13px;color:#166534;line-height:1.7;margin-top:8px;}
+    .result-copy strong{display:block;font-size:14px;margin-bottom:4px;}
+    .result-card.fail{background:linear-gradient(135deg,#FFF7ED,#FEF2F2);border-color:#FED7AA;}
+    .result-card.fail .result-score,.result-card.fail .result-copy{color:#9A3412;}
+
+    .stage-panel{padding:16px;background:
+      radial-gradient(circle at top, rgba(108,61,237,.08), transparent 30%),
+      linear-gradient(180deg,#F5F1FF 0%,#F8F5FF 100%);}
+    .stage-loading,.stage-empty{padding:80px 20px;text-align:center;color:var(--muted);}
+    .stage-loading span,.stage-empty span{display:block;font-size:58px;margin-bottom:12px;}
+    .sheet-page{position:relative;width:fit-content;max-width:100%;margin:0 auto 18px;padding:14px;background:white;border:1px solid rgba(212,201,255,.82);border-radius:18px;box-shadow:0 18px 40px rgba(91,62,182,.12);}
+    .sheet-wrap{position:relative;}
+    .sheet-canvas{display:block;width:100%;height:auto;border-radius:10px;}
+    .sheet-overlay{position:absolute;inset:0;}
+    .sheet-footer{display:flex;justify-content:flex-end;padding-top:10px;font-size:12px;font-weight:800;color:var(--slate);}
+
+    .answer-box{position:absolute;border-radius:16px;border:2px solid rgba(108,61,237,.24);background:rgba(255,255,255,.94);backdrop-filter:blur(10px);box-shadow:0 10px 22px rgba(32,18,101,.12);padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto;}
+    .answer-box strong{font-size:12px;line-height:1.35;}
+    .answer-box p{font-size:11px;color:var(--slate);line-height:1.5;}
+    .answer-box .points{font-size:10px;font-weight:900;color:var(--purple);text-transform:uppercase;letter-spacing:.4px;}
+    .answer-options{display:grid;gap:6px;}
+    .answer-options label{margin:0;font-size:12px;font-weight:700;color:var(--navy);display:flex;align-items:flex-start;gap:8px;}
+    .answer-options input,.answer-options select{accent-color:var(--purple);}
+    .answer-options select{padding:8px 9px;font-size:12px;}
+    .box-truefalse{border-color:rgba(37,99,235,.26);}
+    .box-single{border-color:rgba(124,58,237,.25);}
+    .box-multi{border-color:rgba(15,118,110,.26);}
+    .box-match{border-color:rgba(194,65,12,.25);}
+    .match-row{display:grid;grid-template-columns:1fr;gap:6px;padding:7px 8px;border-radius:12px;background:#FBFAFF;border:1px solid #EDE8FF;}
+    .match-row span{font-size:11px;font-weight:800;color:var(--slate);}
+
+    .toast{position:fixed;right:20px;bottom:24px;z-index:9999;padding:13px 18px;border-radius:16px;color:white;font-size:14px;font-weight:800;opacity:0;pointer-events:none;transform:translateY(12px);transition:all .25s;}
+    .toast.show{opacity:1;transform:translateY(0);}
+    .toast.success{background:var(--success);}
+    .toast.error{background:var(--danger);}
+
+    @media (max-width:1080px){
+      .layout{grid-template-columns:1fr;}
+      .side-panel{position:static;}
+    }
+    @media (max-width:720px){
+      .worksheet-shell{padding:16px 12px 30px;}
+      .hero{padding:20px;}
+      .grid-2{grid-template-columns:1fr;}
+      .stage-panel{padding:12px;}
+      .answer-box{padding:9px;}
+      .answer-options label{font-size:11px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="worksheet-shell">
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <div class="hero-pill" id="worksheetPill">🧩 Etkileşimli Çalışma Kağıdı</div>
+          <h1 id="worksheetTitle">Çalışma kağıdı yükleniyor…</h1>
+          <p id="worksheetDesc">PDF ve cevap alanları hazırlanıyor. Birkaç saniye içinde çözmeye başlayabilirsin.</p>
+        </div>
+        <div class="hero-actions">
+          <a href="/index.html">← Ana sayfaya dön</a>
+          <a href="/dokuman.html" id="backToDocumentLink">PDF görünümünü aç</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="side-panel">
+        <section class="panel">
+          <div class="card-head">
+            <h2>Öğrenci Bilgileri</h2>
+            <p>Sonuçlar bu bilgilerle kaydedilir.</p>
+          </div>
+          <div class="card-body">
+            <div class="grid-2">
+              <div>
+                <label for="studentName">Ad</label>
+                <input type="text" id="studentName" placeholder="Adın">
+              </div>
+              <div>
+                <label for="studentSurname">Soyad</label>
+                <input type="text" id="studentSurname" placeholder="Soyadın">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div>
+                <label for="studentGrade">Sınıf</label>
+                <input type="number" id="studentGrade" min="1" max="8" placeholder="1">
+              </div>
+              <div>
+                <label for="studentSection">Şube</label>
+                <input type="text" id="studentSection" placeholder="A">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="card-head">
+            <h2>Yönergeler</h2>
+            <p>PDF üstündeki kutuların içinden cevaplarını ver.</p>
+          </div>
+          <div class="card-body">
+            <div class="stats">
+              <div class="stat" id="worksheetFieldStat">0 alan</div>
+              <div class="stat" id="worksheetPassStat">Gecme 60</div>
+            </div>
+            <div class="muted" id="worksheetInstructions">Yönergeler yükleniyor…</div>
+            <button class="primary-btn" type="button" id="submitBtn">Çalışmayı Gönder ve Puanı Gör</button>
+            <div class="muted">Gönderince sistem cevaplarını kontrol eder ve puanı 100 üzerinden hesaplar.</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="card-head">
+            <h2>Sonuç</h2>
+            <p>Gönderim sonrası puanın burada görünür.</p>
+          </div>
+          <div class="card-body">
+            <div class="result-card" id="resultCard">
+              <div class="result-score" id="resultScore">0/100</div>
+              <div class="result-copy" id="resultCopy"></div>
+            </div>
+            <div class="muted" id="resultHint">Henüz gönderim yapılmadı.</div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="panel stage-panel">
+        <div id="worksheetStage">
+          <div class="stage-loading"><span>⏳</span><p>PDF sayfaları hazırlanıyor…</p></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/dokuman-store.js"></script>
+  <script src="/js/calisma-kagidi-store.js"></script>
+  <script src="/js/calisma-kagidi-app.js"></script>
+</body>
+</html>

@@ -256,6 +256,7 @@
           '<div class="doc-actions">' +
             '<button class="btn-edit" type="button" onclick="dokumanDuzenle(\'' + item.id + '\')">Düzenle</button>' +
             '<a class="btn-open" href="' + escHtml(window.kemalDocumentStore.buildViewerUrl(item.id)) + '" target="_blank" rel="noreferrer">Aç</a>' +
+            '<button class="btn-worksheet" type="button" onclick="calismaKagidiDuzenle(\'' + item.id + '\')">Çalışma Kağıdı</button>' +
           '</div>' +
           '<div class="doc-actions">' +
             '<button class="btn-open" type="button" onclick="durumDegistir(\'' + item.id + '\')">' + (item.aktif ? 'Pasife Al' : 'Aktife Al') + '</button>' +
@@ -571,6 +572,14 @@
     window.open(window.kemalDocumentStore.buildViewerUrl(state.editingId), '_blank');
   }
 
+  function openWorksheetBuilder(documentId) {
+    if (!documentId) {
+      toast('Önce dokümanı kaydetmelisin.', 'error');
+      return;
+    }
+    window.location.href = '/admin/calisma-kagidi-editor.html?dokumanId=' + encodeURIComponent(documentId);
+  }
+
   function applyFilters() {
     state.filters.grade = document.getElementById('filterGrade').value;
     state.filters.subject = document.getElementById('filterSubject').value;
@@ -689,4 +698,8 @@
   window.kaydet = save;
   window.viewerAc = openViewer;
   window.linkKopyala = copyViewerLink;
+  window.calismaKagidiDuzenle = openWorksheetBuilder;
+  window.calismaKagidiAc = function() {
+    openWorksheetBuilder(state.editingId);
+  };
 })();

@@ -240,15 +240,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const GRADES=[1,2,3,4,5,6,7,8];
-const SUBJECTS={
-  1:['Tümü','Türkçe','Matematik','Hayat Bilgisi','Deneme'],
-  2:['Tümü','Türkçe','Matematik','Hayat Bilgisi','Deneme'],
-  3:['Tümü','Türkçe','Matematik','Hayat Bilgisi','Fen Bilimleri','Deneme'],
-  4:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
-  5:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
-  6:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
-  7:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
-  8:['Tümü','Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler']
+const DEFAULT_SUBJECTS={
+  1:['Türkçe','Matematik','Hayat Bilgisi','Deneme'],
+  2:['Türkçe','Matematik','Hayat Bilgisi','Deneme'],
+  3:['Türkçe','Matematik','Hayat Bilgisi','Fen Bilimleri','Deneme'],
+  4:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  5:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  6:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  7:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
+  8:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler']
 };
 const GC=[null,
   {bg:'linear-gradient(135deg,#FF6B6B,#FF8E53)'},
@@ -261,7 +261,7 @@ const GC=[null,
   {bg:'linear-gradient(135deg,#AB47BC,#EC407A)'}
 ];
 
-let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:10,selExam:null}; // Sayfada 10 sınav ayarı
+let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:10,selExam:null,categoryMap:{}}; // Sayfada 10 sınav ayarı
 
 function fmtDate(ts){
   if(!ts)return'—';
@@ -269,6 +269,49 @@ function fmtDate(ts){
   return d.toLocaleDateString('tr-TR');
 }
 function capitalize(s){return s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');}
+function escHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
+function sanitizeCategoryList(list){
+  const seen=new Set();
+  return(Array.isArray(list)?list:[]).map(sanitizeCategoryLabel).filter(label=>{
+    if(!label) return false;
+    const key=label.toLocaleLowerCase('tr-TR');
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function mergeCategoryLists(...lists){
+  const merged=[];
+  const seen=new Set();
+  lists.flat().forEach(item=>{
+    const label=sanitizeCategoryLabel(item);
+    if(!label) return;
+    const key=label.toLocaleLowerCase('tr-TR');
+    if(seen.has(key)) return;
+    seen.add(key);
+    merged.push(label);
+  });
+  return merged;
+}
+function getConfiguredSubjects(grade){
+  const configured=sanitizeCategoryList(S.categoryMap?.[grade]);
+  const defaults=sanitizeCategoryList(DEFAULT_SUBJECTS[grade]||[]);
+  return configured.length?configured:defaults;
+}
+function getSubjectOptions(grade){
+  return ['Tümü',...mergeCategoryLists(getConfiguredSubjects(grade),S.exams.map(exam=>exam.subject))];
+}
+async function loadCategoriesForGrade(grade){
+  try{
+    const snap=await getDoc(doc(db,'examCategories',`grade-${grade}`));
+    const categories=snap.exists()?sanitizeCategoryList(snap.data()?.categories):[];
+    S.categoryMap[grade]=categories.length?categories:[...(DEFAULT_SUBJECTS[grade]||[])];
+  }catch(error){
+    console.error(error);
+    S.categoryMap[grade]=[...(DEFAULT_SUBJECTS[grade]||[])];
+  }
+}
 function openExamModal(exam){
   if(!exam)return;
   S.selExam=exam;
@@ -306,8 +349,9 @@ window.selectGrade=async function(g){
   const bn=document.getElementById('gradeBanner');
   bn.style.background=GC[g].bg;
   document.getElementById('gradeBannerTitle').textContent=`${g}. Sınıf Sınavları`;
+  await Promise.all([loadCategoriesForGrade(g),loadExams(g)]);
   renderSubjects(g);
-  await loadExams(g);
+  applyFilter();
 };
 
 window.showHero=function(){
@@ -318,8 +362,9 @@ window.showHero=function(){
 };
 
 function renderSubjects(g){
-  const ss=SUBJECTS[g]||['Tümü'];
-  document.getElementById('subjFilters').innerHTML=ss.map(s=>`<button class="sf-btn ${s===S.subject?'active':''}" onclick="window.filterSub('${s}')">${s}</button>`).join('');
+  const ss=getSubjectOptions(g);
+  if(!ss.includes(S.subject)) S.subject='Tümü';
+  document.getElementById('subjFilters').innerHTML=ss.map(s=>`<button class="sf-btn ${s===S.subject?'active':''}" onclick='window.filterSub(${JSON.stringify(s)})'>${escHtml(s)}</button>`).join('');
 }
 
 window.filterSub=function(s){
@@ -345,7 +390,6 @@ async function loadExams(g){
       }
     }
     S.exams=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-    applyFilter();
   }catch(e){
     grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">⚠️</span><h3>Yükleme Hatası</h3><p>Sınavlar yüklenemedi, lütfen sayfayı yenileyin.</p></div>';
   }

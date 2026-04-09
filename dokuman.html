@@ -61,17 +61,24 @@
     .viewer-top-actions a{background:rgba(255,255,255,.12);color:white;border:1px solid rgba(255,255,255,.16);}
     .viewer-top-actions button{background:white;color:var(--viewer-purple);}
 
+    .viewer-main-layout{
+      display:grid;
+      grid-template-columns:340px minmax(0,1fr);
+      gap:18px;
+      align-items:start;
+    }
     .viewer-toolbar{
-      background:rgba(255,255,255,.82);
+      position:sticky;
+      top:18px;
+      background:rgba(255,255,255,.86);
       backdrop-filter:blur(18px);
       border:2px solid rgba(226,217,255,.9);
-      border-radius:26px;
-      padding:18px;
+      border-radius:28px;
+      padding:16px;
       display:grid;
-      grid-template-columns:minmax(0,1.9fr) minmax(280px,.8fr) minmax(280px,.8fr);
+      grid-template-columns:1fr;
       gap:14px;
       box-shadow:0 18px 44px rgba(92,63,182,.12);
-      margin-bottom:22px;
     }
     .tool-card{background:white;border:2px solid var(--viewer-border);border-radius:20px;padding:16px;position:relative;overflow:visible;}
     .tool-card h3{font-family:var(--font-display);font-size:18px;color:var(--viewer-navy);margin-bottom:12px;}
@@ -158,11 +165,12 @@
     .action-btn.danger:hover:not(:disabled){border-color:#FCA5A5;color:var(--viewer-danger);background:#FFF1F2;}
 
     .viewer-stage{
-      background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(248,244,255,.95));
+      background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(248,244,255,.98));
       border:2px solid var(--viewer-border);
       border-radius:30px;
-      padding:18px;
+      padding:22px 20px 20px;
       box-shadow:var(--viewer-shadow);
+      min-width:0;
     }
     .viewer-status{
       display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;
@@ -187,11 +195,12 @@
     .shortcut-help-btn:hover{border-color:var(--viewer-purple);background:var(--viewer-purple-soft);color:var(--viewer-purple);}
     .book-frame{
       background:
-        linear-gradient(180deg,#F8F5FF,#F1ECFF),
-        repeating-linear-gradient(90deg,rgba(255,255,255,.22),rgba(255,255,255,.22) 8px,transparent 8px,transparent 16px);
-      border-radius:24px;
-      border:2px solid rgba(226,217,255,.7);
-      padding:18px 14px;
+        radial-gradient(ellipse at 30% 20%, rgba(108,61,237,.07), transparent 55%),
+        radial-gradient(ellipse at 80% 80%, rgba(0,201,177,.05), transparent 50%),
+        linear-gradient(180deg,#F3EEF9 0%,#EDE6F7 100%);
+      border-radius:28px;
+      border:2px solid rgba(200,185,255,.65);
+      padding:24px 18px;
       min-height:720px;
       display:flex;
       align-items:center;
@@ -199,7 +208,10 @@
       position:relative;
       overflow:hidden;
       margin-bottom:16px;
-      perspective:2600px;
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.7),
+        inset 0 -2px 0 rgba(108,61,237,.06),
+        0 8px 32px rgba(108,61,237,.08);
     }
     .book-frame.is-pannable{cursor:grab;}
     .book-frame.is-pannable.is-panning{cursor:grabbing;}
@@ -239,73 +251,96 @@
       height:100%;
       transform-style:preserve-3d;
     }
-    #bookRoot.is-spread::before{opacity:.55;}
+    #bookRoot.is-spread::before{opacity:1;}
     #bookRoot::before{
       content:'';
       position:absolute;
       left:50%;
-      top:3%;
-      bottom:3%;
-      width:18px;
+      top:2%;
+      bottom:2%;
+      width:14px;
       transform:translateX(-50%);
       border-radius:999px;
-      background:linear-gradient(180deg,rgba(39,18,105,.1),rgba(39,18,105,.03),rgba(39,18,105,.1));
-      filter:blur(2px);
+      background:linear-gradient(
+        180deg,
+        rgba(39,18,105,.04) 0%,
+        rgba(39,18,105,.12) 20%,
+        rgba(39,18,105,.06) 50%,
+        rgba(39,18,105,.12) 80%,
+        rgba(39,18,105,.04) 100%
+      );
+      box-shadow:
+        2px 0 6px rgba(39,18,105,.08),
+        -2px 0 6px rgba(39,18,105,.08);
       z-index:0;
       pointer-events:none;
+      opacity:0;
+      transition:opacity .3s;
     }
     .flip-page{
       position:absolute;
       left:50%;
       top:50%;
-      background:linear-gradient(180deg,#fff,#FCFBFF);
+      background:#FFFFFE;
       box-shadow:
-        0 26px 42px rgba(31,18,78,.18),
-        inset 0 0 0 1px rgba(226,217,255,.6);
+        0 2px 4px rgba(31,18,78,.06),
+        0 12px 28px rgba(31,18,78,.12),
+        0 32px 56px rgba(31,18,78,.14),
+        inset 0 0 0 1px rgba(200,185,255,.5);
       overflow:hidden;
-      border-radius:16px;
-      transform:translate(-50%,-50%) rotateY(0deg) scale(.985);
+      border-radius:2px 14px 14px 2px;
+      transform:translate(-50%,-50%) scale(.984);
       transform-origin:center center;
       transform-style:preserve-3d;
       backface-visibility:hidden;
       opacity:0;
       pointer-events:none;
-      transition:opacity .28s ease, transform .28s ease, box-shadow .28s ease;
+      transition:opacity .26s ease, transform .26s ease, box-shadow .26s ease;
     }
     .flip-page.is-active{
       opacity:1;
       pointer-events:auto;
       transform:translate(-50%,-50%) scale(1);
       box-shadow:
-        0 36px 58px rgba(31,18,78,.22),
-        inset 0 0 0 2px rgba(108,61,237,.18);
+        0 2px 4px rgba(31,18,78,.06),
+        0 16px 36px rgba(31,18,78,.16),
+        0 40px 70px rgba(31,18,78,.16),
+        inset 0 0 0 1px rgba(108,61,237,.14);
       z-index:3;
     }
     .flip-page.is-active.is-spread-left{
-      transform:translate(calc(-100% - 12px),-50%) scale(1);
+      border-radius:2px 14px 14px 2px;
+      transform:translate(calc(-100% - 2px),-50%) scale(1);
       box-shadow:
-        0 26px 46px rgba(31,18,78,.18),
-        inset 0 0 0 2px rgba(108,61,237,.12);
+        -4px 16px 36px rgba(31,18,78,.14),
+        -2px 40px 60px rgba(31,18,78,.12),
+        inset 0 0 0 1px rgba(108,61,237,.10);
     }
     .flip-page.is-active.is-spread-right{
-      transform:translate(12px,-50%) scale(1);
+      border-radius:14px 2px 2px 14px;
+      transform:translate(2px,-50%) scale(1);
       box-shadow:
-        0 26px 46px rgba(31,18,78,.18),
-        inset 0 0 0 2px rgba(108,61,237,.12);
+        4px 16px 36px rgba(31,18,78,.14),
+        2px 40px 60px rgba(31,18,78,.12),
+        inset 0 0 0 1px rgba(108,61,237,.10);
     }
     .flip-page.is-animating{
       opacity:1;
       pointer-events:none;
     }
-    .flip-page.flip-in-next{z-index:5;animation:flipInNext .58s cubic-bezier(.2,.82,.25,1) both;}
-    .flip-page.flip-out-next{z-index:4;animation:flipOutNext .58s cubic-bezier(.2,.82,.25,1) both;}
-    .flip-page.flip-in-prev{z-index:5;animation:flipInPrev .58s cubic-bezier(.2,.82,.25,1) both;}
-    .flip-page.flip-out-prev{z-index:4;animation:flipOutPrev .58s cubic-bezier(.2,.82,.25,1) both;}
     .page-surface{
       position:relative;
       width:100%;
       height:100%;
-      background:white;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 27px,
+          rgba(108,61,237,.018) 27px,
+          rgba(108,61,237,.018) 28px
+        ),
+        #FFFFFE;
     }
     .page-pdf-canvas,.page-annotation-canvas{
       position:absolute;
@@ -316,9 +351,43 @@
     }
     .page-annotation-canvas{z-index:2;}
     .page-footer{
-      position:absolute;right:16px;bottom:14px;z-index:3;
-      background:rgba(255,255,255,.88);border:1px solid rgba(226,217,255,.8);border-radius:999px;
-      padding:5px 10px;font-size:12px;font-weight:800;color:var(--viewer-slate);
+      position:absolute;
+      right:14px;
+      bottom:12px;
+      z-index:3;
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(200,185,255,.65);
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:11px;
+      font-weight:800;
+      color:var(--viewer-slate);
+      letter-spacing:.3px;
+      box-shadow:0 2px 8px rgba(108,61,237,.08);
+      backdrop-filter:blur(6px);
+    }
+    .flip-page.is-active::after{
+      content:'';
+      position:absolute;
+      right:0;
+      bottom:0;
+      width:28px;
+      height:28px;
+      background:linear-gradient(
+        225deg,
+        #F3EEF9 0%,
+        #F3EEF9 40%,
+        rgba(108,61,237,.10) 40%,
+        transparent 68%
+      );
+      border-top-left-radius:6px;
+      z-index:4;
+      pointer-events:none;
+      transition:width .2s ease, height .2s ease;
+    }
+    .flip-page.is-active:hover::after{
+      width:42px;
+      height:42px;
     }
     .page-turn-layer{
       position:absolute;
@@ -328,22 +397,20 @@
       display:none;
       pointer-events:none;
       z-index:28;
-      perspective:3200px;
     }
     .page-turn-layer.is-active{display:block;}
+    .page-turn-shadow{
+      position:absolute;
+      inset:0;
+      border-radius:16px;
+      opacity:0;
+      pointer-events:none;
+    }
     .page-turn-sheet{
       position:absolute;
       inset:0;
       transform-style:preserve-3d;
       border-radius:16px;
-    }
-    .page-turn-layer.is-next .page-turn-sheet{
-      transform-origin:left center;
-      animation:pageTurnNext .96s cubic-bezier(.18,.76,.14,1) both;
-    }
-    .page-turn-layer.is-prev .page-turn-sheet{
-      transform-origin:right center;
-      animation:pageTurnPrev .96s cubic-bezier(.18,.76,.14,1) both;
     }
     .page-turn-face{
       position:absolute;
@@ -354,95 +421,134 @@
       background-repeat:no-repeat;
       backface-visibility:hidden;
       overflow:hidden;
-      box-shadow:0 24px 48px rgba(23,14,64,.18);
-      border:1px solid rgba(226,217,255,.82);
+      border:1px solid rgba(226,217,255,.7);
+      box-shadow:
+        0 28px 56px rgba(12,8,40,.22),
+        0 4px 8px rgba(12,8,40,.10);
     }
-    .page-turn-face::after{
+    .page-turn-front::after{
       content:'';
       position:absolute;
       inset:0;
       border-radius:inherit;
       pointer-events:none;
-    }
-    .page-turn-front::after{
-      background:
-        linear-gradient(90deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,0) 24%, rgba(26,16,64,.14) 100%);
+      background:linear-gradient(
+        90deg,
+        rgba(255,255,255,.22) 0%,
+        rgba(255,255,255,.06) 30%,
+        rgba(255,255,255,.01) 54%,
+        rgba(12,8,40,.08) 78%,
+        rgba(12,8,40,.28) 100%
+      );
+      animation:pageTurnFrontSheen .92s ease both;
     }
     .page-turn-back{
       transform:rotateY(180deg);
-      box-shadow:0 18px 40px rgba(23,14,64,.12);
     }
     .page-turn-back::after{
-      background:
-        linear-gradient(90deg, rgba(26,16,64,.2) 0%, rgba(255,255,255,.04) 36%, rgba(255,255,255,.16) 100%);
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+      background:linear-gradient(
+        90deg,
+        rgba(12,8,40,.34) 0%,
+        rgba(12,8,40,.10) 28%,
+        rgba(255,255,255,.08) 54%,
+        rgba(255,255,255,.22) 100%
+      );
     }
-    .page-turn-edge{
+    .page-turn-fold{
       position:absolute;
       top:0;
       bottom:0;
-      width:24px;
-      right:-12px;
+      width:18px;
+      right:-6px;
       border-radius:999px;
-      background:linear-gradient(90deg, rgba(255,255,255,.88), rgba(26,16,64,.12));
-      filter:blur(1px);
-      opacity:.8;
-      transform:translateZ(1px);
+      background:linear-gradient(
+        90deg,
+        rgba(255,255,255,.0) 0%,
+        rgba(255,255,255,.88) 38%,
+        rgba(255,255,255,.92) 54%,
+        rgba(12,8,40,.22) 100%
+      );
+      filter:blur(1.5px);
+      transform:translateZ(3px);
+      animation:pageTurnFoldNext .92s ease both;
     }
-    .page-turn-layer.is-prev .page-turn-edge{
-      left:-12px;
+    .page-turn-layer.is-prev .page-turn-fold{
+      left:-6px;
       right:auto;
-      background:linear-gradient(90deg, rgba(26,16,64,.12), rgba(255,255,255,.88));
+      background:linear-gradient(
+        90deg,
+        rgba(12,8,40,.22) 0%,
+        rgba(255,255,255,.92) 46%,
+        rgba(255,255,255,.88) 62%,
+        rgba(255,255,255,.0) 100%
+      );
+      animation:pageTurnFoldPrev .92s ease both;
     }
-    .page-turn-shadow{
-      position:absolute;
-      inset:-4%;
-      border-radius:22px;
-      opacity:0;
-      filter:blur(18px);
-      background:
-        radial-gradient(circle at center, rgba(22,13,62,.2), rgba(22,13,62,0) 68%);
+    .page-turn-layer.is-next .page-turn-sheet{
+      transform-origin:left center;
+      animation:pageTurnNext .92s cubic-bezier(.20,.72,.18,1) both;
     }
-    .page-turn-layer.is-next .page-turn-shadow{animation:pageTurnShadowNext .96s ease both;}
-    .page-turn-layer.is-prev .page-turn-shadow{animation:pageTurnShadowPrev .96s ease both;}
-    @keyframes flipInNext{
-      0%{opacity:.38;transform:translate(-50%,-50%) rotateY(74deg) translateX(32px) scale(.96);}
-      100%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
+    .page-turn-layer.is-prev .page-turn-sheet{
+      transform-origin:right center;
+      animation:pageTurnPrev .92s cubic-bezier(.20,.72,.18,1) both;
     }
-    @keyframes flipOutNext{
-      0%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
-      100%{opacity:.05;transform:translate(-50%,-50%) rotateY(-74deg) translateX(-32px) scale(.97);}
-    }
-    @keyframes flipInPrev{
-      0%{opacity:.38;transform:translate(-50%,-50%) rotateY(-74deg) translateX(-32px) scale(.96);}
-      100%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
-    }
-    @keyframes flipOutPrev{
-      0%{opacity:1;transform:translate(-50%,-50%) rotateY(0deg) translateX(0) scale(1);}
-      100%{opacity:.05;transform:translate(-50%,-50%) rotateY(74deg) translateX(32px) scale(.97);}
-    }
+    .page-turn-layer.is-next .page-turn-shadow{animation:pageTurnShadowNext .92s ease both;}
+    .page-turn-layer.is-prev .page-turn-shadow{animation:pageTurnShadowPrev .92s ease both;}
     @keyframes pageTurnNext{
-      0%{transform:rotateY(0deg) scale(1);}
-      18%{transform:rotateY(-18deg) scale(1.002);}
-      58%{transform:rotateY(-112deg) scale(1.004);}
-      100%{transform:rotateY(-178deg) scale(1);}
+      0%  { transform: perspective(1100px) rotateY(  0deg) translateY(  0px) scale(1.000); }
+      8%  { transform: perspective(1100px) rotateY( -8deg) translateY( -1px) scale(1.002); }
+      22% { transform: perspective(1100px) rotateY(-34deg) translateY( -4px) scale(1.006); }
+      48% { transform: perspective(1100px) rotateY(-90deg) translateY( -6px) scale(1.009); }
+      72% { transform: perspective(1100px) rotateY(-148deg) translateY(-3px) scale(1.004); }
+      88% { transform: perspective(1100px) rotateY(-172deg) translateY( -1px) scale(1.001); }
+      100%{ transform: perspective(1100px) rotateY(-180deg) translateY(  0px) scale(1.000); }
     }
     @keyframes pageTurnPrev{
-      0%{transform:rotateY(0deg) scale(1);}
-      18%{transform:rotateY(18deg) scale(1.002);}
-      58%{transform:rotateY(112deg) scale(1.004);}
-      100%{transform:rotateY(178deg) scale(1);}
+      0%  { transform: perspective(1100px) rotateY(  0deg) translateY(  0px) scale(1.000); }
+      8%  { transform: perspective(1100px) rotateY(  8deg) translateY( -1px) scale(1.002); }
+      22% { transform: perspective(1100px) rotateY( 34deg) translateY( -4px) scale(1.006); }
+      48% { transform: perspective(1100px) rotateY( 90deg) translateY( -6px) scale(1.009); }
+      72% { transform: perspective(1100px) rotateY(148deg) translateY( -3px) scale(1.004); }
+      88% { transform: perspective(1100px) rotateY(172deg) translateY( -1px) scale(1.001); }
+      100%{ transform: perspective(1100px) rotateY(180deg) translateY(  0px) scale(1.000); }
     }
     @keyframes pageTurnShadowNext{
-      0%{opacity:0;transform:translateX(0) scaleX(.7);}
-      26%{opacity:.18;transform:translateX(-6%) scaleX(1.06);}
-      60%{opacity:.26;transform:translateX(-10%) scaleX(1.18);}
-      100%{opacity:0;transform:translateX(-16%) scaleX(.92);}
+      0%  { opacity:0;   background:radial-gradient(ellipse 80% 60% at 88% 50%, rgba(12,8,40,.28), transparent 72%); }
+      15% { opacity:.85; background:radial-gradient(ellipse 70% 70% at 80% 50%, rgba(12,8,40,.22), transparent 70%); }
+      48% { opacity:.70; background:radial-gradient(ellipse 30% 90% at 50% 50%, rgba(12,8,40,.18), transparent 80%); }
+      75% { opacity:.60; background:radial-gradient(ellipse 70% 70% at 22% 50%, rgba(12,8,40,.14), transparent 70%); }
+      100%{ opacity:0;   background:radial-gradient(ellipse 80% 60% at 14% 50%, rgba(12,8,40,.08), transparent 72%); }
     }
     @keyframes pageTurnShadowPrev{
-      0%{opacity:0;transform:translateX(0) scaleX(.7);}
-      26%{opacity:.18;transform:translateX(6%) scaleX(1.06);}
-      60%{opacity:.26;transform:translateX(10%) scaleX(1.18);}
-      100%{opacity:0;transform:translateX(16%) scaleX(.92);}
+      0%  { opacity:0;   background:radial-gradient(ellipse 80% 60% at 14% 50%, rgba(12,8,40,.28), transparent 72%); }
+      15% { opacity:.85; background:radial-gradient(ellipse 70% 70% at 22% 50%, rgba(12,8,40,.22), transparent 70%); }
+      48% { opacity:.70; background:radial-gradient(ellipse 30% 90% at 50% 50%, rgba(12,8,40,.18), transparent 80%); }
+      75% { opacity:.60; background:radial-gradient(ellipse 70% 70% at 80% 50%, rgba(12,8,40,.14), transparent 70%); }
+      100%{ opacity:0;   background:radial-gradient(ellipse 80% 60% at 88% 50%, rgba(12,8,40,.08), transparent 72%); }
+    }
+    @keyframes pageTurnFoldNext{
+      0%  { opacity:0;   width:8px;  right:-4px;  }
+      20% { opacity:1;   width:32px; right:-16px; }
+      48% { opacity:1;   width:22px; right:-11px; }
+      75% { opacity:.8;  width:14px; right:-7px;  }
+      100%{ opacity:0;   width:8px;  right:-4px;  }
+    }
+    @keyframes pageTurnFoldPrev{
+      0%  { opacity:0;   width:8px;  left:-4px;  }
+      20% { opacity:1;   width:32px; left:-16px; }
+      48% { opacity:1;   width:22px; left:-11px; }
+      75% { opacity:.8;  width:14px; left:-7px;  }
+      100%{ opacity:0;   width:8px;  left:-4px;  }
+    }
+    @keyframes pageTurnFrontSheen{
+      0%  { background-position:0% 0%;   opacity:1; }
+      50% { background-position:100% 0%; opacity:.7; }
+      100%{ background-position:200% 0%; opacity:1; }
     }
     .viewer-pager{
       display:grid;
@@ -530,10 +636,11 @@
       border-radius:12px;background:#F2EBFF;color:var(--viewer-purple);font-size:12px;font-weight:900;border:1px solid rgba(108,61,237,.14);
     }
     @media (max-width:1280px){
-      .viewer-toolbar{grid-template-columns:1fr 1fr;}
+      .viewer-main-layout{grid-template-columns:300px minmax(0,1fr);}
     }
     @media (max-width:860px){
-      .viewer-toolbar{grid-template-columns:1fr;}
+      .viewer-main-layout{grid-template-columns:1fr;}
+      .viewer-toolbar{position:static;}
       .viewer-pager{grid-template-columns:1fr;justify-items:stretch;}
       .pager-btn{width:100%;}
       .pager-jump-row{justify-content:flex-start;}
@@ -560,70 +667,72 @@
         </div>
         <div class="viewer-top-actions">
           <a href="/index.html" id="backSubjectLink">← Derse Dön</a>
+          <a href="/calisma-kagidi.html" id="worksheetBtn" style="display:none;">Çalışma Kağıdını Aç</a>
           <button type="button" id="downloadBtn">PDF İndir</button>
           <button type="button" id="printBtn">Yazdır</button>
         </div>
       </div>
     </section>
 
-    <section class="viewer-toolbar">
-      <div class="tool-card">
-        <h3>Araçlar</h3>
-        <p>İkonların üstüne gelince araç adını görürsün. Seçili araçta tooltip görünmez.</p>
-        <div class="tool-grid tools" id="toolButtons"></div>
-      </div>
-      <div class="tool-card">
-        <h3>Biçim</h3>
-        <div class="tool-row" style="margin-bottom:12px;">
-          <span class="tool-label">Renk</span>
-          <input class="tool-input" type="color" id="colorInput" value="#FF6052">
+    <div class="viewer-main-layout">
+      <aside class="viewer-toolbar">
+        <div class="tool-card">
+          <h3>Araçlar</h3>
+          <p>İkonların üstüne gelince araç adını görürsün. Seçili araçta tooltip görünmez.</p>
+          <div class="tool-grid tools" id="toolButtons"></div>
         </div>
-        <div class="tool-row">
-          <span class="tool-label">Kalınlık</span>
-          <input class="tool-input" type="range" id="sizeInput" min="1" max="24" step="1" value="4">
-          <span class="tool-value" id="sizeValue">4 px</span>
+        <div class="tool-card">
+          <h3>Biçim</h3>
+          <div class="tool-row" style="margin-bottom:12px;">
+            <span class="tool-label">Renk</span>
+            <input class="tool-input" type="color" id="colorInput" value="#FF6052">
+          </div>
+          <div class="tool-row">
+            <span class="tool-label">Kalınlık</span>
+            <input class="tool-input" type="range" id="sizeInput" min="1" max="24" step="1" value="4">
+            <span class="tool-value" id="sizeValue">4 px</span>
+          </div>
+          <div class="tool-row" style="margin-top:12px;">
+            <span class="tool-label">Yakınlık</span>
+            <div class="zoom-controls">
+              <button class="zoom-btn" type="button" id="zoomOutBtn" aria-label="Uzaklaştır">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+              </button>
+              <div class="zoom-pill" id="zoomValue">%100</div>
+              <button class="zoom-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">
+                1:1
+              </button>
+              <button class="zoom-btn" type="button" id="zoomInBtn" aria-label="Yakınlaştır">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="tool-note">Yakınlaştırınca el aracını seçip PDF alanını sürükleyebilirsin.</div>
         </div>
-        <div class="tool-row" style="margin-top:12px;">
-          <span class="tool-label">Yakınlık</span>
-          <div class="zoom-controls">
-            <button class="zoom-btn" type="button" id="zoomOutBtn" aria-label="Uzaklaştır">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+        <div class="tool-card">
+          <h3>Geçmiş</h3>
+          <div class="tool-grid">
+            <button class="action-btn" type="button" id="undoBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
+              <span>Geri Al</span>
             </button>
-            <div class="zoom-pill" id="zoomValue">%100</div>
-            <button class="zoom-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">
-              1:1
+            <button class="action-btn" type="button" id="redoBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M4 20a8 8 0 0 1 8-8h8"/></svg>
+              <span>İleri Al</span>
             </button>
-            <button class="zoom-btn" type="button" id="zoomInBtn" aria-label="Yakınlaştır">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            <button class="action-btn" type="button" id="deleteSelectionBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+              <span>Seçileni Sil</span>
+            </button>
+            <button class="action-btn danger" type="button" id="clearPageBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M8.5 8.5 3 14a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L15.5 15.5"/><path d="m14 5 5 5"/></svg>
+              <span>Sayfayı Temizle</span>
             </button>
           </div>
         </div>
-        <div class="tool-note">Yakınlaştırınca el aracını seçip PDF alanını sürükleyebilirsin.</div>
-      </div>
-      <div class="tool-card">
-        <h3>Geçmiş</h3>
-        <div class="tool-grid">
-          <button class="action-btn" type="button" id="undoBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
-            <span>Geri Al</span>
-          </button>
-          <button class="action-btn" type="button" id="redoBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M4 20a8 8 0 0 1 8-8h8"/></svg>
-            <span>İleri Al</span>
-          </button>
-          <button class="action-btn" type="button" id="deleteSelectionBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-            <span>Seçileni Sil</span>
-          </button>
-          <button class="action-btn danger" type="button" id="clearPageBtn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M8.5 8.5 3 14a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L15.5 15.5"/><path d="m14 5 5 5"/></svg>
-            <span>Sayfayı Temizle</span>
-          </button>
-        </div>
-      </div>
-    </section>
+      </aside>
 
-    <section class="viewer-stage">
+      <section class="viewer-stage">
       <div class="viewer-status">
         <div id="viewerStatusLeft">Hazırlanıyor…</div>
         <div id="viewerStatusRight"><strong id="pageCounter">0 / 0</strong></div>
@@ -647,11 +756,11 @@
                 </div>
               </div>
               <div class="page-turn-layer" id="pageTurnLayer" aria-hidden="true">
-                <div class="page-turn-shadow"></div>
+                <div class="page-turn-shadow" id="pageTurnShadow"></div>
                 <div class="page-turn-sheet" id="pageTurnSheet">
                   <div class="page-turn-face page-turn-front" id="pageTurnFront"></div>
                   <div class="page-turn-face page-turn-back" id="pageTurnBack"></div>
-                  <div class="page-turn-edge"></div>
+                  <div class="page-turn-fold"></div>
                 </div>
               </div>
             </div>
@@ -686,7 +795,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
-    </section>
+      </section>
+    </div>
 
   </div>
   <div class="tool-tooltip" id="toolTooltip" aria-hidden="true"></div>
@@ -706,6 +816,7 @@
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
   <script src="/js/dokuman-store.js"></script>
+  <script src="/js/calisma-kagidi-store.js"></script>
   <script src="/js/dokuman-viewer.js"></script>
 </body>
 </html>

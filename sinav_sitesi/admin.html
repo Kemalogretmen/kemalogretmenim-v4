@@ -201,6 +201,7 @@ import {
   getDocs,
   doc,
   getDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -217,7 +218,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const GRADES=[1,2,3,4,5,6,7,8];
-const SUBJECTS_BY_GRADE={
+const DEFAULT_SUBJECTS_BY_GRADE={
   1:['Türkçe','Matematik','Hayat Bilgisi','Deneme'],
   2:['Türkçe','Matematik','Hayat Bilgisi','Deneme'],
   3:['Türkçe','Matematik','Hayat Bilgisi','Fen Bilimleri','Deneme'],
@@ -227,7 +228,12 @@ const SUBJECTS_BY_GRADE={
   7:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler'],
   8:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler']
 };
-const ALL_SUBJECTS=['Türkçe','Matematik','Hayat Bilgisi','Fen Bilimleri','Sosyal Bilgiler','Deneme','Agisler'];
+function createDefaultCategoryMap(){
+  return GRADES.reduce((acc,grade)=>{
+    acc[grade]=[...(DEFAULT_SUBJECTS_BY_GRADE[grade]||[])];
+    return acc;
+  },{});
+}
 const ALL_OPTS=['A','B','C','D','E','F'];
 const auth=getAuth(app);
 
@@ -235,11 +241,14 @@ let authReady=false;
 let currentUser=null;
 let currentUserIsAdmin=false;
 let questionSortables=[];
+let preserveCreateDraftOnReturn=false;
 function createInitialState(overrides={}){
   return Object.assign({
     page:'create',step:1,
     grade:null,subject:null,examName:'',
     optionCount:4,negativeMarking:false,
+    categoryMap:createDefaultCategoryMap(),
+    categoryGrade:1,
     questionSections:[],
     questions:[],
     pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,
@@ -268,6 +277,45 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function fmtDate(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleDateString('tr-TR');}catch{return'';}}
 function fmtDT(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return'';}}
 function buildExamShareUrl(examId){return`${window.location.origin}/sinav_sitesi/index.html?examId=${encodeURIComponent(examId)}`;}
+function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
+function sanitizeCategoryList(list){
+  const seen=new Set();
+  return(Array.isArray(list)?list:[]).map(sanitizeCategoryLabel).filter(label=>{
+    if(!label) return false;
+    const key=normalizeKeyPart(label);
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function mergeCategoryLists(...lists){
+  const merged=[];
+  const seen=new Set();
+  lists.flat().forEach(item=>{
+    const label=sanitizeCategoryLabel(item);
+    if(!label) return;
+    const key=normalizeKeyPart(label);
+    if(seen.has(key)) return;
+    seen.add(key);
+    merged.push(label);
+  });
+  return merged;
+}
+function getEditableCategoriesForGrade(grade,map=A?.categoryMap){
+  const raw=Array.isArray(map?.[grade])?map[grade].map(item=>String(item??'')):[...(DEFAULT_SUBJECTS_BY_GRADE[grade]||[])];
+  return raw.length?raw:[''];
+}
+function getConfiguredCategoriesForGrade(grade,map=A?.categoryMap){
+  const cleaned=sanitizeCategoryList(Array.isArray(map?.[grade])?map[grade]:(DEFAULT_SUBJECTS_BY_GRADE[grade]||[]));
+  return cleaned.length?cleaned:sanitizeCategoryList(DEFAULT_SUBJECTS_BY_GRADE[grade]||[]);
+}
+function getAvailableCategoriesForGrade(grade,extras=[]){
+  return mergeCategoryLists(getConfiguredCategoriesForGrade(grade),extras);
+}
+function getAllKnownSubjects(extraLists=[]){
+  const baseLists=GRADES.map(grade=>getConfiguredCategoriesForGrade(grade));
+  return mergeCategoryLists(baseLists,...extraLists);
+}
 function normalizeKeyPart(value){
   return String(value||'').trim().toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 }
@@ -528,6 +576,8 @@ function getExamStatusMeta(status){
 function resetBuilderState(nextPage='create'){
   A=createInitialState({
     page:nextPage,
+    categoryMap:A.categoryMap||createDefaultCategoryMap(),
+    categoryGrade:A.categoryGrade||1,
     exams:A.exams||[],
     results:A.results||[],
     appeals:A.appeals||[],
@@ -639,7 +689,12 @@ function renderNotAuthorized(){
 
 /* ── SHELL ── */
 function renderShell(content){
-  const nav=[{id:'create',icon:'📝',label:'Sınav Oluştur'},{id:'exams',icon:'📚',label:'Sınavlar'},{id:'results',icon:'📊',label:'Sonuçlar'}];
+  const nav=[
+    {id:'create',icon:'📝',label:'Sınav Oluştur'},
+    {id:'categories',icon:'🗂️',label:'Kategoriler'},
+    {id:'exams',icon:'📚',label:'Sınavlar'},
+    {id:'results',icon:'📊',label:'Sonuçlar'}
+  ];
   const quickLinks=[
     {icon:'🧭',label:'Site Admin',href:'/admin/index.html'},
     {icon:'📝',label:'Okuma Editörü',href:'/admin/okuma-editor.html'},
@@ -701,16 +756,19 @@ function renderCreate(){
 
 function renderStep1(){
   const gCards=GRADES.map(g=>`<div class="sel-card ${A.grade===g?'selected':''}" onclick="W.setGrade(${g})">${g}. Sınıf</div>`).join('');
-  const subs=A.grade?SUBJECTS_BY_GRADE[A.grade]:[];
-  const sCards=subs.map(s=>`<div class="sel-card ${A.subject===s?'selected':''}" onclick="W.setSubject('${s}')">${s}</div>`).join('');
+  const subs=A.grade?getAvailableCategoriesForGrade(A.grade,[A.subject]):[];
+  const sCards=subs.map(s=>`<div class="sel-card ${A.subject===s?'selected':''}" onclick='W.setSubject(${JSON.stringify(s)})'>${esc(s)}</div>`).join('');
   return`<div class="card p-6" style="max-width:560px">
     <div style="margin-bottom:22px">
       <label class="form-label" style="font-size:14px;margin-bottom:10px">Sınıf Seçin</label>
       <div class="sel-grid">${gCards}</div>
     </div>
     ${A.grade?`<div style="margin-bottom:22px">
-      <label class="form-label" style="font-size:14px;margin-bottom:10px">Ders Seçin</label>
-      <div class="sel-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${sCards}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+        <label class="form-label" style="font-size:14px;margin-bottom:0">Kategori / Ders Seçin</label>
+        <button class="btn btn-sm btn-outline" type="button" onclick="W.openCategoryManager()">🗂️ Kategorileri Düzenle</button>
+      </div>
+      <div class="sel-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${sCards||'<div class="text-sm text-muted">Bu sınıf için henüz kategori tanımlı değil.</div>'}</div>
     </div>`:''}
     <div style="text-align:right"><button class="btn btn-primary btn-lg" onclick="W.nextStep()" ${!A.grade||!A.subject?'disabled':''}>Devam Et →</button></div>
   </div>`;
@@ -970,7 +1028,10 @@ function renderAdminExams(){
 /* ── RESULTS ── */
 function renderAdminResults(){
   const gOpts=GRADES.map(g=>`<option value="${g}" ${A.rf.grade==g?'selected':''}>${g}. Sınıf</option>`).join('');
-  const sOpts=ALL_SUBJECTS.map(s=>`<option value="${s}" ${A.rf.subject===s?'selected':''}>${s}</option>`).join('');
+  const sOpts=getAllKnownSubjects([
+    A.results.map(result=>result.subject),
+    A.exams.map(exam=>exam.subject)
+  ]).map(s=>`<option value="${esc(s)}" ${A.rf.subject===s?'selected':''}>${esc(s)}</option>`).join('');
   const subeOpts=['A','B','C','D','E','F','G','H'].map(s=>`<option value="${s}" ${A.rf.sube===s?'selected':''}>${s} Şubesi</option>`).join('');
   const rows=A.results.map(r=>{
     const sc=r.score;const col=sc>=70?'#059669':sc>=50?'#D97706':'#DC2626';
@@ -1016,6 +1077,49 @@ function renderAdminResults(){
         <thead><tr><th>Ad Soyad</th><th>Sınıf/Şube</th><th>Ders</th><th>Sınav</th><th>✓ D</th><th>✗ Y</th><th>○ B</th><th>Başarı</th><th>Tarih</th><th>İşlem</th></tr></thead>
         <tbody>${rows||'<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">Kayıt bulunamadı</td></tr>'}</tbody>
       </table>
+    </div>
+  </div>`;
+}
+
+function renderAdminCategories(){
+  const selectedGrade=A.categoryGrade||GRADES[0];
+  const gradeButtons=GRADES.map(grade=>`
+    <button type="button" class="sel-card ${selectedGrade===grade?'selected':''}" style="min-height:72px" onclick="W.setCategoryGrade(${grade})">${grade}. Sınıf</button>
+  `).join('');
+  const rows=getEditableCategoriesForGrade(selectedGrade).map((category,index)=>`
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center">
+      <input class="form-input" type="text" value="${esc(category)}" placeholder="Örn: Türkçe" oninput="W.updateCategoryField(${index},this.value)">
+      <button class="btn btn-red" type="button" onclick="W.removeCategoryRow(${index})">Sil</button>
+    </div>
+  `).join('');
+  return`<div class="page-pad">
+    <div style="max-width:1120px">
+      <h2 style="font-size:20px;margin-bottom:2px">Sınıf Bazlı Kategoriler</h2>
+      <p class="text-sm text-muted" style="margin-bottom:22px">Her sınıf için ders veya kategori listesini buradan yönetebilirsin. Buradaki değişiklikler yeni sınav oluşturma ekranına ve öğrenci sınav filtrelerine yansır; mevcut sınav kayıtlarının düzenini bozmaz.</p>
+      <div style="display:grid;grid-template-columns:minmax(240px,280px) minmax(0,1fr);gap:18px;align-items:start">
+        <div class="card p-5">
+          <strong style="display:block;font-size:15px;margin-bottom:12px;font-family:var(--fd)">Sınıf Seçimi</strong>
+          <div class="sel-grid">${gradeButtons}</div>
+        </div>
+        <div class="card p-6">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div>
+              <strong style="display:block;font-size:18px;font-family:var(--fd)">${selectedGrade}. Sınıf Kategorileri</strong>
+              <span class="text-sm text-muted">Kategori adlarını düzenleyebilir, yeni satır ekleyebilir veya gereksiz olanları kaldırabilirsin.</span>
+            </div>
+            <span class="section-tag">Toplam ${sanitizeCategoryList(getEditableCategoriesForGrade(selectedGrade)).length} kayıt</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">${rows}</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:16px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-outline" type="button" onclick="W.addCategoryRow()">+ Kategori Ekle</button>
+              <button class="btn btn-outline" type="button" onclick="W.resetCategoryGrade()">Varsayılanları Yükle</button>
+            </div>
+            <button class="btn btn-green" type="button" onclick="W.saveCategoryGrade()">💾 Kaydet</button>
+          </div>
+          <div class="section-note" style="margin-top:14px">Örnek: 1. sınıfta Türkçe, Matematik, Hayat Bilgisi, Deneme; istersen buna Genel Tarama, Okuma Çalışması veya farklı bir kategori daha ekleyebilirsin.</div>
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -1188,7 +1292,36 @@ async function fbLoadExamQuestions(examId){
     return orderedSnap.docs.map(d=>({id:d.id,...d.data()}));
   }catch{
     const fallbackSnap=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
-    return fallbackSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order??0)-(b.order??0));
+      return fallbackSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order??0)-(b.order??0));
+  }
+}
+
+async function fbLoadCategoryConfigs(){
+  const defaults=createDefaultCategoryMap();
+  try{
+    const snap=await getDocs(query(collection(db,'examCategories'),orderBy('grade','asc')));
+    snap.docs.forEach(row=>{
+      const data=row.data()||{};
+      const grade=parseInt(data.grade,10);
+      if(!GRADES.includes(grade)) return;
+      const categories=sanitizeCategoryList(data.categories);
+      if(categories.length) defaults[grade]=categories;
+    });
+    return defaults;
+  }catch{
+    try{
+      const snap=await getDocs(collection(db,'examCategories'));
+      snap.docs.forEach(row=>{
+        const data=row.data()||{};
+        const grade=parseInt(data.grade,10);
+        if(!GRADES.includes(grade)) return;
+        const categories=sanitizeCategoryList(data.categories);
+        if(categories.length) defaults[grade]=categories;
+      });
+    }catch(error){
+      console.error(error);
+    }
+    return defaults;
   }
 }
 
@@ -1244,9 +1377,20 @@ const W={
   async nav(page,opts={}){
     if(!currentUserIsAdmin){toast('Yetkiniz yok','error');return;}
     if(page==='create'&&A.page!=='create'){
-      resetBuilderState('create');
+      if(preserveCreateDraftOnReturn){
+        preserveCreateDraftOnReturn=false;
+      }else{
+        resetBuilderState('create');
+      }
+    }else if(page!=='categories'&&page!=='create'){
+      preserveCreateDraftOnReturn=false;
     }
     A.page=page;
+    if(page==='categories'){
+      showLoad();
+      A.categoryMap=await fbLoadCategoryConfigs();
+      hideLoad();
+    }
     if(page==='exams'){
       showLoad();
       const [exams,appeals]=await Promise.all([fbLoadExams(''),fbLoadAppeals()]);
@@ -1257,6 +1401,10 @@ const W={
     if(page==='results'){Object.assign(A.rf,opts);showLoad();A.results=await fbLoadResults(A.rf);hideLoad();}
     render();
   },
+  openCategoryManager(){
+    if(A.page==='create') preserveCreateDraftOnReturn=true;
+    this.nav('categories');
+  },
   setGrade(g){A.grade=g;A.subject=null;A.questionSections=[];setContent(renderCreate());},
   setSubject(s){
     A.subject=s;
@@ -1264,6 +1412,52 @@ const W={
     setContent(renderCreate());
   },
   setOptCount(n){A.optionCount=n;setContent(renderCreate());},
+  setCategoryGrade(grade){
+    A.categoryGrade=grade;
+    setContent(renderAdminCategories());
+  },
+  updateCategoryField(index,value){
+    if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
+    A.categoryMap[A.categoryGrade][index]=String(value??'');
+  },
+  addCategoryRow(){
+    if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
+    A.categoryMap[A.categoryGrade].push('');
+    setContent(renderAdminCategories());
+  },
+  removeCategoryRow(index){
+    if(!Array.isArray(A.categoryMap[A.categoryGrade])) return;
+    A.categoryMap[A.categoryGrade].splice(index,1);
+    setContent(renderAdminCategories());
+  },
+  resetCategoryGrade(){
+    A.categoryMap[A.categoryGrade]=[...(DEFAULT_SUBJECTS_BY_GRADE[A.categoryGrade]||[])];
+    setContent(renderAdminCategories());
+    toast('Varsayılan kategori listesi geri yüklendi. Kaydetmeyi unutma.','info');
+  },
+  async saveCategoryGrade(){
+    const grade=A.categoryGrade;
+    const categories=sanitizeCategoryList(A.categoryMap[grade]);
+    if(!categories.length){
+      toast('En az 1 kategori girin','error');
+      return;
+    }
+    showLoad('Kategoriler kaydediliyor...');
+    try{
+      await setDoc(doc(db,'examCategories',`grade-${grade}`),{
+        grade,
+        categories,
+        updatedAt:serverTimestamp()
+      });
+      A.categoryMap[grade]=[...categories];
+      hideLoad();
+      setContent(renderAdminCategories());
+      toast(`${grade}. sınıf kategorileri kaydedildi.`,'success');
+    }catch(error){
+      hideLoad();
+      toast('Kategori kaydı başarısız: '+error.message,'error');
+    }
+  },
   toggleNeg(){A.negativeMarking=!A.negativeMarking;setContent(renderCreate());},
   setQuestionAnswer(i,ans){
     if(!A.questions[i]) return;
@@ -1458,6 +1652,8 @@ const W={
         page:'create',
         step:4,
         editExamId:id,
+        categoryMap:A.categoryMap||createDefaultCategoryMap(),
+        categoryGrade:A.categoryGrade||1,
         grade:exam.grade||null,
         subject:exam.subject||null,
         examName:exam.title||'',
@@ -1981,6 +2177,9 @@ onAuthStateChanged(auth, async (user) => {
   currentUser=user||null;
   currentUserIsAdmin=false;
   if(user) currentUserIsAdmin=await checkIsAdmin(user.uid);
+  if(currentUserIsAdmin){
+    A.categoryMap=await fbLoadCategoryConfigs();
+  }
   render();
 });
 
@@ -1992,6 +2191,7 @@ function render(){
   if(!currentUser){renderLogin();return;}
   if(!currentUserIsAdmin){renderNotAuthorized();return;}
   if(A.page==='create'){renderShell(renderCreate());afterCreateRender();}
+  else if(A.page==='categories') renderShell(renderAdminCategories());
   else if(A.page==='exams') renderShell(renderAdminExams());
   else if(A.page==='results') renderShell(renderAdminResults());
 }
