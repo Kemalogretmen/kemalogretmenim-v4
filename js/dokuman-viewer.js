@@ -1931,6 +1931,24 @@
     }
   }
 
+  function markDocumentAsRead() {
+    if (!window.kemalContentProgress || !state.documentId || !state.documentRow) {
+      return;
+    }
+
+    window.kemalContentProgress.markRead({
+      type: 'document',
+      id: state.documentId,
+      title: state.documentRow.baslik || 'Dokuman',
+      href: '/dokuman.html?id=' + encodeURIComponent(state.documentId),
+      grade: state.documentRow.sinif || '',
+      subject: state.documentRow.ders || '',
+      meta: {
+        pageCount: state.pageCount || state.documentRow.sayfa_sayisi || 0,
+      },
+    });
+  }
+
   async function init() {
     state.viewMode = loadViewModePreference();
     bindUi();
@@ -1939,6 +1957,7 @@
     syncPageControls();
     await loadDocument();
     await buildBook();
+    markDocumentAsRead();
   }
 
   document.addEventListener('DOMContentLoaded', function() {

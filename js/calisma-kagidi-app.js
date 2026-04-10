@@ -303,11 +303,31 @@
     qs('resultHint').textContent = 'Gonderim kaydedildi. Istersen yeni bir deneme yapabilirsin.';
   }
 
+  function markWorksheetCompleted(result) {
+    if (!window.kemalContentProgress || !state.documentId || !state.documentRow) {
+      return;
+    }
+
+    window.kemalContentProgress.markCompleted({
+      type: 'worksheet',
+      id: state.documentId,
+      title: state.documentRow.baslik || 'Calisma kagidi',
+      href: '/calisma-kagidi.html?id=' + encodeURIComponent(state.documentId),
+      grade: state.documentRow.sinif || '',
+      subject: state.documentRow.ders || '',
+      meta: {
+        score100: result && result.puan_100luk ? result.puan_100luk : 0,
+        passed: Boolean(result && result.gecti),
+      },
+    });
+  }
+
   async function submitWorksheet() {
     try {
       qs('submitBtn').disabled = true;
       var result = await window.kemalCalismaKagidiStore.submitWorksheet(state.documentId, getStudentPayload(), state.answers);
       showResult(result || {});
+      markWorksheetCompleted(result || {});
       toast('Calisma kagidi gonderildi.', 'success');
     } catch (error) {
       toast(humanizeError(error), 'error');

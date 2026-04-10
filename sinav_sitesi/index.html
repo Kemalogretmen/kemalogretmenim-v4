@@ -70,10 +70,15 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .ec-sub{font-size:10px;font-weight:800;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.5px}
 .ec-title{font-family:var(--fd);font-size:15px;font-weight:800;color:#fff;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.2);line-height:1.3}
 .ec-body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:10px}
+.ec-flags{display:flex;gap:8px;flex-wrap:wrap}
+.ec-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.05em}
+.ec-chip-new{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA}
+.ec-chip-status{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}
 .ec-meta{display:flex;gap:10px;flex-wrap:wrap}
 .ec-mi{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
 .ec-btn{width:100%;padding:8px;border-radius:var(--r-sm);border:none;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;background:rgba(108,61,237,.07);color:var(--purple)}
 .ec-btn:hover{background:var(--purple);color:#fff}
+.ec.is-complete{border-color:#A7F3D0;box-shadow:0 8px 20px rgba(16,185,129,.10)}
 
 /* PAGINATION */
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
@@ -227,6 +232,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
 
 <script src="/js/site-data.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/content-progress.js"></script>
 <script type="module">
 import { db } from "./js/firebase.js";
 import {
@@ -405,17 +411,27 @@ function renderGrid(){
   const gc=GC[S.grade];
   const start=(S.page-1)*S.perPage;
   const items=S.filtered.slice(start,start+S.perPage);
+  const newestExamIds=new Set(
+    [...S.exams]
+      .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))
+      .slice(0,3)
+      .map(item=>String(item.id))
+  );
   if(!items.length){
     grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">📭</span><h3>Sınav Bulunamadı</h3><p>Bu alanda henüz sınav yayınlanmamış.</p></div>';
     return;
   }
   grid.innerHTML=`<div class="exam-grid">${items.map(e=>`
-    <div class="ec" onclick="window.openModal('${e.id}')">
+    <div class="ec ${getExamStatusMeta(e)?'is-complete':''}" onclick="window.openModal('${e.id}')">
       <div class="ec-head" style="background:${gc.bg}">
         <div class="ec-sub">${e.subject||''}</div>
         <div class="ec-title">${e.title}</div>
       </div>
       <div class="ec-body">
+        <div class="ec-flags">
+          ${newestExamIds.has(String(e.id))?'<span class="ec-chip ec-chip-new">🌟 YENİ</span>':''}
+          ${getExamStatusMeta(e)?`<span class="ec-chip ec-chip-status">✅ ${escHtml(getExamStatusMeta(e).label)}</span>`:''}
+        </div>
         <div class="ec-meta">
           <span class="ec-mi">📝 ${e.questionCount||'?'} soru</span>
           <span class="ec-mi">📚 ${e.subject||'—'}</span>
@@ -443,6 +459,14 @@ window.goPage=function(p){
   S.page=p;renderGrid();renderPagination();
   document.getElementById('gradeSection').scrollIntoView({behavior:'smooth',block:'start'});
 };
+
+function getExamStatusMeta(exam){
+  if(!window.kemalContentProgress||!exam||!exam.id) return null;
+  return window.kemalContentProgress.getStatusMeta({
+    type:'exam',
+    id:exam.id
+  });
+}
 
 window.openModal=function(examId){
   const exam=S.exams.find(e=>e.id===examId)||S.filtered.find(e=>e.id===examId);

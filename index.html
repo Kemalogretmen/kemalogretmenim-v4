@@ -742,6 +742,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/content-feed.js"></script>
   <script>
     const RENKLER = ['purple','coral','teal','yellow','navy'];
     const EMOJI_FALLBACK = ['📖','🎮','🔢','🔬','🌟','📝','🌱','⭐'];
@@ -762,11 +763,39 @@
         return new Date(value).toLocaleDateString('tr-TR', { day:'numeric', month:'long' });
       }
 
-      function guncelListeOlustur(siteData) {
+      function renkBelirle(item, index) {
+        if (item && item.type === 'reading') return 'purple';
+        if (item && item.type === 'exam') return 'coral';
+        if (item && item.type === 'document') return 'teal';
+        return RENKLER[index % RENKLER.length];
+      }
+
+      async function guncelListeOlustur(siteData) {
+        if (window.kemalContentFeed) {
+          try {
+            const dynamicItems = await window.kemalContentFeed.getTickerItems({ maxItems: 5 });
+            if (dynamicItems.length) {
+              return dynamicItems.map((item, index) => ({
+                baslik: item.title,
+                aciklama: [item.gradeLabel, item.subjectLabel, item.contentTypeLabel].filter(Boolean).join(' • '),
+                kategori: item.gradeLabel || item.contentTypeLabel || 'Güncel İçerik',
+                link: item.href || '#',
+                emoji: item.icon || '📌',
+                renk: renkBelirle(item, index),
+                tarih: item.createdAt || '',
+                type: item.type || 'content',
+              }));
+            }
+          } catch (error) {
+            /* Dinamik akış başarısız olursa yerel veriye düş. */
+          }
+        }
+
         const oneCikanlar = siteData && siteData.onecikarlar
           ? siteData.onecikarlar.filter(h => h.aktif).map(h => ({
               baslik: h.baslik,
               aciklama: h.aciklama || '',
+              kategori: 'Öne Çıkan',
               link: h.link || '#',
               emoji: h.emoji || '📌',
               renk: h.renk || 'purple',
@@ -778,6 +807,7 @@
           ? siteData.yeniIcerikler.filter(i => i.aktif).map((i, index) => ({
               baslik: i.baslik,
               aciklama: i.aciklama || 'Yeni içerik yayında.',
+              kategori: 'Yeni İçerik',
               link: i.link || '#',
               emoji: i.emoji || '🌟',
               renk: ['yellow','teal','coral','purple'][index % 4],
@@ -796,19 +826,19 @@
             return true;
           })
           .sort((a, b) => tarihDegeri(b) - tarihDegeri(a))
-          .slice(0, 8);
+          .slice(0, 5);
       }
 
       /* ── HABERLER ── */
-      const haberler = guncelListeOlustur(data);
+      const haberler = await guncelListeOlustur(data);
       const cards    = document.getElementById('haberCards');
       const ticker   = document.getElementById('tickerTrack');
       const dots     = document.getElementById('haberDots');
 
       const DEFAULT_HABERLER = [
-        { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün' },
-        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', link:'/oyun/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
-        { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
+        { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', kategori:'Hızlı Okuma', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün' },
+        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', kategori:'Platform', link:'/oyun/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
+        { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', kategori:'Güncel', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
       ];
 
       const liste = haberler.length ? haberler : DEFAULT_HABERLER;
@@ -822,7 +852,7 @@
             <div class="haber-card-top">
               <div class="haber-em ${renk}">${h.emoji||EMOJI_FALLBACK[i%8]}</div>
               <div>
-                <div class="haber-cat">Öne Çıkan</div>
+                <div class="haber-cat">${h.kategori || 'Güncel İçerik'}</div>
                 <div class="haber-tarih">${tarihStr}</div>
               </div>
             </div>

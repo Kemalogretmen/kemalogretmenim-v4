@@ -250,6 +250,33 @@
       padding: 6px 10px;
       flex-shrink: 0;
     }
+    .subject-doc-head-side {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .subject-doc-mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .subject-doc-mini-new {
+      background: #FFF7ED;
+      color: #C2410C;
+      border: 1px solid #FED7AA;
+    }
+    .subject-doc-mini-status {
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+    }
     .subject-doc-title {
       font-family: var(--font-display);
       font-size: 22px;
@@ -289,6 +316,10 @@
       font-size: 13px;
       font-weight: 800;
       box-shadow: 0 10px 20px rgba(82, 45, 172, .18);
+    }
+    .subject-doc-card.is-complete {
+      border-color: #A7F3D0;
+      box-shadow: 0 18px 34px rgba(16, 185, 129, .10);
     }
     .subject-doc-state {
       max-width: 820px;
@@ -378,6 +409,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/content-progress.js"></script>
   <script src="/js/dokuman-store.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async function() {
@@ -450,12 +482,28 @@
           return;
         }
 
+        const newestDocumentIds = new Set(documents
+          .slice()
+          .sort(function(a, b) {
+            return getTimeValue(b.olusturma_tarihi) - getTimeValue(a.olusturma_tarihi);
+          })
+          .slice(0, 3)
+          .map(function(item) {
+            return String(item.id);
+          }));
+
         docsGrid.innerHTML = documents.map(function(item) {
+          const statusMeta = getDocumentStatusMeta(item);
+          const isNew = newestDocumentIds.has(String(item.id));
           return `
-            <a href="${item.viewerUrl}" class="subject-doc-card" style="--doc-color:${item.kapak_renk || data.color}">
+            <a href="${item.viewerUrl}" class="subject-doc-card ${statusMeta ? 'is-complete' : ''}" style="--doc-color:${item.kapak_renk || data.color}">
               <div class="subject-doc-head">
                 <span class="subject-doc-badge">📚 ${item.sinifLabel} · ${item.dersLabel}</span>
-                <span class="subject-doc-pages">${item.sayfa_sayisi || '?'} sayfa</span>
+                <div class="subject-doc-head-side">
+                  ${isNew ? '<span class="subject-doc-mini subject-doc-mini-new">🌟 Yeni</span>' : ''}
+                  ${statusMeta ? `<span class="subject-doc-mini subject-doc-mini-status">✅ ${statusMeta.label}</span>` : ''}
+                  <span class="subject-doc-pages">${item.sayfa_sayisi || '?'} sayfa</span>
+                </div>
               </div>
               <div class="subject-doc-title">${item.baslik}</div>
               <p class="subject-doc-desc">${item.aciklama || 'Bu doküman açıldığında flipbook görünümünde görüntülenir; sayfa üstünde çizim, not alma ve çıktı alma araçlarıyla birlikte gelir.'}</p>
@@ -474,6 +522,21 @@
           <span>⚠️</span>
           <p>Dokümanlar şu anda yüklenemedi. Lütfen daha sonra tekrar dene.</p>`;
         docsGrid.style.display = 'none';
+      }
+
+      function getTimeValue(raw) {
+        const value = Date.parse(String(raw || ''));
+        return Number.isNaN(value) ? 0 : value;
+      }
+
+      function getDocumentStatusMeta(item) {
+        if (!window.kemalContentProgress || !item || !item.id) {
+          return null;
+        }
+        return window.kemalContentProgress.getStatusMeta({
+          type: 'document',
+          id: item.id,
+        });
       }
     });
   </script>

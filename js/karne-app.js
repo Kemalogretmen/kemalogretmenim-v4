@@ -368,6 +368,28 @@
     window.location.href = '/hizli-okuma/oku.html';
   }
 
+  function markReadingCompleted(runtime, hedefWpm, comprehension, kelimeSayisi) {
+    if (!window.kemalContentProgress || !runtime || !runtime.metin) {
+      return;
+    }
+
+    window.kemalContentProgress.markCompleted({
+      type: 'reading',
+      id: runtime.metin.id,
+      title: runtime.metin.baslik,
+      href: '/hizli-okuma/index.html?metinId=' + encodeURIComponent(runtime.metin.id),
+      grade: runtime.kullanici && runtime.kullanici.sinif ? runtime.kullanici.sinif : '',
+      subject: 'okuma-anlama',
+      meta: {
+        attemptId: runtime.attemptId || '',
+        wpm: runtime.wpm || 0,
+        targetWpm: hedefWpm || 0,
+        wordCount: kelimeSayisi || 0,
+        comprehensionPercent: comprehension && comprehension.yuzde ? comprehension.yuzde : 0,
+      },
+    });
+  }
+
   function render(runtime) {
     const sinif = runtime.kullanici.sinif;
     const norm = NORMS[sinif] || NORMS[4];
@@ -433,6 +455,7 @@
     document.getElementById('donutMetin').innerHTML = feedback.html;
     document.getElementById('karneSubTitle').textContent = runtime.kullanici.ad + ' için hız ve anlama değerlendirmesi hazır.';
 
+    markReadingCompleted(runtime, hedefWpm, comprehension, kelimeSayisi);
     saveResult(runtime, hedefWpm, comprehension, kelimeSayisi);
 
     window.karnePdfIndir = downloadPdf;

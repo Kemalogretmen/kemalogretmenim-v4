@@ -6,72 +6,264 @@
   <title>🌟 Yeni İçerikler — Kemal Öğretmenim</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .new-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 24px;
-      margin-top: 40px;
+    .new-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px 70px;
     }
-    .new-card {
+    .new-toolbar {
       background: white;
-      border-radius: var(--r-lg);
-      padding: 28px;
+      border-radius: var(--r-xl);
+      padding: 24px;
       border: 2px solid var(--border);
-      text-decoration: none;
-      color: inherit;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 22px;
+    }
+    .new-toolbar-head {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .new-toolbar-head h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .new-toolbar-head p {
+      color: var(--slate);
+      line-height: 1.7;
+      max-width: 760px;
+    }
+    .new-summary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: #F4F0FF;
+      color: var(--purple);
+      font-weight: 800;
+      font-size: 13px;
+    }
+    .new-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .filter-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--slate);
+      margin-bottom: 7px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .filter-field select,
+    .filter-field input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      background: #FBFAFF;
+      color: var(--navy);
+      outline: none;
+    }
+    .filter-field select:focus,
+    .filter-field input:focus {
+      border-color: var(--purple);
+      background: white;
+    }
+    .new-list {
+      display: grid;
+      gap: 18px;
+    }
+    .new-item {
+      --item-color: #6C3DED;
+      --item-soft: #F4F0FF;
+      --item-border: #D9CBFF;
+      background: white;
+      border: 2px solid var(--item-border);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
       position: relative;
       overflow: hidden;
+      transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
     }
-    .new-card::before {
-      content: 'YENİ';
+    .new-item::before {
+      content: '';
       position: absolute;
-      top: 16px; right: -28px;
-      background: var(--coral);
-      color: white;
-      font-size: 11px;
-      font-weight: 900;
-      padding: 4px 36px;
-      transform: rotate(45deg);
-      letter-spacing: 1px;
+      inset: 0 auto 0 0;
+      width: 8px;
+      background: var(--item-color);
     }
-    .new-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-md); }
-
-    .nc-date {
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .5px;
+    .new-item:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
     }
-    .nc-emoji { font-size: 46px; animation: floatB 3s ease-in-out infinite; }
-    .nc-title { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--navy); }
-    .nc-desc  { font-size: 14px; color: var(--slate); line-height: 1.6; flex: 1; }
-    .nc-btn   {
+    .new-item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .new-path {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .new-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 18px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .new-pill.grade {
+      background: var(--item-soft);
+      color: var(--item-color);
+      border: 1px solid var(--item-border);
+    }
+    .new-pill.subject,
+    .new-pill.type {
+      background: #F8FAFC;
+      color: var(--slate);
+      border: 1px solid #E2E8F0;
+    }
+    .new-pill.status {
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+    }
+    .new-date {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .new-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--navy);
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+    .new-title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .new-title a:hover {
+      color: var(--item-color);
+    }
+    .new-desc {
+      color: var(--slate);
+      line-height: 1.75;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .new-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .new-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--item-color);
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 10px 20px rgba(82, 45, 172, .18);
+    }
+    .new-link:hover {
+      transform: translateX(3px);
+    }
+    .new-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .new-meta span {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--slate);
+      background: #F8FAFC;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+    .new-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 26px;
+      flex-wrap: wrap;
+    }
+    .np-btn {
+      min-width: 42px;
+      height: 42px;
+      padding: 0 14px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      color: var(--slate);
+      font-family: var(--font-body);
+      font-weight: 800;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .np-btn:hover,
+    .np-btn.active {
+      border-color: var(--purple);
       background: var(--purple);
       color: white;
-      border-radius: 50px;
-      font-weight: 800;
-      font-size: 13px;
-      align-self: flex-start;
-      transition: all .2s;
     }
-    .nc-btn:hover { background: var(--purple-dark); transform: translateX(3px); }
-
+    .np-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
     .empty-state {
       text-align: center;
       padding: 80px 20px;
       color: var(--slate);
+      background: white;
+      border-radius: var(--r-xl);
+      border: 2px dashed var(--border);
+      box-shadow: var(--shadow-sm);
     }
     .empty-state .em { font-size: 80px; display: block; margin-bottom: 20px; }
     .empty-state h3  { font-family: var(--font-display); font-size: 28px; color: var(--navy); margin-bottom: 10px; }
+    @media (max-width: 860px) {
+      .new-shell { padding: 0 16px 56px; }
+      .new-filter-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .new-item { padding: 20px 18px 20px 20px; }
+      .new-title { font-size: 20px; }
+      .new-footer { align-items: stretch; }
+      .new-link { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
 <body>
@@ -79,55 +271,251 @@
   <header class="page-header">
     <div style="font-size:60px;margin-bottom:16px;animation:floatB 3s ease-in-out infinite;">🌟</div>
     <h1 class="page-header-title">Yeni <span>İçerikler</span></h1>
-    <p class="page-header-sub">En son eklenen ders materyalleri, oyunlar ve etkinlikler burada!</p>
+    <p class="page-header-sub">En son eklenen hızlı okuma metinleri, sınavlar ve dokümanlar burada birleşir.</p>
   </header>
 
   <section class="section">
-    <div id="newContent">
-      <!-- JS ile doldurulur -->
-      <div class="empty-state">
-        <span class="em">⏳</span>
-        <h3>Yükleniyor…</h3>
+    <div class="new-shell">
+      <div class="new-toolbar">
+        <div class="new-toolbar-head">
+          <div>
+            <h2>Yeni Eklenenler Listesi</h2>
+            <p>Her kayıt sınıf, ders ve içerik türüyle birlikte listelenir. Sayfa başına 10 içerik, toplamda en fazla 30 yeni kayıt gösterilir.</p>
+          </div>
+          <div class="new-summary" id="newSummary">⏳ Liste hazırlanıyor…</div>
+        </div>
+        <div class="new-filter-grid">
+          <div class="filter-field">
+            <label for="gradeFilter">Sınıf</label>
+            <select id="gradeFilter">
+              <option value="">Tüm sınıflar</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="subjectFilter">Ders</label>
+            <select id="subjectFilter">
+              <option value="">Tüm dersler</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label for="searchFilter">İçerik Ara</label>
+            <input id="searchFilter" type="text" placeholder="Örn: toplama, Atatürk, test">
+          </div>
+        </div>
       </div>
+
+      <div id="newContent">
+        <div class="empty-state">
+          <span class="em">⏳</span>
+          <h3>Yükleniyor…</h3>
+        </div>
+      </div>
+
+      <div class="new-pagination" id="newPagination"></div>
     </div>
   </section>
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/content-progress.js"></script>
+  <script src="/js/content-feed.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async function() {
-      const data    = window.kemalSite ? await window.kemalSite.getDataAsync() : null;
-      const items   = data && data.yeniIcerikler
-                        ? data.yeniIcerikler.filter(i => i.aktif)
-                        : [];
-      const wrapper = document.getElementById('newContent');
+      const state = {
+        allItems: [],
+        filtered: [],
+        page: 1,
+        perPage: 10,
+      };
 
-      if (!items.length) {
-        wrapper.innerHTML = `
-          <div class="empty-state">
-            <span class="em">✨</span>
-            <h3>Çok Yakında!</h3>
-            <p>Yeni içerikler ekleniyor. Takipte kal!</p>
-          </div>`;
-        return;
+      const wrapper = document.getElementById('newContent');
+      const pagination = document.getElementById('newPagination');
+      const summary = document.getElementById('newSummary');
+      const gradeFilter = document.getElementById('gradeFilter');
+      const subjectFilter = document.getElementById('subjectFilter');
+      const searchFilter = document.getElementById('searchFilter');
+
+      function escHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
       }
 
       function formatDate(str) {
-        if (!str) return '';
-        const d = new Date(str);
-        return d.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
+        if (!str) return 'Tarih yok';
+        const date = new Date(str);
+        return Number.isNaN(date.getTime())
+          ? str
+          : date.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
       }
 
-      wrapper.innerHTML = `<div class="new-grid">` +
-        items.map(i => `
-          <a href="${i.link}" class="new-card">
-            <span class="nc-date">${formatDate(i.tarih)}</span>
-            <span class="nc-emoji">${i.emoji || '📄'}</span>
-            <div class="nc-title">${i.baslik}</div>
-            <p class="nc-desc">${i.aciklama}</p>
-            <span class="nc-btn">İncele →</span>
-          </a>`).join('') +
-        `</div>`;
+      function populateFilters(items) {
+        const gradeMap = new Map();
+        const subjectMap = new Map();
+
+        items.forEach(function(item) {
+          (Array.isArray(item.grades) ? item.grades : []).forEach(function(grade) {
+            if (!gradeMap.has(String(grade))) {
+              const gradeMeta = window.kemalContentFeed.getGradeMeta(grade);
+              gradeMap.set(String(grade), gradeMeta.label);
+            }
+          });
+
+          if (item.subject) {
+            const subjectMeta = window.kemalContentFeed.getSubjectMeta(item.subject);
+            subjectMap.set(item.subject, subjectMeta.label);
+          }
+        });
+
+        gradeFilter.innerHTML = '<option value="">Tüm sınıflar</option>' +
+          Array.from(gradeMap.entries())
+            .sort(function(a, b) { return Number(a[0]) - Number(b[0]); })
+            .map(function(entry) {
+              return `<option value="${entry[0]}">${escHtml(entry[1])}</option>`;
+            }).join('');
+
+        subjectFilter.innerHTML = '<option value="">Tüm dersler</option>' +
+          Array.from(subjectMap.entries())
+            .sort(function(a, b) { return a[1].localeCompare(b[1], 'tr'); })
+            .map(function(entry) {
+              return `<option value="${escHtml(entry[0])}">${escHtml(entry[1])}</option>`;
+            }).join('');
+      }
+
+      function applyFilters() {
+        const gradeValue = gradeFilter.value;
+        const subjectValue = subjectFilter.value;
+        const query = searchFilter.value.trim().toLocaleLowerCase('tr-TR');
+
+        state.filtered = state.allItems.filter(function(item) {
+          const matchesGrade = !gradeValue || window.kemalContentFeed.matchesGrade(item, gradeValue);
+          const matchesSubject = !subjectValue || window.kemalContentFeed.matchesSubject(item, subjectValue);
+          const haystack = [
+            item.title,
+            item.gradeLabel,
+            item.subjectLabel,
+            item.contentTypeLabel,
+          ].join(' ').toLocaleLowerCase('tr-TR');
+          const matchesSearch = !query || haystack.indexOf(query) !== -1;
+          return matchesGrade && matchesSubject && matchesSearch;
+        });
+
+        state.page = 1;
+        render();
+      }
+
+      function renderSummary() {
+        const total = state.filtered.length;
+        summary.textContent = total
+          ? total + ' içerik filtreye uyuyor · Son 30 kayıt içinden gösteriliyor'
+          : 'Filtreye uyan içerik bulunamadı';
+      }
+
+      function renderList() {
+        if (!state.filtered.length) {
+          wrapper.innerHTML = `
+            <div class="empty-state">
+              <span class="em">🔎</span>
+              <h3>İçerik bulunamadı</h3>
+              <p>Filtreleri biraz genişletip tekrar deneyebilirsin.</p>
+            </div>`;
+          return;
+        }
+
+        const start = (state.page - 1) * state.perPage;
+        const items = state.filtered.slice(start, start + state.perPage);
+
+        wrapper.innerHTML = '<div class="new-list">' + items.map(function(item) {
+          const palette = item.palette || window.kemalContentFeed.getGradeMeta(item.grade);
+          const statusHtml = item.statusMeta
+            ? `<span class="new-pill status">✅ ${escHtml(item.statusMeta.label)}</span>`
+            : '';
+          const metaBits = [
+            item.sourceLabel ? `<span>${escHtml(item.sourceLabel)}</span>` : '',
+            item.createdAt ? `<span>📅 ${escHtml(formatDate(item.createdAt))}</span>` : '',
+          ].filter(Boolean).join('');
+
+          return `
+            <article class="new-item" style="--item-color:${palette.color};--item-soft:${palette.soft};--item-border:${palette.border};">
+              <div class="new-item-top">
+                <div class="new-path">
+                  <span class="new-pill grade">${escHtml(item.gradeLabel || 'Genel')}</span>
+                  <span class="new-pill subject">${escHtml(item.subjectLabel || 'Genel')}</span>
+                  <span class="new-pill type">${escHtml(item.contentTypeLabel || 'İçerik')}</span>
+                  ${statusHtml}
+                </div>
+                <div class="new-date">${escHtml(formatDate(item.createdAt))}</div>
+              </div>
+              <div class="new-title"><a href="${item.href || '#'}">${escHtml(item.title)}</a></div>
+              <p class="new-desc">${escHtml((item.gradeLabel || 'Genel') + ' → ' + (item.subjectLabel || 'Genel') + ' → ' + (item.contentTypeLabel || 'İçerik'))}</p>
+              <div class="new-footer">
+                <div class="new-meta">${metaBits}</div>
+                <a href="${item.href || '#'}" class="new-link">İçeriği Aç →</a>
+              </div>
+            </article>`;
+        }).join('') + '</div>';
+      }
+
+      function renderPagination() {
+        const totalPages = Math.ceil(state.filtered.length / state.perPage);
+        if (totalPages <= 1) {
+          pagination.innerHTML = '';
+          return;
+        }
+
+        let html = `<button class="np-btn" onclick="window.yeniIcerikPage(${state.page - 1})" ${state.page === 1 ? 'disabled' : ''}>←</button>`;
+        for (let i = 1; i <= totalPages; i += 1) {
+          html += `<button class="np-btn ${i === state.page ? 'active' : ''}" onclick="window.yeniIcerikPage(${i})">${i}</button>`;
+        }
+        html += `<button class="np-btn" onclick="window.yeniIcerikPage(${state.page + 1})" ${state.page === totalPages ? 'disabled' : ''}>→</button>`;
+        pagination.innerHTML = html;
+      }
+
+      function render() {
+        renderSummary();
+        renderList();
+        renderPagination();
+      }
+
+      window.yeniIcerikPage = function(page) {
+        const totalPages = Math.ceil(state.filtered.length / state.perPage);
+        if (page < 1 || page > totalPages) {
+          return;
+        }
+        state.page = page;
+        render();
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      gradeFilter.addEventListener('change', applyFilters);
+      subjectFilter.addEventListener('change', applyFilters);
+      searchFilter.addEventListener('input', applyFilters);
+
+      try {
+        state.allItems = window.kemalContentFeed
+          ? await window.kemalContentFeed.getLatestContent({ maxItems: 30, forceRefresh: true })
+          : [];
+      } catch (error) {
+        state.allItems = [];
+      }
+
+      if (!state.allItems.length) {
+        wrapper.innerHTML = `
+          <div class="empty-state">
+            <span class="em">✨</span>
+            <h3>Henüz içerik görünmüyor</h3>
+            <p>Yeni içerikler eklendikçe bu alan otomatik dolacak.</p>
+          </div>`;
+        summary.textContent = 'İçerik bekleniyor';
+        pagination.innerHTML = '';
+        return;
+      }
+
+      populateFilters(state.allItems);
+      state.filtered = state.allItems.slice();
+      render();
     });
   </script>
 </body>

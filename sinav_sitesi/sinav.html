@@ -6,6 +6,7 @@
 <title>Sınav — Kemal Öğretmenim</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="/js/content-progress.js"></script>
 <style>
 :root{
   --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
@@ -697,6 +698,25 @@ function getSearchParams(){
 
 function isAdminKarneMode(){
   return getSearchParams().get('adminKarne')==='1';
+}
+
+function markExamCompleted(result){
+  if(isAdminKarneMode()||!window.kemalContentProgress||!result||!result.examId) return;
+  window.kemalContentProgress.markCompleted({
+    type:'exam',
+    id:result.examId,
+    title:result.examTitle||'Sınav',
+    href:'/sinav_sitesi/index.html?examId='+encodeURIComponent(result.examId),
+    grade:result.grade||'',
+    subject:result.subject||'',
+    meta:{
+      score:result.score||0,
+      correct:result.correct||0,
+      wrong:result.wrong||0,
+      blank:result.blank||0,
+      resultId:result.resultId||''
+    }
+  });
 }
 
 function formatStoredResultDate(value){
@@ -1926,6 +1946,7 @@ async function timeUp(){
   }catch(error){
     console.error(error);
   }
+  markExamCompleted(result);
   showScreen('screenTimeout');
 }
 
@@ -2032,6 +2053,7 @@ window.finishExam=async function(){
     toast('Sonuç kaydı oluşturulamadı. Karne görüntülendi ancak itiraz gönderimi bu oturumda kapalı olabilir.','error');
   }
 
+  markExamCompleted(r);
   renderKarne();
   showScreen('screenKarne');
 };
