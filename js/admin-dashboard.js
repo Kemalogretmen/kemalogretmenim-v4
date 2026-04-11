@@ -14,6 +14,7 @@
 
   const TITLES = {
     overview: '📊 Genel Bakış',
+    analytics: '📈 Site Analizleri',
     duyurular: '📢 Duyurular',
     badges: '🔔 YENİ Rozetleri',
     hizli: '⚡ Hızlı Erişim',
@@ -28,14 +29,97 @@
   let state = {
     currentPanel: 'overview',
     data: window.kemalSiteStore ? window.kemalSiteStore.getDefaults() : {},
+    analytics: {
+      days: 7,
+      loadedDays: 0,
+      loading: false,
+      summary: null,
+      error: '',
+    },
   };
 
   function escHtml(value) {
-    return (value || '')
+    return String(value || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function formatNumber(value) {
+    return new Intl.NumberFormat('tr-TR').format(Number(value || 0));
+  }
+
+  function formatDuration(seconds) {
+    const total = Math.max(0, Math.round(Number(seconds || 0)));
+    if (total < 60) {
+      return total + ' sn';
+    }
+
+    const minutes = Math.floor(total / 60);
+    const restSeconds = total % 60;
+    if (minutes < 60) {
+      return minutes + ' dk' + (restSeconds ? ' ' + restSeconds + ' sn' : '');
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const restMinutes = minutes % 60;
+    return hours + ' sa' + (restMinutes ? ' ' + restMinutes + ' dk' : '');
+  }
+
+  function formatDay(value) {
+    try {
+      return new Intl.DateTimeFormat('tr-TR', {
+        day: '2-digit',
+        month: 'short',
+      }).format(new Date(value));
+    } catch (error) {
+      return String(value || '-');
+    }
+  }
+
+  function formatDateTime(value) {
+    try {
+      return new Intl.DateTimeFormat('tr-TR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(new Date(value));
+    } catch (error) {
+      return String(value || '-');
+    }
+  }
+
+  function formatPathLabel(path) {
+    const raw = String(path || '').trim();
+    if (!raw) {
+      return 'Bilinmeyen sayfa';
+    }
+    if (raw === '/' || raw === '/index.html') {
+      return 'Ana sayfa';
+    }
+    try {
+      return decodeURIComponent(raw);
+    } catch (error) {
+      return raw;
+    }
+  }
+
+  function emptyStateHtml(message) {
+    return '<div class="analytics-empty">' + escHtml(message) + '</div>';
+  }
+
+  function humanizeAnalyticsError(error) {
+    const message = String((error && error.message) || '');
+    if (
+      message.includes('site_analytics_events') ||
+      message.includes('get_site_analytics_summary') ||
+      message.includes('Could not find the function public.get_site_analytics_summary')
+    ) {
+      return 'Site analizleri tablosu veya rapor fonksiyonu henüz kurulmamış görünüyor. `supabase-v1-ucretsiz-mimari.sql` dosyasını Supabase SQL Editor içinde tekrar çalıştırın.';
+    }
+    return window.kemalAdminAuth.humanizeError(error);
   }
 
   let toastTimer = null;
@@ -93,6 +177,9 @@
     }
     document.getElementById('panelTitle').textContent = TITLES[id] || TITLES.overview;
     renderCurrentPanel();
+    if (id === 'analytics') {
+      loadAnalytics(false);
+    }
   }
 
   function renderDuyurular() {
@@ -233,8 +320,239 @@
       : '<p style="color:var(--muted);font-size:14px;">Henüz ekstra bağlantı eklenmedi.</p>';
   }
 
+  function renderAnalytics() {
+    const analytics = state.analytics;
+    const statusEl = document.getElementById('analyticsStatus');
+    const summaryEl = document.getElementById('analyticsSummary');
+    const topPagesEl = document.getElementById('analyticsTopPages');
+    const referrersEl = document.getElementById('analyticsReferrers');
+    const dailyEl = document.getElementById('analyticsDaily');
+    const recentEl = document.getElementById('analyticsRecent');
+
+    [7, 30, 90].forEach(function(days) {
+      const button = document.getElementById('analyticsDays' + days);
+      if (!button) {
+        return;
+      }
+      button.classList.toggle('on', analytics.days === days);
+      button.classList.toggle('off', analytics.days !== days);
+    });
+
+    if (!statusEl || !summaryEl || !topPagesEl || !referrersEl || !dailyEl || !recentEl) {
+      return;
+    }
+
+    if (analytics.loading && !analytics.summary) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Analiz verileri yükleniyor…';
+      summaryEl.style.display = 'none';
+      topPagesEl.innerHTML = emptyStateHtml('Veriler geldiğinde en çok açılan sayfalar burada listelenecek.');
+      referrersEl.innerHTML = emptyStateHtml('Trafik kaynakları burada görünecek.');
+      dailyEl.innerHTML = emptyStateHtml('Günlük hareket akışı burada görünecek.');
+      recentEl.innerHTML = emptyStateHtml('Son ziyaretler burada görünecek.');
+      return;
+    }
+
+    if (analytics.error) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = analytics.error;
+      summaryEl.style.display = 'none';
+      topPagesEl.innerHTML = emptyStateHtml('Analiz raporu okunamadı.');
+      referrersEl.innerHTML = emptyStateHtml('Analiz raporu okunamadı.');
+      dailyEl.innerHTML = emptyStateHtml('Analiz raporu okunamadı.');
+      recentEl.innerHTML = emptyStateHtml('Analiz raporu okunamadı.');
+      return;
+    }
+
+    if (!analytics.summary) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Henüz ziyaret verisi oluşmadı. Siteye trafik geldikçe burası dolacak.';
+      summaryEl.style.display = 'none';
+      topPagesEl.innerHTML = emptyStateHtml('Henüz ziyaret verisi yok.');
+      referrersEl.innerHTML = emptyStateHtml('Henüz ziyaret verisi yok.');
+      dailyEl.innerHTML = emptyStateHtml('Henüz ziyaret verisi yok.');
+      recentEl.innerHTML = emptyStateHtml('Henüz ziyaret verisi yok.');
+      return;
+    }
+
+    const summary = analytics.summary.summary || {};
+    const topPage = summary.top_page || null;
+    const topPages = Array.isArray(analytics.summary.top_pages) ? analytics.summary.top_pages : [];
+    const referrers = Array.isArray(analytics.summary.referrers) ? analytics.summary.referrers : [];
+    const daily = Array.isArray(analytics.summary.daily) ? analytics.summary.daily : [];
+    const recent = Array.isArray(analytics.summary.recent) ? analytics.summary.recent : [];
+    const maxPageviews = topPages.reduce(function(max, item) {
+      return Math.max(max, Number(item.pageviews || 0));
+    }, 0);
+
+    statusEl.style.display = analytics.loading ? 'block' : 'none';
+    statusEl.textContent = analytics.loading ? 'Veriler yenileniyor…' : '';
+    summaryEl.style.display = 'grid';
+    summaryEl.innerHTML = [
+      {
+        label: 'Sayfa Görüntüleme',
+        value: formatNumber(summary.pageviews),
+        sub: analytics.days + ' günlük toplam görüntüleme',
+      },
+      {
+        label: 'Tekil Oturum',
+        value: formatNumber(summary.sessions),
+        sub: 'Aynı ziyaretçinin 30 dakika içindeki gezintisi tek oturum sayılır',
+      },
+      {
+        label: 'Ortalama Açık Kalma',
+        value: formatDuration(summary.avg_open_seconds),
+        sub: 'Sayfa değişene veya sekme kapanana kadar geçen ortalama süre',
+      },
+      {
+        label: 'En Popüler Sayfa',
+        value: topPage ? formatNumber(topPage.pageviews) : '0',
+        sub: topPage ? formatPathLabel(topPage.page_path || topPage.page_title) : 'Henüz veri yok',
+      },
+    ].map(function(card) {
+      return (
+        '<div class="analytics-card">' +
+          '<div class="analytics-card-label">' + escHtml(card.label) + '</div>' +
+          '<div class="analytics-card-value">' + escHtml(card.value) + '</div>' +
+          '<div class="analytics-card-sub">' + escHtml(card.sub) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    topPagesEl.innerHTML = topPages.length
+      ? topPages.map(function(item) {
+          const width = maxPageviews ? Math.max(8, Math.round((Number(item.pageviews || 0) / maxPageviews) * 100)) : 0;
+          return (
+            '<div class="analytics-row">' +
+              '<div class="analytics-row-top">' +
+                '<div class="analytics-row-title">' + escHtml(formatPathLabel(item.page_title || item.page_path)) +
+                  '<small>' + escHtml(item.page_path || '') + '</small>' +
+                '</div>' +
+                '<div class="analytics-row-value">' + escHtml(formatNumber(item.pageviews)) + ' görüntüleme</div>' +
+              '</div>' +
+              '<div class="analytics-bar"><span style="width:' + width + '%"></span></div>' +
+              '<div class="analytics-row-sub">' +
+                '<span>Ortalama aktif süre: ' + escHtml(formatDuration(item.avg_active_seconds)) + '</span>' +
+                '<span>Son ' + escHtml(String(analytics.days)) + ' gün</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('')
+      : emptyStateHtml('Henüz ziyaret edilen sayfa kaydı yok.');
+
+    referrersEl.innerHTML = referrers.length
+      ? referrers.map(function(item) {
+          const label = item.source === 'site-ici'
+            ? 'Site içi yönlendirme'
+            : (item.source || 'Direkt / Bilinmiyor');
+          return (
+            '<div class="analytics-row">' +
+              '<div class="analytics-row-top">' +
+                '<div class="analytics-row-title">' + escHtml(label) + '</div>' +
+                '<div class="analytics-row-value">' + escHtml(formatNumber(item.pageviews)) + '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('')
+      : emptyStateHtml('Henüz referrer verisi yok.');
+
+    dailyEl.innerHTML = daily.length
+      ? daily.slice().reverse().map(function(item) {
+          return (
+            '<div class="analytics-row">' +
+              '<div class="analytics-row-top">' +
+                '<div class="analytics-row-title">' + escHtml(formatDay(item.day)) + '</div>' +
+                '<div class="analytics-row-value">' + escHtml(formatNumber(item.pageviews)) + ' görüntüleme</div>' +
+              '</div>' +
+              '<div class="analytics-row-sub">' +
+                '<span>' + escHtml(formatNumber(item.sessions)) + ' tekil oturum</span>' +
+                '<span>' + escHtml(item.day || '') + '</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('')
+      : emptyStateHtml('Henüz günlük akış verisi yok.');
+
+    recentEl.innerHTML = recent.length
+      ? recent.map(function(item) {
+          const referrerLabel = item.referrer_host === 'site-ici'
+            ? 'Site içi'
+            : (item.referrer_host || 'Direkt');
+          return (
+            '<div class="analytics-row">' +
+              '<div class="analytics-row-top">' +
+                '<div class="analytics-row-title">' + escHtml(formatPathLabel(item.page_title || item.page_path)) +
+                  '<small>' + escHtml(item.page_path || '') + '</small>' +
+                '</div>' +
+                '<div class="analytics-row-value">' + escHtml(formatDateTime(item.created_at)) + '</div>' +
+              '</div>' +
+              '<div class="analytics-row-sub">' +
+                '<span>Kaynak: ' + escHtml(referrerLabel) + '</span>' +
+                '<span>Açık: ' + escHtml(formatDuration(item.open_seconds)) + ' · Aktif: ' + escHtml(formatDuration(item.active_seconds)) + '</span>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('')
+      : emptyStateHtml('Henüz son ziyaret kaydı yok.');
+  }
+
+  async function loadAnalytics(force) {
+    if (state.analytics.loading) {
+      return;
+    }
+    if (!force && state.analytics.summary && state.analytics.loadedDays === state.analytics.days) {
+      renderAnalytics();
+      return;
+    }
+
+    state.analytics.loading = true;
+    state.analytics.error = '';
+    renderAnalytics();
+
+    try {
+      const client = window.kemalAdminAuth.getClient();
+      const result = await client.rpc('get_site_analytics_summary', {
+        days: state.analytics.days,
+      });
+      if (result.error) {
+        throw result.error;
+      }
+      state.analytics.summary = result.data || null;
+      state.analytics.loadedDays = state.analytics.days;
+    } catch (error) {
+      state.analytics.summary = null;
+      state.analytics.loadedDays = 0;
+      state.analytics.error = humanizeAnalyticsError(error);
+    } finally {
+      state.analytics.loading = false;
+      renderAnalytics();
+    }
+  }
+
+  function setAnalyticsDays(days) {
+    if (![7, 30, 90].includes(days)) {
+      return;
+    }
+    state.analytics.days = days;
+    state.analytics.error = '';
+    if (state.currentPanel === 'analytics') {
+      loadAnalytics(true);
+    } else {
+      renderAnalytics();
+    }
+  }
+
+  function refreshAnalytics() {
+    state.analytics.summary = null;
+    state.analytics.loadedDays = 0;
+    loadAnalytics(true);
+  }
+
   function renderCurrentPanel() {
     switch (state.currentPanel) {
+      case 'analytics':
+        renderAnalytics();
+        break;
       case 'duyurular':
         renderDuyurular();
         break;
@@ -576,6 +894,8 @@
   window.changePassword = changePassword;
   window.exportData = exportData;
   window.resetConfirm = resetConfirm;
+  window.setAnalyticsDays = setAnalyticsDays;
+  window.refreshAnalytics = refreshAnalytics;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootstrap);

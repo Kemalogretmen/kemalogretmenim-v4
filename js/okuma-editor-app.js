@@ -2,7 +2,15 @@
   'use strict';
 
   const OPTIONAL_METIN_COLUMNS = ['baslik_stil_json', 'plain_text'];
+  const OPTIONAL_QUESTION_COLUMNS = ['soru_tipi', 'ayar_json'];
   const PAGE_SIZE = 10;
+  const QUESTION_TYPES = {
+    CHOICE: 'coktan-secmeli',
+    TRUE_FALSE: 'dogru-yanlis',
+    FILL: 'bosluk-doldurma',
+  };
+  const QUESTION_SELECT = 'id,soru_metni,sira,soru_tipi,ayar_json,secenekler(id,secenek_metni,dogru_mu,sira)';
+  const QUESTION_SELECT_LEGACY = 'id,soru_metni,sira,secenekler(id,secenek_metni,dogru_mu,sira)';
   const FONT_LABELS = {
     nunito: 'Nunito',
     georgia: 'Georgia',
@@ -98,6 +106,103 @@
     return fallback;
   }
 
+  function normalizeTextToken(value) {
+    return String(value || '')
+      .toLocaleLowerCase('tr-TR')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function hasBlankPlaceholder(value) {
+    return /_{3,}|\.{3,}/.test(String(value || ''));
+  }
+
+  function normalizeQuestionType(value) {
+    const raw = normalizeTextToken(value);
+    if (raw === QUESTION_TYPES.TRUE_FALSE || raw === 'dogru-yanlis' || raw === 'dogru_yanlis') {
+      return QUESTION_TYPES.TRUE_FALSE;
+    }
+    if (raw === QUESTION_TYPES.FILL || raw === 'bosluk-doldurma' || raw === 'bosluk_doldurma') {
+      return QUESTION_TYPES.FILL;
+    }
+    return QUESTION_TYPES.CHOICE;
+  }
+
+  function isTrueFalseChoices(choices) {
+    if (!Array.isArray(choices) || choices.length !== 2) {
+      return false;
+    }
+    const labels = choices.map(function(choice) {
+      return normalizeTextToken(choice && choice.secenek_metni ? choice.secenek_metni : choice && choice.text ? choice.text : '');
+    });
+    return labels.includes('doğru') && labels.includes('yanlış') ||
+      labels.includes('dogru') && labels.includes('yanlis');
+  }
+
+  function inferQuestionType(question) {
+    if (!question) {
+      return QUESTION_TYPES.CHOICE;
+    }
+    const explicitType = normalizeQuestionType(question.soru_tipi || question.type);
+    if (question.soru_tipi || question.type) {
+      return explicitType;
+    }
+    if (isTrueFalseChoices(question.secenekler)) {
+      return QUESTION_TYPES.TRUE_FALSE;
+    }
+    if (hasBlankPlaceholder(question.soru_metni)) {
+      return QUESTION_TYPES.FILL;
+    }
+    return QUESTION_TYPES.CHOICE;
+  }
+
+  function getQuestionTypeLabel(type) {
+    const safeType = normalizeQuestionType(type);
+    if (safeType === QUESTION_TYPES.TRUE_FALSE) {
+      return 'Doğru / Yanlış';
+    }
+    if (safeType === QUESTION_TYPES.FILL) {
+      return 'Boşluk Doldurma';
+    }
+    return 'Test';
+  }
+
+  function getQuestionHelpText(type) {
+    const safeType = normalizeQuestionType(type);
+    if (safeType === QUESTION_TYPES.TRUE_FALSE) {
+      return 'Cümleyi soru alanına yaz. Öğrenci sadece "Doğru" veya "Yanlış" seçerek ilerler.';
+    }
+    if (safeType === QUESTION_TYPES.FILL) {
+      return 'Tek boşluğu soru metninde _____ ile göster. Öğrenci alttaki kelime veya ifadelerden birini seçer.';
+    }
+    return '3 ila 5 seçenek ekleyebilirsin. Tek bir doğru cevap işaretlenmelidir.';
+  }
+
+  function getQuestionInputPlaceholder(type) {
+    const safeType = normalizeQuestionType(type);
+    if (safeType === QUESTION_TYPES.TRUE_FALSE) {
+      return 'Cümleyi yaz…';
+    }
+    if (safeType === QUESTION_TYPES.FILL) {
+      return 'Boşluğu _____ ile göstererek soruyu yaz…';
+    }
+    return 'Soru metnini yaz…';
+  }
+
+  function getChoiceMarker(type, index) {
+    if (normalizeQuestionType(type) === QUESTION_TYPES.FILL) {
+      return String(index + 1);
+    }
+    return ['A', 'B', 'C', 'D', 'E'][index] || String(index + 1);
+  }
+
+  function getChoicePlaceholder(type, index) {
+    if (normalizeQuestionType(type) === QUESTION_TYPES.FILL) {
+      return 'Kelime / ifade ' + getChoiceMarker(type, index) + '…';
+    }
+    return 'Şık ' + getChoiceMarker(type, index) + '…';
+  }
+
   function normalizeFontKey(value) {
     const raw = String(value || '').trim();
     const map = {
@@ -179,13 +284,10 @@
     if (!state.quill) {
       return;
     }
-    const fontKey = normalizeFontKey(document.getElementById('fYaziTipi').value || 'nunito');
-    const size = parseInt(document.getElementById('fYaziBoyutu').value, 10) || 18;
-    const color = document.getElementById('fYaziRengi').value || '#1A1040';
-    state.quill.root.style.fontFamily = FONT_STACKS[fontKey] || FONT_STACKS.nunito;
-    state.quill.root.style.fontSize = size + 'px';
-    state.quill.root.style.color = color;
-    state.quill.root.dataset.defaultFont = fontKey;
+    state.quill.root.style.fontFamily = FONT_STACKS.nunito;
+    state.quill.root.style.fontSize = '18px';
+    state.quill.root.style.color = '#1A1040';
+    state.quill.root.dataset.defaultFont = 'nunito';
   }
 
   function configureQuillFonts() {
@@ -269,9 +371,6 @@
       state.quill.clipboard.dangerouslyPasteHTML(html);
     }
 
-    document.getElementById('fYaziTipi').value = normalizeFontKey(text && text.yazi_tipi ? text.yazi_tipi : 'nunito');
-    document.getElementById('fYaziBoyutu').value = String(text && text.yazi_boyutu ? text.yazi_boyutu : 18);
-    document.getElementById('fYaziRengi').value = text && text.yazi_rengi ? text.yazi_rengi : '#1A1040';
     applyEditorDefaultStyle();
     updateWordCount();
 
@@ -419,6 +518,38 @@
     applyFilterDirect(filter);
   }
 
+  async function loadQuestionsForText(client, textId) {
+    let response = await client
+      .from('sorular')
+      .select(QUESTION_SELECT)
+      .eq('metin_id', textId)
+      .order('sira');
+
+    if (response.error && OPTIONAL_QUESTION_COLUMNS.some(function(column) {
+      return response.error.message && response.error.message.includes(column);
+    })) {
+      response = await client
+        .from('sorular')
+        .select(QUESTION_SELECT_LEGACY)
+        .eq('metin_id', textId)
+        .order('sira');
+    }
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    return (response.data || []).map(function(question) {
+      return Object.assign({}, question, {
+        soru_tipi: inferQuestionType(question),
+        ayar_json: parseOptionalJson(question.ayar_json, {}),
+        secenekler: (question.secenekler || []).sort(function(a, b) {
+          return (a.sira || 0) - (b.sira || 0);
+        }),
+      });
+    });
+  }
+
   async function openEditor(text) {
     fillForm(text || null);
     showEditPanel();
@@ -433,19 +564,12 @@
       return;
     }
 
-    const { data: questions } = await client
-      .from('sorular')
-      .select('id,soru_metni,sira,secenekler(id,secenek_metni,dogru_mu,sira)')
-      .eq('metin_id', id)
-      .order('sira');
-
-    text.sorular = (questions || []).map(function(question) {
-      return Object.assign({}, question, {
-        secenekler: (question.secenekler || []).sort(function(a, b) {
-          return (a.sira || 0) - (b.sira || 0);
-        }),
-      });
-    });
+    try {
+      text.sorular = await loadQuestionsForText(client, id);
+    } catch (questionError) {
+      toast('Sorular yuklenemedi: ' + questionError.message, 'error');
+      text.sorular = [];
+    }
 
     openEditor(text);
   }
@@ -517,13 +641,103 @@
     });
   }
 
-  function buildChoiceRows(choiceName, choices) {
-    const letters = ['A', 'B', 'C', 'D', 'E'];
+  function buildQuestionTypeOptions(selectedType) {
+    const types = [
+      { value: QUESTION_TYPES.CHOICE, label: 'Test' },
+      { value: QUESTION_TYPES.TRUE_FALSE, label: 'Doğru / Yanlış' },
+      { value: QUESTION_TYPES.FILL, label: 'Boşluk Doldurma' },
+    ];
+    return types.map(function(type) {
+      return '<option value="' + type.value + '" ' + (normalizeQuestionType(selectedType) === type.value ? 'selected' : '') + '>' + type.label + '</option>';
+    }).join('');
+  }
+
+  function getDefaultQuestionChoices(type) {
+    const safeType = normalizeQuestionType(type);
+    if (safeType === QUESTION_TYPES.TRUE_FALSE) {
+      return [
+        { secenek_metni: 'Doğru', dogru_mu: true },
+        { secenek_metni: 'Yanlış', dogru_mu: false },
+      ];
+    }
+    return [
+      { secenek_metni: '', dogru_mu: true },
+      { secenek_metni: '', dogru_mu: false },
+      { secenek_metni: '', dogru_mu: false },
+    ];
+  }
+
+  function normalizeChoiceCorrectness(choices) {
+    const safeChoices = (choices || []).map(function(choice) {
+      return {
+        secenek_metni: choice && choice.secenek_metni ? choice.secenek_metni : '',
+        dogru_mu: !!(choice && choice.dogru_mu),
+      };
+    });
+
+    const firstCorrectIndex = safeChoices.findIndex(function(choice) {
+      return choice.dogru_mu;
+    });
+
+    return safeChoices.map(function(choice, index) {
+      return {
+        secenek_metni: choice.secenek_metni,
+        dogru_mu: index === (firstCorrectIndex >= 0 ? firstCorrectIndex : 0),
+      };
+    });
+  }
+
+  function getTrueFalseChoices(choices) {
+    const list = Array.isArray(choices) && choices.length ? choices : getDefaultQuestionChoices(QUESTION_TYPES.TRUE_FALSE);
+    const trueChoice = list.find(function(choice) {
+      const label = normalizeTextToken(choice && choice.secenek_metni ? choice.secenek_metni : '');
+      return label === 'doğru' || label === 'dogru';
+    });
+    const falseChoice = list.find(function(choice) {
+      const label = normalizeTextToken(choice && choice.secenek_metni ? choice.secenek_metni : '');
+      return label === 'yanlış' || label === 'yanlis';
+    });
+    const isTrueCorrect = trueChoice
+      ? !!trueChoice.dogru_mu
+      : !(falseChoice && falseChoice.dogru_mu);
+    return [
+      { secenek_metni: 'Doğru', dogru_mu: isTrueCorrect },
+      { secenek_metni: 'Yanlış', dogru_mu: !isTrueCorrect },
+    ];
+  }
+
+  function getEditableChoices(type, choices) {
+    const safeType = normalizeQuestionType(type);
+    if (safeType === QUESTION_TYPES.TRUE_FALSE) {
+      return getTrueFalseChoices(choices);
+    }
+
+    const safeChoices = normalizeChoiceCorrectness(
+      Array.isArray(choices) && choices.length
+        ? choices.slice(0, 5)
+        : getDefaultQuestionChoices(safeType)
+    );
+
+    const targetLength = safeType === QUESTION_TYPES.CHOICE
+      ? Math.max(safeChoices.length, 3)
+      : safeChoices.length || 3;
+
+    while (safeChoices.length < targetLength && safeChoices.length < 5) {
+      safeChoices.push({
+        secenek_metni: '',
+        dogru_mu: false,
+      });
+    }
+
+    return safeChoices;
+  }
+
+  function buildChoiceRows(type, choiceName, choices) {
     return choices.map(function(choice, index) {
       return (
         '<div class="sik-row">' +
-          '<span class="sik-harf">' + letters[index] + '</span>' +
-          '<input type="text" placeholder="Şık ' + letters[index] + '…" value="' + escHtml(choice.secenek_metni || '') + '">' +
+          '<span class="sik-harf">' + getChoiceMarker(type, index) + '</span>' +
+          '<input type="text" placeholder="' + getChoicePlaceholder(type, index) + '" value="' + escHtml(choice.secenek_metni || '') + '">' +
           '<input type="radio" name="' + choiceName + '" title="Doğru cevap" ' + (choice.dogru_mu ? 'checked' : '') + '>' +
           '<button class="sik-del" onclick="sikSil(this)" type="button">✕</button>' +
         '</div>'
@@ -531,47 +745,136 @@
     }).join('');
   }
 
-  function addQuestion(data) {
+  function buildTrueFalseRows(choiceName, choices) {
+    return choices.map(function(choice) {
+      const value = normalizeTextToken(choice.secenek_metni) === 'yanlış' || normalizeTextToken(choice.secenek_metni) === 'yanlis'
+        ? 'yanlis'
+        : 'dogru';
+      return (
+        '<label class="dy-answer-option">' +
+          '<input type="radio" name="' + choiceName + '" value="' + value + '" ' + (choice.dogru_mu ? 'checked' : '') + '>' +
+          '<span>' + escHtml(choice.secenek_metni) + '</span>' +
+        '</label>'
+      );
+    }).join('');
+  }
+
+  function updateChoiceMarkers(list, type) {
+    list.querySelectorAll('.sik-row').forEach(function(row, index) {
+      const badge = row.querySelector('.sik-harf');
+      const input = row.querySelector('input[type="text"]');
+      if (badge) {
+        badge.textContent = getChoiceMarker(type, index);
+      }
+      if (input) {
+        input.placeholder = getChoicePlaceholder(type, index);
+      }
+    });
+  }
+
+  function renderQuestionBody(item, type, data) {
+    const safeType = normalizeQuestionType(type);
+    const body = item.querySelector('.soru-body');
+    const input = item.querySelector('.soru-input');
+    const radioName = 'dogru_' + item.id;
+    const buttonLabel = safeType === QUESTION_TYPES.FILL ? '+ Kelime / İfade Ekle' : '+ Şık Ekle';
+
+    item.dataset.questionType = safeType;
+    if (input) {
+      input.placeholder = getQuestionInputPlaceholder(safeType);
+    }
+
+    if (safeType === QUESTION_TYPES.TRUE_FALSE) {
+      body.innerHTML =
+        '<div class="soru-type-row">' +
+          '<span class="soru-type-badge ' + safeType + '">✓✗ ' + getQuestionTypeLabel(safeType) + '</span>' +
+        '</div>' +
+        '<div class="soru-yardim">' + getQuestionHelpText(safeType) + '</div>' +
+        '<div class="dy-answer-grid">' + buildTrueFalseRows(radioName, getTrueFalseChoices(data && data.secenekler)) + '</div>';
+      return;
+    }
+
+    body.innerHTML =
+      '<div class="soru-type-row">' +
+        '<span class="soru-type-badge ' + safeType + '">' + (safeType === QUESTION_TYPES.FILL ? '🧩 ' : '📝 ') + getQuestionTypeLabel(safeType) + '</span>' +
+      '</div>' +
+      '<div class="soru-yardim">' + getQuestionHelpText(safeType) + '</div>' +
+      (safeType === QUESTION_TYPES.FILL
+        ? '<div class="bosluk-ipucu">Örnek kullanım: "Betül kendini _____ hissetti." Öğrenci alttaki seçeneklerden birini seçer.</div>'
+        : '') +
+      '<div class="sik-list">' + buildChoiceRows(safeType, radioName, getEditableChoices(safeType, data && data.secenekler)) + '</div>' +
+      '<button class="btn-sik-ekle" onclick="sikEkle(\'' + item.id + '\')" type="button">' + buttonLabel + '</button>';
+  }
+
+  function readQuestionDraft(item) {
+    const type = normalizeQuestionType(item.dataset.questionType);
+    if (type === QUESTION_TYPES.TRUE_FALSE) {
+      const selected = item.querySelector('.dy-answer-grid input[type="radio"]:checked');
+      const selectedValue = selected ? selected.value : 'dogru';
+      return {
+        secenekler: [
+          { secenek_metni: 'Doğru', dogru_mu: selectedValue === 'dogru' },
+          { secenek_metni: 'Yanlış', dogru_mu: selectedValue === 'yanlis' },
+        ],
+      };
+    }
+
+    return {
+      secenekler: Array.from(item.querySelectorAll('.sik-row')).map(function(row) {
+        return {
+          secenek_metni: row.querySelector('input[type="text"]').value || '',
+          dogru_mu: row.querySelector('input[type="radio"]').checked,
+        };
+      }),
+    };
+  }
+
+  function addQuestion(typeOrData, maybeData) {
     state.questionCounter += 1;
     const questionId = 'soru_' + state.questionCounter;
     const questionList = document.getElementById('soruList');
     const wrapper = document.createElement('div');
-    const initialChoices = data && Array.isArray(data.secenekler) && data.secenekler.length
-      ? data.secenekler.slice(0, 5)
-      : [
-          { secenek_metni: '', dogru_mu: true },
-          { secenek_metni: '', dogru_mu: false },
-          { secenek_metni: '', dogru_mu: false },
-        ];
+    const data = typeof typeOrData === 'string' ? maybeData || null : typeOrData || null;
+    const questionType = typeof typeOrData === 'string' ? normalizeQuestionType(typeOrData) : inferQuestionType(typeOrData);
+
     wrapper.className = 'soru-item';
     wrapper.id = questionId;
+    wrapper.dataset.questionType = questionType;
     wrapper.innerHTML =
       '<div class="soru-item-header">' +
         '<span class="soru-no-badge">' + (questionList.children.length + 1) + '</span>' +
-        '<input type="text" placeholder="Soru metnini yaz…" value="' + escHtml(data && data.soru_metni ? data.soru_metni : '') + '" class="soru-input" style="flex:1;margin-bottom:0;">' +
+        '<input type="text" value="' + escHtml(data && data.soru_metni ? data.soru_metni : '') + '" class="soru-input" style="margin-bottom:0;">' +
+        '<select class="soru-type-select" onchange="soruTipiDegis(\'' + questionId + '\', this.value)">' + buildQuestionTypeOptions(questionType) + '</select>' +
       '</div>' +
-      '<div class="sik-list">' + buildChoiceRows('dogru_' + questionId, initialChoices) + '</div>' +
-      '<button class="btn-sik-ekle" onclick="sikEkle(\'' + questionId + '\')" type="button">+ Şık Ekle</button>' +
+      '<div class="soru-body"></div>' +
       '<button class="btn-soru-sil" onclick="soruSil(\'' + questionId + '\')" type="button">🗑️ Soruyu Sil</button>';
 
     questionList.appendChild(wrapper);
+    renderQuestionBody(wrapper, questionType, data);
     renumberQuestions();
   }
 
   function addChoice(questionId) {
     const item = document.getElementById(questionId);
-    const list = item.querySelector('.sik-list');
-    if (list.children.length >= 5) {
-      toast('Bir soru için en fazla 5 şık eklenebilir.', 'error');
+    if (!item) {
       return;
     }
-    const letters = ['A', 'B', 'C', 'D', 'E'];
+    const type = normalizeQuestionType(item.dataset.questionType);
+    if (type === QUESTION_TYPES.TRUE_FALSE) {
+      return;
+    }
+    const list = item.querySelector('.sik-list');
+    if (list.children.length >= 5) {
+      toast('Bir soru için en fazla 5 seçenek eklenebilir.', 'error');
+      return;
+    }
+
     const index = list.children.length;
     const row = document.createElement('div');
     row.className = 'sik-row';
     row.innerHTML =
-      '<span class="sik-harf">' + letters[index] + '</span>' +
-      '<input type="text" placeholder="Şık ' + letters[index] + '…">' +
+      '<span class="sik-harf">' + getChoiceMarker(type, index) + '</span>' +
+      '<input type="text" placeholder="' + getChoicePlaceholder(type, index) + '">' +
       '<input type="radio" name="dogru_' + questionId + '" title="Doğru cevap">' +
       '<button class="sik-del" onclick="sikSil(this)" type="button">✕</button>';
     list.appendChild(row);
@@ -580,15 +883,26 @@
   function deleteChoice(button) {
     const row = button.closest('.sik-row');
     const list = row.closest('.sik-list');
-    if (list.children.length <= 3) {
-      toast('Bir soruda en az 3 şık bulunmalı.', 'error');
+    const item = row.closest('.soru-item');
+    const type = normalizeQuestionType(item && item.dataset.questionType);
+    const minimumChoices = type === QUESTION_TYPES.FILL ? 2 : 3;
+
+    if (list.children.length <= minimumChoices) {
+      toast('Bu soru tipinde en az ' + minimumChoices + ' seçenek bırakılmalı.', 'error');
       return;
     }
+
     row.remove();
-    const letters = ['A', 'B', 'C', 'D', 'E'];
-    list.querySelectorAll('.sik-harf').forEach(function(node, index) {
-      node.textContent = letters[index] || String(index + 1);
-    });
+    updateChoiceMarkers(list, type);
+  }
+
+  function changeQuestionType(questionId, nextType) {
+    const item = document.getElementById(questionId);
+    if (!item) {
+      return;
+    }
+    const draft = readQuestionDraft(item);
+    renderQuestionBody(item, nextType, draft);
   }
 
   function deleteQuestion(questionId) {
@@ -606,39 +920,79 @@
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       const questionText = (item.querySelector('.soru-input').value || '').trim();
+      const type = normalizeQuestionType(item.dataset.questionType);
+
+      if (type === QUESTION_TYPES.TRUE_FALSE) {
+        if (!questionText) {
+          continue;
+        }
+        const selected = item.querySelector('.dy-answer-grid input[type="radio"]:checked');
+        const selectedValue = selected ? selected.value : 'dogru';
+        questions.push({
+          soru_metni: questionText,
+          soru_tipi: type,
+          ayar_json: {},
+          sira: i + 1,
+          secenekler: [
+            { secenek_metni: 'Doğru', dogru_mu: selectedValue === 'dogru', sira: 1 },
+            { secenek_metni: 'Yanlış', dogru_mu: selectedValue === 'yanlis', sira: 2 },
+          ],
+        });
+        continue;
+      }
+
       const rows = Array.from(item.querySelectorAll('.sik-row'));
-      const filledChoices = rows.map(function(row) {
+      const rawChoices = rows.map(function(row) {
         return {
           text: (row.querySelector('input[type="text"]').value || '').trim(),
           correct: row.querySelector('input[type="radio"]').checked,
         };
-      }).filter(function(choice) {
+      });
+      const filledChoices = rawChoices.filter(function(choice) {
         return choice.text;
       });
-
       const hasAnyChoiceText = filledChoices.length > 0;
+
       if (!questionText && !hasAnyChoiceText) {
         continue;
       }
       if (!questionText) {
         throw new Error((i + 1) + '. sorunun metni boş bırakılamaz.');
       }
-      if (rows.some(function(row) { return !(row.querySelector('input[type="text"]').value || '').trim(); })) {
-        throw new Error((i + 1) + '. soruda boş şık bırakılamaz.');
+      if (rows.some(function(row) {
+        return !(row.querySelector('input[type="text"]').value || '').trim();
+      })) {
+        throw new Error((i + 1) + '. soruda boş seçenek bırakılamaz.');
       }
-      if (filledChoices.length < 3) {
-        throw new Error((i + 1) + '. soru için en az 3 şık gerekli.');
+      if (type === QUESTION_TYPES.FILL && !hasBlankPlaceholder(questionText)) {
+        throw new Error((i + 1) + '. boşluk doldurma sorusunda boşluğu _____ ile göstermelisin.');
+      }
+      if (type === QUESTION_TYPES.FILL) {
+        const blankCount = (questionText.match(/_{3,}|\.{3,}/g) || []).length;
+        if (blankCount !== 1) {
+          throw new Error((i + 1) + '. boşluk doldurma sorusunda yalnızca 1 boşluk kullanılabilir.');
+        }
+      }
+
+      const minChoiceCount = type === QUESTION_TYPES.FILL ? 2 : 3;
+      if (filledChoices.length < minChoiceCount) {
+        throw new Error((i + 1) + '. soru için en az ' + minChoiceCount + ' seçenek gerekli.');
       }
       if (filledChoices.length > 5) {
-        throw new Error((i + 1) + '. soru için en fazla 5 şık kullanılabilir.');
+        throw new Error((i + 1) + '. soru için en fazla 5 seçenek kullanılabilir.');
       }
-      const correctCount = filledChoices.filter(function(choice) { return choice.correct; }).length;
+
+      const correctCount = filledChoices.filter(function(choice) {
+        return choice.correct;
+      }).length;
       if (correctCount !== 1) {
         throw new Error((i + 1) + '. soruda tam olarak 1 doğru cevap seçilmelidir.');
       }
 
       questions.push({
         soru_metni: questionText,
+        soru_tipi: type,
+        ayar_json: type === QUESTION_TYPES.FILL ? { bosluklu: true } : {},
         sira: i + 1,
         secenekler: filledChoices.map(function(choice, index) {
           return {
@@ -682,9 +1036,9 @@
       hedef_hiz: parseInt(document.getElementById('fHedefHiz').value, 10) || 80,
       kelime_ms: parseInt(document.getElementById('fKelimeMs').value, 10) || 500,
       tikla_mod: document.getElementById('ilerTikla').checked,
-      yazi_tipi: normalizeFontKey(document.getElementById('fYaziTipi').value || 'nunito'),
-      yazi_boyutu: parseInt(document.getElementById('fYaziBoyutu').value, 10) || 18,
-      yazi_rengi: document.getElementById('fYaziRengi').value || '#1A1040',
+      yazi_tipi: 'nunito',
+      yazi_boyutu: 18,
+      yazi_rengi: '#1A1040',
       kelime_sayisi: getWordCount(plainText),
     };
   }
@@ -735,15 +1089,34 @@
 
     for (let i = 0; i < questions.length; i += 1) {
       const question = questions[i];
-      const { data, error } = await client
+      let response = await client
         .from('sorular')
         .insert({
           metin_id: textId,
           soru_metni: question.soru_metni,
+          soru_tipi: question.soru_tipi,
+          ayar_json: question.ayar_json || {},
           sira: question.sira,
         })
         .select()
         .single();
+
+      if (response.error && OPTIONAL_QUESTION_COLUMNS.some(function(column) {
+        return response.error.message && response.error.message.includes(column);
+      })) {
+        response = await client
+          .from('sorular')
+          .insert({
+            metin_id: textId,
+            soru_metni: question.soru_metni,
+            sira: question.sira,
+          })
+          .select()
+          .single();
+      }
+
+      const data = response.data;
+      const error = response.error;
 
       if (error || !data) {
         throw error || new Error('Soru kaydedilemedi.');
@@ -851,10 +1224,6 @@
     document.getElementById('fBaslikRenk').addEventListener('input', applyTitleStylePreview);
     document.getElementById('fBaslikBoyut').addEventListener('change', applyTitleStylePreview);
     document.getElementById('fBaslikHiza').addEventListener('change', applyTitleStylePreview);
-
-    document.getElementById('fYaziTipi').addEventListener('change', applyEditorDefaultStyle);
-    document.getElementById('fYaziBoyutu').addEventListener('change', applyEditorDefaultStyle);
-    document.getElementById('fYaziRengi').addEventListener('input', applyEditorDefaultStyle);
   }
 
   document.addEventListener('DOMContentLoaded', async function() {
@@ -899,7 +1268,8 @@
   window.modSec = setMode;
   window.ilerModDegis = updateProgressMode;
   window.kelimeMsDegis = updateWordIntervalText;
-  window.soruEkle = function(data) { addQuestion(data); };
+  window.soruEkle = function(type, data) { addQuestion(type, data); };
+  window.soruTipiDegis = changeQuestionType;
   window.soruSil = deleteQuestion;
   window.sikEkle = addChoice;
   window.sikSil = deleteChoice;

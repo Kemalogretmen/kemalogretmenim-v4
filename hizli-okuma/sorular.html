@@ -86,6 +86,8 @@
 
     /* Şıklar */
     .secenekler-list { display: flex; flex-direction: column; gap: 12px; }
+    .secenekler-list.dy-list { flex-direction: row; flex-wrap: wrap; gap: 14px; }
+    .secenekler-list.fill-list { flex-direction: row; flex-wrap: wrap; gap: 10px; }
     .secenek-btn {
       padding: 15px 20px;
       background: rgba(255,255,255,.07);
@@ -113,6 +115,21 @@
       border-color: var(--purple);
       color: white;
     }
+    .secenek-btn.fill-btn {
+      width: auto;
+      border-radius: 999px;
+      padding: 12px 18px;
+      text-align: center;
+    }
+    .secenek-btn.fill-btn:hover {
+      transform: translateY(-2px);
+    }
+    .secenek-btn.dy-btn {
+      flex: 1 1 220px;
+      justify-content: center;
+      text-align: center;
+      padding: 18px 20px;
+    }
     .secenek-harf {
       width: 30px; height: 30px;
       background: rgba(255,255,255,.1);
@@ -123,6 +140,44 @@
       flex-shrink: 0;
     }
     .secenek-btn.secili .secenek-harf { background: var(--purple); }
+    .dy-circle {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 800;
+      flex-shrink: 0;
+      background: rgba(255,255,255,.15);
+      border: 2px solid rgba(255,255,255,.18);
+    }
+    .secenek-btn.dy-btn.secili .dy-circle {
+      background: rgba(255,255,255,.28);
+      border-color: transparent;
+    }
+    .secenek-btn.dy-btn.dogru.secili {
+      background: linear-gradient(135deg,rgba(0,201,177,.42),rgba(85,239,196,.28));
+      border-color: rgba(85,239,196,.8);
+    }
+    .secenek-btn.dy-btn.yanlis.secili {
+      background: linear-gradient(135deg,rgba(255,96,82,.42),rgba(255,154,74,.28));
+      border-color: rgba(255,154,74,.8);
+    }
+    .bosluk-vurgu {
+      display: inline-flex;
+      align-items: flex-end;
+      justify-content: center;
+      min-width: 92px;
+      padding: 0 10px 4px;
+      margin: 0 4px;
+      border-bottom: 3px dashed #FFD93D;
+      color: #FFD93D;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
 
     /* Navigasyon */
     .soru-nav {
@@ -255,38 +310,163 @@
 
     if (!metin || !kullanici) { window.location.href = '/hizli-okuma/index.html'; }
 
+    const QUESTION_TYPES = {
+      CHOICE: 'coktan-secmeli',
+      TRUE_FALSE: 'dogru-yanlis',
+      FILL: 'bosluk-doldurma',
+    };
+
     const sorular = (metin.sorular || []);
     if (sorular.length === 0) { window.location.href = '/hizli-okuma/karne.html'; }
 
     let aktifSoru = 0;
-    const cevaplar = new Array(sorular.length).fill(null); // seceneğin id'si
+    const cevaplar = new Array(sorular.length).fill(null);
 
-    /* ─── INIT ─── */
+    function normalizeTextToken(value) {
+      return String(value || '')
+        .toLocaleLowerCase('tr-TR')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function hasBlankPlaceholder(value) {
+      return /_{3,}|\.{3,}/.test(String(value || ''));
+    }
+
+    function isTrueFalseChoices(choices) {
+      if (!Array.isArray(choices) || choices.length !== 2) {
+        return false;
+      }
+      const labels = choices.map(choice => normalizeTextToken(choice && choice.secenek_metni));
+      return labels.includes('doğru') && labels.includes('yanlış') ||
+        labels.includes('dogru') && labels.includes('yanlis');
+    }
+
+    function getQuestionType(question) {
+      const explicitType = normalizeTextToken(question && question.soru_tipi);
+      if (explicitType === QUESTION_TYPES.TRUE_FALSE) return QUESTION_TYPES.TRUE_FALSE;
+      if (explicitType === QUESTION_TYPES.FILL) return QUESTION_TYPES.FILL;
+      if (isTrueFalseChoices(question && question.secenekler)) return QUESTION_TYPES.TRUE_FALSE;
+      if (hasBlankPlaceholder(question && question.soru_metni)) return QUESTION_TYPES.FILL;
+      return QUESTION_TYPES.CHOICE;
+    }
+
+    function getTrueFalseChoices(choices) {
+      const list = Array.isArray(choices) ? choices : [];
+      const dogruSec = list.find(choice => {
+        const label = normalizeTextToken(choice && choice.secenek_metni);
+        return label === 'doğru' || label === 'dogru';
+      });
+      const yanlisSec = list.find(choice => {
+        const label = normalizeTextToken(choice && choice.secenek_metni);
+        return label === 'yanlış' || label === 'yanlis';
+      });
+      const dogruMu = dogruSec ? !!dogruSec.dogru_mu : !(yanlisSec && yanlisSec.dogru_mu);
+      return [
+        {
+          id: dogruSec && dogruSec.id ? dogruSec.id : 'dogru',
+          secenek_metni: 'Doğru',
+          dogru_mu: dogruMu,
+        },
+        {
+          id: yanlisSec && yanlisSec.id ? yanlisSec.id : 'yanlis',
+          secenek_metni: 'Yanlış',
+          dogru_mu: !dogruMu,
+        },
+      ];
+    }
+
+    function getQuestionChoices(question) {
+      const type = getQuestionType(question);
+      if (type === QUESTION_TYPES.TRUE_FALSE) {
+        return getTrueFalseChoices(question && question.secenekler);
+      }
+      return (question && question.secenekler ? question.secenekler : [])
+        .slice()
+        .sort((a, b) => (a.sira || 0) - (b.sira || 0))
+        .map((choice, index) => ({
+          ...choice,
+          id: choice && choice.id ? choice.id : `sec_${index + 1}`,
+        }));
+    }
+
+    function getCorrectChoice(question) {
+      return getQuestionChoices(question).find(choice => choice.dogru_mu) || null;
+    }
+
+    function formatQuestionText(question) {
+      const raw = escHtml(question && question.soru_metni ? question.soru_metni : '');
+      if (getQuestionType(question) !== QUESTION_TYPES.FILL) {
+        return raw;
+      }
+      return raw.replace(/_{3,}|\.{3,}/g, '<span class="bosluk-vurgu">_____</span>');
+    }
+
+    function getQuestionListClass(type) {
+      if (type === QUESTION_TYPES.TRUE_FALSE) return 'secenekler-list dy-list';
+      if (type === QUESTION_TYPES.FILL) return 'secenekler-list fill-list';
+      return 'secenekler-list';
+    }
+
+    function buildOptionsHtml(question, questionIndex) {
+      const type = getQuestionType(question);
+      const choices = getQuestionChoices(question);
+      const selectedId = cevaplar[questionIndex];
+      const harfler = ['A', 'B', 'C', 'D', 'E'];
+
+      if (type === QUESTION_TYPES.TRUE_FALSE) {
+        return choices.map(choice => {
+          const key = normalizeTextToken(choice.secenek_metni);
+          const shortLabel = key === 'yanlış' || key === 'yanlis' ? 'Y' : 'D';
+          const tone = shortLabel === 'D' ? 'dogru' : 'yanlis';
+          return `
+            <button class="secenek-btn dy-btn ${tone} ${String(selectedId)===String(choice.id)?'secili':''}"
+                    onclick="cevapSec('${choice.id}',this,${questionIndex})">
+              <span class="dy-circle">${shortLabel}</span>
+              <span>${escHtml(choice.secenek_metni)}</span>
+            </button>`;
+        }).join('');
+      }
+
+      if (type === QUESTION_TYPES.FILL) {
+        return choices.map(choice => `
+          <button class="secenek-btn fill-btn ${String(selectedId)===String(choice.id)?'secili':''}"
+                  onclick="cevapSec('${choice.id}',this,${questionIndex})">
+            <span>${escHtml(choice.secenek_metni)}</span>
+          </button>`).join('');
+      }
+
+      return choices.map((choice, i) => `
+        <button class="secenek-btn ${String(selectedId)===String(choice.id)?'secili':''}"
+                onclick="cevapSec('${choice.id}',this,${questionIndex})">
+          <span class="secenek-harf">${harfler[i]||i+1}</span>
+          <span>${escHtml(choice.secenek_metni)}</span>
+        </button>`).join('');
+    }
+
+    function getChoiceText(question, selectedId) {
+      const selected = getQuestionChoices(question).find(choice => String(choice.id) === String(selectedId));
+      return selected ? selected.secenek_metni : '—';
+    }
+
     document.getElementById('soruMetinAdi').textContent = '📖 ' + metin.baslik;
     renderNoktalar();
     soruGoster(0);
 
     function soruGoster(index) {
       aktifSoru = index;
-      const s = sorular[index];
-      const harfler = ['A','B','C','D','E'];
+      const soru = sorular[index];
+      const type = getQuestionType(soru);
 
       document.getElementById('soruNo').textContent = `SORU ${index+1}`;
-      document.getElementById('soruMetin').textContent = s.soru_metni;
+      document.getElementById('soruMetin').innerHTML = formatQuestionText(soru);
       document.getElementById('soruSayacBadge').textContent = `${index+1} / ${sorular.length}`;
-      document.getElementById('soruProgress').style.width =
-        ((index+1)/sorular.length*100) + '%';
+      document.getElementById('soruProgress').style.width = ((index+1)/sorular.length*100) + '%';
 
-      // Şıklar
       const list = document.getElementById('seceneklerList');
-      list.innerHTML = (s.secenekler || []).map((sec, i) => `
-        <button class="secenek-btn ${cevaplar[index]===sec.id?'secili':''}"
-                onclick="cevapSec('${sec.id}',this,${index})">
-          <span class="secenek-harf">${harfler[i]||i+1}</span>
-          <span>${escHtml(sec.secenek_metni)}</span>
-        </button>`).join('');
+      list.className = getQuestionListClass(type);
+      list.innerHTML = buildOptionsHtml(soru, index);
 
-      // Nav butonları
       document.getElementById('geriBtn').disabled = index === 0;
 
       const ileriBtn = document.getElementById('ileriBtn');
@@ -306,7 +486,7 @@
     function cevapSec(secId, el, soruIndex) {
       cevaplar[soruIndex] = secId;
       el.closest('.secenekler-list').querySelectorAll('.secenek-btn')
-        .forEach(b => b.classList.remove('secili'));
+        .forEach(button => button.classList.remove('secili'));
       el.classList.add('secili');
       renderNoktalar();
     }
@@ -314,6 +494,7 @@
     function soruIleri() {
       if (aktifSoru < sorular.length - 1) soruGoster(aktifSoru + 1);
     }
+
     function soruGeri() {
       if (aktifSoru > 0) soruGoster(aktifSoru - 1);
     }
@@ -325,7 +506,7 @@
     }
 
     function bitirOnayla() {
-      const bos = cevaplar.filter(c=>c===null).length;
+      const bos = cevaplar.filter(c => c === null).length;
       const sub = bos > 0
         ? `<strong>${bos} soru</strong> boş bırakıldı. Yine de bitirmek istiyor musun?`
         : 'Tüm sorular cevaplandı. Sınavı tamamlamak istiyor musun?';
@@ -338,26 +519,30 @@
     }
 
     function soruBitir() {
-      // Sonuçları hesapla
-      let dogru = 0, yanlis = 0;
-      const detay = sorular.map((s, i) => {
-        const secilen = cevaplar[i];
-        const dogruSec = (s.secenekler || []).find(sec => sec.dogru_mu);
-        const isDogru = dogruSec && secilen === dogruSec.id;
+      let dogru = 0;
+      let yanlis = 0;
+
+      const detay = sorular.map((soru, index) => {
+        const secilen = cevaplar[index];
+        const dogruSec = getCorrectChoice(soru);
+        const isDogru = dogruSec && secilen !== null && String(secilen) === String(dogruSec.id);
+
         if (secilen === null) {
-          yanlis++;
+          yanlis += 1;
         } else if (isDogru) {
-          dogru++;
+          dogru += 1;
         } else {
-          yanlis++;
+          yanlis += 1;
         }
+
         return {
-          soru: s.soru_metni,
+          soru: soru.soru_metni,
+          tip: getQuestionType(soru),
           secilen,
-          dogruId: dogruSec?.id,
-          isDogru,
-          secilenMetin: (s.secenekler||[]).find(sec=>sec.id===secilen)?.secenek_metni || '—',
-          dogruMetin:   dogruSec?.secenek_metni || '—'
+          dogruId: dogruSec ? dogruSec.id : null,
+          isDogru: !!isDogru,
+          secilenMetin: getChoiceText(soru, secilen),
+          dogruMetin: dogruSec ? dogruSec.secenek_metni : '—',
         };
       });
 

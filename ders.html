@@ -421,6 +421,13 @@
 
       if (!data) {
         document.title = 'Ders Bulunamadı | Kemal Öğretmenim';
+        if (window.kemalSeo) {
+          window.kemalSeo.update({
+            title: document.title,
+            description: 'Aradığınız ders sayfası bulunamadı. Ana sayfaya dönerek içeriklere yeniden ulaşabilirsiniz.',
+            robots: 'noindex,follow',
+          });
+        }
         document.body.innerHTML = `
           <div class="subject-empty">
             <span class="em">🧭</span>
@@ -432,6 +439,12 @@
       }
 
       document.title = data.title + ' | Kemal Öğretmenim';
+      if (window.kemalSeo) {
+        window.kemalSeo.update({
+          title: document.title,
+          description: data.description,
+        });
+      }
       document.getElementById('subjectHero').style.setProperty('--subject-color', data.color);
       document.getElementById('subjectRibbon').textContent = data.icon + ' ' + data.ribbon;
       document.getElementById('subjectTitle').textContent = data.title;

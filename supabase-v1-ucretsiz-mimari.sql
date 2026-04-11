@@ -119,12 +119,16 @@ create table if not exists public.sorular (
   id uuid primary key default gen_random_uuid(),
   metin_id uuid not null references public.metinler(id) on delete cascade,
   soru_metni text not null,
+  soru_tipi text not null default 'coktan-secmeli',
+  ayar_json jsonb not null default '{}'::jsonb,
   sira integer not null default 1
 );
 
 alter table public.sorular
   add column if not exists metin_id uuid references public.metinler(id) on delete cascade,
   add column if not exists soru_metni text,
+  add column if not exists soru_tipi text not null default 'coktan-secmeli',
+  add column if not exists ayar_json jsonb not null default '{}'::jsonb,
   add column if not exists sira integer not null default 1;
 
 alter table public.sorular enable row level security;
@@ -262,6 +266,260 @@ grant select, insert, update, delete on public.sonuclar to authenticated;
 
 grant select, insert, update, delete on public.site_settings to authenticated;
 grant select on public.site_settings to anon;
+
+-- ----------------------------------------------------------
+-- SITE ANALYTICS
+-- ----------------------------------------------------------
+create table if not exists public.site_analytics_events (
+  id bigint generated always as identity primary key,
+  view_id uuid not null,
+  session_id uuid not null,
+  event_type text not null check (event_type in ('page_view', 'page_leave')),
+  page_url text not null,
+  page_path text not null,
+  page_title text,
+  referrer text,
+  referrer_host text,
+  utm_source text,
+  utm_medium text,
+  utm_campaign text,
+  screen_width integer,
+  screen_height integer,
+  language text,
+  timezone text,
+  active_seconds numeric(10,2),
+  event_payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.site_analytics_events enable row level security;
+
+drop policy if exists "site analytics public insert" on public.site_analytics_events;
+create policy "site analytics public insert"
+on public.site_analytics_events
+for insert
+with check (true);
+
+drop policy if exists "site analytics auth read" on public.site_analytics_events;
+create policy "site analytics auth read"
+on public.site_analytics_events
+for select
+to authenticated
+using (true);
+
+create index if not exists idx_site_analytics_created_at on public.site_analytics_events (created_at desc);
+create index if not exists idx_site_analytics_page_path on public.site_analytics_events (page_path);
+create index if not exists idx_site_analytics_event_type on public.site_analytics_events (event_type);
+create index if not exists idx_site_analytics_session on public.site_analytics_events (session_id);
+create index if not exists idx_site_analytics_view on public.site_analytics_events (view_id, event_type);
+
+grant insert on public.site_analytics_events to anon, authenticated;
+grant select on public.site_analytics_events to authenticated;
+grant usage, select on sequence public.site_analytics_events_id_seq to anon, authenticated;
+
+create or replace function public.get_site_analytics_summary(days integer default 7)
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  with requested as (
+    select greatest(1, least(coalesce(days, 7), 90))::int as days
+  ),
+  filtered_events as (
+    select *
+    from public.site_analytics_events
+    where created_at >= now() - make_interval(days => (select days from requested))
+  ),
+  page_views as (
+    select distinct on (view_id)
+      view_id,
+      session_id,
+      page_path,
+      page_url,
+      nullif(trim(page_title), '') as page_title,
+      nullif(trim(referrer_host), '') as referrer_host,
+      created_at
+    from filtered_events
+    where event_type = 'page_view'
+    order by view_id, created_at desc
+  ),
+  page_leaves as (
+    select
+      view_id,
+      max(active_seconds) filter (where active_seconds is not null) as active_seconds,
+      max(
+        coalesce(
+          nullif(event_payload ->> 'open_seconds', '')::numeric,
+          active_seconds
+        )
+      ) as open_seconds
+    from filtered_events
+    where event_type = 'page_leave'
+    group by view_id
+  ),
+  visits as (
+    select
+      pv.view_id,
+      pv.session_id,
+      pv.page_path,
+      pv.page_url,
+      coalesce(pv.page_title, pv.page_path) as page_title,
+      pv.referrer_host,
+      pv.created_at,
+      coalesce(pl.active_seconds, 0)::numeric(10,2) as active_seconds,
+      coalesce(pl.open_seconds, pl.active_seconds, 0)::numeric(10,2) as open_seconds
+    from page_views pv
+    left join page_leaves pl using (view_id)
+  ),
+  summary as (
+    select
+      count(*) as pageviews,
+      count(distinct session_id) as sessions,
+      round(avg(active_seconds), 1) as avg_active_seconds,
+      round(avg(open_seconds), 1) as avg_open_seconds
+    from visits
+  ),
+  top_page as (
+    select
+      page_path,
+      min(page_title) as page_title,
+      count(*) as pageviews
+    from visits
+    group by page_path
+    order by pageviews desc, page_path asc
+    limit 1
+  ),
+  daily as (
+    select
+      to_char(date_trunc('day', created_at at time zone 'Europe/Istanbul'), 'YYYY-MM-DD') as day,
+      count(*) as pageviews,
+      count(distinct session_id) as sessions
+    from visits
+    group by 1
+    order by 1
+  ),
+  top_pages as (
+    select
+      page_path,
+      min(page_title) as page_title,
+      count(*) as pageviews,
+      round(avg(active_seconds), 1) as avg_active_seconds
+    from visits
+    group by page_path
+    order by pageviews desc, page_path asc
+    limit 10
+  ),
+  referrers as (
+    select
+      coalesce(referrer_host, '') as source,
+      count(*) as pageviews
+    from visits
+    group by 1
+    order by pageviews desc, source asc
+    limit 10
+  ),
+  recent as (
+    select
+      page_title,
+      page_path,
+      coalesce(referrer_host, '') as referrer_host,
+      created_at,
+      active_seconds,
+      open_seconds
+    from visits
+    order by created_at desc
+    limit 15
+  )
+  select jsonb_build_object(
+    'range_days', (select days from requested),
+    'generated_at', now(),
+    'summary', jsonb_build_object(
+      'pageviews', coalesce((select pageviews from summary), 0),
+      'sessions', coalesce((select sessions from summary), 0),
+      'avg_active_seconds', coalesce((select avg_active_seconds from summary), 0),
+      'avg_open_seconds', coalesce((select avg_open_seconds from summary), 0),
+      'top_page',
+        coalesce(
+          (
+            select jsonb_build_object(
+              'page_path', page_path,
+              'page_title', page_title,
+              'pageviews', pageviews
+            )
+            from top_page
+          ),
+          '{}'::jsonb
+        )
+    ),
+    'daily',
+      coalesce(
+        (
+          select jsonb_agg(
+            jsonb_build_object(
+              'day', day,
+              'pageviews', pageviews,
+              'sessions', sessions
+            )
+            order by day
+          )
+          from daily
+        ),
+        '[]'::jsonb
+      ),
+    'top_pages',
+      coalesce(
+        (
+          select jsonb_agg(
+            jsonb_build_object(
+              'page_path', page_path,
+              'page_title', page_title,
+              'pageviews', pageviews,
+              'avg_active_seconds', avg_active_seconds
+            )
+            order by pageviews desc, page_path asc
+          )
+          from top_pages
+        ),
+        '[]'::jsonb
+      ),
+    'referrers',
+      coalesce(
+        (
+          select jsonb_agg(
+            jsonb_build_object(
+              'source', source,
+              'pageviews', pageviews
+            )
+            order by pageviews desc, source asc
+          )
+          from referrers
+        ),
+        '[]'::jsonb
+      ),
+    'recent',
+      coalesce(
+        (
+          select jsonb_agg(
+            jsonb_build_object(
+              'page_title', page_title,
+              'page_path', page_path,
+              'referrer_host', referrer_host,
+              'created_at', created_at,
+              'active_seconds', active_seconds,
+              'open_seconds', open_seconds
+            )
+            order by created_at desc
+          )
+          from recent
+        ),
+        '[]'::jsonb
+      )
+  );
+$$;
+
+revoke all on function public.get_site_analytics_summary(integer) from public;
+grant execute on function public.get_site_analytics_summary(integer) to authenticated;
 
 -- ----------------------------------------------------------
 -- NOTLAR

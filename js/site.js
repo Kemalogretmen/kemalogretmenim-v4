@@ -172,6 +172,491 @@
     'okuma-anlama': 'okuma-anlama',
   };
 
+  const SITE_ORIGIN = 'https://www.kemalogretmenim.com.tr';
+  const SITE_NAME = 'Kemal Öğretmenim';
+  const DEFAULT_OG_IMAGE = SITE_ORIGIN + '/gorseller/logo.png';
+  const TRACKING_PARAM_KEYS = [
+    'utm_source',
+    'utm_medium',
+    'utm_campaign',
+    'utm_term',
+    'utm_content',
+    'gclid',
+    'fbclid',
+    'msclkid',
+  ];
+  const PRODUCTION_HOSTS = {
+    'www.kemalogretmenim.com.tr': true,
+    'kemalogretmenim.com.tr': true,
+  };
+  const SEO_DESCRIPTION_MAP = {
+    '/': '1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik, fen bilimleri, sınav ve eğitim oyunları içerikleri.',
+    '/index.html': '1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik, fen bilimleri, sınav ve eğitim oyunları içerikleri.',
+    '/hakkimda.html': 'Kemal Öğretmen hakkında bilgiler, eğitim yaklaşımı ve yıllara dayanan öğretmenlik deneyimi.',
+    '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
+    '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
+    '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
+    '/oyun/oyunlar.html': 'Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.',
+    '/sinav_sitesi/index.html': 'Sınıf düzeyine uygun online sınavlar, denemeler ve konu pekiştirme merkezi.',
+    '/siniflar/1-sinif.html': '1. sınıf için okuma, matematik ve hayat bilgisi içeriklerini tek yerden keşfedin.',
+    '/siniflar/2-sinif.html': '2. sınıf için Türkçe, matematik ve hayat bilgisi içeriklerini tek yerden keşfedin.',
+    '/siniflar/3-sinif.html': '3. sınıf için Türkçe, matematik, hayat bilgisi ve fen bilimleri içeriklerini keşfedin.',
+    '/siniflar/4-sinif.html': '4. sınıf için Türkçe, matematik, sosyal bilgiler ve fen bilimleri içeriklerini keşfedin.',
+    '/siniflar/ortaokul.html': '5, 6 ve 7. sınıf ortaokul ders içerikleri, sınavlar ve konu destek sayfaları.',
+    '/ders.html': 'Sınıf ve derse göre yönlendirilmiş içerikler, PDF dokümanlar ve destek araçları.',
+    '/dokuman.html': 'Ders bazlı PDF dokümanları görüntüleyin, inceleyin ve çalışma akışını destekleyin.',
+    '/calisma-kagidi.html': 'Etkileşimli çalışma kağıtlarını çözün, sonuçlarınızı görün ve öğrenmeyi pekiştirin.',
+    '/404.html': 'Aradığınız sayfa bulunamadı. Kemal Öğretmenim ana sayfasına veya iletişim sayfasına dönebilirsiniz.',
+  };
+  const analyticsState = {
+    initialized: false,
+    sessionId: '',
+    viewId: '',
+    pageStartedAt: 0,
+    visibleStartedAt: 0,
+    visibleMs: 0,
+    finishSent: false,
+    heartbeatTimer: 0,
+  };
+
+  function safeTrim(value) {
+    return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function clampText(value, maxLength) {
+    const text = safeTrim(value);
+    if (!maxLength || text.length <= maxLength) {
+      return text;
+    }
+    return text.slice(0, Math.max(0, maxLength - 1)).trim() + '…';
+  }
+
+  function ensureHead() {
+    return document.head || document.getElementsByTagName('head')[0] || null;
+  }
+
+  function ensureMeta(attrName, attrValue) {
+    const head = ensureHead();
+    if (!head) {
+      return null;
+    }
+
+    let selector = 'meta[' + attrName + '="' + attrValue.replace(/"/g, '\\"') + '"]';
+    let tag = head.querySelector(selector);
+    if (!tag) {
+      tag = document.createElement('meta');
+      tag.setAttribute(attrName, attrValue);
+      head.appendChild(tag);
+    }
+    return tag;
+  }
+
+  function ensureLink(relValue) {
+    const head = ensureHead();
+    if (!head) {
+      return null;
+    }
+
+    let link = head.querySelector('link[rel="' + relValue + '"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.setAttribute('rel', relValue);
+      head.appendChild(link);
+    }
+    return link;
+  }
+
+  function readMetaContent(attrName, attrValue) {
+    const head = ensureHead();
+    if (!head) {
+      return '';
+    }
+    const tag = head.querySelector('meta[' + attrName + '="' + attrValue.replace(/"/g, '\\"') + '"]');
+    return tag && tag.content ? safeTrim(tag.content) : '';
+  }
+
+  function createUuid() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+      return window.crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(char) {
+      const random = Math.random() * 16 | 0;
+      const value = char === 'x' ? random : (random & 0x3 | 0x8);
+      return value.toString(16);
+    });
+  }
+
+  function sanitizeUrl(inputUrl) {
+    let parsed;
+
+    try {
+      parsed = new URL(inputUrl || window.location.href, SITE_ORIGIN);
+    } catch (error) {
+      parsed = new URL(window.location.pathname || '/', SITE_ORIGIN);
+    }
+
+    const clean = new URL(parsed.pathname + parsed.search, SITE_ORIGIN);
+    TRACKING_PARAM_KEYS.forEach(function(key) {
+      clean.searchParams.delete(key);
+    });
+
+    if (clean.pathname === '/index.html') {
+      clean.pathname = '/';
+    }
+
+    clean.hash = '';
+    return clean;
+  }
+
+  function getCanonicalPath() {
+    const clean = sanitizeUrl(window.location.href);
+    return clean.pathname + clean.search;
+  }
+
+  function guessSeoDescription(pathname) {
+    const existing = readMetaContent('name', 'description');
+    if (existing) {
+      return existing;
+    }
+
+    if (SEO_DESCRIPTION_MAP[pathname]) {
+      return SEO_DESCRIPTION_MAP[pathname];
+    }
+
+    const lead =
+      document.querySelector('.hero p') ||
+      document.querySelector('.subject-lead') ||
+      document.querySelector('.sec-sub') ||
+      document.querySelector('main p') ||
+      document.querySelector('p');
+
+    if (lead && lead.textContent) {
+      return clampText(lead.textContent, 170);
+    }
+
+    return SEO_DESCRIPTION_MAP['/'];
+  }
+
+  function setMetaContent(attrName, attrValue, content) {
+    const tag = ensureMeta(attrName, attrValue);
+    if (tag) {
+      tag.setAttribute('content', content);
+    }
+  }
+
+  function updateSeo(options) {
+    const cleanUrl = sanitizeUrl(options && options.url ? options.url : window.location.href);
+    const path = cleanUrl.pathname;
+    const title = safeTrim(options && options.title ? options.title : document.title || SITE_NAME) || SITE_NAME;
+    const description = clampText(
+      options && options.description ? options.description : guessSeoDescription(path),
+      170
+    );
+    const robots = options && options.robots
+      ? options.robots
+      : (path === '/404.html' ? 'noindex,follow' : 'index,follow,max-image-preview:large');
+
+    setMetaContent('name', 'description', description);
+    setMetaContent('name', 'robots', robots);
+    setMetaContent('property', 'og:locale', 'tr_TR');
+    setMetaContent('property', 'og:type', 'website');
+    setMetaContent('property', 'og:title', title);
+    setMetaContent('property', 'og:description', description);
+    setMetaContent('property', 'og:url', cleanUrl.toString());
+    setMetaContent('property', 'og:site_name', SITE_NAME);
+    setMetaContent('property', 'og:image', DEFAULT_OG_IMAGE);
+    setMetaContent('name', 'twitter:card', 'summary');
+    setMetaContent('name', 'twitter:title', title);
+    setMetaContent('name', 'twitter:description', description);
+    setMetaContent('name', 'twitter:image', DEFAULT_OG_IMAGE);
+
+    const canonical = ensureLink('canonical');
+    if (canonical) {
+      canonical.setAttribute('href', cleanUrl.toString());
+    }
+
+    return {
+      title: title,
+      description: description,
+      url: cleanUrl.toString(),
+      path: path,
+    };
+  }
+
+  function injectHomeSchema() {
+    const cleanUrl = sanitizeUrl(window.location.href);
+    if (cleanUrl.pathname !== '/') {
+      return;
+    }
+
+    const head = ensureHead();
+    if (!head) {
+      return;
+    }
+
+    const payload = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': SITE_ORIGIN + '/#organization',
+          name: SITE_NAME,
+          url: SITE_ORIGIN,
+          logo: DEFAULT_OG_IMAGE,
+          sameAs: [
+            'https://instagram.com/kemalkogretmenim',
+            'https://youtube.com/@kemalkogretmenim',
+            'https://twitter.com/kemalkogretmen',
+          ],
+        },
+        {
+          '@type': 'WebSite',
+          '@id': SITE_ORIGIN + '/#website',
+          url: SITE_ORIGIN,
+          name: SITE_NAME,
+          inLanguage: 'tr-TR',
+          publisher: {
+            '@id': SITE_ORIGIN + '/#organization',
+          },
+        },
+      ],
+    };
+
+    let schemaTag = document.getElementById('kemal-home-schema');
+    if (!schemaTag) {
+      schemaTag = document.createElement('script');
+      schemaTag.type = 'application/ld+json';
+      schemaTag.id = 'kemal-home-schema';
+      head.appendChild(schemaTag);
+    }
+
+    schemaTag.textContent = JSON.stringify(payload);
+  }
+
+  function initSeo() {
+    const state = updateSeo();
+    injectHomeSchema();
+    return state;
+  }
+
+  function readStoredJson(key) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeStoredJson(key, value) {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function isTrackingEnabled() {
+    const protocol = String(window.location.protocol || '').toLowerCase();
+    const host = String(window.location.hostname || '').toLowerCase();
+
+    if ((document.body && document.body.dataset.kemalAnalytics === 'off') || !/^https?:$/.test(protocol)) {
+      return false;
+    }
+
+    return !!PRODUCTION_HOSTS[host];
+  }
+
+  function getAnalyticsSessionId() {
+    const storageKey = 'kemal_site_analytics_session';
+    const ttlMs = 30 * 60 * 1000;
+    const now = Date.now();
+    const existing = readStoredJson(storageKey);
+
+    if (existing && existing.id && existing.lastSeenAt && (now - Number(existing.lastSeenAt)) < ttlMs) {
+      writeStoredJson(storageKey, {
+        id: existing.id,
+        lastSeenAt: now,
+      });
+      return existing.id;
+    }
+
+    const nextId = createUuid();
+    writeStoredJson(storageKey, {
+      id: nextId,
+      lastSeenAt: now,
+    });
+    return nextId;
+  }
+
+  function touchAnalyticsSession() {
+    const storageKey = 'kemal_site_analytics_session';
+    if (!analyticsState.sessionId) {
+      return;
+    }
+    writeStoredJson(storageKey, {
+      id: analyticsState.sessionId,
+      lastSeenAt: Date.now(),
+    });
+  }
+
+  function parseReferrer() {
+    const raw = String(document.referrer || '');
+    if (!raw) {
+      return {
+        referrer: '',
+        referrerHost: '',
+      };
+    }
+
+    try {
+      const parsed = new URL(raw);
+      const referrerHost = parsed.hostname && PRODUCTION_HOSTS[parsed.hostname]
+        ? 'site-ici'
+        : parsed.hostname;
+      return {
+        referrer: parsed.origin + parsed.pathname,
+        referrerHost: referrerHost || '',
+      };
+    } catch (error) {
+      return {
+        referrer: '',
+        referrerHost: '',
+      };
+    }
+  }
+
+  function getActiveSeconds() {
+    const currentVisibleMs = analyticsState.visibleStartedAt
+      ? (Date.now() - analyticsState.visibleStartedAt)
+      : 0;
+    const totalMs = analyticsState.visibleMs + currentVisibleMs;
+    return Math.min(21600, Math.max(0, totalMs / 1000));
+  }
+
+  function getOpenSeconds() {
+    return Math.min(21600, Math.max(0, (Date.now() - analyticsState.pageStartedAt) / 1000));
+  }
+
+  function buildAnalyticsPayload(eventType, extra) {
+    const cleanUrl = sanitizeUrl(extra && extra.url ? extra.url : window.location.href);
+    const referrer = parseReferrer();
+    const liveUrl = new URL(window.location.href);
+
+    return {
+      view_id: analyticsState.viewId,
+      session_id: analyticsState.sessionId,
+      event_type: eventType,
+      page_url: cleanUrl.toString(),
+      page_path: cleanUrl.pathname + cleanUrl.search,
+      page_title: clampText(extra && extra.title ? extra.title : document.title, 200),
+      referrer: referrer.referrer,
+      referrer_host: referrer.referrerHost,
+      utm_source: liveUrl.searchParams.get('utm_source') || '',
+      utm_medium: liveUrl.searchParams.get('utm_medium') || '',
+      utm_campaign: liveUrl.searchParams.get('utm_campaign') || '',
+      screen_width: window.screen && window.screen.width ? Number(window.screen.width) : null,
+      screen_height: window.screen && window.screen.height ? Number(window.screen.height) : null,
+      language: navigator.language || 'tr-TR',
+      timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+      active_seconds: typeof (extra && extra.activeSeconds) === 'number'
+        ? Number(extra.activeSeconds.toFixed(2))
+        : null,
+      event_payload: Object.assign({
+        open_seconds: Number(getOpenSeconds().toFixed(2)),
+      }, extra && extra.payload ? extra.payload : {}),
+    };
+  }
+
+  function sendAnalyticsEvent(eventType, extra, keepalive) {
+    if (!analyticsState.sessionId || !analyticsState.viewId) {
+      return Promise.resolve();
+    }
+
+    touchAnalyticsSession();
+
+    return fetch('https://mwxcvlyrkptxrwgkmqum.supabase.co/rest/v1/site_analytics_events', {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      keepalive: !!keepalive,
+      headers: {
+        apikey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
+        Authorization: 'Bearer sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify(buildAnalyticsPayload(eventType, extra)),
+    }).catch(function() {
+      /* no-op */
+    });
+  }
+
+  function syncVisibilityState() {
+    if (document.visibilityState === 'hidden') {
+      if (analyticsState.visibleStartedAt) {
+        analyticsState.visibleMs += (Date.now() - analyticsState.visibleStartedAt);
+        analyticsState.visibleStartedAt = 0;
+      }
+      touchAnalyticsSession();
+      return;
+    }
+
+    if (!analyticsState.visibleStartedAt) {
+      analyticsState.visibleStartedAt = Date.now();
+    }
+    touchAnalyticsSession();
+  }
+
+  function sendPageLeaveOnce(reason) {
+    if (!analyticsState.initialized || analyticsState.finishSent) {
+      return;
+    }
+
+    analyticsState.finishSent = true;
+    syncVisibilityState();
+    sendAnalyticsEvent('page_leave', {
+      activeSeconds: getActiveSeconds(),
+      payload: {
+        reason: reason || 'pagehide',
+      },
+    }, true);
+  }
+
+  function initAnalytics() {
+    if (analyticsState.initialized || !isTrackingEnabled()) {
+      return;
+    }
+
+    analyticsState.initialized = true;
+    analyticsState.sessionId = getAnalyticsSessionId();
+    analyticsState.viewId = createUuid();
+    analyticsState.pageStartedAt = Date.now();
+    analyticsState.visibleMs = 0;
+    analyticsState.finishSent = false;
+    analyticsState.visibleStartedAt = document.visibilityState === 'hidden' ? 0 : Date.now();
+
+    window.setTimeout(function() {
+      if (!analyticsState.finishSent) {
+        sendAnalyticsEvent('page_view');
+      }
+    }, 300);
+
+    document.addEventListener('visibilitychange', syncVisibilityState, { passive: true });
+    window.addEventListener('pagehide', function() {
+      sendPageLeaveOnce('pagehide');
+    });
+    window.addEventListener('beforeunload', function() {
+      sendPageLeaveOnce('beforeunload');
+    });
+
+    analyticsState.heartbeatTimer = window.setInterval(function() {
+      touchAnalyticsSession();
+    }, 60000);
+  }
+
   function fallbackDefaults() {
     return {
       menuBadges: {},
@@ -832,6 +1317,8 @@
     return saved;
   }
 
+  const seoState = initSeo();
+  initAnalytics();
   const ready = hydrateChrome();
 
   window.kemalSiteRoutes = {
@@ -858,5 +1345,21 @@
       highlightActiveLink();
       return data;
     },
+  };
+
+  window.kemalSeo = {
+    state: seoState,
+    update: function(options) {
+      return updateSeo(options);
+    },
+    getCanonicalPath: getCanonicalPath,
+  };
+
+  window.kemalAnalytics = {
+    init: initAnalytics,
+    trackPageview: function(options) {
+      return sendAnalyticsEvent('page_view', options || {});
+    },
+    finish: sendPageLeaveOnce,
   };
 })();

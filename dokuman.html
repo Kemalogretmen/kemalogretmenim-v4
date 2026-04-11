@@ -187,12 +187,46 @@
       color:var(--viewer-slate);font-size:12px;font-weight:800;line-height:1.55;
     }
     .shortcut-pill strong{color:var(--viewer-purple);}
+    .shortcut-actions{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:10px;
+      flex-wrap:wrap;
+    }
     .shortcut-help-btn{
       display:inline-flex;align-items:center;justify-content:center;gap:8px;
       min-height:42px;padding:0 14px;border-radius:14px;border:2px solid var(--viewer-border);
       background:#FBF9FF;color:var(--viewer-slate);cursor:pointer;font-size:12px;font-weight:900;transition:all .2s;
     }
     .shortcut-help-btn:hover{border-color:var(--viewer-purple);background:var(--viewer-purple-soft);color:var(--viewer-purple);}
+    .shortcut-action-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      min-height:42px;
+      padding:0 16px;
+      border:none;
+      border-radius:14px;
+      background:linear-gradient(135deg,#6C3DED 0%,#8E6CFF 100%);
+      color:white;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:900;
+      box-shadow:0 12px 24px rgba(108,61,237,.18);
+      transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+    .shortcut-action-btn:hover{
+      transform:translateY(-1px);
+      box-shadow:0 16px 30px rgba(108,61,237,.24);
+      filter:saturate(1.06);
+    }
+    .shortcut-action-btn.print{
+      background:linear-gradient(135deg,#12B981 0%,#22C3A6 100%);
+      box-shadow:0 12px 24px rgba(16,185,129,.18);
+    }
+    .shortcut-action-btn.print:hover{box-shadow:0 16px 30px rgba(16,185,129,.24);}
     .book-frame{
       background:
         radial-gradient(ellipse at 30% 20%, rgba(108,61,237,.07), transparent 55%),
@@ -645,6 +679,7 @@
       .pager-btn{width:100%;}
       .pager-jump-row{justify-content:flex-start;}
       .shortcut-grid{grid-template-columns:1fr;}
+      .shortcut-actions{width:100%;justify-content:flex-start;}
     }
     @media (max-width:760px){
       .viewer-shell{padding:18px 12px 32px;}
@@ -653,6 +688,7 @@
       .viewer-top-actions{width:100%;}
       .tool-grid.tools{grid-template-columns:repeat(4,minmax(0,1fr));}
       .zoom-controls{width:100%;}
+      .shortcut-help-btn,.shortcut-action-btn{flex:1 1 100%;}
     }
   </style>
 </head>
@@ -668,8 +704,6 @@
         <div class="viewer-top-actions">
           <a href="/index.html" id="backSubjectLink">← Derse Dön</a>
           <a href="/calisma-kagidi.html" id="worksheetBtn" style="display:none;">Çalışma Kağıdını Aç</a>
-          <button type="button" id="downloadBtn">PDF İndir</button>
-          <button type="button" id="printBtn">Yazdır</button>
         </div>
       </div>
     </section>
@@ -743,7 +777,11 @@
           <strong>Kısayollar</strong>
           <span>Yükleniyor…</span>
         </div>
-        <button class="shortcut-help-btn" type="button" id="shortcutHelpBtn">⌨️ Tüm Kısayollar</button>
+        <div class="shortcut-actions">
+          <button class="shortcut-help-btn" type="button" id="shortcutHelpBtn">⌨️ Tüm Kısayollar</button>
+          <button class="shortcut-action-btn" type="button" id="downloadBtn">⬇️ PDF İndir</button>
+          <button class="shortcut-action-btn print" type="button" id="printBtn">🖨️ Yazdır</button>
+        </div>
       </div>
       <div class="book-frame" id="bookFrame">
         <div class="book-viewport" id="bookViewport">

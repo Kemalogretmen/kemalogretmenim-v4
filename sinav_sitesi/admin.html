@@ -328,7 +328,11 @@ function buildStudentKey(source){
   ].filter(Boolean).join('|');
 }
 function getResultStudentKey(result){
-  return result?.studentKey||buildStudentKey(result);
+  const accountUid=String(result?.accountUid||result?.userId||'').trim();
+  if(accountUid) return`uid:${accountUid}`;
+  const explicitKey=String(result?.studentKey||'').trim();
+  if(explicitKey.startsWith('uid:')) return explicitKey;
+  return buildStudentKey(result)||explicitKey;
 }
 async function copyText(text,successMsg='Kopyalandı'){
   try{
@@ -1052,6 +1056,7 @@ function renderAdminResults(){
       <td style="font-size:11px;color:var(--muted)">${fmtDT(r.date)}</td>
       <td>
         <div class="flex gap-8" style="flex-wrap:wrap">
+          <button onclick="W.openResultEdit('${r.id}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#C2410C;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F97316';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#C2410C'">✏️ Düzenle</button>
           <button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>
           <button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>
           <button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>
@@ -1296,6 +1301,52 @@ async function fbLoadExamQuestions(examId){
   }
 }
 
+async function loadRelatedResultDocs(result){
+  const rows=new Map();
+  const candidatePairs=[];
+  const explicitKey=String(result?.studentKey||'').trim();
+  const derivedKey=buildStudentKey(result);
+  const oldAccountUid=String(result?.accountUid||result?.userId||'').trim();
+  if(oldAccountUid) candidatePairs.push({field:'accountUid',value:oldAccountUid});
+  if(explicitKey&&!explicitKey.startsWith('uid:')) candidatePairs.push({field:'studentKey',value:explicitKey});
+  if(derivedKey&&derivedKey!==explicitKey) candidatePairs.push({field:'studentKey',value:derivedKey});
+
+  if(!candidatePairs.length){
+    const singleSnap=await getDoc(doc(db,'results',result.id));
+    if(singleSnap.exists()) rows.set(singleSnap.id,singleSnap);
+    return Array.from(rows.values());
+  }
+
+  await Promise.all(candidatePairs.map(async pair=>{
+    try{
+      const snap=await getDocs(query(collection(db,'results'),where(pair.field,'==',pair.value)));
+      snap.docs.forEach(docSnap=>rows.set(docSnap.id,docSnap));
+    }catch(error){
+      console.error(error);
+    }
+  }));
+
+  if(!rows.has(result.id)){
+    const singleSnap=await getDoc(doc(db,'results',result.id));
+    if(singleSnap.exists()) rows.set(singleSnap.id,singleSnap);
+  }
+  if(rows.size<=1){
+    try{
+      const fallbackSnap=await getDocs(collection(db,'results'));
+      const oldNameKey=[normalizeKeyPart(result?.firstName),normalizeKeyPart(result?.lastName)].filter(Boolean).join('|');
+      fallbackSnap.docs.forEach(docSnap=>{
+        if(rows.has(docSnap.id)) return;
+        const data=docSnap.data()||{};
+        const nameKey=[normalizeKeyPart(data?.firstName),normalizeKeyPart(data?.lastName)].filter(Boolean).join('|');
+        if(oldNameKey&&nameKey===oldNameKey) rows.set(docSnap.id,docSnap);
+      });
+    }catch(error){
+      console.error(error);
+    }
+  }
+  return Array.from(rows.values());
+}
+
 async function fbLoadCategoryConfigs(){
   const defaults=createDefaultCategoryMap();
   try{
@@ -1454,7 +1505,12 @@ const W={
       setContent(renderAdminCategories());
       toast(`${grade}. sınıf kategorileri kaydedildi.`,'success');
     }catch(error){
+      console.error(error);
       hideLoad();
+      if(error?.code==='permission-denied'){
+        toast('Kategori kaydı için Firestore kuralları canlıya alınmamış görünüyor. Terminalde firebase deploy --only firestore:rules çalıştırın.','error');
+        return;
+      }
       toast('Kategori kaydı başarısız: '+error.message,'error');
     }
   },
@@ -1731,6 +1787,110 @@ const W={
       setContent(renderAdminResults());
     }catch(e){toast('Silme hatası: '+e.message,'error');}
   },
+  closeResultEdit(){
+    document.getElementById('resultEditModal')?.remove();
+  },
+  openResultEdit(id){
+    const result=A.results.find(item=>item.id===id);
+    if(!result){
+      toast('Sonuç kaydı bulunamadı','error');
+      return;
+    }
+    this.closeResultEdit();
+    const gradeOptions=GRADES.map(grade=>`<option value="${grade}" ${Number(result.grade)===grade?'selected':''}>${grade}. Sınıf</option>`).join('');
+    const subeOptions=['','A','B','C','D','E','F','G','H'].map(sube=>`<option value="${sube}" ${String(result.sube||'')===sube?'selected':''}>${sube?sube+' Şubesi':'Şube Seçilmedi'}</option>`).join('');
+    const el=document.createElement('div');
+    el.className='modal-overlay';
+    el.id='resultEditModal';
+    el.innerHTML=`<div class="modal-box" style="max-width:640px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div>
+          <div style="font-family:var(--fd);font-size:22px;font-weight:900">✏️ Sonuç Kaydını Düzenle</div>
+          <div class="text-sm text-muted" style="margin-top:4px">${esc(result.examTitle||'Sınav')} · ${esc(result.subject||'Genel')}</div>
+        </div>
+        <button class="btn btn-outline" type="button" onclick="W.closeResultEdit()">Kapat</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <div>
+          <label class="form-label">Ad</label>
+          <input class="form-input" id="resultEditFirstName" type="text" value="${esc(result.firstName||'')}">
+        </div>
+        <div>
+          <label class="form-label">Soyad</label>
+          <input class="form-input" id="resultEditLastName" type="text" value="${esc(result.lastName||'')}">
+        </div>
+        <div>
+          <label class="form-label">Sınıf</label>
+          <select class="form-input" id="resultEditGrade">${gradeOptions}</select>
+        </div>
+        <div>
+          <label class="form-label">Şube</label>
+          <select class="form-input" id="resultEditSube">${subeOptions}</select>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label class="form-label">Üye UID / Hesap Kimliği (isteğe bağlı)</label>
+        <input class="form-input" id="resultEditAccountUid" type="text" value="${esc(result.accountUid||'')}" placeholder="Gelecekte üyelik sistemi için kullanılabilir">
+        <p class="text-xs text-muted" style="margin-top:6px;line-height:1.7">Bu alan boş bırakılırsa sistem eşleşmeyi mevcut ad, soyad, sınıf ve şube bilgisine göre sürdürür. Bir UID girersen toplu karne eşleşmesi ileride bu kimliği öncelikli kullanmaya hazır hale gelir.</p>
+      </div>
+      <div class="section-note" style="margin-top:14px">Bu güncelleme mevcut sonucu ve aynı öğrenci anahtarıyla kaydedilmiş diğer sınav kayıtlarını birlikte düzeltmeye çalışır. Böylece Karne Merkezi öğrencinin sınavlarını tek noktada toplamaya devam eder.</div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px">
+        <button class="btn btn-outline" type="button" onclick="W.closeResultEdit()">Vazgeç</button>
+        <button class="btn btn-green" type="button" onclick="W.saveResultEdit('${result.id}')">💾 Kaydet</button>
+      </div>
+    </div>`;
+    document.body.appendChild(el);
+    el.addEventListener('click',event=>{if(event.target===el)W.closeResultEdit();});
+  },
+  async saveResultEdit(id){
+    const current=A.results.find(item=>item.id===id);
+    if(!current){
+      toast('Sonuç kaydı bulunamadı','error');
+      return;
+    }
+    const firstName=(document.getElementById('resultEditFirstName')?.value||'').trim();
+    const lastName=(document.getElementById('resultEditLastName')?.value||'').trim();
+    const grade=parseInt(document.getElementById('resultEditGrade')?.value,10);
+    const sube=(document.getElementById('resultEditSube')?.value||'').trim();
+    const accountUid=(document.getElementById('resultEditAccountUid')?.value||'').trim();
+    if(!firstName||!lastName||!Number.isFinite(grade)||grade<1||grade>8){
+      toast('Ad, soyad ve geçerli sınıf bilgisi zorunludur','error');
+      return;
+    }
+    const studentKey=accountUid?`uid:${accountUid}`:buildStudentKey({firstName,lastName,grade,sube});
+    const payload={firstName,lastName,grade,sube,studentKey,accountUid};
+    showLoad('Sonuç kaydı güncelleniyor...');
+    try{
+      const relatedResultDocs=await loadRelatedResultDocs(current);
+      const resultBatch=writeBatch(db);
+      relatedResultDocs.forEach(docSnap=>{
+        resultBatch.update(docSnap.ref,{...payload,updatedAt:serverTimestamp()});
+      });
+      await resultBatch.commit();
+
+      const appealBatches=[];
+      await Promise.all(relatedResultDocs.map(async docSnap=>{
+        const appealSnap=await getDocs(query(collection(db,'resultAppeals'),where('resultId','==',docSnap.id)));
+        if(appealSnap.empty) return;
+        const batch=writeBatch(db);
+        appealSnap.docs.forEach(appealDoc=>{
+          batch.update(appealDoc.ref,{firstName,lastName,grade,sube,studentKey,accountUid});
+        });
+        appealBatches.push(batch.commit());
+      }));
+      if(appealBatches.length) await Promise.all(appealBatches);
+
+      A.results=await fbLoadResults(A.rf);
+      if(A.appeals?.length) A.appeals=await fbLoadAppeals();
+      hideLoad();
+      this.closeResultEdit();
+      setContent(renderAdminResults());
+      toast(`${relatedResultDocs.length} sonuç kaydı güncellendi`,'success');
+    }catch(error){
+      hideLoad();
+      toast('Sonuç kaydı güncellenemedi: '+error.message,'error');
+    }
+  },
   openResultKarne(id){
     const result=A.results.find(item=>item.id===id);
     if(!result){
@@ -1755,6 +1915,7 @@ const W={
       lastName:result.lastName||'',
       grade:result.grade||'',
       sube:result.sube||'',
+      accountUid:result.accountUid||'',
       studentKey:getResultStudentKey(result),
       focusResultId:result.id
     };
@@ -2123,6 +2284,7 @@ const W={
     const summary=A.results.map(r=>({
       'Ad':r.firstName,'Soyad':r.lastName,
       'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+      'Üye UID':r.accountUid||'—',
       'Öğrenci Anahtarı':getResultStudentKey(r),
       'Ders':r.subject||'—','Sınav':r.examTitle||'—',
       'Doğru':r.correct,'Yanlış':r.wrong,'Boş':r.blank,
@@ -2135,6 +2297,7 @@ const W={
       if(!details.length){
         detailRows.push({
           'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+          'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Sınav':r.examTitle||'—','Soru No':'—',
           'Sonuç':'Detay yok','Verilen Cevap':'—','Doğru Cevap':'—'
@@ -2145,6 +2308,7 @@ const W={
         const outcome=item.outcome==='D'?'Doğru':item.outcome==='Y'?'Yanlış':'Boş';
         detailRows.push({
           'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+          'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,
           'Sonuç':outcome,'Verilen Cevap':item.selectedAnswer||'Boş','Doğru Cevap':item.correctAnswer||'—'

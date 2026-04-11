@@ -194,9 +194,17 @@
     /* Sorular */
     .soru-list{display:flex;flex-direction:column;gap:12px;}
     .soru-item{background:#FAFAFF;border-radius:var(--r-md);padding:14px;border:2px solid var(--border);}
-    .soru-item-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+    .soru-item-header{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
     .soru-no-badge{background:var(--purple);color:white;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+    .soru-input{flex:1;min-width:220px;}
     .soru-item input[type="text"]{margin-bottom:8px;}
+    .soru-type-select{width:auto;min-width:180px;margin-bottom:0;background:white;font-weight:800;}
+    .soru-type-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+    .soru-type-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;}
+    .soru-type-badge.coktan-secmeli{background:#EEF5FF;color:#185FA5;}
+    .soru-type-badge.dogru-yanlis{background:#ECFDF5;color:#047857;}
+    .soru-type-badge.bosluk-doldurma{background:#FFF4E6;color:#C56B00;}
+    .soru-yardim{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:12px;}
     .sik-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
     .sik-harf{width:26px;height:26px;background:var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
     .sik-row input[type="text"]{flex:1;margin-bottom:0;padding:8px 11px;}
@@ -205,9 +213,16 @@
     .sik-del:hover{color:var(--danger);}
     .btn-sik-ekle{background:none;border:2px dashed var(--border);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;margin-top:3px;transition:all .2s;}
     .btn-sik-ekle:hover{border-color:var(--purple);color:var(--purple);}
-    .btn-soru-sil{background:rgba(239,68,68,.08);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;color:var(--danger);cursor:pointer;margin-top:6px;}
-    .btn-soru-ekle{display:flex;align-items:center;gap:7px;padding:12px 20px;background:none;border:2px dashed var(--border);border-radius:50px;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;width:100%;justify-content:center;transition:all .2s;margin-top:6px;}
-    .btn-soru-ekle:hover{border-color:var(--purple);color:var(--purple);}
+    .btn-soru-sil{background:rgba(239,68,68,.08);border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;color:var(--danger);cursor:pointer;margin-top:10px;}
+    .soru-actions-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px;}
+    .btn-soru-ekle{display:flex;align-items:center;gap:7px;padding:12px 16px;background:none;border:2px dashed var(--border);border-radius:16px;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;width:100%;justify-content:center;transition:all .2s;}
+    .btn-soru-ekle:hover{border-color:var(--purple);color:var(--purple);background:#FFF;}
+    .btn-soru-ekle.secondary{border-style:solid;background:white;}
+    .dy-answer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .dy-answer-option{display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid var(--border);border-radius:14px;background:white;font-weight:800;color:var(--navy);cursor:pointer;transition:all .2s;}
+    .dy-answer-option:hover{border-color:var(--purple);transform:translateY(-1px);}
+    .dy-answer-option input{width:18px;height:18px;margin:0;accent-color:var(--teal);}
+    .bosluk-ipucu{background:white;border:2px dashed #FFD7A1;border-radius:12px;padding:10px 12px;font-size:12px;color:#9A5A00;line-height:1.6;margin-bottom:10px;}
 
     /* Kaydet barı */
     .kaydet-bar{position:sticky;bottom:0;background:white;border-top:2px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:50;}
@@ -232,6 +247,7 @@
       .ql-editor{min-height:320px;padding:18px 16px;}
       .kaydet-bar{padding:12px;flex-direction:column;align-items:stretch;}
       .btn-kaydet,.btn-taslak{justify-content:center;}
+      .soru-actions-grid{grid-template-columns:1fr;}
     }
   </style>
 </head>
@@ -430,9 +446,14 @@
 
           <!-- ANLAMA SORULARI -->
           <div class="kart">
-            <div class="kart-title">❓ Anlama Soruları <span style="font-size:12px;color:var(--muted);font-family:'Nunito',sans-serif;">(İsteğe bağlı · 3-5 şık)</span></div>
+            <div class="kart-title">❓ Anlama Soruları <span style="font-size:12px;color:var(--muted);font-family:'Nunito',sans-serif;">(İsteğe bağlı · Test / Doğru-Yanlış / Boşluk Doldurma)</span></div>
+            <p class="yardim-metin">Her soru anlama puanına aynı ağırlıkla eklenir. Boşluk doldurmada tek boşluğu <strong>_____</strong> ile gösterebilirsin.</p>
             <div class="soru-list" id="soruList"></div>
-            <button class="btn-soru-ekle" onclick="soruEkle()">+ Soru Ekle</button>
+            <div class="soru-actions-grid">
+              <button class="btn-soru-ekle" onclick="soruEkle('coktan-secmeli')" type="button">+ Test Sorusu</button>
+              <button class="btn-soru-ekle secondary" onclick="soruEkle('dogru-yanlis')" type="button">+ Doğru / Yanlış</button>
+              <button class="btn-soru-ekle secondary" onclick="soruEkle('bosluk-doldurma')" type="button">+ Boşluk Doldurma</button>
+            </div>
           </div>
         </div>
 
@@ -483,29 +504,6 @@
             </div>
           </div>
 
-          <div class="kart">
-            <div class="kart-title">🎨 Varsayılan Yazı Stili</div>
-            <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Bu ayarlar metnin genel görünümünü belirler. Özel vurgular için üstteki zengin editörü kullan.</p>
-            <label>Yazı Tipi</label>
-            <select id="fYaziTipi">
-              <option value="nunito">Nunito</option>
-              <option value="georgia">Georgia</option>
-              <option value="arial">Arial</option>
-              <option value="times-new-roman">Times New Roman</option>
-              <option value="courier-new">Courier New</option>
-            </select>
-            <label>Yazı Boyutu</label>
-            <select id="fYaziBoyutu">
-              <option value="14">14 px</option>
-              <option value="16">16 px</option>
-              <option value="18" selected>18 px</option>
-              <option value="20">20 px</option>
-              <option value="22">22 px</option>
-              <option value="24">24 px</option>
-            </select>
-            <label>Yazı Rengi</label>
-            <input type="color" id="fYaziRengi" value="#1A1040">
-          </div>
         </div>
 
       </div><!-- /edit-grid -->

@@ -32,6 +32,7 @@
     .topbar-btn:hover{transform:translateY(-1px)}
     .btn-back{background:#eef2ff;color:#4338ca}
     .btn-excel{background:#ecfdf5;color:#047857}
+    .btn-image{background:#fff7ed;color:#c2410c}
     .btn-print{background:linear-gradient(135deg,var(--blue),var(--blue-2));color:#fff;box-shadow:0 14px 24px rgba(79,107,240,.18)}
 
     .screen-only{}
@@ -179,6 +180,7 @@
 
     @page{size:A4;margin:10mm}
     @media print{
+      html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       body{background:#fff}
       .screen-only,.topbar,.filter-card{display:none!important}
       .page-wrap{max-width:none;padding:0}
@@ -209,11 +211,13 @@
     <div class="topbar screen-only">
       <div class="topbar-title">
         <h1>📚 Sınav Karne Merkezi</h1>
-        <p>Öğrenci, sınıf, ders ve sınav filtreleriyle profesyonel analiz raporu üret; yazdır, PDF al ve Excel dışa aktar.</p>
+        <p>Öğrencinin sınav gelişimini, güçlü yönlerini ve odaklanılması gereken alanları tek merkezde incele; profesyonel karne çıktısı al.</p>
       </div>
       <div class="topbar-actions">
         <button class="topbar-btn btn-back" id="backBtn">← Sınav Paneli</button>
         <button class="topbar-btn btn-excel" id="excelBtn">📥 Excel İndir</button>
+        <button class="topbar-btn btn-image" id="pngBtn">🖼️ PNG İndir</button>
+        <button class="topbar-btn btn-image" id="jpegBtn">🖼️ JPEG İndir</button>
         <button class="topbar-btn btn-print" id="printBtn">🖨️ Yazdır / PDF</button>
       </div>
     </div>
@@ -334,7 +338,7 @@
               <div class="panel-head">
                 <div>
                   <h3>🧭 Değerlendirme Özeti</h3>
-                  <p>Rapor, ölçüt referanslı gelişim izleme ile norm referanslı grup karşılaştırmasını birlikte sunar.</p>
+                  <p>Öğrencinin seçili sınav performansını, gelişim yönünü ve sonraki çalışma odağını özetler.</p>
                 </div>
               </div>
               <div class="compare-strip" id="compareStrip"></div>
@@ -346,9 +350,7 @@
               <strong>By Kemal Öğretmen</strong>
               kemalogretmenim.com.tr
             </div>
-            <div class="footer-center">
-              Bu karne, kemalogretmenim.com.tr üzerindeki sınav değerlendirme altyapısı tarafından otomatik oluşturulan profesyonel öğrenci analiz raporudur.
-            </div>
+            <div class="footer-center" id="footerCenterPage1">Öğrencinin seçili sınav performansı dikkate alınarak hazırlanmış profesyonel değerlendirme özeti.</div>
             <div class="footer-page">Sayfa: 1 / 2</div>
           </div>
         </section>
@@ -419,9 +421,7 @@
               <strong>By Kemal Öğretmen</strong>
               kemalogretmenim.com.tr
             </div>
-            <div class="footer-center">
-              Bu karne, kemalogretmenim.com.tr üzerindeki sınav değerlendirme altyapısı tarafından otomatik oluşturulan profesyonel öğrenci analiz raporudur.
-            </div>
+            <div class="footer-center" id="footerCenterPage2">Sınav geçmişi ve soru bazlı değerlendirme, öğrenme takibini desteklemek amacıyla raporlanmıştır.</div>
             <div class="footer-page">Sayfa: 2 / 2</div>
           </div>
         </section>
@@ -429,6 +429,7 @@
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="/sinav_sitesi/js/ogrenci-karne.js"></script>
 </body>
 </html>

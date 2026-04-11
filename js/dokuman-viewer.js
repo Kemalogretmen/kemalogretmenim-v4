@@ -1917,6 +1917,12 @@
     qs('backSubjectLink').href = '/ders.html?sinif=' + encodeURIComponent(documentRow.sinif) + '&ders=' + encodeURIComponent(documentRow.ders);
     qs('backSubjectLink').textContent = '← ' + documentRow.dersLabel + ' dersine dön';
     document.title = documentRow.baslik + ' | Kemal Öğretmenim';
+    if (window.kemalSeo) {
+      window.kemalSeo.update({
+        title: document.title,
+        description: documentRow.aciklama || (documentRow.sinifLabel + ' için yüklenmiş ders dokümanı.'),
+      });
+    }
 
     if (window.kemalCalismaKagidiStore && qs('worksheetBtn')) {
       try {

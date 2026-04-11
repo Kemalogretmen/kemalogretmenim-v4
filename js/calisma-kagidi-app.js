@@ -156,6 +156,13 @@
       ? '🧩 ' + state.documentRow.sinifLabel + ' · ' + state.documentRow.dersLabel
       : '🧩 Etkileşimli Calisma Kagidi';
     qs('backToDocumentLink').href = '/dokuman.html?id=' + encodeURIComponent(state.documentId);
+    document.title = (state.documentRow && state.documentRow.baslik ? state.documentRow.baslik + ' Çalışma Kağıdı' : 'Çalışma Kağıdı') + ' | Kemal Öğretmenim';
+    if (window.kemalSeo) {
+      window.kemalSeo.update({
+        title: document.title,
+        description: qs('worksheetDesc').textContent,
+      });
+    }
   }
 
   function syncInfoCards() {

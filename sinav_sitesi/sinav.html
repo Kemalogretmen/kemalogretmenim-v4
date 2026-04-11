@@ -764,6 +764,14 @@ function buildStudentKey(source){
   ].filter(Boolean).join('|');
 }
 
+function getStudentIdentityKey(source){
+  const accountUid=String(source?.accountUid||source?.userId||'').trim();
+  if(accountUid) return`uid:${accountUid}`;
+  const explicitKey=String(source?.studentKey||'').trim();
+  if(explicitKey.startsWith('uid:')) return explicitKey;
+  return buildStudentKey(source)||explicitKey;
+}
+
 function getResultQuestionEntries(result){
   const details=Array.isArray(result?.answerDetails)?result.answerDetails:[];
   if(details.length){
@@ -939,7 +947,7 @@ async function openAdminKarne(){
       subject:storedResult.subject||exam.subject||'',
       examTitle:storedResult.examTitle||exam.title||'',
       examId:storedResult.examId,
-      studentKey:storedResult.studentKey||buildStudentKey(storedResult),
+      studentKey:getStudentIdentityKey(storedResult),
       correct:Number(storedResult.correct||0),
       wrong:Number(storedResult.wrong||0),
       blank:Number(storedResult.blank||0),
