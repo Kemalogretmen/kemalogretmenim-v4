@@ -172,7 +172,7 @@
     'okuma-anlama': 'okuma-anlama',
   };
 
-  const SITE_ORIGIN = 'https://www.kemalogretmenim.com.tr';
+  const SITE_ORIGIN = 'https://kemalogretmenim.com.tr';
   const SITE_NAME = 'Kemal Öğretmenim';
   const DEFAULT_OG_IMAGE = SITE_ORIGIN + '/gorseller/logo.png';
   const TRACKING_PARAM_KEYS = [
@@ -1070,7 +1070,7 @@
         '</div>' +
       '</div>' +
       '<div class="footer-bottom">' +
-        '<span>© 2026 Kemal Öğretmen | <a href="https://www.kemalogretmenim.com.tr" style="color:inherit;">www.kemalogretmenim.com.tr</a></span>' +
+        '<span>© 2026 Kemal Öğretmen | <a href="https://kemalogretmenim.com.tr" style="color:inherit;">kemalogretmenim.com.tr</a></span>' +
         '<span style="font-size:12px;">🌟 Eğitim Sevgi ile Başlar 🌟</span>' +
       '</div>' +
     '</footer>';
