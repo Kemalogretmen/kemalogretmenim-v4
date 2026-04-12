@@ -16,6 +16,15 @@
   let wordIndex = 0;
   let wordTimer = null;
 
+  function getKullaniciMetaLine() {
+    const parts = [
+      kullanici.sinif && kullanici.sube ? kullanici.sinif + '/' + kullanici.sube : '',
+      kullanici.il || '',
+      kullanici.okul || '',
+    ].filter(Boolean);
+    return parts.join(' · ');
+  }
+
   function stripHtml(value) {
     return (value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   }
@@ -111,7 +120,7 @@
     const content = document.getElementById('tamMetinIcerik');
     screen.style.display = 'flex';
 
-    document.getElementById('tamMetinKullanici').innerHTML = '👤 <strong>' + kullanici.ad + ' ' + kullanici.soyad + '</strong>';
+    document.getElementById('tamMetinKullanici').innerHTML = '👤 <strong>' + kullanici.ad + ' ' + kullanici.soyad + '</strong> · ' + getKullaniciMetaLine();
     document.getElementById('tamMetinBaslik').textContent = metin.baslik;
     applyTitleStyle();
     applyBodyStyle(content);
@@ -209,7 +218,7 @@
       ? (metin.tikla_mod ? '⚡ Kelime Kelime (Tıklayarak)' : '⚡ Kelime Kelime (Otomatik)')
       : '📄 Tam Metin';
     document.getElementById('hazirBaslik').textContent = metin.baslik;
-    document.getElementById('hazirKullanici').textContent = '👤 ' + kullanici.ad + ' ' + kullanici.soyad + ' · ' + kullanici.sinif + '/' + kullanici.sube;
+    document.getElementById('hazirKullanici').textContent = '👤 ' + kullanici.ad + ' ' + kullanici.soyad + ' · ' + getKullaniciMetaLine();
     document.getElementById('hazirBilgi').innerHTML =
       '<strong>' + modeLabel + '</strong><br>' +
       (metin.kelime_sayisi || '?') + ' kelime · ' +

@@ -16,6 +16,29 @@
       .replace(/>/g, '&gt;');
   }
 
+  function parseDetailJson(value) {
+    if (!value) {
+      return null;
+    }
+    if (typeof value === 'object') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  function getLocationMeta(row) {
+    const detail = parseDetailJson(row.detay_json);
+    const userInfo = detail && detail.kullanici_bilgileri ? detail.kullanici_bilgileri : {};
+    return [row.il || userInfo.il || '', row.okul || userInfo.okul || ''].filter(Boolean).join(' · ');
+  }
+
   function toast(message, type) {
     const el = document.getElementById('toast');
     if (!el) {
@@ -110,10 +133,11 @@
       const target = row.hedef_hiz || 0;
       const percent = row.toplam_soru > 0 ? (row.anlama_yuzdesi || 0) : -1;
       const comprehensionText = row.toplam_soru > 0 ? percent + '%' : '—';
+      const locationMeta = getLocationMeta(row);
       return (
         '<div class="tablo-satir" id="row_' + row.id + '">' +
           '<div class="td"><input type="checkbox" class="row-cb" value="' + row.id + '" onchange="satirSecimiGuncelle()"></div>' +
-          '<div class="td bold">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + '</div>' +
+          '<div class="td bold">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + (locationMeta ? '<div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px">' + escHtml(locationMeta) + '</div>' : '') + '</div>' +
           '<div class="td">' + (row.sinif || '?') + '/' + (row.sube || '?') + '</div>' +
           '<div class="td"><span class="hiz-badge ' + speedClass(wpm, target) + '">' + wpm + '</span></div>' +
           '<div class="td"><span class="anlama-badge ' + comprehensionClass(percent, row.toplam_soru || 0) + '">' + comprehensionText + '</span></div>' +
@@ -137,12 +161,13 @@
     }
     list.innerHTML = filteredResults.map(function(row) {
       const percent = row.toplam_soru > 0 ? (row.anlama_yuzdesi || 0) + '%' : 'Soru yok';
+      const locationMeta = getLocationMeta(row);
       return (
         '<div class="mobil-sonuc-kart">' +
           '<div class="msk-head">' +
             '<div>' +
               '<div class="msk-title">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + '</div>' +
-              '<div class="msk-sub">' + (row.sinif || '?') + '. sınıf / ' + (row.sube || '?') + ' şubesi</div>' +
+              '<div class="msk-sub">' + (row.sinif || '?') + '. sınıf / ' + (row.sube || '?') + ' şubesi' + (locationMeta ? ' · ' + escHtml(locationMeta) : '') + '</div>' +
             '</div>' +
             '<div class="islem-grup"><button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button><button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div>' +
           '</div>' +
@@ -171,7 +196,7 @@
     const text = document.getElementById('fMetin').value.trim().toLowerCase();
 
     filteredResults = allResults.filter(function(row) {
-      const fullName = ((row.ad || '') + ' ' + (row.soyad || '')).toLowerCase();
+      const fullName = ((row.ad || '') + ' ' + (row.soyad || '') + ' ' + getLocationMeta(row)).toLowerCase();
       const matchesName = !name || fullName.includes(name);
       const matchesGrade = !grade || String(row.sinif) === grade;
       const matchesSection = !section || row.sube === section;
@@ -202,7 +227,14 @@
       return;
     }
 
-    allResults = data || [];
+    allResults = (data || []).map(function(row) {
+      const detail = parseDetailJson(row.detay_json);
+      const userInfo = detail && detail.kullanici_bilgileri ? detail.kullanici_bilgileri : {};
+      return Object.assign({}, row, {
+        il: row.il || userInfo.il || '',
+        okul: row.okul || userInfo.okul || '',
+      });
+    });
     filteredResults = allResults.slice();
     render();
   }

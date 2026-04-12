@@ -388,6 +388,17 @@
           </div>
         </div>
 
+        <div class="form-row-2">
+          <div class="fg">
+            <label>İl *</label>
+            <input type="text" id="kullanici_il" placeholder="İlinizi yazın" autocomplete="address-level1" maxlength="40">
+          </div>
+          <div class="fg">
+            <label>Okul *</label>
+            <input type="text" id="kullanici_okul" placeholder="Okul adını yazın" autocomplete="organization" maxlength="90">
+          </div>
+        </div>
+
         <button class="start-btn" onclick="okumaBaslat()">🚀 Okumaya Başla!</button>
       </div>
     </div>
@@ -409,6 +420,16 @@
 
     let seciliSinif = null;
     let seciliMetin = null;
+
+    function collapseSpaces(value) {
+      return String(value || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function capitalizeWords(value) {
+      return collapseSpaces(value).split(' ').map(function(word) {
+        return word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '';
+      }).join(' ');
+    }
 
     function normalizeGradeList(metin) {
       const raw = Array.isArray(metin.siniflar) && metin.siniflar.length
@@ -674,13 +695,22 @@
       const soyad = document.getElementById('kullanici_soyad').value.trim();
       const sinif = document.getElementById('kullanici_sinif').value;
       const sube  = document.getElementById('kullanici_sube').value;
+      const il    = document.getElementById('kullanici_il').value.trim();
+      const okul  = document.getElementById('kullanici_okul').value.trim();
 
-      if (!ad || !soyad || !sinif || !sube) {
+      if (!ad || !soyad || !sinif || !sube || !il || !okul) {
         alert('Lütfen tüm alanları doldurun!');
         return;
       }
 
-      sessionStorage.setItem('okuma_kullanici', JSON.stringify({ ad, soyad, sinif: parseInt(sinif), sube }));
+      sessionStorage.setItem('okuma_kullanici', JSON.stringify({
+        ad: capitalizeWords(ad),
+        soyad: capitalizeWords(soyad),
+        sinif: parseInt(sinif),
+        sube,
+        il: capitalizeWords(il),
+        okul: collapseSpaces(okul)
+      }));
       window.location.href = '/hizli-okuma/oku.html';
     }
 

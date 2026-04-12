@@ -33,6 +33,13 @@
       .replace(/>/g, '&gt;');
   }
 
+  function getUserLocationLine(kullanici) {
+    return [
+      kullanici && kullanici.il ? kullanici.il : '',
+      kullanici && kullanici.okul ? kullanici.okul : '',
+    ].filter(Boolean).join(' · ');
+  }
+
   function getRuntime() {
     const main = {
       metin: JSON.parse(sessionStorage.getItem('okuma_metin') || 'null'),
@@ -278,6 +285,10 @@
       detay_json: {
         cevaplar: comprehension.detay,
         goruntuleme_modu: runtime.metin.goruntuleme_modu,
+        kullanici_bilgileri: {
+          il: runtime.kullanici.il || '',
+          okul: runtime.kullanici.okul || '',
+        },
       },
     };
 
@@ -397,9 +408,10 @@
     const kelimeSayisi = runtime.metin.kelime_sayisi || stripHtml(runtime.metin.icerik_html || runtime.metin.icerik || '').split(/\s+/).filter(Boolean).length;
     const comprehension = getComprehensionSummary(runtime);
     const today = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const locationLine = getUserLocationLine(runtime.kullanici);
 
     document.getElementById('karneAd').textContent = runtime.kullanici.ad + ' ' + runtime.kullanici.soyad;
-    document.getElementById('karneSinifSube').textContent = runtime.kullanici.sinif + '. Sınıf / ' + runtime.kullanici.sube + ' Şubesi';
+    document.getElementById('karneSinifSube').textContent = runtime.kullanici.sinif + '. Sınıf / ' + runtime.kullanici.sube + ' Şubesi' + (locationLine ? ' · ' + locationLine : '');
     document.getElementById('karneTarih').textContent = today;
     document.getElementById('karneMetinAdi').textContent = runtime.metin.baslik;
     document.getElementById('karneWpm').textContent = String(runtime.wpm);

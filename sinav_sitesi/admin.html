@@ -89,15 +89,18 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .sel-card.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple)}
 
 /* PDF / CANVAS */
-.pdf-layout{display:flex;gap:18px;align-items:flex-start}
+.pdf-layout{display:flex;gap:22px;align-items:flex-start}
 .pdf-main{flex:1;min-width:0}
 .pdf-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:8px;flex-wrap:wrap}
-.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--white);overflow:auto;max-height:560px;cursor:crosshair;user-select:none}
-#pdfCanvas{display:block;background:var(--white)}
-#cropCanvas{position:absolute;top:0;left:0}
+.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#F8FAFC 0%,#EEF2FF 100%);overflow:auto;max-height:min(76vh,780px);min-height:620px;display:flex;align-items:flex-start;justify-content:center;padding:28px;cursor:crosshair;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.pdf-canvas-wrap.drag-over,.pdf-dropzone.drag-over{border-color:var(--purple);background:#F5F3FF;box-shadow:0 0 0 4px rgba(108,61,237,.12)}
+.pdf-canvas-stage{position:relative;display:inline-block;flex:0 0 auto}
+#pdfCanvas{display:block;background:var(--white);border-radius:14px;box-shadow:0 18px 36px rgba(15,23,42,.12)}
+#cropCanvas{position:absolute;top:0;left:0;touch-action:none}
+.pdf-dropzone{min-height:360px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:18px;border:2px dashed var(--border);flex-direction:column;gap:10px;cursor:pointer;padding:24px;text-align:center;transition:all .18s}
 
 /* Q PANEL */
-.q-panel{width:290px;flex-shrink:0;max-height:660px;overflow-y:auto}
+.q-panel{width:320px;flex-shrink:0;max-height:min(76vh,780px);overflow-y:auto}
 .q-list{display:flex;flex-direction:column;gap:8px}
 .q-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);background:var(--white);box-shadow:var(--sh-sm)}
 .q-thumb{width:72px;height:44px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#f8f9fa;flex-shrink:0}
@@ -179,10 +182,18 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .section-row{display:grid;grid-template-columns:minmax(0,1.6fr) 110px 110px auto;gap:10px;align-items:end;padding:14px;border:1px solid var(--border);border-radius:var(--r);background:#F8FAFC}
 .section-note{padding:12px 14px;border-radius:var(--r);background:#EEF2FF;color:var(--purple);font-size:12px;font-weight:600;line-height:1.6}
 .section-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#EEF2FF;color:var(--purple);font-size:11px;font-weight:800}
+.category-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center}
+.category-toggle{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:#F8FAFC;color:var(--slate);font-size:12px;font-weight:700;white-space:nowrap}
+.category-toggle input{accent-color:var(--purple)}
 
 /* MAIN FOOTER */
 .main-footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px}
 .main-footer a{color:var(--purple);text-decoration:none;font-family:var(--fd);font-weight:700;font-size:12px}
+
+@media(max-width:1180px){
+  .pdf-layout{flex-direction:column}
+  .q-panel{width:100%;max-height:none}
+}
 </style>
 </head>
 <body>
@@ -234,6 +245,12 @@ function createDefaultCategoryMap(){
     return acc;
   },{});
 }
+function createDefaultSectionCategoryMap(){
+  return GRADES.reduce((acc,grade)=>{
+    acc[grade]=(DEFAULT_SUBJECTS_BY_GRADE[grade]||[]).filter(item=>item==='Deneme'||item==='Agisler');
+    return acc;
+  },{});
+}
 const ALL_OPTS=['A','B','C','D','E','F'];
 const auth=getAuth(app);
 
@@ -248,6 +265,7 @@ function createInitialState(overrides={}){
     grade:null,subject:null,examName:'',
     optionCount:4,negativeMarking:false,
     categoryMap:createDefaultCategoryMap(),
+    sectionCategoryMap:createDefaultSectionCategoryMap(),
     categoryGrade:1,
     questionSections:[],
     questions:[],
@@ -312,6 +330,28 @@ function getConfiguredCategoriesForGrade(grade,map=A?.categoryMap){
 function getAvailableCategoriesForGrade(grade,extras=[]){
   return mergeCategoryLists(getConfiguredCategoriesForGrade(grade),extras);
 }
+function isLegacySectionCategoryLabel(value){
+  const key=normalizeKeyPart(value);
+  return key==='deneme'||key==='agisler'||key==='lgs'||key.indexOf('deneme')>-1||key.indexOf('agis')>-1||key.indexOf('lgs')>-1;
+}
+function getSectionEnabledCategoriesForGrade(grade,sectionMap=A?.sectionCategoryMap,categoryMap=A?.categoryMap){
+  const configured=getConfiguredCategoriesForGrade(grade,categoryMap);
+  const configuredKeys=new Set(configured.map(item=>normalizeKeyPart(item)));
+  return mergeCategoryLists(
+    Array.isArray(sectionMap?.[grade])?sectionMap[grade]:[],
+    configured.filter(isLegacySectionCategoryLabel)
+  ).filter(item=>configuredKeys.has(normalizeKeyPart(item)));
+}
+function isSectionEnabledCategory(grade,subject,sectionMap=A?.sectionCategoryMap,categoryMap=A?.categoryMap){
+  const targetKey=normalizeKeyPart(subject);
+  if(!targetKey) return false;
+  return getSectionEnabledCategoriesForGrade(grade,sectionMap,categoryMap).some(item=>normalizeKeyPart(item)===targetKey);
+}
+function isConfiguredCategoryForGrade(grade,subject,map=A?.categoryMap){
+  const targetKey=normalizeKeyPart(subject);
+  if(!targetKey) return false;
+  return getConfiguredCategoriesForGrade(grade,map).some(item=>normalizeKeyPart(item)===targetKey);
+}
 function getAllKnownSubjects(extraLists=[]){
   const baseLists=GRADES.map(grade=>getConfiguredCategoriesForGrade(grade));
   return mergeCategoryLists(baseLists,...extraLists);
@@ -326,6 +366,12 @@ function buildStudentKey(source){
     normalizeKeyPart(source?.grade),
     normalizeKeyPart(source?.sube)
   ].filter(Boolean).join('|');
+}
+function buildLocationText(source){
+  return[
+    String(source?.city||source?.il||'').trim(),
+    String(source?.school||source?.okul||'').trim()
+  ].filter(Boolean).join(' · ');
 }
 function getResultStudentKey(result){
   const accountUid=String(result?.accountUid||result?.userId||'').trim();
@@ -361,7 +407,7 @@ async function copyText(text,successMsg='Kopyalandı'){
 function getOPTS(){return ALL_OPTS.slice(0,A.optionCount);}
 function syncQuestionOrder(){A.questions=A.questions.map((q,index)=>({...q,order:index}));}
 function destroyQuestionSortables(){questionSortables.forEach(instance=>instance?.destroy?.());questionSortables=[];}
-function shouldUseSections(subject){return subject==='Deneme'||subject==='Agisler';}
+function shouldUseSections(subject,grade=A?.grade){return !!sanitizeCategoryLabel(subject)&&isSectionEnabledCategory(grade,subject);}
 function toSectionNumber(value){
   const num=parseInt(value,10);
   return Number.isFinite(num)?num:'';
@@ -581,6 +627,7 @@ function resetBuilderState(nextPage='create'){
   A=createInitialState({
     page:nextPage,
     categoryMap:A.categoryMap||createDefaultCategoryMap(),
+    sectionCategoryMap:A.sectionCategoryMap||createDefaultSectionCategoryMap(),
     categoryGrade:A.categoryGrade||1,
     exams:A.exams||[],
     results:A.results||[],
@@ -620,6 +667,7 @@ function afterCreateRender(){
   requestAnimationFrame(()=>{
     initQuestionSortables();
     if(A.step===3){
+      setupUploadSurface();
       if(A.pdfDoc) setTimeout(()=>renderPage(A.pdfPage),40);
       else if(A.imgLoaded) setTimeout(()=>renderImageOnCanvas(),40);
     }
@@ -835,14 +883,16 @@ function renderStep3(){
           </div>
           <span class="text-xs text-muted" style="margin-left:8px">💡 Sürükleyerek kırpın</span>
         </div>
-        <div id="pdfCont" class="pdf-canvas-wrap" style="display:${A.pdfDoc||A.imgLoaded?'block':'none'}">
-          <canvas id="pdfCanvas"></canvas>
-          <canvas id="cropCanvas"></canvas>
+        <div id="pdfCont" class="pdf-canvas-wrap" style="display:${A.pdfDoc||A.imgLoaded?'flex':'none'}">
+          <div class="pdf-canvas-stage" id="pdfStage">
+            <canvas id="pdfCanvas"></canvas>
+            <canvas id="cropCanvas"></canvas>
+          </div>
         </div>
-        <div id="pdfPh" style="height:240px;display:${A.pdfDoc||A.imgLoaded?'none':'flex'};align-items:center;justify-content:center;background:#f8fafc;border-radius:8px;border:2px dashed var(--border);flex-direction:column;gap:10px;cursor:pointer" onclick="document.getElementById('pdfFile').click()">
+        <div id="pdfPh" class="pdf-dropzone" style="display:${A.pdfDoc||A.imgLoaded?'none':'flex'}" onclick="document.getElementById('pdfFile').click()">
           <span style="font-size:42px">📄</span>
-          <span class="text-muted text-sm">Tıkla veya sürükle-bırak</span>
-          <span class="text-xs text-muted">PDF, JPEG veya PNG yükle → sürükle-kırp ile soru ekle</span>
+          <span class="text-muted text-sm">Tıkla veya dosyayı buraya sürükle</span>
+          <span class="text-xs text-muted">PDF, JPEG veya PNG yükle → daha geniş çalışma alanında rahatça kırp</span>
         </div>
       </div>
       <div class="flex justify-between" style="gap:10px">
@@ -923,7 +973,7 @@ function renderSectionEditor(){
   `).join(''):'<div class="text-sm text-muted" style="padding:4px 0 8px">Henüz ders başlığı eklenmedi. İstersen aşağıdan soru aralıkları tanımlayabilirsin.</div>';
   return`<div class="card p-6 mb-4">
     <strong style="display:block;font-size:15px;margin-bottom:8px;font-family:var(--fd)">🏷️ Soru Üstü Ders Başlıkları</strong>
-    <p class="text-sm text-muted" style="margin-bottom:14px">Deneme ve Agisler sınavlarında belirli soru aralıklarına ders başlığı vererek öğrencinin üst kısımda hangi derste olduğunu görmesini sağlayabilirsin.</p>
+    <p class="text-sm text-muted" style="margin-bottom:14px">İstersen bu sınavdaki belirli soru aralıklarına ders veya bölüm başlığı vererek öğrencinin üst kısımda hangi alanda olduğunu net biçimde gösterebilirsin.</p>
     <div class="section-editor">${rows}</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px">
       <button class="btn btn-outline" type="button" onclick="W.addSection()">+ Bölüm Ekle</button>
@@ -1039,8 +1089,12 @@ function renderAdminResults(){
   const subeOpts=['A','B','C','D','E','F','G','H'].map(s=>`<option value="${s}" ${A.rf.sube===s?'selected':''}>${s} Şubesi</option>`).join('');
   const rows=A.results.map(r=>{
     const sc=r.score;const col=sc>=70?'#059669':sc>=50?'#D97706':'#DC2626';
+    const locationMeta=buildLocationText(r);
     return`<tr>
-      <td style="font-weight:600;font-family:var(--fd)">${esc(r.firstName)} ${esc(r.lastName)}</td>
+      <td style="font-weight:600;font-family:var(--fd)">
+        <div>${esc(r.firstName)} ${esc(r.lastName)}</div>
+        ${locationMeta?`<div style="font-size:11px;color:var(--muted);font-family:var(--fb);font-weight:600;margin-top:4px">${esc(locationMeta)}</div>`:''}
+      </td>
       <td><span class="badge badge-blue">${r.grade}. Sınıf${r.sube?' '+r.sube:''}</span></td>
       <td style="font-size:12px;color:var(--slate)">${r.subject||'—'}</td>
       <td style="font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.examTitle||'—')}</td>
@@ -1075,7 +1129,7 @@ function renderAdminResults(){
       <select class="form-input" style="width:130px" onchange="W.filterRes('grade',this.value)"><option value="">Tüm Sınıflar</option>${gOpts}</select>
       <select class="form-input" style="width:130px" onchange="W.filterRes('sube',this.value)"><option value="">Tüm Şubeler</option>${subeOpts}</select>
       <select class="form-input" style="width:150px" onchange="W.filterRes('subject',this.value)"><option value="">Tüm Dersler</option>${sOpts}</select>
-      <input class="form-input" style="width:175px" type="text" placeholder="İsim ara..." value="${esc(A.rf.name||'')}" oninput="W.filterRes('name',this.value)">
+      <input class="form-input" style="width:210px" type="text" placeholder="İsim, il veya okul ara..." value="${esc(A.rf.name||'')}" oninput="W.filterRes('name',this.value)">
     </div>
     <div class="card" style="overflow-x:auto">
       <table class="data-table">
@@ -1092,8 +1146,12 @@ function renderAdminCategories(){
     <button type="button" class="sel-card ${selectedGrade===grade?'selected':''}" style="min-height:72px" onclick="W.setCategoryGrade(${grade})">${grade}. Sınıf</button>
   `).join('');
   const rows=getEditableCategoriesForGrade(selectedGrade).map((category,index)=>`
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center">
+    <div class="category-row">
       <input class="form-input" type="text" value="${esc(category)}" placeholder="Örn: Türkçe" oninput="W.updateCategoryField(${index},this.value)">
+      <label class="category-toggle" title="Açık olduğunda bu kategori için soru aralıklarına ders/bölüm başlığı tanımlanabilir.">
+        <input type="checkbox" ${isSectionEnabledCategory(selectedGrade,category)?'checked':''} onchange="W.toggleCategorySection(${index},this.checked)">
+        Bölümlü Sınav
+      </label>
       <button class="btn btn-red" type="button" onclick="W.removeCategoryRow(${index})">Sil</button>
     </div>
   `).join('');
@@ -1122,7 +1180,7 @@ function renderAdminCategories(){
             </div>
             <button class="btn btn-green" type="button" onclick="W.saveCategoryGrade()">💾 Kaydet</button>
           </div>
-          <div class="section-note" style="margin-top:14px">Örnek: 1. sınıfta Türkçe, Matematik, Hayat Bilgisi, Deneme; istersen buna Genel Tarama, Okuma Çalışması veya farklı bir kategori daha ekleyebilirsin.</div>
+          <div class="section-note" style="margin-top:14px">Örnek: Deneme, LGS veya Genel Tarama gibi kategorilerde <strong>Bölümlü Sınav</strong> açık olursa soru aralıklarına Türkçe, Matematik, Fen Bilimleri gibi başlıklar ekleyebilirsin.</div>
         </div>
       </div>
     </div>
@@ -1130,14 +1188,64 @@ function renderAdminCategories(){
 }
 
 /* ── IMAGE/PDF ── */
+function syncPdfStage(width,height){
+  const stage=document.getElementById('pdfStage');
+  if(!stage) return;
+  stage.style.width=`${width}px`;
+  stage.style.height=`${height}px`;
+}
+
+function setUploadDragState(active){
+  ['pdfPh','pdfCont'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('drag-over',!!active);
+  });
+}
+
+function setupUploadSurface(){
+  ['pdfPh','pdfCont'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||el.dataset.dropBound==='1') return;
+    const stop=event=>{
+      event.preventDefault();
+      event.stopPropagation();
+    };
+    el.addEventListener('dragenter',event=>{
+      stop(event);
+      setUploadDragState(true);
+    });
+    el.addEventListener('dragover',event=>{
+      stop(event);
+      if(event.dataTransfer) event.dataTransfer.dropEffect='copy';
+      setUploadDragState(true);
+    });
+    el.addEventListener('dragleave',event=>{
+      stop(event);
+      const next=event.relatedTarget;
+      if(next&&el.contains(next)) return;
+      setUploadDragState(false);
+    });
+    el.addEventListener('drop',async event=>{
+      stop(event);
+      setUploadDragState(false);
+      const file=event.dataTransfer?.files?.[0];
+      if(file) await loadSelectedUploadFile(file);
+    });
+    el.dataset.dropBound='1';
+  });
+}
+
 function renderImageOnCanvas(){
   const img=A.imgData;if(!img)return;
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
   if(!c||!cc)return;
-  const baseW=Math.min(img.width,900);
+  const wrap=document.getElementById('pdfCont');
+  const availableWidth=Math.max(((wrap?.clientWidth||0)-56),1040);
+  const baseW=Math.min(img.width,availableWidth);
   const scale=(A.pdfZoom/1.5)*(baseW/img.width);
   c.width=img.width*scale;c.height=img.height*scale;
   cc.width=c.width;cc.height=c.height;
+  syncPdfStage(c.width,c.height);
   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/1.5*100)+'%';
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=true;
@@ -1145,8 +1253,13 @@ function renderImageOnCanvas(){
   setupCrop();
 }
 
-async function loadFile(inp){
-  const file=inp.files[0];if(!file)return;
+async function loadSelectedUploadFile(file){
+  if(!file) return;
+  removeCropModal();
+  A.draftImg=null;
+  A.draftAns=null;
+  A.pdfZoom=1.5;
+  setUploadDragState(false);
   const isImg=/image\//i.test(file.type)||/\.(jpg|jpeg|png|webp)$/i.test(file.name);
   if(isImg){
     showLoad('Görsel yükleniyor...');
@@ -1155,7 +1268,7 @@ async function loadFile(inp){
       const img=new Image();
       await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url;});
       A.pdfDoc=null;A.imgLoaded=true;A.imgData=img;A.pdfPage=1;A.pdfTotal=1;
-      document.getElementById('pdfCont').style.display='block';
+      document.getElementById('pdfCont').style.display='flex';
       document.getElementById('pdfPh').style.display='none';
       document.getElementById('pdfCtrl').style.display='flex';
       renderImageOnCanvas();hideLoad();
@@ -1167,12 +1280,19 @@ async function loadFile(inp){
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const ab=await file.arrayBuffer();
     A.pdfDoc=await pdfjsLib.getDocument(ab).promise;
-    A.pdfTotal=A.pdfDoc.numPages;A.pdfPage=1;A.imgLoaded=false;
-    document.getElementById('pdfCont').style.display='block';
+    A.pdfTotal=A.pdfDoc.numPages;A.pdfPage=1;A.imgLoaded=false;A.imgData=null;
+    document.getElementById('pdfCont').style.display='flex';
     document.getElementById('pdfPh').style.display='none';
     document.getElementById('pdfCtrl').style.display='flex';
     hideLoad();await renderPage(1);
   }catch(e){hideLoad();toast('PDF yükleme hatası: '+e.message,'error');}
+}
+
+async function loadFile(inp){
+  const file=inp.files?.[0];
+  if(!file) return;
+  await loadSelectedUploadFile(file);
+  inp.value='';
 }
 
 async function renderPage(n){
@@ -1182,6 +1302,7 @@ async function renderPage(n){
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
   if(!c||!cc)return;
   c.width=vp.width;c.height=vp.height;cc.width=vp.width;cc.height=vp.height;
+  syncPdfStage(vp.width,vp.height);
   await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
   const pj=document.getElementById('pageJump');if(pj)pj.value=n;
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=(n<=1);
@@ -1195,32 +1316,57 @@ function setupCrop(){
   if(!cc||!pc)return;
   const newCC=cc.cloneNode(false);cc.parentNode.replaceChild(newCC,cc);
   let drawing=false,sx=0,sy=0;
+  const ctx=newCC.getContext('2d');
   const getPos=e=>{
     const rect=newCC.getBoundingClientRect();
     const sx2=newCC.width/rect.width,sy2=newCC.height/rect.height;
-    const cx=e.touches?e.touches[0].clientX:e.clientX;
-    const cy=e.touches?e.touches[0].clientY:e.clientY;
+    const point=e.touches?e.touches[0]:(e.changedTouches?e.changedTouches[0]:e);
+    const cx=point.clientX;
+    const cy=point.clientY;
     return{x:(cx-rect.left)*sx2,y:(cy-rect.top)*sy2};
   };
-  newCC.style.cursor='crosshair';
-  newCC.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);sx=p.x;sy=p.y;e.preventDefault();});
-  document.addEventListener('mousemove',function onmm(e){
-    if(!drawing)return;const p=getPos(e);
-    const ctx=newCC.getContext('2d');ctx.clearRect(0,0,newCC.width,newCC.height);
+  const drawSelection=(ex,ey)=>{
+    ctx.clearRect(0,0,newCC.width,newCC.height);
     ctx.strokeStyle='#6C3DED';ctx.lineWidth=2;ctx.setLineDash([6,3]);
-    ctx.strokeRect(sx,sy,p.x-sx,p.y-sy);
-    ctx.fillStyle='rgba(108,61,237,.08)';ctx.fillRect(sx,sy,p.x-sx,p.y-sy);
-  });
-  document.addEventListener('mouseup',function onmu(e){
-    if(!drawing)return;drawing=false;const p=getPos(e);
-    newCC.getContext('2d').clearRect(0,0,newCC.width,newCC.height);
+    ctx.strokeRect(sx,sy,ex-sx,ey-sy);
+    ctx.fillStyle='rgba(108,61,237,.08)';ctx.fillRect(sx,sy,ex-sx,ey-sy);
+  };
+  const finishSelection=p=>{
+    ctx.clearRect(0,0,newCC.width,newCC.height);
     const x=Math.min(sx,p.x),y=Math.min(sy,p.y),w=Math.abs(p.x-sx),h=Math.abs(p.y-sy);
     if(w<20||h<20)return;
     const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
     tmp.getContext('2d').drawImage(pc,x,y,w,h,0,0,w,h);
-    A.draftImg=tmp.toDataURL('image/jpeg',.88);A.draftAns=null;
+    A.draftImg=tmp.toDataURL('image/jpeg',.92);A.draftAns=null;
     showCropModal();
+  };
+  const handleMove=e=>{
+    if(!drawing)return;
+    const p=getPos(e);
+    drawSelection(p.x,p.y);
+    e.preventDefault();
+  };
+  const handleUp=e=>{
+    if(!drawing)return;
+    drawing=false;
+    window.removeEventListener('pointermove',handleMove);
+    window.removeEventListener('pointerup',handleUp);
+    window.removeEventListener('pointercancel',handleUp);
+    finishSelection(getPos(e));
+  };
+  newCC.style.cursor='crosshair';
+  newCC.style.touchAction='none';
+  newCC.addEventListener('pointerdown',e=>{
+    if(typeof e.button==='number'&&e.button!==0) return;
+    drawing=true;
+    const p=getPos(e);sx=p.x;sy=p.y;
+    drawSelection(p.x,p.y);
+    window.addEventListener('pointermove',handleMove);
+    window.addEventListener('pointerup',handleUp);
+    window.addEventListener('pointercancel',handleUp);
+    e.preventDefault();
   });
+  newCC.addEventListener('dragstart',e=>e.preventDefault());
 }
 
 function showCropModal(){
@@ -1272,7 +1418,10 @@ async function fbLoadResults(rf){
     if(rf.grade) res=res.filter(r=>r.grade==rf.grade);
     if(rf.sube) res=res.filter(r=>r.sube===rf.sube);
     if(rf.subject) res=res.filter(r=>r.subject===rf.subject);
-    if(rf.name) res=res.filter(r=>`${r.firstName} ${r.lastName}`.toLowerCase().includes(rf.name.toLowerCase()));
+    if(rf.name){
+      const queryText=rf.name.toLowerCase();
+      res=res.filter(r=>`${r.firstName} ${r.lastName} ${buildLocationText(r)}`.toLowerCase().includes(queryText));
+    }
     if(rf.examId) res=res.filter(r=>r.examId===rf.examId);
     return res;
   }catch{
@@ -1372,8 +1521,43 @@ async function fbLoadCategoryConfigs(){
     }catch(error){
       console.error(error);
     }
-    return defaults;
   }
+  return defaults;
+}
+
+async function fbLoadSectionCategoryConfigs(categoryMap){
+  const defaults=createDefaultSectionCategoryMap();
+  const applyRows=snap=>{
+    snap.docs.forEach(row=>{
+      const data=row.data()||{};
+      const grade=parseInt(data.grade,10);
+      if(!GRADES.includes(grade)) return;
+      const configured=getConfiguredCategoriesForGrade(grade,categoryMap);
+      const configuredKeys=new Set(configured.map(item=>normalizeKeyPart(item)));
+      const sectionCategories=mergeCategoryLists(
+        sanitizeCategoryList(data.sectionCategories),
+        configured.filter(isLegacySectionCategoryLabel)
+      ).filter(item=>configuredKeys.has(normalizeKeyPart(item)));
+      defaults[grade]=sectionCategories;
+    });
+  };
+  try{
+    applyRows(await getDocs(query(collection(db,'examCategories'),orderBy('grade','asc'))));
+  }catch{
+    try{
+      applyRows(await getDocs(collection(db,'examCategories')));
+    }catch(error){
+      console.error(error);
+    }
+  }
+  return defaults;
+}
+
+async function syncCategoryConfigState(){
+  const categoryMap=await fbLoadCategoryConfigs();
+  const sectionCategoryMap=await fbLoadSectionCategoryConfigs(categoryMap);
+  A.categoryMap=categoryMap;
+  A.sectionCategoryMap=sectionCategoryMap;
 }
 
 /* ── WINDOW HANDLERS ── */
@@ -1439,7 +1623,7 @@ const W={
     A.page=page;
     if(page==='categories'){
       showLoad();
-      A.categoryMap=await fbLoadCategoryConfigs();
+      await syncCategoryConfigState();
       hideLoad();
     }
     if(page==='exams'){
@@ -1458,8 +1642,10 @@ const W={
   },
   setGrade(g){A.grade=g;A.subject=null;A.questionSections=[];setContent(renderCreate());},
   setSubject(s){
-    A.subject=s;
-    if(!shouldUseSections(s)) A.questionSections=[];
+    const nextSubject=sanitizeCategoryLabel(s);
+    const changed=normalizeKeyPart(nextSubject)!==normalizeKeyPart(A.subject);
+    A.subject=nextSubject;
+    if(changed) A.questionSections=[];
     setContent(renderCreate());
   },
   setOptCount(n){A.optionCount=n;setContent(renderCreate());},
@@ -1469,7 +1655,17 @@ const W={
   },
   updateCategoryField(index,value){
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
+    if(!Array.isArray(A.sectionCategoryMap[A.categoryGrade])) A.sectionCategoryMap[A.categoryGrade]=getSectionEnabledCategoriesForGrade(A.categoryGrade);
+    const previousLabel=sanitizeCategoryLabel(A.categoryMap[A.categoryGrade][index]);
+    const nextLabel=sanitizeCategoryLabel(value);
+    const enabled=A.sectionCategoryMap[A.categoryGrade].some(item=>normalizeKeyPart(item)===normalizeKeyPart(previousLabel));
     A.categoryMap[A.categoryGrade][index]=String(value??'');
+    if(enabled){
+      A.sectionCategoryMap[A.categoryGrade]=mergeCategoryLists(
+        A.sectionCategoryMap[A.categoryGrade].filter(item=>normalizeKeyPart(item)!==normalizeKeyPart(previousLabel)),
+        nextLabel?[nextLabel]:[]
+      );
+    }
   },
   addCategoryRow(){
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
@@ -1478,17 +1674,31 @@ const W={
   },
   removeCategoryRow(index){
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) return;
+    const removedLabel=sanitizeCategoryLabel(A.categoryMap[A.categoryGrade][index]);
     A.categoryMap[A.categoryGrade].splice(index,1);
+    if(Array.isArray(A.sectionCategoryMap[A.categoryGrade])){
+      A.sectionCategoryMap[A.categoryGrade]=A.sectionCategoryMap[A.categoryGrade].filter(item=>normalizeKeyPart(item)!==normalizeKeyPart(removedLabel));
+    }
     setContent(renderAdminCategories());
+  },
+  toggleCategorySection(index,enabled){
+    if(!Array.isArray(A.categoryMap[A.categoryGrade])) return;
+    if(!Array.isArray(A.sectionCategoryMap[A.categoryGrade])) A.sectionCategoryMap[A.categoryGrade]=getSectionEnabledCategoriesForGrade(A.categoryGrade);
+    const label=sanitizeCategoryLabel(A.categoryMap[A.categoryGrade][index]);
+    A.sectionCategoryMap[A.categoryGrade]=enabled
+      ? mergeCategoryLists(A.sectionCategoryMap[A.categoryGrade],[label])
+      : A.sectionCategoryMap[A.categoryGrade].filter(item=>normalizeKeyPart(item)!==normalizeKeyPart(label));
   },
   resetCategoryGrade(){
     A.categoryMap[A.categoryGrade]=[...(DEFAULT_SUBJECTS_BY_GRADE[A.categoryGrade]||[])];
+    A.sectionCategoryMap[A.categoryGrade]=[...createDefaultSectionCategoryMap()[A.categoryGrade]];
     setContent(renderAdminCategories());
     toast('Varsayılan kategori listesi geri yüklendi. Kaydetmeyi unutma.','info');
   },
   async saveCategoryGrade(){
     const grade=A.categoryGrade;
     const categories=sanitizeCategoryList(A.categoryMap[grade]);
+    const sectionCategories=getSectionEnabledCategoriesForGrade(grade,A.sectionCategoryMap,A.categoryMap);
     if(!categories.length){
       toast('En az 1 kategori girin','error');
       return;
@@ -1498,9 +1708,18 @@ const W={
       await setDoc(doc(db,'examCategories',`grade-${grade}`),{
         grade,
         categories,
+        sectionCategories,
         updatedAt:serverTimestamp()
       });
       A.categoryMap[grade]=[...categories];
+      A.sectionCategoryMap[grade]=[...sectionCategories];
+      if(A.grade===grade&&!A.editExamId&&A.subject&&!isConfiguredCategoryForGrade(grade,A.subject,A.categoryMap)){
+        A.subject=null;
+        A.questionSections=[];
+        A.step=1;
+      }else if(A.grade===grade&&A.subject&&!isSectionEnabledCategory(grade,A.subject,A.sectionCategoryMap,A.categoryMap)){
+        A.questionSections=[];
+      }
       hideLoad();
       setContent(renderAdminCategories());
       toast(`${grade}. sınıf kategorileri kaydedildi.`,'success');
@@ -1709,6 +1928,7 @@ const W={
         step:4,
         editExamId:id,
         categoryMap:A.categoryMap||createDefaultCategoryMap(),
+        sectionCategoryMap:A.sectionCategoryMap||createDefaultSectionCategoryMap(),
         categoryGrade:A.categoryGrade||1,
         grade:exam.grade||null,
         subject:exam.subject||null,
@@ -1827,6 +2047,14 @@ const W={
           <label class="form-label">Şube</label>
           <select class="form-input" id="resultEditSube">${subeOptions}</select>
         </div>
+        <div>
+          <label class="form-label">İl</label>
+          <input class="form-input" id="resultEditCity" type="text" value="${esc(result.city||'')}" placeholder="Örn. İstanbul">
+        </div>
+        <div>
+          <label class="form-label">Okul</label>
+          <input class="form-input" id="resultEditSchool" type="text" value="${esc(result.school||'')}" placeholder="Okul adı">
+        </div>
       </div>
       <div style="margin-top:14px">
         <label class="form-label">Üye UID / Hesap Kimliği (isteğe bağlı)</label>
@@ -1852,13 +2080,15 @@ const W={
     const lastName=(document.getElementById('resultEditLastName')?.value||'').trim();
     const grade=parseInt(document.getElementById('resultEditGrade')?.value,10);
     const sube=(document.getElementById('resultEditSube')?.value||'').trim();
+    const city=(document.getElementById('resultEditCity')?.value||'').trim();
+    const school=(document.getElementById('resultEditSchool')?.value||'').trim();
     const accountUid=(document.getElementById('resultEditAccountUid')?.value||'').trim();
     if(!firstName||!lastName||!Number.isFinite(grade)||grade<1||grade>8){
       toast('Ad, soyad ve geçerli sınıf bilgisi zorunludur','error');
       return;
     }
     const studentKey=accountUid?`uid:${accountUid}`:buildStudentKey({firstName,lastName,grade,sube});
-    const payload={firstName,lastName,grade,sube,studentKey,accountUid};
+    const payload={firstName,lastName,grade,sube,city,school,studentKey,accountUid};
     showLoad('Sonuç kaydı güncelleniyor...');
     try{
       const relatedResultDocs=await loadRelatedResultDocs(current);
@@ -1874,7 +2104,7 @@ const W={
         if(appealSnap.empty) return;
         const batch=writeBatch(db);
         appealSnap.docs.forEach(appealDoc=>{
-          batch.update(appealDoc.ref,{firstName,lastName,grade,sube,studentKey,accountUid});
+          batch.update(appealDoc.ref,{firstName,lastName,grade,sube,city,school,studentKey,accountUid});
         });
         appealBatches.push(batch.commit());
       }));
@@ -1964,7 +2194,7 @@ const W={
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
                 <div>
                   <div style="font-family:var(--fd);font-size:18px;font-weight:900">${esc(appeal.firstName||'')} ${esc(appeal.lastName||'')}</div>
-                  <div class="text-sm text-muted" style="margin-top:4px">${appeal.grade||'—'}. Sınıf ${appeal.sube?esc(appeal.sube)+' Şubesi':''} · ${fmtDT(appeal.createdAt)}</div>
+                  <div class="text-sm text-muted" style="margin-top:4px">${appeal.grade||'—'}. Sınıf ${appeal.sube?esc(appeal.sube)+' Şubesi':''}${buildLocationText(appeal)?' · '+esc(buildLocationText(appeal)):''} · ${fmtDT(appeal.createdAt)}</div>
                 </div>
                 <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:12px;font-weight:900">${meta.icon} ${meta.label}</span>
               </div>
@@ -2284,6 +2514,7 @@ const W={
     const summary=A.results.map(r=>({
       'Ad':r.firstName,'Soyad':r.lastName,
       'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+      'İl':r.city||'—','Okul':r.school||'—',
       'Üye UID':r.accountUid||'—',
       'Öğrenci Anahtarı':getResultStudentKey(r),
       'Ders':r.subject||'—','Sınav':r.examTitle||'—',
@@ -2297,6 +2528,7 @@ const W={
       if(!details.length){
         detailRows.push({
           'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+          'İl':r.city||'—','Okul':r.school||'—',
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Sınav':r.examTitle||'—','Soru No':'—',
@@ -2308,6 +2540,7 @@ const W={
         const outcome=item.outcome==='D'?'Doğru':item.outcome==='Y'?'Yanlış':'Boş';
         detailRows.push({
           'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
+          'İl':r.city||'—','Okul':r.school||'—',
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,
@@ -2342,7 +2575,7 @@ onAuthStateChanged(auth, async (user) => {
   currentUserIsAdmin=false;
   if(user) currentUserIsAdmin=await checkIsAdmin(user.uid);
   if(currentUserIsAdmin){
-    A.categoryMap=await fbLoadCategoryConfigs();
+    await syncCategoryConfigState();
   }
   render();
 });

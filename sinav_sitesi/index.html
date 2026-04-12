@@ -234,6 +234,10 @@ body.sinav-home-page .site-footer{margin-top:40px}
         </select>
       </div>
     </div>
+    <div class="form-row">
+      <div class="fg"><label>İl *</label><input class="fi" id="cityInput" placeholder="İlinizi yazın" type="text" autocomplete="address-level1"></div>
+      <div class="fg"><label>Okul *</label><input class="fi" id="schoolInput" placeholder="Okul adını yazın" type="text" autocomplete="organization"></div>
+    </div>
     <div class="err-msg" id="modalErr">⚠️ Lütfen tüm alanları eksiksiz doldurun.</div>
     <div class="btn-row">
       <button class="btn btn-outline" onclick="closeModal()">İptal</button>
@@ -346,6 +350,8 @@ function openExamModal(exam){
   document.getElementById('fnInput').value='';
   document.getElementById('lnInput').value='';
   document.getElementById('subeSelect').value='';
+  document.getElementById('cityInput').value='';
+  document.getElementById('schoolInput').value='';
   document.getElementById('modalErr').style.display='none';
   document.getElementById('studentModal').style.display='flex';
   setTimeout(()=>document.getElementById('fnInput').focus(),100);
@@ -495,10 +501,13 @@ window.startExam=function(){
   const fn=document.getElementById('fnInput').value.trim();
   const ln=document.getElementById('lnInput').value.trim();
   const sube=document.getElementById('subeSelect').value;
+  const city=document.getElementById('cityInput').value.trim();
+  const school=document.getElementById('schoolInput').value.trim();
   const err=document.getElementById('modalErr');
-  if(!fn||!ln||!sube){err.textContent='⚠️ Lütfen adınızı, soyadınızı ve şubenizi girin.';err.style.display='block';return;}
+  if(!fn||!ln||!sube||!city||!school){err.textContent='⚠️ Lütfen ad, soyad, şube, il ve okul bilgilerini eksiksiz girin.';err.style.display='block';return;}
   if(fn.length<2||ln.length<2){err.textContent='⚠️ Ad ve soyad en az 2 karakter olmalıdır.';err.style.display='block';return;}
-  const student={firstName:capitalize(fn),lastName:capitalize(ln),grade:S.grade,sube};
+  if(city.length<2||school.length<2){err.textContent='⚠️ İl ve okul bilgileri en az 2 karakter olmalıdır.';err.style.display='block';return;}
+  const student={firstName:capitalize(fn),lastName:capitalize(ln),grade:S.grade,sube,city:capitalize(city),school:school.replace(/\s+/g,' ').trim()};
   sessionStorage.setItem('sinav_student',JSON.stringify(student));
   sessionStorage.setItem('sinav_examId',S.selExam.id);
   window.location.href=`sinav.html?examId=${S.selExam.id}`;
