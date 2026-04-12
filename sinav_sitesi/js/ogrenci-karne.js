@@ -791,34 +791,91 @@ function renderSelectedExam() {
     window.openExamKarneFromStudentReport(result.id);
   };
 
-  $("matrixWrap").innerHTML = blocks.length
-    ? blocks.map(function(block) {
-        const rowsHtml = block.rows.map(function(row) {
-          const cells = row.items.map(function(entry) {
-            const cls = entry.outcome === "D" ? "ok" : entry.outcome === "Y" ? "bad" : "blank";
-            const label = entry.outcome === "B" ? "•" : (entry.selectedAnswer || "•");
-            return (
-              "<div class=\"q-cell\">" +
-                "<div class=\"q-cell-num\">" + entry.questionNo + "</div>" +
-                "<div class=\"q-bubble " + cls + "\">" + esc(label) + "</div>" +
-              "</div>"
-            );
-          }).join("");
-          return (
-            "<div class=\"matrix-row\">" +
-              "<div><div class=\"matrix-label\">" + esc(row.label) + "</div><div class=\"matrix-sub\">Sorular bu bölümde kompakt matris düzeninde gösterilir.</div></div>" +
-              "<div class=\"matrix-cells\">" + cells + "</div>" +
-            "</div>"
-          );
-        }).join("");
+  // Tüm sınavların matrisini göster
+  if (!S.reportResults.length) {
+    $("matrixWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:22px;text-align:center;color:var(--muted);\">Sınav kaydı bulunamadı.</div>";
+    return;
+  }
+  $("matrixWrap").innerHTML = S.reportResults.slice().reverse().map(function(examResult) {
+    var examBenchmark = getBenchmarkStats(examResult);
+    var examDeltaLabel = formatSigned(examBenchmark.delta);
+    var allEntries = getQuestionEntries(examResult);
+    var examDate = examResult.formattedDate || "—";
+    var examSubject = examResult.subject || "Genel";
+    var headerHtml =
+      "<div class=\"matrix-card-head\">" +
+        "<strong>" + esc(shortTitle(examResult.examTitle, 52)) + "</strong>" +
+        "<span>" + esc(examSubject) + " • " + esc(examDate) +
+          " • " + (examResult.total || allEntries.length) + " soru" +
+          " • %" + (examResult.score || 0) +
+          " • Grup farkı: " + examDeltaLabel + " puan</span>" +
+      "</div>";
+    if (!allEntries.length) {
+      return (
+        "<div class=\"matrix-card\">" +
+          headerHtml +
+          "<div class=\"matrix-card-body\"><p style=\"padding:8px 0;color:var(--muted);font-size:13px;\">Bu sınava ait soru bazlı kayıt bulunamadı.</p></div>" +
+        "</div>"
+      );
+    }
+    // Ders/bölüm bazında grupla
+    var sectionMap = new Map();
+    var sectionOrder = [];
+    allEntries.forEach(function(entry) {
+      var key = entry.sectionTitle || examSubject;
+      if (!sectionMap.has(key)) {
+        sectionMap.set(key, []);
+        sectionOrder.push(key);
+      }
+      sectionMap.get(key).push(entry);
+    });
+    var totalD = allEntries.filter(function(e) { return e.outcome === "D"; }).length;
+    var totalY = allEntries.filter(function(e) { return e.outcome === "Y"; }).length;
+    var totalB = allEntries.filter(function(e) { return e.outcome === "B"; }).length;
+    var rowsHtml = sectionOrder.map(function(secLabel) {
+      var items = sectionMap.get(secLabel);
+      var secD = items.filter(function(e) { return e.outcome === "D"; }).length;
+      var secY = items.filter(function(e) { return e.outcome === "Y"; }).length;
+      var secB = items.filter(function(e) { return e.outcome === "B"; }).length;
+      var cells = items.map(function(entry) {
+        var cls = entry.outcome === "D" ? "ok" : entry.outcome === "Y" ? "bad" : "blank";
+        var lbl = entry.outcome === "B" ? "•" : (entry.selectedAnswer || "•");
         return (
-          "<div class=\"matrix-card\">" +
-            "<div class=\"matrix-card-head\"><strong>" + esc(shortTitle(result.examTitle, 46)) + "</strong><span>Sorular " + block.start + " - " + block.end + " • Fark " + deltaLabel + " puan</span></div>" +
-            "<div class=\"matrix-card-body\">" + rowsHtml + "</div>" +
+          "<div class=\"q-cell\">" +
+            "<div class=\"q-cell-num\">" + entry.questionNo + "</div>" +
+            "<div class=\"q-bubble " + cls + "\">" + esc(lbl) + "</div>" +
           "</div>"
         );
-      }).join("")
-    : "<div class=\"panel-card\">Bu sınava ait soru bazlı kayıt bulunamadı.</div>";
+      }).join("");
+      return (
+        "<div class=\"matrix-row\">" +
+          "<div>" +
+            "<div class=\"matrix-label\">" + esc(secLabel) + "</div>" +
+            "<div class=\"matrix-sub\">" + items.length + " soru — " +
+              "<span style=\"color:var(--ok);font-weight:800;\">D:" + secD + "</span> " +
+              "<span style=\"color:var(--bad);font-weight:800;\">Y:" + secY + "</span> " +
+              "<span style=\"color:var(--blank);font-weight:800;\">B:" + secB + "</span>" +
+            "</div>" +
+          "</div>" +
+          "<div class=\"matrix-cells\">" + cells + "</div>" +
+        "</div>"
+      );
+    }).join("");
+    var totalRow =
+      "<div style=\"display:flex;align-items:center;gap:16px;padding:10px 0 2px;border-top:2px solid var(--border);margin-top:6px;font-size:12px;font-weight:800;flex-wrap:wrap;\">" +
+        "<span style=\"color:var(--slate);\">TOPLAM → " + allEntries.length + " soru</span>" +
+        "<span style=\"color:var(--ok);\">✓ Doğru: " + totalD + "</span>" +
+        "<span style=\"color:var(--bad);\">✗ Yanlış: " + totalY + "</span>" +
+        "<span style=\"color:var(--blank);\">○ Boş: " + totalB + "</span>" +
+        "<span style=\"color:var(--slate);margin-left:auto;\">Katılım Ort: %" + examBenchmark.avgScore + " • Yüzdelik: %" + examBenchmark.rankPercent + "</span>" +
+      "</div>";
+    return (
+      "<div class=\"matrix-card\">" +
+        headerHtml +
+        "<div class=\"matrix-card-body\">" + rowsHtml + totalRow + "</div>" +
+      "</div>"
+    );
+  }).join("");
 }
 
 function getChartImage(chart, canvasId) {
@@ -830,37 +887,77 @@ function getChartImage(chart, canvasId) {
 }
 
 function renderPrintableMatrix(result) {
-  const benchmark = getBenchmarkStats(result);
-  const deltaLabel = formatSigned(benchmark.delta);
-  const blocks = buildMatrixBlocks(result);
-  if (!blocks.length) {
+  var benchmark = getBenchmarkStats(result);
+  var deltaLabel = formatSigned(benchmark.delta);
+  var allEntries = getQuestionEntries(result);
+  var examSubject = result.subject || "Genel";
+  if (!allEntries.length) {
     return "<div class=\"print-empty\">Bu sınav için soru bazlı detay bulunamadı.</div>";
   }
-  return blocks.map(function(block) {
-    const rowsHtml = block.rows.map(function(row) {
-      const cells = row.items.map(function(entry) {
-        const cls = entry.outcome === "D" ? "ok" : entry.outcome === "Y" ? "bad" : "blank";
-        const label = entry.outcome === "B" ? "•" : (entry.selectedAnswer || "•");
-        return (
-          "<div class=\"print-q-cell\">" +
-            "<div class=\"print-q-num\">" + entry.questionNo + "</div>" +
-            "<div class=\"print-q-bubble " + cls + "\">" + esc(label) + "</div>" +
-          "</div>"
-        );
-      }).join("");
+  var sectionMap = new Map();
+  var sectionOrder = [];
+  allEntries.forEach(function(entry) {
+    var key = entry.sectionTitle || examSubject;
+    if (!sectionMap.has(key)) { sectionMap.set(key, []); sectionOrder.push(key); }
+    sectionMap.get(key).push(entry);
+  });
+  var totalD = allEntries.filter(function(e) { return e.outcome === "D"; }).length;
+  var totalY = allEntries.filter(function(e) { return e.outcome === "Y"; }).length;
+  var totalB = allEntries.filter(function(e) { return e.outcome === "B"; }).length;
+  var rowsHtml = sectionOrder.map(function(secLabel) {
+    var items = sectionMap.get(secLabel);
+    var secD = items.filter(function(e) { return e.outcome === "D"; }).length;
+    var secY = items.filter(function(e) { return e.outcome === "Y"; }).length;
+    var secB = items.filter(function(e) { return e.outcome === "B"; }).length;
+    var cells = items.map(function(entry) {
+      var cls = entry.outcome === "D" ? "ok" : entry.outcome === "Y" ? "bad" : "blank";
+      var lbl = entry.outcome === "B" ? "\u2022" : (entry.selectedAnswer || "\u2022");
       return (
-        "<div class=\"print-matrix-row\">" +
-          "<div class=\"print-matrix-label-wrap\"><div class=\"print-matrix-label\">" + esc(row.label) + "</div></div>" +
-          "<div class=\"print-matrix-cells\">" + cells + "</div>" +
+        "<div class=\"print-q-cell\">" +
+          "<div class=\"print-q-num\">" + entry.questionNo + "</div>" +
+          "<div class=\"print-q-bubble " + cls + "\">" + esc(lbl) + "</div>" +
         "</div>"
       );
     }).join("");
     return (
-      "<section class=\"print-panel break-avoid\">" +
-        "<div class=\"print-panel-head dark\"><div><strong>" + esc(shortTitle(result.examTitle, 56)) + "</strong><span>Sorular " + block.start + " - " + block.end + " • Fark " + deltaLabel + " puan</span></div></div>" +
-        "<div class=\"print-panel-body\">" + rowsHtml + "</div>" +
-      "</section>"
+      "<div class=\"print-matrix-row\">" +
+        "<div class=\"print-matrix-label-wrap\">" +
+          "<div class=\"print-matrix-label\">" + esc(secLabel) + "</div>" +
+          "<div class=\"print-matrix-sub\">" + items.length + " soru — " +
+            "<span style=\"color:#179b66\">D:" + secD + "</span> " +
+            "<span style=\"color:#d94d4d\">Y:" + secY + "</span> " +
+            "<span style=\"color:#8391a7\">B:" + secB + "</span>" +
+          "</div>" +
+        "</div>" +
+        "<div class=\"print-matrix-cells\">" + cells + "</div>" +
+      "</div>"
     );
+  }).join("");
+  var totalsRow =
+    "<div class=\"print-matrix-totals\">" +
+      "<span>TOPLAM: " + allEntries.length + " soru</span>" +
+      "<span style=\"color:#179b66\">\u2713 Dogru: " + totalD + "</span>" +
+      "<span style=\"color:#d94d4d\">\u2717 Yanlis: " + totalY + "</span>" +
+      "<span style=\"color:#8391a7\">\u25cb Bos: " + totalB + "</span>" +
+      "<span style=\"margin-left:auto\">Grup farki: " + deltaLabel + " puan \u2022 Yuzdelik: %" + benchmark.rankPercent + "</span>" +
+    "</div>";
+  return (
+    "<div class=\"print-panel break-avoid\">" +
+      "<div class=\"print-panel-head dark\">" +
+        "<strong>" + esc(shortTitle(result.examTitle, 60)) + "</strong>" +
+        "<span>" + esc(examSubject) + " \u2022 " + esc(result.formattedDate || "\u2014") + " \u2022 " + allEntries.length + " soru \u2022 %" + (result.score || 0) + "</span>" +
+      "</div>" +
+      "<div class=\"print-panel-body\">" + rowsHtml + totalsRow + "</div>" +
+    "</div>"
+  );
+}
+
+function buildAllPrintableMatrices() {
+  if (!S.reportResults.length) {
+    return "<div class=\"print-empty\">Soru bazli degerlendirme icin kayit bulunamadi.</div>";
+  }
+  return S.reportResults.slice().reverse().map(function(examResult) {
+    return renderPrintableMatrix(examResult);
   }).join("");
 }
 
@@ -936,7 +1033,12 @@ function buildPrintDocument() {
       ".print-focus-list{display:grid;grid-template-columns:repeat(2,1fr);gap:10px} .print-focus-item{border:1px solid var(--border);border-radius:18px;padding:14px;background:#fff}" +
       ".print-focus-item strong{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px} .print-focus-item p{margin:0;font-size:16px;line-height:1.6;color:var(--navy)}" +
       ".print-matrix-row{display:grid;grid-template-columns:170px 1fr;gap:12px;padding:10px 0;border-bottom:1px dashed #e7edf3}.print-matrix-row:last-child{border-bottom:none}" +
-      ".print-matrix-label{font-size:17px;font-weight:800;color:var(--navy)} .print-matrix-cells{display:flex;flex-wrap:wrap;gap:6px}" +
+      ".print-matrix-label{font-size:15px;font-weight:800;color:var(--navy)}" +
+      ".print-matrix-sub{font-size:11px;color:var(--slate);margin-top:3px}" +
+      ".print-matrix-cells{display:flex;flex-wrap:wrap;gap:5px}" +
+      ".print-matrix-totals{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 0 0;border-top:2px solid var(--border);margin-top:6px;font-size:11px;font-weight:800;color:var(--slate)}" +
+      ".print-section-title{font-family:Arial,sans-serif;font-size:18px;font-weight:900;color:var(--navy);margin:18px 0 4px}" +
+      ".print-section-sub{font-size:12px;line-height:1.6;color:var(--slate);margin-bottom:10px}" +
       ".print-q-cell{width:28px;display:flex;flex-direction:column;align-items:center;gap:3px}.print-q-num{font-size:10px;color:var(--slate);font-weight:700}" +
       ".print-q-bubble{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800}.print-q-bubble.ok{background:var(--ok)}.print-q-bubble.bad{background:var(--bad)}.print-q-bubble.blank{background:var(--blank);color:#526274}" +
       ".print-footer{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;border-top:1px solid var(--border);padding-top:12px;margin-top:18px;font-size:12px;color:var(--slate)} .break-avoid{break-inside:avoid}" +
@@ -987,7 +1089,9 @@ function buildPrintDocument() {
       "</section>" +
       "<section class=\"print-sheet\">" +
         "<section class=\"print-panel\"><div class=\"print-panel-head\"><strong>Sınav Geçmişi ve Kıyaslama Tablosu</strong><span>Öğrencinin seçili tüm sınav performansları</span></div><div class=\"print-panel-body\"><div class=\"print-table-wrap\"><table><thead><tr><th>Tarih</th><th>Sınav</th><th>Ders</th><th>Başarı</th><th>Katılım Ort.</th><th>Fark</th><th>Yüzdelik</th></tr></thead><tbody>" + buildPrintableHistoryRows() + "</tbody></table></div></div></section>" +
-        "<section class=\"print-panel break-avoid\" style=\"margin-top:16px\"><div class=\"print-panel-head\"><strong>Soru Bazlı Kompakt Değerlendirme</strong><span>" + esc(selectedSummary) + "</span></div><div class=\"print-panel-body\">" + (selected ? renderPrintableMatrix(selected) : "<div class=\"print-empty\">Seçili sınav detayları bulunamadı.</div>") + "</div></section>" +
+        "<div class=\"print-section-title\">🔎 Soru Bazlı Kompakt Değerlendirme</div>" +
+        "<div class=\"print-section-sub\">Tüm denemelerdeki her dersin soru bazlı doğru/yanlış/boş matrisi aşağıda sıralanmaktadır.</div>" +
+        "<div style=\"display:flex;flex-direction:column;gap:14px;margin-top:12px;\">" + buildAllPrintableMatrices() + "</div>" +
         "<div class=\"print-footer\"><div><strong>By Kemal Öğretmen</strong><br>kemalogretmenim.com.tr</div><div>" + esc(insight.recommendationText) + "</div><div>Sayfa 2 / 2</div></div>" +
       "</section>" +
     "</div>" +
@@ -1173,57 +1277,35 @@ async function printReport() {
     window.print();
     return;
   }
-  var printWindow = null;
-  var printDocumentTarget = null;
-  try {
-    printWindow = window.open("about:blank", "_blank");
-  } catch (error) {
-    printWindow = null;
-  }
-  if (printWindow) {
-    try {
-      printWindow.opener = null;
-    } catch (error) {}
-    printDocumentTarget = printWindow;
-    printDocumentTarget.document.open();
-    printDocumentTarget.document.write(
-      "<!DOCTYPE html><html lang=\"tr\"><head><meta charset=\"UTF-8\"><title>PDF hazırlanıyor...</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Arial,sans-serif;background:#f4f6fb;color:#1f2a44} .box{padding:24px 28px;border-radius:18px;background:#fff;box-shadow:0 14px 34px rgba(15,23,42,.12);font-size:16px;font-weight:700}</style></head><body><div class=\"box\">PDF hazırlanıyor...</div></body></html>"
-    );
-    printDocumentTarget.document.close();
-  } else {
-    var printFrame = createPrintFrame();
-    printDocumentTarget = printFrame.contentWindow || printFrame;
-    if (!printDocumentTarget || !printDocumentTarget.document) {
-      removePrintFrame();
-      window.alert("Yazdırma alanı hazırlanamadı. Lütfen sayfayı yenileyip tekrar deneyin.");
-      return;
-    }
-  }
-
-  if (typeof window.html2canvas !== "function") {
-    printDocumentTarget.document.open();
-    printDocumentTarget.document.write(buildPrintDocument());
-    printDocumentTarget.document.close();
-    return;
-  }
   setPrintButtonState(true, "PDF Hazırlanıyor...");
   try {
-    var canvases = await captureReportSheetCanvases();
-    var imageUrls = canvases.map(function(canvas) {
-      return canvas.toDataURL("image/png");
-    });
-    printDocumentTarget.document.open();
-    printDocumentTarget.document.write(buildA4ImagePrintDocument(imageUrls));
-    printDocumentTarget.document.close();
+    var printDoc = buildPrintDocument();
+    var printWindow = null;
+    try {
+      printWindow = window.open("about:blank", "_blank");
+    } catch (openErr) {
+      printWindow = null;
+    }
+    if (printWindow) {
+      try { printWindow.opener = null; } catch (e) {}
+      printWindow.document.open();
+      printWindow.document.write(printDoc);
+      printWindow.document.close();
+    } else {
+      var printFrame = createPrintFrame();
+      var frameDoc = printFrame.contentWindow ? printFrame.contentWindow.document : null;
+      if (!frameDoc) {
+        removePrintFrame();
+        window.alert("Yazdırma penceresi açılamadı. Tarayıcınızda pop-up engelleyiciyi kapatıp tekrar deneyin.");
+        return;
+      }
+      frameDoc.open();
+      frameDoc.write(printDoc);
+      frameDoc.close();
+    }
   } catch (error) {
     console.error(error);
-    try {
-      if (printWindow) {
-        printWindow.close();
-      }
-    } catch (closeError) {}
-    removePrintFrame();
-    window.alert("PDF çıktısı hazırlanırken bir hata oluştu. Lütfen tekrar deneyin.");
+    window.alert("PDF çıktısı hazırlanırken hata oluştu. Lütfen tekrar deneyin.");
   } finally {
     setPrintButtonState(false);
   }

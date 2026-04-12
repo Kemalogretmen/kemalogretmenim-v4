@@ -178,16 +178,30 @@
       .footer-note{flex-direction:column;align-items:flex-start}
     }
 
-    @page{size:A4;margin:10mm}
+    @page{size:A4 portrait;margin:10mm}
     @media print{
-      html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      body{background:#fff}
-      .screen-only,.topbar,.filter-card{display:none!important}
-      .page-wrap{max-width:none;padding:0}
+      html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff!important}
+      .screen-only,.topbar,.filter-card,.selected-actions{display:none!important}
+      .page-wrap{max-width:none;padding:0;margin:0}
       .report-wrap{display:block!important}
-      .sheet{box-shadow:none;border:none;border-radius:0;min-height:277mm;padding:14mm 12mm 10mm;margin:0;break-after:page}
-      .sheet:last-child{break-after:auto}
-      .panel-card,.metric-card,.compare-card,.history-table-wrap,.matrix-card,.selected-card{break-inside:avoid}
+      .sheet{
+        box-shadow:none!important;border:none!important;border-radius:0!important;
+        min-height:auto;padding:12mm 12mm 10mm;margin:0;
+        page-break-after:always;break-after:page;
+        display:block!important
+      }
+      .sheet:last-child{page-break-after:auto;break-after:auto}
+      .sheet::before,.sheet::after,.sheet-bottom-left,.sheet-bottom-right{display:none!important}
+      .topbar{display:none!important}
+      .panel-card,.metric-card,.compare-card,.history-table-wrap,.matrix-card,.selected-card,.benchmark-grid,.compare-strip{break-inside:avoid;page-break-inside:avoid}
+      .chart-row,.hero-row,.report-mast,.metric-grid,.selected-top{page-break-inside:avoid}
+      .brand-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:linear-gradient(135deg,#123a34,#16624f)!important;color:#fff!important}
+      .hero-card{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:linear-gradient(135deg,#2940be,#5068ee)!important;color:#fff!important}
+      .matrix-card-head{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:linear-gradient(135deg,#123a34,#196451)!important;color:#fff!important}
+      .selected-benchmark{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:linear-gradient(135deg,#123a34,#196451)!important;color:#fff!important}
+      .q-bubble.ok{background:#1f9d68!important;color:#fff!important}
+      .q-bubble.bad{background:#e55252!important;color:#fff!important}
+      .q-bubble.blank{background:#cbd5e1!important;color:#64748b!important}
     }
   </style>
 </head>
@@ -404,7 +418,7 @@
             <div class="matrix-head">
               <div>
                 <h3>🔎 Soru Bazlı Kompakt Değerlendirme</h3>
-                <p>Uzun dikey liste yerine, bölüm bazlı ve soru numarası hizalı kompakt matris kullanılır. Doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri görünür.</p>
+                <p>Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.</p>
               </div>
               <div class="legend">
                 <span><i class="dot ok"></i> Doğru</span>
