@@ -1289,15 +1289,22 @@
   }
 
   async function initPage(pageNumber, pdfPage) {
+    // devicePixelRatio: Retina/HiDPI ekranlarda (MacBook, modern telefon) canvas
+    // görsel boyutunu büyütür — aksi halde tarayıcı 1x canvas'ı 2x/3x uzatır = bulanıklık.
+    const dpr = window.devicePixelRatio || 1;
     const scale = state.pageWidth / pdfPage.getViewport({ scale: 1 }).width;
-    const viewport = pdfPage.getViewport({ scale: scale });
+    const viewport = pdfPage.getViewport({ scale: scale * dpr });
     const nodes = createPageShell(pageNumber);
+
+    // Canvas piksel boyutları DPR ile büyütülür (gerçek keskinlik)
     nodes.pdfCanvas.width = viewport.width;
     nodes.pdfCanvas.height = viewport.height;
     nodes.annotationCanvas.width = viewport.width;
     nodes.annotationCanvas.height = viewport.height;
-    nodes.shell.style.width = viewport.width + 'px';
-    nodes.shell.style.height = viewport.height + 'px';
+
+    // CSS görüntü boyutu ise DPR'sız kalır (layout bozulmasın)
+    nodes.shell.style.width = (viewport.width / dpr) + 'px';
+    nodes.shell.style.height = (viewport.height / dpr) + 'px';
 
     await pdfPage.render({
       canvasContext: nodes.pdfCanvas.getContext('2d'),
@@ -1309,8 +1316,8 @@
       selection: false,
       enableRetinaScaling: true,
     });
-    fabricCanvas.setWidth(viewport.width);
-    fabricCanvas.setHeight(viewport.height);
+    fabricCanvas.setWidth(viewport.width / dpr);
+    fabricCanvas.setHeight(viewport.height / dpr);
 
     const pageState = {
       index: pageNumber,

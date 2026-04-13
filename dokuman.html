@@ -118,7 +118,12 @@
     .tool-label{font-size:12px;color:var(--viewer-slate);font-weight:800;min-width:72px;}
     .tool-input{flex:1;min-width:120px;}
     .tool-value{font-size:12px;font-weight:800;color:var(--viewer-purple);min-width:42px;text-align:right;}
-    .zoom-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;}
+    .zoom-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;}
+    .zoom-slider{
+      flex:1;
+      min-width:150px;
+      accent-color:var(--viewer-purple);
+    }
     .zoom-btn{
       width:42px;height:42px;border-radius:12px;border:2px solid var(--viewer-border);
       background:#FBF9FF;color:var(--viewer-slate);display:inline-flex;align-items:center;justify-content:center;
@@ -131,6 +136,27 @@
       min-width:72px;height:42px;border-radius:12px;background:#F7F3FF;color:var(--viewer-purple);
       display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;padding:0 12px;
     }
+    .zoom-reset-btn{
+      min-width:56px;
+      height:42px;
+      border-radius:12px;
+      border:2px solid var(--viewer-border);
+      background:#FBF9FF;
+      color:var(--viewer-slate);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      transition:all .2s;
+    }
+    .zoom-reset-btn:hover:not(:disabled){
+      border-color:var(--viewer-purple);
+      background:var(--viewer-purple-soft);
+      color:var(--viewer-purple);
+    }
+    .zoom-reset-btn:disabled{opacity:.45;cursor:not-allowed;}
     .tool-note{
       display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#FAF8FF;color:var(--viewer-slate);
       font-size:12px;font-weight:700;margin-top:12px;border:1px solid rgba(226,217,255,.8);
@@ -729,15 +755,10 @@
           <div class="tool-row" style="margin-top:12px;">
             <span class="tool-label">Yakınlık</span>
             <div class="zoom-controls">
-              <button class="zoom-btn" type="button" id="zoomOutBtn" aria-label="Uzaklaştır">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>
-              </button>
+              <input class="zoom-slider" type="range" id="zoomInput" min="100" max="260" step="5" value="100" aria-label="Yakınlaştırma seviyesi">
               <div class="zoom-pill" id="zoomValue">%100</div>
-              <button class="zoom-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">
+              <button class="zoom-reset-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">
                 1:1
-              </button>
-              <button class="zoom-btn" type="button" id="zoomInBtn" aria-label="Yakınlaştır">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
               </button>
             </div>
           </div>

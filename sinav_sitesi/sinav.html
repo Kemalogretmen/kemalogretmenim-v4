@@ -78,7 +78,7 @@ body.theme-dark{
 .exam-q-num{font-size:13px;font-weight:600;color:var(--muted);text-align:center}
 .exam-section-banner{display:none;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:linear-gradient(135deg,#EFF6FF,#E0F2FE);border:1.5px solid #BFDBFE;color:#1D4ED8;font-size:13px;font-weight:800;box-shadow:0 8px 18px rgba(37,99,235,.08)}
 .exam-section-banner .section-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#2563EB}
-.question-media-shell{width:min(100%,960px);display:flex;flex-direction:column;align-items:center;gap:12px}
+.question-media-shell{width:min(100%,1120px);display:flex;flex-direction:column;align-items:center;gap:12px}
 .drawing-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;width:100%;padding:12px 14px;background:var(--panel-bg);border:1.5px solid var(--border);border-radius:20px;box-shadow:var(--sh-sm);backdrop-filter:blur(14px)}
 .tool-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px solid var(--border);border-radius:999px;background:var(--panel-surface);font-family:var(--fb);font-size:13px;font-weight:700;color:var(--slate);cursor:pointer;transition:all .18s}
 .tool-btn:hover{border-color:var(--purple);color:var(--purple)}
@@ -106,7 +106,7 @@ body.theme-dark{
 .mini-action-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-family:var(--fb);font-size:12px;font-weight:800;cursor:pointer;transition:all .18s}
 .mini-action-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
 .mini-action-btn:disabled{opacity:.45;cursor:not-allowed}
-.exam-media-stage{position:relative;width:min(100%,960px);height:clamp(380px,50vh,580px);padding:12px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden;user-select:none;touch-action:none}
+.exam-media-stage{position:relative;width:min(100%,1120px);height:clamp(430px,60vh,760px);padding:10px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden;user-select:none;touch-action:none}
 .exam-media-stage.mode-pencil{cursor:var(--cursor-pencil) 6 24,crosshair}
 .exam-media-stage.mode-eraser{cursor:cell}
 .exam-media-stage.mode-select{cursor:default}
@@ -117,7 +117,19 @@ body.theme-dark{
   repeating-linear-gradient(90deg,transparent 0 35px,var(--stage-grid) 35px 36px),
   var(--stage-bg)}
 .question-transform-layer{position:absolute;inset:0;transform:translate3d(var(--question-pan-x,0px),var(--question-pan-y,0px),0) scale(var(--question-zoom,1));transform-origin:center center;transition:transform .16s ease;will-change:transform}
-.exam-q-img{position:absolute;inset:24px;max-width:calc(100% - 48px);max-height:calc(100% - 48px);margin:auto;object-fit:contain;border-radius:var(--r);display:block}
+.exam-q-img{
+  position:absolute;
+  inset:clamp(10px,1.6vw,18px);
+  max-width:calc(100% - (clamp(10px,1.6vw,18px) * 2));
+  max-height:calc(100% - (clamp(10px,1.6vw,18px) * 2));
+  margin:auto;
+  object-fit:contain;
+  object-position:center center;
+  border-radius:var(--r);
+  display:block;
+  image-rendering:auto;
+  filter:drop-shadow(0 10px 24px rgba(15,23,42,.08));
+}
 .exam-media-stage.is-dragging .question-transform-layer{transition:none}
 .draw-canvas{position:absolute;inset:0;pointer-events:none;z-index:2}
 .question-hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
@@ -354,7 +366,7 @@ body.theme-dark .size-value{color:var(--muted)}
   .toolbar-divider{display:none}
   .question-status-strip{padding:10px 12px}
   .status-pills,.status-actions{width:100%}
-  .exam-media-stage{width:100%;height:clamp(320px,48vh,460px)}
+  .exam-media-stage{width:100%;height:clamp(340px,52vh,520px)}
   .exam-answers{gap:8px}
   .ans-btn{padding:9px 14px;font-size:13px}
   .exam-navrow{padding:12px 14px}
@@ -381,7 +393,7 @@ body.theme-dark .size-value{color:var(--muted)}
   .exam-section-banner{width:100%;justify-content:center;text-align:center;flex-wrap:wrap}
   .zoom-wrap{min-width:100%}
   .mini-action-btn{flex:1;justify-content:center}
-  .exam-media-stage{height:clamp(300px,44vh,420px)}
+  .exam-media-stage{height:clamp(320px,48vh,460px)}
   .ksp-headline{font-size:28px}
   .ksp-mini-stats{grid-template-columns:1fr}
   .chart-frame-bars{height:220px;min-height:220px;max-height:220px}
