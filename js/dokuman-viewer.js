@@ -374,7 +374,8 @@
   }
 
   function setStatus(text) {
-    qs('viewerStatusLeft').textContent = text;
+    var el = qs('viewerStatusLeft');
+    if (el) el.textContent = text;
   }
 
   function refreshStatus(prefixText) {
@@ -704,22 +705,28 @@
   }
 
   function updateSizeLabel() {
-    qs('sizeValue').textContent = state.size + ' px';
+    var el = qs('sizeValue');
+    if (el) el.textContent = state.size + ' px';
   }
 
   function setSize(nextSize) {
     state.size = clamp(parseInt(nextSize, 10) || 4, 1, 24);
-    qs('sizeInput').value = String(state.size);
+    var sizeInput = qs('sizeInput');
+    if (sizeInput) sizeInput.value = String(state.size);
     updateSizeLabel();
     applyToolToAllPages();
   }
 
   function updateHistoryButtons() {
     const pageState = getActivePageState();
-    qs('undoBtn').disabled = !pageState || pageState.history.length <= 1;
-    qs('redoBtn').disabled = !pageState || !pageState.redo.length;
-    qs('deleteSelectionBtn').disabled = !pageState || !pageState.canvas.getActiveObject();
-    qs('clearPageBtn').disabled = !pageState || !pageState.canvas.getObjects().length;
+    var undoBtn         = qs('undoBtn');
+    var redoBtn         = qs('redoBtn');
+    var deleteBtn       = qs('deleteSelectionBtn');
+    var clearBtn        = qs('clearPageBtn');
+    if (undoBtn)   undoBtn.disabled   = !pageState || pageState.history.length <= 1;
+    if (redoBtn)   redoBtn.disabled   = !pageState || !pageState.redo.length;
+    if (deleteBtn) deleteBtn.disabled = !pageState || !pageState.canvas.getActiveObject();
+    if (clearBtn)  clearBtn.disabled  = !pageState || !pageState.canvas.getObjects().length;
   }
 
   function clampPanValues() {
@@ -737,10 +744,14 @@
   }
 
   function syncZoomButtons() {
-    qs('zoomValue').textContent = '%' + Math.round(state.zoom * 100);
-    qs('zoomOutBtn').disabled = state.zoom <= 1;
-    qs('zoomResetBtn').disabled = state.zoom === 1 && state.panX === 0 && state.panY === 0;
-    qs('zoomInBtn').disabled = state.zoom >= 2.6;
+    var zoomValue    = qs('zoomValue');
+    var zoomOutBtn   = qs('zoomOutBtn');
+    var zoomResetBtn = qs('zoomResetBtn');
+    var zoomInBtn    = qs('zoomInBtn');
+    if (zoomValue)    zoomValue.textContent = '%' + Math.round(state.zoom * 100);
+    if (zoomOutBtn)   zoomOutBtn.disabled   = state.zoom <= 1;
+    if (zoomResetBtn) zoomResetBtn.disabled = state.zoom === 1 && state.panX === 0 && state.panY === 0;
+    if (zoomInBtn)    zoomInBtn.disabled    = state.zoom >= 2.6;
     getBookFrame().classList.toggle('is-pannable', state.zoom > 1 && state.tool === 'pan');
     getBookFrame().classList.toggle('is-panning', state.isPanning);
     updateViewModeButtons();
@@ -788,15 +799,25 @@
   function syncPageControls() {
     const visiblePages = getVisiblePages();
     const pageCounter = formatVisiblePageLabel(visiblePages);
-    qs('pageCounter').textContent = pageCounter;
-    qs('pageChip').textContent = 'Sayfa ' + pageCounter;
-    qs('pageSlider').max = String(Math.max(1, state.pageCount));
-    qs('pageSlider').step = String(getPageStep());
-    qs('pageSlider').value = String(clamp(state.currentPage, 1, Math.max(1, state.pageCount)));
-    qs('pageJumpInput').max = String(Math.max(1, state.pageCount));
-    qs('pageJumpInput').value = String(clamp(state.focusPage, 1, Math.max(1, state.pageCount)));
-    qs('prevPageBtn').disabled = state.currentPage <= 1 || state.isFlipping || state.isRebuilding;
-    qs('nextPageBtn').disabled = visiblePages[visiblePages.length - 1] >= state.pageCount || state.isFlipping || state.isRebuilding;
+    var pageCounterEl  = qs('pageCounter');
+    var pageChipEl     = qs('pageChip');
+    var pageSliderEl   = qs('pageSlider');
+    var pageJumpEl     = qs('pageJumpInput');
+    var prevBtn        = qs('prevPageBtn');
+    var nextBtn        = qs('nextPageBtn');
+    if (pageCounterEl) pageCounterEl.textContent = pageCounter;
+    if (pageChipEl)    pageChipEl.textContent    = 'Sayfa ' + pageCounter;
+    if (pageSliderEl) {
+      pageSliderEl.max   = String(Math.max(1, state.pageCount));
+      pageSliderEl.step  = String(getPageStep());
+      pageSliderEl.value = String(clamp(state.currentPage, 1, Math.max(1, state.pageCount)));
+    }
+    if (pageJumpEl) {
+      pageJumpEl.max   = String(Math.max(1, state.pageCount));
+      pageJumpEl.value = String(clamp(state.focusPage, 1, Math.max(1, state.pageCount)));
+    }
+    if (prevBtn) prevBtn.disabled = state.currentPage <= 1 || state.isFlipping || state.isRebuilding;
+    if (nextBtn) nextBtn.disabled = visiblePages[visiblePages.length - 1] >= state.pageCount || state.isFlipping || state.isRebuilding;
   }
 
   function pushHistory(pageState) {
