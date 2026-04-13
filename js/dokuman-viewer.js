@@ -215,6 +215,10 @@
   ];
   const VIEW_MODE_STORAGE_KEY = 'kemal_dokuman_view_mode';
   const PAGE_TURN_DURATION = 920;
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 2.6;
+  const ZOOM_STEP = 0.2;
+  const PDF_RENDER_BOOST = 1.75;
 
   const state = {
     documentId: '',
@@ -374,8 +378,7 @@
   }
 
   function setStatus(text) {
-    var el = qs('viewerStatusLeft');
-    if (el) el.textContent = text;
+    qs('viewerStatusLeft').textContent = text;
   }
 
   function refreshStatus(prefixText) {
@@ -705,28 +708,22 @@
   }
 
   function updateSizeLabel() {
-    var el = qs('sizeValue');
-    if (el) el.textContent = state.size + ' px';
+    qs('sizeValue').textContent = state.size + ' px';
   }
 
   function setSize(nextSize) {
     state.size = clamp(parseInt(nextSize, 10) || 4, 1, 24);
-    var sizeInput = qs('sizeInput');
-    if (sizeInput) sizeInput.value = String(state.size);
+    qs('sizeInput').value = String(state.size);
     updateSizeLabel();
     applyToolToAllPages();
   }
 
   function updateHistoryButtons() {
     const pageState = getActivePageState();
-    var undoBtn         = qs('undoBtn');
-    var redoBtn         = qs('redoBtn');
-    var deleteBtn       = qs('deleteSelectionBtn');
-    var clearBtn        = qs('clearPageBtn');
-    if (undoBtn)   undoBtn.disabled   = !pageState || pageState.history.length <= 1;
-    if (redoBtn)   redoBtn.disabled   = !pageState || !pageState.redo.length;
-    if (deleteBtn) deleteBtn.disabled = !pageState || !pageState.canvas.getActiveObject();
-    if (clearBtn)  clearBtn.disabled  = !pageState || !pageState.canvas.getObjects().length;
+    qs('undoBtn').disabled = !pageState || pageState.history.length <= 1;
+    qs('redoBtn').disabled = !pageState || !pageState.redo.length;
+    qs('deleteSelectionBtn').disabled = !pageState || !pageState.canvas.getActiveObject();
+    qs('clearPageBtn').disabled = !pageState || !pageState.canvas.getObjects().length;
   }
 
   function clampPanValues() {
@@ -744,14 +741,9 @@
   }
 
   function syncZoomButtons() {
-    var zoomValue    = qs('zoomValue');
-    var zoomOutBtn   = qs('zoomOutBtn');
-    var zoomResetBtn = qs('zoomResetBtn');
-    var zoomInBtn    = qs('zoomInBtn');
-    if (zoomValue)    zoomValue.textContent = '%' + Math.round(state.zoom * 100);
-    if (zoomOutBtn)   zoomOutBtn.disabled   = state.zoom <= 1;
-    if (zoomResetBtn) zoomResetBtn.disabled = state.zoom === 1 && state.panX === 0 && state.panY === 0;
-    if (zoomInBtn)    zoomInBtn.disabled    = state.zoom >= 2.6;
+    qs('zoomValue').textContent = '%' + Math.round(state.zoom * 100);
+    qs('zoomInput').value = String(Math.round(state.zoom * 100));
+    qs('zoomResetBtn').disabled = state.zoom === 1 && state.panX === 0 && state.panY === 0;
     getBookFrame().classList.toggle('is-pannable', state.zoom > 1 && state.tool === 'pan');
     getBookFrame().classList.toggle('is-panning', state.isPanning);
     updateViewModeButtons();
@@ -782,7 +774,7 @@
 
   function setZoom(nextZoom, options) {
     const previousZoom = state.zoom;
-    state.zoom = clamp(nextZoom, 1, 2.6);
+    state.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
 
     if (state.zoom === 1) {
       state.panX = 0;
@@ -799,25 +791,15 @@
   function syncPageControls() {
     const visiblePages = getVisiblePages();
     const pageCounter = formatVisiblePageLabel(visiblePages);
-    var pageCounterEl  = qs('pageCounter');
-    var pageChipEl     = qs('pageChip');
-    var pageSliderEl   = qs('pageSlider');
-    var pageJumpEl     = qs('pageJumpInput');
-    var prevBtn        = qs('prevPageBtn');
-    var nextBtn        = qs('nextPageBtn');
-    if (pageCounterEl) pageCounterEl.textContent = pageCounter;
-    if (pageChipEl)    pageChipEl.textContent    = 'Sayfa ' + pageCounter;
-    if (pageSliderEl) {
-      pageSliderEl.max   = String(Math.max(1, state.pageCount));
-      pageSliderEl.step  = String(getPageStep());
-      pageSliderEl.value = String(clamp(state.currentPage, 1, Math.max(1, state.pageCount)));
-    }
-    if (pageJumpEl) {
-      pageJumpEl.max   = String(Math.max(1, state.pageCount));
-      pageJumpEl.value = String(clamp(state.focusPage, 1, Math.max(1, state.pageCount)));
-    }
-    if (prevBtn) prevBtn.disabled = state.currentPage <= 1 || state.isFlipping || state.isRebuilding;
-    if (nextBtn) nextBtn.disabled = visiblePages[visiblePages.length - 1] >= state.pageCount || state.isFlipping || state.isRebuilding;
+    qs('pageCounter').textContent = pageCounter;
+    qs('pageChip').textContent = 'Sayfa ' + pageCounter;
+    qs('pageSlider').max = String(Math.max(1, state.pageCount));
+    qs('pageSlider').step = String(getPageStep());
+    qs('pageSlider').value = String(clamp(state.currentPage, 1, Math.max(1, state.pageCount)));
+    qs('pageJumpInput').max = String(Math.max(1, state.pageCount));
+    qs('pageJumpInput').value = String(clamp(state.focusPage, 1, Math.max(1, state.pageCount)));
+    qs('prevPageBtn').disabled = state.currentPage <= 1 || state.isFlipping || state.isRebuilding;
+    qs('nextPageBtn').disabled = visiblePages[visiblePages.length - 1] >= state.pageCount || state.isFlipping || state.isRebuilding;
   }
 
   function pushHistory(pageState) {
@@ -1310,26 +1292,25 @@
   }
 
   async function initPage(pageNumber, pdfPage) {
-    // devicePixelRatio: Retina/HiDPI ekranlarda (MacBook, modern telefon) canvas
-    // görsel boyutunu büyütür — aksi halde tarayıcı 1x canvas'ı 2x/3x uzatır = bulanıklık.
-    const dpr = window.devicePixelRatio || 1;
-    const scale = state.pageWidth / pdfPage.getViewport({ scale: 1 }).width;
-    const viewport = pdfPage.getViewport({ scale: scale * dpr });
+    const baseViewport = pdfPage.getViewport({ scale: 1 });
+    const cssScale = state.pageWidth / baseViewport.width;
+    const viewport = pdfPage.getViewport({ scale: cssScale });
+    const renderBoost = Math.min(PDF_RENDER_BOOST, Math.max(1, window.devicePixelRatio || 1));
     const nodes = createPageShell(pageNumber);
+    nodes.pdfCanvas.width = Math.round(viewport.width * renderBoost);
+    nodes.pdfCanvas.height = Math.round(viewport.height * renderBoost);
+    nodes.pdfCanvas.style.width = viewport.width + 'px';
+    nodes.pdfCanvas.style.height = viewport.height + 'px';
+    nodes.annotationCanvas.style.width = viewport.width + 'px';
+    nodes.annotationCanvas.style.height = viewport.height + 'px';
+    nodes.shell.style.width = viewport.width + 'px';
+    nodes.shell.style.height = viewport.height + 'px';
 
-    // Canvas piksel boyutları DPR ile büyütülür (gerçek keskinlik)
-    nodes.pdfCanvas.width = viewport.width;
-    nodes.pdfCanvas.height = viewport.height;
-    nodes.annotationCanvas.width = viewport.width;
-    nodes.annotationCanvas.height = viewport.height;
-
-    // CSS görüntü boyutu ise DPR'sız kalır (layout bozulmasın)
-    nodes.shell.style.width = (viewport.width / dpr) + 'px';
-    nodes.shell.style.height = (viewport.height / dpr) + 'px';
-
+    const pdfContext = nodes.pdfCanvas.getContext('2d', { alpha: false });
     await pdfPage.render({
-      canvasContext: nodes.pdfCanvas.getContext('2d'),
+      canvasContext: pdfContext,
       viewport: viewport,
+      transform: renderBoost > 1 ? [renderBoost, 0, 0, renderBoost, 0, 0] : null,
     }).promise;
 
     const fabricCanvas = new window.fabric.Canvas(nodes.annotationCanvas, {
@@ -1337,8 +1318,8 @@
       selection: false,
       enableRetinaScaling: true,
     });
-    fabricCanvas.setWidth(viewport.width / dpr);
-    fabricCanvas.setHeight(viewport.height / dpr);
+    fabricCanvas.setWidth(viewport.width);
+    fabricCanvas.setHeight(viewport.height);
 
     const pageState = {
       index: pageNumber,
@@ -1370,22 +1351,23 @@
     return nodes.shell;
   }
 
-  function getResponsivePageWidth(baseWidth) {
+  function getResponsivePageWidth(baseWidth, baseHeight) {
     const frame = getBookFrame();
     const viewportWidth = Math.max(
       320,
       (frame && frame.clientWidth ? frame.clientWidth : (window.innerWidth || 1280)) - 28
     );
+    const isLandscape = baseWidth >= baseHeight;
     if (state.viewMode === 'spread') {
-      return Math.min(baseWidth, Math.max(168, (viewportWidth - 12) / 2));
+      return Math.max(168, Math.min(isLandscape ? 620 : 560, (viewportWidth - 12) / 2));
     }
     if (viewportWidth < 760) {
-      return Math.min(430, viewportWidth - 24);
+      return Math.max(280, viewportWidth - 24);
     }
     if (viewportWidth < 1180) {
-      return Math.min(600, viewportWidth - 44);
+      return Math.min(isLandscape ? 920 : 780, viewportWidth - 28);
     }
-    return Math.min(760, viewportWidth - 64);
+    return Math.min(isLandscape ? 1100 : 860, viewportWidth - 44);
   }
 
   function showPage(pageNumber, initial) {
@@ -1500,7 +1482,7 @@
 
     const firstPage = await state.pdfDoc.getPage(1);
     const baseViewport = firstPage.getViewport({ scale: 1 });
-    state.pageWidth = getResponsivePageWidth(baseViewport.width);
+    state.pageWidth = getResponsivePageWidth(baseViewport.width, baseViewport.height);
     state.pageHeight = state.pageWidth * (baseViewport.height / baseViewport.width);
     state.bookWidth = state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth;
     state.bookHeight = state.pageHeight;
@@ -1673,11 +1655,8 @@
     });
     qs('toolButtons').addEventListener('mouseleave', hideToolTooltip);
 
-    qs('zoomInBtn').addEventListener('click', function() {
-      setZoom(state.zoom + 0.2, { keepCenter: true });
-    });
-    qs('zoomOutBtn').addEventListener('click', function() {
-      setZoom(state.zoom - 0.2, { keepCenter: true });
+    qs('zoomInput').addEventListener('input', function(event) {
+      setZoom((parseInt(event.target.value, 10) || 100) / 100, { keepCenter: true });
     });
     qs('zoomResetBtn').addEventListener('click', function() {
       setZoom(1);
@@ -1839,12 +1818,12 @@
       }
       if (key === '+' || key === '=') {
         event.preventDefault();
-        setZoom(state.zoom + 0.2, { keepCenter: true });
+        setZoom(state.zoom + ZOOM_STEP, { keepCenter: true });
         return;
       }
       if (key === '-') {
         event.preventDefault();
-        setZoom(state.zoom - 0.2, { keepCenter: true });
+        setZoom(state.zoom - ZOOM_STEP, { keepCenter: true });
         return;
       }
       if (key === '0') {
