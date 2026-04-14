@@ -8,8 +8,6 @@
     readingSupabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
     documentSupabaseUrl: 'https://mwxcvlyrkptxrwgkmqum.supabase.co',
     documentSupabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
-    legacySiteSettingsUrl: 'https://spaquvxaldxgjieqmzio.supabase.co',
-    legacySiteSettingsAnonKey: 'sb_publishable_60Rg38eHmnV2UMXW7GYmPw_F-QBWhEz',
     siteSettingsTable: 'site_settings',
     siteSettingsRowKey: 'site_content',
     cacheKey: 'kemal_site_data',
@@ -268,21 +266,6 @@
       primaryValue = null;
     }
 
-    if (
-      CONFIG.legacySiteSettingsUrl &&
-      CONFIG.legacySiteSettingsAnonKey &&
-      CONFIG.legacySiteSettingsUrl !== CONFIG.supabaseUrl
-    ) {
-      try {
-        const legacyValue = await fetchSiteDataFrom(CONFIG.legacySiteSettingsUrl, CONFIG.legacySiteSettingsAnonKey);
-        if (isMeaningfulSiteData(legacyValue)) {
-          return setCachedData(legacyValue);
-        }
-      } catch (error) {
-        return getCachedData();
-      }
-    }
-
     if (primaryValue && typeof primaryValue === 'object') {
       return setCachedData(primaryValue);
     }
@@ -361,14 +344,6 @@
         supabaseUrl: CONFIG.documentSupabaseUrl || CONFIG.readingSupabaseUrl || CONFIG.supabaseUrl,
         supabaseAnonKey: CONFIG.documentSupabaseAnonKey || CONFIG.readingSupabaseAnonKey || CONFIG.supabaseAnonKey,
       };
-    },
-    getLegacySiteConfig: function() {
-      return CONFIG.legacySiteSettingsUrl
-        ? {
-          supabaseUrl: CONFIG.legacySiteSettingsUrl,
-          supabaseAnonKey: CONFIG.legacySiteSettingsAnonKey,
-        }
-        : null;
     },
     getDefaults: function() {
       return normalizeSiteData(DEFAULT_SITE_DATA);

@@ -651,27 +651,54 @@
       }
       if (!selectedMetin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
 
-      // Soruları çek (varsa)
-      let soruResponse = await sb
-        .from('sorular')
-        .select('id, soru_metni, sira, soru_tipi, ayar_json, secenekler(id, secenek_metni, dogru_mu, sira)')
+      // Soruları güvenli public view'lardan çek
+      const { data: sorularRows, error: sorularError } = await sb
+        .from('sorular_public')
+        .select('id, metin_id, soru_metni, sira, soru_tipi, ayar_json')
         .eq('metin_id', metinId)
         .order('sira');
 
-      if (soruResponse.error && ['soru_tipi', 'ayar_json'].some(col => soruResponse.error.message && soruResponse.error.message.includes(col))) {
-        soruResponse = await sb
-          .from('sorular')
-          .select('id, soru_metni, sira, secenekler(id, secenek_metni, dogru_mu, sira)')
-          .eq('metin_id', metinId)
-          .order('sira');
+      if (sorularError) {
+        alert('Sorular yüklenemedi, lütfen tekrar deneyin.');
+        return;
       }
 
-      const sorularData = soruResponse.data || [];
+      const soruIds = (sorularRows || []).map((soru) => soru.id);
+      let secenekRows = [];
 
-      selectedMetin.sorular = (sorularData || selectedMetin.sorular || []).map(s => ({
-        ...s,
-        secenekler: (s.secenekler || []).sort((a,b) => a.sira - b.sira)
-      }));
+      if (soruIds.length) {
+        const { data: secenekData, error: secenekError } = await sb
+          .from('secenekler_public')
+          .select('id, soru_id, secenek_metni, sira')
+          .in('soru_id', soruIds)
+          .order('sira');
+
+        if (secenekError) {
+          alert('Seçenekler yüklenemedi, lütfen tekrar deneyin.');
+          return;
+        }
+
+        secenekRows = secenekData || [];
+      }
+
+      const secenekMap = {};
+      secenekRows.forEach(function(secenek) {
+        if (!secenekMap[secenek.soru_id]) {
+          secenekMap[secenek.soru_id] = [];
+        }
+        secenekMap[secenek.soru_id].push(secenek);
+      });
+
+      const sorularData = (sorularRows || []).map(function(soru) {
+        return {
+          ...soru,
+          secenekler: (secenekMap[soru.id] || []).sort(function(a, b) {
+            return a.sira - b.sira;
+          }),
+        };
+      });
+
+      selectedMetin.sorular = sorularData;
 
       seciliMetin = selectedMetin;
       document.getElementById('kullanici_sinif').value = seciliSinif || normalizeGradeList(selectedMetin)[0] || '';
