@@ -391,7 +391,7 @@
         <div class="form-row-2">
           <div class="fg">
             <label>İl *</label>
-            <input type="text" id="kullanici_il" placeholder="İlinizi yazın" autocomplete="address-level1" maxlength="40">
+            <select id="kullanici_il"></select>
           </div>
           <div class="fg">
             <label>Okul *</label>
@@ -417,6 +417,10 @@
     const METIN_DETAIL_CACHE_PREFIX = 'kemal_okuma_metin_detay_';
     const urlParams = new URLSearchParams(window.location.search);
     const sharedMetinId = urlParams.get('metinId') || urlParams.get('textId') || urlParams.get('metin') || '';
+    const TR_CITIES = window.kemalSiteStore && window.kemalSiteStore.getTurkeyCities
+      ? window.kemalSiteStore.getTurkeyCities()
+      : [];
+    const LOW_QUALITY_TOKENS = ['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
 
     let seciliSinif = null;
     let seciliMetin = null;
@@ -429,6 +433,50 @@
       return collapseSpaces(value).split(' ').map(function(word) {
         return word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '';
       }).join(' ');
+    }
+
+    function populateCitySelect() {
+      const select = document.getElementById('kullanici_il');
+      if (!select) {
+        return;
+      }
+      select.innerHTML = '<option value="">Seç…</option>' + TR_CITIES.map(function(city) {
+        return '<option value="' + escHtml(city) + '">' + escHtml(city) + '</option>';
+      }).join('');
+    }
+
+    function hasLowQualityText(value) {
+      const normalized = collapseSpaces(value).toLocaleLowerCase('tr-TR');
+      if (!normalized) {
+        return true;
+      }
+      const lettersOnly = normalized.replace(/[^a-zçğıöşü]/g, '');
+      if (lettersOnly.length < 2) {
+        return true;
+      }
+      if (/^(.)\1{2,}$/.test(lettersOnly) || /(.)\1{3,}/.test(lettersOnly)) {
+        return true;
+      }
+      if (LOW_QUALITY_TOKENS.includes(normalized) || LOW_QUALITY_TOKENS.includes(lettersOnly)) {
+        return true;
+      }
+      const words = normalized.split(' ').filter(Boolean);
+      if (words.length > 1 && new Set(words).size === 1) {
+        return true;
+      }
+      return false;
+    }
+
+    function validateSurname(value) {
+      const normalized = collapseSpaces(value);
+      if (!/^[A-Za-zÇĞİÖŞÜçğıöşü\s'-]+$/.test(normalized)) {
+        return false;
+      }
+      return !hasLowQualityText(normalized);
+    }
+
+    function validateSchool(value) {
+      return !hasLowQualityText(value);
     }
 
     function normalizeGradeList(metin) {
@@ -651,12 +699,24 @@
       }
       if (!selectedMetin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
 
-      // Soruları güvenli public view'lardan çek
-      const { data: sorularRows, error: sorularError } = await sb
-        .from('sorular_public')
+      // Önce doğrudan tablolardan çekmeyi dene; doğru cevap bilgisi burada tam bulunur.
+      // Canlı projede bu tablo erişimi kapalıysa public view'lara güvenli şekilde geri düş.
+      let soruResponse = await sb
+        .from('sorular')
         .select('id, metin_id, soru_metni, sira, soru_tipi, ayar_json')
         .eq('metin_id', metinId)
         .order('sira');
+
+      if (soruResponse.error) {
+        soruResponse = await sb
+          .from('sorular_public')
+          .select('id, metin_id, soru_metni, sira, soru_tipi, ayar_json')
+          .eq('metin_id', metinId)
+          .order('sira');
+      }
+
+      const sorularRows = soruResponse.data;
+      const sorularError = soruResponse.error;
 
       if (sorularError) {
         alert('Sorular yüklenemedi, lütfen tekrar deneyin.');
@@ -667,11 +727,22 @@
       let secenekRows = [];
 
       if (soruIds.length) {
-        const { data: secenekData, error: secenekError } = await sb
-          .from('secenekler_public')
-          .select('id, soru_id, secenek_metni, sira')
+        let secenekResponse = await sb
+          .from('secenekler')
+          .select('id, soru_id, secenek_metni, sira, dogru_mu')
           .in('soru_id', soruIds)
           .order('sira');
+
+        if (secenekResponse.error) {
+          secenekResponse = await sb
+            .from('secenekler_public')
+            .select('id, soru_id, secenek_metni, sira')
+            .in('soru_id', soruIds)
+            .order('sira');
+        }
+
+        const secenekData = secenekResponse.data;
+        const secenekError = secenekResponse.error;
 
         if (secenekError) {
           alert('Seçenekler yüklenemedi, lütfen tekrar deneyin.');
@@ -729,6 +800,14 @@
         alert('Lütfen tüm alanları doldurun!');
         return;
       }
+      if (!validateSurname(soyad)) {
+        alert('Soyad alanında anlamsız, tekrar eden veya geçersiz bir giriş görünüyor.');
+        return;
+      }
+      if (!validateSchool(okul)) {
+        alert('Okul adı anlamsız veya tekrar eden bir giriş gibi görünüyor. Lütfen okul adını daha net yazın.');
+        return;
+      }
 
       sessionStorage.setItem('okuma_kullanici', JSON.stringify({
         ad: capitalizeWords(ad),
@@ -738,6 +817,7 @@
         il: capitalizeWords(il),
         okul: collapseSpaces(okul)
       }));
+      sessionStorage.removeItem('kemal_okuma_result_id');
       window.location.href = '/hizli-okuma/oku.html';
     }
 
@@ -777,6 +857,8 @@
 
       return getCachedMetinById(metinId);
     }
+
+    populateCitySelect();
 
     async function handleSharedMetinLink() {
       if (!sharedMetinId) {

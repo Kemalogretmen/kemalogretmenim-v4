@@ -21,6 +21,7 @@
 
   const client = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
   const PENDING_RESULTS_KEY = 'kemal_okuma_pending_results_v1';
+  const READING_RESULT_ID_KEY = 'kemal_okuma_result_id';
 
   function stripHtml(value) {
     return (value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -100,14 +101,30 @@
   }
 
   async function insertResultPayload(payload) {
-    let response = await client.from('sonuclar').insert(payload);
+    let response = await client.from('sonuclar').insert(payload).select('id').maybeSingle();
     if (response.error && response.error.message && response.error.message.includes('detay_json')) {
       const fallbackPayload = Object.assign({}, payload);
       delete fallbackPayload.detay_json;
-      response = await client.from('sonuclar').insert(fallbackPayload);
+      response = await client.from('sonuclar').insert(fallbackPayload).select('id').maybeSingle();
     }
     if (response.error) {
       throw response.error;
+    }
+    return response.data || null;
+  }
+
+  async function updateResultPayload(id, payload) {
+    let response = await client.from('sonuclar').update(payload).eq('id', id).select('id').maybeSingle();
+    if (response.error && response.error.message && response.error.message.includes('detay_json')) {
+      const fallbackPayload = Object.assign({}, payload);
+      delete fallbackPayload.detay_json;
+      response = await client.from('sonuclar').update(fallbackPayload).eq('id', id).select('id').maybeSingle();
+    }
+    if (response.error) {
+      throw response.error;
+    }
+    if (!response.data || !response.data.id) {
+      throw new Error('Baslatilan okuma kaydi guncellenemedi.');
     }
   }
 
@@ -283,6 +300,7 @@
       toplam_soru: comprehension.toplam,
       anlama_yuzdesi: comprehension.yuzde,
       detay_json: {
+        attempt_status: 'completed',
         cevaplar: comprehension.detay,
         goruntuleme_modu: runtime.metin.goruntuleme_modu,
         kullanici_bilgileri: {
@@ -294,7 +312,15 @@
 
     try {
       await flushPendingResults();
-      await insertResultPayload(payload);
+      const existingId = sessionStorage.getItem(READING_RESULT_ID_KEY) || '';
+      if (existingId) {
+        await updateResultPayload(existingId, payload);
+      } else {
+        const inserted = await insertResultPayload(payload);
+        if (inserted && inserted.id) {
+          sessionStorage.setItem(READING_RESULT_ID_KEY, String(inserted.id));
+        }
+      }
     } catch (error) {
       const pending = getPendingResults();
       pending.push(payload);
@@ -375,6 +401,7 @@
     sessionStorage.removeItem('okuma_wpm');
     sessionStorage.removeItem('okuma_cevaplar');
     sessionStorage.removeItem('okuma_karne_kaydedildi');
+    sessionStorage.removeItem(READING_RESULT_ID_KEY);
     sessionStorage.setItem('okuma_attempt_id', 'attempt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     window.location.href = '/hizli-okuma/oku.html';
   }

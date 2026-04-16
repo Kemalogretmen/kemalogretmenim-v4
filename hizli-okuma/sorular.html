@@ -391,7 +391,45 @@
     }
 
     function getCorrectChoice(question) {
-      return getQuestionChoices(question).find(choice => choice.dogru_mu) || null;
+      const choices = getQuestionChoices(question);
+      const direct = choices.find(choice => choice && choice.dogru_mu);
+      if (direct) {
+        return direct;
+      }
+
+      const settings = question && question.ayar_json && typeof question.ayar_json === 'object'
+        ? question.ayar_json
+        : {};
+      const explicitIds = [
+        settings.dogruSecenekId,
+        settings.correctChoiceId,
+        settings.correctId,
+        settings.correctChoice,
+        settings.dogru_id,
+      ].filter(Boolean);
+
+      for (const explicitId of explicitIds) {
+        const match = choices.find(choice => String(choice.id) === String(explicitId));
+        if (match) {
+          return match;
+        }
+      }
+
+      const explicitTexts = [
+        settings.dogruSecenekMetni,
+        settings.correctChoiceText,
+        settings.correctText,
+        settings.dogruMetin,
+      ].map(normalizeTextToken).filter(Boolean);
+
+      for (const explicitText of explicitTexts) {
+        const match = choices.find(choice => normalizeTextToken(choice && choice.secenek_metni) === explicitText);
+        if (match) {
+          return match;
+        }
+      }
+
+      return null;
     }
 
     function formatQuestionText(question) {

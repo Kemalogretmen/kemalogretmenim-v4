@@ -794,6 +794,53 @@ function formatStudentMetaLine(source){
   return [...baseParts,...getStudentLocationParts(source)].join(' · ');
 }
 
+function buildResultSnapshot(status='completed'){
+  const qs=P.questions,ans=P.answers;
+  let correct=0,wrong=0,blank=0;
+  const studentKey=buildStudentKey(P.student);
+  const answerDetails=qs.map((q,i)=>{
+    const a=ans[i];
+    const sectionTitle=getQuestionSectionDisplay(q,i,P.exam.subject,P.exam.questionSections);
+    if(!a){
+      blank++;
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
+    }
+    if(a===q.correctAnswer){
+      correct++;
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
+    }
+    wrong++;
+    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
+  });
+  let netCorrect=correct;
+  if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
+  const total=qs.length;
+  const score=Math.round(netCorrect/Math.max(total,1)*100);
+  const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
+  return{
+    resultId:P.result?.resultId||'',
+    firstName:P.student.firstName,
+    lastName:P.student.lastName,
+    grade:P.student.grade,
+    sube:P.student.sube,
+    city:P.student.city||'',
+    school:P.student.school||'',
+    studentKey,
+    subject:P.exam.subject,
+    examTitle:P.exam.title,
+    examId:P.exam.id,
+    correct,wrong,blank,netCorrect,score,total,
+    negativeMarking:P.exam.negativeMarking,
+    answers:{...ans},
+    answerDetails,
+    questionSections:Array.isArray(P.exam.questionSections)?P.exam.questionSections:[],
+    elapsed,
+    status,
+    date:new Date().toLocaleDateString('tr-TR'),
+    questions:qs
+  };
+}
+
 function getStudentIdentityKey(source){
   const accountUid=String(source?.accountUid||source?.userId||'').trim();
   if(accountUid) return`uid:${accountUid}`;
@@ -2043,40 +2090,29 @@ window.showKarne=function(){renderKarne();showScreen('screenKarne');};
 
 function calcResult(){
   clearInterval(P.timer);
-  const qs=P.questions,ans=P.answers;
-  let correct=0,wrong=0,blank=0;
-  const studentKey=buildStudentKey(P.student);
-  const answerDetails=qs.map((q,i)=>{
-    const a=ans[i];
-    const sectionTitle=getQuestionSectionDisplay(q,i,P.exam.subject,P.exam.questionSections);
-    if(!a){
-      blank++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
-    }
-    if(a===q.correctAnswer){
-      correct++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
-    }
-    wrong++;
-    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
-  });
-  let netCorrect=correct;
-  if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
-  const total=qs.length;
-  const score=Math.round(netCorrect/total*100);
-  const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
-  P.result={resultId:'',firstName:P.student.firstName,lastName:P.student.lastName,grade:P.student.grade,sube:P.student.sube,city:P.student.city||'',school:P.student.school||'',studentKey,subject:P.exam.subject,examTitle:P.exam.title,examId:P.exam.id,correct,wrong,blank,netCorrect,score,total,negativeMarking:P.exam.negativeMarking,answers:{...ans},answerDetails,questionSections:Array.isArray(P.exam.questionSections)?P.exam.questionSections:[],elapsed,date:new Date().toLocaleDateString('tr-TR'),questions:qs};
+  P.result={...buildResultSnapshot('completed'),resultId:''};
   return P.result;
 }
 
 async function persistResultRecord(result){
-  if(result?.resultId) return result.resultId;
   const resultRef=await addDoc(collection(db,'results'),{
-    firstName:result.firstName,lastName:result.lastName,grade:result.grade,sube:result.sube,city:result.city||'',school:result.school||'',studentKey:result.studentKey,
-    subject:result.subject,examTitle:result.examTitle,examId:result.examId,
-    correct:result.correct,wrong:result.wrong,blank:result.blank,netCorrect:result.netCorrect,
-    score:result.score,total:result.total,negativeMarking:result.negativeMarking||false,
-    elapsed:result.elapsed,answerDetails:result.answerDetails||[],
+    firstName:result.firstName,
+    lastName:result.lastName,
+    grade:result.grade,
+    sube:result.sube,
+    studentKey:result.studentKey,
+    subject:result.subject,
+    examTitle:result.examTitle,
+    examId:result.examId,
+    correct:result.correct,
+    wrong:result.wrong,
+    blank:result.blank,
+    netCorrect:result.netCorrect,
+    score:result.score,
+    total:result.total,
+    negativeMarking:result.negativeMarking||false,
+    elapsed:result.elapsed,
+    answerDetails:result.answerDetails||[],
     questionSections:result.questionSections||[],
     date:serverTimestamp()
   });
@@ -2184,8 +2220,6 @@ window.submitAppeal=async function(){
       subject:r.subject,
       grade:r.grade,
       sube:r.sube||'',
-      city:r.city||'',
-      school:r.school||'',
       firstName:r.firstName,
       lastName:r.lastName,
       studentKey:r.studentKey||buildStudentKey(r),

@@ -39,6 +39,21 @@
     return [row.il || userInfo.il || '', row.okul || userInfo.okul || ''].filter(Boolean).join(' · ');
   }
 
+  function getAttemptStatus(row) {
+    const detail = parseDetailJson(row.detay_json);
+    return detail && detail.attempt_status === 'started' ? 'started' : 'completed';
+  }
+
+  function getAttemptStatusMeta(row) {
+    return getAttemptStatus(row) === 'started'
+      ? { label: 'Devam ediyor', color: '#92400E', bg: '#FEF3C7' }
+      : { label: 'Tamamlandı', color: '#166534', bg: '#DCFCE7' };
+  }
+
+  function isCompletedAttempt(row) {
+    return getAttemptStatus(row) === 'completed';
+  }
+
   function toast(message, type) {
     const el = document.getElementById('toast');
     if (!el) {
@@ -93,7 +108,7 @@
   }
 
   function updateStats() {
-    const source = filteredResults;
+    const source = filteredResults.filter(isCompletedAttempt);
     const answerable = source.filter(function(row) {
       return (row.toplam_soru || 0) > 0;
     });
@@ -134,17 +149,21 @@
       const percent = row.toplam_soru > 0 ? (row.anlama_yuzdesi || 0) : -1;
       const comprehensionText = row.toplam_soru > 0 ? percent + '%' : '—';
       const locationMeta = getLocationMeta(row);
+      const statusMeta = getAttemptStatusMeta(row);
+      const karneButton = isCompletedAttempt(row)
+        ? '<button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button>'
+        : '<button class="btn-karne-row" disabled style="opacity:.5;cursor:not-allowed">Karne</button>';
       return (
         '<div class="tablo-satir" id="row_' + row.id + '">' +
           '<div class="td"><input type="checkbox" class="row-cb" value="' + row.id + '" onchange="satirSecimiGuncelle()"></div>' +
-          '<div class="td bold">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + (locationMeta ? '<div style="font-size:11px;color:var(--muted);font-weight:700;margin-top:4px">' + escHtml(locationMeta) + '</div>' : '') + '</div>' +
+          '<div class="td bold">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">' + (locationMeta ? '<span style="font-size:11px;color:var(--muted);font-weight:700">' + escHtml(locationMeta) + '</span>' : '') + '<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:' + statusMeta.bg + ';color:' + statusMeta.color + ';font-size:10px;font-weight:800">' + statusMeta.label + '</span></div></div>' +
           '<div class="td">' + (row.sinif || '?') + '/' + (row.sube || '?') + '</div>' +
           '<div class="td"><span class="hiz-badge ' + speedClass(wpm, target) + '">' + wpm + '</span></div>' +
           '<div class="td"><span class="anlama-badge ' + comprehensionClass(percent, row.toplam_soru || 0) + '">' + comprehensionText + '</span></div>' +
           '<div class="td">' + escHtml(row.metin_adi || '—') + '</div>' +
           '<div class="td">' + formatDuration(row.okuma_suresi_sn || 0) + '</div>' +
           '<div class="td">' + formatDate(row.olusturma_tarihi) + '</div>' +
-          '<div class="td"><div class="islem-grup"><button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button><button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div></div>' +
+          '<div class="td"><div class="islem-grup">' + karneButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div></div>' +
         '</div>'
       );
     }).join('');
@@ -162,14 +181,19 @@
     list.innerHTML = filteredResults.map(function(row) {
       const percent = row.toplam_soru > 0 ? (row.anlama_yuzdesi || 0) + '%' : 'Soru yok';
       const locationMeta = getLocationMeta(row);
+      const statusMeta = getAttemptStatusMeta(row);
+      const karneButton = isCompletedAttempt(row)
+        ? '<button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button>'
+        : '<button class="btn-karne-row" disabled style="opacity:.5;cursor:not-allowed">Karne</button>';
       return (
         '<div class="mobil-sonuc-kart">' +
           '<div class="msk-head">' +
             '<div>' +
               '<div class="msk-title">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + '</div>' +
               '<div class="msk-sub">' + (row.sinif || '?') + '. sınıf / ' + (row.sube || '?') + ' şubesi' + (locationMeta ? ' · ' + escHtml(locationMeta) : '') + '</div>' +
+              '<div style="margin-top:6px"><span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:' + statusMeta.bg + ';color:' + statusMeta.color + ';font-size:10px;font-weight:800">' + statusMeta.label + '</span></div>' +
             '</div>' +
-            '<div class="islem-grup"><button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button><button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div>' +
+            '<div class="islem-grup">' + karneButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div>' +
           '</div>' +
           '<div class="msk-grid">' +
             '<div class="msk-item"><span>Metin</span><strong>' + escHtml(row.metin_adi || '—') + '</strong></div>' +
@@ -303,13 +327,16 @@
       return;
     }
 
-    const header = ['Ad', 'Soyad', 'Sınıf', 'Şube', 'Metin', 'WPM', 'Hedef WPM', 'Süre (sn)', 'Doğru', 'Yanlış', 'Toplam Soru', 'Anlama %', 'Tarih'];
+    const header = ['Ad', 'Soyad', 'Sınıf', 'Şube', 'İl', 'Okul', 'Durum', 'Metin', 'WPM', 'Hedef WPM', 'Süre (sn)', 'Doğru', 'Yanlış', 'Toplam Soru', 'Anlama %', 'Tarih'];
     const rows = filteredResults.map(function(row) {
       return [
         row.ad,
         row.soyad,
         row.sinif,
         row.sube,
+        row.il || '',
+        row.okul || '',
+        getAttemptStatusMeta(row).label,
         row.metin_adi,
         row.dakika_kelime,
         row.hedef_hiz,
@@ -345,6 +372,10 @@
 
     if (!row) {
       toast('Karne için kayıt bulunamadı.', 'error');
+      return;
+    }
+    if (!isCompletedAttempt(row)) {
+      toast('Bu okuma oturumu henüz tamamlanmadığı için karne hazır değil.', 'error');
       return;
     }
 

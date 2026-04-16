@@ -93,6 +93,8 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .pdf-main{flex:1;min-width:0}
 .pdf-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:8px;flex-wrap:wrap}
 .pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#F8FAFC 0%,#EEF2FF 100%);overflow:auto;max-height:min(76vh,780px);min-height:620px;display:flex;align-items:flex-start;justify-content:center;padding:28px;cursor:crosshair;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.pdf-canvas-wrap.hand-mode{cursor:grab}
+.pdf-canvas-wrap.hand-mode.dragging{cursor:grabbing}
 .pdf-canvas-wrap.drag-over,.pdf-dropzone.drag-over{border-color:var(--purple);background:#F5F3FF;box-shadow:0 0 0 4px rgba(108,61,237,.12)}
 .pdf-canvas-stage{position:relative;display:inline-block;flex:0 0 auto}
 #pdfCanvas{display:block;background:var(--white);border-radius:14px;box-shadow:0 18px 36px rgba(15,23,42,.12)}
@@ -269,7 +271,7 @@ function createInitialState(overrides={}){
     categoryGrade:1,
     questionSections:[],
     questions:[],
-    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,
+    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,cropTool:'crop',
     pubTitle:'',pubDur:30,editExamId:null,
     exams:[],results:[],appeals:[],
     appealInspect:null,
@@ -372,6 +374,24 @@ function buildLocationText(source){
     String(source?.city||source?.il||'').trim(),
     String(source?.school||source?.okul||'').trim()
   ].filter(Boolean).join(' · ');
+}
+function getResultProgressMeta(status){
+  if(status==='in_progress') return{label:'Devam Ediyor',bg:'#FEF3C7',color:'#92400E'};
+  return{label:'Tamamlandı',bg:'#DCFCE7',color:'#166534'};
+}
+function getResultAppealMeta(resultId,examId){
+  const list=(A.appeals||[]).filter(item=>{
+    if(resultId&&item?.resultId===resultId) return true;
+    return !resultId&&examId&&item?.examId===examId;
+  });
+  const pending=list.filter(item=>{
+    const status=deriveAppealStatus(item);
+    return status==='pending'||status==='partial';
+  }).length;
+  return{
+    total:list.length,
+    pending
+  };
 }
 function getResultStudentKey(result){
   const accountUid=String(result?.accountUid||result?.userId||'').trim();
@@ -881,7 +901,11 @@ function renderStep3(){
             <span id="zoomLbl" class="text-xs text-muted" style="min-width:40px;text-align:center">${Math.round(A.pdfZoom/1.5*100)}%</span>
             <button class="btn btn-sm btn-outline" onclick="W.zoomIn()" style="width:30px;padding:0;height:30px;font-size:16px">+</button>
           </div>
-          <span class="text-xs text-muted" style="margin-left:8px">💡 Sürükleyerek kırpın</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-left:8px;border-left:1px solid var(--border);padding-left:10px">
+            <button class="btn btn-sm ${A.cropTool==='crop'?'btn-primary':'btn-outline'}" type="button" onclick="W.setCropTool('crop')">✂️ Kırp</button>
+            <button class="btn btn-sm ${A.cropTool==='pan'?'btn-primary':'btn-outline'}" type="button" onclick="W.setCropTool('pan')">✋ Taşı</button>
+          </div>
+          <span class="text-xs text-muted" id="cropHint" style="margin-left:8px">${A.cropTool==='pan'?'💡 El aracı açık. PDF alanını tutup sürükleyerek gezebilirsin.':'💡 Kırp aracı açık. Soru alanını sürükleyerek seçebilirsin.'}</span>
         </div>
         <div id="pdfCont" class="pdf-canvas-wrap" style="display:${A.pdfDoc||A.imgLoaded?'flex':'none'}">
           <div class="pdf-canvas-stage" id="pdfStage">
@@ -1090,10 +1114,21 @@ function renderAdminResults(){
   const rows=A.results.map(r=>{
     const sc=r.score;const col=sc>=70?'#059669':sc>=50?'#D97706':'#DC2626';
     const locationMeta=buildLocationText(r);
+    const statusMeta=getResultProgressMeta(r.status);
+    const appealMeta=getResultAppealMeta(r.id,r.examId);
+    const reportButtons=r.status==='in_progress'
+      ? `<button style="background:#F8FAFC;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;cursor:not-allowed;font-size:12px;font-weight:700" disabled>⏳ Tek Sınav</button>
+         <button style="background:#F8FAFC;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;cursor:not-allowed;font-size:12px;font-weight:700" disabled>⏳ Karne Merkezi</button>`
+      : `<button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>
+         <button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>`;
     return`<tr>
       <td style="font-weight:600;font-family:var(--fd)">
         <div>${esc(r.firstName)} ${esc(r.lastName)}</div>
-        ${locationMeta?`<div style="font-size:11px;color:var(--muted);font-family:var(--fb);font-weight:600;margin-top:4px">${esc(locationMeta)}</div>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">
+          ${locationMeta?`<span style="font-size:11px;color:var(--muted);font-family:var(--fb);font-weight:600">${esc(locationMeta)}</span>`:''}
+          <span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:${statusMeta.bg};color:${statusMeta.color};font-size:10px;font-weight:800;font-family:var(--fb)">${statusMeta.label}</span>
+          <span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:${appealMeta.total?'#FFF7ED':'#F8FAFC'};color:${appealMeta.total?'#9A3412':'#64748B'};font-size:10px;font-weight:800;font-family:var(--fb)">${appealMeta.total?`📝 ${appealMeta.total} itiraz${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}`:'💬 İtiraz yok'}</span>
+        </div>
       </td>
       <td><span class="badge badge-blue">${r.grade}. Sınıf${r.sube?' '+r.sube:''}</span></td>
       <td style="font-size:12px;color:var(--slate)">${r.subject||'—'}</td>
@@ -1111,8 +1146,8 @@ function renderAdminResults(){
       <td>
         <div class="flex gap-8" style="flex-wrap:wrap">
           <button onclick="W.openResultEdit('${r.id}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#C2410C;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F97316';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#C2410C'">✏️ Düzenle</button>
-          <button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>
-          <button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>
+          <button onclick="W.showExamAppeals('${r.examId}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#9A3412;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F59E0B';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#9A3412'">📝 İtirazlar</button>
+          ${reportButtons}
           <button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>
         </div>
       </td>
@@ -1195,6 +1230,22 @@ function syncPdfStage(width,height){
   stage.style.height=`${height}px`;
 }
 
+function syncCropToolUI(){
+  const wrap=document.getElementById('pdfCont');
+  if(wrap){
+    wrap.classList.toggle('hand-mode',A.cropTool==='pan');
+    wrap.classList.remove('dragging');
+  }
+  const canvas=document.getElementById('cropCanvas');
+  if(canvas) canvas.style.cursor=A.cropTool==='pan'?'grab':'crosshair';
+  const hint=document.getElementById('cropHint');
+  if(hint){
+    hint.textContent=A.cropTool==='pan'
+      ? '💡 El aracı açık. PDF alanını tutup sürükleyerek gezebilirsin.'
+      : '💡 Kırp aracı açık. Soru alanını sürükleyerek seçebilirsin.';
+  }
+}
+
 function setUploadDragState(active){
   ['pdfPh','pdfCont'].forEach(id=>{
     const el=document.getElementById(id);
@@ -1251,6 +1302,7 @@ function renderImageOnCanvas(){
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=true;
   const bn=document.getElementById('btnPDFNext');if(bn)bn.disabled=true;
   setupCrop();
+  syncCropToolUI();
 }
 
 async function loadSelectedUploadFile(file){
@@ -1309,13 +1361,15 @@ async function renderPage(n){
   const bn=document.getElementById('btnPDFNext');if(bn)bn.disabled=(n>=A.pdfTotal);
   const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/1.5*100)+'%';
   setupCrop();
+  syncCropToolUI();
 }
 
 function setupCrop(){
   const cc=document.getElementById('cropCanvas');const pc=document.getElementById('pdfCanvas');
   if(!cc||!pc)return;
+  const wrap=document.getElementById('pdfCont');
   const newCC=cc.cloneNode(false);cc.parentNode.replaceChild(newCC,cc);
-  let drawing=false,sx=0,sy=0;
+  let drawing=false,panning=false,sx=0,sy=0,startClientX=0,startClientY=0,startScrollLeft=0,startScrollTop=0;
   const ctx=newCC.getContext('2d');
   const getPos=e=>{
     const rect=newCC.getBoundingClientRect();
@@ -1336,17 +1390,35 @@ function setupCrop(){
     const x=Math.min(sx,p.x),y=Math.min(sy,p.y),w=Math.abs(p.x-sx),h=Math.abs(p.y-sy);
     if(w<20||h<20)return;
     const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
-    tmp.getContext('2d').drawImage(pc,x,y,w,h,0,0,w,h);
+    const tmpCtx=tmp.getContext('2d');
+    tmpCtx.fillStyle='#FFFFFF';
+    tmpCtx.fillRect(0,0,w,h);
+    tmpCtx.drawImage(pc,x,y,w,h,0,0,w,h);
     A.draftImg=tmp.toDataURL('image/jpeg',.92);A.draftAns=null;
     showCropModal();
   };
   const handleMove=e=>{
+    if(panning&&wrap){
+      wrap.scrollLeft=startScrollLeft-(e.clientX-startClientX);
+      wrap.scrollTop=startScrollTop-(e.clientY-startClientY);
+      e.preventDefault();
+      return;
+    }
     if(!drawing)return;
     const p=getPos(e);
     drawSelection(p.x,p.y);
     e.preventDefault();
   };
   const handleUp=e=>{
+    if(panning){
+      panning=false;
+      wrap?.classList.remove('dragging');
+      newCC.style.cursor='grab';
+      window.removeEventListener('pointermove',handleMove);
+      window.removeEventListener('pointerup',handleUp);
+      window.removeEventListener('pointercancel',handleUp);
+      return;
+    }
     if(!drawing)return;
     drawing=false;
     window.removeEventListener('pointermove',handleMove);
@@ -1354,10 +1426,24 @@ function setupCrop(){
     window.removeEventListener('pointercancel',handleUp);
     finishSelection(getPos(e));
   };
-  newCC.style.cursor='crosshair';
+  newCC.style.cursor=A.cropTool==='pan'?'grab':'crosshair';
   newCC.style.touchAction='none';
   newCC.addEventListener('pointerdown',e=>{
     if(typeof e.button==='number'&&e.button!==0) return;
+    if(A.cropTool==='pan'){
+      panning=true;
+      startClientX=e.clientX;
+      startClientY=e.clientY;
+      startScrollLeft=wrap?.scrollLeft||0;
+      startScrollTop=wrap?.scrollTop||0;
+      wrap?.classList.add('dragging');
+      newCC.style.cursor='grabbing';
+      window.addEventListener('pointermove',handleMove);
+      window.addEventListener('pointerup',handleUp);
+      window.addEventListener('pointercancel',handleUp);
+      e.preventDefault();
+      return;
+    }
     drawing=true;
     const p=getPos(e);sx=p.x;sy=p.y;
     drawSelection(p.x,p.y);
@@ -1633,7 +1719,19 @@ const W={
       A.appeals=appeals;
       hideLoad();
     }
-    if(page==='results'){Object.assign(A.rf,opts);showLoad();A.results=await fbLoadResults(A.rf);hideLoad();}
+    if(page==='results'){
+      Object.assign(A.rf,opts);
+      showLoad();
+      const [results,appeals,exams]=await Promise.all([
+        fbLoadResults(A.rf),
+        fbLoadAppeals(),
+        A.exams?.length?Promise.resolve(A.exams):fbLoadExams('')
+      ]);
+      A.results=results;
+      A.appeals=appeals;
+      A.exams=exams;
+      hideLoad();
+    }
     render();
   },
   openCategoryManager(){
@@ -1810,6 +1908,11 @@ const W={
     A.pdfZoom=Math.max(A.pdfZoom-0.1,0.5);
     if(A.pdfDoc)await renderPage(A.pdfPage);
     else if(A.imgLoaded)renderImageOnCanvas();
+  },
+  setCropTool(tool){
+    A.cropTool=tool==='pan'?'pan':'crop';
+    syncCropToolUI();
+    setupCrop();
   },
   async publish(){
     await this.saveAs('active');
@@ -2175,7 +2278,17 @@ const W={
     document.getElementById('appealInspectModal')?.remove();
   },
   showExamAppeals(examId){
-    const exam=A.exams.find(item=>item.id===examId);
+    const resultFallback=(A.results||[]).find(item=>item.examId===examId)||null;
+    const exam=A.exams.find(item=>item.id===examId)||(
+      resultFallback
+        ? {
+            id:examId,
+            title:resultFallback.examTitle||'Sınav',
+            grade:resultFallback.grade||'',
+            subject:resultFallback.subject||''
+          }
+        : null
+    );
     if(!exam){
       toast('Sınav bulunamadı','error');
       return;
@@ -2515,6 +2628,7 @@ const W={
       'Ad':r.firstName,'Soyad':r.lastName,
       'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
       'İl':r.city||'—','Okul':r.school||'—',
+      'Durum':getResultProgressMeta(r.status).label,
       'Üye UID':r.accountUid||'—',
       'Öğrenci Anahtarı':getResultStudentKey(r),
       'Ders':r.subject||'—','Sınav':r.examTitle||'—',
@@ -2529,6 +2643,7 @@ const W={
         detailRows.push({
           'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
           'İl':r.city||'—','Okul':r.school||'—',
+          'Durum':getResultProgressMeta(r.status).label,
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Sınav':r.examTitle||'—','Soru No':'—',
@@ -2541,6 +2656,7 @@ const W={
         detailRows.push({
           'Ad':r.firstName,'Soyad':r.lastName,'Sınıf':r.grade+'. Sınıf','Şube':r.sube||'—',
           'İl':r.city||'—','Okul':r.school||'—',
+          'Durum':getResultProgressMeta(r.status).label,
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,

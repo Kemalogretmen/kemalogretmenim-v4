@@ -181,6 +181,10 @@ function normalizeResult(row) {
   });
 }
 
+function isCompletedResult(row) {
+  return row && row.status !== "in_progress";
+}
+
 function showError(title, detail) {
   $("loadingState").style.display = "none";
   $("app").style.display = "none";
@@ -295,7 +299,7 @@ async function loadAllResults() {
   }
   return docs.map(function(docSnap) {
     return normalizeResult(Object.assign({ id: docSnap.id }, docSnap.data()));
-  });
+  }).filter(isCompletedResult);
 }
 
 function getUniqueGrades() {

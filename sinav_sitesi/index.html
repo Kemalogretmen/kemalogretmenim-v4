@@ -235,7 +235,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
       </div>
     </div>
     <div class="form-row">
-      <div class="fg"><label>İl *</label><input class="fi" id="cityInput" placeholder="İlinizi yazın" type="text" autocomplete="address-level1"></div>
+      <div class="fg"><label>İl *</label><select class="fs" id="cityInput"></select></div>
       <div class="fg"><label>Okul *</label><input class="fi" id="schoolInput" placeholder="Okul adını yazın" type="text" autocomplete="organization"></div>
     </div>
     <div class="err-msg" id="modalErr">⚠️ Lütfen tüm alanları eksiksiz doldurun.</div>
@@ -284,6 +284,8 @@ const GC=[null,
 ];
 
 let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:10,selExam:null,categoryMap:{}}; // Sayfada 10 sınav ayarı
+const TR_CITIES=window.kemalSiteStore?.getTurkeyCities?window.kemalSiteStore.getTurkeyCities():[];
+const LOW_QUALITY_TOKENS=['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
 
 function fmtDate(ts){
   if(!ts)return'—';
@@ -291,6 +293,35 @@ function fmtDate(ts){
   return d.toLocaleDateString('tr-TR');
 }
 function capitalize(s){return s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');}
+function collapseSpaces(s){return String(s??'').replace(/\s+/g,' ').trim();}
+function populateCitySelect(selectId){
+  const select=document.getElementById(selectId);
+  if(!select) return;
+  const current=select.value;
+  select.innerHTML=`<option value="">İl seçin</option>${TR_CITIES.map(city=>`<option value="${escHtml(city)}">${escHtml(city)}</option>`).join('')}`;
+  if(current&&TR_CITIES.includes(current)) select.value=current;
+}
+function hasLowQualityText(value){
+  const normalized=collapseSpaces(value).toLocaleLowerCase('tr-TR');
+  if(!normalized) return true;
+  const lettersOnly=normalized.replace(/[^a-zçğıöşü]/g,'');
+  if(lettersOnly.length<2) return true;
+  if(/^(.)\1{2,}$/.test(lettersOnly)) return true;
+  if(/(.)\1{3,}/.test(lettersOnly)) return true;
+  if(LOW_QUALITY_TOKENS.includes(normalized)||LOW_QUALITY_TOKENS.includes(lettersOnly)) return true;
+  const words=normalized.split(' ').filter(Boolean);
+  if(words.length>1&&new Set(words).size===1) return true;
+  return false;
+}
+function validateSurname(value){
+  const normalized=collapseSpaces(value);
+  if(!/^[A-Za-zÇĞİÖŞÜçğıöşü\s'-]+$/.test(normalized)) return false;
+  return !hasLowQualityText(normalized);
+}
+function validateSchool(value){
+  const normalized=collapseSpaces(value);
+  return !hasLowQualityText(normalized);
+}
 function escHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
 function sanitizeCategoryList(list){
@@ -506,7 +537,9 @@ window.startExam=function(){
   const err=document.getElementById('modalErr');
   if(!fn||!ln||!sube||!city||!school){err.textContent='⚠️ Lütfen ad, soyad, şube, il ve okul bilgilerini eksiksiz girin.';err.style.display='block';return;}
   if(fn.length<2||ln.length<2){err.textContent='⚠️ Ad ve soyad en az 2 karakter olmalıdır.';err.style.display='block';return;}
+  if(!validateSurname(ln)){err.textContent='⚠️ Soyad alanında anlamsız, tekrar eden veya geçersiz bir giriş görünüyor.';err.style.display='block';return;}
   if(city.length<2||school.length<2){err.textContent='⚠️ İl ve okul bilgileri en az 2 karakter olmalıdır.';err.style.display='block';return;}
+  if(!validateSchool(school)){err.textContent='⚠️ Okul adı anlamsız veya tekrar eden bir giriş gibi görünüyor. Lütfen okul adını daha net yazın.';err.style.display='block';return;}
   const student={firstName:capitalize(fn),lastName:capitalize(ln),grade:S.grade,sube,city:capitalize(city),school:school.replace(/\s+/g,' ').trim()};
   sessionStorage.setItem('sinav_student',JSON.stringify(student));
   sessionStorage.setItem('sinav_examId',S.selExam.id);
@@ -551,6 +584,7 @@ async function initPage(){
   const urlParams=new URLSearchParams(window.location.search);
   const urlG=urlParams.get('grade');
   const urlExamId=urlParams.get('examId')||urlParams.get('sinavId');
+  populateCitySelect('cityInput');
   initUI();
   await loadStats();
   if(urlExamId){
