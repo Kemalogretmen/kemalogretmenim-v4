@@ -39,6 +39,32 @@
     return [row.il || userInfo.il || '', row.okul || userInfo.okul || ''].filter(Boolean).join(' · ');
   }
 
+  function normalizeKeyPart(value) {
+    return String(value || '').trim().toLocaleLowerCase('tr-TR');
+  }
+
+  function getAttemptId(row) {
+    const detail = parseDetailJson(row.detay_json);
+    return detail && detail.attempt_id ? String(detail.attempt_id) : '';
+  }
+
+  function getRowTime(row) {
+    const value = row && row.olusturma_tarihi ? new Date(row.olusturma_tarihi).getTime() : 0;
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  function getStudentTextKey(row) {
+    return [
+      normalizeKeyPart(row.ad),
+      normalizeKeyPart(row.soyad),
+      normalizeKeyPart(row.sinif),
+      normalizeKeyPart(row.sube),
+      normalizeKeyPart(row.il),
+      normalizeKeyPart(row.okul),
+      normalizeKeyPart(row.metin_id || row.metin_adi),
+    ].join('|');
+  }
+
   function getAttemptStatus(row) {
     const detail = parseDetailJson(row.detay_json);
     return detail && detail.attempt_status === 'started' ? 'started' : 'completed';
@@ -52,6 +78,63 @@
 
   function isCompletedAttempt(row) {
     return getAttemptStatus(row) === 'completed';
+  }
+
+  function collapseDuplicateCompletedAttempts(rows) {
+    const seenAttemptIds = new Set();
+    return rows.filter(function(row) {
+      if (!isCompletedAttempt(row)) {
+        return true;
+      }
+      const attemptId = getAttemptId(row);
+      if (!attemptId) {
+        return true;
+      }
+      if (seenAttemptIds.has(attemptId)) {
+        return false;
+      }
+      seenAttemptIds.add(attemptId);
+      return true;
+    });
+  }
+
+  function collapseShadowStartedRows(rows) {
+    const DUPLICATE_WINDOW_MS = 12 * 60 * 60 * 1000;
+    const completedByAttempt = new Map();
+    const completedByKey = new Map();
+
+    rows.filter(isCompletedAttempt).forEach(function(row) {
+      const attemptId = getAttemptId(row);
+      const key = getStudentTextKey(row);
+      if (attemptId) {
+        completedByAttempt.set(attemptId, row);
+      }
+      if (!completedByKey.has(key)) {
+        completedByKey.set(key, []);
+      }
+      completedByKey.get(key).push(row);
+    });
+
+    return rows.filter(function(row) {
+      if (isCompletedAttempt(row)) {
+        return true;
+      }
+
+      const rowTime = getRowTime(row);
+      const attemptId = getAttemptId(row);
+      if (attemptId && completedByAttempt.has(attemptId)) {
+        const completedTime = getRowTime(completedByAttempt.get(attemptId));
+        if (completedTime >= rowTime) {
+          return false;
+        }
+      }
+
+      const siblings = completedByKey.get(getStudentTextKey(row)) || [];
+      return !siblings.some(function(completedRow) {
+        const completedTime = getRowTime(completedRow);
+        return completedTime >= rowTime && (completedTime - rowTime) <= DUPLICATE_WINDOW_MS;
+      });
+    });
   }
 
   function toast(message, type) {
@@ -251,14 +334,14 @@
       return;
     }
 
-    allResults = (data || []).map(function(row) {
+    allResults = collapseDuplicateCompletedAttempts(collapseShadowStartedRows((data || []).map(function(row) {
       const detail = parseDetailJson(row.detay_json);
       const userInfo = detail && detail.kullanici_bilgileri ? detail.kullanici_bilgileri : {};
       return Object.assign({}, row, {
         il: row.il || userInfo.il || '',
         okul: row.okul || userInfo.okul || '',
       });
-    });
+    }))).filter(isCompletedAttempt);
     filteredResults = allResults.slice();
     render();
   }

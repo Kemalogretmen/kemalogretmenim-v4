@@ -429,6 +429,20 @@
       return String(value || '').replace(/\s+/g, ' ').trim();
     }
 
+    function parseOptionalJson(value) {
+      if (!value) {
+        return {};
+      }
+      if (typeof value === 'object') {
+        return value;
+      }
+      try {
+        return JSON.parse(value);
+      } catch (error) {
+        return {};
+      }
+    }
+
     function capitalizeWords(value) {
       return collapseSpaces(value).split(' ').map(function(word) {
         return word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '';
@@ -552,7 +566,7 @@
 
     let tumMetinler = [];
     let aktifSayfa  = 1;
-    const SAYFA_BOYUT = 10;
+    const SAYFA_BOYUT = 12;
 
     async function loadMetinler(sinif) {
       const list = document.getElementById('metinListesi');
@@ -699,8 +713,6 @@
       }
       if (!selectedMetin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
 
-      // Önce doğrudan tablolardan çekmeyi dene; doğru cevap bilgisi burada tam bulunur.
-      // Canlı projede bu tablo erişimi kapalıysa public view'lara güvenli şekilde geri düş.
       let soruResponse = await sb
         .from('sorular')
         .select('id, metin_id, soru_metni, sira, soru_tipi, ayar_json')
@@ -713,6 +725,13 @@
           .select('id, metin_id, soru_metni, sira, soru_tipi, ayar_json')
           .eq('metin_id', metinId)
           .order('sira');
+        if (soruResponse.error && /(soru_tipi|ayar_json)/i.test(soruResponse.error.message || '')) {
+          soruResponse = await sb
+            .from('sorular_public')
+            .select('id, metin_id, soru_metni, sira')
+            .eq('metin_id', metinId)
+            .order('sira');
+        }
       }
 
       const sorularRows = soruResponse.data;
@@ -736,9 +755,16 @@
         if (secenekResponse.error) {
           secenekResponse = await sb
             .from('secenekler_public')
-            .select('id, soru_id, secenek_metni, sira')
+            .select('id, soru_id, secenek_metni, sira, dogru_mu')
             .in('soru_id', soruIds)
             .order('sira');
+          if (secenekResponse.error && /dogru_mu/i.test(secenekResponse.error.message || '')) {
+            secenekResponse = await sb
+              .from('secenekler_public')
+              .select('id, soru_id, secenek_metni, sira')
+              .in('soru_id', soruIds)
+              .order('sira');
+          }
         }
 
         const secenekData = secenekResponse.data;
@@ -763,6 +789,8 @@
       const sorularData = (sorularRows || []).map(function(soru) {
         return {
           ...soru,
+          soru_tipi: soru.soru_tipi || '',
+          ayar_json: parseOptionalJson(soru.ayar_json),
           secenekler: (secenekMap[soru.id] || []).sort(function(a, b) {
             return a.sira - b.sira;
           }),
@@ -817,7 +845,6 @@
         il: capitalizeWords(il),
         okul: collapseSpaces(okul)
       }));
-      sessionStorage.removeItem('kemal_okuma_result_id');
       window.location.href = '/hizli-okuma/oku.html';
     }
 

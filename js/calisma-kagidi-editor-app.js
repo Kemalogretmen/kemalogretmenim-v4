@@ -1125,10 +1125,35 @@
     }
   }
 
+  async function initAuth() {
+    try {
+      const session = await window.kemalAdminAuth.getSession();
+      if (session) {
+        qs('loginScreen').style.display = 'none';
+        qs('app').style.display = 'block';
+        await loadDocuments();
+        var params = new URLSearchParams(window.location.search);
+        var documentId = params.get('dokumanId') || '';
+        if (documentId) {
+          openDocument(documentId);
+        } else {
+          showWorkspace(false);
+        }
+        return;
+      }
+    } catch (error) {
+      console.warn('Oturum okunamadi:', error);
+    }
+
+    qs('loginScreen').style.display = 'flex';
+    qs('app').style.display = 'none';
+  }
+
   window.doLogin = doLogin;
   window.doLogout = doLogout;
 
   document.addEventListener('DOMContentLoaded', function() {
     bindUi();
+    initAuth();
   });
 })();

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎮 Oyunlar Yönetimi — Kemal Öğretmenim</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap');
     :root{
@@ -235,6 +236,24 @@
 
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  if(!window.KemalAdminShell){
+    return;
+  }
+  window.KemalAdminShell.initStandalone({
+    appId:'app',
+    activeKey:'oyunlar-admin',
+    homeHref:'/oyun/oyunlar.html',
+    homeLabel:'🌐 Oyunlar Sayfası',
+    homeTarget:'_blank',
+    utilityHref:'/oyun/oyunlar.html',
+    utilityLabel:'🌐 Oyunlar Sayfası',
+    utilityTarget:'_blank'
+  });
+});
+</script>
 <script>
 const OYUN_KEY='kemal_oyunlar';
 

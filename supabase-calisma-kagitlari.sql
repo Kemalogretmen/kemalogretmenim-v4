@@ -167,7 +167,8 @@ grant select, insert, update, delete on public.calisma_kagitlari to authenticate
 grant select, insert, update, delete on public.calisma_kagidi_alanlari to authenticated;
 grant select, update, delete on public.calisma_kagidi_gonderimleri to authenticated;
 
-create or replace view public.calisma_kagidi_ogrenci_alanlari as
+create or replace view public.calisma_kagidi_ogrenci_alanlari
+with (security_invoker = true) as
 select
   a.id,
   w.dokuman_id,
@@ -197,6 +198,7 @@ create or replace function public.calisma_kagidi_cevap_dogru_mu(
 returns boolean
 language plpgsql
 immutable
+set search_path = public
 as $$
 declare
   v_tip text := lower(coalesce(trim(p_alan_tipi), ''));

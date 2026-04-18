@@ -928,10 +928,20 @@
         }
         const selected = item.querySelector('.dy-answer-grid input[type="radio"]:checked');
         const selectedValue = selected ? selected.value : 'dogru';
+        const correctText = selectedValue === 'dogru' ? 'Doğru' : 'Yanlış';
+        const correctOrder = selectedValue === 'dogru' ? 1 : 2;
         questions.push({
           soru_metni: questionText,
           soru_tipi: type,
-          ayar_json: {},
+          ayar_json: {
+            dogruSecenekMetni: correctText,
+            correctChoiceText: correctText,
+            correctText: correctText,
+            dogruMetin: correctText,
+            dogruSecenekSira: correctOrder,
+            correctChoiceOrder: correctOrder,
+            correctOrder: correctOrder,
+          },
           sira: i + 1,
           secenekler: [
             { secenek_metni: 'Doğru', dogru_mu: selectedValue === 'dogru', sira: 1 },
@@ -989,10 +999,29 @@
         throw new Error((i + 1) + '. soruda tam olarak 1 doğru cevap seçilmelidir.');
       }
 
+      const correctChoice = filledChoices.find(function(choice) {
+        return choice.correct;
+      });
+      const correctOrder = filledChoices.findIndex(function(choice) {
+        return choice.correct;
+      }) + 1;
+      const settings = {
+        dogruSecenekMetni: correctChoice.text,
+        correctChoiceText: correctChoice.text,
+        correctText: correctChoice.text,
+        dogruMetin: correctChoice.text,
+        dogruSecenekSira: correctOrder,
+        correctChoiceOrder: correctOrder,
+        correctOrder: correctOrder,
+      };
+      if (type === QUESTION_TYPES.FILL) {
+        settings.bosluklu = true;
+      }
+
       questions.push({
         soru_metni: questionText,
         soru_tipi: type,
-        ayar_json: type === QUESTION_TYPES.FILL ? { bosluklu: true } : {},
+        ayar_json: settings,
         sira: i + 1,
         secenekler: filledChoices.map(function(choice, index) {
           return {

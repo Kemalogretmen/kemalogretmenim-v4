@@ -14,6 +14,7 @@
 
   const TITLES = {
     overview: '📊 Genel Bakış',
+    adminler: '👥 Alt Adminler',
     analytics: '📈 Site Analizleri',
     duyurular: '📢 Duyurular',
     badges: '🔔 YENİ Rozetleri',
@@ -29,6 +30,11 @@
   let state = {
     currentPanel: 'overview',
     data: window.kemalSiteStore ? window.kemalSiteStore.getDefaults() : {},
+    accessProfile: null,
+    adminUsers: [],
+    adminUsersLoading: false,
+    adminUsersError: '',
+    adminUserEditingEmail: '',
     analytics: {
       days: 7,
       loadedDays: 0,
@@ -137,6 +143,177 @@
     return state.data;
   }
 
+  function getPermissionDefs() {
+    return window.kemalAdminAuth && typeof window.kemalAdminAuth.getAdminPermissionDefs === 'function'
+      ? window.kemalAdminAuth.getAdminPermissionDefs()
+      : [];
+  }
+
+  function getAccessProfile() {
+    return state.accessProfile || {
+      email: '',
+      displayName: '',
+      active: true,
+      isOwner: true,
+      legacyMode: true,
+      permissions: getPermissionDefs().reduce(function(map, item) {
+        map[item.key] = true;
+        return map;
+      }, {}),
+      allowedPanels: getPermissionDefs().map(function(item) { return item.key; }),
+      row: null,
+      rows: [],
+    };
+  }
+
+  function canAccess(permissionKey) {
+    const profile = getAccessProfile();
+    if (!permissionKey) {
+      return true;
+    }
+    if (profile.isOwner || profile.legacyMode) {
+      return true;
+    }
+    return !!(profile.permissions && profile.permissions[permissionKey]);
+  }
+
+  function isOwnerUser() {
+    const profile = getAccessProfile();
+    return !!(profile.isOwner || profile.legacyMode);
+  }
+
+  function setElementVisible(id, visible, displayValue) {
+    const el = document.getElementById(id);
+    if (!el) {
+      return;
+    }
+    el.style.display = visible ? (displayValue || '') : 'none';
+  }
+
+  function getOverviewQuickButtonMap() {
+    return {
+      'quick-analytics': 'site_admin_dashboard',
+      'quick-duyurular': 'site_admin_dashboard',
+      'quick-yeni': 'site_admin_dashboard',
+      'quick-badges': 'site_admin_dashboard',
+      'quick-hizli': 'site_admin_dashboard',
+      'quick-okuma-editor': 'okuma_editor',
+      'quick-dokuman-yonetimi': 'dokuman_yonetimi',
+      'quick-calisma-kagidi': 'calisma_kagidi',
+      'quick-okuma-sonuclari': 'okuma_sonuclari',
+      'quick-okuma-karne': 'okuma_karne',
+      'quick-adminler': '__owner__',
+      'quick-sinav-admin': '__owner__',
+    };
+  }
+
+  function getSidebarPermissionMap() {
+    return {
+      'btn-analytics': 'site_admin_dashboard',
+      'btn-duyurular': 'site_admin_dashboard',
+      'btn-badges': 'site_admin_dashboard',
+      'btn-hizli': 'site_admin_dashboard',
+      'btn-onecikarlar': 'site_admin_dashboard',
+      'btn-yeni': 'site_admin_dashboard',
+      'btn-hakkimda': 'site_admin_dashboard',
+      'btn-menuler': 'site_admin_dashboard',
+      'btn-oyunlar': 'oyunlar_admin',
+      'btn-okuma-editor': 'okuma_editor',
+      'btn-dokuman-yonetimi': 'dokuman_yonetimi',
+      'btn-calisma-kagidi': 'calisma_kagidi',
+      'btn-okuma-sonuclar': 'okuma_sonuclari',
+      'btn-okuma-karne': 'okuma_karne',
+      'btn-adminler': '__owner__',
+      'btn-yedek': '__owner__',
+      'btn-sinav-admin': '__owner__',
+    };
+  }
+
+  function renderAccessSummary() {
+    const profile = getAccessProfile();
+    const defs = getPermissionDefs();
+    const allowedDefs = defs.filter(function(item) {
+      return canAccess(item.key);
+    });
+
+    const roleValueEl = document.getElementById('accessRoleValue');
+    const roleSubEl = document.getElementById('accessRoleSub');
+    const countValueEl = document.getElementById('accessCountValue');
+    const countSubEl = document.getElementById('accessCountSub');
+    const chipsEl = document.getElementById('accessPermissionChips');
+    const hintEl = document.getElementById('overviewAccessHint');
+
+    if (roleValueEl) {
+      roleValueEl.textContent = isOwnerUser() ? 'Ana Yönetici' : 'Alt Admin';
+    }
+    if (roleSubEl) {
+      if (profile.legacyMode) {
+        roleSubEl.textContent = 'Alt admin sistemi henüz veritabanında başlatılmamış. Bu hesap geçici olarak tam erişimle açıldı.';
+      } else if (isOwnerUser()) {
+        roleSubEl.textContent = 'Bu hesap tüm Supabase tabanlı admin panellerini yönetebilir.';
+      } else {
+        roleSubEl.textContent = 'Bu hesap yalnızca ana yönetici tarafından açılan panellere erişebilir.';
+      }
+    }
+    if (countValueEl) {
+      countValueEl.textContent = String(allowedDefs.length);
+    }
+    if (countSubEl) {
+      countSubEl.textContent = allowedDefs.length
+        ? 'Bu hesap için açık yönetim paneli sayısı'
+        : 'Bu hesap için henüz panel yetkisi açılmadı.';
+    }
+    if (chipsEl) {
+      if (!allowedDefs.length) {
+        chipsEl.innerHTML = '<span class="perm-chip muted">Henüz panel yetkisi açık değil</span>';
+      } else {
+        chipsEl.innerHTML = allowedDefs.map(function(item) {
+          return '<span class="perm-chip">✅ ' + escHtml(item.label) + '</span>';
+        }).join('');
+      }
+    }
+    if (hintEl) {
+      const hasSiteDashboard = canAccess('site_admin_dashboard');
+      hintEl.style.display = hasSiteDashboard ? 'none' : 'block';
+      hintEl.textContent = isOwnerUser()
+        ? 'Ana yönetici olarak tüm panellere erişimin açık. İstersen alt adminleri bu ekrandan daha sınırlı yetkilerle tanımlayabilirsin.'
+        : 'Bu hesapta ana site içerik panelleri kapalı. Aşağıdaki açık yetki kartlarından yalnızca size tanımlanan bölümlere geçebilirsiniz.';
+    }
+  }
+
+  function applyAccessControl() {
+    const showSiteDashboard = canAccess('site_admin_dashboard');
+    const ownerMode = isOwnerUser();
+
+    Object.entries(getSidebarPermissionMap()).forEach(function(entry) {
+      const elementId = entry[0];
+      const permissionKey = entry[1];
+      const visible = permissionKey === '__owner__'
+        ? ownerMode
+        : canAccess(permissionKey);
+      setElementVisible(elementId, visible);
+    });
+
+    Object.entries(getOverviewQuickButtonMap()).forEach(function(entry) {
+      const elementId = entry[0];
+      const permissionKey = entry[1];
+      const visible = permissionKey === '__owner__'
+        ? ownerMode
+        : canAccess(permissionKey);
+      setElementVisible(elementId, visible);
+    });
+
+    setElementVisible('statsRow', showSiteDashboard, 'grid');
+
+    if (!showSiteDashboard && ['analytics', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler', 'yedek'].includes(state.currentPanel)) {
+      state.currentPanel = 'overview';
+    }
+    if (!ownerMode && state.currentPanel === 'adminler') {
+      state.currentPanel = 'overview';
+    }
+    renderAccessSummary();
+  }
+
   function updateStats() {
     const data = getData();
     document.getElementById('sDuyuru').textContent = (data.duyurular || []).filter((item) => item.aktif).length;
@@ -146,6 +323,10 @@
   }
 
   async function persistData(successMessage) {
+    if (!canAccess('site_admin_dashboard')) {
+      toast('Bu içerik alanında değişiklik yapma yetkin açık değil.', 'error');
+      return;
+    }
     try {
       const accessToken = await window.kemalAdminAuth.getAccessToken();
       state.data = await window.kemalSiteStore.saveSiteData(state.data, accessToken);
@@ -159,7 +340,42 @@
     }
   }
 
+  function getRequestedPanelFromHash() {
+    const hash = String(window.location.hash || '').replace(/^#/, '').trim();
+    if (!hash) {
+      return '';
+    }
+    return Object.prototype.hasOwnProperty.call(TITLES, hash) ? hash : '';
+  }
+
+  function syncSidebarState() {
+    const activeButton = document.querySelector('.side-btn.active');
+    if (!activeButton) {
+      return;
+    }
+    document.querySelectorAll('.admin-nav-group').forEach(function(group) {
+      if (group.contains(activeButton)) {
+        group.classList.add('is-open');
+      }
+    });
+  }
+
   function showPanel(id) {
+    const ownerMode = isOwnerUser();
+    const siteDashboardPanels = ['analytics', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler'];
+    if (siteDashboardPanels.includes(id) && !canAccess('site_admin_dashboard')) {
+      toast('Bu içerik alanı için yetkin açık değil.', 'error');
+      return;
+    }
+    if (id === 'adminler' && !ownerMode) {
+      toast('Alt admin yönetimi yalnızca ana yöneticiye açık.', 'error');
+      return;
+    }
+    if (id === 'yedek' && !ownerMode) {
+      toast('Yedek ve sıfırlama alanı yalnızca ana yöneticiye açık.', 'error');
+      return;
+    }
+
     state.currentPanel = id;
     document.querySelectorAll('.panel').forEach(function(panel) {
       panel.classList.remove('active');
@@ -175,8 +391,16 @@
     if (button) {
       button.classList.add('active');
     }
+    const targetHash = '#' + id;
+    if (window.location.hash !== targetHash) {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search + targetHash);
+    }
     document.getElementById('panelTitle').textContent = TITLES[id] || TITLES.overview;
+    syncSidebarState();
     renderCurrentPanel();
+    if (id === 'adminler') {
+      loadAdminUsers(false);
+    }
     if (id === 'analytics') {
       loadAnalytics(false);
     }
@@ -318,6 +542,220 @@
             </div>`;
         }).join('')
       : '<p style="color:var(--muted);font-size:14px;">Henüz ekstra bağlantı eklenmedi.</p>';
+  }
+
+  function syncAdminActiveLabel() {
+    const toggle = document.getElementById('subAdminActive');
+    const label = document.getElementById('subAdminActiveLabel');
+    if (!toggle || !label) {
+      return;
+    }
+    label.textContent = toggle.checked ? 'Aktif' : 'Pasif';
+  }
+
+  function buildPermissionCheckboxes() {
+    const container = document.getElementById('subAdminPermissionList');
+    if (!container) {
+      return;
+    }
+    const defs = getPermissionDefs();
+    container.innerHTML = defs.map(function(item) {
+      return (
+        '<label class="admin-permission-card">' +
+          '<input type="checkbox" data-admin-permission="' + escHtml(item.key) + '">' +
+          '<div>' +
+            '<strong>' + escHtml(item.label) + '</strong>' +
+            '<span>' + escHtml(item.description) + '</span>' +
+          '</div>' +
+        '</label>'
+      );
+    }).join('');
+  }
+
+  function resetAdminMemberForm() {
+    const emailInput = document.getElementById('subAdminEmail');
+    const displayNameInput = document.getElementById('subAdminDisplayName');
+    const activeInput = document.getElementById('subAdminActive');
+    const noteEl = document.getElementById('subAdminFormNote');
+
+    state.adminUserEditingEmail = '';
+    if (emailInput) {
+      emailInput.value = '';
+      emailInput.disabled = false;
+    }
+    if (displayNameInput) {
+      displayNameInput.value = '';
+    }
+    if (activeInput) {
+      activeInput.checked = true;
+    }
+    syncAdminActiveLabel();
+    document.querySelectorAll('[data-admin-permission]').forEach(function(input) {
+      input.checked = false;
+      input.disabled = false;
+    });
+    if (noteEl) {
+      noteEl.textContent = 'Alt admin giriş yaptıktan sonra yalnızca seçtiğiniz paneller görünür. Şifre değişikliği kullanıcıya aittir; bu ekranda erişim yönetilir.';
+    }
+  }
+
+  function fillAdminMemberForm(row) {
+    const emailInput = document.getElementById('subAdminEmail');
+    const displayNameInput = document.getElementById('subAdminDisplayName');
+    const activeInput = document.getElementById('subAdminActive');
+    const noteEl = document.getElementById('subAdminFormNote');
+    if (!row) {
+      resetAdminMemberForm();
+      return;
+    }
+
+    state.adminUserEditingEmail = row.email;
+    if (emailInput) {
+      emailInput.value = row.email;
+      emailInput.disabled = !!row.isOwner;
+    }
+    if (displayNameInput) {
+      displayNameInput.value = row.displayName || '';
+    }
+    if (activeInput) {
+      activeInput.checked = row.active !== false;
+    }
+    syncAdminActiveLabel();
+    document.querySelectorAll('[data-admin-permission]').forEach(function(input) {
+      const key = input.getAttribute('data-admin-permission');
+      input.checked = !!(row.permissions && row.permissions[key]);
+      input.disabled = !!row.isOwner;
+    });
+    if (noteEl) {
+      noteEl.textContent = row.isOwner
+        ? 'Ana yönetici hesabı burada yalnızca görüntülenir. Silinemez veya yetkisi kapatılamaz.'
+        : 'Düzenleme modundasın. E-postayı değiştirmek yerine yeni kayıt açmak daha güvenli olur.';
+    }
+  }
+
+  function renderAdminUsersPanel() {
+    const listEl = document.getElementById('adminUsersList');
+    const statusEl = document.getElementById('adminUsersStatus');
+    const ownerEmailEl = document.getElementById('ownerEmailValue');
+    const ownerModeEl = document.getElementById('ownerModeValue');
+    const subAdminCountEl = document.getElementById('subAdminCountValue');
+    const subAdminCountSubEl = document.getElementById('subAdminCountSub');
+
+    if (!listEl || !statusEl) {
+      return;
+    }
+
+    const profile = getAccessProfile();
+    const rows = Array.isArray(state.adminUsers) ? state.adminUsers : [];
+    const ownerRow = rows.find(function(row) { return row.isOwner; }) || null;
+    const subAdmins = rows.filter(function(row) { return !row.isOwner; });
+    const activeSubAdmins = subAdmins.filter(function(row) { return row.active !== false; });
+
+    if (ownerEmailEl) {
+      ownerEmailEl.textContent = ownerRow ? ownerRow.email : (profile.email || '-');
+    }
+    if (ownerModeEl) {
+      ownerModeEl.textContent = profile.legacyMode
+        ? 'Veritabanında admin_users yapısı henüz başlatılmadı. İlk kayıtla birlikte ana yönetici satırı oluşturulur.'
+        : 'Ana yönetici tüm alt adminleri yönetir ve gerekirse pasife alabilir.';
+    }
+    if (subAdminCountEl) {
+      subAdminCountEl.textContent = String(activeSubAdmins.length);
+    }
+    if (subAdminCountSubEl) {
+      subAdminCountSubEl.textContent = subAdmins.length
+        ? subAdmins.length + ' kayıtlı alt admin bulunuyor.'
+        : 'Henüz alt admin eklenmedi.';
+    }
+
+    if (!isOwnerUser()) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Alt admin yönetimi yalnızca ana yönetici hesabında görünür.';
+      listEl.innerHTML = '';
+      return;
+    }
+
+    if (state.adminUsersLoading) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Alt admin listesi yükleniyor…';
+      listEl.innerHTML = '';
+      return;
+    }
+
+    if (state.adminUsersError) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = state.adminUsersError;
+      listEl.innerHTML = '';
+      return;
+    }
+
+    statusEl.style.display = rows.length ? 'none' : 'block';
+    statusEl.textContent = rows.length
+      ? ''
+      : 'Henüz veritabanına kaydedilmiş admin satırı yok. İlk alt admin kaydında ana yönetici hesabı otomatik hazırlanır.';
+
+    listEl.innerHTML = rows.length
+      ? rows.map(function(row) {
+          const permissionChips = row.isOwner
+            ? '<span class="perm-chip">👑 Tüm Supabase panelleri</span>'
+            : Object.keys(row.permissions || {}).filter(function(key) {
+                return !!row.permissions[key];
+              }).map(function(key) {
+                const def = getPermissionDefs().find(function(item) {
+                  return item.key === key;
+                });
+                return '<span class="perm-chip">' + escHtml(def ? def.label : key) + '</span>';
+              }).join('') || '<span class="perm-chip muted">Henüz panel açılmadı</span>';
+
+          return (
+            '<div class="admin-user-row">' +
+              '<div class="admin-user-head">' +
+                '<div class="admin-user-title">' + escHtml(row.displayName || row.email) +
+                  '<small>' + escHtml(row.email) + '</small>' +
+                '</div>' +
+                '<div class="admin-badge-row">' +
+                  (row.isOwner ? '<span class="admin-pill owner">Ana Yönetici</span>' : '<span class="admin-pill">Alt Admin</span>') +
+                  '<span class="admin-pill ' + (row.active ? 'active' : 'passive') + '">' + (row.active ? 'Aktif' : 'Pasif') + '</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="perm-chip-wrap">' + permissionChips + '</div>' +
+              '<div class="admin-row-actions">' +
+                (row.isOwner
+                  ? '<button class="btn-secondary" onclick="resetAdminMemberForm()">Ana yönetici hesabı</button>'
+                  : '<button class="btn-add" onclick="editAdminMember(\'' + escHtml(row.email) + '\')">✏️ Düzenle</button>' +
+                    '<button class="btn-toggle ' + (row.active ? 'on' : 'off') + '" onclick="toggleAdminMember(\'' + escHtml(row.email) + '\')">' + (row.active ? 'Pasife Al' : 'Aktifleştir') + '</button>' +
+                    '<button class="btn-danger" onclick="removeAdminMember(\'' + escHtml(row.email) + '\')">Sil</button>') +
+              '</div>' +
+            '</div>'
+          );
+        }).join('')
+      : '';
+  }
+
+  async function loadAdminUsers(force) {
+    if (!isOwnerUser()) {
+      state.adminUsers = [];
+      state.adminUsersError = '';
+      renderAdminUsersPanel();
+      return;
+    }
+    if (state.adminUsersLoading && !force) {
+      return;
+    }
+
+    state.adminUsersLoading = true;
+    state.adminUsersError = '';
+    renderAdminUsersPanel();
+
+    try {
+      state.adminUsers = await window.kemalAdminAuth.listAdminUsers();
+    } catch (error) {
+      state.adminUsers = [];
+      state.adminUsersError = window.kemalAdminAuth.humanizeError(error);
+    } finally {
+      state.adminUsersLoading = false;
+      renderAdminUsersPanel();
+    }
   }
 
   function renderAnalytics() {
@@ -550,6 +988,9 @@
 
   function renderCurrentPanel() {
     switch (state.currentPanel) {
+      case 'adminler':
+        renderAdminUsersPanel();
+        break;
       case 'analytics':
         renderAnalytics();
         break;
@@ -587,9 +1028,11 @@
   }
 
   async function initDashboard() {
+    buildPermissionCheckboxes();
     state.data = await window.kemalSiteStore.loadSiteData();
+    state.accessProfile = await window.kemalAdminAuth.getAdminAccessProfile(true);
     updateStats();
-    renderCurrentPanel();
+    applyAccessControl();
     document.getElementById('yeniTarih').value = new Date().toISOString().split('T')[0];
     document.getElementById('onecTarih').value = new Date().toISOString().split('T')[0];
     try {
@@ -598,6 +1041,10 @@
     } catch (error) {
       document.getElementById('adminEmailDisplay').value = '';
     }
+    if (isOwnerUser()) {
+      await loadAdminUsers(false);
+    }
+    showPanel(getRequestedPanelFromHash() || 'overview');
   }
 
   async function doLogin() {
@@ -805,6 +1252,112 @@
     persistData('🗑️ Menü bağlantısı silindi');
   }
 
+  function collectAdminPermissions() {
+    const permissions = {};
+    document.querySelectorAll('[data-admin-permission]').forEach(function(input) {
+      permissions[input.getAttribute('data-admin-permission')] = !!input.checked;
+    });
+    return permissions;
+  }
+
+  async function saveAdminMember() {
+    if (!isOwnerUser()) {
+      toast('Alt adminleri yalnızca ana yönetici yönetebilir.', 'error');
+      return;
+    }
+
+    const email = document.getElementById('subAdminEmail').value.trim();
+    const displayName = document.getElementById('subAdminDisplayName').value.trim();
+    const active = !!document.getElementById('subAdminActive').checked;
+    const permissions = collectAdminPermissions();
+
+    if (!email) {
+      toast('Alt admin için e-posta zorunlu.', 'error');
+      return;
+    }
+
+    if (!Object.values(permissions).some(Boolean)) {
+      toast('En az bir panel yetkisi açmalısın.', 'error');
+      return;
+    }
+
+    try {
+      state.adminUsersLoading = true;
+      state.adminUsersError = '';
+      renderAdminUsersPanel();
+      state.accessProfile = await window.kemalAdminAuth.saveAdminUser({
+        originalEmail: state.adminUserEditingEmail || email,
+        email,
+        displayName,
+        active,
+        permissions,
+      });
+      toast(state.adminUserEditingEmail ? '✅ Alt admin güncellendi.' : '✅ Alt admin eklendi.', 'success');
+      resetAdminMemberForm();
+      applyAccessControl();
+      await loadAdminUsers(true);
+    } catch (error) {
+      state.adminUsersLoading = false;
+      state.adminUsersError = window.kemalAdminAuth.humanizeError(error);
+      renderAdminUsersPanel();
+      toast(window.kemalAdminAuth.humanizeError(error), 'error');
+    }
+  }
+
+  function editAdminMember(email) {
+    const row = (state.adminUsers || []).find(function(item) {
+      return item.email === String(email || '').trim().toLocaleLowerCase('tr-TR');
+    });
+    if (!row) {
+      toast('Düzenlenecek admin kaydı bulunamadı.', 'error');
+      return;
+    }
+    fillAdminMemberForm(row);
+    showPanel('adminler');
+  }
+
+  async function toggleAdminMember(email) {
+    const row = (state.adminUsers || []).find(function(item) {
+      return item.email === String(email || '').trim().toLocaleLowerCase('tr-TR');
+    });
+    if (!row) {
+      toast('Admin kaydı bulunamadı.', 'error');
+      return;
+    }
+
+    try {
+      state.accessProfile = await window.kemalAdminAuth.saveAdminUser({
+        originalEmail: row.email,
+        email: row.email,
+        displayName: row.displayName,
+        active: !row.active,
+        permissions: row.permissions,
+      });
+      toast(row.active ? '⏸️ Alt admin pasife alındı.' : '✅ Alt admin yeniden aktifleştirildi.', 'success');
+      applyAccessControl();
+      await loadAdminUsers(true);
+    } catch (error) {
+      toast(window.kemalAdminAuth.humanizeError(error), 'error');
+    }
+  }
+
+  async function removeAdminMember(email) {
+    if (!confirm('Bu alt admin kaydını silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    try {
+      await window.kemalAdminAuth.deleteAdminUser(email);
+      toast('🗑️ Alt admin silindi.', 'success');
+      if (state.adminUserEditingEmail && state.adminUserEditingEmail === String(email || '').trim().toLocaleLowerCase('tr-TR')) {
+        resetAdminMemberForm();
+      }
+      await loadAdminUsers(true);
+    } catch (error) {
+      toast(window.kemalAdminAuth.humanizeError(error), 'error');
+    }
+  }
+
   async function changePassword() {
     const password = document.getElementById('sifreYeni').value;
     const password2 = document.getElementById('sifreYeniTekrar').value;
@@ -828,6 +1381,10 @@
   }
 
   function exportData() {
+    if (!isOwnerUser()) {
+      toast('Yedek indirme yalnızca ana yöneticiye açık.', 'error');
+      return;
+    }
     const blob = new Blob([JSON.stringify(getData(), null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -839,6 +1396,10 @@
   }
 
   async function resetConfirm() {
+    if (!isOwnerUser()) {
+      toast('Yalnızca ana yönetici verileri sıfırlayabilir.', 'error');
+      return;
+    }
     if (!confirm('TÜM içerik verileri varsayılan içeriğe dönecek. Emin misiniz?')) {
       return;
     }
@@ -850,6 +1411,11 @@
     const session = await window.kemalAdminAuth.getSession().catch(function() {
       return null;
     });
+    const activeInput = document.getElementById('subAdminActive');
+    if (activeInput) {
+      activeInput.addEventListener('change', syncAdminActiveLabel);
+      syncAdminActiveLabel();
+    }
     document.getElementById('loginPass').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         doLogin();
@@ -858,6 +1424,15 @@
     document.getElementById('loginEmail').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         doLogin();
+      }
+    });
+    if (window.KemalAdminShell) {
+      window.KemalAdminShell.bindSidebar(document.querySelector('.sidebar'));
+    }
+    window.addEventListener('hashchange', function() {
+      const requestedPanel = getRequestedPanelFromHash();
+      if (requestedPanel && requestedPanel !== state.currentPanel) {
+        showPanel(requestedPanel);
       }
     });
 
@@ -891,6 +1466,11 @@
   window.saveHakkimda = saveHakkimda;
   window.addMenu = addMenu;
   window.delMenu = delMenu;
+  window.resetAdminMemberForm = resetAdminMemberForm;
+  window.saveAdminMember = saveAdminMember;
+  window.editAdminMember = editAdminMember;
+  window.toggleAdminMember = toggleAdminMember;
+  window.removeAdminMember = removeAdminMember;
   window.changePassword = changePassword;
   window.exportData = exportData;
   window.resetConfirm = resetConfirm;

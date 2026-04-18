@@ -260,6 +260,7 @@ with check (true);
 create index if not exists idx_sonuclar_tarih on public.sonuclar (olusturma_tarihi desc);
 create index if not exists idx_sonuclar_metin on public.sonuclar (metin_id);
 create index if not exists idx_sonuclar_sinif_sube on public.sonuclar (sinif, sube);
+create index if not exists idx_sonuclar_attempt_id on public.sonuclar ((detay_json ->> 'attempt_id'));
 
 grant insert on public.sonuclar to anon;
 grant select, insert, update, delete on public.sonuclar to authenticated;

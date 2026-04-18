@@ -6,6 +6,7 @@
   <title>📝 Okuma Editörü — Kemal Öğretmenim</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
+  <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
     :root {
@@ -527,6 +528,24 @@
 <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!window.KemalAdminShell) {
+      return;
+    }
+    window.KemalAdminShell.initStandalone({
+      appId: 'app',
+      activeKey: 'okuma-editor',
+      homeHref: '/hizli-okuma/index.html',
+      homeLabel: '🌐 Okuma Sayfası',
+      homeTarget: '_blank',
+      utilityHref: '/hizli-okuma/index.html',
+      utilityLabel: '🌐 Okuma Sayfası',
+      utilityTarget: '_blank'
+    });
+  });
+</script>
 <script src="/js/okuma-editor-app.js"></script>
 </body>
 </html>

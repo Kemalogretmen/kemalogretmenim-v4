@@ -3,13 +3,6 @@
 
   const metin = JSON.parse(sessionStorage.getItem('okuma_metin') || 'null');
   const kullanici = JSON.parse(sessionStorage.getItem('okuma_kullanici') || 'null');
-  const READING_RESULT_ID_KEY = 'kemal_okuma_result_id';
-  const readingConfig = window.kemalSiteStore
-    ? (window.kemalSiteStore.getReadingConfig ? window.kemalSiteStore.getReadingConfig() : window.kemalSiteStore.getConfig())
-    : null;
-  const readingClient = window.supabase && readingConfig
-    ? window.supabase.createClient(readingConfig.supabaseUrl, readingConfig.supabaseAnonKey)
-    : null;
 
   if (!metin || !kullanici) {
     window.location.href = '/hizli-okuma/index.html';
@@ -126,60 +119,7 @@
       }
     };
 
-    ensureStartedReadingRecord().catch(function(error) {
-      console.warn('Okuma baslangic kaydi olusturulamadi:', error && error.message ? error.message : error);
-    });
     launch();
-  }
-
-  async function ensureStartedReadingRecord() {
-    if (!readingClient) {
-      return '';
-    }
-    const existing = sessionStorage.getItem(READING_RESULT_ID_KEY) || '';
-    if (existing) {
-      return existing;
-    }
-    const payload = {
-      ad: kullanici.ad,
-      soyad: kullanici.soyad,
-      sinif: kullanici.sinif,
-      sube: kullanici.sube,
-      metin_id: metin.id,
-      metin_adi: metin.baslik,
-      okuma_suresi_sn: 0,
-      kelime_sayisi: metin.kelime_sayisi || getPlainText().split(/\s+/).filter(Boolean).length,
-      dakika_kelime: 0,
-      hedef_hiz: metin.hedef_hiz || 0,
-      dogru_sayisi: 0,
-      yanlis_sayisi: 0,
-      toplam_soru: getQuestionCount(),
-      anlama_yuzdesi: 0,
-      detay_json: {
-        attempt_status: 'started',
-        goruntuleme_modu: metin.goruntuleme_modu,
-        kullanici_bilgileri: {
-          il: kullanici.il || '',
-          okul: kullanici.okul || '',
-        },
-      },
-    };
-
-    let response = await readingClient.from('sonuclar').insert(payload).select('id').maybeSingle();
-    if (response.error && response.error.message && response.error.message.includes('detay_json')) {
-      const fallbackPayload = Object.assign({}, payload);
-      delete fallbackPayload.detay_json;
-      response = await readingClient.from('sonuclar').insert(fallbackPayload).select('id').maybeSingle();
-    }
-    if (response.error) {
-      throw response.error;
-    }
-
-    const resultId = response.data && response.data.id ? String(response.data.id) : '';
-    if (resultId) {
-      sessionStorage.setItem(READING_RESULT_ID_KEY, resultId);
-    }
-    return resultId;
   }
 
   function startFullTextMode() {

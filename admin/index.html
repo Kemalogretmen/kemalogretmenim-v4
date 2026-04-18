@@ -6,6 +6,7 @@
   <title>⚙️ Yönetim Paneli — Kemal Öğretmenim</title>
   <meta name="robots" content="noindex,nofollow">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -74,7 +75,7 @@
       left:0; top:0;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 12px;
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-width: thin;
@@ -95,7 +96,6 @@
       font-family:'Baloo 2',cursive;
       font-size:18px; font-weight:800;
       color:white;
-      margin-bottom:24px;
       display:flex; align-items:center; gap:10px;
     }
     .sidebar-logo a {
@@ -124,6 +124,22 @@
       color: white;
     }
     .side-btn .em { font-size:18px; width:26px; text-align:center; }
+    .sidebar .admin-nav-section { display:grid; gap:8px; }
+    .sidebar .admin-nav-section-label { padding:0 8px; }
+    .sidebar .admin-nav-group { padding:8px; }
+    .sidebar .admin-nav-group-link { cursor:pointer; }
+    .sidebar .admin-nav-submenu { padding-left:16px; }
+    .sidebar .admin-nav-submenu .side-btn {
+      font-size:13px;
+      padding:9px 12px;
+      border-radius:10px;
+      color:rgba(255,255,255,.7);
+    }
+    .sidebar .admin-nav-submenu .side-btn:hover,
+    .sidebar .admin-nav-submenu .side-btn.active {
+      background: rgba(255,255,255,.12);
+      color:white;
+    }
 
     .sidebar-bottom { margin-top:auto; }
     .logout-btn {
@@ -409,6 +425,214 @@
       border-radius:999px;
       background:linear-gradient(135deg,var(--purple),var(--purple-light));
     }
+    .access-summary-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin-top:18px;
+    }
+    .access-summary-card {
+      background:#FAFAFF;
+      border:2px solid var(--border);
+      border-radius:16px;
+      padding:18px;
+    }
+    .access-summary-label {
+      font-size:12px;
+      font-weight:800;
+      color:var(--slate);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:8px;
+    }
+    .access-summary-value {
+      font-family:'Baloo 2',cursive;
+      font-size:28px;
+      font-weight:800;
+      color:var(--purple);
+      line-height:1.1;
+      margin-bottom:8px;
+    }
+    .access-summary-sub {
+      font-size:13px;
+      line-height:1.6;
+      color:var(--slate);
+    }
+    .perm-chip-wrap {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .perm-chip {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 12px;
+      border-radius:999px;
+      background:#F0EBFF;
+      color:var(--purple);
+      font-size:12px;
+      font-weight:800;
+      border:1px solid rgba(108,61,237,.16);
+    }
+    .perm-chip.muted {
+      background:#F8FAFC;
+      color:var(--slate);
+      border-color:#E2E8F0;
+    }
+    .admin-help-box {
+      padding:16px 18px;
+      border:2px dashed var(--border);
+      border-radius:16px;
+      background:#FAFAFF;
+      color:var(--slate);
+      font-size:14px;
+      line-height:1.7;
+      margin-bottom:18px;
+    }
+    .admin-grid {
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:18px;
+      align-items:start;
+    }
+    .admin-user-list {
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .admin-user-row {
+      padding:16px 18px;
+      border-radius:16px;
+      border:2px solid var(--border);
+      background:#FAFAFF;
+    }
+    .admin-user-head {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+      flex-wrap:wrap;
+    }
+    .admin-user-title {
+      font-size:15px;
+      font-weight:800;
+      color:var(--navy);
+    }
+    .admin-user-title small {
+      display:block;
+      margin-top:4px;
+      font-size:12px;
+      color:var(--slate);
+      font-weight:700;
+    }
+    .admin-badge-row {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .admin-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      background:#EDE9FE;
+      color:var(--purple);
+    }
+    .admin-pill.owner {
+      background:#FEF3C7;
+      color:#B45309;
+    }
+    .admin-pill.active {
+      background:#DCFCE7;
+      color:#15803D;
+    }
+    .admin-pill.passive {
+      background:#FEE2E2;
+      color:#DC2626;
+    }
+    .admin-row-actions {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .admin-permission-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .admin-permission-card {
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:2px solid var(--border);
+      background:#FAFAFF;
+      transition:all .2s;
+    }
+    .admin-permission-card:hover {
+      border-color:var(--purple);
+      background:white;
+    }
+    .admin-permission-card input {
+      width:18px;
+      height:18px;
+      margin-top:2px;
+      accent-color:var(--purple);
+      flex-shrink:0;
+    }
+    .admin-permission-card strong {
+      display:block;
+      font-size:13px;
+      color:var(--navy);
+      margin-bottom:4px;
+    }
+    .admin-permission-card span {
+      font-size:12px;
+      color:var(--slate);
+      line-height:1.5;
+    }
+    .admin-form-actions {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top:6px;
+    }
+    .admin-form-note {
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.6;
+      margin-top:10px;
+    }
+    .btn-secondary {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:11px 22px;
+      background:white;
+      color:var(--slate);
+      border:2px solid var(--border);
+      border-radius:50px;
+      cursor:pointer;
+      font-family:'Nunito',sans-serif;
+      font-weight:800;
+      font-size:14px;
+      transition:all .2s;
+    }
+    .btn-secondary:hover {
+      border-color:var(--purple);
+      color:var(--purple);
+      transform:translateY(-1px);
+    }
 
     @media (max-width:900px) {
       .sidebar { width:70px; padding:20px 10px; }
@@ -416,6 +640,7 @@
       .main-area { margin-left:70px; padding:20px; }
       .stats-row { grid-template-columns:1fr 1fr; }
       .form-row, .form-row-3 { grid-template-columns:1fr; }
+      .admin-grid, .admin-permission-grid, .access-summary-grid { grid-template-columns:1fr; }
     }
     @media (max-width:640px) {
       .main-area { padding:16px; }
@@ -449,71 +674,155 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-      <div class="sidebar-logo">
-        <span>🌟</span> Yönetim
-        <a href="/index.html" target="_blank">Siteyi Aç ↗</a>
+      <div class="sidebar-logo admin-nav-brand">
+        <span class="admin-nav-brand-badge">🌟</span>
+        <div class="admin-nav-brand-copy">
+          <strong>Kemal Öğretmenim</strong>
+          <span>Ortak admin gezintisi</span>
+        </div>
       </div>
 
-      <span class="nav-section-lbl">Ana Menü</span>
-      <button class="side-btn active" onclick="showPanel('overview')" id="btn-overview">
-        <span class="em">📊</span><span>Genel Bakış</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('analytics')" id="btn-analytics">
-        <span class="em">📈</span><span>Site Analizleri</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('duyurular')" id="btn-duyurular">
-        <span class="em">📢</span><span>Duyurular</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('badges')" id="btn-badges">
-        <span class="em">🔔</span><span>YENİ Rozetleri</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('hizli')" id="btn-hizli">
-        <span class="em">⚡</span><span>Hızlı Erişim</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('onecikarlar')" id="btn-onecikarlar">
-        <span class="em">📰</span><span>Öne Çıkanlar</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('yeni')" id="btn-yeni">
-        <span class="em">🌟</span><span>Yeni İçerikler</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('hakkimda')" id="btn-hakkimda">
-        <span class="em">👤</span><span>Hakkımda</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('menuler')" id="btn-menuler">
-        <span class="em">🔗</span><span>Ekstra Menü</span>
-      </button>
+      <div class="admin-nav-section">
+        <div class="admin-nav-section-label">Genel Yönetim</div>
+        <div class="admin-nav-group is-open" data-admin-group="site-admin">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link is-active" href="/admin/index.html">
+              <span class="icon">⚙️</span>
+              <span class="copy">
+                <strong>Ana Admin Paneli</strong>
+                <span>Site ayarları ve yönetim</span>
+              </span>
+            </a>
+            <button class="admin-nav-group-toggle" type="button" aria-label="Ana admin alt menülerini açıp kapat">
+              <span class="caret">⌄</span>
+            </button>
+          </div>
+          <div class="admin-nav-submenu">
+            <button class="side-btn active" onclick="showPanel('overview')" id="btn-overview">
+              <span class="em">📊</span><span>Genel Bakış</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('analytics')" id="btn-analytics">
+              <span class="em">📈</span><span>Site Analizleri</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('duyurular')" id="btn-duyurular">
+              <span class="em">📢</span><span>Duyurular</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('badges')" id="btn-badges">
+              <span class="em">🔔</span><span>YENİ Rozetleri</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('hizli')" id="btn-hizli">
+              <span class="em">⚡</span><span>Hızlı Erişim</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('onecikarlar')" id="btn-onecikarlar">
+              <span class="em">📰</span><span>Öne Çıkanlar</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('yeni')" id="btn-yeni">
+              <span class="em">🌟</span><span>Yeni İçerikler</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('hakkimda')" id="btn-hakkimda">
+              <span class="em">👤</span><span>Hakkımda</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('menuler')" id="btn-menuler">
+              <span class="em">🔗</span><span>Ekstra Menü</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('adminler')" id="btn-adminler">
+              <span class="em">👥</span><span>Alt Adminler</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('sifre')" id="btn-sifre">
+              <span class="em">🔑</span><span>Şifre Değiştir</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('yedek')" id="btn-yedek">
+              <span class="em">💾</span><span>Yedek / Sıfırla</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
-      <button class="side-btn" onclick="window.location='/admin/oyunlar-admin.html'" id="btn-oyunlar">
-        <span class="em">🎮</span><span>Oyunlar Yönetimi</span>
-      </button>
-      <button class="side-btn" onclick="window.location='/admin/okuma-editor.html'" id="btn-okuma-editor">
-        <span class="em">📝</span><span>Okuma Metinleri</span>
-      </button>
-      <button class="side-btn" onclick="window.location='/admin/dokuman-yonetimi.html'" id="btn-dokuman-yonetimi">
-        <span class="em">📚</span><span>Doküman Yönetimi</span>
-      </button>
-      <button class="side-btn" onclick="window.location='/admin/calisma-kagidi-editor.html'" id="btn-calisma-kagidi">
-        <span class="em">🧩</span><span>Çalışma Kağıtları</span>
-      </button>
-      <button class="side-btn" onclick="window.location='/admin/okuma-sonuclari.html'" id="btn-okuma-sonuclar">
-        <span class="em">📊</span><span>Okuma Sonuçları</span>
-      </button>
-      <button class="side-btn" onclick="window.location='/admin/okuma-karne.html'" id="btn-okuma-karne">
-        <span class="em">📘</span><span>Okuma Karne Merkezi</span>
-      </button>
-      <button class="side-btn" onclick="window.location='/sinav_sitesi/admin.html'" id="btn-sinav-admin">
-        <span class="em">🧪</span><span>Sınav Yönetimi</span>
-      </button>
+      <div class="admin-nav-section">
+        <div class="admin-nav-section-label">İçerik Yönetimi</div>
+        <div class="admin-nav-group">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link" href="/admin/oyunlar-admin.html">
+              <span class="icon">🎮</span>
+              <span class="copy">
+                <strong>Oyunlar Yönetimi</strong>
+                <span>Oyun kartları ve bağlantılar</span>
+              </span>
+            </a>
+          </div>
+        </div>
+        <div class="admin-nav-group" data-admin-group="reading-admin">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link" href="/admin/okuma-editor.html">
+              <span class="icon">📚</span>
+              <span class="copy">
+                <strong>Okuma Admin</strong>
+                <span>Metinler, sonuçlar ve karne</span>
+              </span>
+            </a>
+            <button class="admin-nav-group-toggle" type="button" aria-label="Okuma admin alt menülerini açıp kapat">
+              <span class="caret">⌄</span>
+            </button>
+          </div>
+          <div class="admin-nav-submenu">
+            <a href="/admin/okuma-editor.html">Okuma Metinleri</a>
+            <a href="/admin/okuma-sonuclari.html">Okuma Sonuçları</a>
+            <a href="/admin/okuma-karne.html">Karne Merkezi</a>
+          </div>
+        </div>
+        <div class="admin-nav-group">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link" href="/admin/dokuman-yonetimi.html">
+              <span class="icon">📄</span>
+              <span class="copy">
+                <strong>Doküman Yönetimi</strong>
+                <span>PDF içerikler ve yayın akışı</span>
+              </span>
+            </a>
+          </div>
+        </div>
+        <div class="admin-nav-group">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link" href="/admin/calisma-kagidi-editor.html">
+              <span class="icon">🧩</span>
+              <span class="copy">
+                <strong>Çalışma Kağıdı</strong>
+                <span>Etkileşimli çalışma kağıdı tasarımı</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      </div>
 
-      <span class="nav-section-lbl">Araçlar</span>
-      <button class="side-btn" onclick="showPanel('sifre')" id="btn-sifre">
-        <span class="em">🔑</span><span>Şifre Değiştir</span>
-      </button>
-      <button class="side-btn" onclick="showPanel('yedek')" id="btn-yedek">
-        <span class="em">💾</span><span>Yedek / Sıfırla</span>
-      </button>
+      <div class="admin-nav-section">
+        <div class="admin-nav-section-label">Ölçme Değerlendirme</div>
+        <div class="admin-nav-group" data-admin-group="exam-admin">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link" href="/sinav_sitesi/admin.html">
+              <span class="icon">🧪</span>
+              <span class="copy">
+                <strong>Sınav Admin</strong>
+                <span>Sınav, kategori ve sonuç yönetimi</span>
+              </span>
+            </a>
+            <button class="admin-nav-group-toggle" type="button" aria-label="Sınav admin alt menülerini açıp kapat">
+              <span class="caret">⌄</span>
+            </button>
+          </div>
+          <div class="admin-nav-submenu">
+            <a href="/sinav_sitesi/admin.html#create">Sınav Oluştur</a>
+            <a href="/sinav_sitesi/admin.html#categories">Kategoriler</a>
+            <a href="/sinav_sitesi/admin.html#exams">Sınavlar</a>
+            <a href="/sinav_sitesi/admin.html#results">Sonuçlar</a>
+            <a href="/sinav_sitesi/index.html">Öğrenci Sayfası</a>
+          </div>
+        </div>
+      </div>
 
       <div class="sidebar-bottom">
+        <a href="/index.html" target="_blank" class="side-btn" style="text-decoration:none;">
+          <span class="em">🏠</span><span>Siteyi Aç</span>
+        </a>
         <button class="logout-btn" onclick="doLogout()">
           <span class="em">🚪</span><span>Çıkış Yap</span>
         </button>
@@ -552,17 +861,38 @@
         <div class="card">
           <div class="card-title">🎯 Hızlı Eylemler</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
-            <button class="btn-add" onclick="showPanel('analytics')">📈 Site Analizleri</button>
-            <button class="btn-add" onclick="showPanel('duyurular')">📢 Duyuru Ekle</button>
-            <button class="btn-add" onclick="showPanel('yeni')">🌟 Yeni İçerik Ekle</button>
-            <button class="btn-add" onclick="showPanel('badges')">🔔 Rozet Ayarla</button>
-            <button class="btn-add" onclick="showPanel('hizli')">⚡ Kart Düzenle</button>
-            <button class="btn-add" onclick="window.location='/admin/okuma-editor.html'">📝 Okuma Editörü</button>
-            <button class="btn-add" onclick="window.location='/admin/dokuman-yonetimi.html'">📚 Doküman Yönetimi</button>
-            <button class="btn-add" onclick="window.location='/admin/calisma-kagidi-editor.html'">🧩 Çalışma Kağıtları</button>
-            <button class="btn-add" onclick="window.location='/admin/okuma-sonuclari.html'">📊 Okuma Sonuçları</button>
-            <button class="btn-add" onclick="window.location='/admin/okuma-karne.html'">📘 Okuma Karnesi</button>
-            <button class="btn-add" onclick="window.location='/sinav_sitesi/admin.html'">🧪 Sınav Yönetimi</button>
+            <button class="btn-add" onclick="showPanel('analytics')" id="quick-analytics">📈 Site Analizleri</button>
+            <button class="btn-add" onclick="showPanel('duyurular')" id="quick-duyurular">📢 Duyuru Ekle</button>
+            <button class="btn-add" onclick="showPanel('yeni')" id="quick-yeni">🌟 Yeni İçerik Ekle</button>
+            <button class="btn-add" onclick="showPanel('badges')" id="quick-badges">🔔 Rozet Ayarla</button>
+            <button class="btn-add" onclick="showPanel('hizli')" id="quick-hizli">⚡ Kart Düzenle</button>
+            <button class="btn-add" onclick="window.location='/admin/okuma-editor.html'" id="quick-okuma-editor">📝 Okuma Editörü</button>
+            <button class="btn-add" onclick="window.location='/admin/dokuman-yonetimi.html'" id="quick-dokuman-yonetimi">📚 Doküman Yönetimi</button>
+            <button class="btn-add" onclick="window.location='/admin/calisma-kagidi-editor.html'" id="quick-calisma-kagidi">🧩 Çalışma Kağıtları</button>
+            <button class="btn-add" onclick="window.location='/admin/okuma-sonuclari.html'" id="quick-okuma-sonuclari">📊 Okuma Sonuçları</button>
+            <button class="btn-add" onclick="window.location='/admin/okuma-karne.html'" id="quick-okuma-karne">📘 Okuma Karnesi</button>
+            <button class="btn-add" onclick="showPanel('adminler')" id="quick-adminler">👥 Alt Adminler</button>
+            <button class="btn-add" onclick="window.location='/sinav_sitesi/admin.html'" id="quick-sinav-admin">🧪 Sınav Yönetimi</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">👥 Yetki Özeti</div>
+          <div id="overviewAccessHint" class="admin-help-box" style="display:none;"></div>
+          <div class="access-summary-grid">
+            <div class="access-summary-card">
+              <div class="access-summary-label">Rol</div>
+              <div class="access-summary-value" id="accessRoleValue">Ana Yönetici</div>
+              <div class="access-summary-sub" id="accessRoleSub">Bu hesap tüm panellere tam erişimle açıldı.</div>
+            </div>
+            <div class="access-summary-card">
+              <div class="access-summary-label">Açık Yetki Sayısı</div>
+              <div class="access-summary-value" id="accessCountValue">0</div>
+              <div class="access-summary-sub" id="accessCountSub">Bu hesap için açık paneller burada özetlenir.</div>
+            </div>
+          </div>
+          <div style="margin-top:18px;">
+            <label style="margin-bottom:10px;">Bu hesap için açık yönetim panelleri</label>
+            <div class="perm-chip-wrap" id="accessPermissionChips"></div>
           </div>
         </div>
         <div class="card">
@@ -831,6 +1161,65 @@
         </div>
       </div>
 
+      <!-- ══ ALT ADMİNLER ══ -->
+      <div class="panel" id="panel-adminler">
+        <div class="card">
+          <div class="card-title">👑 Yönetici Yapısı</div>
+          <div id="adminUsersHint" class="admin-help-box">
+            Ana yönetici bu ekrandan alt adminleri ekler, hangi panellere erişeceklerini belirler ve gerektiğinde pasife alır. Sınav paneli şu an ayrı Firebase yetkisi kullandığı için bu ekran yalnızca Supabase tabanlı admin panellerini yönetir.
+          </div>
+          <div class="access-summary-grid">
+            <div class="access-summary-card">
+              <div class="access-summary-label">Ana Yönetici</div>
+              <div class="access-summary-value" id="ownerEmailValue">-</div>
+              <div class="access-summary-sub" id="ownerModeValue">Kurulum tamamlandığında alt adminler sadece seçtiğiniz panelleri görebilir.</div>
+            </div>
+            <div class="access-summary-card">
+              <div class="access-summary-label">Aktif Alt Admin</div>
+              <div class="access-summary-value" id="subAdminCountValue">0</div>
+              <div class="access-summary-sub" id="subAdminCountSub">Pasif hesaplar yönetim listesinde kalır ama giriş yapamaz.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-grid">
+          <div class="card">
+            <div class="card-title">➕ Alt Admin Ekle / Düzenle</div>
+            <label>E-posta</label>
+            <input type="text" id="subAdminEmail" placeholder="ornek@site.com">
+            <div class="form-row">
+              <div>
+                <label>Görünen Ad</label>
+                <input type="text" id="subAdminDisplayName" placeholder="Örn: Ayşe Öğretmen">
+              </div>
+              <div>
+                <label>Durum</label>
+                <div class="toggle-wrap" style="margin:10px 0 0;">
+                  <label class="toggle" style="margin:0;">
+                    <input type="checkbox" id="subAdminActive" checked>
+                    <span class="slider"></span>
+                  </label>
+                  <span id="subAdminActiveLabel" style="font-size:13px;font-weight:800;color:var(--slate);">Aktif</span>
+                </div>
+              </div>
+            </div>
+            <label>Paneller</label>
+            <div class="admin-permission-grid" id="subAdminPermissionList"></div>
+            <div class="admin-form-actions">
+              <button class="btn-save" onclick="saveAdminMember()">💾 Kaydet</button>
+              <button class="btn-secondary" onclick="resetAdminMemberForm()">↺ Formu Temizle</button>
+            </div>
+            <p class="admin-form-note" id="subAdminFormNote">Alt admin giriş yaptıktan sonra yalnızca seçtiğiniz paneller görünür. Şifre değişikliği kullanıcıya aittir; bu ekranda erişim yönetilir.</p>
+          </div>
+
+          <div class="card">
+            <div class="card-title">📋 Yetkili Adminler</div>
+            <div id="adminUsersStatus" class="admin-help-box" style="display:none;"></div>
+            <div class="admin-user-list" id="adminUsersList"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ YEDEK / SIFIRLA ══ -->
       <div class="panel" id="panel-yedek">
         <div class="card" style="max-width:520px;">
@@ -853,6 +1242,7 @@
 
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js"></script>
+<script src="/js/admin-shell.js"></script>
 <script src="/js/admin-dashboard.js"></script>
 </body>
 </html>

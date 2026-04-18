@@ -361,17 +361,26 @@
         const label = normalizeTextToken(choice && choice.secenek_metni);
         return label === 'yanlış' || label === 'yanlis';
       });
-      const dogruMu = dogruSec ? !!dogruSec.dogru_mu : !(yanlisSec && yanlisSec.dogru_mu);
+      const hasExplicitCorrectFlag = list.some(choice =>
+        typeof (choice && choice.dogru_mu) === 'boolean' ||
+        String(choice && choice.dogru_mu) === 'true' ||
+        String(choice && choice.dogru_mu) === 'false'
+      );
+      const dogruMu = hasExplicitCorrectFlag
+        ? (dogruSec ? String(dogruSec.dogru_mu) === 'true' || dogruSec.dogru_mu === true : !(yanlisSec && (String(yanlisSec.dogru_mu) === 'true' || yanlisSec.dogru_mu === true)))
+        : undefined;
       return [
         {
           id: dogruSec && dogruSec.id ? dogruSec.id : 'dogru',
           secenek_metni: 'Doğru',
           dogru_mu: dogruMu,
+          sira: dogruSec && dogruSec.sira ? dogruSec.sira : 1,
         },
         {
           id: yanlisSec && yanlisSec.id ? yanlisSec.id : 'yanlis',
           secenek_metni: 'Yanlış',
-          dogru_mu: !dogruMu,
+          dogru_mu: typeof dogruMu === 'boolean' ? !dogruMu : undefined,
+          sira: yanlisSec && yanlisSec.sira ? yanlisSec.sira : 2,
         },
       ];
     }
@@ -387,19 +396,34 @@
         .map((choice, index) => ({
           ...choice,
           id: choice && choice.id ? choice.id : `sec_${index + 1}`,
+          sira: choice && choice.sira ? choice.sira : index + 1,
         }));
+    }
+
+    function parseQuestionSettings(question) {
+      if (!question || !question.ayar_json) {
+        return {};
+      }
+      if (typeof question.ayar_json === 'object') {
+        return question.ayar_json;
+      }
+      try {
+        return JSON.parse(question.ayar_json);
+      } catch (error) {
+        return {};
+      }
     }
 
     function getCorrectChoice(question) {
       const choices = getQuestionChoices(question);
-      const direct = choices.find(choice => choice && choice.dogru_mu);
+      const direct = choices.find(choice =>
+        choice && (choice.dogru_mu === true || String(choice.dogru_mu) === 'true')
+      );
       if (direct) {
         return direct;
       }
 
-      const settings = question && question.ayar_json && typeof question.ayar_json === 'object'
-        ? question.ayar_json
-        : {};
+      const settings = parseQuestionSettings(question);
       const explicitIds = [
         settings.dogruSecenekId,
         settings.correctChoiceId,
@@ -415,11 +439,30 @@
         }
       }
 
+      const explicitOrders = [
+        settings.dogruSecenekSira,
+        settings.correctChoiceOrder,
+        settings.correctOrder,
+        settings.dogruSira,
+      ]
+        .map(value => parseInt(value, 10))
+        .filter(value => Number.isFinite(value) && value > 0);
+
+      for (const explicitOrder of explicitOrders) {
+        const match = choices.find(choice => parseInt(choice && choice.sira, 10) === explicitOrder)
+          || choices[explicitOrder - 1];
+        if (match) {
+          return match;
+        }
+      }
+
       const explicitTexts = [
         settings.dogruSecenekMetni,
         settings.correctChoiceText,
         settings.correctText,
         settings.dogruMetin,
+        settings.dogruSecenek,
+        settings.correctChoiceLabel,
       ].map(normalizeTextToken).filter(Boolean);
 
       for (const explicitText of explicitTexts) {

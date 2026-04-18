@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Paneli — Kemal Öğretmenim</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/admin-shell.css">
 <style>
 :root{
   --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
@@ -205,6 +206,7 @@ h1,h2,h3,h4{font-family:var(--fd)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="/js/admin-shell.js"></script>
 
 <script type="module">
 import { app, db } from "./js/firebase.js";
@@ -281,6 +283,11 @@ function createInitialState(overrides={}){
 }
 let A=createInitialState();
 const appEl=()=>document.getElementById('app');
+
+function getRequestedPageFromHash(){
+  const hash=String(window.location.hash||'').replace(/^#/,'').trim();
+  return ['create','categories','exams','results'].includes(hash)?hash:'';
+}
 
 /* ── UTILS ── */
 function toast(msg,type='info'){
@@ -761,50 +768,25 @@ function renderNotAuthorized(){
 
 /* ── SHELL ── */
 function renderShell(content){
-  const nav=[
-    {id:'create',icon:'📝',label:'Sınav Oluştur'},
-    {id:'categories',icon:'🗂️',label:'Kategoriler'},
-    {id:'exams',icon:'📚',label:'Sınavlar'},
-    {id:'results',icon:'📊',label:'Sonuçlar'}
-  ];
-  const quickLinks=[
-    {icon:'🧭',label:'Site Admin',href:'/admin/index.html'},
-    {icon:'📝',label:'Okuma Editörü',href:'/admin/okuma-editor.html'},
-    {icon:'📈',label:'Okuma Sonuçları',href:'/admin/okuma-sonuclari.html'},
-    {icon:'📘',label:'Okuma Karnesi',href:'/admin/okuma-karne.html'},
-    {icon:'🎮',label:'Oyunlar Admin',href:'/admin/oyunlar-admin.html'}
-  ];
+  const sidebarHtml=window.KemalAdminShell
+    ? window.KemalAdminShell.renderSidebar({
+        activeKey:`exam-${A.page}`,
+        homeHref:'index.html',
+        homeLabel:'Öğrenci Sayfası',
+        homeTarget:'_blank'
+      })
+    : '';
   appEl().innerHTML=`
-  <div class="admin-wrap">
-	    <div class="sidebar">
-	      <div class="sidebar-head">
-	        <h2>🎓 Kemal Öğretmenim</h2>
-	        <p>Yönetim Paneli v2</p>
-	        ${currentUser?`
-	          <div style="margin-top:12px;padding:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:14px">
-	            <div style="font-size:10px;color:rgba(255,255,255,.35);font-weight:800;letter-spacing:.4px;text-transform:uppercase">UID</div>
-	            <div style="margin-top:6px;font-size:10px;color:rgba(255,255,255,.8);word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace">${currentUser.uid}</div>
-	            <button class="btn btn-outline w-full" style="margin-top:10px;border-color:rgba(255,255,255,.18);color:#fff" onclick="W.copyUid()">Kopyala</button>
-	          </div>`:''}
-	      </div>
-	      <div class="sidebar-nav">
-	        ${nav.map(n=>`<div class="snav-item ${A.page===n.id?'active':''}" onclick="W.nav('${n.id}')"><span style="font-size:15px">${n.icon}</span>${n.label}</div>`).join('')}
-          <div class="sidebar-links-head">Diğer Paneller</div>
-          ${quickLinks.map(link=>`<div class="snav-item snav-link" onclick="window.location='${link.href}'"><span style="font-size:15px">${link.icon}</span>${link.label}</div>`).join('')}
-	      </div>
-      <div class="sidebar-foot">
-        <div class="snav-item" onclick="window.open('index.html','_blank')"><span>🏠</span>Öğrenci Sayfası</div>
-        <div class="snav-item" onclick="W.logout()"><span>🚪</span>Çıkış Yap</div>
-        <div style="padding:10px 8px 6px;font-size:11px;color:rgba(255,255,255,.2);text-align:center">
-          <a href="https://www.kemalogretmenim.com.tr" target="_blank" style="color:rgba(255,255,255,.2);text-decoration:none;font-family:var(--fd);font-weight:700">✦ By Kemal Öğretmen</a>
-        </div>
-      </div>
-    </div>
-    <div class="main-area">
+  <div class="admin-shell-layout">
+    ${sidebarHtml}
+    <div class="admin-shell-main">
       <div id="mainContent">${content}</div>
       <div class="main-footer"><a href="https://www.kemalogretmenim.com.tr" target="_blank">✦ By Kemal Öğretmen</a></div>
     </div>
   </div>`;
+  if(window.KemalAdminShell){
+    window.KemalAdminShell.bindSidebar(appEl().querySelector('.admin-nav-sidebar'),()=>W.logout());
+  }
 }
 function setContent(html){const el=document.getElementById('mainContent');if(el)el.innerHTML=html;}
 
@@ -1707,6 +1689,10 @@ const W={
       preserveCreateDraftOnReturn=false;
     }
     A.page=page;
+    const targetHash=`#${page}`;
+    if(window.location.hash!==targetHash){
+      window.history.replaceState({},document.title,window.location.pathname+window.location.search+targetHash);
+    }
     if(page==='categories'){
       showLoad();
       await syncCategoryConfigState();
@@ -2692,6 +2678,11 @@ onAuthStateChanged(auth, async (user) => {
   if(user) currentUserIsAdmin=await checkIsAdmin(user.uid);
   if(currentUserIsAdmin){
     await syncCategoryConfigState();
+    const requestedPage=getRequestedPageFromHash();
+    if(requestedPage&&requestedPage!=='create'){
+      await W.nav(requestedPage);
+      return;
+    }
   }
   render();
 });
@@ -2708,6 +2699,12 @@ function render(){
   else if(A.page==='exams') renderShell(renderAdminExams());
   else if(A.page==='results') renderShell(renderAdminResults());
 }
+window.addEventListener('hashchange',()=>{
+  const requestedPage=getRequestedPageFromHash();
+  if(requestedPage&&requestedPage!==A.page&&currentUserIsAdmin){
+    W.nav(requestedPage);
+  }
+});
 render();
 </script>
 </body>

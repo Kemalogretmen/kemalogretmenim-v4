@@ -9,6 +9,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -318,6 +319,22 @@
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js"></script>
 <script src="/js/dokuman-store.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!window.KemalAdminShell) {
+      return;
+    }
+    window.KemalAdminShell.initStandalone({
+      appId: 'app',
+      activeKey: 'dokuman-yonetimi',
+      homeHref: '/index.html',
+      homeLabel: '🏠 Ana Site',
+      utilityHref: '/index.html',
+      utilityLabel: '🏠 Ana Site'
+    });
+  });
+</script>
 <script src="/js/dokuman-yonetimi-app.js"></script>
 </body>
 </html>
