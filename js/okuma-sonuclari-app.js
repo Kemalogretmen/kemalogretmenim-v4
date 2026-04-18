@@ -4,6 +4,8 @@
   let allResults = [];
   let filteredResults = [];
   let toastTimer = null;
+  let rawResultsCount = 0;
+  let hiddenResultsCount = 0;
 
   function getClient() {
     return window.kemalAdminAuth.getClient();
@@ -219,7 +221,11 @@
 
   function renderDesktopRows() {
     const body = document.getElementById('tabloGovde');
-    document.getElementById('tabloCount').textContent = filteredResults.length + ' kayıt';
+    document.getElementById('tabloCount').textContent = filteredResults.length + ' kayıt' + (
+      hiddenResultsCount > 0
+        ? ' · ' + hiddenResultsCount + ' tamamlanmamış / eski kayıt gizlendi'
+        : ''
+    );
 
     if (!filteredResults.length) {
       body.innerHTML = '<div class="bos-durum"><span>📭</span><p>Sonuç bulunamadı.</p></div>';
@@ -334,6 +340,7 @@
       return;
     }
 
+    rawResultsCount = (data || []).length;
     allResults = collapseDuplicateCompletedAttempts(collapseShadowStartedRows((data || []).map(function(row) {
       const detail = parseDetailJson(row.detay_json);
       const userInfo = detail && detail.kullanici_bilgileri ? detail.kullanici_bilgileri : {};
@@ -342,6 +349,7 @@
         okul: row.okul || userInfo.okul || '',
       });
     }))).filter(isCompletedAttempt);
+    hiddenResultsCount = Math.max(0, rawResultsCount - allResults.length);
     filteredResults = allResults.slice();
     render();
   }
