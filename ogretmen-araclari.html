@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>⏱️ Öğretmen Araçları — Kemal Öğretmenim</title>
+  <meta name="description" content="Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, geri sayım ve yerel saat görünümü.">
+  <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
+  <meta property="og:site_name" content="Kemal Öğretmenim">
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
+
+    :root {
+      --purple: #6c3ded;
+      --purple-2: #9b72f5;
+      --teal: #16c7b2;
+      --navy: #20104a;
+      --red: #dc2626;
+      --red-2: #b91c1c;
+      --bg-gradient: radial-gradient(circle at top left, #f4efff 0%, #fffdf8 46%, #eff8ff 100%);
+    }
+
+    * { box-sizing: border-box; touch-action: manipulation; }
+    input, select, textarea { touch-action: auto; }
+
+    body {
+      margin: 0;
+      font-family: 'Nunito', sans-serif;
+      color: var(--navy);
+      background: var(--bg-gradient);
+      -webkit-user-select: none;
+      user-select: none;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    p, h1, h2, h3, .big-digits, .local-clock { -webkit-user-select: text; user-select: text; }
+
+    /* Arka Plan Süsleri */
+    body::before, body::after {
+      content: ""; position: fixed; width: 340px; height: 340px; border-radius: 999px;
+      filter: blur(24px); opacity: 0.3; pointer-events: none; z-index: -1;
+    }
+    body::before { top: -100px; left: -90px; background: linear-gradient(135deg, var(--purple), var(--teal)); }
+    body::after { right: -120px; bottom: -130px; background: linear-gradient(135deg, #ff6052, #ffd93d); }
+
+    .tools-page { width: min(1180px, calc(100% - 20px)); margin: 0 auto; padding: 60px 0 24px; }
+    
+    .glass {
+      background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,255,255,0.65));
+      border: 1.5px solid rgba(227,214,255,0.9);
+      border-radius: 28px;
+      box-shadow: 0 14px 42px rgba(108,61,237,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* Üst Zaman Çubuğu */
+    .time-bar { display: flex; align-items: center; gap: 16px; padding: 14px 22px; margin-bottom: 16px; flex-wrap: wrap; }
+    .time-bar-label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(108,61,237,0.1); color: var(--purple); font-weight: 800; font-size: 14px; }
+    .time-bar-clock { font-family: 'Baloo 2', cursive; font-size: clamp(26px, 4vw, 42px); line-height: 1; color: var(--purple); }
+    .time-bar-date { font-size: 14px; font-weight: 800; color: #64708f; }
+    .time-bar-tz { margin-left: auto; padding: 9px 14px; border-radius: 999px; background: rgba(255,255,255,0.8); border: 1px solid rgba(227,214,255,0.9); font-size: 13px; font-weight: 800; color: #5c6787; }
+
+    /* Ana Menü Kartları */
+    .tool-hub { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .tool-card-btn { width: 100%; border: none; background: transparent; padding: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
+    .tool-card-btn:active .hero-card { transform: scale(0.97); }
+    .hero-card { padding: 18px 20px; min-height: 196px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; transition: transform 0.15s, box-shadow 0.15s; position: relative; overflow: hidden; }
+    .hero-card::after { content: ""; position: absolute; inset: auto -70px -80px auto; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(255,216,77,0.3), transparent); pointer-events: none; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(108,61,237,0.1); color: var(--purple); font-weight: 800; font-size: 14px; }
+    .hero-card h2 { margin: 8px 0 0; font-family: 'Baloo 2', cursive; font-size: 28px; line-height: 1; }
+    .hero-card p { margin: 0; color: #62708f; font-size: 14px; line-height: 1.5; font-weight: 700; }
+    .tool-card-visual { display: flex; align-items: center; gap: 12px; }
+    .tool-card-icon { width: 64px; height: 64px; border-radius: 20px; display: inline-grid; place-items: center; font-size: 28px; background: rgba(255,255,255,0.6); border: 1.5px solid rgba(227,214,255,0.9); }
+    .tool-card-meter { flex: 1; display: grid; gap: 8px; }
+    .meter-bar { height: 10px; border-radius: 999px; background: rgba(108,61,237,0.1); border: 1px solid rgba(227,214,255,0.9); overflow: hidden; }
+    .meter-fill { height: 100%; border-radius: inherit; background: linear-gradient(135deg, rgba(108,61,237,0.8), rgba(22,199,178,0.8)); }
+    .tool-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tool-tag { padding: 6px 10px; border-radius: 12px; background: rgba(255,255,255,0.7); border: 1px solid rgba(227,214,255,0.9); font-size: 11px; font-weight: 800; color: #5c6787; }
+    .hero-card.is-active { border-color: rgba(108,61,237,0.4) !important; box-shadow: 0 20px 44px rgba(108,61,237,0.15), inset 0 1px 0 rgba(255,255,255,0.8) !important; }
+    .hero-card.is-active .tool-card-icon { background: linear-gradient(135deg, rgba(108,61,237,0.15), rgba(255,255,255,0.7)); }
+
+    /* Çalışma Alanları */
+    .workspace { display: none; grid-template-columns: minmax(0, 1fr) 232px; gap: 12px; }
+    .workspace.is-visible { display: grid; }
+    .panel { padding: 16px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+    .panel-head h2 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 24px; line-height: 1; }
+    .tool-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .mini-stack { display: grid; gap: 12px; }
+    .mini-panel { padding: 14px; }
+    .mini-panel h3 { margin: 0 0 8px; font-family: 'Baloo 2', cursive; font-size: 22px; line-height: 1; }
+
+    /* Butonlar */
+    .btn {
+      border: none; cursor: pointer; font: inherit; border-radius: 16px; padding: 11px 16px;
+      font-weight: 800; font-size: 14px; transition: transform 0.1s, box-shadow 0.1s;
+      -webkit-tap-highlight-color: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:active { transform: scale(0.95) !important; box-shadow: none !important; }
+    .btn-primary { background: linear-gradient(135deg, var(--purple), var(--purple-2)); color: #fff; box-shadow: 0 6px 16px rgba(108,61,237,0.2); }
+    .btn-secondary { background: rgba(255,255,255,0.9); color: var(--navy); border: 1.5px solid rgba(227,214,255,0.9); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+    .btn-teal { background: linear-gradient(135deg, var(--teal), #0ca88f); color: #fff; box-shadow: 0 6px 16px rgba(22,199,178,0.2); }
+    .btn-stop { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; font-size: 16px; padding: 12px 24px; box-shadow: 0 6px 16px rgba(239,68,68,0.2); }
+    .btn-stop.is-pulsing { animation: stopPulse 1.3s infinite; }
+    @keyframes stopPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); } 50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); } }
+
+    /* Sahne / Sekmeler */
+    .display-stage {
+      background: radial-gradient(circle at top, rgba(255,255,255,0.85), rgba(255,255,255,0.6)), linear-gradient(180deg, rgba(108,61,237,0.05), rgba(22,199,178,0.05));
+      border: 1.5px solid rgba(227,214,255,0.9); border-radius: 24px; padding: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .mode-tabs { display: inline-flex; gap: 8px; padding: 6px; border-radius: 999px; background: rgba(108,61,237,0.08); margin-bottom: 16px; flex-wrap: wrap; }
+    .mode-tab { border: none; background: transparent; border-radius: 999px; padding: 10px 16px; font-weight: 800; color: #5f6787; cursor: pointer; transition: 0.2s; font-family: 'Nunito', sans-serif; font-size: 15px; }
+    .mode-tab.active { background: #fff; color: var(--purple); box-shadow: 0 6px 16px rgba(108,61,237,0.15); }
+
+    /* YENİ PROFESYONEL KRONOMETRE TASARIMI */
+    .timer-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: center; }
+    .svg-timer-wrap { position: relative; width: 100%; max-width: 320px; margin: 0 auto; aspect-ratio: 1; display: grid; place-items: center; }
+    .svg-timer { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 15px 30px rgba(108,61,237,0.18)); }
+    .svg-timer-bg { fill: none; stroke: rgba(227,214,255,0.4); stroke-width: 10; }
+    .svg-timer-progress { fill: none; stroke: url(#timerGradient); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 527.78; stroke-dashoffset: 0; transition: stroke-dashoffset 0.1s linear; }
+    .svg-timer-inner { position: absolute; inset: 24px; border-radius: 50%; background: linear-gradient(145deg, #ffffff, #f8f9fc); box-shadow: inset 0 8px 24px rgba(0,0,0,0.03), 0 10px 24px rgba(108,61,237,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.8); }
+    .timer-digital-main { font-family: 'Baloo 2', cursive; font-size: 52px; font-weight: 800; color: var(--navy); line-height: 1; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .timer-digital-ms { font-size: 22px; color: var(--purple); opacity: 0.85; font-weight: 700; margin-top: 0; }
+    .live-status-pill { margin-bottom: 8px; padding: 6px 14px; border-radius: 999px; font-size: 11px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; background: rgba(22,199,178,0.12); color: #088d7c; box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+    .live-status-pill.running { background: rgba(239,68,68,0.12); color: #dc2626; animation: pulsePill 1.5s infinite; }
+    @keyframes pulsePill { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    .timer-controls-area { display: flex; flex-direction: column; gap: 16px; }
+    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip { padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,0.8); border: 1px solid rgba(227,214,255,0.9); font-size: 13px; font-weight: 800; color: #5f6888; }
+    
+    /* SALİSE BUTONU DÜZELTMESİ (Sıkışma ve Kayma Engellendi) */
+    .sw-wrap { 
+      display: inline-flex; align-items: center; gap: 8px; cursor: pointer; 
+      background: rgba(255,255,255,0.8); padding: 6px 12px; border-radius: 14px; 
+      border: 1px solid rgba(227,214,255,0.9); margin-left: auto; 
+      white-space: nowrap; flex-shrink: 0; 
+    }
+    .sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; min-width: 44px; display: block; }
+    .sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .sw-track { position: absolute; inset: 0; border-radius: 999px; background: rgba(200,200,222,0.5); transition: 0.2s; }
+    .sw-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .sw input:checked + .sw-track { background: var(--purple); }
+    .sw input:checked + .sw-track::after { transform: translateX(20px); }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+    .field { background: rgba(255,255,255,0.8); border: 1px solid rgba(227,214,255,0.9); border-radius: 18px; padding: 10px; text-align: center; }
+    .field label { display: block; font-size: 11px; font-weight: 900; color: #76819b; text-transform: uppercase; margin-bottom: 6px; }
+    .stepper { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .step-btn { width: 36px; height: 36px; border: none; border-radius: 10px; background: rgba(108,61,237,0.1); color: var(--purple); font-size: 20px; font-weight: 800; cursor: pointer; }
+    .step-btn:active { transform: scale(0.9); }
+    .step-value { font-family: 'Baloo 2', cursive; font-size: 22px; font-weight: 800; color: var(--navy); width: 40px; }
+    .alarm-banner { display: none; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 16px; background: linear-gradient(135deg, rgba(255,216,77,0.3), rgba(255,96,82,0.2)); border: 2px solid rgba(255,96,82,0.3); font-weight: 800; font-size: 15px; margin-top: 10px; }
+    .alarm-banner.show { display: flex; }
+
+    /* --- BEYAZ TAHTA CSS --- */
+    .board-shell { display: grid; gap: 12px; }
+    .board-stage { position: relative; min-height: 72vh; border-radius: 26px; overflow: hidden; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; }
+    .board-plane { position: relative; width: 100%; min-height: max(100%, 800px); background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.3s, height 0.3s; overflow: hidden; }
+    .board-plane.board-paper-white { background: #ffffff; }
+    .board-plane.board-paper-lined { background: repeating-linear-gradient(180deg, #ffffff 0 34px, rgba(115,128,255,0.15) 34px 36px); }
+    .board-plane.board-paper-grid { background: linear-gradient(rgba(115,128,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(115,128,255,0.12) 1px, transparent 1px), #ffffff; background-size: 34px 34px, 34px 34px, auto; }
+    .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+    
+    .board-toolbar { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(255,255,255,0.96); border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 12px 30px rgba(0,0,0,0.12); border-radius: 20px; width: 260px; padding: 14px; display: flex; flex-direction: column; gap: 12px; touch-action: none; }
+    .toolbar-handle { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 12px; background: #f3f0ff; color: var(--purple); font-size: 13px; font-weight: 900; cursor: grab; }
+    .toolbar-handle:active { cursor: grabbing; }
+    .drag-dots { display: flex; gap: 4px; }
+    .drag-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--purple-2); }
+    .toolbar-section { border-bottom: 1px solid rgba(227,214,255,0.8); padding-bottom: 12px; }
+    .toolbar-section:last-child { border: none; padding-bottom: 0; }
+    .toolbar-title { font-size: 11px; font-weight: 900; color: #7a84a2; text-transform: uppercase; margin-bottom: 8px; padding-left: 4px; }
+    
+    .tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .tool-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .toolbar-btn { min-height: 36px; border: 1.5px solid rgba(227,214,255,0.9); border-radius: 12px; background: #fff; color: var(--navy); font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.1s; }
+    .toolbar-btn:active { transform: scale(0.95); }
+    .toolbar-btn.is-active { background: linear-gradient(135deg, var(--purple), var(--purple-2)); color: #fff; border-color: var(--purple); box-shadow: 0 6px 12px rgba(108,61,237,0.2); }
+    .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+    .color-btn { width: 100%; aspect-ratio: 1; border-radius: 10px; border: 2px solid #fff; box-shadow: 0 0 0 1.5px rgba(227,214,255,0.9); cursor: pointer; position: relative; }
+    .color-btn.is-active::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 14px; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+    .color-btn[data-light="true"].is-active::after { color: #1a1040; text-shadow: none; }
+    .size-slider { width: 100%; accent-color: var(--purple); margin-bottom: 8px; }
+    .sample-line { height: 20px; background: #f3f0ff; border-radius: 10px; display: grid; place-items: center; }
+    .sample-line span { display: block; background: var(--purple); border-radius: 999px; width: 60px; }
+    .shape-panel { display: none; margin-top: 8px; }
+    .shape-panel.is-open { display: block; }
+    .board-overlay-text { position: absolute; min-width: 150px; min-height: 50px; resize: both; padding: 10px; border-radius: 12px; border: 2px dashed var(--purple); background: rgba(255,255,255,0.95); color: var(--navy); font: 800 24px/1.3 'Nunito', sans-serif; outline: none; z-index: 12; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .board-empty-hint { position: absolute; right: 20px; bottom: 20px; padding: 10px 16px; border-radius: 999px; background: rgba(255,255,255,0.9); border: 1.5px solid rgba(227,214,255,0.9); color: #71809b; font-size: 13px; font-weight: 800; z-index: 6; pointer-events: none; }
+    .board-stage.has-content .board-empty-hint { display: none; }
+
+    /* AÇIÖLÇER (İLETKİ) CSS */
+    .board-protractor {
+      position: absolute; left: 0; top: 0; width: 440px; height: 240px; display: none; z-index: 50;
+      transform-origin: 220px 220px;
+    }
+    .protractor-svg-wrapper { width: 100%; height: 100%; cursor: grab; }
+    .protractor-svg-wrapper:active { cursor: grabbing; }
+    .protractor-control {
+      position: absolute; width: 36px; height: 36px; border-radius: 50%; background: #fff;
+      border: 2px solid var(--purple); color: var(--purple); display: grid; place-items: center;
+      font-size: 18px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer;
+      user-select: none; touch-action: none; transition: transform 0.1s;
+    }
+    .protractor-control:active { transform: scale(0.9); }
+    .protractor-control.close { top: 10px; right: 0; border-color: #dc2626; color: #dc2626; font-size: 14px; }
+    .protractor-control.rotate { top: -18px; left: 50%; transform: translateX(-50%); cursor: ew-resize; }
+    .protractor-control.rotate:active { transform: translateX(-50%) scale(0.9); }
+    .protractor-control.resize { bottom: -10px; right: 10px; cursor: nwse-resize; font-size: 14px; }
+
+    #whiteboardStage:fullscreen, #whiteboardStage:-webkit-full-screen { width: 100%; height: 100%; max-width: none; padding: 28px; border-radius: 0; overflow: auto; }
+    #whiteboardStage:fullscreen .board-toolbar, #whiteboardStage:-webkit-full-screen .board-toolbar { top: 24px; left: 24px; width: min(244px, calc(100% - 48px)); }
+
+    /* --- MATEMATİK ARAÇLARI CSS --- */
+    .math-grid { display: grid; gap: 20px; }
+    
+    /* Hesap Makinesi */
+    .calc-wrapper {
+      max-width: 460px; margin: 0 auto; width: 100%; background: #fff;
+      padding: 24px; border-radius: 32px; border: 2px solid rgba(227,214,255,0.9);
+      box-shadow: 0 20px 50px rgba(108,61,237,0.1);
+    }
+    .calc-screen {
+      background: #f8f9fc; border-radius: 20px; padding: 24px; font-size: 48px;
+      text-align: right; margin-bottom: 24px; font-family: 'Baloo 2', cursive;
+      color: var(--navy); border: 2px solid #e2e8f0; box-shadow: inset 0 4px 12px rgba(0,0,0,0.05);
+      overflow-x: auto; white-space: nowrap; letter-spacing: 2px;
+    }
+    .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .calc-btn {
+      height: 72px; border-radius: 18px; font-size: 26px; font-weight: 900;
+      border: none; background: #fff; color: var(--navy);
+      box-shadow: 0 6px 0 #e2e8f0; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .calc-btn:active { transform: translateY(6px); box-shadow: 0 0 0 #e2e8f0; }
+    .calc-btn.op { background: #f3f0ff; color: var(--purple); box-shadow: 0 6px 0 #ddd4ff; }
+    .calc-btn.eq { background: linear-gradient(135deg, var(--teal), #0ca88f); color: #fff; box-shadow: 0 6px 0 #008a75; grid-column: span 2; }
+    .calc-btn.clear { background: #fee2e2; color: #ef4444; box-shadow: 0 6px 0 #fecaca; }
+
+    /* 3D Zar ve Metalik Yazı Tura */
+    .rng-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    .rng-card {
+      background: #fff; padding: 32px; border-radius: 32px; border: 2px solid rgba(227,214,255,0.9);
+      text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px;
+      box-shadow: 0 20px 50px rgba(108,61,237,0.1);
+    }
+    .rng-card h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 28px; color: var(--navy); }
+    
+    /* CSS Gerçek 3D Zar Yapısı */
+    .dice-stage { display: flex; gap: 30px; min-height: 160px; align-items: center; justify-content: center; perspective: 1200px; }
+    .dice-3d-wrap { width: 90px; height: 90px; position: relative; }
+    .dice-3d {
+      width: 100%; height: 100%; position: absolute; transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform: rotateX(-15deg) rotateY(15deg);
+    }
+    .dice-face {
+      position: absolute; width: 90px; height: 90px; background: #fff; border: 2px solid #e2e8f0;
+      border-radius: 16px; box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+      backface-visibility: hidden; display: grid; padding: 12px;
+      grid-template-areas: "a b c" "d e f" "g h i";
+      grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr;
+    }
+    .dice-face.front  { transform: rotateY(0deg) translateZ(45px); }
+    .dice-face.back   { transform: rotateY(180deg) translateZ(45px); }
+    .dice-face.right  { transform: rotateY(90deg) translateZ(45px); }
+    .dice-face.left   { transform: rotateY(-90deg) translateZ(45px); }
+    .dice-face.top    { transform: rotateX(90deg) translateZ(45px); }
+    .dice-face.bottom { transform: rotateX(-90deg) translateZ(45px); }
+    
+    /* Noktalar (Kusursuz Ortalama) */
+    .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--purple); box-shadow: inset 0 3px 5px rgba(0,0,0,0.3); justify-self: center; align-self: center; }
+    .face-1 .dot:nth-child(1) { grid-area: e; }
+    .face-2 .dot:nth-child(1) { grid-area: a; } .face-2 .dot:nth-child(2) { grid-area: i; }
+    .face-3 .dot:nth-child(1) { grid-area: a; } .face-3 .dot:nth-child(2) { grid-area: e; } .face-3 .dot:nth-child(3) { grid-area: i; }
+    .face-4 .dot:nth-child(1) { grid-area: a; } .face-4 .dot:nth-child(2) { grid-area: c; } .face-4 .dot:nth-child(3) { grid-area: g; } .face-4 .dot:nth-child(4) { grid-area: i; }
+    .face-5 .dot:nth-child(1) { grid-area: a; } .face-5 .dot:nth-child(2) { grid-area: c; } .face-5 .dot:nth-child(3) { grid-area: e; } .face-5 .dot:nth-child(4) { grid-area: g; } .face-5 .dot:nth-child(5) { grid-area: i; }
+    .face-6 .dot:nth-child(1) { grid-area: a; } .face-6 .dot:nth-child(2) { grid-area: d; } .face-6 .dot:nth-child(3) { grid-area: g; } .face-6 .dot:nth-child(4) { grid-area: c; } .face-6 .dot:nth-child(5) { grid-area: f; } .face-6 .dot:nth-child(6) { grid-area: i; }
+
+    /* Metalik Bozuk Para */
+    .coin-stage { perspective: 1200px; min-height: 160px; display: flex; align-items: center; justify-content: center; }
+    .coin-inner { width: 130px; height: 130px; position: relative; transition: transform 2.5s cubic-bezier(0.2, 0.8, 0.2, 1); transform-style: preserve-3d; }
+    .coin-face {
+      position: absolute; width: 100%; height: 100%; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 32px; letter-spacing: 2px;
+      backface-visibility: hidden; border: 5px solid #fef08a; 
+      box-shadow: inset 0 0 0 8px #d97706, 0 15px 35px rgba(0,0,0,0.25); 
+    }
+    .coin-front { background: radial-gradient(circle at 30% 30%, #fde047, #b45309); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .coin-back { background: radial-gradient(circle at 30% 30%, #e5e7eb, #4b5563); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.4); border-color: #f3f4f6; box-shadow: inset 0 0 0 8px #6b7280, 0 15px 35px rgba(0,0,0,0.25); transform: rotateY(180deg); }
+
+    @media (max-width:1180px) { .workspace { grid-template-columns: 1fr; } .mini-stack { grid-template-columns: repeat(3,minmax(0,1fr)); } .rng-wrapper { grid-template-columns: 1fr; } }
+    @media (max-width:1080px) { .tool-hub, .timer-grid { grid-template-columns: 1fr; } .svg-timer-wrap { max-width: 320px; } .tools-page { padding-top: 92px; } }
+    @media (max-width:900px) { .mini-stack { grid-template-columns: 1fr; } }
+    @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel,.mini-panel { padding: 14px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .tool-grid, .tool-grid-2, .color-grid { grid-template-columns: repeat(3, 1fr); } .board-stage { min-height: 66vh; } .board-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: auto; } .calc-btn { height: 60px; font-size: 22px; } }
+    @media (max-width:480px) { .time-bar-date { display: none; } .board-stage { min-height: 72vh; } .color-grid { grid-template-columns: repeat(5, 1fr); } .calc-keys { gap: 8px; } .calc-btn { height: 54px; font-size: 20px; } }
+  </style>
+</head>
+<body>
+  <main class="tools-page">
+
+    <div class="time-bar glass">
+      <div class="time-bar-label">⏱️ Öğretmen Araçları</div>
+      <div class="time-bar-clock" id="timeBarClock">--:--:--</div>
+      <div class="time-bar-date" id="timeBarDate">yükleniyor…</div>
+      <div class="time-bar-tz" id="timeBarTz">🌍 Yerel Saat</div>
+    </div>
+
+    <section class="tool-hub" id="toolHub">
+      <button class="tool-card-btn" type="button" data-tool-card="countdown">
+        <article class="hero-card glass">
+          <div>
+            <div class="hero-eyebrow">⏱️ Zaman Aracı</div>
+            <h2>Kronometre</h2>
+            <p>İleri & geri sayım, yeni profesyonel dijital görünüm, salise desteği.</p>
+          </div>
+          <div class="tool-card-visual">
+            <div class="tool-card-icon">⏱️</div>
+            <div class="tool-card-meter">
+              <div class="meter-bar"><div class="meter-fill" style="width:82%"></div></div>
+              <div class="tool-card-tags">
+                <div class="tool-tag">Geri Sayım</div>
+                <div class="tool-tag">İleri Sayım</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </button>
+
+      <button class="tool-card-btn" type="button" data-tool-card="whiteboard">
+        <article class="hero-card glass">
+          <div>
+            <div class="hero-eyebrow">✏️ Yazma Alanı</div>
+            <h2>Beyaz Tahta</h2>
+            <p>Geniş alan, sayfa boyutları, PDF çıktı, şeffaf döner iletki ve seç/taşı.</p>
+          </div>
+          <div class="tool-card-visual">
+            <div class="tool-card-icon">🧼</div>
+            <div class="tool-card-meter">
+              <div class="meter-bar"><div class="meter-fill" style="width:64%"></div></div>
+              <div class="tool-card-tags">
+                <div class="tool-tag">A4 & A3 Desteği</div>
+                <div class="tool-tag">İletki</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </button>
+
+      <button class="tool-card-btn" type="button" data-tool-card="math">
+        <article class="hero-card glass is-active">
+          <div>
+            <div class="hero-eyebrow">📐 Ders Yardımı</div>
+            <h2>Matematik Araçları</h2>
+            <p>Büyük tuşlu hesap makinesi, kusursuz 3D zarlar ve metalik yazı tura.</p>
+          </div>
+          <div class="tool-card-visual">
+            <div class="tool-card-icon">➗</div>
+            <div class="tool-card-meter">
+              <div class="meter-bar"><div class="meter-fill" style="width:100%"></div></div>
+              <div class="tool-card-tags">
+                <div class="tool-tag">Hesap Makinesi</div>
+                <div class="tool-tag">3D Zar & Para</div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </button>
+    </section>
+
+    <section class="workspace" id="countdownWorkspace" data-tool-panel="countdown">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h2>Kronometre Sahnesi</h2>
+          <div class="tool-actions">
+            <button class="btn btn-secondary" type="button" id="soundToggleBtn">🔔 Ses açık</button>
+            <button class="btn btn-secondary" type="button" id="stageFullscreenBtn">🖥️ Büyüt</button>
+          </div>
+        </div>
+        <div class="display-stage" id="timerStage">
+          <div class="mode-tabs" role="tablist">
+            <button class="mode-tab active" type="button" data-mode="countdown">⏳ Geri sayım</button>
+            <button class="mode-tab" type="button" data-mode="stopwatch">🚀 İleri sayım</button>
+          </div>
+          
+          <div class="timer-grid">
+            <div class="svg-timer-wrap">
+              <svg class="svg-timer" viewBox="0 0 200 200">
+                <defs>
+                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6c3ded" />
+                    <stop offset="100%" stop-color="#16c7b2" />
+                  </linearGradient>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+                <circle cx="100" cy="100" r="98" fill="#f8f9fc" stroke="#e2e8f0" stroke-width="2" />
+                <g id="svgTicks"></g>
+                <circle class="svg-timer-bg" cx="100" cy="100" r="84" />
+                <circle class="svg-timer-progress" id="timerProgressRing" cx="100" cy="100" r="84" filter="url(#glow)" />
+              </svg>
+              <div class="svg-timer-inner">
+                <div class="live-status-pill" id="liveBadge">Hazır</div>
+                <div class="timer-digital-main" id="bigDigitsMain">05:00</div>
+                <div class="timer-digital-ms" id="bigDigitsMs" style="display:none;">.00</div>
+              </div>
+            </div>
+
+            <div class="timer-controls-area">
+              <div class="chip-row">
+                <div class="chip" id="modeChip">Mod: Geri sayım</div>
+                <div class="chip" id="statusChip">Durum: Bekliyor</div>
+                <div class="chip" id="targetChip">Hedef: 5 dk</div>
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button class="btn btn-primary btn-start" style="flex:1;" type="button" id="startPauseBtn">▶ Başlat</button>
+                <button class="btn btn-stop" type="button" id="stopBtn">⏹ Durdur</button>
+              </div>
+
+              <div class="chip-row" style="margin-top: 4px; align-items: center;">
+                <button class="btn btn-secondary" type="button" id="resetBtn">↺ Sıfırla</button>
+                <button class="btn btn-teal" type="button" id="presetFiveBtn">5 dk</button>
+                <button class="btn btn-secondary" type="button" id="presetTenBtn">10 dk</button>
+                <label class="sw-wrap">
+                  <span class="sw"><input type="checkbox" id="millisCb"><span class="sw-track"></span></span>
+                  <span style="font-size:13px; font-weight:800; color:#5c6787; margin-left:2px;">Salise</span>
+                </label>
+              </div>
+
+              <div class="settings-grid" id="cdSettings">
+                <div class="field"><label>Saat</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="h">−</button><div class="step-value" id="hVal">00</div><button class="step-btn" type="button" data-adj="1" data-unit="h">+</button></div><input class="sr-only" id="hInput" type="number" min="0" max="23" value="0"></div>
+                <div class="field"><label>Dakika</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="m">−</button><div class="step-value" id="mVal">05</div><button class="step-btn" type="button" data-adj="1" data-unit="m">+</button></div><input class="sr-only" id="mInput" type="number" min="0" max="59" value="5"></div>
+                <div class="field"><label>Saniye</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="s">−</button><div class="step-value" id="sVal">00</div><button class="step-btn" type="button" data-adj="1" data-unit="s">+</button></div><input class="sr-only" id="sInput" type="number" min="0" max="59" value="0"></div>
+              </div>
+              <div class="alarm-banner" id="alarmBanner"><span>⏰ Süre doldu!</span><button class="btn btn-secondary" type="button" id="alarmStopBtn">Sesi durdur</button></div>
+            </div>
+          </div>
+        </div>
+      </article>
+      <aside class="mini-stack">
+        <section class="mini-panel glass"><h3>Şu an</h3><div class="local-clock" id="sidebarClock">--:--</div><div class="clock-date" id="sidebarDate">Yükleniyor…</div></section>
+        <section class="mini-panel glass"><h3>Hızlı Ayar</h3><div class="fact-list"><button class="fact-item" type="button" data-preset="60"><span>1 dakika</span><span>Hazırla</span></button><button class="fact-item" type="button" data-preset="180"><span>3 dakika</span><span>Hazırla</span></button><button class="fact-item" type="button" data-preset="900"><span>15 dakika</span><span>Hazırla</span></button></div></section>
+      </aside>
+    </section>
+
+    <section class="workspace" id="whiteboardWorkspace" data-tool-panel="whiteboard">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h2>Beyaz Tahta Sahnesi</h2>
+          <div class="tool-actions">
+            <button class="btn btn-secondary" type="button" id="boardSaveBtn">💾 Kaydet</button>
+            <button class="btn btn-secondary" type="button" id="boardPrintBtn">🖨️ Yazdır</button>
+            <button class="btn btn-secondary" type="button" id="boardClearBtn">🧽 Temizle</button>
+            <button class="btn btn-secondary" type="button" id="boardUndoBtn">↶ Geri</button>
+            <button class="btn btn-secondary" type="button" id="boardRedoBtn">↷ İleri</button>
+            <button class="btn btn-secondary" type="button" id="boardFullscreenBtn">🖥️ Büyüt</button>
+          </div>
+        </div>
+
+        <div class="board-shell">
+          <div class="board-stage" id="whiteboardStage">
+            <div class="board-plane board-paper-white" id="boardPlane">
+              <canvas class="board-surface" id="whiteboardCanvas"></canvas>
+              <canvas class="board-surface" id="whiteboardPreviewCanvas" aria-hidden="true"></canvas>
+              
+              <div id="boardProtractor" class="board-protractor" aria-hidden="true">
+                  <div id="protractorHandleRotate" class="protractor-control rotate" title="Döndür">↻</div>
+                  <div id="protractorHandleResize" class="protractor-control resize" title="Boyutlandır">⤡</div>
+                  <div id="protractorHandleClose" class="protractor-control close" title="Kapat">✖</div>
+                  <div id="protractorSvgContainer" class="protractor-svg-wrapper"></div>
+              </div>
+
+              <div class="board-empty-hint">Araç seçip tahtaya dokunarak başlayın</div>
+
+              <section class="board-toolbar glass" id="boardToolbar">
+                <div class="toolbar-handle" id="boardToolbarHandle">
+                  <span>💎 Araç Paneli</span>
+                  <span class="drag-dots"><span></span><span></span><span></span></span>
+                </div>
+
+                <div class="toolbar-section">
+                  <div class="toolbar-title">Sayfa Yönetimi</div>
+                  <div class="page-controls">
+                    <button class="btn btn-secondary btn-sm" type="button" id="prevPageBtn">◀</button>
+                    <span id="pageInfoDisplay" style="font-weight: 800; font-size: 13px; color: var(--purple);">1 / 1</span>
+                    <button class="btn btn-secondary btn-sm" type="button" id="nextPageBtn">▶</button>
+                  </div>
+                  <div class="tool-grid-2">
+                    <button class="toolbar-btn" type="button" id="addPageBtn">➕ Ekle</button>
+                    <button class="toolbar-btn" type="button" id="deletePageBtn">🗑️ Sil</button>
+                  </div>
+                </div>
+
+                <div class="toolbar-section">
+                  <div class="toolbar-title">Araçlar</div>
+                  <div class="tool-grid">
+                    <button class="toolbar-btn" type="button" data-board-tool="select">↖ Seç/Taşı</button>
+                    <button class="toolbar-btn is-active" type="button" data-board-tool="pen">✏️ Kalem</button>
+                    <button class="toolbar-btn" type="button" data-board-tool="highlighter">🖍️ İşaret</button>
+                    <button class="toolbar-btn" type="button" data-board-tool="eraser">🧽 Silgi</button>
+                    <button class="toolbar-btn" type="button" data-board-tool="text">T Yazı</button>
+                    <button class="toolbar-btn" type="button" data-board-tool="pan">✋ Kaydır</button>
+                    <button class="toolbar-btn" type="button" id="shapeToggleBtn" aria-expanded="false" style="grid-column: span 2;">▦ Şekiller</button>
+                    <button class="toolbar-btn" type="button" id="boardProtractorBtn">📐 İletki</button>
+                  </div>
+                  <div class="shape-panel" id="shapePanel">
+                    <div class="tool-grid-2">
+                      <button class="toolbar-btn" type="button" data-board-tool="line">／ Çizgi</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="ray">•⟶ Işın</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="infiniteLine">⟷ Doğru</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="dashline">╌ Kesik</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="segment">•—• Parça</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="rect">▭ Dikdörtgen</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="square">□ Kare</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="circle">◯ Daire</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="triangle">△ Üçgen</button>
+                      <button class="toolbar-btn" type="button" data-board-tool="star">★ Yıldız</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="toolbar-section">
+                  <div class="toolbar-title">Renkler</div>
+                  <div class="tool-grid">
+                    <button class="toolbar-btn is-active" type="button" data-board-palette="stroke">Çizgi</button>
+                    <button class="toolbar-btn" type="button" data-board-palette="fill">Dolgu</button>
+                    <button class="toolbar-btn" type="button" id="boardFillToggleBtn">İçi boş</button>
+                  </div>
+                  <div class="color-grid" style="margin-top:8px;">
+                    <button class="color-btn is-active" type="button" data-board-color="#1f2142" style="background:#1f2142"></button>
+                    <button class="color-btn" type="button" data-board-color="#ef4444" style="background:#ef4444"></button>
+                    <button class="color-btn" type="button" data-board-color="#f97316" style="background:#f97316"></button>
+                    <button class="color-btn" type="button" data-board-color="#facc15" data-light="true" style="background:#facc15"></button>
+                    <button class="color-btn" type="button" data-board-color="#22c55e" style="background:#22c55e"></button>
+                    <button class="color-btn" type="button" data-board-color="#14b8a6" style="background:#14b8a6"></button>
+                    <button class="color-btn" type="button" data-board-color="#3b82f6" style="background:#3b82f6"></button>
+                    <button class="color-btn" type="button" data-board-color="#8b5cf6" style="background:#8b5cf6"></button>
+                    <button class="color-btn" type="button" data-board-color="#ec4899" style="background:#ec4899"></button>
+                    <button class="color-btn" type="button" data-board-color="#8b5a2b" style="background:#8b5a2b"></button>
+                    <button class="color-btn" type="button" data-board-color="#9ca3af" data-light="true" style="background:#9ca3af"></button>
+                    <button class="color-btn" type="button" data-board-color="#ffffff" data-light="true" style="background:#ffffff"></button>
+                  </div>
+                </div>
+
+                <div class="toolbar-section">
+                  <div class="toolbar-title">Kalınlık</div>
+                  <input class="size-slider" id="boardSizeSlider" type="range" min="1" max="24" step="1" value="6">
+                  <div class="sample-line"><span id="boardSizeSample" style="height:6px"></span></div>
+                </div>
+
+                <div class="toolbar-section text-tools" id="textTools">
+                  <div class="toolbar-title">Yazı Düzeni</div>
+                  <div class="tool-grid">
+                    <button class="toolbar-btn is-active" type="button" data-text-align="left">Sola</button>
+                    <button class="toolbar-btn" type="button" data-text-align="center">Orta</button>
+                    <button class="toolbar-btn" type="button" data-text-align="right">Sağa</button>
+                  </div>
+                  <div class="tool-grid" style="margin:6px 0;">
+                    <button class="toolbar-btn" type="button" data-text-weight="500">İnce</button>
+                    <button class="toolbar-btn is-active" type="button" data-text-weight="800">Orta</button>
+                    <button class="toolbar-btn" type="button" data-text-weight="900">Kalın</button>
+                  </div>
+                  <input class="size-slider" id="boardTextSizeSlider" type="range" min="18" max="72" step="1" value="32">
+                </div>
+
+                <div class="toolbar-section">
+                  <div class="toolbar-title">Sayfa Biçimi & Boyutu</div>
+                  <div class="tool-grid" style="margin-bottom: 6px;">
+                    <button class="toolbar-btn is-active" type="button" data-board-paper="white">Beyaz</button>
+                    <button class="toolbar-btn" type="button" data-board-paper="lined">Çizgili</button>
+                    <button class="toolbar-btn" type="button" data-board-paper="grid">Kareli</button>
+                  </div>
+                  <select id="pageSizeSelect" style="width: 100%; padding: 6px 10px; border-radius: 8px; border: 1.5px solid rgba(227,214,255,0.9); font-family: 'Nunito', sans-serif; font-weight: 800; color: #5c6787; background: #fff; cursor: pointer;">
+                    <option value="auto">Serbest / Ekrana Sığdır</option>
+                    <option value="a4v">A4 (Dikey)</option>
+                    <option value="a4h">A4 (Yatay)</option>
+                    <option value="a3v">A3 (Dikey)</option>
+                    <option value="a3h">A3 (Yatay)</option>
+                  </select>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="mini-stack">
+        <section class="mini-panel glass">
+          <h3>Seçim</h3>
+          <div class="fact-list">
+            <div class="fact-item"><span>Araç</span><span id="boardToolLabel">Kalem</span></div>
+            <div class="fact-item"><span>Çizgi</span><span id="boardColorLabel">Siyah</span></div>
+            <div class="fact-item"><span>Dolgu</span><span id="boardFillLabel">Boş</span></div>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <section class="workspace is-visible" id="mathWorkspace" data-tool-panel="math">
+      <article class="panel glass" style="max-width: 900px; margin: 0 auto; width: 100%;">
+        <div class="panel-head">
+          <h2>Matematik Araçları</h2>
+        </div>
+        <div class="display-stage">
+          <div class="mode-tabs" role="tablist">
+            <button class="mode-tab active" type="button" data-math-mode="calc">🧮 Hesap Makinesi</button>
+            <button class="mode-tab" type="button" data-math-mode="rng">🎲 Zar & Yazı Tura</button>
+          </div>
+          
+          <div class="math-grid" id="mathContent">
+            
+            <div id="mathCalcView" style="display: block;">
+              <div class="calc-wrapper">
+                <div class="calc-screen" id="calcScreen">0</div>
+                <div class="calc-keys">
+                  <button class="calc-btn clear" type="button" onclick="mathCalc('C')">C</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('(')">(</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc(')')">)</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('/')">÷</button>
+                  
+                  <button class="calc-btn" type="button" onclick="mathCalc('7')">7</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('8')">8</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('9')">9</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('*')">×</button>
+                  
+                  <button class="calc-btn" type="button" onclick="mathCalc('4')">4</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('5')">5</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('6')">6</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('-')">−</button>
+                  
+                  <button class="calc-btn" type="button" onclick="mathCalc('1')">1</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('2')">2</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('3')">3</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('+')">+</button>
+                  
+                  <button class="calc-btn" type="button" onclick="mathCalc('0')">0</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('.')">,</button>
+                  <button class="calc-btn eq" type="button" onclick="mathCalc('=')">=</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="mathRngView" style="display: none;">
+              <div class="rng-wrapper">
+                
+                <div class="rng-card">
+                  <h3>Zar At</h3>
+                  <div class="dice-stage">
+                    <div class="dice-3d-wrap" id="dice1Wrap">
+                      <div class="dice-3d" id="dice1">
+                        <div class="dice-face front face-1"><span class="dot"></span></div>
+                        <div class="dice-face back face-6"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face right face-3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face left face-4"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face top face-2"><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face bottom face-5"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                      </div>
+                    </div>
+                    <div class="dice-3d-wrap" id="dice2Wrap" style="display:none;">
+                      <div class="dice-3d" id="dice2">
+                        <div class="dice-face front face-1"><span class="dot"></span></div>
+                        <div class="dice-face back face-6"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face right face-3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face left face-4"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face top face-2"><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face bottom face-5"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <label class="chk-label" style="margin-top:12px;"><input type="checkbox" id="diceCountToggle"> İki Zar Kullan</label>
+                  <button class="btn btn-primary" type="button" onclick="roll3DDice()" style="width:100%; height:54px; font-size:18px; margin-top:10px;">Zarları At</button>
+                </div>
+                
+                <div class="rng-card">
+                  <h3>Yazı Tura</h3>
+                  <div class="coin-stage">
+                    <div class="coin-inner" id="coinInner">
+                      <div class="coin-face coin-front">YAZI</div>
+                      <div class="coin-face coin-back">TURA</div>
+                    </div>
+                  </div>
+                  <div style="height:36px;"></div>
+                  <button class="btn btn-teal" type="button" onclick="flipCoin()" style="width:100%; height:54px; font-size:18px;">Parayı Çevir</button>
+                </div>
+                
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+  (function(){
+    'use strict';
+
+    var S = {
+      mode: 'countdown', 
+      tool: 'countdown', // İlk açılışta zaman aracı görünmesi için 
+      running: false, 
+      alarmOn: true, 
+      showMs: false,
+      cdTarget: 5*60*1000, 
+      dispMs: 5*60*1000, 
+      startedAt: 0, 
+      pausedAt: 0, 
+      frame: null,
+      clockTick: null, 
+      alarmIds: [], 
+      actx: null,
+      board: {
+        tool: 'pen', strokeColor: '#1f2142', strokeColorName: 'Siyah',
+        fillColor: '#facc15', fillColorName: 'Sarı', fillEnabled: false,
+        paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
+        drawing: false, dragToolbar: false, shapesOpen: false,
+        startX: 0, startY: 0, points: [],
+        pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
+        pageIndex: 0,
+        selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
+        activeText: null, textAlign: 'left', textWeight: '800', textStyle: 'normal', textSize: 32
+      },
+      protractor: { visible: false, x: 0, y: 0, scale: 1, rot: 0 },
+      mathCalcExpr: '0',
+      mathMode: 'calc',
+      coinRot: 0,
+      dice1Rot: {x: -15, y: 15},
+      dice2Rot: {x: -15, y: 15}
+    };
+
+    var PAGE_DIMENSIONS = {
+      'auto': { w: null, h: null, label: 'Serbest' },
+      'a4v': { w: 800, h: 1131, label: 'A4 Dikey' },
+      'a4h': { w: 1131, h: 800, label: 'A4 Yatay' },
+      'a3v': { w: 1131, h: 1600, label: 'A3 Dikey' },
+      'a3h': { w: 1600, h: 1131, label: 'A3 Yatay' }
+    };
+
+    var E = {
+      timeBarClock: document.getElementById('timeBarClock'), timeBarDate: document.getElementById('timeBarDate'), timeBarTz: document.getElementById('timeBarTz'),
+      sidebarClock: document.getElementById('sidebarClock'), sidebarDate: document.getElementById('sidebarDate'), tzLabel: document.getElementById('tzLabel'), soundLabel: document.getElementById('soundLabel'),
+      bigDigitsMain: document.getElementById('bigDigitsMain'), bigDigitsMs: document.getElementById('bigDigitsMs'), timerProgressRing: document.getElementById('timerProgressRing'), modeChip: document.getElementById('modeChip'), statusChip: document.getElementById('statusChip'), targetChip: document.getElementById('targetChip'), liveBadge: document.getElementById('liveBadge'),
+      startPauseBtn: document.getElementById('startPauseBtn'), stopBtn: document.getElementById('stopBtn'), resetBtn: document.getElementById('resetBtn'), presetFiveBtn: document.getElementById('presetFiveBtn'), presetTenBtn: document.getElementById('presetTenBtn'),
+      millisCb: document.getElementById('millisCb'), hInput: document.getElementById('hInput'), mInput: document.getElementById('mInput'), sInput: document.getElementById('sInput'), hVal: document.getElementById('hVal'), mVal: document.getElementById('mVal'), sVal: document.getElementById('sVal'),
+      soundToggleBtn: document.getElementById('soundToggleBtn'), alarmBanner: document.getElementById('alarmBanner'), alarmStopBtn: document.getElementById('alarmStopBtn'),
+      stageFullscreenBtn: document.getElementById('stageFullscreenBtn'), timerStage: document.getElementById('timerStage'), cdSettings: document.getElementById('cdSettings'),
+      toolCards: [].slice.call(document.querySelectorAll('[data-tool-card]')), toolPanels: [].slice.call(document.querySelectorAll('[data-tool-panel]')), modeTabs: [].slice.call(document.querySelectorAll('.mode-tab')),
+      presetBtns: [].slice.call(document.querySelectorAll('[data-preset]')), adjBtns: [].slice.call(document.querySelectorAll('[data-adj]')),
+      boardToolBtns: [].slice.call(document.querySelectorAll('[data-board-tool]')), boardColorBtns: [].slice.call(document.querySelectorAll('[data-board-color]')),
+      boardPaletteBtns: [].slice.call(document.querySelectorAll('[data-board-palette]')), boardPaperBtns: [].slice.call(document.querySelectorAll('[data-board-paper]')),
+      textAlignBtns: [].slice.call(document.querySelectorAll('[data-text-align]')), textWeightBtns: [].slice.call(document.querySelectorAll('[data-text-weight]')), textStyleBtns: [].slice.call(document.querySelectorAll('[data-text-style]')),
+      boardStage: document.getElementById('whiteboardStage'), boardPlane: document.getElementById('boardPlane'), boardCanvas: document.getElementById('whiteboardCanvas'), boardPreview: document.getElementById('whiteboardPreviewCanvas'),
+      boardToolbar: document.getElementById('boardToolbar'), boardToolbarHandle: document.getElementById('boardToolbarHandle'), shapeToggleBtn: document.getElementById('shapeToggleBtn'), shapePanel: document.getElementById('shapePanel'),
+      boardFillToggleBtn: document.getElementById('boardFillToggleBtn'), boardClearBtn: document.getElementById('boardClearBtn'), boardUndoBtn: document.getElementById('boardUndoBtn'), boardRedoBtn: document.getElementById('boardRedoBtn'),
+      boardFullscreenBtn: document.getElementById('boardFullscreenBtn'), boardSaveBtn: document.getElementById('boardSaveBtn'), boardPrintBtn: document.getElementById('boardPrintBtn'),
+      boardSizeSlider: document.getElementById('boardSizeSlider'), boardSizeDisplay: document.getElementById('boardSizeDisplay'), boardSizeSample: document.getElementById('boardSizeSample'),
+      textTools: document.getElementById('textTools'), boardTextSizeSlider: document.getElementById('boardTextSizeSlider'), textSizeDisplay: document.getElementById('textSizeDisplay'),
+      boardToolLabel: document.getElementById('boardToolLabel'), boardColorLabel: document.getElementById('boardColorLabel'), boardFillLabel: document.getElementById('boardFillLabel'),
+      boardSizeLabel: document.getElementById('boardSizeLabel'), boardPaperLabel: document.getElementById('boardPaperLabel'), boardSizeInfoLabel: document.getElementById('boardSizeInfoLabel'),
+      prevPageBtn: document.getElementById('prevPageBtn'), nextPageBtn: document.getElementById('nextPageBtn'), addPageBtn: document.getElementById('addPageBtn'), deletePageBtn: document.getElementById('deletePageBtn'),
+      pageInfoDisplay: document.getElementById('pageInfoDisplay'), pageSizeSelect: document.getElementById('pageSizeSelect'), boardProtractorBtn: document.getElementById('boardProtractorBtn')
+    };
+
+    var fmtDate = new Intl.DateTimeFormat('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    var fmtTime = new Intl.DateTimeFormat('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    function pad2(n) { return String(Math.floor(n)).padStart(2,'0'); }
+
+    function renderTimerSVG(ms) {
+      if(!E.timerProgressRing || !E.bigDigitsMain) return;
+      var tot = Math.floor(ms/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; var cs = Math.floor((ms%1000)/10);
+      E.bigDigitsMain.textContent = h > 0 ? pad2(h)+':'+pad2(m)+':'+pad2(s) : pad2(m)+':'+pad2(s);
+      
+      if(S.showMs) { E.bigDigitsMs.style.display = 'block'; E.bigDigitsMs.textContent = '.'+pad2(cs); } 
+      else { E.bigDigitsMs.style.display = 'none'; }
+      
+      var circumference = 527.78; // SVG Çember çevresi (2 * PI * 84)
+      var offset = 0;
+      if (S.mode === 'countdown') {
+         var ratio = Math.max(0, Math.min(1, ms / Math.max(S.cdTarget, 1)));
+         offset = circumference * (1 - ratio);
+      } else {
+         var ratio = (ms % 60000) / 60000;
+         offset = circumference * (1 - ratio);
+      }
+      E.timerProgressRing.style.strokeDashoffset = offset;
+    }
+
+    function buildTimerTicks() {
+      var ticks = document.getElementById('svgTicks');
+      if(!ticks) return;
+      var h = '';
+      for(var i=0; i<60; i++) {
+        var angle = i * 6 * Math.PI / 180;
+        var rOuter = 96;
+        var rInner = i % 5 === 0 ? 89 : 93;
+        var x1 = 100 + Math.cos(angle) * rOuter;
+        var y1 = 100 + Math.sin(angle) * rOuter;
+        var x2 = 100 + Math.cos(angle) * rInner;
+        var y2 = 100 + Math.sin(angle) * rInner;
+        var sw = i % 5 === 0 ? 2.5 : 1;
+        var sc = i % 5 === 0 ? '#94a3b8' : '#cbd5e1';
+        h += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+sc+'" stroke-width="'+sw+'" />';
+      }
+      ticks.innerHTML = h;
+    }
+
+    function fmtDur(ms) {
+      var tot = Math.floor(ms/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; var p=[]; 
+      if(h) p.push(h+' sa'); if(m) p.push(m+' dk'); if(s||!p.length) p.push(s+' sn'); return p.join(' ');
+    }
+
+    function updateClock() {
+      var now = new Date(); var t = fmtTime.format(now); var d = fmtDate.format(now);
+      if(E.timeBarClock) E.timeBarClock.textContent = t; if(E.timeBarDate) E.timeBarDate.textContent = d;
+      if(E.sidebarClock) E.sidebarClock.textContent = t; if(E.sidebarDate) E.sidebarDate.textContent = d;
+    }
+
+    function render() {
+      var ms = Math.max(0, S.dispMs);
+      renderTimerSVG(ms);
+      var modeTxt = S.mode==='countdown' ? 'Geri sayım' : 'İleri sayım';
+      if(E.modeChip) E.modeChip.textContent = 'Mod: '+modeTxt;
+      if(E.targetChip) E.targetChip.textContent = S.mode==='countdown' ? 'Hedef: '+fmtDur(S.cdTarget) : 'Geçen: '+fmtDur(ms);
+      var statTxt = S.running ? 'Çalışıyor' : ms===0 ? 'Sıfır' : 'Bekliyor';
+      if(E.statusChip) E.statusChip.textContent = 'Durum: '+statTxt;
+      
+      if(E.liveBadge) {
+        if(S.running) { E.liveBadge.textContent='Çalışıyor'; E.liveBadge.className='live-status-pill running'; }
+        else if(ms===0 && S.mode==='countdown') { E.liveBadge.textContent='Süre Doldu'; E.liveBadge.className='live-status-pill'; E.liveBadge.style.color='#dc2626'; E.liveBadge.style.background='rgba(239,68,68,0.12)'; }
+        else { E.liveBadge.textContent='Hazır'; E.liveBadge.className='live-status-pill'; E.liveBadge.style.color='#088d7c'; E.liveBadge.style.background='rgba(22,199,178,0.12)'; }
+      }
+      
+      if(E.startPauseBtn) { E.startPauseBtn.textContent = S.running ? '⏸ Duraklat' : '▶ Başlat'; E.startPauseBtn.className = S.running ? 'btn btn-secondary btn-start' : 'btn btn-primary btn-start'; }
+      if(E.stopBtn) { if(S.running) E.stopBtn.classList.add('is-pulsing'); else E.stopBtn.classList.remove('is-pulsing'); }
+      if(E.cdSettings) E.cdSettings.style.display = S.mode==='countdown' ? '' : 'none';
+    }
+
+    function syncSteppers() {
+      var tot = Math.floor(S.cdTarget/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60;
+      if(E.hVal) E.hVal.textContent = pad2(h); if(E.mVal) E.mVal.textContent = pad2(m); if(E.sVal) E.sVal.textContent = pad2(s);
+      if(E.hInput) E.hInput.value = h; if(E.mInput) E.mInput.value = m; if(E.sInput) E.sInput.value = s;
+    }
+    function getInputMs() { var h = parseInt(E.hInput.value||0,10)||0; var m = parseInt(E.mInput.value||0,10)||0; var s = parseInt(E.sInput.value||0,10)||0; return (h*3600+m*60+s)*1000; }
+    function adjustUnit(unit, delta) {
+      if(S.running) return;
+      var h = parseInt(E.hInput.value||0,10)||0; var m = parseInt(E.mInput.value||0,10)||0; var s = parseInt(E.sInput.value||0,10)||0;
+      if(unit==='h') h = Math.max(0,Math.min(23,h+delta)); if(unit==='m') m = Math.max(0,Math.min(59,m+delta)); if(unit==='s') s = Math.max(0,Math.min(59,s+delta));
+      S.cdTarget = (h*3600+m*60+s)*1000; if(S.mode==='countdown') S.dispMs = S.cdTarget; syncSteppers(); render();
+    }
+
+    function getActx() { if(!S.actx) { try { S.actx = new(window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return S.actx; }
+    function beep(freq,dur,vol) { 
+      var ctx = getActx(); if(!ctx) return; 
+      try { 
+        var o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = freq; o.type = 'sine'; 
+        g.gain.setValueAtTime(vol||0.4, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+(dur||0.5)); 
+        o.start(ctx.currentTime); o.stop(ctx.currentTime+(dur||0.5)); 
+      } catch(e) {} 
+    }
+    function playAlarm() { if(!S.alarmOn) return; S.alarmIds.push(setTimeout(function(){ beep(880,.4,.5); },0)); S.alarmIds.push(setTimeout(function(){ beep(1100,.4,.5); },450)); S.alarmIds.push(setTimeout(function(){ beep(1320,.6,.6); },900)); if(E.alarmBanner) E.alarmBanner.classList.add('show'); }
+    function clearAlarm() { S.alarmIds.forEach(clearTimeout); S.alarmIds = []; if(E.alarmBanner) E.alarmBanner.classList.remove('show'); }
+    function stopLoop() { if(S.frame) { cancelAnimationFrame(S.frame); S.frame = null; } }
+
+    function tick() {
+      var elapsed = S.pausedAt + (Date.now()-S.startedAt);
+      if(S.mode === 'countdown') { S.dispMs = S.cdTarget - elapsed; if(S.dispMs <= 0) { S.dispMs = 0; S.running = false; S.pausedAt = 0; playAlarm(); render(); stopLoop(); return; } } 
+      else { S.dispMs = elapsed; } 
+      render(); S.frame = requestAnimationFrame(tick);
+    }
+    function startTimer() {
+      clearAlarm();
+      if(S.mode === 'countdown') { var dur = getInputMs(); if(!S.running && S.dispMs === 0) { S.cdTarget = Math.max(dur,1000); S.dispMs = S.cdTarget; } if(!S.dispMs) { S.cdTarget = Math.max(dur,1000); S.dispMs = S.cdTarget; } }
+      S.running = true; S.startedAt = Date.now(); stopLoop(); tick(); render();
+    }
+    function pauseTimer() { if(!S.running) return; S.pausedAt += Date.now() - S.startedAt; S.running = false; stopLoop(); render(); }
+    function stopTimer() { pauseTimer(); }
+    function resetTimer() { pauseTimer(); clearAlarm(); S.pausedAt = 0; S.dispMs = S.mode === 'countdown' ? S.cdTarget : 0; if(S.mode === 'countdown') syncSteppers(); render(); }
+    function setMode(mode) {
+      if(S.mode === mode) return; pauseTimer(); clearAlarm(); S.mode = mode; S.pausedAt = 0;
+      if(mode === 'countdown') { S.cdTarget = Math.max(getInputMs(),1000); S.dispMs = S.cdTarget; } else { S.dispMs = 0; }
+      E.modeTabs.forEach(function(t) { t.classList.toggle('active',t.dataset.mode === mode); }); render();
+    }
+    function setPreset(sec) { var ms = sec * 1000; S.cdTarget = ms; if(S.mode === 'countdown') S.dispMs = ms; S.pausedAt = 0; syncSteppers(); if(!S.running) render(); }
+
+    function selectTool(name) {
+      S.tool = S.tool === name ? '' : name;
+      E.toolCards.forEach(function(btn) { var card = btn.querySelector('.hero-card'); if(card) card.classList.toggle('is-active', btn.dataset.toolCard === S.tool); });
+      E.toolPanels.forEach(function(p) { p.classList.toggle('is-visible', p.dataset.toolPanel === S.tool); });
+      if(S.tool === 'whiteboard') setTimeout(resizeBoard, 0);
+    }
+
+    function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function reqFs(el) { if(el.requestFullscreen) return el.requestFullscreen(); if(el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); return Promise.resolve(); } return Promise.resolve(); }
+    function exitFs() { if(document.exitFullscreen) return document.exitFullscreen(); if(document.webkitExitFullscreen) { document.webkitExitFullscreen(); return Promise.resolve(); } return Promise.resolve(); }
+    function toggleStageFs() { fsEl() === E.timerStage ? exitFs().catch(function(){}) : reqFs(E.timerStage).catch(function(){}); }
+    function syncFsBtn() {
+      if(E.stageFullscreenBtn) E.stageFullscreenBtn.textContent = fsEl() === E.timerStage ? '🗗 Küçült' : '🖥️ Büyüt';
+      if(E.boardFullscreenBtn) E.boardFullscreenBtn.textContent = fsEl() === E.boardStage ? '🗗 Küçült' : '🖥️ Büyüt';
+      if(fsEl() === E.boardStage || S.tool === 'whiteboard') setTimeout(resizeBoard, 0);
+    }
+
+    /* ── Whiteboard Page Management ── */
+    function getActivePage() { return S.board.pages[S.board.pageIndex]; }
+    function syncPageUI() {
+       if(E.pageInfoDisplay) E.pageInfoDisplay.textContent = (S.board.pageIndex + 1) + ' / ' + S.board.pages.length;
+       if(E.boardSizeInfoLabel) E.boardSizeInfoLabel.textContent = PAGE_DIMENSIONS[S.board.pageSize].label;
+    }
+    function addPage() { S.board.pages.splice(S.board.pageIndex + 1, 0, { items: [], undoStack: [[]], undoIndex: 0 }); S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); }
+    function deletePage() { if (S.board.pages.length <= 1) { clearBoard(); return; } S.board.pages.splice(S.board.pageIndex, 1); if (S.board.pageIndex >= S.board.pages.length) S.board.pageIndex = S.board.pages.length - 1; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); }
+    function prevPage() { if (S.board.pageIndex > 0) { S.board.pageIndex--; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); } }
+    function nextPage() { if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); } }
+    function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); }
+
+    /* ── Whiteboard Drawing ── */
+    var boardCtx = null; var boardPreviewCtx = null;
+    var TOOL_NAMES = { select: 'Seç/Taşı', pen: 'Kalem', highlighter: 'İşaretleyici', eraser: 'Silgi', text: 'Yazı', pan: 'Kaydır', line: 'Çizgi', dashline: 'Kesik çizgi', segment: 'Doğru parçası', ray: 'Işın', infiniteLine: 'Doğru', rect: 'Dikdörtgen', square: 'Kare', circle: 'Daire', triangle: 'Üçgen', star: 'Yıldız' };
+    var PAPER_NAMES = { white: 'Beyaz', lined: 'Çizgili', grid: 'Kareli' };
+    var COLOR_NAMES = { '#1f2142': 'Siyah', '#ef4444': 'Kırmızı', '#f97316': 'Turuncu', '#facc15': 'Sarı', '#22c55e': 'Yeşil', '#14b8a6': 'Turkuaz', '#3b82f6': 'Mavi', '#8b5cf6': 'Mor', '#ec4899': 'Pembe', '#8b5a2b': 'Kahve', '#9ca3af': 'Gri', '#ffffff': 'Beyaz' };
+
+    function boardCanDraw(tool) { return tool === 'pen' || tool === 'highlighter' || tool === 'eraser'; }
+
+    function resizeBoard() {
+      if(!E.boardPlane || !E.boardCanvas || !E.boardPreview) return;
+      var conf = PAGE_DIMENSIONS[S.board.pageSize];
+      var ratio = window.devicePixelRatio || 1;
+      var w, h;
+      
+      if(conf.w && conf.h) {
+         w = conf.w; h = conf.h;
+         E.boardPlane.style.width = w + 'px'; E.boardPlane.style.minHeight = h + 'px'; E.boardPlane.style.height = h + 'px'; E.boardPlane.style.margin = '10px auto';
+      } else {
+         var boardIsFullscreen = fsEl() === E.boardStage;
+         var fullH = Math.max(E.boardStage.clientHeight, window.innerHeight || 0);
+         h = boardIsFullscreen ? fullH : Math.max(E.boardStage.clientHeight + 320, 1240);
+         E.boardPlane.style.width = '100%'; E.boardPlane.style.margin = '0'; E.boardPlane.style.height = 'auto'; E.boardPlane.style.minHeight = h + 'px';
+         w = E.boardPlane.clientWidth;
+      }
+      
+      [E.boardCanvas, E.boardPreview].forEach(function(canvas) {
+        canvas.width = Math.max(1, Math.floor(w * ratio)); canvas.height = Math.max(1, Math.floor(h * ratio)); canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      });
+      boardCtx = E.boardCanvas.getContext('2d'); boardPreviewCtx = E.boardPreview.getContext('2d');
+      if(boardCtx) boardCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      if(boardPreviewCtx) boardPreviewCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      redrawBoard();
+    }
+
+    function clearPreview() { if(boardPreviewCtx && E.boardPreview) { boardPreviewCtx.clearRect(0, 0, E.boardPreview.width, E.boardPreview.height); } }
+    function getBoardPoint(evt) { var rect = E.boardCanvas.getBoundingClientRect(); return { x: evt.clientX - rect.left, y: evt.clientY - rect.top }; }
+
+    function setBoardLabels() {
+      if(E.boardToolLabel) E.boardToolLabel.textContent = TOOL_NAMES[S.board.tool] || 'Kalem';
+      if(E.boardColorLabel) E.boardColorLabel.textContent = S.board.strokeColorName;
+      if(E.boardFillLabel) E.boardFillLabel.textContent = S.board.fillEnabled ? S.board.fillColorName : 'Boş';
+      if(E.boardSizeLabel) E.boardSizeLabel.textContent = S.board.size + ' px';
+      if(E.boardPaperLabel) E.boardPaperLabel.textContent = PAPER_NAMES[S.board.paper] || 'Beyaz';
+    }
+
+    function syncBoardUI() {
+      E.boardToolBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardTool === S.board.tool); });
+      E.boardColorBtns.forEach(function(btn){ var activeColor = S.board.paletteTarget === 'fill' ? S.board.fillColor : S.board.strokeColor; btn.classList.toggle('is-active', btn.dataset.boardColor === activeColor); });
+      E.boardPaletteBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPalette === S.board.paletteTarget); });
+      E.boardPaperBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPaper === S.board.paper); });
+      E.textAlignBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textAlign === S.board.textAlign); });
+      E.textWeightBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textWeight === String(S.board.textWeight)); });
+      E.textStyleBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textStyle === S.board.textStyle); });
+      
+      if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid'); E.boardPlane.classList.add('board-paper-' + S.board.paper); }
+      if(E.shapePanel) E.shapePanel.classList.toggle('is-open', S.board.shapesOpen);
+      if(E.shapeToggleBtn) E.shapeToggleBtn.setAttribute('aria-expanded', S.board.shapesOpen ? 'true' : 'false');
+      
+      if(E.boardFillToggleBtn) { E.boardFillToggleBtn.classList.toggle('is-active', !S.board.fillEnabled); E.boardFillToggleBtn.textContent = S.board.fillEnabled ? 'Dolgu açık' : 'İçi boş'; }
+      if(E.boardSizeSlider) E.boardSizeSlider.value = String(S.board.size);
+      if(E.boardSizeDisplay) E.boardSizeDisplay.textContent = S.board.size + ' px';
+      if(E.boardSizeSample) { E.boardSizeSample.style.height = Math.max(2, S.board.size) + 'px'; E.boardSizeSample.style.background = S.board.strokeColor; }
+      
+      if(E.textTools) E.textTools.classList.toggle('is-visible', S.board.tool === 'text');
+      if(E.boardTextSizeSlider) E.boardTextSizeSlider.value = String(S.board.textSize);
+      if(E.textSizeDisplay) E.textSizeDisplay.textContent = S.board.textSize + ' px';
+      
+      setBoardLabels(); syncActiveTextStyles(); syncPageUI();
+    }
+
+    function boardStrokeStyle(item) {
+      if(item.tool === 'eraser') { return { color: 'rgba(0,0,0,1)', width: item.size * 1.8, alpha: 1, composite: 'destination-out', dash: [] }; }
+      if(item.tool === 'highlighter') { return { color: item.strokeColor || item.color, width: Math.max(item.size * 2.2, 14), alpha: 0.26, composite: 'multiply', dash: [] }; }
+      return { color: item.strokeColor || item.color, width: item.size, alpha: 1, composite: 'source-over', dash: item.tool === 'dashline' ? [12, 10] : [] };
+    }
+
+    function applyBoardBrush(ctx, item) {
+      var style = boardStrokeStyle(item);
+      ctx.globalCompositeOperation = style.composite; ctx.globalAlpha = style.alpha; ctx.strokeStyle = style.color;
+      ctx.fillStyle = style.color; ctx.lineWidth = style.width; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.setLineDash(style.dash);
+    }
+
+    function drawStrokePath(ctx, item) {
+      if(!item.points || item.points.length < 2) return; applyBoardBrush(ctx, item); ctx.beginPath(); ctx.moveTo(item.points[0].x, item.points[0].y);
+      for(var i = 1; i < item.points.length; i += 1) { ctx.lineTo(item.points[i].x, item.points[i].y); }
+      ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function drawArrowHead(ctx, from, to, color, width) {
+      var angle = Math.atan2(to.y - from.y, to.x - from.x); 
+      var len = Math.max(16, width * 3.5); 
+      var wing = Math.max(8, width * 1.5); 
+      ctx.save(); 
+      ctx.fillStyle = color; 
+      ctx.translate(to.x, to.y); 
+      ctx.rotate(angle); 
+      ctx.beginPath();
+      var tipShift = width / 2; 
+      ctx.translate(tipShift, 0);
+      ctx.moveTo(0, 0); 
+      ctx.lineTo(-len, wing); 
+      ctx.lineTo(-len * 0.75, 0); 
+      ctx.lineTo(-len, -wing); 
+      ctx.closePath(); 
+      ctx.fill(); 
+      ctx.restore();
+    }
+
+    function drawStarPath(ctx, x1, y1, x2, y2) {
+      var cx = (x1 + x2) / 2; var cy = (y1 + y2) / 2; var radius = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2; var inner = radius * 0.46;
+      ctx.beginPath();
+      for(var i = 0; i < 10; i += 1) {
+        var angle = (-90 + i * 36) * Math.PI / 180; var r = i % 2 === 0 ? radius : inner;
+        var px = cx + Math.cos(angle) * r; var py = cy + Math.sin(angle) * r;
+        if(i === 0) { ctx.moveTo(px, py); } else { ctx.lineTo(px, py); }
+      }
+      ctx.closePath();
+    }
+
+    function drawShape(ctx, item) {
+      applyBoardBrush(ctx, item);
+      if(item.fillEnabled && item.tool !== 'line' && item.tool !== 'segment' && item.tool !== 'dashline' && item.tool !== 'ray' && item.tool !== 'infiniteLine') { ctx.fillStyle = item.fillColor || 'transparent'; ctx.globalAlpha = item.tool === 'highlighter' ? 0.2 : 1; }
+      
+      if(item.tool === 'line' || item.tool === 'segment' || item.tool === 'dashline') {
+        ctx.beginPath(); ctx.moveTo(item.start.x, item.start.y); ctx.lineTo(item.end.x, item.end.y); ctx.stroke();
+        if(item.tool === 'segment') { ctx.beginPath(); ctx.arc(item.start.x, item.start.y, Math.max(3, item.size * 0.55), 0, Math.PI * 2); ctx.arc(item.end.x, item.end.y, Math.max(3, item.size * 0.55), 0, Math.PI * 2); ctx.fill(); }
+      } else if(item.tool === 'ray') {
+        ctx.beginPath(); ctx.moveTo(item.start.x, item.start.y); ctx.lineTo(item.end.x, item.end.y); ctx.stroke();
+        drawArrowHead(ctx, item.start, item.end, item.strokeColor || item.color, item.size);
+      } else if(item.tool === 'infiniteLine') {
+        ctx.beginPath(); ctx.moveTo(item.start.x, item.start.y); ctx.lineTo(item.end.x, item.end.y); ctx.stroke();
+        drawArrowHead(ctx, item.start, item.end, item.strokeColor || item.color, item.size); drawArrowHead(ctx, item.end, item.start, item.strokeColor || item.color, item.size);
+      } else if(item.tool === 'rect' || item.tool === 'square') {
+        var w = item.end.x - item.start.x; var h = item.end.y - item.start.y;
+        if(item.tool === 'square') { var side = Math.max(Math.abs(w), Math.abs(h)); w = w < 0 ? -side : side; h = h < 0 ? -side : side; }
+        if(item.fillEnabled) ctx.fillRect(item.start.x, item.start.y, w, h); ctx.strokeRect(item.start.x, item.start.y, w, h);
+      } else if(item.tool === 'circle') {
+        var rx = (item.end.x - item.start.x) / 2; var ry = (item.end.y - item.start.y) / 2;
+        ctx.beginPath(); ctx.ellipse(item.start.x + rx, item.start.y + ry, Math.abs(rx), Math.abs(ry), 0, 0, Math.PI * 2);
+        if(item.fillEnabled) ctx.fill(); ctx.stroke();
+      } else if(item.tool === 'star') {
+        drawStarPath(ctx, item.start.x, item.start.y, item.end.x, item.end.y); if(item.fillEnabled) ctx.fill(); ctx.stroke();
+      } else if(item.tool === 'triangle') {
+        ctx.beginPath(); ctx.moveTo(item.start.x + (item.end.x - item.start.x) / 2, item.start.y); ctx.lineTo(item.start.x, item.end.y); ctx.lineTo(item.end.x, item.end.y); ctx.closePath();
+        if(item.fillEnabled) ctx.fill(); ctx.stroke();
+      }
+      ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
+
+    function drawBoardItem(ctx, item) {
+      if(item.kind === 'path') drawStrokePath(ctx, item);
+      if(item.kind === 'shape') drawShape(ctx, item);
+      if(item.kind === 'text') {
+        ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.fillStyle = item.color;
+        ctx.font = item.textStyle + ' ' + item.textWeight + ' ' + item.fontSize + 'px Nunito'; ctx.textBaseline = 'top'; ctx.textAlign = item.textAlign || 'left';
+        var lines = item.text.split('\n'); var lineHeight = item.fontSize * 1.28; var baseX = item.x;
+        if(item.textAlign === 'center') baseX = item.x + (item.boxWidth || 180) / 2; if(item.textAlign === 'right') baseX = item.x + (item.boxWidth || 180);
+        for(var i = 0; i < lines.length; i += 1) { ctx.fillText(lines[i], baseX, item.y + i * lineHeight, item.boxWidth || 300); }
+        ctx.restore();
+      }
+    }
+
+    function getBounds(item) {
+      var pad = 6;
+      if(item.kind === 'path') {
+        var minX = Infinity; var maxX = -Infinity; var minY = Infinity; var maxY = -Infinity;
+        item.points.forEach(function(p) { if(p.x < minX) minX = p.x; if(p.x > maxX) maxX = p.x; if(p.y < minY) minY = p.y; if(p.y > maxY) maxY = p.y; });
+        return {x: minX-pad, y: minY-pad, w: maxX-minX+pad*2, h: maxY-minY+pad*2};
+      } else if (item.kind === 'shape') {
+        var minX = Math.min(item.start.x, item.end.x); var maxX = Math.max(item.start.x, item.end.x); var minY = Math.min(item.start.y, item.end.y); var maxY = Math.max(item.start.y, item.end.y);
+        if (item.tool === 'square') { var s = Math.max(maxX - minX, maxY - minY); maxX = minX + s; maxY = minY + s; } 
+        else if (item.tool === 'circle') { var rx = Math.abs(item.end.x - item.start.x)/2; var ry = Math.abs(item.end.y - item.start.y)/2; var cx = Math.min(item.start.x, item.end.x) + rx; var cy = Math.min(item.start.y, item.end.y) + ry; return {x: cx - rx - pad, y: cy - ry - pad, w: rx*2 + pad*2, h: ry*2 + pad*2}; }
+        return {x: minX-pad, y: minY-pad, w: maxX-minX+pad*2, h: maxY-minY+pad*2};
+      } else if (item.kind === 'text') {
+        var lines = item.text.split('\n').length; var h = lines * item.fontSize * 1.28; var w = item.boxWidth || 200; var bx = item.x;
+        if(item.textAlign === 'center') bx -= w/2; if(item.textAlign === 'right') bx -= w;
+        return {x: bx-pad, y: item.y-pad, w: w+pad*2, h: h+pad*2};
+      }
+      return {x:0, y:0, w:0, h:0};
+    }
+
+    function drawSelectionBox(ctx, bounds) {
+      ctx.save(); ctx.strokeStyle = '#6c3ded'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      ctx.fillStyle = '#ffffff'; ctx.setLineDash([]); var hs = 10;
+      var handles = [ {x: bounds.x, y: bounds.y}, {x: bounds.x + bounds.w, y: bounds.y}, {x: bounds.x, y: bounds.y + bounds.h}, {x: bounds.x + bounds.w, y: bounds.y + bounds.h} ];
+      handles.forEach(function(h) { ctx.strokeRect(h.x - hs/2, h.y - hs/2, hs, hs); ctx.fillRect(h.x - hs/2, h.y - hs/2, hs, hs); }); ctx.restore();
+    }
+
+    function getHitHandle(bounds, px, py) {
+      var hs = 14; var handles = { 'tl': {x: bounds.x, y: bounds.y}, 'tr': {x: bounds.x + bounds.w, y: bounds.y}, 'bl': {x: bounds.x, y: bounds.y + bounds.h}, 'br': {x: bounds.x + bounds.w, y: bounds.y + bounds.h} };
+      for (var k in handles) { var h = handles[k]; if (Math.abs(px - h.x) <= hs && Math.abs(py - h.y) <= hs) { return k; } } return null;
+    }
+
+    function pointInRect(px, py, r) { return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h; }
+
+    function redrawBoard() {
+      if(!boardCtx || !E.boardCanvas) return;
+      boardCtx.clearRect(0, 0, E.boardCanvas.width, E.boardCanvas.height);
+      var page = getActivePage();
+      page.items.forEach(function(item) { drawBoardItem(boardCtx, item); });
+      if (S.board.tool === 'select' && S.board.selectedItem) { drawSelectionBox(boardCtx, getBounds(S.board.selectedItem)); }
+      if(E.boardStage) E.boardStage.classList.toggle('has-content', page.items.length > 0);
+    }
+
+    function saveSnapshot() {
+      var page = getActivePage();
+      page.undoStack.splice(page.undoIndex + 1);
+      page.undoStack.push(JSON.parse(JSON.stringify(page.items)));
+      page.undoIndex++;
+    }
+
+    function pushBoardItem(item) { getActivePage().items.push(item); saveSnapshot(); redrawBoard(); }
+
+    function commitTextOverlay(save) {
+      var active = S.board.activeText; if(!active) return;
+      var textarea = active.el; var text = textarea.value.trim();
+      if(save && text) { pushBoardItem({ kind: 'text', text: text, x: active.x, y: active.y, color: S.board.strokeColor, fontSize: S.board.textSize, textAlign: S.board.textAlign, textWeight: S.board.textWeight, textStyle: S.board.textStyle, boxWidth: active.el.offsetWidth }); }
+      textarea.remove(); S.board.activeText = null;
+    }
+
+    function syncActiveTextStyles() {
+      if(!S.board.activeText) return; var ta = S.board.activeText.el;
+      ta.style.color = S.board.strokeColor; ta.style.textAlign = S.board.textAlign; ta.style.fontWeight = S.board.textWeight; ta.style.fontStyle = S.board.textStyle; ta.style.fontSize = S.board.textSize + 'px';
+    }
+
+    function placeTextBox(point) {
+      commitTextOverlay(false); var ta = document.createElement('textarea'); ta.className = 'board-overlay-text';
+      ta.style.left = Math.max(10, point.x) + 'px'; ta.style.top = Math.max(10, point.y) + 'px'; ta.placeholder = 'Yazınızı girin';
+      E.boardPlane.appendChild(ta); ta.focus(); S.board.activeText = { el: ta, x: point.x, y: point.y }; syncActiveTextStyles();
+      ta.addEventListener('keydown', function(evt) { if(evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); commitTextOverlay(true); } else if(evt.key === 'Escape') { evt.preventDefault(); commitTextOverlay(false); } });
+      ta.addEventListener('blur', function() { commitTextOverlay(true); });
+    }
+
+    function startBoardDraw(point) {
+      if(S.board.tool === 'select') {
+        S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; var hit = false;
+        if(S.board.selectedItem) {
+          var bounds = getBounds(S.board.selectedItem); var handle = getHitHandle(bounds, point.x, point.y);
+          if(handle) { S.board.selectAction = 'resize-' + handle; S.board.dragStartItem = JSON.parse(JSON.stringify(S.board.selectedItem)); S.board.dragStartBounds = bounds; hit = true; }
+          else if(pointInRect(point.x, point.y, bounds)) { S.board.selectAction = 'move'; S.board.dragStartItem = JSON.parse(JSON.stringify(S.board.selectedItem)); hit = true; }
+        }
+        if(!hit) {
+          S.board.selectedItem = null; var page = getActivePage();
+          for(var i = page.items.length - 1; i >= 0; i--) {
+            if(pointInRect(point.x, point.y, getBounds(page.items[i]))) { S.board.selectedItem = page.items[i]; S.board.selectAction = 'move'; S.board.dragStartItem = JSON.parse(JSON.stringify(S.board.selectedItem)); break; }
+          }
+        }
+        redrawBoard(); return;
+      }
+      
+      S.board.selectedItem = null;
+      if(S.board.tool === 'pan') { S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; S.board.panStartLeft = E.boardStage.scrollLeft; S.board.panStartTop = E.boardStage.scrollTop; return; }
+      if(S.board.tool === 'text') { placeTextBox(point); return; }
+      S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; S.board.points = [{ x: point.x, y: point.y }]; clearPreview();
+      if(boardCanDraw(S.board.tool)) { drawStrokePath(boardPreviewCtx, { tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points }); }
+    }
+
+    function moveBoardDraw(point) {
+      if(!S.board.drawing) return;
+      if(S.board.tool === 'select' && S.board.selectedItem) {
+        var dx = point.x - S.board.startX; var dy = point.y - S.board.startY; var orig = S.board.dragStartItem; var item = S.board.selectedItem;
+        if(S.board.selectAction === 'move') {
+          if(item.kind === 'path') { for(var i=0; i<item.points.length; i++) { item.points[i].x = orig.points[i].x + dx; item.points[i].y = orig.points[i].y + dy; } }
+          else if(item.kind === 'shape') { item.start.x = orig.start.x + dx; item.start.y = orig.start.y + dy; item.end.x = orig.end.x + dx; item.end.y = orig.end.y + dy; }
+          else if(item.kind === 'text') { item.x = orig.x + dx; item.y = orig.y + dy; }
+        } else if(S.board.selectAction && S.board.selectAction.startsWith('resize')) {
+          var ob = S.board.dragStartBounds; var nx = ob.x, ny = ob.y, nw = ob.w, nh = ob.h; var h = S.board.selectAction.split('-')[1];
+          if(h === 'tl') { nx=point.x; ny=point.y; nw=ob.w+(ob.x-nx); nh=ob.h+(ob.y-ny); } if(h === 'tr') { ny=point.y; nw=point.x-ob.x; nh=ob.h+(ob.y-ny); }
+          if(h === 'bl') { nx=point.x; nw=ob.w+(ob.x-nx); nh=point.y-ob.y; } if(h === 'br') { nw=point.x-ob.x; nh=point.y-ob.y; }
+          if(nw < 10) nw = 10; if(nh < 10) nh = 10;
+          var sx = nw / ob.w; var sy = nh / ob.h;
+          if(item.kind === 'path') { for(var j=0; j<item.points.length; j++) { item.points[j].x = nx + (orig.points[j].x - ob.x) * sx; item.points[j].y = ny + (orig.points[j].y - ob.y) * sy; } }
+          else if(item.kind === 'shape') { item.start.x = nx + (orig.start.x - ob.x) * sx; item.start.y = ny + (orig.start.y - ob.y) * sy; item.end.x = nx + (orig.end.x - ob.x) * sx; item.end.y = ny + (orig.end.y - ob.y) * sy; }
+          else if(item.kind === 'text') { item.x = nx + (orig.x - ob.x) * sx; item.y = ny + (orig.y - ob.y) * sy; item.fontSize = Math.max(10, orig.fontSize * sy); item.boxWidth = Math.max(50, orig.boxWidth * sx); }
+        }
+        redrawBoard(); return;
+      }
+      if(S.board.tool === 'pan') { E.boardStage.scrollLeft = S.board.panStartLeft - (point.x - S.board.startX); E.boardStage.scrollTop = S.board.panStartTop - (point.y - S.board.startY); return; }
+      clearPreview();
+      if(boardCanDraw(S.board.tool)) { S.board.points.push({ x: point.x, y: point.y }); drawStrokePath(boardPreviewCtx, { tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points }); }
+      else { drawShape(boardPreviewCtx, { kind: 'shape', tool: S.board.tool, strokeColor: S.board.strokeColor, fillColor: S.board.fillColor, fillEnabled: S.board.fillEnabled, size: S.board.size, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
+    }
+
+    function endBoardDraw(point) {
+      if(!S.board.drawing) return;
+      if(S.board.tool === 'select') { if(S.board.selectedItem && S.board.selectAction) saveSnapshot(); S.board.drawing = false; S.board.selectAction = null; return; }
+      if(S.board.tool === 'pan') { S.board.drawing = false; return; }
+      S.board.drawing = false; clearPreview();
+      if(boardCanDraw(S.board.tool)) { if(S.board.points.length === 1) S.board.points.push({ x: point.x + 0.1, y: point.y + 0.1 }); pushBoardItem({ kind: 'path', tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points.slice() }); } 
+      else { pushBoardItem({ kind: 'shape', tool: S.board.tool, strokeColor: S.board.strokeColor, fillColor: S.board.fillColor, fillEnabled: S.board.fillEnabled, size: S.board.size, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
+      S.board.points = [];
+    }
+
+    function setBoardTool(tool) { S.board.tool = tool; if(['rect','square','circle','star'].indexOf(tool) > -1) { S.board.shapesOpen = true; } syncBoardUI(); }
+    function setBoardColor(color) { if(S.board.paletteTarget === 'fill') { S.board.fillColor = color; S.board.fillColorName = COLOR_NAMES[color] || 'Renk'; S.board.fillEnabled = true; } else { S.board.strokeColor = color; S.board.strokeColorName = COLOR_NAMES[color] || 'Renk'; } syncBoardUI(); }
+    function setBoardSize(size) { S.board.size = size; syncBoardUI(); }
+    function setBoardPalette(target) { S.board.paletteTarget = target; syncBoardUI(); }
+    function toggleBoardFill() { S.board.fillEnabled = !S.board.fillEnabled; syncBoardUI(); }
+    function toggleShapesPanel() { S.board.shapesOpen = !S.board.shapesOpen; syncBoardUI(); }
+    function setTextAlign(value) { S.board.textAlign = value; syncBoardUI(); }
+    function setTextWeight(value) { S.board.textWeight = value; syncBoardUI(); }
+    function setTextStyle(value) { S.board.textStyle = value; syncBoardUI(); }
+    function setTextSize(value) { S.board.textSize = value; syncBoardUI(); }
+    function setBoardPaper(paper) { S.board.paper = paper; syncBoardUI(); }
+    function clearBoard() { commitTextOverlay(false); var page = getActivePage(); page.items = []; S.board.selectedItem = null; saveSnapshot(); clearPreview(); redrawBoard(); }
+    function undoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex > 0) { page.undoIndex--; page.items = JSON.parse(JSON.stringify(page.undoStack[page.undoIndex])); S.board.selectedItem = null; redrawBoard(); } }
+    function redoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex < page.undoStack.length - 1) { page.undoIndex++; page.items = JSON.parse(JSON.stringify(page.undoStack[page.undoIndex])); S.board.selectedItem = null; redrawBoard(); } }
+    function toggleBoardFs() { fsEl() === E.boardStage ? exitFs().catch(function(){}) : reqFs(E.boardStage).catch(function(){}); }
+
+    function getCompositeDataURL() {
+      var comp = document.createElement('canvas'); comp.width = E.boardCanvas.width; comp.height = E.boardCanvas.height; var ctx = comp.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, comp.width, comp.height);
+      var ratio = window.devicePixelRatio || 1; var step = 34 * ratio;
+      if (S.board.paper === 'lined') { ctx.strokeStyle = 'rgba(115,128,255,0.16)'; ctx.lineWidth = 1.5 * ratio; ctx.beginPath(); for (var y = step; y < comp.height; y += step) { ctx.moveTo(0, y); ctx.lineTo(comp.width, y); } ctx.stroke(); } 
+      else if (S.board.paper === 'grid') { ctx.strokeStyle = 'rgba(115,128,255,0.12)'; ctx.lineWidth = 1 * ratio; ctx.beginPath(); for (var yy = step; yy < comp.height; yy += step) { ctx.moveTo(0, yy); ctx.lineTo(comp.width, yy); } for (var xx = step; xx < comp.width; xx += step) { ctx.moveTo(xx, 0); ctx.lineTo(xx, comp.height); } ctx.stroke(); }
+      ctx.drawImage(E.boardCanvas, 0, 0); return comp.toDataURL('image/png');
+    }
+    function saveBoard() { var link = document.createElement('a'); link.download = 'Tahta_' + new Date().toISOString().slice(0,10) + '.png'; link.href = getCompositeDataURL(); link.click(); }
+    function printBoard() { var dataUrl = getCompositeDataURL(); var win = window.open(''); win.document.write('<!DOCTYPE html><html><head><title>Yazdır - Tahta</ti' + 'tle></he' + 'ad><body style="margin:0;display:flex;justify-content:center;align-items:center;">'); win.document.write('<img src="' + dataUrl + '" style="max-width:100%; max-height:100vh;" onload="window.print();window.close();"/>'); win.document.write('</bo' + 'dy></ht' + 'ml>'); win.document.close(); }
+
+    function initBoardDrag() {
+      if(!E.boardToolbar || !E.boardToolbarHandle || !E.boardPlane) return;
+      var drag = { active: false, dx: 0, dy: 0, id: null };
+      E.boardToolbarHandle.addEventListener('pointerdown', function(evt){
+        if(window.innerWidth <= 760) return; drag.active = true; drag.id = evt.pointerId; var rect = E.boardToolbar.getBoundingClientRect(); drag.dx = evt.clientX - rect.left; drag.dy = evt.clientY - rect.top; E.boardToolbar.classList.add('is-dragging'); E.boardToolbarHandle.setPointerCapture(evt.pointerId);
+      });
+      E.boardToolbarHandle.addEventListener('pointermove', function(evt){
+        if(!drag.active) return; var stageRect = E.boardStage.getBoundingClientRect(); var width = E.boardToolbar.offsetWidth; var height = E.boardToolbar.offsetHeight; var left = evt.clientX - stageRect.left - drag.dx; var top = evt.clientY - stageRect.top - drag.dy;
+        left = Math.max(10, Math.min(stageRect.width - width - 10, left)); top = Math.max(10, Math.min(stageRect.height - height - 10, top)); E.boardToolbar.style.left = left + 'px'; E.boardToolbar.style.top = top + 'px'; E.boardToolbar.style.bottom = 'auto'; E.boardToolbar.style.right = 'auto';
+      });
+      function endDrag(evt) { if(!drag.active) return; drag.active = false; E.boardToolbar.classList.remove('is-dragging'); try { E.boardToolbarHandle.releasePointerCapture(evt.pointerId); } catch(err) {} }
+      E.boardToolbarHandle.addEventListener('pointerup', endDrag); E.boardToolbarHandle.addEventListener('pointercancel', endDrag);
+    }
+
+    function initProtractor() {
+      const protractor = document.getElementById('boardProtractor');
+      const svgContainer = document.getElementById('protractorSvgContainer');
+      const btnClose = document.getElementById('protractorHandleClose');
+      const btnRotate = document.getElementById('protractorHandleRotate');
+      const btnResize = document.getElementById('protractorHandleResize');
+      
+      let svg = '<svg viewBox="-220 -220 440 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><path d="M -200 0 A 200 200 0 0 1 200 0 Z" fill="rgba(255, 255, 255, 0.45)" stroke="#1a1040" stroke-width="2"/><path d="M -150 0 A 150 150 0 0 1 150 0" fill="none" stroke="#1a1040" stroke-width="1.5"/><circle cx="0" cy="0" r="6" fill="none" stroke="#1a1040" stroke-width="2"/><line x1="-20" y1="0" x2="20" y2="0" stroke="#1a1040" stroke-width="2"/><line x1="0" y1="-20" x2="0" y2="0" stroke="#1a1040" stroke-width="2"/>';
+          
+      for (let i = 0; i <= 180; i++) {
+          let a = i * Math.PI / 180; let is10 = i % 10 === 0; let is5 = i % 5 === 0; let outer = 200; let inner = is10 ? 180 : (is5 ? 188 : 194);
+          let x1 = -Math.cos(a) * outer, y1 = -Math.sin(a) * outer; let x2 = -Math.cos(a) * inner, y2 = -Math.sin(a) * inner;
+          let innerLine = is10 ? '<line x1="'+(-Math.cos(a)*150)+'" y1="'+(-Math.sin(a)*150)+'" x2="'+(-Math.cos(a)*140)+'" y2="'+(-Math.sin(a)*140)+'" stroke="#1a1040" stroke-width="1.5"/>' : '';
+          let text = '';
+          if (is10) {
+              let tx1 = -Math.cos(a) * 168, ty1 = -Math.sin(a) * 168; let tx2 = -Math.cos(a) * 125, ty2 = -Math.sin(a) * 125;
+              text += '<text x="'+tx1+'" y="'+ty1+'" font-family="Nunito, sans-serif" font-size="11" font-weight="900" fill="#1a1040" text-anchor="middle" dominant-baseline="middle" transform="rotate('+(i-90)+' '+tx1+' '+ty1+')">'+i+'</text>';
+              text += '<text x="'+tx2+'" y="'+ty2+'" font-family="Nunito, sans-serif" font-size="9" font-weight="900" fill="#1a1040" text-anchor="middle" dominant-baseline="middle" transform="rotate('+(i-90)+' '+tx2+' '+ty2+')">'+(180-i)+'</text>';
+          }
+          svg += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#1a1040" stroke-width="'+(is10 ? 2 : 1)+'"/>'+innerLine+text;
+      }
+      svg += '</svg>';
+      svgContainer.innerHTML = svg;
+
+      let state = S.protractor; let activeAction = null; let startMouse = {x: 0, y: 0}; let startState = {x: 0, y: 0, rot: 0, scale: 1};
+
+      function updateTransform() { protractor.style.transform = 'translate(calc('+state.x+'px - 50%), calc('+state.y+'px - 100%)) rotate('+state.rot+'deg) scale('+state.scale+')'; }
+      function getPt(e) { return { x: e.clientX, y: e.clientY }; }
+      function onPointerDown(e, action) { e.preventDefault(); e.stopPropagation(); activeAction = action; startMouse = getPt(e); startState = { x: state.x, y: state.y, rot: state.rot, scale: state.scale }; document.addEventListener('pointermove', onPointerMove, {passive: false}); document.addEventListener('pointerup', onPointerUp); document.addEventListener('pointercancel', onPointerUp); }
+
+      svgContainer.addEventListener('pointerdown', e => onPointerDown(e, 'drag'));
+      btnRotate.addEventListener('pointerdown', e => onPointerDown(e, 'rotate'));
+      btnResize.addEventListener('pointerdown', e => onPointerDown(e, 'resize'));
+      btnClose.addEventListener('click', e => { e.preventDefault(); state.visible = false; protractor.style.display = 'none'; });
+
+      function onPointerMove(e) {
+          if (!activeAction) return; e.preventDefault();
+          let currentBoardPt = getBoardPoint(e); let startBoardPt = getBoardPoint({clientX: startMouse.x, clientY: startMouse.y});
+          let dx = currentBoardPt.x - startBoardPt.x; let dy = currentBoardPt.y - startBoardPt.y;
+
+          if (activeAction === 'drag') { state.x = startState.x + dx; state.y = startState.y + dy; } 
+          else if (activeAction === 'rotate') {
+              let cx = startState.x; let cy = startState.y;
+              let angle1 = Math.atan2(startBoardPt.y - cy, startBoardPt.x - cx);
+              let angle2 = Math.atan2(currentBoardPt.y - cy, currentBoardPt.x - cx);
+              state.rot = startState.rot + (angle2 - angle1) * 180 / Math.PI;
+          } 
+          else if (activeAction === 'resize') {
+              let cx = startState.x; let cy = startState.y;
+              let d1 = Math.hypot(startBoardPt.x - cx, startBoardPt.y - cy);
+              let d2 = Math.hypot(currentBoardPt.x - cx, currentBoardPt.y - cy);
+              state.scale = Math.max(0.5, Math.min(3, startState.scale * (d2 / d1)));
+          }
+          updateTransform();
+      }
+
+      function onPointerUp() { activeAction = null; document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onPointerUp); document.removeEventListener('pointercancel', onPointerUp); }
+
+      if(E.boardProtractorBtn) {
+        E.boardProtractorBtn.addEventListener('click', function() {
+            state.visible = !state.visible;
+            if (state.visible) {
+                protractor.style.display = 'block';
+                if (state.x === 0 && state.y === 0 && E.boardStage) {
+                    var scrollLeft = E.boardStage.scrollLeft; var scrollTop = E.boardStage.scrollTop;
+                    var visibleWidth = E.boardStage.clientWidth; var visibleHeight = E.boardStage.clientHeight;
+                    state.x = scrollLeft + (visibleWidth / 2); state.y = scrollTop + (visibleHeight / 2) + 120;
+                }
+                updateTransform();
+            } else { protractor.style.display = 'none'; }
+        });
+      }
+    }
+
+    window.mathCalc = function(char) {
+      if(char === 'C') { S.mathCalcExpr = '0'; }
+      else if(char === '=') {
+        try {
+          var safeExpr = S.mathCalcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/,/g, '.');
+          if(/[^0-9+\-*/(). ]/.test(safeExpr)) { S.mathCalcExpr = 'Hata'; }
+          else { S.mathCalcExpr = String(new Function('return ' + safeExpr)()); }
+        } catch(e) { S.mathCalcExpr = 'Hata'; }
+      } else {
+        if(S.mathCalcExpr === '0' || S.mathCalcExpr === 'Hata') {
+          if(['+','-','*','/'].includes(char)) S.mathCalcExpr = '0' + (char === '*' ? '×' : char === '/' ? '÷' : char);
+          else S.mathCalcExpr = char;
+        } else {
+          var dispChar = char === '*' ? '×' : char === '/' ? '÷' : char;
+          S.mathCalcExpr += dispChar;
+        }
+      }
+      document.getElementById('calcScreen').textContent = S.mathCalcExpr;
+    };
+
+    function setDiceTransform(diceId, face) {
+      var d = document.getElementById(diceId);
+      var rx = 0, ry = 0;
+      if(face === 1) { rx = 0; ry = 0; }
+      else if(face === 2) { rx = -90; ry = 0; }
+      else if(face === 3) { rx = 0; ry = -90; }
+      else if(face === 4) { rx = 0; ry = 90; }
+      else if(face === 5) { rx = 90; ry = 0; }
+      else if(face === 6) { rx = 180; ry = 0; }
+      
+      var stateObj = diceId === 'dice1' ? S.dice1Rot : S.dice2Rot;
+      var spinsX = Math.floor(Math.random() * 3 + 2) * 360; 
+      var spinsY = Math.floor(Math.random() * 3 + 2) * 360;
+      
+      stateObj.x = rx + spinsX;
+      stateObj.y = ry + spinsY;
+      d.style.transform = 'rotateX(' + stateObj.x + 'deg) rotateY(' + stateObj.y + 'deg)';
+    }
+
+    window.roll3DDice = function() {
+      var face1 = Math.floor(Math.random() * 6) + 1;
+      var face2 = Math.floor(Math.random() * 6) + 1;
+      var useTwo = document.getElementById('diceCountToggle').checked;
+      
+      setDiceTransform('dice1', face1);
+      if(useTwo) setDiceTransform('dice2', face2);
+    };
+
+    window.flipCoin = function() {
+      var coin = document.getElementById('coinInner');
+      var result = Math.random() > 0.5 ? 'tura' : 'yazi'; 
+      S.coinRot += 1800; 
+      if(result === 'tura') S.coinRot += 180;
+      else if(S.coinRot % 360 !== 0) S.coinRot += 180; 
+      coin.style.transform = 'rotateY(' + S.coinRot + 'deg)';
+    };
+
+    document.getElementById('diceCountToggle').addEventListener('change', function(e) {
+      document.getElementById('dice2Wrap').style.display = e.target.checked ? 'block' : 'none';
+    });
+
+    document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var mode = btn.dataset.mathMode;
+        document.querySelectorAll('[data-math-mode]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('mathCalcView').style.display = mode === 'calc' ? 'block' : 'none';
+        document.getElementById('mathRngView').style.display = mode === 'rng' ? 'block' : 'none';
+      });
+    });
+
+    E.modeTabs.forEach(function(t) { t.addEventListener('click',function() { setMode(t.dataset.mode); }); });
+    E.toolCards.forEach(function(b) { b.addEventListener('click',function() { selectTool(b.dataset.toolCard||''); }); });
+    E.startPauseBtn.addEventListener('click',function() { S.running ? pauseTimer() : startTimer(); });
+    E.stopBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); stopTimer(); });
+    E.resetBtn.addEventListener('click', resetTimer);
+    E.presetFiveBtn.addEventListener('click',function() { setPreset(300); }); 
+    E.presetTenBtn.addEventListener('click', function() { setPreset(600); });
+    E.soundToggleBtn.addEventListener('click',function() { S.alarmOn = !S.alarmOn; E.soundToggleBtn.textContent = S.alarmOn ? '🔔 Ses açık' : '🔕 Ses kapalı'; if(E.soundLabel) E.soundLabel.textContent = S.alarmOn ? 'Açık' : 'Kapalı'; if(!S.alarmOn) clearAlarm(); });
+    E.millisCb.addEventListener('change',function() { S.showMs = E.millisCb.checked; render(); });
+    E.alarmStopBtn.addEventListener('click', clearAlarm); 
+    E.stageFullscreenBtn.addEventListener('click', toggleStageFs);
+    document.addEventListener('fullscreenchange', syncFsBtn); 
+    document.addEventListener('webkitfullscreenchange', syncFsBtn);
+    [E.hInput,E.mInput,E.sInput].forEach(function(inp) { if(!inp) return; inp.addEventListener('change',function() { if(S.mode!=='countdown'||S.running) return; S.cdTarget=Math.max(getInputMs(),1000); S.dispMs=S.cdTarget; render(); }); });
+    E.adjBtns.forEach(function(b) { b.addEventListener('click',function(){ adjustUnit(b.dataset.unit,Number(b.dataset.adj)); }); });
+    E.presetBtns.forEach(function(b) { b.addEventListener('click',function(){ setPreset(Number(b.dataset.preset)); }); });
+    E.boardToolBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardTool(btn.dataset.boardTool); }); });
+    E.boardColorBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardColor(btn.dataset.boardColor); }); });
+    E.boardPaletteBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPalette(btn.dataset.boardPalette); }); });
+    E.boardPaperBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPaper(btn.dataset.boardPaper); }); });
+    E.textAlignBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextAlign(btn.dataset.textAlign); }); });
+    E.textWeightBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextWeight(btn.dataset.textWeight); }); });
+    E.textStyleBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextStyle(btn.dataset.textStyle); }); });
+    if(E.shapeToggleBtn) E.shapeToggleBtn.addEventListener('click', toggleShapesPanel);
+    if(E.boardFillToggleBtn) E.boardFillToggleBtn.addEventListener('click', toggleBoardFill);
+    if(E.boardClearBtn) E.boardClearBtn.addEventListener('click', clearBoard);
+    if(E.boardUndoBtn) E.boardUndoBtn.addEventListener('click', undoBoard);
+    if(E.boardRedoBtn) E.boardRedoBtn.addEventListener('click', redoBoard);
+    if(E.boardFullscreenBtn) E.boardFullscreenBtn.addEventListener('click', toggleBoardFs);
+    if(E.boardSaveBtn) E.boardSaveBtn.addEventListener('click', saveBoard);
+    if(E.boardPrintBtn) E.boardPrintBtn.addEventListener('click', printBoard);
+    if(E.boardSizeSlider) E.boardSizeSlider.addEventListener('input', function(){ setBoardSize(Number(E.boardSizeSlider.value)); });
+    if(E.boardTextSizeSlider) E.boardTextSizeSlider.addEventListener('input', function(){ setTextSize(Number(E.boardTextSizeSlider.value)); });
+    if(E.prevPageBtn) E.prevPageBtn.addEventListener('click', prevPage);
+    if(E.nextPageBtn) E.nextPageBtn.addEventListener('click', nextPage);
+    if(E.addPageBtn) E.addPageBtn.addEventListener('click', addPage);
+    if(E.deletePageBtn) E.deletePageBtn.addEventListener('click', deletePage);
+    if(E.pageSizeSelect) E.pageSizeSelect.addEventListener('change', function(){ setPageSize(E.pageSizeSelect.value); });
+
+    document.addEventListener('keydown', function(evt){
+      if ((evt.key === 'Delete' || evt.key === 'Backspace') && S.board.selectedItem && S.board.tool === 'select') {
+        if(evt.target.tagName === 'INPUT' || evt.target.tagName === 'TEXTAREA') return;
+        var page = getActivePage();
+        var idx = page.items.indexOf(S.board.selectedItem);
+        if (idx > -1) { page.items.splice(idx, 1); S.board.selectedItem = null; saveSnapshot(); redrawBoard(); }
+      }
+    });
+
+    if(E.boardPreview) {
+      E.boardPreview.addEventListener('pointerdown', function(evt) {
+        if(!E.boardStage) return; 
+        if(evt.target.closest && evt.target.closest('#boardToolbar')) return;
+        evt.preventDefault(); commitTextOverlay(true); startBoardDraw(getBoardPoint(evt));
+        if(S.board.tool !== 'text') E.boardPreview.setPointerCapture(evt.pointerId);
+      });
+      E.boardPreview.addEventListener('pointermove', function(evt) {
+        if(!S.board.drawing) return; evt.preventDefault(); moveBoardDraw(getBoardPoint(evt));
+      });
+      function finishBoardPointer(evt) { if(!S.board.drawing) return; evt.preventDefault(); endBoardDraw(getBoardPoint(evt)); }
+      E.boardPreview.addEventListener('pointerup', finishBoardPointer);
+      E.boardPreview.addEventListener('pointercancel', finishBoardPointer);
+      E.boardPreview.addEventListener('pointerleave', function(evt) { if(!S.board.drawing) return; finishBoardPointer(evt); });
+    }
+
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Yerel saat';
+    if(E.tzLabel) E.tzLabel.textContent = tz; if(E.timeBarTz) E.timeBarTz.textContent = '🌍 '+tz;
+
+    buildTimerTicks(); 
+    syncSteppers(); 
+    syncBoardUI(); 
+    initBoardDrag(); 
+    initProtractor(); 
+    selectTool('countdown'); 
+    syncFsBtn(); 
+    updateClock(); 
+    render(); 
+    resizeBoard();
+    
+    S.clockTick = setInterval(updateClock, 250); 
+    window.addEventListener('resize', resizeBoard);
+    
+  })();
+  </script>
+</body>
+</html>

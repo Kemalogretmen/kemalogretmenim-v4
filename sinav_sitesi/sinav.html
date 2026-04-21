@@ -1430,12 +1430,21 @@ function beginStageGesture(event){
   }
   const point=getCanvasPoint(event);
   if(!point) return;
-  P.stageGesture={pointerId:event.pointerId,tool:P.drawingTool,moved:false,stroke:null};
+  const normalizedPoint={x:point.x/point.width,y:point.y/point.height};
+  P.stageGesture={
+    pointerId:event.pointerId,
+    tool:P.drawingTool,
+    moved:false,
+    stroke:null,
+    startPoint:normalizedPoint,
+    totalDistance:0,
+    maxDistanceFromStart:0
+  };
   const stroke={
     tool:P.drawingTool,
     color:P.brushColor,
     size:P.brushSize,
-    points:[{x:point.x/point.width,y:point.y/point.height}]
+    points:[normalizedPoint]
   };
   P.stageGesture.stroke=stroke;
   getQuestionDrawing().strokes.push(stroke);
@@ -1462,10 +1471,19 @@ function moveStageGesture(event){
   const stroke=P.stageGesture.stroke;
   const nextPoint={x:point.x/point.width,y:point.y/point.height};
   const lastPoint=stroke.points[stroke.points.length-1];
+  const segmentDx=(nextPoint.x-lastPoint.x)*point.width;
+  const segmentDy=(nextPoint.y-lastPoint.y)*point.height;
+  P.stageGesture.totalDistance+=(Math.hypot(segmentDx,segmentDy)||0);
+  const startDx=(nextPoint.x-P.stageGesture.startPoint.x)*point.width;
+  const startDy=(nextPoint.y-P.stageGesture.startPoint.y)*point.height;
+  P.stageGesture.maxDistanceFromStart=Math.max(
+    P.stageGesture.maxDistanceFromStart||0,
+    Math.hypot(startDx,startDy)||0
+  );
   if(!P.stageGesture.moved){
-    const dx=(nextPoint.x-lastPoint.x)*point.width;
-    const dy=(nextPoint.y-lastPoint.y)*point.height;
-    P.stageGesture.moved=Math.hypot(dx,dy)>3;
+    P.stageGesture.moved=
+      (P.stageGesture.totalDistance||0)>4 ||
+      (P.stageGesture.maxDistanceFromStart||0)>2.5;
   }
   stroke.points.push(nextPoint);
   redrawDrawingCanvas();
@@ -1482,14 +1500,8 @@ function finishStageGesture(event){
     P.stageGesture=null;
     return;
   }
-  const { stroke, moved, tool }=P.stageGesture;
-  if(stroke&&!moved){
-    const drawing=getQuestionDrawing();
-    if(drawing.strokes[drawing.strokes.length-1]===stroke){
-      drawing.strokes.pop();
-      redrawDrawingCanvas();
-    }
-  }else if(tool!=='select'&&moved){
+  const { tool, moved }=P.stageGesture;
+  if(tool!=='select'&&moved){
     P.ignoreStageClick=true;
   }
   stage?.classList.remove('is-dragging');

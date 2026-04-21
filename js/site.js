@@ -195,6 +195,7 @@
     '/hakkimda.html': 'Kemal Öğretmen hakkında bilgiler, eğitim yaklaşımı ve yıllara dayanan öğretmenlik deneyimi.',
     '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
     '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
+    '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, zamanlayıcı ve sınıf içi yardımcı araçlar.',
     '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
     '/oyun/oyunlar.html': 'Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.',
     '/sinav_sitesi/index.html': 'Sınıf düzeyine uygun online sınavlar, denemeler ve konu pekiştirme merkezi.',
@@ -1028,6 +1029,7 @@
             '<a href="/hakkimda.html" class="dd-item"><span class="dd-icon">👨‍🏫</span> Hakkımda</a>' +
             '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
             '<a href="/yeni.html" class="dd-item"><span class="dd-icon">🌟</span> Yeni İçerikler</a>' +
+            '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
             '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
           '</div>' +
         '</li>' +
@@ -1064,6 +1066,7 @@
             '<li><a href="/oyun/oyunlar.html">🎮 Oyunlar</a></li>' +
             '<li><a href="/sinav_sitesi/index.html">📝 Sınav Merkezi</a></li>' +
             '<li><a href="/yeni.html">🌟 Yeni İçerikler</a></li>' +
+            '<li><a href="/ogretmen-araclari.html">⏱️ Öğretmen Araçları</a></li>' +
             '<li><a href="/hakkimda.html">Hakkımda</a></li>' +
             '<li><a href="/iletisim.html">İletişim</a></li>' +
           '</ul>' +
