@@ -10,7 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/admin-shell.css?v=20260418-2">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
     :root{
       --purple:#6C3DED;--purple-light:#9B72F5;--coral:#FF6052;
       --teal:#00C9B1;--yellow:#FFD93D;--navy:#1A1040;
@@ -33,7 +33,7 @@
     /* LAYOUT */
     .app{display:none;}
     .topbar{background:white;border-bottom:2px solid var(--border);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-    .topbar-title{font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:var(--purple);}
+    .topbar-title{font-family:'Fredoka','Nunito',sans-serif;font-size:20px;font-weight:700;color:var(--purple);}
     .topbar-links{display:flex;gap:10px;}
     .topbar-link{padding:8px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);transition:all .2s;}
     .topbar-link:hover{border-color:var(--purple);color:var(--purple);}
@@ -45,7 +45,7 @@
     .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
     .stat-card{background:white;border-radius:var(--r-lg);padding:20px;border:2px solid var(--border);display:flex;align-items:center;gap:14px;}
     .stat-em{font-size:30px;}
-    .stat-n{font-family:'Baloo 2',cursive;font-size:28px;font-weight:800;color:var(--purple);}
+    .stat-n{font-family:'Fredoka','Nunito',sans-serif;font-size:28px;font-weight:700;color:var(--purple);}
     .stat-l{font-size:12px;color:var(--slate);font-weight:700;}
 
     /* Filtreler */
@@ -59,6 +59,8 @@
     .fb-btn-filtrele{background:var(--purple);color:white;}
     .fb-btn-filtrele:hover{background:var(--purple-dark,#4A1FD0);}
     .fb-btn-temizle{background:var(--bg);color:var(--slate);border:2px solid var(--border);}
+    .fb-btn-duzenle{background:#EEF4FF;color:#2563EB;border:2px solid rgba(37,99,235,.14);}
+    .fb-btn-duzenle:hover{background:#2563EB;color:white;}
     .fb-btn-excel{background:linear-gradient(135deg,#10B981,#059669);color:white;}
     .fb-btn-excel:hover{transform:translateY(-1px);}
     .fb-btn-toplu-sil{background:rgba(239,68,68,.1);color:var(--danger);border:2px solid rgba(239,68,68,.25);}
@@ -67,7 +69,7 @@
     /* Sonuç tablosu */
     .tablo-kart{background:white;border:2px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
     .tablo-header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:2px solid var(--border);}
-    .tablo-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--navy);}
+    .tablo-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;color:var(--navy);}
     .tablo-count{font-size:13px;color:var(--muted);font-weight:700;}
     .mobil-kart-list{display:none;padding:14px;gap:12px;flex-direction:column;background:#fff;}
     .mobil-sonuc-kart{border:2px solid var(--border);border-radius:18px;padding:16px;background:#FAFAFF;}
@@ -103,6 +105,8 @@
     .islem-grup{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-start;}
     .btn-karne-row{padding:5px 12px;background:#EEF4FF;color:#2563EB;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
     .btn-karne-row:hover{background:#2563EB;color:white;}
+    .btn-edit-row{padding:5px 12px;background:#F3E8FF;color:#7C3AED;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
+    .btn-edit-row:hover{background:#7C3AED;color:white;}
     .btn-sil-row{padding:5px 12px;background:rgba(239,68,68,.1);color:var(--danger);border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;}
     .btn-sil-row:hover{background:var(--danger);color:white;}
     input[type="checkbox"]{width:18px;height:18px;accent-color:var(--purple);cursor:pointer;}
@@ -116,6 +120,22 @@
     .toast.show{opacity:1;transform:translateY(0);}
     .toast.success{background:var(--success);}
     .toast.error{background:var(--danger);}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(26,16,64,.34);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;z-index:9998;}
+    .modal-backdrop.show{display:flex;}
+    .modal-card{width:min(100%,460px);background:white;border:2px solid var(--border);border-radius:24px;padding:22px;box-shadow:0 22px 64px rgba(108,61,237,.18);}
+    .modal-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;color:var(--navy);line-height:1.1;}
+    .modal-sub{margin-top:8px;font-size:13px;color:var(--slate);font-weight:700;line-height:1.5;}
+    .modal-form{display:grid;gap:14px;margin-top:18px;}
+    .modal-note{padding:10px 12px;border-radius:12px;background:#FAF7FF;border:1px solid var(--border);font-size:12px;color:var(--slate);font-weight:700;line-height:1.45;}
+    .modal-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .modal-field{display:grid;gap:6px;}
+    .modal-label{font-size:12px;font-weight:800;color:var(--slate);}
+    .modal-input{padding:12px 14px;border:2px solid var(--border);border-radius:12px;font:inherit;font-size:14px;color:var(--navy);background:var(--bg);outline:none;}
+    .modal-input:focus{border-color:var(--purple);}
+    .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap;}
+    .modal-btn{padding:11px 18px;border-radius:999px;border:none;font:inherit;font-size:13px;font-weight:800;cursor:pointer;}
+    .modal-btn-secondary{background:var(--bg);color:var(--slate);border:2px solid var(--border);}
+    .modal-btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-light));color:#fff;}
 
     @media(max-width:1100px){
       .tablo-thead,.tablo-satir{grid-template-columns:36px 2fr 1fr 70px 100px 100px 90px;}
@@ -143,7 +163,7 @@
   <div class="login-screen" id="loginScreen">
     <div class="login-box">
       <div style="font-size:52px;margin-bottom:12px;">📊</div>
-      <div style="font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;margin-bottom:6px;">Okuma Sonuçları</div>
+      <div style="font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;margin-bottom:6px;">Okuma Sonuçları</div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Kemal Öğretmenim — Veri Yönetimi</p>
       <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-posta adresi" autocomplete="username">
       <input class="login-input" type="password" id="loginPass" placeholder="Şifre…" autocomplete="current-password">
@@ -206,6 +226,7 @@
           <input class="fb-input" type="text" id="fMetin" placeholder="Metin adı…" oninput="uygula()">
         </div>
         <button class="fb-btn fb-btn-temizle" onclick="filtreTemizle()">🗑️ Temizle</button>
+        <button class="fb-btn fb-btn-duzenle" onclick="secilileriDuzenle()">✏️ İsim Düzenle</button>
         <button class="fb-btn fb-btn-excel" onclick="excelIndir()">📥 Excel İndir</button>
         <button class="fb-btn fb-btn-toplu-sil" onclick="topluSil()">🗑️ Seçilileri Sil</button>
       </div>
@@ -237,6 +258,29 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <div class="modal-backdrop" id="nameEditModal">
+    <div class="modal-card">
+      <div class="modal-title">Öğrenci İsmini Düzenle</div>
+      <div class="modal-sub" id="nameEditSummary">Seçilen kayıtlar aynı ad ve soyada çevrilecek.</div>
+      <div class="modal-form">
+        <div class="modal-note">Bu işlem sadece seçtiğiniz okuma sonuçlarını günceller. Aynı isimde birleşen kayıtlar Karne Merkezi'nde tek öğrenci altında görünür.</div>
+        <div class="modal-row">
+          <div class="modal-field">
+            <label class="modal-label" for="editStudentName">Ad</label>
+            <input class="modal-input" type="text" id="editStudentName" maxlength="40" placeholder="Öğrenci adı">
+          </div>
+          <div class="modal-field">
+            <label class="modal-label" for="editStudentSurname">Soyad</label>
+            <input class="modal-input" type="text" id="editStudentSurname" maxlength="40" placeholder="Öğrenci soyadı">
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-secondary" type="button" onclick="isimModalKapat()">Vazgeç</button>
+        <button class="modal-btn modal-btn-primary" type="button" onclick="isimKaydet()">Kaydet</button>
+      </div>
+    </div>
+  </div>
 
 <script src="/js/site-data.js?v=20260418-2"></script>
 <script src="/js/admin-auth.js?v=20260418-2"></script>
@@ -258,6 +302,6 @@
     });
   });
 </script>
-<script src="/js/okuma-sonuclari-app.js?v=20260418-2"></script>
+<script src="/js/okuma-sonuclari-app.js?v=20260422-1"></script>
 </body>
 </html>

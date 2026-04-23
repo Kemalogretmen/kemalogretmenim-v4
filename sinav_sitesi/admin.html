@@ -1207,9 +1207,41 @@ function renderAdminCategories(){
 /* ── IMAGE/PDF ── */
 function syncPdfStage(width,height){
   const stage=document.getElementById('pdfStage');
-  if(!stage) return;
-  stage.style.width=`${width}px`;
-  stage.style.height=`${height}px`;
+  const pdfCanvas=document.getElementById('pdfCanvas');
+  const cropCanvas=document.getElementById('cropCanvas');
+  const wrap=document.getElementById('pdfCont');
+  if(!stage||!pdfCanvas||!cropCanvas) return;
+  const wrapWidth=Math.max((wrap?.clientWidth||0)-56,0);
+  const wrapHeight=Math.max((wrap?.clientHeight||0)-56,0);
+  const stageWidth=Math.max(width,wrapWidth||0);
+  const stageHeight=Math.max(height,wrapHeight||0);
+  const offsetX=Math.max(0,(stageWidth-width)/2);
+  const offsetY=Math.max(0,(stageHeight-height)/2);
+  stage.style.width=`${stageWidth}px`;
+  stage.style.height=`${stageHeight}px`;
+  stage.dataset.contentX=String(offsetX);
+  stage.dataset.contentY=String(offsetY);
+  stage.dataset.contentWidth=String(width);
+  stage.dataset.contentHeight=String(height);
+  pdfCanvas.style.position='absolute';
+  pdfCanvas.style.left=`${offsetX}px`;
+  pdfCanvas.style.top=`${offsetY}px`;
+  cropCanvas.style.position='absolute';
+  cropCanvas.style.left='0px';
+  cropCanvas.style.top='0px';
+}
+
+function getPdfStageContentBox(){
+  const stage=document.getElementById('pdfStage');
+  if(!stage){
+    return{x:0,y:0,width:0,height:0};
+  }
+  return{
+    x:parseFloat(stage.dataset.contentX)||0,
+    y:parseFloat(stage.dataset.contentY)||0,
+    width:parseFloat(stage.dataset.contentWidth)||0,
+    height:parseFloat(stage.dataset.contentHeight)||0
+  };
 }
 
 function syncCropToolUI(){
@@ -1276,9 +1308,13 @@ function renderImageOnCanvas(){
   const availableWidth=Math.max(((wrap?.clientWidth||0)-56),1040);
   const baseW=Math.min(img.width,availableWidth);
   const scale=(A.pdfZoom/1.5)*(baseW/img.width);
-  c.width=img.width*scale;c.height=img.height*scale;
-  cc.width=c.width;cc.height=c.height;
-  syncPdfStage(c.width,c.height);
+  const contentWidth=img.width*scale;
+  const contentHeight=img.height*scale;
+  c.width=contentWidth;c.height=contentHeight;
+  syncPdfStage(contentWidth,contentHeight);
+  const stage=document.getElementById('pdfStage');
+  cc.width=stage?.clientWidth||contentWidth;
+  cc.height=stage?.clientHeight||contentHeight;
   c.getContext('2d').drawImage(img,0,0,c.width,c.height);
   const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/1.5*100)+'%';
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=true;
@@ -1335,8 +1371,11 @@ async function renderPage(n){
   const vp=page.getViewport({scale:A.pdfZoom});
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
   if(!c||!cc)return;
-  c.width=vp.width;c.height=vp.height;cc.width=vp.width;cc.height=vp.height;
+  c.width=vp.width;c.height=vp.height;
   syncPdfStage(vp.width,vp.height);
+  const stage=document.getElementById('pdfStage');
+  cc.width=stage?.clientWidth||vp.width;
+  cc.height=stage?.clientHeight||vp.height;
   await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
   const pj=document.getElementById('pageJump');if(pj)pj.value=n;
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=(n<=1);
@@ -1351,6 +1390,7 @@ function setupCrop(){
   if(!cc||!pc)return;
   const wrap=document.getElementById('pdfCont');
   const newCC=cc.cloneNode(false);cc.parentNode.replaceChild(newCC,cc);
+  const contentBox=getPdfStageContentBox();
   let drawing=false,panning=false,sx=0,sy=0,startClientX=0,startClientY=0,startScrollLeft=0,startScrollTop=0;
   const ctx=newCC.getContext('2d');
   const getPos=e=>{
@@ -1375,7 +1415,17 @@ function setupCrop(){
     const tmpCtx=tmp.getContext('2d');
     tmpCtx.fillStyle='#FFFFFF';
     tmpCtx.fillRect(0,0,w,h);
-    tmpCtx.drawImage(pc,x,y,w,h,0,0,w,h);
+    tmpCtx.drawImage(
+      pc,
+      x-contentBox.x,
+      y-contentBox.y,
+      w,
+      h,
+      0,
+      0,
+      w,
+      h
+    );
     A.draftImg=tmp.toDataURL('image/jpeg',.92);A.draftAns=null;
     showCropModal();
   };

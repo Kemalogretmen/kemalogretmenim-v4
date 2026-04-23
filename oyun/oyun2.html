@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ritmik Sayma Oyunu - Kemal Öğretmen</title>
     
+    <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
@@ -702,41 +703,9 @@
                 margin: 0 5px;
             }
         }
-    </style>
+</style>
 </head>
 <body>
-
-    <nav class="navbar">
-        <a href="/index.html" class="logo">
-            <img src="/gorseller/logo.png" style="width: 50px; height: auto; margin-right: 10px;" alt="Logo"> 
-            Kemal Öğretmenim
-        </a>
-
-        <div class="hamburger" onclick="menuAcKapat()">
-            <i class="fas fa-bars"></i>
-        </div>
-        
-        <div class="nav-links" id="menuLinks">
-            <div class="dropdown">
-                <button class="dropbtn">1. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
-                <div class="dropdown-content">
-                    <a href="/1_sinif/okuma_anlama/1_okuma_anlama.html">📖 Okuma-Anlama</a>
-                    <a href="/ders.html?sinif=1&ders=turkce">📝 Türkçe</a>
-                    <a href="/ders.html?sinif=1&ders=matematik">🔢 Matematik</a>
-                    <a href="/ders.html?sinif=1&ders=hayat-bilgisi">🌱 Hayat Bilgisi</a>
-                    <a href="/oyun/oyunlar.html">🎮 Oyunlar</a>
-                </div>
-            </div>
-            
-            <div class="dropdown"><button class="dropbtn">2. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="/ders.html?sinif=2&ders=okuma-anlama">📖 Okuma-Anlama</a></div></div>
-            <div class="dropdown"><button class="dropbtn">3. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="/ders.html?sinif=3&ders=fen-bilimleri">🔬 Fen Bilimleri</a></div></div>
-            <div class="dropdown"><button class="dropbtn">4. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="/ders.html?sinif=4&ders=sosyal-bilgiler">🌍 Sosyal Bilgiler</a></div></div>
-            <div class="dropdown"><button class="dropbtn">Ortaokul <i class="fas fa-chevron-down" style="font-size:10px;"></i></button><div class="dropdown-content"><a href="/ders.html?sinif=5&ders=matematik">🔢 Matematik</a></div></div>
-
-            <a href="/hizli-okuma/index.html" class="nav-link" style="background:linear-gradient(135deg,#6C3DED,#9B72F5);color:white;">📖 Hızlı Okuma</a><a href="/sinav_sitesi/index.html" class="nav-link" style="background:linear-gradient(135deg,#FF6052,#FF9F43);color:white;">📝 Sınavlar</a><a href="/oyun/oyunlar.html" class="nav-link" style="background:linear-gradient(135deg,#00C9B1,#00A891);color:white;">🎮 Oyunlar</a><a href="/hakkimda.html" class="nav-link">Hakkımda</a>
-            <a href="/iletisim.html" class="nav-link">İletişim</a>
-        </div>
-    </nav>
 
     <main class="icerik-kapsayici">
         <div class="oyun-konteyner">
@@ -840,26 +809,8 @@
 
     <div class="konfeti-container" id="konfeti"></div>
 
-    <footer>
-        <div class="sosyal">
-            <a href="https://instagram.com/kemalkogretmenim" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="https://youtube.com/@kemalkogretmenim" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
-            <a href="https://twitter.com/kemalkogretmen" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
-        </div>
-        <p style="color: #94a3b8;">© 2026 Kemal Öğretmen - Tüm Hakları Saklıdır.</p>
-    </footer>
-
+    <script src="/js/site.js"></script>
     <script>
-        // Menü fonksiyonu
-        function menuAcKapat() {
-            var x = document.getElementById("menuLinks");
-            if (x.classList.contains("aktif")) {
-                x.classList.remove("aktif");
-            } else {
-                x.classList.add("aktif");
-            }
-        }
-
         // Oyun değişkenleri
         let mevcutMod = 2;
         let ileriYon = true;

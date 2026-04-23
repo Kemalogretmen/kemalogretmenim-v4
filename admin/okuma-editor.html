@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
   <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
     :root {
       --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
       --coral:#FF6052;--teal:#00C9B1;--navy:#1A1040;
@@ -23,7 +23,7 @@
     .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#F2EAFF,#FFF5F4);}
     .login-box{background:white;border-radius:24px;padding:44px 36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(108,61,237,.18);text-align:center;border:2px solid var(--border);}
     .login-icon{font-size:52px;display:block;margin-bottom:12px;}
-    .login-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;margin-bottom:6px;}
+    .login-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;margin-bottom:6px;}
     .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
     .login-input:focus{border-color:var(--purple);}
     .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
@@ -33,7 +33,7 @@
     /* APP LAYOUT */
     .app{display:none;min-height:100vh;}
     .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
-    .topbar-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--purple);}
+    .topbar-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;color:var(--purple);}
     .topbar-links{display:flex;gap:8px;}
     .topbar-link{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);transition:all .2s;}
     .topbar-link:hover{border-color:var(--purple);color:var(--purple);}
@@ -46,7 +46,7 @@
 
     /* ── LİSTE ── */
     .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
-    .list-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;}
+    .list-title{font-family:'Fredoka','Nunito',sans-serif;font-size:22px;font-weight:700;}
     .btn-yeni{padding:11px 22px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;}
     .btn-yeni:hover{background:var(--purple-dark);transform:translateY(-1px);}
 
@@ -61,7 +61,7 @@
     .metin-kart:hover{box-shadow:0 8px 24px rgba(108,61,237,.12);border-color:var(--purple);transform:translateY(-3px);}
     .mk-sinif-badges{display:flex;gap:6px;flex-wrap:wrap;}
     .mk-sinif-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;background:#F0EBFF;color:var(--purple);}
-    .mk-title{font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;color:var(--navy);line-height:1.3;}
+    .mk-title{font-family:'Fredoka','Nunito',sans-serif;font-size:16px;font-weight:700;color:var(--navy);line-height:1.3;}
     .mk-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;}
     .mk-mod{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;}
     .mk-mod.tam{background:#EFF7FF;color:#185FA5;}
@@ -93,11 +93,11 @@
     .edit-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
     .back-btn{background:none;border:2px solid var(--border);border-radius:50px;padding:8px 18px;font-weight:800;font-size:13px;cursor:pointer;color:var(--slate);transition:all .2s;}
     .back-btn:hover{border-color:var(--purple);color:var(--purple);}
-    .edit-title{font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;}
+    .edit-title{font-family:'Fredoka','Nunito',sans-serif;font-size:22px;font-weight:700;}
     .edit-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
 
     .kart{background:white;border-radius:var(--r-lg);padding:22px;border:2px solid var(--border);margin-bottom:20px;}
-    .kart-title{font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;color:var(--purple);margin-bottom:16px;}
+    .kart-title{font-family:'Fredoka','Nunito',sans-serif;font-size:16px;font-weight:700;color:var(--purple);margin-bottom:16px;}
     label{display:block;font-size:13px;font-weight:800;color:var(--slate);margin-bottom:6px;}
     input[type="text"],input[type="number"],input[type="color"],select{
       width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:10px;
@@ -166,7 +166,7 @@
 
     .kw-bar{background:#F0EBFF;border-radius:8px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border:2px solid var(--border);}
     .kw-label{font-size:13px;color:var(--slate);font-weight:700;}
-    .kw-count{font-family:'Baloo 2',cursive;font-size:20px;font-weight:800;color:var(--purple);}
+    .kw-count{font-family:'Fredoka','Nunito',sans-serif;font-size:20px;font-weight:700;color:var(--purple);}
 
     .yardim-metin{font-size:12px;color:var(--muted);line-height:1.6;margin:-4px 0 12px;}
 

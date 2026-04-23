@@ -414,17 +414,45 @@
       loadDynamicOyunlar();
     });
 
+    function createMetaBadge(text, background, color) {
+      const badge = document.createElement('span');
+      badge.className = 'gc-badge';
+      badge.style.background = background;
+      badge.style.color = color;
+      badge.textContent = text;
+      return badge;
+    }
+
+    function buildIframeGameUrl(id) {
+      return '/oyun/iframe-oyun.html?id=' + encodeURIComponent(id || '');
+    }
+
     function loadDynamicOyunlar() {
       try {
         const oyunlar = JSON.parse(localStorage.getItem(OYUN_KEY)||'[]');
         const aktifler = oyunlar.filter(o => o.aktif);
         if (!aktifler.length) return;
 
-        const grid = document.getElementById('gameGrid');
+        const grid = document.getElementById('gamesGrid');
+        const emptyState = document.getElementById('emptyFilter');
+        if (!grid) {
+          console.warn('Oyun listesi bulunamadi: #gamesGrid');
+          return;
+        }
         const renkler = ['purple','coral','orange','green','blue','yellow','pink'];
         const katMap = {
           'Türkçe':'türkçe','Matematik':'matematik','Fen':'fen',
           'Hayat Bilgisi':'hayat','Strateji':'strateji','Hafıza':'hafıza','Bulmaca':'bulmaca','Sosyal':'sosyal'
+        };
+        const katLabelMap = {
+          'Türkçe':'📝 Türkçe',
+          'Matematik':'🔢 Matematik',
+          'Fen':'🔬 Fen',
+          'Hayat Bilgisi':'🌱 Hayat Bilgisi',
+          'Strateji':'♟️ Strateji',
+          'Hafıza':'🧠 Hafıza',
+          'Bulmaca':'🧩 Bulmaca',
+          'Sosyal':'🌍 Sosyal'
         };
 
         aktifler.forEach((o, i) => {
@@ -432,61 +460,85 @@
           const cat = katMap[o.kat] || 'genel';
           const sinifTxt = o.sinif && o.sinif!=='Tümü' ? `${o.sinif}. Sınıf` : '';
           const sevTxt = o.sev && o.sev!=='Tümü' ? o.sev : '';
-
-          let hedef = o.url;
-          // Iframe oyunlar için özel sayfa oluştur
-          let onclick = '';
-          if(o.tip === 'iframe') {
-            onclick = ` onclick="oyunAc(event,'${encodeURIComponent(o.iframe||'')}')"`;
-          }
+          const oyunHref = o.tip === 'iframe' ? buildIframeGameUrl(o.id) : o.url;
 
           const el = document.createElement('a');
-          el.href = o.tip === 'iframe' ? '#' : o.url;
-          if(o.tip === 'link' && (o.url.startsWith('http'))) el.target = '_blank';
+          el.href = oyunHref || '#';
+          if(o.tip === 'link' && o.url && o.url.startsWith('http')) {
+            el.target = '_blank';
+            el.rel = 'noopener';
+          }
           el.className = 'game-card';
           el.dataset.color = renk;
           el.dataset.cat = cat;
-          if(o.tip === 'iframe') el.addEventListener('click', function(e){
-            e.preventDefault();
-            oyunAc(o.iframe, o.ad);
-          });
 
-          el.innerHTML = `
-            <div class="gc-banner">
-              <span class="gc-em">${o.emoji||'🎮'}</span>
-            </div>
-            <div class="gc-body">
-              <div class="gc-badges">
-                ${o.kat?`<span class="gc-badge" style="background:rgba(108,61,237,.1);color:var(--purple);">${o.kat}</span>`:''}
-                ${sinifTxt?`<span class="gc-badge" style="background:#EFF7FF;color:#185FA5;">${sinifTxt}</span>`:''}
-                ${sevTxt?`<span class="gc-badge" style="background:#DCFCE7;color:#15803D;">${sevTxt}</span>`:''}
-              </div>
-              <div class="gc-title">${o.ad}</div>
-              ${o.aciklama?`<div class="gc-desc">${o.aciklama}</div>`:''}
-              <div class="gc-btn">Oyna →</div>
-            </div>`;
-          grid.appendChild(el);
+          const banner = document.createElement('div');
+          banner.className = 'gc-banner';
+
+          const category = document.createElement('span');
+          category.className = 'gc-category';
+          category.textContent = katLabelMap[o.kat] || ((o.kat || 'Genel') === 'Genel' ? '🎮 Genel' : o.kat);
+
+          const bannerEmoji = document.createElement('span');
+          bannerEmoji.className = 'gc-banner-em';
+          bannerEmoji.textContent = o.emoji || '🎮';
+
+          banner.appendChild(category);
+          banner.appendChild(bannerEmoji);
+
+          const body = document.createElement('div');
+          body.className = 'gc-body';
+
+          const metaWrap = document.createElement('div');
+          metaWrap.className = 'gc-badges';
+
+          if (sinifTxt) {
+            metaWrap.appendChild(createMetaBadge(sinifTxt, '#EFF7FF', '#185FA5'));
+          }
+          if (sevTxt) {
+            metaWrap.appendChild(createMetaBadge(sevTxt, '#DCFCE7', '#15803D'));
+          }
+
+          const title = document.createElement('div');
+          title.className = 'gc-title';
+          title.textContent = o.ad || 'Yeni Oyun';
+
+          const subtitle = document.createElement('div');
+          subtitle.className = 'gc-subtitle';
+          subtitle.textContent = o.aciklama ? `"${o.aciklama}"` : '"Yeni eklenen oyun"';
+
+          const play = document.createElement('div');
+          play.className = 'gc-play';
+
+          const playLabel = document.createElement('span');
+          playLabel.className = 'gc-play-lbl';
+          playLabel.textContent = 'Oyna!';
+
+          const playArrow = document.createElement('span');
+          playArrow.className = 'gc-play-arrow';
+          playArrow.textContent = '→';
+
+          play.appendChild(playLabel);
+          play.appendChild(playArrow);
+
+          if (metaWrap.childNodes.length) {
+            body.appendChild(metaWrap);
+          }
+          body.appendChild(title);
+          body.appendChild(subtitle);
+          body.appendChild(play);
+
+          el.appendChild(banner);
+          el.appendChild(body);
+
+          if (emptyState) {
+            grid.insertBefore(el, emptyState);
+          } else {
+            grid.appendChild(el);
+          }
         });
+        filterGames(aktifKat, document.querySelector('.filter-btn.active') || document.querySelector('.filter-btn'));
       } catch(e) { console.warn('Oyun yükleme hatası:', e); }
-    }
-
-    // Iframe oyunları overlay'de aç
-    function oyunAc(iframeKod, baslik) {
-      const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
-      overlay.innerHTML = `
-        <div style="background:white;border-radius:16px;overflow:hidden;max-width:700px;width:100%;max-height:90vh;">
-          <div style="background:#1A1040;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="color:white;font-weight:800;font-size:16px;">🎮 ${baslik||'Oyun'}</span>
-            <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:32px;height:32px;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
-          </div>
-          <div style="padding:0;">${decodeURIComponent(iframeKod)}</div>
-        </div>`;
-      // iframe boyutunu ayarla
-      const iframe = overlay.querySelector('iframe');
-      if(iframe){iframe.style.width='100%';iframe.style.maxHeight='70vh';}
-      document.body.appendChild(overlay);
-      overlay.addEventListener('click', e=>{ if(e.target===overlay) overlay.remove(); });
     }
 
     function filterGames(cat, btn) {

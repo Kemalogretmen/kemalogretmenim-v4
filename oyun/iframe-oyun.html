@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iframe Oyun | Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --hero-shadow: 0 18px 50px rgba(26, 16, 64, 0.18);
+      --panel-shadow: 0 18px 40px rgba(108, 61, 237, 0.14);
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 10% 18%, rgba(255, 96, 82, 0.16), transparent 28%),
+        radial-gradient(circle at 88% 10%, rgba(0, 201, 177, 0.16), transparent 24%),
+        linear-gradient(180deg, #fffdf9 0%, #f7f2ff 42%, #eef8ff 100%);
+    }
+
+    .iframe-game-shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 28px 18px 72px;
+    }
+
+    .iframe-hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--r-xl);
+      padding: clamp(26px, 4vw, 40px);
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(26, 16, 64, 0.96), rgba(74, 31, 208, 0.94)),
+        linear-gradient(135deg, #1a1040, #6c3ded);
+      box-shadow: var(--hero-shadow);
+    }
+
+    .iframe-hero::before,
+    .iframe-hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.28;
+    }
+
+    .iframe-hero::before {
+      width: 280px;
+      height: 280px;
+      right: -90px;
+      top: -120px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.25), transparent 70%);
+    }
+
+    .iframe-hero::after {
+      width: 220px;
+      height: 220px;
+      left: -70px;
+      bottom: -110px;
+      background: radial-gradient(circle, rgba(255, 217, 61, 0.3), transparent 70%);
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      margin-top: 16px;
+      font-family: var(--font-display);
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1.04;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      margin-top: 12px;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: clamp(15px, 2vw, 18px);
+      line-height: 1.7;
+      font-weight: 700;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .iframe-card {
+      margin-top: 24px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 2px solid rgba(108, 61, 237, 0.12);
+      border-radius: var(--r-xl);
+      box-shadow: var(--panel-shadow);
+      overflow: hidden;
+    }
+
+    .iframe-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(108, 61, 237, 0.1);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,245,255,0.96));
+      flex-wrap: wrap;
+    }
+
+    .iframe-card-title {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 4vw, 34px);
+      color: var(--navy);
+      line-height: 1.08;
+    }
+
+    .iframe-card-sub {
+      margin-top: 6px;
+      color: var(--slate);
+      font-size: 14px;
+      line-height: 1.6;
+      font-weight: 700;
+    }
+
+    .iframe-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .iframe-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 2px solid var(--border);
+      background: white;
+      color: var(--slate);
+      font-weight: 800;
+      font-size: 14px;
+      transition: transform .18s ease, border-color .18s ease, color .18s ease;
+    }
+
+    .iframe-action:hover {
+      transform: translateY(-1px);
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+
+    .iframe-stage {
+      padding: 20px;
+      background:
+        radial-gradient(circle at top left, rgba(108, 61, 237, 0.06), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(0, 201, 177, 0.08), transparent 22%),
+        #f8fbff;
+    }
+
+    .iframe-wrap {
+      background: white;
+      border-radius: 24px;
+      border: 2px solid rgba(108, 61, 237, 0.1);
+      overflow: hidden;
+      min-height: 70vh;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .iframe-wrap iframe {
+      display: block;
+      width: 100%;
+      min-height: 70vh;
+      border: 0;
+    }
+
+    .empty-state {
+      margin-top: 26px;
+      padding: 34px 28px;
+      background: white;
+      border: 2px dashed var(--border);
+      border-radius: var(--r-lg);
+      text-align: center;
+      color: var(--slate);
+    }
+
+    .empty-state h2 {
+      font-family: var(--font-display);
+      font-size: 32px;
+      color: var(--navy);
+    }
+
+    .empty-state p {
+      margin-top: 10px;
+      line-height: 1.7;
+      font-weight: 700;
+    }
+
+    @media (max-width: 800px) {
+      .iframe-game-shell {
+        padding-inline: 14px;
+      }
+
+      .iframe-card-head,
+      .iframe-stage {
+        padding: 16px;
+      }
+
+      .iframe-wrap,
+      .iframe-wrap iframe {
+        min-height: 62vh;
+      }
+
+      .iframe-actions {
+        width: 100%;
+      }
+
+      .iframe-action {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="iframe-game-shell">
+    <section class="iframe-hero">
+      <span class="hero-kicker" id="gameKicker">🎮 Yeni Oyun</span>
+      <h1 class="hero-title" id="gameTitle">Oyun yükleniyor…</h1>
+      <p class="hero-copy" id="gameDescription">Eklenen iframe oyunu hazırlanıyor. Birkaç saniye içinde burada açılacak.</p>
+      <div class="hero-meta" id="gameMeta"></div>
+    </section>
+
+    <section class="iframe-card" id="gameCard" hidden>
+      <div class="iframe-card-head">
+        <div>
+          <div class="iframe-card-title" id="stageTitle">Oyun Alanı</div>
+          <div class="iframe-card-sub" id="stageSub">Tam ekrana yakın bir görünümle oyun burada açılır.</div>
+        </div>
+        <div class="iframe-actions">
+          <a href="/oyun/oyunlar.html" class="iframe-action">← Oyunlara Dön</a>
+        </div>
+      </div>
+      <div class="iframe-stage">
+        <div class="iframe-wrap" id="iframeWrap"></div>
+      </div>
+    </section>
+
+    <section class="empty-state" id="emptyState" hidden>
+      <div style="font-size:56px;">🧩</div>
+      <h2>Oyun Bulunamadı</h2>
+      <p id="emptyMessage">Bu oyun kaydı bulunamadı ya da iframe kodu eksik görünüyor.</p>
+      <div style="margin-top:18px;">
+        <a href="/oyun/oyunlar.html" class="iframe-action">🎮 Oyunlar Sayfasına Dön</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const OYUN_KEY = 'kemal_oyunlar';
+
+    function getGameIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('id') || '').trim();
+    }
+
+    function getStoredGames() {
+      try {
+        const raw = localStorage.getItem(OYUN_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (error) {
+        console.warn('Oyun kayitlari okunamadi:', error);
+        return [];
+      }
+    }
+
+    function normalizeIframeMarkup(iframeKod) {
+      const rawMarkup = String(iframeKod || '').trim();
+      if (!rawMarkup) {
+        return '';
+      }
+
+      if (rawMarkup.startsWith('%3C') || rawMarkup.includes('%3Ciframe')) {
+        try {
+          return decodeURIComponent(rawMarkup);
+        } catch (error) {
+          console.warn('Iframe decode edilemedi, ham kod kullaniliyor:', error);
+        }
+      }
+
+      return rawMarkup;
+    }
+
+    function createHeroPill(text) {
+      const pill = document.createElement('span');
+      pill.className = 'hero-pill';
+      pill.textContent = text;
+      return pill;
+    }
+
+    function updateMeta(game) {
+      const meta = document.getElementById('gameMeta');
+      meta.innerHTML = '';
+
+      const items = [];
+      if (game.kat) items.push(game.kat);
+      if (game.sinif && game.sinif !== 'Tümü') items.push(game.sinif + '. Sınıf');
+      if (game.sev && game.sev !== 'Tümü') items.push(game.sev + ' Seviye');
+      items.push('Iframe Oyun');
+
+      items.forEach(function(item) {
+        meta.appendChild(createHeroPill(item));
+      });
+    }
+
+    function showEmpty(message) {
+      document.title = 'Oyun Bulunamadı | Kemal Öğretmenim';
+      document.getElementById('gameTitle').textContent = 'Oyun bulunamadı';
+      document.getElementById('gameDescription').textContent = 'Aradığınız iframe oyun kaydı şu anda açılamıyor.';
+      document.getElementById('emptyMessage').textContent = message;
+      document.getElementById('emptyState').hidden = false;
+      document.getElementById('gameCard').hidden = true;
+    }
+
+    function renderGame(game) {
+      const iframeMarkup = normalizeIframeMarkup(game.iframe);
+      if (!iframeMarkup) {
+        showEmpty('Bu oyunun iframe kodu eksik görünüyor. Admin panelinden kaydı kontrol edebilirsiniz.');
+        return;
+      }
+
+      document.title = (game.ad || 'Iframe Oyun') + ' | Kemal Öğretmenim';
+      document.getElementById('gameKicker').textContent = (game.emoji || '🎮') + ' ' + (game.kat || 'Yeni Oyun');
+      document.getElementById('gameTitle').textContent = game.ad || 'Iframe Oyun';
+      document.getElementById('gameDescription').textContent =
+        game.aciklama || 'Admin panelinden eklenen iframe oyun bu sayfada tam görünümle açılır.';
+      document.getElementById('stageTitle').textContent = game.ad || 'Oyun Alanı';
+      document.getElementById('stageSub').textContent =
+        (game.sinif && game.sinif !== 'Tümü' ? game.sinif + '. sınıf' : 'Tüm seviyeler') +
+        ' için hazırlanmış oyun deneyimi.';
+
+      updateMeta(game);
+
+      const wrap = document.getElementById('iframeWrap');
+      wrap.innerHTML = iframeMarkup;
+
+      const iframe = wrap.querySelector('iframe');
+      if (iframe) {
+        iframe.style.width = '100%';
+        iframe.style.minHeight = '70vh';
+        iframe.setAttribute('loading', 'lazy');
+      }
+
+      document.getElementById('gameCard').hidden = false;
+      document.getElementById('emptyState').hidden = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const gameId = getGameIdFromUrl();
+      if (!gameId) {
+        showEmpty('Oyun bağlantısında kimlik bilgisi bulunamadı. Lütfen oyunlar sayfasından tekrar deneyin.');
+        return;
+      }
+
+      const games = getStoredGames();
+      const game = games.find(function(item) {
+        return item && item.id === gameId && item.tip === 'iframe' && item.aktif;
+      });
+
+      if (!game) {
+        showEmpty('Bu oyun kaydı bu tarayıcıda bulunamadı. Oyun admin paneli ile aynı tarayıcı/origin üzerinde olmalıdır.');
+        return;
+      }
+
+      renderGame(game);
+    });
+  </script>
+</body>
+</html>

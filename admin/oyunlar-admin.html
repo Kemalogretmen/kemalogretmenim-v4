@@ -7,7 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
     :root{
       --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
       --coral:#FF6052;--teal:#00C9B1;--navy:#1A1040;
@@ -28,7 +28,7 @@
 
     .app{display:none;}
     .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
-    .topbar-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--purple);}
+    .topbar-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;color:var(--purple);}
     .topbar-links{display:flex;gap:8px;}
     .t-link{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);}
     .t-link:hover{border-color:var(--purple);color:var(--purple);}
@@ -37,14 +37,14 @@
     .main{max-width:1100px;margin:0 auto;padding:24px 20px;}
 
     .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
-    .page-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;}
+    .page-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;}
     .btn-yeni{padding:11px 22px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s;}
     .btn-yeni:hover{background:var(--purple-dark);transform:translateY(-1px);}
 
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
 
     .kart{background:white;border-radius:var(--r-lg);padding:22px;border:2px solid var(--border);margin-bottom:20px;}
-    .kart-title{font-family:'Baloo 2',cursive;font-size:16px;font-weight:800;color:var(--purple);margin-bottom:16px;}
+    .kart-title{font-family:'Fredoka','Nunito',sans-serif;font-size:16px;font-weight:700;color:var(--purple);margin-bottom:16px;}
     label{display:block;font-size:13px;font-weight:800;color:var(--slate);margin-bottom:6px;}
     input[type="text"],input[type="url"],select,textarea{
       width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:10px;
@@ -76,7 +76,7 @@
     .ok-header{padding:14px 16px;display:flex;align-items:center;gap:12px;}
     .ok-em{font-size:32px;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .ok-info{flex:1;}
-    .ok-title{font-family:'Baloo 2',cursive;font-size:15px;font-weight:800;color:var(--navy);}
+    .ok-title{font-family:'Fredoka','Nunito',sans-serif;font-size:15px;font-weight:700;color:var(--navy);}
     .ok-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
     .ok-badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;}
     .ok-badge.kat{background:#F0EBFF;color:var(--purple);}
@@ -108,7 +108,7 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
     <div style="font-size:52px;margin-bottom:12px;">🎮</div>
-    <div style="font-family:'Baloo 2',cursive;font-size:22px;font-weight:800;margin-bottom:6px;">Oyunlar Yönetimi</div>
+    <div style="font-family:'Fredoka','Nunito',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px;">Oyunlar Yönetimi</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:22px;">Kemal Öğretmenim</p>
     <input class="login-input" type="email" id="loginEmail" placeholder="Yönetici e-postası" autocomplete="username">
     <input class="login-input" type="password" id="loginPass" placeholder="Şifre…">
@@ -257,6 +257,10 @@ document.addEventListener('DOMContentLoaded', function(){
 <script>
 const OYUN_KEY='kemal_oyunlar';
 
+function buildIframeGameUrl(id){
+  return '/oyun/iframe-oyun.html?id=' + encodeURIComponent(id || '');
+}
+
 async function doLogin(){
   const email=document.getElementById('loginEmail').value.trim();
   const password=document.getElementById('loginPass').value;
@@ -336,6 +340,8 @@ function kaydetOyun(){
   const sinif=document.getElementById('fSinif').value;
   const emoji=document.getElementById('fEmoji').value.trim()||'🎮';
   const aciklama=document.getElementById('fAciklama').value.trim();
+  const editId=document.getElementById('editId').value;
+  const recordId=editId || ('oyun_'+Date.now());
 
   let url=''; let iframe=''; let tip=oyunTip;
   if(tip==='link'){
@@ -344,20 +350,25 @@ function kaydetOyun(){
   } else {
     iframe=document.getElementById('fIframe').value.trim();
     if(!iframe){toast('Iframe kodu zorunludur!','error');return;}
-    // İframe için otomatik bir oyun sayfası oluştur
-    url='/oyun/oyun_iframe_'+Date.now()+'.html';
+    // İframe oyunlari ortak oyun sayfasinda acilir.
+    url=buildIframeGameUrl(recordId);
   }
   if(!ad){toast('Oyun adı zorunludur!','error');return;}
 
-  const editId=document.getElementById('editId').value;
   const d=getOyunlar();
 
   if(editId){
     const idx=d.findIndex(o=>o.id===editId);
-    if(idx>-1){ d[idx]={...d[idx],ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:d[idx].aktif}; }
+    if(idx>-1){
+      d[idx]={
+        ...d[idx],
+        ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,
+        aktif:d[idx].aktif
+      };
+    }
     toast('✅ Güncellendi!','success');
   } else {
-    d.unshift({id:'oyun_'+Date.now(),ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:true});
+    d.unshift({id:recordId,ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:true});
     toast('✅ Oyun eklendi!','success');
   }
 

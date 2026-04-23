@@ -1217,12 +1217,17 @@
   function highlightActiveLink() {
     const current = new URL(window.location.href);
     const activeNavKey = getActiveNavKey();
+    const navRoot = document.getElementById('mainNav');
 
-    document.querySelectorAll('.nav-item').forEach(function(item) {
+    if (!navRoot) {
+      return;
+    }
+
+    navRoot.querySelectorAll('.nav-item').forEach(function(item) {
       item.classList.toggle('is-active', item.dataset.navKey === activeNavKey);
     });
 
-    document.querySelectorAll('.dd-item, .nav-btn').forEach(function(link) {
+    navRoot.querySelectorAll('.dd-item, .nav-btn').forEach(function(link) {
       if (!link.href) {
         return;
       }

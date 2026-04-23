@@ -6,6 +6,7 @@
   let toastTimer = null;
   let rawResultsCount = 0;
   let hiddenResultsCount = 0;
+  let nameEditTargetIds = [];
 
   function getClient() {
     return window.kemalAdminAuth.getClient();
@@ -14,8 +15,41 @@
   function escHtml(value) {
     return (value || '')
       .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  function normalizeStudentText(value) {
+    return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function titleCaseStudentText(value) {
+    return normalizeStudentText(value)
+      .split(' ')
+      .filter(Boolean)
+      .map(function(part) {
+        return part
+          .split(/([-'])/g)
+          .map(function(piece) {
+            if (piece === '-' || piece === "'") {
+              return piece;
+            }
+            if (!piece) {
+              return '';
+            }
+            return piece.charAt(0).toLocaleUpperCase('tr-TR') + piece.slice(1).toLocaleLowerCase('tr-TR');
+          })
+          .join('');
+      })
+      .join(' ');
+  }
+
+  function cloneDetailJson(row) {
+    const detail = parseDetailJson(row && row.detay_json);
+    return detail ? JSON.parse(JSON.stringify(detail)) : {};
   }
 
   function parseDetailJson(value) {
@@ -242,6 +276,7 @@
       const karneButton = isCompletedAttempt(row)
         ? '<button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button>'
         : '<button class="btn-karne-row" disabled style="opacity:.5;cursor:not-allowed">Karne</button>';
+      const editButton = '<button class="btn-edit-row" onclick="isimDuzenle(\'' + row.id + '\')">Düzenle</button>';
       return (
         '<div class="tablo-satir" id="row_' + row.id + '">' +
           '<div class="td"><input type="checkbox" class="row-cb" value="' + row.id + '" onchange="satirSecimiGuncelle()"></div>' +
@@ -252,7 +287,7 @@
           '<div class="td">' + escHtml(row.metin_adi || '—') + '</div>' +
           '<div class="td">' + formatDuration(row.okuma_suresi_sn || 0) + '</div>' +
           '<div class="td">' + formatDate(row.olusturma_tarihi) + '</div>' +
-          '<div class="td"><div class="islem-grup">' + karneButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div></div>' +
+          '<div class="td"><div class="islem-grup">' + karneButton + editButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div></div>' +
         '</div>'
       );
     }).join('');
@@ -274,6 +309,7 @@
       const karneButton = isCompletedAttempt(row)
         ? '<button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button>'
         : '<button class="btn-karne-row" disabled style="opacity:.5;cursor:not-allowed">Karne</button>';
+      const editButton = '<button class="btn-edit-row" onclick="isimDuzenle(\'' + row.id + '\')">Düzenle</button>';
       return (
         '<div class="mobil-sonuc-kart">' +
           '<div class="msk-head">' +
@@ -282,7 +318,7 @@
               '<div class="msk-sub">' + (row.sinif || '?') + '. sınıf / ' + (row.sube || '?') + ' şubesi' + (locationMeta ? ' · ' + escHtml(locationMeta) : '') + '</div>' +
               '<div style="margin-top:6px"><span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:' + statusMeta.bg + ';color:' + statusMeta.color + ';font-size:10px;font-weight:800">' + statusMeta.label + '</span></div>' +
             '</div>' +
-            '<div class="islem-grup">' + karneButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div>' +
+            '<div class="islem-grup">' + karneButton + editButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div>' +
           '</div>' +
           '<div class="msk-grid">' +
             '<div class="msk-item"><span>Metin</span><strong>' + escHtml(row.metin_adi || '—') + '</strong></div>' +
@@ -300,6 +336,117 @@
     renderDesktopRows();
     renderMobileCards();
     updateStats();
+  }
+
+  function getRowsByIds(ids) {
+    const wanted = new Set(ids);
+    return allResults.filter(function(row) { return wanted.has(row.id); });
+  }
+
+  function closeNameEditModal() {
+    const modal = document.getElementById('nameEditModal');
+    if (modal) {
+      modal.classList.remove('show');
+    }
+    nameEditTargetIds = [];
+  }
+
+  function openNameEditModal(ids) {
+    const rows = getRowsByIds(ids);
+    if (!rows.length) {
+      toast('Düzenlenecek kayıt bulunamadı.', 'error');
+      return;
+    }
+
+    nameEditTargetIds = rows.map(function(row) { return row.id; });
+    const first = rows[0];
+    const sameName = rows.every(function(row) {
+      return normalizeStudentText(row.ad) === normalizeStudentText(first.ad) &&
+        normalizeStudentText(row.soyad) === normalizeStudentText(first.soyad);
+    });
+
+    document.getElementById('editStudentName').value = sameName ? (first.ad || '') : '';
+    document.getElementById('editStudentSurname').value = sameName ? (first.soyad || '') : '';
+    document.getElementById('nameEditSummary').textContent = rows.length === 1
+      ? 'Bu kaydın öğrenci adı düzeltilecek.'
+      : rows.length + ' kayıt aynı ad ve soyada çevrilecek.';
+    document.getElementById('nameEditModal').classList.add('show');
+    document.getElementById('editStudentName').focus();
+  }
+
+  function openSelectedNameEditor() {
+    const ids = getSelectedIds();
+    if (!ids.length) {
+      toast('Önce aynı öğrenciye ait satırları seçmelisin.', 'error');
+      return;
+    }
+    openNameEditModal(ids);
+  }
+
+  async function saveNameEdit() {
+    const ad = titleCaseStudentText(document.getElementById('editStudentName').value);
+    const soyad = titleCaseStudentText(document.getElementById('editStudentSurname').value);
+    if (!ad || !soyad) {
+      toast('Ad ve soyad boş bırakılamaz.', 'error');
+      return;
+    }
+    const ids = nameEditTargetIds.slice();
+    if (!ids.length) {
+      toast('Düzenlenecek kayıt bulunamadı.', 'error');
+      return;
+    }
+
+    const rows = getRowsByIds(ids);
+    const client = getClient();
+    const responses = await Promise.all(rows.map(async function(row) {
+      const detail = cloneDetailJson(row);
+      if (!detail.kullanici_bilgileri || typeof detail.kullanici_bilgileri !== 'object') {
+        detail.kullanici_bilgileri = {};
+      }
+      detail.kullanici_bilgileri.ad = ad;
+      detail.kullanici_bilgileri.soyad = soyad;
+
+      let response = await client
+        .from('sonuclar')
+        .update({ ad: ad, soyad: soyad, detay_json: detail })
+        .eq('id', row.id)
+        .select('*')
+        .maybeSingle();
+
+      if (response.error && response.error.message && response.error.message.includes('detay_json')) {
+        response = await client
+          .from('sonuclar')
+          .update({ ad: ad, soyad: soyad })
+          .eq('id', row.id)
+          .select('*')
+          .maybeSingle();
+      }
+
+      return { row: row, response: response };
+    }));
+
+    const failed = responses.find(function(item) { return item.response.error; });
+    if (failed) {
+      toast('İsim güncellenemedi: ' + failed.response.error.message, 'error');
+      return;
+    }
+
+    responses.forEach(function(item) {
+      const updated = item.response.data || {};
+      const nextDetail = updated.detay_json != null ? updated.detay_json : item.row.detay_json;
+      const nextRow = Object.assign({}, item.row, updated, {
+        ad: ad,
+        soyad: soyad,
+        detay_json: nextDetail
+      });
+      allResults = allResults.map(function(row) {
+        return row.id === item.row.id ? nextRow : row;
+      });
+    });
+
+    closeNameEditModal();
+    applyFilters();
+    toast(ids.length === 1 ? 'Öğrenci adı güncellendi.' : ids.length + ' kayıt aynı isimde birleştirildi.', 'success');
   }
 
   function applyFilters() {
@@ -534,6 +681,26 @@
         doLogin();
       }
     });
+    document.getElementById('nameEditModal').addEventListener('click', function(event) {
+      if (event.target === this) {
+        closeNameEditModal();
+      }
+    });
+    document.getElementById('editStudentName').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        saveNameEdit();
+      }
+    });
+    document.getElementById('editStudentSurname').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        saveNameEdit();
+      }
+    });
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeNameEditModal();
+      }
+    });
     initAuth();
   });
 
@@ -547,4 +714,8 @@
   window.satirSecimiGuncelle = updateRowSelectionState;
   window.excelIndir = exportCsv;
   window.karneAc = openKarne;
+  window.isimDuzenle = function(id) { openNameEditModal([id]); };
+  window.secilileriDuzenle = openSelectedNameEditor;
+  window.isimKaydet = saveNameEdit;
+  window.isimModalKapat = closeNameEditModal;
 })();

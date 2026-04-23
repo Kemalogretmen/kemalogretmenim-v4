@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <link rel="stylesheet" href="/css/admin-shell.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 
     :root {
       --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
@@ -26,7 +26,7 @@
     .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#F2EAFF,#FFF5F4);}
     .login-box{background:white;border-radius:24px;padding:44px 36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(108,61,237,.18);text-align:center;border:2px solid var(--border);}
     .login-icon{font-size:52px;display:block;margin-bottom:12px;}
-    .login-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;margin-bottom:6px;}
+    .login-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;margin-bottom:6px;}
     .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
     .login-input:focus{border-color:var(--purple);}
     .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
@@ -35,7 +35,7 @@
 
     .app{display:none;min-height:100vh;}
     .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
-    .topbar-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--purple);}
+    .topbar-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;color:var(--purple);}
     .topbar-links{display:flex;gap:8px;flex-wrap:wrap;}
     .topbar-link{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);transition:all .2s;}
     .topbar-link:hover{border-color:var(--purple);color:var(--purple);}
@@ -46,7 +46,7 @@
     #panelEdit{display:none;}
 
     .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
-    .list-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;}
+    .list-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;}
     .list-sub{font-size:14px;color:var(--slate);}
     .btn-main{padding:11px 22px;background:var(--purple);color:white;border:none;border-radius:50px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;}
     .btn-main:hover{background:var(--purple-dark);transform:translateY(-1px);}
@@ -74,7 +74,7 @@
     .doc-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;}
     .doc-status.on{background:#DCFCE7;color:#15803D;}
     .doc-status.off{background:#FEE2E2;color:#DC2626;}
-    .doc-title{font-family:'Baloo 2',cursive;font-size:18px;font-weight:800;color:var(--navy);line-height:1.25;}
+    .doc-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;color:var(--navy);line-height:1.25;}
     .doc-desc{font-size:13px;color:var(--slate);line-height:1.65;min-height:40px;}
     .doc-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);}
     .doc-meta span{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:#F8F6FF;}
@@ -92,7 +92,7 @@
     .empty-box span{font-size:58px;display:block;margin-bottom:14px;}
 
     .edit-header{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
-    .edit-title{font-family:'Baloo 2',cursive;font-size:24px;font-weight:800;}
+    .edit-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;}
     .edit-grid{display:grid;grid-template-columns:minmax(0,1.35fr) 340px;gap:20px;align-items:start;}
     .help-card{background:#F8F6FF;border:2px solid var(--border);border-radius:var(--r-md);padding:16px;}
     .help-card p{font-size:13px;color:var(--slate);line-height:1.7;}
@@ -246,7 +246,7 @@
           </div>
 
           <div class="panel">
-            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;color:var(--purple);margin-bottom:12px;">Yayın Ayarları</h2>
+            <h2 style="font-family:'Fredoka','Nunito',sans-serif;font-size:18px;color:var(--purple);margin-bottom:12px;">Yayın Ayarları</h2>
             <label>Sınıf</label>
             <select id="fSinif"></select>
 
@@ -289,13 +289,13 @@
 
         <aside>
           <div class="panel">
-            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;color:var(--purple);margin-bottom:12px;">Kayıt Özeti</h2>
+            <h2 style="font-family:'Fredoka','Nunito',sans-serif;font-size:18px;color:var(--purple);margin-bottom:12px;">Kayıt Özeti</h2>
             <div class="status-line" id="summaryTitle">Henüz başlık girilmedi.</div>
             <div class="hint" id="summaryRoute">Sınıf ve ders seçildiğinde yayın yolu burada görünür.</div>
             <div class="hint" id="summaryMeta">Dosya seçildiğinde sayfa sayısı ve boyut bilgisi hesaplanır.</div>
           </div>
           <div class="panel">
-            <h2 style="font-family:'Baloo 2',cursive;font-size:18px;color:var(--purple);margin-bottom:12px;">Hızlı İşlemler</h2>
+            <h2 style="font-family:'Fredoka','Nunito',sans-serif;font-size:18px;color:var(--purple);margin-bottom:12px;">Hızlı İşlemler</h2>
             <button class="btn-main" style="width:100%;justify-content:center;margin-bottom:10px;" onclick="viewerAc()">Önizlemeyi Aç</button>
             <button class="btn-worksheet" style="width:100%;justify-content:center;margin-bottom:10px;border:none;border-radius:50px;padding:11px 18px;font-weight:800;font-size:13px;cursor:pointer;" onclick="calismaKagidiAc()">Çalışma Kağıdı Editörünü Aç</button>
             <button class="btn-ghost" style="width:100%;" onclick="linkKopyala()">Görüntüleme Linkini Kopyala</button>

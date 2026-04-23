@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Halat Çekme Arenası - Kemal Öğretmen</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
@@ -29,13 +30,15 @@
             --sky: #dff3ff;
             --panel-shadow: 0 22px 55px rgba(108, 61, 237, 0.14);
             --soft-shadow: 0 12px 30px rgba(26, 16, 64, 0.1);
-            --font-display: "Baloo 2", cursive;
+            --font-display: "Fredoka", "Nunito", sans-serif;
             --font-body: "Nunito", sans-serif;
             --left-accent: #4285f4;
             --left-accent-dark: #2156c8;
             --right-accent: #ff7a59;
             --right-accent-dark: #e6522b;
             --arena-shift: 0px;
+            --viewport-height: 100dvh;
+            --viewport-width: 100vw;
         }
 
         *, *::before, *::after {
@@ -234,14 +237,28 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-start;
+            min-height: calc(var(--viewport-height) - 24px);
         }
 
         .setup-shell {
             width: 100%;
             display: grid;
+            place-items: start center;
+            --stage-scale: 1;
+        }
+
+        .setup-shell-inner {
+            width: calc(100% / var(--stage-scale));
+            min-width: 0;
+            display: grid;
             grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.95fr);
             gap: 24px;
             align-items: stretch;
+            transform: scale(var(--stage-scale));
+            transform-origin: top center;
+            transition: transform 0.18s ease, width 0.18s ease;
+            will-change: transform;
         }
 
         .setup-hero,
@@ -384,8 +401,12 @@
         .preview-track img {
             position: absolute;
             left: 50%;
-            bottom: 38px;
-            width: min(92%, 620px);
+            bottom: 34px;
+            width: auto;
+            height: calc(100% - 64px);
+            max-width: min(92%, 620px);
+            object-fit: contain;
+            object-position: center bottom;
             transform: translateX(-50%);
         }
 
@@ -674,10 +695,22 @@
         /* --- OYUN EKRANI (DÜZELTİLMİŞ) --- */
         .game-shell {
             width: 100%;
+            display: grid;
+            place-items: start center;
+            --stage-scale: 1;
+        }
+
+        .game-shell-inner {
+            width: calc(100% / var(--stage-scale));
+            min-width: 0;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            flex-grow: 1; /* Ekranı kaplamasını sağlar */
+            flex-grow: 1;
+            transform: scale(var(--stage-scale));
+            transform-origin: top center;
+            transition: transform 0.18s ease, width 0.18s ease;
+            will-change: transform;
         }
 
         .game-topbar {
@@ -747,6 +780,7 @@
             gap: 20px;
             align-items: stretch;
             flex-grow: 1;
+            min-width: 0;
         }
 
         /* OYUNCU PANELLERİ (SAĞ VE SOL) */
@@ -986,7 +1020,7 @@
         .arena-finish-flag {
             position: absolute;
             left: 50%;
-            bottom: 48px;
+            bottom: 38px;
             transform: translateX(-50%);
             font-size: 30px;
             line-height: 1;
@@ -997,15 +1031,24 @@
         .arena-rope-wrap {
             position: absolute;
             left: 50%;
-            bottom: 44px;
+            top: 8px;
+            bottom: 24px;
             width: min(92%, 860px);
+            padding-top: 18px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
             transform: translate(-50%, 0) translateX(var(--arena-shift));
             transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
             z-index: 2;
         }
 
         .arena-rope-wrap img {
-            width: 100%;
+            width: auto;
+            height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+            object-position: center bottom;
             filter: drop-shadow(0 18px 18px rgba(26, 16, 64, 0.16));
             user-select: none;
             -webkit-user-drag: none;
@@ -1014,7 +1057,7 @@
 
         .rope-name {
             position: absolute;
-            top: 12px;
+            top: 10px;
             padding: 4px 8px;
             border-radius: 999px;
             color: #ffffff;
@@ -1204,9 +1247,8 @@
         body.oyun-aktif .page-shell {
             padding-top: 14px;
             padding-bottom: 14px;
-            /* Ekranı tam olarak kaplaması için */
-            height: calc(100vh - 80px); 
-            height: calc(100dvh - 80px);
+            min-height: calc(var(--viewport-height) - 28px);
+            height: auto;
         }
 
         body.oyun-aktif footer {
@@ -1215,7 +1257,7 @@
 
         /* --- RESPONSIVE TASARIM (Mobil, Tablet, Akıllı Tahta Uyumu) --- */
         @media (max-width: 1180px) {
-            .setup-shell { grid-template-columns: 1fr; }
+            .setup-shell-inner { grid-template-columns: 1fr; }
             .game-grid { grid-template-columns: 220px 1fr 220px; gap: 16px; }
         }
 
@@ -1244,7 +1286,7 @@
             .arena-panel { grid-area: arena; }
             .player-panel.left { grid-area: left; }
             .player-panel.right { grid-area: right; }
-            body.oyun-aktif .page-shell { height: auto; min-height: 100vh; }
+            body.oyun-aktif .page-shell { min-height: var(--viewport-height); }
         }
 
         @media (max-width: 620px) {
@@ -1262,305 +1304,322 @@
             .topbar-actions { justify-content: stretch; }
             .topbar-actions button { flex: 1; }
         }
+
+        @media (max-aspect-ratio: 4/5) {
+            .setup-shell-inner { grid-template-columns: 1fr; }
+
+            .game-grid {
+                grid-template-columns: 1fr 1fr;
+                grid-template-areas:
+                    "arena arena"
+                    "left right";
+            }
+
+            .arena-panel { grid-area: arena; }
+            .player-panel.left { grid-area: left; }
+            .player-panel.right { grid-area: right; }
+        }
+
+        @media (max-aspect-ratio: 3/4) {
+            .game-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "arena"
+                    "left"
+                    "right";
+            }
+
+            .game-topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .topbar-actions {
+                justify-content: stretch;
+            }
+
+            .topbar-actions button {
+                flex: 1 1 0;
+            }
+        }
+
+        @media (max-height: 860px) {
+            .page-shell {
+                padding-top: 16px;
+                padding-bottom: 20px;
+            }
+
+            .game-shell-inner {
+                gap: 12px;
+            }
+
+            .game-topbar {
+                padding: 10px 14px;
+                gap: 12px;
+            }
+
+            .game-grid {
+                gap: 14px;
+            }
+
+            .player-panel,
+            .arena-panel {
+                padding: 14px;
+            }
+
+            .question-box {
+                min-height: 54px;
+                font-size: 24px;
+            }
+
+            .answer-box {
+                min-height: 42px;
+                font-size: 18px;
+            }
+
+            .key-btn {
+                min-height: 38px;
+                font-size: 17px;
+            }
+
+            .arena-track {
+                min-height: 260px;
+            }
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <a href="/index.html" class="logo">
-            <img src="/gorseller/logo.png" alt="Kemal Öğretmen logosu">
-            Kemal Öğretmen
-        </a>
-
-        <button class="hamburger" type="button" onclick="menuAcKapat()">
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <div class="nav-links" id="menuLinks">
-            <div class="dropdown">
-                <button class="dropbtn" type="button" onclick="dropdownAcKapat(event)">1. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
-                <div class="dropdown-content">
-                    <a href="/1_sinif/okuma_anlama/1_okuma_anlama.html">📖 Okuma-Anlama</a>
-                    <a href="/ders.html?sinif=1&ders=turkce">📝 Türkçe</a>
-                    <a href="/ders.html?sinif=1&ders=matematik">🔢 Matematik</a>
-                    <a href="/ders.html?sinif=1&ders=hayat-bilgisi">🌱 Hayat Bilgisi</a>
-                    <a href="/oyun/oyunlar.html">🎮 Oyunlar</a>
-                </div>
-            </div>
-            <div class="dropdown">
-                <button class="dropbtn" type="button" onclick="dropdownAcKapat(event)">2. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
-                <div class="dropdown-content">
-                    <a href="/ders.html?sinif=2&ders=okuma-anlama">📖 Okuma-Anlama</a>
-                    <a href="/ders.html?sinif=2&ders=turkce">📝 Türkçe</a>
-                    <a href="/ders.html?sinif=2&ders=matematik">🔢 Matematik</a>
-                    <a href="/ders.html?sinif=2&ders=hayat-bilgisi">🌱 Hayat Bilgisi</a>
-                    <a href="/oyun/oyunlar.html">🎮 Oyunlar</a>
-                </div>
-            </div>
-            <div class="dropdown">
-                <button class="dropbtn" type="button" onclick="dropdownAcKapat(event)">3. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
-                <div class="dropdown-content">
-                    <a href="/ders.html?sinif=3&ders=okuma-anlama">📖 Okuma-Anlama</a>
-                    <a href="/ders.html?sinif=3&ders=turkce">📝 Türkçe</a>
-                    <a href="/ders.html?sinif=3&ders=matematik">🔢 Matematik</a>
-                    <a href="/ders.html?sinif=3&ders=hayat-bilgisi">🌱 Hayat Bilgisi</a>
-                    <a href="/ders.html?sinif=3&ders=fen-bilimleri">🔬 Fen Bilimleri</a>
-                    <a href="/oyun/oyunlar.html">🎮 Oyunlar</a>
-                </div>
-            </div>
-            <div class="dropdown">
-                <button class="dropbtn" type="button" onclick="dropdownAcKapat(event)">4. Sınıf <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
-                <div class="dropdown-content">
-                    <a href="/ders.html?sinif=4&ders=okuma-anlama">📖 Okuma-Anlama</a>
-                    <a href="/ders.html?sinif=4&ders=turkce">📝 Türkçe</a>
-                    <a href="/ders.html?sinif=4&ders=matematik">🔢 Matematik</a>
-                    <a href="/ders.html?sinif=4&ders=fen-bilimleri">🔬 Fen Bilimleri</a>
-                    <a href="/ders.html?sinif=4&ders=sosyal-bilgiler">🌍 Sosyal Bilgiler</a>
-                    <a href="/oyun/oyunlar.html">🎮 Oyunlar</a>
-                </div>
-            </div>
-            <div class="dropdown">
-                <button class="dropbtn" type="button" onclick="dropdownAcKapat(event)">Ortaokul <i class="fas fa-chevron-down" style="font-size:10px;"></i></button>
-                <div class="dropdown-content">
-                    <a href="/ders.html?sinif=5&ders=matematik">🔢 5. Sınıf Mat</a>
-                    <a href="/ders.html?sinif=6&ders=matematik">🔢 6. Sınıf Mat</a>
-                    <a href="/ders.html?sinif=7&ders=matematik">🔢 7. Sınıf Mat</a>
-                </div>
-            </div>
-            <a href="/hizli-okuma/index.html" class="nav-link" style="background:linear-gradient(135deg,#6C3DED,#9B72F5);color:white;">📖 Hızlı Okuma</a>
-            <a href="/sinav_sitesi/index.html" class="nav-link" style="background:linear-gradient(135deg,#FF6052,#FF9F43);color:white;">📝 Sınavlar</a>
-            <a href="/oyun/oyunlar.html" class="nav-link" style="background:linear-gradient(135deg,#00C9B1,#00A891);color:white;">🎮 Oyunlar</a>
-            <a href="/hakkimda.html" class="nav-link">Hakkımda</a>
-            <a href="/iletisim.html" class="nav-link">İletişim</a>
-        </div>
-    </nav>
-
     <main class="page-shell" id="pageShell">
         <section id="girisEkrani" class="setup-shell">
-            <div class="setup-hero">
-                <span class="hero-badge" id="heroBadge">Sınıf Seviyesine Uygun Matematik Arenası</span>
-                <div>
-                    <h1>Halat Çekme Arenası</h1>
-                    <p id="heroDescription">
-                        Halat Çekme Arenası, aynı ekranda oynanan hızlı bir matematik düellosudur. Her turda gelen işlemler
-                        seçilen sınıf, zorluk ve oyun moduna göre ayarlanır; amaç yalnızca hız değil, doğru zamanda doğru cevabı verip
-                        orta çizgiyi korumaktır.
-                    </p>
-                </div>
-
-                <div class="hero-pill-row">
-                    <div class="hero-pill"><i class="fas fa-hand-pointer"></i> Çoklu dokunmaya uygun</div>
-                    <div class="hero-pill"><i class="fas fa-random"></i> Karışık işlem ve zorluk seçimi</div>
-                    <div class="hero-pill"><i class="fas fa-flag-checkered"></i> Orta çizgiye göre bitiş</div>
-                    <div class="hero-pill"><i class="fas fa-robot"></i> Bilgisayar arkadaş modu</div>
-                </div>
-
-                <div class="hero-preview">
-                    <div class="preview-topline">
-                        <span id="previewLead">Zihinden çözülebilen işlemlerle ritmi koru</span>
-                        <span id="previewTrail">Hedef: Bayrağı rakip tarafa taşı</span>
-                    </div>
-                    <div class="preview-track">
-                        <div class="preview-name left" id="previewLeftName">Mavi Şimşek</div>
-                        <div class="preview-name right" id="previewRightName">Kırmızı Ateş</div>
-                        <div class="preview-finish-flag" aria-hidden="true">🏁</div>
-                        <img src="/gorseller/halat.png" alt="Halat çeken iki çocuk">
-                    </div>
-                </div>
-            </div>
-
-            <div class="setup-panel">
-                <div class="panel-topline">
+            <div class="setup-shell-inner" id="girisEkraniIcerik">
+                <div class="setup-hero">
+                    <span class="hero-badge" id="heroBadge">Sınıf Seviyesine Uygun Matematik Arenası</span>
                     <div>
-                        <h2 class="panel-title">Yarışı Hazırla</h2>
-                        <p class="panel-subtitle" id="panelSubtitle">Oyun modunu, sınıfı, işlem yapısını ve zorluğu belirle.</p>
-                    </div>
-                    <button class="sound-btn" type="button" data-control="toggle-sound" data-ses-toggle>🔊 Ses Açık</button>
-                </div>
-
-                <div class="setup-section">
-                    <label class="setup-label">Oyun Modu</label>
-                    <div class="button-grid">
-                        <button class="pick-btn" type="button" data-control="select-mode" data-group="mod" data-value="2p">👫 2 Oyuncu</button>
-                        <button class="pick-btn" type="button" data-control="select-mode" data-group="mod" data-value="cpu">🤖 Bilgisayar Arkadaş</button>
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <label class="setup-label">Sınıf Seviyesi</label>
-                    <div class="button-grid">
-                        <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="1">🌱 1. Sınıf</button>
-                        <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="2">🌿 2. Sınıf</button>
-                        <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="3">🌳 3. Sınıf</button>
-                        <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="4">🎯 4. Sınıf</button>
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <label class="setup-label">İşlem Türü</label>
-                    <div class="button-grid ops-grid">
-                        <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="+">➕ Toplama</button>
-                        <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="-">➖ Çıkarma</button>
-                        <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="x">✖️ Çarpma</button>
-                        <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="/">➗ Bölme</button>
-                        <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="mixed">🎲 Karışık</button>
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <label class="setup-label">Zorluk Seviyesi</label>
-                    <div class="button-grid difficulty-grid">
-                        <button class="pick-btn" type="button" data-control="select-difficulty" data-group="zorluk" data-value="kolay">🍀 Kolay</button>
-                        <button class="pick-btn" type="button" data-control="select-difficulty" data-group="zorluk" data-value="orta">⚡ Orta</button>
-                        <button class="pick-btn" type="button" data-control="select-difficulty" data-group="zorluk" data-value="zor">🔥 Zor</button>
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <label class="setup-label">Oyuncu İsimleri</label>
-                    <div class="player-card-grid">
-                        <div class="name-card left">
-                            <div class="name-card-head">
-                                <div class="name-icon">🧒</div>
-                                <div>
-                                    <strong id="solSetupRole">Sol Oyuncu</strong>
-                                    <span id="solSetupCopy">Halatı sola çeker</span>
-                                </div>
-                            </div>
-                            <input id="solIsimInput" class="name-input" type="text" maxlength="18" placeholder="Mavi Şimşek">
-                        </div>
-                        <div class="name-card right">
-                            <div class="name-card-head">
-                                <div class="name-icon">🧑</div>
-                                <div>
-                                    <strong id="sagSetupRole">Sağ Oyuncu</strong>
-                                    <span id="sagSetupCopy">Halatı sağa çeker</span>
-                                </div>
-                            </div>
-                            <input id="sagIsimInput" class="name-input" type="text" maxlength="18" placeholder="Kırmızı Ateş">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setup-section">
-                    <div class="guide-card">
-                        <h3 class="guide-title">Oyun Nasıl İlerler?</h3>
-                        <p class="guide-copy" id="oyunAnlatimi">
-                            Her oyuncu kendi panelinde çıkan işlemi zihinden çözer. Doğru cevap halatı kendi tarafına çeker.
+                        <h1>Halat Çekme Arenası</h1>
+                        <p id="heroDescription">
+                            Halat Çekme Arenası, aynı ekranda oynanan hızlı bir matematik düellosudur. Her turda gelen işlemler
+                            seçilen sınıf, zorluk ve oyun moduna göre ayarlanır; amaç yalnızca hız değil, doğru zamanda doğru cevabı verip
+                            orta çizgiyi korumaktır.
                         </p>
-                        <div class="curriculum-note" id="mufredatNotu">Sınıf seçildiğinde, zihinden yapılabilir soru aralığı burada otomatik açıklanır.</div>
+                    </div>
+
+                    <div class="hero-pill-row">
+                        <div class="hero-pill"><i class="fas fa-hand-pointer"></i> Çoklu dokunmaya uygun</div>
+                        <div class="hero-pill"><i class="fas fa-random"></i> Karışık işlem ve zorluk seçimi</div>
+                        <div class="hero-pill"><i class="fas fa-flag-checkered"></i> Orta çizgiye göre bitiş</div>
+                        <div class="hero-pill"><i class="fas fa-robot"></i> Bilgisayar arkadaş modu</div>
+                    </div>
+
+                    <div class="hero-preview">
+                        <div class="preview-topline">
+                            <span id="previewLead">Zihinden çözülebilen işlemlerle ritmi koru</span>
+                            <span id="previewTrail">Hedef: Bayrağı rakip tarafa taşı</span>
+                        </div>
+                        <div class="preview-track">
+                            <div class="preview-name left" id="previewLeftName">Mavi Şimşek</div>
+                            <div class="preview-name right" id="previewRightName">Kırmızı Ateş</div>
+                            <div class="preview-finish-flag" aria-hidden="true">🏁</div>
+                            <img src="../gorseller/halat.png" alt="Halat çeken iki çocuk">
+                        </div>
                     </div>
                 </div>
 
-                <div class="setup-section">
-                    <button id="baslaBtn" class="start-btn" type="button" data-control="start-game" disabled>Yarışı Başlat ▶</button>
+                <div class="setup-panel">
+                    <div class="panel-topline">
+                        <div>
+                            <h2 class="panel-title">Yarışı Hazırla</h2>
+                            <p class="panel-subtitle" id="panelSubtitle">Oyun modunu, sınıfı, işlem yapısını ve zorluğu belirle.</p>
+                        </div>
+                        <button class="sound-btn" type="button" data-control="toggle-sound" data-ses-toggle>🔊 Ses Açık</button>
+                    </div>
+
+                    <div class="setup-section">
+                        <label class="setup-label">Oyun Modu</label>
+                        <div class="button-grid">
+                            <button class="pick-btn" type="button" data-control="select-mode" data-group="mod" data-value="2p">👫 2 Oyuncu</button>
+                            <button class="pick-btn" type="button" data-control="select-mode" data-group="mod" data-value="cpu">🤖 Bilgisayar Arkadaş</button>
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <label class="setup-label">Sınıf Seviyesi</label>
+                        <div class="button-grid">
+                            <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="1">🌱 1. Sınıf</button>
+                            <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="2">🌿 2. Sınıf</button>
+                            <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="3">🌳 3. Sınıf</button>
+                            <button class="pick-btn" type="button" data-control="select-class" data-group="sinif" data-value="4">🎯 4. Sınıf</button>
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <label class="setup-label">İşlem Türü</label>
+                        <div class="button-grid ops-grid">
+                            <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="+">➕ Toplama</button>
+                            <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="-">➖ Çıkarma</button>
+                            <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="x">✖️ Çarpma</button>
+                            <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="/">➗ Bölme</button>
+                            <button class="pick-btn" type="button" data-control="select-op" data-group="islem" data-value="mixed">🎲 Karışık</button>
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <label class="setup-label">Zorluk Seviyesi</label>
+                        <div class="button-grid difficulty-grid">
+                            <button class="pick-btn" type="button" data-control="select-difficulty" data-group="zorluk" data-value="kolay">🍀 Kolay</button>
+                            <button class="pick-btn" type="button" data-control="select-difficulty" data-group="zorluk" data-value="orta">⚡ Orta</button>
+                            <button class="pick-btn" type="button" data-control="select-difficulty" data-group="zorluk" data-value="zor">🔥 Zor</button>
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <label class="setup-label">Oyuncu İsimleri</label>
+                        <div class="player-card-grid">
+                            <div class="name-card left">
+                                <div class="name-card-head">
+                                    <div class="name-icon">🧒</div>
+                                    <div>
+                                        <strong id="solSetupRole">Sol Oyuncu</strong>
+                                        <span id="solSetupCopy">Halatı sola çeker</span>
+                                    </div>
+                                </div>
+                                <input id="solIsimInput" class="name-input" type="text" maxlength="18" placeholder="Mavi Şimşek">
+                            </div>
+                            <div class="name-card right">
+                                <div class="name-card-head">
+                                    <div class="name-icon">🧑</div>
+                                    <div>
+                                        <strong id="sagSetupRole">Sağ Oyuncu</strong>
+                                        <span id="sagSetupCopy">Halatı sağa çeker</span>
+                                    </div>
+                                </div>
+                                <input id="sagIsimInput" class="name-input" type="text" maxlength="18" placeholder="Kırmızı Ateş">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <div class="guide-card">
+                            <h3 class="guide-title">Oyun Nasıl İlerler?</h3>
+                            <p class="guide-copy" id="oyunAnlatimi">
+                                Her oyuncu kendi panelinde çıkan işlemi zihinden çözer. Doğru cevap halatı kendi tarafına çeker.
+                            </p>
+                            <div class="curriculum-note" id="mufredatNotu">Sınıf seçildiğinde, zihinden yapılabilir soru aralığı burada otomatik açıklanır.</div>
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <button id="baslaBtn" class="start-btn" type="button" data-control="start-game" disabled>Yarışı Başlat ▶</button>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section id="oyunSahnesi" class="game-shell" hidden>
-            <div class="game-topbar">
-                <div class="topbar-block">
-                    <span class="topbar-label">Canlı Durum</span>
-                    <div class="topbar-value" id="durumMesaji">Halat dengede. İlk doğru cevabı bekliyoruz.</div>
-                </div>
-                <div class="topbar-block">
-                    <span class="topbar-label">Tur Ayarı</span>
-                    <div class="topbar-value" id="bitisMesaji">Orta çizgiyi geçen oyuncu kaybeder.</div>
-                </div>
-                <div class="topbar-actions">
-                    <button class="sound-btn" type="button" data-control="toggle-sound" data-ses-toggle>🔊 Ses Açık</button>
-                    <button class="mini-btn secondary" type="button" data-control="restart-round">Yeni Tur</button>
-                    <button class="mini-btn ghost" type="button" data-control="back-to-setup">Ayarlara Dön</button>
-                </div>
-            </div>
-
-            <div class="game-grid">
-                <aside class="player-panel left" id="solOyuncuPaneli" data-player-panel="sol">
-                    <div class="player-head">
-                        <div class="player-badge">🟦</div>
-                        <div>
-                            <span class="player-caption" id="solPanelRol">Sol Oyuncu</span>
-                            <div class="player-name" id="solPanelIsim">Mavi Şimşek</div>
-                        </div>
+            <div class="game-shell-inner" id="oyunSahnesiIcerik">
+                <div class="game-topbar">
+                    <div class="topbar-block">
+                        <span class="topbar-label">Canlı Durum</span>
+                        <div class="topbar-value" id="durumMesaji">Halat dengede. İlk doğru cevabı bekliyoruz.</div>
                     </div>
-                    <div class="question-box" id="solSoru">12 + 7 = ?</div>
-                    <div class="answer-box" id="solCevap">Hazır</div>
-                    <div class="keypad">
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="1">1</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="2">2</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="3">3</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="4">4</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="5">5</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="6">6</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="7">7</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="8">8</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="9">9</button>
-                        <button class="key-btn clear" type="button" data-control="clear" data-player="sol">Sil</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="0">0</button>
-                        <button class="key-btn submit" type="button" data-control="submit" data-player="sol">OK</button>
+                    <div class="topbar-block">
+                        <span class="topbar-label">Tur Ayarı</span>
+                        <div class="topbar-value" id="bitisMesaji">Orta çizgiyi geçen oyuncu kaybeder.</div>
                     </div>
-                </aside>
+                    <div class="topbar-actions">
+                        <button class="sound-btn" type="button" data-control="toggle-sound" data-ses-toggle>🔊 Ses Açık</button>
+                        <button class="mini-btn secondary" type="button" data-control="restart-round">Yeni Tur</button>
+                        <button class="mini-btn ghost" type="button" data-control="back-to-setup">Ayarlara Dön</button>
+                    </div>
+                </div>
 
-                <section class="arena-panel">
-                    <div class="arena-head">
-                        <div class="meter-card left">
-                            <div class="meter-top">
-                                <span id="solMeterLabel">Mavi Şimşek</span>
-                                <strong id="solMeterValue">%50</strong>
+                <div class="game-grid">
+                    <aside class="player-panel left" id="solOyuncuPaneli" data-player-panel="sol">
+                        <div class="player-head">
+                            <div class="player-badge">🟦</div>
+                            <div>
+                                <span class="player-caption" id="solPanelRol">Sol Oyuncu</span>
+                                <div class="player-name" id="solPanelIsim">Mavi Şimşek</div>
                             </div>
-                            <div class="meter-bar"><div id="solMeterFill" class="meter-fill"></div></div>
                         </div>
-                        <div class="meter-card right">
-                            <div class="meter-top">
-                                <span id="sagMeterLabel">Kırmızı Ateş</span>
-                                <strong id="sagMeterValue">%50</strong>
+                        <div class="question-box" id="solSoru">12 + 7 = ?</div>
+                        <div class="answer-box" id="solCevap">Hazır</div>
+                        <div class="keypad">
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="1">1</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="2">2</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="3">3</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="4">4</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="5">5</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="6">6</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="7">7</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="8">8</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="9">9</button>
+                            <button class="key-btn clear" type="button" data-control="clear" data-player="sol">Sil</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sol" data-value="0">0</button>
+                            <button class="key-btn submit" type="button" data-control="submit" data-player="sol">OK</button>
+                        </div>
+                    </aside>
+
+                    <section class="arena-panel">
+                        <div class="arena-head">
+                            <div class="meter-card left">
+                                <div class="meter-top">
+                                    <span id="solMeterLabel">Mavi Şimşek</span>
+                                    <strong id="solMeterValue">%50</strong>
+                                </div>
+                                <div class="meter-bar"><div id="solMeterFill" class="meter-fill"></div></div>
                             </div>
-                            <div class="meter-bar"><div id="sagMeterFill" class="meter-fill"></div></div>
+                            <div class="meter-card right">
+                                <div class="meter-top">
+                                    <span id="sagMeterLabel">Kırmızı Ateş</span>
+                                    <strong id="sagMeterValue">%50</strong>
+                                </div>
+                                <div class="meter-bar"><div id="sagMeterFill" class="meter-fill"></div></div>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="arena-track" id="arenaTrack">
-                        <div class="arena-center-line"></div>
-                        <div class="arena-guide"></div>
-                        <div class="arena-finish-flag" aria-hidden="true">🏁</div>
-                        <div class="arena-rope-wrap" id="halatKapsayici">
-                            <div class="rope-name left" id="solHalatIsim">Mavi Şimşek</div>
-                            <div class="rope-name right" id="sagHalatIsim">Kırmızı Ateş</div>
-                            <img src="/gorseller/halat.png" alt="İki oyuncunun halat çektiği sahne">
+                        <div class="arena-track" id="arenaTrack">
+                            <div class="arena-center-line"></div>
+                            <div class="arena-guide"></div>
+                            <div class="arena-finish-flag" aria-hidden="true">🏁</div>
+                            <div class="arena-rope-wrap" id="halatKapsayici">
+                                <div class="rope-name left" id="solHalatIsim">Mavi Şimşek</div>
+                                <div class="rope-name right" id="sagHalatIsim">Kırmızı Ateş</div>
+                                <img src="../gorseller/halat.png" alt="İki oyuncunun halat çektiği sahne">
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="arena-footer">
-                        <div class="arena-tip" id="arenaTip">İki oyuncu aynı anda basabilir.</div>
-                        <div class="round-chip"><strong id="hamleSayisi">0</strong> çekiş yapıldı</div>
-                    </div>
-                </section>
-
-                <aside class="player-panel right" id="sagOyuncuPaneli" data-player-panel="sag">
-                    <div class="player-head">
-                        <div class="player-badge">🟥</div>
-                        <div>
-                            <span class="player-caption" id="sagPanelRol">Sağ Oyuncu</span>
-                            <div class="player-name" id="sagPanelIsim">Kırmızı Ateş</div>
+                        <div class="arena-footer">
+                            <div class="arena-tip" id="arenaTip">İki oyuncu aynı anda basabilir.</div>
+                            <div class="round-chip"><strong id="hamleSayisi">0</strong> çekiş yapıldı</div>
                         </div>
-                    </div>
-                    <div class="question-box" id="sagSoru">18 - 4 = ?</div>
-                    <div class="answer-box" id="sagCevap">Hazır</div>
-                    <div class="keypad">
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="1">1</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="2">2</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="3">3</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="4">4</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="5">5</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="6">6</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="7">7</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="8">8</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="9">9</button>
-                        <button class="key-btn clear" type="button" data-control="clear" data-player="sag">Sil</button>
-                        <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="0">0</button>
-                        <button class="key-btn submit" type="button" data-control="submit" data-player="sag">OK</button>
-                    </div>
-                </aside>
+                    </section>
+
+                    <aside class="player-panel right" id="sagOyuncuPaneli" data-player-panel="sag">
+                        <div class="player-head">
+                            <div class="player-badge">🟥</div>
+                            <div>
+                                <span class="player-caption" id="sagPanelRol">Sağ Oyuncu</span>
+                                <div class="player-name" id="sagPanelIsim">Kırmızı Ateş</div>
+                            </div>
+                        </div>
+                        <div class="question-box" id="sagSoru">18 - 4 = ?</div>
+                        <div class="answer-box" id="sagCevap">Hazır</div>
+                        <div class="keypad">
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="1">1</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="2">2</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="3">3</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="4">4</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="5">5</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="6">6</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="7">7</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="8">8</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="9">9</button>
+                            <button class="key-btn clear" type="button" data-control="clear" data-player="sag">Sil</button>
+                            <button class="key-btn" type="button" data-control="digit" data-player="sag" data-value="0">0</button>
+                            <button class="key-btn submit" type="button" data-control="submit" data-player="sag">OK</button>
+                        </div>
+                    </aside>
+                </div>
             </div>
         </section>
     </main>
@@ -1592,15 +1651,7 @@
         </div>
     </div>
 
-    <footer>
-        <div class="sosyal">
-            <a href="https://instagram.com/kemalkogretmenim" target="_blank" rel="noopener"><i class="fab fa-instagram"></i></a>
-            <a href="https://youtube.com/@kemalkogretmenim" target="_blank" rel="noopener"><i class="fab fa-youtube"></i></a>
-            <a href="https://twitter.com/kemalkogretmen" target="_blank" rel="noopener"><i class="fab fa-twitter"></i></a>
-        </div>
-        <p>© 2026 Kemal Öğretmen - Tüm Hakları Saklıdır.</p>
-    </footer>
-
+    <script src="/js/site.js"></script>
     <script>
         const STORAGE_KEY = "halat_yarisi_v5";
         const DEFAULT_NAMES = {
@@ -1648,20 +1699,14 @@
         const SABITLER = {
             leftAnchor: 0.22, // Görsele daha uyumlu hale getirildi
             rightAnchor: 0.78,
+            leftFinishEdge: 0.34,
+            rightFinishEdge: 0.705,
             maxDigits: 5
         };
 
         const byId = id => document.getElementById(id);
         let audioContext = null;
-
-        function menuAcKapat() { byId("menuLinks").classList.toggle("aktif"); }
-        function dropdownAcKapat(event) {
-            if (window.innerWidth > 1024) return;
-            event.preventDefault();
-            const dropdown = event.target.closest(".dropdown");
-            if (!dropdown) return;
-            dropdown.classList.toggle("is-open");
-        }
+        let ekranUyumRaf = 0;
 
         function oyunModuTekKisilik() { return ayarlar.mod === "cpu"; }
         function oyuncuInsanMi(taraf) { return !(oyunModuTekKisilik() && taraf === "sag"); }
@@ -1718,6 +1763,77 @@
             oyunDurumu.insanTepkiOrtalamasi = 4800;
         }
 
+        function viewportOlcusunuAl() {
+            const kaynak = window.visualViewport || window;
+            const genislik = Math.max(320, Math.round(kaynak.width || window.innerWidth));
+            const yukseklik = Math.max(320, Math.round(kaynak.height || window.innerHeight));
+            document.documentElement.style.setProperty("--viewport-width", `${genislik}px`);
+            document.documentElement.style.setProperty("--viewport-height", `${yukseklik}px`);
+            return { genislik, yukseklik };
+        }
+
+        function aktifSahneReferansiGetir() {
+            if (!byId("oyunSahnesi").hidden) {
+                return {
+                    disKapsayici: byId("oyunSahnesi"),
+                    icKapsayici: byId("oyunSahnesiIcerik")
+                };
+            }
+
+            return {
+                disKapsayici: byId("girisEkrani"),
+                icKapsayici: byId("girisEkraniIcerik")
+            };
+        }
+
+        function ekranUyumunuUygula() {
+            ekranUyumRaf = 0;
+            const { yukseklik } = viewportOlcusunuAl();
+            const { disKapsayici, icKapsayici } = aktifSahneReferansiGetir();
+            const pageShell = byId("pageShell");
+
+            if (!disKapsayici || !icKapsayici || disKapsayici.hidden || !pageShell) {
+                return;
+            }
+
+            disKapsayici.style.setProperty("--stage-scale", "1");
+            disKapsayici.style.height = "auto";
+
+            const shellStili = getComputedStyle(pageShell);
+            const kullanilabilirGenislik = Math.max(320, pageShell.clientWidth);
+            const kullanilabilirYukseklik = Math.max(
+                320,
+                yukseklik
+                    - (parseFloat(shellStili.paddingTop) || 0)
+                    - (parseFloat(shellStili.paddingBottom) || 0)
+            );
+
+            const dogalGenislik = Math.max(
+                icKapsayici.scrollWidth,
+                Math.ceil(icKapsayici.getBoundingClientRect().width),
+                kullanilabilirGenislik
+            );
+            const dogalYukseklik = Math.max(
+                icKapsayici.scrollHeight,
+                Math.ceil(icKapsayici.getBoundingClientRect().height)
+            );
+
+            const olcek = Math.min(1, kullanilabilirGenislik / dogalGenislik, kullanilabilirYukseklik / dogalYukseklik);
+            disKapsayici.style.setProperty("--stage-scale", olcek.toFixed(4));
+            disKapsayici.style.height = `${Math.ceil(dogalYukseklik * olcek)}px`;
+
+            if (!byId("oyunSahnesi").hidden && (oyunDurumu.aktif || oyunDurumu.tamamlandi)) {
+                arenaGuncelle();
+            }
+        }
+
+        function ekranUyumunuZamanla() {
+            if (ekranUyumRaf) {
+                cancelAnimationFrame(ekranUyumRaf);
+            }
+            ekranUyumRaf = requestAnimationFrame(ekranUyumunuUygula);
+        }
+
         function kontrolDinleyicileriniKur() {
             document.querySelectorAll("[data-control]").forEach(button => {
                 button.addEventListener("pointerdown", kontrolButonuBasildi);
@@ -1725,6 +1841,14 @@
 
             byId("solIsimInput").addEventListener("input", isimleriGuncelle);
             byId("sagIsimInput").addEventListener("input", isimleriGuncelle);
+            window.addEventListener("resize", ekranUyumunuZamanla);
+            window.addEventListener("orientationchange", ekranUyumunuZamanla);
+            window.addEventListener("pageshow", ekranUyumunuZamanla);
+            document.addEventListener("fullscreenchange", ekranUyumunuZamanla);
+
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener("resize", ekranUyumunuZamanla);
+            }
 
             // Çift tıklama yakınlaştırmayı (zoom) engellemek için
             document.addEventListener("dblclick", function(event) {
@@ -1862,6 +1986,7 @@
 
             ayarlariKaydet();
             metinleriGuncelle();
+            ekranUyumunuZamanla();
         }
 
         function sinifNotuOlustur() {
@@ -1899,6 +2024,7 @@
             byId("mufredatNotu").textContent = sinifNotuOlustur();
             byId("bitisMesaji").textContent = turOzetiOlustur();
             byId("arenaTip").textContent = arenaIpuclariOlustur();
+            ekranUyumunuZamanla();
         }
 
         function oyunuBaslat() {
@@ -1923,6 +2049,7 @@
             durumMesajiGuncelle("Halat dengede. İlk doğru cevabı bekliyoruz.");
             if (oyunModuTekKisilik()) bilgisayarHamlesiniPlanla();
             sesCal("start");
+            ekranUyumunuZamanla();
         }
 
         function yeniTurBaslat() {
@@ -1940,6 +2067,7 @@
             durumMesajiGuncelle("Yeni tur başladı. Orta çizgiyi koru.");
             if (oyunModuTekKisilik()) bilgisayarHamlesiniPlanla();
             sesCal("start");
+            ekranUyumunuZamanla();
         }
 
         function ayarlaraDon() {
@@ -1951,6 +2079,7 @@
             byId("girisEkrani").hidden = false;
             document.body.classList.remove("oyun-aktif");
             durumMesajiGuncelle("Halat dengede. İlk doğru cevabı bekliyoruz.");
+            ekranUyumunuZamanla();
         }
 
         function etkinIslemSec() {
@@ -2148,6 +2277,36 @@
             return Math.max(120, Math.round(genislik * (0.5 - SABITLER.leftAnchor)));
         }
 
+        function cizgiyiGecenOyuncuyuBul() {
+            const arena = byId("arenaTrack");
+            const merkezCizgisi = arena ? arena.querySelector(".arena-center-line") : null;
+            const halatGorseli = byId("halatKapsayici")?.querySelector("img");
+            if (!arena || !merkezCizgisi || !halatGorseli) {
+                return null;
+            }
+
+            const merkezRect = merkezCizgisi.getBoundingClientRect();
+            const gorselRect = halatGorseli.getBoundingClientRect();
+            if (gorselRect.width <= 0) {
+                return null;
+            }
+
+            const merkezX = merkezRect.left + (merkezRect.width / 2);
+            const solOyuncuSiniri = gorselRect.left + (gorselRect.width * SABITLER.leftFinishEdge);
+            const sagOyuncuSiniri = gorselRect.left + (gorselRect.width * SABITLER.rightFinishEdge);
+            const gecisPayi = 2;
+
+            if (solOyuncuSiniri > merkezX + gecisPayi) {
+                return "sol";
+            }
+
+            if (sagOyuncuSiniri < merkezX - gecisPayi) {
+                return "sag";
+            }
+
+            return null;
+        }
+
         function arenaGuncelle(ozelMesaj = "") {
             const bitisMesafesi = hesaplaBitisMesafesi();
             // limit tam olarak bitiş çizgisine hizalanmıştır
@@ -2166,6 +2325,9 @@
 
             // Karakter merkezi çizgiye vurduğunda anında oyunu bitir
             if (!oyunDurumu.tamamlandi) {
+                const cizgiyiGecen = cizgiyiGecenOyuncuyuBul();
+                if (cizgiyiGecen === "sol") { oyunuBitir("sag"); return; }
+                if (cizgiyiGecen === "sag") { oyunuBitir("sol"); return; }
                 if (oyunDurumu.cekisKaymasi >= limit) { oyunuBitir("sag"); return; }
                 if (oyunDurumu.cekisKaymasi <= -limit) { oyunuBitir("sol"); return; }
             }
@@ -2243,6 +2405,7 @@
             durumMesajiGuncelle(`${kazananIsmi} oyunu tamamladı. ${kaybedenIsmi} orta çizgiyi geçti.`);
             sesCal("win");
             konfetiBaslat();
+            ekranUyumunuZamanla();
         }
 
         function durumMesajiGuncelle(mesaj) { byId("durumMesaji").textContent = mesaj; }
@@ -2289,6 +2452,7 @@
             arenaGuncelle();
             ekranCevabiniGuncelle("sol");
             ekranCevabiniGuncelle("sag", oyuncuInsanMi("sag") ? "Hazır" : "Bilgisayar hazır");
+            ekranUyumunuZamanla();
         }
 
         function sesiHazirla() {
@@ -2374,6 +2538,12 @@
         ayarlariYukle();
         kontrolDinleyicileriniKur();
         arayuzuBaslat();
+        ekranUyumunuZamanla();
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(() => {
+                ekranUyumunuZamanla();
+            }).catch(() => {});
+        }
     </script>
 </body>
 </html>
