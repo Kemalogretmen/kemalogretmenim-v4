@@ -146,6 +146,8 @@
         '</svg>',
     },
   ];
+  const PRIMARY_TOOL_KEYS = ['select', 'pen', 'highlighter', 'eraser', 'text', 'pan'];
+  const SHAPE_TOOL_KEYS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star', 'checkmark', 'cross'];
   const TOOL_SHORTCUTS = {
     V: 'select',
     H: 'pan',
@@ -243,6 +245,15 @@
     zoom: 1,
     panX: 0,
     panY: 0,
+    toolbarCollapsed: false,
+    shapesOpen: false,
+    protractor: {
+      visible: false,
+      x: 0,
+      y: 0,
+      scale: 1,
+      rot: 0,
+    },
     isPanning: false,
     panPointerId: null,
     panStartX: 0,
@@ -397,6 +408,10 @@
     return qs('bookFrame');
   }
 
+  function getDocProtractor() {
+    return qs('docProtractor');
+  }
+
   function getBookViewport() {
     return qs('bookViewport');
   }
@@ -437,7 +452,9 @@
     }
 
     singleButton.classList.toggle('active', state.viewMode === 'single');
+    singleButton.classList.toggle('is-active', state.viewMode === 'single');
     spreadButton.classList.toggle('active', state.viewMode === 'spread');
+    spreadButton.classList.toggle('is-active', state.viewMode === 'spread');
   }
 
   function formatVisiblePageLabel(visiblePages) {
@@ -709,6 +726,61 @@
 
   function updateSizeLabel() {
     qs('sizeValue').textContent = state.size + ' px';
+  }
+
+  function normalizeColorValue(color) {
+    return String(color || '').trim().toLowerCase();
+  }
+
+  function getCollapseIconMarkup(collapsed) {
+    return collapsed
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5"></path><path d="m3 3 6 6"></path><path d="M21 16v5h-5"></path><path d="m21 21-6-6"></path></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H3v5"></path><path d="m3 3 6 6"></path><path d="M16 21h5v-5"></path><path d="m21 21-6-6"></path></svg>';
+  }
+
+  function syncToolbarUi() {
+    const toolbar = qs('docToolbar');
+    const shapePanel = qs('docShapePanel');
+    const shapeToggle = qs('docShapeToggleBtn');
+    const toggleBtn = qs('docToolbarToggleBtn');
+    const protractorBtn = qs('docProtractorBtn');
+    const protractor = getDocProtractor();
+    const activeTool = state.tool;
+    const shapesVisible = state.shapesOpen || SHAPE_TOOL_KEYS.includes(activeTool);
+
+    if (toolbar) {
+      toolbar.style.setProperty('--doc-accent-color', state.color || '#6C3DED');
+      toolbar.classList.toggle('is-collapsed', !!state.toolbarCollapsed);
+    }
+    if (toggleBtn) {
+      toggleBtn.innerHTML = getCollapseIconMarkup(!!state.toolbarCollapsed);
+    }
+    if (shapePanel) {
+      shapePanel.classList.toggle('is-hidden', !shapesVisible);
+    }
+    if (shapeToggle) {
+      shapeToggle.classList.toggle('is-active', shapesVisible);
+      shapeToggle.classList.toggle('active', shapesVisible);
+      shapeToggle.setAttribute('aria-expanded', shapesVisible ? 'true' : 'false');
+    }
+    if (protractorBtn) {
+      protractorBtn.classList.toggle('is-active', !!state.protractor.visible);
+      protractorBtn.classList.toggle('active', !!state.protractor.visible);
+    }
+    if (protractor) {
+      protractor.classList.toggle('is-visible', !!state.protractor.visible);
+      protractor.setAttribute('aria-hidden', state.protractor.visible ? 'false' : 'true');
+    }
+
+    Array.from(document.querySelectorAll('[data-tool]')).forEach(function(button) {
+      const isActive = button.getAttribute('data-tool') === activeTool;
+      button.classList.toggle('active', isActive);
+      button.classList.toggle('is-active', isActive);
+    });
+
+    Array.from(document.querySelectorAll('[data-doc-color]')).forEach(function(button) {
+      button.classList.toggle('is-active', normalizeColorValue(button.getAttribute('data-doc-color')) === normalizeColorValue(state.color));
+    });
   }
 
   function setSize(nextSize) {
@@ -1129,9 +1201,10 @@
 
   function setTool(tool) {
     state.tool = tool;
-    Array.from(document.querySelectorAll('[data-tool]')).forEach(function(button) {
-      button.classList.toggle('active', button.getAttribute('data-tool') === tool);
-    });
+    if (SHAPE_TOOL_KEYS.includes(tool)) {
+      state.shapesOpen = true;
+    }
+    syncToolbarUi();
     applyToolToAllPages();
     syncZoomButtons();
     refreshStatus();
@@ -1604,36 +1677,40 @@
     }
   }
 
-  function renderToolButtons() {
-    qs('toolButtons').innerHTML = TOOL_DEFS.map(function(tool) {
-      return (
-        '<button class="tool-btn' + (tool.key === state.tool ? ' active' : '') + '"' +
-        ' type="button"' +
-        ' data-tool="' + tool.key + '"' +
-        ' data-label="' + tool.label + '"' +
-        ' aria-label="' + tool.label + '">' +
-          tool.icon +
-        '</button>'
-      );
-    }).join('');
+  function renderToolButtonMarkup(tool) {
+    return (
+      '<button class="toolbar-btn' + (tool.key === state.tool ? ' active is-active' : '') + '"' +
+      ' type="button"' +
+      ' data-tool="' + tool.key + '"' +
+      ' data-label="' + tool.label + '"' +
+      ' aria-label="' + tool.label + '">' +
+        tool.icon +
+      '</button>'
+    );
   }
 
-  function bindUi() {
-    renderToolButtons();
-    renderShortcutUi();
-    syncZoomButtons();
-    updateViewModeButtons();
+  function renderToolButtons() {
+    const mainTarget = qs('docMainTools');
+    const shapeTarget = qs('docShapeTools');
+    if (!mainTarget || !shapeTarget) {
+      return;
+    }
 
-    qs('colorInput').addEventListener('input', function(event) {
-      state.color = event.target.value;
-      applyToolToAllPages();
-    });
+    mainTarget.innerHTML = PRIMARY_TOOL_KEYS.map(function(key) {
+      return getToolDef(key);
+    }).filter(Boolean).map(renderToolButtonMarkup).join('');
 
-    qs('sizeInput').addEventListener('input', function(event) {
-      setSize(event.target.value);
-    });
+    shapeTarget.innerHTML = SHAPE_TOOL_KEYS.map(function(key) {
+      return getToolDef(key);
+    }).filter(Boolean).map(renderToolButtonMarkup).join('');
+  }
 
-    qs('toolButtons').addEventListener('click', function(event) {
+  function bindToolContainer(container) {
+    if (!container) {
+      return;
+    }
+
+    container.addEventListener('click', function(event) {
       const button = event.target.closest('[data-tool]');
       if (!button) {
         return;
@@ -1641,19 +1718,212 @@
       hideToolTooltip();
       setTool(button.getAttribute('data-tool'));
     });
-    qs('toolButtons').addEventListener('mouseover', function(event) {
+    container.addEventListener('mouseover', function(event) {
       const button = event.target.closest('[data-tool]');
       if (button) {
         showToolTooltip(button, event);
       }
     });
-    qs('toolButtons').addEventListener('mousemove', function(event) {
+    container.addEventListener('mousemove', function(event) {
       const button = event.target.closest('[data-tool]');
       if (button) {
         showToolTooltip(button, event);
       }
     });
-    qs('toolButtons').addEventListener('mouseleave', hideToolTooltip);
+    container.addEventListener('mouseleave', hideToolTooltip);
+  }
+
+  function setToolbarCollapsed(collapsed) {
+    state.toolbarCollapsed = !!collapsed;
+    syncToolbarUi();
+  }
+
+  function toggleShapePanel() {
+    state.shapesOpen = !state.shapesOpen;
+    syncToolbarUi();
+  }
+
+  function buildProtractorSvgMarkup() {
+    var svg = '<svg viewBox="-220 -220 440 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><path d="M -200 0 A 200 200 0 0 1 200 0 Z" fill="rgba(255, 255, 255, 0.45)" stroke="#1a1040" stroke-width="2"/><path d="M -150 0 A 150 150 0 0 1 150 0" fill="none" stroke="#1a1040" stroke-width="1.5"/><circle cx="0" cy="0" r="6" fill="none" stroke="#1a1040" stroke-width="2"/><line x1="-20" y1="0" x2="20" y2="0" stroke="#1a1040" stroke-width="2"/><line x1="0" y1="-20" x2="0" y2="0" stroke="#1a1040" stroke-width="2"/>';
+    for (var i = 0; i <= 180; i += 1) {
+      var a = i * Math.PI / 180;
+      var is10 = i % 10 === 0;
+      var is5 = i % 5 === 0;
+      var outer = 200;
+      var inner = is10 ? 180 : (is5 ? 188 : 194);
+      var x1 = -Math.cos(a) * outer;
+      var y1 = -Math.sin(a) * outer;
+      var x2 = -Math.cos(a) * inner;
+      var y2 = -Math.sin(a) * inner;
+      var innerLine = is10
+        ? '<line x1="' + (-Math.cos(a) * 150) + '" y1="' + (-Math.sin(a) * 150) + '" x2="' + (-Math.cos(a) * 140) + '" y2="' + (-Math.sin(a) * 140) + '" stroke="#1a1040" stroke-width="1.5"/>'
+        : '';
+      var text = '';
+      if (is10) {
+        var tx1 = -Math.cos(a) * 168;
+        var ty1 = -Math.sin(a) * 168;
+        var tx2 = -Math.cos(a) * 125;
+        var ty2 = -Math.sin(a) * 125;
+        text += '<text x="' + tx1 + '" y="' + ty1 + '" font-family="Nunito, sans-serif" font-size="11" font-weight="900" fill="#1a1040" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + (i - 90) + ' ' + tx1 + ' ' + ty1 + ')">' + i + '</text>';
+        text += '<text x="' + tx2 + '" y="' + ty2 + '" font-family="Nunito, sans-serif" font-size="9" font-weight="900" fill="#1a1040" text-anchor="middle" dominant-baseline="middle" transform="rotate(' + (i - 90) + ' ' + tx2 + ' ' + ty2 + ')">' + (180 - i) + '</text>';
+      }
+      svg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#1a1040" stroke-width="' + (is10 ? 2 : 1) + '"/>' + innerLine + text;
+    }
+    return svg + '</svg>';
+  }
+
+  function getBookFramePoint(evt) {
+    var frame = getBookFrame();
+    var rect = frame ? frame.getBoundingClientRect() : { left: 0, top: 0 };
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top,
+    };
+  }
+
+  function updateProtractorTransform() {
+    var protractor = getDocProtractor();
+    if (!protractor) {
+      return;
+    }
+    protractor.style.transform = 'translate(calc(' + state.protractor.x + 'px - 50%), calc(' + state.protractor.y + 'px - 100%)) rotate(' + state.protractor.rot + 'deg) scale(' + state.protractor.scale + ')';
+  }
+
+  function toggleDocProtractor() {
+    var frame = getBookFrame();
+    if (!frame) {
+      return;
+    }
+    state.protractor.visible = !state.protractor.visible;
+    if (state.protractor.visible && state.protractor.x === 0 && state.protractor.y === 0) {
+      state.protractor.x = frame.clientWidth / 2;
+      state.protractor.y = frame.clientHeight / 3;
+    }
+    updateProtractorTransform();
+    syncToolbarUi();
+  }
+
+  function initDocProtractor() {
+    var protractor = getDocProtractor();
+    var svgContainer = qs('docProtractorSvg');
+    var btnClose = qs('docProtractorClose');
+    var btnRotate = qs('docProtractorRotate');
+    var btnResize = qs('docProtractorResize');
+    var btnToggle = qs('docProtractorBtn');
+    if (!protractor || !svgContainer || !btnClose || !btnRotate || !btnResize || !btnToggle) {
+      return;
+    }
+
+    svgContainer.innerHTML = buildProtractorSvgMarkup();
+
+    var activeAction = null;
+    var startMouse = { x: 0, y: 0 };
+    var startState = { x: 0, y: 0, rot: 0, scale: 1 };
+
+    function onPointerDown(event, action) {
+      event.preventDefault();
+      event.stopPropagation();
+      activeAction = action;
+      startMouse = { x: event.clientX, y: event.clientY };
+      startState = {
+        x: state.protractor.x,
+        y: state.protractor.y,
+        rot: state.protractor.rot,
+        scale: state.protractor.scale,
+      };
+      document.addEventListener('pointermove', onPointerMove, { passive: false });
+      document.addEventListener('pointerup', onPointerUp);
+      document.addEventListener('pointercancel', onPointerUp);
+    }
+
+    function onPointerMove(event) {
+      if (!activeAction) {
+        return;
+      }
+      event.preventDefault();
+      var currentPoint = getBookFramePoint(event);
+      var startPoint = getBookFramePoint({ clientX: startMouse.x, clientY: startMouse.y });
+      var dx = currentPoint.x - startPoint.x;
+      var dy = currentPoint.y - startPoint.y;
+
+      if (activeAction === 'drag') {
+        state.protractor.x = startState.x + dx;
+        state.protractor.y = startState.y + dy;
+      } else if (activeAction === 'rotate') {
+        var cx = startState.x;
+        var cy = startState.y;
+        var angle1 = Math.atan2(startPoint.y - cy, startPoint.x - cx);
+        var angle2 = Math.atan2(currentPoint.y - cy, currentPoint.x - cx);
+        state.protractor.rot = startState.rot + ((angle2 - angle1) * 180 / Math.PI);
+      } else if (activeAction === 'resize') {
+        var centerX = startState.x;
+        var centerY = startState.y;
+        var d1 = Math.hypot(startPoint.x - centerX, startPoint.y - centerY) || 1;
+        var d2 = Math.hypot(currentPoint.x - centerX, currentPoint.y - centerY);
+        state.protractor.scale = Math.max(0.5, Math.min(3, startState.scale * (d2 / d1)));
+      }
+      updateProtractorTransform();
+    }
+
+    function onPointerUp() {
+      activeAction = null;
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
+    }
+
+    svgContainer.addEventListener('pointerdown', function(event) { onPointerDown(event, 'drag'); });
+    btnRotate.addEventListener('pointerdown', function(event) { onPointerDown(event, 'rotate'); });
+    btnResize.addEventListener('pointerdown', function(event) { onPointerDown(event, 'resize'); });
+    btnClose.addEventListener('click', function(event) {
+      event.preventDefault();
+      state.protractor.visible = false;
+      syncToolbarUi();
+    });
+    btnToggle.addEventListener('click', function(event) {
+      event.preventDefault();
+      toggleDocProtractor();
+    });
+    updateProtractorTransform();
+    syncToolbarUi();
+  }
+
+  function bindUi() {
+    renderToolButtons();
+    renderShortcutUi();
+    initDocProtractor();
+    syncZoomButtons();
+    updateViewModeButtons();
+    updateSizeLabel();
+    qs('colorInput').value = state.color;
+    syncToolbarUi();
+
+    qs('colorInput').addEventListener('input', function(event) {
+      state.color = event.target.value;
+      applyToolToAllPages();
+      syncToolbarUi();
+    });
+
+    qs('sizeInput').addEventListener('input', function(event) {
+      setSize(event.target.value);
+    });
+
+    bindToolContainer(qs('docMainTools'));
+    bindToolContainer(qs('docShapeTools'));
+    qs('docShapeToggleBtn').addEventListener('click', toggleShapePanel);
+    qs('docToolbarToggleBtn').addEventListener('click', function() {
+      setToolbarCollapsed(!state.toolbarCollapsed);
+    });
+    qs('docColorGrid').addEventListener('click', function(event) {
+      const button = event.target.closest('[data-doc-color]');
+      if (!button) {
+        return;
+      }
+      state.color = button.getAttribute('data-doc-color');
+      qs('colorInput').value = state.color;
+      applyToolToAllPages();
+      syncToolbarUi();
+    });
 
     qs('zoomInput').addEventListener('input', function(event) {
       setZoom((parseInt(event.target.value, 10) || 100) / 100, { keepCenter: true });

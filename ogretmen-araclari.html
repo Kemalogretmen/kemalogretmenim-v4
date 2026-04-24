@@ -138,12 +138,12 @@
       position: absolute; top: 20px; left: 20px; z-index: 10;
       background: rgba(255,255,255,0.98); border: 1px solid rgba(227,214,255,0.9);
       box-shadow: 0 16px 40px rgba(32,16,74,0.12); border-radius: 20px;
-      width: 280px; display: flex; flex-direction: column; touch-action: none;
-      overflow: hidden; transition: width 0.3s ease;
+      width: 360px; display: flex; flex-direction: column; touch-action: none;
+      overflow: hidden; transition: width 0.3s ease, max-height 0.3s ease, box-shadow 0.3s ease;
     }
-    
-    /* Araç kutusu daraltıldığında advanced araçları gizle */
-    .pro-toolbar.is-collapsed .advanced-tools { display: none; }
+    .pro-toolbar.is-collapsed { width: 304px; box-shadow: 0 20px 46px rgba(32,16,74,0.16); }
+    .pro-toolbar.is-collapsed .advanced-tools,
+    .pro-toolbar.is-collapsed .color-grid { display: none; }
     
     .toolbar-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -164,6 +164,7 @@
     
     .toolbar-main { padding: 16px; }
     .advanced-tools { padding: 0 16px 16px 16px; }
+    .toolbar-compact-pages { display: grid; padding: 0 16px 16px 16px; gap: 12px; }
     .toolbar-divider { height: 1.5px; background: rgba(227,214,255,0.6); margin: 16px 0; border-radius: 1px;}
     .toolbar-title { font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
     
@@ -177,12 +178,12 @@
     }
     .toolbar-btn:hover { border-color: var(--purple-light); color: var(--purple); background: #f8f5ff; }
     .toolbar-btn:active { transform: scale(0.92); }
-    .toolbar-btn.is-active { background: linear-gradient(135deg, var(--purple), var(--purple-2)); color: #fff; border-color: var(--purple); box-shadow: 0 6px 16px rgba(108,61,237,0.3); }
+    .toolbar-btn.is-active { background: linear-gradient(135deg, var(--purple), var(--purple-2)); color: #fff; border-color: var(--board-accent-color, var(--purple)); box-shadow: 0 0 0 3px var(--board-accent-color, rgba(108,61,237,0.22)), 0 10px 22px rgba(108,61,237,0.28); }
     
     .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-    .color-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #e2e8f0; cursor: pointer; transition: 0.2s; }
+    .color-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #e2e8f0; cursor: pointer; transition: 0.2s; position: relative; }
     .color-btn:hover { transform: scale(1.1); }
-    .color-btn.is-active { box-shadow: 0 0 0 2.5px var(--purple); transform: scale(1.15); }
+    .color-btn.is-active { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--active-ring, var(--purple)), 0 14px 24px rgba(15,23,42,0.16); transform: scale(1.12); z-index: 2; }
     .color-btn.is-active::after { display: none; }
 
     .shape-panel { display: none; }
@@ -190,6 +191,31 @@
     @keyframes fadeDown { from{opacity:0; transform:translateY(-5px);} to{opacity:1; transform:translateY(0);} }
 
     .size-slider { width: 100%; accent-color: var(--purple); cursor: pointer; }
+    .shortcut-help { position: relative; display: flex; align-items: center; }
+    .shortcut-help-btn {
+      width: 40px; height: 40px; border-radius: 14px; border: 1.5px solid rgba(227,214,255,0.9);
+      background: #fff; color: var(--purple); font-size: 20px; font-weight: 900; cursor: pointer;
+      box-shadow: 0 8px 18px rgba(108,61,237,0.1); transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+    }
+    .shortcut-help-btn:hover,
+    .shortcut-help-btn.is-open { transform: translateY(-1px); border-color: #c4b5fd; box-shadow: 0 12px 22px rgba(108,61,237,0.16); }
+    .shortcut-popover {
+      position: absolute; top: calc(100% + 10px); right: 0; width: min(320px, calc(100vw - 40px));
+      padding: 16px; border-radius: 20px; background: rgba(255,255,255,0.98); border: 1.5px solid rgba(227,214,255,0.95);
+      box-shadow: 0 22px 40px rgba(32,16,74,0.16); display: none; z-index: 40;
+    }
+    .shortcut-popover.is-open { display: grid; gap: 12px; animation: fadeDown 0.18s ease; }
+    .shortcut-popover-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .shortcut-popover-title { margin: 0; font-size: 14px; font-weight: 900; color: var(--navy); }
+    .shortcut-close {
+      width: 28px; height: 28px; border: none; border-radius: 10px; background: #f3f4f6; color: #64748b; cursor: pointer; font-weight: 900;
+    }
+    .shortcut-list { display: grid; gap: 8px; margin: 0; }
+    .shortcut-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; font-size: 13px; font-weight: 800; color: #5b6983; }
+    .shortcut-key {
+      display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding: 6px 10px;
+      border-radius: 12px; background: #f8f5ff; border: 1px solid #ddd6fe; color: var(--purple); font-size: 12px; font-weight: 900;
+    }
 
     /* Beyaz Tahta Ana Sahne */
     .board-shell { display: grid; gap: 12px; }
@@ -232,7 +258,7 @@
     .class-view.is-active { display: block; animation: fadeIn 0.28s ease; }
 
     .dojo-shell,
-    .teacher-wheel-shell { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
+    .teacher-wheel-shell { display: grid; grid-template-columns: 288px minmax(0, 1fr); gap: 18px; align-items: start; }
     .dojo-sidebar,
     .dojo-main,
     .wheel-editor-card,
@@ -243,7 +269,7 @@
     .dojo-main,
     .teacher-wheel-card { padding: 24px; }
 
-    .class-toolbar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 10px; }
+    .class-toolbar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; }
     .class-select,
     .cls-input,
     .wheel-text-input,
@@ -281,12 +307,12 @@
     .random-help-text,
     .wheel-help-card p { margin: 0; color: var(--slate); font-size: 13px; line-height: 1.5; font-weight: 800; }
 
-    .selected-student-panel { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 20px 22px; border-radius: 28px; background: linear-gradient(135deg, rgba(108,61,237,0.1), rgba(22,199,178,0.08)); border: 2px solid rgba(202,184,255,0.92); margin-bottom: 18px; box-shadow: 0 16px 40px rgba(108,61,237,0.08); }
-    .selected-student-avatar { width: 84px; height: 84px; border-radius: 24px; display: grid; place-items: center; font-size: 38px; color: #fff; background: linear-gradient(135deg, var(--purple), #22c1c3); box-shadow: 0 16px 28px rgba(108,61,237,0.2); }
+    .selected-student-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 18px 20px; border-radius: 28px; background: linear-gradient(135deg, rgba(108,61,237,0.1), rgba(22,199,178,0.08)); border: 2px solid rgba(202,184,255,0.92); margin-bottom: 16px; box-shadow: 0 16px 40px rgba(108,61,237,0.08); }
+    .selected-student-avatar { width: 74px; height: 74px; border-radius: 22px; display: grid; place-items: center; font-size: 32px; color: #fff; background: linear-gradient(135deg, var(--purple), #22c1c3); box-shadow: 0 16px 28px rgba(108,61,237,0.2); }
     .selected-student-label { font-size: 12px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.08em; }
-    .selected-student-name { margin: 4px 0; font-family: 'Baloo 2', cursive; font-size: clamp(32px, 4vw, 46px); line-height: 0.95; color: var(--navy); }
+    .selected-student-name { margin: 4px 0; font-family: 'Baloo 2', cursive; font-size: clamp(26px, 3vw, 36px); line-height: 0.98; color: var(--navy); }
     .selected-student-meta { margin: 0; color: #53627f; font-size: 14px; font-weight: 800; }
-    .selected-student-actions { display: grid; gap: 10px; }
+    .selected-student-actions { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 
     .class-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
     .legend-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 999px; font-size: 13px; font-weight: 900; border: 1.5px solid transparent; }
@@ -295,8 +321,8 @@
     .legend-pill.passive { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
 
-    .student-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 18px; }
-    .student-card { position: relative; padding: 18px 16px 16px; border-radius: 26px; background: #fff; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 14px 30px rgba(31,33,66,0.06); transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s; }
+    .student-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 12px; max-height: 620px; overflow: auto; padding-right: 6px; align-content: start; }
+    .student-card { position: relative; padding: 12px; border-radius: 24px; background: #fff; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 12px 26px rgba(31,33,66,0.06); transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s; }
     .student-card:hover { transform: translateY(-3px); box-shadow: 0 18px 34px rgba(108,61,237,0.1); }
     .student-card.is-highlighted { animation: studentPulse 0.34s ease infinite alternate; border-color: #f59e0b; box-shadow: 0 18px 34px rgba(245,158,11,0.28); }
     .student-card.is-selected { border-color: var(--purple); box-shadow: 0 20px 36px rgba(108,61,237,0.22); }
@@ -305,28 +331,28 @@
     .student-card.status-passive { background: linear-gradient(180deg, #fff, #f4f7fb); border-color: #dbe4ef; }
     @keyframes studentPulse { from { transform: translateY(-2px) scale(1); } to { transform: translateY(-6px) scale(1.02); } }
 
-    .student-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .student-avatar { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; font-size: 28px; color: #fff; box-shadow: inset 0 -8px 16px rgba(255,255,255,0.15), 0 10px 18px rgba(108,61,237,0.12); }
+    .student-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .student-avatar { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; font-size: 22px; color: #fff; box-shadow: inset 0 -8px 16px rgba(255,255,255,0.15), 0 10px 18px rgba(108,61,237,0.12); }
     .student-avatar.girl { background: linear-gradient(135deg, #f97393, #fb7185); }
     .student-avatar.boy { background: linear-gradient(135deg, #38bdf8, #6366f1); }
-    .student-badge { display: inline-flex; align-items: center; justify-content: center; padding: 7px 11px; border-radius: 999px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+    .student-badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; border-radius: 999px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
     .student-badge.active { background: var(--soft-teal); color: #0f766e; }
     .student-badge.absent { background: var(--soft-red); color: #be123c; }
     .student-badge.passive { background: #f1f5f9; color: #475569; }
-    .student-card-name { margin: 14px 0 6px; font-size: 18px; font-weight: 900; color: var(--navy); line-height: 1.15; }
-    .student-card-note { min-height: 18px; margin: 0 0 14px; color: #6b7a94; font-size: 12px; font-weight: 800; }
-    .student-status-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
-    .mini-chip-btn { border: none; border-radius: 12px; padding: 10px 8px; font-size: 12px; font-weight: 900; cursor: pointer; transition: 0.16s; }
+    .student-card-name { margin: 10px 0 2px; font-size: 16px; font-weight: 900; color: var(--navy); line-height: 1.08; word-break: break-word; }
+    .student-card-note { min-height: 0; margin: 0 0 10px; color: #6b7a94; font-size: 11px; font-weight: 800; }
+    .student-status-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+    .mini-chip-btn { border: none; border-radius: 11px; padding: 8px 6px; font-size: 11px; font-weight: 900; cursor: pointer; transition: 0.16s; }
     .mini-chip-btn.is-active { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0,0,0,0.1); }
     .mini-chip-btn.status-active { background: #d1fae5; color: #0f766e; }
     .mini-chip-btn.status-absent { background: #ffe4e6; color: #be123c; }
     .mini-chip-btn.status-passive { background: #e2e8f0; color: #475569; }
-    .student-card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
-    .student-aux-btn { border: none; border-radius: 14px; padding: 10px 12px; cursor: pointer; font-size: 13px; font-weight: 900; background: #f8fafc; color: var(--navy); }
+    .student-card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+    .student-aux-btn { border: none; border-radius: 13px; padding: 8px 10px; cursor: pointer; font-size: 12px; font-weight: 900; background: #f8fafc; color: var(--navy); }
     .student-aux-btn.danger { background: #fff1f2; color: #e11d48; }
 
-    .class-empty-state { display: grid; place-items: center; min-height: 320px; border-radius: 28px; border: 2px dashed rgba(202,184,255,0.9); background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,240,255,0.9)); color: var(--slate); text-align: center; padding: 28px; }
-    .class-empty-state strong { display: block; font-family: 'Baloo 2', cursive; font-size: 28px; color: var(--navy); margin-bottom: 8px; }
+    .class-empty-state { display: grid; place-items: center; min-height: 220px; border-radius: 28px; border: 2px dashed rgba(202,184,255,0.9); background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,240,255,0.9)); color: var(--slate); text-align: center; padding: 24px; }
+    .class-empty-state strong { display: block; font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); margin-bottom: 8px; }
 
     .wheel-input-row,
     .wheel-editor-actions { grid-template-columns: minmax(0, 1fr) auto; }
@@ -339,7 +365,7 @@
     .wheel-inline-btn { border: none; border-radius: 12px; padding: 9px 12px; cursor: pointer; font-size: 12px; font-weight: 900; background: #eef2ff; color: var(--purple); }
     .wheel-inline-btn.danger { background: #fff1f2; color: #e11d48; }
 
-    .teacher-wheel-card { display: grid; gap: 20px; text-align: center; }
+    .teacher-wheel-card { display: grid; gap: 18px; text-align: center; }
     .teacher-wheel-stage { position: relative; width: min(100%, 540px); aspect-ratio: 1; margin: 0 auto; }
     .teacher-wheel-svg { width: 100%; height: 100%; filter: drop-shadow(0 20px 34px rgba(108,61,237,0.18)); }
     .teacher-wheel-pointer { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 46px; color: #ef4444; z-index: 3; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.16)); }
@@ -347,8 +373,9 @@
     @keyframes pointerTick { 0% { transform: translateX(-50%) rotate(0deg); } 50% { transform: translateX(-50%) rotate(-12deg); } 100% { transform: translateX(-50%) rotate(0deg); } }
     .teacher-wheel-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #fff, #f8f5ff); border: 6px solid var(--navy); z-index: 2; font-size: 34px; color: var(--purple); box-shadow: 0 12px 24px rgba(32,16,74,0.14); }
     .teacher-wheel-result { display: grid; gap: 8px; justify-items: center; }
-    .teacher-wheel-result strong { font-family: 'Baloo 2', cursive; font-size: clamp(36px, 5vw, 52px); line-height: 0.95; color: var(--navy); }
-    .teacher-wheel-result span { color: var(--slate); font-size: 14px; font-weight: 800; }
+    .teacher-wheel-result strong { font-family: 'Baloo 2', cursive; font-size: clamp(32px, 4.5vw, 46px); line-height: 0.98; color: var(--navy); }
+    .teacher-wheel-result span { color: var(--slate); font-size: 13px; font-weight: 800; }
+    .wheel-label-text { fill: #fff; font-family: 'Nunito', sans-serif; font-weight: 900; pointer-events: none; paint-order: stroke; stroke: rgba(26,16,64,0.12); stroke-width: 1.6; letter-spacing: 0.2px; }
 
     /* Modal for Winner Options */
     .winner-modal { position: fixed; inset: 0; background: rgba(32,16,74,0.6); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; }
@@ -373,6 +400,8 @@
       .wheel-editor-actions { grid-template-columns: 1fr; }
       .wheel-option-item { grid-template-columns: auto minmax(0, 1fr) auto; }
       .wheel-option-item .wheel-inline-btn.danger { grid-column: span 3; }
+      .shortcut-popover { right: auto; left: 0; }
+      .student-card-grid { grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); max-height: none; }
     }
 
     /* --- MATEMATİK ARAÇLARI CSS --- */
@@ -390,26 +419,27 @@
     .rng-card { background: #fff; padding: 36px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; box-shadow: 0 20px 50px rgba(108,61,237,0.1); }
     .rng-card h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 32px; color: var(--navy); line-height: 1;}
     
-    .dice-stage { display: flex; gap: 40px; min-height: 180px; align-items: center; justify-content: center; perspective: 1200px; }
-    .dice-3d-wrap { width: 100px; height: 100px; position: relative; }
-    .dice-3d { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); transform: rotateX(-15deg) rotateY(15deg); }
-    .dice-face { position: absolute; width: 100px; height: 100px; background: #fff; border: 2px solid #cbd5e1; border-radius: 18px; box-shadow: inset 0 0 24px rgba(0,0,0,0.06); backface-visibility: hidden; display: grid; padding: 16px; grid-template-areas: "a b c" "d e f" "g h i"; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
-    .dice-face.front  { transform: rotateY(0deg) translateZ(50px); } .dice-face.back   { transform: rotateY(180deg) translateZ(50px); }
-    .dice-face.right  { transform: rotateY(90deg) translateZ(50px); } .dice-face.left   { transform: rotateY(-90deg) translateZ(50px); }
-    .dice-face.top    { transform: rotateX(90deg) translateZ(50px); } .dice-face.bottom { transform: rotateX(-90deg) translateZ(50px); }
+    .dice-stage { display: flex; gap: 46px; min-height: 210px; align-items: center; justify-content: center; perspective: 1400px; }
+    .dice-3d-wrap { width: 112px; height: 112px; position: relative; filter: drop-shadow(0 16px 20px rgba(15,23,42,0.2)); }
+    .dice-3d { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 1.7s cubic-bezier(0.2, 0.8, 0.2, 1); transform: rotateX(-18deg) rotateY(18deg); }
+    .dice-face { position: absolute; width: 112px; height: 112px; background: linear-gradient(145deg, #ffffff, #dbeafe); border: 2px solid #cbd5e1; border-radius: 24px; box-shadow: inset -10px -10px 22px rgba(148,163,184,0.22), inset 10px 10px 24px rgba(255,255,255,0.9); backface-visibility: hidden; display: grid; padding: 18px; grid-template-areas: "a b c" "d e f" "g h i"; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+    .dice-face.front  { transform: rotateY(0deg) translateZ(56px); } .dice-face.back   { transform: rotateY(180deg) translateZ(56px); }
+    .dice-face.right  { transform: rotateY(90deg) translateZ(56px); } .dice-face.left   { transform: rotateY(-90deg) translateZ(56px); }
+    .dice-face.top    { transform: rotateX(90deg) translateZ(56px); } .dice-face.bottom { transform: rotateX(-90deg) translateZ(56px); }
     
-    .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--purple); box-shadow: inset 0 3px 6px rgba(0,0,0,0.4); justify-self: center; align-self: center; }
+    .dot { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #4338ca, #1e1b4b); box-shadow: inset 0 4px 7px rgba(255,255,255,0.26), 0 3px 8px rgba(15,23,42,0.18); justify-self: center; align-self: center; }
     .face-1 .dot:nth-child(1) { grid-area: e; } .face-2 .dot:nth-child(1) { grid-area: a; } .face-2 .dot:nth-child(2) { grid-area: i; }
     .face-3 .dot:nth-child(1) { grid-area: a; } .face-3 .dot:nth-child(2) { grid-area: e; } .face-3 .dot:nth-child(3) { grid-area: i; }
     .face-4 .dot:nth-child(1) { grid-area: a; } .face-4 .dot:nth-child(2) { grid-area: c; } .face-4 .dot:nth-child(3) { grid-area: g; } .face-4 .dot:nth-child(4) { grid-area: i; }
     .face-5 .dot:nth-child(1) { grid-area: a; } .face-5 .dot:nth-child(2) { grid-area: c; } .face-5 .dot:nth-child(3) { grid-area: e; } .face-5 .dot:nth-child(4) { grid-area: g; } .face-5 .dot:nth-child(5) { grid-area: i; }
     .face-6 .dot:nth-child(1) { grid-area: a; } .face-6 .dot:nth-child(2) { grid-area: d; } .face-6 .dot:nth-child(3) { grid-area: g; } .face-6 .dot:nth-child(4) { grid-area: c; } .face-6 .dot:nth-child(5) { grid-area: f; } .face-6 .dot:nth-child(6) { grid-area: i; }
 
-    .coin-stage { perspective: 1200px; min-height: 180px; display: flex; align-items: center; justify-content: center; }
-    .coin-inner { width: 140px; height: 140px; position: relative; transition: transform 2.5s cubic-bezier(0.2, 0.8, 0.2, 1); transform-style: preserve-3d; }
-    .coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 34px; letter-spacing: 2px; backface-visibility: hidden; border: 6px solid #fef08a; box-shadow: inset 0 0 0 8px #d97706, 0 20px 40px rgba(0,0,0,0.3); }
-    .coin-front { background: radial-gradient(circle at 30% 30%, #fde047, #b45309); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-    .coin-back { background: radial-gradient(circle at 30% 30%, #e5e7eb, #4b5563); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); border-color: #ffffff; box-shadow: inset 0 0 0 8px #4b5563, 0 20px 40px rgba(0,0,0,0.3); transform: rotateY(180deg); }
+    .coin-stage { perspective: 1200px; min-height: 210px; display: flex; align-items: center; justify-content: center; }
+    .coin-inner { width: 154px; height: 154px; position: relative; transition: transform 2.7s cubic-bezier(0.2, 0.8, 0.2, 1); transform-style: preserve-3d; }
+    .coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 34px; letter-spacing: 2px; backface-visibility: hidden; border: 8px solid #fef08a; box-shadow: inset 0 0 0 8px rgba(120,53,15,0.45), inset 0 12px 18px rgba(255,255,255,0.22), 0 22px 42px rgba(0,0,0,0.26); }
+    .coin-face::after { content: ''; position: absolute; inset: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); }
+    .coin-front { background: radial-gradient(circle at 30% 25%, #fff7b3, #f59e0b 52%, #7c2d12 100%); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+    .coin-back { background: radial-gradient(circle at 30% 25%, #ffffff, #cbd5e1 55%, #334155 100%); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); border-color: #ffffff; box-shadow: inset 0 0 0 8px rgba(71,85,105,0.5), inset 0 12px 18px rgba(255,255,255,0.22), 0 22px 42px rgba(0,0,0,0.26); transform: rotateY(180deg); }
 
     .chk-label { font-weight: 900; font-size: 16px; color: var(--slate); display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .chk-label input { width: 24px; height: 24px; accent-color: var(--purple); cursor: pointer; }
@@ -430,12 +460,19 @@
 
     /* KESİRLER VE SAYI DOĞRUSU CSS */
     .fraction-wrapper, .nl-wrapper { max-width: 900px; margin: 0 auto; width: 100%; background: #fff; padding: 36px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 20px 50px rgba(108,61,237,0.1); text-align: center; }
-    .fraction-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; margin-top: 20px;}
+    .fraction-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 40px; align-items: center; margin-top: 20px;}
     .frac-controls { display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center;}
     .frac-box { display: flex; flex-direction: column; align-items: center; gap: 8px; background: #f8f9fc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; width: 160px;}
     .frac-box span { font-weight: 900; color: var(--slate); font-size: 14px; text-transform: uppercase; }
     .frac-row { display: flex; align-items: center; gap: 12px; }
     .frac-val { font-family: 'Baloo 2', cursive; font-size: 42px; font-weight: 800; color: var(--navy); width: 40px; }
+    .frac-shape-toggle { display: inline-flex; gap: 8px; padding: 6px; border-radius: 999px; background: #eef2ff; }
+    .frac-shape-btn { border: none; border-radius: 999px; padding: 10px 16px; background: transparent; color: #7c89a3; font-weight: 900; cursor: pointer; }
+    .frac-shape-btn.is-active { background: #fff; color: var(--purple); box-shadow: 0 6px 14px rgba(108,61,237,0.12); }
+    .fraction-status { margin: 0; font-size: 14px; font-weight: 900; color: #5b6983; }
+    .fraction-canvas { display: grid; gap: 16px; justify-items: center; }
+    .fraction-unit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; width: 100%; }
+    .fraction-unit svg { width: 100%; max-width: 190px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.08)); }
     .nl-container { width: 100%; overflow-x: auto; padding: 40px 0; display: flex; justify-content: center; }
     .nl-controls { display: flex; justify-content: center; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
     .geo-wrapper { width: 100%; height: 600px; border-radius: 24px; overflow: hidden; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 14px 42px rgba(108,61,237,0.08); }
@@ -444,7 +481,7 @@
     #konfetiCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; display: none; }
 
     @media (max-width:1080px) { .tool-hub, .timer-grid { grid-template-columns: 1fr; } .svg-timer-wrap { max-width: 320px; } .tools-page { padding-top: 92px; } .fraction-grid { grid-template-columns: 1fr; } .class-grid{ grid-template-columns: 1fr;} }
-    @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel { padding: 16px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .board-stage { min-height: 66vh; } .pro-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: calc(100% - 20px) !important; flex-direction: row; flex-wrap: wrap; overflow:auto; max-height:200px;} .pro-toolbar.is-collapsed{max-height: 70px;} .calc-btn { height: 60px; font-size: 22px; } .rng-wrapper { grid-template-columns: 1fr; } .wheel-container { gap: 8px; padding: 20px 16px; } }
+    @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel { padding: 16px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .board-stage { min-height: 66vh; } .pro-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: calc(100% - 20px) !important; flex-direction: row; flex-wrap: wrap; overflow:auto; max-height:340px;} .pro-toolbar.is-collapsed{max-height: 212px;} .calc-btn { height: 60px; font-size: 22px; } .rng-wrapper { grid-template-columns: 1fr; } .wheel-container { gap: 8px; padding: 20px 16px; } }
     @media (max-width:480px) { .time-bar-date { display: none; } .board-stage { min-height: 72vh; } .calc-keys { gap: 8px; } .calc-btn { height: 54px; font-size: 20px; } .wheel-container { gap: 4px; padding: 16px 8px; } .wheel-settings { padding: 10px 16px; gap: 10px; } .wheel-settings label { font-size: 13px; } .frac-box{ width: 100%;} }
   </style>
 </head>
@@ -521,6 +558,22 @@
         <div class="panel-head">
           <h2>Kronometre Sahnesi</h2>
           <div class="tool-actions">
+            <div class="shortcut-help">
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="timerShortcuts">!</button>
+              <div class="shortcut-popover" id="timerShortcuts">
+                <div class="shortcut-popover-head">
+                  <p class="shortcut-popover-title">Kronometre Kısayolları</p>
+                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row"><span class="shortcut-key">Space</span><span>Başlat veya duraklat</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">R</span><span>Sıfırla</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">S</span><span>Durdur</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">C</span><span>Geri sayım</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">I</span><span>İleri sayım</span></div>
+                </div>
+              </div>
+            </div>
             <button class="btn btn-secondary" type="button" id="soundToggleBtn"><i class="fas fa-bell"></i> Ses açık</button>
             <button class="btn btn-secondary" type="button" id="stageFullscreenBtn"><i class="fas fa-expand"></i> Büyüt</button>
           </div>
@@ -592,6 +645,24 @@
         <div class="panel-head">
           <h2>Beyaz Tahta Sahnesi</h2>
           <div class="tool-actions">
+            <div class="shortcut-help">
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="boardShortcuts">!</button>
+              <div class="shortcut-popover" id="boardShortcuts">
+                <div class="shortcut-popover-head">
+                  <p class="shortcut-popover-title">Beyaz Tahta Kısayolları</p>
+                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row"><span class="shortcut-key">V</span><span>Seç aracı</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">P</span><span>Kalem</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">H</span><span>İşaretleyici</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">E</span><span>Silgi</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">T</span><span>Yazı ekle</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">Ctrl/Cmd+S</span><span>Kaydet</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">Ctrl/Cmd+Z</span><span>Geri al</span></div>
+                </div>
+              </div>
+            </div>
             <button class="btn btn-secondary" type="button" id="boardSaveBtn"><i class="fas fa-save"></i> Kaydet</button>
             <button class="btn btn-secondary" type="button" id="boardPrintBtn"><i class="fas fa-print"></i> Yazdır</button>
             <button class="btn btn-secondary" type="button" id="boardClearBtn"><i class="fas fa-trash-alt"></i> Temizle</button>
@@ -666,30 +737,7 @@
                   </div>
                 </div>
 
-                <div id="advancedTools" class="advanced-tools">
-                  <div class="toolbar-divider"></div>
-                  <div class="toolbar-title">Kalınlık & Dolgu</div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
-                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-board-palette="stroke">Çizgi</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-board-palette="fill">Dolgu</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" id="boardFillToggleBtn">Boş</button>
-                  </div>
-                  <input class="size-slider" id="boardSizeSlider" type="range" min="1" max="24" step="1" value="6">
-
-                  <div class="toolbar-divider"></div>
-                  <div class="toolbar-title">Yazı Düzeni</div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
-                    <button class="toolbar-btn is-active" style="height:36px;" type="button" data-text-align="left"><i class="fas fa-align-left"></i></button>
-                    <button class="toolbar-btn" style="height:36px;" type="button" data-text-align="center"><i class="fas fa-align-center"></i></button>
-                    <button class="toolbar-btn" style="height:36px;" type="button" data-text-align="right"><i class="fas fa-align-right"></i></button>
-                  </div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-text-weight="500">İnce</button>
-                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-text-weight="800">Orta</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-text-weight="900">Kalın</button>
-                  </div>
-                  <input class="size-slider" id="boardTextSizeSlider" type="range" min="18" max="72" step="1" value="32">
-
+                <div class="toolbar-compact-pages">
                   <div class="toolbar-divider"></div>
                   <div class="toolbar-title">Sayfa Yönetimi</div>
                   <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fc; padding:8px; border-radius:12px; margin-bottom:10px;">
@@ -714,6 +762,32 @@
                     <option value="a3h">A3 (Yatay)</option>
                   </select>
                 </div>
+
+                <div id="advancedTools" class="advanced-tools">
+                  <div class="toolbar-divider"></div>
+                  <div class="toolbar-title">Kalınlık & Dolgu</div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-board-palette="stroke">Çizgi</button>
+                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-board-palette="fill">Dolgu</button>
+                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" id="boardFillToggleBtn">Boş</button>
+                  </div>
+                  <input class="size-slider" id="boardSizeSlider" type="range" min="1" max="24" step="1" value="6">
+
+                  <div class="toolbar-divider"></div>
+                  <div class="toolbar-title">Yazı Düzeni</div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <button class="toolbar-btn is-active" style="height:36px;" type="button" data-text-align="left"><i class="fas fa-align-left"></i></button>
+                    <button class="toolbar-btn" style="height:36px;" type="button" data-text-align="center"><i class="fas fa-align-center"></i></button>
+                    <button class="toolbar-btn" style="height:36px;" type="button" data-text-align="right"><i class="fas fa-align-right"></i></button>
+                  </div>
+                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
+                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-text-weight="500">İnce</button>
+                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-text-weight="800">Orta</button>
+                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-text-weight="900">Kalın</button>
+                  </div>
+                  <input class="size-slider" id="boardTextSizeSlider" type="range" min="18" max="72" step="1" value="32">
+
+                </div>
               </section>
 
             </div>
@@ -723,9 +797,28 @@
     </section>
 
     <section class="workspace" id="classWorkspace" data-tool-panel="class">
-      <article class="panel glass" style="max-width: 1000px; margin: 0 auto; width: 100%;">
+      <article class="panel glass" style="max-width: 1320px; margin: 0 auto; width: 100%;">
         <div class="panel-head">
           <h2>Sınıfım & Çark</h2>
+          <div class="tool-actions">
+            <div class="shortcut-help">
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="classShortcuts">!</button>
+              <div class="shortcut-popover" id="classShortcuts">
+                <div class="shortcut-popover-head">
+                  <p class="shortcut-popover-title">Sınıf ve Çark Kısayolları</p>
+                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row"><span class="shortcut-key">A</span><span>Sınıfta rastgele öğrenci seç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">N</span><span>Yeni sınıf ekle</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">Enter</span><span>Öğrenci veya seçenek ekle</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">W</span><span>Çark sekmesine geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">C</span><span>Sınıf sekmesine dön</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">Space</span><span>Çark sekmesinde çarkı çevir</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="display-stage" style="padding: 30px;">
           <div class="class-workspace-shell">
@@ -778,7 +871,6 @@
 
                   <div class="random-control-card">
                     <p class="section-kicker">Rastgele Seçim</p>
-                    <p class="random-help-text" id="classRandomHint">Yok ve pasif öğrenciler seçim havuzuna girmez. Seçilen öğrenciyi isterseniz tek dokunuşla pasife alabilirsiniz.</p>
                     <div class="random-action-stack">
                       <button class="btn btn-primary" id="classRandomPickBtn" type="button"><i class="fas fa-wand-magic-sparkles"></i> Rastgele Seç</button>
                     </div>
@@ -788,11 +880,11 @@
                 <div class="dojo-main">
                   <div class="selected-student-panel" id="selectedStudentPanel">
                     <div class="selected-student-avatar" id="selectedStudentAvatar"><i class="fas fa-star"></i></div>
-                    <div>
-                      <div class="selected-student-label">Seçilen Öğrenci</div>
-                      <h3 class="selected-student-name" id="selectedStudentName">Henüz seçim yapılmadı</h3>
-                      <p class="selected-student-meta" id="selectedStudentMeta">Rastgele seçtiğiniz öğrenci burada büyük ve belirgin biçimde görünecek.</p>
-                    </div>
+                      <div>
+                        <div class="selected-student-label">Seçilen Öğrenci</div>
+                        <h3 class="selected-student-name" id="selectedStudentName">Henüz seçim yapılmadı</h3>
+                      <p class="selected-student-meta" id="selectedStudentMeta">Hazır sınıf bekliyor.</p>
+                      </div>
                     <div class="selected-student-actions">
                       <button class="btn btn-secondary" id="selectedKeepBtn" type="button">Aktif Kalsın</button>
                       <button class="btn btn-primary" id="selectedPassiveBtn" type="button"><i class="fas fa-pause"></i> Bu Tur Pasif Yap</button>
@@ -815,7 +907,6 @@
                 <div class="wheel-editor-card">
                   <div>
                     <p class="section-kicker">Çark Seçenekleri</p>
-                    <p class="random-help-text">Buraya işlem, kelime, öğrenci adı veya istediğiniz herhangi bir seçeneği ekleyebilirsiniz. İsterseniz bazı seçenekleri pasif bırakabilirsiniz.</p>
                   </div>
 
                   <div class="wheel-input-row" style="display:grid; gap:10px;">
@@ -824,7 +915,7 @@
                   </div>
 
                   <div>
-                    <textarea id="wheelBulkInput" class="wheel-bulk-input" placeholder="İsterseniz seçenekleri alt alta yapıştırın. Her satır ayrı seçenek olur."></textarea>
+                    <textarea id="wheelBulkInput" class="wheel-bulk-input" placeholder="Her satıra bir seçenek yazın"></textarea>
                   </div>
 
                   <div class="wheel-editor-actions" style="display:grid; gap:10px;">
@@ -866,9 +957,28 @@
     </section>
 
     <section class="workspace" id="mathWorkspace" data-tool-panel="math">
-      <article class="panel glass" style="max-width: 1000px; margin: 0 auto; width: 100%;">
+      <article class="panel glass" style="max-width: 1080px; margin: 0 auto; width: 100%;">
         <div class="panel-head">
           <h2>Matematik Araçları</h2>
+          <div class="tool-actions">
+            <div class="shortcut-help">
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="mathShortcuts">!</button>
+              <div class="shortcut-popover" id="mathShortcuts">
+                <div class="shortcut-popover-head">
+                  <p class="shortcut-popover-title">Matematik Kısayolları</p>
+                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row"><span class="shortcut-key">M</span><span>Matematik panelini aç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">D</span><span>Zar at</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">F</span><span>Yazı tura çevir</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">K</span><span>Kesir modeline geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">L</span><span>Sayı doğrusuna geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">W</span><span>Sayı çarkına geç</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="display-stage" style="padding: 30px;">
           
@@ -982,7 +1092,7 @@
                       </div>
                     </div>
                     <div style="width: 120px; height: 4px; background: var(--slate); border-radius: 2px;"></div>
-                    <div class="frac-box">
+                  <div class="frac-box">
                       <span>Payda (Bütün)</span>
                       <div class="frac-row">
                         <button class="step-btn" onclick="changeFrac('den', -1)">-</button>
@@ -990,8 +1100,13 @@
                         <button class="step-btn" onclick="changeFrac('den', 1)">+</button>
                       </div>
                     </div>
+                    <div class="frac-shape-toggle" id="fracShapeToggle">
+                      <button class="frac-shape-btn is-active" type="button" data-frac-shape="circle">Daire</button>
+                      <button class="frac-shape-btn" type="button" data-frac-shape="rect">Dikdörtgen</button>
+                    </div>
+                    <p class="fraction-status" id="fractionStatusText">1/4 modeli</p>
                   </div>
-                  <div id="fracSvgContainer" style="display: grid; place-items: center;"></div>
+                  <div id="fracSvgContainer" class="fraction-canvas"></div>
                 </div>
               </div>
             </div>
@@ -1016,9 +1131,6 @@
               <div class="geo-wrapper">
                 <iframe src="https://www.geogebra.org/classic?showMenuBar=false&showToolBar=true&showAlgebraInput=false" width="100%" height="100%" style="border:none;"></iframe>
               </div>
-              <p style="text-align: center; color: var(--slate); font-size: 13px; margin-top: 10px; font-weight: 700;">
-                <i class="fas fa-info-circle"></i> Dünyanın en gelişmiş açık kaynaklı geometri aracı <strong>GeoGebra</strong> doğrudan entegre edilmiştir. Sayfanızın ağırlaşmaması için online çalışır.
-              </p>
             </div>
             
           </div>
@@ -1068,7 +1180,7 @@
         tool: 'pen', strokeColor: '#1f2142', strokeColorName: 'Siyah',
         fillColor: '#facc15', fillColorName: 'Sarı', fillEnabled: false,
         paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
-        drawing: false, dragToolbar: false, shapesOpen: false,
+        drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
         startX: 0, startY: 0, points: [],
         pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
         pageIndex: 0,
@@ -1081,7 +1193,7 @@
       coinRot: 0,
       dice1Rot: {x: -15, y: 15},
       dice2Rot: {x: -15, y: 15},
-      frac: { num: 1, den: 4 },
+      frac: { num: 1, den: 4, shape: 'circle' },
       nl: { pos: 0, min: -10, max: 20 },
       classroom: {
         view: 'class',
@@ -1139,12 +1251,37 @@
       wheelItemInput: document.getElementById('wheelItemInput'), addWheelItemBtn: document.getElementById('addWheelItemBtn'), wheelBulkInput: document.getElementById('wheelBulkInput'), addWheelBulkBtn: document.getElementById('addWheelBulkBtn'),
       resetWheelOptionsBtn: document.getElementById('resetWheelOptionsBtn'), clearWheelOptionsBtn: document.getElementById('clearWheelOptionsBtn'), wheelOptionList: document.getElementById('wheelOptionList'), wheelItemCount: document.getElementById('wheelItemCount'),
       classOptionWheel: document.getElementById('classOptionWheel'), classWheelPointer: document.getElementById('classWheelPointer'), classWheelWinnerName: document.getElementById('classWheelWinnerName'), classWheelWinnerHint: document.getElementById('classWheelWinnerHint'),
-      classWheelSpinBtn: document.getElementById('classWheelSpinBtn')
+      classWheelSpinBtn: document.getElementById('classWheelSpinBtn'),
+      fracShapeBtns: [].slice.call(document.querySelectorAll('[data-frac-shape]')),
+      fractionStatusText: document.getElementById('fractionStatusText'),
+      shortcutHelpBtns: [].slice.call(document.querySelectorAll('[data-shortcut-target]')),
+      shortcutPopovers: [].slice.call(document.querySelectorAll('.shortcut-popover')),
+      shortcutCloseBtns: [].slice.call(document.querySelectorAll('[data-shortcut-close]'))
     };
 
     var fmtDate = new Intl.DateTimeFormat('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
     var fmtTime = new Intl.DateTimeFormat('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     function pad2(n) { return String(Math.floor(n)).padStart(2,'0'); }
+    function isEditableTarget(target) {
+      if(!target) return false;
+      var tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+    function closeShortcutPopovers() {
+      E.shortcutHelpBtns.forEach(function(btn) { btn.classList.remove('is-open'); });
+      E.shortcutPopovers.forEach(function(pop) { pop.classList.remove('is-open'); });
+    }
+    function toggleShortcutPopover(id) {
+      var target = document.getElementById(id);
+      if(!target) return;
+      var shouldOpen = !target.classList.contains('is-open');
+      closeShortcutPopovers();
+      if(shouldOpen) {
+        target.classList.add('is-open');
+        var trigger = E.shortcutHelpBtns.find(function(btn) { return btn.getAttribute('data-shortcut-target') === id; });
+        if(trigger) trigger.classList.add('is-open');
+      }
+    }
 
     /* ── KRONOMETRE & SAAT ── */
     function renderTimerSVG(ms) {
@@ -1202,7 +1339,8 @@
 
     /* ── SEKMELER / TAM EKRAN ── */
     function selectTool(name) {
-      S.tool = S.tool === name ? '' : name;
+      if(!name) return;
+      S.tool = name;
       E.toolCards.forEach(function(btn) { var card = btn.querySelector('.hero-card'); if(card) card.classList.toggle('is-active', btn.dataset.toolCard === S.tool); });
       E.toolPanels.forEach(function(p) { p.classList.toggle('is-visible', p.dataset.toolPanel === S.tool); });
       if(S.tool === 'whiteboard') setTimeout(resizeBoard, 0);
@@ -1225,9 +1363,9 @@
     var LEGACY_CLASS_STORAGE_KEY = 'kemal_class_data';
     var W_COLORS = ['#ff6052', '#6c3ded', '#16c7b2', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#10b981', '#14b8a6', '#fb7185'];
     var CLASS_STATUS_META = {
-      active: { label: 'Aktif', note: 'Rastgele seçim havuzunda.', className: 'active' },
-      absent: { label: 'Yok', note: 'Yoklama ile gelmedi işaretli.', className: 'absent' },
-      passive: { label: 'Pasif', note: 'Bu tur rastgele seçim dışında.', className: 'passive' }
+      active: { label: 'Aktif', note: 'Seçimde', className: 'active' },
+      absent: { label: 'Yok', note: 'Yoklamada', className: 'absent' },
+      passive: { label: 'Pasif', note: 'Beklemede', className: 'passive' }
     };
     var GENDER_META = {
       girl: { label: 'Kız öğrenci', icon: 'fa-person-dress', className: 'girl' },
@@ -1457,7 +1595,7 @@
       if(!student) {
         if(E.selectedStudentAvatar) E.selectedStudentAvatar.innerHTML = '<i class="fas fa-star"></i>';
         if(E.selectedStudentName) E.selectedStudentName.textContent = 'Henüz seçim yapılmadı';
-        if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = current ? current.name + ' sınıfından seçim yaptığınızda öğrenci burada görünür.' : 'Bir sınıf seçin veya oluşturun.';
+        if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = current ? current.name + ' sınıfı hazır.' : 'Bir sınıf seçin.';
         if(E.selectedKeepBtn) E.selectedKeepBtn.disabled = true;
         if(E.selectedPassiveBtn) { E.selectedPassiveBtn.disabled = true; E.selectedPassiveBtn.innerHTML = '<i class="fas fa-pause"></i> Bu Tur Pasif Yap'; }
         return;
@@ -1466,7 +1604,7 @@
       var statusMeta = CLASS_STATUS_META[student.status] || CLASS_STATUS_META.active;
       if(E.selectedStudentAvatar) E.selectedStudentAvatar.innerHTML = '<i class="fas ' + gender.icon + '"></i>';
       if(E.selectedStudentName) E.selectedStudentName.textContent = student.name;
-      if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = statusMeta.label + ' • ' + (current ? current.name : 'Sınıf') + ' • ' + gender.label;
+      if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = (current ? current.name : 'Sınıf') + ' • ' + statusMeta.label + ' • ' + gender.label;
       if(E.selectedKeepBtn) { E.selectedKeepBtn.disabled = false; E.selectedKeepBtn.textContent = student.status === 'active' ? 'Aktif Kalsın' : 'Aktif Yap'; }
       if(E.selectedPassiveBtn) {
         E.selectedPassiveBtn.disabled = false;
@@ -1477,7 +1615,7 @@
       if(!E.studentCardGrid) return;
       var current = getCurrentClassroom();
       if(!current || current.students.length === 0) {
-        E.studentCardGrid.innerHTML = '<div class="class-empty-state"><div><strong>Sınıfınız hazır</strong>Öğrenci ekledikçe burada kartlar oluşacak. Yoklama ve rastgele seçim için her kartın kendi durum kontrolü bulunur.</div></div>';
+        E.studentCardGrid.innerHTML = '<div class="class-empty-state"><div><strong>Sınıfınız hazır</strong>İlk öğrenciyi ekleyin.</div></div>';
         return;
       }
       var html = current.students.map(function(student) {
@@ -1528,9 +1666,7 @@
       var winner = getWheelWinnerItem();
       if(E.classWheelWinnerName) E.classWheelWinnerName.textContent = winner ? winner.label : 'Hazır';
       if(E.classWheelWinnerHint) {
-        E.classWheelWinnerHint.textContent = winner
-          ? 'Son seçilen seçenek kaydedildi. İsterseniz yeni eklemelerle çarkı tekrar çevirebilirsiniz.'
-          : 'Çarkı çevirdiğinizde seçilen seçenek burada görünecek.';
+        E.classWheelWinnerHint.textContent = winner ? 'Son seçim kaydedildi.' : 'Hazır';
       }
       if(E.classWheelSpinBtn) E.classWheelSpinBtn.disabled = S.classroom.isSpinningWheel || getEnabledWheelItems().length === 0;
     }
@@ -1543,6 +1679,24 @@
         svg.innerHTML = '<circle cx="0" cy="0" r="104" fill="#e2e8f0"></circle><text x="0" y="0" text-anchor="middle" dominant-baseline="middle" font-family="Nunito" font-weight="900" font-size="12" fill="#64748b">Seçenek ekleyin</text>';
         return;
       }
+      function slicePath(startAngle, endAngle, radius) {
+        var rad1 = (startAngle - 90) * Math.PI / 180;
+        var rad2 = (endAngle - 90) * Math.PI / 180;
+        var x1 = Math.cos(rad1) * radius;
+        var y1 = Math.sin(rad1) * radius;
+        var x2 = Math.cos(rad2) * radius;
+        var y2 = Math.sin(rad2) * radius;
+        var largeArc = endAngle - startAngle > 180 ? 1 : 0;
+        return 'M 0 0 L ' + x1 + ' ' + y1 + ' A ' + radius + ' ' + radius + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z';
+      }
+      function fitWheelLabel(label, baseSize, maxLength) {
+        var text = String(label || '').replace(/\s+/g, ' ').trim();
+        if(!text) text = 'Seçenek';
+        return {
+          text: text.length > maxLength ? text.slice(0, Math.max(4, maxLength - 1)).trim() + '…' : text,
+          size: Math.max(11, baseSize - Math.max(0, Math.ceil((text.length - 10) / 4)))
+        };
+      }
       var sliceAngle = 360 / items.length;
       var html = '';
       for(var i = 0; i < items.length; i += 1) {
@@ -1552,24 +1706,19 @@
         if(items.length === 1) {
           html += '<circle cx="0" cy="0" r="104" fill="' + color + '"></circle>';
         } else {
-          var rad1 = (startAngle - 90) * Math.PI / 180;
-          var rad2 = (endAngle - 90) * Math.PI / 180;
-          var x1 = Math.cos(rad1) * 104;
-          var y1 = Math.sin(rad1) * 104;
-          var x2 = Math.cos(rad2) * 104;
-          var y2 = Math.sin(rad2) * 104;
-          var largeArc = sliceAngle > 180 ? 1 : 0;
-          html += '<path d="M 0 0 L ' + x1 + ' ' + y1 + ' A 104 104 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z" fill="' + color + '" stroke="#ffffff" stroke-width="2"></path>';
+          html += '<path d="' + slicePath(startAngle, endAngle, 104) + '" fill="' + color + '" stroke="#ffffff" stroke-width="2"></path>';
         }
         var textAngle = startAngle + sliceAngle / 2;
-        var textRad = (textAngle - 90) * Math.PI / 180;
-        var tx = Math.cos(textRad) * 68;
-        var ty = Math.sin(textRad) * 68;
-        var rotation = textAngle + 90;
-        if(textAngle > 90 && textAngle < 270) rotation -= 180;
-        var size = items.length > 10 ? 8 : (items.length > 6 ? 9 : 12);
-        var label = items[i].label.length > 14 ? items[i].label.slice(0, 13) + '…' : items[i].label;
-        html += '<text x="' + tx.toFixed(2) + '" y="' + ty.toFixed(2) + '" text-anchor="middle" dominant-baseline="middle" font-family="Nunito" font-weight="900" font-size="' + size + '" fill="#fff" transform="rotate(' + rotation.toFixed(2) + ' ' + tx.toFixed(2) + ' ' + ty.toFixed(2) + ')">' + escapeHtml(label) + '</text>';
+        var theta = (textAngle - 90) * Math.PI / 180;
+        var textX = Math.cos(theta) * (sliceAngle >= 72 ? 58 : 62);
+        var textY = Math.sin(theta) * (sliceAngle >= 72 ? 58 : 62);
+        var rotation = (textAngle - 90);
+        if(rotation > 90 || rotation < -90) rotation += 180;
+        var baseSize = sliceAngle >= 72 ? 17 : (sliceAngle >= 48 ? 14 : 12);
+        var labelFit = fitWheelLabel(items[i].label, baseSize, sliceAngle >= 72 ? 10 : 8);
+        html += '<g transform="translate(' + textX.toFixed(2) + ' ' + textY.toFixed(2) + ') rotate(' + rotation.toFixed(2) + ')">';
+        html += '<text class="wheel-label-text" text-anchor="middle" dominant-baseline="middle" font-size="' + labelFit.size + '" lengthAdjust="spacingAndGlyphs" textLength="' + (sliceAngle >= 72 ? 56 : 50) + '">' + escapeHtml(labelFit.text) + '</text>';
+        html += '</g>';
       }
       svg.innerHTML = html;
     }
@@ -1852,8 +2001,13 @@
     function getBoardPoint(evt) { var rect = E.boardCanvas.getBoundingClientRect(); return { x: evt.clientX - rect.left, y: evt.clientY - rect.top }; }
 
     function syncBoardUI() {
+      var activeColor = S.board.paletteTarget === 'fill' ? S.board.fillColor : S.board.strokeColor;
+      if(E.boardToolbar) E.boardToolbar.style.setProperty('--board-accent-color', activeColor || '#6c3ded');
       E.boardToolBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardTool === S.board.tool); });
-      E.boardColorBtns.forEach(function(btn){ var activeColor = S.board.paletteTarget === 'fill' ? S.board.fillColor : S.board.strokeColor; btn.classList.toggle('is-active', btn.dataset.boardColor === activeColor); });
+      E.boardColorBtns.forEach(function(btn){
+        btn.classList.toggle('is-active', btn.dataset.boardColor === activeColor);
+        btn.style.setProperty('--active-ring', btn.dataset.boardColor || '#6c3ded');
+      });
       E.boardPaletteBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPalette === S.board.paletteTarget); });
       E.boardPaperBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPaper === S.board.paper); });
       E.textAlignBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textAlign === S.board.textAlign); });
@@ -2140,23 +2294,80 @@
     }
 
     /* ── KESİRLER MANTIĞI ── */
-    window.drawFraction = function() {
-      let pay = S.frac.num; let payda = S.frac.den;
-      document.getElementById('fracNumDisplay').textContent = pay; document.getElementById('fracDenDisplay').textContent = payda;
-      let svg = '<svg viewBox="-100 -100 200 200" width="100%" height="100%" style="max-height:300px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));">';
-      for(let i=0; i<payda; i++) {
-          let angle = 360 / payda; let startAngle = i * angle; let endAngle = (i+1) * angle;
-          let isFilled = i < pay; let fill = isFilled ? '#16c7b2' : '#f8f9fc'; let stroke = '#20104a';
-          if(payda === 1) { svg += '<circle cx="0" cy="0" r="90" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/>'; } 
-          else { let radStart = (startAngle - 90) * Math.PI / 180; let radEnd = (endAngle - 90) * Math.PI / 180; let x1 = Math.cos(radStart) * 90, y1 = Math.sin(radStart) * 90; let x2 = Math.cos(radEnd) * 90, y2 = Math.sin(radEnd) * 90; let largeArc = angle > 180 ? 1 : 0; let d = 'M 0 0 L '+x1+' '+y1+' A 90 90 0 '+largeArc+' 1 '+x2+' '+y2+' Z'; svg += '<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/>'; }
+    function buildCircleFractionSvg(filled, total) {
+      var svg = '<svg viewBox="-100 -100 200 200" aria-label="Daire kesir modeli">';
+      for(var i = 0; i < total; i += 1) {
+        var angle = 360 / total;
+        var startAngle = i * angle;
+        var endAngle = (i + 1) * angle;
+        var fill = i < filled ? '#16c7b2' : '#f8f9fc';
+        if(total === 1) {
+          svg += '<circle cx="0" cy="0" r="90" fill="' + fill + '" stroke="#20104a" stroke-width="2"></circle>';
+        } else {
+          var radStart = (startAngle - 90) * Math.PI / 180;
+          var radEnd = (endAngle - 90) * Math.PI / 180;
+          var x1 = Math.cos(radStart) * 90;
+          var y1 = Math.sin(radStart) * 90;
+          var x2 = Math.cos(radEnd) * 90;
+          var y2 = Math.sin(radEnd) * 90;
+          var largeArc = angle > 180 ? 1 : 0;
+          svg += '<path d="M 0 0 L ' + x1 + ' ' + y1 + ' A 90 90 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z" fill="' + fill + '" stroke="#20104a" stroke-width="2"></path>';
+        }
       }
-      svg += '</svg>'; document.getElementById('fracSvgContainer').innerHTML = svg;
+      return svg + '</svg>';
     }
-    window.changeFrac = function(type, val) {
-      if(type === 'num') { S.frac.num += val; if(S.frac.num < 0) S.frac.num = 0; if(S.frac.num > S.frac.den) S.frac.num = S.frac.den; }
-      else if(type === 'den') { S.frac.den += val; if(S.frac.den < 1) S.frac.den = 1; if(S.frac.den > 30) S.frac.den = 30; if(S.frac.num > S.frac.den) S.frac.num = S.frac.den; }
+    function buildRectFractionSvg(filled, total) {
+      var width = 180;
+      var height = 180;
+      var cellWidth = width / total;
+      var svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" aria-label="Dikdörtgen kesir modeli">';
+      for(var i = 0; i < total; i += 1) {
+        var fill = i < filled ? '#16c7b2' : '#f8f9fc';
+        svg += '<rect x="' + (i * cellWidth) + '" y="0" width="' + cellWidth + '" height="' + height + '" fill="' + fill + '" stroke="#20104a" stroke-width="2"></rect>';
+      }
+      return svg + '</svg>';
+    }
+    function setFractionShape(shape) {
+      S.frac.shape = shape === 'rect' ? 'rect' : 'circle';
       drawFraction();
     }
+    window.drawFraction = function() {
+      var pay = S.frac.num;
+      var payda = S.frac.den;
+      var units = Math.max(1, Math.ceil(Math.max(pay, 1) / payda));
+      var remaining = pay;
+      var html = '<div class="fraction-unit-grid">';
+      document.getElementById('fracNumDisplay').textContent = pay;
+      document.getElementById('fracDenDisplay').textContent = payda;
+      E.fracShapeBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.getAttribute('data-frac-shape') === S.frac.shape); });
+      for(var unitIndex = 0; unitIndex < units; unitIndex += 1) {
+        var filled = Math.min(payda, Math.max(0, remaining));
+        remaining -= filled;
+        html += '<div class="fraction-unit">' + (S.frac.shape === 'rect' ? buildRectFractionSvg(filled, payda) : buildCircleFractionSvg(filled, payda)) + '</div>';
+      }
+      html += '</div>';
+      document.getElementById('fracSvgContainer').innerHTML = html;
+      if(E.fractionStatusText) {
+        var whole = Math.floor(pay / payda);
+        var remainder = pay % payda;
+        E.fractionStatusText.textContent = whole > 0
+          ? pay + '/' + payda + ' = ' + whole + (remainder ? ' tam ' + remainder + '/' + payda : ' tam')
+          : pay + '/' + payda + ' modeli';
+      }
+    };
+    window.changeFrac = function(type, val) {
+      if(type === 'num') {
+        S.frac.num += val;
+        if(S.frac.num < 0) S.frac.num = 0;
+        if(S.frac.num > S.frac.den * 6) S.frac.num = S.frac.den * 6;
+      } else if(type === 'den') {
+        S.frac.den += val;
+        if(S.frac.den < 1) S.frac.den = 1;
+        if(S.frac.den > 16) S.frac.den = 16;
+        if(S.frac.num > S.frac.den * 6) S.frac.num = S.frac.den * 6;
+      }
+      drawFraction();
+    };
 
     /* ── SAYI DOĞRUSU MANTIĞI ── */
     window.drawNumberLine = function() {
@@ -2226,22 +2437,30 @@
 
     document.getElementById('diceCountToggle').addEventListener('change', function(e) { document.getElementById('dice2Wrap').style.display = e.target.checked ? 'block' : 'none'; });
 
-    document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var mode = btn.dataset.mathMode; S.mathMode = mode;
-        document.querySelectorAll('[data-math-mode]').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-        document.getElementById('mathCalcView').style.display = mode === 'calc' ? 'block' : 'none';
-        document.getElementById('mathRngView').style.display = mode === 'rng' ? 'block' : 'none';
-        document.getElementById('mathWheelView').style.display = mode === 'wheel' ? 'block' : 'none';
-        document.getElementById('mathFracView').style.display = mode === 'frac' ? 'block' : 'none';
-        document.getElementById('mathNlView').style.display = mode === 'nl' ? 'block' : 'none';
-        document.getElementById('mathGeoView').style.display = mode === 'geo' ? 'block' : 'none';
-        if(mode === 'frac') drawFraction(); if(mode === 'nl') drawNumberLine();
+    function setMathMode(mode) {
+      S.mathMode = mode;
+      document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.mathMode === mode);
       });
+      document.getElementById('mathCalcView').style.display = mode === 'calc' ? 'block' : 'none';
+      document.getElementById('mathRngView').style.display = mode === 'rng' ? 'block' : 'none';
+      document.getElementById('mathWheelView').style.display = mode === 'wheel' ? 'block' : 'none';
+      document.getElementById('mathFracView').style.display = mode === 'frac' ? 'block' : 'none';
+      document.getElementById('mathNlView').style.display = mode === 'nl' ? 'block' : 'none';
+      document.getElementById('mathGeoView').style.display = mode === 'geo' ? 'block' : 'none';
+      if(mode === 'frac') drawFraction();
+      if(mode === 'nl') drawNumberLine();
+    }
+
+    document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
+      btn.addEventListener('click', function() { setMathMode(btn.dataset.mathMode); });
     });
 
     E.classTabs.forEach(function(tab) {
       tab.addEventListener('click', function() { setClassroomView(tab.dataset.classView); });
+    });
+    E.fracShapeBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() { setFractionShape(btn.getAttribute('data-frac-shape')); });
     });
     if(E.classSelector) E.classSelector.addEventListener('change', function() { changeCurrentClassroom(E.classSelector.value); });
     if(E.addClassBtn) E.addClassBtn.addEventListener('click', addNewClassroom);
@@ -2312,8 +2531,40 @@
       if(evt.target === winnerModal) winnerModal.classList.remove('show');
     });
 
+    function setBoardToolbarCollapsed(collapsed) {
+      var toggleBtn = document.getElementById('toolbarToggleBtn');
+      var boardToolbar = document.getElementById('boardToolbar');
+      if(!toggleBtn || !boardToolbar) return;
+      S.board.toolbarCollapsed = !!collapsed;
+      boardToolbar.classList.toggle('is-collapsed', S.board.toolbarCollapsed);
+      toggleBtn.innerHTML = S.board.toolbarCollapsed ? '<i class="fas fa-expand-arrows-alt"></i>' : '<i class="fas fa-compress-alt"></i>';
+    }
     const toggleBtn = document.getElementById('toolbarToggleBtn'); const boardToolbar = document.getElementById('boardToolbar');
-    if(toggleBtn && boardToolbar) { toggleBtn.addEventListener('click', function(e) { e.preventDefault(); boardToolbar.classList.toggle('is-collapsed'); if(boardToolbar.classList.contains('is-collapsed')) { toggleBtn.innerHTML = '<i class="fas fa-expand-arrows-alt"></i>'; } else { toggleBtn.innerHTML = '<i class="fas fa-compress-alt"></i>'; } }); }
+    if(toggleBtn && boardToolbar) {
+      toggleBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        setBoardToolbarCollapsed(!boardToolbar.classList.contains('is-collapsed'));
+      });
+      setBoardToolbarCollapsed(false);
+    }
+
+    E.shortcutHelpBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        toggleShortcutPopover(btn.getAttribute('data-shortcut-target'));
+      });
+    });
+    E.shortcutCloseBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        closeShortcutPopovers();
+      });
+    });
+    document.addEventListener('click', function(evt) {
+      if(evt.target.closest('.shortcut-help')) return;
+      closeShortcutPopovers();
+    });
 
     E.modeTabs.forEach(function(t) { t.addEventListener('click',function() { setMode(t.dataset.mode); }); });
     E.toolCards.forEach(function(b) { b.addEventListener('click',function() { selectTool(b.dataset.toolCard||''); }); });
@@ -2355,10 +2606,58 @@
     if(E.pageSizeSelect) E.pageSizeSelect.addEventListener('change', function(){ setPageSize(E.pageSizeSelect.value); });
 
     document.addEventListener('keydown', function(evt){
-      if ((evt.key === 'Delete' || evt.key === 'Backspace') && S.board.selectedItem && S.board.tool === 'select') {
-        if(evt.target.tagName === 'INPUT' || evt.target.tagName === 'TEXTAREA') return;
+      var key = evt.key;
+      var lower = key && key.length === 1 ? key.toLowerCase() : key;
+      var editable = isEditableTarget(evt.target);
+      if(key === 'Escape') {
+        closeShortcutPopovers();
+        var winnerModalEl = document.getElementById('winnerModal');
+        if(winnerModalEl) winnerModalEl.classList.remove('show');
+      }
+      if ((key === 'Delete' || key === 'Backspace') && S.board.selectedItem && S.board.tool === 'select') {
+        if(editable) return;
         var page = getActivePage(); var idx = page.items.indexOf(S.board.selectedItem);
         if (idx > -1) { page.items.splice(idx, 1); S.board.selectedItem = null; saveSnapshot(); redrawBoard(); }
+        return;
+      }
+      if(evt.metaKey || evt.ctrlKey) {
+        if(lower === 's' && S.tool === 'whiteboard') { evt.preventDefault(); saveBoard(); return; }
+        if(lower === 'z' && S.tool === 'whiteboard') { evt.preventDefault(); if(evt.shiftKey) redoBoard(); else undoBoard(); return; }
+      }
+      if(editable) return;
+      if(lower === '1') { selectTool('countdown'); return; }
+      if(lower === '2') { selectTool('whiteboard'); return; }
+      if(lower === '3') { selectTool('class'); return; }
+      if(lower === '4' || lower === 'm') { selectTool('math'); return; }
+      if(S.tool === 'countdown') {
+        if(key === ' ') { evt.preventDefault(); S.running ? pauseTimer() : startTimer(); return; }
+        if(lower === 'r') { evt.preventDefault(); resetTimer(); return; }
+        if(lower === 's') { evt.preventDefault(); stopTimer(); return; }
+        if(lower === 'c') { evt.preventDefault(); setMode('countdown'); return; }
+        if(lower === 'i') { evt.preventDefault(); setMode('stopwatch'); return; }
+      }
+      if(S.tool === 'whiteboard') {
+        if(lower === 'v') { evt.preventDefault(); setBoardTool('select'); return; }
+        if(lower === 'p') { evt.preventDefault(); setBoardTool('pen'); return; }
+        if(lower === 'h') { evt.preventDefault(); setBoardTool('highlighter'); return; }
+        if(lower === 'e') { evt.preventDefault(); setBoardTool('eraser'); return; }
+        if(lower === 't') { evt.preventDefault(); setBoardTool('text'); return; }
+        if(lower === 'g') { evt.preventDefault(); toggleShapesPanel(); return; }
+        if(lower === 'b') { evt.preventDefault(); setBoardToolbarCollapsed(!S.board.toolbarCollapsed); return; }
+      }
+      if(S.tool === 'class') {
+        if(lower === 'n') { evt.preventDefault(); addNewClassroom(); return; }
+        if(lower === 'a' && S.classroom.view === 'class') { evt.preventDefault(); startRandomStudentPick(); return; }
+        if(lower === 'w') { evt.preventDefault(); setClassroomView('wheel'); return; }
+        if(lower === 'c') { evt.preventDefault(); setClassroomView('class'); return; }
+        if(key === ' ' && S.classroom.view === 'wheel') { evt.preventDefault(); spinClassOptionWheel(); return; }
+      }
+      if(S.tool === 'math') {
+        if(lower === 'd') { evt.preventDefault(); setMathMode('rng'); roll3DDice(); return; }
+        if(lower === 'f') { evt.preventDefault(); setMathMode('rng'); flipCoin(); return; }
+        if(lower === 'k') { evt.preventDefault(); setMathMode('frac'); return; }
+        if(lower === 'l') { evt.preventDefault(); setMathMode('nl'); return; }
+        if(lower === 'w') { evt.preventDefault(); setMathMode('wheel'); return; }
       }
     });
 

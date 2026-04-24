@@ -63,103 +63,192 @@
 
     .viewer-main-layout{
       display:grid;
-      grid-template-columns:340px minmax(0,1fr);
+      grid-template-columns:332px minmax(0,1fr);
       gap:18px;
       align-items:start;
     }
     .viewer-toolbar{
+      --doc-accent-color:var(--viewer-purple);
       position:sticky;
       top:18px;
-      background:rgba(255,255,255,.86);
+      width:100%;
+      background:rgba(255,255,255,.92);
       backdrop-filter:blur(18px);
       border:2px solid rgba(226,217,255,.9);
-      border-radius:28px;
-      padding:16px;
+      border-radius:32px;
+      padding:0;
       display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
+      gap:0;
+      overflow:hidden;
       box-shadow:0 18px 44px rgba(92,63,182,.12);
     }
-    .tool-card{background:white;border:2px solid var(--viewer-border);border-radius:20px;padding:16px;position:relative;overflow:visible;}
-    .tool-card h3{font-family:var(--font-display);font-size:18px;color:var(--viewer-navy);margin-bottom:12px;}
-    .tool-card p{font-size:13px;color:var(--viewer-slate);line-height:1.7;margin-bottom:12px;}
-    .tool-grid{display:flex;flex-wrap:wrap;gap:10px;}
-    .tool-grid.tools{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(56px,1fr));
-      gap:10px;
-      overflow:visible;
-    }
-    .tool-btn{
-      position:relative;
-      display:inline-flex;
+    .viewer-toolbar.is-collapsed{width:304px;}
+    .viewer-toolbar.is-collapsed .advanced-tools,
+    .viewer-toolbar.is-collapsed .doc-color-grid,
+    .viewer-toolbar.is-collapsed .shape-panel{display:none;}
+    .toolbar-header{
+      display:flex;
       align-items:center;
-      justify-content:center;
-      width:100%;
-      min-height:54px;
-      border-radius:16px;
-      border:2px solid var(--viewer-border);
-      background:#FBF9FF;
-      color:var(--viewer-slate);
-      cursor:pointer;
-      transition:all .2s;
-      box-shadow:0 8px 18px rgba(95,69,188,.04);
-      z-index:1;
+      justify-content:space-between;
+      gap:12px;
+      padding:24px 24px 18px;
+      border-bottom:2px solid rgba(226,217,255,.76);
+      cursor:default;
     }
-    .tool-btn svg{width:22px;height:22px;display:block;}
-    .tool-btn:hover,.tool-btn.active{
-      border-color:var(--viewer-purple);
-      background:var(--viewer-purple-soft);
-      color:var(--viewer-purple);
-      transform:translateY(-1px);
-      z-index:2;
+    .toolbar-brand{display:flex;align-items:center;gap:14px;min-width:0;}
+    .toolbar-logo{
+      width:48px;height:48px;border-radius:16px;object-fit:cover;background:white;padding:4px;
+      box-shadow:0 10px 22px rgba(42,26,108,.12);
     }
-    .tool-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    .tool-label{font-size:12px;color:var(--viewer-slate);font-weight:800;min-width:72px;}
-    .tool-input{flex:1;min-width:120px;}
-    .tool-value{font-size:12px;font-weight:800;color:var(--viewer-purple);min-width:42px;text-align:right;}
-    .zoom-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;}
-    .zoom-slider{
-      flex:1;
-      min-width:150px;
-      accent-color:var(--viewer-purple);
+    .brand-text{
+      font-family:var(--font-display);
+      font-size:20px;
+      font-weight:800;
+      color:var(--viewer-navy);
+      line-height:1;
     }
-    .zoom-btn{
-      width:42px;height:42px;border-radius:12px;border:2px solid var(--viewer-border);
-      background:#FBF9FF;color:var(--viewer-slate);display:inline-flex;align-items:center;justify-content:center;
-      cursor:pointer;transition:all .2s;
+    .toggle-collapse-btn{
+      width:44px;height:44px;border:none;border-radius:14px;background:white;color:#6d7892;
+      display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s ease;
+      box-shadow:0 10px 20px rgba(26,16,64,.08), inset 0 0 0 2px rgba(226,217,255,.86);
+      flex-shrink:0;
     }
-    .zoom-btn:hover:not(:disabled){border-color:var(--viewer-purple);background:var(--viewer-purple-soft);color:var(--viewer-purple);}
-    .zoom-btn:disabled{opacity:.45;cursor:not-allowed;}
-    .zoom-btn svg{width:18px;height:18px;display:block;}
-    .zoom-pill{
-      min-width:72px;height:42px;border-radius:12px;background:#F7F3FF;color:var(--viewer-purple);
-      display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;padding:0 12px;
-    }
-    .zoom-reset-btn{
-      min-width:56px;
-      height:42px;
-      border-radius:12px;
-      border:2px solid var(--viewer-border);
-      background:#FBF9FF;
-      color:var(--viewer-slate);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      font-size:12px;
+    .toggle-collapse-btn:hover{transform:translateY(-1px);color:var(--viewer-purple);}
+    .toggle-collapse-btn svg{width:18px;height:18px;display:block;}
+    .toolbar-main{padding:22px 24px 18px;display:grid;gap:16px;}
+    .tool-grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+    .tool-grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;}
+    .tool-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .toolbar-btn{
+      --btn-accent:var(--doc-accent-color);
+      border:none;
+      border-radius:20px;
+      min-height:58px;
+      background:#fff;
+      color:#6d7892;
+      font-family:'Nunito',sans-serif;
+      font-size:14px;
       font-weight:900;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
       cursor:pointer;
-      transition:all .2s;
+      transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+      box-shadow:inset 0 0 0 2px rgba(220,227,238,.95);
+      padding:0 12px;
+      text-align:center;
     }
-    .zoom-reset-btn:hover:not(:disabled){
-      border-color:var(--viewer-purple);
-      background:var(--viewer-purple-soft);
+    .toolbar-btn svg{width:22px;height:22px;display:block;}
+    .toolbar-btn:hover{transform:translateY(-1px);}
+    .toolbar-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+    .toolbar-btn.active,.toolbar-btn.is-active{
+      background:linear-gradient(135deg,var(--btn-accent),#8b5cf6);
+      color:#fff;
+      box-shadow:0 14px 28px rgba(108,61,237,.24);
+    }
+    .toolbar-btn.action-btn{
+      min-height:48px;
+      border-radius:16px;
+      font-size:13px;
+    }
+    .toolbar-btn.action-btn.danger{
+      color:var(--viewer-danger);
+      box-shadow:inset 0 0 0 2px rgba(252,165,165,.55);
+      background:#fff8f8;
+    }
+    .toolbar-btn.action-btn.danger:hover{
+      background:#fff1f2;
+    }
+    .shape-panel{display:grid;gap:10px;}
+    .shape-panel.is-hidden{display:none;}
+    .doc-color-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;}
+    .color-btn{
+      width:100%;
+      aspect-ratio:1;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      box-shadow:0 0 0 4px rgba(255,255,255,.96), inset 0 0 0 2px rgba(220,227,238,.92);
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+    .color-btn:hover{transform:translateY(-1px);}
+    .color-btn.is-active{
+      box-shadow:0 0 0 5px rgba(108,61,237,.72), 0 16px 28px rgba(108,61,237,.16);
+      transform:translateY(-1px) scale(1.03);
+    }
+    .toolbar-divider{height:2px;background:rgba(226,217,255,.82);border-radius:999px;margin:0;}
+    .toolbar-title{
+      font-size:13px;
+      font-weight:900;
+      letter-spacing:.05em;
+      text-transform:uppercase;
+      color:#94a3b8;
+      margin-bottom:2px;
+    }
+    .toolbar-compact-pages,.advanced-tools{
+      display:grid;
+      gap:12px;
+      padding:0 24px 24px;
+    }
+    .viewer-toolbar-pages{padding-top:0;}
+    .doc-toolbar-page-nav{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px;
+      border-radius:18px;
+      background:#f8f9fc;
+    }
+    .doc-toolbar-chip,.doc-toolbar-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:40px;
+      padding:0 14px;
+      border-radius:14px;
+      background:#f7f3ff;
       color:var(--viewer-purple);
+      font-size:13px;
+      font-weight:900;
+      text-align:center;
     }
-    .zoom-reset-btn:disabled{opacity:.45;cursor:not-allowed;}
-    .tool-note{
-      display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:#FAF8FF;color:var(--viewer-slate);
-      font-size:12px;font-weight:700;margin-top:12px;border:1px solid rgba(226,217,255,.8);
+    .doc-toolbar-view-switch,
+    .doc-toolbar-meta{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      align-items:center;
+    }
+    .doc-toolbar-jump{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px;
+      align-items:center;
+    }
+    .doc-toolbar-jump input,
+    .doc-color-input{
+      width:100%;
+      min-height:44px;
+      border-radius:14px;
+      border:2px solid var(--viewer-border);
+      background:#fff;
+      color:var(--viewer-navy);
+      font-family:'Nunito',sans-serif;
+      font-size:14px;
+      font-weight:800;
+      padding:0 14px;
+      outline:none;
+    }
+    .doc-color-input{
+      padding:0;
+      min-height:46px;
+      cursor:pointer;
+    }
+    .size-slider{
+      width:100%;
+      accent-color:var(--doc-accent-color);
     }
     .tool-tooltip{
       position:fixed;
@@ -180,16 +269,6 @@
       box-shadow:0 14px 30px rgba(26,16,64,.22);
     }
     .tool-tooltip.show{opacity:1;}
-    .action-btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:8px;
-      min-height:50px;padding:0 16px;border-radius:16px;border:2px solid var(--viewer-border);
-      background:#FBF9FF;color:var(--viewer-slate);cursor:pointer;font-weight:800;font-size:13px;transition:all .2s;
-    }
-    .action-btn svg{width:20px;height:20px;display:block;}
-    .action-btn:hover:not(:disabled){border-color:var(--viewer-purple);color:var(--viewer-purple);background:var(--viewer-purple-soft);}
-    .action-btn:disabled{opacity:.45;cursor:not-allowed;}
-    .action-btn.danger:hover:not(:disabled){border-color:#FCA5A5;color:var(--viewer-danger);background:#FFF1F2;}
-
     .viewer-stage{
       background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(248,244,255,.98));
       border:2px solid var(--viewer-border);
@@ -275,6 +354,43 @@
     }
     .book-frame.is-pannable{cursor:grab;}
     .book-frame.is-pannable.is-panning{cursor:grabbing;}
+    .doc-protractor{
+      position:absolute;
+      left:0;
+      top:0;
+      width:440px;
+      height:240px;
+      display:none;
+      z-index:40;
+      transform-origin:220px 220px;
+      pointer-events:auto;
+    }
+    .doc-protractor.is-visible{display:block;}
+    .doc-protractor-svg{width:100%;height:100%;cursor:grab;}
+    .doc-protractor-svg:active{cursor:grabbing;}
+    .doc-protractor-control{
+      position:absolute;
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      background:#fff;
+      border:2px solid var(--viewer-purple);
+      color:var(--viewer-purple);
+      display:grid;
+      place-items:center;
+      font-size:18px;
+      font-weight:900;
+      box-shadow:0 4px 12px rgba(0,0,0,.15);
+      cursor:pointer;
+      user-select:none;
+      touch-action:none;
+      transition:transform .1s ease;
+    }
+    .doc-protractor-control:active{transform:scale(.9);}
+    .doc-protractor-control.close{top:10px;right:0;border-color:#dc2626;color:#dc2626;font-size:14px;}
+    .doc-protractor-control.rotate{top:-18px;left:50%;transform:translateX(-50%);cursor:ew-resize;}
+    .doc-protractor-control.rotate:active{transform:translateX(-50%) scale(.9);}
+    .doc-protractor-control.resize{bottom:-10px;right:10px;cursor:nwse-resize;font-size:14px;}
     .book-loading,.book-empty{text-align:center;color:var(--viewer-slate);}
     .book-loading span,.book-empty span{font-size:58px;display:block;margin-bottom:12px;}
     .book-viewport{
@@ -697,13 +813,11 @@
     }
     @media (max-width:1280px){
       .viewer-main-layout{grid-template-columns:300px minmax(0,1fr);}
+      .viewer-toolbar.is-collapsed{width:100%;}
     }
     @media (max-width:860px){
       .viewer-main-layout{grid-template-columns:1fr;}
       .viewer-toolbar{position:static;}
-      .viewer-pager{grid-template-columns:1fr;justify-items:stretch;}
-      .pager-btn{width:100%;}
-      .pager-jump-row{justify-content:flex-start;}
       .shortcut-grid{grid-template-columns:1fr;}
       .shortcut-actions{width:100%;justify-content:flex-start;}
     }
@@ -712,8 +826,18 @@
       .viewer-hero{padding:22px 18px;border-radius:24px;}
       .book-frame{min-height:540px;padding:10px;}
       .viewer-top-actions{width:100%;}
-      .tool-grid.tools{grid-template-columns:repeat(4,minmax(0,1fr));}
-      .zoom-controls{width:100%;}
+      .viewer-toolbar{width:100%;}
+      .viewer-toolbar.is-collapsed{width:100%;}
+      .toolbar-header,
+      .toolbar-main,
+      .toolbar-compact-pages,
+      .advanced-tools{padding-left:18px;padding-right:18px;}
+      .tool-grid-4{grid-template-columns:repeat(3,minmax(0,1fr));}
+      .tool-grid-5{grid-template-columns:repeat(4,minmax(0,1fr));}
+      .doc-color-grid{grid-template-columns:repeat(6,minmax(0,1fr));}
+      .doc-toolbar-view-switch,
+      .doc-toolbar-meta,
+      .doc-toolbar-jump{grid-template-columns:1fr;}
       .shortcut-help-btn,.shortcut-action-btn{flex:1 1 100%;}
     }
   </style>
@@ -735,53 +859,113 @@
     </section>
 
     <div class="viewer-main-layout">
-      <aside class="viewer-toolbar">
-        <div class="tool-card">
-          <h3>Araçlar</h3>
-          <p>İkonların üstüne gelince araç adını görürsün. Seçili araçta tooltip görünmez.</p>
-          <div class="tool-grid tools" id="toolButtons"></div>
+      <aside class="viewer-toolbar" id="docToolbar">
+        <div class="toolbar-header">
+          <div class="toolbar-brand">
+            <img src="/gorseller/logo.png" alt="Kemal Öğretmenim" class="toolbar-logo">
+            <span class="brand-text">Araçlar</span>
+          </div>
+          <button class="toggle-collapse-btn" type="button" id="docToolbarToggleBtn" aria-label="Daralt veya genişlet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 3H3v5"></path>
+              <path d="m3 3 6 6"></path>
+              <path d="M16 21h5v-5"></path>
+              <path d="m21 21-6-6"></path>
+            </svg>
+          </button>
         </div>
-        <div class="tool-card">
-          <h3>Biçim</h3>
-          <div class="tool-row" style="margin-bottom:12px;">
-            <span class="tool-label">Renk</span>
-            <input class="tool-input" type="color" id="colorInput" value="#FF6052">
+
+        <div class="toolbar-main">
+          <div class="tool-grid-4" id="docMainTools"></div>
+          <button class="toolbar-btn" type="button" id="docProtractorBtn" title="Açı ölçer (iletki)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 17a8 8 0 0 1 16 0"></path>
+              <path d="M4 17h16"></path>
+              <path d="M12 9v8"></path>
+              <path d="M8 10.5 9.5 17"></path>
+              <path d="M16 10.5 14.5 17"></path>
+            </svg>
+            <span>İletki</span>
+          </button>
+          <button class="toolbar-btn" type="button" id="docShapeToggleBtn" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="6.5" cy="17.5" r="2.5"></circle>
+              <rect x="10" y="13" width="6" height="6" rx="1.5"></rect>
+              <path d="M17 6.5 20.5 12h-7z"></path>
+            </svg>
+            <span>Şekiller</span>
+          </button>
+          <div class="shape-panel is-hidden" id="docShapePanel">
+            <div class="tool-grid-5" id="docShapeTools"></div>
           </div>
-          <div class="tool-row">
-            <span class="tool-label">Kalınlık</span>
-            <input class="tool-input" type="range" id="sizeInput" min="1" max="24" step="1" value="4">
-            <span class="tool-value" id="sizeValue">4 px</span>
+          <div class="doc-color-grid" id="docColorGrid">
+            <button class="color-btn" type="button" data-doc-color="#1f2142" style="background:#1f2142" aria-label="Lacivert"></button>
+            <button class="color-btn is-active" type="button" data-doc-color="#ef4444" style="background:#ef4444" aria-label="Kırmızı"></button>
+            <button class="color-btn" type="button" data-doc-color="#f97316" style="background:#f97316" aria-label="Turuncu"></button>
+            <button class="color-btn" type="button" data-doc-color="#facc15" style="background:#facc15" aria-label="Sarı"></button>
+            <button class="color-btn" type="button" data-doc-color="#22c55e" style="background:#22c55e" aria-label="Yeşil"></button>
+            <button class="color-btn" type="button" data-doc-color="#14b8a6" style="background:#14b8a6" aria-label="Turkuaz"></button>
+            <button class="color-btn" type="button" data-doc-color="#3b82f6" style="background:#3b82f6" aria-label="Mavi"></button>
+            <button class="color-btn" type="button" data-doc-color="#8b5cf6" style="background:#8b5cf6" aria-label="Mor"></button>
+            <button class="color-btn" type="button" data-doc-color="#ec4899" style="background:#ec4899" aria-label="Pembe"></button>
+            <button class="color-btn" type="button" data-doc-color="#8b5a2b" style="background:#8b5a2b" aria-label="Kahverengi"></button>
+            <button class="color-btn" type="button" data-doc-color="#9ca3af" style="background:#9ca3af" aria-label="Gri"></button>
+            <button class="color-btn" type="button" data-doc-color="#ffffff" style="background:#ffffff" aria-label="Beyaz"></button>
           </div>
-          <div class="tool-row" style="margin-top:12px;">
-            <span class="tool-label">Yakınlık</span>
-            <div class="zoom-controls">
-              <input class="zoom-slider" type="range" id="zoomInput" min="100" max="260" step="5" value="100" aria-label="Yakınlaştırma seviyesi">
-              <div class="zoom-pill" id="zoomValue">%100</div>
-              <button class="zoom-reset-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">
-                1:1
-              </button>
-            </div>
-          </div>
-          <div class="tool-note">Yakınlaştırınca el aracını seçip PDF alanını sürükleyebilirsin.</div>
         </div>
-        <div class="tool-card">
-          <h3>Geçmiş</h3>
-          <div class="tool-grid">
-            <button class="action-btn" type="button" id="undoBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M20 20a8 8 0 0 0-8-8H4"/></svg>
-              <span>Geri Al</span>
+
+        <div class="toolbar-compact-pages viewer-toolbar-pages">
+          <div class="toolbar-divider"></div>
+          <div class="toolbar-title">Sayfa Yönetimi</div>
+          <div class="doc-toolbar-page-nav">
+            <button class="toolbar-btn action-btn" type="button" id="prevPageBtn">Önceki</button>
+            <span class="doc-toolbar-chip" id="pageChip">Sayfa 1 / 1</span>
+            <button class="toolbar-btn action-btn" type="button" id="nextPageBtn">Sonraki</button>
+          </div>
+          <input class="size-slider" type="range" id="pageSlider" min="1" max="1" step="1" value="1" aria-label="Sayfa ilerleme kaydırıcısı">
+          <div class="doc-toolbar-view-switch">
+            <button class="toolbar-btn active" type="button" id="viewSingleBtn">Tek Sayfa</button>
+            <button class="toolbar-btn" type="button" id="viewSpreadBtn">Çift Sayfa</button>
+          </div>
+          <div class="doc-toolbar-jump">
+            <input type="number" id="pageJumpInput" min="1" value="1" aria-label="Sayfa numarası">
+            <button class="toolbar-btn action-btn" type="button" id="jumpPageBtn">Git</button>
+          </div>
+          <div class="toolbar-divider"></div>
+          <div class="toolbar-title">Yakınlaştırma</div>
+          <input class="size-slider" type="range" id="zoomInput" min="100" max="260" step="5" value="100" aria-label="Yakınlaştırma seviyesi">
+          <div class="doc-toolbar-meta">
+            <span class="doc-toolbar-pill" id="zoomValue">%100</span>
+            <button class="toolbar-btn action-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">1:1</button>
+          </div>
+        </div>
+
+        <div class="advanced-tools" id="docAdvancedTools">
+          <div class="toolbar-divider"></div>
+          <div class="toolbar-title">Çizim Ayarı</div>
+          <input class="size-slider" type="range" id="sizeInput" min="1" max="24" step="1" value="4" aria-label="Çizim kalınlığı">
+          <div class="doc-toolbar-meta">
+            <span class="doc-toolbar-pill" id="sizeValue">4 px</span>
+            <input class="doc-color-input" type="color" id="colorInput" value="#FF6052" aria-label="Özel renk seç">
+          </div>
+          <div class="toolbar-divider"></div>
+          <div class="toolbar-title">Geçmiş</div>
+          <div class="tool-grid-2">
+            <button class="toolbar-btn action-btn" type="button" id="undoBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M20 20a8 8 0 0 0-8-8H4"></path></svg>
+              <span>Geri</span>
             </button>
-            <button class="action-btn" type="button" id="redoBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M4 20a8 8 0 0 1 8-8h8"/></svg>
-              <span>İleri Al</span>
+            <button class="toolbar-btn action-btn" type="button" id="redoBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M4 20a8 8 0 0 1 8-8h8"></path></svg>
+              <span>İleri</span>
             </button>
-            <button class="action-btn" type="button" id="deleteSelectionBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-              <span>Seçileni Sil</span>
+            <button class="toolbar-btn action-btn" type="button" id="deleteSelectionBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="m19 6-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
+              <span>Sil</span>
             </button>
-            <button class="action-btn danger" type="button" id="clearPageBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"/><path d="M8.5 8.5 3 14a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L15.5 15.5"/><path d="m14 5 5 5"/></svg>
-              <span>Sayfayı Temizle</span>
+            <button class="toolbar-btn action-btn danger" type="button" id="clearPageBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"></path><path d="M8.5 8.5 3 14a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L15.5 15.5"></path><path d="m14 5 5 5"></path></svg>
+              <span>Temizle</span>
             </button>
           </div>
         </div>
@@ -825,34 +1009,12 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="viewer-pager">
-        <button class="pager-btn" type="button" id="prevPageBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-          <span>Önceki</span>
-        </button>
-        <div class="pager-center">
-          <div class="pager-slider-row">
-            <span class="pager-slider-label">İlerleme</span>
-            <input type="range" id="pageSlider" min="1" max="1" value="1">
-          </div>
-          <div class="pager-jump-row">
-            <span class="pager-chip" id="pageChip">Sayfa 1 / 1</span>
-            <div class="pager-jump">
-              <label for="pageJumpInput">Sayfaya git</label>
-              <input type="number" id="pageJumpInput" min="1" value="1">
-              <button type="button" id="jumpPageBtn">Git</button>
-            </div>
-            <div class="pager-view-switch">
-              <button class="view-mode-btn active" type="button" id="viewSingleBtn">Tek Sayfa</button>
-              <button class="view-mode-btn" type="button" id="viewSpreadBtn">Çift Sayfa</button>
-            </div>
-          </div>
+        <div class="doc-protractor" id="docProtractor" aria-hidden="true">
+          <div class="doc-protractor-control rotate" id="docProtractorRotate" title="Döndür">↻</div>
+          <div class="doc-protractor-control resize" id="docProtractorResize" title="Boyutlandır">⤡</div>
+          <div class="doc-protractor-control close" id="docProtractorClose" title="Kapat">✖</div>
+          <div class="doc-protractor-svg" id="docProtractorSvg"></div>
         </div>
-        <button class="pager-btn" type="button" id="nextPageBtn">
-          <span>Sonraki</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </button>
       </div>
       </section>
     </div>
