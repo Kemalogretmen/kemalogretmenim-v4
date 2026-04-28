@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Öğretmen Paneli — Kemal Öğretmenim</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .teacher-panel{min-height:calc(100vh - 106px);padding:30px 18px 46px;background:#F8FAFC;color:#0F172A}
+    .teacher-shell{max-width:1260px;margin:0 auto}
+    .teacher-hero{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;box-shadow:0 14px 34px rgba(15,23,42,.05)}
+    .teacher-hero h1{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);color:#0F172A;margin:0 0 6px;letter-spacing:0}
+    .teacher-hero p{color:#475569;font-weight:750;line-height:1.55;margin:0;max-width:760px}
+    .teacher-badge{display:inline-flex;align-items:center;border-radius:999px;padding:9px 14px;background:#E0F2FE;color:#075985;font-weight:900;white-space:nowrap}
+    .teacher-top-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+    .teacher-btn,.teacher-link{border:0;border-radius:8px;padding:11px 14px;background:#4F46E5;color:#fff;font-weight:900;text-decoration:none;cursor:pointer;font-family:var(--font-body)}
+    .teacher-btn.secondary,.teacher-link.secondary{background:#fff;color:#0F172A;border:1px solid #CBD5E1}
+    .teacher-btn.danger{background:#B91C1C}
+    .teacher-btn:disabled{opacity:.55;cursor:not-allowed}
+    .teacher-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+    .teacher-stat{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:16px}
+    .teacher-stat span{display:block;color:#64748B;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+    .teacher-stat strong{display:block;color:#0F172A;font-family:var(--font-display);font-size:30px;line-height:1.1;margin-top:5px}
+    .teacher-tabs{display:flex;gap:8px;overflow:auto;padding:4px;margin:8px 0 16px}
+    .teacher-tab{border:1px solid #CBD5E1;background:#fff;color:#334155;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;white-space:nowrap}
+    .teacher-tab.active{background:#0F172A;color:#fff;border-color:#0F172A}
+    .teacher-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
+    .teacher-panel-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:18px;box-shadow:0 12px 28px rgba(15,23,42,.035)}
+    .teacher-panel-card h2{font-family:var(--font-display);font-size:22px;color:#0F172A;margin:0 0 8px;letter-spacing:0}
+    .teacher-panel-card p{color:#64748B;font-weight:700;line-height:1.55;margin:0 0 14px}
+    .teacher-form{display:grid;gap:12px}
+    .teacher-field label{display:block;font-size:12px;font-weight:900;color:#475569;margin-bottom:6px}
+    .teacher-field input,.teacher-field select,.teacher-field textarea{width:100%;border:1px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:#0F172A;font:800 14px var(--font-body);padding:11px 12px;outline:none}
+    .teacher-field input[readonly]{background:#F1F5F9;color:#475569;cursor:not-allowed}
+    .teacher-field textarea{min-height:92px;resize:vertical}
+    .teacher-field input:focus,.teacher-field select:focus,.teacher-field textarea:focus{border-color:var(--purple);background:#fff;box-shadow:0 0 0 3px rgba(108,61,237,.1)}
+    .teacher-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .teacher-list{display:grid;gap:10px}
+    .teacher-row{border:1px solid #E2E8F0;border-radius:10px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;background:#fff}
+    .teacher-row-title{font-weight:950;color:#0F172A;line-height:1.25}
+    .teacher-row-sub{font-size:13px;color:#64748B;font-weight:750;margin-top:4px;line-height:1.45}
+    .teacher-row-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .teacher-mini-btn{border:1px solid #CBD5E1;background:#fff;color:#334155;border-radius:8px;padding:8px 10px;font-weight:900;cursor:pointer}
+    .teacher-mini-btn.primary{background:#EEF2FF;color:#4338CA;border-color:#C7D2FE}
+    .teacher-mini-btn.danger{background:#FEF2F2;color:#B91C1C;border-color:#FECACA}
+    .teacher-empty{border:1.5px dashed #CBD5E1;border-radius:12px;padding:18px;color:#64748B;font-weight:800;text-align:center;background:#F8FAFC}
+    .teacher-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .teacher-table th{text-align:left;font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.04em;padding:0 10px}
+    .teacher-table td{background:#fff;border-top:1.5px solid #E2E8F0;border-bottom:1.5px solid #E2E8F0;padding:12px 10px;color:#334155;font-weight:750}
+    .teacher-table td:first-child{border-left:1.5px solid #E2E8F0;border-radius:10px 0 0 10px}
+    .teacher-table td:last-child{border-right:1.5px solid #E2E8F0;border-radius:0 10px 10px 0}
+    .teacher-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:900}
+    .teacher-pill.ok{background:#DCFCE7;color:#166534}
+    .teacher-pill.warn{background:#FEF3C7;color:#92400E}
+    .teacher-toast{position:fixed;right:18px;bottom:18px;z-index:50;max-width:360px;background:#0F172A;color:#fff;border-radius:12px;padding:13px 15px;font-weight:850;box-shadow:0 20px 44px rgba(15,23,42,.28);display:none}
+    .teacher-toast.show{display:block}
+    .teacher-toast.error{background:#B91C1C}
+    .teacher-section{display:none}
+    .teacher-section.active{display:block}
+    .teacher-note{padding:12px 14px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;color:#475569;font-weight:800;line-height:1.5;margin-bottom:14px}
+    .teacher-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .teacher-action-card{border:1px solid #E2E8F0;border-radius:10px;background:#fff;padding:16px;display:grid;gap:10px;align-content:start}
+    .teacher-action-card strong{font-size:17px;color:#0F172A}
+    .teacher-action-card span{color:#64748B;font-weight:750;line-height:1.45}
+    .teacher-account-grid{display:grid;grid-template-columns:minmax(280px,420px) minmax(0,1fr);gap:16px;align-items:start}
+    .teacher-danger-zone{border:1px solid #FECACA;background:#FEF2F2;border-radius:10px;padding:16px}
+    .teacher-danger-zone h3{font-size:18px;color:#991B1B;margin:0 0 8px}
+    .teacher-danger-zone p{color:#7F1D1D;margin-bottom:12px}
+    .teacher-status-line{display:grid;gap:8px;margin-top:10px}
+    .teacher-status-line div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #E2E8F0;padding-bottom:8px;color:#475569;font-weight:800}
+    .teacher-status-line strong{color:#0F172A}
+    @media(max-width:980px){.teacher-hero{grid-template-columns:1fr}.teacher-top-actions{justify-content:flex-start}.teacher-layout,.teacher-account-grid{grid-template-columns:1fr}.teacher-stats,.teacher-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:640px){.teacher-panel{padding:18px 12px 34px}.teacher-row{grid-template-columns:1fr}.teacher-row-actions{justify-content:flex-start}.teacher-two,.teacher-stats,.teacher-action-grid{grid-template-columns:1fr}.teacher-table{font-size:13px}}
+  </style>
+</head>
+<body>
+  <main class="teacher-panel">
+    <section class="teacher-shell">
+      <div class="teacher-hero">
+        <div>
+          <h1>Öğretmen Paneli</h1>
+          <p id="teacherIntro">Hesabın yükleniyor...</p>
+          <div class="teacher-top-actions">
+            <a class="teacher-link secondary" href="/index.html">Siteye Dön</a>
+            <button class="teacher-btn secondary" id="refreshBtn" type="button">Yenile</button>
+            <button class="teacher-btn danger" id="logoutBtn" type="button">Çıkış Yap</button>
+          </div>
+        </div>
+        <span class="teacher-badge" id="teacherStatus">Kontrol ediliyor</span>
+      </div>
+
+      <div class="teacher-stats">
+        <div class="teacher-stat"><span>Sınıf</span><strong id="statClasses">0</strong></div>
+        <div class="teacher-stat"><span>Öğrenci</span><strong id="statStudents">0</strong></div>
+        <div class="teacher-stat"><span>Aktif Ödev</span><strong id="statAssignments">0</strong></div>
+        <div class="teacher-stat"><span>Yaklaşan</span><strong id="statDueSoon">0</strong></div>
+      </div>
+
+      <div class="teacher-tabs" role="tablist">
+        <button class="teacher-tab active" type="button" data-tab="classes">Sınıflarım</button>
+        <button class="teacher-tab" type="button" data-tab="assignments">Ödevler</button>
+        <button class="teacher-tab" type="button" data-tab="reports">Karneler</button>
+        <button class="teacher-tab" type="button" data-tab="content">İçerik Paylaşımı</button>
+        <button class="teacher-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
+      </div>
+
+      <section class="teacher-section active" id="section-classes">
+        <div class="teacher-layout">
+          <article class="teacher-panel-card">
+            <h2>Sınıf Oluştur</h2>
+            <p>Sınıf kodu otomatik üretilir. Öğrenciler bu kodla sınıfa bağlanabilir.</p>
+            <form class="teacher-form" id="classForm">
+              <div class="teacher-field">
+                <label for="className">Sınıf adı</label>
+                <input id="className" type="text" placeholder="Örn. 4/A Türkçe Grubu" required>
+              </div>
+              <div class="teacher-two">
+                <div class="teacher-field">
+                  <label for="classGrade">Sınıf seviyesi</label>
+                  <select id="classGrade" required></select>
+                </div>
+                <div class="teacher-field">
+                  <label for="classBranch">Şube</label>
+                  <input id="classBranch" type="text" maxlength="12" placeholder="A">
+                </div>
+              </div>
+              <button class="teacher-btn" type="submit">Sınıfı Kaydet</button>
+            </form>
+          </article>
+
+          <article class="teacher-panel-card">
+            <h2>Sınıf Listesi</h2>
+            <div class="teacher-list" id="classList"></div>
+          </article>
+        </div>
+
+        <div class="teacher-panel-card" style="margin-top:16px">
+          <h2>Öğrenci Ekle / Çıkar</h2>
+          <p>Öğrenci e-postası varsa hesabıyla eşleşir; yoksa öğretmen takip listesinde manuel kayıt olarak kalır.</p>
+          <form class="teacher-form" id="studentForm">
+            <div class="teacher-two">
+              <div class="teacher-field">
+                <label for="studentClass">Sınıf</label>
+                <select id="studentClass" required></select>
+              </div>
+              <div class="teacher-field">
+                <label for="studentEmail">Öğrenci e-postası</label>
+                <input id="studentEmail" type="email" placeholder="opsiyonel">
+              </div>
+            </div>
+            <div class="teacher-two">
+              <div class="teacher-field">
+                <label for="studentName">Ad soyad</label>
+                <input id="studentName" type="text" placeholder="Örn. Zeynep Kaya" required>
+              </div>
+              <div class="teacher-field">
+                <label for="studentNo">Okul no</label>
+                <input id="studentNo" type="text" placeholder="opsiyonel">
+              </div>
+            </div>
+            <button class="teacher-btn" type="submit">Öğrenciyi Ekle</button>
+          </form>
+          <div style="height:14px"></div>
+          <div id="studentList"></div>
+        </div>
+      </section>
+
+      <section class="teacher-section" id="section-assignments">
+        <div class="teacher-layout">
+          <article class="teacher-panel-card">
+            <h2>Ödev Ver</h2>
+            <p>Ödevi tüm sınıfa ya da seçili öğrencilere atayabilirsin.</p>
+            <form class="teacher-form" id="assignmentForm">
+              <div class="teacher-field">
+                <label for="assignmentTitle">Ödev başlığı</label>
+                <input id="assignmentTitle" type="text" placeholder="Örn. Hafta sonu okuma görevi" required>
+              </div>
+              <div class="teacher-two">
+                <div class="teacher-field">
+                  <label for="assignmentType">İçerik türü</label>
+                  <select id="assignmentType">
+                    <option value="reading">Hızlı okuma</option>
+                    <option value="exam">Sınav / deneme</option>
+                    <option value="document">Doküman</option>
+                    <option value="custom">Serbest bağlantı</option>
+                  </select>
+                </div>
+                <div class="teacher-field">
+                  <label for="assignmentClass">Sınıf</label>
+                  <select id="assignmentClass" required></select>
+                </div>
+              </div>
+              <div class="teacher-field">
+                <label for="assignmentTarget">Hedef</label>
+                <select id="assignmentTarget">
+                  <option value="class">Tüm sınıf</option>
+                  <option value="students">Seçili öğrenciler</option>
+                </select>
+              </div>
+              <div class="teacher-field" id="assignmentStudentsWrap" style="display:none">
+                <label for="assignmentStudents">Öğrenciler</label>
+                <select id="assignmentStudents" multiple size="5"></select>
+              </div>
+              <div class="teacher-field">
+                <label for="assignmentUrl">İçerik bağlantısı veya ID</label>
+                <input id="assignmentUrl" type="text" placeholder="/hizli-okuma/oku.html?id=...">
+              </div>
+              <div class="teacher-two">
+                <div class="teacher-field">
+                  <label for="assignmentStart">Başlama tarihi</label>
+                  <input id="assignmentStart" type="date">
+                </div>
+                <div class="teacher-field">
+                  <label for="assignmentDue">Bitiş tarihi</label>
+                  <input id="assignmentDue" type="date">
+                </div>
+              </div>
+              <div class="teacher-field">
+                <label for="assignmentNote">Not</label>
+                <textarea id="assignmentNote" placeholder="Kısa yönerge"></textarea>
+              </div>
+              <button class="teacher-btn" type="submit">Ödevi Yayınla</button>
+            </form>
+          </article>
+
+          <article class="teacher-panel-card">
+            <h2>Yaklaşan ve Aktif Ödevler</h2>
+            <div class="teacher-list" id="assignmentList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="teacher-section" id="section-reports">
+        <div class="teacher-panel-card">
+          <h2>Öğrenci Karneleri ve İlerleme</h2>
+          <p>Kendi sınıflarındaki öğrenciler için okuma sonuçları, ödev tamamlama durumu ve liyakat puanları birlikte izlenir.</p>
+          <div id="reportList"></div>
+        </div>
+      </section>
+
+      <section class="teacher-section" id="section-content">
+        <div class="teacher-panel-card">
+          <h2>İçerik Merkezi</h2>
+          <p>Öğretmen içeriklerini tek yerden hazırlamak, görünürlüğünü seçmek ve sınıfa ödev olarak göndermek için planlanan çalışma alanı.</p>
+          <div class="teacher-action-grid">
+            <article class="teacher-action-card">
+              <strong>Okuma metni</strong>
+              <span>Kendi hızlı okuma metinlerini oluşturup sınıfa özel veya herkese açık yayınlayabilirsin.</span>
+              <span class="teacher-pill ok">Model hazır</span>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Sınav / deneme</strong>
+              <span>Mevcut sınav yöneticisi öğretmen sahipliğiyle bağlanacak; sınıf görünürlüğü buradan yönetilecek.</span>
+              <span class="teacher-pill warn">Bağlantı aşaması</span>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Doküman</strong>
+              <span>PDF ve çalışma kağıtlarını sınıfa veya seçili öğrencilere ödev olarak atayabilirsin.</span>
+              <span class="teacher-pill ok">Ödevde aktif</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="teacher-section" id="section-account">
+        <div class="teacher-account-grid">
+          <article class="teacher-panel-card">
+            <h2>Kişisel Bilgiler</h2>
+            <p>İsim ve e-posta hesap güvenliği için bu panelden değiştirilemez.</p>
+            <div class="teacher-form">
+              <div class="teacher-field">
+                <label for="accountName">İsim</label>
+                <input id="accountName" type="text" readonly>
+              </div>
+              <div class="teacher-field">
+                <label for="accountEmail">E-posta</label>
+                <input id="accountEmail" type="email" readonly>
+              </div>
+              <div class="teacher-two">
+                <div class="teacher-field">
+                  <label for="accountRole">Rol</label>
+                  <input id="accountRole" type="text" readonly>
+                </div>
+                <div class="teacher-field">
+                  <label for="accountStatusText">Hesap durumu</label>
+                  <input id="accountStatusText" type="text" readonly>
+                </div>
+              </div>
+              <div class="teacher-field">
+                <label for="accountSchool">Okul</label>
+                <input id="accountSchool" type="text" readonly>
+              </div>
+            </div>
+          </article>
+
+          <article class="teacher-panel-card">
+            <h2>Hesap Yönetimi</h2>
+            <p>Hesabını kapatırsan tekrar giriş yapamazsın; sınıf ve ödev kayıtları raporlama için korunur.</p>
+            <div class="teacher-status-line">
+              <div><span>Kayıt e-postası</span><strong id="accountEmailSummary">-</strong></div>
+              <div><span>Onay durumu</span><strong id="accountApprovalSummary">-</strong></div>
+              <div><span>Aktiflik</span><strong id="accountActiveSummary">-</strong></div>
+            </div>
+            <div class="teacher-danger-zone" style="margin-top:16px">
+              <h3>Hesap kapatma</h3>
+              <p>Bu işlem profilini pasife alır ve oturumu kapatır. E-posta ve isim geçmiş kayıtlarla eşleşebilmesi için korunur.</p>
+              <div class="teacher-row-actions" style="justify-content:flex-start">
+                <button class="teacher-btn danger" type="button" id="deactivateAccountBtn">Hesabı Kapat</button>
+                <button class="teacher-btn secondary" type="button" id="requestDeleteBtn">Silme Talebi Oluştur</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div class="teacher-toast" id="teacherToast"></div>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script src="/js/ogretmen-paneli.js"></script>
+</body>
+</html>

@@ -2,8 +2,8 @@
   'use strict';
 
   const BUCKET_NAME = window.kemalDocumentStore.getBucketName();
-  const SUBJECTS = window.kemalDocumentStore.getSubjects();
   const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
+  const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 
   const state = {
     documents: [],
@@ -91,6 +91,22 @@
       unit += 1;
     }
     return size.toFixed(size >= 10 || unit === 0 ? 0 : 1) + ' ' + units[unit];
+  }
+
+  function validatePdfFile(file) {
+    if (!file) {
+      return;
+    }
+
+    const name = String(file.name || '').toLowerCase();
+    const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
+    if (!isPdf) {
+      throw new Error('Yalnızca PDF dosyası yükleyebilirsin.');
+    }
+
+    if (file.size > MAX_PDF_SIZE_BYTES) {
+      throw new Error('PDF dosyası en fazla ' + formatBytes(MAX_PDF_SIZE_BYTES) + ' olabilir.');
+    }
   }
 
   function slugify(value) {
@@ -187,7 +203,7 @@
     document.getElementById('fBaslik').value = '';
     document.getElementById('fAciklama').value = '';
     document.getElementById('fSinif').value = '1';
-    document.getElementById('fDers').value = SUBJECTS[0].key;
+    document.getElementById('fDers').value = (window.kemalDocumentStore.getSubjects()[0] || {}).key || '';
     document.getElementById('fSiralama').value = '0';
     document.getElementById('fKapakRenk').value = '#6C3DED';
     document.getElementById('fAktif').checked = true;
@@ -198,11 +214,12 @@
   }
 
   function populateSelects() {
+    const subjects = window.kemalDocumentStore.getSubjects();
     document.getElementById('fSinif').innerHTML = GRADES.map(function(grade) {
       return '<option value="' + grade + '">' + window.kemalDocumentStore.getGradeLabel(grade) + '</option>';
     }).join('');
 
-    const subjectOptions = SUBJECTS.map(function(subject) {
+    const subjectOptions = subjects.map(function(subject) {
       return '<option value="' + subject.key + '">' + subject.icon + ' ' + subject.label + '</option>';
     }).join('');
 
@@ -288,6 +305,7 @@
   }
 
   async function extractPdfMeta(file) {
+    validatePdfFile(file);
     ensurePdfWorker();
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -308,6 +326,16 @@
       } else {
         setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
       }
+      updateSummary();
+      return;
+    }
+
+    try {
+      validatePdfFile(file);
+    } catch (error) {
+      document.getElementById('fPdf').value = '';
+      setFileInfo(error.message + ' Dosya seçimi temizlendi.');
+      toast(error.message, 'error');
       updateSummary();
       return;
     }
@@ -370,6 +398,9 @@
     }
     if (!existing && !file) {
       throw new Error('Yeni kayıt için bir PDF yüklemelisin.');
+    }
+    if (file) {
+      validatePdfFile(file);
     }
 
     return {
@@ -522,7 +553,7 @@
     document.getElementById('fBaslik').value = doc.baslik || '';
     document.getElementById('fAciklama').value = doc.aciklama || '';
     document.getElementById('fSinif').value = String(doc.sinif || 1);
-    document.getElementById('fDers').value = doc.ders || SUBJECTS[0].key;
+    document.getElementById('fDers').value = doc.ders || (window.kemalDocumentStore.getSubjects()[0] || {}).key || '';
     document.getElementById('fSiralama').value = String(doc.siralama || 0);
     document.getElementById('fKapakRenk').value = doc.kapak_renk || '#6C3DED';
     document.getElementById('fAktif').checked = Boolean(doc.aktif);
@@ -669,6 +700,20 @@
   }
 
   document.addEventListener('DOMContentLoaded', async function() {
+    // Dinamik ders listesini Supabase'den yükle
+    try {
+      const cfg = window.kemalDocumentStore.getConfig();
+      if (cfg && cfg.supabaseUrl && window.supabase) {
+        const dynClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
+          auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
+        });
+        const res = await dynClient.from('menu_ogeler').select('ders_key,label,icon').eq('active', true);
+        if (!res.error && window.kemalDocumentStore.mergeMenuItems) {
+          window.kemalDocumentStore.mergeMenuItems(res.data || []);
+        }
+      }
+    } catch (e) { /* tablo yoksa atla */ }
+
     populateSelects();
     bindEvents();
     resetForm();

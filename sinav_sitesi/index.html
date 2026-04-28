@@ -35,29 +35,31 @@ html{scroll-behavior:smooth}
 body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:100vh}
 
 /* HERO */
-.exam-hero{max-width:1280px;margin:0 auto;padding:68px 24px 56px;display:grid;grid-template-columns:minmax(320px,1fr) minmax(320px,440px);gap:44px;align-items:center}
+.exam-hero{max-width:1500px;margin:0 auto;padding:58px 28px 52px;display:grid;grid-template-columns:minmax(340px,.86fr) minmax(590px,1.14fr);gap:42px;align-items:center}
 .exam-hero-copy{text-align:left}
 .exam-hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(108,61,237,.1);color:var(--purple);font-size:13px;font-weight:700;padding:8px 18px;border-radius:50px;margin-bottom:20px;border:1.5px solid rgba(108,61,237,.2)}
-.exam-hero-title{font-family:var(--fd);font-size:clamp(38px,5vw,72px);font-weight:900;color:var(--navy);line-height:1.03;margin-bottom:18px;letter-spacing:-0.02em}
+.exam-hero-title{font-family:var(--fd);font-size:clamp(36px,4.15vw,64px);font-weight:900;color:var(--navy);line-height:1.04;margin-bottom:18px;letter-spacing:0}
 .exam-hero-title span{display:block;color:var(--purple)}
-.exam-hero-text{font-size:20px;color:var(--slate);max-width:620px;line-height:1.7}
-.exam-hero-stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:30px}
+.exam-hero-text{font-size:18px;color:var(--slate);max-width:560px;line-height:1.65}
+.exam-hero-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
 .exam-hero-stat{min-width:132px;padding:18px 18px 16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(108,61,237,.12);border-radius:20px;box-shadow:var(--sh-sm);backdrop-filter:blur(8px)}
 .exam-stat-number{font-family:var(--fd);font-size:34px;font-weight:900;color:var(--purple);line-height:1}
 .exam-stat-label{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin-top:8px}
 
 /* GRADE PANEL */
-.exam-grade-panel{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.74));border:1.5px solid rgba(108,61,237,.12);border-radius:32px;padding:28px;box-shadow:var(--sh-lg);backdrop-filter:blur(12px)}
+.exam-grade-panel{width:100%;min-width:0;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.76));border:1.5px solid rgba(108,61,237,.12);border-radius:32px;padding:30px 34px;box-shadow:var(--sh-lg);backdrop-filter:blur(12px)}
 .exam-grade-panel-title{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--navy);text-align:center}
 .exam-grade-panel-text{font-size:14px;color:var(--slate);text-align:center;line-height:1.7;margin:10px auto 22px;max-width:320px}
-.exam-grade-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.exam-grade-card{border:none;border-radius:28px;padding:16px 12px 18px;min-height:152px;text-align:center;cursor:pointer;transition:transform .24s cubic-bezier(.34,1.56,.64,1),box-shadow .24s ease,filter .24s ease;box-shadow:var(--sh);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;align-items:center;color:#fff;font-family:var(--fb)}
-.exam-grade-card:hover{transform:translateY(-6px) scale(1.03);box-shadow:var(--sh-lg);filter:saturate(1.06)}
-.exam-grade-card::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 48%,rgba(255,255,255,.08));opacity:.9}
+.exam-grade-grid{display:grid;grid-template-columns:repeat(4,minmax(128px,1fr));gap:18px}
+.exam-grade-card{min-width:0;border:none;border-radius:28px;padding:14px;aspect-ratio:1/1;min-height:154px;text-align:center;cursor:pointer;transition:transform .24s cubic-bezier(.34,1.56,.64,1),box-shadow .24s ease,filter .24s ease;box-shadow:0 14px 28px var(--grade-shadow,rgba(15,23,42,.12));position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--fb)}
+.exam-grade-card:hover{transform:translateY(-5px) scale(1.025);box-shadow:0 20px 38px var(--grade-shadow,rgba(15,23,42,.16));filter:saturate(1.06)}
+.exam-grade-card::before{content:'';position:absolute;inset:8px;border-radius:21px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.48),0 12px 24px rgba(15,23,42,.10);backdrop-filter:blur(14px) saturate(1.24);-webkit-backdrop-filter:blur(14px) saturate(1.24)}
+.exam-grade-card::after{content:'';position:absolute;inset:0;background:linear-gradient(165deg,rgba(255,255,255,.22),rgba(255,255,255,.06) 45%,transparent 70%);opacity:.94}
 .exam-grade-card > *{position:relative;z-index:1}
-.exam-grade-card-label{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:6px 12px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-.exam-grade-card-num{font-family:var(--fd);font-size:64px;font-weight:900;line-height:1;text-shadow:0 4px 14px rgba(0,0,0,.14)}
-.exam-grade-card-action{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.92)}
+.exam-grade-card-title{display:flex;align-items:center;justify-content:center;flex-direction:column;width:100%;height:100%;padding:8px;border-radius:18px;font-family:var(--fd);font-weight:900;line-height:1;color:#fff;text-shadow:0 2px 10px rgba(15,23,42,.16);letter-spacing:.01em}
+.exam-grade-card-no{display:block;font-size:clamp(52px,3.5vw,74px);line-height:.82;margin-bottom:6px;white-space:nowrap}
+.exam-grade-card-class{display:block;font-size:clamp(22px,1.55vw,30px);line-height:.95;text-transform:uppercase;white-space:nowrap}
+.exam-grade-card-action{display:block;margin-top:7px;font-size:clamp(13px,.9vw,16px);line-height:1.05;white-space:nowrap}
 
 /* GRADE SECTION */
 .grade-section{max-width:1280px;margin:0 auto;padding:0 24px 60px;animation:fadeUp .3s ease}
@@ -69,27 +71,35 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .back-btn:hover{background:rgba(255,255,255,.3)}
 
 /* SUBJECT FILTERS */
-.subj-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.subj-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .sf-btn{padding:8px 16px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--white);color:var(--slate);transition:all .18s;font-family:var(--fb)}
 .sf-btn:hover{border-color:var(--purple);color:var(--purple)}
 .sf-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
+.exam-filter-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:#fff;border:1.5px solid rgba(108,61,237,.14);border-radius:18px;padding:14px;margin-bottom:18px;box-shadow:var(--sh-sm)}
+.exam-filter-panel label{display:block;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
+.exam-filter-panel select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:#F8FAFC;color:var(--navy);font-family:var(--fb);font-weight:700;outline:none}
+.exam-filter-panel select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,61,237,.10);background:#fff}
 
-/* EXAM GRID (İKİLİ SÜTUN) */
-.exam-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:20px}
-.ec{background:var(--white);border-radius:var(--r-lg);border:1.5px solid var(--border);overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--sh-sm);display:flex;flex-direction:column}
-.ec:hover{transform:translateY(-3px);box-shadow:var(--sh);border-color:rgba(108,61,237,.3)}
-.ec-head{height:96px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;padding:0 12px}
-.ec-sub{font-size:10px;font-weight:800;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.5px}
-.ec-title{font-family:var(--fd);font-size:15px;font-weight:800;color:#fff;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.2);line-height:1.3}
-.ec-body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:10px}
+/* EXAM GRID */
+.exam-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:20px}
+.ec{background:var(--white);border-radius:22px;border:2px solid var(--card-border,#E2E8F0);overflow:hidden;cursor:pointer;transition:all .22s;box-shadow:0 14px 30px rgba(15,23,42,.08);display:flex;flex-direction:column;min-height:260px;position:relative}
+.ec::before{content:'';position:absolute;inset:0 0 auto 0;height:7px;background:var(--card-accent,#6C3DED)}
+.ec:hover{transform:translateY(-5px);box-shadow:0 18px 38px rgba(15,23,42,.12);border-color:var(--card-accent,#6C3DED)}
+.ec-head{min-height:116px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:24px 20px 16px;background:linear-gradient(180deg,var(--card-bg,#F8FAFC),#fff)}
+.ec-number{width:52px;height:52px;border-radius:18px;display:flex;align-items:center;justify-content:center;background:var(--card-accent,#6C3DED);color:#fff;font-family:var(--fd);font-size:26px;font-weight:900;box-shadow:0 12px 22px var(--card-shadow,rgba(108,61,237,.22));flex-shrink:0}
+.ec-heading{min-width:0;flex:1}
+.ec-sub{font-size:10px;font-weight:900;color:var(--card-accent,#6C3DED);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px}
+.ec-title{font-family:var(--fd);font-size:17px;font-weight:900;color:var(--navy);line-height:1.28;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ec-active-pill{align-self:flex-start;padding:5px 10px;border-radius:999px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;font-size:10px;font-weight:900;letter-spacing:.06em;white-space:nowrap}
+.ec-body{padding:0 20px 18px;flex:1;display:flex;flex-direction:column;gap:12px}
 .ec-flags{display:flex;gap:8px;flex-wrap:wrap}
 .ec-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.05em}
 .ec-chip-new{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA}
 .ec-chip-status{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}
 .ec-meta{display:flex;gap:10px;flex-wrap:wrap}
 .ec-mi{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
-.ec-btn{width:100%;padding:8px;border-radius:var(--r-sm);border:none;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;background:rgba(108,61,237,.07);color:var(--purple)}
-.ec-btn:hover{background:var(--purple);color:#fff}
+.ec-btn{width:100%;margin-top:auto;padding:11px 12px;border-radius:12px;border:none;font-family:var(--fb);font-size:13px;font-weight:900;cursor:pointer;transition:all .18s;background:var(--card-accent,#6C3DED);color:#fff;box-shadow:0 10px 18px var(--card-shadow,rgba(108,61,237,.20))}
+.ec-btn:hover{filter:saturate(1.08) brightness(.98);transform:translateY(-1px)}
 .ec.is-complete{border-color:#A7F3D0;box-shadow:0 8px 20px rgba(16,185,129,.10)}
 
 /* PAGINATION */
@@ -147,17 +157,27 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 body.sinav-home-page .nav-logo img{display:block!important}
 body.sinav-home-page .site-footer{margin-top:40px}
 
-/* RESPONSIVE (Telefonda otomatik tek sütun) */
-@media(max-width:768px){
-  .exam-hero{grid-template-columns:1fr;gap:24px;padding:40px 16px 36px}
+/* RESPONSIVE */
+@media(max-width:1320px){
+  .exam-hero{max-width:920px;grid-template-columns:1fr;gap:30px;padding:48px 24px 46px}
   .exam-hero-copy{text-align:center}
+  .exam-hero-text{margin:0 auto}
+  .exam-hero-stats{justify-content:center}
+  .exam-grade-panel{max-width:760px;margin:0 auto}
+}
+@media(max-width:920px){
+  .exam-hero{padding:44px 20px 40px}
+  .exam-grade-panel{max-width:640px;padding:26px 24px;border-radius:28px}
+  .exam-grade-grid{grid-template-columns:repeat(2,minmax(128px,1fr));gap:16px}
+}
+@media(max-width:768px){
+  .exam-hero{gap:24px;padding:40px 16px 36px}
   .exam-hero-title{font-size:44px}
   .exam-hero-text{font-size:17px;max-width:none}
-  .exam-hero-stats{justify-content:center}
   .exam-grade-panel{padding:22px 18px;border-radius:24px}
   .exam-grade-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  .exam-grade-card{min-height:144px}
-  .exam-grade-card-num{font-size:56px}
+  .exam-grade-card{min-height:140px}
+  .exam-filter-panel{grid-template-columns:1fr}
   .exam-grid{grid-template-columns:1fr}
   .grade-section{padding:0 14px 40px}
   .grade-banner{padding:18px 20px}
@@ -166,10 +186,12 @@ body.sinav-home-page .site-footer{margin-top:40px}
 }
 @media(max-width:480px){
   .exam-hero-title{font-size:34px}
-  .exam-grade-card{min-height:130px;padding:14px 10px 16px}
-  .exam-grade-card-num{font-size:46px}
-  .exam-grade-card-label{font-size:10px;padding:5px 10px}
-  .exam-grade-card-action{font-size:11px}
+  .exam-grade-card{min-height:126px;padding:10px;border-radius:22px}
+  .exam-grade-card::before{inset:7px;border-radius:17px}
+  .exam-grade-card-title{padding:8px}
+  .exam-grade-card-no{font-size:52px}
+  .exam-grade-card-class{font-size:22px}
+  .exam-grade-card-action{font-size:13px}
 }
 </style>
 </head>
@@ -210,6 +232,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
       <button class="back-btn" onclick="showHero()">← Tüm Sınıflar</button>
     </div>
     <div class="subj-filters" id="subjFilters"></div>
+    <div class="exam-filter-panel" id="examTools"></div>
     <div id="examGrid"></div>
     <div class="pagination" id="pagination"></div>
   </div>
@@ -273,17 +296,27 @@ const DEFAULT_SUBJECTS={
   8:['Türkçe','Matematik','Sosyal Bilgiler','Fen Bilimleri','Deneme','Agisler']
 };
 const GC=[null,
-  {bg:'linear-gradient(135deg,#FF6B6B,#FF8E53)'},
-  {bg:'linear-gradient(135deg,#FF8E53,#FFA726)'},
-  {bg:'linear-gradient(135deg,#FFA726,#FFCC02)'},
-  {bg:'linear-gradient(135deg,#4CAF50,#66BB6A)'},
-  {bg:'linear-gradient(135deg,#26A69A,#26C6DA)'},
-  {bg:'linear-gradient(135deg,#29B6F6,#42A5F5)'},
-  {bg:'linear-gradient(135deg,#5C6BC0,#7E57C2)'},
-  {bg:'linear-gradient(135deg,#AB47BC,#EC407A)'}
+  {bg:'linear-gradient(135deg,#FF8A7A,#F36A72)',shadow:'rgba(243,106,114,.26)'},
+  {bg:'linear-gradient(135deg,#FFB15D,#F59E3B)',shadow:'rgba(245,158,59,.24)'},
+  {bg:'linear-gradient(135deg,#FFD166,#FBBF24)',shadow:'rgba(251,191,36,.24)'},
+  {bg:'linear-gradient(135deg,#8ED88F,#4FB866)',shadow:'rgba(79,184,102,.22)'},
+  {bg:'linear-gradient(135deg,#63C7C4,#28AEB3)',shadow:'rgba(40,174,179,.22)'},
+  {bg:'linear-gradient(135deg,#77C6F2,#3498DB)',shadow:'rgba(52,152,219,.22)'},
+  {bg:'linear-gradient(135deg,#9B8BE7,#6F5CCF)',shadow:'rgba(111,92,207,.24)'},
+  {bg:'linear-gradient(135deg,#E36DB5,#C24182)',shadow:'rgba(194,65,130,.22)'}
+];
+const EXAM_CARD_THEMES=[
+  {accent:'#F97373',bg:'#FFF1F2',border:'#FECACA',shadow:'rgba(249,115,115,.22)'},
+  {accent:'#F59E0B',bg:'#FFF7ED',border:'#FED7AA',shadow:'rgba(245,158,11,.22)'},
+  {accent:'#22C55E',bg:'#F0FDF4',border:'#BBF7D0',shadow:'rgba(34,197,94,.20)'},
+  {accent:'#14B8A6',bg:'#ECFEFF',border:'#99F6E4',shadow:'rgba(20,184,166,.20)'},
+  {accent:'#38BDF8',bg:'#EFF6FF',border:'#BAE6FD',shadow:'rgba(56,189,248,.20)'},
+  {accent:'#8B5CF6',bg:'#F5F3FF',border:'#DDD6FE',shadow:'rgba(139,92,246,.22)'},
+  {accent:'#D946EF',bg:'#FDF4FF',border:'#F5D0FE',shadow:'rgba(217,70,239,.18)'},
+  {accent:'#64748B',bg:'#F8FAFC',border:'#CBD5E1',shadow:'rgba(100,116,139,.16)'}
 ];
 
-let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:10,selExam:null,categoryMap:{}}; // Sayfada 10 sınav ayarı
+let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:12,selExam:null,categoryMap:{},sort:'custom',questionFilter:'all'}; // Sayfada 12 sınav ayarı
 const TR_CITIES=window.kemalSiteStore?.getTurkeyCities?window.kemalSiteStore.getTurkeyCities():[];
 const LOW_QUALITY_TOKENS=['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
 
@@ -291,6 +324,60 @@ function fmtDate(ts){
   if(!ts)return'—';
   const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);
   return d.toLocaleDateString('tr-TR');
+}
+function getTimestampValue(value){
+  if(!value)return 0;
+  if(typeof value.seconds==='number')return value.seconds*1000;
+  const parsed=Date.parse(String(value));
+  return Number.isNaN(parsed)?0:parsed;
+}
+function getDisplayOrderValue(exam,index){
+  const order=Number(exam&&exam.displayOrder);
+  return Number.isFinite(order)?order:10000+index;
+}
+function compareByCustomOrder(a,b){
+  const orderDiff=getDisplayOrderValue(a.item,a.index)-getDisplayOrderValue(b.item,b.index);
+  if(orderDiff!==0)return orderDiff;
+  return getTimestampValue(b.item.createdAt)-getTimestampValue(a.item.createdAt);
+}
+function sortExamRecords(list,mode){
+  const decorated=(list||[]).map((item,index)=>({item,index}));
+  if(mode==='oldest'){
+    decorated.sort((a,b)=>getTimestampValue(a.item.createdAt)-getTimestampValue(b.item.createdAt));
+  }else if(mode==='newest'){
+    decorated.sort((a,b)=>getTimestampValue(b.item.createdAt)-getTimestampValue(a.item.createdAt));
+  }else if(mode==='most-questions'){
+    decorated.sort((a,b)=>(Number(b.item.questionCount)||0)-(Number(a.item.questionCount)||0)||compareByCustomOrder(a,b));
+  }else if(mode==='fewest-questions'){
+    decorated.sort((a,b)=>(Number(a.item.questionCount)||0)-(Number(b.item.questionCount)||0)||compareByCustomOrder(a,b));
+  }else{
+    decorated.sort(compareByCustomOrder);
+  }
+  return decorated.map(row=>row.item);
+}
+function getQuestionFilterLabel(value){
+  if(value==='1-10')return '1-10 soru';
+  if(value==='11-20')return '11-20 soru';
+  if(value==='21-40')return '21-40 soru';
+  if(value==='41+')return '41+ soru';
+  return 'Tüm soru sayıları';
+}
+function matchesQuestionFilter(exam){
+  const count=Number(exam&&exam.questionCount)||0;
+  if(S.questionFilter==='1-10')return count>=1&&count<=10;
+  if(S.questionFilter==='11-20')return count>=11&&count<=20;
+  if(S.questionFilter==='21-40')return count>=21&&count<=40;
+  if(S.questionFilter==='41+')return count>=41;
+  return true;
+}
+function getHashIndex(value,length){
+  const text=String(value||'');
+  let hash=0;
+  for(let i=0;i<text.length;i++)hash=(hash*31+text.charCodeAt(i))>>>0;
+  return length?hash%length:0;
+}
+function getExamTheme(exam,index){
+  return EXAM_CARD_THEMES[getHashIndex((exam&&exam.id)||index,EXAM_CARD_THEMES.length)];
 }
 function capitalize(s){return s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');}
 function collapseSpaces(s){return String(s??'').replace(/\s+/g,' ').trim();}
@@ -390,10 +477,12 @@ function openExamModal(exam){
 
 function initUI(){
   document.getElementById('gradeCardsHero').innerHTML=GRADES.map(g=>`
-    <button type="button" class="exam-grade-card" style="background:${GC[g].bg}" onclick="window.selectGrade(${g})">
-      <span class="exam-grade-card-label">${g}. Sınıf</span>
-      <span class="exam-grade-card-num">${g}</span>
-      <span class="exam-grade-card-action">Sınavları Gör</span>
+    <button type="button" class="exam-grade-card" style="background:${GC[g].bg};--grade-shadow:${GC[g].shadow}" onclick="window.selectGrade(${g})">
+      <span class="exam-grade-card-title">
+        <span class="exam-grade-card-no">${g}.</span>
+        <span class="exam-grade-card-class">Sınıf</span>
+        <span class="exam-grade-card-action">Sınavları Gör</span>
+      </span>
     </button>`).join('');
 }
 
@@ -406,6 +495,7 @@ window.selectGrade=async function(g){
   document.getElementById('gradeBannerTitle').textContent=`${g}. Sınıf Sınavları`;
   await Promise.all([loadCategoriesForGrade(g),loadExams(g)]);
   renderSubjects(g);
+  renderExamTools(g);
   applyFilter();
 };
 
@@ -422,9 +512,51 @@ function renderSubjects(g){
   document.getElementById('subjFilters').innerHTML=ss.map(s=>`<button class="sf-btn ${s===S.subject?'active':''}" onclick='window.filterSub(${JSON.stringify(s)})'>${escHtml(s)}</button>`).join('');
 }
 
+function renderExamTools(g){
+  const ss=getSubjectOptions(g);
+  document.getElementById('examTools').innerHTML=`
+    <div>
+      <label>Tür</label>
+      <select onchange="window.setExamTool('subject',this.value)">
+        ${ss.map(s=>`<option value="${escHtml(s)}" ${s===S.subject?'selected':''}>${escHtml(s)}</option>`).join('')}
+      </select>
+    </div>
+    <div>
+      <label>Tarih / Sıra</label>
+      <select onchange="window.setExamTool('sort',this.value)">
+        <option value="custom" ${S.sort==='custom'?'selected':''}>Benim sıram</option>
+        <option value="newest" ${S.sort==='newest'?'selected':''}>En yeni</option>
+        <option value="oldest" ${S.sort==='oldest'?'selected':''}>En eski</option>
+        <option value="most-questions" ${S.sort==='most-questions'?'selected':''}>Soru sayısı fazla</option>
+        <option value="fewest-questions" ${S.sort==='fewest-questions'?'selected':''}>Soru sayısı az</option>
+      </select>
+    </div>
+    <div>
+      <label>Soru Sayısı</label>
+      <select onchange="window.setExamTool('questionFilter',this.value)">
+        ${['all','1-10','11-20','21-40','41+'].map(value=>`<option value="${value}" ${S.questionFilter===value?'selected':''}>${getQuestionFilterLabel(value)}</option>`).join('')}
+      </select>
+    </div>`;
+}
+
 window.filterSub=function(s){
   S.subject=s;S.page=1;
   renderSubjects(S.grade);
+  renderExamTools(S.grade);
+  applyFilter();
+};
+
+window.setExamTool=function(key,value){
+  if(key==='subject'){
+    S.subject=value;
+    renderSubjects(S.grade);
+  }else if(key==='questionFilter'){
+    S.questionFilter=value;
+  }else{
+    S.sort=value;
+  }
+  S.page=1;
+  renderExamTools(S.grade);
   applyFilter();
 };
 
@@ -444,14 +576,18 @@ async function loadExams(g){
         snap={docs:psnap.docs.filter(d=>d.data()?.grade===g)};
       }
     }
-    S.exams=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    S.exams=sortExamRecords(snap.docs.map(d=>({id:d.id,...d.data()})),'custom');
   }catch(e){
     grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">⚠️</span><h3>Yükleme Hatası</h3><p>Sınavlar yüklenemedi, lütfen sayfayı yenileyin.</p></div>';
   }
 }
 
 function applyFilter(){
-  S.filtered=S.subject==='Tümü'?[...S.exams]:S.exams.filter(e=>e.subject===S.subject);
+  S.filtered=sortExamRecords(
+    (S.subject==='Tümü'?[...S.exams]:S.exams.filter(e=>e.subject===S.subject))
+      .filter(matchesQuestionFilter),
+    S.sort
+  );
   renderGrid();renderPagination();
 }
 
@@ -470,11 +606,17 @@ function renderGrid(){
     grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">📭</span><h3>Sınav Bulunamadı</h3><p>Bu alanda henüz sınav yayınlanmamış.</p></div>';
     return;
   }
-  grid.innerHTML=`<div class="exam-grid">${items.map(e=>`
-    <div class="ec ${getExamStatusMeta(e)?'is-complete':''}" onclick="window.openModal('${e.id}')">
-      <div class="ec-head" style="background:${gc.bg}">
-        <div class="ec-sub">${e.subject||''}</div>
-        <div class="ec-title">${e.title}</div>
+  grid.innerHTML=`<div class="exam-grid">${items.map((e,i)=>{
+    const theme=getExamTheme(e,start+i);
+    return `
+    <div class="ec ${getExamStatusMeta(e)?'is-complete':''}" style="--card-accent:${theme.accent};--card-bg:${theme.bg};--card-border:${theme.border};--card-shadow:${theme.shadow}" onclick="window.openModal('${e.id}')">
+      <div class="ec-head">
+        <div class="ec-heading">
+          <div class="ec-sub">${escHtml(e.subject||'Sınav')}</div>
+          <div class="ec-title">${escHtml(e.title)}</div>
+        </div>
+        <div class="ec-number">${start+i+1}</div>
+        <span class="ec-active-pill">Aktif</span>
       </div>
       <div class="ec-body">
         <div class="ec-flags">
@@ -489,7 +631,8 @@ function renderGrid(){
         </div>
         <button class="ec-btn">Sınava Gir →</button>
       </div>
-    </div>`).join('')}</div>`;
+    </div>`;
+  }).join('')}</div>`;
 }
 
 function renderPagination(){

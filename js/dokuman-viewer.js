@@ -220,7 +220,8 @@
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 2.6;
   const ZOOM_STEP = 0.2;
-  const PDF_RENDER_BOOST = 1.75;
+  const PDF_RENDER_BOOST = 2.25;
+  const ANNOTATION_EXPORT_SCALE = 2;
 
   const state = {
     documentId: '',
@@ -1368,7 +1369,7 @@
     const baseViewport = pdfPage.getViewport({ scale: 1 });
     const cssScale = state.pageWidth / baseViewport.width;
     const viewport = pdfPage.getViewport({ scale: cssScale });
-    const renderBoost = Math.min(PDF_RENDER_BOOST, Math.max(1, window.devicePixelRatio || 1));
+    const renderBoost = Math.min(PDF_RENDER_BOOST, Math.max(2, window.devicePixelRatio || 1));
     const nodes = createPageShell(pageNumber);
     nodes.pdfCanvas.width = Math.round(viewport.width * renderBoost);
     nodes.pdfCanvas.height = Math.round(viewport.height * renderBoost);
@@ -1380,6 +1381,8 @@
     nodes.shell.style.height = viewport.height + 'px';
 
     const pdfContext = nodes.pdfCanvas.getContext('2d', { alpha: false });
+    pdfContext.imageSmoothingEnabled = true;
+    pdfContext.imageSmoothingQuality = 'high';
     await pdfPage.render({
       canvasContext: pdfContext,
       viewport: viewport,
@@ -1610,6 +1613,7 @@
       const pngDataUrl = pageState.canvas.toDataURL({
         format: 'png',
         enableRetinaScaling: true,
+        multiplier: ANNOTATION_EXPORT_SCALE,
         withoutTransform: true,
       });
       const pngImage = await pdfDoc.embedPng(pngDataUrl);

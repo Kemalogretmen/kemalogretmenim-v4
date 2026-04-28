@@ -417,6 +417,9 @@
       const grade = params.get('sinif');
       const subject = params.get('ders');
       const routeHelper = window.kemalSiteRoutes;
+      if (routeHelper && typeof routeHelper.loadDynamicMenuItems === 'function') {
+        await routeHelper.loadDynamicMenuItems();
+      }
       const data = routeHelper ? routeHelper.getSubjectPageData(grade, subject) : null;
 
       if (!data) {

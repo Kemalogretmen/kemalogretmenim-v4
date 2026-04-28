@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  const SUBJECTS = [
+  const BASE_SUBJECTS = [
     { key: 'turkce', label: 'Türkçe', icon: '📝' },
     { key: 'matematik', label: 'Matematik', icon: '🔢' },
     { key: 'hayat-bilgisi', label: 'Hayat Bilgisi', icon: '🌱' },
@@ -10,10 +10,29 @@
     { key: 'okuma-anlama', label: 'Okuma Anlama', icon: '📖' },
   ];
 
-  const SUBJECT_MAP = SUBJECTS.reduce(function(map, subject) {
-    map[subject.key] = subject;
-    return map;
-  }, {});
+  // Dinamik dersler Supabase'den yüklendikçe buraya eklenir
+  let SUBJECTS = BASE_SUBJECTS.slice();
+  let SUBJECT_MAP = buildSubjectMap(SUBJECTS);
+
+  function buildSubjectMap(list) {
+    return list.reduce(function(map, subject) {
+      map[subject.key] = subject;
+      return map;
+    }, {});
+  }
+
+  // menu_ogeler tablosundaki yeni dersleri SUBJECTS listesine ekler
+  function mergeMenuItems(rows) {
+    if (!Array.isArray(rows)) return;
+    rows.forEach(function(row) {
+      var key = String(row.ders_key || '').trim().toLowerCase();
+      if (!key) return;
+      if (SUBJECT_MAP[key]) return; // zaten var
+      var entry = { key: key, label: row.label || key, icon: row.icon || '📄' };
+      SUBJECTS.push(entry);
+      SUBJECT_MAP[key] = entry;
+    });
+  }
 
   const SUBJECT_ALIASES = {
     turkce: 'turkce',
@@ -183,5 +202,6 @@
     buildViewerUrl: buildViewerUrl,
     listDocumentsBySubject: listDocumentsBySubject,
     getDocumentById: getDocumentById,
+    mergeMenuItems: mergeMenuItems,
   };
 })();

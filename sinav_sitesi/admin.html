@@ -90,10 +90,10 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .sel-card.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple)}
 
 /* PDF / CANVAS */
-.pdf-layout{display:flex;gap:22px;align-items:flex-start}
-.pdf-main{flex:1;min-width:0}
+.pdf-layout{display:flex;flex-direction:column;gap:16px}
+.pdf-main{width:100%;min-width:0}
 .pdf-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:8px;flex-wrap:wrap}
-.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#F8FAFC 0%,#EEF2FF 100%);overflow:auto;max-height:min(76vh,780px);min-height:620px;display:flex;align-items:flex-start;justify-content:center;padding:28px;cursor:crosshair;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#F8FAFC 0%,#EEF2FF 100%);overflow:auto;max-height:min(82vh,920px);min-height:680px;display:flex;align-items:flex-start;justify-content:center;padding:28px;cursor:crosshair;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
 .pdf-canvas-wrap.hand-mode{cursor:grab}
 .pdf-canvas-wrap.hand-mode.dragging{cursor:grabbing}
 .pdf-canvas-wrap.drag-over,.pdf-dropzone.drag-over{border-color:var(--purple);background:#F5F3FF;box-shadow:0 0 0 4px rgba(108,61,237,.12)}
@@ -103,12 +103,12 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .pdf-dropzone{min-height:360px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:18px;border:2px dashed var(--border);flex-direction:column;gap:10px;cursor:pointer;padding:24px;text-align:center;transition:all .18s}
 
 /* Q PANEL */
-.q-panel{width:320px;flex-shrink:0;max-height:min(76vh,780px);overflow-y:auto}
-.q-list{display:flex;flex-direction:column;gap:8px}
-.q-item{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);background:var(--white);box-shadow:var(--sh-sm)}
-.q-thumb{width:72px;height:44px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#f8f9fa;flex-shrink:0}
+.q-panel{width:100%;flex-shrink:0}
+.q-list{display:flex;flex-direction:row;flex-wrap:wrap;gap:10px}
+.q-item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border:1px solid var(--border);border-radius:var(--r);background:var(--white);box-shadow:var(--sh-sm);width:130px;flex-shrink:0}
+.q-thumb{width:110px;height:70px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:#f8f9fa;flex-shrink:0}
 .ans-badge{padding:3px 11px;border-radius:20px;background:var(--purple);color:#fff;font-weight:700;font-size:12px}
-.q-handle{width:34px;height:44px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:10px;background:#F8FAFC;color:var(--muted);font-size:16px;cursor:grab;flex-shrink:0}
+.q-handle{width:100%;height:24px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);border-radius:6px;background:#F8FAFC;color:var(--muted);font-size:14px;cursor:grab;flex-shrink:0}
 .q-handle:active{cursor:grabbing}
 .q-order{min-width:18px;padding-top:4px;font-weight:800;color:var(--muted);font-size:12px;font-family:var(--fd)}
 .q-meta{flex:1;min-width:0}
@@ -194,8 +194,7 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .main-footer a{color:var(--purple);text-decoration:none;font-family:var(--fd);font-weight:700;font-size:12px}
 
 @media(max-width:1180px){
-  .pdf-layout{flex-direction:column}
-  .q-panel{width:100%;max-height:none}
+  .q-panel{width:100%}
 }
 </style>
 </head>
@@ -263,6 +262,11 @@ let currentUser=null;
 let currentUserIsAdmin=false;
 let questionSortables=[];
 let preserveCreateDraftOnReturn=false;
+const PDF_BASE_ZOOM=2.2;
+const PDF_RENDER_BOOST=3.0;
+const QUESTION_IMAGE_MAX_EDGE=2800;
+const QUESTION_IMAGE_MAX_BYTES=760*1024;
+const QUESTION_IMAGE_MIN_QUALITY=.86;
 function createInitialState(overrides={}){
   return Object.assign({
     page:'create',step:1,
@@ -273,8 +277,8 @@ function createInitialState(overrides={}){
     categoryGrade:1,
     questionSections:[],
     questions:[],
-    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:1.5,imgData:null,cropTool:'crop',
-    pubTitle:'',pubDur:30,editExamId:null,
+    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:PDF_BASE_ZOOM,imgData:null,cropTool:'crop',
+    pubTitle:'',pubDur:30,pubDisplayOrder:'',editExamId:null,
     exams:[],results:[],appeals:[],
     appealInspect:null,
     rf:{grade:'',subject:'',name:'',examId:'',sube:''},
@@ -650,6 +654,59 @@ function getExamStatusMeta(status){
   if(status==='paused') return {label:'Pasif',icon:'⏸',bg:'#FEF3C7',color:'#92400E'};
   return {label:'Beklemede',icon:'🕒',bg:'#E2E8F0',color:'#334155'};
 }
+function getTimestampValue(value){
+  if(!value) return 0;
+  if(typeof value.seconds==='number') return value.seconds*1000;
+  const parsed=Date.parse(String(value));
+  return Number.isNaN(parsed)?0:parsed;
+}
+function getExamDisplayOrder(exam,index){
+  const order=Number(exam?.displayOrder);
+  return Number.isFinite(order)?order:index+1;
+}
+function compareExamDisplayRows(a,b){
+  const gradeDiff=Number(a.item.grade)-Number(b.item.grade);
+  if(gradeDiff!==0) return gradeDiff;
+  const orderDiff=getExamDisplayOrder(a.item,a.index)-getExamDisplayOrder(b.item,b.index);
+  if(orderDiff!==0) return orderDiff;
+  return getTimestampValue(b.item.createdAt)-getTimestampValue(a.item.createdAt);
+}
+function sortAdminExamRecords(list){
+  return (list||[])
+    .map((item,index)=>({item,index}))
+    .sort(compareExamDisplayRows)
+    .map(row=>row.item);
+}
+function getExamPlacementList(grade,excludeId=''){
+  return sortAdminExamRecords(
+    (A.exams||[]).filter(exam=>String(exam.grade)===String(grade)&&String(exam.id)!==String(excludeId))
+  );
+}
+function clampRequestedExamOrder(value,max){
+  const parsed=parseInt(value,10);
+  if(!Number.isFinite(parsed)) return 1;
+  return Math.max(1,Math.min(max,parsed));
+}
+async function placeExamAtDisplayOrder(examId,grade,requestedOrder){
+  const sameGrade=getExamPlacementList(grade,examId);
+  const insertOrder=clampRequestedExamOrder(requestedOrder,sameGrade.length+1);
+  const batch=writeBatch(db);
+  sameGrade.forEach((exam,index)=>{
+    const nextOrder=index+1>=insertOrder?index+2:index+1;
+    if(getExamDisplayOrder(exam,index)!==nextOrder){
+      batch.update(doc(db,'exams',exam.id),{
+        displayOrder:nextOrder,
+        updatedAt:serverTimestamp()
+      });
+    }
+  });
+  batch.update(doc(db,'exams',examId),{
+    displayOrder:insertOrder,
+    updatedAt:serverTimestamp()
+  });
+  await batch.commit();
+  return insertOrder;
+}
 function resetBuilderState(nextPage='create'){
   A=createInitialState({
     page:nextPage,
@@ -880,7 +937,7 @@ function renderStep3(){
           <button class="btn btn-sm btn-outline" onclick="W.nextPage()" id="btnPDFNext" ${A.pdfPage>=A.pdfTotal?'disabled':''}>Sonraki ›</button>
           <div style="display:flex;align-items:center;gap:5px;margin-left:8px;border-left:1px solid var(--border);padding-left:10px">
             <button class="btn btn-sm btn-outline" onclick="W.zoomOut()" style="width:30px;padding:0;height:30px;font-size:16px">−</button>
-            <span id="zoomLbl" class="text-xs text-muted" style="min-width:40px;text-align:center">${Math.round(A.pdfZoom/1.5*100)}%</span>
+            <span id="zoomLbl" class="text-xs text-muted" style="min-width:40px;text-align:center">${Math.round(A.pdfZoom/PDF_BASE_ZOOM*100)}%</span>
             <button class="btn btn-sm btn-outline" onclick="W.zoomIn()" style="width:30px;padding:0;height:30px;font-size:16px">+</button>
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-left:8px;border-left:1px solid var(--border);padding-left:10px">
@@ -916,19 +973,20 @@ function renderStep3(){
 }
 
 function renderQList(){
-  if(!A.questions.length) return'<p class="text-sm text-muted text-center" style="padding:20px 0">Henüz soru eklenmedi</p>';
+  if(!A.questions.length) return'<p class="text-sm text-muted text-center" style="padding:16px 0">Henüz soru eklenmedi</p>';
   return A.questions.map((q,i)=>`
-    <div class="q-item">
-      <button class="q-handle" type="button" title="Soru sırasını değiştir">⋮⋮</button>
-      <span class="q-order">${i+1}</span>
-      <img class="q-thumb" src="${q.img}" alt="">
-      <div class="q-meta">
-        <div class="text-xs text-muted">Doğru cevap</div>
-        <span class="ans-badge">${q.ans}</span>
-        ${getQuestionSectionLabel(i)?`<div style="margin-top:8px"><span class="section-tag">📚 ${esc(getQuestionSectionLabel(i))}</span></div>`:''}
-        <div class="q-answer-row">${renderAnswerEditor(i,q.ans)}</div>
+    <div class="q-item" data-index="${i}">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:4px">
+        <button class="q-handle" type="button" title="Sıra değiştir" style="flex:1;height:20px">⋮⋮</button>
+        <span class="q-order" style="font-size:11px">${i+1}</span>
+        <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır" style="font-size:14px;line-height:1;padding:0 2px">×</button>
       </div>
-      <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır">×</button>
+      <img class="q-thumb" src="${q.img}" alt="">
+      <div style="width:100%;text-align:center">
+        <span class="ans-badge">${q.ans}</span>
+        ${getQuestionSectionLabel(i)?`<div style="margin-top:3px"><span class="section-tag" style="font-size:9px">📚 ${esc(getQuestionSectionLabel(i))}</span></div>`:''}
+      </div>
+      <div class="q-answer-row" style="justify-content:center">${renderAnswerEditor(i,q.ans)}</div>
     </div>`).join('');
 }
 function renderPreviewQuestionList(){
@@ -995,7 +1053,7 @@ function renderStep4(){
   return`<div style="max-width:680px">
     <div class="card p-6 mb-4">
       <strong style="display:block;font-size:15px;margin-bottom:16px;font-family:var(--fd)">${editing?'🛠 Düzenleme Özeti':'📋 Sınav Bilgileri'}</strong>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:16px">
         <div>
           <label class="form-label">Sınav Başlığı</label>
           <input class="form-input" id="pubTitle" type="text" value="${esc(title)}" oninput="A.pubTitle=this.value">
@@ -1003,6 +1061,11 @@ function renderStep4(){
         <div>
           <label class="form-label">Süre (dakika) — 0 = Sınırsız</label>
           <input class="form-input" id="pubDur" type="number" min="0" value="${A.pubDur}" oninput="A.pubDur=parseInt(this.value)||0">
+        </div>
+        <div>
+          <label class="form-label">Görünüm Sırası</label>
+          <input class="form-input" id="pubDisplayOrder" type="number" min="1" step="1" value="${A.pubDisplayOrder!==''?esc(A.pubDisplayOrder):''}" placeholder="Boşsa otomatik en üste" oninput="A.pubDisplayOrder=this.value">
+          <p class="text-xs text-muted" style="margin-top:6px;line-height:1.6">Küçük sayı daha öne gelir. Boş bırakırsan bu sınav bulunduğu sınıfta otomatik olarak ilk sıraya alınır.</p>
         </div>
       </div>
       <div style="background:#F5F3FF;border:1.5px solid rgba(108,61,237,.2);padding:13px 16px;border-radius:var(--r);font-size:13px;color:var(--purple);display:flex;gap:16px;flex-wrap:wrap;font-weight:600">
@@ -1033,12 +1096,14 @@ function renderStep4(){
 function renderAdminExams(){
   const appealSummary=buildExamAppealSummary(A.appeals);
   const gOpts=GRADES.map(g=>`<option value="${g}">${g}. Sınıf</option>`).join('');
-  const cards=!A.exams.length?
+  const visibleExams=sortAdminExamRecords(A.exams);
+  const cards=!visibleExams.length?
     '<div class="text-center text-muted p-8" style="padding:40px">Henüz sınav bulunmuyor</div>':
-    A.exams.map(e=>{
+    visibleExams.map((e,index)=>{
       const status=getExamStatus(e);
       const meta=getExamStatusMeta(status);
       const appealMeta=appealSummary[e.id]||{total:0,pending:0};
+      const displayOrder=getExamDisplayOrder(e,index);
       const primaryAction=status==='active'
         ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
         : `<button class="btn btn-sm btn-green" onclick="W.setExamStatus('${e.id}','active')">🚀 Aktif Et</button>`;
@@ -1049,19 +1114,27 @@ function renderAdminExams(){
         ? `<button class="btn btn-sm btn-outline" onclick="W.copyExamLink('${e.id}')">🔗 Link Kopyala</button>`
         : '';
       return `
-      <div class="card flex items-center gap-12 p-4" style="margin-bottom:10px">
-        <div style="width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0;font-family:var(--fd)" class="gc-${e.grade}">${e.grade}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:14px;font-family:var(--fd)">${esc(e.title)}</div>
-          <div class="text-sm text-muted" style="margin-top:2px">${e.grade}. Sınıf &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
-            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:11px;font-weight:800">${meta.icon} ${meta.label}</span>
-            <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${appealMeta.total?'#FFF7ED':'#F8FAFC'};color:${appealMeta.total?'#9A3412':'#64748B'};font-size:11px;font-weight:800">${appealMeta.total?'📝 '+appealMeta.total+' itiraz':'💬 İtiraz yok'}${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}</span>
-            <span class="text-xs text-muted">📅 ${fmtDate(e.createdAt)}</span>
-            ${e.updatedAt?`<span class="text-xs text-muted">✏️ ${fmtDate(e.updatedAt)} güncellendi</span>`:''}
+      <div class="card p-4" style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0;font-family:var(--fd)" class="gc-${e.grade}">${e.grade}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:14px;font-family:var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.title)}</div>
+            <div class="text-sm text-muted" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.grade}. Sınıf &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:11px;font-weight:800">${meta.icon} ${meta.label}</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${appealMeta.total?'#FFF7ED':'#F8FAFC'};color:${appealMeta.total?'#9A3412':'#64748B'};font-size:11px;font-weight:800">${appealMeta.total?'📝 '+appealMeta.total+' itiraz':'💬 İtiraz yok'}${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}</span>
+              <span class="text-xs text-muted">📅 ${fmtDate(e.createdAt)}</span>
+              ${e.updatedAt?`<span class="text-xs text-muted">✏️ ${fmtDate(e.updatedAt)} güncellendi</span>`:''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;background:#F8FAFC;border:1.5px solid var(--border);border-radius:12px;padding:8px 10px">
+            <span style="font-size:10px;font-weight:900;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">Sıra</span>
+            <button class="btn btn-sm btn-outline" type="button" title="Yukarı taşı" onclick="W.moveExamDisplayOrder('${e.id}',-1)" style="padding:4px 8px">↑</button>
+            <input class="form-input" type="number" min="1" step="1" value="${displayOrder}" style="width:54px;padding:5px 6px;text-align:center;font-weight:800;margin:0" onchange="W.updateExamDisplayOrder('${e.id}',this.value)">
+            <button class="btn btn-sm btn-outline" type="button" title="Aşağı taşı" onclick="W.moveExamDisplayOrder('${e.id}',1)" style="padding:4px 8px">↓</button>
           </div>
         </div>
-        <div class="flex gap-8" style="flex-wrap:wrap;justify-content:flex-end">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
           <button class="btn btn-sm btn-primary" onclick="W.editExam('${e.id}')">✏️ Düzenle</button>
           ${primaryAction}
           ${secondaryAction}
@@ -1075,7 +1148,7 @@ function renderAdminExams(){
     <div class="flex justify-between items-center mb-6" style="flex-wrap:wrap;gap:12px">
       <div>
         <h2 style="font-size:20px;margin-bottom:2px">Sınavlar</h2>
-        <p class="text-sm text-muted">${A.exams.length} sınav listeleniyor</p>
+        <p class="text-sm text-muted">${A.exams.length} sınav listeleniyor · Görünüm sırası öğrenci sayfasındaki sınav kartlarını belirler.</p>
       </div>
       <select class="form-input" style="width:150px" onchange="W.loadExamsFilter(this.value)">
         <option value="">Tüm Sınıflar</option>${gOpts}
@@ -1300,6 +1373,68 @@ function setupUploadSurface(){
   });
 }
 
+function getCanvasRenderBoost(){
+  return Math.min(PDF_RENDER_BOOST,Math.max(2,window.devicePixelRatio||1));
+}
+
+function getDataUrlByteSize(dataUrl){
+  const base64=String(dataUrl||'').split(',')[1]||'';
+  return Math.ceil(base64.length*.75);
+}
+
+function resizeCanvas(sourceCanvas,scale){
+  const next=document.createElement('canvas');
+  next.width=Math.max(1,Math.round(sourceCanvas.width*scale));
+  next.height=Math.max(1,Math.round(sourceCanvas.height*scale));
+  const ctx=next.getContext('2d');
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillRect(0,0,next.width,next.height);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(sourceCanvas,0,0,next.width,next.height);
+  return next;
+}
+
+function optimizeQuestionCanvas(sourceCanvas){
+  let working=sourceCanvas;
+  const longest=Math.max(working.width,working.height);
+  if(longest>QUESTION_IMAGE_MAX_EDGE){
+    working=resizeCanvas(working,QUESTION_IMAGE_MAX_EDGE/longest);
+  }
+
+  // Önce PNG dene (kayıpsız, metin netliği için ideal)
+  let dataUrl=working.toDataURL('image/png');
+  if(getDataUrlByteSize(dataUrl)<=QUESTION_IMAGE_MAX_BYTES) return dataUrl;
+
+  // Firestore dokuman siniri icin PNG buyukse yuksek kaliteli JPEG kullan
+  let quality=.97;
+  dataUrl=working.toDataURL('image/jpeg',quality);
+  while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&quality>QUESTION_IMAGE_MIN_QUALITY){
+    quality=Math.max(QUESTION_IMAGE_MIN_QUALITY,quality-.02);
+    dataUrl=working.toDataURL('image/jpeg',quality);
+  }
+
+  // Hala buyukse olculeri kademeli indir, kaliteyi okunabilir seviyede tut
+  while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&Math.max(working.width,working.height)>1000){
+    working=resizeCanvas(working,.92);
+    quality=.97;
+    dataUrl=working.toDataURL('image/jpeg',quality);
+    while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&quality>QUESTION_IMAGE_MIN_QUALITY){
+      quality=Math.max(QUESTION_IMAGE_MIN_QUALITY,quality-.02);
+      dataUrl=working.toDataURL('image/jpeg',quality);
+    }
+  }
+
+  if(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES){
+    while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&quality>.78){
+      quality=Math.max(.78,quality-.03);
+      dataUrl=working.toDataURL('image/jpeg',quality);
+    }
+  }
+
+  return dataUrl;
+}
+
 function renderImageOnCanvas(){
   const img=A.imgData;if(!img)return;
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
@@ -1307,16 +1442,23 @@ function renderImageOnCanvas(){
   const wrap=document.getElementById('pdfCont');
   const availableWidth=Math.max(((wrap?.clientWidth||0)-56),1040);
   const baseW=Math.min(img.width,availableWidth);
-  const scale=(A.pdfZoom/1.5)*(baseW/img.width);
+  const scale=(A.pdfZoom/PDF_BASE_ZOOM)*(baseW/img.width);
   const contentWidth=img.width*scale;
   const contentHeight=img.height*scale;
-  c.width=contentWidth;c.height=contentHeight;
+  const renderBoost=getCanvasRenderBoost();
+  c.width=Math.round(contentWidth*renderBoost);c.height=Math.round(contentHeight*renderBoost);
+  c.style.width=contentWidth+'px';c.style.height=contentHeight+'px';
   syncPdfStage(contentWidth,contentHeight);
   const stage=document.getElementById('pdfStage');
   cc.width=stage?.clientWidth||contentWidth;
   cc.height=stage?.clientHeight||contentHeight;
-  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/1.5*100)+'%';
+  const ctx=c.getContext('2d',{alpha:false});
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(img,0,0,c.width,c.height);
+  const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/PDF_BASE_ZOOM*100)+'%';
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=true;
   const bn=document.getElementById('btnPDFNext');if(bn)bn.disabled=true;
   setupCrop();
@@ -1328,7 +1470,7 @@ async function loadSelectedUploadFile(file){
   removeCropModal();
   A.draftImg=null;
   A.draftAns=null;
-  A.pdfZoom=1.5;
+  A.pdfZoom=PDF_BASE_ZOOM;
   setUploadDragState(false);
   const isImg=/image\//i.test(file.type)||/\.(jpg|jpeg|png|webp)$/i.test(file.name);
   if(isImg){
@@ -1371,16 +1513,25 @@ async function renderPage(n){
   const vp=page.getViewport({scale:A.pdfZoom});
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
   if(!c||!cc)return;
-  c.width=vp.width;c.height=vp.height;
+  const renderBoost=getCanvasRenderBoost();
+  c.width=Math.round(vp.width*renderBoost);c.height=Math.round(vp.height*renderBoost);
+  c.style.width=vp.width+'px';c.style.height=vp.height+'px';
   syncPdfStage(vp.width,vp.height);
   const stage=document.getElementById('pdfStage');
   cc.width=stage?.clientWidth||vp.width;
   cc.height=stage?.clientHeight||vp.height;
-  await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  const ctx=c.getContext('2d',{alpha:false});
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  await page.render({
+    canvasContext:ctx,
+    viewport:vp,
+    transform:renderBoost>1?[renderBoost,0,0,renderBoost,0,0]:null
+  }).promise;
   const pj=document.getElementById('pageJump');if(pj)pj.value=n;
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=(n<=1);
   const bn=document.getElementById('btnPDFNext');if(bn)bn.disabled=(n>=A.pdfTotal);
-  const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/1.5*100)+'%';
+  const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/PDF_BASE_ZOOM*100)+'%';
   setupCrop();
   syncCropToolUI();
 }
@@ -1409,24 +1560,36 @@ function setupCrop(){
   };
   const finishSelection=p=>{
     ctx.clearRect(0,0,newCC.width,newCC.height);
-    const x=Math.min(sx,p.x),y=Math.min(sy,p.y),w=Math.abs(p.x-sx),h=Math.abs(p.y-sy);
+    const left=Math.max(Math.min(sx,p.x),contentBox.x);
+    const top=Math.max(Math.min(sy,p.y),contentBox.y);
+    const right=Math.min(Math.max(sx,p.x),contentBox.x+contentBox.width);
+    const bottom=Math.min(Math.max(sy,p.y),contentBox.y+contentBox.height);
+    const w=right-left,h=bottom-top;
     if(w<20||h<20)return;
-    const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
+    const sourceScaleX=pc.width/Math.max(contentBox.width,1);
+    const sourceScaleY=pc.height/Math.max(contentBox.height,1);
+    const srcX=(left-contentBox.x)*sourceScaleX;
+    const srcY=(top-contentBox.y)*sourceScaleY;
+    const srcW=w*sourceScaleX;
+    const srcH=h*sourceScaleY;
+    const tmp=document.createElement('canvas');tmp.width=Math.max(1,Math.round(srcW));tmp.height=Math.max(1,Math.round(srcH));
     const tmpCtx=tmp.getContext('2d');
     tmpCtx.fillStyle='#FFFFFF';
-    tmpCtx.fillRect(0,0,w,h);
+    tmpCtx.fillRect(0,0,tmp.width,tmp.height);
+    tmpCtx.imageSmoothingEnabled=true;
+    tmpCtx.imageSmoothingQuality='high';
     tmpCtx.drawImage(
       pc,
-      x-contentBox.x,
-      y-contentBox.y,
-      w,
-      h,
+      srcX,
+      srcY,
+      srcW,
+      srcH,
       0,
       0,
-      w,
-      h
+      tmp.width,
+      tmp.height
     );
-    A.draftImg=tmp.toDataURL('image/jpeg',.92);A.draftAns=null;
+    A.draftImg=optimizeQuestionCanvas(tmp);A.draftAns=null;
     showCropModal();
   };
   const handleMove=e=>{
@@ -1513,17 +1676,18 @@ async function fbLoadExams(gf){
   try{
     const q=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf)),orderBy('createdAt','desc')):
       query(collection(db,'exams'),orderBy('createdAt','desc'));
-    const snap=await getDocs(q);return snap.docs.map(d=>({id:d.id,...d.data()}));
+    const snap=await getDocs(q);
+    return sortAdminExamRecords(snap.docs.map(d=>({id:d.id,...d.data()})));
   }catch(e1){
     try{
       const q2=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf))):query(collection(db,'exams'));
       const snap=await getDocs(q2);
-      return snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      return sortAdminExamRecords(snap.docs.map(d=>({id:d.id,...d.data()})));
     }catch(e2){
       const psnap=await getDocs(collection(db,'exams'));
       const g=gf?parseInt(gf):null;
       const docs=g?psnap.docs.filter(d=>d.data()?.grade===g):psnap.docs;
-      return docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      return sortAdminExamRecords(docs.map(d=>({id:d.id,...d.data()})));
     }
   }
 }
@@ -1709,6 +1873,41 @@ const W={
   },
   async copyExamLink(id){
     await copyText(buildExamShareUrl(id),'Sınav bağlantısı kopyalandı');
+  },
+  async updateExamDisplayOrder(id,value){
+    const current=A.exams.find(exam=>exam.id===id);
+    if(!current) return;
+    const order=clampRequestedExamOrder(value,getExamPlacementList(current.grade,id).length+1);
+    showLoad('Görünüm sırası kaydediliyor...');
+    try{
+      await placeExamAtDisplayOrder(id,current.grade,order);
+      A.exams=await fbLoadExams('');
+      hideLoad();
+      setContent(renderAdminExams());
+      toast('Sınav görünüm sırası kaydedildi.','success');
+    }catch(e){
+      hideLoad();
+      toast('Sıra kaydedilemedi: '+e.message,'error');
+    }
+  },
+  async moveExamDisplayOrder(id,direction){
+    const current=A.exams.find(exam=>exam.id===id);
+    if(!current) return;
+    const sameGrade=sortAdminExamRecords(A.exams.filter(exam=>String(exam.grade)===String(current.grade)));
+    const index=sameGrade.findIndex(exam=>exam.id===id);
+    const targetIndex=index+direction;
+    if(index<0||targetIndex<0||targetIndex>=sameGrade.length) return;
+    showLoad('Sıra güncelleniyor...');
+    try{
+      await placeExamAtDisplayOrder(id,current.grade,targetIndex+1);
+      A.exams=await fbLoadExams('');
+      hideLoad();
+      setContent(renderAdminExams());
+      toast('Sınav sırası güncellendi.','success');
+    }catch(e){
+      hideLoad();
+      toast('Sıra güncellenemedi: '+e.message,'error');
+    }
   },
   async refreshAdmin(){
     if(!currentUser){return;}
@@ -1955,6 +2154,7 @@ const W={
   },
   async saveAs(targetStatus){
     const t=(document.getElementById('pubTitle')?.value||A.pubTitle||A.examName).trim();
+    const rawDisplayOrder=(document.getElementById('pubDisplayOrder')?.value??A.pubDisplayOrder??'').toString().trim();
     if(!t){toast('Başlık girin','error');return;}
     if(!A.questions.length){toast('En az 1 soru ekleyin','error');return;}
     syncQuestionOrder();
@@ -1984,6 +2184,10 @@ const W={
         status:targetStatus,
         updatedAt:serverTimestamp()
       };
+      const explicitDisplayOrder=rawDisplayOrder===''?null:clampRequestedExamOrder(rawDisplayOrder,getExamPlacementList(A.grade,isEdit?A.editExamId:'').length+1);
+      if(isEdit&&explicitDisplayOrder!==null){
+        payload.displayOrder=explicitDisplayOrder;
+      }
 
       let examId=A.editExamId;
       if(examId){
@@ -1995,6 +2199,12 @@ const W={
       }else{
         const er=await addDoc(collection(db,'exams'),Object.assign({},payload,{createdAt:serverTimestamp()}));
         examId=er.id;
+      }
+
+      if(!isEdit){
+        await placeExamAtDisplayOrder(examId,A.grade,explicitDisplayOrder??1);
+      }else if(explicitDisplayOrder!==null){
+        await placeExamAtDisplayOrder(examId,A.grade,explicitDisplayOrder);
       }
 
       const writtenQuestions=[];
@@ -2077,6 +2287,7 @@ const W={
         questionSections:cloneQuestionSections(exam.questionSections),
         pubTitle:exam.title||'',
         pubDur:exam.duration||0,
+        pubDisplayOrder:Number.isFinite(Number(exam.displayOrder))?Number(exam.displayOrder):'',
         questions:qdocs.map((qd,index)=>{
           const data=qd.data()||{};
           return {
@@ -2112,7 +2323,7 @@ const W={
         published:status==='active',
         updatedAt:serverTimestamp()
       });
-      A.exams=A.exams.map(exam=>exam.id===id?{...exam,status:status,published:status==='active'}:exam);
+      A.exams=sortAdminExamRecords(A.exams.map(exam=>exam.id===id?{...exam,status:status,published:status==='active'}:exam));
       hideLoad();
       setContent(renderAdminExams());
       toast(`${meta.icon} Sınav ${meta.label.toLowerCase()} durumuna alındı.`,'success');
@@ -2129,7 +2340,7 @@ const W={
       const qsnap=await getDocs(query(collection(db,'questions'),where('examId','==',id)));
       for(const qd of qsnap.docs) await deleteDoc(doc(db,'questions',qd.id));
       hideLoad();toast('Sınav silindi','success');
-      A.exams=A.exams.filter(e=>e.id!==id);setContent(renderAdminExams());
+      A.exams=sortAdminExamRecords(A.exams.filter(e=>e.id!==id));setContent(renderAdminExams());
     }catch(e){hideLoad();toast('Hata: '+e.message,'error');}
   },
   async showResults(examId){A.rf.examId=examId;await this.nav('results');},

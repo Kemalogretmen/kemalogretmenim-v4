@@ -74,26 +74,54 @@ body.theme-dark{
 .theme-toggle:hover{background:rgba(255,255,255,.16)}
 .exam-body{flex:1;display:flex;overflow:hidden}
 .exam-main{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:var(--page-bg)}
-.exam-q-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 32px;min-height:0;gap:14px}
+.exam-q-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 24px;min-height:0;gap:10px}
 .exam-q-num{font-size:13px;font-weight:600;color:var(--muted);text-align:center}
 .exam-section-banner{display:none;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:linear-gradient(135deg,#EFF6FF,#E0F2FE);border:1.5px solid #BFDBFE;color:#1D4ED8;font-size:13px;font-weight:800;box-shadow:0 8px 18px rgba(37,99,235,.08)}
 .exam-section-banner .section-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#2563EB}
 .question-media-shell{width:min(100%,1120px);display:flex;flex-direction:column;align-items:center;gap:12px}
-.drawing-toolbar{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;width:100%;padding:12px 14px;background:var(--panel-bg);border:1.5px solid var(--border);border-radius:20px;box-shadow:var(--sh-sm);backdrop-filter:blur(14px)}
+.toolbar-dock{position:absolute;top:0;left:0;z-index:25;display:flex;flex-direction:column;width:min(112px,calc(100% - 24px));border:1.5px solid var(--border);border-radius:26px;background:var(--panel-bg);box-shadow:0 16px 40px rgba(15,23,42,.12);backdrop-filter:blur(16px);overflow:visible;transform:translate3d(14px,14px,0);touch-action:none}
+.toolbar-dock.is-dragging{box-shadow:0 22px 52px rgba(15,23,42,.18)}
+.toolbar-dock-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 10px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.08));cursor:grab}
+.toolbar-dock.is-dragging .toolbar-dock-head{cursor:grabbing}
+.toolbar-dock-title{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
+.toolbar-dock-head button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:14px;font-weight:900;cursor:pointer;transition:all .18s}
+.toolbar-dock-head button:hover{border-color:var(--purple);color:var(--purple)}
+.toolbar-dock-body{padding:12px 10px;max-height:min(64vh,640px);overflow:auto}
+.drawing-toolbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-width:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;backdrop-filter:none}
+.toolbar-section{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+.tool-btn.compact{width:100%;min-height:56px;padding:8px 6px;flex-direction:column;justify-content:center;gap:4px;border-radius:18px}
+.tool-icon{font-size:19px;line-height:1}
+.tool-label-sm{font-size:10px;font-weight:900;letter-spacing:.04em;line-height:1.1;text-align:center}
 .tool-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px solid var(--border);border-radius:999px;background:var(--panel-surface);font-family:var(--fb);font-size:13px;font-weight:700;color:var(--slate);cursor:pointer;transition:all .18s}
 .tool-btn:hover{border-color:var(--purple);color:var(--purple)}
 .tool-btn.active{background:#EEF2FF;border-color:var(--purple);color:var(--purple-d);box-shadow:0 6px 18px rgba(108,61,237,.12)}
-.toolbar-divider{width:1px;height:24px;background:var(--border)}
-.color-swatches{display:flex;align-items:center;gap:8px}
+.toolbar-divider{width:100%;height:1px;background:var(--border)}
+.toolbar-mini-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.color-swatches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;justify-items:center;width:100%}
 .color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
 .color-swatch:hover{transform:translateY(-1px)}
 .color-swatch.active{border-color:var(--navy);box-shadow:0 0 0 3px rgba(15,23,42,.08)}
 .toolbar-label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
-.size-wrap{display:flex;align-items:center;gap:8px}
+.size-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 .size-wrap input{accent-color:var(--purple)}
-.size-value{min-width:38px;font-size:12px;font-weight:700;color:var(--slate)}
-.zoom-wrap{flex:1 1 240px;justify-content:center;min-width:220px}
-.zoom-wrap input{flex:1;min-width:140px}
+.size-value{min-width:38px;font-size:12px;font-weight:700;color:var(--slate);text-align:center}
+.toolbar-dock .size-wrap input{width:100%}
+.zoom-stack{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+.zoom-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
+.zoom-btn{width:100%;min-height:42px;padding:0;border:1.5px solid var(--border);border-radius:14px;background:var(--panel-surface);font-family:var(--fd);font-size:20px;font-weight:900;color:var(--slate);cursor:pointer;transition:all .18s}
+.zoom-btn:hover{border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
+.zoom-value-pill{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:7px 10px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:12px;font-weight:900}
+.toolbar-action-stack{display:flex;flex-direction:column;gap:8px;width:100%}
+.pencil-panel{position:absolute;top:0;left:0;z-index:26;display:none;flex-direction:column;gap:12px;width:min(220px,calc(100% - 24px));padding:14px;border:1.5px solid var(--border);border-radius:24px;background:var(--panel-bg);box-shadow:0 18px 42px rgba(15,23,42,.16);backdrop-filter:blur(18px)}
+.pencil-panel.open{display:flex}
+.pencil-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pencil-panel-title{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
+.pencil-panel-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:16px;font-weight:900;cursor:pointer;transition:all .18s}
+.pencil-panel-close:hover{border-color:var(--purple);color:var(--purple)}
+.pencil-panel .color-swatches{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pencil-panel .size-wrap{align-items:stretch}
+.pencil-panel .size-wrap input{width:100%}
+.pencil-panel-note{font-size:11px;line-height:1.5;color:var(--muted)}
 .question-status-strip{width:min(100%,960px);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--panel-bg);border:1.5px solid var(--border);border-radius:18px;box-shadow:var(--sh-sm);backdrop-filter:blur(12px)}
 .status-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1 1 520px}
 .status-pill{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:999px;background:var(--panel-surface);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--slate);line-height:1.45}
@@ -106,7 +134,7 @@ body.theme-dark{
 .mini-action-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-family:var(--fb);font-size:12px;font-weight:800;cursor:pointer;transition:all .18s}
 .mini-action-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
 .mini-action-btn:disabled{opacity:.45;cursor:not-allowed}
-.exam-media-stage{position:relative;width:min(100%,1120px);height:clamp(430px,60vh,760px);padding:10px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden;user-select:none;touch-action:none}
+.exam-media-stage{position:relative;width:min(100%,1120px);height:clamp(520px,72vh,900px);padding:10px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden;user-select:none;touch-action:none}
 .exam-media-stage.mode-pencil{cursor:var(--cursor-pencil) 6 24,crosshair}
 .exam-media-stage.mode-eraser{cursor:cell}
 .exam-media-stage.mode-select{cursor:default}
@@ -138,13 +166,13 @@ body.theme-dark{
 .ans-btn:hover{border-color:var(--purple);color:var(--purple)}
 .ans-btn.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple-d)}
 .ans-circle{width:28px;height:28px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
-.exam-navrow{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:14px 24px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0;flex-wrap:wrap}
-.exam-nav-main{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:520px;margin:0 auto}
-.exam-nav-btn{min-height:56px;padding:0 20px;border:none;border-radius:18px;background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:800;font-family:var(--fd);transition:transform .18s,box-shadow .18s,opacity .18s;box-shadow:0 12px 24px rgba(108,61,237,.22)}
-.exam-nav-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 16px 26px rgba(108,61,237,.28)}
+.exam-navrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.exam-nav-main{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:380px;margin:0 auto}
+.exam-nav-btn{min-height:40px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:800;font-family:var(--fd);transition:transform .18s,box-shadow .18s,opacity .18s;box-shadow:0 6px 16px rgba(108,61,237,.22)}
+.exam-nav-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 20px rgba(108,61,237,.28)}
 .exam-nav-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
-.finish-btn{display:inline-flex;align-items:center;gap:9px;padding:12px 18px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:16px;font-family:var(--fb);font-size:14px;font-weight:800;cursor:pointer;transition:transform .18s,box-shadow .18s,filter .18s;box-shadow:0 14px 26px rgba(220,38,38,.26)}
-.finish-btn:hover{transform:translateY(-1px);box-shadow:0 18px 30px rgba(220,38,38,.32);filter:saturate(1.05)}
+.finish-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;background:linear-gradient(135deg,#DC2626,#EF4444);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:12px;font-family:var(--fb);font-size:13px;font-weight:800;cursor:pointer;transition:transform .18s,box-shadow .18s,filter .18s;box-shadow:0 6px 16px rgba(220,38,38,.26)}
+.finish-btn:hover{transform:translateY(-1px);box-shadow:0 12px 22px rgba(220,38,38,.32);filter:saturate(1.05)}
 .finish-icon{font-size:15px}
 
 /* OPTIC PANEL */
@@ -184,6 +212,9 @@ body.theme-dark{
 .od-bubble.sel{background:var(--purple);border-color:var(--purple);color:#fff}
 
 body.theme-dark .drawing-toolbar,
+body.theme-dark .toolbar-dock,
+body.theme-dark .toolbar-dock-head,
+body.theme-dark .pencil-panel,
 body.theme-dark .exam-navrow,
 body.theme-dark .optic-panel,
 body.theme-dark .optic-drawer,
@@ -193,6 +224,8 @@ body.theme-dark .od-close{
   border-color:var(--border);
 }
 body.theme-dark .tool-btn,
+body.theme-dark .toolbar-dock-head button,
+body.theme-dark .pencil-panel-close,
 body.theme-dark .mini-action-btn,
 body.theme-dark .ans-btn,
 body.theme-dark .op-stat,
@@ -362,8 +395,7 @@ body.theme-dark .size-value{color:var(--muted)}
   .optic-drawer{display:flex}
   .exam-q-wrap{padding:14px 16px}
   .question-media-shell{width:100%}
-  .drawing-toolbar{justify-content:flex-start}
-  .toolbar-divider{display:none}
+  .toolbar-dock{width:min(104px,calc(100% - 16px))}
   .question-status-strip{padding:10px 12px}
   .status-pills,.status-actions{width:100%}
   .exam-media-stage{width:100%;height:clamp(340px,52vh,520px)}
@@ -391,7 +423,6 @@ body.theme-dark .size-value{color:var(--muted)}
   .exam-nav-btn{min-height:52px;font-size:15px}
   .finish-btn{width:100%;justify-content:center}
   .exam-section-banner{width:100%;justify-content:center;text-align:center;flex-wrap:wrap}
-  .zoom-wrap{min-width:100%}
   .mini-action-btn{flex:1;justify-content:center}
   .exam-media-stage{height:clamp(320px,48vh,460px)}
   .ksp-headline{font-size:28px}
@@ -470,36 +501,77 @@ body.theme-dark .size-value{color:var(--muted)}
         <div class="exam-q-num" id="qNum"></div>
         <div class="exam-section-banner" id="questionSectionBanner"></div>
         <div class="question-media-shell">
-          <div class="drawing-toolbar" id="drawingToolbar">
-            <button class="tool-btn" type="button" data-draw-tool="pencil" onclick="setDrawTool('pencil')" title="Kalem aracı (K)">✏️ Kalem</button>
-            <button class="tool-btn" type="button" data-draw-tool="select" onclick="setDrawTool('select')" title="Seçim aracı (S)">🖱️ Seçim</button>
-            <button class="tool-btn" type="button" data-draw-tool="eraser" onclick="setDrawTool('eraser')" title="Silgi aracı (L)">⬜ Silgi</button>
-            <div class="toolbar-divider"></div>
-            <span class="toolbar-label">Renk</span>
-            <div class="color-swatches">
-              <button class="color-swatch" type="button" data-draw-color="#EF4444" style="background:#EF4444" onclick="setDrawColor('#EF4444')" aria-label="Kırmızı"></button>
-              <button class="color-swatch" type="button" data-draw-color="#2563EB" style="background:#2563EB" onclick="setDrawColor('#2563EB')" aria-label="Mavi"></button>
-              <button class="color-swatch" type="button" data-draw-color="#0F172A" style="background:#0F172A" onclick="setDrawColor('#0F172A')" aria-label="Siyah"></button>
-              <button class="color-swatch" type="button" data-draw-color="#10B981" style="background:#10B981" onclick="setDrawColor('#10B981')" aria-label="Yeşil"></button>
-              <button class="color-swatch" type="button" data-draw-color="#F97316" style="background:#F97316" onclick="setDrawColor('#F97316')" aria-label="Turuncu"></button>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="size-wrap">
-              <span class="toolbar-label">Kalınlık</span>
-              <input id="brushSize" type="range" min="1" max="8" value="3" oninput="setBrushSize(this.value)">
-              <span class="size-value" id="brushSizeValue">3px</span>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="size-wrap zoom-wrap">
-              <span class="toolbar-label">Yakınlaştır</span>
-              <input id="zoomRange" type="range" min="80" max="220" value="100" step="5" oninput="setQuestionZoom(this.value)">
-              <span class="size-value" id="zoomValue">%100</span>
-            </div>
-            <button class="tool-btn" type="button" onclick="resetQuestionZoom()" title="Yakınlaştırmayı sıfırla (0)">↺ Zoom</button>
-            <button class="tool-btn" type="button" onclick="openImageLightbox()" title="Soruyu tam ekranda aç">🔍 Tam Ekran</button>
-            <button class="tool-btn" type="button" onclick="clearCurrentDrawing()" title="Bu sorudaki çizimleri temizle">🗑️ Temizle</button>
-          </div>
           <div class="exam-media-stage" id="mediaStage">
+            <div class="toolbar-dock" id="toolbarDock">
+              <div class="toolbar-dock-head" id="toolbarDragHandle">
+                <div class="toolbar-dock-title"><span>☰</span><span>Araçlar</span></div>
+                <button type="button" onclick="resetToolbarPosition()" title="Araç kutusunu başlangıç konumuna al">↺</button>
+              </div>
+              <div class="toolbar-dock-body">
+                <div class="drawing-toolbar" id="drawingToolbar">
+                  <div class="toolbar-section">
+                    <div class="toolbar-mini-label">Zoom</div>
+                    <div class="zoom-stack">
+                      <div class="zoom-controls">
+                        <button class="zoom-btn" type="button" onclick="adjustQuestionZoom(10)" title="Yakınlaştır">＋</button>
+                        <button class="zoom-btn" type="button" onclick="adjustQuestionZoom(-10)" title="Uzaklaştır">−</button>
+                      </div>
+                      <div class="zoom-value-pill" id="zoomValue">%100</div>
+                      <input id="zoomRange" type="range" min="80" max="220" value="100" step="5" oninput="setQuestionZoom(this.value)" style="display:none">
+                    </div>
+                  </div>
+                  <div class="toolbar-divider"></div>
+                  <div class="toolbar-section">
+                    <button class="tool-btn compact" type="button" data-draw-tool="select" onclick="setDrawTool('select')" title="Seçim aracı (S)">
+                      <span class="tool-icon">🖱️</span><span class="tool-label-sm">Seçim</span>
+                    </button>
+                    <button class="tool-btn compact" type="button" data-draw-tool="pencil" onclick="setDrawTool('pencil',{togglePanel:true})" title="Kalem aracı (K)">
+                      <span class="tool-icon">✏️</span><span class="tool-label-sm">Kalem</span>
+                    </button>
+                    <button class="tool-btn compact" type="button" data-draw-tool="eraser" onclick="setDrawTool('eraser')" title="Silgi aracı (L)">
+                      <span class="tool-icon">⬜</span><span class="tool-label-sm">Silgi</span>
+                    </button>
+                  </div>
+                  <div class="toolbar-divider"></div>
+                  <div class="toolbar-action-stack">
+                    <button class="tool-btn compact" type="button" onclick="resetQuestionZoom()" title="Yakınlaştırmayı sıfırla (0)">
+                      <span class="tool-icon">↺</span><span class="tool-label-sm">Zoom Sıfırla</span>
+                    </button>
+                    <button class="tool-btn compact" type="button" onclick="openImageLightbox()" title="Soruyu tam ekranda aç">
+                      <span class="tool-icon">🔍</span><span class="tool-label-sm">Tam Ekran</span>
+                    </button>
+                    <button class="tool-btn compact" type="button" onclick="clearCurrentDrawing()" title="Bu sorudaki çizimleri temizle">
+                      <span class="tool-icon">🗑️</span><span class="tool-label-sm">Temizle</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="pencil-panel" id="pencilPanel" aria-hidden="true">
+              <div class="pencil-panel-head">
+                <div class="pencil-panel-title">Kalem Ayarları</div>
+                <button class="pencil-panel-close" type="button" onclick="closePencilPanel()" title="Kalem ayarlarını kapat">×</button>
+              </div>
+              <div class="toolbar-section">
+                <div class="toolbar-mini-label">Renk</div>
+                <div class="color-swatches">
+                  <button class="color-swatch" type="button" data-draw-color="#EF4444" style="background:#EF4444" onclick="setDrawColor('#EF4444')" aria-label="Kırmızı"></button>
+                  <button class="color-swatch" type="button" data-draw-color="#2563EB" style="background:#2563EB" onclick="setDrawColor('#2563EB')" aria-label="Mavi"></button>
+                  <button class="color-swatch" type="button" data-draw-color="#0F172A" style="background:#0F172A" onclick="setDrawColor('#0F172A')" aria-label="Siyah"></button>
+                  <button class="color-swatch" type="button" data-draw-color="#10B981" style="background:#10B981" onclick="setDrawColor('#10B981')" aria-label="Yeşil"></button>
+                  <button class="color-swatch" type="button" data-draw-color="#F97316" style="background:#F97316" onclick="setDrawColor('#F97316')" aria-label="Turuncu"></button>
+                </div>
+              </div>
+              <div class="toolbar-divider"></div>
+              <div class="toolbar-section">
+                <div class="size-wrap">
+                  <span class="toolbar-mini-label">Kalınlık</span>
+                  <input id="brushSize" type="range" min="1" max="8" value="3" oninput="setBrushSize(this.value)">
+                  <span class="size-value" id="brushSizeValue">3px</span>
+                </div>
+              </div>
+              <div class="pencil-panel-note">Kalem aktifken renk ve kalınlığı buradan hızlıca değiştirebilirsin.</div>
+            </div>
             <div class="stage-workspace" id="stageWorkspace">
               <div class="question-transform-layer" id="questionTransformLayer">
                 <img class="exam-q-img" id="qImg" src="" alt="Soru görseli">
@@ -687,6 +759,17 @@ let P={
   questionZoom:100,
   questionPanX:0,
   questionPanY:0,
+  pencilPanelOpen:false,
+  toolbar:{
+    x:14,
+    y:14,
+    dragging:false,
+    pointerId:null,
+    originX:0,
+    originY:0,
+    startX:14,
+    startY:14
+  },
   uiBound:false,
   stageGesture:null,
   ignoreStageClick:false,
@@ -1300,7 +1383,64 @@ function syncDrawingToolbar(){
     stage.style.setProperty('--question-pan-x',`${P.questionPanX||0}px`);
     stage.style.setProperty('--question-pan-y',`${P.questionPanY||0}px`);
   }
+  syncToolbarDock();
   renderQuestionStatus();
+}
+
+function clampToolbarDockPosition(){
+  const stage=document.getElementById('mediaStage');
+  const dock=document.getElementById('toolbarDock');
+  if(!stage||!dock) return;
+  const pad=12;
+  const stageWidth=stage.clientWidth||0;
+  const stageHeight=stage.clientHeight||0;
+  const dockWidth=dock.offsetWidth||0;
+  const dockHeight=dock.offsetHeight||0;
+  if(!Number.isFinite(P.toolbar.x)) P.toolbar.x=14;
+  if(!Number.isFinite(P.toolbar.y)) P.toolbar.y=14;
+  const maxX=Math.max(pad,stageWidth-dockWidth-pad);
+  const maxY=Math.max(pad,stageHeight-dockHeight-pad);
+  P.toolbar.x=Math.max(pad,Math.min(maxX,P.toolbar.x));
+  P.toolbar.y=Math.max(pad,Math.min(maxY,P.toolbar.y));
+}
+
+function syncToolbarDock(){
+  const dock=document.getElementById('toolbarDock');
+  if(!dock) return;
+  clampToolbarDockPosition();
+  dock.style.transform=`translate3d(${P.toolbar.x||14}px,${P.toolbar.y||14}px,0)`;
+  dock.classList.toggle('is-dragging',!!P.toolbar.dragging);
+  syncPencilPanel();
+}
+
+function syncPencilPanel(){
+  const panel=document.getElementById('pencilPanel');
+  const dock=document.getElementById('toolbarDock');
+  const stage=document.getElementById('mediaStage');
+  if(!panel||!dock||!stage) return;
+  if(!P.pencilPanelOpen){
+    panel.classList.remove('open');
+    panel.setAttribute('aria-hidden','true');
+    return;
+  }
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden','false');
+  const gap=12;
+  const stageWidth=stage.clientWidth||0;
+  const stageHeight=stage.clientHeight||0;
+  const dockWidth=dock.offsetWidth||0;
+  const panelWidth=panel.offsetWidth||220;
+  const panelHeight=panel.offsetHeight||240;
+  let x=(P.toolbar.x||14)+dockWidth+gap;
+  if(x+panelWidth>stageWidth-gap){
+    x=(P.toolbar.x||14)-panelWidth-gap;
+  }
+  x=Math.max(gap,Math.min(stageWidth-panelWidth-gap,x));
+  let y=P.toolbar.y||14;
+  if(y+panelHeight>stageHeight-gap){
+    y=Math.max(gap,stageHeight-panelHeight-gap);
+  }
+  panel.style.transform=`translate3d(${x}px,${y}px,0)`;
 }
 
 function getQuestionPanLimits(){
@@ -1330,6 +1470,38 @@ function clampQuestionPan(){
 function updateQuestionTransform(){
   clampQuestionPan();
   syncDrawingToolbar();
+}
+
+function beginToolbarDrag(event){
+  if(event.button!==0) return;
+  if(event.target?.closest?.('button')) return;
+  const handle=document.getElementById('toolbarDragHandle');
+  P.toolbar.dragging=true;
+  P.toolbar.pointerId=event.pointerId;
+  P.toolbar.originX=event.clientX;
+  P.toolbar.originY=event.clientY;
+  P.toolbar.startX=P.toolbar.x||14;
+  P.toolbar.startY=P.toolbar.y||14;
+  handle?.setPointerCapture?.(event.pointerId);
+  syncToolbarDock();
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function moveToolbarDrag(event){
+  if(!P.toolbar.dragging||P.toolbar.pointerId!==event.pointerId) return;
+  P.toolbar.x=P.toolbar.startX+(event.clientX-P.toolbar.originX);
+  P.toolbar.y=P.toolbar.startY+(event.clientY-P.toolbar.originY);
+  syncToolbarDock();
+  event.preventDefault();
+}
+
+function endToolbarDrag(event){
+  if(!P.toolbar.dragging) return;
+  if(event?.pointerId!=null&&P.toolbar.pointerId!==event.pointerId) return;
+  P.toolbar.dragging=false;
+  P.toolbar.pointerId=null;
+  syncToolbarDock();
 }
 
 function drawStoredStroke(ctx,stroke,width,height){
@@ -1634,6 +1806,9 @@ function bindExamInteractions(){
   P.uiBound=true;
   const stage=document.getElementById('mediaStage');
   const img=document.getElementById('qImg');
+  const toolbarDock=document.getElementById('toolbarDock');
+  const toolbarHandle=document.getElementById('toolbarDragHandle');
+  const pencilPanel=document.getElementById('pencilPanel');
   const lightbox=document.getElementById('imageLightbox');
   const lightboxStage=document.getElementById('lightboxStage');
 
@@ -1641,9 +1816,23 @@ function bindExamInteractions(){
   stage.addEventListener('pointermove',moveStageGesture);
   stage.addEventListener('pointerup',finishStageGesture);
   stage.addEventListener('pointercancel',finishStageGesture);
+  toolbarHandle?.addEventListener('pointerdown',beginToolbarDrag);
+  ['pointerdown','click','wheel','touchstart'].forEach(eventName=>{
+    toolbarDock?.addEventListener(eventName,event=>event.stopPropagation(),{passive:eventName==='wheel'?true:false});
+    pencilPanel?.addEventListener(eventName,event=>event.stopPropagation(),{passive:eventName==='wheel'?true:false});
+  });
   img.addEventListener('load',()=>requestAnimationFrame(syncDrawingSurface));
   window.addEventListener('resize',()=>requestAnimationFrame(syncDrawingSurface));
   document.addEventListener('keydown',handleExamKeydown);
+  window.addEventListener('pointermove',moveToolbarDrag);
+  window.addEventListener('pointerup',endToolbarDrag);
+  window.addEventListener('pointercancel',endToolbarDrag);
+  document.addEventListener('pointerdown',event=>{
+    if(!P.pencilPanelOpen) return;
+    if(toolbarDock?.contains(event.target)||pencilPanel?.contains(event.target)) return;
+    P.pencilPanelOpen=false;
+    syncDrawingToolbar();
+  });
 
   lightbox.addEventListener('click',event=>{
     if(event.target===lightbox||event.target===lightboxStage) closeImageLightbox();
@@ -1764,7 +1953,12 @@ function renderWarning(){
   document.getElementById('warnShortcutAnswers').textContent=`Klavye ile A-${lastOption} arası tuşlarla cevap işaretleyebilirsin. Aynı şıkkı tekrar seçerek işareti kaldırabilir, Delete veya Backspace ile mevcut cevabı temizleyebilirsin.`;
 }
 
-window.beginExam=function(){renderExamUI();showScreen('screenExam');startTimer();};
+window.beginExam=function(){
+  renderExamUI();
+  showScreen('screenExam');
+  requestAnimationFrame(syncDrawingSurface);
+  startTimer();
+};
 
 // ===== EXAM UI =====
 function renderExamUI(){
@@ -1871,8 +2065,15 @@ window.goQ=function(i){renderQuestion(i);};
 window.prevQ=function(){if(P.curQ>0)renderQuestion(P.curQ-1);};
 window.nextQ=function(){if(P.curQ<P.questions.length-1)renderQuestion(P.curQ+1);};
 
-window.setDrawTool=function(tool){
+window.setDrawTool=function(tool,options={}){
+  const togglePanel=!!options?.togglePanel;
+  const wasPencil=P.drawingTool==='pencil';
   P.drawingTool=tool;
+  if(tool==='pencil'){
+    P.pencilPanelOpen=togglePanel?(wasPencil?!P.pencilPanelOpen:true):P.pencilPanelOpen;
+  }else{
+    P.pencilPanelOpen=false;
+  }
   persistDrawingPrefs();
   syncDrawingToolbar();
 };
@@ -1889,6 +2090,11 @@ window.setBrushSize=function(size){
   syncDrawingToolbar();
 };
 
+window.closePencilPanel=function(){
+  P.pencilPanelOpen=false;
+  syncDrawingToolbar();
+};
+
 window.setQuestionZoom=function(value){
   P.questionZoom=Math.max(80,Math.min(220,parseInt(value,10)||100));
   if(P.questionZoom<=100){
@@ -1899,12 +2105,22 @@ window.setQuestionZoom=function(value){
   requestAnimationFrame(syncDrawingSurface);
 };
 
+window.adjustQuestionZoom=function(delta){
+  window.setQuestionZoom((P.questionZoom||100)+(parseInt(delta,10)||0));
+};
+
 window.resetQuestionZoom=function(){
   P.questionZoom=100;
   P.questionPanX=0;
   P.questionPanY=0;
   updateQuestionTransform();
   requestAnimationFrame(syncDrawingSurface);
+};
+
+window.resetToolbarPosition=function(){
+  P.toolbar.x=14;
+  P.toolbar.y=14;
+  syncToolbarDock();
 };
 
 window.centerQuestionStage=function(){

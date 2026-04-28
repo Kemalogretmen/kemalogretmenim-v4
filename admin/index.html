@@ -67,15 +67,17 @@
     /* ─── DASHBOARD ─── */
     .dashboard { display:none; }
     .sidebar {
-      width: 260px;
-      background: var(--navy);
+      width: 300px;
+      background:
+        radial-gradient(circle at 22px 18px, rgba(255,255,255,.09), transparent 26px),
+        linear-gradient(180deg,#21144a 0%,#171033 52%,#110b28 100%);
       height: 100vh;
-      padding: 28px 20px;
+      padding: 22px 16px;
       position: fixed;
       left:0; top:0;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
       overflow-y: auto;
       overscroll-behavior: contain;
       scrollbar-width: thin;
@@ -125,10 +127,11 @@
     }
     .side-btn .em { font-size:18px; width:26px; text-align:center; }
     .sidebar .admin-nav-section { display:grid; gap:8px; }
-    .sidebar .admin-nav-section-label { padding:0 8px; }
-    .sidebar .admin-nav-group { padding:8px; }
+    .sidebar .admin-nav-section-label { padding:0 10px; font-size:11px; color:rgba(255,255,255,.5); }
+    .sidebar .admin-nav-group { padding:6px; border-radius:14px; }
+    .sidebar .admin-nav-group-link { border-radius:10px; padding:12px 13px; }
     .sidebar .admin-nav-group-link { cursor:pointer; }
-    .sidebar .admin-nav-submenu { padding-left:16px; }
+    .sidebar .admin-nav-submenu { padding-left:42px; }
     .sidebar .admin-nav-submenu .side-btn {
       font-size:13px;
       padding:9px 12px;
@@ -153,7 +156,7 @@
     .logout-btn:hover { background:rgba(239,68,68,.3); color:white; }
 
     .main-area {
-      margin-left: 260px;
+      margin-left: 300px;
       padding: 32px;
       min-height: 100vh;
     }
@@ -634,6 +637,11 @@
       transform:translateY(-1px);
     }
 
+    .admin-nav-group-head { min-height:0; }
+    .admin-nav-group-link .copy strong { font-size:14px; }
+    .admin-nav-group-link .copy span { font-size:11px; line-height:1.35; }
+    .admin-nav-group-toggle { min-height:48px; }
+
     @media (max-width:900px) {
       .sidebar { width:70px; padding:20px 10px; }
       .sidebar-logo, .nav-section-lbl, .side-btn span:last-child { display:none; }
@@ -678,7 +686,7 @@
         <span class="admin-nav-brand-badge">🌟</span>
         <div class="admin-nav-brand-copy">
           <strong>Kemal Öğretmenim</strong>
-          <span>Ortak admin gezintisi</span>
+          <span>Yönetim merkezi</span>
         </div>
       </div>
 
@@ -740,7 +748,7 @@
 
       <div class="admin-nav-section">
         <div class="admin-nav-section-label">İçerik Yönetimi</div>
-        <div class="admin-nav-group">
+        <div class="admin-nav-group" data-admin-group="games-admin">
           <div class="admin-nav-group-head">
             <a class="admin-nav-group-link" href="/admin/oyunlar-admin.html">
               <span class="icon">🎮</span>
@@ -770,7 +778,7 @@
             <a href="/admin/okuma-karne.html">Karne Merkezi</a>
           </div>
         </div>
-        <div class="admin-nav-group">
+        <div class="admin-nav-group" data-admin-group="documents-admin">
           <div class="admin-nav-group-head">
             <a class="admin-nav-group-link" href="/admin/dokuman-yonetimi.html">
               <span class="icon">📄</span>
@@ -781,7 +789,18 @@
             </a>
           </div>
         </div>
-        <div class="admin-nav-group">
+        <div class="admin-nav-group" data-admin-group="menu-admin">
+          <div class="admin-nav-group-head">
+            <a class="admin-nav-group-link" href="/admin/menu-yonetimi.html">
+              <span class="icon">🗂️</span>
+              <span class="copy">
+                <strong>Menü & Ders Yönetimi</strong>
+                <span>Üst menüye ders sayfaları ekle</span>
+              </span>
+            </a>
+          </div>
+        </div>
+        <div class="admin-nav-group" data-admin-group="worksheet-admin">
           <div class="admin-nav-group-head">
             <a class="admin-nav-group-link" href="/admin/calisma-kagidi-editor.html">
               <span class="icon">🧩</span>
@@ -868,6 +887,7 @@
             <button class="btn-add" onclick="showPanel('hizli')" id="quick-hizli">⚡ Kart Düzenle</button>
             <button class="btn-add" onclick="window.location='/admin/okuma-editor.html'" id="quick-okuma-editor">📝 Okuma Editörü</button>
             <button class="btn-add" onclick="window.location='/admin/dokuman-yonetimi.html'" id="quick-dokuman-yonetimi">📚 Doküman Yönetimi</button>
+            <button class="btn-add" onclick="window.location='/admin/menu-yonetimi.html'" id="quick-menu-yonetimi">🗂️ Menü & Ders Yönetimi</button>
             <button class="btn-add" onclick="window.location='/admin/calisma-kagidi-editor.html'" id="quick-calisma-kagidi">🧩 Çalışma Kağıtları</button>
             <button class="btn-add" onclick="window.location='/admin/okuma-sonuclari.html'" id="quick-okuma-sonuclari">📊 Okuma Sonuçları</button>
             <button class="btn-add" onclick="window.location='/admin/okuma-karne.html'" id="quick-okuma-karne">📘 Okuma Karnesi</button>

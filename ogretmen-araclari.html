@@ -134,64 +134,179 @@
     .alarm-banner.show { display: flex; }
 
     /* PROFESYONEL BEYAZ TAHTA ARAÇ KUTUSU */
+    /* ── YENİ KOMPAKT ARAÇ ÇUBUĞU ── */
     .pro-toolbar {
-      position: absolute; top: 20px; left: 20px; z-index: 10;
-      background: rgba(255,255,255,0.98); border: 1px solid rgba(227,214,255,0.9);
-      box-shadow: 0 16px 40px rgba(32,16,74,0.12); border-radius: 20px;
-      width: 360px; display: flex; flex-direction: column; touch-action: none;
-      overflow: hidden; transition: width 0.3s ease, max-height 0.3s ease, box-shadow 0.3s ease;
+      position: absolute; top: 16px; left: 16px; z-index: 30;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(227,214,255,0.85);
+      border-radius: 22px; padding: 8px 7px;
+      box-shadow: 0 12px 40px rgba(108,61,237,0.13), 0 2px 8px rgba(0,0,0,0.06);
+      width: 62px; touch-action: none;
+      overflow: visible;
     }
-    .pro-toolbar.is-collapsed { width: 304px; box-shadow: 0 20px 46px rgba(32,16,74,0.16); }
-    .pro-toolbar.is-collapsed .advanced-tools,
-    .pro-toolbar.is-collapsed .color-grid { display: none; }
-    
-    .toolbar-header {
+    .pro-toolbar.sub-open { width: 62px; } /* genişleme yok */
+
+    /* Yüzen yan panel */
+    .float-panel {
+      display: none;
+      position: absolute;
+      top: 0; left: calc(100% + 10px);
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(227,214,255,0.9);
+      border-radius: 18px;
+      padding: 14px 13px 12px;
+      box-shadow: 0 16px 48px rgba(108,61,237,0.14), 0 2px 8px rgba(0,0,0,0.07);
+      min-width: 220px; max-width: 250px;
+      z-index: 40;
+      flex-direction: column; gap: 11px;
+    }
+    .float-panel.is-open { display: flex; animation: fadeSlideIn .18s ease; }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .float-panel-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 18px; background: #f8f9fc; border-bottom: 1px solid rgba(227,214,255,0.8);
-      cursor: grab;
+      margin-bottom: 2px;
+    }
+    .float-panel-title { font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: .07em; }
+    .float-close-btn {
+      width: 22px; height: 22px; border-radius: 7px; border: none;
+      background: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 900;
+      cursor: pointer; display: grid; place-items: center;
+      transition: background .15s, color .15s;
+    }
+    .float-close-btn:hover { background: #fee2e2; color: #dc2626; }
+
+    /* Mobil: panel yukarı açılır */
+    @media (max-width: 760px) {
+      .float-panel { top: auto; bottom: calc(100% + 8px); left: 0; right: 0; max-width: 100%; min-width: unset; }
+    }
+
+    /* Sürükleme tutacağı */
+    .toolbar-header {
+      display: flex; align-items: center; justify-content: center;
+      padding: 2px 0 6px; cursor: grab; user-select: none; width: 100%;
     }
     .toolbar-header:active { cursor: grabbing; }
-    
-    .toolbar-brand { display: flex; align-items: center; gap: 10px; font-weight: 900; color: var(--navy); font-size: 15px; }
-    .toolbar-logo { width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    
-    .toggle-collapse-btn {
-      background: #fff; border: 1px solid rgba(227,214,255,0.9); color: var(--slate);
-      width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
-      font-size: 14px; transition: 0.2s; display: grid; place-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .toggle-collapse-btn:hover { color: var(--purple); border-color: var(--purple-light); }
-    
-    .toolbar-main { padding: 16px; }
-    .advanced-tools { padding: 0 16px 16px 16px; }
-    .toolbar-compact-pages { display: grid; padding: 0 16px 16px 16px; gap: 12px; }
-    .toolbar-divider { height: 1.5px; background: rgba(227,214,255,0.6); margin: 16px 0; border-radius: 1px;}
-    .toolbar-title { font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
-    
-    .tool-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .tool-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px;}
-    
+    .toolbar-brand { display: none; }
+    .toolbar-logo { display: none; }
+    .toggle-collapse-btn { display: none; }
+    .toolbar-drag-icon { color: #cbd5e1; font-size: 14px; }
+
+    /* Ana araç butonları */
+    .toolbar-main { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; width: 100%; }
+    .tool-grid-4 { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; }
+
     .toolbar-btn {
-      height: 46px; border-radius: 12px; background: #fff; border: 1.5px solid #e2e8f0;
-      color: var(--slate); font-size: 18px; display: flex; align-items: center; justify-content: center; gap:6px;
-      cursor: pointer; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+      width: 46px; height: 46px; border-radius: 14px;
+      border: 1.5px solid transparent;
+      background: transparent; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+      display: grid; place-items: center;
+      font-size: 17px; position: relative;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0;
     }
-    .toolbar-btn:hover { border-color: var(--purple-light); color: var(--purple); background: #f8f5ff; }
-    .toolbar-btn:active { transform: scale(0.92); }
-    .toolbar-btn.is-active { background: linear-gradient(135deg, var(--purple), var(--purple-2)); color: #fff; border-color: var(--board-accent-color, var(--purple)); box-shadow: 0 0 0 3px var(--board-accent-color, rgba(108,61,237,0.22)), 0 10px 22px rgba(108,61,237,0.28); }
-    
-    .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-    .color-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 2px #e2e8f0; cursor: pointer; transition: 0.2s; position: relative; }
-    .color-btn:hover { transform: scale(1.1); }
-    .color-btn.is-active { box-shadow: 0 0 0 3px #fff, 0 0 0 7px var(--active-ring, var(--purple)), 0 14px 24px rgba(15,23,42,0.16); transform: scale(1.12); z-index: 2; }
-    .color-btn.is-active::after { display: none; }
+    .toolbar-btn:hover { background: #f1eeff; color: var(--purple); border-color: rgba(167,139,250,.3); }
+    .toolbar-btn:active { transform: scale(0.88); }
+    .toolbar-btn.is-active {
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 16px rgba(108,61,237,0.38);
+    }
+    .toolbar-btn.wide { width: 100%; height: 36px; border-radius: 10px; font-size: 13px; justify-content: flex-start; padding: 0 10px; gap: 8px; }
 
-    .shape-panel { display: none; }
-    .shape-panel.is-open { display: block; animation: fadeDown 0.2s ease; }
-    @keyframes fadeDown { from{opacity:0; transform:translateY(-5px);} to{opacity:1; transform:translateY(0);} }
+    /* Aktif renk nokta göstergesi */
+    .color-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,.7);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.15);
+      position: absolute; bottom: 7px; right: 7px;
+      pointer-events: none;
+    }
 
-    .size-slider { width: 100%; accent-color: var(--purple); cursor: pointer; }
-    .shortcut-help { position: relative; display: flex; align-items: center; }
+    /* toolbar-sub artık float-panel olarak dışarıda — bu kural kaldırıldı */
+
+    /* Kalem alt satırı (pen/highlighter/eraser seçimi) */
+    .pen-row { display: flex; gap: 5px; }
+    .pen-row .toolbar-btn { width: 40px; height: 36px; border-radius: 10px; font-size: 15px; }
+
+    /* Renk paleti — kompakt */
+    .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .color-btn {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.8);
+      box-shadow: 0 0 0 1.5px rgba(0,0,0,.12);
+      cursor: pointer; transition: transform .15s, box-shadow .15s, outline-color .15s;
+      position: relative;
+    }
+    .color-btn:hover { transform: scale(1.12); box-shadow: 0 0 0 2px rgba(15,23,42,.18); }
+    .color-btn.is-active {
+      outline: 4px solid var(--purple);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 2.5px #fff, 0 10px 18px rgba(108,61,237,.28) !important;
+      transform: scale(1.18) !important;
+      z-index: 2;
+    }
+    .color-btn.is-active::after {
+      content: "";
+      position: absolute;
+      right: -3px;
+      bottom: -3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--purple);
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(15,23,42,.22);
+    }
+
+    /* Kalınlık slider */
+    .size-slider { width: 100%; accent-color: var(--purple); cursor: pointer; height: 4px; border-radius: 2px; margin: 0; }
+    .thickness-row { display: flex; align-items: center; gap: 8px; }
+    .thickness-dot { border-radius: 50%; background: #1f2142; flex-shrink: 0; }
+
+    /* Şekil ızgarası */
+    .shape-panel { display: none; width: 100%; }
+    .shape-panel.is-open { display: block; }
+    .tool-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .tool-grid-5 .toolbar-btn { width: 100%; height: 36px; border-radius: 10px; font-size: 14px; border: 1.5px solid rgba(227,214,255,.7); background: #fafbff; }
+
+    /* toolbar-compact-pages artık float-panel içinde */
+
+    /* Gelişmiş araçlar — metin vb. (gizli, gerektiğinde açılır) */
+    .advanced-tools { display: none; }
+
+    /* Araç ayırıcı */
+    .tool-sep { height: 1px; background: rgba(227,214,255,.55); margin: 2px 0; width: 100%; border-radius: 1px; }
+
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:translateY(0);} }
+    .shape-panel.is-open { animation: fadeDown 0.18s ease; }
+
+    /* Mobil */
+    @media (max-width: 760px) {
+      .pro-toolbar {
+        top: auto; left: 8px; right: 8px; bottom: 8px;
+        width: calc(100% - 16px) !important;
+        flex-direction: row; flex-wrap: wrap;
+        border-radius: 18px; padding: 8px 10px;
+        align-items: center;
+      }
+      .pro-toolbar.sub-open { width: calc(100% - 16px) !important; }
+      .toolbar-main { flex-direction: row; flex-wrap: wrap; gap: 4px; align-items: center; }
+      .tool-grid-4 { flex-direction: row; flex-wrap: wrap; }
+      .toolbar-header { padding: 0; width: auto; }
+      .toolbar-sub, .toolbar-compact-pages {
+        position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+        background: rgba(255,255,255,.98); border-radius: 18px;
+        border: 1.5px solid rgba(227,214,255,.9);
+        box-shadow: 0 -8px 32px rgba(108,61,237,.12);
+        padding: 14px; margin: 0; border-top: none;
+      }
+    }
     .shortcut-help-btn {
       width: 40px; height: 40px; border-radius: 14px; border: 1.5px solid rgba(227,214,255,0.9);
       background: #fff; color: var(--purple); font-size: 20px; font-weight: 900; cursor: pointer;
@@ -224,6 +339,18 @@
     .board-plane.board-paper-white { background: #ffffff; }
     .board-plane.board-paper-lined { background: repeating-linear-gradient(180deg, #ffffff 0 34px, rgba(115,128,255,0.15) 34px 36px); }
     .board-plane.board-paper-grid { background: linear-gradient(rgba(115,128,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(115,128,255,0.12) 1px, transparent 1px), #ffffff; background-size: 34px 34px, 34px 34px, auto; }
+    .board-plane.board-paper-guide {
+      background:
+        repeating-linear-gradient(180deg,
+          rgba(70,80,90,0.62) 0 2px,
+          #ffffff 2px 32px,
+          rgba(70,80,90,0.62) 32px 34px,
+          rgba(255,250,184,0.76) 34px 64px,
+          rgba(70,80,90,0.62) 64px 66px,
+          transparent 66px 165px
+        ),
+        #e6f8ff;
+    }
     .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
     .board-overlay-text { position: absolute; min-width: 150px; min-height: 50px; resize: both; padding: 10px; border-radius: 12px; border: 2px dashed var(--purple); background: rgba(255,255,255,0.95); color: var(--navy); font: 800 24px/1.3 'Nunito', sans-serif; outline: none; z-index: 12; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 
@@ -434,12 +561,27 @@
     .face-5 .dot:nth-child(1) { grid-area: a; } .face-5 .dot:nth-child(2) { grid-area: c; } .face-5 .dot:nth-child(3) { grid-area: e; } .face-5 .dot:nth-child(4) { grid-area: g; } .face-5 .dot:nth-child(5) { grid-area: i; }
     .face-6 .dot:nth-child(1) { grid-area: a; } .face-6 .dot:nth-child(2) { grid-area: d; } .face-6 .dot:nth-child(3) { grid-area: g; } .face-6 .dot:nth-child(4) { grid-area: c; } .face-6 .dot:nth-child(5) { grid-area: f; } .face-6 .dot:nth-child(6) { grid-area: i; }
 
-    .coin-stage { perspective: 1200px; min-height: 210px; display: flex; align-items: center; justify-content: center; }
-    .coin-inner { width: 154px; height: 154px; position: relative; transition: transform 2.7s cubic-bezier(0.2, 0.8, 0.2, 1); transform-style: preserve-3d; }
-    .coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 34px; letter-spacing: 2px; backface-visibility: hidden; border: 8px solid #fef08a; box-shadow: inset 0 0 0 8px rgba(120,53,15,0.45), inset 0 12px 18px rgba(255,255,255,0.22), 0 22px 42px rgba(0,0,0,0.26); }
-    .coin-face::after { content: ''; position: absolute; inset: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); }
-    .coin-front { background: radial-gradient(circle at 30% 25%, #fff7b3, #f59e0b 52%, #7c2d12 100%); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-    .coin-back { background: radial-gradient(circle at 30% 25%, #ffffff, #cbd5e1 55%, #334155 100%); color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.5); border-color: #ffffff; box-shadow: inset 0 0 0 8px rgba(71,85,105,0.5), inset 0 12px 18px rgba(255,255,255,0.22), 0 22px 42px rgba(0,0,0,0.26); transform: rotateY(180deg); }
+    .coin-stage { perspective: 1000px; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+    .coin-wrap { position: relative; width: 160px; height: 160px; }
+    .coin-shadow { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); width: 120px; height: 18px; background: radial-gradient(ellipse, rgba(0,0,0,0.28) 0%, transparent 70%); border-radius: 50%; filter: blur(4px); transition: all 0.3s ease; }
+    .coin-inner { width: 160px; height: 160px; position: relative; transition: transform 2.8s cubic-bezier(0.15, 0.88, 0.18, 1); transform-style: preserve-3d; }
+    .coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .coin-face::before { content:''; position:absolute; inset:0; border-radius:50%; box-shadow: inset 0 0 0 5px rgba(255,255,255,0.18), inset 0 0 0 7px rgba(0,0,0,0.12), 0 0 0 2px rgba(180,140,0,0.6), 0 24px 48px rgba(0,0,0,0.32); z-index:3; pointer-events:none; }
+    .coin-face::after { content:''; position:absolute; inset:0; border-radius:50%; background: linear-gradient(130deg, rgba(255,255,255,0.38) 0%, transparent 45%, rgba(0,0,0,0.12) 100%); z-index:4; pointer-events:none; }
+    .coin-front { transform: rotateY(0deg); background: radial-gradient(circle at 42% 38%, #fff9d0 0%, #f5c800 38%, #b8900a 80%, #7a5a00 100%); }
+    .coin-front img { width:84%; height:84%; object-fit:contain; border-radius:50%; position:relative; z-index:2; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+    .coin-back { transform: rotateY(180deg); background: radial-gradient(circle at 42% 38%, #f0f0f0 0%, #d0d0d0 38%, #909090 80%, #505050 100%); }
+    .coin-back img { width:84%; height:84%; object-fit:contain; border-radius:50%; position:relative; z-index:2; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.30)); }
+    @keyframes coinWobble {
+      0%   { transform: rotateY(0deg) rotateZ(0deg) translateY(0); }
+      15%  { transform: rotateY(180deg) rotateZ(3deg) translateY(-12px); }
+      30%  { transform: rotateY(360deg) rotateZ(-2deg) translateY(-20px); }
+      50%  { transform: rotateY(720deg) rotateZ(1.5deg) translateY(-10px); }
+      70%  { transform: rotateY(1080deg) rotateZ(-1deg) translateY(-4px); }
+      85%  { transform: rotateY(1260deg) rotateZ(0.5deg) translateY(-1px); }
+      100% { transform: rotateY(1440deg) rotateZ(0deg) translateY(0); }
+    }
+    .coin-inner.is-flipping { animation: coinWobble 2.8s cubic-bezier(0.15,0.88,0.18,1) forwards; }
 
     .chk-label { font-weight: 900; font-size: 16px; color: var(--slate); display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .chk-label input { width: 24px; height: 24px; accent-color: var(--purple); cursor: pointer; }
@@ -685,109 +827,151 @@
                   <div id="protractorSvgContainer" class="protractor-svg-wrapper"></div>
               </div>
 
-              <section class="board-toolbar pro-toolbar" id="boardToolbar">
+              <section class="board-toolbar pro-toolbar" id="boardToolbar" style="position:absolute;top:16px;left:16px;">
+
+                <!-- Sürükleme tutacağı -->
                 <div class="toolbar-header" id="boardToolbarHandle">
-                  <div class="toolbar-brand">
-                    <img src="/gorseller/logo.png" alt="Logo" class="toolbar-logo">
-                    <span class="brand-text">Araçlar</span>
-                  </div>
-                  <button id="toolbarToggleBtn" class="toggle-collapse-btn" title="Daralt/Genişlet"><i class="fas fa-compress-alt"></i></button>
+                  <i class="fas fa-grip-lines toolbar-drag-icon"></i>
                 </div>
 
+                <!-- ANA ARAÇLAR -->
                 <div class="toolbar-main">
                   <div class="tool-grid-4">
-                    <button class="toolbar-btn" type="button" data-board-tool="select" title="Seç/Taşı"><i class="fas fa-mouse-pointer"></i></button>
-                    <button class="toolbar-btn is-active" type="button" data-board-tool="pen" title="Kalem"><i class="fas fa-pen"></i></button>
-                    <button class="toolbar-btn" type="button" data-board-tool="highlighter" title="İşaretleyici"><i class="fas fa-highlighter"></i></button>
-                    <button class="toolbar-btn" type="button" data-board-tool="eraser" title="Silgi"><i class="fas fa-eraser"></i></button>
-                    <button class="toolbar-btn" type="button" data-board-tool="text" title="Yazı Ekle"><i class="fas fa-font"></i></button>
-                    <button class="toolbar-btn" type="button" data-board-tool="pan" title="Sayfayı Kaydır"><i class="fas fa-hand-paper"></i></button>
-                    <button class="toolbar-btn" type="button" id="boardProtractorBtn" title="İletki (Açıölçer)"><i class="fas fa-drafting-compass"></i></button>
-                    <button class="toolbar-btn" type="button" id="shapeToggleBtn" aria-expanded="false" title="Geometrik Şekiller"><i class="fas fa-shapes"></i></button>
+
+                    <button class="toolbar-btn" type="button" data-board-tool="select" title="Seç / Taşı">
+                      <i class="fas fa-mouse-pointer"></i>
+                    </button>
+
+                    <button class="toolbar-btn is-active" type="button" id="penGroupBtn" title="Kalem Araçları">
+                      <i class="fas fa-pen"></i>
+                      <span class="color-dot" id="activeColorDot" style="background:#1f2142"></span>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" id="shapeGroupBtn" title="Şekiller">
+                      <i class="fas fa-shapes"></i>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" id="boardProtractorBtn" title="İletki / Açıölçer">
+                      <i class="fas fa-drafting-compass"></i>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" data-board-tool="text" title="Yazı Ekle">
+                      <i class="fas fa-font"></i>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" data-board-tool="pan" title="Sayfayı Kaydır">
+                      <i class="fas fa-hand-paper"></i>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" id="pageGroupBtn" title="Sayfa Yönetimi">
+                      <i class="fas fa-file-alt"></i>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" id="clearBoardBtn" title="Sayfayı Temizle" style="color:#dc2626;">
+                      <i class="fas fa-trash"></i>
+                    </button>
+
+                  </div>
+                </div>
+
+                <!-- KALEM YÜZEN PANELİ -->
+                <div class="float-panel is-open" id="penSubPanel">
+                  <div class="float-panel-head">
+                    <span class="float-panel-title">Kalem Araçları</span>
+                    <button class="float-close-btn" data-close-panel="penSubPanel">✕</button>
                   </div>
 
-                  <div class="shape-panel" id="shapePanel">
-                    <div class="tool-grid-5">
-                      <button class="toolbar-btn" type="button" data-board-tool="line" title="Çizgi"><i class="fas fa-slash"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="ray" title="Işın"><i class="fas fa-long-arrow-alt-right"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="infiniteLine" title="Doğru"><i class="fas fa-arrows-alt-h"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="dashline" title="Kesik Çizgi"><i class="fas fa-ellipsis-h"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="segment" title="Doğru Parçası"><i class="fas fa-minus"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="rect" title="Dikdörtgen"><i class="far fa-square"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="square" title="Kare"><i class="fas fa-square"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="circle" title="Daire"><i class="far fa-circle"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="triangle" title="Üçgen"><i class="fas fa-caret-up"></i></button>
-                      <button class="toolbar-btn" type="button" data-board-tool="star" title="Yıldız"><i class="fas fa-star"></i></button>
+                  <div>
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Kalem Türü</div>
+                    <div class="pen-row">
+                      <button class="toolbar-btn is-active" type="button" data-board-tool="pen" title="Kalem"><i class="fas fa-pen"></i></button>
+                      <button class="toolbar-btn" type="button" data-board-tool="highlighter" title="İşaretleyici"><i class="fas fa-highlighter"></i></button>
+                      <button class="toolbar-btn" type="button" data-board-tool="eraser" title="Silgi"><i class="fas fa-eraser"></i></button>
                     </div>
                   </div>
 
-                  <div class="color-grid" style="margin-top:16px;">
-                    <button class="color-btn is-active" type="button" data-board-color="#1f2142" style="background:#1f2142" title="Siyah"></button>
-                    <button class="color-btn" type="button" data-board-color="#ef4444" style="background:#ef4444" title="Kırmızı"></button>
-                    <button class="color-btn" type="button" data-board-color="#f97316" style="background:#f97316" title="Turuncu"></button>
-                    <button class="color-btn" type="button" data-board-color="#facc15" data-light="true" style="background:#facc15" title="Sarı"></button>
-                    <button class="color-btn" type="button" data-board-color="#22c55e" style="background:#22c55e" title="Yeşil"></button>
-                    <button class="color-btn" type="button" data-board-color="#14b8a6" style="background:#14b8a6" title="Turkuaz"></button>
-                    <button class="color-btn" type="button" data-board-color="#3b82f6" style="background:#3b82f6" title="Mavi"></button>
-                    <button class="color-btn" type="button" data-board-color="#8b5cf6" style="background:#8b5cf6" title="Mor"></button>
-                    <button class="color-btn" type="button" data-board-color="#ec4899" style="background:#ec4899" title="Pembe"></button>
-                    <button class="color-btn" type="button" data-board-color="#8b5a2b" style="background:#8b5a2b" title="Kahve"></button>
-                    <button class="color-btn" type="button" data-board-color="#9ca3af" data-light="true" style="background:#9ca3af" title="Gri"></button>
-                    <button class="color-btn" type="button" data-board-color="#ffffff" data-light="true" style="background:#ffffff" title="Beyaz"></button>
+                  <div>
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Renk</div>
+                    <div class="color-grid">
+                      <button class="color-btn is-active" type="button" data-board-color="#1f2142" style="background:#1f2142" title="Siyah"></button>
+                      <button class="color-btn" type="button" data-board-color="#ef4444" style="background:#ef4444" title="Kırmızı"></button>
+                      <button class="color-btn" type="button" data-board-color="#f97316" style="background:#f97316" title="Turuncu"></button>
+                      <button class="color-btn" type="button" data-board-color="#facc15" data-light="true" style="background:#facc15" title="Sarı"></button>
+                      <button class="color-btn" type="button" data-board-color="#22c55e" style="background:#22c55e" title="Yeşil"></button>
+                      <button class="color-btn" type="button" data-board-color="#14b8a6" style="background:#14b8a6" title="Turkuaz"></button>
+                      <button class="color-btn" type="button" data-board-color="#3b82f6" style="background:#3b82f6" title="Mavi"></button>
+                      <button class="color-btn" type="button" data-board-color="#8b5cf6" style="background:#8b5cf6" title="Mor"></button>
+                      <button class="color-btn" type="button" data-board-color="#ec4899" style="background:#ec4899" title="Pembe"></button>
+                      <button class="color-btn" type="button" data-board-color="#8b5a2b" style="background:#8b5a2b" title="Kahve"></button>
+                      <button class="color-btn" type="button" data-board-color="#9ca3af" data-light="true" style="background:#9ca3af" title="Gri"></button>
+                      <button class="color-btn" type="button" data-board-color="#ffffff" data-light="true" style="background:#ffffff" title="Beyaz"></button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Kalınlık</div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <span class="thickness-dot" id="thicknessDot" style="width:10px;height:10px;border-radius:50%;background:#1f2142;flex-shrink:0;display:block;"></span>
+                      <input class="size-slider" id="boardSizeSlider" type="range" min="1" max="24" step="1" value="6" style="flex:1;accent-color:var(--purple);cursor:pointer;">
+                    </div>
                   </div>
                 </div>
 
-                <div class="toolbar-compact-pages">
-                  <div class="toolbar-divider"></div>
-                  <div class="toolbar-title">Sayfa Yönetimi</div>
-                  <div style="display:flex; justify-content:space-between; align-items:center; background:#f8f9fc; padding:8px; border-radius:12px; margin-bottom:10px;">
-                    <button class="btn btn-secondary btn-sm" type="button" id="prevPageBtn" style="padding:6px 12px;"><i class="fas fa-chevron-left"></i></button>
-                    <span id="pageInfoDisplay" style="font-weight:900; color:var(--purple); font-size:14px;">1 / 1</span>
-                    <button class="btn btn-secondary btn-sm" type="button" id="nextPageBtn" style="padding:6px 12px;"><i class="fas fa-chevron-right"></i></button>
+                <!-- ŞEKİL YÜZEN PANELİ -->
+                <div class="float-panel" id="shapeSubPanel">
+                  <div class="float-panel-head">
+                    <span class="float-panel-title">Geometrik Şekiller</span>
+                    <button class="float-close-btn" data-close-panel="shapeSubPanel">✕</button>
                   </div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
-                    <button class="toolbar-btn" style="height:36px; font-size:13px;" type="button" id="addPageBtn"><i class="fas fa-plus"></i> Ekle</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:13px; color:#dc2626;" type="button" id="deletePageBtn"><i class="fas fa-trash"></i> Sil</button>
+                  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;">
+                    <button class="toolbar-btn" type="button" data-board-tool="line" title="Çizgi" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-slash"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="ray" title="Işın" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-long-arrow-alt-right"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="dashline" title="Kesik" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-ellipsis-h"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="rect" title="Dikdörtgen" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="far fa-square"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="square" title="Kare" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-square"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="circle" title="Daire" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="far fa-circle"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="triangle" title="Üçgen" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-caret-up"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="star" title="Yıldız" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-star"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="segment" title="Parça" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-minus"></i></button>
+                    <button class="toolbar-btn" type="button" data-board-tool="infiniteLine" title="Doğru" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-arrows-alt-h"></i></button>
                   </div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
-                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-board-paper="white">Beyaz</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-board-paper="lined">Çizgili</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-board-paper="grid">Kareli</button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;">
+                    <button class="toolbar-btn is-active" type="button" data-board-palette="stroke" style="height:32px;font-size:11px;font-weight:800;border-radius:9px;">Çizgi</button>
+                    <button class="toolbar-btn" type="button" data-board-palette="fill" style="height:32px;font-size:11px;font-weight:800;border-radius:9px;">Dolgu</button>
+                    <button class="toolbar-btn" type="button" id="boardFillToggleBtn" style="height:32px;font-size:11px;font-weight:800;border-radius:9px;">Boş</button>
                   </div>
-                  <select id="pageSizeSelect" style="width:100%; padding:10px; border-radius:12px; border:1.5px solid #e2e8f0; font-family:'Nunito', sans-serif; font-weight:800; color:var(--navy); outline:none; background:#f8f9fc; cursor:pointer;">
+                </div>
+
+                <!-- SAYFA YÖZEN PANELİ -->
+                <div class="float-panel" id="pageSubPanel">
+                  <div class="float-panel-head">
+                    <span class="float-panel-title">Sayfa Yönetimi</span>
+                    <button class="float-close-btn" data-close-panel="pageSubPanel">✕</button>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;background:#f8f9fc;padding:6px 8px;border-radius:10px;">
+                    <button class="toolbar-btn" type="button" id="prevPageBtn" style="width:30px;height:30px;border-radius:9px;font-size:12px;"><i class="fas fa-chevron-left"></i></button>
+                    <span id="pageInfoDisplay" style="font-weight:900;color:var(--purple);font-size:13px;">1 / 1</span>
+                    <button class="toolbar-btn" type="button" id="nextPageBtn" style="width:30px;height:30px;border-radius:9px;font-size:12px;"><i class="fas fa-chevron-right"></i></button>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                    <button class="toolbar-btn" type="button" id="addPageBtn" style="height:32px;font-size:12px;font-weight:800;border-radius:9px;gap:4px;"><i class="fas fa-plus"></i> Ekle</button>
+                    <button class="toolbar-btn" type="button" id="deletePageBtn" style="height:32px;font-size:12px;font-weight:800;border-radius:9px;color:#dc2626;gap:4px;"><i class="fas fa-trash"></i> Sil</button>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+                    <button class="toolbar-btn is-active" type="button" data-board-paper="white" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Beyaz</button>
+                    <button class="toolbar-btn" type="button" data-board-paper="lined" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Çizgili</button>
+                    <button class="toolbar-btn" type="button" data-board-paper="grid" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Kareli</button>
+                    <button class="toolbar-btn" type="button" data-board-paper="guide" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Kılavuz</button>
+                  </div>
+                  <select id="pageSizeSelect" style="width:100%;padding:7px 10px;border-radius:9px;border:1.5px solid #e2e8f0;font-family:'Nunito',sans-serif;font-weight:800;color:var(--navy);outline:none;background:#f8f9fc;cursor:pointer;font-size:12px;">
                     <option value="auto">Ekrana Sığdır</option>
-                    <option value="a4v">A4 (Dikey)</option>
-                    <option value="a4h">A4 (Yatay)</option>
-                    <option value="a3v">A3 (Dikey)</option>
-                    <option value="a3h">A3 (Yatay)</option>
+                    <option value="a4v">A4 Dikey</option>
+                    <option value="a4h">A4 Yatay</option>
+                    <option value="a3v">A3 Dikey</option>
+                    <option value="a3h">A3 Yatay</option>
                   </select>
                 </div>
 
-                <div id="advancedTools" class="advanced-tools">
-                  <div class="toolbar-divider"></div>
-                  <div class="toolbar-title">Kalınlık & Dolgu</div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
-                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-board-palette="stroke">Çizgi</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-board-palette="fill">Dolgu</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" id="boardFillToggleBtn">Boş</button>
-                  </div>
-                  <input class="size-slider" id="boardSizeSlider" type="range" min="1" max="24" step="1" value="6">
-
-                  <div class="toolbar-divider"></div>
-                  <div class="toolbar-title">Yazı Düzeni</div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
-                    <button class="toolbar-btn is-active" style="height:36px;" type="button" data-text-align="left"><i class="fas fa-align-left"></i></button>
-                    <button class="toolbar-btn" style="height:36px;" type="button" data-text-align="center"><i class="fas fa-align-center"></i></button>
-                    <button class="toolbar-btn" style="height:36px;" type="button" data-text-align="right"><i class="fas fa-align-right"></i></button>
-                  </div>
-                  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px;">
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-text-weight="500">İnce</button>
-                    <button class="toolbar-btn is-active" style="height:36px; font-size:12px;" type="button" data-text-weight="800">Orta</button>
-                    <button class="toolbar-btn" style="height:36px; font-size:12px;" type="button" data-text-weight="900">Kalın</button>
-                  </div>
-                  <input class="size-slider" id="boardTextSizeSlider" type="range" min="18" max="72" step="1" value="32">
-
-                </div>
               </section>
 
             </div>
@@ -1052,13 +1236,21 @@
                 <div class="rng-card">
                   <h3>Yazı Tura</h3>
                   <div class="coin-stage">
-                    <div class="coin-inner" id="coinInner">
-                      <div class="coin-face coin-front">YAZI</div>
-                      <div class="coin-face coin-back">TURA</div>
+                    <div class="coin-wrap">
+                      <div class="coin-inner" id="coinInner">
+                        <div class="coin-face coin-front">
+                          <img src="/gorseller/yazi.png" alt="Yazı" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'font-size:32px;font-weight:900;color:#7a5a00;position:relative;z-index:2;\'>YAZI</span>')">
+                        </div>
+                        <div class="coin-face coin-back">
+                          <img src="/gorseller/tura.png" alt="Tura" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'font-size:32px;font-weight:900;color:#505050;position:relative;z-index:2;\'>TURA</span>')">
+                        </div>
+                      </div>
+                      <div class="coin-shadow" id="coinShadow"></div>
                     </div>
                   </div>
                   <div style="height:36px;"></div>
-                  <button class="btn btn-teal" type="button" onclick="flipCoin()" style="width:100%; height:54px; font-size:18px;">Parayı Çevir</button>
+                  <button class="btn btn-teal" type="button" onclick="flipCoin()" style="width:100%; height:50px; font-size:17px; margin-top:6px;">🪙 Parayı Çevir</button>
+                  <div id="coinResultLabel" style="text-align:center;font-size:22px;font-weight:900;color:var(--purple);letter-spacing:.04em;margin-top:8px;opacity:0;transition:opacity .4s ease;min-height:32px;"></div>
                 </div>
               </div>
             </div>
@@ -2004,16 +2196,22 @@
       var activeColor = S.board.paletteTarget === 'fill' ? S.board.fillColor : S.board.strokeColor;
       if(E.boardToolbar) E.boardToolbar.style.setProperty('--board-accent-color', activeColor || '#6c3ded');
       E.boardToolBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardTool === S.board.tool); });
-      E.boardColorBtns.forEach(function(btn){
-        btn.classList.toggle('is-active', btn.dataset.boardColor === activeColor);
-        btn.style.setProperty('--active-ring', btn.dataset.boardColor || '#6c3ded');
+      // Renk butonları — her seferinde taze DOM sorgusu (scope sorunu yok)
+      document.querySelectorAll('[data-board-color]').forEach(function(btn) {
+        var match = btn.dataset.boardColor === activeColor;
+        btn.classList.toggle('is-active', match);
+        btn.setAttribute('aria-pressed', match ? 'true' : 'false');
       });
+      var dotEl = document.getElementById('activeColorDot');
+      var thickEl = document.getElementById('thicknessDot');
+      if(dotEl)   dotEl.style.background   = activeColor || '#1f2142';
+      if(thickEl) thickEl.style.background = activeColor || '#1f2142';
       E.boardPaletteBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPalette === S.board.paletteTarget); });
       E.boardPaperBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPaper === S.board.paper); });
       E.textAlignBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textAlign === S.board.textAlign); });
       E.textWeightBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textWeight === String(S.board.textWeight)); });
       E.textStyleBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textStyle === S.board.textStyle); });
-      if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid'); E.boardPlane.classList.add('board-paper-' + S.board.paper); }
+      if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid', 'board-paper-guide'); E.boardPlane.classList.add('board-paper-' + S.board.paper); }
       if(E.shapePanel) E.shapePanel.classList.toggle('is-open', S.board.shapesOpen);
       if(E.shapeToggleBtn) E.shapeToggleBtn.setAttribute('aria-expanded', S.board.shapesOpen ? 'true' : 'false');
       if(E.boardFillToggleBtn) { E.boardFillToggleBtn.classList.toggle('is-active', !S.board.fillEnabled); E.boardFillToggleBtn.innerHTML = S.board.fillEnabled ? 'Dolu' : 'Boş'; }
@@ -2143,8 +2341,18 @@
       S.board.points = [];
     }
 
-    function setBoardTool(tool) { S.board.tool = tool; if(['rect','square','circle','star'].indexOf(tool) > -1) { S.board.shapesOpen = true; } syncBoardUI(); }
-    function setBoardColor(color) { if(S.board.paletteTarget === 'fill') { S.board.fillColor = color; S.board.fillColorName = COLOR_NAMES[color] || 'Renk'; S.board.fillEnabled = true; } else { S.board.strokeColor = color; S.board.strokeColorName = COLOR_NAMES[color] || 'Renk'; } syncBoardUI(); }
+    function setBoardTool(tool) {
+      S.board.tool = tool;
+      if(boardCanDraw(tool) || tool === 'text') S.board.paletteTarget = 'stroke';
+      if(['rect','square','circle','star'].indexOf(tool) > -1) { S.board.shapesOpen = true; }
+      syncBoardUI();
+    }
+    function setBoardColor(color) {
+      if(boardCanDraw(S.board.tool) || S.board.tool === 'text') S.board.paletteTarget = 'stroke';
+      if(S.board.paletteTarget === 'fill') { S.board.fillColor = color; S.board.fillColorName = COLOR_NAMES[color] || 'Renk'; S.board.fillEnabled = true; } else { S.board.strokeColor = color; S.board.strokeColorName = COLOR_NAMES[color] || 'Renk'; }
+      updateColorDot(color);
+      syncBoardUI();
+    }
     function setBoardSize(size) { S.board.size = size; syncBoardUI(); }
     function setBoardPalette(target) { S.board.paletteTarget = target; syncBoardUI(); }
     function toggleBoardFill() { S.board.fillEnabled = !S.board.fillEnabled; syncBoardUI(); }
@@ -2161,10 +2369,27 @@
 
     function getCompositeDataURL() {
       var comp = document.createElement('canvas'); comp.width = E.boardCanvas.width; comp.height = E.boardCanvas.height; var ctx = comp.getContext('2d');
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, comp.width, comp.height);
+      ctx.fillStyle = S.board.paper === 'guide' ? '#e6f8ff' : '#ffffff'; ctx.fillRect(0, 0, comp.width, comp.height);
       var ratio = window.devicePixelRatio || 1; var step = 34 * ratio;
       if (S.board.paper === 'lined') { ctx.strokeStyle = 'rgba(115,128,255,0.16)'; ctx.lineWidth = 1.5 * ratio; ctx.beginPath(); for (var y = step; y < comp.height; y += step) { ctx.moveTo(0, y); ctx.lineTo(comp.width, y); } ctx.stroke(); } 
       else if (S.board.paper === 'grid') { ctx.strokeStyle = 'rgba(115,128,255,0.12)'; ctx.lineWidth = 1 * ratio; ctx.beginPath(); for (var yy = step; yy < comp.height; yy += step) { ctx.moveTo(0, yy); ctx.lineTo(comp.width, yy); } for (var xx = step; xx < comp.width; xx += step) { ctx.moveTo(xx, 0); ctx.lineTo(xx, comp.height); } ctx.stroke(); }
+      else if (S.board.paper === 'guide') {
+        var guideStep = 165 * ratio;
+        var lineW = 2 * ratio;
+        ctx.lineWidth = lineW;
+        for (var gy = 0; gy < comp.height; gy += guideStep) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, gy + 2 * ratio, comp.width, 30 * ratio);
+          ctx.fillStyle = 'rgba(255,250,184,0.76)';
+          ctx.fillRect(0, gy + 34 * ratio, comp.width, 30 * ratio);
+          ctx.strokeStyle = 'rgba(70,80,90,0.62)';
+          ctx.beginPath();
+          ctx.moveTo(0, gy + lineW / 2); ctx.lineTo(comp.width, gy + lineW / 2);
+          ctx.moveTo(0, gy + 33 * ratio); ctx.lineTo(comp.width, gy + 33 * ratio);
+          ctx.moveTo(0, gy + 65 * ratio); ctx.lineTo(comp.width, gy + 65 * ratio);
+          ctx.stroke();
+        }
+      }
       ctx.drawImage(E.boardCanvas, 0, 0); return comp.toDataURL('image/png');
     }
     function saveBoard() { var link = document.createElement('a'); link.download = 'Tahta_' + new Date().toISOString().slice(0,10) + '.png'; link.href = getCompositeDataURL(); link.click(); }
@@ -2397,7 +2622,36 @@
     }
 
     window.roll3DDice = function() { var face1 = Math.floor(Math.random() * 6) + 1; var face2 = Math.floor(Math.random() * 6) + 1; var useTwo = document.getElementById('diceCountToggle').checked; setDiceTransform('dice1', face1); if(useTwo) setDiceTransform('dice2', face2); };
-    window.flipCoin = function() { var coin = document.getElementById('coinInner'); var result = Math.random() > 0.5 ? 'tura' : 'yazi'; S.coinRot += 1800; if(result === 'tura') S.coinRot += 180; else if(S.coinRot % 360 !== 0) S.coinRot += 180; coin.style.transform = 'rotateY(' + S.coinRot + 'deg)'; };
+    window.flipCoin = function() {
+      var coin = document.getElementById('coinInner');
+      var shadow = document.getElementById('coinShadow');
+      if (!coin || coin.classList.contains('is-flipping')) return;
+      var result = Math.random() > 0.5 ? 'tura' : 'yazi';
+      coin.style.transform = '';
+      coin.classList.remove('is-flipping');
+      void coin.offsetWidth; // reflow
+      coin.classList.add('is-flipping');
+      if (shadow) {
+        shadow.style.transform = 'translateX(-50%) scaleX(0.3)';
+        shadow.style.opacity = '0.15';
+        setTimeout(function() {
+          shadow.style.transition = 'all 0.4s ease';
+          shadow.style.transform = 'translateX(-50%) scaleX(1)';
+          shadow.style.opacity = '1';
+        }, 2400);
+      }
+      setTimeout(function() {
+        coin.classList.remove('is-flipping');
+        coin.style.transition = 'none';
+        coin.style.transform = result === 'tura' ? 'rotateY(180deg)' : 'rotateY(0deg)';
+        var resultEl = document.getElementById('coinResultLabel');
+        if (resultEl) {
+          resultEl.textContent = result === 'yazi' ? '🪙 YAZI!' : '🪙 TURA!';
+          resultEl.style.opacity = '1';
+          setTimeout(function() { resultEl.style.opacity = '0'; }, 2500);
+        }
+      }, 2820);
+    };
     
     // YENİ KONFETİ ANİMASYONU EKLENTİSİ
     function konfetiBaslat() {
@@ -2539,13 +2793,129 @@
       boardToolbar.classList.toggle('is-collapsed', S.board.toolbarCollapsed);
       toggleBtn.innerHTML = S.board.toolbarCollapsed ? '<i class="fas fa-expand-arrows-alt"></i>' : '<i class="fas fa-compress-alt"></i>';
     }
-    const toggleBtn = document.getElementById('toolbarToggleBtn'); const boardToolbar = document.getElementById('boardToolbar');
-    if(toggleBtn && boardToolbar) {
-      toggleBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        setBoardToolbarCollapsed(!boardToolbar.classList.contains('is-collapsed'));
+    // ── YENİ ARAÇ ÇUBUĞU YÜZEN PANELLERİ ──
+    var boardToolbar   = document.getElementById('boardToolbar');
+    var penSubPanel    = document.getElementById('penSubPanel');
+    var shapeSubPanel  = document.getElementById('shapeSubPanel');
+    var pageSubPanel   = document.getElementById('pageSubPanel');
+    var activeColorDot = document.getElementById('activeColorDot');
+    var thicknessDot   = document.getElementById('thicknessDot');
+
+    // Panel listesi — aynı anda sadece biri açık
+    var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel].filter(Boolean);
+
+    function closeAllSubPanels() {
+      allFloatPanels.forEach(function(p) { p.classList.remove('is-open'); });
+    }
+    function togglePanel(panel) {
+      if (!panel) return;
+      var wasOpen = panel.classList.contains('is-open');
+      closeAllSubPanels();
+      if (!wasOpen) panel.classList.add('is-open');
+    }
+
+    // X (kapat) butonları
+    document.querySelectorAll('[data-close-panel]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var target = document.getElementById(btn.dataset.closePanel);
+        if (target) target.classList.remove('is-open');
       });
-      setBoardToolbarCollapsed(false);
+    });
+
+    // Kalem grubu
+    var penGroupBtn = document.getElementById('penGroupBtn');
+    if (penGroupBtn) {
+      penGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        togglePanel(penSubPanel);
+        setBoardTool('pen');
+      });
+    }
+
+    // Şekil grubu
+    var shapeGroupBtn = document.getElementById('shapeGroupBtn');
+    if (shapeGroupBtn) {
+      shapeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        togglePanel(shapeSubPanel);
+      });
+    }
+
+    // Sayfa yönetimi
+    var pageGroupBtn = document.getElementById('pageGroupBtn');
+    if (pageGroupBtn) {
+      pageGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        togglePanel(pageSubPanel);
+      });
+    }
+
+    // Temizle
+    var clearBoardBtnNew = document.getElementById('clearBoardBtn');
+    if (clearBoardBtnNew) {
+      clearBoardBtnNew.addEventListener('click', function() {
+        if (confirm('Bu sayfadaki çizimler silinsin mi?')) { clearBoardPage(); }
+      });
+    }
+
+    // Kalınlık slider → nokta boyutu
+    var boardSizeSliderEl = document.getElementById('boardSizeSlider');
+    if (boardSizeSliderEl && thicknessDot) {
+      boardSizeSliderEl.addEventListener('input', function() {
+        var sz = Math.max(5, Math.min(22, parseInt(this.value, 10)));
+        thicknessDot.style.width  = sz + 'px';
+        thicknessDot.style.height = sz + 'px';
+      });
+    }
+
+    // Renk noktası güncelle — anında çağrılır, syncBoardUI beklenmez
+    function syncBoardColorSelection(color) {
+      document.querySelectorAll('[data-board-color]').forEach(function(btn) {
+        var selected = btn.dataset.boardColor === color;
+        btn.classList.toggle('is-active', selected);
+        btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+    }
+
+    function updateColorDot(color) {
+      if (activeColorDot) activeColorDot.style.background = color || '#1f2142';
+      if (thicknessDot)   thicknessDot.style.background  = color || '#1f2142';
+      syncBoardColorSelection(color);
+    }
+
+    // Sayfa başlangıcında kalem paneli açık
+    if (penSubPanel) penSubPanel.classList.add('is-open');
+
+    // ── DOKUNMATIK GECİKME OPTİMİZASYONLARI ──
+    if (E.boardPreview) {
+      // will-change: içerik değişiyor, tarayıcı katman oluşturur
+      E.boardPreview.style.willChange = 'contents';
+      E.boardCanvas.style.willChange  = 'contents';
+      // touch-action kesin olarak none
+      E.boardPreview.style.touchAction = 'none';
+      E.boardCanvas.style.touchAction  = 'none';
+    }
+
+    // RAF tabanlı pointermove throttling — her frame'de bir kez çiz
+    var _rafPending = false;
+    var _lastMoveEvt = null;
+    if (E.boardPreview) {
+      E.boardPreview.removeEventListener('pointermove', null); // eski listener'ı kapat
+      E.boardPreview.addEventListener('pointermove', function(evt) {
+        if (!S.board.drawing) return;
+        evt.preventDefault();
+        _lastMoveEvt = evt;
+        if (!_rafPending) {
+          _rafPending = true;
+          requestAnimationFrame(function() {
+            _rafPending = false;
+            if (_lastMoveEvt && S.board.drawing) {
+              moveBoardDraw(getBoardPoint(_lastMoveEvt));
+            }
+          });
+        }
+      }, { passive: false });
     }
 
     E.shortcutHelpBtns.forEach(function(btn) {
@@ -2583,7 +2953,28 @@
     E.adjBtns.forEach(function(b) { b.addEventListener('click',function(){ adjustUnit(b.dataset.unit,Number(b.dataset.adj)); }); });
     E.presetBtns.forEach(function(b) { b.addEventListener('click',function(){ setPreset(Number(b.dataset.preset)); }); });
     E.boardToolBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardTool(btn.dataset.boardTool); }); });
-    E.boardColorBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardColor(btn.dataset.boardColor); }); });
+    E.boardColorBtns.forEach(function(btn) {
+      btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+      btn.addEventListener('pointerdown', function(evt){
+        evt.preventDefault();
+        evt.stopPropagation();
+        // Tüm renk butonlarından is-active kaldır — her seferinde taze querySelectorAll
+        document.querySelectorAll('[data-board-color]').forEach(function(b) {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        // Bu butonu aktif yap — anında, syncBoardUI beklenmeden
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
+        // Renk noktasını güncelle
+        var dot = document.getElementById('activeColorDot');
+        var thick = document.getElementById('thicknessDot');
+        if (dot) dot.style.background = btn.dataset.boardColor;
+        if (thick) thick.style.background = btn.dataset.boardColor;
+        // State'i güncelle
+        setBoardColor(btn.dataset.boardColor);
+      });
+    });
     E.boardPaletteBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPalette(btn.dataset.boardPalette); }); });
     E.boardPaperBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPaper(btn.dataset.boardPaper); }); });
     E.textAlignBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextAlign(btn.dataset.textAlign); }); });

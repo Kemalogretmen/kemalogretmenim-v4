@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🗂️ Menü & Ders Yönetimi — Kemal Öğretmenim</title>
+  <script>window.kemalAdminScope = 'menu';</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/css/admin-shell.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+    :root {
+      --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
+      --coral:#FF6052;--teal:#00C9B1;--navy:#1A1040;
+      --slate:#64748B;--muted:#94A3B8;--bg:#F5F0FF;
+      --white:#fff;--border:#E2D9FF;--success:#10B981;--danger:#EF4444;--warn:#F59E0B;
+      --r-sm:10px;--r-md:16px;--r-lg:22px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--navy);}
+
+    /* ── Login ── */
+    .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#F2EAFF,#FFF5F4);}
+    .login-box{background:white;border-radius:24px;padding:44px 36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(108,61,237,.18);text-align:center;border:2px solid var(--border);}
+    .login-icon{font-size:52px;display:block;margin-bottom:12px;}
+    .login-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;margin-bottom:6px;}
+    .login-input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;margin-bottom:12px;outline:none;}
+    .login-input:focus{border-color:var(--purple);}
+    .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+    .login-err{display:none;margin-top:14px;padding:10px 12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);border-radius:10px;font-size:13px;color:var(--danger);font-weight:700;}
+
+    /* ── App shell ── */
+    .app{display:none;min-height:100vh;}
+    .topbar{background:white;border-bottom:2px solid var(--border);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+    .topbar-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;color:var(--purple);}
+    .topbar-links{display:flex;gap:8px;flex-wrap:wrap;}
+    .topbar-link{padding:7px 14px;border-radius:50px;font-weight:800;font-size:13px;text-decoration:none;background:var(--bg);color:var(--slate);border:2px solid var(--border);transition:all .2s;}
+    .topbar-link:hover{border-color:var(--purple);color:var(--purple);}
+    .logout-btn{padding:7px 14px;background:rgba(239,68,68,.1);border:none;border-radius:50px;color:var(--danger);font-weight:800;font-size:13px;cursor:pointer;cursor:pointer;}
+    .main{max-width:1100px;margin:0 auto;padding:28px 20px;}
+
+    /* ── Cards ── */
+    .page-title{font-family:'Fredoka','Nunito',sans-serif;font-size:26px;font-weight:700;margin-bottom:4px;}
+    .page-sub{font-size:14px;color:var(--slate);margin-bottom:28px;}
+    .card{background:white;border-radius:var(--r-lg);border:2px solid var(--border);padding:28px;}
+    .card+.card{margin-top:20px;}
+    .section-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+    /* ── Form ── */
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;align-items:end;}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    label{font-size:12px;font-weight:800;color:var(--slate);text-transform:uppercase;letter-spacing:.06em;}
+    .form-input,.form-select{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:var(--r-sm);font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;color:var(--navy);background:white;outline:none;transition:border-color .2s;}
+    .form-input:focus,.form-select:focus{border-color:var(--purple);}
+    .btn{padding:10px 20px;border:none;border-radius:50px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;}
+    .btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;}
+    .btn-primary:hover{opacity:.9;}
+    .btn-danger{background:rgba(239,68,68,.1);color:var(--danger);border:1.5px solid rgba(239,68,68,.2);}
+    .btn-danger:hover{background:rgba(239,68,68,.2);}
+    .btn-sm{padding:6px 14px;font-size:13px;}
+    .icon-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+    .icon-opt{width:34px;height:34px;border:2px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:all .15s;}
+    .icon-opt:hover,.icon-opt.selected{border-color:var(--purple);background:#F5F0FF;}
+
+    /* ── Table ── */
+    .table-wrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:14px;}
+    th{text-align:left;padding:10px 12px;font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);}
+    td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:#FAFAFF;}
+    .badge-nav{display:inline-block;padding:3px 10px;border-radius:50px;font-size:11px;font-weight:800;background:#EDE9FE;color:var(--purple);}
+    .badge-active{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);}
+    .badge-inactive{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--muted);}
+    .empty-row td{text-align:center;color:var(--muted);padding:40px;font-size:15px;}
+
+    /* ── Info box ── */
+    .info-box{background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:var(--r-md);padding:16px 18px;font-size:13px;color:#166534;line-height:1.6;margin-bottom:20px;}
+    .info-box strong{font-weight:800;}
+    .warn-box{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:var(--r-md);padding:16px 18px;font-size:13px;color:#92400E;line-height:1.6;margin-bottom:20px;}
+
+    /* ── Toast ── */
+    .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:12px;font-weight:800;font-size:14px;color:white;background:#1E293B;z-index:9999;transform:translateY(120%);transition:transform .3s;pointer-events:none;}
+    .toast.show{transform:translateY(0);}
+    .toast.success{background:#059669;}
+    .toast.error{background:var(--danger);}
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <span class="login-icon">🗂️</span>
+    <div class="login-title">Menü & Ders Yönetimi</div>
+    <p style="font-size:13px;color:var(--slate);margin-bottom:20px;">Admin girişi gerekli</p>
+    <input class="login-input" type="email" id="loginEmail" placeholder="E-posta">
+    <input class="login-input" type="password" id="loginPass" placeholder="Şifre">
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" onclick="doLogin()">Giriş Yap</button>
+  </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div class="app" id="app">
+  <div class="topbar">
+    <span class="topbar-title">🗂️ Menü & Ders Yönetimi</span>
+    <div class="topbar-links">
+      <a href="/admin/dokuman-yonetimi.html" class="topbar-link">📄 Dokümanlar</a>
+      <a href="/admin/index.html" class="topbar-link">⚙️ Admin Paneli</a>
+      <a href="/index.html" class="topbar-link">🏠 Ana Site</a>
+      <button class="logout-btn" onclick="doLogout()">Çıkış</button>
+    </div>
+  </div>
+
+  <div id="shellSidebar"></div>
+
+  <div class="main">
+    <div class="page-title">🗂️ Menü & Ders Yönetimi</div>
+    <p class="page-sub">Site navigasyonuna yeni ders sayfaları ekle. Eklediğin her menü öğesi hem üst menüde hem doküman yönetiminde otomatik görünür.</p>
+
+    <div class="warn-box">
+      ⚠️ <strong>Önce Supabase kurulumu:</strong> Bu sayfayı ilk defa açıyorsan, Supabase → SQL Editor'a gidip
+      <code>supabase-menu.sql</code> dosyasını çalıştırmalısın. Aksi takdirde kayıt yapılamaz.
+    </div>
+
+    <!-- ── EKLEME FORMU ── -->
+    <div class="card">
+      <div class="section-title">➕ Yeni Menü Öğesi Ekle</div>
+
+      <div class="info-box">
+        Örnek: Ortaokul altına <strong>5. Sınıf Türkçe</strong> eklemek için → Menü: <em>Ortaokul</em>, Sınıf: <em>5</em>, Ders Anahtarı: <em>turkce</em>, Etiket: <em>5. Sınıf Türkçe</em>.
+        Ders anahtarı URL'de kullanılır; küçük harf, tire ile yazılmalı (örn. <em>sosyal-bilgiler</em>, <em>deneme-sinavi</em>).
+      </div>
+
+      <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Menü (Hangi dropdown?)</label>
+          <select class="form-select" id="fNavKey">
+            <option value="1">1. Sınıf</option>
+            <option value="2">2. Sınıf</option>
+            <option value="3">3. Sınıf</option>
+            <option value="4">4. Sınıf</option>
+            <option value="ortaokul" selected>Ortaokul (5-6-7. Sınıf)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sınıf No</label>
+          <select class="form-select" id="fSinif">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ders Anahtarı (key)</label>
+          <input class="form-input" type="text" id="fDersKey" placeholder="orn. turkce, deneme-sinavi">
+        </div>
+        <div class="form-group">
+          <label>Menüdeki Etiketi</label>
+          <input class="form-input" type="text" id="fLabel" placeholder="orn. 5. Sınıf Türkçe">
+        </div>
+        <div class="form-group">
+          <label>Sıralama (küçük = üste)</label>
+          <input class="form-input" type="number" id="fSortOrder" value="99" min="1">
+        </div>
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label style="display:block;margin-bottom:8px;">İkon Seç</label>
+        <div class="icon-picker" id="iconPicker">
+          <div class="icon-opt selected" data-icon="📄" onclick="selectIcon(this)">📄</div>
+          <div class="icon-opt" data-icon="📝" onclick="selectIcon(this)">📝</div>
+          <div class="icon-opt" data-icon="🔢" onclick="selectIcon(this)">🔢</div>
+          <div class="icon-opt" data-icon="🔬" onclick="selectIcon(this)">🔬</div>
+          <div class="icon-opt" data-icon="🌍" onclick="selectIcon(this)">🌍</div>
+          <div class="icon-opt" data-icon="📖" onclick="selectIcon(this)">📖</div>
+          <div class="icon-opt" data-icon="🌱" onclick="selectIcon(this)">🌱</div>
+          <div class="icon-opt" data-icon="🧮" onclick="selectIcon(this)">🧮</div>
+          <div class="icon-opt" data-icon="🎯" onclick="selectIcon(this)">🎯</div>
+          <div class="icon-opt" data-icon="📊" onclick="selectIcon(this)">📊</div>
+          <div class="icon-opt" data-icon="🧪" onclick="selectIcon(this)">🧪</div>
+          <div class="icon-opt" data-icon="📐" onclick="selectIcon(this)">📐</div>
+          <div class="icon-opt" data-icon="🌐" onclick="selectIcon(this)">🌐</div>
+          <div class="icon-opt" data-icon="🏛️" onclick="selectIcon(this)">🏛️</div>
+          <div class="icon-opt" data-icon="🎨" onclick="selectIcon(this)">🎨</div>
+          <div class="icon-opt" data-icon="🎵" onclick="selectIcon(this)">🎵</div>
+          <div class="icon-opt" data-icon="💡" onclick="selectIcon(this)">💡</div>
+          <div class="icon-opt" data-icon="⚡" onclick="selectIcon(this)">⚡</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-primary" onclick="kaydet()">✅ Ekle & Kaydet</button>
+        <span id="saveStatus" style="font-size:13px;color:var(--slate);"></span>
+      </div>
+    </div>
+
+    <!-- ── MEVCUT LİSTE ── -->
+    <div class="card">
+      <div class="section-title" style="justify-content:space-between;">
+        <span>📋 Mevcut Menü Öğeleri</span>
+        <button class="btn btn-sm btn-primary" onclick="loadItems()">🔄 Yenile</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>İkon</th>
+              <th>Menü</th>
+              <th>Sınıf</th>
+              <th>Ders Key</th>
+              <th>Etiket</th>
+              <th>Sıra</th>
+              <th>URL Önizleme</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="itemsTableBody">
+            <tr class="empty-row"><td colspan="9">⏳ Yükleniyor…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── YARDIM ── -->
+    <div class="card" style="background:#F8F5FF;">
+      <div class="section-title">💡 Nasıl Çalışır?</div>
+      <ol style="padding-left:18px;line-height:2;font-size:14px;color:var(--slate);">
+        <li>Buraya bir menü öğesi eklediğinde site navigasyonu <strong>otomatik olarak güncellenir</strong> (sayfa yenilemeden sonra).</li>
+        <li>Aynı ders anahtarı artık <strong>Doküman Yönetimi</strong>'nde ders seçme listesinde de belirir.</li>
+        <li>Ders anahtarı URL'e yansır: <code>/ders.html?sinif=5&ders=<strong>ders-key</strong></code></li>
+        <li>Mevcut sayfalar etkilenmez — sadece yeni öğe eklenir, silinmez.</li>
+        <li><strong>Dikkat:</strong> Zaten var olan dersler (Matematik, Türkçe vb.) için tekrar eklemeye gerek yok, otomatik görünürler.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/site-data.js"></script>
+<script src="/js/admin-auth.js"></script>
+<script src="/js/admin-shell.js"></script>
+<script>
+(function() {
+  'use strict';
+
+  var state = { items: [], selectedIcon: '📄' };
+  var toastTimer = null;
+
+  function getClient() {
+    return window.kemalAdminAuth.getClient();
+  }
+
+  function toast(msg, type) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'toast ' + (type || 'success') + ' show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { el.classList.remove('show'); }, 3000);
+  }
+
+  function esc(v) {
+    return String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function navKeyLabel(key) {
+    var map = { '1':'1. Sınıf', '2':'2. Sınıf', '3':'3. Sınıf', '4':'4. Sınıf', 'ortaokul':'Ortaokul' };
+    return map[key] || key;
+  }
+
+  window.selectIcon = function(el) {
+    document.querySelectorAll('.icon-opt').forEach(function(o) { o.classList.remove('selected'); });
+    el.classList.add('selected');
+    state.selectedIcon = el.dataset.icon || '📄';
+  };
+
+  function renderItems() {
+    var tbody = document.getElementById('itemsTableBody');
+    if (!state.items.length) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Henüz öğe eklenmedi.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = state.items.map(function(item) {
+      var previewUrl = '/ders.html?sinif=' + encodeURIComponent(item.sinif) + '&ders=' + encodeURIComponent(item.ders_key);
+      return '<tr>' +
+        '<td style="font-size:20px;">' + esc(item.icon) + '</td>' +
+        '<td><span class="badge-nav">' + esc(navKeyLabel(item.nav_key)) + '</span></td>' +
+        '<td style="font-weight:800;">' + esc(item.sinif) + '. Sınıf</td>' +
+        '<td><code style="background:#F1F5F9;padding:2px 7px;border-radius:6px;font-size:12px;">' + esc(item.ders_key) + '</code></td>' +
+        '<td style="font-weight:700;">' + esc(item.label) + '</td>' +
+        '<td style="text-align:center;">' + esc(item.sort_order) + '</td>' +
+        '<td><a href="' + esc(previewUrl) + '" target="_blank" style="color:var(--purple);font-size:12px;">' + esc(previewUrl) + '</a></td>' +
+        '<td style="text-align:center;"><span class="' + (item.active ? 'badge-active' : 'badge-inactive') + '" title="' + (item.active ? 'Aktif' : 'Pasif') + '"></span></td>' +
+        '<td style="display:flex;gap:6px;">' +
+          '<button class="btn btn-sm btn-danger" onclick="toggleItem(\'' + item.id + '\')">' + (item.active ? 'Pasife Al' : 'Aktife Al') + '</button>' +
+          '<button class="btn btn-sm btn-danger" onclick="deleteItem(\'' + item.id + '\')">Sil</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  window.loadItems = async function() {
+    document.getElementById('itemsTableBody').innerHTML = '<tr class="empty-row"><td colspan="9">⏳ Yükleniyor…</td></tr>';
+    var result = await getClient().from('menu_ogeler').select('*').order('nav_key').order('sort_order');
+    if (result.error) {
+      toast('Yüklenemedi: ' + result.error.message, 'error');
+      document.getElementById('itemsTableBody').innerHTML = '<tr class="empty-row"><td colspan="9">⚠️ Tablo bulunamadı. Supabase SQL kurulumu yapıldı mı?</td></tr>';
+      return;
+    }
+    state.items = result.data || [];
+    renderItems();
+  };
+
+  window.kaydet = async function() {
+    var navKey = document.getElementById('fNavKey').value.trim();
+    var sinif = document.getElementById('fSinif').value.trim();
+    var dersKey = document.getElementById('fDersKey').value.trim().toLowerCase()
+      .replace(/ğ/g,'g').replace(/ü/g,'u').replace(/ş/g,'s').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ç/g,'c')
+      .replace(/[^a-z0-9-]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+    var label = document.getElementById('fLabel').value.trim();
+    var sortOrder = parseInt(document.getElementById('fSortOrder').value, 10) || 99;
+
+    if (!navKey || !sinif || !dersKey || !label) {
+      toast('Tüm alanları doldurun.', 'error');
+      return;
+    }
+
+    var status = document.getElementById('saveStatus');
+    status.textContent = 'Kaydediliyor…';
+
+    var result = await getClient().from('menu_ogeler').insert({
+      nav_key: navKey,
+      sinif: sinif,
+      ders_key: dersKey,
+      label: label,
+      icon: state.selectedIcon,
+      sort_order: sortOrder,
+      active: true,
+    }).select().single();
+
+    if (result.error) {
+      toast('Hata: ' + result.error.message, 'error');
+      status.textContent = '';
+      return;
+    }
+
+    toast('✅ Menü öğesi eklendi! Site navigasyonu otomatik güncellenir.', 'success');
+    status.textContent = '';
+    document.getElementById('fDersKey').value = '';
+    document.getElementById('fLabel').value = '';
+    await loadItems();
+  };
+
+  window.toggleItem = async function(id) {
+    var item = state.items.find(function(i) { return i.id === id; });
+    if (!item) return;
+    var result = await getClient().from('menu_ogeler').update({ active: !item.active }).eq('id', id);
+    if (result.error) { toast('Güncellenemedi.', 'error'); return; }
+    toast(item.active ? 'Pasife alındı.' : 'Aktife alındı.', 'success');
+    await loadItems();
+  };
+
+  window.deleteItem = async function(id) {
+    var item = state.items.find(function(i) { return i.id === id; });
+    if (!item) return;
+    if (!confirm('"' + item.label + '" silinsin mi?')) return;
+    var result = await getClient().from('menu_ogeler').delete().eq('id', id);
+    if (result.error) { toast('Silinemedi.', 'error'); return; }
+    toast('Silindi.', 'success');
+    await loadItems();
+  };
+
+  window.doLogin = async function() {
+    var email = document.getElementById('loginEmail').value.trim();
+    var pass = document.getElementById('loginPass').value;
+    var errEl = document.getElementById('loginErr');
+    if (!email || !pass) {
+      errEl.style.display = 'block';
+      errEl.textContent = '❌ E-posta ve şifre gerekli.';
+      return;
+    }
+    try {
+      await window.kemalAdminAuth.signIn(email, pass);
+      errEl.style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      await loadItems();
+    } catch (err) {
+      errEl.style.display = 'block';
+      errEl.textContent = '❌ ' + window.kemalAdminAuth.humanizeError(err);
+      document.getElementById('loginPass').value = '';
+    }
+  };
+
+  window.doLogout = async function() {
+    try { await window.kemalAdminAuth.signOut(); } finally { window.location.reload(); }
+  };
+
+  ['loginEmail','loginPass'].forEach(function(id) {
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', async function() {
+    if (window.KemalAdminShell) {
+      window.KemalAdminShell.initStandalone({
+        appId: 'app',
+        activeKey: 'menu-yonetimi',
+        homeHref: '/index.html',
+        homeLabel: '🏠 Ana Site',
+        utilityHref: '/admin/dokuman-yonetimi.html',
+        utilityLabel: '📄 Dokümanlar'
+      });
+    }
+    try {
+      var session = await window.kemalAdminAuth.getSession();
+      if (session) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        await loadItems();
+        return;
+      }
+    } catch (e) {}
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  });
+})();
+</script>
+</body>
+</html>

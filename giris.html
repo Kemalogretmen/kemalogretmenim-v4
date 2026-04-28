@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giriş Yap — Kemal Öğretmenim</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .login-page {
+      min-height: calc(100vh - 106px);
+      display: grid;
+      place-items: center;
+      padding: 48px 18px;
+      background: linear-gradient(145deg,#F2EAFF,#FFFBF5 52%,#ECFEFF);
+    }
+    .login-card {
+      width: min(440px, 100%);
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 24px;
+      padding: 34px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+    .login-card h1 {
+      font-family: var(--font-display);
+      font-size: 34px;
+      margin-bottom: 8px;
+      color: var(--navy);
+    }
+    .login-card p {
+      color: var(--slate);
+      line-height: 1.55;
+      margin-bottom: 24px;
+      font-weight: 700;
+    }
+    .login-form { display: grid; gap: 14px; text-align: left; }
+    .login-form label { font-size: 13px; font-weight: 900; color: var(--slate); }
+    .login-form input {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: #FAFAFF;
+      font: 800 15px var(--font-body);
+      outline: none;
+    }
+    .login-form input:focus { border-color: var(--purple); background: white; }
+    .login-form button {
+      margin-top: 6px;
+      border: 0;
+      border-radius: 999px;
+      padding: 15px 22px;
+      background: linear-gradient(135deg,var(--purple),var(--purple-light));
+      color: white;
+      font: 900 16px var(--font-body);
+      cursor: pointer;
+    }
+    .login-form button:disabled { opacity: .72; cursor: wait; }
+    .login-message {
+      display: none;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+    .login-message.show { display: block; }
+    .login-message.err { background:#FFF0EE; color:#C0392B; border:2px solid #FFC9C3; }
+    .login-message.ok { background:#E8FFF4; color:#047857; border:2px solid #A8EDBD; }
+    .login-register { display:inline-block; margin-top:18px; color:var(--purple); font-weight:900; text-decoration:none; }
+  </style>
+</head>
+<body>
+  <main class="login-page">
+    <section class="login-card">
+      <h1>Giriş Yap</h1>
+      <p>Panel girişleri şimdilik yayından kaldırıldı. Site içeriklerini kayıt olmadan kullanabilirsin.</p>
+      <form class="login-form" id="roleLoginForm" onsubmit="return false;">
+        <label for="loginEmail">E-posta</label>
+        <input id="loginEmail" type="email" autocomplete="username" required>
+        <label for="loginPassword">Şifre</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required>
+        <button id="loginSubmit" type="submit" disabled>Girişler Şimdilik Kapalı</button>
+      </form>
+      <div class="login-message" id="loginMessage" role="status" aria-live="polite"></div>
+      <a class="login-register" href="/index.html">Ana sayfaya dön</a>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+</body>
+</html>

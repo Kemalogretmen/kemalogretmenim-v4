@@ -58,6 +58,14 @@
           key: 'dokuman-yonetimi'
         },
         {
+          id: 'menu-admin',
+          icon: '🗂️',
+          label: 'Menü & Ders Yönetimi',
+          description: 'Site navigasyonuna ders sayfaları ekle',
+          href: '/admin/menu-yonetimi.html',
+          key: 'menu-yonetimi'
+        },
+        {
           id: 'worksheet-admin',
           icon: '🧩',
           label: 'Çalışma Kağıdı',
@@ -138,7 +146,7 @@
           '<span class="admin-nav-brand-badge">🌟</span>' +
           '<div class="admin-nav-brand-copy">' +
             '<strong>Kemal Öğretmenim</strong>' +
-            '<span>Ortak admin gezinme menüsü</span>' +
+            '<span>Yönetim merkezi</span>' +
           '</div>' +
         '</div>' +
         NAV_SECTIONS.map(function(section) {

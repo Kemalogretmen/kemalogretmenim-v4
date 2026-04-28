@@ -23,6 +23,11 @@
       description: 'PDF ve doküman içeriklerini yönetme',
     },
     {
+      key: 'menu_yonetimi',
+      label: 'Menü & Ders Yönetimi',
+      description: 'Üst menüye ders sayfaları ekleme',
+    },
+    {
       key: 'calisma_kagidi',
       label: 'Çalışma Kağıtları',
       description: 'Çalışma kağıdı editörü ve alan yerleşimi',
@@ -42,6 +47,7 @@
   const PAGE_PERMISSION_MAP = [
     { suffix: '/admin/okuma-editor.html', key: 'okuma_editor' },
     { suffix: '/admin/dokuman-yonetimi.html', key: 'dokuman_yonetimi' },
+    { suffix: '/admin/menu-yonetimi.html', key: 'menu_yonetimi' },
     { suffix: '/admin/calisma-kagidi-editor.html', key: 'calisma_kagidi' },
     { suffix: '/admin/okuma-sonuclari.html', key: 'okuma_sonuclari' },
     { suffix: '/admin/okuma-karne.html', key: 'okuma_karne' },
@@ -246,6 +252,26 @@
     return Array.isArray(data) ? data : [];
   }
 
+  async function fetchPublicUserProfile(email) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      return null;
+    }
+    try {
+      const { data, error } = await getClient()
+        .from('user_profiles')
+        .select('role,approval_status,active,email,full_name')
+        .eq('email', normalizedEmail)
+        .maybeSingle();
+      if (error) {
+        return null;
+      }
+      return data || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
   async function getSessionRaw() {
     const { data, error } = await getClient().auth.getSession();
     if (error) {
@@ -288,12 +314,29 @@
     accessCacheEmail = email;
     accessPromise = (async function() {
       try {
+        const publicProfile = await fetchPublicUserProfile(email);
         const rows = await fetchAdminRows();
         const normalizedRows = rows
           .map(normalizeAdminUserRow)
           .filter(function(row) { return !!row.email; });
 
         if (!normalizedRows.length) {
+          if (publicProfile && (publicProfile.role === 'teacher' || publicProfile.role === 'student')) {
+            accessCache = {
+              email,
+              displayName: publicProfile.full_name || email.split('@')[0],
+              active: false,
+              isOwner: false,
+              legacyMode: false,
+              permissions: createPermissionMap(false),
+              allowedPanels: [],
+              row: null,
+              rows: [],
+              publicRole: publicProfile.role,
+              approvalStatus: publicProfile.approval_status || '',
+            };
+            return accessCache;
+          }
           accessCache = buildLegacyOwnerProfile(email);
           return accessCache;
         }
@@ -604,7 +647,7 @@
       return 'Bu e-posta adresi doğrulanmamış görünüyor.';
     }
     if (message.includes('Bu hesap için yönetici erişimi tanımlı değil')) {
-      return 'Bu e-posta için yönetici erişimi tanımlı değil. Ana yönetici seni alt admin olarak eklemeli.';
+      return 'Bu hesap ana yönetim paneline yetkili değil. Öğretmen hesabıysan Giriş Yap ekranından öğretmen paneline yönlendirilmelisin.';
     }
     if (message.includes('pasif durumda')) {
       return 'Bu yönetici hesabı şu anda pasif durumda.';

@@ -5,6 +5,9 @@
 (function() {
   'use strict';
 
+  // Supabase'den yüklenen dinamik menü öğeleri
+  var dynamicNavItems = [];
+
   function hasRecoveryRedirectPayload() {
     const path = String(window.location && window.location.pathname ? window.location.pathname : '');
     const isHomePage = path === '/' || path === '/index.html' || path.endsWith('/index.html');
@@ -78,6 +81,14 @@
     },
     '7': {
       label: '7. Sınıf',
+      panelHref: '/siniflar/ortaokul.html',
+      panelLabel: 'Ortaokul Paneli',
+      color: '#6C3DED',
+      theme: 'orta',
+      ribbon: 'Ortaokul rotası',
+    },
+    '8': {
+      label: '8. Sınıf',
       panelHref: '/siniflar/ortaokul.html',
       panelLabel: 'Ortaokul Paneli',
       color: '#6C3DED',
@@ -224,6 +235,14 @@
     return String(value || '')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  function escHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function clampText(value, maxLength) {
@@ -713,11 +732,42 @@
     return '/ders.html?sinif=' + encodeURIComponent(safeGrade) + '&ders=' + encodeURIComponent(safeSubject);
   }
 
+  function findDynamicSubject(grade, subject) {
+    const safeGrade = normalizeGradeKey(grade);
+    const safeSubject = normalizeSubjectKey(subject);
+    return dynamicNavItems.find(function(item) {
+      return normalizeGradeKey(item.sinif) === safeGrade && normalizeSubjectKey(item.ders_key) === safeSubject;
+    }) || dynamicNavItems.find(function(item) {
+      return normalizeSubjectKey(item.ders_key) === safeSubject;
+    }) || null;
+  }
+
+  function stripGradePrefix(label, gradeLabel) {
+    const cleanLabel = String(label || '').trim();
+    const cleanGrade = String(gradeLabel || '').trim();
+    if (cleanGrade && cleanLabel.toLowerCase().indexOf(cleanGrade.toLowerCase()) === 0) {
+      return cleanLabel.slice(cleanGrade.length).replace(/^[-\s.]+/, '').trim() || cleanLabel;
+    }
+    return cleanLabel;
+  }
+
   function getSubjectPageData(grade, subject) {
     const safeGrade = normalizeGradeKey(grade);
     const safeSubject = normalizeSubjectKey(subject);
     const gradeMeta = GRADE_META[safeGrade];
-    const subjectMeta = SUBJECT_META[safeSubject];
+    const dynamicSubject = findDynamicSubject(safeGrade, safeSubject);
+    const subjectMeta = SUBJECT_META[safeSubject] || (dynamicSubject ? {
+      label: stripGradePrefix(dynamicSubject.label, gradeMeta ? gradeMeta.label : ''),
+      icon: dynamicSubject.icon || '📄',
+      color: gradeMeta ? gradeMeta.color : '#6C3DED',
+      description: dynamicSubject.label + ' için eklenen dokümanlar, bağlantılar ve sınıf içeriği bu sayfada toplanır.',
+      focus: 'Bu ders için eklenen PDF dokümanlar ve güncel içerikler',
+      features: [
+        'Üst menüden doğrudan erişilebilir ders sayfası',
+        'Doküman yönetiminden eklenen PDF içeriklerle otomatik beslenir',
+        'Sınıf paneli ve ana site akışıyla birlikte çalışır',
+      ],
+    } : null);
 
     if (!gradeMeta || !subjectMeta) {
       return null;
@@ -780,7 +830,46 @@
   }
 
   function getGradeMenuSections() {
-    return [
+    function getItemGrade(item) {
+      if (item && item.grade) {
+        return normalizeGradeKey(item.grade);
+      }
+      try {
+        const query = String(item && item.href ? item.href : '').split('?')[1] || '';
+        return normalizeGradeKey(new URLSearchParams(query).get('sinif'));
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function insertDynamicItem(section, item) {
+      const grade = normalizeGradeKey(item.sinif);
+      const href = buildSubjectUrl(grade, item.ders_key);
+      if (href === '#') return;
+      const exists = section.items.some(function(existing) { return existing.href === href; });
+      if (exists) return;
+
+      const menuItem = { href: href, label: item.label, icon: item.icon || '📄', grade: grade };
+      if (section.navKey !== 'ortaokul') {
+        section.items.push(menuItem);
+        return;
+      }
+
+      let insertAfterIndex = -1;
+      section.items.forEach(function(existing, index) {
+        if (getItemGrade(existing) === grade) {
+          insertAfterIndex = index;
+        }
+      });
+
+      if (insertAfterIndex >= 0) {
+        section.items.splice(insertAfterIndex + 1, 0, menuItem);
+      } else {
+        section.items.push(menuItem);
+      }
+    }
+
+    const sections = [
       {
         navKey: '1',
         gradeKey: '1',
@@ -848,6 +937,17 @@
         ],
       },
     ];
+
+    // Dinamik öğeleri statik sectionlara ekle
+    if (dynamicNavItems.length) {
+      dynamicNavItems.forEach(function(extra) {
+        var section = sections.find(function(s) { return s.navKey === extra.nav_key; });
+        if (!section) return;
+        insertDynamicItem(section, extra);
+      });
+    }
+
+    return sections;
   }
 
   function buildLegacyRouteMap() {
@@ -960,7 +1060,18 @@
 
   function buildExtraMenuItems(data) {
     const extraMenus = Array.isArray(data.ekMenuler)
-      ? data.ekMenuler.filter(function(item) { return item && item.ad && item.url; })
+      ? data.ekMenuler.filter(function(item) {
+        if (!item || !item.ad || !item.url) return false;
+        const url = String(item.url || '').toLowerCase();
+        return !(
+          url.indexOf('/admin') === 0 ||
+          url.indexOf('/sinav_sitesi/admin') === 0 ||
+          url.indexOf('/giris.html') === 0 ||
+          url.indexOf('/kayit.html') === 0 ||
+          url.indexOf('/ogretmen-paneli.html') === 0 ||
+          url.indexOf('/ogrenci-paneli.html') === 0
+        );
+      })
       : [];
 
     return extraMenus.map(function(item) {
@@ -1130,6 +1241,7 @@
   function initHamburger() {
     const btn = document.getElementById('hamBtn');
     const links = document.getElementById('navLinks');
+    const navRoot = document.getElementById('mainNav');
     if (!btn || !links || btn.dataset.bound === '1') {
       return;
     }
@@ -1147,7 +1259,8 @@
         return;
       }
       navBtn.addEventListener('click', function() {
-        if (window.innerWidth <= 1060) {
+        const localNavRoot = document.getElementById('mainNav');
+        if (window.innerWidth <= 1180 || (localNavRoot && localNavRoot.classList.contains('is-compact'))) {
           item.classList.toggle('open');
         }
       });
@@ -1169,6 +1282,61 @@
         }
       });
     }
+
+    if (navRoot) {
+      syncAdaptiveNav();
+    }
+  }
+
+  function syncAdaptiveNav() {
+    const navRoot = document.getElementById('mainNav');
+    const logo = navRoot ? navRoot.querySelector('.nav-logo') : null;
+    const links = document.getElementById('navLinks');
+    const btn = document.getElementById('hamBtn');
+    if (!navRoot || !logo || !links || !btn) {
+      return;
+    }
+
+    if (window.innerWidth <= 1180) {
+      navRoot.classList.add('is-compact');
+      return;
+    }
+
+    if (window.innerWidth >= 1440) {
+      navRoot.classList.remove('is-compact');
+      links.classList.remove('open');
+      btn.classList.remove('open');
+      document.body.style.overflow = '';
+      return;
+    }
+
+    const wasOpen = links.classList.contains('open');
+    navRoot.classList.remove('is-compact');
+    links.classList.remove('open');
+    btn.classList.remove('open');
+
+    const availableWidth = navRoot.clientWidth - logo.offsetWidth - btn.offsetWidth - 36;
+    const needsCompact = links.scrollWidth > availableWidth;
+    navRoot.classList.toggle('is-compact', needsCompact);
+
+    if (needsCompact && wasOpen) {
+      links.classList.add('open');
+      btn.classList.add('open');
+    } else if (!needsCompact) {
+      document.body.style.overflow = '';
+    }
+  }
+
+  function bindAdaptiveNavResize() {
+    if (document.body.dataset.kemalAdaptiveNavBound === '1') {
+      return;
+    }
+    document.body.dataset.kemalAdaptiveNavBound = '1';
+    let resizeTimer = 0;
+    window.addEventListener('resize', function() {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(syncAdaptiveNav, 120);
+    }, { passive: true });
   }
 
   function getActiveNavKey() {
@@ -1278,6 +1446,93 @@
     return !document.body || document.body.dataset.kemalChrome !== 'off';
   }
 
+  async function fetchDynamicMenuItems() {
+    try {
+      if (!window.kemalSiteStore) return;
+      var config = window.kemalSiteStore.getConfig ? window.kemalSiteStore.getConfig() : null;
+      if (!config || !config.supabaseUrl) return;
+      if (window.supabase) {
+        var client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+          auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
+        });
+        var result = await client.from('menu_ogeler').select('*').eq('active', true).order('sort_order', { ascending: true });
+        if (!result.error && Array.isArray(result.data)) {
+          dynamicNavItems = result.data;
+        }
+        return;
+      }
+
+      var endpoint = config.supabaseUrl.replace(/\/$/, '') + '/rest/v1/menu_ogeler?select=*&active=eq.true&order=sort_order.asc';
+      var response = await fetch(endpoint, {
+        headers: {
+          apikey: config.supabaseAnonKey,
+          Authorization: 'Bearer ' + config.supabaseAnonKey,
+        },
+      });
+      if (response.ok) {
+        var rows = await response.json();
+        if (Array.isArray(rows)) {
+          dynamicNavItems = rows;
+        }
+      }
+    } catch (e) {
+      /* Tablo henüz oluşturulmamışsa sessizce atla */
+    }
+  }
+
+  function getClassPanelGrades() {
+    const path = String(window.location && window.location.pathname ? window.location.pathname : '');
+    const match = path.match(/\/siniflar\/([1-4])-sinif\.html$/);
+    if (match) {
+      return [match[1]];
+    }
+    if (path.endsWith('/siniflar/ortaokul.html')) {
+      return ['5', '6', '7', '8'];
+    }
+    return [];
+  }
+
+  function injectDynamicClassCards() {
+    const grades = getClassPanelGrades();
+    if (!grades.length || !dynamicNavItems.length) {
+      return;
+    }
+
+    const grid = document.querySelector('.sp-grid');
+    if (!grid) {
+      return;
+    }
+
+    const existingHrefs = new Set(Array.prototype.slice.call(grid.querySelectorAll('a[href]')).map(function(link) {
+      return link.getAttribute('href');
+    }));
+
+    dynamicNavItems.forEach(function(item) {
+      const grade = normalizeGradeKey(item.sinif);
+      if (!grades.includes(grade)) {
+        return;
+      }
+
+      const href = buildSubjectUrl(grade, item.ders_key);
+      if (href === '#' || existingHrefs.has(href)) {
+        return;
+      }
+
+      const gradeMeta = GRADE_META[grade] || {};
+      const card = document.createElement('a');
+      card.href = href;
+      card.className = 'sp-card';
+      card.style.setProperty('--sp-color', gradeMeta.color || '#6C3DED');
+      card.innerHTML =
+        '<span class="sp-card-em">' + escHtml(item.icon || '📄') + '</span>' +
+        '<div class="sp-card-title">' + escHtml(item.label) + '</div>' +
+        '<div class="sp-card-sub">Bu ders için eklenen sayfa ve dokümanlar.</div>' +
+        '<span class="sp-card-btn">Derse Git →</span>';
+      grid.appendChild(card);
+      existingHrefs.add(href);
+    });
+  }
+
   async function hydrateChrome() {
     const initialData = getSyncData();
 
@@ -1286,6 +1541,8 @@
     }
     repairLegacyLinks(document);
     initHamburger();
+    bindAdaptiveNavResize();
+    syncAdaptiveNav();
     highlightActiveLink();
     initScrollReveal();
 
@@ -1294,11 +1551,16 @@
     }
 
     const remoteData = await window.kemalSiteStore.loadSiteData();
+    // Dinamik menü öğelerini çek ve nav'ı güncelle
+    await fetchDynamicMenuItems();
     if (isChromeEnabled()) {
       renderChrome(remoteData);
     }
+    injectDynamicClassCards();
     repairLegacyLinks(document);
     initHamburger();
+    bindAdaptiveNavResize();
+    syncAdaptiveNav();
     highlightActiveLink();
     initScrollReveal();
     return remoteData;
@@ -1335,6 +1597,7 @@
     getLegacyRedirectPath: getLegacyRedirectPath,
     repairLegacyLinks: repairLegacyLinks,
     getGradeMenuSections: getGradeMenuSections,
+    loadDynamicMenuItems: fetchDynamicMenuItems,
   };
 
   window.kemalSite = {
@@ -1348,6 +1611,8 @@
       if (isChromeEnabled()) {
         renderChrome(data);
       }
+      await fetchDynamicMenuItems();
+      injectDynamicClassCards();
       repairLegacyLinks(document);
       initHamburger();
       highlightActiveLink();

@@ -1,6 +1,8 @@
 (function() {
   'use strict';
 
+  var PDF_RENDER_BOOST = 2.25;
+
   var state = {
     documentId: '',
     documentRow: null,
@@ -51,6 +53,10 @@
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       state.pdfWorkerReady = true;
     }
+  }
+
+  function getCanvasRenderBoost() {
+    return Math.min(PDF_RENDER_BOOST, Math.max(2, window.devicePixelRatio || 1));
   }
 
   function clamp(value, min, max) {
@@ -245,8 +251,11 @@
 
       var canvas = document.createElement('canvas');
       canvas.className = 'sheet-canvas';
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+      var renderBoost = getCanvasRenderBoost();
+      canvas.width = Math.round(viewport.width * renderBoost);
+      canvas.height = Math.round(viewport.height * renderBoost);
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
 
       var overlay = document.createElement('div');
       overlay.className = 'sheet-overlay';
@@ -262,9 +271,13 @@
 
       stage.appendChild(pageEl);
 
+      var context = canvas.getContext('2d', { alpha: false });
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
       await page.render({
-        canvasContext: canvas.getContext('2d'),
+        canvasContext: context,
         viewport: viewport,
+        transform: renderBoost > 1 ? [renderBoost, 0, 0, renderBoost, 0, 0] : null,
       }).promise;
 
       state.fields.filter(function(field) {
