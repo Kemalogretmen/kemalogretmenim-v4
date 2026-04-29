@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paralarımız - Kemal Öğretmenim</title>
+  <meta name="description" content="Türk lirası ve kuruşları tanıma, kasaya ödeme yapma ve para üstü bulma oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --money-ink: #17223b;
+      --money-muted: #63718b;
+      --money-bg: #f6fbff;
+      --money-card: #ffffff;
+      --money-line: #dce7f5;
+      --money-green: #098b67;
+      --money-green-soft: #dff8ee;
+      --money-blue: #1269d3;
+      --money-blue-soft: #e6f1ff;
+      --money-amber: #f2a51f;
+      --money-amber-soft: #fff3cf;
+      --money-coral: #f65f5f;
+      --money-purple: #6545d8;
+      --money-shadow: 0 18px 45px rgba(23, 34, 59, 0.12);
+      --money-radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--money-ink);
+      background:
+        radial-gradient(circle at 10% 8%, rgba(242, 165, 31, 0.22), transparent 24%),
+        radial-gradient(circle at 90% 12%, rgba(18, 105, 211, 0.18), transparent 26%),
+        linear-gradient(180deg, #fffdf6 0%, var(--money-bg) 48%, #f8fbff 100%);
+      min-height: 100vh;
+    }
+
+    .money-page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 16px 70px;
+    }
+
+    .money-game {
+      overflow: hidden;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(18, 105, 211, 0.12);
+      box-shadow: var(--money-shadow);
+    }
+
+    .money-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 26px;
+      background:
+        linear-gradient(135deg, rgba(9, 139, 103, 0.94), rgba(18, 105, 211, 0.96)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 10px, transparent 10px 20px);
+      color: white;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      font-weight: 900;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+    }
+
+    .money-hero h1 {
+      margin: 12px 0 8px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      line-height: 1.04;
+      letter-spacing: 0;
+    }
+
+    .money-hero p {
+      margin: 0;
+      max-width: 680px;
+      color: rgba(255, 255, 255, 0.82);
+      font-weight: 700;
+      line-height: 1.55;
+    }
+
+    .score-rack {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(92px, 1fr));
+      gap: 10px;
+      min-width: min(100%, 340px);
+    }
+
+    .score-card {
+      padding: 14px 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .score-card span {
+      display: block;
+      font-size: 0.76rem;
+      color: rgba(255, 255, 255, 0.76);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .score-card strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.45rem;
+      font-weight: 900;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 16px 20px;
+      background: #f7fbff;
+      border-bottom: 1px solid var(--money-line);
+    }
+
+    .mode-tabs,
+    .settings-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .mode-btn,
+    .setting-btn,
+    .main-btn,
+    .money-btn,
+    .answer-btn {
+      border: 0;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: 900;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .mode-btn,
+    .setting-btn {
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: white;
+      color: var(--money-muted);
+      border: 2px solid var(--money-line);
+    }
+
+    .mode-btn:hover,
+    .setting-btn:hover,
+    .main-btn:hover,
+    .money-btn:hover,
+    .answer-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .mode-btn.is-active {
+      background: var(--money-blue);
+      border-color: var(--money-blue);
+      color: white;
+      box-shadow: 0 12px 20px rgba(18, 105, 211, 0.18);
+    }
+
+    .setting-btn.is-active {
+      background: var(--money-green-soft);
+      border-color: rgba(9, 139, 103, 0.28);
+      color: var(--money-green);
+    }
+
+    .main-btn {
+      min-height: 48px;
+      padding: 12px 18px;
+      border-radius: 16px;
+      background: var(--money-amber);
+      color: #3a2500;
+      box-shadow: 0 12px 20px rgba(242, 165, 31, 0.2);
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .stage,
+    .side-panel {
+      border-radius: var(--money-radius);
+      background: var(--money-card);
+      border: 1px solid var(--money-line);
+      box-shadow: 0 12px 26px rgba(23, 34, 59, 0.06);
+    }
+
+    .stage {
+      min-height: 560px;
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .side-panel {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.35rem;
+      color: var(--money-ink);
+    }
+
+    .task-card {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #fff8df, #eaf7ff);
+      border: 1px solid rgba(242, 165, 31, 0.22);
+    }
+
+    .task-label {
+      color: var(--money-muted);
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .task-main {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.45rem, 4vw, 2.35rem);
+      line-height: 1.12;
+      font-weight: 900;
+    }
+
+    .task-sub {
+      margin: 0;
+      color: #55647c;
+      font-weight: 800;
+      line-height: 1.48;
+    }
+
+    .play-area {
+      display: grid;
+      gap: 18px;
+    }
+
+    .money-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+      gap: 12px;
+    }
+
+    .money-btn {
+      min-height: 104px;
+      padding: 10px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff, #f3f8ff);
+      border: 2px solid #dbe8f7;
+      color: var(--money-ink);
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .money-btn.is-obsolete {
+      opacity: 0.78;
+      background: linear-gradient(180deg, #ffffff, #fff7e2);
+    }
+
+    .money-btn.is-correct {
+      border-color: var(--money-green);
+      background: var(--money-green-soft);
+    }
+
+    .money-btn.is-wrong {
+      border-color: var(--money-coral);
+      background: #fff0f0;
+    }
+
+    .money-visual {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    .money-visual.coin {
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.92), transparent 22%),
+        linear-gradient(145deg, #f6cf68, #b98319);
+      box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.28), 0 8px 14px rgba(90, 64, 10, 0.18);
+    }
+
+    .money-visual.note {
+      width: 98px;
+      height: 56px;
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.26), transparent 40%),
+        linear-gradient(145deg, #9fe4ce, #159071);
+      box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.22), 0 8px 14px rgba(20, 80, 62, 0.16);
+    }
+
+    .money-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+
+    .money-visual.has-image {
+      background: transparent;
+      box-shadow: none;
+      border-radius: 0;
+    }
+
+    .money-visual.has-image img { opacity: 1; }
+    .money-visual.has-image .fallback-label { display: none; }
+
+    .fallback-label {
+      padding: 4px;
+      color: #20304b;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.1rem;
+      font-weight: 900;
+      line-height: 1.05;
+      text-align: center;
+    }
+
+    .money-name {
+      font-size: 0.88rem;
+      font-weight: 900;
+      color: var(--money-muted);
+      text-align: center;
+    }
+
+    .cash-register {
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #233759, #17223b);
+      color: white;
+    }
+
+    .register-screen {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 76px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: #d9ffe9;
+      color: #063d2e;
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.38);
+    }
+
+    .register-screen span {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 900;
+      color: rgba(6, 61, 46, 0.72);
+      text-transform: uppercase;
+    }
+
+    .register-screen strong {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.7rem;
+      font-weight: 900;
+    }
+
+    .payment-strip {
+      min-height: 88px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px dashed rgba(255, 255, 255, 0.34);
+    }
+
+    .payment-chip {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: white;
+      color: var(--money-ink);
+      font-weight: 900;
+      box-shadow: 0 8px 14px rgba(0, 0, 0, 0.14);
+    }
+
+    .feedback {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 13px 15px;
+      border-radius: 18px;
+      background: #eef5ff;
+      color: #36506f;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .feedback.good {
+      background: var(--money-green-soft);
+      color: #086149;
+    }
+
+    .feedback.bad {
+      background: #fff0f0;
+      color: #a32929;
+    }
+
+    .feedback.warn {
+      background: var(--money-amber-soft);
+      color: #74500a;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .answer-btn {
+      min-height: 70px;
+      border-radius: 18px;
+      background: #f2f7ff;
+      color: var(--money-ink);
+      border: 2px solid #dbe8f7;
+      font-size: 1.05rem;
+    }
+
+    .answer-btn.is-correct {
+      background: var(--money-green-soft);
+      border-color: var(--money-green);
+      color: var(--money-green);
+    }
+
+    .answer-btn.is-wrong {
+      background: #fff0f0;
+      border-color: var(--money-coral);
+      color: #a32929;
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .mini-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 13px;
+      border-radius: 16px;
+      background: #f5f9ff;
+      color: #485872;
+      font-weight: 900;
+    }
+
+    .info-box {
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--money-blue-soft);
+      color: #34506f;
+      font-size: 0.92rem;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      .money-hero,
+      .toolbar,
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .score-rack {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .money-page { padding: 10px 10px 48px; }
+      .money-game { border-radius: 24px; }
+      .money-hero,
+      .toolbar,
+      .game-layout,
+      .stage,
+      .side-panel { padding: 14px; }
+      .money-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .money-btn { min-height: 96px; }
+      .score-rack { grid-template-columns: repeat(3, 1fr); }
+      .score-card strong { font-size: 1.16rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="money-page">
+    <section class="money-game" aria-label="Paralarımız oyunu">
+      <header class="money-hero">
+        <div>
+          <span class="hero-kicker">Matematik • Paralarımız</span>
+          <h1>Para Marketi</h1>
+          <p>Paraları tanı, kasaya doğru ödeme yap, para üstünü hızlıca bul. Görselleri eklediğinde oyun otomatik olarak yazı yerine para resimlerini gösterir.</p>
+        </div>
+        <div class="score-rack" aria-label="Oyun puanları">
+          <div class="score-card"><span>Puan</span><strong id="scoreText">0</strong></div>
+          <div class="score-card"><span>Seri</span><strong id="streakText">0</strong></div>
+          <div class="score-card"><span>Rekor</span><strong id="bestText">0</strong></div>
+        </div>
+      </header>
+
+      <nav class="toolbar" aria-label="Oyun ayarları">
+        <div class="mode-tabs">
+          <button class="mode-btn is-active" type="button" data-mode="identify">Parayı Tanı</button>
+          <button class="mode-btn" type="button" data-mode="pay">Kasaya Öde</button>
+          <button class="mode-btn" type="button" data-mode="change">Para Üstü</button>
+        </div>
+        <div class="settings-row">
+          <button class="setting-btn is-active" type="button" data-level="easy">Kolay</button>
+          <button class="setting-btn" type="button" data-level="normal">Orta</button>
+          <button class="setting-btn" type="button" data-level="hard">Zor</button>
+          <button class="setting-btn" type="button" id="obsoleteToggle" aria-pressed="false">Eski Kuruşlar</button>
+          <button class="main-btn" type="button" id="newQuestionBtn">Yeni Soru</button>
+        </div>
+      </nav>
+
+      <div class="game-layout">
+        <section class="stage">
+          <div class="task-card">
+            <span class="task-label" id="taskLabel">Görev</span>
+            <div class="task-main" id="taskMain">Parayı seç.</div>
+            <p class="task-sub" id="taskSub">Doğru parayı bulmak için seçeneklere dokun.</p>
+          </div>
+
+          <div class="play-area">
+            <div id="identifyArea">
+              <div class="money-grid" id="identifyGrid"></div>
+            </div>
+
+            <div id="payArea" class="hidden">
+              <div class="cash-register">
+                <div class="register-screen">
+                  <div>
+                    <span>Kasaya atılan</span>
+                    <strong id="paidTotalText">0 TL</strong>
+                  </div>
+                  <button class="main-btn" type="button" id="checkPayBtn">Kontrol Et</button>
+                </div>
+                <div class="payment-strip" id="paymentStrip" aria-label="Kasaya atılan paralar"></div>
+              </div>
+              <div class="money-grid" id="walletGrid"></div>
+            </div>
+
+            <div id="changeArea" class="hidden">
+              <div class="answer-grid" id="changeAnswers"></div>
+            </div>
+
+            <div class="feedback" id="feedback">Hazırım. Bir cevap seçerek başlayabilirsin.</div>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <h2 class="panel-title">Para Kutusu</h2>
+          <div class="money-grid" id="moneyPreview"></div>
+          <div class="info-box">
+            Görselleri <strong>/gorseller/</strong> klasörüne verdiğin dosya adlarıyla eklediğinde kartlardaki yazılar otomatik olarak görsele dönüşür.
+          </div>
+          <ul class="mini-list">
+            <li><span>Mod</span><strong id="modeName">Parayı Tanı</strong></li>
+            <li><span>Seviye</span><strong id="levelName">Kolay</strong></li>
+            <li><span>Eski kuruş</span><strong id="obsoleteName">Kapalı</strong></li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const MONEY = [
+      { id: "1_kurus", name: "1 Kuruş", short: "1 kr", value: 1, type: "coin", img: "/gorseller/1_krus.png", obsolete: true },
+      { id: "5_krus", name: "5 Kuruş", short: "5 kr", value: 5, type: "coin", img: "/gorseller/5_krus.png", obsolete: true },
+      { id: "10_kurus", name: "10 Kuruş", short: "10 kr", value: 10, type: "coin", img: "/gorseller/10_krus.png", obsolete: true },
+      { id: "25_kurus", name: "25 Kuruş", short: "25 kr", value: 25, type: "coin", img: "/gorseller/25_krus.png" },
+      { id: "50_kurus", name: "50 Kuruş", short: "50 kr", value: 50, type: "coin", img: "/gorseller/50_kurus.png" },
+      { id: "1_tl_coin", name: "1 TL Madeni", short: "1 TL", value: 100, type: "coin", img: "/gorseller/1_tl.png" },
+      { id: "5_tl_coin", name: "5 TL Madeni", short: "5 TL", value: 500, type: "coin", img: "/gorseller/5_tl.png" },
+      { id: "5_tl_note", name: "5 TL Kağıt", short: "5 TL", value: 500, type: "note", img: "/gorseller/5tl_.png" },
+      { id: "10_tl", name: "10 TL", short: "10 TL", value: 1000, type: "note", img: "/gorseller/10_tl.png" },
+      { id: "20_tl", name: "20 TL", short: "20 TL", value: 2000, type: "note", img: "/gorseller/20_tl.png" },
+      { id: "50_tl", name: "50 TL", short: "50 TL", value: 5000, type: "note", img: "/gorseller/50_tl.png" },
+      { id: "100_tl", name: "100 TL", short: "100 TL", value: 10000, type: "note", img: "/gorseller/100_tl.png" },
+      { id: "200_tl", name: "200 TL", short: "200 TL", value: 20000, type: "note", img: "/gorseller/200_tl.png" }
+    ];
+
+    const PRODUCTS = [
+      { name: "silgi", price: 250 },
+      { name: "kalem", price: 500 },
+      { name: "defter", price: 750 },
+      { name: "boya kalemi", price: 1250 },
+      { name: "kitap ayracı", price: 350 },
+      { name: "hikaye kitabı", price: 2000 },
+      { name: "cetvel", price: 450 },
+      { name: "makas", price: 1500 },
+      { name: "okul rozeti", price: 275 },
+      { name: "resim kağıdı", price: 625 }
+    ];
+
+    const state = {
+      mode: "identify",
+      level: "easy",
+      includeObsolete: false,
+      targetMoney: null,
+      targetPrice: 0,
+      paid: [],
+      correctChange: 0,
+      score: 0,
+      streak: 0,
+      locked: false
+    };
+
+    const els = {
+      score: document.getElementById("scoreText"),
+      streak: document.getElementById("streakText"),
+      best: document.getElementById("bestText"),
+      taskLabel: document.getElementById("taskLabel"),
+      taskMain: document.getElementById("taskMain"),
+      taskSub: document.getElementById("taskSub"),
+      feedback: document.getElementById("feedback"),
+      identifyArea: document.getElementById("identifyArea"),
+      payArea: document.getElementById("payArea"),
+      changeArea: document.getElementById("changeArea"),
+      identifyGrid: document.getElementById("identifyGrid"),
+      walletGrid: document.getElementById("walletGrid"),
+      paymentStrip: document.getElementById("paymentStrip"),
+      paidTotal: document.getElementById("paidTotalText"),
+      changeAnswers: document.getElementById("changeAnswers"),
+      moneyPreview: document.getElementById("moneyPreview"),
+      modeName: document.getElementById("modeName"),
+      levelName: document.getElementById("levelName"),
+      obsoleteName: document.getElementById("obsoleteName")
+    };
+
+    const modeNames = { identify: "Parayı Tanı", pay: "Kasaya Öde", change: "Para Üstü" };
+    const levelNames = { easy: "Kolay", normal: "Orta", hard: "Zor" };
+    const bestKey = "kemal_paralarimiz_best";
+
+    function formatMoney(value) {
+      const lira = Math.floor(value / 100);
+      const kurus = value % 100;
+      if (lira && kurus) return lira + " TL " + kurus + " kr";
+      if (lira) return lira + " TL";
+      return kurus + " kr";
+    }
+
+    function shuffle(items) {
+      return items.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function availableMoney() {
+      let list = MONEY.filter(item => state.includeObsolete || !item.obsolete);
+      if (state.level === "easy") {
+        list = list.filter(item => (state.includeObsolete && item.obsolete) || [25, 50, 100, 500, 1000, 2000].includes(item.value));
+      } else if (state.level === "normal") {
+        list = list.filter(item => (state.includeObsolete && item.obsolete) || item.value <= 5000);
+      }
+      return list;
+    }
+
+    function walletMoney() {
+      return availableMoney().filter(item => {
+        if (state.level === "easy") return [50, 100, 500, 1000, 2000].includes(item.value);
+        if (state.level === "normal") return item.value <= 5000 && item.value >= 25;
+        return item.value >= 25;
+      });
+    }
+
+    function makeMoneyButton(item, onClick, options = {}) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "money-btn" + (item.obsolete ? " is-obsolete" : "");
+      button.dataset.id = item.id;
+      button.setAttribute("aria-label", item.name);
+      button.innerHTML = `
+        <span class="money-visual ${item.type}">
+          <img alt="${item.name}" loading="lazy">
+          <span class="fallback-label">${item.short}</span>
+        </span>
+        <span class="money-name">${options.name || item.name}</span>
+      `;
+      const visual = button.querySelector(".money-visual");
+      const image = button.querySelector("img");
+      image.addEventListener("load", () => visual.classList.add("has-image"));
+      image.addEventListener("error", () => visual.classList.remove("has-image"));
+      image.src = item.img;
+      button.addEventListener("click", () => onClick(item, button));
+      return button;
+    }
+
+    function setFeedback(text, tone = "") {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function updateScore(correct) {
+      if (correct) {
+        state.streak += 1;
+        state.score += 10 + Math.min(state.streak * 2, 20);
+      } else {
+        state.streak = 0;
+        state.score = Math.max(0, state.score - 3);
+      }
+      const best = Math.max(Number(localStorage.getItem(bestKey) || 0), state.score);
+      localStorage.setItem(bestKey, String(best));
+      els.score.textContent = state.score;
+      els.streak.textContent = state.streak;
+      els.best.textContent = best;
+    }
+
+    function renderPreview() {
+      els.moneyPreview.innerHTML = "";
+      availableMoney().forEach(item => {
+        els.moneyPreview.appendChild(makeMoneyButton(item, () => {
+          setFeedback(item.name + " değeri: " + formatMoney(item.value), "warn");
+        }, { name: formatMoney(item.value) }));
+      });
+    }
+
+    function pickMoneyQuestion() {
+      state.locked = false;
+      const choices = shuffle(availableMoney()).slice(0, 6);
+      state.targetMoney = choices[Math.floor(Math.random() * choices.length)];
+      els.taskLabel.textContent = "Parayı Tanı";
+      els.taskMain.textContent = state.targetMoney.name;
+      els.taskSub.textContent = "Aşağıdaki seçeneklerden bu parayı bul.";
+      els.identifyGrid.innerHTML = "";
+      choices.forEach(item => {
+        els.identifyGrid.appendChild(makeMoneyButton(item, (selected, button) => checkIdentify(selected, button)));
+      });
+      setFeedback("Doğru parayı seç.", "");
+    }
+
+    function checkIdentify(selected, button) {
+      if (state.locked) return;
+      state.locked = true;
+      const correct = selected.id === state.targetMoney.id;
+      button.classList.add(correct ? "is-correct" : "is-wrong");
+      if (!correct) {
+        const right = els.identifyGrid.querySelector(`[data-id="${state.targetMoney.id}"]`);
+        if (right) right.classList.add("is-correct");
+      }
+      updateScore(correct);
+      setFeedback(correct ? "Harika! Doğru parayı buldun." : "Bu değil. Doğru cevap: " + state.targetMoney.name, correct ? "good" : "bad");
+      window.setTimeout(newQuestion, 1200);
+    }
+
+    function pickPayQuestion() {
+      state.locked = false;
+      state.paid = [];
+      const products = state.level === "easy" ? PRODUCTS.filter(p => p.price % 50 === 0 && p.price <= 2000) : PRODUCTS;
+      const product = products[Math.floor(Math.random() * products.length)];
+      state.targetPrice = product.price;
+      els.taskLabel.textContent = "Kasaya Öde";
+      els.taskMain.textContent = product.name + " fiyatı: " + formatMoney(product.price);
+      els.taskSub.textContent = "Paralara dokunarak kasaya ekle. Kasadaki paraya tekrar dokunursan geri alırsın.";
+      renderWallet();
+      renderPayment();
+      setFeedback("Kasaya ürün fiyatı kadar para at.", "");
+    }
+
+    function renderWallet() {
+      els.walletGrid.innerHTML = "";
+      walletMoney().forEach(item => {
+        els.walletGrid.appendChild(makeMoneyButton(item, selected => {
+          if (state.locked) return;
+          state.paid.push(selected);
+          renderPayment();
+        }, { name: formatMoney(item.value) }));
+      });
+    }
+
+    function renderPayment() {
+      const total = state.paid.reduce((sum, item) => sum + item.value, 0);
+      els.paidTotal.textContent = formatMoney(total);
+      els.paymentStrip.innerHTML = "";
+      if (!state.paid.length) {
+        const empty = document.createElement("span");
+        empty.textContent = "Kasa boş";
+        empty.style.color = "rgba(255,255,255,.76)";
+        empty.style.fontWeight = "900";
+        els.paymentStrip.appendChild(empty);
+        return;
+      }
+      state.paid.forEach((item, index) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "payment-chip";
+        chip.textContent = item.short;
+        chip.addEventListener("click", () => {
+          if (state.locked) return;
+          state.paid.splice(index, 1);
+          renderPayment();
+        });
+        els.paymentStrip.appendChild(chip);
+      });
+    }
+
+    function checkPayment() {
+      if (state.locked) return;
+      const total = state.paid.reduce((sum, item) => sum + item.value, 0);
+      const diff = total - state.targetPrice;
+      if (diff === 0) {
+        state.locked = true;
+        updateScore(true);
+        setFeedback("Tam ödeme! Kasadaki tutar doğru.", "good");
+        window.setTimeout(newQuestion, 1200);
+      } else {
+        updateScore(false);
+        setFeedback(diff < 0 ? formatMoney(Math.abs(diff)) + " eksik." : formatMoney(diff) + " fazla.", diff < 0 ? "warn" : "bad");
+      }
+    }
+
+    function pickChangeQuestion() {
+      state.locked = false;
+      const prices = state.level === "easy" ? [250, 500, 750, 1000, 1250, 1500] : PRODUCTS.map(p => p.price);
+      const paidOptions = state.level === "hard" ? [500, 1000, 2000, 5000, 10000, 20000] : [500, 1000, 2000, 5000];
+      let price = prices[Math.floor(Math.random() * prices.length)];
+      let paid = paidOptions.find(v => v > price) || 5000;
+      if (state.level !== "easy") {
+        const possible = paidOptions.filter(v => v > price);
+        paid = possible[Math.floor(Math.random() * possible.length)] || paid;
+      }
+      state.correctChange = paid - price;
+      els.taskLabel.textContent = "Para Üstü";
+      els.taskMain.textContent = formatMoney(price) + " tuttu. " + formatMoney(paid) + " verdin.";
+      els.taskSub.textContent = "Para üstün kaç olmalı?";
+      const answers = shuffle([
+        state.correctChange,
+        Math.max(0, state.correctChange - 50),
+        state.correctChange + 50,
+        state.correctChange + 100,
+        Math.max(0, state.correctChange - 100)
+      ].filter((value, index, arr) => arr.indexOf(value) === index)).slice(0, 4);
+      if (!answers.includes(state.correctChange)) answers[0] = state.correctChange;
+      els.changeAnswers.innerHTML = "";
+      shuffle(answers).forEach(value => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-btn";
+        button.textContent = formatMoney(value);
+        button.addEventListener("click", () => checkChange(value, button));
+        els.changeAnswers.appendChild(button);
+      });
+      setFeedback("Doğru para üstünü seç.", "");
+    }
+
+    function checkChange(value, button) {
+      if (state.locked) return;
+      state.locked = true;
+      const correct = value === state.correctChange;
+      button.classList.add(correct ? "is-correct" : "is-wrong");
+      if (!correct) {
+        Array.from(els.changeAnswers.children).forEach(btn => {
+          if (btn.textContent === formatMoney(state.correctChange)) btn.classList.add("is-correct");
+        });
+      }
+      updateScore(correct);
+      setFeedback(correct ? "Aynen öyle! Para üstünü doğru buldun." : "Doğru para üstü: " + formatMoney(state.correctChange), correct ? "good" : "bad");
+      window.setTimeout(newQuestion, 1400);
+    }
+
+    function switchMode(mode) {
+      state.mode = mode;
+      document.querySelectorAll(".mode-btn").forEach(btn => btn.classList.toggle("is-active", btn.dataset.mode === mode));
+      els.identifyArea.classList.toggle("hidden", mode !== "identify");
+      els.payArea.classList.toggle("hidden", mode !== "pay");
+      els.changeArea.classList.toggle("hidden", mode !== "change");
+      els.modeName.textContent = modeNames[mode];
+      newQuestion();
+    }
+
+    function switchLevel(level) {
+      state.level = level;
+      document.querySelectorAll(".setting-btn[data-level]").forEach(btn => btn.classList.toggle("is-active", btn.dataset.level === level));
+      els.levelName.textContent = levelNames[level];
+      renderPreview();
+      newQuestion();
+    }
+
+    function newQuestion() {
+      if (state.mode === "identify") pickMoneyQuestion();
+      if (state.mode === "pay") pickPayQuestion();
+      if (state.mode === "change") pickChangeQuestion();
+    }
+
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchMode(btn.dataset.mode));
+    });
+
+    document.querySelectorAll(".setting-btn[data-level]").forEach(btn => {
+      btn.addEventListener("click", () => switchLevel(btn.dataset.level));
+    });
+
+    document.getElementById("obsoleteToggle").addEventListener("click", event => {
+      state.includeObsolete = !state.includeObsolete;
+      event.currentTarget.classList.toggle("is-active", state.includeObsolete);
+      event.currentTarget.setAttribute("aria-pressed", String(state.includeObsolete));
+      els.obsoleteName.textContent = state.includeObsolete ? "Açık" : "Kapalı";
+      renderPreview();
+      newQuestion();
+    });
+
+    document.getElementById("newQuestionBtn").addEventListener("click", newQuestion);
+    document.getElementById("checkPayBtn").addEventListener("click", checkPayment);
+
+    els.best.textContent = localStorage.getItem(bestKey) || "0";
+    renderPreview();
+    newQuestion();
+  </script>
+</body>
+</html>
