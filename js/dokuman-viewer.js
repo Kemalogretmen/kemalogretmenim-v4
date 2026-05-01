@@ -23,6 +23,38 @@
         '</svg>',
     },
     {
+      key: 'clear-area',
+      label: 'Temizle',
+      icon:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M3 6h18"/>' +
+          '<path d="M8 6V4h8v2"/>' +
+          '<path d="m19 6-1 14H6L5 6"/>' +
+          '<path d="M10 11v6"/>' +
+          '<path d="M14 11v6"/>' +
+        '</svg>',
+    },
+    {
+      key: 'magnifier-area',
+      label: 'Büyüteç Alanı',
+      icon:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' +
+          '<circle cx="10.5" cy="10.5" r="5.5"/>' +
+          '<path d="m15 15 5 5"/>' +
+          '<path d="M6 4h8M4 6v8M18 10v4M10 18h4"/>' +
+        '</svg>',
+    },
+    {
+      key: 'answer-area',
+      label: 'Cevap Alanı',
+      icon:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M9.2 9a3 3 0 1 1 4.9 2.3c-1.3.9-2.1 1.5-2.1 3.2"/>' +
+          '<path d="M12 18h.01"/>' +
+          '<rect x="4" y="4" width="16" height="16" rx="4"/>' +
+        '</svg>',
+    },
+    {
       key: 'pen',
       label: 'Kalem',
       icon:
@@ -146,7 +178,8 @@
         '</svg>',
     },
   ];
-  const PRIMARY_TOOL_KEYS = ['select', 'pen', 'highlighter', 'eraser', 'text', 'pan'];
+  const PRIMARY_TOOL_KEYS = ['select', 'pen', 'highlighter', 'eraser', 'text', 'pan', 'clear-area'];
+  const INTERACTION_TOOL_KEYS = ['magnifier-area', 'answer-area'];
   const SHAPE_TOOL_KEYS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star', 'checkmark', 'cross'];
   const TOOL_SHORTCUTS = {
     V: 'select',
@@ -218,7 +251,7 @@
   const VIEW_MODE_STORAGE_KEY = 'kemal_dokuman_view_mode';
   const PAGE_TURN_DURATION = 920;
   const MIN_ZOOM = 1;
-  const MAX_ZOOM = 2.6;
+  const MAX_ZOOM = 8;
   const ZOOM_STEP = 0.2;
   const PDF_RENDER_BOOST = 2.25;
   const ANNOTATION_EXPORT_SCALE = 2;
@@ -238,7 +271,9 @@
     pages: new Map(),
     annotationCache: {
       pages: {},
+      crop: {},
     },
+    clipboard: null,
     pageWidth: 0,
     pageHeight: 0,
     bookWidth: 0,
@@ -246,6 +281,22 @@
     zoom: 1,
     panX: 0,
     panY: 0,
+    activeMagnifierId: '',
+    activeMagnifierIndex: -1,
+    crop: {
+      canvas: null,
+      page: null,
+      rect: null,
+      displayScale: 1,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      draft: null,
+      pointerStart: null,
+      pointerEnd: null,
+      hotspotId: '',
+      isRestoring: false,
+    },
     toolbarCollapsed: false,
     shapesOpen: false,
     protractor: {
@@ -267,6 +318,14 @@
     flipAudioContext: null,
     flipNoiseBuffer: null,
     resizeTimer: null,
+    editMode: false,
+    interactionsDirty: false,
+    interactions: {
+      version: 1,
+      answersHidden: true,
+      hotspots: [],
+    },
+    revealedAnswers: {},
   };
 
   function qs(id) {
@@ -363,28 +422,131 @@
     return STORAGE_PREFIX + state.documentId;
   }
 
+  function normalizeInteractions(value) {
+    const source = value && typeof value === 'object' ? value : {};
+    return {
+      version: 1,
+      answersHidden: source.answersHidden !== false,
+      hotspots: Array.isArray(source.hotspots) ? source.hotspots.filter(function(item) {
+        return item && item.id && item.page && item.rect && item.type;
+      }) : [],
+    };
+  }
+
+  function createId(prefix) {
+    if (window.crypto && window.crypto.randomUUID) {
+      return prefix + '_' + window.crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    }
+    return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function markInteractionsDirty(message) {
+    state.interactionsDirty = true;
+    const status = qs('interactionStatus');
+    if (status) {
+      status.textContent = message || 'Değişiklik hazır. Yayınla butonuyla öğrenci ekranına aktarabilirsin.';
+    }
+  }
+
+  function getHotspotsForPage(pageNumber) {
+    return state.interactions.hotspots.filter(function(item) {
+      return Number(item.page) === Number(pageNumber);
+    });
+  }
+
+  function normalizeRect(start, end, pageState) {
+    const left = Math.min(start.x, end.x);
+    const top = Math.min(start.y, end.y);
+    const width = Math.abs(end.x - start.x);
+    const height = Math.abs(end.y - start.y);
+    return {
+      x: clamp(left / pageState.canvas.getWidth(), 0, 1),
+      y: clamp(top / pageState.canvas.getHeight(), 0, 1),
+      w: clamp(width / pageState.canvas.getWidth(), 0, 1),
+      h: clamp(height / pageState.canvas.getHeight(), 0, 1),
+    };
+  }
+
+  function rectToCanvas(rect, pageState) {
+    return {
+      x: Number(rect.x || 0) * pageState.canvas.getWidth(),
+      y: Number(rect.y || 0) * pageState.canvas.getHeight(),
+      w: Number(rect.w || 0) * pageState.canvas.getWidth(),
+      h: Number(rect.h || 0) * pageState.canvas.getHeight(),
+    };
+  }
+
+  function getObjectCenter(object) {
+    const center = object.getCenterPoint ? object.getCenterPoint() : null;
+    return center || {
+      x: Number(object.left || 0),
+      y: Number(object.top || 0),
+    };
+  }
+
+  function objectIsInsideRect(object, rectPx) {
+    if (!object || object._temp) {
+      return false;
+    }
+    const center = getObjectCenter(object);
+    return center.x >= rectPx.x &&
+      center.x <= rectPx.x + rectPx.w &&
+      center.y >= rectPx.y &&
+      center.y <= rectPx.y + rectPx.h;
+  }
+
+  function tagObjectForAnswerHotspot(pageState, object) {
+    if (!state.editMode || !pageState || !object || object._temp) {
+      return;
+    }
+    const answerHotspot = getHotspotsForPage(pageState.index).find(function(hotspot) {
+      return hotspot.type === 'answer' && objectIsInsideRect(object, rectToCanvas(hotspot.rect, pageState));
+    });
+    if (answerHotspot) {
+      object.isAnswerObject = true;
+      object.answerHotspotId = answerHotspot.id;
+    }
+  }
+
+  function setAnswerObjectsVisibility(pageState) {
+    if (!pageState || state.editMode) {
+      return;
+    }
+    const shouldHide = state.interactions.answersHidden !== false;
+    pageState.canvas.getObjects().forEach(function(object) {
+      if (object.isAnswerObject && object.answerHotspotId) {
+        object.visible = shouldHide ? Boolean(state.revealedAnswers[object.answerHotspotId]) : true;
+        object.evented = false;
+        object.selectable = false;
+      }
+    });
+    pageState.canvas.renderAll();
+  }
+
   function loadAnnotationCache() {
     try {
       const raw = localStorage.getItem(getStorageKey());
       if (!raw) {
-        return { pages: {} };
+        return { pages: {}, crop: {} };
       }
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') {
-        return { pages: {} };
+        return { pages: {}, crop: {} };
       }
       return {
         pages: parsed.pages && typeof parsed.pages === 'object' ? parsed.pages : {},
+        crop: parsed.crop && typeof parsed.crop === 'object' ? parsed.crop : {},
         updatedAt: parsed.updatedAt || '',
       };
     } catch (error) {
-      return { pages: {} };
+      return { pages: {}, crop: {} };
     }
   }
 
   function persistAnnotationCache() {
     localStorage.setItem(getStorageKey(), JSON.stringify({
       pages: state.annotationCache.pages,
+      crop: state.annotationCache.crop || {},
       updatedAt: new Date().toISOString(),
     }));
   }
@@ -423,6 +585,14 @@
 
   function getBookScaleLayer() {
     return qs('bookScaleLayer');
+  }
+
+  function getCropStage() {
+    return qs('cropStage');
+  }
+
+  function getCropSurface() {
+    return qs('cropSurface');
   }
 
   function getPageTurnLayer() {
@@ -546,9 +716,9 @@
     }
   }
 
-  function compositePageImage(pageState) {
+  function createComposedPageCanvas(pageState) {
     if (!pageState || !pageState.pdfCanvasEl || !pageState.annotationCanvasEl) {
-      return '';
+      return null;
     }
 
     pageState.canvas.renderAll();
@@ -558,6 +728,14 @@
     const context = composed.getContext('2d');
     context.drawImage(pageState.pdfCanvasEl, 0, 0);
     context.drawImage(pageState.annotationCanvasEl, 0, 0);
+    return composed;
+  }
+
+  function compositePageImage(pageState) {
+    const composed = createComposedPageCanvas(pageState);
+    if (!composed) {
+      return '';
+    }
     return composed.toDataURL('image/png');
   }
 
@@ -717,12 +895,96 @@
   }
 
   function getSnapshot(pageState) {
-    return JSON.stringify(pageState.canvas.toDatalessJSON(['globalCompositeOperation']));
+    return JSON.stringify(pageState.canvas.toDatalessJSON(['globalCompositeOperation', 'isAnswerObject', 'answerHotspotId']));
+  }
+
+  function getCropSnapshot(canvas) {
+    return JSON.stringify(canvas.toDatalessJSON(['globalCompositeOperation']));
   }
 
   function savePageSnapshot(pageState, snapshot) {
     state.annotationCache.pages[String(pageState.index)] = snapshot;
     persistAnnotationCache();
+  }
+
+  function saveCropSnapshot() {
+    const canvas = state.crop.canvas;
+    const hotspotId = state.crop.hotspotId || state.activeMagnifierId;
+    if (!canvas || !hotspotId || state.crop.isRestoring) {
+      return;
+    }
+    state.annotationCache.crop = state.annotationCache.crop || {};
+    if (canvas.getObjects().filter(function(object) { return !object._temp; }).length) {
+      state.annotationCache.crop[hotspotId] = getCropSnapshot(canvas);
+    } else {
+      delete state.annotationCache.crop[hotspotId];
+    }
+    persistAnnotationCache();
+  }
+
+  function prepareEraserPath(path) {
+    if (!path) {
+      return;
+    }
+    path.globalCompositeOperation = 'destination-out';
+    path.stroke = 'rgba(0,0,0,1)';
+    path.selectable = false;
+    path.evented = false;
+  }
+
+  function makeObjectEditable(object) {
+    if (!object || object._temp) {
+      return object;
+    }
+    object.set({
+      hasControls: true,
+      lockRotation: false,
+      lockScalingX: false,
+      lockScalingY: false,
+      lockMovementX: false,
+      lockMovementY: false,
+      borderColor: '#6C3DED',
+      cornerColor: '#6C3DED',
+      cornerStrokeColor: '#ffffff',
+      transparentCorners: false,
+      cornerStyle: 'circle',
+      rotatingPointOffset: 34,
+    });
+    if (typeof object.setControlsVisibility === 'function') {
+      object.setControlsVisibility({ mtr: true });
+    }
+    return object;
+  }
+
+  function makeCanvasObjectsEditable(canvas) {
+    if (!canvas) {
+      return;
+    }
+    canvas.getObjects().forEach(function(object) {
+      makeObjectEditable(object);
+    });
+  }
+
+  function walkFabricObject(object, callback) {
+    if (!object) {
+      return;
+    }
+    callback(object);
+    if (typeof object.forEachObject === 'function') {
+      object.forEachObject(function(child) {
+        walkFabricObject(child, callback);
+      });
+    }
+  }
+
+  function syncSelectedObjectControls(event) {
+    if (event && event.selected) {
+      event.selected.forEach(makeObjectEditable);
+    }
+    if (event && event.target) {
+      makeObjectEditable(event.target);
+    }
+    updateHistoryButtons();
   }
 
   function updateSizeLabel() {
@@ -747,7 +1009,7 @@
     const protractorBtn = qs('docProtractorBtn');
     const protractor = getDocProtractor();
     const activeTool = state.tool;
-    const shapesVisible = state.shapesOpen || SHAPE_TOOL_KEYS.includes(activeTool);
+    const shapesVisible = state.shapesOpen || SHAPE_TOOL_KEYS.includes(activeTool) || INTERACTION_TOOL_KEYS.includes(activeTool);
 
     if (toolbar) {
       toolbar.style.setProperty('--doc-accent-color', state.color || '#6C3DED');
@@ -778,6 +1040,10 @@
       button.classList.toggle('active', isActive);
       button.classList.toggle('is-active', isActive);
     });
+    Array.from(document.querySelectorAll('[data-prep-tool]')).forEach(function(button) {
+      const isActive = button.getAttribute('data-prep-tool') === activeTool;
+      button.classList.toggle('is-active', isActive);
+    });
 
     Array.from(document.querySelectorAll('[data-doc-color]')).forEach(function(button) {
       button.classList.toggle('is-active', normalizeColorValue(button.getAttribute('data-doc-color')) === normalizeColorValue(state.color));
@@ -793,13 +1059,75 @@
 
   function updateHistoryButtons() {
     const pageState = getActivePageState();
+    if (isCropViewActive()) {
+      qs('undoBtn').disabled = true;
+      qs('redoBtn').disabled = true;
+      qs('deleteSelectionBtn').disabled = !state.crop.canvas.getActiveObject();
+      if (qs('clearPageBtn')) {
+        qs('clearPageBtn').disabled = !state.crop.canvas.getObjects().some(function(object) {
+          return !object._temp;
+        });
+      }
+      return;
+    }
     qs('undoBtn').disabled = !pageState || pageState.history.length <= 1;
     qs('redoBtn').disabled = !pageState || !pageState.redo.length;
     qs('deleteSelectionBtn').disabled = !pageState || !pageState.canvas.getActiveObject();
-    qs('clearPageBtn').disabled = !pageState || !pageState.canvas.getObjects().length;
+    if (qs('clearPageBtn')) {
+      qs('clearPageBtn').disabled = !pageState || !pageState.canvas.getObjects().some(function(object) {
+        return !object.isAnswerObject && !object._temp;
+      });
+    }
+  }
+
+  function isCropViewActive() {
+    return document.body.classList.contains('is-crop-view') && !!state.crop.canvas;
+  }
+
+  function clampCropPanValues() {
+    const stage = getCropStage();
+    const surface = getCropSurface();
+    if (!stage || !surface) {
+      return;
+    }
+    const maxX = Math.max(0, ((surface.clientWidth || 0) * state.crop.zoom - stage.clientWidth) / 2);
+    const maxY = Math.max(0, ((surface.clientHeight || 0) * state.crop.zoom - stage.clientHeight) / 2);
+    state.crop.panX = clamp(state.crop.panX, -maxX, maxX);
+    state.crop.panY = clamp(state.crop.panY, -maxY, maxY);
+  }
+
+  function updateCropTransform() {
+    const surface = getCropSurface();
+    if (!surface) {
+      return;
+    }
+    clampCropPanValues();
+    surface.style.transformOrigin = 'center center';
+    surface.style.transform = 'translate3d(' + state.crop.panX + 'px,' + state.crop.panY + 'px,0) scale(' + state.crop.zoom + ')';
+    if (state.crop.canvas) {
+      state.crop.canvas.calcOffset();
+    }
+    syncZoomButtons();
+  }
+
+  function setCropZoom(nextZoom, options) {
+    const previousZoom = state.crop.zoom || 1;
+    state.crop.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    if (state.crop.zoom === 1) {
+      state.crop.panX = 0;
+      state.crop.panY = 0;
+    } else if (options && options.keepCenter) {
+      const ratio = state.crop.zoom / previousZoom;
+      state.crop.panX *= ratio;
+      state.crop.panY *= ratio;
+    }
+    updateCropTransform();
   }
 
   function clampPanValues() {
+    if (document.body.classList.contains('is-crop-view')) {
+      return;
+    }
     const viewport = getBookViewport();
     if (!viewport) {
       return;
@@ -814,10 +1142,14 @@
   }
 
   function syncZoomButtons() {
-    qs('zoomValue').textContent = '%' + Math.round(state.zoom * 100);
-    qs('zoomInput').value = String(Math.round(state.zoom * 100));
-    qs('zoomResetBtn').disabled = state.zoom === 1 && state.panX === 0 && state.panY === 0;
-    getBookFrame().classList.toggle('is-pannable', state.zoom > 1 && state.tool === 'pan');
+    const cropActive = isCropViewActive();
+    const activeZoom = cropActive ? state.crop.zoom : state.zoom;
+    const activePanX = cropActive ? state.crop.panX : state.panX;
+    const activePanY = cropActive ? state.crop.panY : state.panY;
+    qs('zoomValue').textContent = '%' + Math.round(activeZoom * 100);
+    qs('zoomInput').value = String(Math.round(activeZoom * 100));
+    qs('zoomResetBtn').disabled = activeZoom === 1 && activePanX === 0 && activePanY === 0;
+    getBookFrame().classList.toggle('is-pannable', activeZoom > 1 && state.tool === 'pan');
     getBookFrame().classList.toggle('is-panning', state.isPanning);
     updateViewModeButtons();
   }
@@ -846,12 +1178,20 @@
   }
 
   function setZoom(nextZoom, options) {
+    if (isCropViewActive()) {
+      setCropZoom(nextZoom, options);
+      return;
+    }
     const previousZoom = state.zoom;
     state.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
 
     if (state.zoom === 1) {
       state.panX = 0;
       state.panY = 0;
+      state.activeMagnifierId = '';
+      state.activeMagnifierIndex = -1;
+      document.body.classList.remove('is-crop-view');
+      updateCropControls();
     } else if (options && options.keepCenter) {
       const ratio = state.zoom / previousZoom;
       state.panX *= ratio;
@@ -862,6 +1202,10 @@
   }
 
   function syncPageControls() {
+    const turnLayer = getPageTurnLayer();
+    if (state.isFlipping && !state.flipTimer && (!turnLayer || !turnLayer.classList.contains('is-active'))) {
+      state.isFlipping = false;
+    }
     const visiblePages = getVisiblePages();
     const pageCounter = formatVisiblePageLabel(visiblePages);
     qs('pageCounter').textContent = pageCounter;
@@ -871,8 +1215,17 @@
     qs('pageSlider').value = String(clamp(state.currentPage, 1, Math.max(1, state.pageCount)));
     qs('pageJumpInput').max = String(Math.max(1, state.pageCount));
     qs('pageJumpInput').value = String(clamp(state.focusPage, 1, Math.max(1, state.pageCount)));
-    qs('prevPageBtn').disabled = state.currentPage <= 1 || state.isFlipping || state.isRebuilding;
-    qs('nextPageBtn').disabled = visiblePages[visiblePages.length - 1] >= state.pageCount || state.isFlipping || state.isRebuilding;
+    const busy = state.isFlipping || state.isRebuilding;
+    const canGoPrev = Math.min.apply(null, visiblePages.concat([state.currentPage, state.focusPage])) > 1;
+    const canGoNext = visiblePages[visiblePages.length - 1] < state.pageCount;
+    qs('prevPageBtn').disabled = !canGoPrev || busy;
+    qs('nextPageBtn').disabled = !canGoNext || busy;
+    Array.from(document.querySelectorAll('[data-edge-page="prev"]')).forEach(function(button) {
+      button.disabled = !canGoPrev || busy;
+    });
+    Array.from(document.querySelectorAll('[data-edge-page="next"]')).forEach(function(button) {
+      button.disabled = !canGoNext || busy;
+    });
   }
 
   function pushHistory(pageState) {
@@ -897,6 +1250,7 @@
       pageState.isRestoring = true;
       pageState.canvas.loadFromJSON(snapshot ? JSON.parse(snapshot) : { version: window.fabric.version, objects: [] }, function() {
         pageState.isRestoring = false;
+        makeCanvasObjectsEditable(pageState.canvas);
         pageState.canvas.renderAll();
         updateHistoryButtons();
         resolve();
@@ -929,7 +1283,129 @@
     updateHistoryButtons();
   }
 
+  function getActiveDrawingScope() {
+    if (isCropViewActive()) {
+      return {
+        canvas: state.crop.canvas,
+        pageState: null,
+        type: 'crop',
+      };
+    }
+    const pageState = getActivePageState();
+    return pageState ? {
+      canvas: pageState.canvas,
+      pageState: pageState,
+      type: 'page',
+    } : null;
+  }
+
+  function isFabricTextEditing() {
+    const scope = getActiveDrawingScope();
+    const object = scope && scope.canvas ? scope.canvas.getActiveObject() : null;
+    return !!(object && object.isEditing);
+  }
+
+  function preparePastedObject(object, scope) {
+    walkFabricObject(object, function(item) {
+      makeObjectEditable(item);
+      if (item.globalCompositeOperation === 'destination-out') {
+        return;
+      }
+      item.selectable = true;
+      item.evented = true;
+      if (scope.type === 'crop') {
+        item.isAnswerObject = false;
+        item.answerHotspotId = '';
+      } else {
+        item.isAnswerObject = false;
+        item.answerHotspotId = '';
+      }
+    });
+    if (scope.type === 'page') {
+      walkFabricObject(object, function(item) {
+        tagObjectForAnswerHotspot(scope.pageState, item);
+      });
+    }
+  }
+
+  function copyActiveObject() {
+    const scope = getActiveDrawingScope();
+    const activeObject = scope && scope.canvas ? scope.canvas.getActiveObject() : null;
+    if (!activeObject) {
+      setStatus('Kopyalamak için önce bir öğe seç.');
+      return false;
+    }
+    activeObject.clone(function(cloned) {
+      state.clipboard = {
+        object: cloned,
+        offset: 0,
+      };
+      setStatus('Seçili öğe kopyalandı.');
+    }, ['globalCompositeOperation', 'isAnswerObject', 'answerHotspotId']);
+    return true;
+  }
+
+  function pasteClipboardObject() {
+    const scope = getActiveDrawingScope();
+    if (!scope || !scope.canvas || !state.clipboard || !state.clipboard.object) {
+      setStatus('Yapıştırmak için önce bir öğe kopyala.');
+      return false;
+    }
+    state.clipboard.object.clone(function(clonedObject) {
+      const offset = 22 + (state.clipboard.offset || 0);
+      scope.canvas.discardActiveObject();
+      clonedObject.set({
+        left: (clonedObject.left || 0) + offset,
+        top: (clonedObject.top || 0) + offset,
+        evented: true,
+        selectable: true,
+      });
+      preparePastedObject(clonedObject, scope);
+
+      if (clonedObject.type === 'activeSelection') {
+        clonedObject.canvas = scope.canvas;
+        clonedObject.forEachObject(function(object) {
+          scope.canvas.add(object);
+        });
+        clonedObject.setCoords();
+      } else {
+        scope.canvas.add(clonedObject);
+      }
+
+      scope.canvas.setActiveObject(clonedObject);
+      scope.canvas.requestRenderAll();
+      state.clipboard.offset = Math.min(88, offset);
+      if (scope.type === 'crop') {
+        saveCropSnapshot();
+      } else {
+        pushHistory(scope.pageState);
+      }
+      updateHistoryButtons();
+      setStatus('Kopyalanan öğe yapıştırıldı.');
+    }, ['globalCompositeOperation', 'isAnswerObject', 'answerHotspotId']);
+    return true;
+  }
+
   function removeActiveObject() {
+    if (isCropViewActive()) {
+      const cropCanvas = state.crop.canvas;
+      const cropObject = cropCanvas.getActiveObject();
+      if (!cropObject) {
+        return;
+      }
+      if (cropObject.type === 'activeSelection') {
+        cropObject.getObjects().forEach(function(object) {
+          cropCanvas.remove(object);
+        });
+      } else {
+        cropCanvas.remove(cropObject);
+      }
+      cropCanvas.discardActiveObject();
+      cropCanvas.renderAll();
+      saveCropSnapshot();
+      updateHistoryButtons();
+      return;
+    }
     const pageState = getActivePageState();
     if (!pageState) {
       return;
@@ -952,18 +1428,76 @@
 
   function clearCurrentPage() {
     const pageState = getActivePageState();
-    if (!pageState || !pageState.canvas.getObjects().length) {
+    if (!pageState) {
       return;
     }
-    if (!window.confirm('Bu sayfadaki tüm çizimleri silmek istiyor musun?')) {
+    const removableObjects = pageState.canvas.getObjects().filter(function(object) {
+      return !object.isAnswerObject && !object._temp;
+    });
+    if (!removableObjects.length) {
+      setStatus('Bu sayfada temizlenecek öğrenci çizimi yok.');
       return;
     }
-    pageState.canvas.getObjects().slice().forEach(function(object) {
+    if (!window.confirm('Bu sayfadaki çizimleri temizlemek istiyor musun? Cevap alanları korunacak.')) {
+      return;
+    }
+    removableObjects.forEach(function(object) {
       pageState.canvas.remove(object);
     });
     pageState.canvas.discardActiveObject();
     pageState.canvas.renderAll();
     pushHistory(pageState);
+    setStatus('Sayfadaki çizimler temizlendi. Cevap alanları korundu.');
+  }
+
+  function clearActiveCropAnnotations() {
+    const canvas = state.crop.canvas;
+    if (!canvas) {
+      return;
+    }
+    const cropObjects = canvas.getObjects().filter(function(object) {
+      return !object._temp;
+    });
+    const pageState = state.crop.page;
+    const pageObjects = pageState && state.crop.rect
+      ? pageState.canvas.getObjects().filter(function(object) {
+        return !object.isAnswerObject && !object._temp && objectIsInsideRect(object, state.crop.rect);
+      })
+      : [];
+    if (!cropObjects.length && !pageObjects.length) {
+      setStatus('Bu kırpılmış soru alanında temizlenecek çizim yok.');
+      return;
+    }
+    if (!window.confirm('Sadece bu kırpılmış soru alanındaki çizimleri temizlemek istiyor musun?')) {
+      return;
+    }
+    cropObjects.forEach(function(object) {
+      canvas.remove(object);
+    });
+    canvas.discardActiveObject();
+    canvas.renderAll();
+    saveCropSnapshot();
+    if (pageState && pageObjects.length) {
+      pageObjects.forEach(function(object) {
+        pageState.canvas.remove(object);
+      });
+      pageState.canvas.discardActiveObject();
+      pageState.canvas.renderAll();
+      pushHistory(pageState);
+      const active = findHotspot(state.activeMagnifierId);
+      if (active) {
+        renderCropView(active);
+      }
+    }
+    setStatus('Bu soru alanındaki çizimler temizlendi.');
+  }
+
+  function clearCurrentScope() {
+    if (document.body.classList.contains('is-crop-view') && state.crop.canvas) {
+      clearActiveCropAnnotations();
+      return;
+    }
+    clearCurrentPage();
   }
 
   function createArrowGroup(start, end, options) {
@@ -1008,12 +1542,14 @@
       }));
     }
 
-    return new window.fabric.Group(objects, {
+    const group = new window.fabric.Group(objects, {
       fill: 'transparent',
       strokeUniform: true,
       hasControls: true,
       objectCaching: false,
     });
+    makeObjectEditable(group);
+    return group;
   }
 
   function createStar(centerX, centerY, outerRadius, innerRadius) {
@@ -1147,6 +1683,9 @@
       return;
     }
 
+    pageState.draft._temp = false;
+    makeObjectEditable(pageState.draft);
+    tagObjectForAnswerHotspot(pageState, pageState.draft);
     pageState.draft = null;
     pageState.pointerStart = null;
     pageState.pointerEnd = null;
@@ -1154,11 +1693,58 @@
     pushHistory(pageState);
   }
 
+  function maybeFinalizeInteractionArea(pageState) {
+    if (!pageState.draft || !pageState.pointerStart || !pageState.pointerEnd) {
+      return;
+    }
+
+    const width = Math.abs(pageState.pointerStart.x - pageState.pointerEnd.x);
+    const height = Math.abs(pageState.pointerStart.y - pageState.pointerEnd.y);
+    pageState.canvas.remove(pageState.draft);
+    pageState.canvas.renderAll();
+
+    if (width < 18 || height < 18) {
+      pageState.draft = null;
+      pageState.pointerStart = null;
+      pageState.pointerEnd = null;
+      return;
+    }
+
+    const type = state.tool === 'answer-area' ? 'answer' : 'magnifier';
+    const hotspot = {
+      id: createId(type),
+      type: type,
+      page: pageState.index,
+      rect: normalizeRect(pageState.pointerStart, pageState.pointerEnd, pageState),
+    };
+    state.interactions.hotspots.push(hotspot);
+
+    if (type === 'answer') {
+      const rectPx = rectToCanvas(hotspot.rect, pageState);
+      pageState.canvas.getObjects().forEach(function(object) {
+        if (objectIsInsideRect(object, rectPx)) {
+          object.isAnswerObject = true;
+          object.answerHotspotId = hotspot.id;
+        }
+      });
+      pushHistory(pageState);
+    }
+
+    pageState.draft = null;
+    pageState.pointerStart = null;
+    pageState.pointerEnd = null;
+    renderHotspotsForPage(pageState);
+    markInteractionsDirty(type === 'answer'
+      ? 'Cevap alanı eklendi. İçindeki çizimler öğrenci ekranında soru işareti açılana kadar gizlenecek.'
+      : 'Büyüteç alanı eklendi. Yayınlayınca öğrenci ekranda büyüteç ikonunu görecek.');
+  }
+
   function applyToolToPage(pageState) {
     const canvas = pageState.canvas;
     const visiblePages = getVisiblePages();
     const isVisible = visiblePages.includes(pageState.index);
     const canInteract = isVisible && state.tool !== 'pan' && !state.isFlipping && !state.isRebuilding;
+    const isInteractionTool = INTERACTION_TOOL_KEYS.includes(state.tool);
 
     canvas.isDrawingMode = false;
     canvas.selection = canInteract && state.tool === 'select';
@@ -1180,7 +1766,11 @@
       return;
     }
 
-    if (['pen', 'highlighter', 'eraser'].includes(state.tool)) {
+    if (isInteractionTool) {
+      canvas.selection = false;
+      canvas.skipTargetFind = true;
+      canvas.isDrawingMode = false;
+    } else if (['pen', 'highlighter', 'eraser'].includes(state.tool)) {
       canvas.selection = false;
       canvas.skipTargetFind = true;
       canvas.isDrawingMode = true;
@@ -1188,7 +1778,7 @@
       brush.width = state.size;
       brush.color = state.tool === 'highlighter'
         ? hexToRgba(state.color, 0.28)
-        : (state.tool === 'eraser' ? 'rgba(0,0,0,1)' : state.color);
+        : (state.tool === 'eraser' ? 'rgba(0,0,0,0)' : state.color);
       canvas.freeDrawingBrush = brush;
     }
   }
@@ -1197,12 +1787,17 @@
     state.pages.forEach(function(pageState) {
       applyToolToPage(pageState);
     });
+    applyToolToCropCanvas();
     updateHistoryButtons();
   }
 
   function setTool(tool) {
+    if (tool === 'clear-area') {
+      clearCurrentScope();
+      return;
+    }
     state.tool = tool;
-    if (SHAPE_TOOL_KEYS.includes(tool)) {
+    if (SHAPE_TOOL_KEYS.includes(tool) || INTERACTION_TOOL_KEYS.includes(tool)) {
       state.shapesOpen = true;
     }
     syncToolbarUi();
@@ -1215,10 +1810,12 @@
     const canvas = pageState.canvas;
 
     canvas.on('path:created', function(event) {
+      tagObjectForAnswerHotspot(pageState, event.path);
       if (state.tool === 'eraser') {
-        event.path.globalCompositeOperation = 'destination-out';
-        event.path.selectable = false;
-        event.path.evented = false;
+        prepareEraserPath(event.path);
+        pageState.canvas.renderAll();
+      } else {
+        makeObjectEditable(event.path);
       }
       if (state.tool === 'highlighter') {
         event.path.selectable = true;
@@ -1234,8 +1831,8 @@
         updateHistoryButtons();
       }
     });
-    canvas.on('selection:created', updateHistoryButtons);
-    canvas.on('selection:updated', updateHistoryButtons);
+    canvas.on('selection:created', syncSelectedObjectControls);
+    canvas.on('selection:updated', syncSelectedObjectControls);
     canvas.on('selection:cleared', updateHistoryButtons);
     canvas.on('text:changed', function() {
       pushHistory(pageState);
@@ -1258,6 +1855,28 @@
 
       const pointer = canvas.getPointer(opt.e);
 
+      if (state.editMode && INTERACTION_TOOL_KEYS.includes(state.tool)) {
+        pageState.pointerStart = pointer;
+        pageState.pointerEnd = pointer;
+        pageState.draft = new window.fabric.Rect({
+          left: pointer.x,
+          top: pointer.y,
+          width: 4,
+          height: 4,
+          fill: state.tool === 'answer-area' ? 'rgba(255,96,82,.10)' : 'rgba(108,61,237,.10)',
+          stroke: state.tool === 'answer-area' ? '#FF6052' : '#6C3DED',
+          strokeDashArray: [10, 6],
+          strokeWidth: 2,
+          selectable: false,
+          evented: false,
+          objectCaching: false,
+        });
+        pageState.draft._temp = true;
+        canvas.add(pageState.draft);
+        canvas.renderAll();
+        return;
+      }
+
       if (state.tool === 'text') {
         const text = new window.fabric.IText('Yeni metin', {
           left: pointer.x,
@@ -1267,7 +1886,9 @@
           fontWeight: '700',
           fontFamily: 'Nunito, sans-serif',
         });
+        makeObjectEditable(text);
         canvas.add(text);
+        tagObjectForAnswerHotspot(pageState, text);
         canvas.setActiveObject(text);
         canvas.renderAll();
         text.enterEditing();
@@ -1290,13 +1911,30 @@
     });
 
     canvas.on('mouse:move', function(opt) {
-      if (!pageState.draft || !pageState.pointerStart || !SHAPE_TOOLS.includes(state.tool)) {
+      if (!pageState.draft || !pageState.pointerStart || (!SHAPE_TOOLS.includes(state.tool) && !INTERACTION_TOOL_KEYS.includes(state.tool))) {
         return;
       }
 
       pageState.pointerEnd = canvas.getPointer(opt.e);
       canvas.remove(pageState.draft);
-      pageState.draft = buildShape(state.tool, pageState.pointerStart, pageState.pointerEnd);
+      if (INTERACTION_TOOL_KEYS.includes(state.tool)) {
+        const rect = {
+          left: Math.min(pageState.pointerStart.x, pageState.pointerEnd.x),
+          top: Math.min(pageState.pointerStart.y, pageState.pointerEnd.y),
+          width: Math.abs(pageState.pointerEnd.x - pageState.pointerStart.x),
+          height: Math.abs(pageState.pointerEnd.y - pageState.pointerStart.y),
+          fill: state.tool === 'answer-area' ? 'rgba(255,96,82,.10)' : 'rgba(108,61,237,.10)',
+          stroke: state.tool === 'answer-area' ? '#FF6052' : '#6C3DED',
+          strokeDashArray: [10, 6],
+          strokeWidth: 2,
+          selectable: false,
+          evented: false,
+          objectCaching: false,
+        };
+        pageState.draft = new window.fabric.Rect(rect);
+      } else {
+        pageState.draft = buildShape(state.tool, pageState.pointerStart, pageState.pointerEnd);
+      }
       if (pageState.draft) {
         pageState.draft._temp = true;
         canvas.add(pageState.draft);
@@ -1305,6 +1943,10 @@
     });
 
     canvas.on('mouse:up', function() {
+      if (state.editMode && INTERACTION_TOOL_KEYS.includes(state.tool)) {
+        maybeFinalizeInteractionArea(pageState);
+        return;
+      }
       maybeFinalizeShape(pageState);
     });
   }
@@ -1336,6 +1978,48 @@
     tooltip.classList.add('show');
   }
 
+  function getMagnifierIconMarkup() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 5 5"></path></svg>';
+  }
+
+  function renderHotspotsForPage(pageState) {
+    if (!pageState || !pageState.hotspotLayer) {
+      return;
+    }
+
+    const hotspots = getHotspotsForPage(pageState.index);
+    pageState.hotspotLayer.innerHTML = hotspots.map(function(hotspot) {
+      const rect = hotspot.rect || {};
+      const left = (Number(rect.x || 0) * 100).toFixed(4);
+      const top = (Number(rect.y || 0) * 100).toFixed(4);
+      const width = (Number(rect.w || 0) * 100).toFixed(4);
+      const height = (Number(rect.h || 0) * 100).toFixed(4);
+      const markerX = (Number(rect.x || 0) * 100).toFixed(4);
+      const markerY = (Number(rect.y || 0) * 100).toFixed(4);
+      const isAnswer = hotspot.type === 'answer';
+      if (isAnswer && !state.editMode && state.interactions.answersHidden === false) {
+        return '';
+      }
+      const openClass = isAnswer && state.revealedAnswers[hotspot.id] ? ' is-open' : '';
+      const outline = state.editMode
+        ? '<span class="hotspot-outline" style="left:' + left + '%;top:' + top + '%;width:' + width + '%;height:' + height + '%"></span>'
+        : '';
+      const icon = isAnswer ? '?' : getMagnifierIconMarkup();
+      return outline +
+        '<button class="hotspot-marker ' + (isAnswer ? 'answer' : 'magnifier') + openClass + '"' +
+          ' type="button" data-hotspot-id="' + hotspot.id + '"' +
+          ' style="left:' + markerX + '%;top:' + markerY + '%"' +
+          ' aria-label="' + (isAnswer ? 'Cevabı göster' : 'Alanı büyüt') + '">' + icon + '</button>';
+    }).join('');
+  }
+
+  function renderAllHotspots() {
+    state.pages.forEach(function(pageState) {
+      renderHotspotsForPage(pageState);
+      setAnswerObjectsVisibility(pageState);
+    });
+  }
+
   function createPageShell(pageNumber) {
     const shell = document.createElement('div');
     shell.className = 'flip-page';
@@ -1350,18 +2034,23 @@
     const annotationCanvas = document.createElement('canvas');
     annotationCanvas.className = 'page-annotation-canvas';
 
+    const hotspotLayer = document.createElement('div');
+    hotspotLayer.className = 'page-hotspot-layer';
+
     const footer = document.createElement('div');
     footer.className = 'page-footer';
     footer.textContent = 'Sayfa ' + pageNumber;
 
     surface.appendChild(pdfCanvas);
     surface.appendChild(annotationCanvas);
+    surface.appendChild(hotspotLayer);
     shell.appendChild(surface);
     shell.appendChild(footer);
     return {
       shell: shell,
       pdfCanvas: pdfCanvas,
       annotationCanvas: annotationCanvas,
+      hotspotLayer: hotspotLayer,
     };
   }
 
@@ -1403,6 +2092,7 @@
       canvas: fabricCanvas,
       pdfCanvasEl: nodes.pdfCanvas,
       annotationCanvasEl: nodes.annotationCanvas,
+      hotspotLayer: nodes.hotspotLayer,
       history: [],
       redo: [],
       draft: null,
@@ -1423,6 +2113,8 @@
       savePageSnapshot(pageState, blank);
     }
 
+    setAnswerObjectsVisibility(pageState);
+    renderHotspotsForPage(pageState);
     state.pages.set(pageNumber, pageState);
     return nodes.shell;
   }
@@ -1501,6 +2193,7 @@
 
     syncPageControls();
     applyToolToAllPages();
+    renderAllHotspots();
     updateBookTransform();
     refreshStatus(initial ? 'Doküman hazır.' : '');
 
@@ -1510,8 +2203,14 @@
   }
 
   function goToPage(pageNumber) {
+    syncPageControls();
     if (!state.pageCount || state.isFlipping) {
       return;
+    }
+    if (document.body.classList.contains('is-crop-view')) {
+      exitCropView();
+    } else if (state.zoom > 1) {
+      setZoom(1);
     }
     const target = clamp(parseInt(pageNumber, 10) || state.currentPage, 1, state.pageCount);
     if (normalizePageForViewMode(target) === state.currentPage) {
@@ -1551,6 +2250,9 @@
   async function buildBook(targetPage) {
     ensurePdfWorker();
     state.annotationCache = loadAnnotationCache();
+    if (state.documentRow && state.documentRow.etkilesim_json && state.documentRow.etkilesim_json.pages) {
+      state.annotationCache.pages = Object.assign({}, state.annotationCache.pages, state.documentRow.etkilesim_json.pages);
+    }
     state.pages.clear();
 
     state.pdfDoc = await window.pdfjsLib.getDocument(state.documentRow.dosyaUrl).promise;
@@ -1681,6 +2383,575 @@
     }
   }
 
+  function findHotspot(id) {
+    return state.interactions.hotspots.find(function(item) {
+      return item.id === id;
+    }) || null;
+  }
+
+  function getMagnifierHotspots() {
+    return state.interactions.hotspots
+      .filter(function(item) { return item.type === 'magnifier'; })
+      .slice()
+      .sort(function(a, b) {
+        if (Number(a.page) !== Number(b.page)) {
+          return Number(a.page) - Number(b.page);
+        }
+        const ar = a.rect || {};
+        const br = b.rect || {};
+        if (Number(ar.y || 0) !== Number(br.y || 0)) {
+          return Number(ar.y || 0) - Number(br.y || 0);
+        }
+        return Number(ar.x || 0) - Number(br.x || 0);
+      });
+  }
+
+  function updateCropControls() {
+    const nav = qs('cropNav');
+    const prev = qs('cropPrevBtn');
+    const next = qs('cropNextBtn');
+    if (!nav || !prev || !next) {
+      return;
+    }
+    const hotspots = getMagnifierHotspots();
+    const activeIndex = hotspots.findIndex(function(item) {
+      return item.id === state.activeMagnifierId;
+    });
+    state.activeMagnifierIndex = activeIndex;
+    nav.setAttribute('aria-hidden', state.activeMagnifierId ? 'false' : 'true');
+    prev.disabled = activeIndex <= 0;
+    next.disabled = activeIndex === -1 || activeIndex >= hotspots.length - 1;
+  }
+
+  function cropRectsIntersect(a, b) {
+    return a.x < b.x + b.w &&
+      a.x + a.w > b.x &&
+      a.y < b.y + b.h &&
+      a.y + a.h > b.y;
+  }
+
+  function renderCropAnswerMarkers(hotspot, pageState, cropPx, canvasCss, imageBox) {
+    const layer = qs('cropHotspotLayer');
+    if (!layer) {
+      return;
+    }
+    const answers = getHotspotsForPage(pageState.index).filter(function(item) {
+      return item.type === 'answer' && cropRectsIntersect(rectToCanvas(item.rect || {}, pageState), cropPx);
+    });
+
+    layer.innerHTML = answers.map(function(answer) {
+      const rect = rectToCanvas(answer.rect || {}, pageState);
+      const localX = ((rect.x - cropPx.x) / cropPx.w) * (imageBox ? imageBox.width : canvasCss.width);
+      const localY = ((rect.y - cropPx.y) / cropPx.h) * (imageBox ? imageBox.height : canvasCss.height);
+      const x = ((imageBox ? imageBox.x : 0) + localX) / canvasCss.width * 100;
+      const y = ((imageBox ? imageBox.y : 0) + localY) / canvasCss.height * 100;
+      const openClass = state.revealedAnswers[answer.id] ? ' is-open' : '';
+      return '<button class="hotspot-marker answer' + openClass + '" type="button" data-hotspot-id="' + answer.id + '" style="left:' + x.toFixed(4) + '%;top:' + y.toFixed(4) + '%" aria-label="Cevabı göster">?</button>';
+    }).join('');
+    if (canvasCss) {
+      layer.style.width = canvasCss.width + 'px';
+      layer.style.height = canvasCss.height + 'px';
+    }
+  }
+
+  function renderCropView(hotspot) {
+    const pageState = hotspot ? state.pages.get(Number(hotspot.page)) : null;
+    const stage = qs('cropStage');
+    const surface = qs('cropSurface');
+    const canvas = qs('cropCanvas');
+    const annotationCanvas = qs('cropAnnotationCanvas');
+    if (!pageState || !stage || !surface || !canvas || !annotationCanvas) {
+      return;
+    }
+
+    const composed = createComposedPageCanvas(pageState);
+    if (!composed) {
+      return;
+    }
+
+    const rect = rectToCanvas(hotspot.rect || {}, pageState);
+    const scaleX = composed.width / pageState.canvas.getWidth();
+    const scaleY = composed.height / pageState.canvas.getHeight();
+    const sx = clamp(rect.x * scaleX, 0, composed.width - 1);
+    const sy = clamp(rect.y * scaleY, 0, composed.height - 1);
+    const sw = clamp(rect.w * scaleX, 1, composed.width - sx);
+    const sh = clamp(rect.h * scaleY, 1, composed.height - sy);
+    const surfaceWidth = Math.max(320, Math.floor(stage.clientWidth || 900));
+    const surfaceHeight = Math.max(240, Math.floor(stage.clientHeight || 620));
+    const verticalRoomForNotes = Math.min(260, Math.max(120, surfaceHeight * 0.28));
+    const maxWidth = surfaceWidth;
+    const maxHeight = Math.max(160, surfaceHeight - verticalRoomForNotes);
+    const displayScale = Math.min(maxWidth / sw, maxHeight / sh);
+    const displayWidth = Math.max(1, Math.floor(sw * displayScale));
+    const displayHeight = Math.max(1, Math.floor(sh * displayScale));
+    const imageX = Math.max(0, Math.floor((surfaceWidth - displayWidth) / 2));
+    const imageY = Math.max(0, Math.floor((surfaceHeight - displayHeight) / 2));
+
+    canvas.width = surfaceWidth;
+    canvas.height = surfaceHeight;
+    annotationCanvas.width = surfaceWidth;
+    annotationCanvas.height = surfaceHeight;
+    canvas.style.width = surfaceWidth + 'px';
+    canvas.style.height = surfaceHeight + 'px';
+    annotationCanvas.style.width = surfaceWidth + 'px';
+    annotationCanvas.style.height = surfaceHeight + 'px';
+    surface.style.width = surfaceWidth + 'px';
+    surface.style.height = surfaceHeight + 'px';
+    const cropContext = canvas.getContext('2d');
+    cropContext.clearRect(0, 0, canvas.width, canvas.height);
+    cropContext.fillStyle = '#ffffff';
+    cropContext.fillRect(0, 0, canvas.width, canvas.height);
+    cropContext.drawImage(composed, sx, sy, sw, sh, imageX, imageY, displayWidth, displayHeight);
+
+    if (state.crop.canvas) {
+      saveCropSnapshot();
+      state.crop.canvas.dispose();
+      state.crop.canvas = null;
+    }
+    state.crop.page = pageState;
+    state.crop.rect = rect;
+    state.crop.displayScale = displayWidth / Math.max(1, rect.w);
+    state.crop.zoom = 1;
+    state.crop.panX = 0;
+    state.crop.panY = 0;
+    state.crop.hotspotId = hotspot.id;
+    state.crop.canvas = new window.fabric.Canvas(annotationCanvas, {
+      preserveObjectStacking: true,
+      selection: state.tool === 'select',
+      enableRetinaScaling: true,
+    });
+    state.crop.canvas.setWidth(surfaceWidth);
+    state.crop.canvas.setHeight(surfaceHeight);
+    syncCropCanvasElementSize(surfaceWidth, surfaceHeight);
+    bindCropCanvasEvents();
+    applyToolToCropCanvas();
+    loadCropSnapshotToCanvas(hotspot.id);
+    renderCropAnswerMarkers(
+      hotspot,
+      pageState,
+      rect,
+      { width: surfaceWidth, height: surfaceHeight },
+      { x: imageX, y: imageY, width: displayWidth, height: displayHeight }
+    );
+    updateCropTransform();
+    updateHistoryButtons();
+  }
+
+  function loadCropSnapshotToCanvas(hotspotId) {
+    const canvas = state.crop.canvas;
+    const saved = state.annotationCache.crop && hotspotId ? state.annotationCache.crop[hotspotId] : '';
+    if (!canvas) {
+      return;
+    }
+    state.crop.isRestoring = false;
+    if (!saved) {
+      canvas.renderAll();
+      return;
+    }
+    state.crop.isRestoring = true;
+    try {
+      canvas.loadFromJSON(JSON.parse(saved), function() {
+        state.crop.isRestoring = false;
+        makeCanvasObjectsEditable(canvas);
+        canvas.renderAll();
+        applyToolToCropCanvas();
+      });
+    } catch (error) {
+      state.crop.isRestoring = false;
+      canvas.renderAll();
+    }
+  }
+
+  function syncCropCanvasElementSize(width, height) {
+    const cropCanvas = state.crop.canvas;
+    if (!cropCanvas) {
+      return;
+    }
+    const wrapper = cropCanvas.wrapperEl;
+    if (wrapper) {
+      wrapper.style.position = 'absolute';
+      wrapper.style.left = '0';
+      wrapper.style.top = '0';
+      wrapper.style.width = width + 'px';
+      wrapper.style.height = height + 'px';
+      wrapper.style.zIndex = '2';
+      wrapper.style.pointerEvents = 'auto';
+    }
+    [cropCanvas.lowerCanvasEl, cropCanvas.upperCanvasEl].forEach(function(el) {
+      if (!el) {
+        return;
+      }
+      el.style.position = 'absolute';
+      el.style.left = '0';
+      el.style.top = '0';
+      el.style.width = width + 'px';
+      el.style.height = height + 'px';
+      el.style.maxWidth = 'none';
+      el.style.maxHeight = 'none';
+      el.style.background = 'transparent';
+      el.style.pointerEvents = 'auto';
+      el.style.touchAction = 'none';
+    });
+    if (cropCanvas.lowerCanvasEl) {
+      cropCanvas.lowerCanvasEl.style.zIndex = '2';
+    }
+    if (cropCanvas.upperCanvasEl) {
+      cropCanvas.upperCanvasEl.style.zIndex = '3';
+      cropCanvas.upperCanvasEl.style.cursor = state.tool === 'pan'
+        ? (state.crop.zoom > 1 ? 'grab' : 'default')
+        : (['pen', 'highlighter', 'eraser'].includes(state.tool) ? 'crosshair' : 'default');
+    }
+    cropCanvas.calcOffset();
+    window.requestAnimationFrame(function() {
+      if (state.crop.canvas === cropCanvas) {
+        cropCanvas.calcOffset();
+      }
+    });
+  }
+
+  function mapCropObjectToPage(object) {
+    const pageState = state.crop.page;
+    if (!pageState || !state.crop.rect || !object) {
+      return;
+    }
+    const ratio = 1 / Math.max(0.0001, state.crop.displayScale || 1);
+    object.clone(function(cloned) {
+      cloned.left = state.crop.rect.x + (Number(cloned.left || 0) * ratio);
+      cloned.top = state.crop.rect.y + (Number(cloned.top || 0) * ratio);
+      cloned.scaleX = Number(cloned.scaleX || 1) * ratio;
+      cloned.scaleY = Number(cloned.scaleY || 1) * ratio;
+      cloned.strokeWidth = cloned.strokeWidth ? cloned.strokeWidth * ratio : cloned.strokeWidth;
+      cloned.isAnswerObject = object.isAnswerObject || false;
+      cloned.answerHotspotId = object.answerHotspotId || '';
+      tagObjectForAnswerHotspot(pageState, cloned);
+      pageState.canvas.add(cloned);
+      pageState.canvas.renderAll();
+      pushHistory(pageState);
+    }, ['globalCompositeOperation', 'isAnswerObject', 'answerHotspotId']);
+  }
+
+  function applyToolToCropCanvas() {
+    const canvas = state.crop.canvas;
+    if (!canvas) {
+      return;
+    }
+    canvas.isDrawingMode = false;
+    canvas.selection = state.tool === 'select';
+    canvas.skipTargetFind = state.tool !== 'select';
+    canvas.defaultCursor = state.tool === 'select'
+      ? 'default'
+      : (state.tool === 'pan' ? (state.crop.zoom > 1 ? 'grab' : 'default') : 'crosshair');
+    if (['pen', 'highlighter', 'eraser'].includes(state.tool)) {
+      canvas.selection = false;
+      canvas.skipTargetFind = true;
+      canvas.isDrawingMode = true;
+      const brush = new window.fabric.PencilBrush(canvas);
+      brush.width = state.size;
+      brush.color = state.tool === 'highlighter'
+        ? hexToRgba(state.color, 0.28)
+        : (state.tool === 'eraser' ? 'rgba(0,0,0,0)' : state.color);
+      canvas.freeDrawingBrush = brush;
+    }
+    canvas.renderAll();
+    syncCropCanvasElementSize(canvas.getWidth(), canvas.getHeight());
+  }
+
+  function buildCropShape(tool, start, end) {
+    return buildShape(tool, start, end);
+  }
+
+  function bindCropCanvasEvents() {
+    const canvas = state.crop.canvas;
+    if (!canvas) {
+      return;
+    }
+    canvas.on('path:created', function(event) {
+      if (state.tool === 'eraser') {
+        prepareEraserPath(event.path);
+        canvas.renderAll();
+      } else {
+        makeObjectEditable(event.path);
+      }
+      saveCropSnapshot();
+    });
+    canvas.on('object:modified', function(event) {
+      if (event.target && !event.target._temp) {
+        saveCropSnapshot();
+      }
+    });
+    canvas.on('text:changed', saveCropSnapshot);
+    canvas.on('text:editing:exited', saveCropSnapshot);
+    canvas.on('object:removed', function() {
+      saveCropSnapshot();
+    });
+    canvas.on('selection:created', syncSelectedObjectControls);
+    canvas.on('selection:updated', syncSelectedObjectControls);
+    canvas.on('selection:cleared', updateHistoryButtons);
+    canvas.on('mouse:down', function(opt) {
+      const pointer = canvas.getPointer(opt.e);
+      if (state.tool === 'text') {
+        const margin = 18;
+        const left = clamp(pointer.x, margin, Math.max(margin, canvas.getWidth() - margin));
+        const top = clamp(pointer.y, margin, Math.max(margin, canvas.getHeight() - margin));
+        const availableWidth = Math.max(180, canvas.getWidth() - left - margin);
+        const text = new window.fabric.Textbox('Yeni metin', {
+          left: left,
+          top: top,
+          width: Math.min(availableWidth, Math.max(220, canvas.getWidth() - (margin * 2))),
+          fill: state.color,
+          fontSize: Math.max(18, state.size * 4),
+          fontWeight: '700',
+          fontFamily: 'Nunito, sans-serif',
+          splitByGrapheme: true,
+          objectCaching: false,
+        });
+        makeObjectEditable(text);
+        canvas.add(text);
+        canvas.setActiveObject(text);
+        canvas.renderAll();
+        text.enterEditing();
+        saveCropSnapshot();
+        return;
+      }
+      if (!SHAPE_TOOLS.includes(state.tool)) {
+        return;
+      }
+      state.crop.pointerStart = pointer;
+      state.crop.pointerEnd = pointer;
+      state.crop.draft = buildCropShape(state.tool, pointer, pointer);
+      if (state.crop.draft) {
+        state.crop.draft._temp = true;
+        canvas.add(state.crop.draft);
+        canvas.renderAll();
+      }
+    });
+    canvas.on('mouse:move', function(opt) {
+      if (!state.crop.draft || !state.crop.pointerStart || !SHAPE_TOOLS.includes(state.tool)) {
+        return;
+      }
+      state.crop.pointerEnd = canvas.getPointer(opt.e);
+      canvas.remove(state.crop.draft);
+      state.crop.draft = buildCropShape(state.tool, state.crop.pointerStart, state.crop.pointerEnd);
+      if (state.crop.draft) {
+        state.crop.draft._temp = true;
+        canvas.add(state.crop.draft);
+        canvas.renderAll();
+      }
+    });
+    canvas.on('mouse:up', function() {
+      if (!state.crop.draft || !state.crop.pointerStart || !state.crop.pointerEnd) {
+        return;
+      }
+      state.crop.draft._temp = false;
+      makeObjectEditable(state.crop.draft);
+      state.crop.draft = null;
+      state.crop.pointerStart = null;
+      state.crop.pointerEnd = null;
+      canvas.renderAll();
+      saveCropSnapshot();
+    });
+  }
+
+  function exitCropView() {
+    state.activeMagnifierId = '';
+    state.activeMagnifierIndex = -1;
+    document.body.classList.remove('is-crop-view');
+    if (qs('cropStage')) {
+      qs('cropStage').setAttribute('aria-hidden', 'true');
+    }
+    if (qs('cropHotspotLayer')) {
+      qs('cropHotspotLayer').innerHTML = '';
+    }
+    if (state.crop.canvas) {
+      saveCropSnapshot();
+      state.crop.canvas.dispose();
+      state.crop.canvas = null;
+    }
+    state.crop.page = null;
+    state.crop.rect = null;
+    state.crop.hotspotId = '';
+    state.crop.isRestoring = false;
+    state.crop.zoom = 1;
+    state.crop.panX = 0;
+    state.crop.panY = 0;
+    if (getCropSurface()) {
+      getCropSurface().style.transform = '';
+    }
+    setZoom(1);
+    updateCropControls();
+    setStatus('Sayfanın tamamına dönüldü.');
+  }
+
+  function focusMagnifierByOffset(offset) {
+    const hotspots = getMagnifierHotspots();
+    const activeIndex = hotspots.findIndex(function(item) {
+      return item.id === state.activeMagnifierId;
+    });
+    const nextIndex = clamp((activeIndex === -1 ? 0 : activeIndex + offset), 0, Math.max(0, hotspots.length - 1));
+    if (hotspots[nextIndex]) {
+      focusHotspotInline(hotspots[nextIndex], { force: true });
+    }
+  }
+
+  function focusHotspotInline(hotspot, options) {
+    const pageState = hotspot ? state.pages.get(Number(hotspot.page)) : null;
+    if (!pageState) {
+      return;
+    }
+
+    if (!(options && options.force) && state.activeMagnifierId === hotspot.id && document.body.classList.contains('is-crop-view')) {
+      exitCropView();
+      return;
+    }
+
+    if (!getVisiblePages().includes(pageState.index)) {
+      goToPage(pageState.index);
+    }
+
+    state.activeMagnifierId = hotspot.id;
+    document.body.classList.add('is-crop-view');
+    if (qs('cropStage')) {
+      qs('cropStage').setAttribute('aria-hidden', 'false');
+    }
+    updateCropControls();
+    renderCropView(hotspot);
+    setStatus('Seçili alan kırpılmış görünümde açıldı. Sayfaya Dön ile tam sayfaya dönebilirsin.');
+  }
+
+  function closeMagnifyModal() {
+    const modal = qs('magnifyModal');
+    const stage = qs('magnifyStage');
+    if (!modal || !stage) {
+      return;
+    }
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    stage.innerHTML = '';
+  }
+
+  function toggleAnswerHotspot(hotspot) {
+    if (!hotspot) {
+      return;
+    }
+    state.revealedAnswers[hotspot.id] = !state.revealedAnswers[hotspot.id];
+    const pageState = state.pages.get(Number(hotspot.page));
+    setAnswerObjectsVisibility(pageState);
+    renderHotspotsForPage(pageState);
+    if (state.activeMagnifierId) {
+      const active = findHotspot(state.activeMagnifierId);
+      if (active) {
+        renderCropView(active);
+      }
+    }
+    setStatus(state.revealedAnswers[hotspot.id] ? 'Cevap görünür.' : 'Cevap tekrar gizlendi.');
+  }
+
+  function maybeTurnPageFromCornerClick(event) {
+    if (state.isFlipping || state.isRebuilding || state.zoom > 1 || !['select', 'pan'].includes(state.tool)) {
+      return false;
+    }
+    if (event.target.closest('[data-hotspot-id]') || event.target.closest('button,a,input,textarea,select')) {
+      return false;
+    }
+
+    const activePage = event.target.closest('.flip-page.is-active');
+    if (!activePage) {
+      return false;
+    }
+
+    const rect = activePage.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const nearTopOrBottom = y <= 84 || y >= rect.height - 84;
+    const nearLeft = x <= 84;
+    const nearRight = x >= rect.width - 84;
+
+    if (!nearTopOrBottom || (!nearLeft && !nearRight)) {
+      return false;
+    }
+
+    if (nearLeft) {
+      goToPage(state.currentPage - getPageStep());
+    } else {
+      goToPage(state.currentPage + getPageStep());
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  }
+
+  function removeHotspot(hotspot) {
+    if (!hotspot || !state.editMode) {
+      return;
+    }
+    if (!window.confirm('Bu etkileşimli alan kaldırılsın mı?')) {
+      return;
+    }
+    state.interactions.hotspots = state.interactions.hotspots.filter(function(item) {
+      return item.id !== hotspot.id;
+    });
+    const pageState = state.pages.get(Number(hotspot.page));
+    if (pageState && hotspot.type === 'answer') {
+      pageState.canvas.getObjects().forEach(function(object) {
+        if (object.answerHotspotId === hotspot.id) {
+          object.isAnswerObject = false;
+          object.answerHotspotId = '';
+          object.visible = true;
+        }
+      });
+      pushHistory(pageState);
+    }
+    renderHotspotsForPage(pageState);
+    markInteractionsDirty('Alan kaldırıldı. Değişikliği öğrenci ekranına aktarmak için yeniden yayınla.');
+  }
+
+  async function savePublishedInteractions() {
+    if (!state.editMode || !state.documentId) {
+      return;
+    }
+    try {
+      setStatus('Etkileşimli alanlar yayınlanıyor…');
+      const pages = {};
+      state.pages.forEach(function(pageState) {
+        pages[String(pageState.index)] = getSnapshot(pageState);
+      });
+      const payload = {
+        version: 1,
+        answersHidden: qs('answersHiddenInput') ? qs('answersHiddenInput').checked : true,
+        hotspots: state.interactions.hotspots,
+        pages: pages,
+        updatedAt: new Date().toISOString(),
+      };
+      const client = window.kemalAdminAuth && typeof window.kemalAdminAuth.getClient === 'function'
+        ? window.kemalAdminAuth.getClient()
+        : null;
+      if (!client) {
+        throw new Error('Yönetici oturumu bulunamadı.');
+      }
+      const result = await client
+        .from('dokumanlar')
+        .update({
+          etkilesim_json: payload,
+          guncelleme_tarihi: new Date().toISOString(),
+        })
+        .eq('id', state.documentId);
+      if (result.error) {
+        throw result.error;
+      }
+      state.interactionsDirty = false;
+      state.interactions.answersHidden = payload.answersHidden;
+      state.documentRow.etkilesim_json = payload;
+      const status = qs('interactionStatus');
+      if (status) {
+        status.textContent = 'Yayınlandı. Öğrenci ekranında büyüteç ve soru işaretleri artık görünecek.';
+      }
+      setStatus('Etkileşimli alanlar yayınlandı.');
+    } catch (error) {
+      setStatus('Yayınlama sırasında sorun oluştu.');
+      window.alert(error && error.message ? error.message : 'Etkileşimli alanlar yayınlanamadı.');
+    }
+  }
+
   function renderToolButtonMarkup(tool) {
     return (
       '<button class="toolbar-btn' + (tool.key === state.tool ? ' active is-active' : '') + '"' +
@@ -1704,7 +2975,8 @@
       return getToolDef(key);
     }).filter(Boolean).map(renderToolButtonMarkup).join('');
 
-    shapeTarget.innerHTML = SHAPE_TOOL_KEYS.map(function(key) {
+    const shapeKeys = state.editMode ? SHAPE_TOOL_KEYS.concat(INTERACTION_TOOL_KEYS) : SHAPE_TOOL_KEYS;
+    shapeTarget.innerHTML = shapeKeys.map(function(key) {
       return getToolDef(key);
     }).filter(Boolean).map(renderToolButtonMarkup).join('');
   }
@@ -1720,7 +2992,12 @@
         return;
       }
       hideToolTooltip();
-      setTool(button.getAttribute('data-tool'));
+      const tool = button.getAttribute('data-tool');
+      if (tool === 'clear-area') {
+        clearCurrentScope();
+        return;
+      }
+      setTool(tool);
     });
     container.addEventListener('mouseover', function(event) {
       const button = event.target.closest('[data-tool]');
@@ -1915,6 +3192,21 @@
     bindToolContainer(qs('docMainTools'));
     bindToolContainer(qs('docShapeTools'));
     qs('docShapeToggleBtn').addEventListener('click', toggleShapePanel);
+    Array.from(document.querySelectorAll('[data-prep-tool]')).forEach(function(button) {
+      button.addEventListener('click', function() {
+        setTool(button.getAttribute('data-prep-tool'));
+      });
+    });
+    if (qs('answersHiddenInput')) {
+      qs('answersHiddenInput').checked = state.interactions.answersHidden !== false;
+      qs('answersHiddenInput').addEventListener('change', function(event) {
+        state.interactions.answersHidden = event.target.checked;
+        markInteractionsDirty(event.target.checked
+          ? 'Cevaplar öğrencide gizlenecek. Yayınlayınca soru işaretiyle açılacak.'
+          : 'Cevaplar öğrencide açık görünecek. Yayınlayınca soru işareti eklenmeyecek.');
+        renderAllHotspots();
+      });
+    }
     qs('docToolbarToggleBtn').addEventListener('click', function() {
       setToolbarCollapsed(!state.toolbarCollapsed);
     });
@@ -1948,6 +3240,28 @@
     qs('nextPageBtn').addEventListener('click', function() {
       goToPage(state.currentPage + getPageStep());
     });
+    if (qs('cropReturnBtn')) {
+      qs('cropReturnBtn').addEventListener('click', exitCropView);
+    }
+    if (qs('cropPrevBtn')) {
+      qs('cropPrevBtn').addEventListener('click', function() {
+        focusMagnifierByOffset(-1);
+      });
+    }
+    if (qs('cropNextBtn')) {
+      qs('cropNextBtn').addEventListener('click', function() {
+        focusMagnifierByOffset(1);
+      });
+    }
+    Array.from(document.querySelectorAll('[data-edge-page]')).forEach(function(button) {
+      button.addEventListener('click', function() {
+        if (button.getAttribute('data-edge-page') === 'prev') {
+          goToPage(state.currentPage - getPageStep());
+        } else {
+          goToPage(state.currentPage + getPageStep());
+        }
+      });
+    });
     qs('pageSlider').addEventListener('input', function(event) {
       goToPage(event.target.value);
     });
@@ -1966,9 +3280,14 @@
     qs('undoBtn').addEventListener('click', undoCurrentPage);
     qs('redoBtn').addEventListener('click', redoCurrentPage);
     qs('deleteSelectionBtn').addEventListener('click', removeActiveObject);
-    qs('clearPageBtn').addEventListener('click', clearCurrentPage);
+    if (qs('clearPageBtn')) {
+      qs('clearPageBtn').addEventListener('click', clearCurrentPage);
+    }
     qs('downloadBtn').addEventListener('click', downloadAnnotatedPdf);
     qs('printBtn').addEventListener('click', printAnnotatedPdf);
+    if (qs('saveInteractionsBtn')) {
+      qs('saveInteractionsBtn').addEventListener('click', savePublishedInteractions);
+    }
     qs('shortcutHelpBtn').addEventListener('click', toggleShortcutModal);
     qs('shortcutCloseBtn').addEventListener('click', closeShortcutModal);
     qs('shortcutModal').addEventListener('click', function(event) {
@@ -1976,8 +3295,56 @@
         closeShortcutModal();
       }
     });
+    qs('bookRoot').addEventListener('click', function(event) {
+      const button = event.target.closest('[data-hotspot-id]');
+      if (!button) {
+        maybeTurnPageFromCornerClick(event);
+        return;
+      }
+      const hotspot = findHotspot(button.getAttribute('data-hotspot-id'));
+      if (!hotspot) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      if (state.editMode) {
+        removeHotspot(hotspot);
+        return;
+      }
+      if (hotspot.type === 'answer') {
+        toggleAnswerHotspot(hotspot);
+      } else {
+        focusHotspotInline(hotspot);
+      }
+    });
+    if (qs('cropHotspotLayer')) {
+      qs('cropHotspotLayer').addEventListener('click', function(event) {
+        const button = event.target.closest('[data-hotspot-id]');
+        if (!button) {
+          return;
+        }
+        const hotspot = findHotspot(button.getAttribute('data-hotspot-id'));
+        if (!hotspot || hotspot.type !== 'answer') {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        toggleAnswerHotspot(hotspot);
+      });
+    }
+    if (qs('magnifyCloseBtn')) {
+      qs('magnifyCloseBtn').addEventListener('click', closeMagnifyModal);
+    }
+    if (qs('magnifyModal')) {
+      qs('magnifyModal').addEventListener('click', function(event) {
+        if (event.target === qs('magnifyModal')) {
+          closeMagnifyModal();
+        }
+      });
+    }
 
     const bookViewport = getBookViewport();
+    const cropStage = getCropStage();
     function finishPanning(event) {
       if (!state.isPanning) {
         return;
@@ -1988,6 +3355,42 @@
       state.isPanning = false;
       state.panPointerId = null;
       syncZoomButtons();
+    }
+
+    if (cropStage) {
+      cropStage.addEventListener('pointerdown', function(event) {
+        if (!isCropViewActive() || state.tool !== 'pan' || state.crop.zoom <= 1) {
+          return;
+        }
+        if (event.target.closest && event.target.closest('[data-hotspot-id]')) {
+          return;
+        }
+        state.isPanning = true;
+        state.panPointerId = event.pointerId;
+        state.panStartX = event.clientX;
+        state.panStartY = event.clientY;
+        state.panOriginX = state.crop.panX;
+        state.panOriginY = state.crop.panY;
+        if (typeof cropStage.setPointerCapture === 'function') {
+          cropStage.setPointerCapture(event.pointerId);
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        syncZoomButtons();
+      }, true);
+
+      cropStage.addEventListener('pointermove', function(event) {
+        if (!state.isPanning || event.pointerId !== state.panPointerId || !isCropViewActive()) {
+          return;
+        }
+        state.crop.panX = state.panOriginX + (event.clientX - state.panStartX);
+        state.crop.panY = state.panOriginY + (event.clientY - state.panStartY);
+        updateCropTransform();
+        event.preventDefault();
+      }, true);
+      cropStage.addEventListener('pointerup', finishPanning);
+      cropStage.addEventListener('pointercancel', finishPanning);
+      cropStage.addEventListener('lostpointercapture', finishPanning);
     }
 
     bookViewport.addEventListener('pointerdown', function(event) {
@@ -2030,6 +3433,11 @@
         event.preventDefault();
         return;
       }
+      if (key === 'Escape' && qs('magnifyModal') && qs('magnifyModal').classList.contains('open')) {
+        closeMagnifyModal();
+        event.preventDefault();
+        return;
+      }
 
       if (!isTextEntry && (key === '?' || key === '/')) {
         toggleShortcutModal();
@@ -2039,6 +3447,16 @@
 
       if (event.metaKey || event.ctrlKey) {
         const lower = key.toLowerCase();
+        if (!isTextEntry && !isFabricTextEditing() && !isShortcutModalOpen() && lower === 'c') {
+          event.preventDefault();
+          copyActiveObject();
+          return;
+        }
+        if (!isTextEntry && !isFabricTextEditing() && !isShortcutModalOpen() && lower === 'v') {
+          event.preventDefault();
+          pasteClipboardObject();
+          return;
+        }
         if (lower === 's') {
           event.preventDefault();
           downloadAnnotatedPdf();
@@ -2071,12 +3489,20 @@
       }
 
       if (key === 'ArrowLeft') {
-        goToPage(state.currentPage - getPageStep());
+        if (isCropViewActive()) {
+          focusMagnifierByOffset(-1);
+        } else {
+          goToPage(state.currentPage - getPageStep());
+        }
         event.preventDefault();
         return;
       }
       if (key === 'ArrowRight') {
-        goToPage(state.currentPage + getPageStep());
+        if (isCropViewActive()) {
+          focusMagnifierByOffset(1);
+        } else {
+          goToPage(state.currentPage + getPageStep());
+        }
         event.preventDefault();
         return;
       }
@@ -2092,12 +3518,12 @@
       }
       if (key === '+' || key === '=') {
         event.preventDefault();
-        setZoom(state.zoom + ZOOM_STEP, { keepCenter: true });
+        setZoom((isCropViewActive() ? state.crop.zoom : state.zoom) + ZOOM_STEP, { keepCenter: true });
         return;
       }
       if (key === '-') {
         event.preventDefault();
-        setZoom(state.zoom - ZOOM_STEP, { keepCenter: true });
+        setZoom((isCropViewActive() ? state.crop.zoom : state.zoom) - ZOOM_STEP, { keepCenter: true });
         return;
       }
       if (key === '0') {
@@ -2150,10 +3576,17 @@
 
     if (bookFrame) {
       bookFrame.addEventListener('touchstart', function(event) {
-        if (state.tool === 'pan' || state.zoom > 1) {
+        if (state.tool === 'pan' || state.zoom > 1 || !['select', 'pan'].includes(state.tool)) {
           return;
         }
         const touch = event.changedTouches[0];
+        const rect = bookFrame.getBoundingClientRect();
+        const localY = touch.clientY - rect.top;
+        const localX = touch.clientX - rect.left;
+        const inTurnZone = localY <= 96 || localY >= rect.height - 96 || localX <= 80 || localX >= rect.width - 80;
+        if (!inTurnZone) {
+          return;
+        }
         swipeStartX = touch.clientX;
         swipeStartY = touch.clientY;
         swipeActive = true;
@@ -2192,6 +3625,10 @@
     }
 
     state.documentRow = documentRow;
+    state.interactions = normalizeInteractions(documentRow.etkilesim_json || {});
+    if (qs('answersHiddenInput')) {
+      qs('answersHiddenInput').checked = state.interactions.answersHidden !== false;
+    }
     qs('viewerPill').textContent = '📚 ' + documentRow.sinifLabel + ' · ' + documentRow.dersLabel;
     qs('viewerTitle').textContent = documentRow.baslik;
     qs('viewerDesc').textContent = documentRow.aciklama || (documentRow.sinifLabel + ' için yüklenmiş ders dokümanı.');
@@ -2237,6 +3674,9 @@
   }
 
   async function init() {
+    const params = new URLSearchParams(window.location.search);
+    state.editMode = params.get('edit') === '1';
+    document.body.classList.toggle('is-interaction-edit', state.editMode);
     state.viewMode = loadViewModePreference();
     bindUi();
     updateSizeLabel();

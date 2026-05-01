@@ -416,8 +416,9 @@
     };
   }
 
-  async function save() {
+  async function save(options) {
     try {
+      const shouldPrepare = Boolean(options && options.openInteractionEditor);
       const data = collectPayload();
       const documentId = state.editingId || (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'doc_' + Date.now());
       let filePath = data.existing ? data.existing.dosya_yolu : '';
@@ -479,6 +480,9 @@
       toast('Doküman kaydedildi.', 'success');
       await loadDocuments();
       openEditor(getDocumentById(response.data.id) || response.data);
+      if (shouldPrepare) {
+        window.location.href = window.kemalDocumentStore.buildViewerUrl(response.data.id) + '&edit=1';
+      }
     } catch (error) {
       toast(humanizeSupabaseError(error), 'error');
     }
@@ -601,6 +605,14 @@
       return;
     }
     window.open(window.kemalDocumentStore.buildViewerUrl(state.editingId), '_blank');
+  }
+
+  function openInteractionEditor() {
+    if (!state.editingId) {
+      toast('Önce dokümanı kaydetmelisin.', 'error');
+      return;
+    }
+    window.open(window.kemalDocumentStore.buildViewerUrl(state.editingId) + '&edit=1', '_blank');
   }
 
   function openWorksheetBuilder(documentId) {
@@ -741,7 +753,11 @@
   window.durumDegistir = toggleActive;
   window.dokumanSil = deleteDocument;
   window.kaydet = save;
+  window.kaydetVeHazirla = function() {
+    save({ openInteractionEditor: true });
+  };
   window.viewerAc = openViewer;
+  window.etkilesimEditorAc = openInteractionEditor;
   window.linkKopyala = copyViewerLink;
   window.calismaKagidiDuzenle = openWorksheetBuilder;
   window.calismaKagidiAc = function() {

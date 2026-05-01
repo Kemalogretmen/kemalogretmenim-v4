@@ -560,6 +560,7 @@
           <button class="setting-btn" type="button" data-level="normal">Orta</button>
           <button class="setting-btn" type="button" data-level="hard">Zor</button>
           <button class="setting-btn" type="button" id="obsoleteToggle" aria-pressed="false">Eski Kuruşlar</button>
+          <button class="setting-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
           <button class="main-btn" type="button" id="newQuestionBtn">Yeni Soru</button>
         </div>
       </nav>
@@ -657,7 +658,8 @@
       correctChange: 0,
       score: 0,
       streak: 0,
-      locked: false
+      locked: false,
+      soundOn: true
     };
 
     const els = {
@@ -685,6 +687,72 @@
     const modeNames = { identify: "Parayı Tanı", pay: "Kasaya Öde", change: "Para Üstü" };
     const levelNames = { easy: "Kolay", normal: "Orta", hard: "Zor" };
     const bestKey = "kemal_paralarimiz_best";
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function playTone(ctx, frequency, start, duration, type, volume) {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.08, start + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.02);
+    }
+
+    function playNoise(ctx, start, duration, volume) {
+      const bufferSize = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i += 1) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const source = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      filter.type = "highpass";
+      filter.frequency.value = 1300;
+      gain.gain.setValueAtTime(volume || 0.06, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      source.buffer = buffer;
+      source.connect(filter).connect(gain).connect(ctx.destination);
+      source.start(start);
+    }
+
+    function playSound(name) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      if (name === "correct") {
+        playTone(ctx, 523.25, now, 0.1, "sine", 0.07);
+        playTone(ctx, 659.25, now + 0.08, 0.1, "sine", 0.07);
+        playTone(ctx, 783.99, now + 0.16, 0.16, "sine", 0.08);
+      } else if (name === "wrong") {
+        playTone(ctx, 180, now, 0.16, "triangle", 0.07);
+        playTone(ctx, 135, now + 0.12, 0.2, "triangle", 0.06);
+      } else if (name === "coin") {
+        playTone(ctx, 1174.66, now, 0.06, "triangle", 0.08);
+        playTone(ctx, 1567.98, now + 0.035, 0.08, "triangle", 0.06);
+        playNoise(ctx, now, 0.09, 0.035);
+      } else if (name === "cash") {
+        playNoise(ctx, now, 0.14, 0.055);
+        playTone(ctx, 880, now + 0.08, 0.08, "square", 0.035);
+      } else if (name === "question") {
+        playTone(ctx, 392, now, 0.06, "sine", 0.035);
+        playTone(ctx, 523.25, now + 0.06, 0.08, "sine", 0.04);
+      }
+    }
 
     function formatMoney(value) {
       const lira = Math.floor(value / 100);
@@ -791,6 +859,7 @@
         if (right) right.classList.add("is-correct");
       }
       updateScore(correct);
+      playSound(correct ? "correct" : "wrong");
       setFeedback(correct ? "Harika! Doğru parayı buldun." : "Bu değil. Doğru cevap: " + state.targetMoney.name, correct ? "good" : "bad");
       window.setTimeout(newQuestion, 1200);
     }
@@ -815,6 +884,7 @@
         els.walletGrid.appendChild(makeMoneyButton(item, selected => {
           if (state.locked) return;
           state.paid.push(selected);
+          playSound("coin");
           renderPayment();
         }, { name: formatMoney(item.value) }));
       });
@@ -840,6 +910,7 @@
         chip.addEventListener("click", () => {
           if (state.locked) return;
           state.paid.splice(index, 1);
+          playSound("coin");
           renderPayment();
         });
         els.paymentStrip.appendChild(chip);
@@ -853,10 +924,13 @@
       if (diff === 0) {
         state.locked = true;
         updateScore(true);
+        playSound("cash");
+        window.setTimeout(() => playSound("correct"), 120);
         setFeedback("Tam ödeme! Kasadaki tutar doğru.", "good");
         window.setTimeout(newQuestion, 1200);
       } else {
         updateScore(false);
+        playSound("wrong");
         setFeedback(diff < 0 ? formatMoney(Math.abs(diff)) + " eksik." : formatMoney(diff) + " fazla.", diff < 0 ? "warn" : "bad");
       }
     }
@@ -906,6 +980,7 @@
         });
       }
       updateScore(correct);
+      playSound(correct ? "correct" : "wrong");
       setFeedback(correct ? "Aynen öyle! Para üstünü doğru buldun." : "Doğru para üstü: " + formatMoney(state.correctChange), correct ? "good" : "bad");
       window.setTimeout(newQuestion, 1400);
     }
@@ -951,7 +1026,18 @@
       newQuestion();
     });
 
-    document.getElementById("newQuestionBtn").addEventListener("click", newQuestion);
+    document.getElementById("soundToggle").addEventListener("click", event => {
+      state.soundOn = !state.soundOn;
+      event.currentTarget.classList.toggle("is-active", state.soundOn);
+      event.currentTarget.setAttribute("aria-pressed", String(state.soundOn));
+      event.currentTarget.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playSound("question");
+    });
+
+    document.getElementById("newQuestionBtn").addEventListener("click", () => {
+      playSound("question");
+      newQuestion();
+    });
     document.getElementById("checkPayBtn").addEventListener("click", checkPayment);
 
     els.best.textContent = localStorage.getItem(bestKey) || "0";

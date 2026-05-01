@@ -413,6 +413,321 @@
       .games-banner { flex-direction:column; text-align:center; padding:36px 24px; }
       .games-links  { justify-content:center; }
     }
+
+    .home-live-panel {
+      width: 100%;
+      max-width: 500px;
+      background: rgba(255,255,255,.94);
+      border: 2px solid rgba(234,227,255,.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .home-live-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #FFFFFF, #F7F3FF);
+    }
+    .home-live-title {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 900;
+      color: var(--navy);
+    }
+    .home-live-kicker {
+      font-size: 12px;
+      color: var(--slate);
+      font-weight: 800;
+      margin-top: 2px;
+    }
+    .home-live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #E9FFFA;
+      color: #00856A;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .home-live-list {
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+    }
+    .home-live-item {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 18px;
+      text-decoration: none;
+      color: inherit;
+      transition: background .2s, transform .2s;
+    }
+    .home-live-item:hover {
+      background: #F8F6FF;
+      transform: translateX(4px);
+    }
+    .home-live-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: #F0EBFF;
+    }
+    .home-live-meta {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .home-live-name {
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+    .home-live-empty {
+      padding: 28px 20px;
+      color: var(--slate);
+      font-weight: 800;
+      line-height: 1.5;
+    }
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .audience-card {
+      background: white;
+      border: 2px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      color: inherit;
+      text-decoration: none;
+      transition: transform .25s, box-shadow .25s, border-color .25s;
+    }
+    .audience-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-md);
+      border-color: rgba(108,61,237,.35);
+    }
+    .audience-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .audience-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: var(--aud-soft);
+    }
+    .audience-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--aud-color);
+      background: var(--aud-soft);
+      border-radius: 999px;
+      padding: 7px 10px;
+    }
+    .audience-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .audience-desc {
+      color: var(--slate);
+      font-size: 14px;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .audience-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .audience-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: var(--slate);
+      font-size: 12px;
+      font-weight: 800;
+      background: #FAFAFF;
+    }
+    .audience-card.student { --aud-color: var(--purple); --aud-soft: #F0EBFF; }
+    .audience-card.parent { --aud-color: #D35400; --aud-soft: #FFF0EC; }
+    .audience-card.teacher { --aud-color: #00856A; --aud-soft: #E9FFFA; }
+
+    .latest-section {
+      background: #FFFFFF;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 64px 32px;
+    }
+    .latest-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .latest-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+    .latest-head .section-header {
+      text-align: left;
+      margin: 0;
+    }
+    .latest-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .latest-select {
+      min-width: 150px;
+      height: 42px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      color: var(--navy);
+      font-weight: 800;
+      padding: 0 12px;
+      font-family: var(--font-body);
+    }
+    .latest-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .latest-card {
+      min-height: 174px;
+      background: #FFFFFF;
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .latest-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-sm);
+      border-color: var(--card-color, var(--purple));
+    }
+    .latest-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .latest-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      background: var(--card-soft, #F0EBFF);
+    }
+    .latest-date {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .latest-title {
+      color: var(--navy);
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 900;
+      line-height: 1.35;
+      flex: 1;
+    }
+    .latest-meta {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+    .latest-tag {
+      background: #FAFAFF;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--slate);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 6px 9px;
+    }
+    .latest-empty {
+      grid-column: 1 / -1;
+      border: 2px dashed var(--border);
+      border-radius: 22px;
+      padding: 28px;
+      color: var(--slate);
+      font-weight: 800;
+      text-align: center;
+      background: #FAFAFF;
+    }
+    @media(max-width:980px) {
+      .audience-grid,
+      .latest-grid {
+        grid-template-columns: 1fr;
+      }
+      .latest-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .latest-head .section-header {
+        text-align: center;
+      }
+      .latest-controls {
+        justify-content: center;
+      }
+    }
+    @media(max-width:600px) {
+      .home-live-panel {
+        border-radius: 22px;
+      }
+      .home-live-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .latest-section {
+        padding: 48px 18px;
+      }
+      .latest-select {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -437,20 +752,18 @@
       <!-- Sol: Metin -->
       <div>
         <div class="hero-eyebrow">
-          <span>🎓</span> 21 Yıllık Öğretmen
+          <span>🎓</span> Öğrenci, veli ve öğretmenler için güncel eğitim merkezi
         </div>
         <h1 class="hero-h1">
-          Geleceği <span class="c-purple">Kodlayan</span><br>
-          Bireyler <span class="c-coral">Yetiştiriyoruz</span>
+          Bilgiye <span class="c-purple">hızlı ulaş</span>,<br>
+          yenilikleri <span class="c-coral">kaçırma</span>
         </h1>
         <p class="hero-p">
-          Sevgili Öğrencilerim ve Değerli Veliler,<br>
-          Her sabah sınıfa aynı inançla giriyorum: <strong>Akla ve bilime dayanan, sorgulayan, özgüvenli bireyler yetiştirmek.</strong>
+          Ders içerikleri, hızlı okuma metinleri, sınavlar, dokümanlar ve duyurular tek akışta toplanır. Siteye her girişte en güncel içeriklere daha kolay ulaşırsın.
         </p>
         <p class="hero-p">
-          Atatürk'ün <em>"Hayatta en hakiki mürşit ilimdir"</em> sözünden ilham alarak; teknoloji ve yapay zekâ okuryazarlığını eğitimle buluşturuyorum.
+          Öğrenciler çalışacağı materyali, veliler takip edeceği bilgiyi, öğretmenler kullanacağı kaynağı hızlıca bulsun diye ana sayfa canlı bir eğitim panosu gibi çalışır.
         </p>
-        <span class="hero-sig">Saygılarımla,<br>Kemal Öğretmen</span>
         <div class="hero-stats">
           <div class="hstat">
             <span class="hstat-n" id="statYil">21+</span>
@@ -467,15 +780,19 @@
         </div>
       </div>
 
-      <!-- Sağ: Görsel -->
+      <!-- Sağ: Canlı içerik panosu -->
       <div class="hero-visual">
-        <div class="hero-img-frame">
-          <img src="/gorseller/ana-resim.png" alt="Kemal Öğretmen - Dijital Eğitim" class="hero-img-main"
-               onerror="this.src='https://placehold.co/460x380/6C3DED/white?text=Kemal+Öğretmen'">
-          <span class="fl fl-1">🚀</span>
-          <span class="fl fl-2">📚</span>
-          <span class="fl fl-3">✏️</span>
-          <span class="fl fl-4">⭐</span>
+        <div class="home-live-panel">
+          <div class="home-live-head">
+            <div>
+              <div class="home-live-title">Bugün Ana Sayfada</div>
+              <div class="home-live-kicker">Son eklenen içerikler otomatik görünür</div>
+            </div>
+            <span class="home-live-pill">Canlı Akış</span>
+          </div>
+          <div class="home-live-list" id="heroLiveList">
+            <div class="home-live-empty">Güncel içerikler yükleniyor...</div>
+          </div>
         </div>
       </div>
     </div>
@@ -530,6 +847,55 @@
     </div>
   </section>
 
+  <section class="section">
+    <div class="section-header">
+      <span class="sec-tag">Hızlı Yönlendirme</span>
+      <h2 class="sec-title">Kim İçin <span>Ne Var?</span></h2>
+      <p class="sec-sub">Ana sayfa, ziyaretçinin rolüne göre doğru kapıyı daha hızlı açar.</p>
+    </div>
+    <div class="audience-grid">
+      <a href="/ders.html" class="audience-card student">
+        <div class="audience-top">
+          <span class="audience-icon">🎒</span>
+          <span class="audience-label">Öğrenci</span>
+        </div>
+        <div class="audience-title">Çalışmaya Başla</div>
+        <p class="audience-desc">Sınıfına ve dersine göre içeriklere, testlere, okuma çalışmalarına ve oyunla pekiştirmeye ulaş.</p>
+        <div class="audience-links">
+          <span class="audience-chip">Dersler</span>
+          <span class="audience-chip">Sınavlar</span>
+          <span class="audience-chip">Oyunlar</span>
+        </div>
+      </a>
+      <a href="/yeni.html" class="audience-card parent">
+        <div class="audience-top">
+          <span class="audience-icon">👨‍👩‍👧</span>
+          <span class="audience-label">Veli</span>
+        </div>
+        <div class="audience-title">Günceli Takip Et</div>
+        <p class="audience-desc">Yeni eklenen çalışmaları, duyuruları ve çocuğun öğrenme sürecini destekleyecek yönlendirmeleri gör.</p>
+        <div class="audience-links">
+          <span class="audience-chip">Yeni İçerikler</span>
+          <span class="audience-chip">Duyurular</span>
+          <span class="audience-chip">Rehberlik</span>
+        </div>
+      </a>
+      <a href="/ogretmen-araclari.html" class="audience-card teacher">
+        <div class="audience-top">
+          <span class="audience-icon">🧑‍🏫</span>
+          <span class="audience-label">Öğretmen</span>
+        </div>
+        <div class="audience-title">Kaynaklara Ulaş</div>
+        <p class="audience-desc">Dokümanlar, sınıf içi araçlar, hızlı okuma ve ölçme içeriklerini derli toplu bir akıştan kullan.</p>
+        <div class="audience-links">
+          <span class="audience-chip">Araçlar</span>
+          <span class="audience-chip">Dokümanlar</span>
+          <span class="audience-chip">Okuma Takibi</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
   <!-- ─── ÖNE ÇIKANLAR / HABERLER ─── -->
   <div class="haberler-section" id="haberlerSection">
     <!-- Ticker bar -->
@@ -553,6 +919,29 @@
       <button class="haber-nav-btn" id="haberIleri" onclick="haberKaydır(1)">→</button>
     </div>
   </div>
+
+  <section class="latest-section" id="latestSection">
+    <div class="latest-inner">
+      <div class="latest-head">
+        <div class="section-header">
+          <span class="sec-tag teal">Son Eklenenler</span>
+          <h2 class="sec-title">Canlı <span>İçerik Akışı</span></h2>
+          <p class="sec-sub">Yeni metinler, dokümanlar ve sınavlar eklendikçe burada kartlara dönüşür.</p>
+        </div>
+        <div class="latest-controls">
+          <select class="latest-select" id="latestGradeFilter" aria-label="Sınıfa göre filtrele">
+            <option value="all">Tüm Sınıflar</option>
+          </select>
+          <select class="latest-select" id="latestSubjectFilter" aria-label="Derse göre filtrele">
+            <option value="all">Tüm Dersler</option>
+          </select>
+        </div>
+      </div>
+      <div class="latest-grid" id="latestGrid">
+        <div class="latest-empty">İçerikler yükleniyor...</div>
+      </div>
+    </div>
+  </section>
 
   <!-- ─── KONU BANDINDA HIZLI ERİŞİM ─── -->
   <div class="subjects-band">
@@ -762,6 +1151,15 @@
     document.addEventListener('DOMContentLoaded', async function() {
       const data = window.kemalSite ? await window.kemalSite.getDataAsync() : null;
 
+      function esc(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
       function tarihDegeri(item) {
         const raw = item && item.tarih ? String(item.tarih) : '';
         const value = raw ? Date.parse(raw) : 0;
@@ -773,6 +1171,12 @@
         const value = Date.parse(raw);
         if (Number.isNaN(value)) return raw;
         return new Date(value).toLocaleDateString('tr-TR', { day:'numeric', month:'long' });
+      }
+
+      function kisaTarih(raw) {
+        const value = raw ? Date.parse(raw) : 0;
+        if (!value || Number.isNaN(value)) return 'Güncel';
+        return new Date(value).toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
       }
 
       function renkBelirle(item, index) {
@@ -853,30 +1257,137 @@
         { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', kategori:'Güncel', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
       ];
 
-      const liste = haberler.length ? haberler : DEFAULT_HABERLER;
+        const liste = haberler.length ? haberler : DEFAULT_HABERLER;
+
+      function renderHeroLive(items) {
+        const target = document.getElementById('heroLiveList');
+        if (!target) return;
+        const list = (items && items.length ? items : liste).slice(0, 4);
+        if (!list.length) {
+          target.innerHTML = '<div class="home-live-empty">Henüz gösterilecek güncel içerik yok.</div>';
+          return;
+        }
+        target.innerHTML = list.map((item, index) => {
+          const color = item.palette && item.palette.soft ? item.palette.soft : '#F0EBFF';
+          const href = item.href || item.link || '#';
+          const title = item.title || item.baslik || 'Yeni içerik';
+          const meta = [
+            item.gradeLabel || item.kategori || 'Güncel',
+            item.subjectLabel || item.contentTypeLabel || ''
+          ].filter(Boolean).join(' · ');
+          return `
+            <a href="${esc(href)}" class="home-live-item">
+              <span class="home-live-icon" style="background:${esc(color)}">${esc(item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+              <span>
+                <span class="home-live-meta">${esc(kisaTarih(item.createdAt || item.tarih))} · ${esc(meta)}</span>
+                <span class="home-live-name">${esc(title)}</span>
+              </span>
+            </a>`;
+        }).join('');
+      }
+
+      async function renderLatestStream() {
+        const grid = document.getElementById('latestGrid');
+        const gradeSelect = document.getElementById('latestGradeFilter');
+        const subjectSelect = document.getElementById('latestSubjectFilter');
+        if (!grid || !window.kemalContentFeed) {
+          if (grid) grid.innerHTML = '<div class="latest-empty">Dinamik içerik akışı şu anda yüklenemedi.</div>';
+          return [];
+        }
+
+        let filterOptions = { grades: [], subjects: [] };
+        try {
+          filterOptions = await window.kemalContentFeed.getFilterOptions();
+        } catch (error) {
+          filterOptions = { grades: [], subjects: [] };
+        }
+
+        if (gradeSelect && gradeSelect.options.length <= 1) {
+          gradeSelect.innerHTML = '<option value="all">Tüm Sınıflar</option>' + filterOptions.grades.map(option =>
+            `<option value="${esc(option.value)}">${esc(option.label)}</option>`
+          ).join('');
+        }
+        if (subjectSelect && subjectSelect.options.length <= 1) {
+          subjectSelect.innerHTML = '<option value="all">Tüm Dersler</option>' + filterOptions.subjects.map(option =>
+            `<option value="${esc(option.value)}">${esc(option.icon)} ${esc(option.label)}</option>`
+          ).join('');
+        }
+
+        async function draw() {
+          const grade = gradeSelect && gradeSelect.value !== 'all' ? gradeSelect.value : '';
+          const subject = subjectSelect && subjectSelect.value !== 'all' ? subjectSelect.value : '';
+          let items = [];
+          try {
+            items = await window.kemalContentFeed.getLatestContent({
+              maxItems: 9,
+              grade,
+              subject,
+            });
+          } catch (error) {
+            items = [];
+          }
+
+          if (!items.length) {
+            grid.innerHTML = '<div class="latest-empty">Bu filtreye uygun içerik bulunamadı.</div>';
+            return [];
+          }
+
+          grid.innerHTML = items.map((item, index) => {
+            const palette = item.palette || {};
+            const color = palette.color || '#6C3DED';
+            const soft = palette.soft || '#F0EBFF';
+            return `
+              <a href="${esc(item.href || '#')}" class="latest-card" style="--card-color:${esc(color)};--card-soft:${esc(soft)}">
+                <div class="latest-card-top">
+                  <span class="latest-icon">${esc(item.icon || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+                  <span class="latest-date">${esc(kisaTarih(item.createdAt))}</span>
+                </div>
+                <div class="latest-title">${esc(item.title || 'Yeni içerik')}</div>
+                <div class="latest-meta">
+                  <span class="latest-tag">${esc(item.gradeLabel || 'Genel')}</span>
+                  <span class="latest-tag">${esc(item.subjectLabel || 'İçerik')}</span>
+                  <span class="latest-tag">${esc(item.contentTypeLabel || item.sourceLabel || 'Kaynak')}</span>
+                </div>
+              </a>`;
+          }).join('');
+          return items;
+        }
+
+        if (gradeSelect) gradeSelect.addEventListener('change', draw);
+        if (subjectSelect) subjectSelect.addEventListener('change', draw);
+        return draw();
+      }
+
+      let latestItemsForHero = [];
+      try {
+        latestItemsForHero = await renderLatestStream();
+      } catch (error) {
+        latestItemsForHero = [];
+      }
+      renderHeroLive(latestItemsForHero);
 
       // Kartlar
       cards.innerHTML = liste.map((h, i) => {
         const renk = h.renk || RENKLER[i % RENKLER.length];
         const tarihStr = formatTarih(h.tarih);
         return `
-          <a href="${h.link||'#'}" class="haber-card">
+          <a href="${esc(h.link||'#')}" class="haber-card">
             <div class="haber-card-top">
-              <div class="haber-em ${renk}">${h.emoji||EMOJI_FALLBACK[i%8]}</div>
+              <div class="haber-em ${esc(renk)}">${esc(h.emoji||EMOJI_FALLBACK[i%8])}</div>
               <div>
-                <div class="haber-cat">${h.kategori || 'Güncel İçerik'}</div>
-                <div class="haber-tarih">${tarihStr}</div>
+                <div class="haber-cat">${esc(h.kategori || 'Güncel İçerik')}</div>
+                <div class="haber-tarih">${esc(tarihStr)}</div>
               </div>
             </div>
-            <div class="haber-title">${h.baslik}</div>
-            <div class="haber-desc">${h.aciklama||''}</div>
+            <div class="haber-title">${esc(h.baslik)}</div>
+            <div class="haber-desc">${esc(h.aciklama||'')}</div>
             <div class="haber-devami">Devamını Gör →</div>
           </a>`;
       }).join('');
 
       // Ticker
       const tickerItems = [...liste, ...liste].map(h =>
-        `<a href="${h.link||'#'}" class="ticker-item">${h.emoji||'📌'} ${h.baslik}<span class="ticker-sep">|</span></a>`
+        `<a href="${esc(h.link||'#')}" class="ticker-item">${esc(h.emoji||'📌')} ${esc(h.baslik)}<span class="ticker-sep">|</span></a>`
       ).join('');
       ticker.innerHTML = tickerItems;
 
@@ -916,10 +1427,10 @@
       }
 
       grid.innerHTML = quickCards.map(c => `
-        <a href="${c.link}" class="qcard" data-c="${c.renk}">
-          <span class="qcard-em">${c.emoji}</span>
-          <div class="qcard-title">${c.baslik}</div>
-          <p class="qcard-desc">${c.aciklama}</p>
+        <a href="${esc(c.link)}" class="qcard" data-c="${esc(c.renk)}">
+          <span class="qcard-em">${esc(c.emoji)}</span>
+          <div class="qcard-title">${esc(c.baslik)}</div>
+          <p class="qcard-desc">${esc(c.aciklama)}</p>
           <span class="qcard-btn">Git →</span>
         </a>`).join('');
     });

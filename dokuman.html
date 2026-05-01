@@ -354,6 +354,72 @@
     }
     .book-frame.is-pannable{cursor:grab;}
     .book-frame.is-pannable.is-panning{cursor:grabbing;}
+    body.is-crop-view .book-viewport{display:none;}
+    .crop-stage{
+      position:absolute;
+      inset:24px 18px 84px;
+      z-index:24;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border-radius:18px;
+      background:white;
+      box-shadow:0 18px 48px rgba(25,16,65,.14);
+    }
+    body.is-crop-view .crop-stage{display:flex;}
+    .crop-surface{
+      position:relative;
+      display:block;
+      max-width:100%;
+      max-height:100%;
+      touch-action:none;
+      user-select:none;
+    }
+    .crop-surface canvas{
+      display:block;
+      max-width:100%;
+      max-height:100%;
+      background:white;
+    }
+    .crop-surface > #cropCanvas{
+      position:relative;
+      z-index:0;
+      pointer-events:none;
+    }
+    #cropAnnotationCanvas{
+      position:absolute;
+      inset:0;
+      background:transparent;
+      z-index:2;
+      pointer-events:auto;
+      touch-action:none;
+    }
+    .crop-surface .canvas-container{
+      position:absolute !important;
+      left:0 !important;
+      top:0 !important;
+      z-index:2;
+      pointer-events:auto;
+      touch-action:none;
+    }
+    .crop-surface .canvas-container canvas{
+      position:absolute !important;
+      left:0 !important;
+      top:0 !important;
+      max-width:none;
+      max-height:none;
+      background:transparent;
+      pointer-events:auto;
+      touch-action:none;
+    }
+    .crop-hotspot-layer{
+      position:absolute;
+      inset:0;
+      z-index:4;
+      pointer-events:none;
+    }
+    .crop-hotspot-layer .hotspot-marker{pointer-events:auto;}
     .doc-protractor{
       position:absolute;
       left:0;
@@ -526,6 +592,41 @@
       display:block;
     }
     .page-annotation-canvas{z-index:2;}
+    .page-hotspot-layer{
+      position:absolute;
+      inset:0;
+      z-index:6;
+      pointer-events:none;
+    }
+    .hotspot-marker{
+      position:absolute;
+      width:38px;
+      height:38px;
+      transform:translate(-50%,-50%);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-radius:50%;
+      border:2px solid rgba(255,255,255,.82);
+      background:rgba(26,16,64,.72);
+      color:white;
+      box-shadow:0 10px 22px rgba(20,14,54,.24);
+      backdrop-filter:blur(8px);
+      pointer-events:auto;
+      cursor:pointer;
+      transition:transform .18s ease, background .18s ease;
+    }
+    .hotspot-marker:hover{transform:translate(-50%,-50%) scale(1.08);background:rgba(108,61,237,.86);}
+    .hotspot-marker svg{width:20px;height:20px;display:block;}
+    .hotspot-marker.answer{background:rgba(255,96,82,.84);font-size:22px;font-weight:900;}
+    .hotspot-marker.answer.is-open{background:rgba(16,185,129,.88);}
+    .hotspot-outline{
+      position:absolute;
+      border:2px dashed rgba(108,61,237,.62);
+      background:rgba(108,61,237,.08);
+      border-radius:10px;
+      pointer-events:none;
+    }
     .page-footer{
       position:absolute;
       right:14px;
@@ -744,6 +845,194 @@
     .pager-btn svg{width:18px;height:18px;display:block;}
     .pager-btn:hover:not(:disabled){border-color:var(--viewer-purple);color:var(--viewer-purple);background:var(--viewer-purple-soft);}
     .pager-btn:disabled{opacity:.45;cursor:not-allowed;}
+    .page-edge-nav{
+      position:absolute;
+      inset:0;
+      z-index:18;
+      pointer-events:none;
+    }
+    .page-edge-btn{
+      position:absolute;
+      width:48px;
+      height:48px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.55);
+      background:rgba(26,16,64,.34);
+      color:white;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      pointer-events:auto;
+      backdrop-filter:blur(8px);
+      box-shadow:0 12px 28px rgba(18,12,48,.18);
+      transition:background .18s ease, transform .18s ease, opacity .18s ease;
+    }
+    .page-edge-btn:hover:not(:disabled){background:rgba(108,61,237,.58);transform:scale(1.05);}
+    .page-edge-btn:disabled{opacity:.22;cursor:not-allowed;}
+    .page-edge-btn svg{width:28px;height:28px;display:block;}
+    .page-edge-btn.prev.top{left:16px;top:16px;}
+    .page-edge-btn.prev.bottom{left:16px;bottom:16px;}
+    .page-edge-btn.next.top{right:16px;top:16px;}
+    .page-edge-btn.next.bottom{right:16px;bottom:16px;}
+    body.is-crop-view .page-edge-nav{display:none;}
+    .crop-nav{
+      position:absolute;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      z-index:35;
+      display:none;
+      align-items:center;
+      gap:10px;
+      padding:8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(226,217,255,.86);
+      box-shadow:0 14px 34px rgba(25,16,65,.16);
+      backdrop-filter:blur(10px);
+    }
+    body.is-crop-view .crop-nav{display:flex;}
+    .crop-nav button{
+      min-height:44px;
+      border:none;
+      border-radius:999px;
+      background:#F3EEFF;
+      color:#4A1FD0;
+      font-weight:900;
+      font-size:14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:0 16px;
+      cursor:pointer;
+      box-shadow:inset 0 0 0 1px rgba(108,61,237,.12);
+    }
+    .crop-nav button.icon{
+      width:44px;
+      padding:0;
+      font-size:24px;
+    }
+    .crop-nav button:disabled{opacity:.4;cursor:not-allowed;}
+    .interaction-save-strip{
+      display:none;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      margin-bottom:12px;
+      border:2px solid rgba(0,201,177,.24);
+      border-radius:18px;
+      background:#ECFDF5;
+      color:#065F46;
+      font-size:12px;
+      font-weight:800;
+      flex-wrap:wrap;
+    }
+    body.is-interaction-edit .interaction-save-strip{display:flex;}
+    .interaction-tools{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .interaction-tool-btn,.interaction-save-strip button{
+      border:none;
+      border-radius:999px;
+      padding:10px 14px;
+      background:white;
+      color:#065F46;
+      font-weight:900;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:inset 0 0 0 1px rgba(6,95,70,.18);
+    }
+    .interaction-tool-btn svg{width:18px;height:18px;display:block;}
+    .interaction-tool-btn.is-active{
+      background:#065F46;
+      color:white;
+      box-shadow:none;
+    }
+    .interaction-save-strip button.save{
+      background:#00A891;
+      color:white;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:none;
+    }
+    .answer-visibility-toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.72);
+      color:#065F46;
+      box-shadow:inset 0 0 0 1px rgba(6,95,70,.14);
+      cursor:pointer;
+      user-select:none;
+    }
+    .answer-visibility-toggle input{
+      width:17px;
+      height:17px;
+      accent-color:#00A891;
+      margin:0;
+    }
+    .magnify-modal{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      background:rgba(15,11,37,.62);
+      backdrop-filter:blur(8px);
+    }
+    .magnify-modal.open{display:flex;}
+    .magnify-panel{
+      width:min(980px,96vw);
+      height:min(720px,84vh);
+      overflow:hidden;
+      position:relative;
+      background:white;
+      border:2px solid rgba(226,217,255,.72);
+      border-radius:24px;
+      box-shadow:0 30px 90px rgba(15,11,37,.34);
+    }
+    .magnify-stage{
+      position:absolute;
+      inset:0;
+      overflow:hidden;
+      background:#f8f6ff;
+    }
+    .magnify-stage img{
+      position:absolute;
+      left:0;
+      top:0;
+      max-width:none;
+      transform-origin:0 0;
+      user-select:none;
+      pointer-events:none;
+    }
+    .magnify-close{
+      position:absolute;
+      right:14px;
+      top:14px;
+      z-index:2;
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.72);
+      background:rgba(26,16,64,.72);
+      color:white;
+      font-size:22px;
+      font-weight:900;
+      cursor:pointer;
+    }
     .pager-center{display:grid;gap:10px;}
     .pager-slider-row{display:flex;align-items:center;gap:12px;}
     .pager-slider-label{font-size:12px;font-weight:800;color:var(--viewer-slate);min-width:64px;}
@@ -839,6 +1128,7 @@
       .doc-toolbar-meta,
       .doc-toolbar-jump{grid-template-columns:1fr;}
       .shortcut-help-btn,.shortcut-action-btn{flex:1 1 100%;}
+      .page-edge-btn{width:42px;height:42px;}
     }
   </style>
 </head>
@@ -933,7 +1223,7 @@
           </div>
           <div class="toolbar-divider"></div>
           <div class="toolbar-title">Yakınlaştırma</div>
-          <input class="size-slider" type="range" id="zoomInput" min="100" max="260" step="5" value="100" aria-label="Yakınlaştırma seviyesi">
+          <input class="size-slider" type="range" id="zoomInput" min="100" max="800" step="5" value="100" aria-label="Yakınlaştırma seviyesi">
           <div class="doc-toolbar-meta">
             <span class="doc-toolbar-pill" id="zoomValue">%100</span>
             <button class="toolbar-btn action-btn" type="button" id="zoomResetBtn" aria-label="Yakınlaştırmayı sıfırla">1:1</button>
@@ -963,10 +1253,6 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="m19 6-1 14H6L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>
               <span>Sil</span>
             </button>
-            <button class="toolbar-btn action-btn danger" type="button" id="clearPageBtn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 18 18"></path><path d="M8.5 8.5 3 14a2 2 0 0 0 0 2.8l4.2 4.2a2 2 0 0 0 2.8 0L15.5 15.5"></path><path d="m14 5 5 5"></path></svg>
-              <span>Temizle</span>
-            </button>
           </div>
         </div>
       </aside>
@@ -977,6 +1263,24 @@
         <div id="viewerStatusRight"><strong id="pageCounter">0 / 0</strong></div>
       </div>
       <div class="shortcut-strip">
+        <div class="interaction-save-strip" id="interactionSaveStrip">
+          <div class="interaction-tools">
+            <button class="interaction-tool-btn" type="button" id="prepMagnifierBtn" data-prep-tool="magnifier-area">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="5.5"></circle><path d="m15 15 5 5"></path><path d="M6 4h8M4 6v8M18 10v4M10 18h4"></path></svg>
+              <span>Büyüteç Alanı</span>
+            </button>
+            <button class="interaction-tool-btn" type="button" id="prepAnswerBtn" data-prep-tool="answer-area">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.2 9a3 3 0 1 1 4.9 2.3c-1.3.9-2.1 1.5-2.1 3.2"></path><path d="M12 18h.01"></path><rect x="4" y="4" width="16" height="16" rx="4"></rect></svg>
+              <span>Cevap Alanı</span>
+            </button>
+            <label class="answer-visibility-toggle" for="answersHiddenInput">
+              <input type="checkbox" id="answersHiddenInput" checked>
+              <span>Cevapları öğrencide gizle</span>
+            </label>
+          </div>
+          <span id="interactionStatus">PDF üzerinde Büyüteç Alanı veya Cevap Alanı seç, alanı sürükle, sonra yayınla.</span>
+          <button class="save" type="button" id="saveInteractionsBtn">Yayınla</button>
+        </div>
         <div class="shortcut-pill" id="shortcutStatusPill">
           <span>⌨️</span>
           <strong>Kısayollar</strong>
@@ -988,7 +1292,36 @@
           <button class="shortcut-action-btn print" type="button" id="printBtn">🖨️ Yazdır</button>
         </div>
       </div>
-      <div class="book-frame" id="bookFrame">
+        <div class="book-frame" id="bookFrame">
+        <div class="page-edge-nav" id="pageEdgeNav" aria-hidden="false">
+          <button class="page-edge-btn prev top" type="button" data-edge-page="prev" aria-label="Önceki sayfa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          </button>
+          <button class="page-edge-btn prev bottom" type="button" data-edge-page="prev" aria-label="Önceki sayfa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+          </button>
+          <button class="page-edge-btn next top" type="button" data-edge-page="next" aria-label="Sonraki sayfa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </button>
+          <button class="page-edge-btn next bottom" type="button" data-edge-page="next" aria-label="Sonraki sayfa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+          </button>
+        </div>
+        <div class="crop-nav" id="cropNav" aria-hidden="true">
+          <button class="icon" type="button" id="cropPrevBtn" aria-label="Önceki büyüteç alanı">‹</button>
+          <button type="button" id="cropReturnBtn">
+            <span>↩</span>
+            <span>Sayfaya Dön</span>
+          </button>
+          <button class="icon" type="button" id="cropNextBtn" aria-label="Sonraki büyüteç alanı">›</button>
+        </div>
+        <div class="crop-stage" id="cropStage" aria-hidden="true">
+          <div class="crop-surface" id="cropSurface">
+            <canvas id="cropCanvas"></canvas>
+            <canvas id="cropAnnotationCanvas"></canvas>
+            <div class="crop-hotspot-layer" id="cropHotspotLayer"></div>
+          </div>
+        </div>
         <div class="book-viewport" id="bookViewport">
           <div class="book-pan-layer" id="bookPanLayer">
             <div class="book-scale-layer" id="bookScaleLayer">
@@ -1033,10 +1366,18 @@
       <div class="shortcut-grid" id="shortcutGrid"></div>
     </div>
   </div>
+  <div class="magnify-modal" id="magnifyModal" aria-hidden="true">
+    <div class="magnify-panel" role="dialog" aria-modal="true">
+      <button class="magnify-close" type="button" id="magnifyCloseBtn" aria-label="Kapat">×</button>
+      <div class="magnify-stage" id="magnifyStage"></div>
+    </div>
+  </div>
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
   <script src="/js/content-progress.js"></script>
+  <script>window.kemalAdminScope = 'documents';</script>
+  <script src="/js/admin-auth.js"></script>
   <script src="/js/dokuman-store.js"></script>
   <script src="/js/calisma-kagidi-store.js"></script>
   <script src="/js/dokuman-viewer.js"></script>

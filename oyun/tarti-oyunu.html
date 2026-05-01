@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚖️ Kütle Tartma Oyunu — Kemal Öğretmenim</title>
+  <meta name="description" content="Nesneleri ve ağırlıkları kullanarak kefeli teraziyi dengele. Kütle ölçmeyi oyunla öğren.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: radial-gradient(circle at top left, #f3f0ff 0%, #fffdf8 46%, #ecfeff 100%); }
+    .scale-page { width: min(1180px, calc(100% - 24px)); margin: 0 auto; padding: 48px 0 72px; }
+    .scale-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; margin-bottom: 22px; }
+    .scale-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #f3f0ff; color: var(--purple); font-weight: 900; font-size: 13px; }
+    .scale-hero h1 { margin: 12px 0 8px; font-size: clamp(34px, 5vw, 58px); line-height: .98; color: var(--navy); font-weight: 900; }
+    .scale-hero p { margin: 0; max-width: 680px; color: var(--slate); font-size: 16px; line-height: 1.6; font-weight: 800; }
+    .scale-score-card { min-width: 210px; background: white; border: 2px solid var(--border); border-radius: 24px; padding: 18px; box-shadow: var(--shadow-sm); display: grid; gap: 8px; }
+    .scale-score-card span { color: var(--slate); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .scale-score-card strong { font-size: 32px; color: var(--purple); line-height: 1; }
+    .scale-game { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 18px; align-items: start; }
+    .scale-stage-card,
+    .scale-control-card { background: rgba(255,255,255,.96); border: 2px solid var(--border); border-radius: 28px; padding: 20px; box-shadow: 0 16px 38px rgba(108,61,237,0.08); }
+    .scale-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .scale-question { padding: 12px 16px; border-radius: 18px; background: linear-gradient(135deg, #f3f0ff, #ecfeff); color: var(--navy); font-weight: 900; line-height: 1.35; flex: 1; }
+    .scale-canvas { width: 100%; height: auto; max-height: 430px; border-radius: 24px; background: linear-gradient(180deg, #f8fbff, #fff); border: 1.5px solid #e2e8f0; }
+    .scale-result { margin-top: 12px; padding: 13px 16px; border-radius: 18px; font-weight: 900; line-height: 1.45; background: #f8fafc; color: #52627c; border: 1.5px solid #e2e8f0; }
+    .scale-result.good { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .scale-result.bad { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .scale-controls { display: grid; gap: 16px; }
+    .scale-control-block { display: grid; gap: 10px; }
+    .scale-control-block h2 { margin: 0; color: var(--slate); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .scale-choice-grid,
+    .scale-weight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .scale-choice,
+    .scale-weight { position: relative; border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 16px; padding: 10px 7px; min-height: 82px; font-family: var(--font-body); cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 3px; transition: .18s; color: var(--navy); }
+    .scale-choice:hover,
+    .scale-weight:hover { transform: translateY(-2px); border-color: var(--purple-light); background: #fff; }
+    .scale-choice.is-selected { border-color: var(--purple); background: #f3f0ff; box-shadow: 0 0 0 3px rgba(108,61,237,.12); }
+    .scale-weight.has-count { border-color: var(--teal); background: #ecfeff; }
+    .scale-emoji { font-size: 26px; }
+    .scale-name { font-size: 11px; font-weight: 900; text-align: center; line-height: 1.1; }
+    .scale-mass { font-size: 10px; color: var(--slate); font-weight: 900; }
+    .scale-count { position: absolute; right: -7px; top: -7px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: none; align-items: center; justify-content: center; background: var(--purple); color: #fff; font-size: 12px; font-weight: 900; }
+    .scale-weight.has-count .scale-count { display: inline-flex; }
+    .scale-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .scale-total { color: var(--teal); font-size: 14px; font-weight: 900; text-align: right; }
+    .game-btn { border: none; border-radius: 16px; padding: 13px 14px; font-family: var(--font-body); font-size: 14px; font-weight: 900; cursor: pointer; transition: .15s; }
+    .game-btn:active { transform: scale(.96); }
+    .game-btn.primary { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: white; box-shadow: var(--shadow-sm); }
+    .game-btn.secondary { background: #fff; color: var(--navy); border: 2px solid var(--border); }
+    #konfetiCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; display: none; }
+    @media (max-width: 920px) {
+      .scale-hero,
+      .scale-game { grid-template-columns: 1fr; }
+      .scale-score-card { min-width: 0; }
+    }
+    @media (max-width: 620px) {
+      .scale-page { width: min(100% - 16px, 1180px); padding-top: 28px; }
+      .scale-choice-grid,
+      .scale-weight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .scale-actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="scale-page">
+    <section class="scale-hero">
+      <div>
+        <span class="scale-eyebrow">⚖️ Matematik Oyunu</span>
+        <h1>Kütle Tartma Oyunu</h1>
+        <p>Sol kefeye bir nesne seç, sağ kefeye ağırlıkları ekle. Teraziyi dengeleyerek gram ve kilogram ilişkisini keşfet.</p>
+      </div>
+      <div class="scale-score-card">
+        <span>Puan</span>
+        <strong id="scaleScore">0</strong>
+        <span>Doğru: <b id="scaleCorrect">0</b></span>
+      </div>
+    </section>
+
+    <section class="scale-game">
+      <div class="scale-stage-card">
+        <div class="scale-topline">
+          <div class="scale-question" id="scaleQuestion">Bir nesne seç, sağ kefeye ağırlıkları ekle ve teraziyi dengele.</div>
+          <button class="game-btn secondary" type="button" onclick="scaleNewQuestion()">Yeni Soru</button>
+        </div>
+        <canvas class="scale-canvas" id="scaleCanvas" width="720" height="430" aria-label="Kütle tartma terazisi"></canvas>
+        <div class="scale-result" id="scaleResult">Hazır: Sol kefeye bir nesne, sağ kefeye ağırlık ekleyin.</div>
+      </div>
+      <div class="scale-control-card">
+        <div class="scale-controls">
+          <div class="scale-control-block">
+            <h2>Sol Kefe - Nesne</h2>
+            <div class="scale-choice-grid" id="scaleObjectGrid"></div>
+          </div>
+          <div class="scale-control-block">
+            <h2>Sağ Kefe - Ağırlıklar</h2>
+            <div class="scale-weight-grid" id="scaleWeightGrid"></div>
+            <div class="scale-total" id="scaleRightTotal">Toplam: 0 g</div>
+          </div>
+          <div class="scale-actions">
+            <button class="game-btn primary" type="button" onclick="scaleCheck()">Tart</button>
+            <button class="game-btn secondary" type="button" onclick="scaleUndoWeight()">Geri Al</button>
+            <button class="game-btn secondary" type="button" onclick="scaleClear()">Temizle</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <canvas id="konfetiCanvas"></canvas>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const scaleState = { selected: null, weights: {}, score: 0, correct: 0, weightHistory: [] };
+    const scaleObjects = [
+      { id:'kalem', emoji:'✏️', name:'Kalem', g:10 },
+      { id:'elma', emoji:'🍎', name:'Elma', g:150 },
+      { id:'bardak', emoji:'🥤', name:'Su Bardağı', g:200 },
+      { id:'kitap', emoji:'📚', name:'Kitap', g:400 },
+      { id:'top', emoji:'⚽', name:'Top', g:430 },
+      { id:'canta', emoji:'🎒', name:'Çanta', g:1200 },
+    ];
+    const scaleWeights = [
+      { id:'w10', emoji:'🟡', label:'10 g', g:10 },
+      { id:'w50', emoji:'🟠', label:'50 g', g:50 },
+      { id:'w100', emoji:'🔴', label:'100 g', g:100 },
+      { id:'w200', emoji:'🟣', label:'200 g', g:200 },
+      { id:'w500', emoji:'🔵', label:'500 g', g:500 },
+      { id:'w1000', emoji:'⚫', label:'1 kg', g:1000 },
+    ];
+
+    function formatMass(g) {
+      if (g >= 1000) {
+        const kg = g / 1000;
+        return (kg % 1 === 0 ? kg : Number(kg.toFixed(2))) + ' kg';
+      }
+      return g + ' g';
+    }
+    function scaleRightTotal() {
+      return scaleWeights.reduce((total, item) => total + (scaleState.weights[item.id] || 0) * item.g, 0);
+    }
+    function setScaleResult(text, kind) {
+      const el = document.getElementById('scaleResult');
+      el.textContent = text;
+      el.className = 'scale-result' + (kind ? ' ' + kind : '');
+    }
+    function renderScaleChoices() {
+      const objectGrid = document.getElementById('scaleObjectGrid');
+      objectGrid.innerHTML = scaleObjects.map(item => `
+        <button class="scale-choice ${scaleState.selected && scaleState.selected.id === item.id ? 'is-selected' : ''}" type="button" data-scale-object="${item.id}">
+          <span class="scale-emoji">${item.emoji}</span>
+          <span class="scale-name">${item.name}</span>
+          <span class="scale-mass">${formatMass(item.g)}</span>
+        </button>`).join('');
+      objectGrid.querySelectorAll('[data-scale-object]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          scaleState.selected = scaleObjects.find(item => item.id === btn.dataset.scaleObject) || null;
+          renderScaleChoices();
+          drawScaleGame();
+          setScaleResult('Nesne seçildi. Şimdi sağ kefeye ağırlık ekleyin.', '');
+        });
+      });
+
+      const weightGrid = document.getElementById('scaleWeightGrid');
+      weightGrid.innerHTML = scaleWeights.map(item => {
+        const count = scaleState.weights[item.id] || 0;
+        return `
+          <button class="scale-weight ${count ? 'has-count' : ''}" type="button" data-scale-weight="${item.id}">
+            <span class="scale-count">${count}</span>
+            <span class="scale-emoji">${item.emoji}</span>
+            <span class="scale-name">${item.label}</span>
+          </button>`;
+      }).join('');
+      weightGrid.querySelectorAll('[data-scale-weight]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.scaleWeight;
+          scaleState.weights[id] = (scaleState.weights[id] || 0) + 1;
+          scaleState.weightHistory.push(id);
+          renderScaleChoices();
+          drawScaleGame();
+          setScaleResult('Ağırlık eklendi. Dengeyi kontrol etmek için Tart düğmesine basın.', '');
+        });
+      });
+
+      document.getElementById('scaleRightTotal').textContent = 'Toplam: ' + formatMass(scaleRightTotal());
+      document.getElementById('scaleScore').textContent = scaleState.score;
+      document.getElementById('scaleCorrect').textContent = scaleState.correct;
+    }
+    function drawScaleGame() {
+      const canvas = document.getElementById('scaleCanvas');
+      const ctx = canvas.getContext('2d');
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#f8fbff';
+      ctx.fillRect(0, 0, W, H);
+
+      const leftG = scaleState.selected ? scaleState.selected.g : 0;
+      const rightG = scaleRightTotal();
+      const pivot = { x: W / 2, y: 172 };
+      const diff = (leftG - rightG) / Math.max(leftG, rightG, 100);
+      const angle = Math.max(-0.28, Math.min(0.28, diff * 0.28));
+      const armLen = Math.min(250, W * 0.34);
+      const leftEnd = { x: pivot.x - armLen * Math.cos(angle), y: pivot.y + armLen * Math.sin(angle) };
+      const rightEnd = { x: pivot.x + armLen * Math.cos(angle), y: pivot.y - armLen * Math.sin(angle) };
+
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#c4b5fd';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(pivot.x, H - 54);
+      ctx.lineTo(pivot.x, pivot.y);
+      ctx.stroke();
+      ctx.fillStyle = '#ede9fe';
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(pivot.x - 72, H - 58, 144, 28, 14) : ctx.rect(pivot.x - 72, H - 58, 144, 28);
+      ctx.fill();
+
+      ctx.strokeStyle = '#6c3ded';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(leftEnd.x, leftEnd.y);
+      ctx.lineTo(rightEnd.x, rightEnd.y);
+      ctx.stroke();
+      ctx.fillStyle = '#6c3ded';
+      ctx.beginPath();
+      ctx.arc(pivot.x, pivot.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      function plate(end, items, label, color) {
+        const ropeLen = 54;
+        const py = end.y + ropeLen;
+        ctx.strokeStyle = '#9988ca';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(end.x, end.y);
+        ctx.lineTo(end.x, py);
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(end.x - 64, py, 128, 18, 9) : ctx.rect(end.x - 64, py, 128, 18);
+        ctx.fill();
+        ctx.stroke();
+        if (items.length) {
+          ctx.font = '28px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          const shown = items.slice(0, 5);
+          const start = end.x - (shown.length - 1) * 16;
+          shown.forEach((emoji, i) => ctx.fillText(emoji, start + i * 32, py - 5));
+        }
+        if (label) {
+          ctx.font = '900 15px Nunito, sans-serif';
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(label, end.x, py + 28);
+        }
+      }
+
+      const rightItems = [];
+      scaleWeights.forEach(weight => {
+        const count = scaleState.weights[weight.id] || 0;
+        for (let i = 0; i < Math.min(count, 3); i += 1) rightItems.push(weight.emoji);
+      });
+      plate(leftEnd, scaleState.selected ? [scaleState.selected.emoji] : [], leftG ? formatMass(leftG) : '', '#6c3ded');
+      plate(rightEnd, rightItems, rightG ? formatMass(rightG) : '', '#0f766e');
+
+      ctx.font = '900 17px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = Math.abs(leftG - rightG) < 0.001 && leftG && rightG ? '#0f766e' : '#64748b';
+      let status = 'Teraziyi dengele';
+      if (leftG && rightG) status = Math.abs(leftG - rightG) < 0.001 ? 'Dengede' : (leftG > rightG ? 'Sol kefe ağır' : 'Sağ kefe ağır');
+      ctx.fillText(status, pivot.x, 34);
+    }
+    function konfetiBaslat() {
+      const canvas = document.getElementById('konfetiCanvas');
+      const ctx = canvas.getContext('2d');
+      const colors = ['#ff6052', '#6c3ded', '#00c9b1', '#ffd93d', '#3b82f6'];
+      const parts = [];
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.display = 'block';
+      for (let i = 0; i < 130; i += 1) {
+        parts.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height, size: Math.random() * 10 + 7, color: colors[Math.floor(Math.random() * colors.length)], speedY: Math.random() * 5 + 3, speedX: Math.random() * 3 - 1.5, rotation: Math.random() * Math.PI, rotateSpeed: Math.random() * .2 + .05 });
+      }
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        parts.forEach(part => {
+          part.y += part.speedY;
+          part.x += part.speedX;
+          part.rotation += part.rotateSpeed;
+          ctx.save();
+          ctx.translate(part.x, part.y);
+          ctx.rotate(part.rotation);
+          ctx.fillStyle = part.color;
+          ctx.fillRect(-part.size / 2, -part.size / 2, part.size, part.size * .6);
+          ctx.restore();
+        });
+        frame += 1;
+        if (frame < 230) requestAnimationFrame(draw);
+        else canvas.style.display = 'none';
+      }
+      draw();
+    }
+    window.scaleCheck = function() {
+      const rightG = scaleRightTotal();
+      if (!scaleState.selected) return setScaleResult('Önce sol kefeye bir nesne seçin.', 'bad');
+      if (!rightG) return setScaleResult('Sağ kefeye en az bir ağırlık ekleyin.', 'bad');
+      const leftG = scaleState.selected.g;
+      drawScaleGame();
+      if (Math.abs(leftG - rightG) < 0.001) {
+        scaleState.score += 10;
+        scaleState.correct += 1;
+        renderScaleChoices();
+        setScaleResult('Harika! Terazi dengede: ' + scaleState.selected.name + ' = ' + formatMass(leftG), 'good');
+        konfetiBaslat();
+      } else {
+        const diff = Math.abs(leftG - rightG);
+        setScaleResult((leftG > rightG ? 'Sol kefe daha ağır. ' : 'Sağ kefe daha ağır. ') + 'Fark: ' + formatMass(diff) + '.', 'bad');
+      }
+    };
+    window.scaleUndoWeight = function() {
+      const id = scaleState.weightHistory.pop();
+      if (id && scaleState.weights[id]) {
+        scaleState.weights[id] -= 1;
+        if (scaleState.weights[id] <= 0) delete scaleState.weights[id];
+      }
+      renderScaleChoices();
+      drawScaleGame();
+    };
+    window.scaleClear = function() {
+      scaleState.selected = null;
+      scaleState.weights = {};
+      scaleState.weightHistory = [];
+      renderScaleChoices();
+      drawScaleGame();
+      setScaleResult('Temizlendi. Yeni bir nesne seçerek başlayın.', '');
+    };
+    window.scaleNewQuestion = function() {
+      const target = scaleObjects[Math.floor(Math.random() * scaleObjects.length)];
+      scaleState.selected = target;
+      scaleState.weights = {};
+      scaleState.weightHistory = [];
+      document.getElementById('scaleQuestion').textContent = target.emoji + ' ' + target.name + ' kaç gram/kilogram eder? Sağ kefeyi dengele.';
+      renderScaleChoices();
+      drawScaleGame();
+      setScaleResult('Soru hazır. Ağırlıkları seç ve tart.', '');
+    };
+    document.addEventListener('DOMContentLoaded', function() {
+      renderScaleChoices();
+      drawScaleGame();
+    });
+  </script>
+</body>
+</html>

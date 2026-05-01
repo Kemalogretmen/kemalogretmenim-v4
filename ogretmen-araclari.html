@@ -619,6 +619,94 @@
     .nl-controls { display: flex; justify-content: center; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
     .geo-wrapper { width: 100%; height: 600px; border-radius: 24px; overflow: hidden; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 14px 42px rgba(108,61,237,0.08); }
 
+    .measure-shell { display: grid; gap: 24px; }
+    .measure-intro { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 18px; align-items: stretch; }
+    .measure-intro-card { padding: 24px; border-radius: 28px; background: linear-gradient(135deg, #ffffff, #f5f0ff); border: 2px solid rgba(227,214,255,0.92); }
+    .measure-intro-card h3 { margin: 0 0 8px; font-family: 'Baloo 2', cursive; font-size: clamp(28px, 4vw, 42px); line-height: .98; color: var(--navy); }
+    .measure-intro-card p { margin: 0; color: var(--slate); font-size: 15px; line-height: 1.55; font-weight: 800; }
+    .measure-rule-card { padding: 22px; border-radius: 28px; background: linear-gradient(135deg, #ecfeff, #fff7ed); border: 2px solid rgba(188,232,226,.95); display: grid; align-content: center; gap: 10px; }
+    .measure-rule-card strong { font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); line-height: 1; }
+    .measure-rule-card span { color: #52627c; font-size: 14px; font-weight: 900; line-height: 1.45; }
+    .converter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .converter-card { background: #fff; border: 2px solid rgba(227,214,255,0.92); border-radius: 28px; padding: 22px; box-shadow: 0 16px 38px rgba(108,61,237,0.08); display: grid; gap: 16px; }
+    .converter-card.wide { grid-column: 1 / -1; }
+    .converter-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .converter-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .converter-icon { width: 52px; height: 52px; border-radius: 18px; display: grid; place-items: center; font-size: 24px; background: var(--conv-soft, #f3f0ff); color: var(--conv-color, var(--purple)); flex-shrink: 0; }
+    .converter-title h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 25px; line-height: 1; color: var(--navy); }
+    .converter-title span { display: block; margin-top: 4px; color: var(--slate); font-size: 12px; font-weight: 900; }
+    .converter-form { display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr); gap: 10px; align-items: end; }
+    .converter-field { display: grid; gap: 7px; }
+    .converter-field label { color: #73819b; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .converter-input,
+    .converter-select { width: 100%; height: 46px; border: 2px solid #e2e8f0; border-radius: 15px; background: #f8fafc; color: var(--navy); font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900; padding: 0 13px; outline: none; }
+    .converter-input:focus,
+    .converter-select:focus { border-color: var(--purple-light); box-shadow: 0 0 0 4px rgba(108,61,237,0.08); background: #fff; }
+    .swap-btn { width: 42px; height: 42px; border: none; border-radius: 15px; background: var(--conv-soft, #f3f0ff); color: var(--conv-color, var(--purple)); font-size: 17px; cursor: pointer; display: grid; place-items: center; margin-bottom: 2px; }
+    .converter-result { min-height: 58px; border-radius: 18px; padding: 13px 15px; background: linear-gradient(135deg, var(--conv-soft, #f3f0ff), #ffffff); border: 1.5px solid rgba(227,214,255,0.88); font-family: 'Baloo 2', cursive; color: var(--conv-color, var(--purple)); font-size: 22px; font-weight: 900; line-height: 1.15; display: flex; align-items: center; }
+    .converter-hint { color: var(--slate); font-size: 12px; font-weight: 800; line-height: 1.45; margin-top: -6px; }
+    .converter-card.mass { --conv-color: #7c3aed; --conv-soft: #f3f0ff; }
+    .converter-card.liquid { --conv-color: #0891b2; --conv-soft: #ecfeff; }
+    .converter-card.length { --conv-color: #0f766e; --conv-soft: #ecfdf5; }
+    .converter-card.area { --conv-color: #d97706; --conv-soft: #fff7ed; }
+
+    .ladder-wrap { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, .9fr); gap: 18px; align-items: center; }
+    .unit-ladder { position: relative; min-height: 360px; padding: 12px 0; }
+    .unit-step { width: min(82%, 440px); margin-left: calc(var(--i) * 24px); height: 52px; border-radius: 16px 16px 10px 10px; color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; box-shadow: 0 12px 22px rgba(15,23,42,0.12); transform: skewY(-1deg); }
+    .unit-step + .unit-step { margin-top: 7px; }
+    .unit-step small { font-size: 12px; opacity: .9; }
+    .ladder-side { display: grid; gap: 12px; }
+    .ladder-note { padding: 16px; border-radius: 20px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #52627c; font-size: 14px; font-weight: 900; line-height: 1.5; }
+    .ladder-note strong { display: block; font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); line-height: 1; margin-bottom: 5px; }
+
+    .math-games-section { display: grid; gap: 18px; }
+    .math-games-title { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .math-games-title h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 32px; line-height: 1; }
+    .scale-game { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 18px; align-items: start; }
+    .scale-stage-card,
+    .scale-control-card { background: #fff; border: 2px solid rgba(227,214,255,0.92); border-radius: 28px; padding: 20px; box-shadow: 0 16px 38px rgba(108,61,237,0.08); }
+    .scale-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .scale-question { padding: 12px 16px; border-radius: 18px; background: linear-gradient(135deg, #f3f0ff, #ecfeff); color: var(--navy); font-weight: 900; line-height: 1.35; flex: 1; }
+    .scale-score { display: inline-flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 999px; background: #fff7ed; color: #9a3412; font-size: 13px; font-weight: 900; white-space: nowrap; }
+    .scale-canvas { width: 100%; height: auto; max-height: 430px; border-radius: 24px; background: linear-gradient(180deg, #f8fbff, #fff); border: 1.5px solid #e2e8f0; }
+    .scale-result { margin-top: 12px; padding: 13px 16px; border-radius: 18px; font-weight: 900; line-height: 1.45; background: #f8fafc; color: #52627c; border: 1.5px solid #e2e8f0; }
+    .scale-result.good { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .scale-result.bad { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .scale-controls { display: grid; gap: 16px; }
+    .scale-control-block { display: grid; gap: 10px; }
+    .scale-control-block h4 { margin: 0; color: var(--slate); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .scale-choice-grid,
+    .scale-weight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .scale-choice,
+    .scale-weight { position: relative; border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 16px; padding: 10px 7px; min-height: 82px; font-family: 'Nunito', sans-serif; cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 3px; transition: .18s; color: var(--navy); }
+    .scale-choice:hover,
+    .scale-weight:hover { transform: translateY(-2px); border-color: var(--purple-light); background: #fff; }
+    .scale-choice.is-selected { border-color: var(--purple); background: #f3f0ff; box-shadow: 0 0 0 3px rgba(108,61,237,.12); }
+    .scale-weight.has-count { border-color: var(--teal); background: #ecfeff; }
+    .scale-emoji { font-size: 26px; }
+    .scale-name { font-size: 11px; font-weight: 900; text-align: center; line-height: 1.1; }
+    .scale-mass { font-size: 10px; color: var(--slate); font-weight: 900; }
+    .scale-count { position: absolute; transform: translate(28px, -28px); min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: none; align-items: center; justify-content: center; background: var(--purple); color: #fff; font-size: 12px; font-weight: 900; }
+    .scale-weight.has-count .scale-count { display: inline-flex; }
+    .scale-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .scale-total { color: var(--teal); font-size: 14px; font-weight: 900; text-align: right; }
+
+    @media (max-width:1080px) {
+      .measure-intro,
+      .converter-grid,
+      .ladder-wrap,
+      .scale-game { grid-template-columns: 1fr; }
+      .converter-card.wide { grid-column: auto; }
+    }
+    @media (max-width:760px) {
+      .converter-form { grid-template-columns: 1fr; }
+      .swap-btn { width: 100%; margin: 0; }
+      .scale-choice-grid,
+      .scale-weight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .scale-actions { grid-template-columns: 1fr; }
+      .unit-step { width: 100%; margin-left: 0; }
+    }
+
     /* Konfeti */
     #konfetiCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; display: none; }
 
@@ -685,7 +773,7 @@
           <div>
             <div class="hero-eyebrow">📐 Ders Yardımı</div>
             <h2>Matematik</h2>
-            <p>Hesap makinesi, 3D zar, yazı tura, sayı çarkı, kesirler ve GeoGebra.</p>
+            <p>Kütle, sıvı, uzunluk ve alan dönüşümleri; ayrıca tartı oyunu.</p>
           </div>
           <div class="tool-card-visual">
             <div class="tool-card-icon" style="color:#f59e0b"><i class="fas fa-calculator"></i></div>
@@ -1159,23 +1247,24 @@
                   <div class="shortcut-row"><span class="shortcut-key">K</span><span>Kesir modeline geç</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">L</span><span>Sayı doğrusuna geç</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">W</span><span>Sayı çarkına geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">U</span><span>Çeviricilere geç</span></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="display-stage" style="padding: 30px;">
-          
-          <div class="mode-tabs" role="tablist">
-            <button class="mode-tab active" type="button" data-math-mode="calc">🧮 Hesap Makinesi</button>
-            <button class="mode-tab" type="button" data-math-mode="rng">🎲 Zar & Yazı Tura</button>
-            <button class="mode-tab" type="button" data-math-mode="wheel">🎡 Sayı Çarkı</button>
-            <button class="mode-tab" type="button" data-math-mode="frac">🍕 Kesirler</button>
-            <button class="mode-tab" type="button" data-math-mode="nl">📏 Sayı Doğrusu</button>
-            <button class="mode-tab" type="button" data-math-mode="geo">📐 Geometri (GeoGebra)</button>
-          </div>
-          
-          <div class="math-grid" id="mathContent">
+          <div class="measure-shell">
+            <div class="mode-tabs" role="tablist">
+              <button class="mode-tab active" type="button" data-math-mode="calc">🧮 Hesap Makinesi</button>
+              <button class="mode-tab" type="button" data-math-mode="rng">🎲 Zar & Yazı Tura</button>
+              <button class="mode-tab" type="button" data-math-mode="wheel">🎡 Sayı Çarkı</button>
+              <button class="mode-tab" type="button" data-math-mode="frac">🍕 Kesirler</button>
+              <button class="mode-tab" type="button" data-math-mode="nl">📏 Sayı Doğrusu</button>
+              <button class="mode-tab" type="button" data-math-mode="geo">📐 Geometri (GeoGebra)</button>
+              <button class="mode-tab" type="button" data-math-mode="convert">🔄 Çeviriciler</button>
+            </div>
+
             <div id="mathCalcView" style="display: block;">
               <div class="calc-wrapper">
                 <div class="calc-screen" id="calcScreen">0</div>
@@ -1232,7 +1321,7 @@
                   <label class="chk-label" style="margin-top:12px;"><input type="checkbox" id="diceCountToggle"> İki Zar Kullan</label>
                   <button class="btn btn-primary" type="button" onclick="roll3DDice()" style="width:100%; height:54px; font-size:18px; margin-top:10px;">Zarları At</button>
                 </div>
-                
+
                 <div class="rng-card">
                   <h3>Yazı Tura</h3>
                   <div class="coin-stage">
@@ -1284,7 +1373,7 @@
                       </div>
                     </div>
                     <div style="width: 120px; height: 4px; background: var(--slate); border-radius: 2px;"></div>
-                  <div class="frac-box">
+                    <div class="frac-box">
                       <span>Payda (Bütün)</span>
                       <div class="frac-row">
                         <button class="step-btn" onclick="changeFrac('den', -1)">-</button>
@@ -1324,7 +1413,191 @@
                 <iframe src="https://www.geogebra.org/classic?showMenuBar=false&showToolBar=true&showAlgebraInput=false" width="100%" height="100%" style="border:none;"></iframe>
               </div>
             </div>
-            
+
+            <div id="mathConvertView" style="display: none;">
+              <div class="measure-intro">
+                <div class="measure-intro-card">
+                  <h3>Ölçü Dönüşüm Merkezi</h3>
+                  <p>Kütle, sıvı, uzunluk ve alan birimleri tek ekranda dönüşür.</p>
+                </div>
+                <div class="measure-rule-card">
+                  <strong>Merdiven mantığı</strong>
+                  <span>Uzunlukta her basamak 10, alan ölçülerinde her basamak 100 ile değişir.</span>
+                </div>
+              </div>
+
+              <div class="converter-grid" style="margin-top:18px;">
+              <div class="converter-card mass" id="mathMassView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-weight-hanging"></i></span>
+                    <div>
+                      <h3>Kütle Çevirme</h3>
+                      <span>ton, kg, g, mg</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="converter-form" data-converter="mass">
+                  <div class="converter-field">
+                    <label>Değer</label>
+                    <input class="converter-input" id="massInput" type="number" step="any" value="1">
+                    <select class="converter-select" id="massFrom">
+                      <option value="t">ton</option>
+                      <option value="kg" selected>kilogram</option>
+                      <option value="g">gram</option>
+                      <option value="mg">miligram</option>
+                    </select>
+                  </div>
+                  <button class="swap-btn" type="button" data-swap-converter="mass" aria-label="Kütle birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                  <div class="converter-field">
+                    <label>Sonuç Birimi</label>
+                    <select class="converter-select" id="massTo">
+                      <option value="t">ton</option>
+                      <option value="kg">kilogram</option>
+                      <option value="g" selected>gram</option>
+                      <option value="mg">miligram</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="converter-result" id="massResult">1 kg = 1000 g</div>
+                <div class="converter-hint">1 ton = 1000 kg, 1 kg = 1000 g, 1 g = 1000 mg.</div>
+              </div>
+
+              <div class="converter-card liquid" id="mathLiquidView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-droplet"></i></span>
+                    <div>
+                      <h3>Sıvı Çevirme</h3>
+                      <span>l, dl, cl, ml</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="converter-form" data-converter="liquid">
+                  <div class="converter-field">
+                    <label>Değer</label>
+                    <input class="converter-input" id="liquidInput" type="number" step="any" value="1">
+                    <select class="converter-select" id="liquidFrom">
+                      <option value="l" selected>litre</option>
+                      <option value="dl">desilitre</option>
+                      <option value="cl">santilitre</option>
+                      <option value="ml">mililitre</option>
+                    </select>
+                  </div>
+                  <button class="swap-btn" type="button" data-swap-converter="liquid" aria-label="Sıvı birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                  <div class="converter-field">
+                    <label>Sonuç Birimi</label>
+                    <select class="converter-select" id="liquidTo">
+                      <option value="l">litre</option>
+                      <option value="dl">desilitre</option>
+                      <option value="cl">santilitre</option>
+                      <option value="ml" selected>mililitre</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="converter-result" id="liquidResult">1 l = 1000 ml</div>
+                <div class="converter-hint">1 l = 10 dl = 100 cl = 1000 ml.</div>
+              </div>
+
+              <div class="converter-card length" id="mathLengthView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-ruler"></i></span>
+                    <div>
+                      <h3>Uzunluk Çevirme</h3>
+                      <span>km'den mm'ye</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="converter-form" data-converter="length">
+                  <div class="converter-field">
+                    <label>Değer</label>
+                    <input class="converter-input" id="lengthInput" type="number" step="any" value="1">
+                    <select class="converter-select" id="lengthFrom">
+                      <option value="km">kilometre</option>
+                      <option value="hm">hektometre</option>
+                      <option value="dam">dekametre</option>
+                      <option value="m" selected>metre</option>
+                      <option value="dm">desimetre</option>
+                      <option value="cm">santimetre</option>
+                      <option value="mm">milimetre</option>
+                    </select>
+                  </div>
+                  <button class="swap-btn" type="button" data-swap-converter="length" aria-label="Uzunluk birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                  <div class="converter-field">
+                    <label>Sonuç Birimi</label>
+                    <select class="converter-select" id="lengthTo">
+                      <option value="km">kilometre</option>
+                      <option value="hm">hektometre</option>
+                      <option value="dam">dekametre</option>
+                      <option value="m">metre</option>
+                      <option value="dm">desimetre</option>
+                      <option value="cm" selected>santimetre</option>
+                      <option value="mm">milimetre</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="converter-result" id="lengthResult">1 m = 100 cm</div>
+                <div class="converter-hint">Uzunluk merdiveninde her basamak 10 kat değişir.</div>
+              </div>
+
+              <div class="converter-card area wide" id="mathAreaView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-border-all"></i></span>
+                    <div>
+                      <h3>Alan Ölçme Birimleri</h3>
+                      <span>km², m², dm², cm², mm² arası dönüşüm</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="ladder-wrap">
+                  <div class="unit-ladder" aria-label="Alan ölçme merdiveni">
+                    <div class="unit-step" style="--i:0;background:linear-gradient(135deg,#2563eb,#38bdf8);"><span>km²</span><small>Kilometrekare</small></div>
+                    <div class="unit-step" style="--i:1;background:linear-gradient(135deg,#0891b2,#22d3ee);"><span>hm²</span><small>Hektometrekare</small></div>
+                    <div class="unit-step" style="--i:2;background:linear-gradient(135deg,#059669,#34d399);"><span>dam²</span><small>Dekametrekare</small></div>
+                    <div class="unit-step" style="--i:3;background:linear-gradient(135deg,#d97706,#facc15);"><span>m²</span><small>Metrekare</small></div>
+                    <div class="unit-step" style="--i:4;background:linear-gradient(135deg,#ea580c,#fb923c);"><span>dm²</span><small>Desimetrekare</small></div>
+                    <div class="unit-step" style="--i:5;background:linear-gradient(135deg,#dc2626,#fb7185);"><span>cm²</span><small>Santimetrekare</small></div>
+                    <div class="unit-step" style="--i:6;background:linear-gradient(135deg,#be185d,#e879f9);"><span>mm²</span><small>Milimetrekare</small></div>
+                  </div>
+                  <div class="ladder-side">
+                    <div class="converter-form" data-converter="area">
+                      <div class="converter-field">
+                        <label>Değer</label>
+                        <input class="converter-input" id="areaInput" type="number" step="any" value="1">
+                        <select class="converter-select" id="areaFrom">
+                          <option value="km2">km²</option>
+                          <option value="hm2">hm²</option>
+                          <option value="dam2">dam²</option>
+                          <option value="m2" selected>m²</option>
+                          <option value="dm2">dm²</option>
+                          <option value="cm2">cm²</option>
+                          <option value="mm2">mm²</option>
+                        </select>
+                      </div>
+                      <button class="swap-btn" type="button" data-swap-converter="area" aria-label="Alan birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                      <div class="converter-field">
+                        <label>Sonuç Birimi</label>
+                        <select class="converter-select" id="areaTo">
+                          <option value="km2">km²</option>
+                          <option value="hm2">hm²</option>
+                          <option value="dam2">dam²</option>
+                          <option value="m2">m²</option>
+                          <option value="dm2">dm²</option>
+                          <option value="cm2" selected>cm²</option>
+                          <option value="mm2">mm²</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="converter-result" id="areaResult">1 m² = 10000 cm²</div>
+                    <div class="ladder-note"><strong>Alan kuralı</strong>Aşağı inerken her basamakta 100 ile çarpılır, yukarı çıkarken 100'e bölünür.</div>
+                    <div class="ladder-note"><strong>Ezber desteği</strong>km² → hm² → dam² → m² → dm² → cm² → mm² sıralamasını takip et.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </article>
@@ -1418,7 +1691,7 @@
       millisCb: document.getElementById('millisCb'), hInput: document.getElementById('hInput'), mInput: document.getElementById('mInput'), sInput: document.getElementById('sInput'), hVal: document.getElementById('hVal'), mVal: document.getElementById('mVal'), sVal: document.getElementById('sVal'),
       soundToggleBtn: document.getElementById('soundToggleBtn'), alarmBanner: document.getElementById('alarmBanner'), alarmStopBtn: document.getElementById('alarmStopBtn'),
       stageFullscreenBtn: document.getElementById('stageFullscreenBtn'), timerStage: document.getElementById('timerStage'), cdSettings: document.getElementById('cdSettings'),
-      toolCards: [].slice.call(document.querySelectorAll('[data-tool-card]')), toolPanels: [].slice.call(document.querySelectorAll('[data-tool-panel]')), modeTabs: [].slice.call(document.querySelectorAll('.mode-tab')),
+      toolCards: [].slice.call(document.querySelectorAll('[data-tool-card]')), toolPanels: [].slice.call(document.querySelectorAll('[data-tool-panel]')), modeTabs: [].slice.call(document.querySelectorAll('[data-mode]')),
       presetBtns: [].slice.call(document.querySelectorAll('[data-preset]')), adjBtns: [].slice.call(document.querySelectorAll('[data-adj]')),
       boardToolBtns: [].slice.call(document.querySelectorAll('[data-board-tool]')), boardColorBtns: [].slice.call(document.querySelectorAll('[data-board-color]')),
       boardPaletteBtns: [].slice.call(document.querySelectorAll('[data-board-palette]')), boardPaperBtns: [].slice.call(document.querySelectorAll('[data-board-paper]')),
@@ -2689,19 +2962,360 @@
         ciz();
     }
 
-    document.getElementById('diceCountToggle').addEventListener('change', function(e) { document.getElementById('dice2Wrap').style.display = e.target.checked ? 'block' : 'none'; });
+    var diceToggle = document.getElementById('diceCountToggle');
+    if(diceToggle) {
+      diceToggle.addEventListener('change', function(e) {
+        var dice2Wrap = document.getElementById('dice2Wrap');
+        if(dice2Wrap) dice2Wrap.style.display = e.target.checked ? 'block' : 'none';
+      });
+    }
+
+    var converterMeta = {
+      mass: {
+        input: 'massInput', from: 'massFrom', to: 'massTo', result: 'massResult',
+        factors: { t: 1000000, kg: 1000, g: 1, mg: 0.001 },
+        labels: { t: 'ton', kg: 'kg', g: 'g', mg: 'mg' },
+      },
+      liquid: {
+        input: 'liquidInput', from: 'liquidFrom', to: 'liquidTo', result: 'liquidResult',
+        factors: { l: 1000, dl: 100, cl: 10, ml: 1 },
+        labels: { l: 'l', dl: 'dl', cl: 'cl', ml: 'ml' },
+      },
+      length: {
+        input: 'lengthInput', from: 'lengthFrom', to: 'lengthTo', result: 'lengthResult',
+        factors: { km: 1000, hm: 100, dam: 10, m: 1, dm: 0.1, cm: 0.01, mm: 0.001 },
+        labels: { km: 'km', hm: 'hm', dam: 'dam', m: 'm', dm: 'dm', cm: 'cm', mm: 'mm' },
+      },
+      area: {
+        input: 'areaInput', from: 'areaFrom', to: 'areaTo', result: 'areaResult',
+        factors: { km2: 1000000, hm2: 10000, dam2: 100, m2: 1, dm2: 0.01, cm2: 0.0001, mm2: 0.000001 },
+        labels: { km2: 'km²', hm2: 'hm²', dam2: 'dam²', m2: 'm²', dm2: 'dm²', cm2: 'cm²', mm2: 'mm²' },
+      },
+    };
+
+    function formatMeasureNumber(value) {
+      if(!Number.isFinite(value)) return '0';
+      if(Math.abs(value) >= 1000000) return value.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+      if(Math.abs(value) >= 1) return value.toLocaleString('tr-TR', { maximumFractionDigits: 6 });
+      return parseFloat(value.toFixed(10)).toLocaleString('tr-TR', { maximumFractionDigits: 10 });
+    }
+
+    function updateConverter(type) {
+      var meta = converterMeta[type];
+      if(!meta) return;
+      var input = document.getElementById(meta.input);
+      var from = document.getElementById(meta.from);
+      var to = document.getElementById(meta.to);
+      var result = document.getElementById(meta.result);
+      if(!input || !from || !to || !result) return;
+      var value = parseFloat(String(input.value).replace(',', '.'));
+      if(!Number.isFinite(value)) {
+        result.textContent = 'Geçerli bir sayı girin';
+        return;
+      }
+      var baseValue = value * meta.factors[from.value];
+      var converted = baseValue / meta.factors[to.value];
+      result.textContent = formatMeasureNumber(value) + ' ' + meta.labels[from.value] + ' = ' + formatMeasureNumber(converted) + ' ' + meta.labels[to.value];
+    }
+
+    function initConverters() {
+      Object.keys(converterMeta).forEach(function(type) {
+        var meta = converterMeta[type];
+        [meta.input, meta.from, meta.to].forEach(function(id) {
+          var el = document.getElementById(id);
+          if(el) el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', function() { updateConverter(type); });
+        });
+        updateConverter(type);
+      });
+
+      document.querySelectorAll('[data-swap-converter]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var type = btn.getAttribute('data-swap-converter');
+          var meta = converterMeta[type];
+          if(!meta) return;
+          var from = document.getElementById(meta.from);
+          var to = document.getElementById(meta.to);
+          if(!from || !to) return;
+          var old = from.value;
+          from.value = to.value;
+          to.value = old;
+          updateConverter(type);
+        });
+      });
+    }
+
+    var scaleState = {
+      selected: null,
+      weights: {},
+      question: null,
+      score: 0,
+      correct: 0,
+      weightHistory: [],
+    };
+    var scaleObjects = [
+      { id:'kalem', emoji:'✏️', name:'Kalem', g:10 },
+      { id:'elma', emoji:'🍎', name:'Elma', g:150 },
+      { id:'bardak', emoji:'🥤', name:'Su Bardağı', g:200 },
+      { id:'kitap', emoji:'📚', name:'Kitap', g:400 },
+      { id:'top', emoji:'⚽', name:'Top', g:430 },
+      { id:'canta', emoji:'🎒', name:'Çanta', g:1200 },
+    ];
+    var scaleWeights = [
+      { id:'w10', emoji:'🟡', label:'10 g', g:10 },
+      { id:'w50', emoji:'🟠', label:'50 g', g:50 },
+      { id:'w100', emoji:'🔴', label:'100 g', g:100 },
+      { id:'w200', emoji:'🟣', label:'200 g', g:200 },
+      { id:'w500', emoji:'🔵', label:'500 g', g:500 },
+      { id:'w1000', emoji:'⚫', label:'1 kg', g:1000 },
+    ];
+
+    function formatMass(g) {
+      if(g >= 1000) {
+        var kg = g / 1000;
+        return (kg % 1 === 0 ? kg : parseFloat(kg.toFixed(2))) + ' kg';
+      }
+      return g + ' g';
+    }
+
+    function scaleRightTotal() {
+      return scaleWeights.reduce(function(total, item) {
+        return total + (scaleState.weights[item.id] || 0) * item.g;
+      }, 0);
+    }
+
+    function setScaleResult(text, kind) {
+      var el = document.getElementById('scaleResult');
+      if(!el) return;
+      el.textContent = text;
+      el.className = 'scale-result' + (kind ? ' ' + kind : '');
+    }
+
+    function renderScaleChoices() {
+      var objectGrid = document.getElementById('scaleObjectGrid');
+      if(objectGrid) {
+        objectGrid.innerHTML = scaleObjects.map(function(item) {
+          return '<button class="scale-choice ' + (scaleState.selected && scaleState.selected.id === item.id ? 'is-selected' : '') + '" type="button" data-scale-object="' + item.id + '">' +
+            '<span class="scale-emoji">' + item.emoji + '</span>' +
+            '<span class="scale-name">' + item.name + '</span>' +
+            '<span class="scale-mass">' + formatMass(item.g) + '</span>' +
+          '</button>';
+        }).join('');
+        objectGrid.querySelectorAll('[data-scale-object]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            scaleState.selected = scaleObjects.find(function(item) { return item.id === btn.getAttribute('data-scale-object'); }) || null;
+            renderScaleChoices();
+            drawScaleGame();
+            setScaleResult('Nesne seçildi. Şimdi sağ kefeye ağırlık ekleyin.', '');
+          });
+        });
+      }
+
+      var weightGrid = document.getElementById('scaleWeightGrid');
+      if(weightGrid) {
+        weightGrid.innerHTML = scaleWeights.map(function(item) {
+          var count = scaleState.weights[item.id] || 0;
+          return '<button class="scale-weight ' + (count ? 'has-count' : '') + '" type="button" data-scale-weight="' + item.id + '">' +
+            '<span class="scale-count">' + count + '</span>' +
+            '<span class="scale-emoji">' + item.emoji + '</span>' +
+            '<span class="scale-name">' + item.label + '</span>' +
+          '</button>';
+        }).join('');
+        weightGrid.querySelectorAll('[data-scale-weight]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var id = btn.getAttribute('data-scale-weight');
+            scaleState.weights[id] = (scaleState.weights[id] || 0) + 1;
+            scaleState.weightHistory.push(id);
+            renderScaleChoices();
+            drawScaleGame();
+            setScaleResult('Ağırlık eklendi. Dengeyi kontrol etmek için Tart düğmesine basın.', '');
+          });
+        });
+      }
+
+      var total = document.getElementById('scaleRightTotal');
+      if(total) total.textContent = 'Toplam: ' + formatMass(scaleRightTotal());
+      var score = document.getElementById('scaleScore');
+      var correct = document.getElementById('scaleCorrect');
+      if(score) score.textContent = scaleState.score;
+      if(correct) correct.textContent = scaleState.correct;
+    }
+
+    function drawScaleGame() {
+      var canvas = document.getElementById('scaleCanvas');
+      if(!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#f8fbff';
+      ctx.fillRect(0, 0, W, H);
+
+      var leftG = scaleState.selected ? scaleState.selected.g : 0;
+      var rightG = scaleRightTotal();
+      var pivot = { x: W / 2, y: 172 };
+      var maxDiff = Math.max(leftG, rightG, 100);
+      var diff = (leftG - rightG) / maxDiff;
+      var angle = Math.max(-0.28, Math.min(0.28, diff * 0.28));
+      var armLen = Math.min(250, W * 0.34);
+      var leftEnd = { x: pivot.x - armLen * Math.cos(angle), y: pivot.y + armLen * Math.sin(angle) };
+      var rightEnd = { x: pivot.x + armLen * Math.cos(angle), y: pivot.y - armLen * Math.sin(angle) };
+
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#c4b5fd';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(pivot.x, H - 54);
+      ctx.lineTo(pivot.x, pivot.y);
+      ctx.stroke();
+      ctx.fillStyle = '#ede9fe';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(pivot.x - 72, H - 58, 144, 28, 14);
+      else ctx.rect(pivot.x - 72, H - 58, 144, 28);
+      ctx.fill();
+
+      ctx.strokeStyle = '#6c3ded';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(leftEnd.x, leftEnd.y);
+      ctx.lineTo(rightEnd.x, rightEnd.y);
+      ctx.stroke();
+      ctx.fillStyle = '#6c3ded';
+      ctx.beginPath();
+      ctx.arc(pivot.x, pivot.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      function plate(end, items, label, color) {
+        var ropeLen = 54;
+        var py = end.y + ropeLen;
+        ctx.strokeStyle = '#9988ca';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(end.x, end.y);
+        ctx.lineTo(end.x, py);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(end.x - 64, py, 128, 18, 9);
+        else ctx.rect(end.x - 64, py, 128, 18);
+        ctx.fill();
+        ctx.stroke();
+
+        if(items.length) {
+          ctx.font = '28px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          var shown = items.slice(0, 5);
+          var start = end.x - (shown.length - 1) * 16;
+          shown.forEach(function(emoji, i) {
+            ctx.fillText(emoji, start + i * 32, py - 5);
+          });
+        }
+        if(label) {
+          ctx.font = '900 15px Nunito, sans-serif';
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(label, end.x, py + 28);
+        }
+      }
+
+      var rightItems = [];
+      scaleWeights.forEach(function(weight) {
+        var count = scaleState.weights[weight.id] || 0;
+        for(var i = 0; i < Math.min(count, 3); i += 1) rightItems.push(weight.emoji);
+      });
+      plate(leftEnd, scaleState.selected ? [scaleState.selected.emoji] : [], leftG ? formatMass(leftG) : '', '#6c3ded');
+      plate(rightEnd, rightItems, rightG ? formatMass(rightG) : '', '#0f766e');
+
+      ctx.font = '900 17px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = Math.abs(leftG - rightG) < 0.001 && leftG && rightG ? '#0f766e' : '#64748b';
+      var status = 'Teraziyi dengele';
+      if(leftG && rightG) status = Math.abs(leftG - rightG) < 0.001 ? 'Dengede' : (leftG > rightG ? 'Sol kefe ağır' : 'Sağ kefe ağır');
+      ctx.fillText(status, pivot.x, 34);
+    }
+
+    window.scaleCheck = function() {
+      var rightG = scaleRightTotal();
+      if(!scaleState.selected) {
+        setScaleResult('Önce sol kefeye bir nesne seçin.', 'bad');
+        return;
+      }
+      if(!rightG) {
+        setScaleResult('Sağ kefeye en az bir ağırlık ekleyin.', 'bad');
+        return;
+      }
+      var leftG = scaleState.selected.g;
+      drawScaleGame();
+      if(Math.abs(leftG - rightG) < 0.001) {
+        scaleState.score += 10;
+        scaleState.correct += 1;
+        renderScaleChoices();
+        setScaleResult('Harika! Terazi dengede: ' + scaleState.selected.name + ' = ' + formatMass(leftG), 'good');
+        if(typeof konfetiBaslat === 'function') konfetiBaslat();
+      } else {
+        var diff = Math.abs(leftG - rightG);
+        setScaleResult((leftG > rightG ? 'Sol kefe daha ağır. ' : 'Sağ kefe daha ağır. ') + 'Fark: ' + formatMass(diff) + '.', 'bad');
+      }
+    };
+    window.scaleUndoWeight = function() {
+      var id = scaleState.weightHistory.pop();
+      if(id && scaleState.weights[id]) {
+        scaleState.weights[id] -= 1;
+        if(scaleState.weights[id] <= 0) delete scaleState.weights[id];
+      }
+      renderScaleChoices();
+      drawScaleGame();
+    };
+    window.scaleClear = function() {
+      scaleState.selected = null;
+      scaleState.weights = {};
+      scaleState.weightHistory = [];
+      renderScaleChoices();
+      drawScaleGame();
+      setScaleResult('Temizlendi. Yeni bir nesne seçerek başlayın.', '');
+    };
+    window.scaleNewQuestion = function() {
+      var target = scaleObjects[Math.floor(Math.random() * scaleObjects.length)];
+      scaleState.selected = target;
+      scaleState.weights = {};
+      scaleState.weightHistory = [];
+      var question = document.getElementById('scaleQuestion');
+      if(question) question.textContent = target.emoji + ' ' + target.name + ' kaç gram/kilogram eder? Sağ kefeyi dengele.';
+      renderScaleChoices();
+      drawScaleGame();
+      setScaleResult('Soru hazır. Ağırlıkları seç ve tart.', '');
+    };
+
+    function initScaleGame() {
+      renderScaleChoices();
+      drawScaleGame();
+    }
 
     function setMathMode(mode) {
       S.mathMode = mode;
       document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
         btn.classList.toggle('active', btn.dataset.mathMode === mode);
       });
-      document.getElementById('mathCalcView').style.display = mode === 'calc' ? 'block' : 'none';
-      document.getElementById('mathRngView').style.display = mode === 'rng' ? 'block' : 'none';
-      document.getElementById('mathWheelView').style.display = mode === 'wheel' ? 'block' : 'none';
-      document.getElementById('mathFracView').style.display = mode === 'frac' ? 'block' : 'none';
-      document.getElementById('mathNlView').style.display = mode === 'nl' ? 'block' : 'none';
-      document.getElementById('mathGeoView').style.display = mode === 'geo' ? 'block' : 'none';
+      var modeToElements = {
+        calc: ['mathCalcView'],
+        rng: ['mathRngView'],
+        wheel: ['mathWheelView'],
+        frac: ['mathFracView'],
+        nl: ['mathNlView'],
+        geo: ['mathGeoView'],
+        convert: ['mathConvertView'],
+      };
+      ['mathCalcView', 'mathRngView', 'mathWheelView', 'mathFracView', 'mathNlView', 'mathGeoView', 'mathConvertView'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+      });
+      (modeToElements[mode] || modeToElements.calc).forEach(function(id) {
+        var el = document.getElementById(id);
+        if(el) el.style.display = '';
+      });
       if(mode === 'frac') drawFraction();
       if(mode === 'nl') drawNumberLine();
     }
@@ -2709,6 +3323,9 @@
     document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
       btn.addEventListener('click', function() { setMathMode(btn.dataset.mathMode); });
     });
+    initConverters();
+    initScaleGame();
+    setMathMode('calc');
 
     E.classTabs.forEach(function(tab) {
       tab.addEventListener('click', function() { setClassroomView(tab.dataset.classView); });
@@ -3049,6 +3666,7 @@
         if(lower === 'k') { evt.preventDefault(); setMathMode('frac'); return; }
         if(lower === 'l') { evt.preventDefault(); setMathMode('nl'); return; }
         if(lower === 'w') { evt.preventDefault(); setMathMode('wheel'); return; }
+        if(lower === 'u') { evt.preventDefault(); setMathMode('convert'); return; }
       }
     });
 
