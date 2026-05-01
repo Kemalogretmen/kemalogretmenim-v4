@@ -202,6 +202,8 @@ h1,h2,h3,h4{font-family:var(--fd)}
 <div id="toast-wrap"></div>
 <div id="app"><div class="spinner" style="margin-top:100px"></div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/site-data.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -230,7 +232,6 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 const GRADES=[1,2,3,4,5,6,7,8];
 const DEFAULT_SUBJECTS_BY_GRADE={
   1:['Türkçe','Matematik','Hayat Bilgisi','Deneme'],
@@ -264,9 +265,10 @@ let questionSortables=[];
 let preserveCreateDraftOnReturn=false;
 const PDF_BASE_ZOOM=2.2;
 const PDF_RENDER_BOOST=3.0;
-const QUESTION_IMAGE_MAX_EDGE=2800;
-const QUESTION_IMAGE_MAX_BYTES=760*1024;
-const QUESTION_IMAGE_MIN_QUALITY=.86;
+const QUESTION_IMAGE_MAX_EDGE=3600;
+const QUESTION_IMAGE_MIN_QUALITY=.92;
+const QUESTION_IMAGE_BUCKET='sinav-sorulari';
+let supabaseUploadClient=null;
 function createInitialState(overrides={}){
   return Object.assign({
     page:'create',step:1,
@@ -492,6 +494,47 @@ function prepareQuestionSections(totalQuestions,sections=A.questionSections){
     return{label,start,end};
   });
   return{sections:normalized,assignments};
+}
+function getQuestionImageExtension(dataUrl){
+  const mime=String(dataUrl||'').match(/^data:([^;]+);/)?.[1]||'image/png';
+  if(mime==='image/jpeg') return 'jpg';
+  if(mime==='image/webp') return 'webp';
+  return 'png';
+}
+function getQuestionImageMime(dataUrl){
+  return String(dataUrl||'').match(/^data:([^;]+);/)?.[1]||'image/png';
+}
+function getSupabaseUploadClient(){
+  if(supabaseUploadClient) return supabaseUploadClient;
+  if(!window.supabase) throw new Error('Supabase kütüphanesi yüklenemedi.');
+  const cfg=window.kemalSiteStore?.getConfig?.();
+  if(!cfg?.supabaseUrl||!cfg?.supabaseAnonKey){
+    throw new Error('Supabase ayarları bulunamadı.');
+  }
+  supabaseUploadClient=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey,{
+    auth:{persistSession:false,autoRefreshToken:false}
+  });
+  return supabaseUploadClient;
+}
+async function dataUrlToBlob(dataUrl){
+  const response=await fetch(dataUrl);
+  return response.blob();
+}
+async function uploadQuestionImage(examId,index,dataUrl){
+  if(!String(dataUrl||'').startsWith('data:')) return{imageUrl:dataUrl};
+  const ext=getQuestionImageExtension(dataUrl);
+  const mime=getQuestionImageMime(dataUrl);
+  const path=`${examId}/q-${String(index+1).padStart(3,'0')}-${Date.now()}.${ext}`;
+  const blob=await dataUrlToBlob(dataUrl);
+  const upload=await getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).upload(path,blob,{
+    cacheControl:'31536000',
+    upsert:false,
+    contentType:mime
+  });
+  if(upload.error) throw upload.error;
+  const publicUrl=getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).getPublicUrl(path).data?.publicUrl;
+  if(!publicUrl) throw new Error('Soru görseli bağlantısı oluşturulamadı.');
+  return{imageUrl:publicUrl,imagePath:path};
 }
 function deriveQuestionSectionsFromQuestions(questions){
   const derived=[];
@@ -1402,36 +1445,16 @@ function optimizeQuestionCanvas(sourceCanvas){
     working=resizeCanvas(working,QUESTION_IMAGE_MAX_EDGE/longest);
   }
 
-  // Önce PNG dene (kayıpsız, metin netliği için ideal)
+  // Storage'a yuklenecegi icin kaliteyi koru; sadece asiri buyuk kirpmalari sinirla.
   let dataUrl=working.toDataURL('image/png');
-  if(getDataUrlByteSize(dataUrl)<=QUESTION_IMAGE_MAX_BYTES) return dataUrl;
+  if(getDataUrlByteSize(dataUrl)<=3*1024*1024) return dataUrl;
 
-  // Firestore dokuman siniri icin PNG buyukse yuksek kaliteli JPEG kullan
-  let quality=.97;
+  let quality=.96;
   dataUrl=working.toDataURL('image/jpeg',quality);
-  while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&quality>QUESTION_IMAGE_MIN_QUALITY){
-    quality=Math.max(QUESTION_IMAGE_MIN_QUALITY,quality-.02);
+  while(getDataUrlByteSize(dataUrl)>3*1024*1024&&quality>QUESTION_IMAGE_MIN_QUALITY){
+    quality=Math.max(QUESTION_IMAGE_MIN_QUALITY,quality-.01);
     dataUrl=working.toDataURL('image/jpeg',quality);
   }
-
-  // Hala buyukse olculeri kademeli indir, kaliteyi okunabilir seviyede tut
-  while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&Math.max(working.width,working.height)>1000){
-    working=resizeCanvas(working,.92);
-    quality=.97;
-    dataUrl=working.toDataURL('image/jpeg',quality);
-    while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&quality>QUESTION_IMAGE_MIN_QUALITY){
-      quality=Math.max(QUESTION_IMAGE_MIN_QUALITY,quality-.02);
-      dataUrl=working.toDataURL('image/jpeg',quality);
-    }
-  }
-
-  if(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES){
-    while(getDataUrlByteSize(dataUrl)>QUESTION_IMAGE_MAX_BYTES&&quality>.78){
-      quality=Math.max(.78,quality-.03);
-      dataUrl=working.toDataURL('image/jpeg',quality);
-    }
-  }
-
   return dataUrl;
 }
 
@@ -2165,7 +2188,6 @@ const W={
       toast(error.message,'error');
       return;
     }
-
     const isEdit=!!A.editExamId;
     const actionLabel=targetStatus==='active'
       ? (isEdit?'Sınav güncelleniyor...':'Sınav yayınlanıyor...')
@@ -2174,6 +2196,9 @@ const W={
         : 'Sınav beklemede kaydediliyor...';
 
     showLoad(actionLabel);
+    let examId=A.editExamId;
+    let createdNewExam=false;
+    const writtenQuestions=[];
     try{
       const payload={
         title:t,grade:A.grade,subject:A.subject,
@@ -2189,7 +2214,6 @@ const W={
         payload.displayOrder=explicitDisplayOrder;
       }
 
-      let examId=A.editExamId;
       if(examId){
         await updateDoc(doc(db,'exams',examId),payload);
         const existingQuestions=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
@@ -2197,8 +2221,14 @@ const W={
           await deleteDoc(doc(db,'questions',qd.id));
         }
       }else{
-        const er=await addDoc(collection(db,'exams'),Object.assign({},payload,{createdAt:serverTimestamp()}));
+        const createPayload=Object.assign({},payload,{createdAt:serverTimestamp()});
+        if(targetStatus==='active'){
+          createPayload.published=false;
+          createPayload.status='draft';
+        }
+        const er=await addDoc(collection(db,'exams'),createPayload);
         examId=er.id;
+        createdNewExam=true;
       }
 
       if(!isEdit){
@@ -2207,17 +2237,23 @@ const W={
         await placeExamAtDisplayOrder(examId,A.grade,explicitDisplayOrder);
       }
 
-      const writtenQuestions=[];
       for(let i=0;i<A.questions.length;i++){
+        showLoad(`${i+1}/${A.questions.length}. soru görseli yükleniyor...`);
+        const uploadedImage=await uploadQuestionImage(examId,i,A.questions[i].img);
         const questionPayload={
           examId:examId,
-          imageData:A.questions[i].img,
+          imageUrl:uploadedImage.imageUrl,
+          imagePath:uploadedImage.imagePath||'',
           correctAnswer:A.questions[i].ans,
           sectionTitle:sectionData.assignments[i+1]||'',
           order:A.questions[i].order??i
         };
         const questionRef=await addDoc(collection(db,'questions'),questionPayload);
         writtenQuestions.push({id:questionRef.id,...questionPayload});
+      }
+
+      if(createdNewExam&&targetStatus==='active'){
+        await updateDoc(doc(db,'exams',examId),payload);
       }
 
       let recalcSummary=null;
@@ -2248,7 +2284,20 @@ const W={
       if(recalcSummary?.skipped){
         toast(`ℹ️ ${recalcSummary.skipped} eski sonuç kaydı soru sayısı uyuşmadığı için otomatik güncellenemedi.`,'info');
       }
-    }catch(e){hideLoad();toast('Hata: '+e.message,'error');}
+    }catch(e){
+      if(createdNewExam&&examId){
+        try{
+          for(const question of writtenQuestions){
+            await deleteDoc(doc(db,'questions',question.id));
+          }
+          await deleteDoc(doc(db,'exams',examId));
+        }catch(cleanupError){
+          console.error(cleanupError);
+        }
+      }
+      hideLoad();
+      toast('Hata: '+e.message,'error');
+    }
   },
   async loadExamsFilter(gf){
     showLoad();
@@ -2336,9 +2385,11 @@ const W={
     if(!confirm('Bu sınavı ve tüm sorularını silmek istiyor musunuz?\n\nBu işlem geri alınamaz!'))return;
     showLoad('Siliniyor...');
     try{
-      await deleteDoc(doc(db,'exams',id));
       const qsnap=await getDocs(query(collection(db,'questions'),where('examId','==',id)));
-      for(const qd of qsnap.docs) await deleteDoc(doc(db,'questions',qd.id));
+      for(const qd of qsnap.docs){
+        await deleteDoc(doc(db,'questions',qd.id));
+      }
+      await deleteDoc(doc(db,'exams',id));
       hideLoad();toast('Sınav silindi','success');
       A.exams=sortAdminExamRecords(A.exams.filter(e=>e.id!==id));setContent(renderAdminExams());
     }catch(e){hideLoad();toast('Hata: '+e.message,'error');}

@@ -80,13 +80,16 @@ body.theme-dark{
 .exam-section-banner .section-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#2563EB}
 .question-media-shell{width:min(100%,1120px);display:flex;flex-direction:column;align-items:center;gap:12px}
 .toolbar-dock{position:absolute;top:0;left:0;z-index:25;display:flex;flex-direction:column;width:min(112px,calc(100% - 24px));border:1.5px solid var(--border);border-radius:26px;background:var(--panel-bg);box-shadow:0 16px 40px rgba(15,23,42,.12);backdrop-filter:blur(16px);overflow:visible;transform:translate3d(14px,14px,0);touch-action:none}
+.toolbar-dock.collapsed{width:auto;min-width:112px}
 .toolbar-dock.is-dragging{box-shadow:0 22px 52px rgba(15,23,42,.18)}
 .toolbar-dock-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 10px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.08));cursor:grab}
+.toolbar-dock.collapsed .toolbar-dock-head{border-bottom:none}
 .toolbar-dock.is-dragging .toolbar-dock-head{cursor:grabbing}
 .toolbar-dock-title{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
 .toolbar-dock-head button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:14px;font-weight:900;cursor:pointer;transition:all .18s}
 .toolbar-dock-head button:hover{border-color:var(--purple);color:var(--purple)}
 .toolbar-dock-body{padding:12px 10px;max-height:min(64vh,640px);overflow:auto}
+.toolbar-dock.collapsed .toolbar-dock-body{display:none}
 .drawing-toolbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-width:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;backdrop-filter:none}
 .toolbar-section{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
 .tool-btn.compact{width:100%;min-height:56px;padding:8px 6px;flex-direction:column;justify-content:center;gap:4px;border-radius:18px}
@@ -396,6 +399,7 @@ body.theme-dark .size-value{color:var(--muted)}
   .exam-q-wrap{padding:14px 16px}
   .question-media-shell{width:100%}
   .toolbar-dock{width:min(104px,calc(100% - 16px))}
+  .toolbar-dock.collapsed{width:auto;min-width:104px}
   .question-status-strip{padding:10px 12px}
   .status-pills,.status-actions{width:100%}
   .exam-media-stage{width:100%;height:clamp(340px,52vh,520px)}
@@ -505,7 +509,7 @@ body.theme-dark .size-value{color:var(--muted)}
             <div class="toolbar-dock" id="toolbarDock">
               <div class="toolbar-dock-head" id="toolbarDragHandle">
                 <div class="toolbar-dock-title"><span>☰</span><span>Araçlar</span></div>
-                <button type="button" onclick="resetToolbarPosition()" title="Araç kutusunu başlangıç konumuna al">↺</button>
+                <button type="button" id="toolbarCollapseBtn" onclick="toggleToolbarDock()" title="Araç kutusunu kapat">−</button>
               </div>
               <div class="toolbar-dock-body">
                 <div class="drawing-toolbar" id="drawingToolbar">
@@ -760,6 +764,7 @@ let P={
   questionPanX:0,
   questionPanY:0,
   pencilPanelOpen:false,
+  toolbarVisible:true,
   toolbar:{
     x:14,
     y:14,
@@ -785,6 +790,7 @@ let P={
     startScale:1
   }
 };
+const preloadedQuestionImages=new Set();
 let donutChartInstance=null;
 let sectionChartInstance=null;
 const ADMIN_KARNE_STORAGE_KEY='kemal_exam_admin_karne_result_v1';
@@ -1246,6 +1252,7 @@ function restoreDrawingPrefs(){
     if(allowedTools.includes(stored?.drawingTool)) P.drawingTool=stored.drawingTool;
     if(allowedColors.includes(stored?.brushColor)) P.brushColor=stored.brushColor;
     if(Number.isFinite(brushSize)&&brushSize>=1&&brushSize<=8) P.brushSize=brushSize;
+    P.toolbarVisible=true;
   }catch(error){}
 }
 
@@ -1406,7 +1413,17 @@ function clampToolbarDockPosition(){
 
 function syncToolbarDock(){
   const dock=document.getElementById('toolbarDock');
+  const collapseBtn=document.getElementById('toolbarCollapseBtn');
   if(!dock) return;
+  dock.classList.toggle('collapsed',!P.toolbarVisible);
+  if(collapseBtn){
+    collapseBtn.textContent=P.toolbarVisible?'−':'＋';
+    collapseBtn.title=P.toolbarVisible?'Araç kutusunu kapat':'Araç kutusunu aç';
+    collapseBtn.setAttribute('aria-label',collapseBtn.title);
+  }
+  if(!P.toolbarVisible){
+    P.pencilPanelOpen=false;
+  }
   clampToolbarDockPosition();
   dock.style.transform=`translate3d(${P.toolbar.x||14}px,${P.toolbar.y||14}px,0)`;
   dock.classList.toggle('is-dragging',!!P.toolbar.dragging);
@@ -2005,7 +2022,23 @@ function renderQuestion(i){
   document.querySelectorAll('.op-row').forEach((r,j)=>r.classList.toggle('cur',j===i));
   syncDrawingToolbar();
   if(img.complete) requestAnimationFrame(syncDrawingSurface);
+  preloadQuestionImages(i);
   updateOpticStats();
+}
+
+function getQuestionImageSrc(question){
+  return question?.imageUrl||question?.imageData||'';
+}
+
+function preloadQuestionImages(currentIndex){
+  const indexes=[currentIndex+1,currentIndex+2,currentIndex+3,currentIndex-1].filter(index=>index>=0&&index<P.questions.length);
+  indexes.forEach(index=>{
+    const src=getQuestionImageSrc(P.questions[index]);
+    if(!src||preloadedQuestionImages.has(src)) return;
+    preloadedQuestionImages.add(src);
+    const img=new Image();
+    img.src=src;
+  });
 }
 
 function renderOptic(){
@@ -2092,6 +2125,17 @@ window.setBrushSize=function(size){
 
 window.closePencilPanel=function(){
   P.pencilPanelOpen=false;
+  syncDrawingToolbar();
+};
+
+window.toggleToolbarDock=function(forceVisible){
+  P.toolbarVisible=typeof forceVisible==='boolean'?forceVisible:!P.toolbarVisible;
+  if(P.toolbarVisible){
+    if(!Number.isFinite(P.toolbar.x)) P.toolbar.x=14;
+    if(!Number.isFinite(P.toolbar.y)) P.toolbar.y=14;
+  }else{
+    P.pencilPanelOpen=false;
+  }
   syncDrawingToolbar();
 };
 

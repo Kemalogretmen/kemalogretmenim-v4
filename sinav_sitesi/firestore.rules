@@ -44,11 +44,13 @@ service cloud.firestore {
     }
 
     function validCategoryWrite() {
-      return request.resource.data.keys().hasOnly(['grade', 'categories', 'updatedAt'])
+      return request.resource.data.keys().hasOnly(['grade', 'categories', 'sectionCategories', 'updatedAt'])
         && validGrade(request.resource.data.grade)
         && request.resource.data.categories is list
         && request.resource.data.categories.size() >= 1
         && request.resource.data.categories.size() <= 20
+        && request.resource.data.sectionCategories is list
+        && request.resource.data.sectionCategories.size() <= 20
         && request.resource.data.updatedAt == request.time;
     }
 
@@ -84,6 +86,23 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt;
     }
 
+    function validExamOrderUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayOrder', 'updatedAt'])
+        && request.resource.data.displayOrder is int
+        && request.resource.data.displayOrder >= 1
+        && request.resource.data.displayOrder <= 5000
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validExamStatusUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'published', 'updatedAt'])
+        && request.resource.data.status is string
+        && request.resource.data.status in ['active', 'paused', 'draft']
+        && request.resource.data.published is bool
+        && request.resource.data.published == (request.resource.data.status == 'active')
+        && request.resource.data.updatedAt == request.time;
+    }
+
     function validQuestionWrite() {
       return request.resource.data.examId is string
         && request.resource.data.examId.size() >= 1
@@ -98,7 +117,7 @@ service cloud.firestore {
             && request.resource.data.imageUrl.size() <= 2048)
           || (request.resource.data.imageData is string
             && request.resource.data.imageData.size() >= 1
-            && request.resource.data.imageData.size() <= 900000)
+            && request.resource.data.imageData.size() <= 1030000)
         );
     }
 
@@ -196,7 +215,7 @@ service cloud.firestore {
     match /exams/{examId} {
       allow read: if isAdmin() || resource.data.published == true;
       allow create: if isAdmin() && validExamCreate();
-      allow update: if isAdmin() && validExamUpdate();
+      allow update: if isAdmin() && (validExamUpdate() || validExamOrderUpdate() || validExamStatusUpdate());
       allow delete: if isAdmin();
     }
 
