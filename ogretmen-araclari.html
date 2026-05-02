@@ -28,12 +28,13 @@
       --bg-gradient: radial-gradient(circle at top left, #f4efff 0%, #fffdf8 46%, #eff8ff 100%);
     }
 
+    html { overscroll-behavior: none; }
     * { box-sizing: border-box; touch-action: manipulation; }
     input, select, textarea { touch-action: auto; }
 
     body {
       margin: 0; font-family: 'Nunito', sans-serif; color: var(--navy); background: var(--bg-gradient);
-      -webkit-user-select: none; user-select: none; overflow-x: hidden; min-height: 100vh;
+      -webkit-user-select: none; user-select: none; overflow-x: hidden; min-height: 100vh; overscroll-behavior: none;
     }
     p, h1, h2, h3, .big-digits, .local-clock { -webkit-user-select: text; user-select: text; }
 
@@ -145,6 +146,10 @@
       box-shadow: 0 12px 40px rgba(108,61,237,0.13), 0 2px 8px rgba(0,0,0,0.06);
       width: 62px; touch-action: none;
       overflow: visible;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      will-change: top, left;
     }
     .pro-toolbar.sub-open { width: 62px; } /* genişleme yok */
 
@@ -162,6 +167,7 @@
       min-width: 220px; max-width: 250px;
       z-index: 40;
       flex-direction: column; gap: 11px;
+      touch-action: none;
     }
     .float-panel.is-open { display: flex; animation: fadeSlideIn .18s ease; }
     @keyframes fadeSlideIn {
@@ -236,6 +242,8 @@
 
     /* Renk paleti — kompakt */
     .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .shape-control-block { display: grid; gap: 7px; }
+    .shape-thickness-row { display: flex; align-items: center; gap: 8px; }
     .color-btn {
       width: 26px; height: 26px; border-radius: 50%;
       border: 2px solid rgba(255,255,255,.8);
@@ -290,12 +298,13 @@
     @media (max-width: 760px) {
       .pro-toolbar {
         top: auto; left: 8px; right: 8px; bottom: 8px;
-        width: calc(100% - 16px) !important;
+        width: min(calc(100vw - 16px), calc(100% - 16px)) !important;
+        max-width: calc(100vw - 16px);
         flex-direction: row; flex-wrap: wrap;
         border-radius: 18px; padding: 8px 10px;
         align-items: center;
       }
-      .pro-toolbar.sub-open { width: calc(100% - 16px) !important; }
+      .pro-toolbar.sub-open { width: min(calc(100vw - 16px), calc(100% - 16px)) !important; }
       .toolbar-main { flex-direction: row; flex-wrap: wrap; gap: 4px; align-items: center; }
       .tool-grid-4 { flex-direction: row; flex-wrap: wrap; }
       .toolbar-header { padding: 0; width: auto; }
@@ -334,8 +343,8 @@
 
     /* Beyaz Tahta Ana Sahne */
     .board-shell { display: grid; gap: 12px; }
-    .board-stage { position: relative; min-height: 80vh; border-radius: 26px; overflow: hidden; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; }
-    .board-plane { position: relative; width: 100%; min-height: max(100%, 800px); background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.3s, height 0.3s; overflow: hidden; }
+    .board-stage { position: relative; min-height: 80vh; border-radius: 26px; overflow: hidden; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; overscroll-behavior: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+    .board-plane { position: relative; width: 100%; min-height: max(100%, 800px); background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.3s, height 0.3s; overflow: hidden; transform: translateZ(0); }
     .board-plane.board-paper-white { background: #ffffff; }
     .board-plane.board-paper-lined { background: repeating-linear-gradient(180deg, #ffffff 0 34px, rgba(115,128,255,0.15) 34px 36px); }
     .board-plane.board-paper-grid { background: linear-gradient(rgba(115,128,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(115,128,255,0.12) 1px, transparent 1px), #ffffff; background-size: 34px 34px, 34px 34px, auto; }
@@ -351,7 +360,7 @@
         ),
         #e6f8ff;
     }
-    .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+    .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-user-drag:none; }
     .board-overlay-text { position: absolute; min-width: 150px; min-height: 50px; resize: both; padding: 10px; border-radius: 12px; border: 2px dashed var(--purple); background: rgba(255,255,255,0.95); color: var(--navy); font: 800 24px/1.3 'Nunito', sans-serif; outline: none; z-index: 12; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 
     /* AÇIÖLÇER (İLETKİ) CSS */
@@ -711,7 +720,7 @@
     #konfetiCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; display: none; }
 
     @media (max-width:1080px) { .tool-hub, .timer-grid { grid-template-columns: 1fr; } .svg-timer-wrap { max-width: 320px; } .tools-page { padding-top: 92px; } .fraction-grid { grid-template-columns: 1fr; } .class-grid{ grid-template-columns: 1fr;} }
-    @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel { padding: 16px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .board-stage { min-height: 66vh; } .pro-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: calc(100% - 20px) !important; flex-direction: row; flex-wrap: wrap; overflow:auto; max-height:340px;} .pro-toolbar.is-collapsed{max-height: 212px;} .calc-btn { height: 60px; font-size: 22px; } .rng-wrapper { grid-template-columns: 1fr; } .wheel-container { gap: 8px; padding: 20px 16px; } }
+    @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel { padding: 16px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .board-stage { min-height: 66vh; } .pro-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: min(calc(100vw - 20px), calc(100% - 20px)) !important; max-width: calc(100vw - 20px); flex-direction: row; flex-wrap: wrap; overflow:auto; max-height:340px;} .pro-toolbar.is-collapsed{max-height: 212px;} .calc-btn { height: 60px; font-size: 22px; } .rng-wrapper { grid-template-columns: 1fr; } .wheel-container { gap: 8px; padding: 20px 16px; } }
     @media (max-width:480px) { .time-bar-date { display: none; } .board-stage { min-height: 72vh; } .calc-keys { gap: 8px; } .calc-btn { height: 54px; font-size: 20px; } .wheel-container { gap: 4px; padding: 16px 8px; } .wheel-settings { padding: 10px 16px; gap: 10px; } .wheel-settings label { font-size: 13px; } .frac-box{ width: 100%;} }
   </style>
 </head>
@@ -993,6 +1002,18 @@
                       <button class="color-btn" type="button" data-board-color="#8b5a2b" style="background:#8b5a2b" title="Kahve"></button>
                       <button class="color-btn" type="button" data-board-color="#9ca3af" data-light="true" style="background:#9ca3af" title="Gri"></button>
                       <button class="color-btn" type="button" data-board-color="#ffffff" data-light="true" style="background:#ffffff" title="Beyaz"></button>
+                      <button class="color-btn" type="button" data-board-color="#000000" style="background:#000000" title="Tam Siyah"></button>
+                      <button class="color-btn" type="button" data-board-color="#334155" style="background:#334155" title="Lacivert Gri"></button>
+                      <button class="color-btn" type="button" data-board-color="#0f766e" style="background:#0f766e" title="Koyu Turkuaz"></button>
+                      <button class="color-btn" type="button" data-board-color="#84cc16" style="background:#84cc16" title="Limon Yeşili"></button>
+                      <button class="color-btn" type="button" data-board-color="#06b6d4" style="background:#06b6d4" title="Camgöbeği"></button>
+                      <button class="color-btn" type="button" data-board-color="#2563eb" style="background:#2563eb" title="Koyu Mavi"></button>
+                      <button class="color-btn" type="button" data-board-color="#4f46e5" style="background:#4f46e5" title="İndigo"></button>
+                      <button class="color-btn" type="button" data-board-color="#a855f7" style="background:#a855f7" title="Eflatun"></button>
+                      <button class="color-btn" type="button" data-board-color="#f43f5e" style="background:#f43f5e" title="Gül"></button>
+                      <button class="color-btn" type="button" data-board-color="#7f1d1d" style="background:#7f1d1d" title="Bordo"></button>
+                      <button class="color-btn" type="button" data-board-color="#d97706" style="background:#d97706" title="Kehribar"></button>
+                      <button class="color-btn" type="button" data-board-color="#e5e7eb" data-light="true" style="background:#e5e7eb" title="Açık Gri"></button>
                     </div>
                   </div>
 
@@ -1022,6 +1043,30 @@
                     <button class="toolbar-btn" type="button" data-board-tool="star" title="Yıldız" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-star"></i></button>
                     <button class="toolbar-btn" type="button" data-board-tool="segment" title="Parça" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-minus"></i></button>
                     <button class="toolbar-btn" type="button" data-board-tool="infiniteLine" title="Doğru" style="width:100%;height:36px;border-radius:10px;font-size:14px;border:1.5px solid rgba(227,214,255,.7);background:#fafbff;"><i class="fas fa-arrows-alt-h"></i></button>
+                  </div>
+                  <div class="shape-control-block">
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;">Şekil Rengi</div>
+                    <div class="color-grid" id="shapeColorGrid">
+                      <button class="color-btn is-active" type="button" data-shape-color="#1f2142" style="background:#1f2142" title="Siyah"></button>
+                      <button class="color-btn" type="button" data-shape-color="#ef4444" style="background:#ef4444" title="Kırmızı"></button>
+                      <button class="color-btn" type="button" data-shape-color="#f97316" style="background:#f97316" title="Turuncu"></button>
+                      <button class="color-btn" type="button" data-shape-color="#facc15" data-light="true" style="background:#facc15" title="Sarı"></button>
+                      <button class="color-btn" type="button" data-shape-color="#22c55e" style="background:#22c55e" title="Yeşil"></button>
+                      <button class="color-btn" type="button" data-shape-color="#14b8a6" style="background:#14b8a6" title="Turkuaz"></button>
+                      <button class="color-btn" type="button" data-shape-color="#3b82f6" style="background:#3b82f6" title="Mavi"></button>
+                      <button class="color-btn" type="button" data-shape-color="#8b5cf6" style="background:#8b5cf6" title="Mor"></button>
+                      <button class="color-btn" type="button" data-shape-color="#ec4899" style="background:#ec4899" title="Pembe"></button>
+                      <button class="color-btn" type="button" data-shape-color="#334155" style="background:#334155" title="Koyu Gri"></button>
+                      <button class="color-btn" type="button" data-shape-color="#ffffff" data-light="true" style="background:#ffffff" title="Beyaz"></button>
+                      <button class="color-btn" type="button" data-shape-color="#000000" style="background:#000000" title="Tam Siyah"></button>
+                    </div>
+                  </div>
+                  <div class="shape-control-block">
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;">Şekil Kalınlığı</div>
+                    <div class="shape-thickness-row">
+                      <span class="thickness-dot" id="shapeThicknessDot" style="width:5px;height:5px;background:#1f2142;"></span>
+                      <input class="size-slider" id="shapeSizeSlider" type="range" min="1" max="28" step="1" value="4" style="flex:1;">
+                    </div>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px;">
                     <button class="toolbar-btn is-active" type="button" data-board-palette="stroke" style="height:32px;font-size:11px;font-weight:800;border-radius:9px;">Çizgi</button>
@@ -1644,9 +1689,13 @@
       board: {
         tool: 'pen', strokeColor: '#1f2142', strokeColorName: 'Siyah',
         fillColor: '#facc15', fillColorName: 'Sarı', fillEnabled: false,
+        shapeStrokeColor: '#1f2142', shapeStrokeColorName: 'Siyah',
+        shapeFillColor: '#facc15', shapeFillColorName: 'Sarı', shapeFillEnabled: false,
+        shapePaletteTarget: 'stroke', shapeSize: 4,
         paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
         drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
-        startX: 0, startY: 0, points: [],
+        startX: 0, startY: 0, points: [], lastPoint: null,
+        panStartClientX: 0, panStartClientY: 0, toolbarLeft: 16, toolbarTop: 16, autosaveTimer: null,
         pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
         pageIndex: 0,
         selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
@@ -1684,6 +1733,17 @@
       'a3h': { w: 1600, h: 1131, label: 'A3 Yatay' }
     };
 
+    var BOARD_STORAGE_KEY = 'kemal_teacher_whiteboard_local_v1';
+    var MAX_BOARD_UNDO = 36;
+    var COLOR_NAMES = {
+      '#1f2142': 'Siyah', '#000000': 'Tam Siyah', '#334155': 'Lacivert Gri', '#ef4444': 'Kırmızı',
+      '#f97316': 'Turuncu', '#d97706': 'Kehribar', '#facc15': 'Sarı', '#84cc16': 'Limon Yeşili',
+      '#22c55e': 'Yeşil', '#0f766e': 'Koyu Turkuaz', '#14b8a6': 'Turkuaz', '#06b6d4': 'Camgöbeği',
+      '#3b82f6': 'Mavi', '#2563eb': 'Koyu Mavi', '#4f46e5': 'İndigo', '#8b5cf6': 'Mor',
+      '#a855f7': 'Eflatun', '#ec4899': 'Pembe', '#f43f5e': 'Gül', '#7f1d1d': 'Bordo',
+      '#8b5a2b': 'Kahve', '#9ca3af': 'Gri', '#e5e7eb': 'Açık Gri', '#ffffff': 'Beyaz'
+    };
+
     var E = {
       timeBarClock: document.getElementById('timeBarClock'), timeBarDate: document.getElementById('timeBarDate'), timeBarTz: document.getElementById('timeBarTz'),
       bigDigitsMain: document.getElementById('bigDigitsMain'), bigDigitsMs: document.getElementById('bigDigitsMs'), timerProgressRing: document.getElementById('timerProgressRing'), modeChip: document.getElementById('modeChip'), statusChip: document.getElementById('statusChip'), targetChip: document.getElementById('targetChip'), liveBadge: document.getElementById('liveBadge'),
@@ -1698,9 +1758,10 @@
       textAlignBtns: [].slice.call(document.querySelectorAll('[data-text-align]')), textWeightBtns: [].slice.call(document.querySelectorAll('[data-text-weight]')), textStyleBtns: [].slice.call(document.querySelectorAll('[data-text-style]')),
       boardStage: document.getElementById('whiteboardStage'), boardPlane: document.getElementById('boardPlane'), boardCanvas: document.getElementById('whiteboardCanvas'), boardPreview: document.getElementById('whiteboardPreviewCanvas'),
       boardToolbar: document.getElementById('boardToolbar'), boardToolbarHandle: document.getElementById('boardToolbarHandle'), shapeToggleBtn: document.getElementById('shapeToggleBtn'), shapePanel: document.getElementById('shapePanel'),
-      boardFillToggleBtn: document.getElementById('boardFillToggleBtn'), boardClearBtn: document.getElementById('boardClearBtn'), boardUndoBtn: document.getElementById('boardUndoBtn'), boardRedoBtn: document.getElementById('boardRedoBtn'),
+      boardFillToggleBtn: document.getElementById('boardFillToggleBtn'), boardClearBtn: document.getElementById('clearBoardBtn'), boardUndoBtn: document.getElementById('boardUndoBtn'), boardRedoBtn: document.getElementById('boardRedoBtn'),
       boardFullscreenBtn: document.getElementById('boardFullscreenBtn'), boardSaveBtn: document.getElementById('boardSaveBtn'), boardPrintBtn: document.getElementById('boardPrintBtn'),
       boardSizeSlider: document.getElementById('boardSizeSlider'), boardSizeDisplay: document.getElementById('boardSizeDisplay'), boardSizeSample: document.getElementById('boardSizeSample'),
+      shapeColorBtns: [].slice.call(document.querySelectorAll('[data-shape-color]')), shapeSizeSlider: document.getElementById('shapeSizeSlider'), shapeThicknessDot: document.getElementById('shapeThicknessDot'),
       textTools: document.getElementById('textTools'), boardTextSizeSlider: document.getElementById('boardTextSizeSlider'), textSizeDisplay: document.getElementById('textSizeDisplay'),
       boardToolLabel: document.getElementById('boardToolLabel'), boardColorLabel: document.getElementById('boardColorLabel'), boardFillLabel: document.getElementById('boardFillLabel'),
       prevPageBtn: document.getElementById('prevPageBtn'), nextPageBtn: document.getElementById('nextPageBtn'), addPageBtn: document.getElementById('addPageBtn'), deletePageBtn: document.getElementById('deletePageBtn'),
@@ -2442,12 +2503,59 @@
 
     /* ── BEYAZ TAHTA ── */
     function getActivePage() { return S.board.pages[S.board.pageIndex]; }
+    function cloneBoardItems(items) { return JSON.parse(JSON.stringify(items || [])); }
+    function normalizeBoardPage(page) {
+      var items = cloneBoardItems(page && page.items ? page.items : []);
+      return { items: items, undoStack: [cloneBoardItems(items)], undoIndex: 0 };
+    }
+    function scheduleBoardAutosave() {
+      if(S.board.autosaveTimer) clearTimeout(S.board.autosaveTimer);
+      S.board.autosaveTimer = setTimeout(saveBoardToMemory, 160);
+    }
+    function saveBoardToMemory() {
+      if(S.board.autosaveTimer) { clearTimeout(S.board.autosaveTimer); S.board.autosaveTimer = null; }
+      try {
+        localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify({
+          version: 1,
+          pageIndex: S.board.pageIndex,
+          paper: S.board.paper,
+          pageSize: S.board.pageSize,
+          strokeColor: S.board.strokeColor,
+          size: S.board.size,
+          shapeStrokeColor: S.board.shapeStrokeColor,
+          shapeFillColor: S.board.shapeFillColor,
+          shapeFillEnabled: S.board.shapeFillEnabled,
+          shapeSize: S.board.shapeSize,
+          toolbarLeft: S.board.toolbarLeft,
+          toolbarTop: S.board.toolbarTop,
+          pages: S.board.pages.map(function(page) { return { items: page.items || [] }; })
+        }));
+      } catch(err) {}
+    }
+    function loadBoardFromMemory() {
+      try {
+        var stored = JSON.parse(localStorage.getItem(BOARD_STORAGE_KEY) || 'null');
+        if(!stored || !Array.isArray(stored.pages) || !stored.pages.length) return;
+        S.board.pages = stored.pages.map(normalizeBoardPage);
+        S.board.pageIndex = Math.max(0, Math.min(S.board.pages.length - 1, Number(stored.pageIndex) || 0));
+        S.board.paper = stored.paper || S.board.paper;
+        S.board.pageSize = stored.pageSize || S.board.pageSize;
+        S.board.strokeColor = stored.strokeColor || S.board.strokeColor;
+        S.board.size = Number(stored.size) || S.board.size;
+        S.board.shapeStrokeColor = stored.shapeStrokeColor || S.board.shapeStrokeColor;
+        S.board.shapeFillColor = stored.shapeFillColor || S.board.shapeFillColor;
+        S.board.shapeFillEnabled = !!stored.shapeFillEnabled;
+        S.board.shapeSize = Number(stored.shapeSize) || S.board.shapeSize;
+        S.board.toolbarLeft = Number(stored.toolbarLeft) || 16;
+        S.board.toolbarTop = Number(stored.toolbarTop) || 16;
+      } catch(err) {}
+    }
     function syncPageUI() { if(E.pageInfoDisplay) E.pageInfoDisplay.textContent = (S.board.pageIndex + 1) + ' / ' + S.board.pages.length; }
-    function addPage() { S.board.pages.splice(S.board.pageIndex + 1, 0, { items: [], undoStack: [[]], undoIndex: 0 }); S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); }
-    function deletePage() { if (S.board.pages.length <= 1) { clearBoard(); return; } S.board.pages.splice(S.board.pageIndex, 1); if (S.board.pageIndex >= S.board.pages.length) S.board.pageIndex = S.board.pages.length - 1; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); }
-    function prevPage() { if (S.board.pageIndex > 0) { S.board.pageIndex--; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); } }
-    function nextPage() { if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); } }
-    function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); }
+    function addPage() { S.board.pages.splice(S.board.pageIndex + 1, 0, { items: [], undoStack: [[]], undoIndex: 0 }); S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
+    function deletePage() { if (S.board.pages.length <= 1) { clearBoard(); return; } S.board.pages.splice(S.board.pageIndex, 1); if (S.board.pageIndex >= S.board.pages.length) S.board.pageIndex = S.board.pages.length - 1; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
+    function prevPage() { if (S.board.pageIndex > 0) { S.board.pageIndex--; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
+    function nextPage() { if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
+    function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); scheduleBoardAutosave(); }
 
     var boardCtx = null; var boardPreviewCtx = null;
 
@@ -2461,14 +2569,40 @@
       boardCtx = E.boardCanvas.getContext('2d'); boardPreviewCtx = E.boardPreview.getContext('2d');
       if(boardCtx) boardCtx.setTransform(ratio, 0, 0, ratio, 0, 0); if(boardPreviewCtx) boardPreviewCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       redrawBoard();
+      positionBoardToolbar();
     }
     function clearPreview() { if(boardPreviewCtx && E.boardPreview) { boardPreviewCtx.clearRect(0, 0, E.boardPreview.width, E.boardPreview.height); } }
     function getBoardPoint(evt) { var rect = E.boardCanvas.getBoundingClientRect(); return { x: evt.clientX - rect.left, y: evt.clientY - rect.top }; }
+    function positionBoardToolbar() {
+      if(!E.boardStage || !E.boardToolbar || !E.boardPlane) return;
+      var mobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+      var stageWidth = E.boardStage.clientWidth || 0;
+      var stageHeight = E.boardStage.clientHeight || 0;
+      if(mobile) {
+        var mobileWidth = Math.max(260, stageWidth - 16);
+        E.boardToolbar.style.width = mobileWidth + 'px';
+        E.boardToolbar.style.left = (E.boardStage.scrollLeft + 8) + 'px';
+        E.boardToolbar.style.top = (E.boardStage.scrollTop + Math.max(8, stageHeight - E.boardToolbar.offsetHeight - 8)) + 'px';
+        E.boardToolbar.style.right = 'auto';
+        E.boardToolbar.style.bottom = 'auto';
+        return;
+      }
+      E.boardToolbar.style.width = '62px';
+      E.boardToolbar.style.left = (E.boardStage.scrollLeft + S.board.toolbarLeft) + 'px';
+      E.boardToolbar.style.top = (E.boardStage.scrollTop + S.board.toolbarTop) + 'px';
+      E.boardToolbar.style.right = 'auto';
+      E.boardToolbar.style.bottom = 'auto';
+    }
 
     function syncBoardUI() {
-      var activeColor = S.board.paletteTarget === 'fill' ? S.board.fillColor : S.board.strokeColor;
+      var activeColor = S.board.strokeColor;
+      var activeShapeColor = S.board.shapePaletteTarget === 'fill' ? S.board.shapeFillColor : S.board.shapeStrokeColor;
       if(E.boardToolbar) E.boardToolbar.style.setProperty('--board-accent-color', activeColor || '#6c3ded');
       E.boardToolBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardTool === S.board.tool); });
+      var penGroup = document.getElementById('penGroupBtn');
+      var shapeGroup = document.getElementById('shapeGroupBtn');
+      if(penGroup) penGroup.classList.toggle('is-active', boardCanDraw(S.board.tool));
+      if(shapeGroup) shapeGroup.classList.toggle('is-active', !boardCanDraw(S.board.tool) && ['line','ray','dashline','rect','square','circle','triangle','star','segment','infiniteLine'].indexOf(S.board.tool) > -1);
       // Renk butonları — her seferinde taze DOM sorgusu (scope sorunu yok)
       document.querySelectorAll('[data-board-color]').forEach(function(btn) {
         var match = btn.dataset.boardColor === activeColor;
@@ -2479,18 +2613,33 @@
       var thickEl = document.getElementById('thicknessDot');
       if(dotEl)   dotEl.style.background   = activeColor || '#1f2142';
       if(thickEl) thickEl.style.background = activeColor || '#1f2142';
-      E.boardPaletteBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPalette === S.board.paletteTarget); });
+      if(thickEl) { thickEl.style.width = Math.max(5, Math.min(22, S.board.size)) + 'px'; thickEl.style.height = Math.max(5, Math.min(22, S.board.size)) + 'px'; }
+      E.shapeColorBtns.forEach(function(btn) {
+        var shapeMatch = btn.dataset.shapeColor === activeShapeColor;
+        btn.classList.toggle('is-active', shapeMatch);
+        btn.setAttribute('aria-pressed', shapeMatch ? 'true' : 'false');
+      });
+      if(E.shapeThicknessDot) {
+        E.shapeThicknessDot.style.background = activeShapeColor || '#1f2142';
+        E.shapeThicknessDot.style.width = Math.max(5, Math.min(24, S.board.shapeSize + 2)) + 'px';
+        E.shapeThicknessDot.style.height = Math.max(5, Math.min(24, S.board.shapeSize + 2)) + 'px';
+      }
+      E.boardPaletteBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPalette === S.board.shapePaletteTarget); });
       E.boardPaperBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPaper === S.board.paper); });
+      if(E.pageSizeSelect) E.pageSizeSelect.value = S.board.pageSize;
       E.textAlignBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textAlign === S.board.textAlign); });
       E.textWeightBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textWeight === String(S.board.textWeight)); });
       E.textStyleBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textStyle === S.board.textStyle); });
       if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid', 'board-paper-guide'); E.boardPlane.classList.add('board-paper-' + S.board.paper); }
+      if(E.boardPreview) E.boardPreview.style.cursor = S.board.tool === 'pan' ? 'grab' : (S.board.tool === 'select' ? 'default' : (S.board.tool === 'text' ? 'text' : 'crosshair'));
       if(E.shapePanel) E.shapePanel.classList.toggle('is-open', S.board.shapesOpen);
       if(E.shapeToggleBtn) E.shapeToggleBtn.setAttribute('aria-expanded', S.board.shapesOpen ? 'true' : 'false');
-      if(E.boardFillToggleBtn) { E.boardFillToggleBtn.classList.toggle('is-active', !S.board.fillEnabled); E.boardFillToggleBtn.innerHTML = S.board.fillEnabled ? 'Dolu' : 'Boş'; }
+      if(E.boardFillToggleBtn) { E.boardFillToggleBtn.classList.toggle('is-active', !S.board.shapeFillEnabled); E.boardFillToggleBtn.innerHTML = S.board.shapeFillEnabled ? 'Dolu' : 'Boş'; }
       if(E.boardSizeSlider) E.boardSizeSlider.value = String(S.board.size);
+      if(E.shapeSizeSlider) E.shapeSizeSlider.value = String(S.board.shapeSize);
       if(E.boardTextSizeSlider) E.boardTextSizeSlider.value = String(S.board.textSize);
       syncActiveTextStyles(); syncPageUI();
+      positionBoardToolbar();
     }
 
     function boardStrokeStyle(item) {
@@ -2500,6 +2649,17 @@
     }
     function applyBoardBrush(ctx, item) { var style = boardStrokeStyle(item); ctx.globalCompositeOperation = style.composite; ctx.globalAlpha = style.alpha; ctx.strokeStyle = style.color; ctx.fillStyle = style.color; ctx.lineWidth = style.width; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.setLineDash(style.dash); }
     function drawStrokePath(ctx, item) { if(!item.points || item.points.length < 2) return; applyBoardBrush(ctx, item); ctx.beginPath(); ctx.moveTo(item.points[0].x, item.points[0].y); for(var i = 1; i < item.points.length; i += 1) { ctx.lineTo(item.points[i].x, item.points[i].y); } ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    function drawStrokeSegment(ctx, item, from, to) {
+      if(!ctx || !from || !to) return;
+      applyBoardBrush(ctx, item);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
     function drawArrowHead(ctx, from, to, color, width) { var angle = Math.atan2(to.y - from.y, to.x - from.x); var len = Math.max(16, width * 3.5); var wing = Math.max(8, width * 1.5); ctx.save(); ctx.fillStyle = color; ctx.translate(to.x, to.y); ctx.rotate(angle); ctx.beginPath(); var tipShift = width / 2; ctx.translate(tipShift, 0); ctx.moveTo(0, 0); ctx.lineTo(-len, wing); ctx.lineTo(-len * 0.75, 0); ctx.lineTo(-len, -wing); ctx.closePath(); ctx.fill(); ctx.restore(); }
     function drawStarPath(ctx, x1, y1, x2, y2) { var cx = (x1 + x2) / 2; var cy = (y1 + y2) / 2; var radius = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2; var inner = radius * 0.46; ctx.beginPath(); for(var i = 0; i < 10; i += 1) { var angle = (-90 + i * 36) * Math.PI / 180; var r = i % 2 === 0 ? radius : inner; var px = cx + Math.cos(angle) * r; var py = cy + Math.sin(angle) * r; if(i === 0) { ctx.moveTo(px, py); } else { ctx.lineTo(px, py); } } ctx.closePath(); }
     
@@ -2546,7 +2706,14 @@
     function pointInRect(px, py, r) { return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h; }
 
     function redrawBoard() { if(!boardCtx || !E.boardCanvas) return; boardCtx.clearRect(0, 0, E.boardCanvas.width, E.boardCanvas.height); var page = getActivePage(); page.items.forEach(function(item) { drawBoardItem(boardCtx, item); }); if (S.board.tool === 'select' && S.board.selectedItem) { drawSelectionBox(boardCtx, getBounds(S.board.selectedItem)); } if(E.boardStage) E.boardStage.classList.toggle('has-content', page.items.length > 0); }
-    function saveSnapshot() { var page = getActivePage(); page.undoStack.splice(page.undoIndex + 1); page.undoStack.push(JSON.parse(JSON.stringify(page.items))); page.undoIndex++; }
+    function saveSnapshot() {
+      var page = getActivePage();
+      page.undoStack.splice(page.undoIndex + 1);
+      page.undoStack.push(cloneBoardItems(page.items));
+      if(page.undoStack.length > MAX_BOARD_UNDO) page.undoStack.shift();
+      page.undoIndex = page.undoStack.length - 1;
+      scheduleBoardAutosave();
+    }
     function pushBoardItem(item) { getActivePage().items.push(item); saveSnapshot(); redrawBoard(); }
 
     function commitTextOverlay(save) {
@@ -2571,14 +2738,13 @@
         }
         redrawBoard(); return;
       }
-      S.board.selectedItem = null;
-      if(S.board.tool === 'pan') { S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; S.board.panStartLeft = E.boardStage.scrollLeft; S.board.panStartTop = E.boardStage.scrollTop; return; }
+      if(S.board.selectedItem) { S.board.selectedItem = null; redrawBoard(); } else { S.board.selectedItem = null; }
+      if(S.board.tool === 'pan') { S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; S.board.panStartLeft = E.boardStage.scrollLeft; S.board.panStartTop = E.boardStage.scrollTop; if(E.boardPreview) E.boardPreview.style.cursor = 'grabbing'; return; }
       if(S.board.tool === 'text') { placeTextBox(point); return; }
-      S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; S.board.points = [{ x: point.x, y: point.y }]; clearPreview();
-      if(boardCanDraw(S.board.tool)) { drawStrokePath(boardPreviewCtx, { tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points }); }
+      S.board.drawing = true; S.board.startX = point.x; S.board.startY = point.y; S.board.points = [{ x: point.x, y: point.y }]; S.board.lastPoint = { x: point.x, y: point.y }; clearPreview();
     }
 
-    function moveBoardDraw(point) {
+    function moveBoardDraw(point, evt) {
       if(!S.board.drawing) return;
       if(S.board.tool === 'select' && S.board.selectedItem) {
         var dx = point.x - S.board.startX; var dy = point.y - S.board.startY; var orig = S.board.dragStartItem; var item = S.board.selectedItem;
@@ -2598,20 +2764,34 @@
         }
         redrawBoard(); return;
       }
-      if(S.board.tool === 'pan') { E.boardStage.scrollLeft = S.board.panStartLeft - (point.x - S.board.startX); E.boardStage.scrollTop = S.board.panStartTop - (point.y - S.board.startY); return; }
-      clearPreview();
-      if(boardCanDraw(S.board.tool)) { S.board.points.push({ x: point.x, y: point.y }); drawStrokePath(boardPreviewCtx, { tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points }); }
-      else { drawShape(boardPreviewCtx, { kind: 'shape', tool: S.board.tool, strokeColor: S.board.strokeColor, fillColor: S.board.fillColor, fillEnabled: S.board.fillEnabled, size: S.board.size, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
+      if(S.board.tool === 'pan') {
+        var clientX = evt && typeof evt.clientX === 'number' ? evt.clientX : point.x;
+        var clientY = evt && typeof evt.clientY === 'number' ? evt.clientY : point.y;
+        E.boardStage.scrollLeft = S.board.panStartLeft - (clientX - S.board.panStartClientX);
+        E.boardStage.scrollTop = S.board.panStartTop - (clientY - S.board.panStartClientY);
+        positionBoardToolbar();
+        return;
+      }
+      if(boardCanDraw(S.board.tool)) {
+        var last = S.board.lastPoint || S.board.points[S.board.points.length - 1];
+        var dxp = point.x - last.x; var dyp = point.y - last.y;
+        if((dxp * dxp + dyp * dyp) < 0.36) return;
+        S.board.points.push({ x: point.x, y: point.y });
+        drawStrokeSegment(boardCtx, { tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size }, last, point);
+        S.board.lastPoint = { x: point.x, y: point.y };
+      }
+      else { clearPreview(); drawShape(boardPreviewCtx, { kind: 'shape', tool: S.board.tool, strokeColor: S.board.shapeStrokeColor, fillColor: S.board.shapeFillColor, fillEnabled: S.board.shapeFillEnabled, size: S.board.shapeSize, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
     }
 
     function endBoardDraw(point) {
       if(!S.board.drawing) return;
       if(S.board.tool === 'select') { if(S.board.selectedItem && S.board.selectAction) saveSnapshot(); S.board.drawing = false; S.board.selectAction = null; return; }
-      if(S.board.tool === 'pan') { S.board.drawing = false; return; }
+      if(S.board.tool === 'pan') { S.board.drawing = false; syncBoardUI(); return; }
       S.board.drawing = false; clearPreview();
       if(boardCanDraw(S.board.tool)) { if(S.board.points.length === 1) S.board.points.push({ x: point.x + 0.1, y: point.y + 0.1 }); pushBoardItem({ kind: 'path', tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points.slice() }); } 
-      else { pushBoardItem({ kind: 'shape', tool: S.board.tool, strokeColor: S.board.strokeColor, fillColor: S.board.fillColor, fillEnabled: S.board.fillEnabled, size: S.board.size, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
+      else { pushBoardItem({ kind: 'shape', tool: S.board.tool, strokeColor: S.board.shapeStrokeColor, fillColor: S.board.shapeFillColor, fillEnabled: S.board.shapeFillEnabled, size: S.board.shapeSize, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
       S.board.points = [];
+      S.board.lastPoint = null;
     }
 
     function setBoardTool(tool) {
@@ -2622,22 +2802,37 @@
     }
     function setBoardColor(color) {
       if(boardCanDraw(S.board.tool) || S.board.tool === 'text') S.board.paletteTarget = 'stroke';
-      if(S.board.paletteTarget === 'fill') { S.board.fillColor = color; S.board.fillColorName = COLOR_NAMES[color] || 'Renk'; S.board.fillEnabled = true; } else { S.board.strokeColor = color; S.board.strokeColorName = COLOR_NAMES[color] || 'Renk'; }
+      S.board.strokeColor = color;
+      S.board.strokeColorName = COLOR_NAMES[color] || 'Renk';
       updateColorDot(color);
       syncBoardUI();
+      scheduleBoardAutosave();
     }
-    function setBoardSize(size) { S.board.size = size; syncBoardUI(); }
-    function setBoardPalette(target) { S.board.paletteTarget = target; syncBoardUI(); }
-    function toggleBoardFill() { S.board.fillEnabled = !S.board.fillEnabled; syncBoardUI(); }
+    function setShapeColor(color) {
+      if(S.board.shapePaletteTarget === 'fill') {
+        S.board.shapeFillColor = color;
+        S.board.shapeFillColorName = COLOR_NAMES[color] || 'Renk';
+        S.board.shapeFillEnabled = true;
+      } else {
+        S.board.shapeStrokeColor = color;
+        S.board.shapeStrokeColorName = COLOR_NAMES[color] || 'Renk';
+      }
+      syncBoardUI();
+      scheduleBoardAutosave();
+    }
+    function setBoardSize(size) { S.board.size = size; syncBoardUI(); scheduleBoardAutosave(); }
+    function setShapeSize(size) { S.board.shapeSize = Math.max(1, Math.min(28, Number(size) || 4)); syncBoardUI(); scheduleBoardAutosave(); }
+    function setBoardPalette(target) { S.board.shapePaletteTarget = target === 'fill' ? 'fill' : 'stroke'; syncBoardUI(); }
+    function toggleBoardFill() { S.board.shapeFillEnabled = !S.board.shapeFillEnabled; syncBoardUI(); scheduleBoardAutosave(); }
     function toggleShapesPanel() { S.board.shapesOpen = !S.board.shapesOpen; syncBoardUI(); }
     function setTextAlign(value) { S.board.textAlign = value; syncBoardUI(); }
     function setTextWeight(value) { S.board.textWeight = value; syncBoardUI(); }
     function setTextStyle(value) { S.board.textStyle = value; syncBoardUI(); }
     function setTextSize(value) { S.board.textSize = value; syncBoardUI(); }
-    function setBoardPaper(paper) { S.board.paper = paper; syncBoardUI(); }
+    function setBoardPaper(paper) { S.board.paper = paper; syncBoardUI(); scheduleBoardAutosave(); }
     function clearBoard() { commitTextOverlay(false); var page = getActivePage(); page.items = []; S.board.selectedItem = null; saveSnapshot(); clearPreview(); redrawBoard(); }
-    function undoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex > 0) { page.undoIndex--; page.items = JSON.parse(JSON.stringify(page.undoStack[page.undoIndex])); S.board.selectedItem = null; redrawBoard(); } }
-    function redoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex < page.undoStack.length - 1) { page.undoIndex++; page.items = JSON.parse(JSON.stringify(page.undoStack[page.undoIndex])); S.board.selectedItem = null; redrawBoard(); } }
+    function undoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex > 0) { page.undoIndex--; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
+    function redoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex < page.undoStack.length - 1) { page.undoIndex++; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
     function toggleBoardFs() { fsEl() === E.boardStage ? exitFs().catch(function(){}) : reqFs(E.boardStage).catch(function(){}); }
 
     function getCompositeDataURL() {
@@ -2672,14 +2867,17 @@
       if(!E.boardToolbar || !E.boardToolbarHandle || !E.boardPlane) return;
       var drag = { active: false, dx: 0, dy: 0, id: null };
       E.boardToolbarHandle.addEventListener('pointerdown', function(evt){
-        if(window.innerWidth <= 760) return; drag.active = true; drag.id = evt.pointerId; var rect = E.boardToolbar.getBoundingClientRect(); drag.dx = evt.clientX - rect.left; drag.dy = evt.clientY - rect.top; E.boardToolbar.classList.add('is-dragging'); E.boardToolbarHandle.setPointerCapture(evt.pointerId);
+        if(window.innerWidth <= 760) return; evt.preventDefault(); drag.active = true; drag.id = evt.pointerId; var rect = E.boardToolbar.getBoundingClientRect(); drag.dx = evt.clientX - rect.left; drag.dy = evt.clientY - rect.top; E.boardToolbar.classList.add('is-dragging'); E.boardToolbarHandle.setPointerCapture(evt.pointerId);
       });
       E.boardToolbarHandle.addEventListener('pointermove', function(evt){
-        if(!drag.active) return; var stageRect = E.boardStage.getBoundingClientRect(); var width = E.boardToolbar.offsetWidth; var height = E.boardToolbar.offsetHeight; var left = evt.clientX - stageRect.left - drag.dx; var top = evt.clientY - stageRect.top - drag.dy;
-        left = Math.max(10, Math.min(stageRect.width - width - 10, left)); top = Math.max(10, Math.min(stageRect.height - height - 10, top)); E.boardToolbar.style.left = left + 'px'; E.boardToolbar.style.top = top + 'px'; E.boardToolbar.style.bottom = 'auto'; E.boardToolbar.style.right = 'auto';
+        if(!drag.active) return; evt.preventDefault(); var stageRect = E.boardStage.getBoundingClientRect(); var width = E.boardToolbar.offsetWidth; var height = E.boardToolbar.offsetHeight; var left = evt.clientX - stageRect.left - drag.dx; var top = evt.clientY - stageRect.top - drag.dy;
+        S.board.toolbarLeft = Math.max(10, Math.min(stageRect.width - width - 10, left));
+        S.board.toolbarTop = Math.max(10, Math.min(stageRect.height - height - 10, top));
+        positionBoardToolbar();
       });
-      function endDrag(evt) { if(!drag.active) return; drag.active = false; E.boardToolbar.classList.remove('is-dragging'); try { E.boardToolbarHandle.releasePointerCapture(evt.pointerId); } catch(err) {} }
+      function endDrag(evt) { if(!drag.active) return; drag.active = false; E.boardToolbar.classList.remove('is-dragging'); scheduleBoardAutosave(); try { E.boardToolbarHandle.releasePointerCapture(evt.pointerId); } catch(err) {} }
       E.boardToolbarHandle.addEventListener('pointerup', endDrag); E.boardToolbarHandle.addEventListener('pointercancel', endDrag);
+      if(E.boardStage) E.boardStage.addEventListener('scroll', positionBoardToolbar, { passive: true });
     }
 
     function initProtractor() {
@@ -2711,7 +2909,16 @@
 
       function updateTransform() { protractor.style.transform = 'translate(calc('+state.x+'px - 50%), calc('+state.y+'px - 100%)) rotate('+state.rot+'deg) scale('+state.scale+')'; }
       function getPt(e) { return { x: e.clientX, y: e.clientY }; }
-      function onPointerDown(e, action) { e.preventDefault(); e.stopPropagation(); activeAction = action; startMouse = getPt(e); startState = { x: state.x, y: state.y, rot: state.rot, scale: state.scale }; document.addEventListener('pointermove', onPointerMove, {passive: false}); document.addEventListener('pointerup', onPointerUp); document.addEventListener('pointercancel', onPointerUp); }
+      function onPointerDown(e, action) {
+        e.preventDefault(); e.stopPropagation();
+        activeAction = action; startMouse = getPt(e); startState = { x: state.x, y: state.y, rot: state.rot, scale: state.scale };
+        if(e.currentTarget && typeof e.currentTarget.setPointerCapture === 'function') {
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch(err) {}
+        }
+        document.addEventListener('pointermove', onPointerMove, {passive: false});
+        document.addEventListener('pointerup', onPointerUp);
+        document.addEventListener('pointercancel', onPointerUp);
+      }
 
       svgContainer.addEventListener('pointerdown', e => onPointerDown(e, 'drag'));
       btnRotate.addEventListener('pointerdown', e => onPointerDown(e, 'rotate'));
@@ -2741,8 +2948,8 @@
 
       function onPointerUp() { activeAction = null; document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onPointerUp); document.removeEventListener('pointercancel', onPointerUp); }
 
-      if(E.boardProtractorBtn) {
-        E.boardProtractorBtn.addEventListener('click', function() {
+      function toggleProtractorTool(evt) {
+            if(evt) { evt.preventDefault(); evt.stopPropagation(); }
             state.visible = !state.visible;
             if (state.visible) {
                 protractor.style.display = 'block';
@@ -2754,7 +2961,10 @@
                 }
                 updateTransform();
             } else { protractor.style.display = 'none'; }
-        });
+      }
+      if(E.boardProtractorBtn) {
+        E.boardProtractorBtn.addEventListener('pointerdown', toggleProtractorTool);
+        E.boardProtractorBtn.addEventListener('click', function(evt) { evt.preventDefault(); });
       }
     }
 
@@ -3423,12 +3633,14 @@
 
     function closeAllSubPanels() {
       allFloatPanels.forEach(function(p) { p.classList.remove('is-open'); });
+      positionBoardToolbar();
     }
     function togglePanel(panel) {
       if (!panel) return;
       var wasOpen = panel.classList.contains('is-open');
       closeAllSubPanels();
       if (!wasOpen) panel.classList.add('is-open');
+      positionBoardToolbar();
     }
 
     // X (kapat) butonları
@@ -3437,6 +3649,7 @@
         e.stopPropagation();
         var target = document.getElementById(btn.dataset.closePanel);
         if (target) target.classList.remove('is-open');
+        positionBoardToolbar();
       });
     });
 
@@ -3465,14 +3678,6 @@
       pageGroupBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         togglePanel(pageSubPanel);
-      });
-    }
-
-    // Temizle
-    var clearBoardBtnNew = document.getElementById('clearBoardBtn');
-    if (clearBoardBtnNew) {
-      clearBoardBtnNew.addEventListener('click', function() {
-        if (confirm('Bu sayfadaki çizimler silinsin mi?')) { clearBoardPage(); }
       });
     }
 
@@ -3514,26 +3719,25 @@
       E.boardCanvas.style.touchAction  = 'none';
     }
 
-    // RAF tabanlı pointermove throttling — her frame'de bir kez çiz
-    var _rafPending = false;
-    var _lastMoveEvt = null;
-    if (E.boardPreview) {
-      E.boardPreview.removeEventListener('pointermove', null); // eski listener'ı kapat
-      E.boardPreview.addEventListener('pointermove', function(evt) {
-        if (!S.board.drawing) return;
-        evt.preventDefault();
-        _lastMoveEvt = evt;
-        if (!_rafPending) {
-          _rafPending = true;
-          requestAnimationFrame(function() {
-            _rafPending = false;
-            if (_lastMoveEvt && S.board.drawing) {
-              moveBoardDraw(getBoardPoint(_lastMoveEvt));
-            }
-          });
+    ['selectstart', 'dragstart', 'contextmenu'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(evt) {
+        if(isEditableTarget(evt.target)) return;
+        if(evt.target.closest && evt.target.closest('#whiteboardStage')) {
+          evt.preventDefault();
         }
-      }, { passive: false });
-    }
+      }, true);
+    });
+    document.addEventListener('touchmove', function(evt) {
+      if(S.tool === 'whiteboard' && evt.target.closest && evt.target.closest('#whiteboardStage')) {
+        evt.preventDefault();
+      }
+    }, { passive: false, capture: true });
+    ['gesturestart', 'gesturechange'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(evt) {
+        if(evt.target.closest && evt.target.closest('#whiteboardStage')) evt.preventDefault();
+      }, true);
+    });
+    window.addEventListener('beforeunload', saveBoardToMemory);
 
     E.shortcutHelpBtns.forEach(function(btn) {
       btn.addEventListener('click', function(evt) {
@@ -3592,6 +3796,14 @@
         setBoardColor(btn.dataset.boardColor);
       });
     });
+    E.shapeColorBtns.forEach(function(btn) {
+      btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+      btn.addEventListener('pointerdown', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        setShapeColor(btn.dataset.shapeColor);
+      });
+    });
     E.boardPaletteBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPalette(btn.dataset.boardPalette); }); });
     E.boardPaperBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPaper(btn.dataset.boardPaper); }); });
     E.textAlignBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextAlign(btn.dataset.textAlign); }); });
@@ -3599,13 +3811,19 @@
     E.textStyleBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextStyle(btn.dataset.textStyle); }); });
     if(E.shapeToggleBtn) E.shapeToggleBtn.addEventListener('click', toggleShapesPanel);
     if(E.boardFillToggleBtn) E.boardFillToggleBtn.addEventListener('click', toggleBoardFill);
-    if(E.boardClearBtn) E.boardClearBtn.addEventListener('click', clearBoard);
+    ['boardClearBtn', 'clearBoardBtn'].forEach(function(clearBtnId) {
+      var clearBtn = document.getElementById(clearBtnId);
+      if(clearBtn) clearBtn.addEventListener('click', function() {
+        if(confirm('Bu sayfadaki tüm yazı ve çizimler silinsin mi?')) clearBoard();
+      });
+    });
     if(E.boardUndoBtn) E.boardUndoBtn.addEventListener('click', undoBoard);
     if(E.boardRedoBtn) E.boardRedoBtn.addEventListener('click', redoBoard);
     if(E.boardFullscreenBtn) E.boardFullscreenBtn.addEventListener('click', toggleBoardFs);
     if(E.boardSaveBtn) E.boardSaveBtn.addEventListener('click', saveBoard);
     if(E.boardPrintBtn) E.boardPrintBtn.addEventListener('click', printBoard);
     if(E.boardSizeSlider) E.boardSizeSlider.addEventListener('input', function(){ setBoardSize(Number(E.boardSizeSlider.value)); });
+    if(E.shapeSizeSlider) E.shapeSizeSlider.addEventListener('input', function(){ setShapeSize(Number(E.shapeSizeSlider.value)); });
     if(E.boardTextSizeSlider) E.boardTextSizeSlider.addEventListener('input', function(){ setTextSize(Number(E.boardTextSizeSlider.value)); });
     if(E.prevPageBtn) E.prevPageBtn.addEventListener('click', prevPage);
     if(E.nextPageBtn) E.nextPageBtn.addEventListener('click', nextPage);
@@ -3673,10 +3891,19 @@
     if(E.boardPreview) {
       E.boardPreview.addEventListener('pointerdown', function(evt) {
         if(!E.boardStage) return; if(evt.target.closest && evt.target.closest('#boardToolbar')) return;
+        S.board.panStartClientX = evt.clientX;
+        S.board.panStartClientY = evt.clientY;
         evt.preventDefault(); commitTextOverlay(true); startBoardDraw(getBoardPoint(evt));
-        if(S.board.tool !== 'text') E.boardPreview.setPointerCapture(evt.pointerId);
+        if(S.board.tool !== 'text' && typeof E.boardPreview.setPointerCapture === 'function') {
+          try { E.boardPreview.setPointerCapture(evt.pointerId); } catch(err) {}
+        }
       });
-      E.boardPreview.addEventListener('pointermove', function(evt) { if(!S.board.drawing) return; evt.preventDefault(); moveBoardDraw(getBoardPoint(evt)); });
+      E.boardPreview.addEventListener('pointermove', function(evt) {
+        if(!S.board.drawing) return;
+        evt.preventDefault();
+        var events = boardCanDraw(S.board.tool) && typeof evt.getCoalescedEvents === 'function' ? evt.getCoalescedEvents() : [evt];
+        for(var i = 0; i < events.length; i += 1) moveBoardDraw(getBoardPoint(events[i]), events[i]);
+      }, { passive: false });
       function finishBoardPointer(evt) { if(!S.board.drawing) return; evt.preventDefault(); endBoardDraw(getBoardPoint(evt)); }
       E.boardPreview.addEventListener('pointerup', finishBoardPointer); E.boardPreview.addEventListener('pointercancel', finishBoardPointer); E.boardPreview.addEventListener('pointerleave', function(evt) { if(!S.board.drawing) return; finishBoardPointer(evt); });
     }
@@ -3684,7 +3911,7 @@
     var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Yerel saat';
     if(E.tzLabel) E.tzLabel.textContent = tz; if(E.timeBarTz) E.timeBarTz.textContent = '🌍 '+tz;
 
-    buildTimerTicks(); syncSteppers(); syncBoardUI(); initBoardDrag(); initProtractor(); initNumberWheel(); loadClassroomState(); selectTool('class'); syncFsBtn(); updateClock(); render(); resizeBoard();
+    buildTimerTicks(); syncSteppers(); loadBoardFromMemory(); syncBoardUI(); initBoardDrag(); initProtractor(); initNumberWheel(); loadClassroomState(); selectTool('class'); syncFsBtn(); updateClock(); render(); resizeBoard();
     S.clockTick = setInterval(updateClock, 250); window.addEventListener('resize', resizeBoard);
     
   })();
