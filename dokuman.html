@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Doküman Görüntüleyici | Kemal Öğretmenim</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -81,6 +81,10 @@
       gap:0;
       overflow:hidden;
       box-shadow:0 18px 44px rgba(92,63,182,.12);
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+      touch-action:manipulation;
     }
     .viewer-toolbar.is-collapsed{width:304px;}
     .viewer-toolbar.is-collapsed .advanced-tools,
@@ -351,6 +355,10 @@
         inset 0 2px 0 rgba(255,255,255,.7),
         inset 0 -2px 0 rgba(108,61,237,.06),
         0 8px 32px rgba(108,61,237,.08);
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+      touch-action:none;
     }
     .book-frame.is-pannable{cursor:grab;}
     .book-frame.is-pannable.is-panning{cursor:grabbing;}
@@ -374,7 +382,9 @@
       max-width:100%;
       max-height:100%;
       touch-action:none;
+      -webkit-user-select:none;
       user-select:none;
+      -webkit-touch-callout:none;
     }
     .crop-surface canvas{
       display:block;
@@ -583,6 +593,10 @@
           rgba(108,61,237,.018) 28px
         ),
         #FFFFFE;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+      touch-action:none;
     }
     .page-pdf-canvas,.page-annotation-canvas{
       position:absolute;
@@ -590,8 +604,29 @@
       width:100%;
       height:100%;
       display:block;
+      -webkit-user-select:none;
+      user-select:none;
+      -webkit-touch-callout:none;
+      -webkit-user-drag:none;
+      touch-action:none;
     }
     .page-annotation-canvas{z-index:2;}
+    .book-frame canvas,
+    .book-frame img,
+    .book-frame .canvas-container,
+    .book-frame .upper-canvas,
+    .book-frame .lower-canvas,
+    .crop-stage canvas,
+    .crop-stage img,
+    .crop-stage .canvas-container,
+    .crop-stage .upper-canvas,
+    .crop-stage .lower-canvas{
+      -webkit-user-select:none !important;
+      user-select:none !important;
+      -webkit-touch-callout:none !important;
+      -webkit-user-drag:none !important;
+      touch-action:none !important;
+    }
     .page-hotspot-layer{
       position:absolute;
       inset:0;

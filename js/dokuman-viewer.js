@@ -332,6 +332,92 @@
     return document.getElementById(id);
   }
 
+  function isNativeTextInput(target) {
+    return !!(target && target.closest && target.closest('input, textarea, select, [contenteditable="true"]'));
+  }
+
+  function getSelectionLockRoot(target) {
+    if (!target || !target.closest || isNativeTextInput(target)) {
+      return null;
+    }
+    return target.closest('#bookFrame, #bookViewport, #bookRoot, #cropStage, #magnifyModal, #docToolbar');
+  }
+
+  function clearNativeSelection() {
+    const selection = window.getSelection && window.getSelection();
+    if (selection && selection.rangeCount) {
+      selection.removeAllRanges();
+    }
+  }
+
+  function lockNativeTouchSurface(element) {
+    if (!element) {
+      return;
+    }
+    element.style.webkitUserSelect = 'none';
+    element.style.userSelect = 'none';
+    element.style.webkitTouchCallout = 'none';
+    element.style.webkitUserDrag = 'none';
+    element.style.touchAction = 'none';
+  }
+
+  function lockFabricNativeSurfaces(canvas) {
+    if (!canvas) {
+      return;
+    }
+    [canvas.lowerCanvasEl, canvas.upperCanvasEl, canvas.wrapperEl].forEach(lockNativeTouchSurface);
+  }
+
+  function installNativeSelectionLocks() {
+    ['selectstart', 'dragstart', 'contextmenu'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(event) {
+        if (!getSelectionLockRoot(event.target)) {
+          return;
+        }
+        clearNativeSelection();
+        event.preventDefault();
+      }, true);
+    });
+
+    document.addEventListener('selectionchange', function() {
+      const active = document.activeElement;
+      if (isNativeTextInput(active)) {
+        return;
+      }
+      const selection = window.getSelection && window.getSelection();
+      if (!selection || selection.rangeCount === 0) {
+        return;
+      }
+      const anchor = selection.anchorNode && (selection.anchorNode.nodeType === 1
+        ? selection.anchorNode
+        : selection.anchorNode.parentElement);
+      if (getSelectionLockRoot(anchor)) {
+        clearNativeSelection();
+      }
+    });
+
+    document.addEventListener('touchstart', function(event) {
+      if (event.touches && event.touches.length > 1 && getSelectionLockRoot(event.target)) {
+        clearNativeSelection();
+        event.preventDefault();
+      }
+    }, { passive: false, capture: true });
+
+    document.addEventListener('touchmove', function(event) {
+      if (event.touches && event.touches.length > 1 && getSelectionLockRoot(event.target)) {
+        event.preventDefault();
+      }
+    }, { passive: false, capture: true });
+
+    ['gesturestart', 'gesturechange'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(event) {
+        if (getSelectionLockRoot(event.target)) {
+          event.preventDefault();
+        }
+      }, true);
+    });
+  }
+
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -1759,6 +1845,7 @@
     if (canvas.wrapperEl) {
       canvas.wrapperEl.style.pointerEvents = canInteract ? 'auto' : 'none';
     }
+    lockFabricNativeSurfaces(canvas);
 
     if (!isVisible) {
       canvas.discardActiveObject();
@@ -2085,6 +2172,7 @@
     });
     fabricCanvas.setWidth(viewport.width);
     fabricCanvas.setHeight(viewport.height);
+    lockFabricNativeSurfaces(fabricCanvas);
 
     const pageState = {
       index: pageNumber,
@@ -2522,6 +2610,7 @@
     });
     state.crop.canvas.setWidth(surfaceWidth);
     state.crop.canvas.setHeight(surfaceHeight);
+    lockFabricNativeSurfaces(state.crop.canvas);
     syncCropCanvasElementSize(surfaceWidth, surfaceHeight);
     bindCropCanvasEvents();
     applyToolToCropCanvas();
@@ -3170,6 +3259,7 @@
   }
 
   function bindUi() {
+    installNativeSelectionLocks();
     renderToolButtons();
     renderShortcutUi();
     initDocProtractor();
