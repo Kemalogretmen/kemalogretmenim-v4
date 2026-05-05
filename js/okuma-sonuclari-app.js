@@ -7,6 +7,7 @@
   let rawResultsCount = 0;
   let hiddenResultsCount = 0;
   let nameEditTargetIds = [];
+  let currentAccessProfile = null;
 
   function getClient() {
     return window.kemalAdminAuth.getClient();
@@ -186,6 +187,33 @@
     }, 2800);
   }
 
+  function canEditResults() {
+    if (!window.kemalAdminAuth || typeof window.kemalAdminAuth.hasPermission !== 'function') {
+      return true;
+    }
+    return window.kemalAdminAuth.hasPermission('okuma_sonuclari_duzenleme', currentAccessProfile);
+  }
+
+  function requireEditPermission(actionLabel) {
+    if (canEditResults()) {
+      return true;
+    }
+    toast((actionLabel || 'Bu işlem') + ' için yetkiniz yok.', 'error');
+    return false;
+  }
+
+  function syncEditControlsVisibility() {
+    const editable = canEditResults();
+    document.querySelectorAll('.fb-btn-duzenle,.fb-btn-toplu-sil').forEach(function(node) {
+      node.style.display = editable ? '' : 'none';
+    });
+    const selectAll = document.getElementById('hepsiniSec');
+    if (selectAll) {
+      selectAll.checked = false;
+      selectAll.style.display = editable ? '' : 'none';
+    }
+  }
+
   function formatDuration(seconds) {
     const safe = Math.round(seconds || 0);
     const minutes = Math.floor(safe / 60);
@@ -248,6 +276,9 @@
   }
 
   function getSelectedIds() {
+    if (!canEditResults()) {
+      return [];
+    }
     return Array.from(document.querySelectorAll('.row-cb:checked')).map(function(node) {
       return node.value;
     });
@@ -266,6 +297,7 @@
       return;
     }
 
+    const editable = canEditResults();
     body.innerHTML = filteredResults.map(function(row) {
       const wpm = row.dakika_kelime || 0;
       const target = row.hedef_hiz || 0;
@@ -276,10 +308,14 @@
       const karneButton = isCompletedAttempt(row)
         ? '<button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button>'
         : '<button class="btn-karne-row" disabled style="opacity:.5;cursor:not-allowed">Karne</button>';
-      const editButton = '<button class="btn-edit-row" onclick="isimDuzenle(\'' + row.id + '\')">Düzenle</button>';
+      const editButton = editable ? '<button class="btn-edit-row" onclick="isimDuzenle(\'' + row.id + '\')">Düzenle</button>' : '';
+      const deleteButton = editable ? '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button>' : '';
+      const selectCell = editable
+        ? '<input type="checkbox" class="row-cb" value="' + row.id + '" onchange="satirSecimiGuncelle()">'
+        : '';
       return (
         '<div class="tablo-satir" id="row_' + row.id + '">' +
-          '<div class="td"><input type="checkbox" class="row-cb" value="' + row.id + '" onchange="satirSecimiGuncelle()"></div>' +
+          '<div class="td">' + selectCell + '</div>' +
           '<div class="td bold">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">' + (locationMeta ? '<span style="font-size:11px;color:var(--muted);font-weight:700">' + escHtml(locationMeta) + '</span>' : '') + '<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:' + statusMeta.bg + ';color:' + statusMeta.color + ';font-size:10px;font-weight:800">' + statusMeta.label + '</span></div></div>' +
           '<div class="td">' + (row.sinif || '?') + '/' + (row.sube || '?') + '</div>' +
           '<div class="td"><span class="hiz-badge ' + speedClass(wpm, target) + '">' + wpm + '</span></div>' +
@@ -287,7 +323,7 @@
           '<div class="td">' + escHtml(row.metin_adi || '—') + '</div>' +
           '<div class="td">' + formatDuration(row.okuma_suresi_sn || 0) + '</div>' +
           '<div class="td">' + formatDate(row.olusturma_tarihi) + '</div>' +
-          '<div class="td"><div class="islem-grup">' + karneButton + editButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div></div>' +
+          '<div class="td"><div class="islem-grup">' + karneButton + editButton + deleteButton + '</div></div>' +
         '</div>'
       );
     }).join('');
@@ -302,6 +338,7 @@
       list.innerHTML = '<div class="bos-durum"><span>📭</span><p>Sonuç bulunamadı.</p></div>';
       return;
     }
+    const editable = canEditResults();
     list.innerHTML = filteredResults.map(function(row) {
       const percent = row.toplam_soru > 0 ? (row.anlama_yuzdesi || 0) + '%' : 'Soru yok';
       const locationMeta = getLocationMeta(row);
@@ -309,7 +346,8 @@
       const karneButton = isCompletedAttempt(row)
         ? '<button class="btn-karne-row" onclick="karneAc(\'' + row.id + '\')">Karne</button>'
         : '<button class="btn-karne-row" disabled style="opacity:.5;cursor:not-allowed">Karne</button>';
-      const editButton = '<button class="btn-edit-row" onclick="isimDuzenle(\'' + row.id + '\')">Düzenle</button>';
+      const editButton = editable ? '<button class="btn-edit-row" onclick="isimDuzenle(\'' + row.id + '\')">Düzenle</button>' : '';
+      const deleteButton = editable ? '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button>' : '';
       return (
         '<div class="mobil-sonuc-kart">' +
           '<div class="msk-head">' +
@@ -318,7 +356,7 @@
               '<div class="msk-sub">' + (row.sinif || '?') + '. sınıf / ' + (row.sube || '?') + ' şubesi' + (locationMeta ? ' · ' + escHtml(locationMeta) : '') + '</div>' +
               '<div style="margin-top:6px"><span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:' + statusMeta.bg + ';color:' + statusMeta.color + ';font-size:10px;font-weight:800">' + statusMeta.label + '</span></div>' +
             '</div>' +
-            '<div class="islem-grup">' + karneButton + editButton + '<button class="btn-sil-row" onclick="tekSil(\'' + row.id + '\')">Sil</button></div>' +
+            '<div class="islem-grup">' + karneButton + editButton + deleteButton + '</div>' +
           '</div>' +
           '<div class="msk-grid">' +
             '<div class="msk-item"><span>Metin</span><strong>' + escHtml(row.metin_adi || '—') + '</strong></div>' +
@@ -333,6 +371,7 @@
   }
 
   function render() {
+    syncEditControlsVisibility();
     renderDesktopRows();
     renderMobileCards();
     updateStats();
@@ -352,6 +391,9 @@
   }
 
   function openNameEditModal(ids) {
+    if (!requireEditPermission('İsim düzenleme')) {
+      return;
+    }
     const rows = getRowsByIds(ids);
     if (!rows.length) {
       toast('Düzenlenecek kayıt bulunamadı.', 'error');
@@ -375,6 +417,9 @@
   }
 
   function openSelectedNameEditor() {
+    if (!requireEditPermission('Toplu isim düzenleme')) {
+      return;
+    }
     const ids = getSelectedIds();
     if (!ids.length) {
       toast('Önce aynı öğrenciye ait satırları seçmelisin.', 'error');
@@ -384,6 +429,9 @@
   }
 
   async function saveNameEdit() {
+    if (!requireEditPermission('İsim kaydetme')) {
+      return;
+    }
     const ad = titleCaseStudentText(document.getElementById('editStudentName').value);
     const soyad = titleCaseStudentText(document.getElementById('editStudentSurname').value);
     if (!ad || !soyad) {
@@ -502,6 +550,9 @@
   }
 
   async function deleteOne(id) {
+    if (!requireEditPermission('Kayıt silme')) {
+      return;
+    }
     if (!window.confirm('Bu kayıt silinsin mi?')) {
       return;
     }
@@ -519,6 +570,9 @@
   }
 
   async function deleteSelected() {
+    if (!requireEditPermission('Toplu silme')) {
+      return;
+    }
     const ids = getSelectedIds();
     if (!ids.length) {
       toast('Önce satır seçmelisin.', 'error');
@@ -541,6 +595,13 @@
   }
 
   function toggleSelectAll() {
+    if (!requireEditPermission('Satır seçme')) {
+      const selectAll = document.getElementById('hepsiniSec');
+      if (selectAll) {
+        selectAll.checked = false;
+      }
+      return;
+    }
     const checked = document.getElementById('hepsiniSec').checked;
     document.querySelectorAll('.row-cb').forEach(function(node) {
       node.checked = checked;
@@ -549,6 +610,9 @@
   }
 
   function updateRowSelectionState() {
+    if (!canEditResults()) {
+      return;
+    }
     const checkedIds = getSelectedIds();
     document.querySelectorAll('.tablo-satir').forEach(function(row) {
       const checkbox = row.querySelector('.row-cb');
@@ -634,6 +698,7 @@
 
     try {
       await window.kemalAdminAuth.signIn(email, password);
+      currentAccessProfile = await window.kemalAdminAuth.ensureCurrentPageAccess();
       errorEl.style.display = 'none';
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
@@ -657,6 +722,7 @@
     try {
       const session = await window.kemalAdminAuth.getSession();
       if (session) {
+        currentAccessProfile = await window.kemalAdminAuth.ensureCurrentPageAccess(session);
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         await loadData();

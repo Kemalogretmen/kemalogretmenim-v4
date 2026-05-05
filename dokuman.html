@@ -504,6 +504,15 @@
       transform-style:preserve-3d;
     }
     #bookRoot.is-spread::before{opacity:1;}
+    #bookRoot.is-image-document::before{display:none;}
+    #bookRoot.is-image-document .flip-page{
+      border-radius:14px;
+      box-shadow:
+        0 2px 4px rgba(31,18,78,.06),
+        0 16px 36px rgba(31,18,78,.16),
+        0 40px 70px rgba(31,18,78,.16),
+        inset 0 0 0 1px rgba(108,61,237,.14);
+    }
     #bookRoot::before{
       content:'';
       position:absolute;

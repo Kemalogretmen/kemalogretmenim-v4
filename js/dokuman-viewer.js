@@ -255,10 +255,12 @@
   const ZOOM_STEP = 0.2;
   const PDF_RENDER_BOOST = 2.25;
   const ANNOTATION_EXPORT_SCALE = 2;
+  const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
 
   const state = {
     documentId: '',
     documentRow: null,
+    documentKind: 'pdf',
     pdfDoc: null,
     pageCount: 0,
     currentPage: 1,
@@ -502,6 +504,39 @@
       throw new Error('PDF görüntüleyici yüklenemedi.');
     }
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  function getFileExtension(value) {
+    const match = String(value || '').toLowerCase().match(/\.([a-z0-9]+)(?:\?|#|$)/);
+    return match ? match[1] : '';
+  }
+
+  function getDocumentKind(row) {
+    const extension = getFileExtension(row && (row.dosya_adi || row.dosya_yolu || row.dosyaUrl));
+    return IMAGE_EXTENSIONS.includes(extension) ? 'image' : 'pdf';
+  }
+
+  function loadImageFromUrl(url) {
+    return fetch(url).then(function(response) {
+      if (!response.ok) {
+        throw new Error('Görsel dosyası okunamadı.');
+      }
+      return response.blob();
+    }).then(function(blob) {
+      return new Promise(function(resolve, reject) {
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(blob);
+        image.onload = function() {
+          URL.revokeObjectURL(objectUrl);
+          resolve(image);
+        };
+        image.onerror = function() {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Görsel görüntülenemedi.'));
+        };
+        image.src = objectUrl;
+      });
+    });
   }
 
   function getStorageKey() {
@@ -2207,6 +2242,74 @@
     return nodes.shell;
   }
 
+  async function initImagePage(pageNumber, image) {
+    const baseWidth = image.naturalWidth || image.width || 1000;
+    const baseHeight = image.naturalHeight || image.height || 1400;
+    const cssScale = state.pageWidth / baseWidth;
+    const width = state.pageWidth;
+    const height = state.pageWidth * (baseHeight / baseWidth);
+    const renderBoost = Math.min(PDF_RENDER_BOOST, Math.max(2, window.devicePixelRatio || 1));
+    const nodes = createPageShell(pageNumber);
+    nodes.pdfCanvas.width = Math.round(width * renderBoost);
+    nodes.pdfCanvas.height = Math.round(height * renderBoost);
+    nodes.pdfCanvas.style.width = width + 'px';
+    nodes.pdfCanvas.style.height = height + 'px';
+    nodes.annotationCanvas.style.width = width + 'px';
+    nodes.annotationCanvas.style.height = height + 'px';
+    nodes.shell.style.width = width + 'px';
+    nodes.shell.style.height = height + 'px';
+
+    const imageContext = nodes.pdfCanvas.getContext('2d', { alpha: false });
+    imageContext.fillStyle = '#fff';
+    imageContext.fillRect(0, 0, nodes.pdfCanvas.width, nodes.pdfCanvas.height);
+    imageContext.imageSmoothingEnabled = true;
+    imageContext.imageSmoothingQuality = 'high';
+    imageContext.setTransform(renderBoost, 0, 0, renderBoost, 0, 0);
+    imageContext.drawImage(image, 0, 0, baseWidth * cssScale, baseHeight * cssScale);
+    imageContext.setTransform(1, 0, 0, 1, 0, 0);
+
+    const fabricCanvas = new window.fabric.Canvas(nodes.annotationCanvas, {
+      preserveObjectStacking: true,
+      selection: false,
+      enableRetinaScaling: true,
+    });
+    fabricCanvas.setWidth(width);
+    fabricCanvas.setHeight(height);
+    lockFabricNativeSurfaces(fabricCanvas);
+
+    const pageState = {
+      index: pageNumber,
+      wrapper: nodes.shell,
+      canvas: fabricCanvas,
+      pdfCanvasEl: nodes.pdfCanvas,
+      annotationCanvasEl: nodes.annotationCanvas,
+      hotspotLayer: nodes.hotspotLayer,
+      history: [],
+      redo: [],
+      draft: null,
+      pointerStart: null,
+      pointerEnd: null,
+      isRestoring: false,
+    };
+
+    bindCanvasEvents(pageState);
+
+    const saved = state.annotationCache.pages[String(pageNumber)];
+    if (saved) {
+      await loadSnapshot(pageState, saved);
+      pageState.history = [saved];
+    } else {
+      const blank = getSnapshot(pageState);
+      pageState.history = [blank];
+      savePageSnapshot(pageState, blank);
+    }
+
+    setAnswerObjectsVisibility(pageState);
+    renderHotspotsForPage(pageState);
+    state.pages.set(pageNumber, pageState);
+    return nodes.shell;
+  }
+
   function getResponsivePageWidth(baseWidth, baseHeight) {
     const frame = getBookFrame();
     const viewportWidth = Math.max(
@@ -2224,6 +2327,24 @@
       return Math.min(isLandscape ? 920 : 780, viewportWidth - 28);
     }
     return Math.min(isLandscape ? 1100 : 860, viewportWidth - 44);
+  }
+
+  function getResponsiveImagePageSize(baseWidth, baseHeight) {
+    const frame = getBookFrame();
+    const viewportWidth = Math.max(
+      320,
+      (frame && frame.clientWidth ? frame.clientWidth : (window.innerWidth || 1280)) - 72
+    );
+    const viewportHeight = Math.max(
+      320,
+      (frame && frame.clientHeight ? frame.clientHeight : Math.min(window.innerHeight || 900, 900)) - 96
+    );
+    const scale = Math.min(viewportWidth / baseWidth, viewportHeight / baseHeight);
+    const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    return {
+      width: Math.max(280, Math.round(baseWidth * safeScale)),
+      height: Math.max(180, Math.round(baseHeight * safeScale)),
+    };
   }
 
   function showPage(pageNumber, initial) {
@@ -2248,8 +2369,8 @@
       const slot = visiblePages.indexOf(pageState.index);
       const keepActive = slot !== -1;
       pageState.wrapper.classList.toggle('is-active', keepActive);
-      pageState.wrapper.classList.toggle('is-spread-left', state.viewMode === 'spread' && slot === 0);
-      pageState.wrapper.classList.toggle('is-spread-right', state.viewMode === 'spread' && slot === 1);
+      pageState.wrapper.classList.toggle('is-spread-left', state.documentKind !== 'image' && state.viewMode === 'spread' && slot === 0);
+      pageState.wrapper.classList.toggle('is-spread-right', state.documentKind !== 'image' && state.viewMode === 'spread' && slot === 1);
       if (!keepActive) {
         pageState.canvas.discardActiveObject();
       }
@@ -2257,7 +2378,7 @@
     });
 
     if (!initial) {
-      if (state.viewMode === 'spread') {
+      if (state.documentKind !== 'image' && state.viewMode === 'spread') {
         if (direction === 'next') {
           flipFromState = state.pages.get(previousVisiblePages[previousVisiblePages.length - 1]) || null;
           flipToState = state.pages.get(visiblePages[0]) || null;
@@ -2336,28 +2457,53 @@
   }
 
   async function buildBook(targetPage) {
-    ensurePdfWorker();
     state.annotationCache = loadAnnotationCache();
     if (state.documentRow && state.documentRow.etkilesim_json && state.documentRow.etkilesim_json.pages) {
       state.annotationCache.pages = Object.assign({}, state.annotationCache.pages, state.documentRow.etkilesim_json.pages);
     }
     state.pages.clear();
+    state.documentKind = getDocumentKind(state.documentRow);
 
-    state.pdfDoc = await window.pdfjsLib.getDocument(state.documentRow.dosyaUrl).promise;
-    state.pageCount = state.pdfDoc.numPages;
+    let firstPage = null;
+    let image = null;
+    let baseWidth = 0;
+    let baseHeight = 0;
 
-    const firstPage = await state.pdfDoc.getPage(1);
-    const baseViewport = firstPage.getViewport({ scale: 1 });
-    state.pageWidth = getResponsivePageWidth(baseViewport.width, baseViewport.height);
-    state.pageHeight = state.pageWidth * (baseViewport.height / baseViewport.width);
-    state.bookWidth = state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth;
+    if (state.documentKind === 'image') {
+      image = await loadImageFromUrl(state.documentRow.dosyaUrl);
+      state.pdfDoc = null;
+      state.pageCount = 1;
+      baseWidth = image.naturalWidth || image.width || 1000;
+      baseHeight = image.naturalHeight || image.height || 1400;
+    } else {
+      ensurePdfWorker();
+      state.pdfDoc = await window.pdfjsLib.getDocument(state.documentRow.dosyaUrl).promise;
+      state.pageCount = state.pdfDoc.numPages;
+      firstPage = await state.pdfDoc.getPage(1);
+      const baseViewport = firstPage.getViewport({ scale: 1 });
+      baseWidth = baseViewport.width;
+      baseHeight = baseViewport.height;
+    }
+
+    if (state.documentKind === 'image') {
+      const imageSize = getResponsiveImagePageSize(baseWidth, baseHeight);
+      state.pageWidth = imageSize.width;
+      state.pageHeight = imageSize.height;
+    } else {
+      state.pageWidth = getResponsivePageWidth(baseWidth, baseHeight);
+      state.pageHeight = state.pageWidth * (baseHeight / baseWidth);
+    }
+    state.bookWidth = state.documentKind === 'image'
+      ? state.pageWidth
+      : (state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth);
     state.bookHeight = state.pageHeight;
 
     const root = qs('bookRoot');
     const panLayer = getBookPanLayer();
     const scaleLayer = getBookScaleLayer();
     root.innerHTML = '';
-    root.classList.toggle('is-spread', state.viewMode === 'spread');
+    root.classList.toggle('is-spread', state.documentKind !== 'image' && state.viewMode === 'spread');
+    root.classList.toggle('is-image-document', state.documentKind === 'image');
     root.style.width = state.bookWidth + 'px';
     root.style.height = state.bookHeight + 'px';
     panLayer.style.width = state.bookWidth + 'px';
@@ -2366,11 +2512,17 @@
     scaleLayer.style.height = state.bookHeight + 'px';
     updatePageTurnLayerSize();
 
-    for (let pageNumber = 1; pageNumber <= state.pageCount; pageNumber += 1) {
-      const pdfPage = pageNumber === 1 ? firstPage : await state.pdfDoc.getPage(pageNumber);
-      const pageElement = await initPage(pageNumber, pdfPage);
+    if (state.documentKind === 'image') {
+      const pageElement = await initImagePage(1, image);
       root.appendChild(pageElement);
-      setStatus('Sayfa ' + pageNumber + ' / ' + state.pageCount + ' hazırlanıyor…');
+      setStatus('Görsel doküman hazırlanıyor…');
+    } else {
+      for (let pageNumber = 1; pageNumber <= state.pageCount; pageNumber += 1) {
+        const pdfPage = pageNumber === 1 ? firstPage : await state.pdfDoc.getPage(pageNumber);
+        const pageElement = await initPage(pageNumber, pdfPage);
+        root.appendChild(pageElement);
+        setStatus('Sayfa ' + pageNumber + ' / ' + state.pageCount + ' hazırlanıyor…');
+      }
     }
 
     const landingPage = normalizePageForViewMode(targetPage || state.focusPage || state.currentPage || 1);
@@ -2387,6 +2539,25 @@
   }
 
   async function buildAnnotatedPdfBytes() {
+    if (state.documentKind === 'image') {
+      const pdfDoc = await window.PDFLib.PDFDocument.create();
+      const pageState = state.pages.get(1);
+      if (!pageState) {
+        throw new Error('Görsel sayfası hazırlanamadı.');
+      }
+      const composed = getComposedPageCanvas(pageState);
+      const pngDataUrl = composed.toDataURL('image/png');
+      const pngImage = await pdfDoc.embedPng(pngDataUrl);
+      const page = pdfDoc.addPage([pageState.canvas.getWidth(), pageState.canvas.getHeight()]);
+      page.drawImage(pngImage, {
+        x: 0,
+        y: 0,
+        width: page.getWidth(),
+        height: page.getHeight(),
+      });
+      return pdfDoc.save();
+    }
+
     const response = await fetch(state.documentRow.dosyaUrl);
     if (!response.ok) {
       throw new Error('Orijinal PDF okunamadi.');
@@ -3715,20 +3886,34 @@
     }
 
     state.documentRow = documentRow;
+    const viewParams = new URLSearchParams(window.location.search);
+    const contextGrade = parseInt(viewParams.get('sinif'), 10);
+    const contextSubject = window.kemalDocumentStore.normalizeSubjectKey(viewParams.get('ders'));
+    const contextTargets = typeof window.kemalDocumentStore.getDocumentTargets === 'function'
+      ? window.kemalDocumentStore.getDocumentTargets(documentRow)
+      : [];
+    const hasContextTarget = contextTargets.some(function(target) {
+      return target.sinif === contextGrade && target.ders === contextSubject;
+    });
+    const displayGrade = hasContextTarget ? contextGrade : documentRow.sinif;
+    const displaySubject = hasContextTarget ? contextSubject : documentRow.ders;
+    const displaySubjectMeta = window.kemalDocumentStore.getSubjectMeta(displaySubject);
+    const displayGradeLabel = window.kemalDocumentStore.getGradeLabel(displayGrade);
+    const displaySubjectLabel = displaySubjectMeta ? displaySubjectMeta.label : displaySubject;
     state.interactions = normalizeInteractions(documentRow.etkilesim_json || {});
     if (qs('answersHiddenInput')) {
       qs('answersHiddenInput').checked = state.interactions.answersHidden !== false;
     }
-    qs('viewerPill').textContent = '📚 ' + documentRow.sinifLabel + ' · ' + documentRow.dersLabel;
+    qs('viewerPill').textContent = '📚 ' + displayGradeLabel + ' · ' + displaySubjectLabel;
     qs('viewerTitle').textContent = documentRow.baslik;
-    qs('viewerDesc').textContent = documentRow.aciklama || (documentRow.sinifLabel + ' için yüklenmiş ders dokümanı.');
-    qs('backSubjectLink').href = '/ders.html?sinif=' + encodeURIComponent(documentRow.sinif) + '&ders=' + encodeURIComponent(documentRow.ders);
-    qs('backSubjectLink').textContent = '← ' + documentRow.dersLabel + ' dersine dön';
+    qs('viewerDesc').textContent = documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ders dokümanı.');
+    qs('backSubjectLink').href = '/ders.html?sinif=' + encodeURIComponent(displayGrade) + '&ders=' + encodeURIComponent(displaySubject);
+    qs('backSubjectLink').textContent = '← ' + displaySubjectLabel + ' dersine dön';
     document.title = documentRow.baslik + ' | Kemal Öğretmenim';
     if (window.kemalSeo) {
       window.kemalSeo.update({
         title: document.title,
-        description: documentRow.aciklama || (documentRow.sinifLabel + ' için yüklenmiş ders dokümanı.'),
+        description: documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ders dokümanı.'),
       });
     }
 

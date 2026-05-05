@@ -6,53 +6,183 @@
       key: 'site_admin_dashboard',
       label: 'Site Yönetim Paneli',
       description: 'Ana site içerikleri, analizler ve genel ayarlar',
-    },
-    {
-      key: 'oyunlar_admin',
-      label: 'Oyunlar Yönetimi',
-      description: 'Oyun içeriklerini düzenleme',
-    },
-    {
-      key: 'okuma_editor',
-      label: 'Okuma Editörü',
-      description: 'Metin, soru ve yayın düzenleme',
-    },
-    {
-      key: 'dokuman_yonetimi',
-      label: 'Doküman Yönetimi',
-      description: 'PDF ve doküman içeriklerini yönetme',
+      group: 'Genel Yönetim',
     },
     {
       key: 'menu_yonetimi',
       label: 'Menü & Ders Yönetimi',
       description: 'Üst menüye ders sayfaları ekleme',
+      group: 'Genel Yönetim',
     },
     {
       key: 'calisma_kagidi',
       label: 'Çalışma Kağıtları',
       description: 'Çalışma kağıdı editörü ve alan yerleşimi',
+      group: 'İçerik Yönetimi',
+    },
+    {
+      key: 'oyun_ekleme',
+      label: 'Oyun Yönetimi / Oyun Ekleme',
+      description: 'Oyun kartlarını ekleme ve düzenleme',
+      group: 'Okuma Admin Paneli',
+    },
+    {
+      key: 'okuma_metinleri',
+      label: 'Okuma Metinleri',
+      description: 'Okuma metni listesini görüntüleme',
+      group: 'Okuma Admin Paneli',
+    },
+    {
+      key: 'okuma_metni_ekleme',
+      label: 'Okuma Metni Ekleme',
+      description: 'Yeni okuma metni ve soru ekleme',
+      group: 'Okuma Admin Paneli',
+    },
+    {
+      key: 'okuma_metni_duzenleme',
+      label: 'Okuma Metinlerini Düzenleme',
+      description: 'Mevcut okuma metinlerini güncelleme veya silme',
+      group: 'Okuma Admin Paneli',
     },
     {
       key: 'okuma_sonuclari',
       label: 'Okuma Sonuçları',
-      description: 'Okuma performans ve sonuç ekranı',
+      description: 'Okuma performans ve sonuç ekranını görüntüleme',
+      group: 'Okuma Admin Paneli',
+    },
+    {
+      key: 'okuma_sonuclari_duzenleme',
+      label: 'Okuma Sonuçlarını Düzenleme',
+      description: 'Okuma sonuçlarını silme veya toplu temizleme',
+      group: 'Okuma Admin Paneli',
     },
     {
       key: 'okuma_karne',
       label: 'Okuma Karne Merkezi',
       description: 'Karne ve rapor ekranları',
+      group: 'Okuma Admin Paneli',
+    },
+    {
+      key: 'dokuman_ekleme',
+      label: 'Doküman Ekleme',
+      description: 'Yeni PDF dokümanı yükleme',
+      group: 'Doküman Yönetimi',
+    },
+    {
+      key: 'dokuman_duzenleme',
+      label: 'Doküman Düzenleme',
+      description: 'Mevcut doküman bilgilerini güncelleme',
+      group: 'Doküman Yönetimi',
+    },
+    {
+      key: 'dokuman_silme',
+      label: 'Doküman Silme',
+      description: 'Doküman kaydı ve dosyasını silme',
+      group: 'Doküman Yönetimi',
+    },
+    {
+      key: 'exam_create',
+      label: 'Sınav Oluşturma',
+      description: 'Yeni sınav oluşturma ve yayınlama',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_categories',
+      label: 'Kategoriler',
+      description: 'Kategori ekranını görüntüleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_category_create',
+      label: 'Kategori Ekleme',
+      description: 'Sınav kategorisi ekleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_category_edit',
+      label: 'Kategori Düzenleme',
+      description: 'Sınav kategorilerini güncelleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_category_delete',
+      label: 'Kategori Silme',
+      description: 'Sınav kategorisi silme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_list',
+      label: 'Sınavlar',
+      description: 'Sınav listesini görüntüleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_edit',
+      label: 'Sınavları Düzenleme',
+      description: 'Sınav içeriği, durum ve sıralama güncelleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_delete',
+      label: 'Sınavları Silme',
+      description: 'Sınav ve sorularını silme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_results',
+      label: 'Sonuçlar',
+      description: 'Sınav sonuçlarını görüntüleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_results_edit',
+      label: 'Sonuçları Düzenleme',
+      description: 'Öğrenci sonuç kayıtlarını güncelleme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_results_delete',
+      label: 'Sonuçları Silme',
+      description: 'Sınav sonucu silme',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_single_report',
+      label: 'Tek Sınav Karnesi',
+      description: 'Tek sınav karne görünümünü açma',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_report_center',
+      label: 'Sınav Karne Merkezi',
+      description: 'Öğrenci sınav karne merkezini açma',
+      group: 'Sınav Admin',
+    },
+    {
+      key: 'exam_appeals',
+      label: 'İtirazlar',
+      description: 'Sınav itirazlarını inceleme ve yönetme',
+      group: 'Sınav Admin',
     },
   ];
 
   const PAGE_PERMISSION_MAP = [
-    { suffix: '/admin/okuma-editor.html', key: 'okuma_editor' },
-    { suffix: '/admin/dokuman-yonetimi.html', key: 'dokuman_yonetimi' },
+    { suffix: '/admin/okuma-editor.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
+    { suffix: '/admin/dokuman-yonetimi.html', anyOf: ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme'] },
     { suffix: '/admin/menu-yonetimi.html', key: 'menu_yonetimi' },
     { suffix: '/admin/calisma-kagidi-editor.html', key: 'calisma_kagidi' },
-    { suffix: '/admin/okuma-sonuclari.html', key: 'okuma_sonuclari' },
+    { suffix: '/admin/okuma-sonuclari.html', anyOf: ['okuma_sonuclari', 'okuma_sonuclari_duzenleme'] },
     { suffix: '/admin/okuma-karne.html', key: 'okuma_karne' },
-    { suffix: '/admin/oyunlar-admin.html', key: 'oyunlar_admin' },
+    { suffix: '/admin/oyunlar-admin.html', key: 'oyun_ekleme' },
+    { suffix: '/sinav_sitesi/admin.html', anyOf: ['exam_create', 'exam_categories', 'exam_list', 'exam_results', 'exam_appeals', 'exam_single_report', 'exam_report_center'] },
   ];
+
+  const PERMISSION_ALIASES = {
+    oyunlar_admin: ['oyun_ekleme'],
+    okuma_editor: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
+    dokuman_yonetimi: ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme'],
+    exam_admin: ['exam_create', 'exam_categories', 'exam_category_create', 'exam_category_edit', 'exam_category_delete', 'exam_list', 'exam_edit', 'exam_delete', 'exam_results', 'exam_results_edit', 'exam_results_delete', 'exam_single_report', 'exam_report_center', 'exam_appeals'],
+  };
 
   const ADMIN_USERS_TABLE = 'admin_users';
 
@@ -126,6 +256,17 @@
     }, {});
   }
 
+  function expandPermissionKey(key) {
+    const raw = String(key || '').trim();
+    if (!raw) {
+      return [];
+    }
+    const expanded = [raw].concat(PERMISSION_ALIASES[raw] || []);
+    return expanded.filter(function(item, index) {
+      return item && expanded.indexOf(item) === index;
+    });
+  }
+
   function normalizePermissions(value, isOwner) {
     if (isOwner) {
       return createPermissionMap(true);
@@ -134,32 +275,65 @@
     const normalized = createPermissionMap(false);
     if (Array.isArray(value)) {
       value.forEach(function(key) {
-        if (Object.prototype.hasOwnProperty.call(normalized, key)) {
-          normalized[key] = true;
-        }
+        expandPermissionKey(key).forEach(function(expandedKey) {
+          if (Object.prototype.hasOwnProperty.call(normalized, expandedKey)) {
+            normalized[expandedKey] = true;
+          }
+        });
       });
       return normalized;
     }
 
     if (value && typeof value === 'object') {
-      Object.keys(normalized).forEach(function(key) {
-        normalized[key] = !!value[key];
+      Object.keys(value).forEach(function(key) {
+        if (!value[key]) {
+          return;
+        }
+        expandPermissionKey(key).forEach(function(expandedKey) {
+          if (Object.prototype.hasOwnProperty.call(normalized, expandedKey)) {
+            normalized[expandedKey] = true;
+          }
+        });
       });
     }
     return normalized;
   }
 
   function getCurrentPagePermission() {
-    const path = getCurrentPath();
-    const match = PAGE_PERMISSION_MAP.find(function(item) {
-      return path.endsWith(item.suffix);
-    });
-    return match ? match.key : null;
+    const match = getPagePermissionMatch();
+    if (!match) {
+      return null;
+    }
+    return match.key || (Array.isArray(match.anyOf) ? match.anyOf[0] : null);
   }
 
   function getPermissionDefinition(key) {
     return ADMIN_PERMISSION_DEFS.find(function(item) {
       return item.key === key;
+    }) || null;
+  }
+
+  function profileHasPermission(profile, key) {
+    if (!profile) {
+      return false;
+    }
+    if (profile.isOwner || profile.legacyMode) {
+      return true;
+    }
+    return !!(profile.active !== false && profile.permissions && profile.permissions[key]);
+  }
+
+  function profileHasAnyPermission(profile, keys) {
+    const list = Array.isArray(keys) ? keys : [keys];
+    return list.some(function(key) {
+      return profileHasPermission(profile, key);
+    });
+  }
+
+  function getPagePermissionMatch(path) {
+    const currentPath = path || getCurrentPath();
+    return PAGE_PERMISSION_MAP.find(function(item) {
+      return currentPath.endsWith(item.suffix);
     }) || null;
   }
 
@@ -606,12 +780,15 @@
       throw new Error('Bu yönetici hesabı pasif durumda.');
     }
 
-    const permissionKey = getCurrentPagePermission();
-    if (!permissionKey || profile.isOwner) {
+    const permissionMatch = getPagePermissionMatch();
+    if (!permissionMatch || profile.isOwner) {
       return profile;
     }
-    if (!profile.permissions[permissionKey]) {
-      const permissionDef = getPermissionDefinition(permissionKey);
+    const allowed = permissionMatch.anyOf
+      ? profileHasAnyPermission(profile, permissionMatch.anyOf)
+      : profileHasPermission(profile, permissionMatch.key);
+    if (!allowed) {
+      const permissionDef = getPermissionDefinition(permissionMatch.key || (permissionMatch.anyOf && permissionMatch.anyOf[0]));
       throw new Error((permissionDef ? permissionDef.label : 'Bu panel') + ' için erişim iznin yok.');
     }
     return profile;
@@ -656,7 +833,7 @@
       return message;
     }
     if (isSetupError(error)) {
-      return 'Alt admin sistemi için Supabase `admin_users` yapısı hazır değil. Kurulum SQL dosyasını çalıştırdıktan sonra tekrar deneyebilirsin.';
+      return 'Alt admin sistemi için Supabase `admin_users` yapısı hazır değil. Supabase SQL Editor içinde `supabase-admin-users.sql` dosyasını çalıştırdıktan sonra tekrar deneyebilirsin.';
     }
     return message || 'İşlem sırasında beklenmeyen bir hata oluştu.';
   }
@@ -716,6 +893,21 @@
     return data.user;
   }
 
+  async function sendPasswordSetupEmail(email) {
+    const normalizedEmail = normalizeEmail(email);
+    if (!normalizedEmail) {
+      throw new Error('Şifre linki için e-posta zorunlu.');
+    }
+    const redirectTo = window.location.origin + '/admin/reset-password.html';
+    const { error } = await getClient().auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo,
+    });
+    if (error) {
+      throw error;
+    }
+    return true;
+  }
+
   async function getAccessToken() {
     const session = await getSession();
     return session ? session.access_token : null;
@@ -728,6 +920,7 @@
     signIn,
     signOut,
     updatePassword,
+    sendPasswordSetupEmail,
     getAccessToken,
     getAdminAccessProfile,
     ensureCurrentPageAccess,
@@ -737,6 +930,12 @@
       });
     },
     getCurrentPagePermission,
+    hasPermission: function(key, profile) {
+      return profileHasPermission(profile || accessCache, key);
+    },
+    hasAnyPermission: function(keys, profile) {
+      return profileHasAnyPermission(profile || accessCache, keys);
+    },
     listAdminUsers,
     saveAdminUser,
     deleteAdminUser,

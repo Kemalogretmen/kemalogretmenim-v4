@@ -10,6 +10,19 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function hasExamPermission(key) {
+      return isAdmin()
+        && (
+          adminDoc().data.keys().hasAny(['permissions']) == false
+          || adminDoc().data.isOwner == true
+          || adminDoc().data.permissions.get(key, false) == true
+        );
+    }
+
     function examDoc(examId) {
       return get(/databases/$(database)/documents/exams/$(examId));
     }
@@ -208,31 +221,35 @@ service cloud.firestore {
 
     match /examCategories/{categoryId} {
       allow read: if true;
-      allow create, update: if isAdmin() && validCategoryWrite();
-      allow delete: if isAdmin();
+      allow create: if hasExamPermission('exam_category_create') && validCategoryWrite();
+      allow update: if hasExamPermission('exam_category_edit') && validCategoryWrite();
+      allow delete: if hasExamPermission('exam_category_delete');
     }
 
     match /exams/{examId} {
-      allow read: if isAdmin() || resource.data.published == true;
-      allow create: if isAdmin() && validExamCreate();
-      allow update: if isAdmin() && (validExamUpdate() || validExamOrderUpdate() || validExamStatusUpdate());
-      allow delete: if isAdmin();
+      allow read: if hasExamPermission('exam_list') || resource.data.published == true;
+      allow create: if hasExamPermission('exam_create') && validExamCreate();
+      allow update: if hasExamPermission('exam_edit') && (validExamUpdate() || validExamOrderUpdate() || validExamStatusUpdate());
+      allow delete: if hasExamPermission('exam_delete');
     }
 
     match /questions/{questionId} {
-      allow read: if isAdmin() || examIsPublished(resource.data.examId);
-      allow create, update: if isAdmin() && validQuestionWrite();
-      allow delete: if isAdmin();
+      allow read: if hasExamPermission('exam_list') || hasExamPermission('exam_results') || hasExamPermission('exam_appeals') || examIsPublished(resource.data.examId);
+      allow create: if hasExamPermission('exam_create') && validQuestionWrite();
+      allow update: if (hasExamPermission('exam_edit') || hasExamPermission('exam_appeals')) && validQuestionWrite();
+      allow delete: if hasExamPermission('exam_delete') || hasExamPermission('exam_edit');
     }
 
     match /results/{resultId} {
       allow create: if validResultCreate();
-      allow read, update, delete: if isAdmin();
+      allow read: if hasExamPermission('exam_results') || hasExamPermission('exam_results_edit') || hasExamPermission('exam_results_delete') || hasExamPermission('exam_single_report') || hasExamPermission('exam_report_center') || hasExamPermission('exam_appeals');
+      allow update: if hasExamPermission('exam_results_edit') || hasExamPermission('exam_appeals');
+      allow delete: if hasExamPermission('exam_results_delete');
     }
 
     match /resultAppeals/{appealId} {
       allow create: if validAppealCreate();
-      allow read, update, delete: if isAdmin();
+      allow read, update, delete: if hasExamPermission('exam_appeals');
     }
   }
 }

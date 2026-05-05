@@ -174,6 +174,9 @@
     if (profile.isOwner || profile.legacyMode) {
       return true;
     }
+    if (window.kemalAdminAuth && typeof window.kemalAdminAuth.hasPermission === 'function') {
+      return window.kemalAdminAuth.hasPermission(permissionKey, profile);
+    }
     return !!(profile.permissions && profile.permissions[permissionKey]);
   }
 
@@ -197,14 +200,14 @@
       'quick-yeni': 'site_admin_dashboard',
       'quick-badges': 'site_admin_dashboard',
       'quick-hizli': 'site_admin_dashboard',
-      'quick-okuma-editor': 'okuma_editor',
-      'quick-dokuman-yonetimi': 'dokuman_yonetimi',
+      'quick-okuma-editor': 'okuma_metinleri',
+      'quick-dokuman-yonetimi': 'dokuman_ekleme',
       'quick-menu-yonetimi': 'menu_yonetimi',
       'quick-calisma-kagidi': 'calisma_kagidi',
       'quick-okuma-sonuclari': 'okuma_sonuclari',
       'quick-okuma-karne': 'okuma_karne',
       'quick-adminler': '__owner__',
-      'quick-sinav-admin': '__owner__',
+      'quick-sinav-admin': 'exam_create',
     };
   }
 
@@ -218,16 +221,16 @@
       'btn-yeni': 'site_admin_dashboard',
       'btn-hakkimda': 'site_admin_dashboard',
       'btn-menuler': 'site_admin_dashboard',
-      'btn-oyunlar': 'oyunlar_admin',
-      'btn-okuma-editor': 'okuma_editor',
-      'btn-dokuman-yonetimi': 'dokuman_yonetimi',
+      'btn-oyunlar': 'oyun_ekleme',
+      'btn-okuma-editor': 'okuma_metinleri',
+      'btn-dokuman-yonetimi': 'dokuman_ekleme',
       'btn-menu-yonetimi': 'menu_yonetimi',
       'btn-calisma-kagidi': 'calisma_kagidi',
       'btn-okuma-sonuclar': 'okuma_sonuclari',
       'btn-okuma-karne': 'okuma_karne',
       'btn-adminler': '__owner__',
       'btn-yedek': '__owner__',
-      'btn-sinav-admin': '__owner__',
+      'btn-sinav-admin': 'exam_create',
     };
   }
 
@@ -560,16 +563,31 @@
     if (!container) {
       return;
     }
-    const defs = getPermissionDefs();
-    container.innerHTML = defs.map(function(item) {
+    const groups = getPermissionDefs().reduce(function(map, item) {
+      const group = item.group || 'Diğer';
+      if (!map[group]) {
+        map[group] = [];
+      }
+      map[group].push(item);
+      return map;
+    }, {});
+    container.innerHTML = Object.keys(groups).map(function(group) {
+      const cards = groups[group].map(function(item) {
+        return (
+          '<label class="admin-permission-card">' +
+            '<input type="checkbox" data-admin-permission="' + escHtml(item.key) + '">' +
+            '<div>' +
+              '<strong>' + escHtml(item.label) + '</strong>' +
+              '<span>' + escHtml(item.description) + '</span>' +
+            '</div>' +
+          '</label>'
+        );
+      }).join('');
       return (
-        '<label class="admin-permission-card">' +
-          '<input type="checkbox" data-admin-permission="' + escHtml(item.key) + '">' +
-          '<div>' +
-            '<strong>' + escHtml(item.label) + '</strong>' +
-            '<span>' + escHtml(item.description) + '</span>' +
-          '</div>' +
-        '</label>'
+        '<div class="admin-permission-section">' +
+          '<div class="admin-permission-section-title">' + escHtml(group) + '</div>' +
+          '<div class="admin-permission-section-grid">' + cards + '</div>' +
+        '</div>'
       );
     }).join('');
   }
@@ -725,6 +743,7 @@
                 (row.isOwner
                   ? '<button class="btn-secondary" onclick="resetAdminMemberForm()">Ana yönetici hesabı</button>'
                   : '<button class="btn-add" onclick="editAdminMember(\'' + escHtml(row.email) + '\')">✏️ Düzenle</button>' +
+                    '<button class="btn-secondary" onclick="sendAdminPasswordSetup(\'' + escHtml(row.email) + '\')">🔑 Şifre Linki Gönder</button>' +
                     '<button class="btn-toggle ' + (row.active ? 'on' : 'off') + '" onclick="toggleAdminMember(\'' + escHtml(row.email) + '\')">' + (row.active ? 'Pasife Al' : 'Aktifleştir') + '</button>' +
                     '<button class="btn-danger" onclick="removeAdminMember(\'' + escHtml(row.email) + '\')">Sil</button>') +
               '</div>' +
@@ -1360,6 +1379,20 @@
     }
   }
 
+  async function sendAdminPasswordSetup(email) {
+    const targetEmail = String(email || '').trim().toLocaleLowerCase('tr-TR');
+    if (!targetEmail) {
+      toast('E-posta bulunamadı.', 'error');
+      return;
+    }
+    try {
+      await window.kemalAdminAuth.sendPasswordSetupEmail(targetEmail);
+      toast('🔑 Şifre belirleme bağlantısı gönderildi. Kullanıcı mailinden şifresini oluşturabilir.', 'success');
+    } catch (error) {
+      toast(window.kemalAdminAuth.humanizeError(error), 'error');
+    }
+  }
+
   async function changePassword() {
     const password = document.getElementById('sifreYeni').value;
     const password2 = document.getElementById('sifreYeniTekrar').value;
@@ -1473,6 +1506,7 @@
   window.editAdminMember = editAdminMember;
   window.toggleAdminMember = toggleAdminMember;
   window.removeAdminMember = removeAdminMember;
+  window.sendAdminPasswordSetup = sendAdminPasswordSetup;
   window.changePassword = changePassword;
   window.exportData = exportData;
   window.resetConfirm = resetConfirm;

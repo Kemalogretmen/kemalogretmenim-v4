@@ -30,7 +30,7 @@ language sql
 stable
 set search_path = public
 as $$
-  select lower(coalesce(auth.jwt() ->> 'email', ''))
+  select lower(coalesce(auth.email(), auth.jwt() ->> 'email', ''))
 $$;
 
 create or replace function public.admin_users_is_empty()
@@ -41,6 +41,21 @@ security definer
 set search_path = public
 as $$
   select not exists (select 1 from public.admin_users)
+$$;
+
+create or replace function public.admin_users_has_owner()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where active = true
+      and is_owner = true
+  )
 $$;
 
 create or replace function public.is_admin_owner()
@@ -83,6 +98,7 @@ revoke all on public.admin_users from public;
 grant select, insert, update, delete on public.admin_users to authenticated;
 grant execute on function public.current_admin_email() to authenticated;
 grant execute on function public.admin_users_is_empty() to authenticated;
+grant execute on function public.admin_users_has_owner() to authenticated;
 grant execute on function public.is_admin_owner() to authenticated;
 
 drop policy if exists "admin_users bootstrap owner insert" on public.admin_users;
@@ -91,7 +107,23 @@ on public.admin_users
 for insert
 to authenticated
 with check (
-  public.admin_users_is_empty()
+  (public.admin_users_is_empty() or not public.admin_users_has_owner())
+  and lower(email) = public.current_admin_email()
+  and active = true
+  and is_owner = true
+);
+
+drop policy if exists "admin_users bootstrap owner update" on public.admin_users;
+create policy "admin_users bootstrap owner update"
+on public.admin_users
+for update
+to authenticated
+using (
+  not public.admin_users_has_owner()
+  and lower(email) = public.current_admin_email()
+)
+with check (
+  not public.admin_users_has_owner()
   and lower(email) = public.current_admin_email()
   and active = true
   and is_owner = true

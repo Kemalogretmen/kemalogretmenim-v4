@@ -115,8 +115,37 @@
     return GRADE_LABELS[Number(value)] || (String(value || '').trim() ? String(value).trim() + '. Sınıf' : 'Sınıf');
   }
 
-  function buildViewerUrl(documentId) {
-    return '/dokuman.html?id=' + encodeURIComponent(documentId);
+  function getDocumentTargets(item) {
+    var targets = Array.isArray(item && item.hedefler) ? item.hedefler : [];
+    var normalized = targets.map(function(target) {
+      var grade = parseInt(target && target.sinif, 10);
+      var subject = normalizeSubjectKey(target && target.ders);
+      if (!grade || !subject) return null;
+      return { sinif: grade, ders: subject };
+    }).filter(Boolean);
+
+    if (!normalized.length && item && item.sinif && item.ders) {
+      normalized.push({
+        sinif: parseInt(item.sinif, 10),
+        ders: normalizeSubjectKey(item.ders),
+      });
+    }
+
+    var seen = {};
+    return normalized.filter(function(target) {
+      var key = target.sinif + '::' + target.ders;
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function buildViewerUrl(documentId, context) {
+    var url = '/dokuman.html?id=' + encodeURIComponent(documentId);
+    if (context && context.sinif && context.ders) {
+      url += '&sinif=' + encodeURIComponent(context.sinif) + '&ders=' + encodeURIComponent(normalizeSubjectKey(context.ders));
+    }
+    return url;
   }
 
   function getPublicFileUrl(path) {
@@ -130,11 +159,11 @@
   async function listDocumentsBySubject(grade, subject, options) {
     const includeInactive = Boolean(options && options.includeInactive);
     const normalizedSubject = normalizeSubjectKey(subject);
+    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi';
+    const fallbackFields = 'id,baslik,aciklama,sinif,ders,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi';
     let query = getPublicClient()
       .from('dokumanlar')
-      .select('id,baslik,aciklama,sinif,ders,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi')
-      .eq('sinif', Number(grade))
-      .eq('ders', normalizedSubject)
+      .select(selectFields)
       .order('siralama', { ascending: true })
       .order('olusturma_tarihi', { ascending: false });
 
@@ -142,17 +171,34 @@
       query = query.eq('aktif', true).eq('oturum_gerekli', false);
     }
 
-    const result = await query;
+    let result = await query;
+    if (result.error && String(result.error.message || '').toLowerCase().includes('hedefler')) {
+      query = getPublicClient()
+        .from('dokumanlar')
+        .select(fallbackFields)
+        .order('siralama', { ascending: true })
+        .order('olusturma_tarihi', { ascending: false });
+      if (!includeInactive) {
+        query = query.eq('aktif', true).eq('oturum_gerekli', false);
+      }
+      result = await query;
+    }
     if (result.error) {
       throw result.error;
     }
 
-    return (result.data || []).map(function(item) {
+    return (result.data || []).filter(function(item) {
+      return getDocumentTargets(item).some(function(target) {
+        return target.sinif === Number(grade) && target.ders === normalizedSubject;
+      });
+    }).map(function(item) {
+      var context = { sinif: Number(grade), ders: normalizedSubject };
+      var subjectMeta = getSubjectMeta(normalizedSubject);
       return Object.assign({}, item, {
-        dersLabel: getSubjectMeta(item.ders) ? getSubjectMeta(item.ders).label : item.ders,
-        sinifLabel: getGradeLabel(item.sinif),
+        dersLabel: subjectMeta ? subjectMeta.label : normalizedSubject,
+        sinifLabel: getGradeLabel(grade),
         dosyaUrl: getPublicFileUrl(item.dosya_yolu),
-        viewerUrl: buildViewerUrl(item.id),
+        viewerUrl: buildViewerUrl(item.id, context),
       });
     });
   }
@@ -181,6 +227,7 @@
     return Object.assign({}, item, {
       dersLabel: getSubjectMeta(item.ders) ? getSubjectMeta(item.ders).label : item.ders,
       sinifLabel: getGradeLabel(item.sinif),
+      hedefler: getDocumentTargets(item),
       dosyaUrl: getPublicFileUrl(item.dosya_yolu),
       viewerUrl: buildViewerUrl(item.id),
     });
@@ -200,6 +247,7 @@
     getGradeLabel: getGradeLabel,
     getPublicFileUrl: getPublicFileUrl,
     buildViewerUrl: buildViewerUrl,
+    getDocumentTargets: getDocumentTargets,
     listDocumentsBySubject: listDocumentsBySubject,
     getDocumentById: getDocumentById,
     mergeMenuItems: mergeMenuItems,

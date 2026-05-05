@@ -200,18 +200,36 @@
   }
 
   function buildDocumentItem(row) {
-    var gradeMeta = getGradeMeta(row.sinif);
-    var subjectMeta = getSubjectMeta(row.ders);
+    var targets = Array.isArray(row.hedefler) ? row.hedefler.map(function(target) {
+      return {
+        sinif: parseInt(target && target.sinif, 10) || null,
+        ders: normalizeSubjectKey(target && target.ders),
+      };
+    }).filter(function(target) {
+      return target.sinif && target.ders;
+    }) : [];
+    if (!targets.length) {
+      targets = [{
+        sinif: parseInt(row.sinif, 10) || null,
+        ders: normalizeSubjectKey(row.ders),
+      }].filter(function(target) {
+        return target.sinif && target.ders;
+      });
+    }
+    var primaryTarget = targets[0] || { sinif: row.sinif, ders: row.ders };
+    var grades = targets.map(function(target) { return target.sinif; }).filter(Boolean);
+    var gradeMeta = getGradeMeta(primaryTarget.sinif);
+    var subjectMeta = getSubjectMeta(primaryTarget.ders);
     return {
       uid: 'document:' + row.id,
       type: 'document',
       id: String(row.id),
       title: row.baslik || 'Doküman',
-      href: '/dokuman.html?id=' + encodeURIComponent(row.id),
-      grade: parseInt(row.sinif, 10) || null,
-      grades: [parseInt(row.sinif, 10) || null].filter(Boolean),
-      gradeLabel: gradeMeta.label,
-      subject: normalizeSubjectKey(row.ders),
+      href: '/dokuman.html?id=' + encodeURIComponent(row.id) + '&sinif=' + encodeURIComponent(primaryTarget.sinif || '') + '&ders=' + encodeURIComponent(primaryTarget.ders || ''),
+      grade: parseInt(primaryTarget.sinif, 10) || null,
+      grades: grades,
+      gradeLabel: getGradeLabels(grades).join(' · ') || gradeMeta.label,
+      subject: normalizeSubjectKey(primaryTarget.ders),
       subjectLabel: subjectMeta.label,
       contentType: 'document',
       contentTypeLabel: 'Dokümanlar',
@@ -272,12 +290,22 @@
 
   async function fetchDocumentItems() {
     var config = getDocumentsConfig();
-    var rows = await fetchSupabaseRows(
-      config,
-      'dokumanlar',
-      'id,baslik,sinif,ders,aktif,oturum_gerekli,olusturma_tarihi',
-      ['aktif=eq.true', 'order=olusturma_tarihi.desc']
-    );
+    var rows;
+    try {
+      rows = await fetchSupabaseRows(
+        config,
+        'dokumanlar',
+        'id,baslik,sinif,ders,hedefler,aktif,oturum_gerekli,olusturma_tarihi',
+        ['aktif=eq.true', 'order=olusturma_tarihi.desc']
+      );
+    } catch (error) {
+      rows = await fetchSupabaseRows(
+        config,
+        'dokumanlar',
+        'id,baslik,sinif,ders,aktif,oturum_gerekli,olusturma_tarihi',
+        ['aktif=eq.true', 'order=olusturma_tarihi.desc']
+      );
+    }
     return rows
       .filter(function(row) {
         return row && row.id && row.oturum_gerekli !== true;

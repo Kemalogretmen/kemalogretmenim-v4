@@ -3,13 +3,20 @@
 
   const BUCKET_NAME = window.kemalDocumentStore.getBucketName();
   const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
-  const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
+  const MAX_DOCUMENT_SIZE_BYTES = 50 * 1024 * 1024;
+  const ALLOWED_FILE_TYPES = {
+    pdf: { mime: 'application/pdf', extensions: ['pdf'], label: 'PDF' },
+    jpeg: { mime: 'image/jpeg', extensions: ['jpg', 'jpeg'], label: 'JPEG' },
+    png: { mime: 'image/png', extensions: ['png'], label: 'PNG' },
+    webp: { mime: 'image/webp', extensions: ['webp'], label: 'WebP' },
+  };
 
   const state = {
     documents: [],
     editingId: null,
     selectedDocument: null,
     currentPdfMeta: null,
+    targets: [],
     filters: {
       grade: '',
       subject: '',
@@ -22,6 +29,20 @@
 
   function getClient() {
     return window.kemalAdminAuth.getClient();
+  }
+
+  function can(permissionKey) {
+    return !window.kemalAdminAuth || typeof window.kemalAdminAuth.hasPermission !== 'function'
+      ? true
+      : window.kemalAdminAuth.hasPermission(permissionKey);
+  }
+
+  function requirePermission(permissionKey, label) {
+    if (can(permissionKey)) {
+      return true;
+    }
+    toast((label || 'Bu işlem') + ' için yetkin yok.', 'error');
+    return false;
   }
 
   function escHtml(value) {
@@ -54,6 +75,10 @@
 
     if (combined.includes('bucket not found')) {
       return 'Supabase bucket bulunamadı. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde çalıştırıp `dokumanlar` bucket\'ını oluşturmalısın.';
+    }
+
+    if (combined.includes('hedefler')) {
+      return 'Çoklu yayın hedefleri için Supabase şemasını güncellemelisin. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.';
     }
 
     if (
@@ -93,19 +118,31 @@
     return size.toFixed(size >= 10 || unit === 0 ? 0 : 1) + ' ' + units[unit];
   }
 
-  function validatePdfFile(file) {
+  function getFileExtension(fileName) {
+    const match = String(fileName || '').toLowerCase().match(/\.([a-z0-9]+)$/);
+    return match ? match[1] : '';
+  }
+
+  function getDocumentFileKind(file) {
+    const mime = String(file && file.type ? file.type : '').toLowerCase();
+    const extension = getFileExtension(file && file.name);
+    return Object.keys(ALLOWED_FILE_TYPES).find(function(key) {
+      const item = ALLOWED_FILE_TYPES[key];
+      return item.mime === mime || item.extensions.includes(extension);
+    }) || '';
+  }
+
+  function validateDocumentFile(file) {
     if (!file) {
       return;
     }
 
-    const name = String(file.name || '').toLowerCase();
-    const isPdf = file.type === 'application/pdf' || name.endsWith('.pdf');
-    if (!isPdf) {
-      throw new Error('Yalnızca PDF dosyası yükleyebilirsin.');
+    if (!getDocumentFileKind(file)) {
+      throw new Error('Yalnızca PDF, JPEG, PNG veya WebP dosyası yükleyebilirsin.');
     }
 
-    if (file.size > MAX_PDF_SIZE_BYTES) {
-      throw new Error('PDF dosyası en fazla ' + formatBytes(MAX_PDF_SIZE_BYTES) + ' olabilir.');
+    if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+      throw new Error('Dosya en fazla ' + formatBytes(MAX_DOCUMENT_SIZE_BYTES) + ' olabilir.');
     }
   }
 
@@ -134,12 +171,100 @@
     }) || null;
   }
 
-  function getViewerUrl(id) {
-    return window.location.origin + window.kemalDocumentStore.buildViewerUrl(id);
+  function getDocumentTargets(item) {
+    if (window.kemalDocumentStore && typeof window.kemalDocumentStore.getDocumentTargets === 'function') {
+      return window.kemalDocumentStore.getDocumentTargets(item);
+    }
+    return item && item.sinif && item.ders ? [{ sinif: Number(item.sinif), ders: item.ders }] : [];
   }
 
-  function getSelectedSubjectMeta() {
-    return window.kemalDocumentStore.getSubjectMeta(document.getElementById('fDers').value);
+  function normalizeTarget(target) {
+    const grade = parseInt(target && target.sinif, 10);
+    const subject = window.kemalDocumentStore.normalizeSubjectKey(target && target.ders);
+    if (!grade || !subject) {
+      return null;
+    }
+    return { sinif: grade, ders: subject };
+  }
+
+  function getTargetKey(target) {
+    return String(target.sinif) + '::' + target.ders;
+  }
+
+  function getTargetLabel(target) {
+    const subjectMeta = window.kemalDocumentStore.getSubjectMeta(target.ders);
+    return window.kemalDocumentStore.getGradeLabel(target.sinif) + ' · ' + (subjectMeta ? subjectMeta.label : target.ders);
+  }
+
+  function dedupeTargets(targets) {
+    const seen = {};
+    return (Array.isArray(targets) ? targets : []).map(normalizeTarget).filter(Boolean).filter(function(target) {
+      const key = getTargetKey(target);
+      if (seen[key]) {
+        return false;
+      }
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function renderTargetList() {
+    const list = document.getElementById('targetList');
+    if (!list) {
+      return;
+    }
+    if (!state.targets.length) {
+      list.innerHTML = '<div class="target-empty">Henüz hedef eklenmedi.</div>';
+      return;
+    }
+    list.innerHTML = state.targets.map(function(target) {
+      return (
+        '<span class="target-chip">' +
+          escHtml(getTargetLabel(target)) +
+          '<button type="button" aria-label="Hedefi kaldır" onclick="hedefSil(\'' + escHtml(getTargetKey(target)) + '\')">×</button>' +
+        '</span>'
+      );
+    }).join('');
+  }
+
+  function setTargets(targets) {
+    state.targets = dedupeTargets(targets);
+    const first = state.targets[0];
+    if (first) {
+      document.getElementById('fSinif').value = String(first.sinif);
+      document.getElementById('fDers').value = first.ders;
+    }
+    renderTargetList();
+    updateSummary();
+  }
+
+  function addTargetFromControls() {
+    const target = normalizeTarget({
+      sinif: document.getElementById('fSinif').value,
+      ders: document.getElementById('fDers').value,
+    });
+    if (!target) {
+      toast('Sınıf ve ders seçmelisin.', 'error');
+      return;
+    }
+    const exists = state.targets.some(function(item) {
+      return getTargetKey(item) === getTargetKey(target);
+    });
+    if (exists) {
+      toast('Bu hedef zaten eklendi.', 'error');
+      return;
+    }
+    setTargets(state.targets.concat([target]));
+  }
+
+  function removeTarget(key) {
+    setTargets(state.targets.filter(function(target) {
+      return getTargetKey(target) !== key;
+    }));
+  }
+
+  function getViewerUrl(id) {
+    return window.location.origin + window.kemalDocumentStore.buildViewerUrl(id);
   }
 
   function setFileInfo(message) {
@@ -148,21 +273,21 @@
 
   function updateSummary() {
     const title = document.getElementById('fBaslik').value.trim();
-    const grade = document.getElementById('fSinif').value;
-    const subject = document.getElementById('fDers').value;
-    const subjectMeta = getSelectedSubjectMeta();
-    const gradeLabel = grade ? window.kemalDocumentStore.getGradeLabel(grade) : 'Sınıf seçilmedi';
-    const subjectLabel = subjectMeta ? subjectMeta.label : 'Ders seçilmedi';
     const activeLabel = document.getElementById('fAktif').checked ? 'Aktif yayın' : 'Pasif kayıt';
     const existing = state.editingId ? getDocumentById(state.editingId) : null;
     const file = getSelectedFile();
     const meta = state.currentPdfMeta || existing;
+    const targets = state.targets.slice();
+    const pendingTarget = normalizeTarget({
+      sinif: document.getElementById('fSinif').value,
+      ders: document.getElementById('fDers').value,
+    });
 
     document.getElementById('summaryTitle').textContent = title || 'Henüz başlık girilmedi.';
     document.getElementById('summaryRoute').textContent =
-      grade && subject
-        ? gradeLabel + ' → ' + subjectLabel + ' altında listelenecek. (' + activeLabel + ')'
-        : 'Sınıf ve ders seçildiğinde yayın yolu burada görünür.';
+      targets.length
+        ? targets.map(getTargetLabel).join(' | ') + ' altında listelenecek. (' + activeLabel + ')'
+        : (pendingTarget ? getTargetLabel(pendingTarget) + ' seçili. Çoklu yayın için Hedef Ekle ile listeye ekleyebilirsin. (' + activeLabel + ')' : 'Yayın hedefi eklediğinde yayın yolları burada görünür.');
 
     if (file) {
       document.getElementById('summaryMeta').textContent =
@@ -174,13 +299,13 @@
 
     if (existing) {
       document.getElementById('summaryMeta').textContent =
-        (existing.dosya_adi || 'Mevcut PDF') +
+        (existing.dosya_adi || 'Mevcut dosya') +
         ' · ' + formatBytes(existing.dosya_boyutu || 0) +
         ((existing.sayfa_sayisi || 0) ? ' · ' + existing.sayfa_sayisi + ' sayfa' : '');
       return;
     }
 
-    document.getElementById('summaryMeta').textContent = 'Dosya seçildiğinde sayfa sayısı ve boyut bilgisi hesaplanır.';
+    document.getElementById('summaryMeta').textContent = 'Dosya seçildiğinde tür, sayfa sayısı ve boyut bilgisi hesaplanır.';
   }
 
   function showListPanel() {
@@ -198,8 +323,9 @@
     state.editingId = null;
     state.selectedDocument = null;
     state.currentPdfMeta = null;
+    state.targets = [];
     document.getElementById('editTitle').textContent = 'Yeni Doküman';
-    document.getElementById('editStatus').textContent = 'Yeni bir PDF yükleyip sınıf ve dersle eşleştirebilirsin.';
+    document.getElementById('editStatus').textContent = 'Yeni bir PDF veya görsel yükleyip birden fazla sınıf ve dersle eşleştirebilirsin.';
     document.getElementById('fBaslik').value = '';
     document.getElementById('fAciklama').value = '';
     document.getElementById('fSinif').value = '1';
@@ -209,7 +335,8 @@
     document.getElementById('fAktif').checked = true;
     document.getElementById('fOturumGerekli').checked = false;
     document.getElementById('fPdf').value = '';
-    setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
+    setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
+    renderTargetList();
     updateSummary();
   }
 
@@ -235,10 +362,16 @@
     const grid = document.getElementById('documentGrid');
 
     const filtered = state.documents.filter(function(item) {
-      if (grade && String(item.sinif) !== String(grade)) {
+      const targets = getDocumentTargets(item);
+      if (grade && !targets.some(function(target) { return String(target.sinif) === String(grade); })) {
         return false;
       }
-      if (subject && item.ders !== subject) {
+      if (subject && !targets.some(function(target) { return target.ders === subject; })) {
+        return false;
+      }
+      if (grade && subject && !targets.some(function(target) {
+        return String(target.sinif) === String(grade) && target.ders === subject;
+      })) {
         return false;
       }
       if (status === 'active' && !item.aktif) {
@@ -256,28 +389,33 @@
     }
 
     grid.innerHTML = filtered.map(function(item) {
-      const subjectMeta = window.kemalDocumentStore.getSubjectMeta(item.ders);
+      const targets = getDocumentTargets(item);
+      const badges = targets.length
+        ? targets.slice(0, 4).map(function(target) {
+          return '<div class="doc-badge">' + escHtml(getTargetLabel(target)) + '</div>';
+        }).join('') + (targets.length > 4 ? '<div class="doc-badge">+' + (targets.length - 4) + ' hedef</div>' : '')
+        : '<div class="doc-badge">Hedef yok</div>';
       return (
         '<article class="doc-card">' +
           '<div class="doc-top">' +
-            '<div class="doc-badge">' + window.kemalDocumentStore.getGradeLabel(item.sinif) + ' · ' + escHtml(subjectMeta ? subjectMeta.label : item.ders) + '</div>' +
+            '<div class="doc-badges">' + badges + '</div>' +
             '<div class="doc-status ' + (item.aktif ? 'on' : 'off') + '">' + (item.aktif ? 'Aktif' : 'Pasif') + '</div>' +
           '</div>' +
           '<div class="doc-title">' + escHtml(item.baslik) + '</div>' +
           '<div class="doc-desc">' + escHtml(item.aciklama || 'Açıklama eklenmedi.') + '</div>' +
           '<div class="doc-meta">' +
-            '<span>📄 ' + escHtml(item.dosya_adi || 'PDF') + '</span>' +
+            '<span>📄 ' + escHtml(item.dosya_adi || 'Dosya') + '</span>' +
             '<span>📚 ' + Number(item.sayfa_sayisi || 0) + ' sayfa</span>' +
             '<span>📦 ' + formatBytes(item.dosya_boyutu || 0) + '</span>' +
           '</div>' +
           '<div class="doc-actions">' +
-            '<button class="btn-edit" type="button" onclick="dokumanDuzenle(\'' + item.id + '\')">Düzenle</button>' +
+            (can('dokuman_duzenleme') ? '<button class="btn-edit" type="button" onclick="dokumanDuzenle(\'' + item.id + '\')">Düzenle</button>' : '') +
             '<a class="btn-open" href="' + escHtml(window.kemalDocumentStore.buildViewerUrl(item.id)) + '" target="_blank" rel="noreferrer">Aç</a>' +
-            '<button class="btn-worksheet" type="button" onclick="calismaKagidiDuzenle(\'' + item.id + '\')">Çalışma Kağıdı</button>' +
+            (can('dokuman_duzenleme') ? '<button class="btn-worksheet" type="button" onclick="calismaKagidiDuzenle(\'' + item.id + '\')">Çalışma Kağıdı</button>' : '') +
           '</div>' +
           '<div class="doc-actions">' +
-            '<button class="btn-open" type="button" onclick="durumDegistir(\'' + item.id + '\')">' + (item.aktif ? 'Pasife Al' : 'Aktife Al') + '</button>' +
-            '<button class="btn-delete" type="button" onclick="dokumanSil(\'' + item.id + '\')">Sil</button>' +
+            (can('dokuman_duzenleme') ? '<button class="btn-open" type="button" onclick="durumDegistir(\'' + item.id + '\')">' + (item.aktif ? 'Pasife Al' : 'Aktife Al') + '</button>' : '') +
+            (can('dokuman_silme') ? '<button class="btn-delete" type="button" onclick="dokumanSil(\'' + item.id + '\')">Sil</button>' : '') +
           '</div>' +
         '</article>'
       );
@@ -304,8 +442,38 @@
     renderDocuments();
   }
 
-  async function extractPdfMeta(file) {
-    validatePdfFile(file);
+  function isImageFile(file) {
+    const kind = getDocumentFileKind(file);
+    return kind === 'jpeg' || kind === 'png' || kind === 'webp';
+  }
+
+  async function extractImageMeta(file) {
+    validateDocumentFile(file);
+    return new Promise(function(resolve, reject) {
+      const image = new Image();
+      const url = URL.createObjectURL(file);
+      image.onload = function() {
+        URL.revokeObjectURL(url);
+        resolve({
+          pageCount: 1,
+          size: file.size || 0,
+          width: image.naturalWidth || image.width || 0,
+          height: image.naturalHeight || image.height || 0,
+        });
+      };
+      image.onerror = function() {
+        URL.revokeObjectURL(url);
+        reject(new Error('Görsel okunamadı.'));
+      };
+      image.src = url;
+    });
+  }
+
+  async function extractDocumentMeta(file) {
+    validateDocumentFile(file);
+    if (isImageFile(file)) {
+      return extractImageMeta(file);
+    }
     ensurePdfWorker();
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -324,14 +492,14 @@
       if (existing) {
         setFileInfo('Mevcut dosya korunacak: ' + existing.dosya_adi + ' · ' + formatBytes(existing.dosya_boyutu) + ' · ' + (existing.sayfa_sayisi || 0) + ' sayfa');
       } else {
-        setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
+        setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
       }
       updateSummary();
       return;
     }
 
     try {
-      validatePdfFile(file);
+      validateDocumentFile(file);
     } catch (error) {
       document.getElementById('fPdf').value = '';
       setFileInfo(error.message + ' Dosya seçimi temizlendi.');
@@ -340,36 +508,40 @@
       return;
     }
 
-    setFileInfo(file.name + ' seçildi. Sayfa sayısı hesaplanıyor…');
+    setFileInfo(file.name + ' seçildi. Dosya bilgisi hesaplanıyor…');
     updateSummary();
 
     try {
-      const meta = await extractPdfMeta(file);
+      const meta = await extractDocumentMeta(file);
       state.currentPdfMeta = meta;
-      setFileInfo(file.name + ' · ' + formatBytes(file.size) + ' · ' + meta.pageCount + ' sayfa');
+      const imageInfo = meta.width && meta.height ? ' · ' + meta.width + '×' + meta.height + ' px' : '';
+      setFileInfo(file.name + ' · ' + formatBytes(file.size) + ' · ' + meta.pageCount + ' sayfa' + imageInfo);
       updateSummary();
     } catch (error) {
-      setFileInfo(file.name + ' seçildi fakat PDF okunamadı.');
-      toast('PDF bilgisi okunamadı: ' + error.message, 'error');
+      setFileInfo(file.name + ' seçildi fakat dosya okunamadı.');
+      toast('Dosya bilgisi okunamadı: ' + error.message, 'error');
     }
   }
 
   function buildStoragePath(documentId, title, grade, subject, fileName) {
     const baseName = slugify(title || fileName || 'dokuman');
+    const extension = getFileExtension(fileName) || 'pdf';
     return [
       String(grade || 'genel'),
       slugify(subject || 'dokuman'),
       documentId,
-      Date.now() + '-' + baseName + '.pdf',
+      Date.now() + '-' + baseName + '.' + extension,
     ].join('/');
   }
 
-  async function uploadPdf(documentId, file, grade, subject, title) {
+  async function uploadDocumentFile(documentId, file, grade, subject, title) {
     const path = buildStoragePath(documentId, title, grade, subject, file.name);
+    const kind = getDocumentFileKind(file);
+    const contentType = (ALLOWED_FILE_TYPES[kind] && ALLOWED_FILE_TYPES[kind].mime) || file.type || 'application/octet-stream';
     const response = await getClient().storage.from(BUCKET_NAME).upload(path, file, {
       cacheControl: '3600',
       upsert: true,
-      contentType: 'application/pdf',
+      contentType: contentType,
     });
 
     if (response.error) {
@@ -382,8 +554,11 @@
   function collectPayload() {
     const title = document.getElementById('fBaslik').value.trim();
     const description = document.getElementById('fAciklama').value.trim();
-    const grade = parseInt(document.getElementById('fSinif').value, 10);
-    const subject = window.kemalDocumentStore.normalizeSubjectKey(document.getElementById('fDers').value);
+    const targets = dedupeTargets(state.targets.length ? state.targets : [{
+      sinif: document.getElementById('fSinif').value,
+      ders: document.getElementById('fDers').value,
+    }]);
+    const primaryTarget = targets[0] || null;
     const sortOrder = parseInt(document.getElementById('fSiralama').value || '0', 10) || 0;
     const coverColor = document.getElementById('fKapakRenk').value || '#6C3DED';
     const active = document.getElementById('fAktif').checked;
@@ -393,21 +568,22 @@
     if (!title) {
       throw new Error('Doküman başlığı zorunlu.');
     }
-    if (!grade || !subject) {
-      throw new Error('Sınıf ve ders seçmelisin.');
+    if (!targets.length || !primaryTarget) {
+      throw new Error('En az bir yayın hedefi eklemelisin.');
     }
     if (!existing && !file) {
-      throw new Error('Yeni kayıt için bir PDF yüklemelisin.');
+      throw new Error('Yeni kayıt için bir PDF veya görsel yüklemelisin.');
     }
     if (file) {
-      validatePdfFile(file);
+      validateDocumentFile(file);
     }
 
     return {
       title: title,
       description: description,
-      grade: grade,
-      subject: subject,
+      grade: primaryTarget.sinif,
+      subject: primaryTarget.ders,
+      targets: targets,
       sortOrder: sortOrder,
       coverColor: coverColor,
       active: active,
@@ -417,6 +593,9 @@
   }
 
   async function save(options) {
+    if (!requirePermission(state.editingId ? 'dokuman_duzenleme' : 'dokuman_ekleme', state.editingId ? 'Doküman düzenleme' : 'Doküman ekleme')) {
+      return;
+    }
     try {
       const shouldPrepare = Boolean(options && options.openInteractionEditor);
       const data = collectPayload();
@@ -427,8 +606,8 @@
       let pageCount = data.existing ? Number(data.existing.sayfa_sayisi || 0) : 0;
 
       if (data.file) {
-        const meta = state.currentPdfMeta || await extractPdfMeta(data.file);
-        filePath = await uploadPdf(documentId, data.file, data.grade, data.subject, data.title);
+        const meta = state.currentPdfMeta || await extractDocumentMeta(data.file);
+        filePath = await uploadDocumentFile(documentId, data.file, data.grade, data.subject, data.title);
         fileName = data.file.name;
         fileSize = data.file.size || 0;
         pageCount = meta.pageCount || 0;
@@ -439,6 +618,7 @@
         aciklama: data.description,
         sinif: data.grade,
         ders: data.subject,
+        hedefler: data.targets,
         dosya_yolu: filePath,
         dosya_adi: fileName,
         dosya_boyutu: fileSize,
@@ -489,6 +669,9 @@
   }
 
   async function toggleActive(documentId) {
+    if (!requirePermission('dokuman_duzenleme', 'Doküman düzenleme')) {
+      return;
+    }
     const item = getDocumentById(documentId);
     if (!item) {
       return;
@@ -512,12 +695,15 @@
   }
 
   async function deleteDocument(documentId) {
+    if (!requirePermission('dokuman_silme', 'Doküman silme')) {
+      return;
+    }
     const item = getDocumentById(documentId);
     if (!item) {
       return;
     }
 
-    const ok = window.confirm('"' + item.baslik + '" dokümanını silmek istiyor musun? Bu işlem PDF kaydını da kaldırır.');
+    const ok = window.confirm('"' + item.baslik + '" dokümanını silmek istiyor musun? Bu işlem yüklenen dosyayı da kaldırır.');
     if (!ok) {
       return;
     }
@@ -556,13 +742,12 @@
     document.getElementById('editStatus').textContent = 'ID: ' + doc.id.slice(0, 8) + '… · Görüntüleme bağlantısı hazır.';
     document.getElementById('fBaslik').value = doc.baslik || '';
     document.getElementById('fAciklama').value = doc.aciklama || '';
-    document.getElementById('fSinif').value = String(doc.sinif || 1);
-    document.getElementById('fDers').value = doc.ders || (window.kemalDocumentStore.getSubjects()[0] || {}).key || '';
+    setTargets(getDocumentTargets(doc));
     document.getElementById('fSiralama').value = String(doc.siralama || 0);
     document.getElementById('fKapakRenk').value = doc.kapak_renk || '#6C3DED';
     document.getElementById('fAktif').checked = Boolean(doc.aktif);
     document.getElementById('fOturumGerekli').checked = Boolean(doc.oturum_gerekli);
-    setFileInfo('Mevcut dosya: ' + (doc.dosya_adi || 'PDF') + ' · ' + formatBytes(doc.dosya_boyutu || 0) + ' · ' + (doc.sayfa_sayisi || 0) + ' sayfa');
+    setFileInfo('Mevcut dosya: ' + (doc.dosya_adi || 'Dosya') + ' · ' + formatBytes(doc.dosya_boyutu || 0) + ' · ' + (doc.sayfa_sayisi || 0) + ' sayfa');
     updateSummary();
   }
 
@@ -744,6 +929,8 @@
   };
   window.uygulaFiltre = applyFilters;
   window.filtreTemizle = clearFilters;
+  window.hedefEkle = addTargetFromControls;
+  window.hedefSil = removeTarget;
   window.dokumanDuzenle = function(id) {
     const item = getDocumentById(id);
     if (item) {

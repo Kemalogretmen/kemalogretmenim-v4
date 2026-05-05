@@ -567,9 +567,26 @@
     }
     .admin-permission-grid {
       display:grid;
+      grid-template-columns:1fr;
+      gap:14px;
+      margin-bottom:14px;
+    }
+    .admin-permission-section {
+      display:grid;
+      gap:10px;
+    }
+    .admin-permission-section-title {
+      font-size:12px;
+      font-weight:900;
+      color:var(--purple);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      padding:0 2px;
+    }
+    .admin-permission-section-grid {
+      display:grid;
       grid-template-columns:1fr 1fr;
       gap:10px;
-      margin-bottom:14px;
     }
     .admin-permission-card {
       display:flex;
@@ -648,7 +665,7 @@
       .main-area { margin-left:70px; padding:20px; }
       .stats-row { grid-template-columns:1fr 1fr; }
       .form-row, .form-row-3 { grid-template-columns:1fr; }
-      .admin-grid, .admin-permission-grid, .access-summary-grid { grid-template-columns:1fr; }
+      .admin-grid, .admin-permission-grid, .admin-permission-section-grid, .access-summary-grid { grid-template-columns:1fr; }
     }
     @media (max-width:640px) {
       .main-area { padding:16px; }
@@ -1186,7 +1203,7 @@
         <div class="card">
           <div class="card-title">👑 Yönetici Yapısı</div>
           <div id="adminUsersHint" class="admin-help-box">
-            Ana yönetici bu ekrandan alt adminleri ekler, hangi panellere erişeceklerini belirler ve gerektiğinde pasife alır. Sınav paneli şu an ayrı Firebase yetkisi kullandığı için bu ekran yalnızca Supabase tabanlı admin panellerini yönetir.
+            Ana yönetici bu ekrandan alt adminlerin yetkilerini belirler. Giriş yapabilmeleri için aynı e-postanın Supabase Authentication > Users içinde kullanıcı olarak bulunması gerekir; ardından aşağıdaki listeden şifre belirleme bağlantısı gönderebilirsin.
           </div>
           <div class="access-summary-grid">
             <div class="access-summary-card">
@@ -1230,6 +1247,7 @@
               <button class="btn-secondary" onclick="resetAdminMemberForm()">↺ Formu Temizle</button>
             </div>
             <p class="admin-form-note" id="subAdminFormNote">Alt admin giriş yaptıktan sonra yalnızca seçtiğiniz paneller görünür. Şifre değişikliği kullanıcıya aittir; bu ekranda erişim yönetilir.</p>
+            <p class="admin-form-note">Giriş hesabı oluşturma adımı: Supabase > Authentication > Users içinde aynı e-postayı kullanıcı olarak ekle. Sonra sağdaki listeden şifre belirleme linki gönder.</p>
           </div>
 
           <div class="card">

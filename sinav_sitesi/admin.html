@@ -204,10 +204,12 @@ h1,h2,h3,h4{font-family:var(--fd)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/site-data.js"></script>
+<script>window.kemalAdminScope='default';</script>
+<script src="/js/admin-auth.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="/js/admin-shell.js"></script>
+<script src="/js/admin-shell.js?v=20260505-1"></script>
 
 <script type="module">
 import { app, db } from "./js/firebase.js";
@@ -261,6 +263,7 @@ const auth=getAuth(app);
 let authReady=false;
 let currentUser=null;
 let currentUserIsAdmin=false;
+let currentAdminAccessProfile=null;
 let questionSortables=[];
 let preserveCreateDraftOnReturn=false;
 const PDF_BASE_ZOOM=2.2;
@@ -293,6 +296,39 @@ const appEl=()=>document.getElementById('app');
 function getRequestedPageFromHash(){
   const hash=String(window.location.hash||'').replace(/^#/,'').trim();
   return ['create','categories','exams','results'].includes(hash)?hash:'';
+}
+
+const EXAM_PAGE_PERMISSIONS={
+  create:['exam_create'],
+  categories:['exam_categories','exam_category_create','exam_category_edit','exam_category_delete'],
+  exams:['exam_list','exam_edit','exam_delete','exam_results','exam_appeals'],
+  results:['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center','exam_appeals']
+};
+function hasExamPerm(key){
+  if(!key) return true;
+  const profile=currentAdminAccessProfile;
+  if(!profile) return currentUserIsAdmin;
+  if(profile.isOwner||profile.legacyMode) return true;
+  return !!(profile.active!==false&&profile.permissions&&profile.permissions[key]);
+}
+function hasAnyExamPerm(keys){
+  return (Array.isArray(keys)?keys:[keys]).some(key=>hasExamPerm(key));
+}
+function canOpenExamPage(page){
+  return hasAnyExamPerm(EXAM_PAGE_PERMISSIONS[page]||[]);
+}
+function firstAllowedExamPage(){
+  return ['create','categories','exams','results'].find(page=>canOpenExamPage(page))||'';
+}
+function requireExamPerm(key,label){
+  if(hasExamPerm(key)) return true;
+  toast((label||'Bu işlem')+' için yetkiniz yok.','error');
+  return false;
+}
+function requireAnyExamPerm(keys,label){
+  if(hasAnyExamPerm(keys)) return true;
+  toast((label||'Bu alan')+' için yetkiniz yok.','error');
+  return false;
 }
 
 /* ── UTILS ── */
@@ -873,7 +909,8 @@ function renderShell(content){
         activeKey:`exam-${A.page}`,
         homeHref:'index.html',
         homeLabel:'Öğrenci Sayfası',
-        homeTarget:'_blank'
+        homeTarget:'_blank',
+        permissionProfile:currentAdminAccessProfile
       })
     : '';
   appEl().innerHTML=`
@@ -1147,10 +1184,10 @@ function renderAdminExams(){
       const meta=getExamStatusMeta(status);
       const appealMeta=appealSummary[e.id]||{total:0,pending:0};
       const displayOrder=getExamDisplayOrder(e,index);
-      const primaryAction=status==='active'
+      const primaryAction=!hasExamPerm('exam_edit')?'':status==='active'
         ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
         : `<button class="btn btn-sm btn-green" onclick="W.setExamStatus('${e.id}','active')">🚀 Aktif Et</button>`;
-      const secondaryAction=status==='draft'
+      const secondaryAction=!hasExamPerm('exam_edit')?'':status==='draft'
         ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
         : `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','draft')">🕒 Beklet</button>`;
       const shareAction=status==='active'
@@ -1170,21 +1207,21 @@ function renderAdminExams(){
               ${e.updatedAt?`<span class="text-xs text-muted">✏️ ${fmtDate(e.updatedAt)} güncellendi</span>`:''}
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;background:#F8FAFC;border:1.5px solid var(--border);border-radius:12px;padding:8px 10px">
+          ${hasExamPerm('exam_edit')?`<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;background:#F8FAFC;border:1.5px solid var(--border);border-radius:12px;padding:8px 10px">
             <span style="font-size:10px;font-weight:900;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap">Sıra</span>
             <button class="btn btn-sm btn-outline" type="button" title="Yukarı taşı" onclick="W.moveExamDisplayOrder('${e.id}',-1)" style="padding:4px 8px">↑</button>
             <input class="form-input" type="number" min="1" step="1" value="${displayOrder}" style="width:54px;padding:5px 6px;text-align:center;font-weight:800;margin:0" onchange="W.updateExamDisplayOrder('${e.id}',this.value)">
             <button class="btn btn-sm btn-outline" type="button" title="Aşağı taşı" onclick="W.moveExamDisplayOrder('${e.id}',1)" style="padding:4px 8px">↓</button>
-          </div>
+          </div>`:''}
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-          <button class="btn btn-sm btn-primary" onclick="W.editExam('${e.id}')">✏️ Düzenle</button>
+          ${hasExamPerm('exam_edit')?`<button class="btn btn-sm btn-primary" onclick="W.editExam('${e.id}')">✏️ Düzenle</button>`:''}
           ${primaryAction}
           ${secondaryAction}
           ${shareAction}
-          <button class="btn btn-sm btn-outline" onclick="W.showExamAppeals('${e.id}')">📝 İtirazlar</button>
-          <button class="btn btn-sm btn-outline" onclick="W.showResults('${e.id}')">📊 Sonuçlar</button>
-          <button class="btn btn-sm btn-red" onclick="W.delExam('${e.id}')">🗑 Sil</button>
+          ${hasExamPerm('exam_appeals')?`<button class="btn btn-sm btn-outline" onclick="W.showExamAppeals('${e.id}')">📝 İtirazlar</button>`:''}
+          ${hasAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'])?`<button class="btn btn-sm btn-outline" onclick="W.showResults('${e.id}')">📊 Sonuçlar</button>`:''}
+          ${hasExamPerm('exam_delete')?`<button class="btn btn-sm btn-red" onclick="W.delExam('${e.id}')">🗑 Sil</button>`:''}
         </div>
       </div>`;}).join('');
   return`<div class="page-pad">
@@ -1217,8 +1254,8 @@ function renderAdminResults(){
     const reportButtons=r.status==='in_progress'
       ? `<button style="background:#F8FAFC;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;cursor:not-allowed;font-size:12px;font-weight:700" disabled>⏳ Tek Sınav</button>
          <button style="background:#F8FAFC;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;cursor:not-allowed;font-size:12px;font-weight:700" disabled>⏳ Karne Merkezi</button>`
-      : `<button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>
-         <button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>`;
+      : `${hasExamPerm('exam_single_report')?`<button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>`:''}
+         ${hasExamPerm('exam_report_center')?`<button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>`:''}`;
     return`<tr>
       <td style="font-weight:600;font-family:var(--fd)">
         <div>${esc(r.firstName)} ${esc(r.lastName)}</div>
@@ -1243,10 +1280,10 @@ function renderAdminResults(){
       <td style="font-size:11px;color:var(--muted)">${fmtDT(r.date)}</td>
       <td>
         <div class="flex gap-8" style="flex-wrap:wrap">
-          <button onclick="W.openResultEdit('${r.id}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#C2410C;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F97316';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#C2410C'">✏️ Düzenle</button>
-          <button onclick="W.showExamAppeals('${r.examId}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#9A3412;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F59E0B';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#9A3412'">📝 İtirazlar</button>
+          ${hasExamPerm('exam_results_edit')?`<button onclick="W.openResultEdit('${r.id}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#C2410C;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F97316';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#C2410C'">✏️ Düzenle</button>`:''}
+          ${hasExamPerm('exam_appeals')?`<button onclick="W.showExamAppeals('${r.examId}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#9A3412;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F59E0B';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#9A3412'">📝 İtirazlar</button>`:''}
           ${reportButtons}
-          <button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>
+          ${hasExamPerm('exam_results_delete')?`<button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>`:''}
         </div>
       </td>
     </tr>`;}).join('');
@@ -1280,12 +1317,12 @@ function renderAdminCategories(){
   `).join('');
   const rows=getEditableCategoriesForGrade(selectedGrade).map((category,index)=>`
     <div class="category-row">
-      <input class="form-input" type="text" value="${esc(category)}" placeholder="Örn: Türkçe" oninput="W.updateCategoryField(${index},this.value)">
+      <input class="form-input" type="text" value="${esc(category)}" placeholder="Örn: Türkçe" oninput="W.updateCategoryField(${index},this.value)" ${hasExamPerm('exam_category_edit')?'':'disabled'}>
       <label class="category-toggle" title="Açık olduğunda bu kategori için soru aralıklarına ders/bölüm başlığı tanımlanabilir.">
-        <input type="checkbox" ${isSectionEnabledCategory(selectedGrade,category)?'checked':''} onchange="W.toggleCategorySection(${index},this.checked)">
+        <input type="checkbox" ${isSectionEnabledCategory(selectedGrade,category)?'checked':''} onchange="W.toggleCategorySection(${index},this.checked)" ${hasExamPerm('exam_category_edit')?'':'disabled'}>
         Bölümlü Sınav
       </label>
-      <button class="btn btn-red" type="button" onclick="W.removeCategoryRow(${index})">Sil</button>
+      ${hasExamPerm('exam_category_delete')?`<button class="btn btn-red" type="button" onclick="W.removeCategoryRow(${index})">Sil</button>`:''}
     </div>
   `).join('');
   return`<div class="page-pad">
@@ -1308,10 +1345,10 @@ function renderAdminCategories(){
           <div style="display:flex;flex-direction:column;gap:10px">${rows}</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:16px">
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn btn-outline" type="button" onclick="W.addCategoryRow()">+ Kategori Ekle</button>
-              <button class="btn btn-outline" type="button" onclick="W.resetCategoryGrade()">Varsayılanları Yükle</button>
+              ${hasExamPerm('exam_category_create')?'<button class="btn btn-outline" type="button" onclick="W.addCategoryRow()">+ Kategori Ekle</button>':''}
+              ${hasExamPerm('exam_category_edit')?'<button class="btn btn-outline" type="button" onclick="W.resetCategoryGrade()">Varsayılanları Yükle</button>':''}
             </div>
-            <button class="btn btn-green" type="button" onclick="W.saveCategoryGrade()">💾 Kaydet</button>
+            ${hasAnyExamPerm(['exam_category_create','exam_category_edit','exam_category_delete'])?'<button class="btn btn-green" type="button" onclick="W.saveCategoryGrade()">💾 Kaydet</button>':''}
           </div>
           <div class="section-note" style="margin-top:14px">Örnek: Deneme, LGS veya Genel Tarama gibi kategorilerde <strong>Bölümlü Sınav</strong> açık olursa soru aralıklarına Türkçe, Matematik, Fen Bilimleri gibi başlıklar ekleyebilirsin.</div>
         </div>
@@ -1879,6 +1916,9 @@ const W={
     showLoad('Giriş yapılıyor...');
     try{
       await signInWithEmailAndPassword(auth,email,pass);
+      if(window.kemalAdminAuth&&typeof window.kemalAdminAuth.signIn==='function'){
+        try{await window.kemalAdminAuth.signIn(email,pass);}catch(supabaseError){console.warn('Supabase admin yetki oturumu açılamadı:',supabaseError);}
+      }
     }catch(e){
       console.error(e);
       if(err){err.textContent='⚠️ Giriş yapılamadı. E-posta/şifre kontrol edin.';err.style.display='block';}
@@ -1887,7 +1927,12 @@ const W={
   },
   async logout(){
     showLoad('Çıkış yapılıyor...');
-    try{await signOut(auth);}finally{hideLoad();}
+    try{
+      if(window.kemalAdminAuth&&typeof window.kemalAdminAuth.signOut==='function'){
+        await window.kemalAdminAuth.signOut().catch(()=>null);
+      }
+      await signOut(auth);
+    }finally{hideLoad();}
   },
   async copyUid(){
     const uid=currentUser?.uid||'';
@@ -1898,6 +1943,7 @@ const W={
     await copyText(buildExamShareUrl(id),'Sınav bağlantısı kopyalandı');
   },
   async updateExamDisplayOrder(id,value){
+    if(!requireExamPerm('exam_edit','Sınav sıralama')) return;
     const current=A.exams.find(exam=>exam.id===id);
     if(!current) return;
     const order=clampRequestedExamOrder(value,getExamPlacementList(current.grade,id).length+1);
@@ -1914,6 +1960,7 @@ const W={
     }
   },
   async moveExamDisplayOrder(id,direction){
+    if(!requireExamPerm('exam_edit','Sınav sıralama')) return;
     const current=A.exams.find(exam=>exam.id===id);
     if(!current) return;
     const sameGrade=sortAdminExamRecords(A.exams.filter(exam=>String(exam.grade)===String(current.grade)));
@@ -1951,6 +1998,7 @@ const W={
   },
   async nav(page,opts={}){
     if(!currentUserIsAdmin){toast('Yetkiniz yok','error');return;}
+    if(!canOpenExamPage(page)){toast('Bu sınav alanı için yetkiniz yok.','error');return;}
     if(page==='create'&&A.page!=='create'){
       if(preserveCreateDraftOnReturn){
         preserveCreateDraftOnReturn=false;
@@ -1993,6 +2041,7 @@ const W={
     render();
   },
   openCategoryManager(){
+    if(!requireAnyExamPerm(['exam_categories','exam_category_create','exam_category_edit','exam_category_delete'],'Kategoriler')) return;
     if(A.page==='create') preserveCreateDraftOnReturn=true;
     this.nav('categories');
   },
@@ -2006,10 +2055,12 @@ const W={
   },
   setOptCount(n){A.optionCount=n;setContent(renderCreate());},
   setCategoryGrade(grade){
+    if(!requireAnyExamPerm(['exam_categories','exam_category_create','exam_category_edit','exam_category_delete'],'Kategoriler')) return;
     A.categoryGrade=grade;
     setContent(renderAdminCategories());
   },
   updateCategoryField(index,value){
+    if(!hasExamPerm('exam_category_edit')) return;
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
     if(!Array.isArray(A.sectionCategoryMap[A.categoryGrade])) A.sectionCategoryMap[A.categoryGrade]=getSectionEnabledCategoriesForGrade(A.categoryGrade);
     const previousLabel=sanitizeCategoryLabel(A.categoryMap[A.categoryGrade][index]);
@@ -2024,11 +2075,13 @@ const W={
     }
   },
   addCategoryRow(){
+    if(!requireExamPerm('exam_category_create','Kategori ekleme')) return;
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
     A.categoryMap[A.categoryGrade].push('');
     setContent(renderAdminCategories());
   },
   removeCategoryRow(index){
+    if(!requireExamPerm('exam_category_delete','Kategori silme')) return;
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) return;
     const removedLabel=sanitizeCategoryLabel(A.categoryMap[A.categoryGrade][index]);
     A.categoryMap[A.categoryGrade].splice(index,1);
@@ -2038,6 +2091,7 @@ const W={
     setContent(renderAdminCategories());
   },
   toggleCategorySection(index,enabled){
+    if(!hasExamPerm('exam_category_edit')) return;
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) return;
     if(!Array.isArray(A.sectionCategoryMap[A.categoryGrade])) A.sectionCategoryMap[A.categoryGrade]=getSectionEnabledCategoriesForGrade(A.categoryGrade);
     const label=sanitizeCategoryLabel(A.categoryMap[A.categoryGrade][index]);
@@ -2046,12 +2100,14 @@ const W={
       : A.sectionCategoryMap[A.categoryGrade].filter(item=>normalizeKeyPart(item)!==normalizeKeyPart(label));
   },
   resetCategoryGrade(){
+    if(!requireExamPerm('exam_category_edit','Kategori düzenleme')) return;
     A.categoryMap[A.categoryGrade]=[...(DEFAULT_SUBJECTS_BY_GRADE[A.categoryGrade]||[])];
     A.sectionCategoryMap[A.categoryGrade]=[...createDefaultSectionCategoryMap()[A.categoryGrade]];
     setContent(renderAdminCategories());
     toast('Varsayılan kategori listesi geri yüklendi. Kaydetmeyi unutma.','info');
   },
   async saveCategoryGrade(){
+    if(!requireAnyExamPerm(['exam_category_create','exam_category_edit','exam_category_delete'],'Kategori kaydetme')) return;
     const grade=A.categoryGrade;
     const categories=sanitizeCategoryList(A.categoryMap[grade]);
     const sectionCategories=getSectionEnabledCategoriesForGrade(grade,A.sectionCategoryMap,A.categoryMap);
@@ -2176,6 +2232,9 @@ const W={
     await this.saveAs('active');
   },
   async saveAs(targetStatus){
+    if(A.editExamId){
+      if(!requireExamPerm('exam_edit','Sınav düzenleme')) return;
+    }else if(!requireExamPerm('exam_create','Sınav oluşturma')) return;
     const t=(document.getElementById('pubTitle')?.value||A.pubTitle||A.examName).trim();
     const rawDisplayOrder=(document.getElementById('pubDisplayOrder')?.value??A.pubDisplayOrder??'').toString().trim();
     if(!t){toast('Başlık girin','error');return;}
@@ -2300,6 +2359,7 @@ const W={
     }
   },
   async loadExamsFilter(gf){
+    if(!requireAnyExamPerm(['exam_list','exam_edit','exam_delete'],'Sınavlar')) return;
     showLoad();
     const [exams,appeals]=await Promise.all([fbLoadExams(gf),fbLoadAppeals()]);
     A.exams=exams;
@@ -2308,6 +2368,7 @@ const W={
     setContent(renderAdminExams());
   },
   async editExam(id){
+    if(!requireExamPerm('exam_edit','Sınav düzenleme')) return;
     showLoad('Sınav düzenleme ekranı hazırlanıyor...');
     try{
       const examSnap=await getDoc(doc(db,'exams',id));
@@ -2364,6 +2425,7 @@ const W={
     }
   },
   async setExamStatus(id,status){
+    if(!requireExamPerm('exam_edit','Sınav durumu düzenleme')) return;
     const meta=getExamStatusMeta(status);
     showLoad('Sınav durumu güncelleniyor...');
     try{
@@ -2382,6 +2444,7 @@ const W={
     }
   },
   async delExam(id){
+    if(!requireExamPerm('exam_delete','Sınav silme')) return;
     if(!confirm('Bu sınavı ve tüm sorularını silmek istiyor musunuz?\n\nBu işlem geri alınamaz!'))return;
     showLoad('Siliniyor...');
     try{
@@ -2394,12 +2457,17 @@ const W={
       A.exams=sortAdminExamRecords(A.exams.filter(e=>e.id!==id));setContent(renderAdminExams());
     }catch(e){hideLoad();toast('Hata: '+e.message,'error');}
   },
-  async showResults(examId){A.rf.examId=examId;await this.nav('results');},
+  async showResults(examId){
+    if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
+    A.rf.examId=examId;await this.nav('results');
+  },
   async filterRes(key,val){
+    if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
     clearTimeout(W._ft);
     W._ft=setTimeout(async()=>{A.rf[key]=val;showLoad();A.results=await fbLoadResults(A.rf);hideLoad();setContent(renderAdminResults());},350);
   },
   async delResult(id){
+    if(!requireExamPerm('exam_results_delete','Sonuç silme')) return;
     if(!confirm('Bu kaydı silmek istediğinize emin misiniz?'))return;
     try{
       await deleteDoc(doc(db,'results',id));
@@ -2412,6 +2480,7 @@ const W={
     document.getElementById('resultEditModal')?.remove();
   },
   openResultEdit(id){
+    if(!requireExamPerm('exam_results_edit','Sonuç düzenleme')) return;
     const result=A.results.find(item=>item.id===id);
     if(!result){
       toast('Sonuç kaydı bulunamadı','error');
@@ -2472,6 +2541,7 @@ const W={
     el.addEventListener('click',event=>{if(event.target===el)W.closeResultEdit();});
   },
   async saveResultEdit(id){
+    if(!requireExamPerm('exam_results_edit','Sonuç düzenleme')) return;
     const current=A.results.find(item=>item.id===id);
     if(!current){
       toast('Sonuç kaydı bulunamadı','error');
@@ -2523,6 +2593,7 @@ const W={
     }
   },
   openResultKarne(id){
+    if(!requireExamPerm('exam_single_report','Tek sınav karnesi')) return;
     const result=A.results.find(item=>item.id===id);
     if(!result){
       toast('Karne verisi bulunamadı','error');
@@ -2536,6 +2607,7 @@ const W={
     window.open(`/sinav_sitesi/sinav.html?examId=${encodeURIComponent(result.examId)}&adminKarne=1`,'_blank');
   },
   openStudentKarne(id){
+    if(!requireExamPerm('exam_report_center','Sınav karne merkezi')) return;
     const result=A.results.find(item=>item.id===id);
     if(!result){
       toast('Öğrenci verisi bulunamadı','error');
@@ -2554,6 +2626,7 @@ const W={
     window.open('/sinav_sitesi/ogrenci-karne.html','_blank');
   },
   async openResultKarneById(id){
+    if(!requireExamPerm('exam_single_report','Tek sınav karnesi')) return;
     let result=A.results.find(item=>item.id===id)||null;
     if(!result){
       try{
@@ -2576,6 +2649,7 @@ const W={
     document.getElementById('appealInspectModal')?.remove();
   },
   showExamAppeals(examId){
+    if(!requireExamPerm('exam_appeals','İtirazlar')) return;
     const resultFallback=(A.results||[]).find(item=>item.examId===examId)||null;
     const exam=A.exams.find(item=>item.id===examId)||(
       resultFallback
@@ -2616,8 +2690,8 @@ const W={
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
                 <button class="btn btn-sm btn-outline" onclick="W.inspectAppeal('${appeal.id}')">🔎 İncele</button>
-                <button class="btn btn-sm btn-outline" onclick="W.openResultKarneById('${appeal.resultId}')">📄 Sonucu Aç</button>
-                <button class="btn btn-sm btn-primary" onclick="W.closeExamAppeals();W.editExam('${examId}')">✏️ Sınavı Düzenle</button>
+                ${hasExamPerm('exam_single_report')?`<button class="btn btn-sm btn-outline" onclick="W.openResultKarneById('${appeal.resultId}')">📄 Sonucu Aç</button>`:''}
+                ${hasExamPerm('exam_edit')?`<button class="btn btn-sm btn-primary" onclick="W.closeExamAppeals();W.editExam('${examId}')">✏️ Sınavı Düzenle</button>`:''}
                 <button class="btn btn-sm btn-outline" onclick="W.setAppealStatus('${appeal.id}','pending','${examId}')">🕵️ İncelemede</button>
                 <button class="btn btn-sm btn-red" onclick="W.deleteAppeal('${appeal.id}','${examId}')">🗑 Sil</button>
               </div>
@@ -2730,6 +2804,7 @@ const W={
     </div>`;
   },
   async inspectAppeal(appealId){
+    if(!requireExamPerm('exam_appeals','İtiraz inceleme')) return;
     const appeal=A.appeals.find(item=>item.id===appealId);
     if(!appeal){
       toast('İtiraz kaydı bulunamadı','error');
@@ -2802,6 +2877,7 @@ const W={
     return nextAppeal;
   },
   async applyAppealCorrection(){
+    if(!requireExamPerm('exam_appeals','İtiraz düzeltme')) return;
     const ctx=A.appealInspect;
     if(!ctx) return;
     const questionNo=ctx.questionNos[ctx.currentIndex];
@@ -2869,6 +2945,7 @@ const W={
     }
   },
   async rejectAppealQuestion(){
+    if(!requireExamPerm('exam_appeals','İtiraz reddetme')) return;
     const ctx=A.appealInspect;
     if(!ctx) return;
     const questionNo=ctx.questionNos[ctx.currentIndex];
@@ -2892,6 +2969,7 @@ const W={
     }
   },
   async setAppealStatus(appealId,status,examId){
+    if(!requireExamPerm('exam_appeals','İtiraz durumu')) return;
     const labels={pending:'İncelemede',accepted:'haklı',rejected:'reddedildi'};
     try{
       await updateDoc(doc(db,'resultAppeals',appealId),{
@@ -2908,6 +2986,7 @@ const W={
     }
   },
   async deleteAppeal(appealId,examId){
+    if(!requireExamPerm('exam_appeals','İtiraz silme')) return;
     if(!confirm('Bu itiraz kaydını silmek istiyor musunuz?')) return;
     try{
       await deleteDoc(doc(db,'resultAppeals',appealId));
@@ -2921,6 +3000,7 @@ const W={
     }
   },
   exportXlsx(){
+    if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete'],'Sonuçlar')) return;
     if(!A.results.length){toast('Dışa aktarılacak kayıt yok','error');return;}
     const summary=A.results.map(r=>({
       'Ad':r.firstName,'Soyad':r.lastName,
@@ -2974,13 +3054,29 @@ const W={
 window.W=W;window.A=A;
 
 async function checkIsAdmin(uid){
+  let firebaseAllowed=false;
   try{
     const snap=await getDoc(doc(db,'admins',uid));
-    return snap.exists();
+    firebaseAllowed=snap.exists();
   }catch(e){
     console.error(e);
-    return false;
   }
+  currentAdminAccessProfile=null;
+  try{
+    if(window.kemalAdminAuth&&typeof window.kemalAdminAuth.getAdminAccessProfile==='function'){
+      currentAdminAccessProfile=await window.kemalAdminAuth.getAdminAccessProfile(true);
+    }
+  }catch(error){
+    currentAdminAccessProfile=null;
+  }
+  if(currentAdminAccessProfile&&!currentAdminAccessProfile.legacyMode&&!currentAdminAccessProfile.isOwner){
+    return firebaseAllowed&&currentAdminAccessProfile.active!==false&&hasAnyExamPerm([
+      'exam_create','exam_categories','exam_category_create','exam_category_edit','exam_category_delete',
+      'exam_list','exam_edit','exam_delete','exam_results','exam_results_edit','exam_results_delete',
+      'exam_single_report','exam_report_center','exam_appeals'
+    ]);
+  }
+  return firebaseAllowed;
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -2991,7 +3087,11 @@ onAuthStateChanged(auth, async (user) => {
   if(currentUserIsAdmin){
     await syncCategoryConfigState();
     const requestedPage=getRequestedPageFromHash();
-    if(requestedPage&&requestedPage!=='create'){
+    const firstPage=firstAllowedExamPage();
+    if(!canOpenExamPage(A.page)&&firstPage){
+      A.page=firstPage;
+    }
+    if(requestedPage&&requestedPage!=='create'&&canOpenExamPage(requestedPage)){
       await W.nav(requestedPage);
       return;
     }
@@ -3006,6 +3106,15 @@ function render(){
   }
   if(!currentUser){renderLogin();return;}
   if(!currentUserIsAdmin){renderNotAuthorized();return;}
+  if(!canOpenExamPage(A.page)){
+    const nextPage=firstAllowedExamPage();
+    if(nextPage){
+      A.page=nextPage;
+    }else{
+      appEl().innerHTML='<div class="page-pad"><div class="card p-6">Bu hesap için açık sınav yönetimi yetkisi bulunmuyor.</div></div>';
+      return;
+    }
+  }
   if(A.page==='create'){renderShell(renderCreate());afterCreateRender();}
   else if(A.page==='categories') renderShell(renderAdminCategories());
   else if(A.page==='exams') renderShell(renderAdminExams());
@@ -3013,8 +3122,10 @@ function render(){
 }
 window.addEventListener('hashchange',()=>{
   const requestedPage=getRequestedPageFromHash();
-  if(requestedPage&&requestedPage!==A.page&&currentUserIsAdmin){
+  if(requestedPage&&requestedPage!==A.page&&currentUserIsAdmin&&canOpenExamPage(requestedPage)){
     W.nav(requestedPage);
+  }else if(requestedPage&&currentUserIsAdmin&&!canOpenExamPage(requestedPage)){
+    toast('Bu sınav alanı için yetkiniz yok.','error');
   }
 });
 render();

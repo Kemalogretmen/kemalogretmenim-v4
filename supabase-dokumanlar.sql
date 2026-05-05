@@ -1,9 +1,9 @@
 -- ==========================================================
--- Kemal Ogretmenim - Dokumanlar / PDF Sistemi
+-- Kemal Ogretmenim - Dokumanlar / PDF ve Gorsel Sistemi
 -- Supabase SQL Editor icinde calistirin.
 -- Bu script:
 -- 1. dokumanlar tablosunu olusturur
--- 2. public PDF bucket'ini kurar
+-- 2. public dokuman bucket'ini kurar
 -- 3. anonim goruntuleme + yonetici yonetimi icin RLS ekler
 -- ==========================================================
 
@@ -15,6 +15,7 @@ create table if not exists public.dokumanlar (
   aciklama text,
   sinif integer not null check (sinif between 1 and 8),
   ders text not null,
+  hedefler jsonb not null default '[]'::jsonb,
   dosya_yolu text not null,
   dosya_adi text not null,
   dosya_boyutu bigint not null default 0,
@@ -32,6 +33,7 @@ alter table public.dokumanlar
   add column if not exists aciklama text,
   add column if not exists sinif integer,
   add column if not exists ders text,
+  add column if not exists hedefler jsonb not null default '[]'::jsonb,
   add column if not exists dosya_yolu text,
   add column if not exists dosya_adi text,
   add column if not exists dosya_boyutu bigint not null default 0,
@@ -47,6 +49,12 @@ alter table public.dokumanlar
 update public.dokumanlar
 set guncelleme_tarihi = coalesce(guncelleme_tarihi, olusturma_tarihi, now())
 where guncelleme_tarihi is null;
+
+update public.dokumanlar
+set hedefler = jsonb_build_array(jsonb_build_object('sinif', sinif, 'ders', ders))
+where (hedefler is null or hedefler = '[]'::jsonb)
+  and sinif is not null
+  and ders is not null;
 
 alter table public.dokumanlar alter column sinif set not null;
 alter table public.dokumanlar alter column ders set not null;
@@ -72,6 +80,9 @@ with check (true);
 create index if not exists idx_dokumanlar_grade_subject_active
   on public.dokumanlar (sinif, ders, aktif, siralama, olusturma_tarihi desc);
 
+create index if not exists idx_dokumanlar_targets_gin
+  on public.dokumanlar using gin (hedefler);
+
 create index if not exists idx_dokumanlar_updated_at
   on public.dokumanlar (guncelleme_tarihi desc);
 
@@ -84,7 +95,7 @@ values (
   'dokumanlar',
   true,
   52428800,
-  array['application/pdf']
+  array['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
 )
 on conflict (id) do update
 set public = excluded.public,
