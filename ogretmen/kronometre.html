@@ -4,13 +4,13 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>⏱️ Öğretmen Araçları — Kemal Öğretmenim</title>
   <meta name="description" content="Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, geri sayım ve yerel saat görünümü.">
   <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
   <meta property="og:site_name" content="Kemal Öğretmenim">
   <link rel="icon" href="/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Kronometre — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
 
@@ -852,12 +852,26 @@
     @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel { padding: 16px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .board-stage { min-height: 66vh; } .pro-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: min(calc(100vw - 20px), calc(100% - 20px)) !important; max-width: calc(100vw - 20px); flex-direction: row; flex-wrap: wrap; overflow:auto; max-height:340px;} .pro-toolbar.is-collapsed{max-height: 212px;} .calc-btn { height: 60px; font-size: 22px; } .rng-wrapper { grid-template-columns: 1fr; } .wheel-container { gap: 8px; padding: 20px 16px; } }
     @media (max-width:480px) { .time-bar-date { display: none; } .board-stage { min-height: 72vh; } .calc-keys { gap: 8px; } .calc-btn { height: 54px; font-size: 20px; } .wheel-container { gap: 4px; padding: 16px 8px; } .wheel-settings { padding: 10px 16px; gap: 10px; } .wheel-settings label { font-size: 13px; } .frac-box{ width: 100%;} }
   
-  .tools-page{cursor:default;}
-  .tool-card-btn{cursor:pointer;}
-  .tool-card-btn:hover .hero-card{transform:translateY(-4px);box-shadow:0 16px 40px rgba(108,61,237,0.16);}
-  </style>
+  .sub-back{position:relative;top:auto;left:0;right:0;z-index:20;height:56px;
+    background:rgba(255,255,255,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border-bottom:1.5px solid rgba(227,214,255,0.8);
+    display:flex;align-items:center;gap:14px;padding:0 22px;
+    box-shadow:0 2px 18px rgba(108,61,237,0.09);}
+  .sub-back a{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;
+    border-radius:10px;background:rgba(108,61,237,0.09);border:none;
+    color:#6c3ded;font-weight:900;font-size:14px;cursor:pointer;
+    text-decoration:none;font-family:inherit;transition:background .15s;}
+  .sub-back a:hover{background:rgba(108,61,237,0.17);}
+  .sub-back-title{font-size:17px;font-weight:900;color:#1e2a4a;}
+  .tools-page{padding-top:24px!important;}
+</style>
 </head>
 <body>
+  <div class="sub-back">
+    <a href="../ogretmen-araclari.html">← Araçlar</a>
+    <span style="font-size:20px">⏱</span>
+    <span class="sub-back-title">Kronometre</span>
+  </div>
   <main class="tools-page">
 
     <div class="time-bar glass">
@@ -867,62 +881,91 @@
       <div class="time-bar-tz" id="timeBarTz">🌍 Yerel Saat</div>
     </div>
 
-    <section class="tool-hub" id="toolHub">
-      <button class="tool-card-btn" type="button" onclick="go('kronometre')">
-        <article class="hero-card glass">
-          <div>
-            <div class="hero-eyebrow">⏱️ Zaman Aracı</div>
-            <h2>Kronometre</h2>
-            <p>İleri & geri sayım, profesyonel dijital görünüm, salise desteği.</p>
+    <section class="workspace is-visible" id="countdownWorkspace" data-tool-panel="countdown">
+      <article class="panel glass">
+        <div class="panel-head">
+          <h2>Kronometre Sahnesi</h2>
+          <div class="tool-actions">
+            <div class="shortcut-help">
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="timerShortcuts">!</button>
+              <div class="shortcut-popover" id="timerShortcuts">
+                <div class="shortcut-popover-head">
+                  <p class="shortcut-popover-title">Kronometre Kısayolları</p>
+                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row"><span class="shortcut-key">Space</span><span>Başlat veya duraklat</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">R</span><span>Sıfırla</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">S</span><span>Durdur</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">C</span><span>Geri sayım</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">I</span><span>İleri sayım</span></div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-secondary" type="button" id="soundToggleBtn"><i class="fas fa-bell"></i> Ses açık</button>
+            <button class="btn btn-secondary" type="button" id="stageFullscreenBtn"><i class="fas fa-expand"></i> Büyüt</button>
           </div>
-          <div class="tool-card-visual">
-            <div class="tool-card-icon"><i class="fas fa-stopwatch"></i></div>
-            <div class="tool-card-meter"><div class="meter-bar"><div class="meter-fill" style="width:82%"></div></div></div>
+        </div>
+        <div class="display-stage" id="timerStage">
+          <div class="mode-tabs" role="tablist">
+            <button class="mode-tab active" type="button" data-mode="countdown">⏳ Geri sayım</button>
+            <button class="mode-tab" type="button" data-mode="stopwatch">🚀 İleri sayım</button>
           </div>
-        </article>
-      </button>
+          
+          <div class="timer-grid">
+            <div class="svg-timer-wrap">
+              <svg class="svg-timer" viewBox="0 0 200 200">
+                <defs>
+                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6c3ded" />
+                    <stop offset="100%" stop-color="#16c7b2" />
+                  </linearGradient>
+                  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="blur" /><feComposite in="SourceGraphic" in2="blur" operator="over" /></filter>
+                </defs>
+                <circle cx="100" cy="100" r="98" fill="#f8f9fc" stroke="#e2e8f0" stroke-width="2" />
+                <g id="svgTicks"></g>
+                <circle class="svg-timer-bg" cx="100" cy="100" r="84" />
+                <circle class="svg-timer-progress" id="timerProgressRing" cx="100" cy="100" r="84" filter="url(#glow)" />
+              </svg>
+              <div class="svg-timer-inner">
+                <div class="live-status-pill" id="liveBadge">Hazır</div>
+                <div class="timer-digital-main" id="bigDigitsMain">05:00</div>
+                <div class="timer-digital-ms" id="bigDigitsMs" style="display:none;">.00</div>
+              </div>
+            </div>
 
-      <button class="tool-card-btn" type="button" onclick="go('beyaztahta')">
-        <article class="hero-card glass">
-          <div>
-            <div class="hero-eyebrow">✏️ Yazma Alanı</div>
-            <h2>Beyaz Tahta</h2>
-            <p>Sadeleşmiş yeni pro-araç kutusu, şeffaf döner iletki ve tam ekran.</p>
-          </div>
-          <div class="tool-card-visual">
-            <div class="tool-card-icon"><i class="fas fa-chalkboard"></i></div>
-            <div class="tool-card-meter"><div class="meter-bar"><div class="meter-fill" style="width:64%"></div></div></div>
-          </div>
-        </article>
-      </button>
+            <div class="timer-controls-area">
+              <div class="status-line">
+                <div class="chip" id="modeChip">Mod: Geri sayım</div>
+                <div class="chip" id="statusChip">Durum: Bekliyor</div>
+                <div class="chip" id="targetChip" style="grid-column: span 2;">Hedef: 5 dk</div>
+              </div>
+              
+              <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button class="btn btn-primary btn-start" style="flex:1; height: 60px; font-size: 20px;" type="button" id="startPauseBtn"><i class="fas fa-play"></i> Başlat</button>
+                <button class="btn btn-stop" type="button" id="stopBtn" style="height: 60px; font-size: 18px; border-radius: 16px;"><i class="fas fa-stop"></i> Durdur</button>
+              </div>
 
-      <button class="tool-card-btn" type="button" onclick="go('sinifimcark')">
-        <article class="hero-card glass">
-          <div>
-            <div class="hero-eyebrow">👥 Sınıf İçi</div>
-            <h2>Sınıfım & Çark</h2>
-            <p>ClassDojo benzeri sınıf yönetimi, yoklama, rastgele seçim ve seçenek çarkı.</p>
-          </div>
-          <div class="tool-card-visual">
-            <div class="tool-card-icon" style="color:var(--teal)"><i class="fas fa-users"></i></div>
-            <div class="tool-card-meter"><div class="meter-bar"><div class="meter-fill" style="width:100%; background:var(--teal)"></div></div></div>
-          </div>
-        </article>
-      </button>
+              <div class="ctrl-secondary" style="margin-top: 8px;">
+                <button class="btn btn-secondary" type="button" id="resetBtn"><i class="fas fa-redo"></i> Sıfırla</button>
+                <button class="btn btn-teal" type="button" id="presetFiveBtn">5 dk</button>
+                <button class="btn btn-secondary" type="button" id="presetTenBtn">10 dk</button>
+                <label class="sw-wrap">
+                  <span class="sw"><input type="checkbox" id="millisCb"><span class="sw-track"></span></span>
+                  <span style="font-size:14px; font-weight:900; color:var(--navy); margin-left:4px;">Salise</span>
+                </label>
+              </div>
 
-      <button class="tool-card-btn" type="button" onclick="go('matematik')">
-        <article class="hero-card glass">
-          <div>
-            <div class="hero-eyebrow">📐 Ders Yardımı</div>
-            <h2>Matematik</h2>
-            <p>Dönüşümler, zar, para, kesir, sayı doğrusu, tartı oyunu ve simetri aynası.</p>
+              <div class="settings-grid" id="cdSettings">
+                <div class="field"><label>Saat</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="h">−</button><div class="step-value" id="hVal">00</div><button class="step-btn" type="button" data-adj="1" data-unit="h">+</button></div><input class="sr-only" id="hInput" type="number" min="0" max="23" value="0"></div>
+                <div class="field"><label>Dakika</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="m">−</button><div class="step-value" id="mVal">05</div><button class="step-btn" type="button" data-adj="1" data-unit="m">+</button></div><input class="sr-only" id="mInput" type="number" min="0" max="59" value="5"></div>
+                <div class="field"><label>Saniye</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="s">−</button><div class="step-value" id="sVal">00</div><button class="step-btn" type="button" data-adj="1" data-unit="s">+</button></div><input class="sr-only" id="sInput" type="number" min="0" max="59" value="0"></div>
+              </div>
+              <div class="alarm-banner" id="alarmBanner"><span>⏰ Süre doldu!</span><button class="btn btn-secondary" type="button" id="alarmStopBtn">Sesi durdur</button></div>
+            </div>
           </div>
-          <div class="tool-card-visual">
-            <div class="tool-card-icon" style="color:#f59e0b"><i class="fas fa-calculator"></i></div>
-            <div class="tool-card-meter"><div class="meter-bar"><div class="meter-fill" style="width:100%; background:#f59e0b"></div></div></div>
-          </div>
-        </article>
-      </button>
+        </div>
+      </article>
     </section>
 
   </main>
@@ -931,20 +974,931 @@
   <script>
 (function(){
   'use strict';
-  window.go=function(name){ window.location='ogretmen/'+name+'.html'; };
-  function pad2(n){return n<10?'0'+n:''+n;}
-  function tick(){
-    var now=new Date();
-    var days=['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
-    var months=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-    var tc=document.getElementById('timeBarClock');
-    var td=document.getElementById('timeBarDate');
-    var tz=document.getElementById('timeBarTz');
-    if(tc) tc.textContent=pad2(now.getHours())+':'+pad2(now.getMinutes())+':'+pad2(now.getSeconds());
-    if(td) td.textContent=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
-    if(tz) tz.textContent='🌍 '+(Intl.DateTimeFormat().resolvedOptions().timeZone||'Yerel Saat');
-  }
-  tick(); setInterval(tick,1000);
+    var S = {
+      mode: 'countdown', 
+      tool: 'class', // İlk açılışta Sınıf Aracı
+      running: false, 
+      alarmOn: true, 
+      showMs: false,
+      cdTarget: 5*60*1000, 
+      dispMs: 5*60*1000, 
+      startedAt: 0, 
+      pausedAt: 0, 
+      frame: null,
+      clockTick: null, 
+      alarmIds: [], 
+      actx: null,
+      board: {
+        tool: 'pen', strokeColor: '#1f2142', strokeColorName: 'Siyah',
+        fillColor: '#facc15', fillColorName: 'Sarı', fillEnabled: false,
+        shapeStrokeColor: '#1f2142', shapeStrokeColorName: 'Siyah',
+        shapeFillColor: '#facc15', shapeFillColorName: 'Sarı', shapeFillEnabled: false,
+        shapePaletteTarget: 'stroke', shapeSize: 4,
+        paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
+        drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
+        startX: 0, startY: 0, points: [], lastPoint: null,
+        panStartClientX: 0, panStartClientY: 0, toolbarLeft: 16, toolbarTop: 16, autosaveTimer: null,
+        pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
+        pageIndex: 0,
+        selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
+        activeText: null, textAlign: 'left', textWeight: '800', textStyle: 'normal', textSize: 32
+      },
+      protractor: { visible: false, x: 0, y: 0, scale: 1, rot: 0 },
+      mathCalcExpr: '0',
+      mathMode: 'calc',
+      coinRot: 0,
+      dice1Rot: {x: -15, y: 15},
+      dice2Rot: {x: -15, y: 15},
+      frac: { num: 1, den: 4, shape: 'circle' },
+      nl: { pos: 0, min: -10, max: 20 },
+      classroom: {
+        view: 'class',
+        currentClassId: '',
+        draftGender: 'girl',
+        selectedStudentId: '',
+        highlightStudentId: '',
+        classWinnerId: '',
+        isPickingStudent: false,
+        wheelRotation: 0,
+        wheelWinnerId: '',
+        isSpinningWheel: false,
+        classes: [],
+        wheelItems: []
+      }
+    };
+
+    var PAGE_DIMENSIONS = {
+      'auto': { w: null, h: null, label: 'Serbest' },
+      'a4v': { w: 800, h: 1131, label: 'A4 Dikey' },
+      'a4h': { w: 1131, h: 800, label: 'A4 Yatay' },
+      'a3v': { w: 1131, h: 1600, label: 'A3 Dikey' },
+      'a3h': { w: 1600, h: 1131, label: 'A3 Yatay' }
+    };
+
+    var BOARD_STORAGE_KEY = 'kemal_teacher_whiteboard_local_v1';
+    var MAX_BOARD_UNDO = 36;
+    var COLOR_NAMES = {
+      '#1f2142': 'Siyah', '#000000': 'Tam Siyah', '#334155': 'Lacivert Gri', '#ef4444': 'Kırmızı',
+      '#f97316': 'Turuncu', '#d97706': 'Kehribar', '#facc15': 'Sarı', '#84cc16': 'Limon Yeşili',
+      '#22c55e': 'Yeşil', '#0f766e': 'Koyu Turkuaz', '#14b8a6': 'Turkuaz', '#06b6d4': 'Camgöbeği',
+      '#3b82f6': 'Mavi', '#2563eb': 'Koyu Mavi', '#4f46e5': 'İndigo', '#8b5cf6': 'Mor',
+      '#a855f7': 'Eflatun', '#ec4899': 'Pembe', '#f43f5e': 'Gül', '#7f1d1d': 'Bordo',
+      '#8b5a2b': 'Kahve', '#9ca3af': 'Gri', '#e5e7eb': 'Açık Gri', '#ffffff': 'Beyaz'
+    };
+
+    var E = {
+      timeBarClock: document.getElementById('timeBarClock'), timeBarDate: document.getElementById('timeBarDate'), timeBarTz: document.getElementById('timeBarTz'),
+      bigDigitsMain: document.getElementById('bigDigitsMain'), bigDigitsMs: document.getElementById('bigDigitsMs'), timerProgressRing: document.getElementById('timerProgressRing'), modeChip: document.getElementById('modeChip'), statusChip: document.getElementById('statusChip'), targetChip: document.getElementById('targetChip'), liveBadge: document.getElementById('liveBadge'),
+      startPauseBtn: document.getElementById('startPauseBtn'), stopBtn: document.getElementById('stopBtn'), resetBtn: document.getElementById('resetBtn'), presetFiveBtn: document.getElementById('presetFiveBtn'), presetTenBtn: document.getElementById('presetTenBtn'),
+      millisCb: document.getElementById('millisCb'), hInput: document.getElementById('hInput'), mInput: document.getElementById('mInput'), sInput: document.getElementById('sInput'), hVal: document.getElementById('hVal'), mVal: document.getElementById('mVal'), sVal: document.getElementById('sVal'),
+      soundToggleBtn: document.getElementById('soundToggleBtn'), alarmBanner: document.getElementById('alarmBanner'), alarmStopBtn: document.getElementById('alarmStopBtn'),
+      stageFullscreenBtn: document.getElementById('stageFullscreenBtn'), timerStage: document.getElementById('timerStage'), cdSettings: document.getElementById('cdSettings'),
+      toolCards: [].slice.call(document.querySelectorAll('[data-tool-card]')), toolPanels: [].slice.call(document.querySelectorAll('[data-tool-panel]')), modeTabs: [].slice.call(document.querySelectorAll('[data-mode]')),
+      presetBtns: [].slice.call(document.querySelectorAll('[data-preset]')), adjBtns: [].slice.call(document.querySelectorAll('[data-adj]')),
+      boardToolBtns: [].slice.call(document.querySelectorAll('[data-board-tool]')), boardColorBtns: [].slice.call(document.querySelectorAll('[data-board-color]')),
+      boardPaletteBtns: [].slice.call(document.querySelectorAll('[data-board-palette]')), boardPaperBtns: [].slice.call(document.querySelectorAll('[data-board-paper]')),
+      textAlignBtns: [].slice.call(document.querySelectorAll('[data-text-align]')), textWeightBtns: [].slice.call(document.querySelectorAll('[data-text-weight]')), textStyleBtns: [].slice.call(document.querySelectorAll('[data-text-style]')),
+      boardStage: document.getElementById('whiteboardStage'), boardPlane: document.getElementById('boardPlane'), boardCanvas: document.getElementById('whiteboardCanvas'), boardPreview: document.getElementById('whiteboardPreviewCanvas'),
+      boardToolbar: document.getElementById('boardToolbar'), boardToolbarHandle: document.getElementById('boardToolbarHandle'), shapeToggleBtn: document.getElementById('shapeToggleBtn'), shapePanel: document.getElementById('shapePanel'),
+      boardFillToggleBtn: document.getElementById('boardFillToggleBtn'), boardClearBtn: document.getElementById('clearBoardBtn'), boardUndoBtn: document.getElementById('boardUndoBtn'), boardRedoBtn: document.getElementById('boardRedoBtn'),
+      boardFullscreenBtn: document.getElementById('boardFullscreenBtn'), boardSaveBtn: document.getElementById('boardSaveBtn'), boardPrintBtn: document.getElementById('boardPrintBtn'),
+      boardSizeSlider: document.getElementById('boardSizeSlider'), boardSizeDisplay: document.getElementById('boardSizeDisplay'), boardSizeSample: document.getElementById('boardSizeSample'),
+      shapeColorBtns: [].slice.call(document.querySelectorAll('[data-shape-color]')), shapeSizeSlider: document.getElementById('shapeSizeSlider'), shapeThicknessDot: document.getElementById('shapeThicknessDot'),
+      textTools: document.getElementById('textTools'), boardTextSizeSlider: document.getElementById('boardTextSizeSlider'), textSizeDisplay: document.getElementById('textSizeDisplay'),
+      boardToolLabel: document.getElementById('boardToolLabel'), boardColorLabel: document.getElementById('boardColorLabel'), boardFillLabel: document.getElementById('boardFillLabel'),
+      prevPageBtn: document.getElementById('prevPageBtn'), nextPageBtn: document.getElementById('nextPageBtn'), addPageBtn: document.getElementById('addPageBtn'), deletePageBtn: document.getElementById('deletePageBtn'),
+      pageInfoDisplay: document.getElementById('pageInfoDisplay'), pageSizeSelect: document.getElementById('pageSizeSelect'), boardProtractorBtn: document.getElementById('boardProtractorBtn'),
+      classTabs: [].slice.call(document.querySelectorAll('[data-class-view]')),
+      classViews: { class: document.getElementById('classManagerView'), wheel: document.getElementById('classWheelView') },
+      classSelector: document.getElementById('classSelector'), addClassBtn: document.getElementById('addClassBtn'), renameClassBtn: document.getElementById('renameClassBtn'), deleteClassBtn: document.getElementById('deleteClassBtn'),
+      studentGenderBtns: [].slice.call(document.querySelectorAll('[data-student-gender]')), studentNameInput: document.getElementById('studentNameInput'), addStudentBtn: document.getElementById('addStudentBtn'),
+      resetStatusesBtn: document.getElementById('resetStatusesBtn'), classRandomPickBtn: document.getElementById('classRandomPickBtn'), classRandomHint: document.getElementById('classRandomHint'),
+      classTotalCount: document.getElementById('classTotalCount'), classActiveCount: document.getElementById('classActiveCount'), classAbsentCount: document.getElementById('classAbsentCount'), classPassiveCount: document.getElementById('classPassiveCount'),
+      studentCardGrid: document.getElementById('studentCardGrid'), selectedStudentAvatar: document.getElementById('selectedStudentAvatar'), selectedStudentName: document.getElementById('selectedStudentName'), selectedStudentMeta: document.getElementById('selectedStudentMeta'),
+      selectedKeepBtn: document.getElementById('selectedKeepBtn'), selectedPassiveBtn: document.getElementById('selectedPassiveBtn'),
+      wheelItemInput: document.getElementById('wheelItemInput'), addWheelItemBtn: document.getElementById('addWheelItemBtn'), wheelBulkInput: document.getElementById('wheelBulkInput'), addWheelBulkBtn: document.getElementById('addWheelBulkBtn'),
+      resetWheelOptionsBtn: document.getElementById('resetWheelOptionsBtn'), clearWheelOptionsBtn: document.getElementById('clearWheelOptionsBtn'), wheelOptionList: document.getElementById('wheelOptionList'), wheelItemCount: document.getElementById('wheelItemCount'),
+      classOptionWheel: document.getElementById('classOptionWheel'), classWheelPointer: document.getElementById('classWheelPointer'), classWheelWinnerName: document.getElementById('classWheelWinnerName'), classWheelWinnerHint: document.getElementById('classWheelWinnerHint'),
+      classWheelSpinBtn: document.getElementById('classWheelSpinBtn'),
+      fracShapeBtns: [].slice.call(document.querySelectorAll('[data-frac-shape]')),
+      fractionStatusText: document.getElementById('fractionStatusText'),
+      shortcutHelpBtns: [].slice.call(document.querySelectorAll('[data-shortcut-target]')),
+      shortcutPopovers: [].slice.call(document.querySelectorAll('.shortcut-popover')),
+      shortcutCloseBtns: [].slice.call(document.querySelectorAll('[data-shortcut-close]'))
+    };
+
+    var fmtDate = new Intl.DateTimeFormat('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    var fmtTime = new Intl.DateTimeFormat('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    function pad2(n) { return String(Math.floor(n)).padStart(2,'0'); }
+    function isEditableTarget(target) {
+      if(!target) return false;
+      var tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+    function closeShortcutPopovers() {
+      E.shortcutHelpBtns.forEach(function(btn) { btn.classList.remove('is-open'); });
+      E.shortcutPopovers.forEach(function(pop) { pop.classList.remove('is-open'); });
+    }
+    function toggleShortcutPopover(id) {
+      var target = document.getElementById(id);
+      if(!target) return;
+      var shouldOpen = !target.classList.contains('is-open');
+      closeShortcutPopovers();
+      if(shouldOpen) {
+        target.classList.add('is-open');
+        var trigger = E.shortcutHelpBtns.find(function(btn) { return btn.getAttribute('data-shortcut-target') === id; });
+        if(trigger) trigger.classList.add('is-open');
+      }
+    }
+
+    /* ── KRONOMETRE & SAAT ── */
+    function renderTimerSVG(ms) {
+      if(!E.timerProgressRing || !E.bigDigitsMain) return;
+      var tot = Math.floor(ms/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; var cs = Math.floor((ms%1000)/10);
+      E.bigDigitsMain.textContent = h > 0 ? pad2(h)+':'+pad2(m)+':'+pad2(s) : pad2(m)+':'+pad2(s);
+      if(S.showMs) { E.bigDigitsMs.style.display = 'block'; E.bigDigitsMs.textContent = '.'+pad2(cs); } 
+      else { E.bigDigitsMs.style.display = 'none'; }
+      var circumference = 527.78; var offset = 0;
+      if (S.mode === 'countdown') { var ratio = Math.max(0, Math.min(1, ms / Math.max(S.cdTarget, 1))); offset = circumference * (1 - ratio); } 
+      else { var ratio = (ms % 60000) / 60000; offset = circumference * (1 - ratio); }
+      E.timerProgressRing.style.strokeDashoffset = offset;
+    }
+    function buildTimerTicks() {
+      var ticks = document.getElementById('svgTicks'); if(!ticks) return; var h = '';
+      for(var i=0; i<60; i++) {
+        var angle = i * 6 * Math.PI / 180; var rOuter = 96; var rInner = i % 5 === 0 ? 89 : 93;
+        var x1 = 100 + Math.cos(angle) * rOuter; var y1 = 100 + Math.sin(angle) * rOuter; var x2 = 100 + Math.cos(angle) * rInner; var y2 = 100 + Math.sin(angle) * rInner;
+        var sw = i % 5 === 0 ? 2.5 : 1; var sc = i % 5 === 0 ? '#94a3b8' : '#cbd5e1';
+        h += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+sc+'" stroke-width="'+sw+'" />';
+      }
+      ticks.innerHTML = h;
+    }
+    function fmtDur(ms) { var tot = Math.floor(ms/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; var p=[]; if(h) p.push(h+' sa'); if(m) p.push(m+' dk'); if(s||!p.length) p.push(s+' sn'); return p.join(' '); }
+    function updateClock() { var now = new Date(); var t = fmtTime.format(now); var d = fmtDate.format(now); if(E.timeBarClock) E.timeBarClock.textContent = t; if(E.timeBarDate) E.timeBarDate.textContent = d; }
+    function render() {
+      var ms = Math.max(0, S.dispMs); renderTimerSVG(ms);
+      var modeTxt = S.mode==='countdown' ? 'Geri sayım' : 'İleri sayım';
+      if(E.modeChip) E.modeChip.textContent = 'Mod: '+modeTxt; if(E.targetChip) E.targetChip.textContent = S.mode==='countdown' ? 'Hedef: '+fmtDur(S.cdTarget) : 'Geçen: '+fmtDur(ms);
+      var statTxt = S.running ? 'Çalışıyor' : ms===0 ? 'Sıfır' : 'Bekliyor'; if(E.statusChip) E.statusChip.textContent = 'Durum: '+statTxt;
+      if(E.liveBadge) {
+        if(S.running) { E.liveBadge.textContent='Çalışıyor'; E.liveBadge.className='live-status-pill running'; }
+        else if(ms===0 && S.mode==='countdown') { E.liveBadge.textContent='Süre Doldu'; E.liveBadge.className='live-status-pill'; E.liveBadge.style.color='#dc2626'; E.liveBadge.style.background='rgba(239,68,68,0.12)'; }
+        else { E.liveBadge.textContent='Hazır'; E.liveBadge.className='live-status-pill'; E.liveBadge.style.color='#088d7c'; E.liveBadge.style.background='rgba(22,199,178,0.12)'; }
+      }
+      if(E.startPauseBtn) { E.startPauseBtn.innerHTML = S.running ? '<i class="fas fa-pause"></i> Duraklat' : '<i class="fas fa-play"></i> Başlat'; E.startPauseBtn.className = S.running ? 'btn btn-secondary btn-start' : 'btn btn-primary btn-start'; }
+      if(E.stopBtn) { if(S.running) E.stopBtn.classList.add('is-pulsing'); else E.stopBtn.classList.remove('is-pulsing'); }
+      if(E.cdSettings) E.cdSettings.style.display = S.mode==='countdown' ? '' : 'none';
+    }
+    function syncSteppers() { var tot = Math.floor(S.cdTarget/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; if(E.hVal) E.hVal.textContent = pad2(h); if(E.mVal) E.mVal.textContent = pad2(m); if(E.sVal) E.sVal.textContent = pad2(s); if(E.hInput) E.hInput.value = h; if(E.mInput) E.mInput.value = m; if(E.sInput) E.sInput.value = s; }
+    function getInputMs() { var h = parseInt(E.hInput.value||0,10)||0; var m = parseInt(E.mInput.value||0,10)||0; var s = parseInt(E.sInput.value||0,10)||0; return (h*3600+m*60+s)*1000; }
+    function adjustUnit(unit, delta) { if(S.running) return; var h = parseInt(E.hInput.value||0,10)||0; var m = parseInt(E.mInput.value||0,10)||0; var s = parseInt(E.sInput.value||0,10)||0; if(unit==='h') h = Math.max(0,Math.min(23,h+delta)); if(unit==='m') m = Math.max(0,Math.min(59,m+delta)); if(unit==='s') s = Math.max(0,Math.min(59,s+delta)); S.cdTarget = (h*3600+m*60+s)*1000; if(S.mode==='countdown') S.dispMs = S.cdTarget; syncSteppers(); render(); }
+    function getActx() { if(!S.actx) { try { S.actx = new(window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return S.actx; }
+    function beep(freq,dur,vol) { var ctx = getActx(); if(!ctx) return; try { var o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = freq; o.type = 'sine'; g.gain.setValueAtTime(vol||0.4, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+(dur||0.5)); o.start(ctx.currentTime); o.stop(ctx.currentTime+(dur||0.5)); } catch(e) {} }
+    function playAlarm() { if(!S.alarmOn) return; S.alarmIds.push(setTimeout(function(){ beep(880,.4,.5); },0)); S.alarmIds.push(setTimeout(function(){ beep(1100,.4,.5); },450)); S.alarmIds.push(setTimeout(function(){ beep(1320,.6,.6); },900)); if(E.alarmBanner) E.alarmBanner.classList.add('show'); }
+    function clearAlarm() { S.alarmIds.forEach(clearTimeout); S.alarmIds = []; if(E.alarmBanner) E.alarmBanner.classList.remove('show'); }
+    function stopLoop() { if(S.frame) { cancelAnimationFrame(S.frame); S.frame = null; } }
+    function tick() { var elapsed = S.pausedAt + (Date.now()-S.startedAt); if(S.mode === 'countdown') { S.dispMs = S.cdTarget - elapsed; if(S.dispMs <= 0) { S.dispMs = 0; S.running = false; S.pausedAt = 0; playAlarm(); render(); stopLoop(); return; } } else { S.dispMs = elapsed; } render(); S.frame = requestAnimationFrame(tick); }
+    function startTimer() { clearAlarm(); if(S.mode === 'countdown') { var dur = getInputMs(); if(!S.running && S.dispMs === 0) { S.cdTarget = Math.max(dur,1000); S.dispMs = S.cdTarget; } if(!S.dispMs) { S.cdTarget = Math.max(dur,1000); S.dispMs = S.cdTarget; } } S.running = true; S.startedAt = Date.now(); stopLoop(); tick(); render(); }
+    function pauseTimer() { if(!S.running) return; S.pausedAt += Date.now() - S.startedAt; S.running = false; stopLoop(); render(); }
+    function stopTimer() { pauseTimer(); }
+    function resetTimer() { pauseTimer(); clearAlarm(); S.pausedAt = 0; S.dispMs = S.mode === 'countdown' ? S.cdTarget : 0; if(S.mode === 'countdown') syncSteppers(); render(); }
+    function setMode(mode) { if(S.mode === mode) return; pauseTimer(); clearAlarm(); S.mode = mode; S.pausedAt = 0; if(mode === 'countdown') { S.cdTarget = Math.max(getInputMs(),1000); S.dispMs = S.cdTarget; } else { S.dispMs = 0; } E.modeTabs.forEach(function(t) { t.classList.toggle('active',t.dataset.mode === mode); }); render(); }
+    function setPreset(sec) { var ms = sec * 1000; S.cdTarget = ms; if(S.mode === 'countdown') S.dispMs = ms; S.pausedAt = 0; syncSteppers(); if(!S.running) render(); }
+
+    /* ── SEKMELER / TAM EKRAN ── */
+    function selectTool(name) {
+      if(!name) return;
+      S.tool = name;
+      E.toolCards.forEach(function(btn) { var card = btn.querySelector('.hero-card'); if(card) card.classList.toggle('is-active', btn.dataset.toolCard === S.tool); });
+      E.toolPanels.forEach(function(p) { p.classList.toggle('is-visible', p.dataset.toolPanel === S.tool); });
+      if(S.tool === 'whiteboard') setTimeout(resizeBoard, 0);
+      if(S.tool === 'math' && S.mathMode === 'nl') drawNumberLine();
+      if(S.tool === 'math' && S.mathMode === 'frac') drawFraction();
+      if(S.tool === 'class') renderClassroomWorkspace();
+    }
+    function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function reqFs(el) { if(el.requestFullscreen) return el.requestFullscreen(); if(el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); return Promise.resolve(); } return Promise.resolve(); }
+    function exitFs() { if(document.exitFullscreen) return document.exitFullscreen(); if(document.webkitExitFullscreen) { document.webkitExitFullscreen(); return Promise.resolve(); } return Promise.resolve(); }
+    function toggleStageFs() { fsEl() === E.timerStage ? exitFs().catch(function(){}) : reqFs(E.timerStage).catch(function(){}); }
+    function syncFsBtn() {
+      if(E.stageFullscreenBtn) E.stageFullscreenBtn.innerHTML = fsEl() === E.timerStage ? '<i class="fas fa-compress"></i> Küçült' : '<i class="fas fa-expand"></i> Büyüt';
+      if(E.boardFullscreenBtn) E.boardFullscreenBtn.innerHTML = fsEl() === E.boardStage ? '<i class="fas fa-compress"></i> Küçült' : '<i class="fas fa-expand"></i> Büyüt';
+      if(fsEl() === E.boardStage || S.tool === 'whiteboard') setTimeout(resizeBoard, 0);
+    }
+
+    /* ── SINIFIM & ÇARK ── */
+    var CLASSROOM_STORAGE_KEY = 'kemal_teacher_tools_panel_v2';
+    var LEGACY_CLASS_STORAGE_KEY = 'kemal_class_data';
+    var W_COLORS = ['#ff6052', '#6c3ded', '#16c7b2', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#10b981', '#14b8a6', '#fb7185'];
+    var CLASS_STATUS_META = {
+      active: { label: 'Aktif', note: 'Seçimde', className: 'active' },
+      absent: { label: 'Yok', note: 'Yoklamada', className: 'absent' },
+      passive: { label: 'Pasif', note: 'Beklemede', className: 'passive' }
+    };
+    var GENDER_META = {
+      girl: { label: 'Kız öğrenci', icon: 'fa-person-dress', className: 'girl' },
+      boy: { label: 'Erkek öğrenci', icon: 'fa-person', className: 'boy' }
+    };
+
+    function uid(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, function(ch) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+      });
+    }
+    function getDefaultWheelItems() {
+      return ['24 ÷ 6', 'Ali', 'Sürpriz Soru', 'Masal Kahramanı', 'Eş Anlamlı Sözcük'].map(function(label, index) {
+        return { id: uid('wheel'), label: label, color: W_COLORS[index % W_COLORS.length], enabled: true };
+      });
+    }
+    function createClassroom(name) { return { id: uid('class'), name: name, students: [] }; }
+    function createStudent(name, gender) { return { id: uid('student'), name: name, gender: gender || 'girl', status: 'active' }; }
+    function getCurrentClassroom() {
+      var found = null;
+      for(var i = 0; i < S.classroom.classes.length; i += 1) {
+        if(S.classroom.classes[i].id === S.classroom.currentClassId) { found = S.classroom.classes[i]; break; }
+      }
+      if(!found && S.classroom.classes.length) {
+        found = S.classroom.classes[0];
+        S.classroom.currentClassId = found.id;
+      }
+      return found;
+    }
+    function getStudentById(studentId) {
+      var current = getCurrentClassroom();
+      if(!current) return null;
+      for(var i = 0; i < current.students.length; i += 1) {
+        if(current.students[i].id === studentId) return current.students[i];
+      }
+      return null;
+    }
+    function getWheelWinnerItem() {
+      for(var i = 0; i < S.classroom.wheelItems.length; i += 1) {
+        if(S.classroom.wheelItems[i].id === S.classroom.wheelWinnerId) return S.classroom.wheelItems[i];
+      }
+      return null;
+    }
+    function getEligibleStudents() {
+      var current = getCurrentClassroom();
+      if(!current) return [];
+      return current.students.filter(function(student) { return student.status === 'active'; });
+    }
+    function getEnabledWheelItems() {
+      return S.classroom.wheelItems.filter(function(item) { return item.enabled !== false; });
+    }
+    function getStatusCounts() {
+      var current = getCurrentClassroom();
+      var counts = { total: 0, active: 0, absent: 0, passive: 0 };
+      if(!current) return counts;
+      counts.total = current.students.length;
+      current.students.forEach(function(student) {
+        if(student.status === 'absent') counts.absent += 1;
+        else if(student.status === 'passive') counts.passive += 1;
+        else counts.active += 1;
+      });
+      return counts;
+    }
+    function pulseWheelPointer() {
+      if(!E.classWheelPointer) return;
+      E.classWheelPointer.classList.remove('is-ticking');
+      void E.classWheelPointer.offsetWidth;
+      E.classWheelPointer.classList.add('is-ticking');
+    }
+    function playStudentPickSound(step, totalSteps) {
+      if(!S.alarmOn) return;
+      var ratio = totalSteps > 0 ? step / totalSteps : 0;
+      beep(420 + ratio * 260, 0.045, 0.035);
+    }
+    function playStudentWinSound() {
+      if(!S.alarmOn) return;
+      beep(740, 0.08, 0.08);
+      setTimeout(function() { beep(988, 0.12, 0.09); }, 120);
+      setTimeout(function() { beep(1244, 0.18, 0.11); }, 260);
+    }
+    function playWheelTickSound() {
+      if(!S.alarmOn) return;
+      beep(640, 0.03, 0.02);
+    }
+    function playWheelWinSound() {
+      if(!S.alarmOn) return;
+      beep(540, 0.08, 0.07);
+      setTimeout(function() { beep(810, 0.1, 0.09); }, 110);
+      setTimeout(function() { beep(1080, 0.18, 0.11); }, 240);
+    }
+
+    function migrateLegacyClassrooms(legacyData) {
+      var classes = [];
+      if(!legacyData || typeof legacyData !== 'object') return classes;
+      Object.keys(legacyData).forEach(function(className) {
+        var students = Array.isArray(legacyData[className]) ? legacyData[className] : [];
+        classes.push({
+          id: uid('class'),
+          name: className,
+          students: students.map(function(student, index) {
+            return {
+              id: String(student && student.id ? student.id : uid('student')),
+              name: student && student.name ? String(student.name).trim() : 'Öğrenci ' + (index + 1),
+              gender: index % 2 === 0 ? 'girl' : 'boy',
+              status: student && ['active', 'absent', 'passive'].indexOf(student.status) > -1 ? student.status : 'active'
+            };
+          })
+        });
+      });
+      return classes;
+    }
+    function normalizeClassroomState(raw) {
+      var source = raw && typeof raw === 'object' ? raw : {};
+      var classes = Array.isArray(source.classes) ? source.classes.map(function(cls, classIndex) {
+        var students = Array.isArray(cls && cls.students) ? cls.students.map(function(student, studentIndex) {
+          var name = student && student.name ? String(student.name).trim() : '';
+          return {
+            id: String(student && student.id ? student.id : uid('student')),
+            name: name || ('Öğrenci ' + (studentIndex + 1)),
+            gender: student && student.gender === 'boy' ? 'boy' : 'girl',
+            status: student && ['active', 'absent', 'passive'].indexOf(student.status) > -1 ? student.status : 'active'
+          };
+        }) : [];
+        return {
+          id: String(cls && cls.id ? cls.id : uid('class')),
+          name: cls && cls.name ? String(cls.name).trim() : ('Sınıf ' + (classIndex + 1)),
+          students: students
+        };
+      }) : [];
+      if(classes.length === 0) classes = [createClassroom('1/A Sınıfı')];
+
+      var wheelItems = Array.isArray(source.wheelItems) ? source.wheelItems.map(function(item, index) {
+        var label = item && (item.label || item.text || item.name) ? String(item.label || item.text || item.name).trim() : '';
+        return {
+          id: String(item && item.id ? item.id : uid('wheel')),
+          label: label || ('Seçenek ' + (index + 1)),
+          color: item && item.color ? item.color : W_COLORS[index % W_COLORS.length],
+          enabled: item ? item.enabled !== false : true
+        };
+      }) : [];
+      if(wheelItems.length === 0) wheelItems = getDefaultWheelItems();
+
+      var classIds = classes.map(function(cls) { return cls.id; });
+      var currentClassId = classIds.indexOf(source.currentClassId) > -1 ? source.currentClassId : classes[0].id;
+
+      return {
+        view: source.view === 'wheel' ? 'wheel' : 'class',
+        currentClassId: currentClassId,
+        draftGender: source.draftGender === 'boy' ? 'boy' : 'girl',
+        selectedStudentId: String(source.selectedStudentId || ''),
+        highlightStudentId: '',
+        classWinnerId: String(source.classWinnerId || ''),
+        isPickingStudent: false,
+        wheelRotation: Number(source.wheelRotation) || 0,
+        wheelWinnerId: String(source.wheelWinnerId || ''),
+        isSpinningWheel: false,
+        classes: classes,
+        wheelItems: wheelItems
+      };
+    }
+    function saveClassroomState() {
+      try {
+        localStorage.setItem(CLASSROOM_STORAGE_KEY, JSON.stringify({
+          view: S.classroom.view,
+          currentClassId: S.classroom.currentClassId,
+          draftGender: S.classroom.draftGender,
+          selectedStudentId: S.classroom.selectedStudentId,
+          classWinnerId: S.classroom.classWinnerId,
+          wheelRotation: S.classroom.wheelRotation,
+          wheelWinnerId: S.classroom.wheelWinnerId,
+          classes: S.classroom.classes,
+          wheelItems: S.classroom.wheelItems
+        }));
+      } catch(err) {}
+    }
+    function commitClassroomChanges() {
+      saveClassroomState();
+      renderClassroomWorkspace();
+    }
+    function loadClassroomState() {
+      var stored = null;
+      try { stored = JSON.parse(localStorage.getItem(CLASSROOM_STORAGE_KEY) || 'null'); } catch(err) {}
+      if(!stored) {
+        try {
+          var legacyStored = JSON.parse(localStorage.getItem(LEGACY_CLASS_STORAGE_KEY) || 'null');
+          var migrated = migrateLegacyClassrooms(legacyStored);
+          if(migrated.length) stored = { classes: migrated };
+        } catch(err2) {}
+      }
+      S.classroom = normalizeClassroomState(stored);
+      renderClassroomWorkspace();
+    }
+
+    function renderClassroomTabs() {
+      E.classTabs.forEach(function(tab) {
+        var active = tab.dataset.classView === S.classroom.view;
+        tab.classList.toggle('is-active', active);
+      });
+      Object.keys(E.classViews).forEach(function(view) {
+        if(E.classViews[view]) E.classViews[view].classList.toggle('is-active', view === S.classroom.view);
+      });
+    }
+    function renderClassSelector() {
+      if(!E.classSelector) return;
+      var options = '';
+      S.classroom.classes.forEach(function(cls) {
+        options += '<option value="' + escapeHtml(cls.id) + '"' + (cls.id === S.classroom.currentClassId ? ' selected' : '') + '>' + escapeHtml(cls.name) + '</option>';
+      });
+      E.classSelector.innerHTML = options;
+    }
+    function renderClassStats() {
+      var counts = getStatusCounts();
+      if(E.classTotalCount) E.classTotalCount.textContent = String(counts.total);
+      if(E.classActiveCount) E.classActiveCount.textContent = String(counts.active);
+      if(E.classAbsentCount) E.classAbsentCount.textContent = String(counts.absent);
+      if(E.classPassiveCount) E.classPassiveCount.textContent = String(counts.passive);
+      if(E.classRandomHint) {
+        E.classRandomHint.textContent = counts.active > 0
+          ? counts.active + ' öğrenci seçime hazır. Yok ve pasif öğrenciler havuza dahil edilmiyor.'
+          : 'Seçim için önce öğrencileri aktif hale getirin. Yok ve pasif öğrenciler havuz dışındadır.';
+      }
+    }
+    function renderSelectedStudent() {
+      var current = getCurrentClassroom();
+      var student = getStudentById(S.classroom.selectedStudentId || S.classroom.classWinnerId);
+      if(!student) {
+        if(E.selectedStudentAvatar) E.selectedStudentAvatar.innerHTML = '<i class="fas fa-star"></i>';
+        if(E.selectedStudentName) E.selectedStudentName.textContent = 'Henüz seçim yapılmadı';
+        if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = current ? current.name + ' sınıfı hazır.' : 'Bir sınıf seçin.';
+        if(E.selectedKeepBtn) E.selectedKeepBtn.disabled = true;
+        if(E.selectedPassiveBtn) { E.selectedPassiveBtn.disabled = true; E.selectedPassiveBtn.innerHTML = '<i class="fas fa-pause"></i> Bu Tur Pasif Yap'; }
+        return;
+      }
+      var gender = GENDER_META[student.gender] || GENDER_META.girl;
+      var statusMeta = CLASS_STATUS_META[student.status] || CLASS_STATUS_META.active;
+      if(E.selectedStudentAvatar) E.selectedStudentAvatar.innerHTML = '<i class="fas ' + gender.icon + '"></i>';
+      if(E.selectedStudentName) E.selectedStudentName.textContent = student.name;
+      if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = (current ? current.name : 'Sınıf') + ' • ' + statusMeta.label + ' • ' + gender.label;
+      if(E.selectedKeepBtn) { E.selectedKeepBtn.disabled = false; E.selectedKeepBtn.textContent = student.status === 'active' ? 'Aktif Kalsın' : 'Aktif Yap'; }
+      if(E.selectedPassiveBtn) {
+        E.selectedPassiveBtn.disabled = false;
+        E.selectedPassiveBtn.innerHTML = student.status === 'passive' ? '<i class="fas fa-play"></i> Aktife Dön' : '<i class="fas fa-pause"></i> Bu Tur Pasif Yap';
+      }
+    }
+    function renderStudentCards() {
+      if(!E.studentCardGrid) return;
+      var current = getCurrentClassroom();
+      if(!current || current.students.length === 0) {
+        E.studentCardGrid.innerHTML = '<div class="class-empty-state"><div><strong>Sınıfınız hazır</strong>İlk öğrenciyi ekleyin.</div></div>';
+        return;
+      }
+      var html = current.students.map(function(student) {
+        var statusMeta = CLASS_STATUS_META[student.status] || CLASS_STATUS_META.active;
+        var gender = GENDER_META[student.gender] || GENDER_META.girl;
+        var highlightClass = student.id === S.classroom.highlightStudentId ? ' is-highlighted' : '';
+        var selectedClass = student.id === S.classroom.selectedStudentId ? ' is-selected' : '';
+        return ''
+          + '<article class="student-card status-' + statusMeta.className + highlightClass + selectedClass + '" data-student-card-id="' + escapeHtml(student.id) + '">'
+          + '  <div class="student-card-top">'
+          + '    <div class="student-avatar ' + gender.className + '"><i class="fas ' + gender.icon + '"></i></div>'
+          + '    <span class="student-badge ' + statusMeta.className + '">' + statusMeta.label + '</span>'
+          + '  </div>'
+          + '  <h3 class="student-card-name">' + escapeHtml(student.name) + '</h3>'
+          + '  <p class="student-card-note">' + escapeHtml(statusMeta.note) + '</p>'
+          + '  <div class="student-status-actions">'
+          + '    <button class="mini-chip-btn status-active' + (student.status === 'active' ? ' is-active' : '') + '" type="button" data-action="status" data-status="active" data-student-id="' + escapeHtml(student.id) + '">Var</button>'
+          + '    <button class="mini-chip-btn status-absent' + (student.status === 'absent' ? ' is-active' : '') + '" type="button" data-action="status" data-status="absent" data-student-id="' + escapeHtml(student.id) + '">Yok</button>'
+          + '    <button class="mini-chip-btn status-passive' + (student.status === 'passive' ? ' is-active' : '') + '" type="button" data-action="status" data-status="passive" data-student-id="' + escapeHtml(student.id) + '">Pasif</button>'
+          + '  </div>'
+          + '  <div class="student-card-actions">'
+          + '    <button class="student-aux-btn" type="button" data-action="edit" data-student-id="' + escapeHtml(student.id) + '"><i class="fas fa-pen"></i> Düzenle</button>'
+          + '    <button class="student-aux-btn danger" type="button" data-action="delete" data-student-id="' + escapeHtml(student.id) + '"><i class="fas fa-trash"></i> Sil</button>'
+          + '  </div>'
+          + '</article>';
+      }).join('');
+      E.studentCardGrid.innerHTML = html;
+      if(E.classRandomPickBtn) E.classRandomPickBtn.disabled = S.classroom.isPickingStudent || getEligibleStudents().length === 0;
+    }
+    function renderWheelOptionList() {
+      if(!E.wheelOptionList) return;
+      if(E.wheelItemCount) E.wheelItemCount.textContent = S.classroom.wheelItems.length + ' seçenek';
+      if(S.classroom.wheelItems.length === 0) {
+        E.wheelOptionList.innerHTML = '<div class="class-empty-state" style="min-height:180px;"><div><strong>Çark boş</strong>İlk seçeneği eklediğinizde çark otomatik oluşur.</div></div>';
+        return;
+      }
+      E.wheelOptionList.innerHTML = S.classroom.wheelItems.map(function(item) {
+        return ''
+          + '<div class="wheel-option-item' + (item.enabled === false ? ' is-disabled' : '') + '">'
+          + '  <span class="wheel-option-swatch" style="background:' + escapeHtml(item.color) + ';"></span>'
+          + '  <span class="wheel-option-label">' + escapeHtml(item.label) + '</span>'
+          + '  <button class="wheel-inline-btn" type="button" data-wheel-action="toggle" data-wheel-id="' + escapeHtml(item.id) + '">' + (item.enabled === false ? 'Aktif Et' : 'Pasif Yap') + '</button>'
+          + '  <button class="wheel-inline-btn danger" type="button" data-wheel-action="delete" data-wheel-id="' + escapeHtml(item.id) + '">Sil</button>'
+          + '</div>';
+      }).join('');
+    }
+    function renderWheelResult() {
+      var winner = getWheelWinnerItem();
+      if(E.classWheelWinnerName) E.classWheelWinnerName.textContent = winner ? winner.label : 'Hazır';
+      if(E.classWheelWinnerHint) {
+        E.classWheelWinnerHint.textContent = winner ? 'Son seçim kaydedildi.' : 'Hazır';
+      }
+      if(E.classWheelSpinBtn) E.classWheelSpinBtn.disabled = S.classroom.isSpinningWheel || getEnabledWheelItems().length === 0;
+    }
+    function drawClassOptionWheel() {
+      if(!E.classOptionWheel) return;
+      var svg = E.classOptionWheel;
+      var items = getEnabledWheelItems();
+      svg.style.transform = 'rotate(' + (S.classroom.wheelRotation || 0) + 'deg)';
+      if(items.length === 0) {
+        svg.innerHTML = '<circle cx="0" cy="0" r="104" fill="#e2e8f0"></circle><text x="0" y="0" text-anchor="middle" dominant-baseline="middle" font-family="Nunito" font-weight="900" font-size="12" fill="#64748b">Seçenek ekleyin</text>';
+        return;
+      }
+      function slicePath(startAngle, endAngle, radius) {
+        var rad1 = (startAngle - 90) * Math.PI / 180;
+        var rad2 = (endAngle - 90) * Math.PI / 180;
+        var x1 = Math.cos(rad1) * radius;
+        var y1 = Math.sin(rad1) * radius;
+        var x2 = Math.cos(rad2) * radius;
+        var y2 = Math.sin(rad2) * radius;
+        var largeArc = endAngle - startAngle > 180 ? 1 : 0;
+        return 'M 0 0 L ' + x1 + ' ' + y1 + ' A ' + radius + ' ' + radius + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z';
+      }
+      function fitWheelLabel(label, baseSize, maxLength) {
+        var text = String(label || '').replace(/\s+/g, ' ').trim();
+        if(!text) text = 'Seçenek';
+        return {
+          text: text.length > maxLength ? text.slice(0, Math.max(4, maxLength - 1)).trim() + '…' : text,
+          size: Math.max(11, baseSize - Math.max(0, Math.ceil((text.length - 10) / 4)))
+        };
+      }
+      var sliceAngle = 360 / items.length;
+      var html = '';
+      for(var i = 0; i < items.length; i += 1) {
+        var startAngle = i * sliceAngle;
+        var endAngle = (i + 1) * sliceAngle;
+        var color = items[i].color || W_COLORS[i % W_COLORS.length];
+        if(items.length === 1) {
+          html += '<circle cx="0" cy="0" r="104" fill="' + color + '"></circle>';
+        } else {
+          html += '<path d="' + slicePath(startAngle, endAngle, 104) + '" fill="' + color + '" stroke="#ffffff" stroke-width="2"></path>';
+        }
+        var textAngle = startAngle + sliceAngle / 2;
+        var theta = (textAngle - 90) * Math.PI / 180;
+        var textX = Math.cos(theta) * (sliceAngle >= 72 ? 58 : 62);
+        var textY = Math.sin(theta) * (sliceAngle >= 72 ? 58 : 62);
+        var rotation = (textAngle - 90);
+        if(rotation > 90 || rotation < -90) rotation += 180;
+        var baseSize = sliceAngle >= 72 ? 17 : (sliceAngle >= 48 ? 14 : 12);
+        var labelFit = fitWheelLabel(items[i].label, baseSize, sliceAngle >= 72 ? 10 : 8);
+        html += '<g transform="translate(' + textX.toFixed(2) + ' ' + textY.toFixed(2) + ') rotate(' + rotation.toFixed(2) + ')">';
+        html += '<text class="wheel-label-text" text-anchor="middle" dominant-baseline="middle" font-size="' + labelFit.size + '" lengthAdjust="spacingAndGlyphs" textLength="' + (sliceAngle >= 72 ? 56 : 50) + '">' + escapeHtml(labelFit.text) + '</text>';
+        html += '</g>';
+      }
+      svg.innerHTML = html;
+    }
+    function renderClassroomWorkspace() {
+      renderClassroomTabs();
+      renderClassSelector();
+      renderClassStats();
+      renderSelectedStudent();
+      renderStudentCards();
+      renderWheelOptionList();
+      renderWheelResult();
+      drawClassOptionWheel();
+      E.studentGenderBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.studentGender === S.classroom.draftGender); });
+    }
+
+    function setClassroomView(view) {
+      S.classroom.view = view === 'wheel' ? 'wheel' : 'class';
+      commitClassroomChanges();
+    }
+    function addNewClassroom() {
+      var name = prompt('Yeni sınıfın adını girin (Örn: 2/B):');
+      if(!name || !name.trim()) return;
+      var trimmed = name.trim();
+      var duplicate = S.classroom.classes.some(function(cls) { return cls.name.toLowerCase() === trimmed.toLowerCase(); });
+      if(duplicate) { alert('Bu isimde bir sınıf zaten var.'); return; }
+      var newClass = createClassroom(trimmed);
+      S.classroom.classes.push(newClass);
+      S.classroom.currentClassId = newClass.id;
+      S.classroom.selectedStudentId = '';
+      S.classroom.classWinnerId = '';
+      commitClassroomChanges();
+    }
+    function renameCurrentClassroom() {
+      var current = getCurrentClassroom();
+      if(!current) return;
+      var name = prompt('Sınıfın yeni adı:', current.name);
+      if(!name || !name.trim()) return;
+      var trimmed = name.trim();
+      var duplicate = S.classroom.classes.some(function(cls) { return cls.id !== current.id && cls.name.toLowerCase() === trimmed.toLowerCase(); });
+      if(duplicate) { alert('Bu isimde başka bir sınıf zaten var.'); return; }
+      current.name = trimmed;
+      commitClassroomChanges();
+    }
+    function deleteCurrentClassroom() {
+      var current = getCurrentClassroom();
+      if(!current) return;
+      if(S.classroom.classes.length <= 1) { alert('En az bir sınıf bulunmalıdır.'); return; }
+      if(!confirm('"' + current.name + '" sınıfı silinecek. Emin misiniz?')) return;
+      S.classroom.classes = S.classroom.classes.filter(function(cls) { return cls.id !== current.id; });
+      S.classroom.currentClassId = S.classroom.classes[0].id;
+      S.classroom.selectedStudentId = '';
+      S.classroom.classWinnerId = '';
+      commitClassroomChanges();
+    }
+    function changeCurrentClassroom(classId) {
+      S.classroom.currentClassId = classId;
+      S.classroom.selectedStudentId = '';
+      S.classroom.classWinnerId = '';
+      commitClassroomChanges();
+    }
+    function addStudentToCurrentClassroom() {
+      var current = getCurrentClassroom();
+      if(!current || !E.studentNameInput) return;
+      var name = E.studentNameInput.value.trim();
+      if(!name) return;
+      current.students.push(createStudent(name, S.classroom.draftGender));
+      E.studentNameInput.value = '';
+      S.classroom.selectedStudentId = '';
+      commitClassroomChanges();
+      E.studentNameInput.focus();
+    }
+    function editStudentName(studentId) {
+      var student = getStudentById(studentId);
+      if(!student) return;
+      var nextName = prompt('Öğrenci adını düzenleyin:', student.name);
+      if(!nextName || !nextName.trim()) return;
+      student.name = nextName.trim();
+      commitClassroomChanges();
+    }
+    function deleteStudentFromCurrentClassroom(studentId) {
+      var current = getCurrentClassroom();
+      if(!current) return;
+      var student = getStudentById(studentId);
+      if(!student) return;
+      if(!confirm('"' + student.name + '" öğrencisi silinsin mi?')) return;
+      current.students = current.students.filter(function(item) { return item.id !== studentId; });
+      if(S.classroom.selectedStudentId === studentId) S.classroom.selectedStudentId = '';
+      if(S.classroom.classWinnerId === studentId) S.classroom.classWinnerId = '';
+      commitClassroomChanges();
+    }
+    function setStudentStatus(studentId, status) {
+      var student = getStudentById(studentId);
+      if(!student) return;
+      student.status = status;
+      S.classroom.selectedStudentId = studentId;
+      commitClassroomChanges();
+    }
+    function resetAllStudentStatuses() {
+      var current = getCurrentClassroom();
+      if(!current) return;
+      current.students.forEach(function(student) { student.status = 'active'; });
+      commitClassroomChanges();
+    }
+    function toggleSelectedStudentPassive() {
+      var student = getStudentById(S.classroom.selectedStudentId);
+      if(!student) return;
+      student.status = student.status === 'passive' ? 'active' : 'passive';
+      commitClassroomChanges();
+    }
+    function activateSelectedStudent() {
+      var student = getStudentById(S.classroom.selectedStudentId);
+      if(!student) return;
+      student.status = 'active';
+      commitClassroomChanges();
+    }
+    function scrollStudentCardIntoView(studentId) {
+      if(!E.studentCardGrid) return;
+      var card = null;
+      [].slice.call(E.studentCardGrid.querySelectorAll('[data-student-card-id]')).some(function(node) {
+        if(node.getAttribute('data-student-card-id') === studentId) { card = node; return true; }
+        return false;
+      });
+      if(card && card.scrollIntoView) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+    }
+    function startRandomStudentPick() {
+      var eligible = getEligibleStudents();
+      if(S.classroom.isPickingStudent) return;
+      if(eligible.length === 0) { alert('Seçim için en az bir aktif öğrenci gerekiyor.'); return; }
+      S.classroom.isPickingStudent = true;
+      S.classroom.classWinnerId = '';
+      renderClassroomWorkspace();
+      var sequence = [];
+      var totalSteps = Math.max(eligible.length * 2, 15) + Math.floor(Math.random() * 6);
+      var lastId = '';
+      for(var i = 0; i < totalSteps; i += 1) {
+        var pool = eligible.filter(function(student) { return eligible.length === 1 || student.id !== lastId; });
+        var picked = pool[Math.floor(Math.random() * pool.length)];
+        sequence.push(picked);
+        lastId = picked.id;
+      }
+      function advance(step) {
+        var student = sequence[step];
+        S.classroom.highlightStudentId = student.id;
+        renderStudentCards();
+        playStudentPickSound(step, totalSteps);
+        if(step < totalSteps - 1) {
+          setTimeout(function() { advance(step + 1); }, 65 + step * 18);
+          return;
+        }
+        S.classroom.highlightStudentId = '';
+        S.classroom.classWinnerId = student.id;
+        S.classroom.selectedStudentId = student.id;
+        S.classroom.isPickingStudent = false;
+        saveClassroomState();
+        renderClassroomWorkspace();
+        playStudentWinSound();
+        konfetiBaslat();
+        scrollStudentCardIntoView(student.id);
+        var winnerNameEl = document.getElementById('winnerModalName');
+        var winnerModalEl = document.getElementById('winnerModal');
+        if(winnerNameEl) winnerNameEl.textContent = student.name;
+        if(winnerModalEl) winnerModalEl.classList.add('show');
+      }
+      advance(0);
+    }
+
+    function addWheelItem(label) {
+      var trimmed = String(label || '').trim();
+      if(!trimmed) return;
+      S.classroom.wheelItems.push({
+        id: uid('wheel'),
+        label: trimmed,
+        color: W_COLORS[S.classroom.wheelItems.length % W_COLORS.length],
+        enabled: true
+      });
+    }
+    function addWheelItemsFromBulk(text) {
+      String(text || '').split('\n').map(function(line) { return line.trim(); }).filter(Boolean).forEach(addWheelItem);
+    }
+    function toggleWheelItemEnabled(itemId) {
+      S.classroom.wheelItems = S.classroom.wheelItems.map(function(item) {
+        if(item.id === itemId) item.enabled = item.enabled === false;
+        return item;
+      });
+      commitClassroomChanges();
+    }
+    function deleteWheelItem(itemId) {
+      S.classroom.wheelItems = S.classroom.wheelItems.filter(function(item) { return item.id !== itemId; });
+      if(S.classroom.wheelWinnerId === itemId) S.classroom.wheelWinnerId = '';
+      commitClassroomChanges();
+    }
+    function resetWheelItems() {
+      S.classroom.wheelItems = getDefaultWheelItems();
+      S.classroom.wheelWinnerId = '';
+      commitClassroomChanges();
+    }
+    function clearWheelItems() {
+      if(!confirm('Çarktaki tüm seçenekler silinsin mi?')) return;
+      S.classroom.wheelItems = [];
+      S.classroom.wheelWinnerId = '';
+      commitClassroomChanges();
+    }
+    function spinClassOptionWheel() {
+      var items = getEnabledWheelItems();
+      if(S.classroom.isSpinningWheel) return;
+      if(items.length === 0) { alert('Çarkı çevirmek için en az bir aktif seçenek ekleyin.'); return; }
+      S.classroom.isSpinningWheel = true;
+      renderWheelResult();
+      var winnerIndex = Math.floor(Math.random() * items.length);
+      var winner = items[winnerIndex];
+      var sliceAngle = 360 / items.length;
+      var targetAngle = (winnerIndex * sliceAngle) + (sliceAngle / 2);
+      var startRotation = S.classroom.wheelRotation || 0;
+      var currentBase = ((startRotation % 360) + 360) % 360;
+      var deltaToTarget = (360 - targetAngle - currentBase + 360) % 360;
+      var endRotation = startRotation + (4 + Math.floor(Math.random() * 2)) * 360 + deltaToTarget;
+      var startTime = null;
+      var duration = 5200;
+      var lastTick = -1;
+
+      function animate(now) {
+        if(startTime === null) startTime = now;
+        var progress = Math.min(1, (now - startTime) / duration);
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var rotation = startRotation + (endRotation - startRotation) * eased;
+        S.classroom.wheelRotation = rotation;
+        if(E.classOptionWheel) E.classOptionWheel.style.transform = 'rotate(' + rotation + 'deg)';
+        var tickIndex = Math.floor((rotation - startRotation) / sliceAngle);
+        if(tickIndex > lastTick) {
+          lastTick = tickIndex;
+          pulseWheelPointer();
+          playWheelTickSound();
+        }
+        if(progress < 1) {
+          requestAnimationFrame(animate);
+          return;
+        }
+        S.classroom.isSpinningWheel = false;
+        S.classroom.wheelWinnerId = winner.id;
+        saveClassroomState();
+        renderWheelResult();
+        playWheelWinSound();
+        konfetiBaslat();
+      }
+      requestAnimationFrame(animate);
+    }
+
+    window.handleWinner = function(action) {
+      var winnerModalEl = document.getElementById('winnerModal');
+      if(action === 'passive') toggleSelectedStudentPassive();
+      if(action === 'keep') activateSelectedStudent();
+      if(winnerModalEl) winnerModalEl.classList.remove('show');
+    };
+
+    /* ── SAYFA BAĞLANTILARI ── */
+    E.shortcutHelpBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        toggleShortcutPopover(btn.getAttribute('data-shortcut-target'));
+      });
+    });
+    E.shortcutCloseBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        closeShortcutPopovers();
+      });
+    });
+    document.addEventListener('click', function(evt) {
+      if(evt.target.closest('.shortcut-help')) return;
+      closeShortcutPopovers();
+    });
+
+    E.modeTabs.forEach(function(tab) {
+      tab.addEventListener('click', function() { setMode(tab.dataset.mode); });
+    });
+    if(E.startPauseBtn) {
+      E.startPauseBtn.addEventListener('click', function() {
+        S.running ? pauseTimer() : startTimer();
+      });
+    }
+    if(E.stopBtn) {
+      E.stopBtn.addEventListener('click', function() { stopTimer(); });
+    }
+    if(E.resetBtn) {
+      E.resetBtn.addEventListener('click', resetTimer);
+    }
+    if(E.presetFiveBtn) {
+      E.presetFiveBtn.addEventListener('click', function() { setPreset(300); });
+    }
+    if(E.presetTenBtn) {
+      E.presetTenBtn.addEventListener('click', function() { setPreset(600); });
+    }
+    E.presetBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() { setPreset(Number(btn.dataset.preset)); });
+    });
+    E.adjBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() { adjustUnit(btn.dataset.unit, Number(btn.dataset.adj)); });
+    });
+    [E.hInput, E.mInput, E.sInput].forEach(function(input) {
+      if(!input) return;
+      input.addEventListener('change', function() {
+        if(S.mode !== 'countdown' || S.running) return;
+        S.cdTarget = Math.max(getInputMs(), 1000);
+        S.dispMs = S.cdTarget;
+        syncSteppers();
+        render();
+      });
+    });
+    if(E.soundToggleBtn) {
+      E.soundToggleBtn.addEventListener('click', function() {
+        S.alarmOn = !S.alarmOn;
+        E.soundToggleBtn.innerHTML = S.alarmOn ? '<i class="fas fa-bell"></i> Ses açık' : '<i class="fas fa-bell-slash"></i> Ses kapalı';
+        if(!S.alarmOn) clearAlarm();
+      });
+    }
+    if(E.millisCb) {
+      E.millisCb.addEventListener('change', function() {
+        S.showMs = E.millisCb.checked;
+        render();
+      });
+    }
+    if(E.alarmStopBtn) {
+      E.alarmStopBtn.addEventListener('click', clearAlarm);
+    }
+    if(E.stageFullscreenBtn) {
+      E.stageFullscreenBtn.addEventListener('click', toggleStageFs);
+    }
+    document.addEventListener('fullscreenchange', syncFsBtn);
+    document.addEventListener('webkitfullscreenchange', syncFsBtn);
+
+    updateClock();
+    buildTimerTicks();
+    syncSteppers();
+    render();
+    S.clockTick = setInterval(updateClock, 1000);
+    window.addEventListener('resize', function() {
+      buildTimerTicks();
+      render();
+    });
+    document.addEventListener('keydown', function(e) {
+      if(isEditableTarget(e.target)) return;
+      var k = e.key.toLowerCase();
+      if(k === ' ' || k === 'enter') {
+        e.preventDefault();
+        S.running ? pauseTimer() : startTimer();
+      }
+      if(k === 'r') resetTimer();
+    });
+
 })();
   </script>
 </body>

@@ -1,0 +1,3037 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="description" content="Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, geri sayım ve yerel saat görünümü.">
+  <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
+  <meta property="og:site_name" content="Kemal Öğretmenim">
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Matematik Araçları — Kemal Öğretmenim</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
+
+    :root {
+      --purple: #6c3ded;
+      --purple-2: #9b72f5;
+      --purple-light: #d7c9ff;
+      --teal: #16c7b2;
+      --navy: #20104a;
+      --red: #dc2626;
+      --slate: #64748b;
+      --soft-violet: #f5f0ff;
+      --soft-red: #fff1f2;
+      --soft-teal: #ecfeff;
+      --soft-sand: #fff7ed;
+      --bg-gradient: radial-gradient(circle at top left, #f4efff 0%, #fffdf8 46%, #eff8ff 100%);
+    }
+
+    html { overscroll-behavior: none; }
+    * { box-sizing: border-box; touch-action: manipulation; }
+    input, select, textarea { touch-action: auto; }
+
+    body {
+      margin: 0; font-family: 'Nunito', sans-serif; color: var(--navy); background: var(--bg-gradient);
+      -webkit-user-select: none; user-select: none; overflow-x: hidden; min-height: 100vh; overscroll-behavior: none;
+    }
+    p, h1, h2, h3, .big-digits, .local-clock { -webkit-user-select: text; user-select: text; }
+
+    body::before, body::after {
+      content: ""; position: fixed; width: 340px; height: 340px; border-radius: 999px;
+      filter: blur(24px); opacity: 0.3; pointer-events: none; z-index: -1;
+    }
+    body::before { top: -100px; left: -90px; background: linear-gradient(135deg, var(--purple), var(--teal)); }
+    body::after { right: -120px; bottom: -130px; background: linear-gradient(135deg, #ff6052, #ffd93d); }
+
+    .tools-page { width: min(1300px, calc(100% - 20px)); margin: 0 auto; padding: 60px 0 24px; }
+    
+    .glass {
+      background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,255,255,0.65));
+      border: 1.5px solid rgba(227,214,255,0.9); border-radius: 28px;
+      box-shadow: 0 14px 42px rgba(108,61,237,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+
+    .time-bar { display: flex; align-items: center; gap: 16px; padding: 14px 22px; margin-bottom: 16px; flex-wrap: wrap; }
+    .time-bar-label { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: rgba(108,61,237,0.1); color: var(--purple); font-weight: 800; font-size: 14px; }
+    .time-bar-clock { font-family: 'Baloo 2', cursive; font-size: clamp(26px, 4vw, 42px); line-height: 1; color: var(--purple); }
+    .time-bar-date { font-size: 14px; font-weight: 800; color: #64708f; }
+    .time-bar-tz { margin-left: auto; padding: 9px 14px; border-radius: 999px; background: rgba(255,255,255,0.8); border: 1px solid rgba(227,214,255,0.9); font-size: 13px; font-weight: 800; color: #5c6787; white-space: nowrap; }
+
+    /* Hub Kartları (4 Adet: Krono, Tahta, Sınıfım, Mat) */
+    .tool-hub { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .tool-card-btn { width: 100%; border: none; background: transparent; padding: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; -webkit-tap-highlight-color: transparent; }
+    .tool-card-btn:active .hero-card { transform: scale(0.97); }
+    .hero-card { padding: 22px 24px; min-height: 210px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; transition: transform 0.15s, box-shadow 0.15s; position: relative; overflow: hidden; }
+    .hero-card::after { content: ""; position: absolute; inset: auto -70px -80px auto; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(255,216,77,0.3), transparent); pointer-events: none; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; background: rgba(108,61,237,0.1); color: var(--purple); font-weight: 800; font-size: 14px; }
+    .hero-card h2 { margin: 8px 0 0; font-family: 'Baloo 2', cursive; font-size: 26px; line-height: 1.1; }
+    .hero-card p { margin: 0; color: #62708f; font-size: 13px; line-height: 1.4; font-weight: 700; }
+    .tool-card-visual { display: flex; align-items: center; gap: 14px; }
+    .tool-card-icon { width: 56px; height: 56px; border-radius: 18px; display: inline-grid; place-items: center; font-size: 24px; background: rgba(255,255,255,0.6); border: 1.5px solid rgba(227,214,255,0.9); flex-shrink:0;}
+    .tool-card-meter { flex: 1; display: grid; gap: 8px; }
+    .meter-bar { height: 10px; border-radius: 999px; background: rgba(108,61,237,0.1); border: 1px solid rgba(227,214,255,0.9); overflow: hidden; }
+    .meter-fill { height: 100%; border-radius: inherit; background: linear-gradient(135deg, rgba(108,61,237,0.8), rgba(22,199,178,0.8)); }
+    .hero-card.is-active { border-color: rgba(108,61,237,0.4) !important; box-shadow: 0 20px 44px rgba(108,61,237,0.15), inset 0 1px 0 rgba(255,255,255,0.8) !important; }
+    .hero-card.is-active .tool-card-icon { background: linear-gradient(135deg, rgba(108,61,237,0.15), rgba(255,255,255,0.7)); }
+
+    /* Çalışma Alanları */
+    .workspace { display: none; }
+    .workspace.is-visible { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+    
+    .panel { padding: 24px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;}
+    .panel-head h2 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 32px; line-height: 1; }
+    .tool-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+
+    /* Butonlar */
+    .btn { border: none; cursor: pointer; font: inherit; border-radius: 16px; padding: 12px 18px; font-weight: 800; font-size: 15px; transition: transform 0.1s, box-shadow 0.1s; -webkit-tap-highlight-color: transparent; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn:active { transform: scale(0.95) !important; box-shadow: none !important; }
+    .btn-primary { background: linear-gradient(135deg, var(--purple), var(--purple-2)); color: #fff; box-shadow: 0 6px 16px rgba(108,61,237,0.2); }
+    .btn-secondary { background: rgba(255,255,255,0.9); color: var(--navy); border: 1.5px solid rgba(227,214,255,0.9); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+    .btn-teal { background: linear-gradient(135deg, var(--teal), #0ca88f); color: #fff; box-shadow: 0 6px 16px rgba(22,199,178,0.2); }
+    .btn-stop { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; font-size: 17px; padding: 14px 28px; box-shadow: 0 6px 16px rgba(239,68,68,0.2); }
+    .btn-stop.is-pulsing { animation: stopPulse 1.3s infinite; }
+    @keyframes stopPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); } 50% { box-shadow: 0 0 0 12px rgba(239,68,68,0); } }
+
+    /* Sahne / Sekmeler */
+    .display-stage { background: radial-gradient(circle at top, rgba(255,255,255,0.9), rgba(255,255,255,0.65)), linear-gradient(180deg, rgba(108,61,237,0.03), rgba(22,199,178,0.03)); border: 1.5px solid rgba(227,214,255,0.9); border-radius: 24px; padding: 24px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.8); }
+    .mode-tabs { display: flex; gap: 8px; padding: 6px; border-radius: 999px; background: rgba(108,61,237,0.05); border: 1.5px solid rgba(227,214,255,0.92); margin-bottom: 24px; flex-wrap: wrap; justify-content: center;}
+    .mode-tab { border: none; background: transparent; border-radius: 999px; padding: 12px 20px; font-weight: 800; color: #5f6787; cursor: pointer; transition: 0.2s; font-family: 'Nunito', sans-serif; font-size: 16px; }
+    .mode-tab.active { background: #fff; color: var(--purple); box-shadow: 0 6px 16px rgba(108,61,237,0.15); }
+
+    /* KRONOMETRE */
+    .timer-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 60px; align-items: center; padding: 20px;}
+    .svg-timer-wrap { position: relative; width: 100%; max-width: 400px; aspect-ratio: 1; display: grid; place-items: center; }
+    .svg-timer { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 15px 30px rgba(108,61,237,0.18)); }
+    .svg-timer-bg { fill: none; stroke: rgba(227,214,255,0.4); stroke-width: 10; }
+    .svg-timer-progress { fill: none; stroke: url(#timerGradient); stroke-width: 10; stroke-linecap: round; stroke-dasharray: 527.78; stroke-dashoffset: 0; transition: stroke-dashoffset 0.1s linear; }
+    .svg-timer-inner { position: absolute; inset: 24px; border-radius: 50%; background: linear-gradient(145deg, #ffffff, #f8f9fc); box-shadow: inset 0 8px 24px rgba(0,0,0,0.03), 0 10px 24px rgba(108,61,237,0.12); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.8); }
+    .timer-digital-main { font-family: 'Baloo 2', cursive; font-size: 72px; font-weight: 800; color: var(--navy); line-height: 1; letter-spacing: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .timer-digital-ms { font-size: 28px; color: var(--purple); opacity: 0.85; font-weight: 700; margin-top: -2px; }
+    .live-status-pill { margin-bottom: 12px; padding: 8px 16px; border-radius: 999px; font-size: 13px; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; background: rgba(22,199,178,0.12); color: #088d7c; box-shadow: inset 0 1px 0 rgba(255,255,255,0.5); }
+    .live-status-pill.running { background: rgba(239,68,68,0.12); color: #dc2626; animation: pulsePill 1.5s infinite; }
+    .timer-controls-area { display: flex; flex-direction: column; gap: 18px; flex: 1; min-width: 320px; max-width: 500px; }
+    .status-line { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .chip { padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(227,214,255,0.9); text-align: center; font-weight: 800; font-size: 14px; color: #5f6888; }
+    .sw-wrap { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; background: rgba(255,255,255,0.8); padding: 10px 16px; border-radius: 16px; border: 1px solid rgba(227,214,255,0.9); margin-left: auto; white-space: nowrap; flex-shrink: 0; }
+    .sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; min-width: 44px; display: block; }
+    .sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .sw-track { position: absolute; inset: 0; border-radius: 999px; background: rgba(200,200,222,0.5); transition: 0.2s; }
+    .sw-track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .sw input:checked + .sw-track { background: var(--purple); }
+    .sw input:checked + .sw-track::after { transform: translateX(20px); }
+    .settings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 10px; }
+    .field { background: rgba(255,255,255,0.8); border: 1px solid rgba(227,214,255,0.9); border-radius: 20px; padding: 16px; text-align: center; }
+    .field label { display: block; font-size: 13px; font-weight: 900; color: #76819b; text-transform: uppercase; margin-bottom: 10px; }
+    .stepper { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .step-btn { width: 40px; height: 40px; border: none; border-radius: 12px; background: rgba(108,61,237,0.1); color: var(--purple); font-size: 22px; font-weight: 800; cursor: pointer; }
+    .step-btn:active { transform: scale(0.9); }
+    .step-value { font-family: 'Baloo 2', cursive; font-size: 26px; font-weight: 800; color: var(--navy); width: 44px; }
+    .alarm-banner { display: none; align-items: center; justify-content: space-between; padding: 16px 20px; border-radius: 16px; background: linear-gradient(135deg, rgba(255,216,77,0.3), rgba(255,96,82,0.2)); border: 2px solid rgba(255,96,82,0.3); font-weight: 800; font-size: 16px; margin-top: 10px; }
+    .alarm-banner.show { display: flex; }
+
+    /* PROFESYONEL BEYAZ TAHTA ARAÇ KUTUSU */
+    /* ── YENİ KOMPAKT ARAÇ ÇUBUĞU ── */
+    .pro-toolbar {
+      position: absolute; top: 16px; left: 16px; z-index: 30;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(227,214,255,0.85);
+      border-radius: 22px; padding: 8px 7px;
+      box-shadow: 0 12px 40px rgba(108,61,237,0.13), 0 2px 8px rgba(0,0,0,0.06);
+      width: 62px; touch-action: none;
+      overflow: visible;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      will-change: top, left;
+    }
+    .pro-toolbar.sub-open { width: 62px; } /* genişleme yok */
+
+    /* Yüzen yan panel */
+    .float-panel {
+      display: none;
+      position: absolute;
+      top: 0; left: calc(100% + 10px);
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1.5px solid rgba(227,214,255,0.9);
+      border-radius: 18px;
+      padding: 14px 13px 12px;
+      box-shadow: 0 16px 48px rgba(108,61,237,0.14), 0 2px 8px rgba(0,0,0,0.07);
+      min-width: 220px; max-width: 250px;
+      z-index: 40;
+      flex-direction: column; gap: 11px;
+      touch-action: none;
+    }
+    .float-panel.is-open { display: flex; animation: fadeSlideIn .18s ease; }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .float-panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .float-panel-title { font-size: 11px; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: .07em; }
+    .float-close-btn {
+      width: 22px; height: 22px; border-radius: 7px; border: none;
+      background: #f1f5f9; color: #64748b; font-size: 13px; font-weight: 900;
+      cursor: pointer; display: grid; place-items: center;
+      transition: background .15s, color .15s;
+    }
+    .float-close-btn:hover { background: #fee2e2; color: #dc2626; }
+
+    /* Mobil: panel yukarı açılır */
+    @media (max-width: 760px) {
+      .float-panel { top: auto; bottom: calc(100% + 8px); left: 0; right: 0; max-width: 100%; min-width: unset; }
+    }
+
+    /* Sürükleme tutacağı */
+    .toolbar-header {
+      display: flex; align-items: center; justify-content: center;
+      padding: 2px 0 6px; cursor: grab; user-select: none; width: 100%;
+    }
+    .toolbar-header:active { cursor: grabbing; }
+    .toolbar-brand { display: none; }
+    .toolbar-logo { display: none; }
+    .toggle-collapse-btn { display: none; }
+    .toolbar-drag-icon { color: #cbd5e1; font-size: 14px; }
+
+    /* Ana araç butonları */
+    .toolbar-main { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 0; width: 100%; }
+    .tool-grid-4 { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; }
+
+    .toolbar-btn {
+      width: 46px; height: 46px; border-radius: 14px;
+      border: 1.5px solid transparent;
+      background: transparent; color: #64748b;
+      cursor: pointer; transition: all 0.15s;
+      display: grid; place-items: center;
+      font-size: 17px; position: relative;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+    }
+    .toolbar-btn:hover { background: #f1eeff; color: var(--purple); border-color: rgba(167,139,250,.3); }
+    .toolbar-btn:active { transform: scale(0.88); }
+    .toolbar-btn.is-active {
+      background: linear-gradient(135deg, var(--purple), var(--purple-2));
+      color: #fff; border-color: transparent;
+      box-shadow: 0 4px 16px rgba(108,61,237,0.38);
+    }
+    .toolbar-btn.wide { width: 100%; height: 36px; border-radius: 10px; font-size: 13px; justify-content: flex-start; padding: 0 10px; gap: 8px; }
+
+    /* Aktif renk nokta göstergesi */
+    .color-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,.7);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.15);
+      position: absolute; bottom: 7px; right: 7px;
+      pointer-events: none;
+    }
+
+    /* toolbar-sub artık float-panel olarak dışarıda — bu kural kaldırıldı */
+
+    /* Kalem alt satırı (pen/highlighter/eraser seçimi) */
+    .pen-row { display: flex; gap: 5px; }
+    .pen-row .toolbar-btn { width: 40px; height: 36px; border-radius: 10px; font-size: 15px; }
+
+    /* Renk paleti — kompakt */
+    .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .shape-control-block { display: grid; gap: 7px; }
+    .shape-thickness-row { display: flex; align-items: center; gap: 8px; }
+    .color-btn {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.8);
+      box-shadow: 0 0 0 1.5px rgba(0,0,0,.12);
+      cursor: pointer; transition: transform .15s, box-shadow .15s, outline-color .15s;
+      position: relative;
+    }
+    .color-btn:hover { transform: scale(1.12); box-shadow: 0 0 0 2px rgba(15,23,42,.18); }
+    .color-btn.is-active {
+      outline: 4px solid var(--purple);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 2.5px #fff, 0 10px 18px rgba(108,61,237,.28) !important;
+      transform: scale(1.18) !important;
+      z-index: 2;
+    }
+    .color-btn.is-active::after {
+      content: "";
+      position: absolute;
+      right: -3px;
+      bottom: -3px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--purple);
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(15,23,42,.22);
+    }
+
+    /* Kalınlık slider */
+    .size-slider { width: 100%; accent-color: var(--purple); cursor: pointer; height: 4px; border-radius: 2px; margin: 0; }
+    .thickness-row { display: flex; align-items: center; gap: 8px; }
+    .thickness-dot { border-radius: 50%; background: #1f2142; flex-shrink: 0; }
+
+    /* Şekil ızgarası */
+    .shape-panel { display: none; width: 100%; }
+    .shape-panel.is-open { display: block; }
+    .tool-grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .tool-grid-5 .toolbar-btn { width: 100%; height: 36px; border-radius: 10px; font-size: 14px; border: 1.5px solid rgba(227,214,255,.7); background: #fafbff; }
+
+    /* toolbar-compact-pages artık float-panel içinde */
+
+    /* Gelişmiş araçlar — metin vb. (gizli, gerektiğinde açılır) */
+    .advanced-tools { display: none; }
+
+    /* Araç ayırıcı */
+    .tool-sep { height: 1px; background: rgba(227,214,255,.55); margin: 2px 0; width: 100%; border-radius: 1px; }
+
+    @keyframes fadeDown { from{opacity:0;transform:translateY(-5px);}to{opacity:1;transform:translateY(0);} }
+    .shape-panel.is-open { animation: fadeDown 0.18s ease; }
+
+    /* Mobil */
+    @media (max-width: 760px) {
+      .pro-toolbar {
+        top: auto; left: 8px; right: 8px; bottom: 8px;
+        width: min(calc(100vw - 16px), calc(100% - 16px)) !important;
+        max-width: calc(100vw - 16px);
+        flex-direction: row; flex-wrap: wrap;
+        border-radius: 18px; padding: 8px 10px;
+        align-items: center;
+      }
+      .pro-toolbar.sub-open { width: min(calc(100vw - 16px), calc(100% - 16px)) !important; }
+      .toolbar-main { flex-direction: row; flex-wrap: wrap; gap: 4px; align-items: center; }
+      .tool-grid-4 { flex-direction: row; flex-wrap: wrap; }
+      .toolbar-header { padding: 0; width: auto; }
+      .toolbar-sub, .toolbar-compact-pages {
+        position: absolute; bottom: calc(100% + 8px); left: 0; right: 0;
+        background: rgba(255,255,255,.98); border-radius: 18px;
+        border: 1.5px solid rgba(227,214,255,.9);
+        box-shadow: 0 -8px 32px rgba(108,61,237,.12);
+        padding: 14px; margin: 0; border-top: none;
+      }
+    }
+    .shortcut-help-btn {
+      width: 40px; height: 40px; border-radius: 14px; border: 1.5px solid rgba(227,214,255,0.9);
+      background: #fff; color: var(--purple); font-size: 20px; font-weight: 900; cursor: pointer;
+      box-shadow: 0 8px 18px rgba(108,61,237,0.1); transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+    }
+    .shortcut-help-btn:hover,
+    .shortcut-help-btn.is-open { transform: translateY(-1px); border-color: #c4b5fd; box-shadow: 0 12px 22px rgba(108,61,237,0.16); }
+    .shortcut-popover {
+      position: absolute; top: calc(100% + 10px); right: 0; width: min(320px, calc(100vw - 40px));
+      padding: 16px; border-radius: 20px; background: rgba(255,255,255,0.98); border: 1.5px solid rgba(227,214,255,0.95);
+      box-shadow: 0 22px 40px rgba(32,16,74,0.16); display: none; z-index: 40;
+    }
+    .shortcut-popover.is-open { display: grid; gap: 12px; animation: fadeDown 0.18s ease; }
+    .shortcut-popover-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .shortcut-popover-title { margin: 0; font-size: 14px; font-weight: 900; color: var(--navy); }
+    .shortcut-close {
+      width: 28px; height: 28px; border: none; border-radius: 10px; background: #f3f4f6; color: #64748b; cursor: pointer; font-weight: 900;
+    }
+    .shortcut-list { display: grid; gap: 8px; margin: 0; }
+    .shortcut-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; font-size: 13px; font-weight: 800; color: #5b6983; }
+    .shortcut-key {
+      display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding: 6px 10px;
+      border-radius: 12px; background: #f8f5ff; border: 1px solid #ddd6fe; color: var(--purple); font-size: 12px; font-weight: 900;
+    }
+
+    /* Beyaz Tahta Ana Sahne */
+    .board-shell { display: grid; gap: 12px; }
+    .board-stage { position: relative; min-height: 80vh; border-radius: 26px; overflow: hidden; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; overscroll-behavior: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+    .board-plane { position: relative; width: 100%; min-height: max(100%, 800px); background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.3s, height 0.3s; overflow: hidden; transform: translateZ(0); }
+    .board-plane.board-paper-white { background: #ffffff; }
+    .board-plane.board-paper-lined { background: repeating-linear-gradient(180deg, #ffffff 0 34px, rgba(115,128,255,0.15) 34px 36px); }
+    .board-plane.board-paper-grid { background: linear-gradient(rgba(115,128,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(115,128,255,0.12) 1px, transparent 1px), #ffffff; background-size: 34px 34px, 34px 34px, auto; }
+    .board-plane.board-paper-guide {
+      background:
+        repeating-linear-gradient(180deg,
+          rgba(70,80,90,0.62) 0 2px,
+          #ffffff 2px 32px,
+          rgba(70,80,90,0.62) 32px 34px,
+          rgba(255,250,184,0.76) 34px 64px,
+          rgba(70,80,90,0.62) 64px 66px,
+          transparent 66px 165px
+        ),
+        #e6f8ff;
+    }
+    .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-user-drag:none; }
+    .board-overlay-text { position: absolute; min-width: 150px; min-height: 50px; resize: both; padding: 10px; border-radius: 12px; border: 2px dashed var(--purple); background: rgba(255,255,255,0.95); color: var(--navy); font: 800 24px/1.3 'Nunito', sans-serif; outline: none; z-index: 12; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+
+    /* AÇIÖLÇER (İLETKİ) CSS */
+    .board-protractor {
+      position: absolute; left: 0; top: 0; width: 440px; height: 240px; display: none; z-index: 50;
+      transform-origin: 220px 220px;
+    }
+    .protractor-svg-wrapper { width: 100%; height: 100%; cursor: grab; }
+    .protractor-svg-wrapper:active { cursor: grabbing; }
+    .protractor-control {
+      position: absolute; width: 36px; height: 36px; border-radius: 50%; background: #fff;
+      border: 2px solid var(--purple); color: var(--purple); display: grid; place-items: center;
+      font-size: 18px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer;
+      user-select: none; touch-action: none; transition: transform 0.1s;
+    }
+    .protractor-control:active { transform: scale(0.9); }
+    .protractor-control.close { top: 10px; right: 0; border-color: #dc2626; color: #dc2626; font-size: 14px; }
+    .protractor-control.rotate { top: -18px; left: 50%; transform: translateX(-50%); cursor: ew-resize; }
+    .protractor-control.rotate:active { transform: translateX(-50%) scale(0.9); }
+    .protractor-control.resize { bottom: -10px; right: 10px; cursor: nwse-resize; font-size: 14px; }
+
+    #whiteboardStage:fullscreen, #whiteboardStage:-webkit-full-screen { width: 100%; height: 100%; max-width: none; padding: 28px; border-radius: 0; overflow: auto; }
+    #whiteboardStage:fullscreen .pro-toolbar, #whiteboardStage:-webkit-full-screen .pro-toolbar { top: 24px; left: 24px; }
+
+    /* --- SINIFIM & ÇARK --- */
+    .class-workspace-shell { display: grid; gap: 24px; }
+    .class-tabs { display: inline-flex; flex-wrap: wrap; gap: 10px; padding: 8px; border-radius: 999px; background: rgba(108,61,237,0.08); border: 1.5px solid rgba(227,214,255,0.92); align-self: start; }
+    .class-tab { border: none; background: transparent; border-radius: 999px; padding: 12px 22px; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900; color: #60708c; cursor: pointer; transition: 0.2s; }
+    .class-tab.is-active { background: #fff; color: var(--purple); box-shadow: 0 8px 20px rgba(108,61,237,0.14); }
+    .class-view { display: none; }
+    .class-view.is-active { display: block; animation: fadeIn 0.28s ease; }
+
+    .dojo-shell,
+    .teacher-wheel-shell { display: grid; grid-template-columns: 288px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .dojo-sidebar,
+    .dojo-main,
+    .wheel-editor-card,
+    .teacher-wheel-card { background: rgba(255,255,255,0.96); border-radius: 28px; border: 2px solid rgba(227,214,255,0.92); box-shadow: 0 16px 40px rgba(108,61,237,0.08); }
+
+    .dojo-sidebar,
+    .wheel-editor-card { padding: 22px; display: grid; gap: 18px; }
+    .dojo-main,
+    .teacher-wheel-card { padding: 24px; }
+
+    .class-toolbar-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; }
+    .class-select,
+    .cls-input,
+    .wheel-text-input,
+    .wheel-bulk-input { width: 100%; padding: 13px 15px; border-radius: 16px; border: 2px solid #e2e8f0; background: #f8fafc; color: var(--navy); font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 800; outline: none; transition: 0.2s; }
+    .class-select:focus,
+    .cls-input:focus,
+    .wheel-text-input:focus,
+    .wheel-bulk-input:focus { border-color: var(--purple-light); box-shadow: 0 0 0 4px rgba(108,61,237,0.08); }
+
+    .round-icon-btn { width: 46px; height: 46px; border-radius: 16px; border: none; display: grid; place-items: center; cursor: pointer; font-size: 16px; color: var(--navy); background: #f4f4ff; transition: transform 0.12s, box-shadow 0.12s; box-shadow: 0 6px 14px rgba(108,61,237,0.1); }
+    .round-icon-btn:active { transform: scale(0.94); }
+    .round-icon-btn.danger { background: #fff1f2; color: #e11d48; }
+    .round-icon-btn.mint { background: #ecfeff; color: #0f766e; }
+
+    .class-stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .class-stat-card { padding: 14px; border-radius: 20px; border: 1.5px solid rgba(227,214,255,0.9); background: linear-gradient(180deg, #fff, #faf8ff); }
+    .class-stat-card span { display: block; font-size: 12px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.05em; }
+    .class-stat-card strong { display: block; margin-top: 6px; font-family: 'Baloo 2', cursive; font-size: 30px; line-height: 1; color: var(--navy); }
+    .class-stat-card.teal strong { color: #0f766e; }
+    .class-stat-card.red strong { color: #dc2626; }
+    .class-stat-card.gray strong { color: #64748b; }
+
+    .student-form-card,
+    .random-control-card,
+    .wheel-help-card { padding: 18px; border-radius: 24px; background: linear-gradient(180deg, #ffffff, #faf8ff); border: 1.5px solid rgba(227,214,255,0.88); }
+    .section-kicker { margin: 0 0 14px 0; font-size: 13px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em; }
+    .gender-toggle { display: inline-flex; gap: 8px; padding: 6px; border-radius: 999px; background: #eef2ff; margin-bottom: 14px; }
+    .gender-btn { min-width: 62px; border: none; border-radius: 999px; padding: 10px 14px; background: transparent; color: #7c89a3; cursor: pointer; font-weight: 900; transition: 0.2s; }
+    .gender-btn.is-active { background: #fff; color: var(--purple); box-shadow: 0 6px 14px rgba(108,61,237,0.12); }
+    .student-form-actions,
+    .random-action-stack,
+    .wheel-editor-actions { display: grid; gap: 10px; }
+    .student-form-actions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 12px; }
+    .random-action-stack { margin-top: 14px; }
+    .random-help-text,
+    .wheel-help-card p { margin: 0; color: var(--slate); font-size: 13px; line-height: 1.5; font-weight: 800; }
+
+    .selected-student-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 18px 20px; border-radius: 28px; background: linear-gradient(135deg, rgba(108,61,237,0.1), rgba(22,199,178,0.08)); border: 2px solid rgba(202,184,255,0.92); margin-bottom: 16px; box-shadow: 0 16px 40px rgba(108,61,237,0.08); }
+    .selected-student-avatar { width: 74px; height: 74px; border-radius: 22px; display: grid; place-items: center; font-size: 32px; color: #fff; background: linear-gradient(135deg, var(--purple), #22c1c3); box-shadow: 0 16px 28px rgba(108,61,237,0.2); }
+    .selected-student-label { font-size: 12px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.08em; }
+    .selected-student-name { margin: 4px 0; font-family: 'Baloo 2', cursive; font-size: clamp(26px, 3vw, 36px); line-height: 0.98; color: var(--navy); }
+    .selected-student-meta { margin: 0; color: #53627f; font-size: 14px; font-weight: 800; }
+    .selected-student-actions { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+    .class-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .legend-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 999px; font-size: 13px; font-weight: 900; border: 1.5px solid transparent; }
+    .legend-pill.active { background: var(--soft-teal); color: #0f766e; border-color: #99f6e4; }
+    .legend-pill.absent { background: var(--soft-red); color: #be123c; border-color: #fecdd3; }
+    .legend-pill.passive { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+
+    .student-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 12px; max-height: 620px; overflow: auto; padding-right: 6px; align-content: start; }
+    .student-card { position: relative; padding: 12px; border-radius: 24px; background: #fff; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 12px 26px rgba(31,33,66,0.06); transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s; }
+    .student-card:hover { transform: translateY(-3px); box-shadow: 0 18px 34px rgba(108,61,237,0.1); }
+    .student-card.is-highlighted { animation: studentPulse 0.34s ease infinite alternate; border-color: #f59e0b; box-shadow: 0 18px 34px rgba(245,158,11,0.28); }
+    .student-card.is-selected { border-color: var(--purple); box-shadow: 0 20px 36px rgba(108,61,237,0.22); }
+    .student-card.status-active { background: linear-gradient(180deg, #fff, #fbfffe); }
+    .student-card.status-absent { background: linear-gradient(180deg, #fff, #fff3f5); border-color: #fecdd3; }
+    .student-card.status-passive { background: linear-gradient(180deg, #fff, #f4f7fb); border-color: #dbe4ef; }
+    @keyframes studentPulse { from { transform: translateY(-2px) scale(1); } to { transform: translateY(-6px) scale(1.02); } }
+
+    .student-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .student-avatar { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; font-size: 22px; color: #fff; box-shadow: inset 0 -8px 16px rgba(255,255,255,0.15), 0 10px 18px rgba(108,61,237,0.12); }
+    .student-avatar.girl { background: linear-gradient(135deg, #f97393, #fb7185); }
+    .student-avatar.boy { background: linear-gradient(135deg, #38bdf8, #6366f1); }
+    .student-badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; border-radius: 999px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+    .student-badge.active { background: var(--soft-teal); color: #0f766e; }
+    .student-badge.absent { background: var(--soft-red); color: #be123c; }
+    .student-badge.passive { background: #f1f5f9; color: #475569; }
+    .student-card-name { margin: 10px 0 2px; font-size: 16px; font-weight: 900; color: var(--navy); line-height: 1.08; word-break: break-word; }
+    .student-card-note { min-height: 0; margin: 0 0 10px; color: #6b7a94; font-size: 11px; font-weight: 800; }
+    .student-status-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+    .mini-chip-btn { border: none; border-radius: 11px; padding: 8px 6px; font-size: 11px; font-weight: 900; cursor: pointer; transition: 0.16s; }
+    .mini-chip-btn.is-active { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0,0,0,0.1); }
+    .mini-chip-btn.status-active { background: #d1fae5; color: #0f766e; }
+    .mini-chip-btn.status-absent { background: #ffe4e6; color: #be123c; }
+    .mini-chip-btn.status-passive { background: #e2e8f0; color: #475569; }
+    .student-card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+    .student-aux-btn { border: none; border-radius: 13px; padding: 8px 10px; cursor: pointer; font-size: 12px; font-weight: 900; background: #f8fafc; color: var(--navy); }
+    .student-aux-btn.danger { background: #fff1f2; color: #e11d48; }
+
+    .class-empty-state { display: grid; place-items: center; min-height: 220px; border-radius: 28px; border: 2px dashed rgba(202,184,255,0.9); background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,240,255,0.9)); color: var(--slate); text-align: center; padding: 24px; }
+    .class-empty-state strong { display: block; font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); margin-bottom: 8px; }
+
+    .wheel-input-row,
+    .wheel-editor-actions { grid-template-columns: minmax(0, 1fr) auto; }
+    .wheel-bulk-input { min-height: 120px; resize: vertical; }
+    .wheel-option-list { display: grid; gap: 10px; max-height: 360px; overflow: auto; padding-right: 4px; }
+    .wheel-option-item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 18px; border: 1.5px solid rgba(227,214,255,0.85); background: #fff; }
+    .wheel-option-item.is-disabled { background: #f8fafc; color: #94a3b8; }
+    .wheel-option-swatch { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255,255,255,0.6); }
+    .wheel-option-label { font-size: 14px; font-weight: 900; color: var(--navy); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wheel-inline-btn { border: none; border-radius: 12px; padding: 9px 12px; cursor: pointer; font-size: 12px; font-weight: 900; background: #eef2ff; color: var(--purple); }
+    .wheel-inline-btn.danger { background: #fff1f2; color: #e11d48; }
+
+    .teacher-wheel-card { display: grid; gap: 18px; text-align: center; }
+    .teacher-wheel-stage { position: relative; width: min(100%, 540px); aspect-ratio: 1; margin: 0 auto; }
+    .teacher-wheel-svg { width: 100%; height: 100%; filter: drop-shadow(0 20px 34px rgba(108,61,237,0.18)); }
+    .teacher-wheel-pointer { position: absolute; top: -2px; left: 50%; transform: translateX(-50%); font-size: 46px; color: #ef4444; z-index: 3; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.16)); }
+    .teacher-wheel-pointer.is-ticking { animation: pointerTick 0.12s ease; }
+    @keyframes pointerTick { 0% { transform: translateX(-50%) rotate(0deg); } 50% { transform: translateX(-50%) rotate(-12deg); } 100% { transform: translateX(-50%) rotate(0deg); } }
+    .teacher-wheel-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #fff, #f8f5ff); border: 6px solid var(--navy); z-index: 2; font-size: 34px; color: var(--purple); box-shadow: 0 12px 24px rgba(32,16,74,0.14); }
+    .teacher-wheel-result { display: grid; gap: 8px; justify-items: center; }
+    .teacher-wheel-result strong { font-family: 'Baloo 2', cursive; font-size: clamp(32px, 4.5vw, 46px); line-height: 0.98; color: var(--navy); }
+    .teacher-wheel-result span { color: var(--slate); font-size: 13px; font-weight: 800; }
+    .wheel-label-text { fill: #fff; font-family: 'Nunito', sans-serif; font-weight: 900; pointer-events: none; paint-order: stroke; stroke: rgba(26,16,64,0.12); stroke-width: 1.6; letter-spacing: 0.2px; }
+
+    /* Modal for Winner Options */
+    .winner-modal { position: fixed; inset: 0; background: rgba(32,16,74,0.6); backdrop-filter: blur(5px); z-index: 9999; display: none; align-items: center; justify-content: center; }
+    .winner-modal.show { display: flex; }
+    .winner-card { background: #fff; padding: 32px; border-radius: 28px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 24px 60px rgba(0,0,0,0.2); animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .winner-card h2 { font-family: 'Baloo 2', cursive; font-size: 36px; color: var(--navy); margin: 0 0 8px 0; }
+    .winner-card p { font-size: 16px; color: var(--slate); font-weight: 700; margin: 0 0 24px 0; }
+
+    @media (max-width: 1080px) {
+      .dojo-shell,
+      .teacher-wheel-shell { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .class-toolbar-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+      .class-toolbar-row .round-icon-btn:last-child { grid-column: span 3; width: 100%; }
+      .selected-student-panel { grid-template-columns: 1fr; text-align: center; }
+      .selected-student-avatar { margin: 0 auto; }
+      .selected-student-actions { grid-template-columns: 1fr; }
+      .student-form-actions,
+      .wheel-input-row,
+      .wheel-editor-actions { grid-template-columns: 1fr; }
+      .wheel-option-item { grid-template-columns: auto minmax(0, 1fr) auto; }
+      .wheel-option-item .wheel-inline-btn.danger { grid-column: span 3; }
+      .shortcut-popover { right: auto; left: 0; }
+      .student-card-grid { grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); max-height: none; }
+    }
+
+    /* --- MATEMATİK ARAÇLARI CSS --- */
+    .math-grid { display: grid; gap: 24px; }
+    .calc-wrapper { max-width: 480px; margin: 0 auto; width: 100%; background: #fff; padding: 32px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 20px 50px rgba(108,61,237,0.1); }
+    .calc-screen { background: #f8f9fc; border-radius: 20px; padding: 24px; font-size: 52px; text-align: right; margin-bottom: 24px; font-family: 'Baloo 2', cursive; color: var(--navy); border: 2px solid #e2e8f0; box-shadow: inset 0 4px 12px rgba(0,0,0,0.05); overflow-x: auto; white-space: nowrap; letter-spacing: 2px; }
+    .calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .calc-btn { height: 76px; border-radius: 20px; font-size: 28px; font-weight: 900; border: none; background: #fff; color: var(--navy); box-shadow: 0 8px 0 #e2e8f0; cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; -webkit-tap-highlight-color: transparent; }
+    .calc-btn:active { transform: translateY(8px); box-shadow: 0 0 0 #e2e8f0; }
+    .calc-btn.op { background: #f3f0ff; color: var(--purple); box-shadow: 0 8px 0 #ddd4ff; }
+    .calc-btn.eq { background: linear-gradient(135deg, var(--teal), #0ca88f); color: #fff; box-shadow: 0 8px 0 #008a75; grid-column: span 2; }
+    .calc-btn.clear { background: #fee2e2; color: #ef4444; box-shadow: 0 8px 0 #fecaca; }
+
+    .rng-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    .rng-card { background: #fff; padding: 36px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; box-shadow: 0 20px 50px rgba(108,61,237,0.1); }
+    .rng-card h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 32px; color: var(--navy); line-height: 1;}
+    
+    .dice-stage { display: flex; gap: 46px; min-height: 210px; align-items: center; justify-content: center; perspective: 1400px; }
+    .dice-3d-wrap { width: 112px; height: 112px; position: relative; filter: drop-shadow(0 16px 20px rgba(15,23,42,0.2)); }
+    .dice-3d { width: 100%; height: 100%; position: absolute; transform-style: preserve-3d; transition: transform 1.7s cubic-bezier(0.2, 0.8, 0.2, 1); transform: rotateX(-18deg) rotateY(18deg); }
+    .dice-face { position: absolute; width: 112px; height: 112px; background: linear-gradient(145deg, #ffffff, #dbeafe); border: 2px solid #cbd5e1; border-radius: 24px; box-shadow: inset -10px -10px 22px rgba(148,163,184,0.22), inset 10px 10px 24px rgba(255,255,255,0.9); backface-visibility: hidden; display: grid; padding: 18px; grid-template-areas: "a b c" "d e f" "g h i"; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+    .dice-face.front  { transform: rotateY(0deg) translateZ(56px); } .dice-face.back   { transform: rotateY(180deg) translateZ(56px); }
+    .dice-face.right  { transform: rotateY(90deg) translateZ(56px); } .dice-face.left   { transform: rotateY(-90deg) translateZ(56px); }
+    .dice-face.top    { transform: rotateX(90deg) translateZ(56px); } .dice-face.bottom { transform: rotateX(-90deg) translateZ(56px); }
+    
+    .dot { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #4338ca, #1e1b4b); box-shadow: inset 0 4px 7px rgba(255,255,255,0.26), 0 3px 8px rgba(15,23,42,0.18); justify-self: center; align-self: center; }
+    .face-1 .dot:nth-child(1) { grid-area: e; } .face-2 .dot:nth-child(1) { grid-area: a; } .face-2 .dot:nth-child(2) { grid-area: i; }
+    .face-3 .dot:nth-child(1) { grid-area: a; } .face-3 .dot:nth-child(2) { grid-area: e; } .face-3 .dot:nth-child(3) { grid-area: i; }
+    .face-4 .dot:nth-child(1) { grid-area: a; } .face-4 .dot:nth-child(2) { grid-area: c; } .face-4 .dot:nth-child(3) { grid-area: g; } .face-4 .dot:nth-child(4) { grid-area: i; }
+    .face-5 .dot:nth-child(1) { grid-area: a; } .face-5 .dot:nth-child(2) { grid-area: c; } .face-5 .dot:nth-child(3) { grid-area: e; } .face-5 .dot:nth-child(4) { grid-area: g; } .face-5 .dot:nth-child(5) { grid-area: i; }
+    .face-6 .dot:nth-child(1) { grid-area: a; } .face-6 .dot:nth-child(2) { grid-area: d; } .face-6 .dot:nth-child(3) { grid-area: g; } .face-6 .dot:nth-child(4) { grid-area: c; } .face-6 .dot:nth-child(5) { grid-area: f; } .face-6 .dot:nth-child(6) { grid-area: i; }
+
+    .coin-stage { perspective: 1000px; min-height: 220px; display: flex; align-items: center; justify-content: center; }
+    .coin-wrap { position: relative; width: 160px; height: 160px; }
+    .coin-shadow { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); width: 120px; height: 18px; background: radial-gradient(ellipse, rgba(0,0,0,0.28) 0%, transparent 70%); border-radius: 50%; filter: blur(4px); transition: all 0.3s ease; }
+    .coin-inner { width: 160px; height: 160px; position: relative; transition: transform 2.8s cubic-bezier(0.15, 0.88, 0.18, 1); transform-style: preserve-3d; }
+    .coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .coin-face::before { content:''; position:absolute; inset:0; border-radius:50%; box-shadow: inset 0 0 0 5px rgba(255,255,255,0.18), inset 0 0 0 7px rgba(0,0,0,0.12), 0 0 0 2px rgba(180,140,0,0.6), 0 24px 48px rgba(0,0,0,0.32); z-index:3; pointer-events:none; }
+    .coin-face::after { content:''; position:absolute; inset:0; border-radius:50%; background: linear-gradient(130deg, rgba(255,255,255,0.38) 0%, transparent 45%, rgba(0,0,0,0.12) 100%); z-index:4; pointer-events:none; }
+    .coin-front { transform: rotateY(0deg); background: radial-gradient(circle at 42% 38%, #fff9d0 0%, #f5c800 38%, #b8900a 80%, #7a5a00 100%); }
+    .coin-front img { width:84%; height:84%; object-fit:contain; border-radius:50%; position:relative; z-index:2; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+    .coin-back { transform: rotateY(180deg); background: radial-gradient(circle at 42% 38%, #f0f0f0 0%, #d0d0d0 38%, #909090 80%, #505050 100%); }
+    .coin-back img { width:84%; height:84%; object-fit:contain; border-radius:50%; position:relative; z-index:2; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.30)); }
+    @keyframes coinWobble {
+      0%   { transform: rotateY(0deg) rotateZ(0deg) translateY(0); }
+      15%  { transform: rotateY(180deg) rotateZ(3deg) translateY(-12px); }
+      30%  { transform: rotateY(360deg) rotateZ(-2deg) translateY(-20px); }
+      50%  { transform: rotateY(720deg) rotateZ(1.5deg) translateY(-10px); }
+      70%  { transform: rotateY(1080deg) rotateZ(-1deg) translateY(-4px); }
+      85%  { transform: rotateY(1260deg) rotateZ(0.5deg) translateY(-1px); }
+      100% { transform: rotateY(1440deg) rotateZ(0deg) translateY(0); }
+    }
+    .coin-inner.is-flipping { animation: coinWobble 2.8s cubic-bezier(0.15,0.88,0.18,1) forwards; }
+
+    .chk-label { font-weight: 900; font-size: 16px; color: var(--slate); display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .chk-label input { width: 24px; height: 24px; accent-color: var(--purple); cursor: pointer; }
+
+    /* SAYI ÇARKI CSS */
+    .wheel-wrapper { max-width: 900px; margin: 0 auto; width: 100%; background: #fff; padding: 36px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 20px 50px rgba(108,61,237,0.1); text-align: center; }
+    .wheel-header { margin-bottom: 24px; }
+    .wheel-header h3 { margin: 0 0 16px 0; font-family: 'Baloo 2', cursive; font-size: 32px; color: var(--navy); line-height: 1; }
+    .wheel-settings { display: inline-flex; align-items: center; justify-content: center; gap: 16px; background: #f8f9fc; padding: 12px 24px; border-radius: 20px; border: 2px solid #e2e8f0; }
+    .wheel-settings label { font-weight: 900; color: var(--slate); font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .wheel-container { display: flex; gap: 12px; justify-content: center; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; background: linear-gradient(180deg, #f1f5f9, #ffffff); padding: 32px 24px; border-radius: 24px; border: 2px solid #e2e8f0; box-shadow: inset 0 8px 20px rgba(0,0,0,0.06); margin-bottom: 32px; }
+    .digit-window { width: clamp(48px, 6vw, 76px); height: clamp(70px, 9vw, 110px); flex-shrink: 0; overflow: hidden; position: relative; background: #fff; border-radius: 16px; border: 3px solid #cbd5e1; box-shadow: 0 10px 20px rgba(0,0,0,0.08), inset 0 0 16px rgba(0,0,0,0.05); }
+    .digit-window::before, .digit-window::after { content: ''; position: absolute; left: 0; right: 0; height: 30px; z-index: 2; pointer-events: none; }
+    .digit-window::before { top: 0; background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0)); border-radius: 13px 13px 0 0; }
+    .digit-window::after { bottom: 0; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0)); border-radius: 0 0 13px 13px; }
+    .digit-strip { display: flex; flex-direction: column; height: 4000%; width: 100%; }
+    .digit-num { height: 2.5%; width: 100%; display: grid; place-items: center; font-family: 'Baloo 2', cursive; font-size: clamp(36px, 5vw, 72px); font-weight: 800; color: var(--navy); line-height: 1; }
+
+    /* KESİRLER VE SAYI DOĞRUSU CSS */
+    .fraction-wrapper, .nl-wrapper { max-width: 900px; margin: 0 auto; width: 100%; background: #fff; padding: 36px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 20px 50px rgba(108,61,237,0.1); text-align: center; }
+    .fraction-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 40px; align-items: center; margin-top: 20px;}
+    .frac-controls { display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center;}
+    .frac-box { display: flex; flex-direction: column; align-items: center; gap: 8px; background: #f8f9fc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; width: 160px;}
+    .frac-box span { font-weight: 900; color: var(--slate); font-size: 14px; text-transform: uppercase; }
+    .frac-row { display: flex; align-items: center; gap: 12px; }
+    .frac-val { font-family: 'Baloo 2', cursive; font-size: 42px; font-weight: 800; color: var(--navy); width: 40px; }
+    .frac-shape-toggle { display: inline-flex; gap: 8px; padding: 6px; border-radius: 999px; background: #eef2ff; }
+    .frac-shape-btn { border: none; border-radius: 999px; padding: 10px 16px; background: transparent; color: #7c89a3; font-weight: 900; cursor: pointer; }
+    .frac-shape-btn.is-active { background: #fff; color: var(--purple); box-shadow: 0 6px 14px rgba(108,61,237,0.12); }
+    .fraction-status { margin: 0; font-size: 14px; font-weight: 900; color: #5b6983; }
+    .fraction-canvas { display: grid; gap: 16px; justify-items: center; }
+    .fraction-unit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 18px; width: 100%; }
+    .fraction-unit svg { width: 100%; max-width: 190px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.08)); }
+    .nl-container { width: 100%; overflow-x: auto; padding: 40px 0; display: flex; justify-content: center; }
+    .nl-controls { display: flex; justify-content: center; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
+    .geo-wrapper { width: 100%; height: 600px; border-radius: 24px; overflow: hidden; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 14px 42px rgba(108,61,237,0.08); }
+
+    .measure-shell { display: grid; gap: 24px; }
+    .measure-intro { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 18px; align-items: stretch; }
+    .measure-intro-card { padding: 24px; border-radius: 28px; background: linear-gradient(135deg, #ffffff, #f5f0ff); border: 2px solid rgba(227,214,255,0.92); }
+    .measure-intro-card h3 { margin: 0 0 8px; font-family: 'Baloo 2', cursive; font-size: clamp(28px, 4vw, 42px); line-height: .98; color: var(--navy); }
+    .measure-intro-card p { margin: 0; color: var(--slate); font-size: 15px; line-height: 1.55; font-weight: 800; }
+    .measure-rule-card { padding: 22px; border-radius: 28px; background: linear-gradient(135deg, #ecfeff, #fff7ed); border: 2px solid rgba(188,232,226,.95); display: grid; align-content: center; gap: 10px; }
+    .measure-rule-card strong { font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); line-height: 1; }
+    .measure-rule-card span { color: #52627c; font-size: 14px; font-weight: 900; line-height: 1.45; }
+    .converter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .converter-card { background: #fff; border: 2px solid rgba(227,214,255,0.92); border-radius: 28px; padding: 22px; box-shadow: 0 16px 38px rgba(108,61,237,0.08); display: grid; gap: 16px; }
+    .converter-card.wide { grid-column: 1 / -1; }
+    .converter-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .converter-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .converter-icon { width: 52px; height: 52px; border-radius: 18px; display: grid; place-items: center; font-size: 24px; background: var(--conv-soft, #f3f0ff); color: var(--conv-color, var(--purple)); flex-shrink: 0; }
+    .converter-title h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 25px; line-height: 1; color: var(--navy); }
+    .converter-title span { display: block; margin-top: 4px; color: var(--slate); font-size: 12px; font-weight: 900; }
+    .converter-form { display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr); gap: 10px; align-items: end; }
+    .converter-field { display: grid; gap: 7px; }
+    .converter-field label { color: #73819b; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .converter-input,
+    .converter-select { width: 100%; height: 46px; border: 2px solid #e2e8f0; border-radius: 15px; background: #f8fafc; color: var(--navy); font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 900; padding: 0 13px; outline: none; }
+    .converter-input:focus,
+    .converter-select:focus { border-color: var(--purple-light); box-shadow: 0 0 0 4px rgba(108,61,237,0.08); background: #fff; }
+    .swap-btn { width: 42px; height: 42px; border: none; border-radius: 15px; background: var(--conv-soft, #f3f0ff); color: var(--conv-color, var(--purple)); font-size: 17px; cursor: pointer; display: grid; place-items: center; margin-bottom: 2px; }
+    .converter-result { min-height: 58px; border-radius: 18px; padding: 13px 15px; background: linear-gradient(135deg, var(--conv-soft, #f3f0ff), #ffffff); border: 1.5px solid rgba(227,214,255,0.88); font-family: 'Baloo 2', cursive; color: var(--conv-color, var(--purple)); font-size: 22px; font-weight: 900; line-height: 1.15; display: flex; align-items: center; }
+    .converter-hint { color: var(--slate); font-size: 12px; font-weight: 800; line-height: 1.45; margin-top: -6px; }
+    .converter-card.mass { --conv-color: #7c3aed; --conv-soft: #f3f0ff; }
+    .converter-card.liquid { --conv-color: #0891b2; --conv-soft: #ecfeff; }
+    .converter-card.length { --conv-color: #0f766e; --conv-soft: #ecfdf5; }
+    .converter-card.area { --conv-color: #d97706; --conv-soft: #fff7ed; }
+
+    .ladder-wrap { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(260px, .9fr); gap: 18px; align-items: center; }
+    .unit-ladder { position: relative; min-height: 360px; padding: 12px 0; }
+    .unit-step { width: min(82%, 440px); margin-left: calc(var(--i) * 24px); height: 52px; border-radius: 16px 16px 10px 10px; color: #fff; font-weight: 900; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; box-shadow: 0 12px 22px rgba(15,23,42,0.12); transform: skewY(-1deg); }
+    .unit-step + .unit-step { margin-top: 7px; }
+    .unit-step small { font-size: 12px; opacity: .9; }
+    .ladder-side { display: grid; gap: 12px; }
+    .ladder-note { padding: 16px; border-radius: 20px; background: #f8fafc; border: 1.5px solid #e2e8f0; color: #52627c; font-size: 14px; font-weight: 900; line-height: 1.5; }
+    .ladder-note strong { display: block; font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); line-height: 1; margin-bottom: 5px; }
+
+    .math-games-section { display: grid; gap: 18px; }
+    .math-games-title { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+    .math-games-title h3 { margin: 0; font-family: 'Baloo 2', cursive; font-size: 32px; line-height: 1; }
+    .scale-game { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 18px; align-items: start; }
+    .scale-stage-card,
+    .scale-control-card { background: #fff; border: 2px solid rgba(227,214,255,0.92); border-radius: 28px; padding: 20px; box-shadow: 0 16px 38px rgba(108,61,237,0.08); }
+    .scale-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .scale-question { padding: 12px 16px; border-radius: 18px; background: linear-gradient(135deg, #f3f0ff, #ecfeff); color: var(--navy); font-weight: 900; line-height: 1.35; flex: 1; }
+    .scale-score { display: inline-flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 999px; background: #fff7ed; color: #9a3412; font-size: 13px; font-weight: 900; white-space: nowrap; }
+    .scale-canvas { width: 100%; height: auto; max-height: 430px; border-radius: 24px; background: linear-gradient(180deg, #f8fbff, #fff); border: 1.5px solid #e2e8f0; }
+    .scale-result { margin-top: 12px; padding: 13px 16px; border-radius: 18px; font-weight: 900; line-height: 1.45; background: #f8fafc; color: #52627c; border: 1.5px solid #e2e8f0; }
+    .scale-result.good { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+    .scale-result.bad { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+    .scale-controls { display: grid; gap: 16px; }
+    .scale-control-block { display: grid; gap: 10px; }
+    .scale-control-block h4 { margin: 0; color: var(--slate); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; }
+    .scale-choice-grid,
+    .scale-weight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .scale-choice,
+    .scale-weight { position: relative; border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 16px; padding: 10px 7px; min-height: 82px; font-family: 'Nunito', sans-serif; cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 3px; transition: .18s; color: var(--navy); }
+    .scale-choice:hover,
+    .scale-weight:hover { transform: translateY(-2px); border-color: var(--purple-light); background: #fff; }
+    .scale-choice.is-selected { border-color: var(--purple); background: #f3f0ff; box-shadow: 0 0 0 3px rgba(108,61,237,.12); }
+    .scale-weight.has-count { border-color: var(--teal); background: #ecfeff; }
+    .scale-emoji { font-size: 26px; }
+    .scale-name { font-size: 11px; font-weight: 900; text-align: center; line-height: 1.1; }
+    .scale-mass { font-size: 10px; color: var(--slate); font-weight: 900; }
+    .scale-count { position: absolute; transform: translate(28px, -28px); min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: none; align-items: center; justify-content: center; background: var(--purple); color: #fff; font-size: 12px; font-weight: 900; }
+    .scale-weight.has-count .scale-count { display: inline-flex; }
+    .scale-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .scale-total { color: var(--teal); font-size: 14px; font-weight: 900; text-align: right; }
+
+    @media (max-width:1080px) {
+      .measure-intro,
+      .converter-grid,
+      .ladder-wrap,
+      .scale-game { grid-template-columns: 1fr; }
+      .converter-card.wide { grid-column: auto; }
+    }
+    @media (max-width:760px) {
+      .converter-form { grid-template-columns: 1fr; }
+      .swap-btn { width: 100%; margin: 0; }
+      .scale-choice-grid,
+      .scale-weight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .scale-actions { grid-template-columns: 1fr; }
+      .unit-step { width: 100%; margin-left: 0; }
+    }
+
+
+    /* ══════════════════════════════
+       🪞 SİMETRİ AYNASI — CSS
+    ══════════════════════════════ */
+    #mathSymmetryView { padding: 0; }
+    .sym-shell {
+      display: flex; flex-direction: column;
+      border-radius: 20px; overflow: hidden;
+      background: #fff;
+      box-shadow: 0 8px 40px rgba(108,61,237,.13);
+      min-height: 680px;
+    }
+    /* Toolbar */
+    .sym-bar {
+      display: flex; align-items: center; gap: 5px;
+      padding: 8px 12px; background: #fff;
+      border-bottom: 1.5px solid #ede9fe;
+      overflow-x: auto; scrollbar-width: none;
+      flex-shrink: 0; touch-action: pan-x;
+      flex-wrap: nowrap;
+    }
+    .sym-bar::-webkit-scrollbar { display: none; }
+    .sym-vsep { width:1px; height:34px; background:#e8e0fb; flex-shrink:0; margin:0 5px; }
+    .sym-grp { display:flex; flex-direction:column; gap:3px; align-items:flex-start; flex-shrink:0; }
+    .sym-grp-label { font-size:8px; font-weight:900; color:#a78bfa; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+    .sym-row { display:flex; gap:4px; align-items:center; }
+    /* Butonlar */
+    .sym-tb {
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+      min-width:42px; height:40px; border:1.5px solid #e8e0fb; border-radius:10px;
+      background:#faf8ff; color:#5b21b6; cursor:pointer;
+      font-size:15px; font-family:inherit; padding:3px 7px; flex-shrink:0;
+      transition:background .12s, border-color .12s, transform .08s;
+      touch-action:manipulation;
+    }
+    .sym-tb-lbl { font-size:8.5px; font-weight:800; color:#7c3aed; letter-spacing:.02em; white-space:nowrap; }
+    .sym-tb:hover  { background:#ede9fe; border-color:#7c3aed; }
+    .sym-tb.active { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+    .sym-tb.active .sym-tb-lbl { color:#ddd6fe; }
+    .sym-tb:active { transform:scale(.9); }
+    /* Renkler */
+    .sym-clr {
+      width:26px; height:26px; border-radius:50%;
+      border:2.5px solid transparent; cursor:pointer;
+      transition:transform .12s, border-color .12s; flex-shrink:0;
+      touch-action:manipulation;
+    }
+    .sym-clr.active { border-color:#4c1d95; transform:scale(1.28); box-shadow:0 0 0 2px #fff,0 0 0 4px #7c3aed; }
+    .sym-clr:hover  { transform:scale(1.14); }
+    /* Canvas alanı */
+    .sym-canvas-area {
+      position:relative; flex:1; background:#fafaf8;
+      overflow:hidden; min-height:500px;
+    }
+    .sym-canvas-area canvas {
+      position:absolute; top:0; left:0;
+      width:100% !important; height:100% !important;
+      touch-action:none;
+    }
+    #symBgCvs   { z-index:1; pointer-events:none; }
+    #symDrawCvs { z-index:2; cursor:crosshair; }
+    #symAxCvs   { z-index:3; pointer-events:none; }
+    /* Sürüklenebilir şekil / text overlay */
+    #symDragLayer {
+      position:absolute; inset:0; z-index:10;
+      pointer-events:none; /* tek tek elemanlar kendi events'ini alır */
+    }
+    /* Eksen etiketi */
+    .sym-axis-badge {
+      position:absolute; top:10px; left:50%;
+      transform:translateX(-50%);
+      background:#7c3aed; color:#fff; border-radius:999px;
+      padding:4px 16px; font-size:12px; font-weight:900;
+      pointer-events:none; z-index:20;
+      box-shadow:0 2px 10px rgba(124,58,237,.35);
+      white-space:nowrap;
+    }
+    /* Alt hint */
+    .sym-hint {
+      text-align:center; padding:10px 16px;
+      font-size:13px; font-weight:700; color:#6d28d9;
+      background:#f5f3ff; border-top:1px solid #ede9fe;
+    }
+    /* Sürüklenebilir eleman */
+    .sym-drag-el {
+      position:absolute; cursor:grab;
+      user-select:none; -webkit-user-select:none;
+      touch-action:none;
+      filter:drop-shadow(0 3px 8px rgba(0,0,0,.18));
+      border:2px dashed transparent;
+      border-radius:6px;
+      transition:border-color .15s;
+    }
+    .sym-drag-el:hover { border-color:rgba(124,58,237,.5); }
+    .sym-drag-el.selected { border-color:#7c3aed; }
+    .sym-drag-el-del {
+      position:absolute; top:-10px; right:-10px;
+      width:20px; height:20px; border-radius:50%;
+      background:#ef4444; color:#fff; font-size:11px; font-weight:900;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; z-index:5; box-shadow:0 2px 6px rgba(239,68,68,.4);
+    }
+    /* Şekil panel popup */
+    #symShapePanel {
+      position:absolute; top:56px; left:50%;
+      transform:translateX(-50%);
+      background:#fff; border:1.5px solid #ede9fe;
+      border-radius:16px; padding:12px;
+      display:none; flex-wrap:wrap; gap:8px;
+      z-index:50; width:260px;
+      box-shadow:0 8px 32px rgba(108,61,237,.18);
+    }
+    #symShapePanel.open { display:flex; }
+    .sym-shape-card {
+      display:flex; flex-direction:column; align-items:center; gap:4px;
+      width:66px; padding:8px 4px; border:1.5px solid #ede9fe;
+      border-radius:12px; background:#faf8ff; cursor:pointer;
+      font-size:22px; transition:.13s; touch-action:manipulation;
+    }
+    .sym-shape-card span { font-size:10px; font-weight:800; color:#6d28d9; }
+    .sym-shape-card:hover { border-color:#7c3aed; background:#ede9fe; }
+    /* Font seçici */
+    #symFontSel {
+      height:34px; border:1.5px solid #ede9fe; border-radius:10px;
+      padding:0 8px; font-size:13px; font-weight:700;
+      color:#4c1d95; background:#faf8ff; cursor:pointer; outline:none;
+    }
+
+    /* Konfeti */
+    #konfetiCanvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9998; display: none; }
+
+    @media (max-width:1080px) { .tool-hub, .timer-grid { grid-template-columns: 1fr; } .svg-timer-wrap { max-width: 320px; } .tools-page { padding-top: 92px; } .fraction-grid { grid-template-columns: 1fr; } .class-grid{ grid-template-columns: 1fr;} }
+    @media (max-width:760px) { .tools-page { width: min(100% - 14px,1240px); padding-top: 82px; } .hero-card,.panel { padding: 16px; border-radius: 20px; } .time-bar { padding: 12px 16px; border-radius: 20px; } .settings-grid { grid-template-columns: 1fr; } .board-stage { min-height: 66vh; } .pro-toolbar { top: auto; left: 10px; right: 10px; bottom: 10px; width: min(calc(100vw - 20px), calc(100% - 20px)) !important; max-width: calc(100vw - 20px); flex-direction: row; flex-wrap: wrap; overflow:auto; max-height:340px;} .pro-toolbar.is-collapsed{max-height: 212px;} .calc-btn { height: 60px; font-size: 22px; } .rng-wrapper { grid-template-columns: 1fr; } .wheel-container { gap: 8px; padding: 20px 16px; } }
+    @media (max-width:480px) { .time-bar-date { display: none; } .board-stage { min-height: 72vh; } .calc-keys { gap: 8px; } .calc-btn { height: 54px; font-size: 20px; } .wheel-container { gap: 4px; padding: 16px 8px; } .wheel-settings { padding: 10px 16px; gap: 10px; } .wheel-settings label { font-size: 13px; } .frac-box{ width: 100%;} }
+  
+  .sub-back{position:relative;top:auto;left:0;right:0;z-index:20;height:56px;
+    background:rgba(255,255,255,0.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border-bottom:1.5px solid rgba(227,214,255,0.8);
+    display:flex;align-items:center;gap:14px;padding:0 22px;
+    box-shadow:0 2px 18px rgba(108,61,237,0.09);}
+  .sub-back a{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;
+    border-radius:10px;background:rgba(108,61,237,0.09);border:none;
+    color:#6c3ded;font-weight:900;font-size:14px;cursor:pointer;
+    text-decoration:none;font-family:inherit;transition:background .15s;}
+  .sub-back a:hover{background:rgba(108,61,237,0.17);}
+  .sub-back-title{font-size:17px;font-weight:900;color:#1e2a4a;}
+  .tools-page{padding-top:24px!important;}
+</style>
+</head>
+<body>
+  <div class="sub-back">
+    <a href="../ogretmen-araclari.html">← Araçlar</a>
+    <span style="font-size:20px">🔢</span>
+    <span class="sub-back-title">Matematik Araçları</span>
+  </div>
+  <main class="tools-page">
+
+    <div class="time-bar glass">
+      <div class="time-bar-label">⏱️ Öğretmen Araçları</div>
+      <div class="time-bar-clock" id="timeBarClock">--:--:--</div>
+      <div class="time-bar-date" id="timeBarDate">yükleniyor…</div>
+      <div class="time-bar-tz" id="timeBarTz">🌍 Yerel Saat</div>
+    </div>
+
+    <section class="workspace is-visible" id="mathWorkspace" data-tool-panel="math">
+      <article class="panel glass" style="max-width: 1080px; margin: 0 auto; width: 100%;">
+        <div class="panel-head">
+          <h2>Matematik Araçları</h2>
+          <div class="tool-actions">
+            <div class="shortcut-help">
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="mathShortcuts">!</button>
+              <div class="shortcut-popover" id="mathShortcuts">
+                <div class="shortcut-popover-head">
+                  <p class="shortcut-popover-title">Matematik Kısayolları</p>
+                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row"><span class="shortcut-key">M</span><span>Matematik panelini aç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">D</span><span>Zar at</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">F</span><span>Yazı tura çevir</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">K</span><span>Kesir modeline geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">L</span><span>Sayı doğrusuna geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">W</span><span>Sayı çarkına geç</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">U</span><span>Çeviricilere geç</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="display-stage" style="padding: 30px;">
+          <div class="measure-shell">
+            <div class="mode-tabs" role="tablist">
+              <button class="mode-tab active" type="button" data-math-mode="calc">🧮 Hesap Makinesi</button>
+              <button class="mode-tab" type="button" data-math-mode="rng">🎲 Zar & Yazı Tura</button>
+              <button class="mode-tab" type="button" data-math-mode="wheel">🎡 Sayı Çarkı</button>
+              <button class="mode-tab" type="button" data-math-mode="frac">🍕 Kesirler</button>
+              <button class="mode-tab" type="button" data-math-mode="nl">📏 Sayı Doğrusu</button>
+              <button class="mode-tab" type="button" data-math-mode="geo">📐 Geometri (GeoGebra)</button>
+              <button class="mode-tab" type="button" data-math-mode="convert">🔄 Çeviriciler</button>
+              <a class="mode-tab" href="simetri.html" style="text-decoration:none;">🪞 Simetri Aynası</a>
+            </div>
+
+            <div id="mathCalcView" style="display: block;">
+              <div class="calc-wrapper">
+                <div class="calc-screen" id="calcScreen">0</div>
+                <div class="calc-keys">
+                  <button class="calc-btn clear" type="button" onclick="mathCalc('C')">C</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('(')">(</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc(')')">)</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('/')">÷</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('7')">7</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('8')">8</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('9')">9</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('*')">×</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('4')">4</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('5')">5</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('6')">6</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('-')">−</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('1')">1</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('2')">2</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('3')">3</button>
+                  <button class="calc-btn op" type="button" onclick="mathCalc('+')">+</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('0')">0</button>
+                  <button class="calc-btn" type="button" onclick="mathCalc('.')">,</button>
+                  <button class="calc-btn eq" type="button" onclick="mathCalc('=')">=</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="mathRngView" style="display: none;">
+              <div class="rng-wrapper">
+                <div class="rng-card">
+                  <h3>Zar At</h3>
+                  <div class="dice-stage">
+                    <div class="dice-3d-wrap" id="dice1Wrap">
+                      <div class="dice-3d" id="dice1">
+                        <div class="dice-face front face-1"><span class="dot"></span></div>
+                        <div class="dice-face back face-6"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face right face-3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face left face-4"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face top face-2"><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face bottom face-5"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                      </div>
+                    </div>
+                    <div class="dice-3d-wrap" id="dice2Wrap" style="display:none;">
+                      <div class="dice-3d" id="dice2">
+                        <div class="dice-face front face-1"><span class="dot"></span></div>
+                        <div class="dice-face back face-6"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face right face-3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face left face-4"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face top face-2"><span class="dot"></span><span class="dot"></span></div>
+                        <div class="dice-face bottom face-5"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <label class="chk-label" style="margin-top:12px;"><input type="checkbox" id="diceCountToggle"> İki Zar Kullan</label>
+                  <button class="btn btn-primary" type="button" onclick="roll3DDice()" style="width:100%; height:54px; font-size:18px; margin-top:10px;">Zarları At</button>
+                </div>
+
+                <div class="rng-card">
+                  <h3>Yazı Tura</h3>
+                  <div class="coin-stage">
+                    <div class="coin-wrap">
+                      <div class="coin-inner" id="coinInner">
+                        <div class="coin-face coin-front">
+                          <img src="/gorseller/yazi.png" alt="Yazı" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'font-size:32px;font-weight:900;color:#7a5a00;position:relative;z-index:2;\'>YAZI</span>')">
+                        </div>
+                        <div class="coin-face coin-back">
+                          <img src="/gorseller/tura.png" alt="Tura" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'font-size:32px;font-weight:900;color:#505050;position:relative;z-index:2;\'>TURA</span>')">
+                        </div>
+                      </div>
+                      <div class="coin-shadow" id="coinShadow"></div>
+                    </div>
+                  </div>
+                  <div style="height:36px;"></div>
+                  <button class="btn btn-teal" type="button" onclick="flipCoin()" style="width:100%; height:50px; font-size:17px; margin-top:6px;">🪙 Parayı Çevir</button>
+                  <div id="coinResultLabel" style="text-align:center;font-size:22px;font-weight:900;color:var(--purple);letter-spacing:.04em;margin-top:8px;opacity:0;transition:opacity .4s ease;min-height:32px;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="mathWheelView" style="display: none;">
+              <div class="wheel-wrapper">
+                <div class="wheel-header">
+                  <h3>Sayı Çarkı</h3>
+                  <div class="wheel-settings">
+                    <label>Basamak:</label>
+                    <input type="range" id="wheelDigitCount" min="2" max="9" value="3" style="accent-color: var(--purple); cursor: pointer; height: 6px;">
+                    <span id="wheelDigitDisplay" style="font-weight:900; color:var(--purple); font-size:22px; width:16px;">3</span>
+                  </div>
+                </div>
+                <div class="wheel-container" id="wheelContainer"></div>
+                <button class="btn btn-primary" type="button" onclick="spinNumberWheel()" style="width:100%; max-width:320px; height:64px; font-size:24px; font-family:'Baloo 2', cursive; letter-spacing: 1px; border-radius: 20px; box-shadow: 0 10px 20px rgba(108,61,237,0.25);">Çarkı Çevir</button>
+              </div>
+            </div>
+
+            <div id="mathFracView" style="display: none;">
+              <div class="fraction-wrapper">
+                <h3 style="font-family:'Baloo 2', cursive; font-size:32px; color:var(--navy); margin: 0 0 20px 0;">Kesir Modelleme</h3>
+                <div class="fraction-grid">
+                  <div class="frac-controls">
+                    <div class="frac-box">
+                      <span>Pay (Boyalı)</span>
+                      <div class="frac-row">
+                        <button class="step-btn" onclick="changeFrac('num', -1)">-</button>
+                        <div class="frac-val" id="fracNumDisplay">1</div>
+                        <button class="step-btn" onclick="changeFrac('num', 1)">+</button>
+                      </div>
+                    </div>
+                    <div style="width: 120px; height: 4px; background: var(--slate); border-radius: 2px;"></div>
+                    <div class="frac-box">
+                      <span>Payda (Bütün)</span>
+                      <div class="frac-row">
+                        <button class="step-btn" onclick="changeFrac('den', -1)">-</button>
+                        <div class="frac-val" id="fracDenDisplay">4</div>
+                        <button class="step-btn" onclick="changeFrac('den', 1)">+</button>
+                      </div>
+                    </div>
+                    <div class="frac-shape-toggle" id="fracShapeToggle">
+                      <button class="frac-shape-btn is-active" type="button" data-frac-shape="circle">Daire</button>
+                      <button class="frac-shape-btn" type="button" data-frac-shape="rect">Dikdörtgen</button>
+                    </div>
+                    <p class="fraction-status" id="fractionStatusText">1/4 modeli</p>
+                  </div>
+                  <div id="fracSvgContainer" class="fraction-canvas"></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="mathNlView" style="display: none;">
+              <div class="nl-wrapper">
+                <h3 style="font-family:'Baloo 2', cursive; font-size:32px; color:var(--navy); margin: 0 0 10px 0;">Sayı Doğrusu</h3>
+                <div class="nl-container">
+                  <canvas id="nlCanvas" width="800" height="200" style="max-width: 100%; height: auto;"></canvas>
+                </div>
+                <div class="nl-controls">
+                  <button class="btn btn-secondary" onclick="moveNl(-5)">-5 Geri</button>
+                  <button class="btn btn-secondary" onclick="moveNl(-1)">-1 Geri</button>
+                  <button class="btn btn-teal" onclick="moveNl('reset')">Sıfıra Dön</button>
+                  <button class="btn btn-secondary" onclick="moveNl(1)">+1 İleri</button>
+                  <button class="btn btn-secondary" onclick="moveNl(5)">+5 İleri</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="mathGeoView" style="display: none;">
+              <div class="geo-wrapper">
+                <iframe src="https://www.geogebra.org/classic?showMenuBar=false&showToolBar=true&showAlgebraInput=false" width="100%" height="100%" style="border:none;"></iframe>
+              </div>
+            </div>
+
+            <div id="mathConvertView" style="display: none;">
+              <div class="measure-intro">
+                <div class="measure-intro-card">
+                  <h3>Ölçü Dönüşüm Merkezi</h3>
+                  <p>Kütle, sıvı, uzunluk ve alan birimleri tek ekranda dönüşür.</p>
+                </div>
+                <div class="measure-rule-card">
+                  <strong>Merdiven mantığı</strong>
+                  <span>Uzunlukta her basamak 10, alan ölçülerinde her basamak 100 ile değişir.</span>
+                </div>
+              </div>
+
+              <div class="converter-grid" style="margin-top:18px;">
+              <div class="converter-card mass" id="mathMassView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-weight-hanging"></i></span>
+                    <div>
+                      <h3>Kütle Çevirme</h3>
+                      <span>ton, kg, g, mg</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="converter-form" data-converter="mass">
+                  <div class="converter-field">
+                    <label>Değer</label>
+                    <input class="converter-input" id="massInput" type="number" step="any" value="1">
+                    <select class="converter-select" id="massFrom">
+                      <option value="t">ton</option>
+                      <option value="kg" selected>kilogram</option>
+                      <option value="g">gram</option>
+                      <option value="mg">miligram</option>
+                    </select>
+                  </div>
+                  <button class="swap-btn" type="button" data-swap-converter="mass" aria-label="Kütle birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                  <div class="converter-field">
+                    <label>Sonuç Birimi</label>
+                    <select class="converter-select" id="massTo">
+                      <option value="t">ton</option>
+                      <option value="kg">kilogram</option>
+                      <option value="g" selected>gram</option>
+                      <option value="mg">miligram</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="converter-result" id="massResult">1 kg = 1000 g</div>
+                <div class="converter-hint">1 ton = 1000 kg, 1 kg = 1000 g, 1 g = 1000 mg.</div>
+              </div>
+
+              <div class="converter-card liquid" id="mathLiquidView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-droplet"></i></span>
+                    <div>
+                      <h3>Sıvı Çevirme</h3>
+                      <span>l, dl, cl, ml</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="converter-form" data-converter="liquid">
+                  <div class="converter-field">
+                    <label>Değer</label>
+                    <input class="converter-input" id="liquidInput" type="number" step="any" value="1">
+                    <select class="converter-select" id="liquidFrom">
+                      <option value="l" selected>litre</option>
+                      <option value="dl">desilitre</option>
+                      <option value="cl">santilitre</option>
+                      <option value="ml">mililitre</option>
+                    </select>
+                  </div>
+                  <button class="swap-btn" type="button" data-swap-converter="liquid" aria-label="Sıvı birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                  <div class="converter-field">
+                    <label>Sonuç Birimi</label>
+                    <select class="converter-select" id="liquidTo">
+                      <option value="l">litre</option>
+                      <option value="dl">desilitre</option>
+                      <option value="cl">santilitre</option>
+                      <option value="ml" selected>mililitre</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="converter-result" id="liquidResult">1 l = 1000 ml</div>
+                <div class="converter-hint">1 l = 10 dl = 100 cl = 1000 ml.</div>
+              </div>
+
+              <div class="converter-card length" id="mathLengthView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-ruler"></i></span>
+                    <div>
+                      <h3>Uzunluk Çevirme</h3>
+                      <span>km'den mm'ye</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="converter-form" data-converter="length">
+                  <div class="converter-field">
+                    <label>Değer</label>
+                    <input class="converter-input" id="lengthInput" type="number" step="any" value="1">
+                    <select class="converter-select" id="lengthFrom">
+                      <option value="km">kilometre</option>
+                      <option value="hm">hektometre</option>
+                      <option value="dam">dekametre</option>
+                      <option value="m" selected>metre</option>
+                      <option value="dm">desimetre</option>
+                      <option value="cm">santimetre</option>
+                      <option value="mm">milimetre</option>
+                    </select>
+                  </div>
+                  <button class="swap-btn" type="button" data-swap-converter="length" aria-label="Uzunluk birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                  <div class="converter-field">
+                    <label>Sonuç Birimi</label>
+                    <select class="converter-select" id="lengthTo">
+                      <option value="km">kilometre</option>
+                      <option value="hm">hektometre</option>
+                      <option value="dam">dekametre</option>
+                      <option value="m">metre</option>
+                      <option value="dm">desimetre</option>
+                      <option value="cm" selected>santimetre</option>
+                      <option value="mm">milimetre</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="converter-result" id="lengthResult">1 m = 100 cm</div>
+                <div class="converter-hint">Uzunluk merdiveninde her basamak 10 kat değişir.</div>
+              </div>
+
+              <div class="converter-card area wide" id="mathAreaView">
+                <div class="converter-head">
+                  <div class="converter-title">
+                    <span class="converter-icon"><i class="fas fa-border-all"></i></span>
+                    <div>
+                      <h3>Alan Ölçme Birimleri</h3>
+                      <span>km², m², dm², cm², mm² arası dönüşüm</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="ladder-wrap">
+                  <div class="unit-ladder" aria-label="Alan ölçme merdiveni">
+                    <div class="unit-step" style="--i:0;background:linear-gradient(135deg,#2563eb,#38bdf8);"><span>km²</span><small>Kilometrekare</small></div>
+                    <div class="unit-step" style="--i:1;background:linear-gradient(135deg,#0891b2,#22d3ee);"><span>hm²</span><small>Hektometrekare</small></div>
+                    <div class="unit-step" style="--i:2;background:linear-gradient(135deg,#059669,#34d399);"><span>dam²</span><small>Dekametrekare</small></div>
+                    <div class="unit-step" style="--i:3;background:linear-gradient(135deg,#d97706,#facc15);"><span>m²</span><small>Metrekare</small></div>
+                    <div class="unit-step" style="--i:4;background:linear-gradient(135deg,#ea580c,#fb923c);"><span>dm²</span><small>Desimetrekare</small></div>
+                    <div class="unit-step" style="--i:5;background:linear-gradient(135deg,#dc2626,#fb7185);"><span>cm²</span><small>Santimetrekare</small></div>
+                    <div class="unit-step" style="--i:6;background:linear-gradient(135deg,#be185d,#e879f9);"><span>mm²</span><small>Milimetrekare</small></div>
+                  </div>
+                  <div class="ladder-side">
+                    <div class="converter-form" data-converter="area">
+                      <div class="converter-field">
+                        <label>Değer</label>
+                        <input class="converter-input" id="areaInput" type="number" step="any" value="1">
+                        <select class="converter-select" id="areaFrom">
+                          <option value="km2">km²</option>
+                          <option value="hm2">hm²</option>
+                          <option value="dam2">dam²</option>
+                          <option value="m2" selected>m²</option>
+                          <option value="dm2">dm²</option>
+                          <option value="cm2">cm²</option>
+                          <option value="mm2">mm²</option>
+                        </select>
+                      </div>
+                      <button class="swap-btn" type="button" data-swap-converter="area" aria-label="Alan birimlerini değiştir"><i class="fas fa-right-left"></i></button>
+                      <div class="converter-field">
+                        <label>Sonuç Birimi</label>
+                        <select class="converter-select" id="areaTo">
+                          <option value="km2">km²</option>
+                          <option value="hm2">hm²</option>
+                          <option value="dam2">dam²</option>
+                          <option value="m2">m²</option>
+                          <option value="dm2">dm²</option>
+                          <option value="cm2" selected>cm²</option>
+                          <option value="mm2">mm²</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="converter-result" id="areaResult">1 m² = 10000 cm²</div>
+                    <div class="ladder-note"><strong>Alan kuralı</strong>Aşağı inerken her basamakta 100 ile çarpılır, yukarı çıkarken 100'e bölünür.</div>
+                    <div class="ladder-note"><strong>Ezber desteği</strong>km² → hm² → dam² → m² → dm² → cm² → mm² sıralamasını takip et.</div>
+                  </div>
+                </div>
+
+            <div id="mathSymmetryView" style="display:none;">
+              <div class="sym-shell">
+
+                <!-- ══ TOOLBAR ══ -->
+                <div class="sym-bar" id="symBar">
+
+                  <!-- EKSEN -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">Eksen</span>
+                    <div class="sym-row">
+                      <button class="sym-tb active" id="symAxV" title="Dikey eksen">↕️<span class="sym-tb-lbl">Dikey</span></button>
+                      <button class="sym-tb"        id="symAxH" title="Yatay eksen">↔️<span class="sym-tb-lbl">Yatay</span></button>
+                      <button class="sym-tb"        id="symAxB" title="Çift eksen (4 yansıma)">✛<span class="sym-tb-lbl">Çift</span></button>
+                    </div>
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- ARAÇ -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">Araç</span>
+                    <div class="sym-row">
+                      <button class="sym-tb active" data-sym-tool="pen"       >✏️<span class="sym-tb-lbl">Kalem</span></button>
+                      <button class="sym-tb"        data-sym-tool="chalk"     >🖍<span class="sym-tb-lbl">Tebeşir</span></button>
+                      <button class="sym-tb"        data-sym-tool="marker"    >🖊<span class="sym-tb-lbl">Marker</span></button>
+                      <button class="sym-tb"        data-sym-tool="eraser"    >⬜<span class="sym-tb-lbl">Silgi</span></button>
+                    </div>
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- RENK -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">Renk</span>
+                    <div class="sym-row" id="symColorRow">
+                      <div class="sym-clr active" data-c="#1a1a2e" style="background:#1a1a2e;"></div>
+                      <div class="sym-clr" data-c="#ef4444" style="background:#ef4444;"></div>
+                      <div class="sym-clr" data-c="#f97316" style="background:#f97316;"></div>
+                      <div class="sym-clr" data-c="#eab308" style="background:#eab308;"></div>
+                      <div class="sym-clr" data-c="#22c55e" style="background:#22c55e;"></div>
+                      <div class="sym-clr" data-c="#3b82f6" style="background:#3b82f6;"></div>
+                      <div class="sym-clr" data-c="#8b5cf6" style="background:#8b5cf6;"></div>
+                      <div class="sym-clr" data-c="#ec4899" style="background:#ec4899;"></div>
+                      <div class="sym-clr" data-c="#ffffff" style="background:#fff;border:2px solid #cbd5e1;"></div>
+                    </div>
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- KALINLIK -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">Kalınlık</span>
+                    <input type="range" id="symSizeRange" min="1" max="28" value="4" style="width:80px;accent-color:#7c3aed;height:6px;cursor:pointer;">
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- ŞEKİLLER -->
+                  <div class="sym-grp" style="position:relative;">
+                    <span class="sym-grp-label">Şekil Ekle</span>
+                    <button class="sym-tb" id="symShapeToggle">▭ ◯ ★<span class="sym-tb-lbl">Şekiller</span></button>
+                    <!-- Popup panel -->
+                    <div id="symShapePanel">
+                      <div class="sym-shape-card" data-shape="rect">▭<span>Dikdörtgen</span></div>
+                      <div class="sym-shape-card" data-shape="square">■<span>Kare</span></div>
+                      <div class="sym-shape-card" data-shape="circle">◯<span>Daire</span></div>
+                      <div class="sym-shape-card" data-shape="triangle">△<span>Üçgen</span></div>
+                      <div class="sym-shape-card" data-shape="star">★<span>Yıldız</span></div>
+                      <div class="sym-shape-card" data-shape="heart">♥<span>Kalp</span></div>
+                      <div class="sym-shape-card" data-shape="diamond">◇<span>Baklava</span></div>
+                      <div class="sym-shape-card" data-shape="pentagon">⬠<span>Beşgen</span></div>
+                      <div class="sym-shape-card" data-shape="arrow">→<span>Ok</span></div>
+                      <div class="sym-shape-card" data-shape="cloud">☁<span>Bulut</span></div>
+                    </div>
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- METİN -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">Metin</span>
+                    <div class="sym-row" style="flex-wrap:wrap;gap:4px;">
+                      <input type="text" id="symTxtVal" placeholder="Yazı gir..." style="height:34px;width:120px;border:1.5px solid #ede9fe;border-radius:10px;padding:0 10px;font-size:13px;font-weight:800;color:#1a1a2e;outline:none;font-family:inherit;">
+                      <input type="number" id="symTxtSize" value="36" min="10" max="140" style="height:34px;width:54px;border:1.5px solid #ede9fe;border-radius:10px;padding:0 6px;font-size:13px;font-weight:800;text-align:center;outline:none;">
+                      <select id="symFontSel">
+                        <option value="'Baloo 2',cursive">Baloo (Varsayılan)</option>
+                        <option value="'Nunito',sans-serif">Nunito</option>
+                        <option value="serif">Serif</option>
+                        <option value="monospace">Monospace</option>
+                        <option value="cursive">El Yazısı</option>
+                        <option value="fantasy">Fantezi</option>
+                      </select>
+                      <button class="sym-tb" id="symAddTxt" style="height:34px;min-width:50px;">➕<span class="sym-tb-lbl">Ekle</span></button>
+                    </div>
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- ZEMİN -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">Zemin</span>
+                    <div class="sym-row">
+                      <button class="sym-tb active" id="symBgW"  title="Beyaz">⬜<span class="sym-tb-lbl">Beyaz</span></button>
+                      <button class="sym-tb"        id="symBgBl" title="Siyah tahta">⬛<span class="sym-tb-lbl">Tahta</span></button>
+                      <button class="sym-tb"        id="symBgGr" title="Kareli">⊞<span class="sym-tb-lbl">Kareli</span></button>
+                      <button class="sym-tb"        id="symBgDt" title="Noktalı">·<span class="sym-tb-lbl">Noktalı</span></button>
+                    </div>
+                  </div>
+
+                  <div class="sym-vsep"></div>
+
+                  <!-- İŞLEMLER -->
+                  <div class="sym-grp">
+                    <span class="sym-grp-label">İşlem</span>
+                    <div class="sym-row">
+                      <button class="sym-tb" id="symUndo" title="Geri Al (Ctrl+Z)">↩️<span class="sym-tb-lbl">Geri</span></button>
+                      <button class="sym-tb" id="symClear" title="Temizle" style="color:#ef4444;">🗑<span class="sym-tb-lbl">Temizle</span></button>
+                      <button class="sym-tb" id="symSave"  title="PNG indir">💾<span class="sym-tb-lbl">Kaydet</span></button>
+                    </div>
+                  </div>
+
+                </div><!-- /sym-bar -->
+
+                <!-- ══ CANVAS ALANI ══ -->
+                <div class="sym-canvas-area" id="symArea">
+                  <canvas id="symBgCvs"></canvas>
+                  <canvas id="symDrawCvs"></canvas>
+                  <canvas id="symAxCvs"></canvas>
+                  <div id="symDragLayer"></div>
+                  <div class="sym-axis-badge" id="symBadge">🪞 Simetri Ekseni</div>
+                </div>
+
+                <!-- ══ HINT ══ -->
+                <div class="sym-hint" id="symHint">✏️ Sol tarafa çiz — sağ tarafta simetrik yansıması anlık oluşur 🪞</div>
+              </div>
+            </div>
+
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </article>
+    </section>
+
+  </main>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+(function(){
+  'use strict';
+    var S = {
+      mode: 'countdown', 
+      tool: 'class', // İlk açılışta Sınıf Aracı
+      running: false, 
+      alarmOn: true, 
+      showMs: false,
+      cdTarget: 5*60*1000, 
+      dispMs: 5*60*1000, 
+      startedAt: 0, 
+      pausedAt: 0, 
+      frame: null,
+      clockTick: null, 
+      alarmIds: [], 
+      actx: null,
+      board: {
+        tool: 'pen', strokeColor: '#1f2142', strokeColorName: 'Siyah',
+        fillColor: '#facc15', fillColorName: 'Sarı', fillEnabled: false,
+        shapeStrokeColor: '#1f2142', shapeStrokeColorName: 'Siyah',
+        shapeFillColor: '#facc15', shapeFillColorName: 'Sarı', shapeFillEnabled: false,
+        shapePaletteTarget: 'stroke', shapeSize: 4,
+        paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
+        drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
+        startX: 0, startY: 0, points: [], lastPoint: null,
+        panStartClientX: 0, panStartClientY: 0, toolbarLeft: 16, toolbarTop: 16, autosaveTimer: null,
+        pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
+        pageIndex: 0,
+        selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
+        activeText: null, textAlign: 'left', textWeight: '800', textStyle: 'normal', textSize: 32
+      },
+      protractor: { visible: false, x: 0, y: 0, scale: 1, rot: 0 },
+      mathCalcExpr: '0',
+      mathMode: 'calc',
+      coinRot: 0,
+      dice1Rot: {x: -15, y: 15},
+      dice2Rot: {x: -15, y: 15},
+      frac: { num: 1, den: 4, shape: 'circle' },
+      nl: { pos: 0, min: -10, max: 20 },
+      classroom: {
+        view: 'class',
+        currentClassId: '',
+        draftGender: 'girl',
+        selectedStudentId: '',
+        highlightStudentId: '',
+        classWinnerId: '',
+        isPickingStudent: false,
+        wheelRotation: 0,
+        wheelWinnerId: '',
+        isSpinningWheel: false,
+        classes: [],
+        wheelItems: []
+      }
+    };
+
+    var PAGE_DIMENSIONS = {
+      'auto': { w: null, h: null, label: 'Serbest' },
+      'a4v': { w: 800, h: 1131, label: 'A4 Dikey' },
+      'a4h': { w: 1131, h: 800, label: 'A4 Yatay' },
+      'a3v': { w: 1131, h: 1600, label: 'A3 Dikey' },
+      'a3h': { w: 1600, h: 1131, label: 'A3 Yatay' }
+    };
+
+    var BOARD_STORAGE_KEY = 'kemal_teacher_whiteboard_local_v1';
+    var MAX_BOARD_UNDO = 36;
+    var COLOR_NAMES = {
+      '#1f2142': 'Siyah', '#000000': 'Tam Siyah', '#334155': 'Lacivert Gri', '#ef4444': 'Kırmızı',
+      '#f97316': 'Turuncu', '#d97706': 'Kehribar', '#facc15': 'Sarı', '#84cc16': 'Limon Yeşili',
+      '#22c55e': 'Yeşil', '#0f766e': 'Koyu Turkuaz', '#14b8a6': 'Turkuaz', '#06b6d4': 'Camgöbeği',
+      '#3b82f6': 'Mavi', '#2563eb': 'Koyu Mavi', '#4f46e5': 'İndigo', '#8b5cf6': 'Mor',
+      '#a855f7': 'Eflatun', '#ec4899': 'Pembe', '#f43f5e': 'Gül', '#7f1d1d': 'Bordo',
+      '#8b5a2b': 'Kahve', '#9ca3af': 'Gri', '#e5e7eb': 'Açık Gri', '#ffffff': 'Beyaz'
+    };
+
+    var E = {
+      timeBarClock: document.getElementById('timeBarClock'), timeBarDate: document.getElementById('timeBarDate'), timeBarTz: document.getElementById('timeBarTz'),
+      bigDigitsMain: document.getElementById('bigDigitsMain'), bigDigitsMs: document.getElementById('bigDigitsMs'), timerProgressRing: document.getElementById('timerProgressRing'), modeChip: document.getElementById('modeChip'), statusChip: document.getElementById('statusChip'), targetChip: document.getElementById('targetChip'), liveBadge: document.getElementById('liveBadge'),
+      startPauseBtn: document.getElementById('startPauseBtn'), stopBtn: document.getElementById('stopBtn'), resetBtn: document.getElementById('resetBtn'), presetFiveBtn: document.getElementById('presetFiveBtn'), presetTenBtn: document.getElementById('presetTenBtn'),
+      millisCb: document.getElementById('millisCb'), hInput: document.getElementById('hInput'), mInput: document.getElementById('mInput'), sInput: document.getElementById('sInput'), hVal: document.getElementById('hVal'), mVal: document.getElementById('mVal'), sVal: document.getElementById('sVal'),
+      soundToggleBtn: document.getElementById('soundToggleBtn'), alarmBanner: document.getElementById('alarmBanner'), alarmStopBtn: document.getElementById('alarmStopBtn'),
+      stageFullscreenBtn: document.getElementById('stageFullscreenBtn'), timerStage: document.getElementById('timerStage'), cdSettings: document.getElementById('cdSettings'),
+      toolCards: [].slice.call(document.querySelectorAll('[data-tool-card]')), toolPanels: [].slice.call(document.querySelectorAll('[data-tool-panel]')), modeTabs: [].slice.call(document.querySelectorAll('[data-mode]')),
+      presetBtns: [].slice.call(document.querySelectorAll('[data-preset]')), adjBtns: [].slice.call(document.querySelectorAll('[data-adj]')),
+      boardToolBtns: [].slice.call(document.querySelectorAll('[data-board-tool]')), boardColorBtns: [].slice.call(document.querySelectorAll('[data-board-color]')),
+      boardPaletteBtns: [].slice.call(document.querySelectorAll('[data-board-palette]')), boardPaperBtns: [].slice.call(document.querySelectorAll('[data-board-paper]')),
+      textAlignBtns: [].slice.call(document.querySelectorAll('[data-text-align]')), textWeightBtns: [].slice.call(document.querySelectorAll('[data-text-weight]')), textStyleBtns: [].slice.call(document.querySelectorAll('[data-text-style]')),
+      boardStage: document.getElementById('whiteboardStage'), boardPlane: document.getElementById('boardPlane'), boardCanvas: document.getElementById('whiteboardCanvas'), boardPreview: document.getElementById('whiteboardPreviewCanvas'),
+      boardToolbar: document.getElementById('boardToolbar'), boardToolbarHandle: document.getElementById('boardToolbarHandle'), shapeToggleBtn: document.getElementById('shapeToggleBtn'), shapePanel: document.getElementById('shapePanel'),
+      boardFillToggleBtn: document.getElementById('boardFillToggleBtn'), boardClearBtn: document.getElementById('clearBoardBtn'), boardUndoBtn: document.getElementById('boardUndoBtn'), boardRedoBtn: document.getElementById('boardRedoBtn'),
+      boardFullscreenBtn: document.getElementById('boardFullscreenBtn'), boardSaveBtn: document.getElementById('boardSaveBtn'), boardPrintBtn: document.getElementById('boardPrintBtn'),
+      boardSizeSlider: document.getElementById('boardSizeSlider'), boardSizeDisplay: document.getElementById('boardSizeDisplay'), boardSizeSample: document.getElementById('boardSizeSample'),
+      shapeColorBtns: [].slice.call(document.querySelectorAll('[data-shape-color]')), shapeSizeSlider: document.getElementById('shapeSizeSlider'), shapeThicknessDot: document.getElementById('shapeThicknessDot'),
+      textTools: document.getElementById('textTools'), boardTextSizeSlider: document.getElementById('boardTextSizeSlider'), textSizeDisplay: document.getElementById('textSizeDisplay'),
+      boardToolLabel: document.getElementById('boardToolLabel'), boardColorLabel: document.getElementById('boardColorLabel'), boardFillLabel: document.getElementById('boardFillLabel'),
+      prevPageBtn: document.getElementById('prevPageBtn'), nextPageBtn: document.getElementById('nextPageBtn'), addPageBtn: document.getElementById('addPageBtn'), deletePageBtn: document.getElementById('deletePageBtn'),
+      pageInfoDisplay: document.getElementById('pageInfoDisplay'), pageSizeSelect: document.getElementById('pageSizeSelect'), boardProtractorBtn: document.getElementById('boardProtractorBtn'),
+      classTabs: [].slice.call(document.querySelectorAll('[data-class-view]')),
+      classViews: { class: document.getElementById('classManagerView'), wheel: document.getElementById('classWheelView') },
+      classSelector: document.getElementById('classSelector'), addClassBtn: document.getElementById('addClassBtn'), renameClassBtn: document.getElementById('renameClassBtn'), deleteClassBtn: document.getElementById('deleteClassBtn'),
+      studentGenderBtns: [].slice.call(document.querySelectorAll('[data-student-gender]')), studentNameInput: document.getElementById('studentNameInput'), addStudentBtn: document.getElementById('addStudentBtn'),
+      resetStatusesBtn: document.getElementById('resetStatusesBtn'), classRandomPickBtn: document.getElementById('classRandomPickBtn'), classRandomHint: document.getElementById('classRandomHint'),
+      classTotalCount: document.getElementById('classTotalCount'), classActiveCount: document.getElementById('classActiveCount'), classAbsentCount: document.getElementById('classAbsentCount'), classPassiveCount: document.getElementById('classPassiveCount'),
+      studentCardGrid: document.getElementById('studentCardGrid'), selectedStudentAvatar: document.getElementById('selectedStudentAvatar'), selectedStudentName: document.getElementById('selectedStudentName'), selectedStudentMeta: document.getElementById('selectedStudentMeta'),
+      selectedKeepBtn: document.getElementById('selectedKeepBtn'), selectedPassiveBtn: document.getElementById('selectedPassiveBtn'),
+      wheelItemInput: document.getElementById('wheelItemInput'), addWheelItemBtn: document.getElementById('addWheelItemBtn'), wheelBulkInput: document.getElementById('wheelBulkInput'), addWheelBulkBtn: document.getElementById('addWheelBulkBtn'),
+      resetWheelOptionsBtn: document.getElementById('resetWheelOptionsBtn'), clearWheelOptionsBtn: document.getElementById('clearWheelOptionsBtn'), wheelOptionList: document.getElementById('wheelOptionList'), wheelItemCount: document.getElementById('wheelItemCount'),
+      classOptionWheel: document.getElementById('classOptionWheel'), classWheelPointer: document.getElementById('classWheelPointer'), classWheelWinnerName: document.getElementById('classWheelWinnerName'), classWheelWinnerHint: document.getElementById('classWheelWinnerHint'),
+      classWheelSpinBtn: document.getElementById('classWheelSpinBtn'),
+      fracShapeBtns: [].slice.call(document.querySelectorAll('[data-frac-shape]')),
+      fractionStatusText: document.getElementById('fractionStatusText'),
+      shortcutHelpBtns: [].slice.call(document.querySelectorAll('[data-shortcut-target]')),
+      shortcutPopovers: [].slice.call(document.querySelectorAll('.shortcut-popover')),
+      shortcutCloseBtns: [].slice.call(document.querySelectorAll('[data-shortcut-close]'))
+    };
+
+    var fmtDate = new Intl.DateTimeFormat('tr-TR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    var fmtTime = new Intl.DateTimeFormat('tr-TR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    function pad2(n) { return String(Math.floor(n)).padStart(2,'0'); }
+    function isEditableTarget(target) {
+      if(!target) return false;
+      var tag = target.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+    }
+    function closeShortcutPopovers() {
+      E.shortcutHelpBtns.forEach(function(btn) { btn.classList.remove('is-open'); });
+      E.shortcutPopovers.forEach(function(pop) { pop.classList.remove('is-open'); });
+    }
+    function toggleShortcutPopover(id) {
+      var target = document.getElementById(id);
+      if(!target) return;
+      var shouldOpen = !target.classList.contains('is-open');
+      closeShortcutPopovers();
+      if(shouldOpen) {
+        target.classList.add('is-open');
+        var trigger = E.shortcutHelpBtns.find(function(btn) { return btn.getAttribute('data-shortcut-target') === id; });
+        if(trigger) trigger.classList.add('is-open');
+      }
+    }
+
+    /* ── KRONOMETRE & SAAT ── */
+    var converterMeta = {
+      mass: {
+        input: 'massInput', from: 'massFrom', to: 'massTo', result: 'massResult',
+        factors: { t: 1000000, kg: 1000, g: 1, mg: 0.001 },
+        labels: { t: 'ton', kg: 'kg', g: 'g', mg: 'mg' },
+      },
+      liquid: {
+        input: 'liquidInput', from: 'liquidFrom', to: 'liquidTo', result: 'liquidResult',
+        factors: { l: 1000, dl: 100, cl: 10, ml: 1 },
+        labels: { l: 'l', dl: 'dl', cl: 'cl', ml: 'ml' },
+      },
+      length: {
+        input: 'lengthInput', from: 'lengthFrom', to: 'lengthTo', result: 'lengthResult',
+        factors: { km: 1000, hm: 100, dam: 10, m: 1, dm: 0.1, cm: 0.01, mm: 0.001 },
+        labels: { km: 'km', hm: 'hm', dam: 'dam', m: 'm', dm: 'dm', cm: 'cm', mm: 'mm' },
+      },
+      area: {
+        input: 'areaInput', from: 'areaFrom', to: 'areaTo', result: 'areaResult',
+        factors: { km2: 1000000, hm2: 10000, dam2: 100, m2: 1, dm2: 0.01, cm2: 0.0001, mm2: 0.000001 },
+        labels: { km2: 'km²', hm2: 'hm²', dam2: 'dam²', m2: 'm²', dm2: 'dm²', cm2: 'cm²', mm2: 'mm²' },
+      },
+    };
+
+    function formatMeasureNumber(value) {
+      if(!Number.isFinite(value)) return '0';
+      if(Math.abs(value) >= 1000000) return value.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+      if(Math.abs(value) >= 1) return value.toLocaleString('tr-TR', { maximumFractionDigits: 6 });
+      return parseFloat(value.toFixed(10)).toLocaleString('tr-TR', { maximumFractionDigits: 10 });
+    }
+
+    function updateConverter(type) {
+      var meta = converterMeta[type];
+      if(!meta) return;
+      var input = document.getElementById(meta.input);
+      var from = document.getElementById(meta.from);
+      var to = document.getElementById(meta.to);
+      var result = document.getElementById(meta.result);
+      if(!input || !from || !to || !result) return;
+      var value = parseFloat(String(input.value).replace(',', '.'));
+      if(!Number.isFinite(value)) {
+        result.textContent = 'Geçerli bir sayı girin';
+        return;
+      }
+      var baseValue = value * meta.factors[from.value];
+      var converted = baseValue / meta.factors[to.value];
+      result.textContent = formatMeasureNumber(value) + ' ' + meta.labels[from.value] + ' = ' + formatMeasureNumber(converted) + ' ' + meta.labels[to.value];
+    }
+
+    function initConverters() {
+      Object.keys(converterMeta).forEach(function(type) {
+        var meta = converterMeta[type];
+        [meta.input, meta.from, meta.to].forEach(function(id) {
+          var el = document.getElementById(id);
+          if(el) el.addEventListener(el.tagName === 'INPUT' ? 'input' : 'change', function() { updateConverter(type); });
+        });
+        updateConverter(type);
+      });
+
+      document.querySelectorAll('[data-swap-converter]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var type = btn.getAttribute('data-swap-converter');
+          var meta = converterMeta[type];
+          if(!meta) return;
+          var from = document.getElementById(meta.from);
+          var to = document.getElementById(meta.to);
+          if(!from || !to) return;
+          var old = from.value;
+          from.value = to.value;
+          to.value = old;
+          updateConverter(type);
+        });
+      });
+    }
+
+    var scaleState = {
+      selected: null,
+      weights: {},
+      question: null,
+      score: 0,
+      correct: 0,
+      weightHistory: [],
+    };
+    var scaleObjects = [
+      { id:'kalem', emoji:'✏️', name:'Kalem', g:10 },
+      { id:'elma', emoji:'🍎', name:'Elma', g:150 },
+      { id:'bardak', emoji:'🥤', name:'Su Bardağı', g:200 },
+      { id:'kitap', emoji:'📚', name:'Kitap', g:400 },
+      { id:'top', emoji:'⚽', name:'Top', g:430 },
+      { id:'canta', emoji:'🎒', name:'Çanta', g:1200 },
+    ];
+    var scaleWeights = [
+      { id:'w10', emoji:'🟡', label:'10 g', g:10 },
+      { id:'w50', emoji:'🟠', label:'50 g', g:50 },
+      { id:'w100', emoji:'🔴', label:'100 g', g:100 },
+      { id:'w200', emoji:'🟣', label:'200 g', g:200 },
+      { id:'w500', emoji:'🔵', label:'500 g', g:500 },
+      { id:'w1000', emoji:'⚫', label:'1 kg', g:1000 },
+    ];
+
+    function formatMass(g) {
+      if(g >= 1000) {
+        var kg = g / 1000;
+        return (kg % 1 === 0 ? kg : parseFloat(kg.toFixed(2))) + ' kg';
+      }
+      return g + ' g';
+    }
+
+    function scaleRightTotal() {
+      return scaleWeights.reduce(function(total, item) {
+        return total + (scaleState.weights[item.id] || 0) * item.g;
+      }, 0);
+    }
+
+    function setScaleResult(text, kind) {
+      var el = document.getElementById('scaleResult');
+      if(!el) return;
+      el.textContent = text;
+      el.className = 'scale-result' + (kind ? ' ' + kind : '');
+    }
+
+    function renderScaleChoices() {
+      var objectGrid = document.getElementById('scaleObjectGrid');
+      if(objectGrid) {
+        objectGrid.innerHTML = scaleObjects.map(function(item) {
+          return '<button class="scale-choice ' + (scaleState.selected && scaleState.selected.id === item.id ? 'is-selected' : '') + '" type="button" data-scale-object="' + item.id + '">' +
+            '<span class="scale-emoji">' + item.emoji + '</span>' +
+            '<span class="scale-name">' + item.name + '</span>' +
+            '<span class="scale-mass">' + formatMass(item.g) + '</span>' +
+          '</button>';
+        }).join('');
+        objectGrid.querySelectorAll('[data-scale-object]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            scaleState.selected = scaleObjects.find(function(item) { return item.id === btn.getAttribute('data-scale-object'); }) || null;
+            renderScaleChoices();
+            drawScaleGame();
+            setScaleResult('Nesne seçildi. Şimdi sağ kefeye ağırlık ekleyin.', '');
+          });
+        });
+      }
+
+      var weightGrid = document.getElementById('scaleWeightGrid');
+      if(weightGrid) {
+        weightGrid.innerHTML = scaleWeights.map(function(item) {
+          var count = scaleState.weights[item.id] || 0;
+          return '<button class="scale-weight ' + (count ? 'has-count' : '') + '" type="button" data-scale-weight="' + item.id + '">' +
+            '<span class="scale-count">' + count + '</span>' +
+            '<span class="scale-emoji">' + item.emoji + '</span>' +
+            '<span class="scale-name">' + item.label + '</span>' +
+          '</button>';
+        }).join('');
+        weightGrid.querySelectorAll('[data-scale-weight]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var id = btn.getAttribute('data-scale-weight');
+            scaleState.weights[id] = (scaleState.weights[id] || 0) + 1;
+            scaleState.weightHistory.push(id);
+            renderScaleChoices();
+            drawScaleGame();
+            setScaleResult('Ağırlık eklendi. Dengeyi kontrol etmek için Tart düğmesine basın.', '');
+          });
+        });
+      }
+
+      var total = document.getElementById('scaleRightTotal');
+      if(total) total.textContent = 'Toplam: ' + formatMass(scaleRightTotal());
+      var score = document.getElementById('scaleScore');
+      var correct = document.getElementById('scaleCorrect');
+      if(score) score.textContent = scaleState.score;
+      if(correct) correct.textContent = scaleState.correct;
+    }
+
+    function drawScaleGame() {
+      var canvas = document.getElementById('scaleCanvas');
+      if(!canvas) return;
+      var ctx = canvas.getContext('2d');
+      var W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#f8fbff';
+      ctx.fillRect(0, 0, W, H);
+
+      var leftG = scaleState.selected ? scaleState.selected.g : 0;
+      var rightG = scaleRightTotal();
+      var pivot = { x: W / 2, y: 172 };
+      var maxDiff = Math.max(leftG, rightG, 100);
+      var diff = (leftG - rightG) / maxDiff;
+      var angle = Math.max(-0.28, Math.min(0.28, diff * 0.28));
+      var armLen = Math.min(250, W * 0.34);
+      var leftEnd = { x: pivot.x - armLen * Math.cos(angle), y: pivot.y + armLen * Math.sin(angle) };
+      var rightEnd = { x: pivot.x + armLen * Math.cos(angle), y: pivot.y - armLen * Math.sin(angle) };
+
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#c4b5fd';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(pivot.x, H - 54);
+      ctx.lineTo(pivot.x, pivot.y);
+      ctx.stroke();
+      ctx.fillStyle = '#ede9fe';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(pivot.x - 72, H - 58, 144, 28, 14);
+      else ctx.rect(pivot.x - 72, H - 58, 144, 28);
+      ctx.fill();
+
+      ctx.strokeStyle = '#6c3ded';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(leftEnd.x, leftEnd.y);
+      ctx.lineTo(rightEnd.x, rightEnd.y);
+      ctx.stroke();
+      ctx.fillStyle = '#6c3ded';
+      ctx.beginPath();
+      ctx.arc(pivot.x, pivot.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      function plate(end, items, label, color) {
+        var ropeLen = 54;
+        var py = end.y + ropeLen;
+        ctx.strokeStyle = '#9988ca';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(end.x, end.y);
+        ctx.lineTo(end.x, py);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        if(ctx.roundRect) ctx.roundRect(end.x - 64, py, 128, 18, 9);
+        else ctx.rect(end.x - 64, py, 128, 18);
+        ctx.fill();
+        ctx.stroke();
+
+        if(items.length) {
+          ctx.font = '28px serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          var shown = items.slice(0, 5);
+          var start = end.x - (shown.length - 1) * 16;
+          shown.forEach(function(emoji, i) {
+            ctx.fillText(emoji, start + i * 32, py - 5);
+          });
+        }
+        if(label) {
+          ctx.font = '900 15px Nunito, sans-serif';
+          ctx.fillStyle = color;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(label, end.x, py + 28);
+        }
+      }
+
+      var rightItems = [];
+      scaleWeights.forEach(function(weight) {
+        var count = scaleState.weights[weight.id] || 0;
+        for(var i = 0; i < Math.min(count, 3); i += 1) rightItems.push(weight.emoji);
+      });
+      plate(leftEnd, scaleState.selected ? [scaleState.selected.emoji] : [], leftG ? formatMass(leftG) : '', '#6c3ded');
+      plate(rightEnd, rightItems, rightG ? formatMass(rightG) : '', '#0f766e');
+
+      ctx.font = '900 17px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = Math.abs(leftG - rightG) < 0.001 && leftG && rightG ? '#0f766e' : '#64748b';
+      var status = 'Teraziyi dengele';
+      if(leftG && rightG) status = Math.abs(leftG - rightG) < 0.001 ? 'Dengede' : (leftG > rightG ? 'Sol kefe ağır' : 'Sağ kefe ağır');
+      ctx.fillText(status, pivot.x, 34);
+    }
+
+    window.scaleCheck = function() {
+      var rightG = scaleRightTotal();
+      if(!scaleState.selected) {
+        setScaleResult('Önce sol kefeye bir nesne seçin.', 'bad');
+        return;
+      }
+      if(!rightG) {
+        setScaleResult('Sağ kefeye en az bir ağırlık ekleyin.', 'bad');
+        return;
+      }
+      var leftG = scaleState.selected.g;
+      drawScaleGame();
+      if(Math.abs(leftG - rightG) < 0.001) {
+        scaleState.score += 10;
+        scaleState.correct += 1;
+        renderScaleChoices();
+        setScaleResult('Harika! Terazi dengede: ' + scaleState.selected.name + ' = ' + formatMass(leftG), 'good');
+        if(typeof konfetiBaslat === 'function') konfetiBaslat();
+      } else {
+        var diff = Math.abs(leftG - rightG);
+        setScaleResult((leftG > rightG ? 'Sol kefe daha ağır. ' : 'Sağ kefe daha ağır. ') + 'Fark: ' + formatMass(diff) + '.', 'bad');
+      }
+    };
+    window.scaleUndoWeight = function() {
+      var id = scaleState.weightHistory.pop();
+      if(id && scaleState.weights[id]) {
+        scaleState.weights[id] -= 1;
+        if(scaleState.weights[id] <= 0) delete scaleState.weights[id];
+      }
+      renderScaleChoices();
+      drawScaleGame();
+    };
+    window.scaleClear = function() {
+      scaleState.selected = null;
+      scaleState.weights = {};
+      scaleState.weightHistory = [];
+      renderScaleChoices();
+      drawScaleGame();
+      setScaleResult('Temizlendi. Yeni bir nesne seçerek başlayın.', '');
+    };
+    window.scaleNewQuestion = function() {
+      var target = scaleObjects[Math.floor(Math.random() * scaleObjects.length)];
+      scaleState.selected = target;
+      scaleState.weights = {};
+      scaleState.weightHistory = [];
+      var question = document.getElementById('scaleQuestion');
+      if(question) question.textContent = target.emoji + ' ' + target.name + ' kaç gram/kilogram eder? Sağ kefeyi dengele.';
+      renderScaleChoices();
+      drawScaleGame();
+      setScaleResult('Soru hazır. Ağırlıkları seç ve tart.', '');
+    };
+
+    function initScaleGame() {
+      renderScaleChoices();
+      drawScaleGame();
+    }
+
+    function initNumberWheel() {
+      var slider = document.getElementById('wheelDigitCount');
+      var display = document.getElementById('wheelDigitDisplay');
+      var container = document.getElementById('wheelContainer');
+      if(!slider || !display || !container) return;
+
+      function buildDigits(count) {
+        container.innerHTML = '';
+        for(var i = 0; i < count; i += 1) {
+          var win = document.createElement('div');
+          win.className = 'digit-window';
+          var strip = document.createElement('div');
+          strip.className = 'digit-strip';
+          strip.dataset.val = '0';
+          for(var j = 0; j < 40; j += 1) {
+            var num = document.createElement('div');
+            num.className = 'digit-num';
+            num.textContent = String(j % 10);
+            strip.appendChild(num);
+          }
+          win.appendChild(strip);
+          container.appendChild(win);
+        }
+      }
+
+      slider.addEventListener('input', function() {
+        display.textContent = slider.value;
+        buildDigits(parseInt(slider.value, 10) || 3);
+      });
+      buildDigits(parseInt(slider.value, 10) || 3);
+    }
+
+    window.spinNumberWheel = function() {
+      var container = document.getElementById('wheelContainer');
+      if(!container) return;
+      var strips = Array.prototype.slice.call(container.querySelectorAll('.digit-strip'));
+      if(!strips.length) {
+        initNumberWheel();
+        strips = Array.prototype.slice.call(container.querySelectorAll('.digit-strip'));
+      }
+      strips.forEach(function(strip) {
+        strip.style.transition = 'none';
+        var currentVal = parseInt(strip.dataset.val || '0', 10) || 0;
+        strip.style.transform = 'translateY(-' + (currentVal * 2.5) + '%)';
+      });
+      void container.offsetHeight;
+      strips.forEach(function(strip, index) {
+        var targetVal = index === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
+        strip.dataset.val = String(targetVal);
+        var finalIndex = 30 + targetVal;
+        window.setTimeout(function() {
+          strip.style.transition = 'transform ' + (2 + index * 0.3) + 's cubic-bezier(0.15, 0.85, 0.35, 1)';
+          strip.style.transform = 'translateY(-' + (finalIndex * 2.5) + '%)';
+        }, 20);
+      });
+    };
+
+    function buildCircleFractionSvg(filled, total) {
+      var svg = '<svg viewBox="-100 -100 200 200" aria-label="Daire kesir modeli">';
+      for(var i = 0; i < total; i += 1) {
+        var angle = 360 / total;
+        var startAngle = i * angle;
+        var endAngle = (i + 1) * angle;
+        var fill = i < filled ? '#16c7b2' : '#f8f9fc';
+        if(total === 1) {
+          svg += '<circle cx="0" cy="0" r="90" fill="' + fill + '" stroke="#20104a" stroke-width="2"></circle>';
+        } else {
+          var radStart = (startAngle - 90) * Math.PI / 180;
+          var radEnd = (endAngle - 90) * Math.PI / 180;
+          var x1 = Math.cos(radStart) * 90;
+          var y1 = Math.sin(radStart) * 90;
+          var x2 = Math.cos(radEnd) * 90;
+          var y2 = Math.sin(radEnd) * 90;
+          var largeArc = angle > 180 ? 1 : 0;
+          svg += '<path d="M 0 0 L ' + x1 + ' ' + y1 + ' A 90 90 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2 + ' Z" fill="' + fill + '" stroke="#20104a" stroke-width="2"></path>';
+        }
+      }
+      return svg + '</svg>';
+    }
+
+    function buildRectFractionSvg(filled, total) {
+      var width = 180;
+      var height = 180;
+      var cellWidth = width / total;
+      var svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" aria-label="Dikdörtgen kesir modeli">';
+      for(var i = 0; i < total; i += 1) {
+        var fill = i < filled ? '#16c7b2' : '#f8f9fc';
+        svg += '<rect x="' + (i * cellWidth) + '" y="0" width="' + cellWidth + '" height="' + height + '" fill="' + fill + '" stroke="#20104a" stroke-width="2"></rect>';
+      }
+      return svg + '</svg>';
+    }
+
+    function setFractionShape(shape) {
+      S.frac.shape = shape === 'rect' ? 'rect' : 'circle';
+      window.drawFraction();
+    }
+
+    window.drawFraction = function() {
+      var pay = S.frac.num;
+      var payda = S.frac.den;
+      var units = Math.max(1, Math.ceil(Math.max(pay, 1) / payda));
+      var remaining = pay;
+      var html = '<div class="fraction-unit-grid">';
+      var numDisplay = document.getElementById('fracNumDisplay');
+      var denDisplay = document.getElementById('fracDenDisplay');
+      if(numDisplay) numDisplay.textContent = pay;
+      if(denDisplay) denDisplay.textContent = payda;
+      E.fracShapeBtns.forEach(function(btn) {
+        btn.classList.toggle('is-active', btn.getAttribute('data-frac-shape') === S.frac.shape);
+      });
+      for(var unitIndex = 0; unitIndex < units; unitIndex += 1) {
+        var filled = Math.min(payda, Math.max(0, remaining));
+        remaining -= filled;
+        html += '<div class="fraction-unit">' + (S.frac.shape === 'rect' ? buildRectFractionSvg(filled, payda) : buildCircleFractionSvg(filled, payda)) + '</div>';
+      }
+      html += '</div>';
+      var container = document.getElementById('fracSvgContainer');
+      if(container) container.innerHTML = html;
+      if(E.fractionStatusText) {
+        var whole = Math.floor(pay / payda);
+        var remainder = pay % payda;
+        E.fractionStatusText.textContent = whole > 0
+          ? pay + '/' + payda + ' = ' + whole + (remainder ? ' tam ' + remainder + '/' + payda : ' tam')
+          : pay + '/' + payda + ' modeli';
+      }
+    };
+
+    window.changeFrac = function(type, val) {
+      if(type === 'num') {
+        S.frac.num += val;
+        if(S.frac.num < 0) S.frac.num = 0;
+        if(S.frac.num > S.frac.den * 6) S.frac.num = S.frac.den * 6;
+      } else if(type === 'den') {
+        S.frac.den += val;
+        if(S.frac.den < 1) S.frac.den = 1;
+        if(S.frac.den > 16) S.frac.den = 16;
+        if(S.frac.num > S.frac.den * 6) S.frac.num = S.frac.den * 6;
+      }
+      window.drawFraction();
+    };
+
+    window.drawNumberLine = function() {
+      var canvas = document.getElementById('nlCanvas');
+      if(!canvas) return;
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var min = S.nl.min;
+      var max = S.nl.max;
+      var padding = 40;
+      var w = canvas.width - padding * 2;
+      var spacing = w / (max - min);
+      ctx.beginPath();
+      ctx.moveTo(padding, 100);
+      ctx.lineTo(canvas.width - padding, 100);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#20104a';
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 16px Nunito';
+      ctx.fillStyle = '#20104a';
+      for(var i = min; i <= max; i += 1) {
+        var x = padding + (i - min) * spacing;
+        ctx.beginPath();
+        ctx.moveTo(x, 90);
+        ctx.lineTo(x, 110);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if(i % 5 === 0 || max - min <= 20) ctx.fillText(i, x, 136);
+      }
+      var currX = padding + (S.nl.pos - min) * spacing;
+      ctx.beginPath();
+      ctx.arc(currX, 90, 14, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff6052';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Nunito';
+      ctx.fillText(S.nl.pos, currX, 95);
+    };
+
+    window.moveNl = function(val) {
+      if(val === 'reset') S.nl.pos = 0;
+      else S.nl.pos += val;
+      if(S.nl.pos < S.nl.min) S.nl.pos = S.nl.min;
+      if(S.nl.pos > S.nl.max) S.nl.pos = S.nl.max;
+      window.drawNumberLine();
+    };
+
+    window.mathCalc = function(char) {
+      if(char === 'C') {
+        S.mathCalcExpr = '0';
+      } else if(char === '=') {
+        try {
+          var safeExpr = S.mathCalcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/,/g, '.');
+          S.mathCalcExpr = /[^0-9+\-*/(). ]/.test(safeExpr) ? 'Hata' : String(new Function('return ' + safeExpr)());
+        } catch(error) {
+          S.mathCalcExpr = 'Hata';
+        }
+      } else if(S.mathCalcExpr === '0' || S.mathCalcExpr === 'Hata') {
+        S.mathCalcExpr = ['+','-','*','/'].includes(char)
+          ? '0' + (char === '*' ? '×' : char === '/' ? '÷' : char)
+          : char;
+      } else {
+        S.mathCalcExpr += char === '*' ? '×' : char === '/' ? '÷' : char;
+      }
+      var screen = document.getElementById('calcScreen');
+      if(screen) screen.textContent = S.mathCalcExpr;
+    };
+
+    function setDiceTransform(diceId, face) {
+      var d = document.getElementById(diceId);
+      if(!d) return;
+      var rx = 0;
+      var ry = 0;
+      if(face === 2) { rx = -90; }
+      else if(face === 3) { ry = -90; }
+      else if(face === 4) { ry = 90; }
+      else if(face === 5) { rx = 90; }
+      else if(face === 6) { rx = 180; }
+      var stateObj = diceId === 'dice1' ? S.dice1Rot : S.dice2Rot;
+      stateObj.x = rx + (Math.floor(Math.random() * 3 + 2) * 360);
+      stateObj.y = ry + (Math.floor(Math.random() * 3 + 2) * 360);
+      d.style.transform = 'rotateX(' + stateObj.x + 'deg) rotateY(' + stateObj.y + 'deg)';
+    }
+
+    window.roll3DDice = function() {
+      var face1 = Math.floor(Math.random() * 6) + 1;
+      var face2 = Math.floor(Math.random() * 6) + 1;
+      var toggle = document.getElementById('diceCountToggle');
+      var dice2Wrap = document.getElementById('dice2Wrap');
+      if(dice2Wrap) dice2Wrap.style.display = toggle && toggle.checked ? 'block' : 'none';
+      setDiceTransform('dice1', face1);
+      if(toggle && toggle.checked) setDiceTransform('dice2', face2);
+    };
+
+    window.flipCoin = function() {
+      var coin = document.getElementById('coinInner');
+      var shadow = document.getElementById('coinShadow');
+      if(!coin || coin.classList.contains('is-flipping')) return;
+      var result = Math.random() > 0.5 ? 'tura' : 'yazi';
+      coin.style.transform = '';
+      coin.classList.remove('is-flipping');
+      void coin.offsetWidth;
+      coin.classList.add('is-flipping');
+      if(shadow) {
+        shadow.style.transform = 'translateX(-50%) scaleX(0.3)';
+        shadow.style.opacity = '0.15';
+        window.setTimeout(function() {
+          shadow.style.transition = 'all 0.4s ease';
+          shadow.style.transform = 'translateX(-50%) scaleX(1)';
+          shadow.style.opacity = '1';
+        }, 2400);
+      }
+      window.setTimeout(function() {
+        coin.classList.remove('is-flipping');
+        coin.style.transition = 'none';
+        coin.style.transform = result === 'tura' ? 'rotateY(180deg)' : 'rotateY(0deg)';
+        var resultEl = document.getElementById('coinResultLabel');
+        if(resultEl) {
+          resultEl.textContent = result === 'yazi' ? 'YAZI!' : 'TURA!';
+          resultEl.style.opacity = '1';
+          window.setTimeout(function() { resultEl.style.opacity = '0'; }, 2500);
+        }
+      }, 2820);
+    };
+
+    function setMathMode(mode) {
+      S.mathMode = mode;
+      document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.mathMode === mode);
+      });
+      var modeToElements = {
+        calc: ['mathCalcView'],
+        rng: ['mathRngView'],
+        wheel: ['mathWheelView'],
+        frac: ['mathFracView'],
+        nl: ['mathNlView'],
+        geo: ['mathGeoView'],
+        convert: ['mathConvertView'],
+        symmetry: ['mathSymmetryView'],
+      };
+      ['mathCalcView', 'mathRngView', 'mathWheelView', 'mathFracView', 'mathNlView', 'mathGeoView', 'mathConvertView', 'mathSymmetryView'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if(el) el.style.display = 'none';
+      });
+      (modeToElements[mode] || modeToElements.calc).forEach(function(id) {
+        var el = document.getElementById(id);
+        if(el) el.style.display = 'block';
+      });
+      if(mode === 'frac') window.drawFraction();
+      if(mode === 'nl') window.drawNumberLine();
+      if(mode === 'symmetry') {
+        /* symArea görünür hale gelince initSym çalıştır */
+        var _t = 0;
+        (function _wait() {
+          var el = document.getElementById('symArea');
+          var w = el ? el.getBoundingClientRect().width : 0;
+          if (w > 20 || _t++ > 30) { initSym(); } else { requestAnimationFrame(_wait); }
+        })();
+      }
+    } /* end setMathMode */
+
+
+    /* ══════════════════════════════════════════════════════
+       🪞 SİMETRİ AYNASI — Tam Özellikli JS
+       · Dikey / Yatay / Çift eksen
+       · Kalem (smooth), Tebeşir (gürültülü), Marker (saydam), Silgi
+       · Pointer Events API — Apple Pencil & touch uyumlu
+       · Sürüklenebilir + taşınabilir şekiller (kapalı panel)
+       · Sürüklenebilir metin kutuları (font + boyut seçimi)
+       · Arka plan: beyaz, tahta, kareli, noktalı
+       · Geri al, Temizle, PNG kaydet
+    ══════════════════════════════════════════════════════ */
+    /* ─── SİMETRİ AYNASI ─── */
+    function initSym() {
+      /* Canvas elementlerini DOM'dan taze al */
+      var area  = document.getElementById('symArea');
+      var bgCvs = document.getElementById('symBgCvs');
+      var drCvs = document.getElementById('symDrawCvs');
+      var axCvs = document.getElementById('symAxCvs');
+      var dragLy= document.getElementById('symDragLayer');
+      if (!area || !bgCvs || !drCvs || !axCvs) { console.warn('symArea elementleri bulunamadı'); return; }
+
+      /* Daha önce init edildiyse sadece resize yap */
+      if (window._symInited) { symDoResize(area, bgCvs, drCvs, axCvs); return; }
+      window._symInited = true;
+
+      var bgX = bgCvs.getContext('2d');
+      var dX  = drCvs.getContext('2d', { willReadFrequently: true });
+      var aX  = axCvs.getContext('2d');
+
+      var S = {
+        tool:'pen', color:'#1a1a2e', size:4,
+        axis:'vertical', bg:'white',
+        drawing:false, lx:0, ly:0,
+        history:[], maxHist:40
+      };
+
+      /* ── RESIZE ── */
+      function symDoResize(ar, bg, dr, ax) {
+        var dpr = window.devicePixelRatio || 1;
+        var r = ar.getBoundingClientRect();
+        var w = Math.max(r.width, 200);
+        var h = Math.max(r.height, 500);
+        [bg, dr, ax].forEach(function(cv) {
+          var snap = null;
+          if (cv === dr && cv.width > 0) { try { snap = dX.getImageData(0,0,cv.width,cv.height); } catch(e){} }
+          cv.width  = Math.round(w * dpr);
+          cv.height = Math.round(h * dpr);
+          cv.style.width  = w + 'px';
+          cv.style.height = h + 'px';
+          cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+          if (cv === dr && snap) { try { dX.putImageData(snap,0,0); } catch(e){} }
+        });
+        drawBg(); drawAxis();
+      }
+      function doResize() { symDoResize(area,bgCvs,drCvs,axCvs); }
+      window.symDoResize = symDoResize;
+      new ResizeObserver(doResize).observe(area);
+      doResize();
+
+      function W(){ return bgCvs.width/(window.devicePixelRatio||1); }
+      function H(){ return bgCvs.height/(window.devicePixelRatio||1); }
+
+      /* ── ARKA PLAN ── */
+      function drawBg() {
+        var w=W(), h=H();
+        bgX.clearRect(0,0,w,h);
+        if(S.bg==='black'){
+          bgX.fillStyle='#111827'; bgX.fillRect(0,0,w,h);
+        } else if(S.bg==='grid'){
+          bgX.fillStyle='#f8f9fc'; bgX.fillRect(0,0,w,h);
+          bgX.strokeStyle='#c8d8ea'; bgX.lineWidth=1;
+          for(var x=30;x<w;x+=30){bgX.beginPath();bgX.moveTo(x,0);bgX.lineTo(x,h);bgX.stroke();}
+          for(var y=30;y<h;y+=30){bgX.beginPath();bgX.moveTo(0,y);bgX.lineTo(w,y);bgX.stroke();}
+        } else if(S.bg==='dot'){
+          bgX.fillStyle='#f8f9fc'; bgX.fillRect(0,0,w,h);
+          bgX.fillStyle='#94a3b8';
+          for(var dx=30;dx<w;dx+=30) for(var dy=30;dy<h;dy+=30){bgX.beginPath();bgX.arc(dx,dy,1.8,0,Math.PI*2);bgX.fill();}
+        } else {
+          bgX.fillStyle='#ffffff'; bgX.fillRect(0,0,w,h);
+        }
+      }
+
+      /* ── EKSEN ── */
+      function drawAxis() {
+        var w=W(), h=H();
+        aX.clearRect(0,0,w,h);
+        aX.save();
+        aX.strokeStyle='rgba(109,40,217,0.65)';
+        aX.lineWidth=2.5; aX.setLineDash([11,7]); aX.lineCap='round';
+        if(S.axis==='vertical'||S.axis==='both'){aX.beginPath();aX.moveTo(w/2,0);aX.lineTo(w/2,h);aX.stroke();}
+        if(S.axis==='horizontal'||S.axis==='both'){aX.beginPath();aX.moveTo(0,h/2);aX.lineTo(w,h/2);aX.stroke();}
+        aX.restore();
+        var badge=document.getElementById('symBadge');
+        if(badge){
+          var bs={vertical:'🪞 Dikey Simetri Ekseni',horizontal:'🪞 Yatay Simetri Ekseni',both:'🪞 Çift Eksen'};
+          badge.textContent=bs[S.axis]||bs.vertical;
+          badge.style.left=S.axis==='horizontal'?'12px':'50%';
+          badge.style.transform=S.axis==='horizontal'?'none':'translateX(-50%)';
+        }
+        var hint=document.getElementById('symHint');
+        if(hint){
+          var hs={vertical:'✏️ Sol tarafa çiz — sağ tarafta simetrik yansıması anlık oluşur 🪞',horizontal:'✏️ Üst tarafa çiz — alt tarafta simetrik yansıması anlık oluşur 🪞',both:'✏️ Herhangi bir çeyreğe çiz — 3 yansıma anlık oluşur ✛'};
+          hint.textContent=hs[S.axis]||hs.vertical;
+        }
+      }
+
+      /* ── COORDS ── */
+      function xy(e){ var r=drCvs.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top, p:e.pressure>0?e.pressure:0.5}; }
+
+      /* ── HISTORY ── */
+      function saveH(){ S.history.push(dX.getImageData(0,0,drCvs.width,drCvs.height)); if(S.history.length>40)S.history.shift(); }
+
+      /* ── MIRROR POINTS ── */
+      function mirrors(x,y){
+        var w=W(),h=H(),pts=[];
+        if(S.axis==='vertical'||S.axis==='both')   pts.push({x:w-x,y:y});
+        if(S.axis==='horizontal'||S.axis==='both') pts.push({x:x,y:h-y});
+        if(S.axis==='both')                        pts.push({x:w-x,y:h-y});
+        return pts;
+      }
+
+      /* ── STROKE STYLE ── */
+      function applyS(ctx){
+        var col=(S.bg==='black'&&S.color==='#1a1a2e')?'#ffffff':S.color;
+        ctx.strokeStyle=col; ctx.fillStyle=col;
+        ctx.lineCap='round'; ctx.lineJoin='round';
+        ctx.globalCompositeOperation='source-over';
+        if(S.tool==='eraser'){ctx.globalCompositeOperation='destination-out';ctx.lineWidth=S.size*5;ctx.globalAlpha=1;}
+        else if(S.tool==='marker'){ctx.lineWidth=S.size*3.5;ctx.globalAlpha=0.35;ctx.lineCap='square';}
+        else if(S.tool==='chalk'){ctx.lineWidth=S.size+3;ctx.globalAlpha=0.82;}
+        else {ctx.lineWidth=S.size;ctx.globalAlpha=1;}
+      }
+
+      /* ── TEBEŞIR ── */
+      function chalkLine(ctx,x1,y1,x2,y2){
+        var dist=Math.hypot(x2-x1,y2-y1), steps=Math.max(2,Math.ceil(dist/1.8));
+        var col=(S.bg==='black'&&S.color==='#1a1a2e')?'#ffffff':S.color;
+        for(var i=0;i<steps;i++){
+          var t=i/steps;
+          var bx=x1+(x2-x1)*t+(Math.random()-.5)*S.size*.7;
+          var by=y1+(y2-y1)*t+(Math.random()-.5)*S.size*.7;
+          ctx.globalAlpha=.45+Math.random()*.55;
+          ctx.fillStyle=col;
+          ctx.beginPath();ctx.arc(bx,by,S.size*(.35+Math.random()*.65),0,Math.PI*2);ctx.fill();
+        }
+        ctx.globalAlpha=1;
+      }
+
+      /* ── SEGMENT (orijinal + yansıma) ── */
+      function seg(x1,y1,x2,y2){
+        applyS(dX);
+        if(S.tool==='chalk'){chalkLine(dX,x1,y1,x2,y2);}
+        else{dX.beginPath();dX.moveTo(x1,y1);dX.lineTo(x2,y2);dX.stroke();}
+        dX.globalAlpha=1;dX.globalCompositeOperation='source-over';
+        var m1=mirrors(x1,y1),m2=mirrors(x2,y2);
+        m1.forEach(function(p1,i){
+          var p2=m2[i]; applyS(dX);
+          if(S.tool==='chalk'){chalkLine(dX,p1.x,p1.y,p2.x,p2.y);}
+          else{dX.beginPath();dX.moveTo(p1.x,p1.y);dX.lineTo(p2.x,p2.y);dX.stroke();}
+          dX.globalAlpha=1;dX.globalCompositeOperation='source-over';
+        });
+      }
+
+      /* ── POINTER EVENTS ── */
+      drCvs.addEventListener('pointerdown',function(e){
+        e.preventDefault(); drCvs.setPointerCapture(e.pointerId);
+        var p=xy(e); S.drawing=true; S.lx=p.x; S.ly=p.y; saveH();
+        applyS(dX);
+        if(S.tool!=='eraser'&&S.tool!=='chalk'){dX.beginPath();dX.arc(p.x,p.y,dX.lineWidth/2,0,Math.PI*2);dX.fill();}
+        else if(S.tool==='chalk'){chalkLine(dX,p.x,p.y,p.x+.1,p.y+.1);}
+        dX.globalAlpha=1;dX.globalCompositeOperation='source-over';
+        mirrors(p.x,p.y).forEach(function(mp){
+          applyS(dX);
+          if(S.tool!=='eraser'&&S.tool!=='chalk'){dX.beginPath();dX.arc(mp.x,mp.y,dX.lineWidth/2,0,Math.PI*2);dX.fill();}
+          dX.globalAlpha=1;dX.globalCompositeOperation='source-over';
+        });
+      },{passive:false});
+
+      drCvs.addEventListener('pointermove',function(e){
+        if(!S.drawing) return; e.preventDefault();
+        var evts=typeof e.getCoalescedEvents==='function'?e.getCoalescedEvents():[e];
+        evts.forEach(function(ev){
+          var p=xy(ev);
+          if(ev.pointerType==='pen'&&ev.pressure>0&&S.tool==='pen') dX.lineWidth=S.size*(.5+ev.pressure*1.5);
+          seg(S.lx,S.ly,p.x,p.y); S.lx=p.x; S.ly=p.y;
+        });
+      },{passive:false});
+
+      drCvs.addEventListener('pointerup',    function(){S.drawing=false;},{passive:true});
+      drCvs.addEventListener('pointercancel',function(){S.drawing=false;},{passive:true});
+      drCvs.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
+      drCvs.addEventListener('touchmove',  function(e){e.preventDefault();},{passive:false});
+
+      /* ── SVG ŞEKİL ── */
+      function makeShapeSVG(type,size,color){
+        var hw=size/2, sw=3.5;
+        var col=(S.bg==='black'&&color==='#1a1a2e')?'#fff':color;
+        var shapes={
+          rect:    '<rect x="5" y="'+(size*.18)+'" width="'+(size-10)+'" height="'+(size*.64)+'" rx="4" fill="none" stroke="'+col+'" stroke-width="'+sw+'"/>',
+          square:  '<rect x="5" y="5" width="'+(size-10)+'" height="'+(size-10)+'" rx="4" fill="none" stroke="'+col+'" stroke-width="'+sw+'"/>',
+          circle:  '<ellipse cx="'+hw+'" cy="'+hw+'" rx="'+(hw-5)+'" ry="'+(hw-5)+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'"/>',
+          triangle:'<polygon points="'+hw+',5 '+(size-5)+','+(size-5)+' 5,'+(size-5)+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linejoin="round"/>',
+          star:(function(){var pts=[],r1=hw-5,r2=r1*.42;for(var i=0;i<10;i++){var r=i%2?r2:r1,a=i*Math.PI/5-Math.PI/2;pts.push((hw+r*Math.cos(a)).toFixed(1)+','+(hw+r*Math.sin(a)).toFixed(1));}return'<polygon points="'+pts.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linejoin="round"/>';})(),
+          heart:   '<path d="M'+hw+','+(size-8)+' C'+(size*.05)+','+hw+' '+(size*.05)+','+(size*.12)+' '+hw+','+(size*.32)+' C'+(size*.95)+','+(size*.12)+' '+(size*.95)+','+hw+' '+hw+','+(size-8)+'Z" fill="none" stroke="'+col+'" stroke-width="'+sw+'"/>',
+          diamond: '<polygon points="'+hw+',5 '+(size-5)+','+hw+' '+hw+','+(size-5)+' 5,'+hw+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linejoin="round"/>',
+          pentagon:(function(){var pts=[];for(var i=0;i<5;i++){var a=i*2*Math.PI/5-Math.PI/2;pts.push((hw+(hw-5)*Math.cos(a)).toFixed(1)+','+(hw+(hw-5)*Math.sin(a)).toFixed(1));}return'<polygon points="'+pts.join(' ')+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linejoin="round"/>';})(),
+          arrow:   '<path d="M8,'+hw+' L'+(size-8)+','+hw+' M'+(size*.58)+','+(size*.28)+' L'+(size-8)+','+hw+' L'+(size*.58)+','+(size*.72)+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"/>',
+          cloud:   '<path d="M'+(size*.22)+','+(size*.72)+' Q'+(size*.05)+','+(size*.72)+' '+(size*.05)+','+(size*.52)+' Q'+(size*.05)+','+(size*.32)+' '+(size*.28)+','+(size*.32)+' Q'+(size*.3)+','+(size*.12)+' '+(size*.52)+','+(size*.14)+' Q'+(size*.72)+','+(size*.12)+' '+(size*.74)+','+(size*.3)+' Q'+(size*.95)+','+(size*.28)+' '+(size*.95)+','+(size*.48)+' Q'+(size*.95)+','+(size*.72)+' '+(size*.78)+','+(size*.72)+'Z" fill="none" stroke="'+col+'" stroke-width="'+sw+'"/>',
+        };
+        return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg">'+(shapes[type]||shapes.rect)+'</svg>';
+      }
+
+      /* ── ŞEKİL DAMGALA ── */
+      function stampShape(type,cx,cy,sz,color){
+        var col=(S.bg==='black'&&color==='#1a1a2e')?'#ffffff':color;
+        function one(ctx,x,y,sx,sy){
+          ctx.save();ctx.translate(x,y);ctx.scale(sx||1,sy||1);
+          ctx.strokeStyle=col;ctx.lineWidth=3.5;ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+          ctx.lineCap='round';ctx.lineJoin='round';
+          var h=sz/2; ctx.beginPath();
+          if(type==='rect')      {ctx.rect(-h,-h*.65,sz,sz*.65);}
+          else if(type==='square'){ctx.rect(-h,-h,sz,sz);}
+          else if(type==='circle'){ctx.arc(0,0,h,0,Math.PI*2);}
+          else if(type==='triangle'){ctx.moveTo(0,-h);ctx.lineTo(h,h);ctx.lineTo(-h,h);ctx.closePath();}
+          else if(type==='diamond'){ctx.moveTo(0,-h);ctx.lineTo(h,0);ctx.lineTo(0,h);ctx.lineTo(-h,0);ctx.closePath();}
+          else if(type==='star'){var r1=h,r2=h*.42;for(var i=0;i<10;i++){var rr=i%2?r2:r1,a=i*Math.PI/5-Math.PI/2;i?ctx.lineTo(rr*Math.cos(a),rr*Math.sin(a)):ctx.moveTo(rr*Math.cos(a),rr*Math.sin(a));}ctx.closePath();}
+          else if(type==='heart'){ctx.moveTo(0,h*.55);ctx.bezierCurveTo(-h,0,-h,-h*.6,0,-h*.2);ctx.bezierCurveTo(h,-h*.6,h,0,0,h*.55);ctx.closePath();}
+          else if(type==='pentagon'){for(var j=0;j<5;j++){var pa=j*2*Math.PI/5-Math.PI/2;j?ctx.lineTo(h*Math.cos(pa),h*Math.sin(pa)):ctx.moveTo(h*Math.cos(pa),h*Math.sin(pa));}ctx.closePath();}
+          else if(type==='arrow'){ctx.moveTo(-h,0);ctx.lineTo(h,0);ctx.moveTo(h*.4,-h*.35);ctx.lineTo(h,0);ctx.lineTo(h*.4,h*.35);}
+          else if(type==='cloud'){ctx.arc(-h*.3,h*.05,h*.38,Math.PI,0);ctx.arc(h*.15,-h*.15,h*.3,Math.PI*1.1,Math.PI*1.9);ctx.arc(h*.5,h*.05,h*.22,Math.PI*1.5,Math.PI*.5);ctx.arc(h*.25,h*.28,h*.22,0,Math.PI);ctx.closePath();}
+          ctx.stroke();ctx.restore();
+        }
+        one(dX,cx,cy);
+        mirrors(cx,cy).forEach(function(mp,i){
+          var sx=(S.axis==='vertical'||(S.axis==='both'&&(i===0||i===2)))?-1:1;
+          var sy=(S.axis==='horizontal'||(S.axis==='both'&&(i===1||i===2)))?-1:1;
+          one(dX,mp.x,mp.y,sx,sy);
+        });
+      }
+
+      /* ── SÜRÜKLEME ── */
+      function makeDrag(el,container){
+        var drag=false,ox,oy;
+        el.addEventListener('pointerdown',function(e){
+          if(e.target.classList.contains('sym-drag-el-del')) return;
+          e.stopPropagation();drag=true;el.setPointerCapture(e.pointerId);
+          var r=container.getBoundingClientRect();
+          ox=e.clientX-r.left-parseFloat(el.style.left||0);
+          oy=e.clientY-r.top-parseFloat(el.style.top||0);
+          el.classList.add('selected');
+        });
+        el.addEventListener('pointermove',function(e){
+          if(!drag) return; e.stopPropagation();
+          var r=container.getBoundingClientRect();
+          el.style.left=(e.clientX-r.left-ox)+'px';
+          el.style.top=(e.clientY-r.top-oy)+'px';
+        });
+        el.addEventListener('pointerup',function(){drag=false;el.classList.remove('selected');});
+      }
+
+      /* ── ŞEKİL SPAWN ── */
+      function spawnShape(type){
+        var sz=100;
+        var el=document.createElement('div');
+        el.className='sym-drag-el';
+        el.style.cssText='left:'+(W()*.15-sz/2)+'px;top:'+(H()*.35-sz/2)+'px;width:'+sz+'px;height:'+sz+'px;';
+        el.innerHTML=makeShapeSVG(type,sz,S.color)+'<div class="sym-drag-el-del" title="Sil">✕</div>';
+        area.appendChild(el);
+        el.querySelector('.sym-drag-el-del').addEventListener('click',function(e){e.stopPropagation();area.removeChild(el);});
+        el.addEventListener('dblclick',function(){
+          saveH();
+          var cx=parseFloat(el.style.left)+sz/2, cy=parseFloat(el.style.top)+sz/2;
+          stampShape(type,cx,cy,sz,S.color); area.removeChild(el);
+        });
+        makeDrag(el,area);
+      }
+
+      /* ── METİN SPAWN ── */
+      function spawnText(txt,fs,font){
+        var el=document.createElement('div');
+        el.className='sym-drag-el';
+        var col=(S.bg==='black'&&S.color==='#1a1a2e')?'#ffffff':S.color;
+        el.style.cssText='left:'+(W()*.12)+'px;top:'+(H()*.35)+'px;padding:6px 10px;border-radius:8px;white-space:pre;';
+        el.innerHTML='<div class="sym-drag-el-del">✕</div><span style="font:bold '+fs+'px '+font+';color:'+col+';display:block;line-height:1.2;">'+txt+'</span>';
+        area.appendChild(el);
+        el.querySelector('.sym-drag-el-del').addEventListener('click',function(e){e.stopPropagation();area.removeChild(el);});
+        el.addEventListener('dblclick',function(){
+          saveH();
+          var r=area.getBoundingClientRect(), er=el.getBoundingClientRect();
+          var cx=er.left-r.left+er.width/2, cy=er.top-r.top+er.height/2;
+          dX.save();dX.globalAlpha=1;dX.globalCompositeOperation='source-over';
+          dX.fillStyle=col;dX.font='bold '+fs+'px '+font;
+          dX.textAlign='center';dX.textBaseline='middle';
+          dX.fillText(txt,cx,cy);
+          mirrors(cx,cy).forEach(function(mp,i){
+            dX.save();dX.translate(mp.x,mp.y);
+            if(S.axis==='vertical'||(S.axis==='both'&&(i===0||i===2))) dX.scale(-1,1);
+            if(S.axis==='horizontal'||(S.axis==='both'&&(i===1||i===2))) dX.scale(1,-1);
+            dX.fillText(txt,0,0);dX.restore();
+          });
+          dX.restore();
+          area.removeChild(el);
+        });
+        makeDrag(el,area);
+      }
+
+      /* ── TOOLBAR ── */
+      /* Eksen */
+      function setAxis(ax){
+        S.axis=ax;
+        ['symAxV','symAxH','symAxB'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
+        var m={vertical:'symAxV',horizontal:'symAxH',both:'symAxB'};
+        var e=document.getElementById(m[ax]);if(e)e.classList.add('active');
+        drawAxis();
+      }
+      document.getElementById('symAxV').addEventListener('click',function(){setAxis('vertical');});
+      document.getElementById('symAxH').addEventListener('click',function(){setAxis('horizontal');});
+      document.getElementById('symAxB').addEventListener('click',function(){setAxis('both');});
+
+      /* Araç */
+      document.querySelectorAll('[data-sym-tool]').forEach(function(btn){
+        btn.addEventListener('click',function(e){
+          e.stopPropagation(); S.tool=btn.dataset.symTool;
+          document.querySelectorAll('[data-sym-tool]').forEach(function(b){b.classList.toggle('active',b.dataset.symTool===S.tool);});
+          drCvs.style.cursor=S.tool==='eraser'?'cell':'crosshair';
+        });
+      });
+
+      /* Renk */
+      document.querySelectorAll('#symColorRow .sym-clr').forEach(function(sw){
+        sw.addEventListener('click',function(e){
+          e.stopPropagation(); S.color=sw.dataset.c;
+          document.querySelectorAll('#symColorRow .sym-clr').forEach(function(s){s.classList.remove('active');});
+          sw.classList.add('active');
+        });
+      });
+
+      /* Kalınlık */
+      var szR=document.getElementById('symSizeRange');
+      if(szR) szR.addEventListener('input',function(){S.size=parseInt(this.value);});
+
+      /* Zemin */
+      function setBg(bg){
+        S.bg=bg;
+        ['symBgW','symBgBl','symBgGr','symBgDt'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
+        var m={white:'symBgW',black:'symBgBl',grid:'symBgGr',dot:'symBgDt'};
+        var e=document.getElementById(m[bg]);if(e)e.classList.add('active');
+        if(bg==='black'&&S.color==='#1a1a2e'){
+          S.color='#ffffff';
+          document.querySelectorAll('#symColorRow .sym-clr').forEach(function(sw){sw.classList.toggle('active',sw.dataset.c==='#ffffff');});
+        }
+        drawBg();
+      }
+      document.getElementById('symBgW') .addEventListener('click',function(){setBg('white');});
+      document.getElementById('symBgBl').addEventListener('click',function(){setBg('black');});
+      document.getElementById('symBgGr').addEventListener('click',function(){setBg('grid');});
+      document.getElementById('symBgDt').addEventListener('click',function(){setBg('dot');});
+
+      /* Şekil paneli */
+      var shPanel=document.getElementById('symShapePanel');
+      document.getElementById('symShapeToggle').addEventListener('click',function(e){
+        e.stopPropagation(); shPanel.classList.toggle('open');
+      });
+      document.addEventListener('pointerdown',function(e){
+        if(shPanel&&shPanel.classList.contains('open')&&!shPanel.contains(e.target)&&e.target.id!=='symShapeToggle')
+          shPanel.classList.remove('open');
+      });
+      document.querySelectorAll('.sym-shape-card').forEach(function(card){
+        card.addEventListener('click',function(e){
+          e.stopPropagation(); shPanel.classList.remove('open');
+          spawnShape(card.dataset.shape);
+        });
+      });
+
+      /* Metin */
+      document.getElementById('symAddTxt').addEventListener('click',function(e){
+        e.stopPropagation();
+        var txt=document.getElementById('symTxtVal').value.trim();
+        var fs=parseInt(document.getElementById('symTxtSize').value)||36;
+        var font=document.getElementById('symFontSel').value||"'Baloo 2',cursive";
+        if(!txt) return;
+        spawnText(txt,fs,font);
+        document.getElementById('symTxtVal').value='';
+      });
+
+      /* Geri al */
+      document.getElementById('symUndo').addEventListener('click',function(){
+        if(!S.history.length) return; dX.putImageData(S.history.pop(),0,0);
+      });
+
+      /* Temizle */
+      document.getElementById('symClear').addEventListener('click',function(){
+        if(!confirm('Simetri alanını temizlemek istediğine emin misin?')) return;
+        saveH(); dX.clearRect(0,0,W(),H());
+        Array.from(area.querySelectorAll('.sym-drag-el')).forEach(function(el){area.removeChild(el);});
+      });
+
+      /* Kaydet */
+      document.getElementById('symSave').addEventListener('click',function(){
+        var out=document.createElement('canvas'), dpr=window.devicePixelRatio||1;
+        out.width=bgCvs.width; out.height=bgCvs.height;
+        var oc=out.getContext('2d');
+        oc.drawImage(bgCvs,0,0); oc.drawImage(drCvs,0,0); oc.drawImage(axCvs,0,0);
+        var a=document.createElement('a');
+        a.download='simetri-'+Date.now()+'.png'; a.href=out.toDataURL('image/png'); a.click();
+      });
+
+      /* Klavye */
+      document.addEventListener('keydown',function(e){
+        var v=document.getElementById('mathSymmetryView');
+        if(!v||v.style.display==='none') return;
+        if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+        if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(S.history.length)dX.putImageData(S.history.pop(),0,0);}
+      });
+
+      drawBg(); drawAxis();
+    } /* end initSym */
+
+
+
+    document.querySelectorAll('[data-math-mode]').forEach(function(btn) {
+      btn.addEventListener('click', function() { setMathMode(btn.dataset.mathMode); });
+    });
+    initNumberWheel();
+    initConverters();
+    initScaleGame();
+    setMathMode('calc');
+
+    E.classTabs.forEach(function(tab) {
+      tab.addEventListener('click', function() { setClassroomView(tab.dataset.classView); });
+    });
+    E.fracShapeBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() { setFractionShape(btn.getAttribute('data-frac-shape')); });
+    });
+    if(E.classSelector) E.classSelector.addEventListener('change', function() { changeCurrentClassroom(E.classSelector.value); });
+    if(E.addClassBtn) E.addClassBtn.addEventListener('click', addNewClassroom);
+    if(E.renameClassBtn) E.renameClassBtn.addEventListener('click', renameCurrentClassroom);
+    if(E.deleteClassBtn) E.deleteClassBtn.addEventListener('click', deleteCurrentClassroom);
+    E.studentGenderBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        S.classroom.draftGender = btn.dataset.studentGender === 'boy' ? 'boy' : 'girl';
+        saveClassroomState();
+        renderClassroomWorkspace();
+      });
+    });
+    if(E.studentNameInput) E.studentNameInput.addEventListener('keydown', function(evt) {
+      if(evt.key === 'Enter') { evt.preventDefault(); addStudentToCurrentClassroom(); }
+    });
+    if(E.addStudentBtn) E.addStudentBtn.addEventListener('click', addStudentToCurrentClassroom);
+    if(E.resetStatusesBtn) E.resetStatusesBtn.addEventListener('click', resetAllStudentStatuses);
+    if(E.classRandomPickBtn) E.classRandomPickBtn.addEventListener('click', startRandomStudentPick);
+    if(E.selectedKeepBtn) E.selectedKeepBtn.addEventListener('click', activateSelectedStudent);
+    if(E.selectedPassiveBtn) E.selectedPassiveBtn.addEventListener('click', toggleSelectedStudentPassive);
+    if(E.studentCardGrid) E.studentCardGrid.addEventListener('click', function(evt) {
+      var btn = evt.target.closest('[data-action]');
+      if(!btn) return;
+      var studentId = btn.getAttribute('data-student-id');
+      var action = btn.getAttribute('data-action');
+      if(action === 'status') setStudentStatus(studentId, btn.getAttribute('data-status'));
+      if(action === 'edit') editStudentName(studentId);
+      if(action === 'delete') deleteStudentFromCurrentClassroom(studentId);
+    });
+    if(E.wheelItemInput) E.wheelItemInput.addEventListener('keydown', function(evt) {
+      if(evt.key === 'Enter') {
+        evt.preventDefault();
+        var value = E.wheelItemInput.value.trim();
+        if(!value) return;
+        addWheelItem(value);
+        E.wheelItemInput.value = '';
+        commitClassroomChanges();
+      }
+    });
+    if(E.addWheelItemBtn) E.addWheelItemBtn.addEventListener('click', function() {
+      if(!E.wheelItemInput) return;
+      var value = E.wheelItemInput.value.trim();
+      if(!value) return;
+      addWheelItem(value);
+      E.wheelItemInput.value = '';
+      commitClassroomChanges();
+    });
+    if(E.addWheelBulkBtn) E.addWheelBulkBtn.addEventListener('click', function() {
+      if(!E.wheelBulkInput) return;
+      var value = E.wheelBulkInput.value.trim();
+      if(!value) return;
+      addWheelItemsFromBulk(value);
+      E.wheelBulkInput.value = '';
+      commitClassroomChanges();
+    });
+    if(E.resetWheelOptionsBtn) E.resetWheelOptionsBtn.addEventListener('click', resetWheelItems);
+    if(E.clearWheelOptionsBtn) E.clearWheelOptionsBtn.addEventListener('click', clearWheelItems);
+    if(E.classWheelSpinBtn) E.classWheelSpinBtn.addEventListener('click', spinClassOptionWheel);
+    if(E.wheelOptionList) E.wheelOptionList.addEventListener('click', function(evt) {
+      var btn = evt.target.closest('[data-wheel-action]');
+      if(!btn) return;
+      var itemId = btn.getAttribute('data-wheel-id');
+      if(btn.getAttribute('data-wheel-action') === 'toggle') toggleWheelItemEnabled(itemId);
+      if(btn.getAttribute('data-wheel-action') === 'delete') deleteWheelItem(itemId);
+    });
+    var winnerModal = document.getElementById('winnerModal');
+    if(winnerModal) winnerModal.addEventListener('click', function(evt) {
+      if(evt.target === winnerModal) winnerModal.classList.remove('show');
+    });
+
+    function setBoardToolbarCollapsed(collapsed) {
+      var toggleBtn = document.getElementById('toolbarToggleBtn');
+      var boardToolbar = document.getElementById('boardToolbar');
+      if(!toggleBtn || !boardToolbar) return;
+      S.board.toolbarCollapsed = !!collapsed;
+      boardToolbar.classList.toggle('is-collapsed', S.board.toolbarCollapsed);
+      toggleBtn.innerHTML = S.board.toolbarCollapsed ? '<i class="fas fa-expand-arrows-alt"></i>' : '<i class="fas fa-compress-alt"></i>';
+    }
+    // ── YENİ ARAÇ ÇUBUĞU YÜZEN PANELLERİ ──
+    var boardToolbar   = document.getElementById('boardToolbar');
+    var penSubPanel    = document.getElementById('penSubPanel');
+    var shapeSubPanel  = document.getElementById('shapeSubPanel');
+    var pageSubPanel   = document.getElementById('pageSubPanel');
+    var activeColorDot = document.getElementById('activeColorDot');
+    var thicknessDot   = document.getElementById('thicknessDot');
+
+    // Panel listesi — aynı anda sadece biri açık
+    var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel].filter(Boolean);
+
+    function closeAllSubPanels() {
+      allFloatPanels.forEach(function(p) { p.classList.remove('is-open'); });
+      positionBoardToolbar();
+    }
+    function togglePanel(panel) {
+      if (!panel) return;
+      var wasOpen = panel.classList.contains('is-open');
+      closeAllSubPanels();
+      if (!wasOpen) panel.classList.add('is-open');
+      positionBoardToolbar();
+    }
+
+    // X (kapat) butonları
+    document.querySelectorAll('[data-close-panel]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var target = document.getElementById(btn.dataset.closePanel);
+        if (target) target.classList.remove('is-open');
+        positionBoardToolbar();
+      });
+    });
+
+    // Kalem grubu
+    var penGroupBtn = document.getElementById('penGroupBtn');
+    if (penGroupBtn) {
+      penGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        togglePanel(penSubPanel);
+        setBoardTool('pen');
+      });
+    }
+
+    // Şekil grubu
+    var shapeGroupBtn = document.getElementById('shapeGroupBtn');
+    if (shapeGroupBtn) {
+      shapeGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        togglePanel(shapeSubPanel);
+      });
+    }
+
+    // Sayfa yönetimi
+    var pageGroupBtn = document.getElementById('pageGroupBtn');
+    if (pageGroupBtn) {
+      pageGroupBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        togglePanel(pageSubPanel);
+      });
+    }
+
+    // Kalınlık slider → nokta boyutu
+    var boardSizeSliderEl = document.getElementById('boardSizeSlider');
+    if (boardSizeSliderEl && thicknessDot) {
+      boardSizeSliderEl.addEventListener('input', function() {
+        var sz = Math.max(5, Math.min(22, parseInt(this.value, 10)));
+        thicknessDot.style.width  = sz + 'px';
+        thicknessDot.style.height = sz + 'px';
+      });
+    }
+
+    // Renk noktası güncelle — anında çağrılır, syncBoardUI beklenmez
+    function syncBoardColorSelection(color) {
+      document.querySelectorAll('[data-board-color]').forEach(function(btn) {
+        var selected = btn.dataset.boardColor === color;
+        btn.classList.toggle('is-active', selected);
+        btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+    }
+
+    function updateColorDot(color) {
+      if (activeColorDot) activeColorDot.style.background = color || '#1f2142';
+      if (thicknessDot)   thicknessDot.style.background  = color || '#1f2142';
+      syncBoardColorSelection(color);
+    }
+
+    // Sayfa başlangıcında kalem paneli açık
+    if (penSubPanel) penSubPanel.classList.add('is-open');
+
+    // ── DOKUNMATIK GECİKME OPTİMİZASYONLARI ──
+    if (E.boardPreview) {
+      // will-change: içerik değişiyor, tarayıcı katman oluşturur
+      E.boardPreview.style.willChange = 'contents';
+      E.boardCanvas.style.willChange  = 'contents';
+      // touch-action kesin olarak none
+      E.boardPreview.style.touchAction = 'none';
+      E.boardCanvas.style.touchAction  = 'none';
+    }
+
+    ['selectstart', 'dragstart', 'contextmenu'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(evt) {
+        if(isEditableTarget(evt.target)) return;
+        if(evt.target.closest && evt.target.closest('#whiteboardStage')) {
+          evt.preventDefault();
+        }
+      }, true);
+    });
+    document.addEventListener('touchmove', function(evt) {
+      if(S.tool === 'whiteboard' && evt.target.closest && evt.target.closest('#whiteboardStage')) {
+        evt.preventDefault();
+      }
+    }, { passive: false, capture: true });
+    ['gesturestart', 'gesturechange'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(evt) {
+        if(evt.target.closest && evt.target.closest('#whiteboardStage')) evt.preventDefault();
+      }, true);
+    });
+    if(typeof saveBoardToMemory === 'function') {
+      window.addEventListener('beforeunload', saveBoardToMemory);
+    }
+
+    E.shortcutHelpBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        toggleShortcutPopover(btn.getAttribute('data-shortcut-target'));
+      });
+    });
+    E.shortcutCloseBtns.forEach(function(btn) {
+      btn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        closeShortcutPopovers();
+      });
+    });
+    document.addEventListener('click', function(evt) {
+      if(evt.target.closest('.shortcut-help')) return;
+      closeShortcutPopovers();
+    });
+
+    E.modeTabs.forEach(function(t) { t.addEventListener('click',function() { setMode(t.dataset.mode); }); });
+    E.toolCards.forEach(function(b) { b.addEventListener('click',function() { selectTool(b.dataset.toolCard||''); }); });
+    if(E.startPauseBtn) E.startPauseBtn.addEventListener('click',function() { S.running ? pauseTimer() : startTimer(); });
+    if(E.stopBtn) E.stopBtn.addEventListener('pointerdown', function(e) { e.preventDefault(); stopTimer(); });
+    if(E.resetBtn) E.resetBtn.addEventListener('click', resetTimer);
+    if(E.presetFiveBtn) E.presetFiveBtn.addEventListener('click',function() { setPreset(300); });
+    if(E.presetTenBtn) E.presetTenBtn.addEventListener('click', function() { setPreset(600); });
+    if(E.soundToggleBtn) E.soundToggleBtn.addEventListener('click',function() { S.alarmOn = !S.alarmOn; E.soundToggleBtn.innerHTML = S.alarmOn ? '<i class="fas fa-bell"></i> Ses açık' : '<i class="fas fa-bell-slash"></i> Ses kapalı'; if(!S.alarmOn) clearAlarm(); });
+    if(E.millisCb) E.millisCb.addEventListener('change',function() { S.showMs = E.millisCb.checked; render(); });
+    if(E.alarmStopBtn) E.alarmStopBtn.addEventListener('click', clearAlarm);
+    if(E.stageFullscreenBtn) E.stageFullscreenBtn.addEventListener('click', toggleStageFs);
+    document.addEventListener('fullscreenchange', syncFsBtn); 
+    document.addEventListener('webkitfullscreenchange', syncFsBtn);
+    [E.hInput,E.mInput,E.sInput].forEach(function(inp) { if(!inp) return; inp.addEventListener('change',function() { if(S.mode!=='countdown'||S.running) return; S.cdTarget=Math.max(getInputMs(),1000); S.dispMs=S.cdTarget; render(); }); });
+    E.adjBtns.forEach(function(b) { b.addEventListener('click',function(){ adjustUnit(b.dataset.unit,Number(b.dataset.adj)); }); });
+    E.presetBtns.forEach(function(b) { b.addEventListener('click',function(){ setPreset(Number(b.dataset.preset)); }); });
+    E.boardToolBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardTool(btn.dataset.boardTool); }); });
+    E.boardColorBtns.forEach(function(btn) {
+      btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+      btn.addEventListener('pointerdown', function(evt){
+        evt.preventDefault();
+        evt.stopPropagation();
+        // Tüm renk butonlarından is-active kaldır — her seferinde taze querySelectorAll
+        document.querySelectorAll('[data-board-color]').forEach(function(b) {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        // Bu butonu aktif yap — anında, syncBoardUI beklenmeden
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
+        // Renk noktasını güncelle
+        var dot = document.getElementById('activeColorDot');
+        var thick = document.getElementById('thicknessDot');
+        if (dot) dot.style.background = btn.dataset.boardColor;
+        if (thick) thick.style.background = btn.dataset.boardColor;
+        // State'i güncelle
+        setBoardColor(btn.dataset.boardColor);
+      });
+    });
+    E.shapeColorBtns.forEach(function(btn) {
+      btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+      btn.addEventListener('pointerdown', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        setShapeColor(btn.dataset.shapeColor);
+      });
+    });
+    E.boardPaletteBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPalette(btn.dataset.boardPalette); }); });
+    E.boardPaperBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setBoardPaper(btn.dataset.boardPaper); }); });
+    E.textAlignBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextAlign(btn.dataset.textAlign); }); });
+    E.textWeightBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextWeight(btn.dataset.textWeight); }); });
+    E.textStyleBtns.forEach(function(btn) { btn.addEventListener('click', function(){ setTextStyle(btn.dataset.textStyle); }); });
+    if(E.shapeToggleBtn) E.shapeToggleBtn.addEventListener('click', toggleShapesPanel);
+    if(E.boardFillToggleBtn) E.boardFillToggleBtn.addEventListener('click', toggleBoardFill);
+    ['boardClearBtn', 'clearBoardBtn'].forEach(function(clearBtnId) {
+      var clearBtn = document.getElementById(clearBtnId);
+      if(clearBtn) clearBtn.addEventListener('click', function() {
+        if(confirm('Bu sayfadaki tüm yazı ve çizimler silinsin mi?')) clearBoard();
+      });
+    });
+    if(E.boardUndoBtn) E.boardUndoBtn.addEventListener('click', undoBoard);
+    if(E.boardRedoBtn) E.boardRedoBtn.addEventListener('click', redoBoard);
+    if(E.boardFullscreenBtn) E.boardFullscreenBtn.addEventListener('click', toggleBoardFs);
+    if(E.boardSaveBtn) E.boardSaveBtn.addEventListener('click', saveBoard);
+    if(E.boardPrintBtn) E.boardPrintBtn.addEventListener('click', printBoard);
+    if(E.boardSizeSlider) E.boardSizeSlider.addEventListener('input', function(){ setBoardSize(Number(E.boardSizeSlider.value)); });
+    if(E.shapeSizeSlider) E.shapeSizeSlider.addEventListener('input', function(){ setShapeSize(Number(E.shapeSizeSlider.value)); });
+    if(E.boardTextSizeSlider) E.boardTextSizeSlider.addEventListener('input', function(){ setTextSize(Number(E.boardTextSizeSlider.value)); });
+    if(E.prevPageBtn) E.prevPageBtn.addEventListener('click', prevPage);
+    if(E.nextPageBtn) E.nextPageBtn.addEventListener('click', nextPage);
+    if(E.addPageBtn) E.addPageBtn.addEventListener('click', addPage);
+    if(E.deletePageBtn) E.deletePageBtn.addEventListener('click', deletePage);
+    if(E.pageSizeSelect) E.pageSizeSelect.addEventListener('change', function(){ setPageSize(E.pageSizeSelect.value); });
+
+    document.addEventListener('keydown', function(evt){
+      var key = evt.key;
+      var lower = key && key.length === 1 ? key.toLowerCase() : key;
+      var editable = isEditableTarget(evt.target);
+      if(key === 'Escape') {
+        closeShortcutPopovers();
+        var winnerModalEl = document.getElementById('winnerModal');
+        if(winnerModalEl) winnerModalEl.classList.remove('show');
+      }
+      if ((key === 'Delete' || key === 'Backspace') && S.board.selectedItem && S.board.tool === 'select') {
+        if(editable) return;
+        var page = getActivePage(); var idx = page.items.indexOf(S.board.selectedItem);
+        if (idx > -1) { page.items.splice(idx, 1); S.board.selectedItem = null; saveSnapshot(); redrawBoard(); }
+        return;
+      }
+      if(evt.metaKey || evt.ctrlKey) {
+        if(lower === 's' && S.tool === 'whiteboard') { evt.preventDefault(); saveBoard(); return; }
+        if(lower === 'z' && S.tool === 'whiteboard') { evt.preventDefault(); if(evt.shiftKey) redoBoard(); else undoBoard(); return; }
+      }
+      if(editable) return;
+      if(lower === '1') { selectTool('countdown'); return; }
+      if(lower === '2') { selectTool('whiteboard'); return; }
+      if(lower === '3') { selectTool('class'); return; }
+      if(lower === '4' || lower === 'm') { selectTool('math'); return; }
+      if(S.tool === 'countdown') {
+        if(key === ' ') { evt.preventDefault(); S.running ? pauseTimer() : startTimer(); return; }
+        if(lower === 'r') { evt.preventDefault(); resetTimer(); return; }
+        if(lower === 's') { evt.preventDefault(); stopTimer(); return; }
+        if(lower === 'c') { evt.preventDefault(); setMode('countdown'); return; }
+        if(lower === 'i') { evt.preventDefault(); setMode('stopwatch'); return; }
+      }
+      if(S.tool === 'whiteboard') {
+        if(lower === 'v') { evt.preventDefault(); setBoardTool('select'); return; }
+        if(lower === 'p') { evt.preventDefault(); setBoardTool('pen'); return; }
+        if(lower === 'h') { evt.preventDefault(); setBoardTool('highlighter'); return; }
+        if(lower === 'e') { evt.preventDefault(); setBoardTool('eraser'); return; }
+        if(lower === 't') { evt.preventDefault(); setBoardTool('text'); return; }
+        if(lower === 'g') { evt.preventDefault(); toggleShapesPanel(); return; }
+        if(lower === 'b') { evt.preventDefault(); setBoardToolbarCollapsed(!S.board.toolbarCollapsed); return; }
+      }
+      if(S.tool === 'class') {
+        if(lower === 'n') { evt.preventDefault(); addNewClassroom(); return; }
+        if(lower === 'a' && S.classroom.view === 'class') { evt.preventDefault(); startRandomStudentPick(); return; }
+        if(lower === 'w') { evt.preventDefault(); setClassroomView('wheel'); return; }
+        if(lower === 'c') { evt.preventDefault(); setClassroomView('class'); return; }
+        if(key === ' ' && S.classroom.view === 'wheel') { evt.preventDefault(); spinClassOptionWheel(); return; }
+      }
+      if(S.tool === 'math') {
+        if(lower === 'd') { evt.preventDefault(); setMathMode('rng'); window.roll3DDice(); return; }
+        if(lower === 'f') { evt.preventDefault(); setMathMode('rng'); window.flipCoin(); return; }
+        if(lower === 'k') { evt.preventDefault(); setMathMode('frac'); return; }
+        if(lower === 'l') { evt.preventDefault(); setMathMode('nl'); return; }
+        if(lower === 'w') { evt.preventDefault(); setMathMode('wheel'); return; }
+        if(lower === 'u') { evt.preventDefault(); setMathMode('convert'); return; }
+      }
+    });
+
+    if(E.boardPreview) {
+      E.boardPreview.addEventListener('pointerdown', function(evt) {
+        if(!E.boardStage) return; if(evt.target.closest && evt.target.closest('#boardToolbar')) return;
+        S.board.panStartClientX = evt.clientX;
+        S.board.panStartClientY = evt.clientY;
+        evt.preventDefault(); commitTextOverlay(true); startBoardDraw(getBoardPoint(evt));
+        if(S.board.tool !== 'text' && typeof E.boardPreview.setPointerCapture === 'function') {
+          try { E.boardPreview.setPointerCapture(evt.pointerId); } catch(err) {}
+        }
+      });
+      E.boardPreview.addEventListener('pointermove', function(evt) {
+        if(!S.board.drawing) return;
+        evt.preventDefault();
+        var events = boardCanDraw(S.board.tool) && typeof evt.getCoalescedEvents === 'function' ? evt.getCoalescedEvents() : [evt];
+        for(var i = 0; i < events.length; i += 1) moveBoardDraw(getBoardPoint(events[i]), events[i]);
+      }, { passive: false });
+      function finishBoardPointer(evt) { if(!S.board.drawing) return; evt.preventDefault(); endBoardDraw(getBoardPoint(evt)); }
+      E.boardPreview.addEventListener('pointerup', finishBoardPointer); E.boardPreview.addEventListener('pointercancel', finishBoardPointer); E.boardPreview.addEventListener('pointerleave', function(evt) { if(!S.board.drawing) return; finishBoardPointer(evt); });
+    }
+
+    var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Yerel saat';
+    if(E.tzLabel) E.tzLabel.textContent = tz; if(E.timeBarTz) E.timeBarTz.textContent = '🌍 '+tz;
+
+    updateClock();
+    
+    function updateClock(){
+      var now=new Date();
+      if(E.timeBarClock) E.timeBarClock.textContent=fmtTime.format(now);
+      if(E.timeBarDate) E.timeBarDate.textContent=fmtDate.format(now);
+    }
+    function selectTool(n){}
+    function syncFsBtn(){}
+    function reqFs(el){return (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);}
+    function exitFs(){return (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);}
+    function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement;}
+    document.querySelectorAll('.shortcut-help-btn').forEach(function(btn){
+      btn.addEventListener('click',function(){ toggleShortcutPopover(btn.dataset.shortcutTarget); });
+    });
+    document.querySelectorAll('[data-shortcut-close]').forEach(function(b){
+      b.addEventListener('click', closeShortcutPopovers);
+    });
+    updateClock(); setInterval(updateClock,1000);
+
+    document.querySelectorAll('[data-math-mode]').forEach(function(btn){
+      btn.addEventListener('click',function(){setMathMode(btn.dataset.mathMode);});
+    });
+    document.addEventListener('click', function(evt) {
+      var btn = evt.target.closest && evt.target.closest('[data-math-mode]');
+      if(!btn) return;
+      evt.preventDefault();
+      setMathMode(btn.dataset.mathMode);
+    });
+    var diceToggle = document.getElementById('diceCountToggle');
+    if(diceToggle) {
+      diceToggle.addEventListener('change', function() {
+        var dice2Wrap = document.getElementById('dice2Wrap');
+        if(dice2Wrap) dice2Wrap.style.display = diceToggle.checked ? 'block' : 'none';
+      });
+    }
+    initConverters();
+    initScaleGame();
+    setMathMode('calc');
+    document.addEventListener('keydown',function(e){
+      if(isEditableTarget(e.target)) return;
+      var k=e.key.toLowerCase();
+      if(k==='c') setMathMode('calc');
+      if(k==='k') setMathMode('frac');
+      if(k==='l') setMathMode('nl');
+      if(k==='s') window.location.href='simetri.html';
+    });
+
+
+    /* onclick erişimi için window expose */
+    if(typeof mathCalc!=='undefined') window.mathCalc=mathCalc;
+    if(typeof changeFrac!=='undefined') window.changeFrac=changeFrac;
+    if(typeof moveNl!=='undefined') window.moveNl=moveNl;
+    if(typeof kutleTart!=='undefined') window.kutleTart=kutleTart;
+    if(typeof kutleTemizle!=='undefined') window.kutleTemizle=kutleTemizle;
+    if(typeof kutleSoruOlustur!=='undefined') window.kutleSoruOlustur=kutleSoruOlustur;
+    if(typeof kutleDonustur!=='undefined') window.kutleDonustur=kutleDonustur;
+    if(typeof kutleInit!=='undefined') window.kutleInit=kutleInit;
+    if(typeof setMathMode!=='undefined') window.setMathMode=setMathMode;
+
+})();
+  </script>
+</body>
+</html>
