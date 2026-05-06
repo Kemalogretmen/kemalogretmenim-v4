@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minik Kodlamacı - Zeka ve Yönelim Oyunu</title>
+  <meta name="description" content="Çocuklar için algoritmik düşünme, kodlama ve yön bulma oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Dinamik Tema (Varsayılan 4 Yaş - Uzay/Mor) */
+      --hero-bg: linear-gradient(135deg, #9D50BB, #6E48AA);
+      --board-bg: linear-gradient(135deg, #eaddff, #d0bcff);
+      --board-border: #6E48AA;
+      --grid-cell: rgba(255, 255, 255, 0.6);
+    }
+
+    body[data-theme="5"] {
+      --hero-bg: linear-gradient(135deg, #f2994a, #f2c94c);
+      --board-bg: linear-gradient(135deg, #ffecd2, #fcb69f);
+      --board-border: #e67e22;
+      --grid-cell: rgba(255, 255, 255, 0.6);
+    }
+
+    body[data-theme="6"] {
+      --hero-bg: linear-gradient(135deg, #11998e, #38ef7d);
+      --board-bg: linear-gradient(135deg, #d4fc79, #96e6a1);
+      --board-border: #27ae60;
+      --grid-cell: rgba(255, 255, 255, 0.5);
+    }
+
+    body[data-theme="7"] {
+      --hero-bg: linear-gradient(135deg, #2b5876, #4e4376);
+      --board-bg: linear-gradient(135deg, #bdc3c7, #2c3e50);
+      --board-border: #1a252f;
+      --grid-cell: rgba(255, 255, 255, 0.2);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background: #f4f7fb;
+      min-height: 100vh;
+      transition: background 0.5s ease;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    /* ANA SİTEDEKİ ÇAKIŞMAYI ENGELLEYEN HERO AYARLARI */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      color: white;
+      background: var(--hero-bg);
+      transition: all 0.5s ease;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text {
+      flex: 1 1 min-content;
+      min-width: 250px;
+    }
+
+    .hero h1 {
+      margin: 6px 0 4px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      font-weight: 800;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      opacity: 0.95;
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: inherit;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      color: inherit;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 14px 18px;
+      background: #f8fbff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setup-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      padding: 16px;
+      box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-btn,
+    .control-btn {
+      border: 0;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-btn {
+      min-height: 68px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600;}
+
+    .choice-btn:hover { transform: translateY(-2px); }
+
+    .choice-btn.is-active {
+      background: #ecf9df;
+      border-color: rgba(94, 165, 28, 0.46);
+      color: #2e6812;
+      box-shadow: 0 8px 16px rgba(94, 165, 28, 0.1);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .control-btn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--muted);
+    }
+
+    .control-btn.is-active {
+      background: #fff3ce;
+      border-color: rgba(255, 209, 102, 0.8);
+      color: #79530c;
+    }
+
+    /* OYUN ALANI */
+    .board-wrap {
+      padding: clamp(16px, 4vw, 32px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: var(--board-bg);
+      border-bottom-left-radius: 30px;
+      border-bottom-right-radius: 30px;
+      transition: background 0.5s ease;
+    }
+
+    /* KOMUT DİZİSİ (KODLAMA ALANI) */
+    .sequence-area {
+      width: 100%;
+      max-width: 600px;
+      min-height: 70px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 16px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.05);
+      border: 2px dashed #9D50BB;
+    }
+    
+    .sequence-empty {
+      width: 100%;
+      text-align: center;
+      color: #999;
+      font-weight: 800;
+      font-size: 0.9rem;
+    }
+
+    .seq-item {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      animation: popIn 0.2s ease;
+    }
+
+    .seq-item.is-active {
+      border-color: #5ea51c;
+      background: #e9f9df;
+      transform: scale(1.1);
+    }
+
+    /* KONTROL BUTONLARI (YÖN TUŞLARI) */
+    .controls-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .dir-btn {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border: 4px solid #eef4fb;
+      border-radius: 16px;
+      font-size: 2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .dir-btn:hover { transform: translateY(-3px); }
+    .dir-btn:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    
+    .dir-up { grid-column: 2; grid-row: 1; }
+    .dir-left { grid-column: 1; grid-row: 2; }
+    .dir-down { grid-column: 2; grid-row: 2; }
+    .dir-right { grid-column: 3; grid-row: 2; }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+
+    .action-btn {
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-weight: 900;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      transition: transform 0.2s;
+    }
+    .action-btn:hover { transform: translateY(-2px); }
+
+    .btn-run { background: #a7f36b; color: #2e6812; border: 2px solid #8be346; }
+    .btn-clear { background: #ffcfcf; color: #982727; border: 2px solid #ffb3b3; }
+
+    /* IZGARA (LABİRENT) */
+    .grid-board {
+      display: grid;
+      gap: 4px;
+      background: var(--board-border);
+      padding: 8px;
+      border-radius: 16px;
+      box-shadow: 0 16px 32px rgba(0,0,0,0.2);
+    }
+
+    .grid-cell {
+      width: clamp(45px, 10vw, 75px);
+      height: clamp(45px, 10vw, 75px);
+      background: var(--grid-cell);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      position: relative;
+    }
+
+    .player {
+      position: absolute;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+    }
+
+    .target { animation: bounce 2s infinite; }
+    .obstacle { filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+
+    .feedback {
+      width: 100%;
+      max-width: 600px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; transform: scale(1.02); border: 2px solid #a7f36b; }
+    .feedback.bad { background: #fff0f0; color: #982727; transform: scale(0.98); border: 2px solid #ffb3b3;}
+
+    .hidden { display: none !important; }
+
+    /* Animasyonlar */
+    @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+      .dir-btn { width: 50px; height: 50px; font-size: 1.5rem; }
+      .controls-panel { grid-template-columns: repeat(3, 50px); }
+    }
+  </style>
+</head>
+<body data-theme="4">
+  <main class="page">
+    <section class="game-shell" aria-label="Minik Kodlamacı Oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Kodlama • Minik Robot</span>
+          <h1>Hedefe Ulaş!</h1>
+          <p>Ok tuşlarını kullanarak robotu hedefine ulaştıracak komutları sırayla yaz, sonra çalıştır.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>Seviye</span><strong id="levelText">1</strong></div>
+          <div class="stat"><span>Adım</span><strong id="scoreText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Yaş ve Zorluk Seviyesi</h2>
+          <div class="choice-row" id="ageChoices">
+            <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>3x3 (Engelsiz)</span></button>
+            <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>4x4 (Tek Engel)</span></button>
+            <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>5x5 (Çok Engel)</span></button>
+            <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>6x6 (Labirent)</span></button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+      </nav>
+
+      <section class="board-wrap">
+        <div class="feedback" id="feedback">Ok tuşlarına basarak robotun yolunu çiz.</div>
+        
+        <div class="sequence-area" id="sequenceArea">
+          <div class="sequence-empty">Henüz komut girmedin.</div>
+        </div>
+
+        <div class="controls-panel">
+          <button class="dir-btn dir-up" type="button" data-dir="up">⬆️</button>
+          <button class="dir-btn dir-left" type="button" data-dir="left">⬅️</button>
+          <button class="dir-btn dir-down" type="button" data-dir="down">⬇️</button>
+          <button class="dir-btn dir-right" type="button" data-dir="right">➡️</button>
+        </div>
+
+        <div class="action-row">
+          <button class="action-btn btn-clear" type="button" id="btnClear">❌ Sil</button>
+          <button class="action-btn btn-run" type="button" id="btnRun">▶️ Çalıştır</button>
+        </div>
+
+        <div class="grid-board" id="gridBoard"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+    const ageConfigs = {
+      4: { size: 3, obstacles: 0, player: '🤖', target: '🔋' },
+      5: { size: 4, obstacles: 1, player: '🐶', target: '🦴' },
+      6: { size: 5, obstacles: 3, player: '🚀', target: '🌍' },
+      7: { size: 6, obstacles: 6, player: '🧙‍♂️', target: '💎' }
+    };
+
+    const state = {
+      age: 4,
+      level: 1,
+      sequence: [],
+      gridSize: 3,
+      playerPos: { x: 0, y: 0 },
+      targetPos: { x: 2, y: 2 },
+      obstacles: [],
+      soundOn: true,
+      isPlaying: false
+    };
+
+    const els = {
+      body: document.body,
+      setup: document.getElementById("setupScreen"),
+      gridBoard: document.getElementById("gridBoard"),
+      sequenceArea: document.getElementById("sequenceArea"),
+      levelText: document.getElementById("levelText"),
+      scoreText: document.getElementById("scoreText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle"),
+      btnClear: document.getElementById("btnClear"),
+      btnRun: document.getElementById("btnRun")
+    };
+
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function playTone(freq, type = "sine", duration = 0.1) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.05);
+    }
+
+    function playSuccess() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.1);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + i * 0.1 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.1);
+        osc.stop(now + i * 0.1 + 0.4);
+      });
+    }
+
+    function playError() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function generateLevel() {
+      const config = ageConfigs[state.age];
+      state.gridSize = config.size;
+      state.playerPos = { x: 0, y: 0 };
+      state.targetPos = { x: config.size - 1, y: config.size - 1 };
+      state.sequence = [];
+      state.obstacles = [];
+      state.isPlaying = false;
+      
+      // Engelleri rastgele yerleştir (Başlangıç ve Bitiş hariç)
+      while (state.obstacles.length < config.obstacles) {
+        const rx = Math.floor(Math.random() * config.size);
+        const ry = Math.floor(Math.random() * config.size);
+        
+        const isStart = (rx === 0 && ry === 0);
+        const isTarget = (rx === config.size - 1 && ry === config.size - 1);
+        const exists = state.obstacles.some(ob => ob.x === rx && ob.y === ry);
+        
+        // Labirent çok tıkanmasın diye hedefin hemen yanlarını serbest bırakalım
+        const isNearTarget = (rx >= config.size - 2 && ry >= config.size - 2 && config.size > 3);
+
+        if (!isStart && !isTarget && !exists && !isNearTarget) {
+          state.obstacles.push({ x: rx, y: ry });
+        }
+      }
+
+      updateSequenceUI();
+      renderBoard();
+      setFeedback("Ok tuşlarını kullanarak rotayı planla.", "");
+      els.levelText.textContent = state.level;
+    }
+
+    function renderBoard() {
+      const config = ageConfigs[state.age];
+      els.gridBoard.style.gridTemplateColumns = `repeat(${config.size}, 1fr)`;
+      els.gridBoard.innerHTML = "";
+
+      for (let y = 0; y < config.size; y++) {
+        for (let x = 0; x < config.size; x++) {
+          const cell = document.createElement("div");
+          cell.className = "grid-cell";
+          cell.id = `cell-${x}-${y}`;
+
+          // Hedef
+          if (x === state.targetPos.x && y === state.targetPos.y) {
+            cell.innerHTML = `<span class="target">${config.target}</span>`;
+          }
+          // Engeller
+          else if (state.obstacles.some(ob => ob.x === x && ob.y === y)) {
+            cell.innerHTML = `<span class="obstacle">🪨</span>`;
+          }
+          
+          els.gridBoard.appendChild(cell);
+        }
+      }
+
+      // Oyuncu Karakterini Ekle
+      const playerEl = document.createElement("div");
+      playerEl.className = "player";
+      playerEl.id = "playerEntity";
+      playerEl.textContent = config.player;
+      document.getElementById(`cell-${state.playerPos.x}-${state.playerPos.y}`).appendChild(playerEl);
+    }
+
+    function updateSequenceUI() {
+      if (state.sequence.length === 0) {
+        els.sequenceArea.innerHTML = '<div class="sequence-empty">Henüz komut girmedin.</div>';
+        els.scoreText.textContent = "0";
+        return;
+      }
+
+      els.sequenceArea.innerHTML = "";
+      state.sequence.forEach(dir => {
+        const item = document.createElement("div");
+        item.className = "seq-item";
+        if (dir === "up") item.textContent = "⬆️";
+        if (dir === "down") item.textContent = "⬇️";
+        if (dir === "left") item.textContent = "⬅️";
+        if (dir === "right") item.textContent = "➡️";
+        els.sequenceArea.appendChild(item);
+      });
+      els.scoreText.textContent = state.sequence.length;
+      
+      // Sağa doğru otomatik kaydır
+      els.sequenceArea.scrollLeft = els.sequenceArea.scrollWidth;
+    }
+
+    // Komut Ekleme
+    document.querySelectorAll(".dir-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (state.isPlaying) return;
+        playTone(600, "triangle");
+        state.sequence.push(btn.dataset.dir);
+        updateSequenceUI();
+      });
+    });
+
+    // Son komutu veya tümünü silme
+    els.btnClear.addEventListener("click", () => {
+      if (state.isPlaying || state.sequence.length === 0) return;
+      playTone(300, "square");
+      state.sequence.pop(); // Sadece son komutu sil (Çocuklar için daha iyi)
+      updateSequenceUI();
+      setFeedback("Son komut silindi.", "");
+      
+      // Eğer uzun basarsa tümünü silsin (Basit bir numara)
+      // Ancak okul öncesi için tek tek silmek daha anlaşılırdır.
+    });
+
+    // Çalıştır (Animasyon Döngüsü)
+    els.btnRun.addEventListener("click", async () => {
+      if (state.isPlaying || state.sequence.length === 0) return;
+      
+      state.isPlaying = true;
+      setFeedback("Robot hareket ediyor...", "action");
+      playTone(440, "sine", 0.3);
+
+      const playerEl = document.getElementById("playerEntity");
+      const seqItems = els.sequenceArea.querySelectorAll(".seq-item");
+
+      // Simüle edilecek anlık pozisyon
+      let cx = state.playerPos.x;
+      let cy = state.playerPos.y;
+      let isCrashed = false;
+
+      for (let i = 0; i < state.sequence.length; i++) {
+        const dir = state.sequence[i];
+        
+        // Aktif komutu parlat
+        seqItems.forEach(el => el.classList.remove("is-active"));
+        if(seqItems[i]) seqItems[i].classList.add("is-active");
+        
+        // Yön hesapla
+        let nx = cx; let ny = cy;
+        if (dir === "up") ny--;
+        if (dir === "down") ny++;
+        if (dir === "left") nx--;
+        if (dir === "right") nx++;
+
+        // Çarpışma Kontrolü (Duvarlar)
+        if (nx < 0 || nx >= state.gridSize || ny < 0 || ny >= state.gridSize) {
+          isCrashed = true;
+          break;
+        }
+
+        // Çarpışma Kontrolü (Engeller)
+        if (state.obstacles.some(ob => ob.x === nx && ob.y === ny)) {
+          isCrashed = true;
+          break;
+        }
+
+        // Hareketi Uygula
+        cx = nx; cy = ny;
+        const targetCell = document.getElementById(`cell-${cx}-${cy}`);
+        targetCell.appendChild(playerEl);
+        
+        playTone(500 + (i*20), "sine"); // Adım sesi
+        
+        // Bekle
+        await new Promise(r => setTimeout(r, 600));
+      }
+
+      // Sonuç Değerlendirmesi
+      seqItems.forEach(el => el.classList.remove("is-active"));
+
+      if (isCrashed) {
+        playError();
+        playerEl.style.transform = "rotate(15deg) scale(0.8)";
+        setFeedback("Eyvah, bir engele çarptık veya yoldan çıktık! Komutları silip tekrar dene.", "bad");
+        
+        // Robotu başa al
+        setTimeout(() => {
+          playerEl.style.transform = "none";
+          document.getElementById(`cell-${state.playerPos.x}-${state.playerPos.y}`).appendChild(playerEl);
+          state.isPlaying = false;
+        }, 1500);
+      } 
+      else if (cx === state.targetPos.x && cy === state.targetPos.y) {
+        // BAŞARI!
+        playSuccess();
+        playerEl.style.transform = "scale(1.2)";
+        setFeedback("Tebrikler! Algoritman harika çalıştı. Sonraki seviyeye geçiliyor...", "good");
+        
+        setTimeout(() => {
+          state.level++;
+          generateLevel();
+        }, 2000);
+      } 
+      else {
+        // Hedefe Ulaşamadı
+        playError();
+        setFeedback("Robot hedefe ulaşamadı. Eksik komutlar olabilir mi?", "bad");
+        
+        // Robotu başa al
+        setTimeout(() => {
+          document.getElementById(`cell-${state.playerPos.x}-${state.playerPos.y}`).appendChild(playerEl);
+          state.isPlaying = false;
+        }, 1500);
+      }
+    });
+
+
+    function initGame() {
+      els.body.setAttribute("data-theme", state.age);
+      state.level = 1;
+      generateLevel();
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    // Olay Dinleyicileri
+    document.querySelectorAll("#ageChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        if (state.isPlaying) return;
+        state.age = Number(button.dataset.age);
+        selectButton("ageChoices", state.age, "age");
+        initGame();
+      });
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playTone(523.25, "sine", 0.1);
+    });
+
+    // Oyunu Başlat
+    initGame();
+  </script>
+</body>
+</html>

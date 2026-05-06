@@ -239,7 +239,7 @@
 
     /* Kalem alt satırı (pen/highlighter/eraser seçimi) */
     .pen-row { display: flex; gap: 5px; }
-    .pen-row .toolbar-btn { width: 40px; height: 36px; border-radius: 10px; font-size: 15px; }
+    .pen-row .toolbar-btn { width: 34px; height: 36px; border-radius: 10px; font-size: 14px; }
 
     /* Renk paleti — kompakt */
     .color-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
@@ -271,6 +271,17 @@
       background: var(--purple);
       border: 2px solid #fff;
       box-shadow: 0 2px 5px rgba(15,23,42,.22);
+    }
+    .page-bg-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .page-bg-btn {
+      width: 100%; height: 28px; border-radius: 10px; border: 2px solid rgba(255,255,255,.9);
+      box-shadow: 0 0 0 1.5px rgba(15,23,42,.15); cursor: pointer; transition: transform .15s, box-shadow .15s;
+    }
+    .page-bg-btn.is-active { transform: scale(1.08); box-shadow: 0 0 0 3px var(--purple), 0 8px 16px rgba(108,61,237,.22); }
+    .zoom-control-row { display: grid; grid-template-columns: 34px 1fr 34px 34px; gap: 6px; align-items: center; }
+    .zoom-value {
+      min-width: 0; height: 34px; display: grid; place-items: center; border-radius: 10px;
+      background: #f8f9fc; border: 1.5px solid #e2e8f0; color: var(--purple); font-size: 12px; font-weight: 900;
     }
 
     /* Kalınlık slider */
@@ -344,22 +355,22 @@
 
     /* Beyaz Tahta Ana Sahne */
     .board-shell { display: grid; gap: 12px; }
-    .board-stage { position: relative; min-height: 80vh; border-radius: 26px; overflow: hidden; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; overscroll-behavior: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
-    .board-plane { position: relative; width: 100%; min-height: max(100%, 800px); background-color: #ffffff; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.3s, height 0.3s; overflow: hidden; transform: translateZ(0); }
-    .board-plane.board-paper-white { background: #ffffff; }
-    .board-plane.board-paper-lined { background: repeating-linear-gradient(180deg, #ffffff 0 34px, rgba(115,128,255,0.15) 34px 36px); }
-    .board-plane.board-paper-grid { background: linear-gradient(rgba(115,128,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(115,128,255,0.12) 1px, transparent 1px), #ffffff; background-size: 34px 34px, 34px 34px, auto; }
+    .board-stage { position: relative; min-height: 80vh; border-radius: 26px; overflow: auto; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; overscroll-behavior: contain; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+    .board-plane { --board-bg:#ffffff; --board-grid-step:34px; position: relative; width: 100%; min-height: max(100%, 800px); background-color: var(--board-bg); box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.16s, height 0.16s, min-height 0.16s; overflow: hidden; transform: translateZ(0); }
+    .board-plane.board-paper-white { background: var(--board-bg); }
+    .board-plane.board-paper-lined { background: repeating-linear-gradient(180deg, var(--board-bg) 0 calc(var(--board-grid-step) - 2px), rgba(115,128,255,0.15) calc(var(--board-grid-step) - 2px) var(--board-grid-step)); }
+    .board-plane.board-paper-grid { background: linear-gradient(rgba(115,128,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(115,128,255,0.12) 1px, transparent 1px), var(--board-bg); background-size: var(--board-grid-step) var(--board-grid-step), var(--board-grid-step) var(--board-grid-step), auto; }
     .board-plane.board-paper-guide {
       background:
         repeating-linear-gradient(180deg,
           rgba(70,80,90,0.62) 0 2px,
-          #ffffff 2px 32px,
+          var(--board-bg) 2px 32px,
           rgba(70,80,90,0.62) 32px 34px,
           rgba(255,250,184,0.76) 34px 64px,
           rgba(70,80,90,0.62) 64px 66px,
           transparent 66px 165px
         ),
-        #e6f8ff;
+        var(--board-bg);
     }
     .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-user-drag:none; }
     .board-overlay-text { position: absolute; min-width: 150px; min-height: 50px; resize: both; padding: 10px; border-radius: 12px; border: 2px dashed var(--purple); background: rgba(255,255,255,0.95); color: var(--navy); font: 800 24px/1.3 'Nunito', sans-serif; outline: none; z-index: 12; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
@@ -897,6 +908,7 @@
                   <div class="shortcut-row"><span class="shortcut-key">V</span><span>Seç aracı</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">P</span><span>Kalem</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">H</span><span>İşaretleyici</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">K</span><span>Karakalem</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">E</span><span>Silgi</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">T</span><span>Yazı ekle</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">Ctrl/Cmd+S</span><span>Kaydet</span></div>
@@ -986,6 +998,7 @@
                       <button class="toolbar-btn is-active" type="button" data-board-tool="pen" title="Kalem"><i class="fas fa-pen"></i></button>
                       <button class="toolbar-btn" type="button" data-board-tool="highlighter" title="İşaretleyici"><i class="fas fa-highlighter"></i></button>
                       <button class="toolbar-btn" type="button" data-board-tool="chalk" title="Tebeşir"><i class="fas fa-chalkboard"></i></button>
+                      <button class="toolbar-btn" type="button" data-board-tool="pencil" title="Karakalem"><i class="fas fa-pencil-alt"></i></button>
                       <button class="toolbar-btn" type="button" data-board-tool="eraser" title="Silgi"><i class="fas fa-eraser"></i></button>
                     </div>
                   </div>
@@ -1025,6 +1038,11 @@
                     <div style="display:flex;align-items:center;gap:8px;">
                       <span class="thickness-dot" id="thicknessDot" style="width:10px;height:10px;border-radius:50%;background:#1f2142;flex-shrink:0;display:block;"></span>
                       <input class="size-slider" id="boardSizeSlider" type="range" min="1" max="24" step="1" value="6" style="flex:1;accent-color:var(--purple);cursor:pointer;">
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;">
+                      <button class="toolbar-btn" type="button" data-board-size-preset="3" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">İnce</button>
+                      <button class="toolbar-btn" type="button" data-board-size-preset="7" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Orta</button>
+                      <button class="toolbar-btn" type="button" data-board-size-preset="13" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Kalın</button>
                     </div>
                   </div>
                 </div>
@@ -1099,6 +1117,16 @@
                     <button class="toolbar-btn" type="button" data-board-paper="grid" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Kareli</button>
                     <button class="toolbar-btn" type="button" data-board-paper="guide" style="height:30px;font-size:11px;font-weight:800;border-radius:9px;">Kılavuz</button>
                   </div>
+                  <div>
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Tahta Rengi</div>
+                    <div class="page-bg-grid">
+                      <button class="page-bg-btn is-active" type="button" data-board-bg="#ffffff" style="background:#ffffff" title="Beyaz"></button>
+                      <button class="page-bg-btn" type="button" data-board-bg="#f8fafc" style="background:#f8fafc" title="Açık gri"></button>
+                      <button class="page-bg-btn" type="button" data-board-bg="#111827" style="background:#111827" title="Kara tahta"></button>
+                      <button class="page-bg-btn" type="button" data-board-bg="#064e3b" style="background:#064e3b" title="Koyu yeşil tahta"></button>
+                      <button class="page-bg-btn" type="button" data-board-bg="#1e293b" style="background:#1e293b" title="Koyu mavi tahta"></button>
+                    </div>
+                  </div>
                   <select id="pageSizeSelect" style="width:100%;padding:7px 10px;border-radius:9px;border:1.5px solid #e2e8f0;font-family:'Nunito',sans-serif;font-weight:800;color:var(--navy);outline:none;background:#f8f9fc;cursor:pointer;font-size:12px;">
                     <option value="auto">Ekrana Sığdır</option>
                     <option value="a4v">A4 Dikey</option>
@@ -1106,6 +1134,12 @@
                     <option value="a3v">A3 Dikey</option>
                     <option value="a3h">A3 Yatay</option>
                   </select>
+                  <div class="zoom-control-row">
+                    <button class="toolbar-btn" type="button" id="boardZoomOutBtn" style="width:34px;height:34px;border-radius:10px;font-size:13px;"><i class="fas fa-minus"></i></button>
+                    <span class="zoom-value" id="boardZoomValue">%100</span>
+                    <button class="toolbar-btn" type="button" id="boardZoomInBtn" style="width:34px;height:34px;border-radius:10px;font-size:13px;"><i class="fas fa-plus"></i></button>
+                    <button class="toolbar-btn" type="button" id="boardZoomResetBtn" style="width:34px;height:34px;border-radius:10px;font-size:12px;"><i class="fas fa-compress-arrows-alt"></i></button>
+                  </div>
                 </div>
 
               </section>
@@ -1143,10 +1177,12 @@
         shapeFillColor: '#facc15', shapeFillColorName: 'Sarı', shapeFillEnabled: false,
         shapePaletteTarget: 'stroke', shapeSize: 4,
         paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
+        backgroundColor: '#ffffff', zoom: 1, minZoom: 0.6, maxZoom: 3,
+        logicalWidth: 0, logicalHeight: 0, displayWidth: 0, displayHeight: 0,
         drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
         startX: 0, startY: 0, points: [], lastPoint: null,
         panStartClientX: 0, panStartClientY: 0, toolbarLeft: 16, toolbarTop: 16, autosaveTimer: null,
-        activePointerId: null, activeStrokes: {},
+        activePointerId: null, activePointerType: null, activeStrokes: {}, touchPointers: {}, pinch: { active: false, startDistance: 0, startZoom: 1 },
         pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
         pageIndex: 0,
         selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
@@ -1204,8 +1240,8 @@
       stageFullscreenBtn: document.getElementById('stageFullscreenBtn'), timerStage: document.getElementById('timerStage'), cdSettings: document.getElementById('cdSettings'),
       toolCards: [].slice.call(document.querySelectorAll('[data-tool-card]')), toolPanels: [].slice.call(document.querySelectorAll('[data-tool-panel]')), modeTabs: [].slice.call(document.querySelectorAll('[data-mode]')),
       presetBtns: [].slice.call(document.querySelectorAll('[data-preset]')), adjBtns: [].slice.call(document.querySelectorAll('[data-adj]')),
-      boardToolBtns: [].slice.call(document.querySelectorAll('[data-board-tool]')), boardColorBtns: [].slice.call(document.querySelectorAll('[data-board-color]')),
-      boardPaletteBtns: [].slice.call(document.querySelectorAll('[data-board-palette]')), boardPaperBtns: [].slice.call(document.querySelectorAll('[data-board-paper]')),
+      boardToolBtns: [].slice.call(document.querySelectorAll('[data-board-tool]')), boardColorBtns: [].slice.call(document.querySelectorAll('[data-board-color]')), boardSizePresetBtns: [].slice.call(document.querySelectorAll('[data-board-size-preset]')),
+      boardPaletteBtns: [].slice.call(document.querySelectorAll('[data-board-palette]')), boardPaperBtns: [].slice.call(document.querySelectorAll('[data-board-paper]')), boardBgBtns: [].slice.call(document.querySelectorAll('[data-board-bg]')),
       textAlignBtns: [].slice.call(document.querySelectorAll('[data-text-align]')), textWeightBtns: [].slice.call(document.querySelectorAll('[data-text-weight]')), textStyleBtns: [].slice.call(document.querySelectorAll('[data-text-style]')),
       boardStage: document.getElementById('whiteboardStage'), boardPlane: document.getElementById('boardPlane'), boardCanvas: document.getElementById('whiteboardCanvas'), boardPreview: document.getElementById('whiteboardPreviewCanvas'),
       boardToolbar: document.getElementById('boardToolbar'), boardToolbarHandle: document.getElementById('boardToolbarHandle'), shapeToggleBtn: document.getElementById('shapeToggleBtn'), shapePanel: document.getElementById('shapePanel'),
@@ -1217,6 +1253,7 @@
       boardToolLabel: document.getElementById('boardToolLabel'), boardColorLabel: document.getElementById('boardColorLabel'), boardFillLabel: document.getElementById('boardFillLabel'),
       prevPageBtn: document.getElementById('prevPageBtn'), nextPageBtn: document.getElementById('nextPageBtn'), addPageBtn: document.getElementById('addPageBtn'), deletePageBtn: document.getElementById('deletePageBtn'),
       pageInfoDisplay: document.getElementById('pageInfoDisplay'), pageSizeSelect: document.getElementById('pageSizeSelect'), boardProtractorBtn: document.getElementById('boardProtractorBtn'),
+      boardZoomOutBtn: document.getElementById('boardZoomOutBtn'), boardZoomValue: document.getElementById('boardZoomValue'), boardZoomInBtn: document.getElementById('boardZoomInBtn'), boardZoomResetBtn: document.getElementById('boardZoomResetBtn'),
       classTabs: [].slice.call(document.querySelectorAll('[data-class-view]')),
       classViews: { class: document.getElementById('classManagerView'), wheel: document.getElementById('classWheelView') },
       classSelector: document.getElementById('classSelector'), addClassBtn: document.getElementById('addClassBtn'), renameClassBtn: document.getElementById('renameClassBtn'), deleteClassBtn: document.getElementById('deleteClassBtn'),
@@ -1279,6 +1316,8 @@
           pageIndex: S.board.pageIndex,
           paper: S.board.paper,
           pageSize: S.board.pageSize,
+          backgroundColor: S.board.backgroundColor,
+          zoom: S.board.zoom,
           strokeColor: S.board.strokeColor,
           size: S.board.size,
           shapeStrokeColor: S.board.shapeStrokeColor,
@@ -1299,6 +1338,8 @@
         S.board.pageIndex = Math.max(0, Math.min(S.board.pages.length - 1, Number(stored.pageIndex) || 0));
         S.board.paper = stored.paper || S.board.paper;
         S.board.pageSize = stored.pageSize || S.board.pageSize;
+        S.board.backgroundColor = stored.backgroundColor || S.board.backgroundColor;
+        S.board.zoom = Math.max(S.board.minZoom, Math.min(S.board.maxZoom, Number(stored.zoom) || S.board.zoom));
         S.board.strokeColor = stored.strokeColor || S.board.strokeColor;
         S.board.size = Number(stored.size) || S.board.size;
         S.board.shapeStrokeColor = stored.shapeStrokeColor || S.board.shapeStrokeColor;
@@ -1318,37 +1359,86 @@
 
     var boardCtx = null; var boardPreviewCtx = null;
 
-    function boardCanDraw(tool) { return tool === 'pen' || tool === 'highlighter' || tool === 'chalk' || tool === 'eraser'; }
+    function boardCanDraw(tool) { return tool === 'pen' || tool === 'highlighter' || tool === 'chalk' || tool === 'pencil' || tool === 'eraser'; }
     function resizeBoard() {
       if(!E.boardPlane || !E.boardCanvas || !E.boardPreview) return;
       var conf = PAGE_DIMENSIONS[S.board.pageSize]; var ratio = window.devicePixelRatio || 1; var w, h;
-      if(conf.w && conf.h) { w = conf.w; h = conf.h; E.boardPlane.style.width = w + 'px'; E.boardPlane.style.minHeight = h + 'px'; E.boardPlane.style.height = h + 'px'; E.boardPlane.style.margin = '10px auto'; } 
-      else { var boardIsFullscreen = fsEl() === E.boardStage; var fullH = Math.max(E.boardStage.clientHeight, window.innerHeight || 0); h = boardIsFullscreen ? fullH : Math.max(E.boardStage.clientHeight + 320, 1240); E.boardPlane.style.width = '100%'; E.boardPlane.style.margin = '0'; E.boardPlane.style.height = 'auto'; E.boardPlane.style.minHeight = h + 'px'; w = E.boardPlane.clientWidth; }
-      [E.boardCanvas, E.boardPreview].forEach(function(canvas) { canvas.width = Math.max(1, Math.floor(w * ratio)); canvas.height = Math.max(1, Math.floor(h * ratio)); canvas.style.width = w + 'px'; canvas.style.height = h + 'px'; });
+      var zoom = clampBoardZoom(S.board.zoom || 1);
+      S.board.zoom = zoom;
+      if(conf.w && conf.h) {
+        w = conf.w; h = conf.h; E.boardPlane.style.margin = '10px auto';
+      } else {
+        var stageW = Math.max(1, E.boardStage ? E.boardStage.clientWidth : 0);
+        var boardIsFullscreen = fsEl() === E.boardStage; var fullH = Math.max(E.boardStage.clientHeight, window.innerHeight || 0);
+        w = stageW;
+        h = boardIsFullscreen ? fullH : Math.max(E.boardStage.clientHeight + 320, 1240);
+        E.boardPlane.style.margin = '0';
+      }
+      var displayW = Math.max(1, Math.round(w * zoom));
+      var displayH = Math.max(1, Math.round(h * zoom));
+      S.board.logicalWidth = w; S.board.logicalHeight = h; S.board.displayWidth = displayW; S.board.displayHeight = displayH;
+      E.boardPlane.style.width = displayW + 'px';
+      E.boardPlane.style.minHeight = displayH + 'px';
+      E.boardPlane.style.height = displayH + 'px';
+      E.boardPlane.style.setProperty('--board-bg', S.board.backgroundColor || '#ffffff');
+      E.boardPlane.style.setProperty('--board-grid-step', Math.max(12, Math.round(34 * zoom)) + 'px');
+      if(E.boardStage) E.boardStage.style.justifyContent = displayW <= E.boardStage.clientWidth ? 'center' : 'flex-start';
+      [E.boardCanvas, E.boardPreview].forEach(function(canvas) { canvas.width = Math.max(1, Math.floor(w * ratio)); canvas.height = Math.max(1, Math.floor(h * ratio)); canvas.style.width = displayW + 'px'; canvas.style.height = displayH + 'px'; });
       boardCtx = E.boardCanvas.getContext('2d'); boardPreviewCtx = E.boardPreview.getContext('2d');
       if(boardCtx) boardCtx.setTransform(ratio, 0, 0, ratio, 0, 0); if(boardPreviewCtx) boardPreviewCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       redrawBoard();
       positionBoardToolbar();
+      updateBoardZoomUi();
     }
     function clearPreview() { if(boardPreviewCtx && E.boardPreview) { boardPreviewCtx.clearRect(0, 0, E.boardPreview.width, E.boardPreview.height); } }
-    function getBoardPoint(evt) { var rect = E.boardCanvas.getBoundingClientRect(); return { x: evt.clientX - rect.left, y: evt.clientY - rect.top }; }
+    function getBoardPoint(evt) {
+      var rect = E.boardCanvas.getBoundingClientRect();
+      var scaleX = (S.board.logicalWidth || rect.width) / Math.max(1, rect.width);
+      var scaleY = (S.board.logicalHeight || rect.height) / Math.max(1, rect.height);
+      return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+    }
+    function getBoardContentPoint(evt) {
+      var rect = E.boardPlane.getBoundingClientRect();
+      return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
+    }
+    function clampBoardZoom(value) { return Math.max(S.board.minZoom || 0.6, Math.min(S.board.maxZoom || 3, Number(value) || 1)); }
+    function updateBoardZoomUi() {
+      if(E.boardZoomValue) E.boardZoomValue.textContent = '%' + Math.round((S.board.zoom || 1) * 100);
+    }
+    function setBoardZoom(nextZoom, center) {
+      if(!E.boardStage || !E.boardCanvas) return;
+      var stageRect = E.boardStage.getBoundingClientRect();
+      var cx = center && typeof center.clientX === 'number' ? center.clientX : stageRect.left + E.boardStage.clientWidth / 2;
+      var cy = center && typeof center.clientY === 'number' ? center.clientY : stageRect.top + E.boardStage.clientHeight / 2;
+      var anchor = getBoardPoint({ clientX: cx, clientY: cy });
+      S.board.zoom = clampBoardZoom(nextZoom);
+      resizeBoard();
+      syncActiveTextStyles();
+      E.boardStage.scrollLeft = Math.max(0, anchor.x * S.board.zoom - (cx - stageRect.left));
+      E.boardStage.scrollTop = Math.max(0, anchor.y * S.board.zoom - (cy - stageRect.top));
+      positionBoardToolbar();
+      scheduleBoardAutosave();
+    }
     function positionBoardToolbar() {
       if(!E.boardStage || !E.boardToolbar || !E.boardPlane) return;
       var mobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
       var stageWidth = E.boardStage.clientWidth || 0;
       var stageHeight = E.boardStage.clientHeight || 0;
       if(mobile) {
-        var mobileWidth = Math.max(260, stageWidth - 16);
+        var mobileWidth = Math.max(160, Math.min(Math.max(1, stageWidth - 16), Math.max(1, (S.board.displayWidth || stageWidth) - 16)));
+        var mobileTop = Math.min(Math.max(8, stageHeight - E.boardToolbar.offsetHeight - 8), Math.max(8, (S.board.displayHeight || stageHeight) - E.boardToolbar.offsetHeight - 8));
         E.boardToolbar.style.width = mobileWidth + 'px';
-        E.boardToolbar.style.left = (E.boardStage.scrollLeft + 8) + 'px';
-        E.boardToolbar.style.top = (E.boardStage.scrollTop + Math.max(8, stageHeight - E.boardToolbar.offsetHeight - 8)) + 'px';
+        E.boardToolbar.style.left = '8px';
+        E.boardToolbar.style.top = mobileTop + 'px';
         E.boardToolbar.style.right = 'auto';
         E.boardToolbar.style.bottom = 'auto';
         return;
       }
       E.boardToolbar.style.width = '62px';
-      E.boardToolbar.style.left = (E.boardStage.scrollLeft + S.board.toolbarLeft) + 'px';
-      E.boardToolbar.style.top = (E.boardStage.scrollTop + S.board.toolbarTop) + 'px';
+      S.board.toolbarLeft = Math.max(10, Math.min(Math.max(10, (S.board.displayWidth || stageWidth) - E.boardToolbar.offsetWidth - 10), S.board.toolbarLeft));
+      S.board.toolbarTop = Math.max(10, Math.min(Math.max(10, (S.board.displayHeight || stageHeight) - E.boardToolbar.offsetHeight - 10), S.board.toolbarTop));
+      E.boardToolbar.style.left = S.board.toolbarLeft + 'px';
+      E.boardToolbar.style.top = S.board.toolbarTop + 'px';
       E.boardToolbar.style.right = 'auto';
       E.boardToolbar.style.bottom = 'auto';
     }
@@ -1385,18 +1475,25 @@
       }
       E.boardPaletteBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPalette === S.board.shapePaletteTarget); });
       E.boardPaperBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.boardPaper === S.board.paper); });
+      E.boardBgBtns.forEach(function(btn){
+        var bgMatch = btn.dataset.boardBg === S.board.backgroundColor;
+        btn.classList.toggle('is-active', bgMatch);
+        btn.setAttribute('aria-pressed', bgMatch ? 'true' : 'false');
+      });
       if(E.pageSizeSelect) E.pageSizeSelect.value = S.board.pageSize;
       E.textAlignBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textAlign === S.board.textAlign); });
       E.textWeightBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textWeight === String(S.board.textWeight)); });
       E.textStyleBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textStyle === S.board.textStyle); });
-      if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid', 'board-paper-guide'); E.boardPlane.classList.add('board-paper-' + S.board.paper); }
+      if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid', 'board-paper-guide'); E.boardPlane.classList.add('board-paper-' + S.board.paper); E.boardPlane.style.setProperty('--board-bg', S.board.backgroundColor || '#ffffff'); }
       if(E.boardPreview) E.boardPreview.style.cursor = S.board.tool === 'pan' ? 'grab' : (S.board.tool === 'select' ? 'default' : (S.board.tool === 'text' ? 'text' : 'crosshair'));
       if(E.shapePanel) E.shapePanel.classList.toggle('is-open', S.board.shapesOpen);
       if(E.shapeToggleBtn) E.shapeToggleBtn.setAttribute('aria-expanded', S.board.shapesOpen ? 'true' : 'false');
       if(E.boardFillToggleBtn) { E.boardFillToggleBtn.classList.toggle('is-active', !S.board.shapeFillEnabled); E.boardFillToggleBtn.innerHTML = S.board.shapeFillEnabled ? 'Dolu' : 'Boş'; }
       if(E.boardSizeSlider) E.boardSizeSlider.value = String(S.board.size);
+      E.boardSizePresetBtns.forEach(function(btn){ btn.classList.toggle('is-active', Number(btn.dataset.boardSizePreset) === Number(S.board.size)); });
       if(E.shapeSizeSlider) E.shapeSizeSlider.value = String(S.board.shapeSize);
       if(E.boardTextSizeSlider) E.boardTextSizeSlider.value = String(S.board.textSize);
+      updateBoardZoomUi();
       syncActiveTextStyles(); syncPageUI();
       positionBoardToolbar();
     }
@@ -1405,6 +1502,7 @@
       if(item.tool === 'eraser') { return { color: 'rgba(0,0,0,1)', width: item.size * 1.8, alpha: 1, composite: 'destination-out', dash: [] }; }
       if(item.tool === 'highlighter') { return { color: item.strokeColor || item.color, width: Math.max(item.size * 2.2, 14), alpha: 0.26, composite: 'multiply', dash: [] }; }
       if(item.tool === 'chalk') { return { color: item.strokeColor || item.color, width: Math.max(item.size * 1.25, 5), alpha: 0.86, composite: 'source-over', dash: [] }; }
+      if(item.tool === 'pencil') { return { color: item.strokeColor || item.color, width: Math.max(item.size * 0.72, 1.2), alpha: 0.78, composite: 'source-over', dash: [] }; }
       return { color: item.strokeColor || item.color, width: item.size, alpha: 1, composite: 'source-over', dash: item.tool === 'dashline' ? [12, 10] : [] };
     }
     function applyBoardBrush(ctx, item) { var style = boardStrokeStyle(item); ctx.globalCompositeOperation = style.composite; ctx.globalAlpha = style.alpha; ctx.strokeStyle = style.color; ctx.fillStyle = style.color; ctx.lineWidth = style.width; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.setLineDash(style.dash); }
@@ -1412,25 +1510,62 @@
       var style = boardStrokeStyle(item);
       var color = style.color || item.strokeColor || item.color || '#1f2142';
       var dist = Math.hypot(to.x - from.x, to.y - from.y);
-      var steps = Math.max(2, Math.ceil(dist / 2));
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = color;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = 0.28;
+      ctx.lineWidth = style.width;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      var passes = 4;
+      for(var p = 0; p < passes; p += 1) {
+        ctx.globalAlpha = 0.08 + Math.random() * 0.12;
+        ctx.lineWidth = Math.max(1, style.width * (0.38 + Math.random() * 0.35));
+        ctx.beginPath();
+        ctx.moveTo(from.x + (Math.random() - 0.5) * style.width * 0.8, from.y + (Math.random() - 0.5) * style.width * 0.8);
+        ctx.lineTo(to.x + (Math.random() - 0.5) * style.width * 0.8, to.y + (Math.random() - 0.5) * style.width * 0.8);
+        ctx.stroke();
+      }
+      var steps = Math.max(2, Math.ceil(dist / 3));
       ctx.fillStyle = color;
       for(var i = 0; i <= steps; i += 1) {
         var t = i / steps;
-        var x = from.x + (to.x - from.x) * t + (Math.random() - 0.5) * style.width * 0.9;
-        var y = from.y + (to.y - from.y) * t + (Math.random() - 0.5) * style.width * 0.9;
-        ctx.globalAlpha = 0.18 + Math.random() * 0.5;
+        var x = from.x + (to.x - from.x) * t + (Math.random() - 0.5) * style.width * 1.35;
+        var y = from.y + (to.y - from.y) * t + (Math.random() - 0.5) * style.width * 1.35;
+        ctx.globalAlpha = 0.08 + Math.random() * 0.24;
         ctx.beginPath();
-        ctx.arc(x, y, Math.max(1.2, style.width * (0.28 + Math.random() * 0.35)), 0, Math.PI * 2);
+        ctx.arc(x, y, Math.max(0.55, style.width * (0.05 + Math.random() * 0.13)), 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
     }
-    function drawStrokePath(ctx, item) { if(!item.points || item.points.length < 2) return; if(item.tool === 'chalk') { for(var i = 1; i < item.points.length; i += 1) drawChalkSegment(ctx, item, item.points[i - 1], item.points[i]); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; return; } applyBoardBrush(ctx, item); ctx.beginPath(); ctx.moveTo(item.points[0].x, item.points[0].y); for(var j = 1; j < item.points.length; j += 1) { ctx.lineTo(item.points[j].x, item.points[j].y); } ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    function drawPencilSegment(ctx, item, from, to) {
+      var style = boardStrokeStyle(item);
+      var color = style.color || item.strokeColor || item.color || '#1f2142';
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = color;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for(var p = 0; p < 3; p += 1) {
+        ctx.globalAlpha = 0.28 + Math.random() * 0.2;
+        ctx.lineWidth = Math.max(0.7, style.width * (0.65 + Math.random() * 0.55));
+        ctx.beginPath();
+        ctx.moveTo(from.x + (Math.random() - 0.5) * style.width, from.y + (Math.random() - 0.5) * style.width);
+        ctx.lineTo(to.x + (Math.random() - 0.5) * style.width, to.y + (Math.random() - 0.5) * style.width);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    function drawStrokePath(ctx, item) { if(!item.points || item.points.length < 2) return; if(item.tool === 'chalk' || item.tool === 'pencil') { for(var i = 1; i < item.points.length; i += 1) { if(item.tool === 'chalk') drawChalkSegment(ctx, item, item.points[i - 1], item.points[i]); else drawPencilSegment(ctx, item, item.points[i - 1], item.points[i]); } ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; return; } applyBoardBrush(ctx, item); ctx.beginPath(); ctx.moveTo(item.points[0].x, item.points[0].y); for(var j = 1; j < item.points.length; j += 1) { ctx.lineTo(item.points[j].x, item.points[j].y); } ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
     function drawStrokeSegment(ctx, item, from, to) {
       if(!ctx || !from || !to) return;
       if(item.tool === 'chalk') { drawChalkSegment(ctx, item, from, to); return; }
+      if(item.tool === 'pencil') { drawPencilSegment(ctx, item, from, to); return; }
       applyBoardBrush(ctx, item);
       ctx.beginPath();
       ctx.moveTo(from.x, from.y);
@@ -1516,11 +1651,11 @@
 
     function commitTextOverlay(save) {
       var active = S.board.activeText; if(!active) return; var textarea = active.el; var text = textarea.value.trim();
-      if(save && text) { pushBoardItem({ kind: 'text', text: text, x: active.x, y: active.y, color: S.board.strokeColor, fontSize: S.board.textSize, textAlign: S.board.textAlign, textWeight: S.board.textWeight, textStyle: S.board.textStyle, boxWidth: active.el.offsetWidth }); }
+      if(save && text) { pushBoardItem({ kind: 'text', text: text, x: active.x, y: active.y, color: S.board.strokeColor, fontSize: S.board.textSize, textAlign: S.board.textAlign, textWeight: S.board.textWeight, textStyle: S.board.textStyle, boxWidth: active.el.offsetWidth / Math.max(0.1, S.board.zoom || 1) }); }
       textarea.remove(); S.board.activeText = null;
     }
-    function syncActiveTextStyles() { if(!S.board.activeText) return; var ta = S.board.activeText.el; ta.style.color = S.board.strokeColor; ta.style.textAlign = S.board.textAlign; ta.style.fontWeight = S.board.textWeight; ta.style.fontStyle = S.board.textStyle; ta.style.fontSize = S.board.textSize + 'px'; }
-    function placeTextBox(point) { commitTextOverlay(false); var ta = document.createElement('textarea'); ta.className = 'board-overlay-text'; ta.style.left = Math.max(10, point.x) + 'px'; ta.style.top = Math.max(10, point.y) + 'px'; ta.placeholder = 'Yazınızı girin'; E.boardPlane.appendChild(ta); ta.focus(); S.board.activeText = { el: ta, x: point.x, y: point.y }; syncActiveTextStyles(); ta.addEventListener('keydown', function(evt) { if(evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); commitTextOverlay(true); } else if(evt.key === 'Escape') { evt.preventDefault(); commitTextOverlay(false); } }); ta.addEventListener('blur', function() { commitTextOverlay(true); }); }
+    function syncActiveTextStyles() { if(!S.board.activeText) return; var zoom = Math.max(0.1, S.board.zoom || 1); var ta = S.board.activeText.el; ta.style.left = Math.max(10, S.board.activeText.x * zoom) + 'px'; ta.style.top = Math.max(10, S.board.activeText.y * zoom) + 'px'; ta.style.color = S.board.strokeColor; ta.style.textAlign = S.board.textAlign; ta.style.fontWeight = S.board.textWeight; ta.style.fontStyle = S.board.textStyle; ta.style.fontSize = (S.board.textSize * zoom) + 'px'; }
+    function placeTextBox(point) { commitTextOverlay(false); var zoom = Math.max(0.1, S.board.zoom || 1); var ta = document.createElement('textarea'); ta.className = 'board-overlay-text'; ta.style.left = Math.max(10, point.x * zoom) + 'px'; ta.style.top = Math.max(10, point.y * zoom) + 'px'; ta.placeholder = 'Yazınızı girin'; E.boardPlane.appendChild(ta); ta.focus(); S.board.activeText = { el: ta, x: point.x, y: point.y }; syncActiveTextStyles(); ta.addEventListener('keydown', function(evt) { if(evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); commitTextOverlay(true); } else if(evt.key === 'Escape') { evt.preventDefault(); commitTextOverlay(false); } }); ta.addEventListener('blur', function() { commitTextOverlay(true); }); }
 
     function startBoardDraw(point) {
       if(S.board.tool === 'select') {
@@ -1628,6 +1763,20 @@
     function setTextStyle(value) { S.board.textStyle = value; syncBoardUI(); }
     function setTextSize(value) { S.board.textSize = value; syncBoardUI(); }
     function setBoardPaper(paper) { S.board.paper = paper; syncBoardUI(); scheduleBoardAutosave(); }
+    function hexLuma(color) {
+      var hex = String(color || '#ffffff').replace('#', '');
+      if(hex.length !== 6) return 255;
+      var r = parseInt(hex.slice(0,2), 16), g = parseInt(hex.slice(2,4), 16), b = parseInt(hex.slice(4,6), 16);
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+    function setBoardBackground(color) {
+      S.board.backgroundColor = color || '#ffffff';
+      var bgIsDark = hexLuma(S.board.backgroundColor) < 90;
+      var strokeIsDark = hexLuma(S.board.strokeColor) < 90;
+      if(bgIsDark && strokeIsDark) { S.board.strokeColor = '#ffffff'; S.board.strokeColorName = COLOR_NAMES['#ffffff']; }
+      if(!bgIsDark && S.board.strokeColor === '#ffffff') { S.board.strokeColor = '#1f2142'; S.board.strokeColorName = COLOR_NAMES['#1f2142']; }
+      syncBoardUI(); resizeBoard(); scheduleBoardAutosave();
+    }
     function clearBoard() { commitTextOverlay(false); var page = getActivePage(); page.items = []; S.board.selectedItem = null; saveSnapshot(); clearPreview(); redrawBoard(); }
     function undoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex > 0) { page.undoIndex--; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
     function redoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex < page.undoStack.length - 1) { page.undoIndex++; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
@@ -1635,7 +1784,7 @@
 
     function getCompositeDataURL() {
       var comp = document.createElement('canvas'); comp.width = E.boardCanvas.width; comp.height = E.boardCanvas.height; var ctx = comp.getContext('2d');
-      ctx.fillStyle = S.board.paper === 'guide' ? '#e6f8ff' : '#ffffff'; ctx.fillRect(0, 0, comp.width, comp.height);
+      ctx.fillStyle = S.board.backgroundColor || (S.board.paper === 'guide' ? '#e6f8ff' : '#ffffff'); ctx.fillRect(0, 0, comp.width, comp.height);
       var ratio = window.devicePixelRatio || 1; var step = 34 * ratio;
       if (S.board.paper === 'lined') { ctx.strokeStyle = 'rgba(115,128,255,0.16)'; ctx.lineWidth = 1.5 * ratio; ctx.beginPath(); for (var y = step; y < comp.height; y += step) { ctx.moveTo(0, y); ctx.lineTo(comp.width, y); } ctx.stroke(); } 
       else if (S.board.paper === 'grid') { ctx.strokeStyle = 'rgba(115,128,255,0.12)'; ctx.lineWidth = 1 * ratio; ctx.beginPath(); for (var yy = step; yy < comp.height; yy += step) { ctx.moveTo(0, yy); ctx.lineTo(comp.width, yy); } for (var xx = step; xx < comp.width; xx += step) { ctx.moveTo(xx, 0); ctx.lineTo(xx, comp.height); } ctx.stroke(); }
@@ -1644,7 +1793,7 @@
         var lineW = 2 * ratio;
         ctx.lineWidth = lineW;
         for (var gy = 0; gy < comp.height; gy += guideStep) {
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = S.board.backgroundColor || '#ffffff';
           ctx.fillRect(0, gy + 2 * ratio, comp.width, 30 * ratio);
           ctx.fillStyle = 'rgba(255,250,184,0.76)';
           ctx.fillRect(0, gy + 34 * ratio, comp.width, 30 * ratio);
@@ -1669,8 +1818,12 @@
       });
       E.boardToolbarHandle.addEventListener('pointermove', function(evt){
         if(!drag.active) return; evt.preventDefault(); var stageRect = E.boardStage.getBoundingClientRect(); var width = E.boardToolbar.offsetWidth; var height = E.boardToolbar.offsetHeight; var left = evt.clientX - stageRect.left - drag.dx; var top = evt.clientY - stageRect.top - drag.dy;
-        S.board.toolbarLeft = Math.max(10, Math.min(stageRect.width - width - 10, left));
-        S.board.toolbarTop = Math.max(10, Math.min(stageRect.height - height - 10, top));
+        var contentLeft = E.boardStage.scrollLeft + left;
+        var contentTop = E.boardStage.scrollTop + top;
+        var maxLeft = Math.max(10, (S.board.displayWidth || stageRect.width) - width - 10);
+        var maxTop = Math.max(10, (S.board.displayHeight || stageRect.height) - height - 10);
+        S.board.toolbarLeft = Math.max(10, Math.min(maxLeft, contentLeft));
+        S.board.toolbarTop = Math.max(10, Math.min(maxTop, contentTop));
         positionBoardToolbar();
       });
       function endDrag(evt) { if(!drag.active) return; drag.active = false; E.boardToolbar.classList.remove('is-dragging'); scheduleBoardAutosave(); try { E.boardToolbarHandle.releasePointerCapture(evt.pointerId); } catch(err) {} }
@@ -1725,7 +1878,7 @@
 
       function onPointerMove(e) {
           if (!activeAction) return; e.preventDefault();
-          let currentBoardPt = getBoardPoint(e); let startBoardPt = getBoardPoint({clientX: startMouse.x, clientY: startMouse.y});
+          let currentBoardPt = getBoardContentPoint(e); let startBoardPt = getBoardContentPoint({clientX: startMouse.x, clientY: startMouse.y});
           let dx = currentBoardPt.x - startBoardPt.x; let dy = currentBoardPt.y - startBoardPt.y;
 
           if (activeAction === 'drag') { state.x = startState.x + dx; state.y = startState.y + dy; } 
@@ -1754,8 +1907,8 @@
                 if (state.x === 0 && state.y === 0 && E.boardStage) {
                     var scrollLeft = E.boardStage.scrollLeft; var scrollTop = E.boardStage.scrollTop;
                     var visibleWidth = E.boardStage.clientWidth; var visibleHeight = E.boardStage.clientHeight;
-                    // Tam görünür ekranın üst orta kısmı
-                    state.x = scrollLeft + (visibleWidth / 2); state.y = scrollTop + (visibleHeight / 3);
+                    state.x = scrollLeft + (visibleWidth / 2);
+                    state.y = scrollTop + Math.max(260, Math.min(340, visibleHeight * 0.38));
                 }
                 updateTransform();
             } else { protractor.style.display = 'none'; }
@@ -2022,12 +2175,66 @@
       if(thicknessDot) thicknessDot.style.background = color || '#1f2142';
       syncBoardColorSelection(color);
     }
+    function trackBoardTouchPointer(evt) {
+      if(evt.pointerType !== 'touch') return;
+      S.board.touchPointers[evt.pointerId] = { clientX: evt.clientX, clientY: evt.clientY };
+    }
+    function releaseBoardTouchPointer(pointerId) {
+      delete S.board.touchPointers[pointerId];
+      if(Object.keys(S.board.touchPointers).length < 2) S.board.pinch.active = false;
+    }
+    function getBoardTouchPointers() {
+      return Object.keys(S.board.touchPointers).map(function(id) { return S.board.touchPointers[id]; });
+    }
+    function getTouchDistance(points) {
+      if(points.length < 2) return 0;
+      return Math.hypot(points[1].clientX - points[0].clientX, points[1].clientY - points[0].clientY);
+    }
+    function getTouchCenter(points) {
+      return {
+        clientX: (points[0].clientX + points[1].clientX) / 2,
+        clientY: (points[0].clientY + points[1].clientY) / 2
+      };
+    }
+    function cancelTouchDrawingForPinch() {
+      Object.keys(S.board.activeStrokes || {}).forEach(function(pointerId) {
+        var stroke = S.board.activeStrokes[pointerId];
+        if(stroke && stroke.pointerType === 'touch') delete S.board.activeStrokes[pointerId];
+      });
+      if(S.board.activePointerType === 'touch') {
+        S.board.drawing = false;
+        S.board.activePointerId = null;
+        S.board.activePointerType = null;
+        S.board.points = [];
+        S.board.lastPoint = null;
+        S.board.selectAction = null;
+        clearPreview();
+      }
+      redrawBoard();
+    }
+    function beginBoardPinch() {
+      var points = getBoardTouchPointers();
+      if(points.length < 2) return;
+      cancelTouchDrawingForPinch();
+      S.board.pinch.active = true;
+      S.board.pinch.startDistance = Math.max(1, getTouchDistance(points));
+      S.board.pinch.startZoom = S.board.zoom || 1;
+    }
+    function moveBoardPinch() {
+      var points = getBoardTouchPointers();
+      if(!S.board.pinch.active || points.length < 2) return false;
+      var distance = Math.max(1, getTouchDistance(points));
+      var center = getTouchCenter(points);
+      setBoardZoom(S.board.pinch.startZoom * (distance / S.board.pinch.startDistance), center);
+      return true;
+    }
     function beginMultiStroke(evt) {
       var point = getBoardPoint(evt);
       var stroke = {
         tool: S.board.tool,
         strokeColor: S.board.strokeColor,
         size: S.board.size,
+        pointerType: evt.pointerType || 'mouse',
         points: [{ x: point.x, y: point.y }],
         lastPoint: { x: point.x, y: point.y }
       };
@@ -2069,6 +2276,7 @@
       evt.preventDefault();
       endBoardDraw(getBoardPoint(evt));
       S.board.activePointerId = null;
+      S.board.activePointerType = null;
       try { E.boardPreview.releasePointerCapture(evt.pointerId); } catch(err) {}
     }
     function bindWhiteboardControls() {
@@ -2107,6 +2315,10 @@
       });
       E.boardPaletteBtns.forEach(function(btn) { btn.addEventListener('click', function() { setBoardPalette(btn.dataset.boardPalette); }); });
       E.boardPaperBtns.forEach(function(btn) { btn.addEventListener('click', function() { setBoardPaper(btn.dataset.boardPaper); }); });
+      E.boardBgBtns.forEach(function(btn) {
+        btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
+        btn.addEventListener('click', function() { setBoardBackground(btn.dataset.boardBg); });
+      });
       E.textAlignBtns.forEach(function(btn) { btn.addEventListener('click', function() { setTextAlign(btn.dataset.textAlign); }); });
       E.textWeightBtns.forEach(function(btn) { btn.addEventListener('click', function() { setTextWeight(btn.dataset.textWeight); }); });
       E.textStyleBtns.forEach(function(btn) { btn.addEventListener('click', function() { setTextStyle(btn.dataset.textStyle); }); });
@@ -2123,6 +2335,7 @@
       if(E.boardSaveBtn) E.boardSaveBtn.addEventListener('click', saveBoard);
       if(E.boardPrintBtn) E.boardPrintBtn.addEventListener('click', printBoard);
       if(E.boardSizeSlider) E.boardSizeSlider.addEventListener('input', function() { setBoardSize(Number(E.boardSizeSlider.value)); });
+      E.boardSizePresetBtns.forEach(function(btn) { btn.addEventListener('click', function() { setBoardSize(Number(btn.dataset.boardSizePreset)); }); });
       if(E.shapeSizeSlider) E.shapeSizeSlider.addEventListener('input', function() { setShapeSize(Number(E.shapeSizeSlider.value)); });
       if(E.boardTextSizeSlider) E.boardTextSizeSlider.addEventListener('input', function() { setTextSize(Number(E.boardTextSizeSlider.value)); });
       if(E.prevPageBtn) E.prevPageBtn.addEventListener('click', prevPage);
@@ -2130,6 +2343,9 @@
       if(E.addPageBtn) E.addPageBtn.addEventListener('click', addPage);
       if(E.deletePageBtn) E.deletePageBtn.addEventListener('click', deletePage);
       if(E.pageSizeSelect) E.pageSizeSelect.addEventListener('change', function() { setPageSize(E.pageSizeSelect.value); });
+      if(E.boardZoomOutBtn) E.boardZoomOutBtn.addEventListener('click', function() { setBoardZoom((S.board.zoom || 1) / 1.18); });
+      if(E.boardZoomInBtn) E.boardZoomInBtn.addEventListener('click', function() { setBoardZoom((S.board.zoom || 1) * 1.18); });
+      if(E.boardZoomResetBtn) E.boardZoomResetBtn.addEventListener('click', function() { setBoardZoom(1); });
     }
     function bindWhiteboardPointerEvents() {
       if(!E.boardPreview) return;
@@ -2141,6 +2357,15 @@
         if(!E.boardStage) return;
         if(evt.target.closest && evt.target.closest('#boardToolbar')) return;
         evt.preventDefault();
+        if(evt.pointerType === 'touch') {
+          trackBoardTouchPointer(evt);
+          try { E.boardPreview.setPointerCapture(evt.pointerId); } catch(err) {}
+          if(getBoardTouchPointers().length > 1) {
+            commitTextOverlay(true);
+            beginBoardPinch();
+            return;
+          }
+        }
         commitTextOverlay(true);
         if(boardCanDraw(S.board.tool)) {
           beginMultiStroke(evt);
@@ -2149,6 +2374,7 @@
         }
         if(S.board.activePointerId !== null && S.board.activePointerId !== evt.pointerId) return;
         S.board.activePointerId = evt.pointerId;
+        S.board.activePointerType = evt.pointerType || 'mouse';
         S.board.panStartClientX = evt.clientX;
         S.board.panStartClientY = evt.clientY;
         startBoardDraw(getBoardPoint(evt));
@@ -2159,6 +2385,13 @@
         }
       }, { passive: false });
       E.boardPreview.addEventListener('pointermove', function(evt) {
+        if(evt.pointerType === 'touch') {
+          trackBoardTouchPointer(evt);
+          if(moveBoardPinch()) {
+            evt.preventDefault();
+            return;
+          }
+        }
         if(S.board.activeStrokes[evt.pointerId]) {
           evt.preventDefault();
           moveMultiStroke(evt);
@@ -2170,6 +2403,13 @@
         events.forEach(function(ev) { moveBoardDraw(getBoardPoint(ev), ev); });
       }, { passive: false });
       E.boardPreview.addEventListener('pointerup', function(evt) {
+        if(evt.pointerType === 'touch' && S.board.pinch.active) {
+          evt.preventDefault();
+          releaseBoardTouchPointer(evt.pointerId);
+          try { E.boardPreview.releasePointerCapture(evt.pointerId); } catch(err) {}
+          return;
+        }
+        if(evt.pointerType === 'touch') releaseBoardTouchPointer(evt.pointerId);
         if(S.board.activeStrokes[evt.pointerId]) {
           evt.preventDefault();
           endMultiStroke(evt);
@@ -2179,6 +2419,11 @@
         finishSinglePointer(evt);
       });
       E.boardPreview.addEventListener('pointercancel', function(evt) {
+        if(evt.pointerType === 'touch' && S.board.pinch.active) {
+          releaseBoardTouchPointer(evt.pointerId);
+          return;
+        }
+        if(evt.pointerType === 'touch') releaseBoardTouchPointer(evt.pointerId);
         if(S.board.activeStrokes[evt.pointerId]) {
           endMultiStroke(evt);
           return;
@@ -2204,6 +2449,7 @@
       if(k==='p') setBoardTool('pen');
       if(k==='h') setBoardTool('highlighter');
       if(k==='c') setBoardTool('chalk');
+      if(k==='k') setBoardTool('pencil');
       if(k==='e') setBoardTool('eraser');
       if(k==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();undoBoard();}
     });

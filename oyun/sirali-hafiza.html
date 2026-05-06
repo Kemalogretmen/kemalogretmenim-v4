@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Işıklı Notalar - Hafıza ve Dikkat Oyunu</title>
+  <meta name="description" content="Çocuklar için dikkat, görsel ve işitsel hafıza geliştirici oyun.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Dinamik Tema (Varsayılan 4 Yaş - Sıcak/Oyuncu) */
+      --hero-bg: linear-gradient(135deg, #ff6a00, #ee0979);
+      --board-bg: linear-gradient(135deg, #2c3e50, #000000);
+      --board-border: #4a5d73;
+    }
+
+    body[data-theme="5"] {
+      --hero-bg: linear-gradient(135deg, #11998e, #38ef7d);
+      --board-bg: linear-gradient(135deg, #1a2a24, #0d1612);
+      --board-border: #304e43;
+    }
+
+    body[data-theme="6"] {
+      --hero-bg: linear-gradient(135deg, #36d1dc, #5b86e5);
+      --board-bg: linear-gradient(135deg, #15213d, #090e1a);
+      --board-border: #2a3f6b;
+    }
+
+    body[data-theme="7"] {
+      --hero-bg: linear-gradient(135deg, #8e2de2, #4a00e0);
+      --board-bg: linear-gradient(135deg, #1e1329, #0f0914);
+      --board-border: #3a264f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255, 209, 102, 0.24), transparent 24%),
+        radial-gradient(circle at 88% 12%, rgba(53, 167, 255, 0.18), transparent 26%),
+        linear-gradient(180deg, #fffdf6 0%, #eff8ff 55%, #f8fbff 100%);
+      min-height: 100vh;
+      transition: background 0.5s ease;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      color: white;
+      background: var(--hero-bg);
+      transition: background 0.5s ease;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text {
+      flex: 1 1 min-content;
+      min-width: 250px;
+    }
+
+    .hero h1 {
+      margin: 6px 0 4px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 70px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat span {
+      display: block;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 14px 18px;
+      background: #f8fbff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setup-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      padding: 16px;
+      box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-btn,
+    .control-btn {
+      border: 0;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-btn {
+      min-height: 68px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600;}
+
+    .choice-btn:hover { transform: translateY(-2px); }
+
+    .choice-btn.is-active {
+      background: #ecf9df;
+      border-color: rgba(94, 165, 28, 0.46);
+      color: #2e6812;
+      box-shadow: 0 8px 16px rgba(94, 165, 28, 0.1);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .control-btn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--muted);
+    }
+
+    .control-btn.is-primary {
+      background: #ffd166;
+      border-color: #ffd166;
+      color: #513707;
+      box-shadow: 0 8px 16px rgba(255, 209, 102, 0.2);
+    }
+    
+    .control-btn.is-success {
+      background: #a7f36b;
+      border-color: #a7f36b;
+      color: #2e6812;
+      box-shadow: 0 8px 16px rgba(167, 243, 107, 0.3);
+      font-size: 1.1rem;
+      padding: 10px 24px;
+    }
+
+    .control-btn.is-active {
+      background: #fff3ce;
+      border-color: rgba(255, 209, 102, 0.8);
+      color: #79530c;
+    }
+
+    .board-wrap {
+      padding: clamp(10px, 3vw, 20px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .board {
+      --cols: 2;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      gap: clamp(10px, 2.5vw, 20px);
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: clamp(16px, 3vw, 32px);
+      border-radius: 36px;
+      background: var(--board-bg);
+      border: 8px solid var(--board-border);
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,.05), 0 24px 48px rgba(0, 0, 0, 0.2);
+      transition: background 0.5s ease, border-color 0.5s ease;
+    }
+
+    .color-btn {
+      aspect-ratio: 1;
+      width: 100%;
+      border-radius: 24px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      background-color: var(--btn-color);
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3), inset 0 8px 16px rgba(255,255,255,0.2);
+      transition: transform 0.1s, filter 0.1s, box-shadow 0.1s;
+      opacity: 0.6;
+    }
+
+    .color-btn.is-lit,
+    .color-btn:active:not(:disabled) {
+      opacity: 1;
+      transform: scale(1.05);
+      filter: brightness(1.4) saturate(1.2);
+      box-shadow: 0 0 30px var(--btn-color), inset 0 8px 16px rgba(255,255,255,0.4);
+      border-color: rgba(255, 255, 255, 0.8);
+      z-index: 10;
+    }
+    
+    .color-btn:disabled {
+      cursor: not-allowed;
+    }
+
+    .feedback {
+      width: 100%;
+      max-width: 600px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: #eef5ff;
+      color: #38516d;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; transform: scale(1.02); }
+    .feedback.bad { background: #fff0f0; color: #982727; transform: scale(0.98); }
+    .feedback.action { background: #fff4d5; color: #75540b; box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .board { gap: 10px; padding: 16px; border-width: 5px; border-radius: 24px; }
+      .color-btn { border-radius: 16px; border-width: 2px; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-theme="4">
+  <main class="page">
+    <section class="game-shell" aria-label="Sıralı Hafıza Oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Dikkat • Işıklı Notalar</span>
+          <h1>Görsel Hafıza</h1>
+          <p>Yanan ışıkları dikkatle izle ve aynı sırayla tekrar et. Bakalım hafızan ne kadar güçlü?</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>Seviye</span><strong id="levelText">1</strong></div>
+          <div class="stat"><span>Rekor</span><strong id="highScoreText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Yaş ve Zorluk Seviyesi</h2>
+          <div class="choice-row" id="ageChoices">
+            <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>4 Renk (Yavaş)</span></button>
+            <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>6 Renk (Orta)</span></button>
+            <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>9 Renk (Hızlı)</span></button>
+            <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>16 Renk (Çok Hızlı)</span></button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+        <button class="control-btn is-primary" type="button" id="resetBtn">Sıfırla</button>
+      </nav>
+
+      <section class="board-wrap">
+        <div class="feedback" id="feedback">Oyuna başlamak için Başla butonuna tıkla.</div>
+        <div class="board" id="board" aria-label="Oyun Butonları"></div>
+        <button class="control-btn is-success" type="button" id="startBtn">▶ Oyuna Başla</button>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+    const ageConfigs = {
+      4: { cols: 2, count: 4, speed: 800, gap: 400 },
+      5: { cols: 3, count: 6, speed: 600, gap: 300 },
+      6: { cols: 3, count: 9, speed: 500, gap: 250 },
+      7: { cols: 4, count: 16, speed: 400, gap: 200 }
+    };
+
+    const PALETTE = [
+      "#ff4136", "#0074d9", "#2ecc40", "#ffdc00", 
+      "#b10dc9", "#ff851b", "#39cccc", "#f012be", 
+      "#01ff70", "#85144b", "#7fdbff", "#ff6b6b", 
+      "#cddc39", "#9c27b0", "#795548", "#607d8b"
+    ];
+
+    const FREQUENCIES = [
+      261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 
+      587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50, 1174.66
+    ];
+
+    const state = {
+      age: 4,
+      sequence: [],
+      playerStep: 0,
+      level: 1,
+      highScore: 0,
+      soundOn: true,
+      isPlaying: false,
+      isShowing: false,
+      timerId: null
+    };
+
+    const els = {
+      body: document.body,
+      setup: document.getElementById("setupScreen"),
+      board: document.getElementById("board"),
+      levelText: document.getElementById("levelText"),
+      highScoreText: document.getElementById("highScoreText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle"),
+      startBtn: document.getElementById("startBtn"),
+      resetBtn: document.getElementById("resetBtn")
+    };
+
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    // Notaların ses seviyesi (gain) artırıldı, daha temiz bir ton için "sine" varsayılan yapıldı.
+    function playTone(index, type = "sine", duration = 0.3) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const freq = FREQUENCIES[index % FREQUENCIES.length];
+      
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      
+      gain.gain.setValueAtTime(0.0001, now);
+      // Ses yüksekliği 0.1'den 0.2'ye çıkarıldı.
+      gain.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.1);
+    }
+
+    function playErrorSound() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      oscillator.type = "sawtooth";
+      oscillator.frequency.setValueAtTime(150, now);
+      oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.4);
+      
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
+      
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 0.5);
+    }
+
+    function playSuccessSound() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      
+      // Daha belirgin ve melodik bir başarı sesi (Do-Mi-Sol-Do arpeji)
+      const melody = [523.25, 659.25, 783.99, 1046.50];
+      melody.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const startTime = now + i * 0.15; // Notalar arası boşluk artırıldı
+        
+        osc.frequency.setValueAtTime(freq, startTime);
+        
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.15, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3);
+        
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.4);
+      });
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function renderBoard() {
+      const cfg = ageConfigs[state.age];
+      els.board.style.setProperty("--cols", cfg.cols);
+      els.board.innerHTML = "";
+      
+      for (let i = 0; i < cfg.count; i++) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "color-btn";
+        button.dataset.index = i;
+        button.style.setProperty("--btn-color", PALETTE[i]);
+        button.setAttribute("aria-label", `Renk Butonu ${i+1}`);
+        button.disabled = true; 
+        
+        button.addEventListener("pointerdown", (e) => {
+          if (!state.isPlaying || state.isShowing) return;
+          e.preventDefault(); 
+          handlePlayerInput(i, button);
+        });
+        
+        els.board.appendChild(button);
+      }
+    }
+
+    function lightUpButton(index, duration) {
+      return new Promise(resolve => {
+        const btn = els.board.querySelector(`[data-index="${index}"]`);
+        if (!btn) return resolve();
+        
+        btn.classList.add("is-lit");
+        playTone(index, "sine", duration / 1000);
+        
+        setTimeout(() => {
+          btn.classList.remove("is-lit");
+          resolve();
+        }, duration);
+      });
+    }
+
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    async function showSequence() {
+      state.isShowing = true;
+      toggleButtons(false);
+      const cfg = ageConfigs[state.age];
+      
+      setFeedback("Dikkatle izle...", "action");
+      await delay(800);
+      
+      for (let i = 0; i < state.sequence.length; i++) {
+        await lightUpButton(state.sequence[i], cfg.speed);
+        await delay(cfg.gap);
+      }
+      
+      state.isShowing = false;
+      toggleButtons(true);
+      setFeedback("Şimdi sıra sende! Aynı sırayla tıkla.", "");
+    }
+
+    function toggleButtons(enable) {
+      const buttons = els.board.querySelectorAll(".color-btn");
+      buttons.forEach(btn => btn.disabled = !enable);
+    }
+
+    function handlePlayerInput(index, button) {
+      // Tıklama sesi ve efekti daha uzun ve belirgin yapıldı
+      button.classList.add("is-lit");
+      playTone(index, "sine", 0.3);
+      setTimeout(() => button.classList.remove("is-lit"), 250);
+
+      const expectedIndex = state.sequence[state.playerStep];
+      
+      if (index === expectedIndex) {
+        state.playerStep++;
+        
+        if (state.playerStep === state.sequence.length) {
+          state.isShowing = true;
+          toggleButtons(false);
+          
+          if (state.level > state.highScore) {
+            state.highScore = state.level;
+            els.highScoreText.textContent = state.highScore;
+          }
+          
+          // ZAMANLAMA DÜZELTMESİ: Son notanın temiz duyulması için 400ms beklendi
+          setTimeout(() => {
+            playSuccessSound();
+            setFeedback("Harika! Hafızan çok güçlü. Bir sonraki seviye geliyor...", "good");
+          }, 400);
+          
+          setTimeout(() => {
+            state.level++;
+            els.levelText.textContent = state.level;
+            nextRound();
+          }, 2000); // Toplam bekleme süresi uzatıldı
+        }
+      } else {
+        gameOver();
+      }
+    }
+
+    function nextRound() {
+      state.playerStep = 0;
+      const cfg = ageConfigs[state.age];
+      const randomNext = Math.floor(Math.random() * cfg.count);
+      state.sequence.push(randomNext);
+      showSequence();
+    }
+
+    function gameOver() {
+      state.isPlaying = false;
+      state.isShowing = true;
+      toggleButtons(false);
+      playErrorSound();
+      
+      const buttons = els.board.querySelectorAll(".color-btn");
+      buttons.forEach(btn => {
+         btn.style.filter = "grayscale(100%)";
+      });
+      
+      setFeedback(`Eyvah! Yanlış renk. Oyun bitti. Toplam Seviye: ${state.level}`, "bad");
+      els.startBtn.classList.remove("hidden");
+      els.startBtn.textContent = "Tekrar Oyna";
+    }
+
+    function startGame() {
+      els.startBtn.classList.add("hidden");
+      
+      const buttons = els.board.querySelectorAll(".color-btn");
+      buttons.forEach(btn => btn.style.filter = "none");
+      
+      state.sequence = [];
+      state.playerStep = 0;
+      state.level = 1;
+      state.isPlaying = true;
+      els.levelText.textContent = state.level;
+      
+      nextRound();
+    }
+
+    function initSettings() {
+      state.isPlaying = false;
+      els.startBtn.classList.remove("hidden");
+      els.startBtn.textContent = "▶ Oyuna Başla";
+      els.levelText.textContent = "1";
+      els.body.setAttribute("data-theme", state.age);
+      renderBoard();
+      setFeedback("Yaş seviyesini seçin ve 'Başla' butonuna tıklayın.", "");
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    document.querySelectorAll("#ageChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        if(state.isPlaying && !confirm("Oyun devam ediyor. Seviyeyi değiştirirsen oyun sıfırlanacak. Emin misin?")) return;
+        state.age = Number(button.dataset.age);
+        selectButton("ageChoices", state.age, "age");
+        initSettings();
+      });
+    });
+
+    els.startBtn.addEventListener("click", () => {
+      getAudioContext();
+      startGame();
+    });
+
+    els.resetBtn.addEventListener("click", () => {
+      if(state.isPlaying && !confirm("Mevcut oyunu sıfırlamak istediğine emin misin?")) return;
+      initSettings();
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playTone(5, "sine", 0.1);
+    });
+
+    initSettings();
+  </script>
+</body>
+</html>

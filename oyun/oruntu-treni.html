@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Örüntü Treni - Mantık ve Zeka Oyunu</title>
+  <meta name="description" content="Çocuklar için örüntü tamamlama ve mantık yürütme oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Dinamik Tema (Varsayılan 4 Yaş - Güneşli) */
+      --hero-bg: linear-gradient(135deg, #FF9A9E, #FECFEF);
+      --hero-color: #513707;
+      --board-bg: linear-gradient(180deg, #85D8CE 0%, #085078 100%);
+      --track-color: #2c3e50;
+    }
+
+    body[data-theme="5"] {
+      --hero-bg: linear-gradient(135deg, #a8e063, #56ab2f);
+      --hero-color: #ffffff;
+      --board-bg: linear-gradient(180deg, #4cb8c4 0%, #3cd3ad 100%);
+    }
+
+    body[data-theme="6"] {
+      --hero-bg: linear-gradient(135deg, #4facfe, #00f2fe);
+      --hero-color: #ffffff;
+      --board-bg: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+    }
+
+    body[data-theme="7"] {
+      --hero-bg: linear-gradient(135deg, #667eea, #764ba2);
+      --hero-color: #ffffff;
+      --board-bg: linear-gradient(180deg, #141e30 0%, #243b55 100%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background: #f4f7fb;
+      min-height: 100vh;
+      transition: background 0.5s ease;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    /* ANA SİTEDEKİ ÇAKIŞMAYI ENGELLEYEN HERO AYARLARI */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      color: var(--hero-color);
+      background: var(--hero-bg);
+      transition: all 0.5s ease;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text {
+      flex: 1 1 min-content;
+      min-width: 250px;
+    }
+
+    .hero h1 {
+      margin: 6px 0 4px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      font-weight: 800;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      opacity: 0.9;
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.3);
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: inherit;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      color: inherit;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 14px 18px;
+      background: #f8fbff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setup-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      padding: 16px;
+      box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-btn,
+    .control-btn {
+      border: 0;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-btn {
+      min-height: 68px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600;}
+
+    .choice-btn:hover { transform: translateY(-2px); }
+
+    .choice-btn.is-active {
+      background: #ecf9df;
+      border-color: rgba(94, 165, 28, 0.46);
+      color: #2e6812;
+      box-shadow: 0 8px 16px rgba(94, 165, 28, 0.1);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .control-btn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--muted);
+    }
+
+    .control-btn.is-active {
+      background: #fff3ce;
+      border-color: rgba(255, 209, 102, 0.8);
+      color: #79530c;
+    }
+
+    /* OYUN ALANI (TREN VE RAYLAR) */
+    .board-wrap {
+      padding: clamp(16px, 4vw, 32px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      background: var(--board-bg);
+      border-bottom-left-radius: 30px;
+      border-bottom-right-radius: 30px;
+      transition: background 0.5s ease;
+    }
+
+    .train-container {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      max-width: 900px;
+      padding-bottom: 14px;
+      border-bottom: 8px solid var(--track-color);
+      position: relative;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+    }
+    
+    /* Tren Rayı Çizgileri */
+    .train-container::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      width: 100%;
+      height: 8px;
+      background-image: repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255,255,255,0.4) 20px, rgba(255,255,255,0.4) 30px);
+    }
+
+    .locomotive {
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      line-height: 1;
+      margin-right: 10px;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.3));
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    .wagon {
+      position: relative;
+      width: clamp(60px, 12vw, 90px);
+      height: clamp(60px, 12vw, 90px);
+      background: #ffffff;
+      border-radius: 12px 12px 4px 4px;
+      border: 4px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    /* Vagon Tekerlekleri */
+    .wagon::before, .wagon::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      width: clamp(16px, 3.5vw, 24px);
+      height: clamp(16px, 3.5vw, 24px);
+      background: #333;
+      border-radius: 50%;
+      border: 3px solid #ccc;
+    }
+    .wagon::before { left: 4px; }
+    .wagon::after { right: 4px; }
+
+    /* Vagon Bağlantısı */
+    .wagon + .wagon::before {
+      content: '';
+      position: absolute;
+      left: -12px;
+      top: 50%;
+      width: 8px;
+      height: 6px;
+      background: #333;
+      border-radius: 0;
+      border: none;
+    }
+
+    .wagon.is-missing {
+      background: rgba(255, 255, 255, 0.2);
+      border: 4px dashed #fff;
+      color: white;
+      font-size: 2.5rem;
+      font-weight: 900;
+      backdrop-filter: blur(4px);
+    }
+    .wagon.is-missing::before, .wagon.is-missing::after {
+       display: none; /* Boş vagonda tekerlek yok (veya tutulabilir) */
+    }
+    /* Ancak bağlantıyı geri getirmek için */
+    .wagon + .wagon.is-missing {
+      margin-left: 10px; /* Bağlantı yeri boşluğu */
+    }
+
+    .shape-svg {
+      width: 70%;
+      height: 70%;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+    }
+
+    /* SEÇENEKLER ALANI */
+    .options-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .option-btn {
+      width: clamp(70px, 15vw, 100px);
+      height: clamp(70px, 15vw, 100px);
+      background: white;
+      border: 4px solid #eef4fb;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .option-btn:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 14px 24px rgba(0,0,0,0.3);
+      border-color: #ffd166;
+    }
+
+    .option-btn.is-correct {
+      background: #e9f9df;
+      border-color: #5ea51c;
+      animation: pulse 0.5s ease;
+    }
+
+    .option-btn.is-wrong {
+      background: #fff0f0;
+      border-color: #ff6868;
+      animation: shake 0.4s ease;
+    }
+
+    .feedback {
+      width: 100%;
+      max-width: 600px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; transform: scale(1.02); border: 2px solid #a7f36b; }
+    .feedback.bad { background: #fff0f0; color: #982727; transform: scale(0.98); border: 2px solid #ffb3b3;}
+
+    .hidden { display: none !important; }
+
+    /* Animasyonlar */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+      .wagon + .wagon.is-missing { margin-left: 5px; }
+    }
+  </style>
+</head>
+<body data-theme="4">
+  <main class="page">
+    <section class="game-shell" aria-label="Örüntü Treni Oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Mantık • Örüntü Treni</span>
+          <h1>Eksik Vagonu Bul!</h1>
+          <p>Trenin vagonlarındaki şekiller belli bir kurala göre sıralanmış. Acaba soru işareti olan yere hangisi gelmeli?</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>Seviye</span><strong id="levelText">1</strong></div>
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Yaş ve Zorluk Seviyesi</h2>
+          <div class="choice-row" id="ageChoices">
+            <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>Basit Sıralama (A-B-A-B)</span></button>
+            <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>Orta Sıralama (A-A-B-B)</span></button>
+            <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>İleri Sıralama (A-B-B-A-B)</span></button>
+            <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>Karmaşık (A-B-C-D)</span></button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+      </nav>
+
+      <section class="board-wrap">
+        <div class="feedback" id="feedback">Kuralı keşfet ve aşağıdaki seçeneklerden doğru şekli bul.</div>
+        
+        <div class="train-container" id="trainContainer" aria-label="Tren Vagonları">
+          <!-- Vagonlar JS ile gelecek -->
+        </div>
+
+        <div class="options-container" id="optionsContainer">
+          <!-- Seçenekler JS ile gelecek -->
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+    // Yaş gruplarına göre örüntü kuralları
+    // length: Trenin toplam vagon sayısı
+    // templates: Örüntü formülleri (0,1,2,3 indeksleri farklı şekilleri temsil eder)
+    const ageConfigs = {
+      4: { length: 4, optionsCount: 3, templates: [ [0,1], [0,0,1,1] ] },         // ABAB, AABB
+      5: { length: 5, optionsCount: 4, templates: [ [0,0,1], [0,1,2] ] },         // AABAAB, ABCABC
+      6: { length: 6, optionsCount: 4, templates: [ [0,1,1], [0,1,0,2] ] },       // ABBABB, ABACABAC
+      7: { length: 7, optionsCount: 5, templates: [ [0,1,2,3], [0,1,1,2,2] ] }    // ABCDABCD, ABBCABBC
+    };
+
+    // Temel şekil ve renk havuzu
+    const SHAPES = [
+      { shape: "circle", color: "#ff4136" },
+      { shape: "square", color: "#0074d9" },
+      { shape: "triangle", color: "#2ecc40" },
+      { shape: "heart", color: "#ffdc00" },
+      { shape: "star", color: "#b10dc9" },
+      { shape: "diamond", color: "#ff851b" },
+      { shape: "pentagon", color: "#39cccc" },
+      { shape: "hexagon", color: "#f012be" }
+    ];
+
+    const state = {
+      age: 4,
+      level: 1,
+      score: 0,
+      soundOn: true,
+      currentQuestion: null,
+      locked: false
+    };
+
+    const els = {
+      body: document.body,
+      setup: document.getElementById("setupScreen"),
+      train: document.getElementById("trainContainer"),
+      options: document.getElementById("optionsContainer"),
+      levelText: document.getElementById("levelText"),
+      scoreText: document.getElementById("scoreText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle")
+    };
+
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function playTone(freq, type = "sine", duration = 0.3) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.1);
+    }
+
+    function playSuccess() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // Do-Mi-Sol-Do
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const startTime = now + i * 0.12;
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.15, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.4);
+      });
+    }
+
+    function playError() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    }
+
+    function shuffle(array) {
+      return array.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function shapeSvg(item) {
+      if(!item) return "";
+      const c = item.color;
+      if (item.shape === "square") return `<svg class="shape-svg" viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" fill="${c}" rx="10"/></svg>`;
+      if (item.shape === "triangle") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L90 85 H10 Z" fill="${c}" stroke-linejoin="round" stroke="${c}" stroke-width="5"/></svg>`;
+      if (item.shape === "circle") return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="${c}"/></svg>`;
+      if (item.shape === "heart") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 85 C20 60 10 40 20 25 C30 10 45 15 50 28 C55 15 70 10 80 25 C90 40 80 60 50 85 Z" fill="${c}"/></svg>`;
+      if (item.shape === "star") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 10 L62 38 L92 40 L68 58 L76 88 L50 70 L24 88 L32 58 L8 40 L38 38 Z" fill="${c}"/></svg>`;
+      if (item.shape === "diamond") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 10 L90 50 L50 90 L10 50 Z" fill="${c}"/></svg>`;
+      if (item.shape === "pentagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L90 40 L75 90 H25 L10 40 Z" fill="${c}"/></svg>`;
+      if (item.shape === "hexagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 15 H75 L95 50 L75 85 H25 L5 50 Z" fill="${c}"/></svg>`;
+      return "";
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function generateLevel() {
+      const config = ageConfigs[state.age];
+      const template = config.templates[Math.floor(Math.random() * config.templates.length)];
+      
+      const uniqueNeeded = Math.max(...template) + 1;
+      const selectedShapes = shuffle(SHAPES).slice(0, uniqueNeeded);
+
+      let sequence = [];
+      for (let i = 0; i < config.length; i++) {
+        sequence.push(selectedShapes[template[i % template.length]]);
+      }
+
+      // Hangi vagonun eksik olacağını seç. (Genelde son vagon, 6-7 yaşta sondan bir önceki de olabilir)
+      let missingIndex = sequence.length - 1;
+      if (state.age >= 6 && Math.random() > 0.5) {
+        missingIndex = sequence.length - 2;
+      }
+
+      const correctAnswer = sequence[missingIndex];
+      sequence[missingIndex] = null; // null = Soru işareti
+
+      // Seçenekleri oluştur
+      let options = [correctAnswer];
+      let pool = shuffle(SHAPES).filter(s => s.shape !== correctAnswer.shape || s.color !== correctAnswer.color);
+      
+      while(options.length < config.optionsCount) {
+        options.push(pool.pop());
+      }
+      options = shuffle(options);
+
+      state.currentQuestion = { sequence, missingIndex, correctAnswer, options };
+      renderBoard();
+    }
+
+    function renderBoard() {
+      // 1. Treni Çiz
+      els.train.innerHTML = '<div class="locomotive">🚂</div>';
+      
+      state.currentQuestion.sequence.forEach((item, index) => {
+        const wagon = document.createElement("div");
+        if (item === null) {
+          wagon.className = "wagon is-missing";
+          wagon.id = "missingWagon";
+          wagon.textContent = "?";
+        } else {
+          wagon.className = "wagon";
+          wagon.innerHTML = shapeSvg(item);
+        }
+        els.train.appendChild(wagon);
+      });
+
+      // 2. Seçenekleri Çiz
+      els.options.innerHTML = "";
+      state.currentQuestion.options.forEach((opt, index) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.innerHTML = shapeSvg(opt);
+        btn.onclick = () => handleAnswer(opt, btn);
+        els.options.appendChild(btn);
+      });
+
+      state.locked = false;
+      setFeedback("Kuralı bul ve eksik vagonu tamamla.", "");
+      els.levelText.textContent = state.level;
+      els.scoreText.textContent = state.score;
+    }
+
+    function handleAnswer(selectedOpt, btnEl) {
+      if (state.locked) return;
+      state.locked = true;
+
+      const isCorrect = (selectedOpt.shape === state.currentQuestion.correctAnswer.shape && 
+                         selectedOpt.color === state.currentQuestion.correctAnswer.color);
+
+      if (isCorrect) {
+        btnEl.classList.add("is-correct");
+        playSuccess();
+        state.score += 10;
+        setFeedback("Harika! Örüntüyü doğru tamamladın.", "good");
+        
+        // Soru işaretinin olduğu vagona doğru şekli yerleştir
+        const missingWagon = document.getElementById("missingWagon");
+        missingWagon.className = "wagon";
+        missingWagon.innerHTML = shapeSvg(state.currentQuestion.correctAnswer);
+        missingWagon.style.transform = "scale(1.1)";
+        setTimeout(() => missingWagon.style.transform = "scale(1)", 300);
+
+        setTimeout(() => {
+          state.level++;
+          generateLevel();
+        }, 1500);
+
+      } else {
+        btnEl.classList.add("is-wrong");
+        playError();
+        setFeedback("Eyvah! Bu şekil kurala uymadı. Tekrar dene.", "bad");
+        
+        setTimeout(() => {
+          btnEl.classList.remove("is-wrong");
+          state.locked = false;
+        }, 600);
+      }
+    }
+
+    function initGame() {
+      els.body.setAttribute("data-theme", state.age);
+      state.level = 1;
+      state.score = 0;
+      generateLevel();
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    // Event Listeners
+    document.querySelectorAll("#ageChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.age = Number(button.dataset.age);
+        selectButton("ageChoices", state.age, "age");
+        initGame();
+      });
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playTone(440, "sine", 0.1);
+    });
+
+    // Oyunu Başlat
+    initGame();
+  </script>
+</body>
+</html>

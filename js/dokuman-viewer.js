@@ -320,11 +320,17 @@
     flipAudioContext: null,
     flipNoiseBuffer: null,
     resizeTimer: null,
+    lastViewportWidth: 0,
+    lastViewportHeight: 0,
+    lastFrameWidth: 0,
+    lastFrameHeight: 0,
     editMode: false,
     interactionsDirty: false,
     interactions: {
       version: 1,
       answersHidden: true,
+      magnifierEnabled: true,
+      answersEnabled: true,
       hotspots: [],
     },
     revealedAnswers: {},
@@ -345,6 +351,13 @@
     return target.closest('#bookFrame, #bookViewport, #bookRoot, #cropStage, #magnifyModal, #docToolbar');
   }
 
+  function getViewerScrollLockRoot(target) {
+    if (!target || !target.closest || isNativeTextInput(target)) {
+      return null;
+    }
+    return target.closest('#bookFrame, #bookViewport, #bookRoot, #cropStage');
+  }
+
   function clearNativeSelection() {
     const selection = window.getSelection && window.getSelection();
     if (selection && selection.rangeCount) {
@@ -361,6 +374,47 @@
     element.style.webkitTouchCallout = 'none';
     element.style.webkitUserDrag = 'none';
     element.style.touchAction = 'none';
+  }
+
+  function isCoarsePointerDevice() {
+    return Boolean(
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+      ('ontouchstart' in window) ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
+    );
+  }
+
+  function captureViewportMetrics() {
+    const frame = getBookFrame();
+    return {
+      viewportWidth: Math.round(window.innerWidth || document.documentElement.clientWidth || 0),
+      viewportHeight: Math.round(window.innerHeight || document.documentElement.clientHeight || 0),
+      frameWidth: Math.round(frame && frame.clientWidth ? frame.clientWidth : 0),
+      frameHeight: Math.round(frame && frame.clientHeight ? frame.clientHeight : 0),
+    };
+  }
+
+  function rememberViewportMetrics() {
+    const metrics = captureViewportMetrics();
+    state.lastViewportWidth = metrics.viewportWidth;
+    state.lastViewportHeight = metrics.viewportHeight;
+    state.lastFrameWidth = metrics.frameWidth;
+    state.lastFrameHeight = metrics.frameHeight;
+  }
+
+  function isMobileToolbarResizeOnly() {
+    if (!isCoarsePointerDevice() || !state.lastViewportWidth) {
+      return false;
+    }
+    const metrics = captureViewportMetrics();
+    const widthChanged = Math.abs(metrics.viewportWidth - state.lastViewportWidth) > 2 ||
+      Math.abs(metrics.frameWidth - state.lastFrameWidth) > 2;
+    if (widthChanged) {
+      return false;
+    }
+    const heightChanged = Math.abs(metrics.viewportHeight - state.lastViewportHeight) > 2 ||
+      Math.abs(metrics.frameHeight - state.lastFrameHeight) > 2;
+    return heightChanged;
   }
 
   function lockFabricNativeSurfaces(canvas) {
@@ -409,6 +463,13 @@
       if (event.touches && event.touches.length > 1 && getSelectionLockRoot(event.target)) {
         event.preventDefault();
       }
+    }, { passive: false, capture: true });
+
+    document.addEventListener('touchmove', function(event) {
+      if (!getViewerScrollLockRoot(event.target)) {
+        return;
+      }
+      event.preventDefault();
     }, { passive: false, capture: true });
 
     ['gesturestart', 'gesturechange'].forEach(function(eventName) {
@@ -548,6 +609,8 @@
     return {
       version: 1,
       answersHidden: source.answersHidden !== false,
+      magnifierEnabled: source.magnifierEnabled !== false,
+      answersEnabled: source.answersEnabled !== false,
       hotspots: Array.isArray(source.hotspots) ? source.hotspots.filter(function(item) {
         return item && item.id && item.page && item.rect && item.type;
       }) : [],
@@ -571,8 +634,21 @@
 
   function getHotspotsForPage(pageNumber) {
     return state.interactions.hotspots.filter(function(item) {
-      return Number(item.page) === Number(pageNumber);
+      return Number(item.page) === Number(pageNumber) && isHotspotTypeEnabled(item.type);
     });
+  }
+
+  function isHotspotTypeEnabled(type) {
+    if (state.editMode) {
+      return true;
+    }
+    if (type === 'magnifier') {
+      return state.interactions.magnifierEnabled !== false;
+    }
+    if (type === 'answer') {
+      return state.interactions.answersEnabled !== false;
+    }
+    return true;
   }
 
   function normalizeRect(start, end, pageState) {
@@ -633,10 +709,11 @@
     if (!pageState || state.editMode) {
       return;
     }
+    const answersDisabled = state.interactions.answersEnabled === false;
     const shouldHide = state.interactions.answersHidden !== false;
     pageState.canvas.getObjects().forEach(function(object) {
       if (object.isAnswerObject && object.answerHotspotId) {
-        object.visible = shouldHide ? Boolean(state.revealedAnswers[object.answerHotspotId]) : true;
+        object.visible = answersDisabled ? false : (shouldHide ? Boolean(state.revealedAnswers[object.answerHotspotId]) : true);
         object.evented = false;
         object.selectable = false;
       }
@@ -1372,6 +1449,7 @@
       pageState.canvas.loadFromJSON(snapshot ? JSON.parse(snapshot) : { version: window.fabric.version, objects: [] }, function() {
         pageState.isRestoring = false;
         makeCanvasObjectsEditable(pageState.canvas);
+        setAnswerObjectsVisibility(pageState);
         pageState.canvas.renderAll();
         updateHistoryButtons();
         resolve();
@@ -2536,6 +2614,7 @@
     updateBookTransform();
     syncPageControls();
     showPage(landingPage, true);
+    rememberViewportMetrics();
   }
 
   async function buildAnnotatedPdfBytes() {
@@ -2643,14 +2722,15 @@
   }
 
   function findHotspot(id) {
-    return state.interactions.hotspots.find(function(item) {
+    const hotspot = state.interactions.hotspots.find(function(item) {
       return item.id === id;
     }) || null;
+    return hotspot && isHotspotTypeEnabled(hotspot.type) ? hotspot : null;
   }
 
   function getMagnifierHotspots() {
     return state.interactions.hotspots
-      .filter(function(item) { return item.type === 'magnifier'; })
+      .filter(function(item) { return item.type === 'magnifier' && isHotspotTypeEnabled(item.type); })
       .slice()
       .sort(function(a, b) {
         if (Number(a.page) !== Number(b.page)) {
@@ -3054,6 +3134,9 @@
   }
 
   function focusHotspotInline(hotspot, options) {
+    if (!hotspot || !isHotspotTypeEnabled(hotspot.type)) {
+      return;
+    }
     const pageState = hotspot ? state.pages.get(Number(hotspot.page)) : null;
     if (!pageState) {
       return;
@@ -3090,7 +3173,7 @@
   }
 
   function toggleAnswerHotspot(hotspot) {
-    if (!hotspot) {
+    if (!hotspot || !isHotspotTypeEnabled('answer')) {
       return;
     }
     state.revealedAnswers[hotspot.id] = !state.revealedAnswers[hotspot.id];
@@ -3178,6 +3261,8 @@
       const payload = {
         version: 1,
         answersHidden: qs('answersHiddenInput') ? qs('answersHiddenInput').checked : true,
+        magnifierEnabled: state.interactions.magnifierEnabled !== false,
+        answersEnabled: state.interactions.answersEnabled !== false,
         hotspots: state.interactions.hotspots,
         pages: pages,
         updatedAt: new Date().toISOString(),
@@ -3200,6 +3285,8 @@
       }
       state.interactionsDirty = false;
       state.interactions.answersHidden = payload.answersHidden;
+      state.interactions.magnifierEnabled = payload.magnifierEnabled;
+      state.interactions.answersEnabled = payload.answersEnabled;
       state.documentRow.etkilesim_json = payload;
       const status = qs('interactionStatus');
       if (status) {
@@ -3678,6 +3765,7 @@
       state.panX = state.panOriginX + (event.clientX - state.panStartX);
       state.panY = state.panOriginY + (event.clientY - state.panStartY);
       updateBookTransform();
+      event.preventDefault();
     });
     bookViewport.addEventListener('pointerup', finishPanning);
     bookViewport.addEventListener('pointercancel', finishPanning);
@@ -3819,6 +3907,12 @@
       }
       state.resizeTimer = window.setTimeout(function() {
         state.resizeTimer = null;
+        if (isMobileToolbarResizeOnly()) {
+          rememberViewportMetrics();
+          updateBookTransform();
+          updateCropTransform();
+          return;
+        }
         if (state.pageCount && !state.isFlipping && !state.isRebuilding) {
           buildBook(state.focusPage || state.currentPage).catch(function() {
             updateBookTransform();

@@ -271,6 +271,26 @@
     document.getElementById('fileInfo').textContent = message;
   }
 
+  function getInteractionSettings(doc) {
+    const source = doc && doc.etkilesim_json && typeof doc.etkilesim_json === 'object' ? doc.etkilesim_json : {};
+    return {
+      magnifierEnabled: source.magnifierEnabled !== false,
+      answersEnabled: source.answersEnabled !== false,
+    };
+  }
+
+  function buildInteractionPayload(existing, data) {
+    const source = existing && existing.etkilesim_json && typeof existing.etkilesim_json === 'object' ? existing.etkilesim_json : {};
+    return Object.assign({
+      version: 1,
+      answersHidden: true,
+      hotspots: [],
+    }, source, {
+      magnifierEnabled: data.magnifierEnabled !== false,
+      answersEnabled: data.answersEnabled !== false,
+    });
+  }
+
   function updateSummary() {
     const title = document.getElementById('fBaslik').value.trim();
     const activeLabel = document.getElementById('fAktif').checked ? 'Aktif yayın' : 'Pasif kayıt';
@@ -333,6 +353,8 @@
     document.getElementById('fSiralama').value = '0';
     document.getElementById('fKapakRenk').value = '#6C3DED';
     document.getElementById('fAktif').checked = true;
+    document.getElementById('fMagnifierEnabled').checked = true;
+    document.getElementById('fAnswersEnabled').checked = true;
     document.getElementById('fOturumGerekli').checked = false;
     document.getElementById('fPdf').value = '';
     setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
@@ -562,6 +584,8 @@
     const sortOrder = parseInt(document.getElementById('fSiralama').value || '0', 10) || 0;
     const coverColor = document.getElementById('fKapakRenk').value || '#6C3DED';
     const active = document.getElementById('fAktif').checked;
+    const magnifierEnabled = document.getElementById('fMagnifierEnabled').checked;
+    const answersEnabled = document.getElementById('fAnswersEnabled').checked;
     const file = getSelectedFile();
     const existing = state.editingId ? getDocumentById(state.editingId) : null;
 
@@ -587,6 +611,8 @@
       sortOrder: sortOrder,
       coverColor: coverColor,
       active: active,
+      magnifierEnabled: magnifierEnabled,
+      answersEnabled: answersEnabled,
       file: file,
       existing: existing,
     };
@@ -627,6 +653,7 @@
         siralama: data.sortOrder,
         aktif: data.active,
         oturum_gerekli: false,
+        etkilesim_json: buildInteractionPayload(data.existing, data),
         guncelleme_tarihi: new Date().toISOString(),
       };
 
@@ -746,6 +773,9 @@
     document.getElementById('fSiralama').value = String(doc.siralama || 0);
     document.getElementById('fKapakRenk').value = doc.kapak_renk || '#6C3DED';
     document.getElementById('fAktif').checked = Boolean(doc.aktif);
+    const interactionSettings = getInteractionSettings(doc);
+    document.getElementById('fMagnifierEnabled').checked = interactionSettings.magnifierEnabled;
+    document.getElementById('fAnswersEnabled').checked = interactionSettings.answersEnabled;
     document.getElementById('fOturumGerekli').checked = Boolean(doc.oturum_gerekli);
     setFileInfo('Mevcut dosya: ' + (doc.dosya_adi || 'Dosya') + ' · ' + formatBytes(doc.dosya_boyutu || 0) + ' · ' + (doc.sayfa_sayisi || 0) + ' sayfa');
     updateSummary();
@@ -874,9 +904,9 @@
   }
 
   function bindEvents() {
-    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif'].forEach(function(id) {
+    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fMagnifierEnabled', 'fAnswersEnabled'].forEach(function(id) {
       const element = document.getElementById(id);
-      const eventName = id === 'fKapakRenk' || id === 'fAktif' ? 'input' : 'input';
+      const eventName = id === 'fKapakRenk' || id === 'fAktif' || id === 'fMagnifierEnabled' || id === 'fAnswersEnabled' ? 'input' : 'input';
       element.addEventListener(eventName, updateSummary);
       if (id === 'fSinif' || id === 'fDers') {
         element.addEventListener('change', updateSummary);

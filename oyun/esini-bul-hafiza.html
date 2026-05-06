@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eşini Bul Hafıza Oyunu - Kemal Öğretmenim</title>
+  <meta name="description" content="4, 5, 6 ve 7+ yaş için tek veya iki kişilik eşini bul hafıza oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Dinamik Tema Değişkenleri (Varsayılan 4 Yaş - Sıcak/Eğlenceli) */
+      --hero-bg: linear-gradient(135deg, #ff8a00, #e52e71);
+      --board-bg: linear-gradient(135deg, #ffcc00, #ff9500);
+      --board-border: #ffe885;
+      --card-back-bg: linear-gradient(135deg, #ff416c, #ff4b2b);
+    }
+
+    /* 5 Yaş Teması (Oyun/Doğa) */
+    body[data-theme="5"] {
+      --hero-bg: linear-gradient(135deg, #5ea51c, #1f8f72);
+      --board-bg: linear-gradient(135deg, #9ad845, #77bd2c);
+      --board-border: #dff3c6;
+      --card-back-bg: linear-gradient(135deg, #35a7ff, #007bb5);
+    }
+
+    /* 6 Yaş Teması (Odak/Mavi) */
+    body[data-theme="6"] {
+      --hero-bg: linear-gradient(135deg, #1fa2ff, #12d8fa, #a6ffcb);
+      --board-bg: linear-gradient(135deg, #35a7ff, #1a73e8);
+      --board-border: #bce0ff;
+      --card-back-bg: linear-gradient(135deg, #7555e8, #4b2aa5);
+    }
+
+    /* 7+ Yaş Teması (Olgun/Ciddi) */
+    body[data-theme="7"] {
+      --hero-bg: linear-gradient(135deg, #302b63, #24243e);
+      --board-bg: linear-gradient(135deg, #654ea3, #eaafc8);
+      --board-border: #eed2ee;
+      --card-back-bg: linear-gradient(135deg, #15213d, #0d1425);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255, 209, 102, 0.24), transparent 24%),
+        radial-gradient(circle at 88% 12%, rgba(53, 167, 255, 0.18), transparent 26%),
+        linear-gradient(180deg, #fffdf6 0%, #eff8ff 55%, #f8fbff 100%);
+      min-height: 100vh;
+      transition: background 0.5s ease;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 22px 14px 64px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  color: white;
+  background: var(--hero-bg);
+  transition: background 0.5s ease;
+  
+  /* DIŞARIDAN GELEN YÜKSEKLİK AYARLARINI EZMEK İÇİN EKLENECEK SATIRLAR */
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+    .hero-text {
+      flex: 1 1 min-content;
+      min-width: 250px;
+    }
+
+    .hero h1 {
+      margin: 6px 0 4px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 70px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat span {
+      display: block;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 18px;
+      padding: 18px 20px;
+      background: #f8fbff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setup-panel,
+    .score-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      padding: 16px;
+      box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05);
+    }
+
+    .setup-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-btn,
+    .control-btn {
+      border: 0;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-btn {
+      min-height: 68px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600;}
+
+    .choice-btn:hover { transform: translateY(-2px); }
+
+    .choice-btn.is-active {
+      background: #ecf9df;
+      border-color: rgba(94, 165, 28, 0.46);
+      color: #2e6812;
+      box-shadow: 0 8px 16px rgba(94, 165, 28, 0.1);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .control-btn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--muted);
+    }
+
+    .control-btn.is-primary {
+      background: #ffd166;
+      border-color: #ffd166;
+      color: #513707;
+      box-shadow: 0 8px 16px rgba(255, 209, 102, 0.2);
+    }
+
+    .control-btn.is-active {
+      background: #fff3ce;
+      border-color: rgba(255, 209, 102, 0.8);
+      color: #79530c;
+    }
+
+    .board-wrap {
+      padding: clamp(10px, 3vw, 20px);
+      display: grid;
+      gap: 14px;
+    }
+
+    .board {
+      --cols: 4;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      gap: clamp(6px, 1.5vw, 14px);
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: clamp(10px, 2vw, 20px);
+      border-radius: 24px;
+      background: var(--board-bg);
+      border: 6px solid var(--board-border);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.2), 0 12px 24px rgba(0, 0, 0, 0.1);
+      transition: background 0.5s ease, border-color 0.5s ease;
+    }
+
+    .card-btn {
+      position: relative;
+      aspect-ratio: 1;
+      width: 100%;
+      min-width: 0;
+      border-radius: clamp(8px, 2vw, 16px);
+      padding: 0;
+      perspective: 800px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .card-inner {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+
+    .card-btn.is-open .card-inner,
+    .card-btn.is-found .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      border-radius: inherit;
+      backface-visibility: hidden;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-back {
+      color: white;
+      background: var(--card-back-bg);
+      border: 3px solid rgba(255,255,255,.6);
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.2rem, 3.5vw, 2.2rem);
+      transition: background 0.5s ease;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      background: white;
+      border: 3px solid #eef4fb;
+    }
+
+    .card-btn.is-found .card-front {
+      border-color: #a7f36b;
+      background: #f8fff0;
+    }
+
+    .shape-svg {
+      width: 65%;
+      height: 65%;
+      overflow: visible;
+    }
+
+    .score-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .score-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: #f6f9ff;
+      color: #4d5f79;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .score-list li.is-active {
+      background: #fff4d5;
+      color: #74530b;
+    }
+
+    .feedback {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: #eef5ff;
+      color: #38516d;
+      font-weight: 800;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 0.95rem;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; }
+    .feedback.bad { background: #fff0f0; color: #982727; }
+
+    .hidden { display: none !important; }
+
+    /* Responsive Adjustments */
+    @media (max-width: 900px) {
+      .setup { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .board { gap: 6px; padding: 10px; border-width: 4px; border-radius: 16px; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-theme="2">
+  <main class="page">
+    <section class="game-shell" aria-label="Eşini bul hafıza oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Hafıza • Eşini Bul</span>
+          <h1>Şekil Hafızası</h1>
+          <p>Kartları aç, aynı şekilleri eşleştir. Tek başına ya da iki kişiyle oynanabilir.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>Hamle</span><strong id="moveText">0</strong></div>
+          <div class="stat"><span>Eş</span><strong id="pairText">0/0</strong></div>
+          <div class="stat"><span>Süre</span><strong id="timeText">0:00</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <div class="setup-grid">
+            <div>
+              <h2 class="section-title">Yaş Seviyesi</h2>
+              <div class="choice-row" id="ageChoices">
+                <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>4x3 (12 Kart)</span></button>
+                <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>4x4 (16 Kart)</span></button>
+                <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>5x4 (20 Kart)</span></button>
+                <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>6x6 (36 Kart)</span></button>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="section-title">Oyuncu Modu</h2>
+              <div class="choice-row" id="modeChoices">
+                <button class="choice-btn is-active" type="button" data-mode="solo"><strong>Tek Başına</strong><span>En az hamleyle bitir</span></button>
+                <button class="choice-btn" type="button" data-mode="duo"><strong>2 Kişi</strong><span>Eş bulan puan alır</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="score-panel">
+          <h2 class="section-title">Skor</h2>
+          <ul class="score-list" id="scoreList"></ul>
+        </aside>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+        <button class="control-btn is-primary" type="button" id="newGameBtn">Yeni Oyun</button>
+      </nav>
+
+      <section class="board-wrap">
+        <div class="board" id="board" aria-label="Hafıza kartları"></div>
+        <div class="feedback" id="feedback">Yaş seviyesini seç, kartları açarak eşleri bul.</div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    // Şekiller yaş gruplarına göre basitten karmaşığa sıralandı.
+    const SHAPES = [
+      // Seviye 1 (4 Yaş İçin Temel Şekiller - Sıcak Renkler)
+      { shape: "circle", color: "#ff4136" },
+      { shape: "square", color: "#ff851b" },
+      { shape: "triangle", color: "#ffdc00" },
+      { shape: "heart", color: "#ff4136" },
+      { shape: "star", color: "#ff851b" },
+      { shape: "oval", color: "#b10dc9" },
+      // Seviye 2 (5 Yaş İçin İlave Şekiller - Doğal Renkler)
+      { shape: "rect", color: "#2ecc40" },
+      { shape: "diamond", color: "#0074d9" },
+      { shape: "pentagon", color: "#3d9970" },
+      // Seviye 3 (6 Yaş İçin Geometrik Şekiller - Mavi/Mor)
+      { shape: "hexagon", color: "#001f3f" },
+      { shape: "octagon", color: "#85144b" },
+      { shape: "trapezoid", color: "#0074d9" },
+      // Seviye 4 (7+ Yaş İçin Karmaşık/3 Boyutlu Şekiller - Koyu/Ciddi Renkler)
+      { shape: "parallelogram", color: "#111111" },
+      { shape: "cube", color: "#ff4136" },
+      { shape: "cylinder", color: "#2ecc40" },
+      { shape: "cone", color: "#0074d9" },
+      { shape: "sphere", color: "#b10dc9" },
+      { shape: "pyramid", color: "#ff851b" }
+    ];
+
+    // Yeni Grid İhtiyaçları
+    // 4 yaş: 4 sütun x 3 satır = 12 kart (6 çift)
+    // 5 yaş: 4 sütun x 4 satır = 16 kart (8 çift)
+    // 6 yaş: 5 sütun x 4 satır = 20 kart (10 çift)
+    // 7+ yaş: 6 sütun x 6 satır = 36 kart (18 çift)
+    const ageConfigs = {
+      4: { cols: 4, pairs: 6 },
+      5: { cols: 4, pairs: 8 },
+      6: { cols: 5, pairs: 10 },
+      7: { cols: 6, pairs: 18 }
+    };
+
+    const state = {
+      age: 4,
+      mode: "solo",
+      players: [],
+      current: 0,
+      cards: [],
+      open: [],
+      locked: false,
+      moves: 0,
+      foundPairs: 0,
+      totalPairs: 6,
+      startedAt: 0,
+      timerId: null,
+      soundOn: true
+    };
+
+    const els = {
+      body: document.body,
+      setup: document.getElementById("setupScreen"),
+      board: document.getElementById("board"),
+      scoreList: document.getElementById("scoreList"),
+      move: document.getElementById("moveText"),
+      pair: document.getElementById("pairText"),
+      time: document.getElementById("timeText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle")
+    };
+
+    let audioContext = null;
+
+    function shuffle(items) {
+      return items.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function tone(ctx, frequency, start, duration, type, volume) {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.06, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.02);
+    }
+
+    function playSound(name) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      if (name === "flip") {
+        tone(ctx, 440, now, 0.05, "triangle", 0.035);
+        tone(ctx, 620, now + 0.04, 0.06, "triangle", 0.03);
+      } else if (name === "match") {
+        tone(ctx, 523.25, now, 0.08, "sine", 0.055);
+        tone(ctx, 659.25, now + 0.07, 0.08, "sine", 0.055);
+        tone(ctx, 783.99, now + 0.14, 0.12, "sine", 0.06);
+      } else if (name === "miss") {
+        tone(ctx, 220, now, 0.12, "triangle", 0.05);
+        tone(ctx, 165, now + 0.1, 0.14, "triangle", 0.045);
+      } else if (name === "win") {
+        [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
+          tone(ctx, frequency, now + index * 0.09, 0.12, "sine", 0.06);
+        });
+      }
+    }
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return min + ":" + String(sec).padStart(2, "0");
+    }
+
+    function startTimer() {
+      if (state.timerId) return;
+      state.startedAt = Date.now();
+      state.timerId = window.setInterval(() => {
+        els.time.textContent = formatTime(Math.floor((Date.now() - state.startedAt) / 1000));
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (state.timerId) {
+        window.clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+
+    function makePlayers() {
+      state.players = state.mode === "duo"
+        ? [{ name: "Oyuncu 1", score: 0 }, { name: "Oyuncu 2", score: 0 }]
+        : [{ name: "Tek Oyuncu", score: 0 }];
+      state.current = 0;
+    }
+
+    function buildCards() {
+      const cfg = ageConfigs[state.age];
+      // Şekilleri baştan alıyoruz ki küçük yaşlar hep temel/sıcak şekillerle oynasın.
+      const selected = SHAPES.slice(0, cfg.pairs);
+      const cards = [];
+      selected.forEach((item, index) => {
+        cards.push({ id: "a-" + index, pair: "p-" + index, item, found: false });
+        cards.push({ id: "b-" + index, pair: "p-" + index, item, found: false });
+      });
+      return shuffle(cards);
+    }
+
+    function shapeSvg(item) {
+      const c = item.color;
+      if (item.shape === "square") return `<svg class="shape-svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "triangle") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "circle") return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="${c}" stroke-width="10"/></svg>`;
+      if (item.shape === "rect") return `<svg class="shape-svg" viewBox="0 0 100 100"><rect x="15" y="25" width="70" height="50" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "oval") return `<svg class="shape-svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="25" fill="none" stroke="${c}" stroke-width="10"/></svg>`;
+      if (item.shape === "pentagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L85 40 L70 85 H30 L15 40 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "diamond") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 10 L85 50 L50 90 L15 50 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "heart") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 85 C20 60 10 40 20 25 C30 10 45 15 50 28 C55 15 70 10 80 25 C90 40 80 60 50 85 Z" fill="none" stroke="${c}" stroke-width="9" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "star") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 10 L62 38 L92 40 L68 58 L76 88 L50 70 L24 88 L32 58 L8 40 L38 38 Z" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "hexagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 15 H75 L95 50 L75 85 H25 L5 50 Z" fill="none" stroke="${c}" stroke-width="9" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "trapezoid") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M30 25 H70 L85 75 H15 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "octagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M30 15 H70 L85 30 V70 L70 85 H30 L15 70 V30 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "cube") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 30 H65 L80 45 V85 H40 L25 70 Z M25 30 L40 45 H80 M40 45 V85 M65 30 L80 45" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "cone") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L80 75 C70 90 30 90 20 75 Z M20 75 C30 60 70 60 80 75" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "cylinder") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 25 C25 10 75 10 75 25 V75 C75 90 25 90 25 75 Z M25 25 C25 40 75 40 75 25 M25 75 C25 60 75 60 75 75" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "sphere") return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="${c}" stroke-width="8"/><path d="M15 50 C30 35 70 35 85 50 C70 65 30 65 15 50 Z" fill="none" stroke="${c}" stroke-width="6"/></svg>`;
+      if (item.shape === "parallelogram") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M30 25 H85 L70 75 H15 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
+      if (item.shape === "pyramid") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L85 75 H15 Z M50 15 V75" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
+      return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="${c}"/></svg>`;
+    }
+
+    function renderBoard() {
+      const cfg = ageConfigs[state.age];
+      els.board.style.setProperty("--cols", cfg.cols);
+      els.board.innerHTML = "";
+      state.cards.forEach((card, index) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "card-btn" + (card.found ? " is-found" : "");
+        button.dataset.index = index;
+        button.setAttribute("aria-label", "Hafıza kartı");
+        button.innerHTML = `
+          <span class="card-inner">
+            <span class="card-face card-back">?</span>
+            <span class="card-face card-front">${shapeSvg(card.item)}</span>
+          </span>
+        `;
+        button.addEventListener("click", () => flipCard(index, button));
+        els.board.appendChild(button);
+      });
+    }
+
+    function renderStats() {
+      els.move.textContent = state.moves;
+      els.pair.textContent = state.foundPairs + "/" + state.totalPairs;
+      els.scoreList.innerHTML = "";
+      state.players.forEach((player, index) => {
+        const li = document.createElement("li");
+        li.className = index === state.current ? "is-active" : "";
+        li.innerHTML = `<span>${player.name}</span><strong>${player.score}</strong>`;
+        els.scoreList.appendChild(li);
+      });
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function flipCard(index, button) {
+      if (state.locked) return;
+      const card = state.cards[index];
+      if (!card || card.found || state.open.includes(index)) return;
+      startTimer();
+      playSound("flip");
+      button.classList.add("is-open");
+      state.open.push(index);
+      
+      if (state.open.length === 2) {
+        state.moves += 1;
+        state.locked = true;
+        window.setTimeout(checkPair, 650);
+      }
+      renderStats();
+    }
+
+    function checkPair() {
+      const first = state.cards[state.open[0]];
+      const second = state.cards[state.open[1]];
+      const buttons = state.open.map(index => els.board.querySelector(`[data-index="${index}"]`));
+      if (first && second && first.pair === second.pair) {
+        first.found = true;
+        second.found = true;
+        state.foundPairs += 1;
+        state.players[state.current].score += 1;
+        buttons.forEach(button => {
+          button.classList.remove("is-open");
+          button.classList.add("is-found");
+        });
+        playSound("match");
+        setFeedback(state.mode === "duo" ? state.players[state.current].name + " eş buldu, sıra onda." : "Harika! Bir eş buldun.", "good");
+      } else {
+        buttons.forEach(button => button.classList.remove("is-open"));
+        playSound("miss");
+        if (state.mode === "duo") {
+          state.current = (state.current + 1) % state.players.length;
+          setFeedback("Eşleşmedi. Sıra " + state.players[state.current].name + " oyuncusunda.", "bad");
+        } else {
+          setFeedback("Eşleşmedi. Kartların yerini aklında tut.", "bad");
+        }
+      }
+      state.open = [];
+      state.locked = false;
+      renderStats();
+      checkFinish();
+    }
+
+    function checkFinish() {
+      if (state.foundPairs < state.totalPairs) return;
+      stopTimer();
+      state.locked = true;
+      playSound("win");
+      let message = "Oyun bitti! ";
+      if (state.mode === "duo") {
+        const sorted = state.players.slice().sort((a, b) => b.score - a.score);
+        message += sorted[0].score === sorted[1].score ? "Berabere!" : sorted[0].name + " kazandı!";
+      } else {
+        message += state.moves + " hamlede tamamladın.";
+      }
+      setFeedback(message, "good");
+    }
+
+    function newGame() {
+      stopTimer();
+      const cfg = ageConfigs[state.age];
+      els.body.setAttribute("data-theme", state.age); // Temayı dinamik değiştir
+      state.totalPairs = cfg.pairs;
+      state.cards = buildCards();
+      state.open = [];
+      state.locked = false;
+      state.moves = 0;
+      state.foundPairs = 0;
+      state.startedAt = 0;
+      els.time.textContent = "0:00";
+      makePlayers();
+      renderBoard();
+      renderStats();
+      setFeedback("Kartları aç ve eşleri bul.", "");
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    document.querySelectorAll("#ageChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.age = Number(button.dataset.age);
+        selectButton("ageChoices", state.age, "age");
+        newGame();
+      });
+    });
+
+    document.querySelectorAll("#modeChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        selectButton("modeChoices", state.mode, "mode");
+        newGame();
+      });
+    });
+
+    document.getElementById("newGameBtn").addEventListener("click", newGame);
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playSound("flip");
+    });
+
+    newGame();
+  </script>
+</body>
+</html>

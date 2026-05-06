@@ -246,9 +246,6 @@
 </head>
 <body>
 
-  <!-- Navbar + Footer: site.js tarafından enjekte edilir -->
-
-  <!-- ─── SAYFA BAŞLIĞI ─── -->
   <div class="games-hero">
     <span class="star-bg" style="--fs:20px;--dur:2.5s;--d:.3s; top:15%; left:8%;">⭐</span>
     <span class="star-bg" style="--fs:16px;--dur:3s;--d:1s;   top:70%; left:5%;">✨</span>
@@ -259,7 +256,6 @@
     <p>Oyna, eğlen, öğren — en iyi kombinasyon!</p>
   </div>
 
-  <!-- ─── FİLTRE ─── -->
   <div class="filter-bar">
     <button class="filter-btn active" onclick="filterGames('tümü', this)">Tümü</button>
     <button class="filter-btn" onclick="filterGames('matematik', this)">🔢 Matematik</button>
@@ -271,7 +267,6 @@
     <button class="filter-btn" onclick="filterGames('bulmaca', this)">🧩 Bulmaca</button>
   </div>
 
-  <!-- ─── OYUN KARTLARI ─── -->
   <div class="games-grid" id="gamesGrid">
 
     <a href="kizma_birader.html" class="game-card" data-color="orange" data-cat="strateji">
@@ -424,7 +419,95 @@
       </div>
     </a>
 
-    <!-- Buraya yeni oyun kartları eklemek için şablonu kopyala -->
+    <a href="matematik-masa-tenisi.html" class="game-card" data-color="blue" data-cat="matematik">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">🏓</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">MATEMATİK MASA TENİSİ</div>
+        <div class="gc-subtitle">"Dört İşlemle Raket Maçı"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="esini-bul-hafiza.html" class="game-card" data-color="pink" data-cat="hafıza">
+      <div class="gc-banner">
+        <span class="gc-category">🧠 Hafıza</span>
+        <span class="gc-banner-em">🧩</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">EŞİNİ BUL</div>
+        <div class="gc-subtitle">"Şekillerle Hafıza Oyunu"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="sirali-hafiza.html" class="game-card" data-color="blue" data-cat="hafıza">
+      <div class="gc-banner">
+        <span class="gc-category">🧠 Hafıza</span>
+        <span class="gc-banner-em">💡</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">IŞIKLI NOTALAR</div>
+        <div class="gc-subtitle">"Görsel ve İşitsel Hafıza"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="oruntu-treni.html" class="game-card" data-color="coral" data-cat="matematik">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">🚂</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">ÖRÜNTÜ TRENİ</div>
+        <div class="gc-subtitle">"Eksik Vagonu Bul!"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="golge-dedektifi.html" class="game-card" data-color="green" data-cat="bulmaca">
+      <div class="gc-banner">
+        <span class="gc-category">🧩 Bulmaca</span>
+        <span class="gc-banner-em">🕵️</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">GÖLGE DEDEKTİFİ</div>
+        <div class="gc-subtitle">"Doğru Gölgeyi Eşleştir"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="minik-kodlamaci.html" class="game-card" data-color="purple" data-cat="strateji">
+      <div class="gc-banner">
+        <span class="gc-category">♟️ Strateji</span>
+        <span class="gc-banner-em">🤖</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">MİNİK KODLAMACI</div>
+        <div class="gc-subtitle">"Robotu Hedefe Ulaştır"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
 
     <div class="empty-filter" id="emptyFilter">
       <span>🔍</span>

@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matematik Masa Tenisi - Kemal Öğretmenim</title>
+  <meta name="description" content="1, 2, 3 ve 4. sınıflar için masa tenisi temalı dört işlem oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #14213d;
+      --muted: #64748b;
+      --paper: #ffffff;
+      --line: #d8e3f2;
+      --table: #167042;
+      --table-deep: #0d4d34;
+      --lime: #a7f36b;
+      --sun: #ffd166;
+      --blue: #2d7ff9;
+      --coral: #ff6464;
+      --violet: #7357e8;
+      --wood: #b87534;
+      --shadow: 0 18px 42px rgba(20, 33, 61, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(255, 209, 102, 0.26), transparent 26%),
+        radial-gradient(circle at 90% 14%, rgba(45, 127, 249, 0.18), transparent 28%),
+        linear-gradient(180deg, #fbfff7 0%, #eef7ff 55%, #f8fbff 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 22px 14px 64px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(45, 127, 249, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 20px;
+      min-height: 0 !important;
+      height: auto !important;
+      background:
+        linear-gradient(135deg, rgba(13, 77, 52, 0.96), rgba(22, 112, 66, 0.94)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 10px, transparent 10px 20px);
+      color: white;
+    }
+
+    .hero h1 {
+      margin: 6px 0 0;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.75rem, 3vw, 2.5rem);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      display: none;
+      margin: 0;
+      max-width: 720px;
+      color: rgba(255, 255, 255, 0.82);
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .kicker {
+      display: inline-flex;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .match-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(78px, 1fr));
+      gap: 10px;
+      min-width: min(100%, 430px);
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.16);
+      text-align: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat span {
+      display: block;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 0.74rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.35rem;
+      font-weight: 900;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .setup-panel,
+    .rule-panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: white;
+      padding: 18px;
+      box-shadow: 0 12px 28px rgba(20, 33, 61, 0.08);
+    }
+
+    .setup-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.25rem;
+      color: var(--ink);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+      gap: 10px;
+    }
+
+    .choice-btn,
+    .control-btn,
+    .answer-btn,
+    .serve-btn {
+      border: 0;
+      font-family: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .choice-btn {
+      min-height: 84px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .choice-btn strong,
+    .choice-btn span {
+      display: block;
+    }
+
+    .choice-btn strong { font-size: 1.02rem; }
+    .choice-btn span { color: var(--muted); font-size: 0.86rem; margin-top: 4px; }
+
+    .choice-btn:hover,
+    .control-btn:hover,
+    .answer-btn:hover,
+    .serve-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .choice-btn.is-active {
+      background: #e9f8ef;
+      border-color: rgba(22, 112, 66, 0.42);
+      color: var(--table-deep);
+      box-shadow: 0 14px 22px rgba(22, 112, 66, 0.12);
+    }
+
+    .choice-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.48;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #f7fbff;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .control-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .control-btn,
+    .serve-btn {
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      background: white;
+      border: 2px solid var(--line);
+      color: var(--muted);
+    }
+
+    .control-btn.is-active {
+      background: #fff3ce;
+      border-color: rgba(255, 209, 102, 0.8);
+      color: #79530c;
+    }
+
+    .serve-btn {
+      background: var(--sun);
+      border-color: var(--sun);
+      color: #3d2a08;
+      box-shadow: 0 12px 20px rgba(255, 209, 102, 0.22);
+    }
+
+    .arena-wrap {
+      padding: 18px 20px 24px;
+    }
+
+    .arena {
+      position: relative;
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr) 150px;
+      grid-template-rows: 86px minmax(410px, 1fr) 86px;
+      gap: 12px;
+      min-height: 610px;
+    }
+
+    .player {
+      position: relative;
+      display: grid;
+      align-content: center;
+      gap: 4px;
+      padding: 13px;
+      border-radius: 18px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      box-shadow: 0 10px 20px rgba(20, 33, 61, 0.06);
+    }
+
+    #playersLayer {
+      display: contents;
+    }
+
+    .player.is-active {
+      border-color: var(--sun);
+      background: #fff8df;
+      box-shadow: 0 14px 24px rgba(255, 209, 102, 0.24);
+    }
+
+    .player.is-winner {
+      border-color: var(--lime);
+      background: #ecffe2;
+    }
+
+    .player-name {
+      font-weight: 900;
+      color: var(--ink);
+    }
+
+    .player-score {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 2rem;
+      line-height: 1;
+      color: var(--table-deep);
+    }
+
+    .player-role {
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .player-0 { grid-column: 1; grid-row: 2; }
+    .player-1 { grid-column: 3; grid-row: 2; }
+    .player-2 { grid-column: 2; grid-row: 1; }
+    .player-3 { grid-column: 2; grid-row: 3; }
+
+    .table {
+      grid-column: 2;
+      grid-row: 2;
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      background:
+        linear-gradient(90deg, transparent calc(50% - 2px), rgba(255,255,255,.8) calc(50% - 2px), rgba(255,255,255,.8) calc(50% + 2px), transparent calc(50% + 2px)),
+        linear-gradient(180deg, transparent calc(50% - 2px), rgba(255,255,255,.74) calc(50% - 2px), rgba(255,255,255,.74) calc(50% + 2px), transparent calc(50% + 2px)),
+        radial-gradient(circle at 24% 18%, rgba(255,255,255,.18), transparent 24%),
+        linear-gradient(135deg, var(--table), var(--table-deep));
+      border: 10px solid #f3f8ec;
+      box-shadow: inset 0 0 0 4px rgba(255,255,255,.38), 0 22px 38px rgba(13, 77, 52, 0.18);
+    }
+
+    .table::before {
+      content: "";
+      position: absolute;
+      top: 7%;
+      bottom: 7%;
+      left: 50%;
+      width: 42px;
+      transform: translateX(-50%);
+      background:
+        linear-gradient(90deg, rgba(255,255,255,.46), rgba(255,255,255,.18), rgba(255,255,255,.46)),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.32) 0 3px, transparent 3px 15px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.28) 0 3px, transparent 3px 15px);
+      background-size: auto, 100% 15px, 15px 100%;
+      border: 2px solid rgba(255,255,255,.56);
+      opacity: 0.86;
+      box-shadow: 0 0 18px rgba(255,255,255,.18);
+    }
+
+    .equation-board {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      width: min(88%, 520px);
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(255,255,255,.92);
+      box-shadow: 0 16px 30px rgba(0,0,0,.18);
+    }
+
+    .equation {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(2.4rem, 8vw, 5rem);
+      line-height: 1;
+      color: #12213f;
+      letter-spacing: 0;
+    }
+
+    .turn-text {
+      color: var(--muted);
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .ball {
+      position: absolute;
+      z-index: 3;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      left: 50%;
+      top: 78%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle at 35% 30%, white 0 20%, #f6f6f6 42%, #dfe8f2 100%);
+      box-shadow: 0 8px 14px rgba(0,0,0,.2);
+    }
+
+    .timer-box {
+      width: min(100%, 360px);
+      display: grid;
+      gap: 6px;
+    }
+
+    .timer-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 0.88rem;
+    }
+
+    .timer-track {
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e2eaf4;
+    }
+
+    .timer-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8be66b, #ffd166);
+      transition: width 0.12s linear, background 0.2s ease;
+    }
+
+    .timer-fill.is-low {
+      background: linear-gradient(90deg, #ff9f43, #ff6464);
+    }
+
+    .answer-panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .answer-btn {
+      min-height: 74px;
+      border-radius: 18px;
+      background: #f5f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      font-size: clamp(1.1rem, 3vw, 1.55rem);
+    }
+
+    .answer-btn.is-correct {
+      background: #e6fbda;
+      border-color: #8fe15b;
+      color: #245e18;
+    }
+
+    .answer-btn.is-wrong {
+      background: #fff0f0;
+      border-color: var(--coral);
+      color: #9e2626;
+    }
+
+    .feedback {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: #eef5ff;
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; }
+    .feedback.bad { background: #fff0f0; color: #982727; }
+    .feedback.warn { background: #fff4d5; color: #75540b; }
+
+    .rule-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule-list li {
+      padding: 12px 13px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      color: #4a5b74;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      .hero,
+      .setup {
+        grid-template-columns: 1fr;
+      }
+
+      .match-stats { width: 100%; }
+
+      .arena {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto minmax(360px, 1fr) auto auto;
+      }
+
+      .table { grid-column: 1 / -1; grid-row: 2; }
+      .player-0 { grid-column: 1; grid-row: 3; }
+      .player-1 { grid-column: 2; grid-row: 3; }
+      .player-2 { grid-column: 1; grid-row: 1; }
+      .player-3 { grid-column: 2; grid-row: 1; }
+    }
+
+    @media (max-width: 620px) {
+      .page { padding: 10px 10px 46px; }
+      .game-shell { border-radius: 24px; }
+      .hero,
+      .setup,
+      .arena-wrap,
+      .control-row { padding: 14px; }
+      .arena { min-height: 560px; gap: 8px; }
+      .player { padding: 10px; }
+      .player-score { font-size: 1.55rem; }
+      .answer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="game-shell" aria-label="Matematik masa tenisi oyunu">
+      <header class="hero">
+        <div>
+          <span class="kicker">Matematik • Masa Tenisi</span>
+          <h1>Raketli İşlemler</h1>
+          <p>İşlemi çöz, doğru cevabı seç, topu karşıya gönder. Sınıfa göre sorular otomatik değişir; iki kişi, dört kişi veya bilgisayara karşı oynanır.</p>
+        </div>
+        <div class="match-stats">
+          <div class="stat"><span>Tur</span><strong id="roundText">0</strong></div>
+          <div class="stat"><span>Hedef</span><strong id="targetText">5 Set</strong></div>
+          <div class="stat"><span>Süre</span><strong id="timeText">10</strong></div>
+          <div class="stat"><span>Seri</span><strong id="streakText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <div class="setup-grid">
+            <div>
+              <h2 class="section-title">Sınıf Seviyesi</h2>
+              <div class="choice-row" id="gradeChoices">
+                <button class="choice-btn is-active" type="button" data-grade="1"><strong>1. Sınıf</strong><span>20'ye kadar toplama ve çıkarma</span></button>
+                <button class="choice-btn" type="button" data-grade="2"><strong>2. Sınıf</strong><span>Dört işlem, çarpma-bölme 1,2,3,4,5,10</span></button>
+                <button class="choice-btn" type="button" data-grade="3"><strong>3. Sınıf</strong><span>Dört işlem, 1000'e kadar</span></button>
+                <button class="choice-btn" type="button" data-grade="4"><strong>4. Sınıf</strong><span>100000'e kadar zihinden işlem</span></button>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="section-title">Oyuncu Modu</h2>
+              <div class="choice-row" id="modeChoices">
+                <button class="choice-btn is-active" type="button" data-mode="cpu"><strong>Bilgisayara Karşı</strong><span>1 öğrenci + bilgisayar</span></button>
+                <button class="choice-btn" type="button" data-mode="2"><strong>2 Kişi</strong><span>Sırayla cevapla</span></button>
+                <button class="choice-btn" type="button" data-mode="4"><strong>4 Kişi</strong><span>Sınıf içi mini turnuva</span></button>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="section-title">İşlem Türü</h2>
+              <div class="choice-row" id="operationChoices">
+                <button class="choice-btn is-active" type="button" data-operation="mixed"><strong>Karışık</strong><span>Uygun işlemler karışık gelsin</span></button>
+                <button class="choice-btn" type="button" data-operation="+"><strong>Toplama</strong><span>Sadece toplama sor</span></button>
+                <button class="choice-btn" type="button" data-operation="-"><strong>Çıkarma</strong><span>Sadece çıkarma sor</span></button>
+                <button class="choice-btn" type="button" data-operation="x"><strong>Çarpma</strong><span>Sadece çarpma sor</span></button>
+                <button class="choice-btn" type="button" data-operation="÷"><strong>Bölme</strong><span>Sadece bölme sor</span></button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <aside class="rule-panel">
+          <h2 class="section-title">Oyun Akışı</h2>
+          <ul class="rule-list">
+            <li>Her oyuncunun cevaplamak için 10 saniyesi vardır.</li>
+            <li>Doğru cevap veren oyuncu set alır ve top karşıya gider.</li>
+            <li>Yanlış cevapta veya süre bitince top dışarı çıkar, oyuncu seti kaybeder.</li>
+            <li>5 set alan oyuncu maçı kazanır.</li>
+            <li>Sesler oyun içinde üretilir; dışarıdan ses dosyası gerekmez.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+          <button class="control-btn" type="button" id="resetBtn">Sıfırla</button>
+        </div>
+        <button class="serve-btn" type="button" id="startBtn">Maçı Başlat</button>
+      </nav>
+
+      <section class="arena-wrap" id="gameScreen">
+        <div class="arena">
+          <div class="table" id="table">
+            <div class="equation-board">
+              <div class="turn-text" id="turnText">Oyunu başlat.</div>
+              <div class="equation" id="equationText">?</div>
+              <div class="timer-box" aria-label="Cevap süresi">
+                <div class="timer-label"><span>Cevap süresi</span><strong id="timerLabel">10 sn</strong></div>
+                <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+              </div>
+            </div>
+            <div class="ball" id="ball"></div>
+          </div>
+          <div id="playersLayer"></div>
+        </div>
+
+        <div class="answer-panel">
+          <div class="answer-grid" id="answerGrid"></div>
+          <div class="feedback" id="feedback">Sınıfı ve oyuncu modunu seç, sonra maçı başlat.</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const state = {
+      grade: 1,
+      playMode: "cpu",
+      operation: "mixed",
+      target: 5,
+      players: [],
+      current: 0,
+      question: null,
+      round: 0,
+      streak: 0,
+      running: false,
+      locked: true,
+      soundOn: true,
+      questionStartedAt: 0,
+      timeLeft: 10,
+      timerId: null,
+      turnToken: 0,
+      ballPos: { left: 16, top: 50 }
+    };
+
+    const els = {
+      setupScreen: document.getElementById("setupScreen"),
+      playersLayer: document.getElementById("playersLayer"),
+      equation: document.getElementById("equationText"),
+      turn: document.getElementById("turnText"),
+      answerGrid: document.getElementById("answerGrid"),
+      feedback: document.getElementById("feedback"),
+      ball: document.getElementById("ball"),
+      round: document.getElementById("roundText"),
+      target: document.getElementById("targetText"),
+      time: document.getElementById("timeText"),
+      timerLabel: document.getElementById("timerLabel"),
+      timerFill: document.getElementById("timerFill"),
+      streak: document.getElementById("streakText"),
+      soundToggle: document.getElementById("soundToggle"),
+      start: document.getElementById("startBtn")
+    };
+
+    const gradeTitles = {
+      1: "1. sınıf: 20'ye kadar toplama ve çıkarma",
+      2: "2. sınıf: dört işlem, çarpma-bölme 1,2,3,4,5,10",
+      3: "3. sınıf: dört işlem, 1000'e kadar",
+      4: "4. sınıf: 100000'e kadar zihinden işlem"
+    };
+
+    const operationNames = {
+      mixed: "karışık",
+      "+": "toplama",
+      "-": "çıkarma",
+      x: "çarpma",
+      "÷": "bölme"
+    };
+
+    let audioContext = null;
+
+    function rand(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function shuffle(items) {
+      return items.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function tone(ctx, frequency, start, duration, type, volume) {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(volume || 0.07, start + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.02);
+    }
+
+    function noise(ctx, start, duration, volume) {
+      const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
+      const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < size; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / size);
+      const source = ctx.createBufferSource();
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      filter.type = "bandpass";
+      filter.frequency.value = 900;
+      gain.gain.setValueAtTime(volume || 0.04, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      source.buffer = buffer;
+      source.connect(filter).connect(gain).connect(ctx.destination);
+      source.start(start);
+    }
+
+    function playSound(name) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      if (name === "hit") {
+        noise(ctx, now, 0.08, 0.06);
+        tone(ctx, 520, now, 0.06, "triangle", 0.04);
+      } else if (name === "correct") {
+        tone(ctx, 523.25, now, 0.08, "sine", 0.06);
+        tone(ctx, 659.25, now + 0.07, 0.08, "sine", 0.06);
+        tone(ctx, 783.99, now + 0.14, 0.13, "sine", 0.07);
+      } else if (name === "wrong") {
+        tone(ctx, 180, now, 0.17, "triangle", 0.07);
+        tone(ctx, 132, now + 0.12, 0.18, "triangle", 0.055);
+      } else if (name === "serve") {
+        tone(ctx, 392, now, 0.07, "sine", 0.04);
+        tone(ctx, 587.33, now + 0.07, 0.08, "sine", 0.045);
+      } else if (name === "tick") {
+        tone(ctx, 720, now, 0.035, "sine", 0.022);
+      } else if (name === "out") {
+        noise(ctx, now, 0.16, 0.055);
+        tone(ctx, 220, now + 0.04, 0.18, "triangle", 0.055);
+      } else if (name === "win") {
+        [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
+          tone(ctx, frequency, now + index * 0.09, 0.12, "sine", 0.07);
+        });
+      }
+    }
+
+    function makePlayers() {
+      const names = state.playMode === "4"
+        ? ["Oyuncu 1", "Oyuncu 2", "Oyuncu 3", "Oyuncu 4"]
+        : state.playMode === "2"
+          ? ["Oyuncu 1", "Oyuncu 2"]
+          : ["Sen", "Bilgisayar"];
+      state.players = names.map((name, index) => ({
+        name,
+        score: 0,
+        computer: state.playMode === "cpu" && index === 1
+      }));
+      state.current = 0;
+    }
+
+    function renderPlayers(winnerIndex = -1) {
+      els.playersLayer.innerHTML = "";
+      state.players.forEach((player, index) => {
+        const card = document.createElement("div");
+        card.className = "player player-" + index + (index === state.current ? " is-active" : "") + (index === winnerIndex ? " is-winner" : "");
+        card.innerHTML = `
+          <div class="player-role">${player.computer ? "Bilgisayar" : "Oyuncu"}</div>
+          <div class="player-name">${player.name}</div>
+          <div class="player-score">${player.score}</div>
+        `;
+        els.playersLayer.appendChild(card);
+      });
+    }
+
+    function updateMeta() {
+      els.round.textContent = state.round;
+      els.target.textContent = state.target + " Set";
+      els.time.textContent = Math.ceil(state.timeLeft);
+      els.streak.textContent = state.streak;
+    }
+
+    function updateTimerView() {
+      const seconds = Math.max(0, Math.ceil(state.timeLeft));
+      const percent = Math.max(0, Math.min(100, state.timeLeft * 10));
+      els.time.textContent = seconds;
+      els.timerLabel.textContent = seconds + " sn";
+      els.timerFill.style.width = percent + "%";
+      els.timerFill.classList.toggle("is-low", state.timeLeft <= 3);
+    }
+
+    function stopTimer() {
+      if (state.timerId) {
+        window.clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+
+    function startTimer(token) {
+      stopTimer();
+      state.timeLeft = 10;
+      updateTimerView();
+      state.timerId = window.setInterval(() => {
+        if (!state.running || token !== state.turnToken) {
+          stopTimer();
+          return;
+        }
+        state.timeLeft = Math.max(0, 10 - ((performance.now() - state.questionStartedAt) / 1000));
+        updateTimerView();
+        if (state.timeLeft <= 3 && Math.ceil(state.timeLeft * 10) % 10 === 0) {
+          playSound("tick");
+        }
+        if (state.timeLeft <= 0) {
+          stopTimer();
+          handleMiss("timeout");
+        }
+      }, 100);
+    }
+
+    function nextIndex(index = state.current) {
+      return (index + 1) % state.players.length;
+    }
+
+    function getBallTarget(playerIndex) {
+      const positions = [
+        { left: 16, top: 50 },
+        { left: 84, top: 50 },
+        { left: 50, top: 18 },
+        { left: 50, top: 82 }
+      ];
+      return positions[playerIndex] || positions[0];
+    }
+
+    function setBallPosition(position) {
+      state.ballPos = position;
+      els.ball.style.left = position.left + "%";
+      els.ball.style.top = position.top + "%";
+    }
+
+    function clampPercent(value) {
+      return Math.max(8, Math.min(92, value));
+    }
+
+    function moveBallTo(playerIndex) {
+      const from = state.ballPos || getBallTarget(state.current);
+      const to = getBallTarget(playerIndex);
+      const spin = rand(-16, 16);
+      const mid = {
+        left: clampPercent((from.left + to.left) / 2 + (Math.abs(from.left - to.left) > Math.abs(from.top - to.top) ? 0 : spin)),
+        top: clampPercent((from.top + to.top) / 2 + (Math.abs(from.left - to.left) > Math.abs(from.top - to.top) ? spin : 0))
+      };
+      els.ball.getAnimations().forEach(animation => animation.cancel());
+      els.ball.animate([
+        { left: from.left + "%", top: from.top + "%", transform: "translate(-50%, -50%) scale(1)" },
+        { left: mid.left + "%", top: mid.top + "%", transform: "translate(-50%, -50%) scale(1.18)" },
+        { left: to.left + "%", top: to.top + "%", transform: "translate(-50%, -50%) scale(1)" }
+      ], {
+        duration: 560,
+        easing: "cubic-bezier(.2,.8,.2,1)",
+        fill: "forwards"
+      });
+      state.ballPos = to;
+    }
+
+    function sendBallOut(playerIndex) {
+      const from = state.ballPos || getBallTarget(playerIndex);
+      const directions = [
+        { left: -9, top: rand(18, 82) },
+        { left: 109, top: rand(18, 82) },
+        { left: rand(18, 82), top: -8 },
+        { left: rand(18, 82), top: 108 }
+      ];
+      const out = directions[playerIndex] || pick(directions);
+      const mid = {
+        left: clampPercent((from.left + out.left) / 2 + rand(-12, 12)),
+        top: clampPercent((from.top + out.top) / 2 + rand(-12, 12))
+      };
+      els.ball.getAnimations().forEach(animation => animation.cancel());
+      els.ball.animate([
+        { left: from.left + "%", top: from.top + "%", transform: "translate(-50%, -50%) scale(1)" },
+        { left: mid.left + "%", top: mid.top + "%", transform: "translate(-50%, -50%) scale(1.14)" },
+        { left: out.left + "%", top: out.top + "%", transform: "translate(-50%, -50%) scale(.82)" }
+      ], {
+        duration: 620,
+        easing: "cubic-bezier(.22,.61,.36,1)",
+        fill: "forwards"
+      });
+      state.ballPos = out;
+    }
+
+    function generateQuestion() {
+      if (state.grade === 1) return generateGradeOne();
+      if (state.grade === 2) return generateGradeTwo();
+      if (state.grade === 3) return generateGradeThree();
+      return generateGradeFour();
+    }
+
+    function allowedOperations() {
+      return state.grade === 1 ? ["+", "-"] : ["+", "-", "x", "÷"];
+    }
+
+    function chooseOperation() {
+      const allowed = allowedOperations();
+      if (state.operation !== "mixed" && allowed.includes(state.operation)) return state.operation;
+      return pick(allowed);
+    }
+
+    function generateGradeOne() {
+      const op = chooseOperation();
+      if (op === "+") {
+        const a = rand(1, 19);
+        const b = rand(1, 20 - a);
+        return { text: `${a} + ${b}`, answer: a + b };
+      }
+      const a = rand(2, 20);
+      const b = rand(1, a);
+      return { text: `${a} - ${b}`, answer: a - b };
+    }
+
+    function generateGradeTwo() {
+      const op = chooseOperation();
+      if (op === "+") {
+        const a = rand(5, 85);
+        const b = rand(1, 100 - a);
+        return { text: `${a} + ${b}`, answer: a + b };
+      }
+      if (op === "-") {
+        const a = rand(10, 100);
+        const b = rand(1, a);
+        return { text: `${a} - ${b}`, answer: a - b };
+      }
+      const factors = [1, 2, 3, 4, 5, 10];
+      const a = pick(factors);
+      const b = rand(1, Math.floor(100 / a));
+      if (op === "x") return { text: `${a} x ${b}`, answer: a * b };
+      return { text: `${a * b} ÷ ${a}`, answer: b };
+    }
+
+    function generateGradeThree() {
+      const op = chooseOperation();
+      if (op === "+") {
+        const a = rand(50, 850);
+        const b = rand(10, 1000 - a);
+        return { text: `${a} + ${b}`, answer: a + b };
+      }
+      if (op === "-") {
+        const a = rand(100, 1000);
+        const b = rand(10, a);
+        return { text: `${a} - ${b}`, answer: a - b };
+      }
+      const a = rand(2, 12);
+      const b = rand(2, Math.floor(1000 / a));
+      if (op === "x") return { text: `${a} x ${b}`, answer: a * b };
+      return { text: `${a * b} ÷ ${a}`, answer: b };
+    }
+
+    function generateGradeFour() {
+      const op = chooseOperation();
+      const steps = [10, 50, 100, 500, 1000];
+      if (op === "+") {
+        const step = pick(steps);
+        const a = rand(10, 900) * step;
+        const b = rand(1, Math.max(1, Math.floor((100000 - a) / step))) * step;
+        return { text: `${a} + ${b}`, answer: a + b };
+      }
+      if (op === "-") {
+        const step = pick(steps);
+        const a = rand(10, 1000) * step;
+        const b = rand(1, Math.max(1, Math.floor(a / step))) * step;
+        return { text: `${a} - ${b}`, answer: a - b };
+      }
+      const multipliers = [2, 3, 4, 5, 10, 20, 25, 50, 100];
+      const a = pick(multipliers);
+      const step = a <= 5 ? pick([10, 100]) : pick([1, 10, 100]);
+      const b = rand(2, Math.max(2, Math.floor(100000 / a / step))) * step;
+      if (op === "x") return { text: `${a} x ${b}`, answer: a * b };
+      return { text: `${a * b} ÷ ${a}`, answer: b };
+    }
+
+    function buildAnswers(answer) {
+      const spread = state.grade === 1 ? [1, 2, 3, 4] : state.grade === 2 ? [1, 2, 5, 10] : state.grade === 3 ? [2, 5, 10, 20, 50] : [10, 50, 100, 500, 1000];
+      const set = new Set([answer]);
+      while (set.size < 4) {
+        const delta = pick(spread) * (Math.random() < 0.5 ? -1 : 1);
+        const value = Math.max(0, answer + delta);
+        if (value !== answer) set.add(value);
+      }
+      return shuffle(Array.from(set));
+    }
+
+    function renderQuestion() {
+      const current = state.players[state.current];
+      state.question = generateQuestion();
+      state.questionStartedAt = performance.now();
+      state.turnToken += 1;
+      state.locked = current.computer;
+      els.equation.textContent = state.question.text;
+      els.turn.textContent = current.name + " cevaplıyor";
+      els.answerGrid.innerHTML = "";
+      buildAnswers(state.question.answer).forEach(value => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-btn";
+        button.textContent = value;
+        button.addEventListener("click", () => submitAnswer(value, button));
+        els.answerGrid.appendChild(button);
+      });
+      setFeedback(questionInfoText(), "");
+      renderPlayers();
+      moveBallTo(state.current);
+      startTimer(state.turnToken);
+      if (current.computer) runComputerTurn();
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function questionInfoText() {
+      return gradeTitles[state.grade] + " • " + operationNames[state.operation] + " soru";
+    }
+
+    function submitAnswer(value, button, fromComputer = false) {
+      if (!state.running || state.locked && !fromComputer) return;
+      stopTimer();
+      state.locked = true;
+      const correct = value === state.question.answer;
+      if (!correct) {
+        if (button) button.classList.add("is-wrong");
+        handleMiss("wrong");
+        return;
+      }
+      const scorer = state.current;
+      state.players[scorer].score += 1;
+      state.round += 1;
+      state.streak += 1;
+      if (button) button.classList.add("is-correct");
+      playSound("hit");
+      window.setTimeout(() => playSound("correct"), 120);
+      setFeedback(state.players[state.current].name + " doğru vurdu ve set aldı!", "good");
+      updateMeta();
+      renderPlayers();
+      moveBallTo(nextIndex());
+      const winner = state.players.findIndex(player => player.score >= state.target);
+      if (winner >= 0) {
+        finishGame(winner);
+        return;
+      }
+      state.current = nextIndex();
+      window.setTimeout(renderQuestion, 1300);
+    }
+
+    function handleMiss(reason) {
+      if (!state.running) return;
+      stopTimer();
+      state.locked = true;
+      const loser = state.current;
+      const scorer = nextIndex();
+      state.players[scorer].score += 1;
+      state.round += 1;
+      state.streak = 0;
+      Array.from(els.answerGrid.children).forEach(btn => {
+        btn.disabled = true;
+        if (Number(btn.textContent) === state.question.answer) btn.classList.add("is-correct");
+      });
+      playSound("out");
+      sendBallOut(loser);
+      const message = reason === "timeout"
+        ? state.players[loser].name + " süreyi kaçırdı. Top dışarı çıktı, set " + state.players[scorer].name + " oyuncusuna."
+        : "Top dışarı çıktı. Doğru cevap " + state.question.answer + ". Set " + state.players[scorer].name + " oyuncusuna.";
+      setFeedback(message, "bad");
+      updateMeta();
+      const winner = state.players.findIndex(player => player.score >= state.target);
+      if (winner >= 0) {
+        finishGame(winner);
+        return;
+      }
+      state.current = scorer;
+      renderPlayers();
+      window.setTimeout(() => {
+        setBallPosition(getBallTarget(state.current));
+        renderQuestion();
+      }, 1450);
+    }
+
+    function runComputerTurn() {
+      const delay = rand(900, 1800);
+      window.setTimeout(() => {
+        if (!state.running || !state.players[state.current].computer) return;
+        const accuracy = state.grade <= 2 ? 0.72 : 0.64;
+        let value = state.question.answer;
+        if (Math.random() > accuracy) {
+          const buttons = Array.from(els.answerGrid.children);
+          const wrong = buttons.filter(btn => Number(btn.textContent) !== state.question.answer);
+          value = Number(pick(wrong).textContent);
+        }
+        const targetButton = Array.from(els.answerGrid.children).find(btn => Number(btn.textContent) === value);
+        submitAnswer(value, targetButton, true);
+      }, delay);
+    }
+
+    function finishGame(winnerIndex) {
+      stopTimer();
+      state.running = false;
+      state.locked = true;
+      state.timeLeft = 0;
+      updateTimerView();
+      playSound("win");
+      renderPlayers(winnerIndex);
+      els.turn.textContent = "Maç bitti";
+      els.equation.textContent = "🏆";
+      setFeedback(state.players[winnerIndex].name + " maçı kazandı! Yeni maç için başlat düğmesine bas.", "good");
+      els.start.textContent = "Yeni Maç Başlat";
+    }
+
+    function startGame() {
+      stopTimer();
+      makePlayers();
+      state.running = true;
+      state.locked = false;
+      state.round = 0;
+      state.streak = 0;
+      state.timeLeft = 10;
+      setBallPosition(getBallTarget(0));
+      els.setupScreen.classList.add("hidden");
+      els.start.textContent = "Yeni Maç";
+      playSound("serve");
+      updateMeta();
+      renderPlayers();
+      renderQuestion();
+    }
+
+    function resetGame() {
+      stopTimer();
+      state.running = false;
+      state.locked = true;
+      state.round = 0;
+      state.streak = 0;
+      state.timeLeft = 10;
+      makePlayers();
+      renderPlayers();
+      updateMeta();
+      updateTimerView();
+      els.equation.textContent = "?";
+      els.turn.textContent = "Oyunu başlat.";
+      els.answerGrid.innerHTML = "";
+      setFeedback("Sınıfı ve oyuncu modunu seç, sonra maçı başlat.", "");
+      els.start.textContent = "Maçı Başlat";
+      setBallPosition(getBallTarget(0));
+    }
+
+    function selectButton(groupId, value, attr, callback) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+      callback();
+    }
+
+    function renderOperationChoices() {
+      const allowed = allowedOperations();
+      if (state.operation !== "mixed" && !allowed.includes(state.operation)) {
+        state.operation = "mixed";
+      }
+      document.querySelectorAll("#operationChoices .choice-btn").forEach(button => {
+        const op = button.dataset.operation;
+        const available = op === "mixed" || allowed.includes(op);
+        button.disabled = !available;
+        button.classList.toggle("is-active", op === state.operation);
+      });
+    }
+
+    document.querySelectorAll("#gradeChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.grade = Number(button.dataset.grade);
+        selectButton("gradeChoices", state.grade, "grade", () => {
+          renderOperationChoices();
+          resetGame();
+        });
+      });
+    });
+
+    document.querySelectorAll("#modeChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.playMode = button.dataset.mode;
+        selectButton("modeChoices", state.playMode, "mode", resetGame);
+      });
+    });
+
+    document.querySelectorAll("#operationChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+        state.operation = button.dataset.operation;
+        selectButton("operationChoices", state.operation, "operation", resetGame);
+      });
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setupScreen.classList.toggle("hidden");
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+    els.start.addEventListener("click", startGame);
+
+    els.soundToggle.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.soundToggle.classList.toggle("is-active", state.soundOn);
+      els.soundToggle.setAttribute("aria-pressed", String(state.soundOn));
+      els.soundToggle.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playSound("serve");
+    });
+
+    renderOperationChoices();
+    resetGame();
+  </script>
+</body>
+</html>

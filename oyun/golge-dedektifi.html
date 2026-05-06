@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gölge Dedektifi - Görsel Zeka Oyunu</title>
+  <meta name="description" content="Çocuklar için görsel algı, dikkat ve gölge eşleştirme oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Dinamik Tema (Varsayılan 4 Yaş - Güneşli/Turuncu) */
+      --hero-bg: linear-gradient(135deg, #FF7E5F, #FEB47B);
+      --board-bg: linear-gradient(135deg, #ffeedb, #ffd7b5);
+      --board-border: #ffc499;
+      --shadow-color: #2c1a0e;
+    }
+
+    body[data-theme="5"] {
+      --hero-bg: linear-gradient(135deg, #43cea2, #185a9d);
+      --board-bg: linear-gradient(135deg, #e0f2f1, #b2dfdb);
+      --board-border: #80cbc4;
+      --shadow-color: #0b2633;
+    }
+
+    body[data-theme="6"] {
+      --hero-bg: linear-gradient(135deg, #614385, #516395);
+      --board-bg: linear-gradient(135deg, #e8eaf6, #c5cae9);
+      --board-border: #9fa8da;
+      --shadow-color: #1a1525;
+    }
+
+    body[data-theme="7"] {
+      --hero-bg: linear-gradient(135deg, #1f4037, #99f2c8);
+      --board-bg: linear-gradient(135deg, #ece9e6, #ffffff);
+      --board-border: #cfd8dc;
+      --shadow-color: #111111;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background: #f4f7fb;
+      min-height: 100vh;
+      transition: background 0.5s ease;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    /* ANA SİTEDEKİ ÇAKIŞMAYI ENGELLEYEN HERO AYARLARI */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      color: white;
+      background: var(--hero-bg);
+      transition: all 0.5s ease;
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text {
+      flex: 1 1 min-content;
+      min-width: 250px;
+    }
+
+    .hero h1 {
+      margin: 6px 0 4px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+      line-height: 1.05;
+    }
+
+    .hero p {
+      margin: 0;
+      font-weight: 800;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      opacity: 0.95;
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      font-size: 0.75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: inherit;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.25);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      color: inherit;
+    }
+
+    .stat span {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 14px 18px;
+      background: #f8fbff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .setup-panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: white;
+      padding: 16px;
+      box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05);
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-btn,
+    .control-btn {
+      border: 0;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-btn {
+      min-height: 68px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--ink);
+      text-align: left;
+    }
+
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600;}
+
+    .choice-btn:hover { transform: translateY(-2px); }
+
+    .choice-btn.is-active {
+      background: #ecf9df;
+      border-color: rgba(94, 165, 28, 0.46);
+      color: #2e6812;
+      box-shadow: 0 8px 16px rgba(94, 165, 28, 0.1);
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: white;
+    }
+
+    .control-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .control-btn {
+      min-height: 44px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: #f6f9ff;
+      border: 2px solid var(--line);
+      color: var(--muted);
+    }
+
+    .control-btn.is-active {
+      background: #fff3ce;
+      border-color: rgba(255, 209, 102, 0.8);
+      color: #79530c;
+    }
+
+    /* OYUN ALANI */
+    .board-wrap {
+      padding: clamp(16px, 4vw, 32px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: var(--board-bg);
+      border-bottom-left-radius: 30px;
+      border-bottom-right-radius: 30px;
+      transition: background 0.5s ease;
+    }
+
+    .detective-board {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .board-col {
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      padding: 20px;
+      border: 4px dashed var(--board-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .col-title {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.3rem;
+      color: var(--ink);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .grid-items {
+      display: grid;
+      gap: 14px;
+      width: 100%;
+      justify-items: center;
+    }
+
+    /* Sütun ayarlamaları yaşa göre */
+    .grid-items[data-cols="1"] { grid-template-columns: repeat(1, 1fr); }
+    .grid-items[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+
+    .game-btn {
+      width: clamp(80px, 18vw, 110px);
+      height: clamp(80px, 18vw, 110px);
+      background: white;
+      border: 4px solid white;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, opacity 0.3s;
+      position: relative;
+    }
+
+    .game-btn:hover:not(.is-matched) {
+      transform: translateY(-4px) scale(1.05);
+      box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+    }
+
+    /* Renkli Şekiller (Sol) */
+    .item-btn.is-selected {
+      border-color: #35a7ff;
+      background: #eef7ff;
+      transform: scale(1.1);
+      box-shadow: 0 0 0 4px rgba(53, 167, 255, 0.3), 0 12px 20px rgba(0,0,0,0.15);
+      z-index: 10;
+    }
+
+    /* Gölgeler (Sağ) */
+    .shadow-btn {
+      background: rgba(255,255,255,0.4);
+    }
+    
+    /* GÖLGE SİHRİ: İçindeki renkleri tamamen silüete çevirir */
+    .shadow-btn svg path,
+    .shadow-btn svg circle,
+    .shadow-btn svg rect,
+    .shadow-btn svg polygon,
+    .shadow-btn svg ellipse {
+      fill: var(--shadow-color) !important;
+      stroke: var(--shadow-color) !important;
+    }
+
+    /* Doğru / Yanlış Eşleştirme Görsel Efektleri */
+    .game-btn.is-matched {
+      border-color: #a7f36b;
+      background: #f4ffe8;
+      opacity: 0.4;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+
+    .shadow-btn.is-wrong {
+      border-color: #ff6868;
+      background: #fff0f0;
+      animation: shake 0.4s ease;
+    }
+
+    .shape-svg {
+      width: 70%;
+      height: 70%;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+      pointer-events: none; /* Tıklamayı engelle, buton algılasın */
+    }
+
+    .feedback {
+      width: 100%;
+      max-width: 700px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; transform: scale(1.02); border: 2px solid #a7f36b; }
+    .feedback.bad { background: #fff0f0; color: #982727; transform: scale(0.98); border: 2px solid #ffb3b3;}
+    .feedback.action { background: #eef7ff; color: #1f6499; border: 2px solid #a6d8ff;}
+
+    .hidden { display: none !important; }
+
+    /* Animasyonlar */
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(167, 243, 107, 0.7); }
+      70% { box-shadow: 0 0 0 15px rgba(167, 243, 107, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(167, 243, 107, 0); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    @media (max-width: 768px) {
+      .detective-board { grid-template-columns: 1fr; }
+      .grid-items { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important; }
+    }
+
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+      .board-col { padding: 12px; }
+      .game-btn { width: clamp(65px, 15vw, 90px); height: clamp(65px, 15vw, 90px); }
+    }
+  </style>
+</head>
+<body data-theme="4">
+  <main class="page">
+    <section class="game-shell" aria-label="Gölge Dedektifi Oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Dikkat • Gölge Dedektifi</span>
+          <h1>Doğru Gölgeyi Bul!</h1>
+          <p>Önce renkli bir nesne seç, sonra sağ taraftaki siyah gölgelerden doğru olanıyla eşleştir.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>Seviye</span><strong id="levelText">1</strong></div>
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Yaş ve Zorluk Seviyesi</h2>
+          <div class="choice-row" id="ageChoices">
+            <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>3 Şekil (Basit)</span></button>
+            <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>4 Şekil (Orta)</span></button>
+            <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>6 Şekil (Zor)</span></button>
+            <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>8 Şekil (Döndürülmüş)</span></button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+      </nav>
+
+      <section class="board-wrap">
+        <div class="feedback" id="feedback">Önce soldan bir renkli nesne seç.</div>
+        
+        <div class="detective-board">
+          <div class="board-col">
+            <div class="col-title">Renkli Nesneler 🍎</div>
+            <div class="grid-items" id="itemsContainer"></div>
+          </div>
+          <div class="board-col">
+            <div class="col-title">Gölgeler 🕵️</div>
+            <div class="grid-items" id="shadowsContainer"></div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+    // Yaş gruplarına göre eşleştirilecek nesne sayısı ve rotasyon ayarı
+    const ageConfigs = {
+      4: { count: 3, rotate: false, cols: 1 },
+      5: { count: 4, rotate: false, cols: 2 },
+      6: { count: 6, rotate: false, cols: 2 },
+      7: { count: 8, rotate: true, cols: 2 }
+    };
+
+    // Sevimli ve net SVG şekiller havuzu
+    const SHAPES = [
+      { id: 'apple', svg: `<path d="M50 25 C30 10 10 30 25 55 C35 70 45 85 50 85 C55 85 65 70 75 55 C90 30 70 10 50 25 Z" fill="#ff4136"/><path d="M50 25 Q55 10 65 10" stroke="#333" stroke-width="5" stroke-linecap="round" fill="none"/>` },
+      { id: 'star', svg: `<path d="M50 10 L61 38 L89 39 L67 56 L75 84 L50 68 L25 84 L33 56 L11 39 L39 38 Z" fill="#ffdc00"/>` },
+      { id: 'tree', svg: `<rect x="42" y="60" width="16" height="30" fill="#8B4513" rx="4"/><circle cx="50" cy="40" r="30" fill="#2ecc40"/>` },
+      { id: 'house', svg: `<polygon points="50,15 15,45 85,45" fill="#ff4136"/><rect x="25" y="45" width="50" height="40" fill="#0074d9"/><rect x="40" y="60" width="20" height="25" fill="#ffffff"/>` },
+      { id: 'car', svg: `<path d="M20 55 L30 35 H70 L80 55 V70 H20 Z" fill="#ff851b"/><circle cx="35" cy="70" r="10" fill="#333"/><circle cx="65" cy="70" r="10" fill="#333"/>` },
+      { id: 'heart', svg: `<path d="M50 85 C20 60 10 40 20 25 C30 10 45 15 50 28 C55 15 70 10 80 25 C90 40 80 60 50 85 Z" fill="#f012be"/>` },
+      { id: 'fish', svg: `<ellipse cx="60" cy="50" rx="30" ry="20" fill="#39cccc"/><polygon points="30,50 10,35 10,65" fill="#39cccc"/><circle cx="75" cy="45" r="4" fill="#ffffff"/>` },
+      { id: 'moon', svg: `<path d="M60 15 C35 15 15 35 15 60 C15 85 35 105 60 105 C45 90 45 40 60 15 Z" fill="#b10dc9"/>` },
+      { id: 'rocket', svg: `<path d="M50 10 C60 30 65 50 65 70 L50 85 L35 70 C35 50 40 30 50 10 Z" fill="#a2abb3"/><polygon points="35,60 20,80 35,70" fill="#ff4136"/><polygon points="65,60 80,80 65,70" fill="#ff4136"/><circle cx="50" cy="45" r="8" fill="#ffffff"/>` },
+      { id: 'flower', svg: `<circle cx="50" cy="25" r="15" fill="#ff6b6b"/><circle cx="50" cy="75" r="15" fill="#ff6b6b"/><circle cx="25" cy="50" r="15" fill="#ff6b6b"/><circle cx="75" cy="50" r="15" fill="#ff6b6b"/><circle cx="50" cy="50" r="15" fill="#ffdc00"/>` },
+      { id: 'candy', svg: `<circle cx="50" cy="50" r="20" fill="#f012be"/><polygon points="30,50 10,35 10,65" fill="#ff851b"/><polygon points="70,50 90,35 90,65" fill="#ff851b"/>` },
+      { id: 'mug', svg: `<rect x="25" y="25" width="50" height="50" rx="10" fill="#0074d9"/><path d="M75 35 H85 C95 35 95 65 85 65 H75" fill="none" stroke="#0074d9" stroke-width="8" stroke-linecap="round"/>` }
+    ];
+
+    const state = {
+      age: 4,
+      level: 1,
+      score: 0,
+      soundOn: true,
+      selectedItemId: null,
+      matchedCount: 0,
+      totalPairs: 0,
+      locked: false
+    };
+
+    const els = {
+      body: document.body,
+      setup: document.getElementById("setupScreen"),
+      itemsCol: document.getElementById("itemsContainer"),
+      shadowsCol: document.getElementById("shadowsContainer"),
+      levelText: document.getElementById("levelText"),
+      scoreText: document.getElementById("scoreText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle")
+    };
+
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    // Tıklama, Hata ve Başarı Sesleri
+    function playTone(freq, type = "sine", duration = 0.15) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.05);
+    }
+
+    function playMatch() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [523.25, 783.99].forEach((freq, i) => { // Do - Sol (Hızlı neşeli akor)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + i * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.2);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 0.3);
+      });
+    }
+
+    function playError() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    }
+
+    function playLevelUp() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.1);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + i * 0.1 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.1);
+        osc.stop(now + i * 0.1 + 0.4);
+      });
+    }
+
+    function shuffle(array) {
+      return array.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function generateLevel() {
+      const config = ageConfigs[state.age];
+      state.totalPairs = config.count;
+      state.matchedCount = 0;
+      state.selectedItemId = null;
+      
+      const selectedShapes = shuffle(SHAPES).slice(0, state.totalPairs);
+      
+      // Öğeleri ve gölgeleri karıştır
+      const items = shuffle([...selectedShapes]);
+      const shadows = shuffle([...selectedShapes]);
+
+      els.itemsCol.setAttribute("data-cols", config.cols);
+      els.shadowsCol.setAttribute("data-cols", config.cols);
+      
+      els.itemsCol.innerHTML = "";
+      els.shadowsCol.innerHTML = "";
+
+      // Renkli nesneleri oluştur
+      items.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "game-btn item-btn";
+        btn.dataset.id = item.id;
+        btn.setAttribute("aria-label", "Renkli nesne");
+        btn.innerHTML = `<svg class="shape-svg" viewBox="0 0 100 100">${item.svg}</svg>`;
+        btn.onclick = () => handleItemClick(item.id, btn);
+        els.itemsCol.appendChild(btn);
+      });
+
+      // Gölgeleri oluştur
+      shadows.forEach(shadow => {
+        const btn = document.createElement("button");
+        btn.className = "game-btn shadow-btn";
+        btn.dataset.id = shadow.id;
+        btn.setAttribute("aria-label", "Gölge nesne");
+        
+        let svgHtml = `<svg class="shape-svg" viewBox="0 0 100 100">${shadow.svg}</svg>`;
+        
+        // 7+ Yaş için rotasyon hilesi
+        if (config.rotate) {
+          const angles = [90, 180, -90, 45, -45, 135];
+          const randomAngle = angles[Math.floor(Math.random() * angles.length)];
+          // SVG'yi çevir
+          svgHtml = `<svg class="shape-svg" viewBox="0 0 100 100" style="transform: rotate(${randomAngle}deg)">${shadow.svg}</svg>`;
+        }
+
+        btn.innerHTML = svgHtml;
+        btn.onclick = () => handleShadowClick(shadow.id, btn);
+        els.shadowsCol.appendChild(btn);
+      });
+
+      state.locked = false;
+      setFeedback("Önce soldan bir renkli nesne seç, sonra sağdan gölgesini bul.", "");
+      els.levelText.textContent = state.level;
+      els.scoreText.textContent = state.score;
+    }
+
+    function handleItemClick(id, btnEl) {
+      if (state.locked || btnEl.classList.contains("is-matched")) return;
+      
+      // Tıklama sesi
+      playTone(440, "triangle");
+
+      // Diğer seçimleri temizle
+      document.querySelectorAll(".item-btn").forEach(b => b.classList.remove("is-selected"));
+      
+      // Yeni seçimi uygula
+      btnEl.classList.add("is-selected");
+      state.selectedItemId = id;
+      
+      setFeedback("Şimdi sağ taraftan bu nesnenin gölgesini tıkla.", "action");
+    }
+
+    function handleShadowClick(shadowId, shadowBtnEl) {
+      if (state.locked || shadowBtnEl.classList.contains("is-matched")) return;
+
+      // Önce nesne seçilmemişse uyar
+      if (!state.selectedItemId) {
+        playError();
+        setFeedback("Lütfen eşleştirmek için önce soldan renkli bir nesne seç!", "bad");
+        return;
+      }
+
+      state.locked = true;
+      const selectedItemBtn = document.querySelector(`.item-btn[data-id="${state.selectedItemId}"]`);
+
+      // Doğru eşleşme mi?
+      if (state.selectedItemId === shadowId) {
+        playMatch();
+        state.score += 10;
+        els.scoreText.textContent = state.score;
+        setFeedback("Harika! Doğru gölgeyi buldun.", "good");
+
+        // İkisine de eşleşti sınıfı ekle
+        selectedItemBtn.classList.remove("is-selected");
+        selectedItemBtn.classList.add("is-matched");
+        shadowBtnEl.classList.add("is-matched");
+        
+        // Küçük yeşil bir parlama efekti (css animation)
+        selectedItemBtn.style.animation = "pulse-green 0.5s ease";
+        shadowBtnEl.style.animation = "pulse-green 0.5s ease";
+
+        state.selectedItemId = null;
+        state.matchedCount++;
+
+        // Tur bitti mi?
+        if (state.matchedCount === state.totalPairs) {
+          setTimeout(() => {
+            playLevelUp();
+            setFeedback("Tebrikler! Tüm gölgeleri buldun. Sonraki seviyeye geçiliyor...", "good");
+            state.level++;
+            setTimeout(generateLevel, 2000);
+          }, 800);
+        } else {
+          setTimeout(() => { state.locked = false; }, 400);
+        }
+
+      } else {
+        // Yanlış Eşleşme
+        playError();
+        setFeedback("Eyvah! Bu gölge seçtiğin nesneye ait değil.", "bad");
+        
+        shadowBtnEl.classList.add("is-wrong");
+        
+        setTimeout(() => {
+          shadowBtnEl.classList.remove("is-wrong");
+          state.locked = false;
+        }, 500);
+      }
+    }
+
+    function initGame() {
+      els.body.setAttribute("data-theme", state.age);
+      state.level = 1;
+      state.score = 0;
+      generateLevel();
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    // Olay Dinleyicileri
+    document.querySelectorAll("#ageChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.age = Number(button.dataset.age);
+        selectButton("ageChoices", state.age, "age");
+        initGame();
+      });
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playTone(523.25, "sine", 0.1);
+    });
+
+    // Oyunu Başlat
+    initGame();
+  </script>
+</body>
+</html>
