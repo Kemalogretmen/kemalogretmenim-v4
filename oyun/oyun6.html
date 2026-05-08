@@ -1,73 +1,694 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1. Sınıf Ritmik Sayma Oyunu - Kemal Öğretmen</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cumhuriyet Yolculuğu - Kemal Öğretmenim</title>
+  <meta name="description" content="Milli Mücadele ve Cumhuriyet'in ilanı yol haritası oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      --turk-kirmizi: #e30a17;
+      --turk-koyu: #b91c1c;
+      --deniz-mavi: #0284c7;
+      --kara-yolu: #475569;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background: #f8fafc;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    /* ÜST BAŞLIK ALANI */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 26px;
+      color: white;
+      background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text { flex: 1 1 min-content; min-width: 250px; }
+    .hero h1 { margin: 6px 0 4px; font-family: var(--font-display, "Fredoka", system-ui, sans-serif); font-size: clamp(1.6rem, 3.5vw, 2.4rem); line-height: 1.05; }
+    .hero p { margin: 0; font-weight: 700; font-size: 0.95rem; opacity: 0.9; }
+
+    .kicker { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; color: inherit; }
+
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stat { flex: 1; min-width: 90px; padding: 10px 16px; border-radius: 16px; background: rgba(0, 0, 0, 0.25); text-align: center; backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255,255,255,0.1); }
+    .stat span { display: block; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; opacity: 0.8; }
+    .stat strong { display: block; margin-top: 4px; font-size: 1.3rem; font-weight: 900; }
+
+    .control-row { display: flex; justify-content: flex-end; padding: 12px 18px; background: white; border-bottom: 1px solid var(--line); }
+    .control-btn { border: 0; font-family: inherit; font-weight: 800; cursor: pointer; min-height: 40px; padding: 8px 16px; border-radius: 12px; background: #f6f9ff; border: 2px solid var(--line); color: var(--muted); transition: 0.2s;}
+    .control-btn.is-active { background: #fee2e2; border-color: #ef4444; color: #991b1b; }
+
+    /* OYUN VE HARİTA ALANI */
+    .board-wrap {
+      padding: clamp(16px, 3vw, 30px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: radial-gradient(circle at center, #f8fafc 0%, #e2e8f0 100%);
+      position: relative;
+    }
+
+    .map-container {
+      width: 100%;
+      max-width: 900px;
+      aspect-ratio: 16 / 7.5;
+      background-color: #e0f2fe; /* Deniz rengi yedek arka plan */
+      border-radius: 24px;
+      border: 6px solid white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+
+    .tr-map {
+      width: 100%; height: 100%;
+      /* Sizin sitenizdeki harita görseli. Yüklenemezse virgül sonrası yedek harita devreye girer */
+      background-image: url('/gorseller/turkiye.png'), url('https://upload.wikimedia.org/wikipedia/commons/b/bb/Turkey_blank_map.svg');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.75; /* Haritanın çok koyu olmaması için */
+      position: absolute;
+    }
+
+    .path-svg {
+      position: absolute;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Şehir Noktaları */
+    .city-pin {
+      position: absolute;
+      width: 18px; height: 18px;
+      background: white;
+      border: 4px solid var(--kara-yolu);
+      border-radius: 50%;
+      z-index: 5;
+      transform: translate(-50%, -50%);
+      transition: all 0.3s ease;
+    }
+
+    .city-pin.active { 
+      background: var(--turk-kirmizi); 
+      border-color: white;
+      transform: translate(-50%, -50%) scale(1.4); 
+      box-shadow: 0 0 15px var(--turk-kirmizi); 
+    }
     
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    .city-pin.completed { 
+      background: #16a34a; 
+      border-color: white;
+    }
+
+    .city-label {
+      position: absolute;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #1e293b;
+      white-space: nowrap;
+      transform: translate(-50%, 15px);
+      background: rgba(255,255,255,0.9);
+      padding: 3px 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Atatürk Silueti / Gezgin (Avatar) */
+    .traveler {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      z-index: 10;
+      transform: translate(-50%, -100%); /* İğnenin tam üstünde durması için */
+      transition: left 1.2s ease-in-out, top 1.2s ease-in-out;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.3));
+    }
+
+    .traveler img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 50%; /* Resim kareyse yuvarlak yapar */
+      background: white;
+      border: 3px solid var(--turk-kirmizi);
+    }
+
+    /* ETKİLEŞİM VE BİLGİ KARTLARI (DİNAMİK BÖLÜM) */
+    .interaction-area {
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+    }
+
+    /* Bilgi Kartı (Soldan veya Ortadan Gelen Öğretici Kart) */
+    .info-card {
+      background: white;
+      border-radius: 24px;
+      padding: 25px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      border: 2px solid var(--line);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      transition: all 0.4s ease;
+    }
+
+    .info-image {
+      flex: 0 0 200px;
+      height: 200px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .info-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .info-text-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .info-title {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      color: var(--turk-koyu);
+      font-size: 1.6rem;
+      margin: 0 0 10px 0;
+    }
+
+    .info-desc {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: #334155;
+      margin-bottom: 20px;
+    }
+
+    .btn-start-task {
+      align-self: flex-start;
+      background: var(--deniz-mavi);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 12px rgba(2, 132, 199, 0.3);
+      transition: 0.2s;
+    }
     
-    <style>
-        /* === TEMEL AYARLAR === */
-        :root { --ana-renk: #673ab7; --ikinci-renk: #0ea5e9; --vurgu: #f97316; --arkaplan: #f8fafc; }
-        body { font-family: 'Nunito', sans-serif; background-color: var(--arkaplan); margin: 0; padding: 0; color: #334155; display: flex; flex-direction: column; min-height: 100vh; }
-        
-        /* === NAVBAR (ÜST MENÜ) AYARLARI === */
-        .navbar { background-color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
-        .logo { font-family: 'Fredoka', sans-serif; font-size: 24px; font-weight: 600; color: var(--ana-renk); text-decoration: none; display: flex; align-items: center; gap: 10px; }
-        
-        .nav-links { display: flex; align-items: center; gap: 5px; } 
-        .nav-link { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; padding: 10px 12px; border-radius: 10px; transition: 0.3s; }
-        .nav-link:hover { background-color: #f1f5f9; color: var(--ana-renk); }
+    .btn-start-task:hover { transform: translateY(-3px); box-shadow: 0 10px 15px rgba(2, 132, 199, 0.4); }
 
-        /* AÇILIR MENÜ */
-        .dropdown { position: relative; display: inline-block; }
-        .dropbtn { text-decoration: none; color: #64748b; font-weight: 700; font-size: 15px; padding: 10px 12px; border-radius: 10px; transition: 0.3s; background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; display: flex; align-items: center; gap: 5px;}
-        .dropdown:hover .dropbtn { background-color: #f1f5f9; color: var(--ana-renk); }
-        .dropdown-content { display: none; position: absolute; background-color: white; min-width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-radius: 15px; top: 100%; left: 0; overflow: hidden; z-index: 1001; }
-        .dropdown-content a { color: #64748b; padding: 12px 20px; text-decoration: none; display: block; font-weight: 700; border-bottom: 1px solid #f1f5f9; transition: 0.2s; font-size: 14px;}
-        .dropdown-content a:hover { background-color: #f8fafc; color: var(--ana-renk); padding-left: 25px; }
-        .dropdown:hover .dropdown-content { display: block; }
+    /* Soru Kartı (Etkileşimli Seçenekler) */
+    .question-card {
+      background: white;
+      border-radius: 24px;
+      padding: 25px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      border: 4px solid var(--deniz-mavi);
+      display: none; /* Bilgi okunduktan sonra açılır */
+      flex-direction: column;
+      gap: 20px;
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
 
-        /* HAMBURGER MENÜ (MOBİL İÇİN) */
-        .hamburger { display: none; font-size: 28px; cursor: pointer; color: var(--ana-renk); }
+    .q-title {
+      text-align: center;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.5rem;
+      color: var(--ink);
+      margin: 0;
+    }
 
-        /* TELEFON EKRANI AYARLARI */
-        @media (max-width: 1024px) {
-            .hamburger { display: block; }
-            .nav-links { display: none; flex-direction: column; position: absolute; top: 70px; left: 0; width: 100%; background-color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); padding: 20px 0; gap: 10px; max-height: 80vh; overflow-y: auto; }
-            .nav-links.aktif { display: flex; }
-            .nav-link, .dropbtn { width: 90%; text-align: left; padding: 15px; font-size: 18px; border-bottom: 1px solid #f1f5f9; }
-            .dropdown { width: 100%; text-align: center; }
-            .dropdown-content { position: relative; width: 90%; margin: 0 auto; box-shadow: none; border-left: 4px solid var(--ikinci-renk); background: #f8fafc; }
-        }
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
 
-        /* === İÇERİK ALANI === */
-        .icerik-kapsayici { flex: 1; max-width: 1100px; margin: 40px auto; width: 90%; padding: 30px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .sayfa-basligi { font-family: 'Fredoka', sans-serif; font-size: 32px; color: var(--ana-renk); text-align: center; margin-top: 0; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px dashed #e2e8f0; }
-        
-        /* Oyun Alanı Ortalama */
-        .oyun-alani { display: flex; justify-content: center; width: 100%; }
+    .opt-btn {
+      background: #f8fafc;
+      border: 3px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 80px;
+    }
 
-        /* === ALT BİLGİ (FOOTER) === */
-        footer { background-color: #1e293b; color: white; text-align: center; padding: 40px 20px; border-top-left-radius: 50px; border-top-right-radius: 50px; margin-top: auto; }
-        .sosyal { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; }
-        .sosyal a { color: white; font-size: 24px; background: rgba(255,255,255,0.1); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.3s; text-decoration: none; }
-        .sosyal a:hover { background: var(--vurgu); transform: scale(1.1); }
-</style>
+    .opt-btn:hover { background: white; border-color: var(--deniz-mavi); color: var(--deniz-mavi); transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.05); }
+    .opt-btn.is-correct { background: #dcfce7; border-color: #22c55e; color: #166534; animation: pulse 0.5s; pointer-events: none; }
+    .opt-btn.is-wrong { background: #fee2e2; border-color: #ef4444; color: #991b1b; animation: shake 0.4s; pointer-events: none; }
+
+    /* Final Kutlaması */
+    .final-screen {
+      display: none;
+      text-align: center;
+      background: linear-gradient(135deg, #b91c1c, #dc2626);
+      color: white;
+      border-radius: 24px;
+      padding: 40px 20px;
+      box-shadow: 0 20px 40px rgba(185, 28, 28, 0.3);
+      animation: popIn 0.5s ease;
+    }
+
+    .final-screen h2 { font-family: var(--font-display); font-size: 3rem; margin: 0 0 15px 0; }
+    .final-screen p { font-size: 1.3rem; font-weight: 700; margin-bottom: 25px; opacity: 0.9;}
+
+    .feedback-msg {
+      text-align: center;
+      font-weight: 900;
+      font-size: 1.2rem;
+      min-height: 30px;
+      margin-top: 10px;
+    }
+
+    /* Animasyonlar */
+    @keyframes popIn { 0% { opacity:0; transform: scale(0.9); } 100% { opacity:1; transform: scale(1); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+
+    @media (max-width: 800px) {
+      .info-card { flex-direction: column; text-align: center; }
+      .info-image { width: 100%; height: 180px; }
+      .btn-start-task { align-self: center; }
+      .map-container { aspect-ratio: 1 / 1; }
+    }
+
+    @media (max-width: 600px) {
+      .options-grid { grid-template-columns: 1fr; }
+      .page { padding: 10px 8px 40px; }
+      .hero { flex-direction: column; text-align: center; }
+    }
+  </style>
 </head>
 <body>
 
-    <main class="icerik-kapsayici">
+<main class="page">
+  <section class="game-shell">
+    <header class="hero">
+      <div class="hero-text">
+        <span class="kicker">Sosyal Bilgiler • Hayat Bilgisi</span>
+        <h1>Cumhuriyet Yolculuğu</h1>
+        <p>Atatürk'ün izinde, Bandırma Vapuru'ndan Cumhuriyet'in ilanına uzanan şanlı yolculuk!</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><span>Görev</span><strong id="stageText">1 / 8</strong></div>
+        <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+      </div>
+    </header>
+
+    <nav class="control-row">
+      <button class="control-btn is-active" id="soundToggle">Ses Açık</button>
+    </nav>
+
+    <section class="board-wrap">
+      
+      <!-- Türkiye Haritası -->
+      <div class="map-container" id="mapContainer">
+        <div class="tr-map"></div>
+        <svg class="path-svg" id="pathSvg" viewBox="0 0 1000 500" preserveAspectRatio="none"></svg>
+        <div id="pins"></div>
         
-        <h1 class="sayfa-basligi">🌟 1. Sınıf Hayat Bilgisi Oyunu 🌟</h1>
+        <!-- Gezgin Avatarı -->
+        <div class="traveler" id="traveler">
+            <!-- Sizin sitenizdeki Atatürk görseli. Yüklenemezse açık kaynaklı fotoğraf devreye girer -->
+            <img src="/gorseller/ataturk.png" 
+                 onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Mustafa_Kemal_Atatürk_1923.jpg/400px-Mustafa_Kemal_Atatürk_1923.jpg'" 
+                 alt="Atatürk">
+        </div>
+      </div>
 
-        <div class="oyun-alani">
-        <iframe style="max-width:100%" src="https://wordwall.net/tr/embed/c21d43b9bd3647298213dcb572f47ae4?themeId=49&templateId=30&fontStackId=2" width="1000" height="760" frameborder="0" allowfullscreen></iframe>    </div>
-    </main>
+      <!-- Etkileşim Alanı -->
+      <div class="interaction-area">
+        
+        <!-- 1. Aşama: Bilgi Kartı -->
+        <div class="info-card" id="infoCard">
+          <div class="info-image">
+            <img id="infoImage" src="" alt="Tarihi Görsel">
+          </div>
+          <div class="info-text-box">
+            <h2 class="info-title" id="infoTitle">Şehir Adı</h2>
+            <p class="info-desc" id="infoDesc">Tarihi bilgi metni.</p>
+            <button class="btn-start-task" onclick="startQuestion()">Bilgiyi Okudum, Soruyu Göster 📝</button>
+          </div>
+        </div>
 
-    <script src="/js/site.js"></script>
+        <!-- 2. Aşama: Soru Kartı -->
+        <div class="question-card" id="questionCard">
+          <h3 class="q-title" id="qTitle">Soru metni buraya gelecek?</h3>
+          <div class="options-grid" id="optionsGrid"></div>
+          <div class="feedback-msg" id="feedbackMsg"></div>
+        </div>
+
+        <!-- 3. Aşama: Final -->
+        <div class="final-screen" id="finalScreen">
+          <h2>🇹🇷 Yaşasın Cumhuriyet! 🇹🇷</h2>
+          <p>Milli Mücadele yolculuğunu başarıyla tamamladın. Atatürk'ün izinde yürüyen aydınlık bir gençsin!</p>
+          <button class="btn-start-task" style="background: white; color: var(--turk-koyu);" onclick="location.reload()">Yolculuğa Tekrar Başla</button>
+        </div>
+
+      </div>
+
+    </section>
+  </section>
+</main>
+
+<script src="/js/site.js"></script>
+<script>
+  // MİLLİ MÜCADELE VERİTABANI (Dinamik Koordinatlar ve Gerçekçi Bilgiler)
+  // X ve Y değerleri Türkiye haritası üzerindeki yaklaşık yüzdelik konumlarıdır.
+  const STAGES = [
+    {
+      id: 'istanbul', name: 'İstanbul', x: 23, y: 22,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Bandirma_Vapuru.jpg/640px-Bandirma_Vapuru.jpg',
+      title: 'Bandırma Vapuru ile Yola Çıkış',
+      info: 'Mustafa Kemal Paşa, yurdu düşman işgalinden kurtarmak için 16 Mayıs 1919\'da İstanbul\'dan Bandırma Vapuru\'na binerek Karadeniz\'e açıldı.',
+      q: 'Milli Mücadele\'yi başlatmak için İstanbul\'dan yola çıkan efsanevi vapurun adı nedir?',
+      options: ['Bandırma Vapuru', 'Nusret Mayın Gemisi', 'Gülcemal Vapuru', 'Yavuz Zırhlısı'],
+      ans: 0
+    },
+    {
+      id: 'samsun', name: 'Samsun', x: 57, y: 16,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Ataturk_and_his_friends_in_Samsun.jpg/640px-Ataturk_and_his_friends_in_Samsun.jpg',
+      title: 'Kurtuluş Meşalesi Yanıyor',
+      info: '19 Mayıs 1919\'da Mustafa Kemal\'in Samsun\'a ayak basmasıyla Milli Mücadele resmen başladı. Bu tarihi gün artık "Gençlik ve Spor Bayramı"dır.',
+      q: 'Milli Mücadele hangi ilimize ayak basılmasıyla başlamıştır?',
+      options: ['Ankara', 'İzmir', 'Samsun', 'Erzurum'],
+      ans: 2
+    },
+    {
+      id: 'amasya', name: 'Amasya', x: 55, y: 28,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Amasya_Genelgesi_Heyeti.jpg/640px-Amasya_Genelgesi_Heyeti.jpg',
+      title: 'Amasya Genelgesi',
+      info: 'Burada yayınlanan genelge ile tüm halka şu çağrı yapıldı: "Vatanın bütünlüğü, milletin bağımsızlığı tehlikededir! Milletin bağımsızlığını yine milletin azim ve kararı kurtaracaktır."',
+      q: '"Vatanın bütünlüğü tehlikededir" uyarısının yapıldığı tarihi belge hangisidir?',
+      options: ['İstiklal Marşı', 'Amasya Genelgesi', 'Nutuk', 'Ankara Antlaşması'],
+      ans: 1
+    },
+    {
+      id: 'erzurum', name: 'Erzurum', x: 82, y: 32,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Erzurum_Kongresi_Temsilciler_Heyeti.jpg/640px-Erzurum_Kongresi_Temsilciler_Heyeti.jpg',
+      title: 'Erzurum Kongresi',
+      info: '23 Temmuz 1919. Doğu illerinden gelen temsilcilerle yapılan bu kongrede çok önemli bir karar alındı: "Milli sınırlar içinde vatan bir bütündür, parçalanamaz!"',
+      q: '"Milli sınırlar içinde vatan bir bütündür" kararı nerede alınmıştır?',
+      options: ['Sivas Kongresi', 'TBMM', 'Erzurum Kongresi', 'Havza Mitingi'],
+      ans: 2
+    },
+    {
+      id: 'sivas', name: 'Sivas', x: 63, y: 40,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Sivas_Kongresi_Delegeleri.jpg/640px-Sivas_Kongresi_Delegeleri.jpg',
+      title: 'Sivas Kongresi',
+      info: '4 Eylül 1919. Yurdun dört bir yanından gelen cemiyetler "Anadolu ve Rumeli Müdafaa-i Hukuk Cemiyeti" adı altında birleştirildi. Artık güçler tek yumruk olmuştu.',
+      q: 'Tüm milli cemiyetlerin tek bir çatı altında birleştiği kongre hangisidir?',
+      options: ['Amasya Görüşmeleri', 'Sivas Kongresi', 'Balıkesir Kongresi', 'Erzurum Kongresi'],
+      ans: 1
+    },
+    {
+      id: 'ankara', name: 'Ankara', x: 44, y: 42,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/First_Parliament_of_Turkey.jpg/640px-First_Parliament_of_Turkey.jpg',
+      title: 'TBMM Açılıyor',
+      info: '23 Nisan 1920\'de Ankara\'da Türkiye Büyük Millet Meclisi açıldı. "Egemenlik kayıtsız şartsız milletindir!" ilkesiyle halk yönetimi eline aldı.',
+      q: 'Egemenliğin millete geçtiği ve 23 Nisan\'da açılan kurumun adı nedir?',
+      options: ['Türkiye Büyük Millet Meclisi', 'Bakanlar Kurulu', 'Milli Eğitim Bakanlığı', 'Osmanlı Mebusan Meclisi'],
+      ans: 0
+    },
+    {
+      id: 'dumlupinar', name: 'Dumlupınar', x: 28, y: 52,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Mustafa_Kemal_Pasha_and_his_soldiers.jpg/640px-Mustafa_Kemal_Pasha_and_his_soldiers.jpg',
+      title: 'Büyük Taarruz ve Zafer',
+      info: 'Mustafa Kemal\'in "Ordular, ilk hedefiniz Akdeniz\'dir. İleri!" emriyle 30 Ağustos 1922\'de düşman orduları kesin bir yenilgiye uğratıldı ve vatan kurtarıldı.',
+      q: 'Yurdu düşmandan tamamen temizlediğimiz ve 30 Ağustos\'ta kutladığımız bayram hangisidir?',
+      options: ['Cumhuriyet Bayramı', 'Zafer Bayramı', 'Gençlik Bayramı', 'Ulusal Egemenlik Bayramı'],
+      ans: 1
+    },
+    {
+      id: 'final', name: 'Ankara (Cumhuriyet)', x: 44, y: 42,
+      img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Mustafa_Kemal_Ataturk_with_the_founders_of_the_Republic.jpg/640px-Mustafa_Kemal_Ataturk_with_the_founders_of_the_Republic.jpg',
+      title: 'Cumhuriyetin İlanı',
+      info: '29 Ekim 1923! Uzun ve zorlu mücadelelerin ardından, devletin yönetim şeklinin "Cumhuriyet" olduğu tüm dünyaya ilan edildi. İlk Cumhurbaşkanı Atatürk oldu.',
+      q: 'Devletimizin yönetim şekli olan Cumhuriyet hangi tarihte ilan edilmiştir?',
+      options: ['29 Ekim 1923', '23 Nisan 1920', '19 Mayıs 1919', '30 Ağustos 1922'],
+      ans: 0
+    }
+  ];
+
+  const state = {
+    stage: 0,
+    score: 0,
+    locked: false,
+    soundOn: true
+  };
+
+  const els = {
+    pins: document.getElementById('pins'),
+    svg: document.getElementById('pathSvg'),
+    traveler: document.getElementById('traveler'),
+    infoCard: document.getElementById('infoCard'),
+    qCard: document.getElementById('questionCard'),
+    finalScreen: document.getElementById('finalScreen'),
+    img: document.getElementById('infoImage'),
+    title: document.getElementById('infoTitle'),
+    desc: document.getElementById('infoDesc'),
+    qTitle: document.getElementById('qTitle'),
+    opts: document.getElementById('optionsGrid'),
+    msg: document.getElementById('feedbackMsg'),
+    stageText: document.getElementById('stageText'),
+    scoreText: document.getElementById('scoreText')
+  };
+
+  function getAudioContext() {
+    if (!state.soundOn) return null;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    const ctx = new AudioContext();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  function playTone(freq, type = "sine", duration = 0.15) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+  }
+
+  function playSuccess() {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    [523.25, 659.25, 783.99].forEach((f, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(f, now + i * 0.1);
+      gain.gain.setValueAtTime(0.0001, now + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.2, now + i * 0.1 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + i * 0.1);
+      osc.stop(now + i * 0.1 + 0.4);
+    });
+  }
+
+  function initMap() {
+    els.pins.innerHTML = '';
+    // Noktaları Çiz
+    STAGES.forEach((s, i) => {
+      const pin = document.createElement('div');
+      pin.className = 'city-pin' + (i === 0 ? ' active' : '');
+      pin.style.left = s.x + '%';
+      pin.style.top = s.y + '%';
+      
+      const label = document.createElement('div');
+      label.className = 'city-label';
+      label.textContent = s.name;
+      pin.appendChild(label);
+      els.pins.appendChild(pin);
+    });
+
+    // Kesik Çizgili Yolu Çiz
+    let pathD = `M ${STAGES[0].x * 10} ${STAGES[0].y * 5}`;
+    for(let i=1; i < STAGES.length; i++) {
+       // Hafif kavisli yollar için Q (Quadratic Bezier) kullanılabilir ama düz line (L) çocuklar için daha nettir.
+       pathD += ` L ${STAGES[i].x * 10} ${STAGES[i].y * 5}`;
+    }
+    const pathLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathLine.setAttribute("d", pathD);
+    pathLine.setAttribute("stroke", "rgba(71, 85, 105, 0.6)"); // kara-yolu rengi hafif saydam
+    pathLine.setAttribute("stroke-width", "4");
+    pathLine.setAttribute("fill", "none");
+    pathLine.setAttribute("stroke-dasharray", "8, 8");
+    els.svg.appendChild(pathLine);
+  }
+
+  function updateMapUI() {
+    const stage = STAGES[state.stage];
+    
+    // Avatarı (Atatürk Silueti) Taşı
+    els.traveler.style.left = stage.x + '%';
+    els.traveler.style.top = stage.y + '%';
+
+    // Pinleri Güncelle
+    const pins = document.querySelectorAll('.city-pin');
+    pins.forEach((p, i) => {
+      p.classList.toggle('active', i === state.stage);
+      p.classList.toggle('completed', i < state.stage);
+    });
+
+    // Skorbord
+    els.stageText.textContent = `${state.stage + 1} / ${STAGES.length}`;
+    els.scoreText.textContent = state.score;
+  }
+
+  function loadStage() {
+    state.locked = false;
+    const stage = STAGES[state.stage];
+    
+    updateMapUI();
+
+    // 1. Bilgi Kartını Yükle ve Göster
+    els.img.src = stage.img;
+    els.title.textContent = stage.title;
+    els.desc.textContent = stage.info;
+    
+    els.infoCard.style.display = 'flex';
+    els.qCard.style.display = 'none';
+  }
+
+  // "Soruyu Göster" Butonuna Basılınca
+  window.startQuestion = function() {
+    playTone(600, 'triangle', 0.1);
+    const stage = STAGES[state.stage];
+    
+    // Soru Kartını Doldur
+    els.qTitle.textContent = stage.q;
+    els.opts.innerHTML = '';
+    els.msg.textContent = '';
+    
+    stage.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.onclick = () => handleAnswer(idx, btn);
+      els.opts.appendChild(btn);
+    });
+
+    // Görünümleri Değiştir
+    els.infoCard.style.display = 'none';
+    els.qCard.style.display = 'flex';
+  };
+
+  function handleAnswer(idx, btn) {
+    if (state.locked) return;
+    state.locked = true;
+    const stage = STAGES[state.stage];
+
+    if (idx === stage.ans) {
+      btn.classList.add('is-correct');
+      playSuccess();
+      state.score += 100;
+      els.msg.textContent = 'Harika! Doğru bildin. Yola devam ediyoruz... 🇹🇷';
+      els.msg.style.color = '#16a34a';
+      
+      setTimeout(() => {
+        if (state.stage < STAGES.length - 1) {
+          state.stage++;
+          loadStage(); // Sonraki şehre geç
+        } else {
+          showFinal(); // Oyun Bitti
+        }
+      }, 1500);
+
+    } else {
+      btn.classList.add('is-wrong');
+      playTone(150, 'sawtooth', 0.3);
+      els.msg.textContent = 'Eyvah! Bir hata var, tekrar düşünelim.';
+      els.msg.style.color = '#dc2626';
+      
+      setTimeout(() => {
+        btn.classList.remove('is-wrong');
+        state.locked = false;
+      }, 1000);
+    }
+  }
+
+  function showFinal() {
+    updateMapUI();
+    els.qCard.style.display = 'none';
+    els.infoCard.style.display = 'none';
+    els.finalScreen.style.display = 'block';
+  }
+
+  document.getElementById('soundToggle').addEventListener('click', function() {
+    state.soundOn = !state.soundOn;
+    this.textContent = state.soundOn ? 'Ses Açık' : 'Ses Kapalı';
+    this.classList.toggle('is-active', !state.soundOn);
+    if(state.soundOn) playTone(500, 'sine', 0.1);
+  });
+
+  // Oyunu Başlat
+  initMap();
+  setTimeout(loadStage, 200);
+
+</script>
 </body>
 </html>

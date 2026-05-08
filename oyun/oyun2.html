@@ -1,1075 +1,670 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ritmik Sayma Oyunu - Kemal Öğretmen</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ritmik Sayma Macerası - Kemal Öğretmenim</title>
+  <meta name="description" content="Çocuklar için ileri ve geri ritmik sayma oyunu.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Temel Tema (Su/Doğa Konsepti) */
+      --hero-bg: linear-gradient(135deg, #0ea5e9, #10b981);
+      --board-bg: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      --board-border: #0369a1;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background: #f4f7fb;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    /* ANA SİTEDEKİ ÇAKIŞMAYI ENGELLEYEN HERO AYARLARI */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      color: white;
+      background: var(--hero-bg);
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text { flex: 1 1 min-content; min-width: 250px; }
+    .hero h1 { margin: 6px 0 4px; font-family: var(--font-display, "Fredoka", system-ui, sans-serif); font-size: clamp(1.6rem, 3.5vw, 2.5rem); line-height: 1.05; }
+    .hero p { margin: 0; font-weight: 800; font-size: 0.95rem; line-height: 1.4; opacity: 0.95; }
+    .kicker { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.25); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; color: inherit; }
+
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stat { flex: 1; min-width: 80px; padding: 10px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.25); text-align: center; backdrop-filter: blur(10px); color: inherit; }
+    .stat span { display: block; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; opacity: 0.8; }
+    .stat strong { display: block; margin-top: 2px; font-size: 1.3rem; font-weight: 900; }
+
+    .setup { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 14px 18px; background: #f8fbff; border-bottom: 1px solid var(--line); }
+    .setup-panel { border: 1px solid var(--line); border-radius: 22px; background: white; padding: 16px; box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05); }
+    .section-title { margin: 0 0 10px; font-family: var(--font-display, "Fredoka", system-ui, sans-serif); font-size: 1.1rem; color: var(--ink); }
+
+    .choice-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    .choice-btn { border: 0; font-family: inherit; font-weight: 800; cursor: pointer; transition: all 0.2s ease; min-height: 68px; padding: 10px; border-radius: 16px; background: #f6f9ff; border: 2px solid var(--line); color: var(--ink); text-align: left; }
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600; line-height: 1.2;}
+    .choice-btn:hover { transform: translateY(-2px); }
+    .choice-btn.is-active { background: #ecf9df; border-color: rgba(94, 165, 28, 0.46); color: #2e6812; box-shadow: 0 8px 16px rgba(94, 165, 28, 0.1); }
+
+    .control-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); background: white; }
+    .control-btn { border: 0; font-family: inherit; font-weight: 800; cursor: pointer; min-height: 44px; padding: 10px 16px; border-radius: 14px; background: #f6f9ff; border: 2px solid var(--line); color: var(--muted); transition: all 0.2s ease;}
+    .control-btn.is-active { background: #fff3ce; border-color: rgba(255, 209, 102, 0.8); color: #79530c; }
+
+    /* OYUN ALANI - GÖLET KONSEPTİ */
+    .board-wrap {
+      padding: clamp(20px, 5vw, 60px) clamp(10px, 3vw, 20px) 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      background: var(--board-bg);
+      border-bottom-left-radius: 30px;
+      border-bottom-right-radius: 30px;
+      position: relative;
+    }
+
+    /* Nilüfer Yaprakları (Sayma Dizisi) */
+    .river-path {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: clamp(15px, 3vw, 25px);
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+    }
+
+    .lily-pad {
+      position: relative;
+      width: clamp(70px, 14vw, 110px);
+      height: clamp(55px, 11vw, 85px);
+      background: radial-gradient(ellipse at 40% 40%, #4ade80 0%, #16a34a 100%);
+      border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 15px rgba(0,0,0,0.25), inset 0 -5px 10px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    /* Yaprağın kesik detayı (Gerçekçi görünüm) */
+    .lily-pad::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -5%;
+      width: 30%;
+      height: 30%;
+      background: var(--board-bg);
+      border-radius: 50%;
+      transform: translateY(-50%);
+    }
+
+    /* Yaprağın damar detayları */
+    .lily-pad::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 60%;
+      height: 2px;
+      background: rgba(20, 83, 45, 0.4);
+      transform: translate(-50%, -50%) rotate(-15deg);
+      border-radius: 2px;
+      z-index: 1;
+    }
+
+    .pad-number {
+      position: relative;
+      z-index: 2;
+      letter-spacing: -1px;
+    }
+
+    .lily-pad.is-missing {
+      background: rgba(255, 255, 255, 0.15);
+      border: 3px dashed rgba(255, 255, 255, 0.6);
+      box-shadow: none;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .lily-pad.is-missing::before, .lily-pad.is-missing::after { display: none; }
+
+    /* Kurbağa Karakteri */
+    .frog {
+      position: absolute;
+      font-size: clamp(3rem, 7vw, 4.5rem);
+      z-index: 10;
+      transition: left 0.5s ease-in-out, top 0.5s ease-in-out, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      filter: drop-shadow(0 12px 15px rgba(0,0,0,0.4));
+      transform-origin: bottom center;
+    }
     
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        /* === TEMEL AYARLAR === */
-        :root { 
-            --ana-renk: #673ab7; 
-            --ikinci-renk: #0ea5e9; 
-            --vurgu: #f97316; 
-            --arkaplan: #f8fafc;
-            --dogru-renk: #10b981;
-            --yanlis-renk: #ef4444;
-        }
-        
-        body { 
-            font-family: 'Nunito', sans-serif; 
-            background-color: var(--arkaplan); 
-            margin: 0; 
-            padding: 0; 
-            color: #334155; 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh; 
-        }
-        
-        /* === NAVBAR (ÜST MENÜ) AYARLARI === */
-        .navbar { 
-            background-color: white; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-            padding: 15px 30px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-        }
-        
-        .logo { 
-            font-family: 'Fredoka', sans-serif; 
-            font-size: 24px; 
-            font-weight: 600; 
-            color: var(--ana-renk); 
-            text-decoration: none; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-        }
-        
-        .nav-links { 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-        } 
-        
-        .nav-link { 
-            text-decoration: none; 
-            color: #64748b; 
-            font-weight: 700; 
-            font-size: 15px; 
-            padding: 10px 12px; 
-            border-radius: 10px; 
-            transition: 0.3s; 
-        }
-        
-        .nav-link:hover { 
-            background-color: #f1f5f9; 
-            color: var(--ana-renk); 
-        }
+    .frog.jumping {
+      animation: jumpArc 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
 
-        /* AÇILIR MENÜ (DROPDOWN) */
-        .dropdown { 
-            position: relative; 
-            display: inline-block; 
-        }
-        
-        .dropbtn { 
-            text-decoration: none; 
-            color: #64748b; 
-            font-weight: 700; 
-            font-size: 15px; 
-            padding: 10px 12px; 
-            border-radius: 10px; 
-            transition: 0.3s; 
-            background: none; 
-            border: none; 
-            cursor: pointer; 
-            font-family: 'Nunito', sans-serif; 
-            display: flex; 
-            align-items: center; 
-            gap: 5px;
-        }
-        
-        .dropdown:hover .dropbtn { 
-            background-color: #f1f5f9; 
-            color: var(--ana-renk); 
-        }
-        
-        .dropdown-content { 
-            display: none; 
-            position: absolute; 
-            background-color: white; 
-            min-width: 220px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            border-radius: 15px; 
-            top: 100%; 
-            left: 0; 
-            overflow: hidden; 
-            z-index: 1001; 
-        }
-        
-        .dropdown-content a { 
-            color: #64748b; 
-            padding: 12px 20px; 
-            text-decoration: none; 
-            display: block; 
-            font-weight: 700; 
-            border-bottom: 1px solid #f1f5f9; 
-            transition: 0.2s; 
-            font-size: 14px;
-        }
-        
-        .dropdown-content a:hover { 
-            background-color: #f8fafc; 
-            color: var(--ana-renk); 
-            padding-left: 25px; 
-        }
-        
-        .dropdown:hover .dropdown-content { 
-            display: block; 
-        }
+    @keyframes jumpArc {
+      0% { transform: translateY(0) scale(1) rotate(0); }
+      50% { transform: translateY(-50px) scale(1.1) rotate(5deg); }
+      100% { transform: translateY(0) scale(1) rotate(0); }
+    }
 
-        /* HAMBURGER MENÜ (MOBİL İÇİN) */
-        .hamburger { 
-            display: none; 
-            font-size: 28px; 
-            cursor: pointer; 
-            color: var(--ana-renk); 
-        }
+    /* SEÇENEKLER ALANI */
+    .options-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 600px;
+      margin-top: 20px;
+    }
 
-        /* === İÇERİK ALANI === */
-        .icerik-kapsayici { 
-            flex: 1; 
-            max-width: 1100px; 
-            margin: 40px auto; 
-            width: 90%; 
-            padding: 30px; 
-            background: white; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
-            position: relative;
-        }
-        
-        .sayfa-basligi { 
-            font-family: 'Fredoka', sans-serif; 
-            font-size: 32px; 
-            color: var(--ana-renk); 
-            text-align: center; 
-            margin-top: 0; 
-            margin-bottom: 30px; 
-            padding-bottom: 15px; 
-            border-bottom: 2px dashed #e2e8f0; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
+    .option-btn {
+      min-height: 70px;
+      background: white;
+      border: 4px solid #eef4fb;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--ink);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
 
-        /* === OYUN STILLERI === */
-        .oyun-konteyner {
-            position: relative;
-            overflow: hidden;
-            border-radius: 20px;
-            padding: 20px;
-        }
+    .option-btn:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 14px 24px rgba(0,0,0,0.25);
+      border-color: #35a7ff;
+    }
 
-        .oyun-karakter {
-            position: absolute;
-            bottom: 20px;
-            right: 30px;
-            font-size: 3em;
-            animation: float 3s ease-in-out infinite;
-            z-index: 10;
-            opacity: 0.8;
-        }
+    .option-btn.is-correct {
+      background: #e9f9df;
+      border-color: #5ea51c;
+      color: #2e6812;
+      animation: pulse 0.5s ease;
+    }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-        }
+    .option-btn.is-wrong {
+      background: #fff0f0;
+      border-color: #ff6868;
+      color: #982727;
+      animation: shake 0.4s ease;
+    }
 
-        .skor-tahtasi {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
+    .feedback {
+      width: 100%;
+      max-width: 600px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
 
-        .skor-kutu {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            padding: 12px 25px;
-            border-radius: 15px;
-            font-weight: 800;
-            font-size: 1.1em;
-            color: var(--ikinci-renk);
-            border: 2px solid #bae6fd;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-        }
+    .feedback.good { background: #e9f9df; color: #28651d; transform: scale(1.02); border: 2px solid #a7f36b; }
+    .feedback.bad { background: #fff0f0; color: #982727; transform: scale(0.98); border: 2px solid #ffb3b3;}
 
-        .skor-kutu:hover {
-            transform: translateY(-2px);
-        }
+    .hidden { display: none !important; }
 
-        .skor-kutu i {
-            color: var(--vurgu);
-        }
+    /* Animasyonlar */
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 
-        .mod-secici {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .mod-buton {
-            padding: 20px;
-            border: 3px solid transparent;
-            border-radius: 15px;
-            font-size: 1.1em;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Nunito', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
-            background: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        .mod-buton::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: left 0.5s;
-        }
-
-        .mod-buton:hover::before {
-            left: 100%;
-        }
-
-        .mod-buton.ikiser {
-            color: #059669;
-            border-color: #059669;
-        }
-        .mod-buton.ikiser:hover, .mod-buton.ikiser.aktif {
-            background: linear-gradient(135deg, #059669, #10b981);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(5, 150, 105, 0.3);
-        }
-
-        .mod-buton.besar {
-            color: #dc2626;
-            border-color: #dc2626;
-        }
-        .mod-buton.besar:hover, .mod-buton.besar.aktif {
-            background: linear-gradient(135deg, #dc2626, #ef4444);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
-        }
-
-        .mod-buton.onar {
-            color: #7c3aed;
-            border-color: #7c3aed;
-        }
-        .mod-buton.onar:hover, .mod-buton.onar.aktif {
-            background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
-        }
-
-        .mod-buton.yon {
-            color: var(--ana-renk);
-            border-color: var(--ana-renk);
-        }
-        .mod-buton.yon:hover, .mod-buton.yon.aktif {
-            background: linear-gradient(135deg, var(--ana-renk), var(--ikinci-renk));
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(103, 58, 183, 0.3);
-        }
-
-        .mod-buton small {
-            font-size: 0.75em;
-            font-weight: 600;
-            opacity: 0.9;
-        }
-
-        .oyun-alani {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border-radius: 20px;
-            padding: 40px 20px;
-            min-height: 400px;
-            position: relative;
-            border: 2px dashed #cbd5e1;
-            display: none;
-        }
-
-        .oyun-alani.aktif {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .ilerleme-cubugu {
-            width: 100%;
-            height: 12px;
-            background: #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 30px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .ilerleme-doldur {
-            height: 100%;
-            background: linear-gradient(90deg, var(--ana-renk), var(--ikinci-renk));
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .ilerleme-doldur::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .soru-kutusu {
-            text-align: center;
-            font-size: 2em;
-            font-weight: 900;
-            color: #1e293b;
-            margin-bottom: 40px;
-            line-height: 1.8;
-            font-family: 'Fredoka', sans-serif;
-        }
-
-        .bosluk {
-            display: inline-block;
-            min-width: 90px;
-            height: 70px;
-            border-bottom: 4px solid var(--ikinci-renk);
-            margin: 0 12px;
-            text-align: center;
-            color: var(--vurgu);
-            transition: all 0.3s;
-            background: rgba(14, 165, 233, 0.05);
-            border-radius: 10px 10px 0 0;
-            line-height: 70px;
-        }
-
-        .bosluk.doldu {
-            color: var(--dogru-renk);
-            border-color: var(--dogru-renk);
-            background: rgba(16, 185, 129, 0.1);
-            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes pop {
-            0% { transform: scale(0.8); opacity: 0.5; }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .secenekler-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 20px;
-            max-width: 600px;
-            margin: 0 auto 30px;
-        }
-
-        .secenek-buton {
-            padding: 20px;
-            font-size: 1.4em;
-            font-weight: 900;
-            border: 3px solid #e2e8f0;
-            background: white;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #334155;
-            font-family: 'Nunito', sans-serif;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.03);
-        }
-
-        .secenek-buton:hover:not(:disabled) {
-            background: #f0f9ff;
-            border-color: var(--ikinci-renk);
-            color: var(--ikinci-renk);
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 10px 20px rgba(14, 165, 233, 0.15);
-        }
-
-        .secenek-buton.correct {
-            background: var(--dogru-renk);
-            color: white;
-            border-color: var(--dogru-renk);
-            animation: correctPulse 0.5s;
-            pointer-events: none;
-        }
-
-        .secenek-buton.wrong {
-            background: var(--yanlis-renk);
-            color: white;
-            border-color: var(--yanlis-renk);
-            animation: shake 0.5s;
-            pointer-events: none;
-        }
-
-        @keyframes correctPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); box-shadow: 0 0 20px rgba(16, 185, 129, 0.5); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
-        }
-
-        .geri-bildirim {
-            text-align: center;
-            font-size: 1.4em;
-            font-weight: 800;
-            margin: 20px 0;
-            min-height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .geri-bildirim.dogru {
-            color: var(--dogru-renk);
-        }
-
-        .geri-bildirim.yanlis {
-            color: var(--yanlis-renk);
-        }
-
-        .kontrol-grup {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 25px;
-            flex-wrap: wrap;
-        }
-
-        .kontrol-buton {
-            padding: 14px 28px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1em;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Nunito', sans-serif;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .kontrol-buton:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-        }
-
-        .kontrol-buton.anamenu {
-            background: #64748b;
-            color: white;
-        }
-
-        .kontrol-buton.anamenu:hover {
-            background: #475569;
-        }
-
-        .kontrol-buton.sonraki {
-            background: linear-gradient(135deg, var(--ana-renk), var(--ikinci-renk));
-            color: white;
-            display: none;
-        }
-
-        .kontrol-buton.sonraki:hover {
-            filter: brightness(1.1);
-        }
-
-        .konfeti-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2000;
-            display: none;
-            overflow: hidden;
-        }
-
-        .konfeti {
-            position: absolute;
-            color: var(--vurgu);
-            font-size: 2em;
-            animation: konfetiDusus 3s linear forwards;
-            text-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        @keyframes konfetiDusus {
-            0% { 
-                transform: translateY(-100px) rotate(0deg) scale(0); 
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-                transform: translateY(0) rotate(180deg) scale(1);
-            }
-            100% { 
-                transform: translateY(100vh) rotate(720deg) scale(0.5); 
-                opacity: 0;
-            }
-        }
-
-        /* === FOOTER === */
-        footer { 
-            background-color: #1e293b; 
-            color: white; 
-            text-align: center; 
-            padding: 40px 20px; 
-            border-top-left-radius: 50px; 
-            border-top-right-radius: 50px; 
-            margin-top: auto; 
-        }
-        
-        .sosyal { 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
-            margin-bottom: 20px; 
-        }
-        
-        .sosyal a { 
-            color: white; 
-            font-size: 24px; 
-            background: rgba(255,255,255,0.1); 
-            width: 50px; 
-            height: 50px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            border-radius: 50%; 
-            transition: 0.3s; 
-            text-decoration: none; 
-        }
-        
-        .sosyal a:hover { 
-            background: var(--vurgu); 
-            transform: scale(1.1); 
-        }
-
-        /* === MOBİL UYUMLULUK === */
-        @media (max-width: 1024px) {
-            .hamburger { display: block; }
-            .nav-links { 
-                display: none; 
-                flex-direction: column; 
-                position: absolute; 
-                top: 70px; 
-                left: 0; 
-                width: 100%; 
-                background-color: white; 
-                box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-                padding: 20px 0; 
-                gap: 10px; 
-                max-height: 80vh; 
-                overflow-y: auto; 
-                z-index: 999;
-            }
-            .nav-links.aktif { display: flex; }
-            .nav-link, .dropbtn { 
-                width: 90%; 
-                text-align: left; 
-                padding: 15px; 
-                font-size: 18px; 
-                border-bottom: 1px solid #f1f5f9; 
-                margin: 0 auto;
-            }
-            .dropdown { width: 100%; text-align: center; }
-            .dropdown-content { 
-                position: relative; 
-                width: 90%; 
-                margin: 0 auto; 
-                box-shadow: none; 
-                border-left: 4px solid var(--ikinci-renk); 
-                background: #f8fafc; 
-            }
-        }
-
-        @media (max-width: 768px) {
-            .icerik-kapsayici {
-                width: 95%;
-                margin: 20px auto;
-                padding: 20px;
-            }
-            
-            .sayfa-basligi {
-                font-size: 24px;
-            }
-            
-            .soru-kutusu {
-                font-size: 1.5em;
-            }
-            
-            .secenekler-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-            
-            .secenek-buton {
-                padding: 15px;
-                font-size: 1.2em;
-            }
-            
-            .bosluk {
-                min-width: 60px;
-                height: 50px;
-                line-height: 50px;
-            }
-            
-            .oyun-karakter {
-                font-size: 2em;
-                bottom: 10px;
-                right: 15px;
-            }
-            
-            .mod-buton {
-                padding: 15px;
-                font-size: 0.95em;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .secenekler-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .soru-kutusu {
-                font-size: 1.3em;
-            }
-            
-            .bosluk {
-                margin: 0 5px;
-            }
-        }
-</style>
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+      .options-container { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
-
-    <main class="icerik-kapsayici">
-        <div class="oyun-konteyner">
-            <div class="oyun-karakter">🚀</div>
-            
-            <h1 class="sayfa-basligi">
-                <i class="fas fa-calculator" style="color: var(--vurgu);"></i>
-                Ritmik Sayma Macerası
-            </h1>
-
-            <div id="menuEkrani">
-                <div class="skor-tahtasi">
-                    <div class="skor-kutu">
-                        <i class="fas fa-star"></i>
-                        <span id="yildizSayisi">0</span> Yıldız
-                    </div>
-                    <div class="skor-kutu" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #86efac; color: var(--dogru-renk);">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="dogruSayisi">0</span> Doğru
-                    </div>
-                </div>
-
-                <div style="background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); padding: 25px; border-radius: 15px; margin-bottom: 30px; text-align: center; border-left: 5px solid var(--ikinci-renk);">
-                    <h3 style="margin-top: 0; color: var(--ana-renk); font-family: 'Fredoka', sans-serif; font-size: 1.4em;">
-                        <i class="fas fa-gamepad" style="margin-right: 8px;"></i>
-                        Nasıl Oynanır?
-                    </h3>
-                    <p style="margin-bottom: 0; color: #475569; font-size: 1.1em; line-height: 1.6;">
-                        Eksik rakamı bulmak için dikkatle bak! Sayı örüntüsünü takip et ve boş kutuya ne gelmesi gerektiğini seç. 
-                        Her doğru cevap için yıldız kazanacaksın! ⭐
-                    </p>
-                </div>
-
-                <h3 style="text-align: center; color: var(--ana-renk); margin-bottom: 20px; font-family: 'Fredoka', sans-serif;">
-                    Oyun Modunu Seç:
-                </h3>
-                
-                <div class="mod-secici">
-                    <button class="mod-buton ikiser" onclick="oyunBaslat(2)">
-                        <i class="fas fa-shoe-prints" style="font-size: 1.5em;"></i>
-                        <div>
-                            İkişer Sayma<br>
-                            <small>2, 4, 6, 8...</small>
-                        </div>
-                    </button>
-                    
-                    <button class="mod-buton besar" onclick="oyunBaslat(5)">
-                        <i class="fas fa-hand-paper" style="font-size: 1.5em;"></i>
-                        <div>
-                            Beşer Sayma<br>
-                            <small>5, 10, 15...</small>
-                        </div>
-                    </button>
-                    
-                    <button class="mod-buton onar" onclick="oyunBaslat(10)">
-                        <i class="fas fa-star" style="font-size: 1.5em;"></i>
-                        <div>
-                            Onar Sayma<br>
-                            <small>10, 20, 30...</small>
-                        </div>
-                    </button>
-                    
-                    <button class="mod-buton yon" onclick="yonDegistir()">
-                        <i class="fas fa-exchange-alt" style="font-size: 1.5em;" id="yonIcon"></i>
-                        <div>
-                            Yön Değiştir<br>
-                            <small id="yonMetin">İleri Sayma</small>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <div id="oyunAlani" class="oyun-alani">
-                <div class="ilerleme-cubugu">
-                    <div class="ilerleme-doldur" id="ilerlemeCubuğu" style="width: 0%"></div>
-                </div>
-                
-                <div class="soru-kutusu" id="soruKutusu">
-                    Soru hazırlanıyor...
-                </div>
-                
-                <div class="secenekler-grid" id="seceneklerAlani">
-                    <!-- Seçenekler buraya -->
-                </div>
-                
-                <div class="geri-bildirim" id="geriBildirim"></div>
-                
-                <div class="kontrol-grup">
-                    <button class="kontrol-buton anamenu" onclick="anaMenuyeDon()">
-                        <i class="fas fa-home"></i>
-                        Ana Menü
-                    </button>
-                    <button class="kontrol-buton sonraki" id="sonrakiButon" onclick="sonrakiSoru()">
-                        Sonraki Soru
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
+  <main class="page">
+    <section class="game-shell" aria-label="Ritmik Sayma Oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Matematik • Zıplayan Kurbağa</span>
+          <h1>Ritmik Sayma Macerası</h1>
+          <p>Kurbağanın karşıya geçmesi için doğru sayıyı bularak yaprakları tamamla!</p>
         </div>
-    </main>
+        <div class="stats">
+          <div class="stat"><span>Seviye</span><strong id="levelText">1</strong></div>
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+        </div>
+      </header>
 
-    <div class="konfeti-container" id="konfeti"></div>
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Sınıf ve Zorluk Seviyesi</h2>
+          <div class="choice-row" id="gradeChoices">
+            <button class="choice-btn is-active" type="button" data-grade="pre"><strong>4-5 Yaş</strong><span>1'er (10'a kadar)</span></button>
+            <button class="choice-btn" type="button" data-grade="grade1"><strong>1. Sınıf</strong><span>1, 2, 5, 10'ar (100'e kadar)</span></button>
+            <button class="choice-btn" type="button" data-grade="grade2"><strong>2. Sınıf</strong><span>1-5 arası ve 10'ar</span></button>
+            <button class="choice-btn" type="button" data-grade="grade3"><strong>3. Sınıf</strong><span>Tüm rakamlar, 50, 100'er</span></button>
+            <button class="choice-btn" type="button" data-grade="grade4"><strong>4. Sınıf</strong><span>1000'er dahil büyük sayılar</span></button>
+          </div>
+          
+          <h2 class="section-title" style="margin-top: 20px;">Sayma Yönü</h2>
+          <div class="choice-row" id="dirChoices">
+            <button class="choice-btn is-active" type="button" data-dir="forward"><strong>İleri Sayma</strong><span>Sayılar büyüyerek gider</span></button>
+            <button class="choice-btn" type="button" data-dir="backward"><strong>Geri Sayma</strong><span>Sayılar küçülerek gider</span></button>
+          </div>
+        </div>
+      </section>
 
-    <script src="/js/site.js"></script>
-    <script>
-        // Oyun değişkenleri
-        let mevcutMod = 2;
-        let ileriYon = true;
-        let mevcutSoru = 0;
-        let dogruCevapSayisi = 0;
-        let toplamYildiz = 0;
-        let toplamSoru = 5;
-        let mevcutDizi = [];
-        let eksikIndeks = 0;
-        let dogruCevap = 0;
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+      </nav>
 
-        // Ses efektleri
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioContext();
+      <section class="board-wrap">
+        <div class="feedback" id="feedback">Örüntüyü takip et ve soru işaretli yaprağa hangi sayının geleceğini bul.</div>
+        
+        <div class="river-path" id="riverPath">
+          <div class="frog" id="frog">🐸</div>
+        </div>
 
-        function sesCal(tip) {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            if (tip === 'dogru') {
-                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 0.5);
-            } else if (tip === 'yanlis') {
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(150, audioCtx.currentTime + 0.3);
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start(audioCtx.currentTime);
-                osc.stop(audioCtx.currentTime + 0.3);
-            }
+        <div class="options-container" id="optionsContainer">
+          </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+    // MEB Müfredatına Göre Ritmik Sayma Kuralları
+    const levelConfigs = {
+      pre: { 
+        steps: [1], 
+        getMax: (step) => 10, 
+        length: 5 
+      },
+      grade1: { 
+        steps: [1, 2, 5, 10], 
+        getMax: (step) => (step <= 2 ? 20 : 100), 
+        length: 5 
+      },
+      grade2: { 
+        steps: [1, 2, 3, 4, 5, 10], 
+        getMax: (step) => 100, 
+        length: 5 
+      },
+      grade3: { 
+        steps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100], 
+        getMax: (step) => 1000, 
+        length: 5 
+      },
+      grade4: { 
+        steps: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 50, 100, 1000], 
+        getMax: (step) => 10000, 
+        length: 5 
+      }
+    };
+
+    const state = {
+      grade: "pre",
+      direction: "forward",
+      level: 1,
+      score: 0,
+      soundOn: true,
+      currentQuestion: null,
+      locked: false
+    };
+
+    const els = {
+      setup: document.getElementById("setupScreen"),
+      riverPath: document.getElementById("riverPath"),
+      frog: document.getElementById("frog"),
+      options: document.getElementById("optionsContainer"),
+      levelText: document.getElementById("levelText"),
+      scoreText: document.getElementById("scoreText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle")
+    };
+
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function playTone(freq, type = "sine", duration = 0.3) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.1);
+    }
+
+    function playSuccess() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50]; 
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        const startTime = now + i * 0.12;
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.15, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.4);
+      });
+    }
+
+    function playError() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    }
+
+    function playJump() {
+      playTone(400, "triangle", 0.15);
+      setTimeout(() => playTone(600, "triangle", 0.15), 100);
+    }
+
+    function shuffle(array) {
+      return array.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    function generateLevel() {
+      const config = levelConfigs[state.grade];
+      const step = config.steps[Math.floor(Math.random() * config.steps.length)];
+      const maxLimit = config.getMax(step);
+      
+      let startNumber = 0;
+      let minMult = 0;
+      let maxMult = 0;
+
+      if (state.direction === "forward") {
+        let maxPossibleStart = maxLimit - ((config.length - 1) * step);
+        if (maxPossibleStart < 0) maxPossibleStart = 0;
+        
+        minMult = (maxPossibleStart >= step && step !== 1) ? 1 : 0;
+        maxMult = Math.floor(maxPossibleStart / step);
+      } else {
+        const minPossibleStart = (config.length - 1) * step;
+        minMult = Math.floor(minPossibleStart / step);
+        maxMult = Math.floor(maxLimit / step);
+      }
+
+      // Güvenlik: max min'den küçükse eşitle
+      if (maxMult < minMult) maxMult = minMult;
+
+      const randomMulti = Math.floor(Math.random() * (maxMult - minMult + 1)) + minMult;
+      startNumber = randomMulti * step;
+
+      let sequence = [];
+      for (let i = 0; i < config.length; i++) {
+        if (state.direction === "forward") {
+          sequence.push(startNumber + (i * step));
+        } else {
+          sequence.push(startNumber - (i * step));
         }
+      }
 
-        function yonDegistir() {
-            ileriYon = !ileriYon;
-            document.getElementById('yonMetin').textContent = ileriYon ? 'İleri Sayma' : 'Geri Sayma';
-            document.getElementById('yonIcon').className = ileriYon ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+      // Boşluk ilk yaprak olmasın
+      const missingIndex = Math.floor(Math.random() * (config.length - 1)) + 1;
+      const correctAnswer = sequence[missingIndex];
+      
+      let options = [correctAnswer];
+      let attempts = 0; // Sonsuz döngü kırıcı
+      
+      while (options.length < 4 && attempts < 100) {
+        attempts++;
+        // Geniş bir aralıktan çeldirici üret (-4 ile +5 katı arası)
+        const fakeStepMulti = Math.floor(Math.random() * 10) - 4; 
+        if (fakeStepMulti === 0) continue; 
+        
+        let fakeAns = correctAnswer + (fakeStepMulti * step);
+        if (fakeAns < 0) continue; 
+        
+        if (!options.includes(fakeAns) && !sequence.includes(fakeAns)) {
+          options.push(fakeAns);
         }
+      }
+      options = shuffle(options);
 
-        function oyunBaslat(mod) {
-            mevcutMod = mod;
-            mevcutSoru = 0;
-            dogruCevapSayisi = 0;
-            
-            document.getElementById('menuEkrani').style.display = 'none';
-            document.getElementById('oyunAlani').classList.add('aktif');
-            
-            ilerlemeGuncelle();
-            soruOlustur();
-        }
+      state.currentQuestion = { sequence, missingIndex, correctAnswer, options, step };
+      renderBoard();
+    }
 
-        function soruOlustur() {
-            const dizi = [];
-            let baslangic;
-            
-            if (ileriYon) {
-                baslangic = Math.floor(Math.random() * 8) * mevcutMod + 2;
-                if (baslangic > 50) baslangic = 2;
-            } else {
-                baslangic = Math.floor(Math.random() * 5) * mevcutMod + 50;
-            }
-            
-            for (let i = 0; i < 5; i++) {
-                if (ileriYon) {
-                    dizi.push(baslangic + (i * mevcutMod));
-                } else {
-                    dizi.push(baslangic - (i * mevcutMod));
-                }
-            }
-            
-            mevcutDizi = dizi;
-            eksikIndeks = Math.floor(Math.random() * 3) + 1;
-            dogruCevap = dizi[eksikIndeks];
-            
-            soruGoster();
-            secenekleriOlustur();
-            
-            document.getElementById('geriBildirim').textContent = '';
-            document.getElementById('geriBildirim').className = 'geri-bildirim';
-            document.getElementById('sonrakiButon').style.display = 'none';
+    function positionFrog(index, animate = true) {
+      const pads = els.riverPath.querySelectorAll(".lily-pad");
+      if(pads[index]) {
+        if (animate) {
+          els.frog.classList.add("jumping");
+          playJump();
         }
+        
+        const padRect = pads[index].getBoundingClientRect();
+        const containerRect = els.riverPath.getBoundingClientRect();
+        
+        const frogWidth = els.frog.offsetWidth || 50;
+        const frogHeight = els.frog.offsetHeight || 50;
+        
+        const left = (padRect.left - containerRect.left) + (padRect.width / 2) - (frogWidth / 2);
+        const top = (padRect.top - containerRect.top) - frogHeight + (padRect.height * 0.4); 
+        
+        els.frog.style.left = left + "px";
+        els.frog.style.top = top + "px";
+        
+        if (animate) {
+          setTimeout(() => els.frog.classList.remove("jumping"), 500);
+        }
+      }
+    }
 
-        function soruGoster() {
-            let html = '';
-            for (let i = 0; i < mevcutDizi.length; i++) {
-                if (i === eksikIndeks) {
-                    html += '<span class="bosluk" id="bosluk">?</span>';
-                } else {
-                    const renk = i < eksikIndeks ? '#64748b' : '#94a3b8';
-                    html += `<span style="color: ${renk}; display: inline-block; min-width: 40px;">${mevcutDizi[i]}</span>`;
-                }
-                if (i < mevcutDizi.length - 1) {
-                    html += `<i class="fas fa-arrow-${ileriYon ? 'right' : 'left'}" style="color: #cbd5e1; margin: 0 8px; font-size: 0.8em;"></i>`;
-                }
-            }
-            document.getElementById('soruKutusu').innerHTML = html;
-        }
+    function renderBoard() {
+      const pads = els.riverPath.querySelectorAll(".lily-pad");
+      pads.forEach(p => p.remove());
 
-        function secenekleriOlustur() {
-            const secenekler = [dogruCevap];
-            
-            while (secenekler.length < 4) {
-                const karisim = Math.floor(Math.random() * 5) - 2;
-                const yanlisCevap = dogruCevap + (karisim * mevcutMod);
-                if (yanlisCevap > 0 && !secenekler.includes(yanlisCevap) && yanlisCevap !== dogruCevap) {
-                    secenekler.push(yanlisCevap);
-                }
-            }
-            
-            secenekler.sort(() => Math.random() - 0.5);
-            
-            const container = document.getElementById('seceneklerAlani');
-            container.innerHTML = '';
-            
-            secenekler.forEach(aday => {
-                const btn = document.createElement('button');
-                btn.className = 'secenek-buton';
-                btn.textContent = aday;
-                btn.onclick = () => cevapKontrol(aday, btn);
-                container.appendChild(btn);
-            });
+      state.currentQuestion.sequence.forEach((num, index) => {
+        const pad = document.createElement("div");
+        if (index === state.currentQuestion.missingIndex) {
+          pad.className = "lily-pad is-missing";
+          pad.id = "missingPad";
+          pad.innerHTML = `<span class="pad-number">?</span>`;
+        } else {
+          pad.className = "lily-pad";
+          pad.innerHTML = `<span class="pad-number">${num}</span>`;
         }
+        els.riverPath.insertBefore(pad, els.frog);
+      });
 
-        function cevapKontrol(cevap, buton) {
-            const butonlar = document.querySelectorAll('.secenek-buton');
-            butonlar.forEach(b => b.disabled = true);
-            
-            if (cevap === dogruCevap) {
-                buton.classList.add('correct');
-                document.getElementById('bosluk').textContent = cevap;
-                document.getElementById('bosluk').classList.add('doldu');
-                document.getElementById('geriBildirim').innerHTML = '<i class="fas fa-trophy"></i> Harika! Doğru cevap!';
-                document.getElementById('geriBildirim').className = 'geri-bildirim dogru';
-                dogruCevapSayisi++;
-                toplamYildiz += 10;
-                sesCal('dogru');
-                konfetiAt();
-                skorGuncelle();
-            } else {
-                buton.classList.add('wrong');
-                document.getElementById('geriBildirim').innerHTML = '<i class="fas fa-times-circle"></i> Tekrar dene!';
-                document.getElementById('geriBildirim').className = 'geri-bildirim yanlis';
-                sesCal('yanlis');
-                
-                setTimeout(() => {
-                    buton.classList.remove('wrong');
-                    butonlar.forEach(b => b.disabled = false);
-                }, 1000);
-                return;
-            }
-            
-            document.getElementById('sonrakiButon').style.display = 'inline-flex';
-        }
+      els.options.innerHTML = "";
+      state.currentQuestion.options.forEach((opt) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = opt;
+        btn.onclick = () => handleAnswer(opt, btn);
+        els.options.appendChild(btn);
+      });
 
-        function sonrakiSoru() {
-            mevcutSoru++;
-            if (mevcutSoru >= toplamSoru) {
-                oyunBitir();
-            } else {
-                ilerlemeGuncelle();
-                soruOlustur();
-            }
-        }
+      state.locked = false;
+      const suffix = (state.currentQuestion.step > 2 && state.currentQuestion.step !== 6 && state.currentQuestion.step !== 10 && state.currentQuestion.step !== 100 && state.currentQuestion.step !== 1000) ? 'er' : (state.currentQuestion.step === 6 ? 'şar' : (state.currentQuestion.step === 2 ? 'şer' : 'ar'));
+      
+      setFeedback(`${state.currentQuestion.step}'${suffix} ${state.direction === "forward" ? "ileri" : "geri"} sayıyoruz. Eksik yaprağı bul!`, "");
+      els.levelText.textContent = state.level;
+      els.scoreText.textContent = state.score;
 
-        function ilerlemeGuncelle() {
-            const yuzde = (mevcutSoru / toplamSoru) * 100;
-            document.getElementById('ilerlemeCubuğu').style.width = yuzde + '%';
-        }
+      setTimeout(() => positionFrog(state.currentQuestion.missingIndex - 1, false), 50);
+    }
 
-        function skorGuncelle() {
-            document.getElementById('yildizSayisi').textContent = toplamYildiz;
-            document.getElementById('dogruSayisi').textContent = dogruCevapSayisi;
-        }
+    function handleAnswer(selectedOpt, btnEl) {
+      if (state.locked) return;
+      state.locked = true;
 
-        function oyunBitir() {
-            const yuzde = (dogruCevapSayisi / toplamSoru) * 100;
-            let mesaj = '';
-            let ikon = '';
-            let renk = '';
-            
-            if (yuzde >= 80) {
-                mesaj = 'Mükemmelsin! Büyüksün!';
-                ikon = '🏆';
-                renk = 'var(--dogru-renk)';
-            } else if (yuzde >= 60) {
-                mesaj = 'Çok iyi gidiyorsun!';
-                ikon = '🌟';
-                renk = 'var(--ikinci-renk)';
-            } else {
-                mesaj = 'Tekrar dene, yapabilirsin!';
-                ikon = '💪';
-                renk = 'var(--vurgu)';
-            }
-            
-            document.getElementById('soruKutusu').innerHTML = `
-                <div style="font-size: 0.9em; line-height: 1.6; animation: fadeIn 0.5s;">
-                    <div style="font-size: 2em; margin-bottom: 15px;">${ikon}</div>
-                    <div>Oyun Bitti!</div>
-                    <div style="color: ${renk}; font-size: 0.8em; margin-top: 10px;">
-                        ${mesaj}<br>
-                        <small>${dogruCevapSayisi}/${toplamSoru} Doğru</small>
-                    </div>
-                </div>
-            `;
-            document.getElementById('seceneklerAlani').innerHTML = '';
-            document.getElementById('geriBildirim').textContent = '';
-            document.getElementById('sonrakiButon').style.display = 'none';
-            
-            // Oyun sonu konfeti
-            for(let i = 0; i < 3; i++) {
-                setTimeout(() => konfetiAt(), i * 500);
-            }
-        }
+      const isCorrect = (selectedOpt === state.currentQuestion.correctAnswer);
 
-        function anaMenuyeDon() {
-            document.getElementById('oyunAlani').classList.remove('aktif');
-            document.getElementById('menuEkrani').style.display = 'block';
-            document.getElementById('ilerlemeCubuğu').style.width = '0%';
-            skorGuncelle();
-        }
+      if (isCorrect) {
+        btnEl.classList.add("is-correct");
+        playSuccess();
+        state.score += 10;
+        setFeedback("Harika! Kurbağa doğru yaprağa zıplıyor.", "good");
+        
+        const missingPad = document.getElementById("missingPad");
+        missingPad.className = "lily-pad";
+        missingPad.innerHTML = `<span class="pad-number">${state.currentQuestion.correctAnswer}</span>`;
+        
+        positionFrog(state.currentQuestion.missingIndex, true);
+        
+        setTimeout(() => {
+          state.level++;
+          generateLevel();
+        }, 1800);
 
-        function konfetiAt() {
-            const container = document.getElementById('konfeti');
-            container.style.display = 'block';
-            
-            const emojiler = ['⭐', '🌟', '✨', '🎉', '🎊', '🏆', '🎯'];
-            
-            for (let i = 0; i < 15; i++) {
-                const konfeti = document.createElement('div');
-                konfeti.className = 'konfeti';
-                konfeti.textContent = emojiler[Math.floor(Math.random() * emojiler.length)];
-                konfeti.style.left = Math.random() * 100 + '%';
-                konfeti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-                konfeti.style.fontSize = (Math.random() * 1.5 + 1.5) + 'em';
-                konfeti.style.animationDelay = (Math.random() * 0.5) + 's';
-                container.appendChild(konfeti);
-            }
-            
-            setTimeout(() => {
-                container.innerHTML = '';
-                container.style.display = 'none';
-            }, 3500);
-        }
+      } else {
+        btnEl.classList.add("is-wrong");
+        playError();
+        setFeedback("Eyvah! Yanlış sayı, tekrar düşünelim.", "bad");
+        
+        setTimeout(() => {
+          btnEl.classList.remove("is-wrong");
+          state.locked = false;
+        }, 800);
+      }
+    }
 
-        // Sayfa yüklendiğinde skorları sıfırla
-        window.onload = function() {
-            skorGuncelle();
-        }
-    </script>
+    function initGame() {
+      state.level = 1;
+      state.score = 0;
+      generateLevel();
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    document.querySelectorAll("#gradeChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.grade = button.dataset.grade;
+        selectButton("gradeChoices", state.grade, "grade");
+        initGame();
+      });
+    });
+
+    document.querySelectorAll("#dirChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.direction = button.dataset.dir;
+        selectButton("dirChoices", state.direction, "dir");
+        initGame();
+      });
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playTone(440, "sine", 0.1);
+    });
+
+    window.addEventListener('resize', () => {
+      if(state.currentQuestion) {
+         const targetIndex = state.locked ? state.currentQuestion.missingIndex : state.currentQuestion.missingIndex - 1;
+         positionFrog(targetIndex, false);
+      }
+    });
+
+    setTimeout(initGame, 100);
+  </script>
 </body>
 </html>

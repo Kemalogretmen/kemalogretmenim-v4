@@ -25,6 +25,7 @@
     'sosyal-bilgiler': { label: 'Sosyal Bilgiler', icon: '🌍' },
     deneme: { label: 'Deneme', icon: '🧠' },
     agisler: { label: 'Agisler', icon: '🧩' },
+    oyun: { label: 'Oyunlar', icon: '🎮' },
   };
 
   var SUBJECT_ALIASES = {
@@ -45,7 +46,11 @@
     sosyal_bilgiler: 'sosyal-bilgiler',
     deneme: 'deneme',
     agisler: 'agisler',
+    oyun: 'oyun',
+    oyunlar: 'oyun',
   };
+
+  var GAME_STORAGE_KEY = 'kemal_oyunlar';
 
   function getSiteStore() {
     return window.kemalSiteStore || null;
@@ -273,6 +278,59 @@
     };
   }
 
+  function getStoredGames() {
+    try {
+      var rows = JSON.parse(window.localStorage.getItem(GAME_STORAGE_KEY) || '[]');
+      return Array.isArray(rows) ? rows : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function getGameTimestamp(row) {
+    var explicitValue = getTimeValue(row && (row.createdAt || row.updatedAt || row.tarih));
+    if (explicitValue) {
+      return explicitValue;
+    }
+    var idMatch = String(row && row.id || '').match(/(\d{10,})/);
+    return idMatch ? Number(idMatch[1]) : 0;
+  }
+
+  function getGameHref(row) {
+    if (row && row.tip === 'iframe') {
+      return '/oyun/iframe-oyun.html?id=' + encodeURIComponent(row.id || '');
+    }
+    return row && row.url ? row.url : '/oyun/oyunlar.html';
+  }
+
+  function buildGameItem(row, index) {
+    var grade = row && row.sinif && row.sinif !== 'Tümü' ? parseInt(row.sinif, 10) : null;
+    var grades = Number.isFinite(grade) ? [grade] : [];
+    var gradeMeta = getGradeMeta(grade);
+    var subjectMeta = getSubjectMeta('oyun');
+    var timestamp = getGameTimestamp(row);
+    return {
+      uid: 'game:' + (row.id || index),
+      type: 'game',
+      id: String(row.id || index),
+      title: row.ad || 'Yeni Oyun',
+      href: getGameHref(row),
+      grade: grade,
+      grades: grades,
+      gradeLabel: grades.length ? getGradeLabels(grades).join(' · ') : 'Genel',
+      subject: 'oyun',
+      subjectLabel: subjectMeta.label,
+      contentType: 'game',
+      contentTypeLabel: 'Oyunlar',
+      icon: row.emoji || subjectMeta.icon,
+      sourceLabel: 'Oyun',
+      createdAt: timestamp ? new Date(timestamp).toISOString() : '',
+      createdAtValue: timestamp,
+      palette: gradeMeta,
+      statusMeta: null,
+    };
+  }
+
   async function fetchReadingItems() {
     var config = getReadingConfig();
     var rows = await fetchSupabaseRows(
@@ -332,6 +390,14 @@
       });
   }
 
+  async function fetchGameItems() {
+    return getStoredGames()
+      .filter(function(row) {
+        return row && row.aktif !== false && row.ad;
+      })
+      .map(buildGameItem);
+  }
+
   function sortByNewest(list) {
     return (Array.isArray(list) ? list.slice() : []).sort(function(a, b) {
       return (b.createdAtValue || 0) - (a.createdAtValue || 0);
@@ -375,6 +441,7 @@
       fetchReadingItems(),
       fetchDocumentItems(),
       fetchExamItems(),
+      fetchGameItems(),
     ]);
 
     var combined = [];

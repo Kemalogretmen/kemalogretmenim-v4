@@ -356,6 +356,7 @@ function kaydetOyun(){
   if(!ad){toast('Oyun adı zorunludur!','error');return;}
 
   const d=getOyunlar();
+  const nowIso=new Date().toISOString();
 
   if(editId){
     const idx=d.findIndex(o=>o.id===editId);
@@ -363,12 +364,14 @@ function kaydetOyun(){
       d[idx]={
         ...d[idx],
         ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,
-        aktif:d[idx].aktif
+        aktif:d[idx].aktif,
+        createdAt:d[idx].createdAt || nowIso,
+        updatedAt:nowIso
       };
     }
     toast('✅ Güncellendi!','success');
   } else {
-    d.unshift({id:recordId,ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:true});
+    d.unshift({id:recordId,ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:true,createdAt:nowIso,updatedAt:nowIso});
     toast('✅ Oyun eklendi!','success');
   }
 
@@ -416,7 +419,11 @@ function silOyun(id){
 function toggleOyun(id){
   const d=getOyunlar();
   const o=d.find(x=>x.id===id);
-  if(o) o.aktif=!o.aktif;
+  if(o) {
+    o.aktif=!o.aktif;
+    o.updatedAt=new Date().toISOString();
+    o.createdAt=o.createdAt || o.updatedAt;
+  }
   saveOyunlar(d);
   renderOyunlar();
   toast(o?.aktif?'✅ Yayına alındı':'⏸️ Durduruldu','success');

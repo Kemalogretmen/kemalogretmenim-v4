@@ -206,6 +206,7 @@
     '/hakkimda.html': 'Kemal Öğretmen hakkında bilgiler, eğitim yaklaşımı ve yıllara dayanan öğretmenlik deneyimi.',
     '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
     '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
+    '/ogretmen-ders-plani.html': 'Öğretmenler için yıllık planlardan öğrenme çıktılarını okuyup haftalık ders programına yerleştiren ders planlama aracı.',
     '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, zamanlayıcı ve sınıf içi yardımcı araçlar.',
     '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
     '/oyun/oyunlar.html': 'Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.',
@@ -1139,7 +1140,7 @@
           '<div class="dropdown-panel">' +
             '<a href="/hakkimda.html" class="dd-item"><span class="dd-icon">👨‍🏫</span> Hakkımda</a>' +
             '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
-            '<a href="/yeni.html" class="dd-item"><span class="dd-icon">🌟</span> Yeni İçerikler</a>' +
+            '<a href="/ogretmen-ders-plani.html" class="dd-item"><span class="dd-icon">📅</span> Ders Programı</a>' +
             '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
             '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
           '</div>' +
@@ -1176,7 +1177,7 @@
             '<li><a href="/hizli-okuma/index.html">📖 Hızlı Okuma</a></li>' +
             '<li><a href="/oyun/oyunlar.html">🎮 Oyunlar</a></li>' +
             '<li><a href="/sinav_sitesi/index.html">📝 Sınav Merkezi</a></li>' +
-            '<li><a href="/yeni.html">🌟 Yeni İçerikler</a></li>' +
+            '<li><a href="/ogretmen-ders-plani.html">📅 Ders Programı</a></li>' +
             '<li><a href="/ogretmen-araclari.html">⏱️ Öğretmen Araçları</a></li>' +
             '<li><a href="/hakkimda.html">Hakkımda</a></li>' +
             '<li><a href="/iletisim.html">İletişim</a></li>' +
@@ -1352,7 +1353,7 @@
     if (path.startsWith('/oyun/')) {
       return 'oyunlar';
     }
-    if (path === '/hakkimda.html' || path === '/iletisim.html' || path === '/yeni.html') {
+    if (path === '/hakkimda.html' || path === '/iletisim.html' || path === '/yeni.html' || path === '/ogretmen-ders-plani.html') {
       return 'ogretmen';
     }
     if (path === '/ders.html') {

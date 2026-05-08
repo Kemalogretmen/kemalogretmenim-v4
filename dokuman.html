@@ -33,8 +33,9 @@
       min-height:100vh;
       overscroll-behavior-y:none;
       overscroll-behavior-x:none;
+      overflow-x:hidden;
     }
-    .viewer-shell{max-width:1480px;margin:0 auto;padding:32px 20px 48px;}
+    .viewer-shell{max-width:1480px;margin:0 auto;padding:32px 20px 48px;overscroll-behavior:contain;}
     .viewer-hero{
       background:linear-gradient(135deg,#1A1040 0%,#4A1FD0 58%,#7B58F6 100%);
       border-radius:32px;
@@ -1182,6 +1183,269 @@
       .shortcut-help-btn,.shortcut-action-btn{flex:1 1 100%;}
       .page-edge-btn{width:42px;height:42px;}
     }
+
+    .viewer-main-layout{
+      display:block;
+    }
+    .viewer-stage{
+      position:relative;
+      min-width:0;
+    }
+    .book-frame .viewer-toolbar,
+    .viewer-toolbar{
+      position:absolute;
+      top:18px;
+      left:18px;
+      z-index:70;
+      width:62px;
+      max-width:none;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:3px;
+      padding:8px 7px;
+      overflow:visible;
+      border-radius:22px;
+      border:1.5px solid rgba(227,214,255,.88);
+      background:rgba(255,255,255,.96);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 16px 48px rgba(108,61,237,.16),0 2px 8px rgba(15,23,42,.08);
+      touch-action:none;
+      will-change:left,top;
+    }
+    .viewer-toolbar.is-dragging{
+      cursor:grabbing;
+      box-shadow:0 22px 56px rgba(108,61,237,.22),0 4px 12px rgba(15,23,42,.12);
+    }
+    .viewer-toolbar.is-collapsed{width:62px;}
+    .viewer-toolbar .toolbar-header{
+      width:100%;
+      padding:2px 0 6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border-bottom:0;
+      cursor:grab;
+      touch-action:none;
+    }
+    .viewer-toolbar .toolbar-header:active{cursor:grabbing;}
+    .viewer-toolbar .toolbar-brand,
+    .viewer-toolbar .toggle-collapse-btn{
+      display:none;
+    }
+    .toolbar-drag-icon{
+      display:grid;
+      place-items:center;
+      width:32px;
+      height:12px;
+      color:#cbd5e1;
+    }
+    .toolbar-drag-icon::before{
+      content:'';
+      width:22px;
+      height:3px;
+      border-radius:999px;
+      background:currentColor;
+      box-shadow:0 6px 0 currentColor;
+      opacity:.9;
+    }
+    .viewer-toolbar .toolbar-main{
+      width:100%;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:3px;
+    }
+    .viewer-toolbar .tool-grid-4{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:3px;
+      width:100%;
+    }
+    .viewer-toolbar .toolbar-btn{
+      width:46px;
+      height:46px;
+      min-height:46px;
+      padding:0;
+      border-radius:14px;
+      border:1.5px solid transparent;
+      background:transparent;
+      box-shadow:none;
+      color:#64748b;
+      display:grid;
+      place-items:center;
+      font-size:0;
+      line-height:1;
+    }
+    .viewer-toolbar .toolbar-btn svg{
+      width:21px;
+      height:21px;
+    }
+    .viewer-toolbar .toolbar-btn span:not(.color-dot){
+      display:none;
+    }
+    .viewer-toolbar .toolbar-btn:hover{
+      background:#f1eeff;
+      color:var(--viewer-purple);
+      border-color:rgba(167,139,250,.32);
+      transform:none;
+    }
+    .viewer-toolbar .toolbar-btn:active{
+      transform:scale(.9);
+    }
+    .viewer-toolbar .toolbar-btn.active,
+    .viewer-toolbar .toolbar-btn.is-active{
+      background:linear-gradient(135deg,#ef6475 0%,#8b5cf6 100%);
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 8px 20px rgba(108,61,237,.28);
+    }
+    .doc-toolbar-page-btn{
+      color:#6d7892;
+    }
+    .viewer-toolbar .doc-color-grid,
+    .viewer-toolbar .advanced-tools,
+    .viewer-toolbar .toolbar-compact-pages,
+    .viewer-toolbar .shape-panel{
+      position:absolute;
+      left:calc(100% + 10px);
+      top:0;
+      z-index:80;
+      width:242px;
+      display:none;
+      padding:14px 13px 12px;
+      border:1.5px solid rgba(227,214,255,.9);
+      border-radius:18px;
+      background:rgba(255,255,255,.97);
+      backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);
+      box-shadow:0 18px 52px rgba(108,61,237,.16),0 2px 8px rgba(15,23,42,.08);
+      touch-action:none;
+    }
+    .viewer-toolbar.is-near-right .doc-color-grid,
+    .viewer-toolbar.is-near-right .advanced-tools,
+    .viewer-toolbar.is-near-right .toolbar-compact-pages,
+    .viewer-toolbar.is-near-right .shape-panel{
+      left:auto;
+      right:calc(100% + 10px);
+    }
+    .viewer-toolbar.is-pen-panel-open .doc-color-grid,
+    .viewer-toolbar.is-pen-panel-open .advanced-tools,
+    .viewer-toolbar.is-page-panel-open .toolbar-compact-pages,
+    .viewer-toolbar .shape-panel:not(.is-hidden){
+      display:grid;
+      gap:11px;
+    }
+    .viewer-toolbar.is-pen-panel-open .advanced-tools{
+      top:216px;
+    }
+    .viewer-toolbar.is-page-panel-open .toolbar-compact-pages{
+      top:148px;
+    }
+    .viewer-toolbar .shape-panel{
+      top:104px;
+    }
+    .viewer-toolbar .doc-color-grid{
+      grid-template-columns:repeat(6,1fr);
+      gap:6px;
+    }
+    .viewer-toolbar .color-btn{
+      width:26px;
+      height:26px;
+    }
+    .viewer-toolbar .toolbar-title{
+      font-size:11px;
+      margin:0;
+      color:#94a3b8;
+      text-transform:uppercase;
+      letter-spacing:.07em;
+    }
+    .viewer-toolbar .toolbar-divider{
+      height:1px;
+      margin:2px 0;
+    }
+    .viewer-toolbar .doc-toolbar-page-nav,
+    .viewer-toolbar .doc-toolbar-view-switch,
+    .viewer-toolbar .doc-toolbar-meta,
+    .viewer-toolbar .doc-toolbar-jump,
+    .viewer-toolbar .tool-grid-2{
+      gap:6px;
+    }
+    .viewer-toolbar .doc-toolbar-page-nav .toolbar-btn,
+    .viewer-toolbar .doc-toolbar-view-switch .toolbar-btn,
+    .viewer-toolbar .doc-toolbar-meta .toolbar-btn,
+    .viewer-toolbar .doc-toolbar-jump .toolbar-btn,
+    .viewer-toolbar .tool-grid-2 .toolbar-btn{
+      width:100%;
+      height:34px;
+      min-height:34px;
+      border-radius:10px;
+      font-size:12px;
+      font-weight:900;
+    }
+    .viewer-toolbar .doc-toolbar-page-nav .toolbar-btn span,
+    .viewer-toolbar .doc-toolbar-view-switch .toolbar-btn span,
+    .viewer-toolbar .doc-toolbar-meta .toolbar-btn span,
+    .viewer-toolbar .doc-toolbar-jump .toolbar-btn span,
+    .viewer-toolbar .tool-grid-2 .toolbar-btn span{
+      display:inline;
+    }
+    .viewer-toolbar .doc-toolbar-chip,
+    .viewer-toolbar .doc-toolbar-pill{
+      min-height:34px;
+      border-radius:10px;
+      font-size:12px;
+    }
+    .viewer-toolbar .doc-color-input{
+      width:42px;
+      height:34px;
+      border-radius:10px;
+    }
+    .viewer-toolbar .size-slider{
+      width:100%;
+      touch-action:auto;
+    }
+    @media (max-width:860px){
+      .viewer-toolbar,
+      .book-frame .viewer-toolbar{
+        position:absolute;
+        width:min(420px,calc(100% - 20px));
+        left:10px;
+        top:auto;
+        bottom:10px;
+        flex-direction:row;
+        flex-wrap:wrap;
+        justify-content:flex-start;
+        max-height:216px;
+        overflow:auto;
+      }
+      .viewer-toolbar .toolbar-header{
+        width:auto;
+        height:46px;
+        padding:0 4px;
+      }
+      .viewer-toolbar .toolbar-main,
+      .viewer-toolbar .tool-grid-4{
+        width:auto;
+        flex-direction:row;
+        flex-wrap:wrap;
+      }
+      .viewer-toolbar .doc-color-grid,
+      .viewer-toolbar .advanced-tools,
+      .viewer-toolbar .toolbar-compact-pages,
+      .viewer-toolbar .shape-panel{
+        left:0;
+        right:0;
+        top:auto !important;
+        bottom:calc(100% + 8px);
+        width:100%;
+        max-height:min(55vh,420px);
+        overflow:auto;
+      }
+    }
   </style>
 </head>
 <body class="viewer-page">
@@ -1203,6 +1467,7 @@
     <div class="viewer-main-layout">
       <aside class="viewer-toolbar" id="docToolbar">
         <div class="toolbar-header">
+          <span class="toolbar-drag-icon" aria-hidden="true"></span>
           <div class="toolbar-brand">
             <img src="/gorseller/logo.png" alt="Kemal Öğretmenim" class="toolbar-logo">
             <span class="brand-text">Araçlar</span>
@@ -1236,6 +1501,15 @@
               <path d="M17 6.5 20.5 12h-7z"></path>
             </svg>
             <span>Şekiller</span>
+          </button>
+          <button class="toolbar-btn doc-toolbar-page-btn" type="button" id="docPagePanelBtn" aria-expanded="false" aria-label="Sayfa ve yakınlaştırma araçları">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 3h7l4 4v14H7z"></path>
+              <path d="M14 3v5h5"></path>
+              <path d="M9 13h6"></path>
+              <path d="M9 17h4"></path>
+            </svg>
+            <span>Sayfa</span>
           </button>
           <div class="shape-panel is-hidden" id="docShapePanel">
             <div class="tool-grid-5" id="docShapeTools"></div>

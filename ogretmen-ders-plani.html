@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Öğretmen Ders Planlama Sistemi</title>
+<title>Öğretmen Ders Programı — Kemal Öğretmenim</title>
+<meta name="description" content="Yıllık planlardan öğrenme çıktılarını okuyup haftalık ders programına yerleştiren öğretmen ders planlama aracı.">
+<link rel="stylesheet" href="css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -466,7 +468,7 @@
     width: 260px;
     z-index: 500;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    pointer-events: none;
+    pointer-events: auto;
     display: none;
     max-height: 180px;
     overflow-y: auto;
@@ -813,7 +815,7 @@
 // STATE
 // ============================================================
 let state = {
-  version: 5,
+  version: 7,
   siniflar: [],          // [{id, name}]
   activeSinif: null,
   programs: {},          // {sinifId: {Mon:[{ders, isHoliday}], ...}}
@@ -825,7 +827,7 @@ let state = {
 
 const GUNLER = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 const GUN_KEYS = ['Mon','Tue','Wed','Thu','Fri'];
-const DATA_VERSION = 5;
+const DATA_VERSION = 7;
 
 // Okul başlangıç tarihi
 const SCHOOL_START = new Date('2025-09-08');
@@ -1806,8 +1808,9 @@ function parseYillikPlanFallback(text) {
 // Devam satırı: |  |  |  | Drama (Kopyalama) | kazanım | etkinlik |
 // ============================================================
 function parseSerbest(text) {
-  const haftaMap = {};
+  const entries = [];
   let curNo = null;
+  let currentWeekMeta = null;
   const lines = text.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
@@ -1839,22 +1842,17 @@ function parseSerbest(text) {
         );
         const tarih = tarihCell ? parseHaftaTarihi(tarihCell) : null;
 
-        if (!haftaMap[curNo]) {
-          haftaMap[curNo] = {
-            hafta:      curNo,
-            tarihLabel: tarihCell || '',
-            tarihStart: tarih?.start || null,
-            tarihEnd:   tarih?.end   || null,
-            ay:         haftaCell.replace(/\s*\(.*\)/,'').trim(),
-            kazanim:    '',
-            surec:      ''
-          };
-        }
+        currentWeekMeta = {
+          hafta:      curNo,
+          tarihLabel: tarihCell || '',
+          tarihStart: tarih?.start || null,
+          tarihEnd:   tarih?.end   || null,
+          ay:         haftaCell.replace(/\s*\(.*\)/,'').trim()
+        };
       }
     }
 
-    if (!curNo || !haftaMap[curNo]) continue;
-    const e = haftaMap[curNo];
+    if (!curNo || !currentWeekMeta) continue;
 
     // Konu hücresi: Drama, Masal, Geleneksel Oyun ile BAŞLAYAN hücre
     const konuCell = cells.find(c => /^(Drama|Masal|Geleneksel\s*Oyun)/i.test(c));
@@ -1868,11 +1866,16 @@ function parseSerbest(text) {
     const kaz = kazanim.substring(0, 200);
     const etk = etkinlik.substring(0, 300);
 
-    e.kazanim += (e.kazanim ? '\n' : '') + '• ' + konuCell + ': ' + kaz;
-    e.surec   += (e.surec   ? '\n' : '') + '• ' + konuCell + ': ' + etk;
+    entries.push({
+      ...currentWeekMeta,
+      konu: konuCell,
+      kazanim: `${konuCell}: ${kaz}`,
+      surec: `${konuCell}: ${etk}`,
+      serbest: true
+    });
   }
 
-  return Object.values(haftaMap).sort((a,b) => a.hafta - b.hafta);
+  return entries.sort((a,b) => a.hafta - b.hafta);
 }
 
 
@@ -1987,7 +1990,8 @@ function parseSerbestRows(tables) {
       if (c.includes('ETKINLIK')) etkinlikCol = ci;
     });
 
-    const grouped = {};
+    const entriesForTable = [];
+    let currentWeekMeta = null;
     for (let i = headerRow + 1; i < rows.length; i++) {
       const row = rows[i];
       const ayCell = cleanCellText(row[ayCol]);
@@ -1998,27 +2002,28 @@ function parseSerbestRows(tables) {
       if (!konu || !kazanim) continue;
 
       const hm = ayCell.match(/\((\d+)\s*\.?\s*HAFTA\)/i);
-      const hafta = hm ? parseInt(hm[1], 10) : null;
-      if (!hafta) continue;
-
-      const tarih = parseHaftaTarihi(haftaCell);
-      if (!grouped[hafta]) {
-        grouped[hafta] = {
-          hafta,
+      if (hm) {
+        const tarih = parseHaftaTarihi(haftaCell);
+        currentWeekMeta = {
+          hafta: parseInt(hm[1], 10),
           tarihLabel: haftaCell,
           tarihStart: tarih?.start || null,
           tarihEnd: tarih?.end || null,
-          ay: ayCell.replace(/\s*\/?\s*\(.*?\)/, '').trim(),
-          kazanim: '',
-          surec: ''
+          ay: ayCell.replace(/\s*\/?\s*\(.*?\)/, '').trim()
         };
       }
+      if (!currentWeekMeta) continue;
 
-      grouped[hafta].kazanim += (grouped[hafta].kazanim ? '\n' : '') + `${konu}: ${kazanim}`;
-      grouped[hafta].surec += (grouped[hafta].surec ? '\n' : '') + `${konu}: ${etkinlik}`;
+      entriesForTable.push({
+        ...currentWeekMeta,
+        konu,
+        kazanim: `${konu}: ${kazanim}`,
+        surec: `${konu}: ${etkinlik}`,
+        serbest: true
+      });
     }
 
-    entries.push(...Object.values(grouped));
+    entries.push(...entriesForTable);
   });
 
   entries.sort((a,b) => a.hafta - b.hafta);
@@ -2153,5 +2158,7 @@ function renderLegend() {
 // ============================================================
 init();
 </script>
+<script src="js/site-data.js"></script>
+<script src="js/site.js"></script>
 </body>
 </html>

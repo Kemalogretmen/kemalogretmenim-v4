@@ -385,8 +385,48 @@
       left: 50%;
       top: 78%;
       transform: translate(-50%, -50%);
-      background: radial-gradient(circle at 35% 30%, white 0 20%, #f6f6f6 42%, #dfe8f2 100%);
-      box-shadow: 0 8px 14px rgba(0,0,0,.2);
+      background:
+        radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95) 0 14%, rgba(255,255,255,0.6) 28%, transparent 55%),
+        radial-gradient(circle at 68% 70%, rgba(180,200,220,0.4) 0 20%, transparent 50%),
+        radial-gradient(circle at 50% 50%, #f8f8f6 0%, #e8eef4 55%, #c8d4e2 100%);
+      box-shadow:
+        0 6px 14px rgba(0,0,0,.28),
+        inset 0 -2px 4px rgba(0,0,0,.12),
+        inset 0 2px 3px rgba(255,255,255,.8);
+    }
+
+    /* Top gölgesi (masa yüzeyinde) */
+    .ball-shadow {
+      position: absolute;
+      z-index: 2;
+      width: 18px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(0,0,0,.22);
+      filter: blur(3px);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    /* Raket SVG overlay */
+    .racket-overlay {
+      position: absolute;
+      z-index: 4;
+      pointer-events: none;
+      width: 54px;
+      height: 54px;
+      opacity: 0;
+      transform: translate(-50%, -50%);
+      transition: opacity 0.15s;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.3));
+    }
+    .racket-overlay.visible { opacity: 1; }
+
+    /* Oyuncu kartı raket ikonu */
+    .player-racket {
+      font-size: 1.6rem;
+      line-height: 1;
+      margin-bottom: 2px;
     }
 
     .timer-box {
@@ -538,7 +578,7 @@
         </div>
         <div class="match-stats">
           <div class="stat"><span>Tur</span><strong id="roundText">0</strong></div>
-          <div class="stat"><span>Hedef</span><strong id="targetText">5 Set</strong></div>
+          <div class="stat"><span>Hedef</span><strong id="targetText">10 Set</strong></div>
           <div class="stat"><span>Süre</span><strong id="timeText">10</strong></div>
           <div class="stat"><span>Seri</span><strong id="streakText">0</strong></div>
         </div>
@@ -586,7 +626,7 @@
             <li>Her oyuncunun cevaplamak için 10 saniyesi vardır.</li>
             <li>Doğru cevap veren oyuncu set alır ve top karşıya gider.</li>
             <li>Yanlış cevapta veya süre bitince top dışarı çıkar, oyuncu seti kaybeder.</li>
-            <li>5 set alan oyuncu maçı kazanır.</li>
+            <li>10 set alan oyuncu maçı kazanır.</li>
             <li>Sesler oyun içinde üretilir; dışarıdan ses dosyası gerekmez.</li>
           </ul>
         </aside>
@@ -612,7 +652,37 @@
                 <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
               </div>
             </div>
+            <div class="ball-shadow" id="ballShadow"></div>
             <div class="ball" id="ball"></div>
+            <!-- Raket overlay'leri – konumlar JS tarafından ayarlanır -->
+            <svg class="racket-overlay" id="racket0" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
+              <ellipse cx="22" cy="20" rx="16" ry="14" fill="#e63946" stroke="#c1121f" stroke-width="2.5"/>
+              <line x1="22" y1="5" x2="22" y2="35" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <line x1="7" y1="20" x2="37" y2="20" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <rect x="19" y="33" width="6" height="18" rx="3" fill="#b87534"/>
+              <rect x="19" y="33" width="6" height="5" rx="0" fill="#8B5E3C" opacity=".5"/>
+            </svg>
+            <svg class="racket-overlay" id="racket1" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg" style="transform:translate(-50%,-50%) rotate(180deg)">
+              <ellipse cx="22" cy="20" rx="16" ry="14" fill="#2d7ff9" stroke="#1a5cbf" stroke-width="2.5"/>
+              <line x1="22" y1="5" x2="22" y2="35" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <line x1="7" y1="20" x2="37" y2="20" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <rect x="19" y="33" width="6" height="18" rx="3" fill="#b87534"/>
+              <rect x="19" y="33" width="6" height="5" rx="0" fill="#8B5E3C" opacity=".5"/>
+            </svg>
+            <svg class="racket-overlay" id="racket2" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg" style="transform:translate(-50%,-50%) rotate(90deg)">
+              <ellipse cx="22" cy="20" rx="16" ry="14" fill="#7357e8" stroke="#5a3ebf" stroke-width="2.5"/>
+              <line x1="22" y1="5" x2="22" y2="35" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <line x1="7" y1="20" x2="37" y2="20" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <rect x="19" y="33" width="6" height="18" rx="3" fill="#b87534"/>
+              <rect x="19" y="33" width="6" height="5" rx="0" fill="#8B5E3C" opacity=".5"/>
+            </svg>
+            <svg class="racket-overlay" id="racket3" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg" style="transform:translate(-50%,-50%) rotate(-90deg)">
+              <ellipse cx="22" cy="20" rx="16" ry="14" fill="#ff6464" stroke="#cc3232" stroke-width="2.5"/>
+              <line x1="22" y1="5" x2="22" y2="35" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <line x1="7" y1="20" x2="37" y2="20" stroke="white" stroke-width="1.2" opacity=".55"/>
+              <rect x="19" y="33" width="6" height="18" rx="3" fill="#b87534"/>
+              <rect x="19" y="33" width="6" height="5" rx="0" fill="#8B5E3C" opacity=".5"/>
+            </svg>
           </div>
           <div id="playersLayer"></div>
         </div>
@@ -632,7 +702,7 @@
       grade: 1,
       playMode: "cpu",
       operation: "mixed",
-      target: 5,
+      target: 10,
       players: [],
       current: 0,
       question: null,
@@ -645,7 +715,9 @@
       timeLeft: 10,
       timerId: null,
       turnToken: 0,
-      ballPos: { left: 16, top: 50 }
+      ballPos: { left: 16, top: 50 },
+      ballPhase: "waiting",   // "waiting"|"slow"|"fast"|"out"|"arrived"
+      ballFlightTimer: null
     };
 
     const els = {
@@ -656,6 +728,8 @@
       answerGrid: document.getElementById("answerGrid"),
       feedback: document.getElementById("feedback"),
       ball: document.getElementById("ball"),
+      ballShadow: document.getElementById("ballShadow"),
+      rackets: [0,1,2,3].map(i => document.getElementById("racket" + i)),
       round: document.getElementById("roundText"),
       target: document.getElementById("targetText"),
       time: document.getElementById("timeText"),
@@ -686,132 +760,162 @@
     function rand(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-
     function pick(items) {
       return items[Math.floor(Math.random() * items.length)];
     }
-
     function shuffle(items) {
       return items.slice().sort(() => Math.random() - 0.5);
     }
 
+    /* ═══════════════════════ SES ═══════════════════════ */
     function getAudioContext() {
       if (!state.soundOn) return null;
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return null;
-      if (!audioContext) audioContext = new AudioContext();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioContext) audioContext = new AC();
       if (audioContext.state === "suspended") audioContext.resume();
       return audioContext;
     }
 
-    function tone(ctx, frequency, start, duration, type, volume) {
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      oscillator.type = type || "sine";
-      oscillator.frequency.setValueAtTime(frequency, start);
-      gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(volume || 0.07, start + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-      oscillator.connect(gain).connect(ctx.destination);
-      oscillator.start(start);
-      oscillator.stop(start + duration + 0.02);
+    function tone(ctx, freq, start, dur, type, vol) {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type || "sine";
+      o.frequency.setValueAtTime(freq, start);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(vol || 0.07, start + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(g).connect(ctx.destination);
+      o.start(start); o.stop(start + dur + 0.02);
     }
 
-    function noise(ctx, start, duration, volume) {
-      const size = Math.max(1, Math.floor(ctx.sampleRate * duration));
-      const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < size; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / size);
-      const source = ctx.createBufferSource();
-      const filter = ctx.createBiquadFilter();
-      const gain = ctx.createGain();
-      filter.type = "bandpass";
-      filter.frequency.value = 900;
-      gain.gain.setValueAtTime(volume || 0.04, start);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-      source.buffer = buffer;
-      source.connect(filter).connect(gain).connect(ctx.destination);
-      source.start(start);
+    function noise(ctx, start, dur, vol) {
+      const size = Math.max(1, Math.floor(ctx.sampleRate * dur));
+      const buf  = ctx.createBuffer(1, size, ctx.sampleRate);
+      const d    = buf.getChannelData(0);
+      for (let i = 0; i < size; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / size);
+      const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+      flt.type = "bandpass"; flt.frequency.value = 900;
+      g.gain.setValueAtTime(vol || 0.04, start);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      src.buffer = buf;
+      src.connect(flt).connect(g).connect(ctx.destination);
+      src.start(start);
     }
 
     function playSound(name) {
-      const ctx = getAudioContext();
-      if (!ctx) return;
+      const ctx = getAudioContext(); if (!ctx) return;
       const now = ctx.currentTime;
+
       if (name === "hit") {
-        noise(ctx, now, 0.08, 0.06);
-        tone(ctx, 520, now, 0.06, "triangle", 0.04);
+        // Gerçekçi plastik top + kauçuk raket sesi
+        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.07), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.exp(-i/ctx.sampleRate*160);
+        const src = ctx.createBufferSource(), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+        flt.type = "highpass"; flt.frequency.value = 1400;
+        g.gain.setValueAtTime(0.7, now); g.gain.exponentialRampToValueAtTime(0.0001, now+0.06);
+        src.buffer=buf; src.connect(flt).connect(g).connect(ctx.destination); src.start(now);
+        // Pop tonu
+        const o = ctx.createOscillator(), og = ctx.createGain();
+        o.type="sine"; o.frequency.setValueAtTime(2200,now); o.frequency.exponentialRampToValueAtTime(800,now+0.05);
+        og.gain.setValueAtTime(0.14,now); og.gain.exponentialRampToValueAtTime(0.0001,now+0.06);
+        o.connect(og).connect(ctx.destination); o.start(now); o.stop(now+0.07);
+
+      } else if (name === "bounce") {
+        // Masaya çarpma sesi
+        const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.045), ctx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/(ctx.sampleRate*0.015));
+        const src=ctx.createBufferSource(), flt=ctx.createBiquadFilter(), g=ctx.createGain();
+        flt.type="bandpass"; flt.frequency.value=700; flt.Q.value=4;
+        g.gain.setValueAtTime(0.45,now); g.gain.exponentialRampToValueAtTime(0.0001,now+0.04);
+        src.buffer=buf; src.connect(flt).connect(g).connect(ctx.destination); src.start(now);
+
       } else if (name === "correct") {
-        tone(ctx, 523.25, now, 0.08, "sine", 0.06);
-        tone(ctx, 659.25, now + 0.07, 0.08, "sine", 0.06);
-        tone(ctx, 783.99, now + 0.14, 0.13, "sine", 0.07);
+        tone(ctx,523.25,now,0.09,"sine",0.07);
+        tone(ctx,659.25,now+0.09,0.09,"sine",0.07);
+        tone(ctx,880,now+0.18,0.15,"sine",0.08);
+
       } else if (name === "wrong") {
-        tone(ctx, 180, now, 0.17, "triangle", 0.07);
-        tone(ctx, 132, now + 0.12, 0.18, "triangle", 0.055);
+        tone(ctx,220,now,0.11,"sawtooth",0.055);
+        tone(ctx,155,now+0.12,0.22,"triangle",0.065);
+
       } else if (name === "serve") {
-        tone(ctx, 392, now, 0.07, "sine", 0.04);
-        tone(ctx, 587.33, now + 0.07, 0.08, "sine", 0.045);
+        noise(ctx,now,0.05,0.025);
+        tone(ctx,440,now+0.02,0.07,"sine",0.045);
+        tone(ctx,660,now+0.09,0.09,"sine",0.05);
+
       } else if (name === "tick") {
-        tone(ctx, 720, now, 0.035, "sine", 0.022);
+        tone(ctx,880,now,0.03,"sine",0.02);
+
       } else if (name === "out") {
-        noise(ctx, now, 0.16, 0.055);
-        tone(ctx, 220, now + 0.04, 0.18, "triangle", 0.055);
+        noise(ctx,now,0.25,0.07);
+        tone(ctx,180,now+0.05,0.25,"triangle",0.06);
+        [0,0.09,0.18].forEach(dt => noise(ctx,now+dt,0.04,0.025));
+
       } else if (name === "win") {
-        [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
-          tone(ctx, frequency, now + index * 0.09, 0.12, "sine", 0.07);
-        });
+        // Zafer fanfarı
+        const melody = [523.25,659.25,783.99,1046.5,1318.51,1568];
+        melody.forEach((f,i) => tone(ctx,f,now+i*0.1,0.18,"sine",0.07+(i*.005)));
+        // Gürültü patlaması (konfeti sesi)
+        window.setTimeout(()=>{ const c=getAudioContext(); if(c) noise(c,c.currentTime,0.18,0.055); },650);
+        window.setTimeout(()=>{ const c=getAudioContext(); if(c) noise(c,c.currentTime,0.12,0.04); },900);
       }
     }
 
+    /* ═══════════════════════ OYUNCULAR ═══════════════════════ */
     function makePlayers() {
       const names = state.playMode === "4"
-        ? ["Oyuncu 1", "Oyuncu 2", "Oyuncu 3", "Oyuncu 4"]
-        : state.playMode === "2"
-          ? ["Oyuncu 1", "Oyuncu 2"]
-          : ["Sen", "Bilgisayar"];
-      state.players = names.map((name, index) => ({
-        name,
-        score: 0,
-        computer: state.playMode === "cpu" && index === 1
+        ? ["Oyuncu 1","Oyuncu 2","Oyuncu 3","Oyuncu 4"]
+        : state.playMode === "2" ? ["Oyuncu 1","Oyuncu 2"] : ["Sen","Bilgisayar"];
+      state.players = names.map((name,i) => ({
+        name, score: 0, computer: state.playMode==="cpu" && i===1
       }));
       state.current = 0;
     }
 
     function renderPlayers(winnerIndex = -1) {
       els.playersLayer.innerHTML = "";
-      state.players.forEach((player, index) => {
+      const fills   = ["#e63946","#2d7ff9","#7357e8","#ff6464"];
+      const strokes = ["#c1121f","#1a5cbf","#5a3ebf","#cc3232"];
+      state.players.forEach((player, i) => {
         const card = document.createElement("div");
-        card.className = "player player-" + index + (index === state.current ? " is-active" : "") + (index === winnerIndex ? " is-winner" : "");
+        card.className = "player player-"+i+(i===state.current?" is-active":"")+(i===winnerIndex?" is-winner":"");
         card.innerHTML = `
-          <div class="player-role">${player.computer ? "Bilgisayar" : "Oyuncu"}</div>
+          <svg width="30" height="30" viewBox="0 0 54 54" style="display:block;margin:0 auto 3px">
+            <ellipse cx="22" cy="20" rx="16" ry="14" fill="${fills[i]}" stroke="${strokes[i]}" stroke-width="2.5"/>
+            <line x1="22" y1="5" x2="22" y2="35" stroke="white" stroke-width="1.5" opacity=".6"/>
+            <line x1="7" y1="20" x2="37" y2="20" stroke="white" stroke-width="1.5" opacity=".6"/>
+            <rect x="19" y="33" width="6" height="17" rx="3" fill="#b87534"/>
+          </svg>
+          <div class="player-role">${player.computer?"Bilgisayar":"Oyuncu"}</div>
           <div class="player-name">${player.name}</div>
-          <div class="player-score">${player.score}</div>
-        `;
+          <div class="player-score">${player.score}</div>`;
         els.playersLayer.appendChild(card);
+      });
+      els.rackets.forEach((r,i) => {
+        if (r) r.style.display = i < state.players.length ? "block" : "none";
       });
     }
 
     function updateMeta() {
-      els.round.textContent = state.round;
+      els.round.textContent  = state.round;
       els.target.textContent = state.target + " Set";
-      els.time.textContent = Math.ceil(state.timeLeft);
+      els.time.textContent   = Math.ceil(state.timeLeft);
       els.streak.textContent = state.streak;
     }
 
     function updateTimerView() {
-      const seconds = Math.max(0, Math.ceil(state.timeLeft));
-      const percent = Math.max(0, Math.min(100, state.timeLeft * 10));
-      els.time.textContent = seconds;
-      els.timerLabel.textContent = seconds + " sn";
-      els.timerFill.style.width = percent + "%";
+      const s = Math.max(0, Math.ceil(state.timeLeft));
+      const p = Math.max(0, Math.min(100, state.timeLeft * 10));
+      els.time.textContent       = s;
+      els.timerLabel.textContent = s + " sn";
+      els.timerFill.style.width  = p + "%";
       els.timerFill.classList.toggle("is-low", state.timeLeft <= 3);
     }
 
     function stopTimer() {
-      if (state.timerId) {
-        window.clearInterval(state.timerId);
-        state.timerId = null;
-      }
+      if (state.timerId) { window.clearInterval(state.timerId); state.timerId = null; }
     }
 
     function startTimer(token) {
@@ -819,417 +923,714 @@
       state.timeLeft = 10;
       updateTimerView();
       state.timerId = window.setInterval(() => {
-        if (!state.running || token !== state.turnToken) {
-          stopTimer();
-          return;
-        }
-        state.timeLeft = Math.max(0, 10 - ((performance.now() - state.questionStartedAt) / 1000));
+        if (!state.running || token !== state.turnToken) { stopTimer(); return; }
+        state.timeLeft = Math.max(0, 10 - ((performance.now()-state.questionStartedAt)/1000));
         updateTimerView();
-        if (state.timeLeft <= 3 && Math.ceil(state.timeLeft * 10) % 10 === 0) {
-          playSound("tick");
-        }
-        if (state.timeLeft <= 0) {
-          stopTimer();
-          handleMiss("timeout");
-        }
+        if (state.timeLeft <= 3 && Math.ceil(state.timeLeft*10)%10===0) playSound("tick");
+        if (state.timeLeft <= 0) { stopTimer(); handleMiss("timeout"); }
       }, 100);
     }
 
-    function nextIndex(index = state.current) {
-      return (index + 1) % state.players.length;
-    }
+    function nextIndex(idx = state.current) { return (idx+1) % state.players.length; }
 
-    function getBallTarget(playerIndex) {
-      const positions = [
-        { left: 16, top: 50 },
-        { left: 84, top: 50 },
-        { left: 50, top: 18 },
-        { left: 50, top: 82 }
+    /* ═══════════════════════ TOP FİZİĞİ ═══════════════════════ */
+    // 4 oyunculu pozisyonlar: Sol, Sağ, Üst, Alt
+    const PLAYER_ZONES = [
+      { left:16, top:50 },   // 0: sol
+      { left:84, top:50 },   // 1: sağ
+      { left:50, top:18 },   // 2: üst
+      { left:50, top:82 }    // 3: alt
+    ];
+
+    // Karşı masanın DROP ZONE'u: hangi oyuncuya gidiyorsa masasının rastgele bir noktası
+    function getDropZone(playerIndex) {
+      const z = PLAYER_ZONES[playerIndex];
+      // Oyuncuya göre masanın hangi çeyreğine düşecek
+      const zones = [
+        // Sol oyuncu (0) → sol masanın ortası
+        [{left:rand(20,44),top:rand(30,70)}],
+        // Sağ oyuncu (1) → sağ masanın ortası
+        [{left:rand(56,80),top:rand(30,70)}],
+        // Üst oyuncu (2) → üst masanın ortası
+        [{left:rand(30,70),top:rand(20,42)}],
+        // Alt oyuncu (3) → alt masanın ortası
+        [{left:rand(30,70),top:rand(58,80)}]
       ];
-      return positions[playerIndex] || positions[0];
+      return pick(zones[playerIndex]);
     }
 
-    function setBallPosition(position) {
-      state.ballPos = position;
-      els.ball.style.left = position.left + "%";
-      els.ball.style.top = position.top + "%";
+    function setBallPosition(pos) {
+      state.ballPos = pos;
+      els.ball.style.left = pos.left + "%";
+      els.ball.style.top  = pos.top  + "%";
+      els.ball.style.transform = "translate(-50%,-50%)";
+      updateShadow(pos.left, pos.top, 1);
     }
 
-    function clampPercent(value) {
-      return Math.max(8, Math.min(92, value));
+    function updateShadow(left, top, scaleMult) {
+      if (!els.ballShadow) return;
+      const fade = Math.max(0.15, 1 - Math.abs(top-50)/60) * (scaleMult||1);
+      els.ballShadow.style.left      = left + "%";
+      els.ballShadow.style.top       = (top + 3) + "%";
+      els.ballShadow.style.transform = `translateX(-50%) scaleX(${fade})`;
+      els.ballShadow.style.opacity   = Math.min(0.75, fade * 0.85);
     }
 
-    function moveBallTo(playerIndex) {
-      const from = state.ballPos || getBallTarget(state.current);
-      const to = getBallTarget(playerIndex);
-      const spin = rand(-16, 16);
-      const mid = {
-        left: clampPercent((from.left + to.left) / 2 + (Math.abs(from.left - to.left) > Math.abs(from.top - to.top) ? 0 : spin)),
-        top: clampPercent((from.top + to.top) / 2 + (Math.abs(from.left - to.left) > Math.abs(from.top - to.top) ? spin : 0))
-      };
-      els.ball.getAnimations().forEach(animation => animation.cancel());
-      els.ball.animate([
-        { left: from.left + "%", top: from.top + "%", transform: "translate(-50%, -50%) scale(1)" },
-        { left: mid.left + "%", top: mid.top + "%", transform: "translate(-50%, -50%) scale(1.18)" },
-        { left: to.left + "%", top: to.top + "%", transform: "translate(-50%, -50%) scale(1)" }
-      ], {
-        duration: 560,
-        easing: "cubic-bezier(.2,.8,.2,1)",
-        fill: "forwards"
-      });
-      state.ballPos = to;
+    function flashRacket(playerIndex) {
+      const r = els.rackets[playerIndex]; if (!r) return;
+      const pos = PLAYER_ZONES[playerIndex];
+      r.style.left = pos.left + "%";
+      r.style.top  = pos.top  + "%";
+      r.classList.add("visible");
+      window.setTimeout(() => r.classList.remove("visible"), 260);
     }
 
-    function sendBallOut(playerIndex) {
-      const from = state.ballPos || getBallTarget(playerIndex);
-      const directions = [
-        { left: -9, top: rand(18, 82) },
-        { left: 109, top: rand(18, 82) },
-        { left: rand(18, 82), top: -8 },
-        { left: rand(18, 82), top: 108 }
+    function clamp(v,mn=8,mx=92) { return Math.max(mn,Math.min(mx,v)); }
+
+    /* ══════════════════════════════════════════════════════════
+       TOP FİZİĞİ
+       ══════════════════════════════════════════════════════════
+
+       FAZI:
+       A)  Oyuncu doğru cevaplar:
+           • Anında: raket flash + vurma sesi
+           • state.ballPhase = "slow"
+           • Top 10sn'de yavaşça karşı masaya süzülür
+           • Bu sürede rakip soruyu cevaplayabilir
+
+       B)  Rakip ERKEN cevaplarsa (top henüz uçuştayken):
+           • Animasyon kesilir, top O AN bulunduğu yerden hızla
+             karşı masaya iner (300ms)
+           • Çarpma sesi → 300ms → raket flash + vurma sesi
+           • Yeni tur başlar
+
+       C)  Süre dolar veya yanlış cevap:
+           • Top masaya çarpar (bounce sesi) → dışarı fırlar
+    ══════════════════════════════════════════════════════════ */
+
+    // Topun o anlık CSS pozisyonunu oku (animasyon çalışırken bile)
+    function getBallCurrentPos() {
+      const el = els.ball;
+      const computed = window.getComputedStyle(el);
+      // left/top % değerleri — animasyon "fill:forwards" altında computedStyle doğru döner
+      const parent = el.offsetParent || el.parentElement;
+      const pw = parent ? parent.offsetWidth  : window.innerWidth;
+      const ph = parent ? parent.offsetHeight : window.innerHeight;
+      const rect = el.getBoundingClientRect();
+      const prect = parent ? parent.getBoundingClientRect() : {left:0,top:0};
+      const cx = rect.left - prect.left + rect.width/2;
+      const cy = rect.top  - prect.top  + rect.height/2;
+      return { left: (cx/pw)*100, top: (cy/ph)*100 };
+    }
+
+    // Yavaş uçuş keyframe'lerini hesapla ve sakla (hızlandırma için paylaşılan veri)
+    let _flight = null; // { drop, dest, spinDeg, bounceTimerId, arriveTimerId, rafId }
+
+    function launchSlowBall(fromIdx, toIdx, onArrive) {
+      // Önceki animasyonları temizle
+      els.ball.getAnimations().forEach(a => a.cancel());
+      if (_flight) {
+        clearTimeout(_flight.bounceTimerId);
+        clearTimeout(_flight.arriveTimerId);
+        cancelAnimationFrame(_flight.rafId);
+        _flight = null;
+      }
+      if (state.ballFlightTimer) { clearTimeout(state.ballFlightTimer); state.ballFlightTimer=null; }
+
+      const from    = state.ballPos || PLAYER_ZONES[fromIdx];
+      const drop    = getDropZone(toIdx);
+      const dest    = PLAYER_ZONES[toIdx];
+      const dx = dest.left-from.left, dy = dest.top-from.top;
+      const len = Math.sqrt(dx*dx+dy*dy)||1;
+      const px = -dy/len, py = dx/len;
+      const spin   = (Math.random()-0.5)*20;
+      const spinDeg = (Math.random()-0.5)*540;
+      const netLeft = clamp((from.left+drop.left)/2 + px*spin);
+      const netTop  = clamp((from.top +drop.top )/2 + py*spin - 16);
+
+      // Tam 10 saniyede karşıya ulaşsın
+      const TOTAL = 10000;
+
+      const kf = [
+        { left:from.left+"%", top:from.top+"%",
+          transform:`translate(-50%,-50%) scale(1) rotate(0deg)`,           offset:0 },
+        { left:netLeft+"%",   top:netTop+"%",
+          transform:`translate(-50%,-50%) scale(1.3) rotate(${spinDeg*.3}deg)`, offset:0.28 },
+        { left:drop.left+"%", top:drop.top+"%",
+          transform:`translate(-50%,-50%) scale(0.85) rotate(${spinDeg*.65}deg)`,offset:0.60 },
+        { left:clamp(drop.left+(dest.left-drop.left)*.42)+"%",
+          top: clamp(drop.top +(dest.top -drop.top )*.42-7)+"%",
+          transform:`translate(-50%,-50%) scale(1.1) rotate(${spinDeg*.85}deg)`, offset:0.80 },
+        { left:dest.left+"%", top:dest.top+"%",
+          transform:`translate(-50%,-50%) scale(1) rotate(${spinDeg}deg)`,   offset:1 }
       ];
-      const out = directions[playerIndex] || pick(directions);
-      const mid = {
-        left: clampPercent((from.left + out.left) / 2 + rand(-12, 12)),
-        top: clampPercent((from.top + out.top) / 2 + rand(-12, 12))
-      };
-      els.ball.getAnimations().forEach(animation => animation.cancel());
+
+      els.ball.animate(kf, { duration:TOTAL, easing:"linear", fill:"forwards" });
+
+      // Bounce sesi (top masaya düştüğünde ≈ %60)
+      const bT = setTimeout(()=>playSound("bounce"), TOTAL*0.60);
+
+      // Gölge
+      const shadowPts = [
+        [from.left,from.top,1],[netLeft,netTop,0.3],[drop.left,drop.top,1],
+        [(drop.left+dest.left)/2,(drop.top+dest.top)/2-3,0.7],[dest.left,dest.top,1]
+      ];
+      const t0 = performance.now();
+      let rafId;
+      function rafShadow(ts) {
+        const t = Math.min(1,(ts-t0)/TOTAL);
+        const si = Math.min(shadowPts.length-2,Math.floor(t*(shadowPts.length-1)));
+        const lt = t*(shadowPts.length-1)-si;
+        const [ax,ay,as]=shadowPts[si],[bx,by,bs]=shadowPts[si+1];
+        updateShadow(ax+(bx-ax)*lt, ay+(by-ay)*lt, as+(bs-as)*lt);
+        if(t<1) rafId=requestAnimationFrame(rafShadow);
+      }
+      rafId = requestAnimationFrame(rafShadow);
+
+      // Tam varışta: raket + ses + callback
+      const aT = setTimeout(()=>{
+        state.ballPos = dest;
+        state.ballPhase = "arrived";
+        flashRacket(toIdx);
+        playSound("hit");
+        _flight = null;
+        if(onArrive) onArrive();
+      }, TOTAL - 30);
+
+      _flight = { drop, dest, spinDeg, bounceTimerId:bT, arriveTimerId:aT, rafId };
+      state.ballPhase = "slow";
+    }
+
+    /* Rakip ERKEN cevap verdi — topu o anki pozisyondan hızla hedefe indir */
+    function accelerateBallToTarget(toIdx, onHit) {
+      if (!_flight) { if(onHit) onHit(); return; }
+
+      // Anlık pozisyonu oku (animasyon çalışırken)
+      const cur = getBallCurrentPos();
+
+      // Önceki animasyonu/timer'ları temizle
+      els.ball.getAnimations().forEach(a => a.cancel());
+      clearTimeout(_flight.bounceTimerId);
+      clearTimeout(_flight.arriveTimerId);
+      cancelAnimationFrame(_flight.rafId);
+      if (state.ballFlightTimer) { clearTimeout(state.ballFlightTimer); state.ballFlightTimer=null; }
+      _flight = null;
+
+      const drop = getDropZone(toIdx);   // yeni rastgele düşüş noktası (her atışta farklı)
+      const dest = PLAYER_ZONES[toIdx];
+      const FAST = 320; // ms — hızlı iniş
+
+      // Hızlı animasyon: mevcut pozisyon → masaya çarpış → rakete
       els.ball.animate([
-        { left: from.left + "%", top: from.top + "%", transform: "translate(-50%, -50%) scale(1)" },
-        { left: mid.left + "%", top: mid.top + "%", transform: "translate(-50%, -50%) scale(1.14)" },
-        { left: out.left + "%", top: out.top + "%", transform: "translate(-50%, -50%) scale(.82)" }
-      ], {
-        duration: 620,
-        easing: "cubic-bezier(.22,.61,.36,1)",
-        fill: "forwards"
-      });
+        { left:cur.left+"%", top:cur.top+"%",
+          transform:"translate(-50%,-50%) scale(1.1) rotate(0deg)", offset:0 },
+        { left:drop.left+"%", top:drop.top+"%",
+          transform:"translate(-50%,-50%) scale(0.82) rotate(180deg)", offset:0.55 },
+        { left:dest.left+"%", top:dest.top+"%",
+          transform:"translate(-50%,-50%) scale(1) rotate(320deg)", offset:1 }
+      ],{ duration:FAST, easing:"cubic-bezier(.4,0,.6,1)", fill:"forwards" });
+
+      // Masaya çarpma sesi (%55'te)
+      setTimeout(()=>playSound("bounce"), FAST*0.55);
+
+      // Varış: masa çarpma → 300ms → raket flash + vurma sesi → callback
+      state.ballPos = dest;
+      state.ballPhase = "fast";
+      setTimeout(()=>{
+        playSound("hit");
+        flashRacket(toIdx);
+        setTimeout(()=>{ if(onHit) onHit(); }, 300);
+      }, FAST + 20);
+    }
+
+    /* Top dışarı fırlatma */
+    function ejectBall(fromIdx) {
+      els.ball.getAnimations().forEach(a=>a.cancel());
+      if (_flight) {
+        clearTimeout(_flight.bounceTimerId);
+        clearTimeout(_flight.arriveTimerId);
+        cancelAnimationFrame(_flight.rafId);
+        _flight = null;
+      }
+      if (state.ballFlightTimer) { clearTimeout(state.ballFlightTimer); state.ballFlightTimer=null; }
+
+      const from = state.ballPos || PLAYER_ZONES[fromIdx];
+      // Çıkış yönü: oyuncunun kendi tarafından
+      const outs = [
+        {left:-14, top:rand(25,75)},
+        {left:114, top:rand(25,75)},
+        {left:rand(25,75), top:-12},
+        {left:rand(25,75), top:114}
+      ];
+      const out = outs[fromIdx % outs.length];
+      // Masaya önce bir çarpacak (gerçekçi sekme)
+      const bounceX = clamp(from.left+(out.left-from.left)*0.38+rand(-8,8));
+      const bounceY = clamp(from.top +(out.top -from.top )*0.38+rand(-8,8));
+
+      // Çarpma sesi önce
+      playSound("bounce");
+      els.ball.animate([
+        { left:from.left+"%",  top:from.top+"%",
+          transform:"translate(-50%,-50%) scale(1) rotate(0deg)", offset:0 },
+        { left:bounceX+"%",    top:bounceY+"%",
+          transform:"translate(-50%,-50%) scale(1.2) rotate(160deg)", offset:0.35 },
+        { left:out.left+"%",   top:out.top+"%",
+          transform:"translate(-50%,-50%) scale(.55) rotate(500deg)", offset:1 }
+      ],{ duration:900, easing:"cubic-bezier(.3,0,.7,.4)", fill:"forwards" });
+
+      if (els.ballShadow) { els.ballShadow.style.transition="opacity 0.5s"; els.ballShadow.style.opacity="0"; }
       state.ballPos = out;
+      state.ballPhase = "out";
     }
 
+    /* ══════════════════════════════════════════════════════════
+       SORU / OYUN AKIŞI
+    ══════════════════════════════════════════════════════════ */
     function generateQuestion() {
-      if (state.grade === 1) return generateGradeOne();
-      if (state.grade === 2) return generateGradeTwo();
-      if (state.grade === 3) return generateGradeThree();
+      if (state.grade===1) return generateGradeOne();
+      if (state.grade===2) return generateGradeTwo();
+      if (state.grade===3) return generateGradeThree();
       return generateGradeFour();
     }
-
-    function allowedOperations() {
-      return state.grade === 1 ? ["+", "-"] : ["+", "-", "x", "÷"];
-    }
-
+    function allowedOperations() { return state.grade===1?["+","-"]:["+","-","x","÷"]; }
     function chooseOperation() {
-      const allowed = allowedOperations();
-      if (state.operation !== "mixed" && allowed.includes(state.operation)) return state.operation;
-      return pick(allowed);
+      const a=allowedOperations();
+      if(state.operation!=="mixed"&&a.includes(state.operation)) return state.operation;
+      return pick(a);
     }
-
-    function generateGradeOne() {
-      const op = chooseOperation();
-      if (op === "+") {
-        const a = rand(1, 19);
-        const b = rand(1, 20 - a);
-        return { text: `${a} + ${b}`, answer: a + b };
-      }
-      const a = rand(2, 20);
-      const b = rand(1, a);
-      return { text: `${a} - ${b}`, answer: a - b };
-    }
-
-    function generateGradeTwo() {
-      const op = chooseOperation();
-      if (op === "+") {
-        const a = rand(5, 85);
-        const b = rand(1, 100 - a);
-        return { text: `${a} + ${b}`, answer: a + b };
-      }
-      if (op === "-") {
-        const a = rand(10, 100);
-        const b = rand(1, a);
-        return { text: `${a} - ${b}`, answer: a - b };
-      }
-      const factors = [1, 2, 3, 4, 5, 10];
-      const a = pick(factors);
-      const b = rand(1, Math.floor(100 / a));
-      if (op === "x") return { text: `${a} x ${b}`, answer: a * b };
-      return { text: `${a * b} ÷ ${a}`, answer: b };
-    }
-
-    function generateGradeThree() {
-      const op = chooseOperation();
-      if (op === "+") {
-        const a = rand(50, 850);
-        const b = rand(10, 1000 - a);
-        return { text: `${a} + ${b}`, answer: a + b };
-      }
-      if (op === "-") {
-        const a = rand(100, 1000);
-        const b = rand(10, a);
-        return { text: `${a} - ${b}`, answer: a - b };
-      }
-      const a = rand(2, 12);
-      const b = rand(2, Math.floor(1000 / a));
-      if (op === "x") return { text: `${a} x ${b}`, answer: a * b };
-      return { text: `${a * b} ÷ ${a}`, answer: b };
-    }
-
-    function generateGradeFour() {
-      const op = chooseOperation();
-      const steps = [10, 50, 100, 500, 1000];
-      if (op === "+") {
-        const step = pick(steps);
-        const a = rand(10, 900) * step;
-        const b = rand(1, Math.max(1, Math.floor((100000 - a) / step))) * step;
-        return { text: `${a} + ${b}`, answer: a + b };
-      }
-      if (op === "-") {
-        const step = pick(steps);
-        const a = rand(10, 1000) * step;
-        const b = rand(1, Math.max(1, Math.floor(a / step))) * step;
-        return { text: `${a} - ${b}`, answer: a - b };
-      }
-      const multipliers = [2, 3, 4, 5, 10, 20, 25, 50, 100];
-      const a = pick(multipliers);
-      const step = a <= 5 ? pick([10, 100]) : pick([1, 10, 100]);
-      const b = rand(2, Math.max(2, Math.floor(100000 / a / step))) * step;
-      if (op === "x") return { text: `${a} x ${b}`, answer: a * b };
-      return { text: `${a * b} ÷ ${a}`, answer: b };
-    }
+    function generateGradeOne(){const op=chooseOperation();if(op==="+"){const a=rand(1,19),b=rand(1,20-a);return{text:`${a} + ${b}`,answer:a+b};}const a=rand(2,20),b=rand(1,a);return{text:`${a} - ${b}`,answer:a-b};}
+    function generateGradeTwo(){const op=chooseOperation();if(op==="+"){const a=rand(5,85),b=rand(1,100-a);return{text:`${a} + ${b}`,answer:a+b};}if(op==="-"){const a=rand(10,100),b=rand(1,a);return{text:`${a} - ${b}`,answer:a-b};}const f=[1,2,3,4,5,10],a=pick(f),b=rand(1,Math.floor(100/a));if(op==="x")return{text:`${a} x ${b}`,answer:a*b};return{text:`${a*b} ÷ ${a}`,answer:b};}
+    function generateGradeThree(){const op=chooseOperation();if(op==="+"){const a=rand(50,850),b=rand(10,1000-a);return{text:`${a} + ${b}`,answer:a+b};}if(op==="-"){const a=rand(100,1000),b=rand(10,a);return{text:`${a} - ${b}`,answer:a-b};}const a=rand(2,12),b=rand(2,Math.floor(1000/a));if(op==="x")return{text:`${a} x ${b}`,answer:a*b};return{text:`${a*b} ÷ ${a}`,answer:b};}
+    function generateGradeFour(){const op=chooseOperation();const steps=[10,50,100,500,1000];if(op==="+"){const s=pick(steps),a=rand(10,900)*s,b=rand(1,Math.max(1,Math.floor((100000-a)/s)))*s;return{text:`${a} + ${b}`,answer:a+b};}if(op==="-"){const s=pick(steps),a=rand(10,1000)*s,b=rand(1,Math.max(1,Math.floor(a/s)))*s;return{text:`${a} - ${b}`,answer:a-b};}const ml=[2,3,4,5,10,20,25,50,100],a=pick(ml),st=a<=5?pick([10,100]):pick([1,10,100]),b=rand(2,Math.max(2,Math.floor(100000/a/st)))*st;if(op==="x")return{text:`${a} x ${b}`,answer:a*b};return{text:`${a*b} ÷ ${a}`,answer:b};}
 
     function buildAnswers(answer) {
-      const spread = state.grade === 1 ? [1, 2, 3, 4] : state.grade === 2 ? [1, 2, 5, 10] : state.grade === 3 ? [2, 5, 10, 20, 50] : [10, 50, 100, 500, 1000];
-      const set = new Set([answer]);
-      while (set.size < 4) {
-        const delta = pick(spread) * (Math.random() < 0.5 ? -1 : 1);
-        const value = Math.max(0, answer + delta);
-        if (value !== answer) set.add(value);
-      }
+      const spread=state.grade===1?[1,2,3,4]:state.grade===2?[1,2,5,10]:state.grade===3?[2,5,10,20,50]:[10,50,100,500,1000];
+      const set=new Set([answer]);
+      while(set.size<4){const d=pick(spread)*(Math.random()<.5?-1:1),v=Math.max(0,answer+d);if(v!==answer)set.add(v);}
       return shuffle(Array.from(set));
     }
 
+    function setFeedback(text,tone){els.feedback.className="feedback"+(tone?" "+tone:"");els.feedback.textContent=text;}
+    function questionInfoText(){return gradeTitles[state.grade]+" • "+operationNames[state.operation]+" soru";}
+
+    /* ══════════════════════════════════════════════════════════
+       TUR BAŞLATMA — simetrik, her oyuncu için aynı mantık
+       ══════════════════════════════════════════════════════════
+       renderQuestion  : yeni maç / eject sonrası — top aktif oyuncunun yanına gelir
+       _prepareQuestion: mevcut top pozisyonunu KORUR, sadece soruyu günceller
+    ══════════════════════════════════════════════════════════ */
+
+    /* Yeni maç başı veya eject sonrası: top aktif oyuncunun yanına yerleşir */
     function renderQuestion() {
-      const current = state.players[state.current];
+      if (!state.running) return;
+      if (els.ballShadow){ els.ballShadow.style.transition=""; els.ballShadow.style.opacity=""; }
+      setBallPosition({ ...PLAYER_ZONES[state.current] });
+      _prepareQuestion();
+    }
+
+    /* Top pozisyonunu değiştirmeden sadece soruyu hazırla */
+    function _prepareQuestion() {
+      if (!state.running) return;
+      const cur = state.players[state.current];
       state.question = generateQuestion();
       state.questionStartedAt = performance.now();
       state.turnToken += 1;
-      state.locked = current.computer;
+      state.locked    = cur.computer;
+      state.ballPhase = "waiting";
       els.equation.textContent = state.question.text;
-      els.turn.textContent = current.name + " cevaplıyor";
+      els.turn.textContent     = cur.name + " cevaplıyor";
       els.answerGrid.innerHTML = "";
-      buildAnswers(state.question.answer).forEach(value => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "answer-btn";
-        button.textContent = value;
-        button.addEventListener("click", () => submitAnswer(value, button));
-        els.answerGrid.appendChild(button);
+      buildAnswers(state.question.answer).forEach(v => {
+        const btn = document.createElement("button");
+        btn.type="button"; btn.className="answer-btn"; btn.textContent=v;
+        btn.addEventListener("click", ()=>submitAnswer(v,btn));
+        els.answerGrid.appendChild(btn);
       });
-      setFeedback(questionInfoText(), "");
+      setFeedback(questionInfoText(),"");
       renderPlayers();
-      moveBallTo(state.current);
       startTimer(state.turnToken);
-      if (current.computer) runComputerTurn();
+      if (cur.computer) runComputerTurn();
     }
 
-    function setFeedback(text, tone) {
-      els.feedback.className = "feedback" + (tone ? " " + tone : "");
-      els.feedback.textContent = text;
-    }
+    /*
+    ══════════════════════════════════════════════════════════
+    submitAnswer — TAM SİMETRİK MANTIK
+    ══════════════════════════════════════════════════════════
 
-    function questionInfoText() {
-      return gradeTitles[state.grade] + " • " + operationNames[state.operation] + " soru";
-    }
+    FAZ "waiting": Top bu oyuncunun yanında, oyuncu yeni soru cevaplıyor
+      • DOĞRU → raket flash + hit sesi → top YAVAŞ (10sn) rakibe doğru uçar
+                rakip sorusu anında gösterilir, rakip cevap bekler (ballPhase="slow")
+      • YANLIŞ/SÜRE → eject, skor karşıya, yeni tur (top karşı oyuncuya gider)
 
-    function submitAnswer(value, button, fromComputer = false) {
-      if (!state.running || state.locked && !fromComputer) return;
-      stopTimer();
-      state.locked = true;
+    FAZ "slow": Top uçuştayken RAKİP erken cevap verdi
+      • DOĞRU → animasyon kesilir, top hızla rakip masasına iner
+                bounce sesi → 300ms → raket flash + hit sesi
+                Şimdi top rakipte, rakip aktif oyuncu olur
+                Rakip soruyu hazırla → top rakipten YAVAŞ geri gidecek
+      • YANLIŞ/SÜRE → top o andan eject, skor karşıya, yeni tur
+    ══════════════════════════════════════════════════════════ */
+    function submitAnswer(value, button, fromComputer=false) {
+      if (!state.running || (state.locked && !fromComputer)) return;
+
+      const phase   = state.ballPhase;
       const correct = value === state.question.answer;
+
+      // ── YANLIŞ: her fazda aynı ──
       if (!correct) {
+        stopTimer();
+        state.locked = true;
         if (button) button.classList.add("is-wrong");
         handleMiss("wrong");
         return;
       }
-      const scorer = state.current;
-      state.players[scorer].score += 1;
-      state.round += 1;
-      state.streak += 1;
+
+      // ── DOĞRU ──
+      stopTimer();
+      state.locked = true;
       if (button) button.classList.add("is-correct");
-      playSound("hit");
-      window.setTimeout(() => playSound("correct"), 120);
-      setFeedback(state.players[state.current].name + " doğru vurdu ve set aldı!", "good");
-      updateMeta();
-      renderPlayers();
-      moveBallTo(nextIndex());
-      const winner = state.players.findIndex(player => player.score >= state.target);
-      if (winner >= 0) {
-        finishGame(winner);
-        return;
+
+      const hitter = state.current;          // topu vuran
+      const toIdx  = nextIndex(hitter);      // topun gideceği oyuncu
+
+      if (phase === "waiting") {
+        /* ── FAZ A: Top bu oyuncunun yanında, şimdi vur → yavaş uçur ── */
+        flashRacket(hitter);
+        playSound("hit");
+        setTimeout(()=>playSound("correct"), 80);
+        setFeedback(state.players[hitter].name + " topa vurdu! Karşıya süzülüyor…", "warn");
+
+        // Top yavaşça toIdx'e gidiyor (10sn)
+        // Varış callback'i: top NATURAL olarak geldi, rakip cevap vermedi demek
+        // Bu durumda puan SAYMAYACAĞİZ — rakip cevap verirse sayacağız
+        // (Sadece puan sistemi: doğru cevap vermek = puan)
+        launchSlowBall(hitter, toIdx, ()=>{
+          // Top 10sn'de karşıya ulaştı AMA rakip henüz cevap vermedi
+          // (eğer cevap verseydi FAZ B tetiklenirdi zaten)
+          // Şimdi top karşıdayken rakip hâlâ cevaplayabilir — ballPhase="waiting" yap
+          // (timer zaten devam ediyor, sadece phase değişiyor)
+          if (!state.running) return;
+          state.ballPhase = "arrived";
+          // Top rakibin yanına geldi, flashRacket yok — oyuncu henüz vurmadı
+          // Rakip cevaplayana kadar top orada bekler
+          // Timer hâlâ çalışıyor, eğer süre bitmişse handleMiss timeout ile tetiklendi
+        });
+
+        // Rakipten soru beklemeye başla (top uçarken)
+        state.current   = toIdx;
+        state.ballPhase = "slow";   // top uçuşta, rakip erken cevap verebilir
+
+        const nxt = state.players[toIdx];
+        state.question  = generateQuestion();
+        state.questionStartedAt = performance.now();
+        state.turnToken += 1;
+        state.locked    = nxt.computer;
+        els.equation.textContent = state.question.text;
+        els.turn.textContent     = nxt.name + " cevaplıyor";
+        els.answerGrid.innerHTML = "";
+        buildAnswers(state.question.answer).forEach(v => {
+          const btn = document.createElement("button");
+          btn.type="button"; btn.className="answer-btn"; btn.textContent=v;
+          btn.addEventListener("click", ()=>submitAnswer(v,btn));
+          els.answerGrid.appendChild(btn);
+        });
+        renderPlayers();
+        startTimer(state.turnToken);
+        if (nxt.computer) runComputerTurn();
+
+      } else {
+        /* ── FAZ B veya "arrived": Rakip cevapladı (erken veya tam vaktinde) ── */
+        // "hitter" şu an state.current = rakip (toIdx olan)
+        // Top ya hâlâ uçuşta (slow) ya da geldi (arrived)
+
+        setFeedback(state.players[hitter].name + " topa vurdu!", "warn");
+        const newTarget = nextIndex(hitter);   // top şimdi geri gidecek
+
+        if (phase === "slow") {
+          // Top hâlâ uçuştayken cevap → hızlandır, masaya çarp, raket
+          accelerateBallToTarget(hitter, ()=>{
+            if (!state.running) return;
+            // Top rakibin yanına hızla geldi, raket vurdu
+            // Şimdi top rakipten YAVAŞ geri gidecek → puan say, yeni tur
+            _afterHit(hitter, newTarget);
+          });
+        } else {
+          // Top zaten gelmiş (arrived), oyuncu vaktinde yakaladı
+          // Raket flash + ses → top yavaş geri gider
+          flashRacket(hitter);
+          playSound("hit");
+          setTimeout(()=>playSound("correct"), 80);
+          _afterHit(hitter, newTarget);
+        }
       }
-      state.current = nextIndex();
-      window.setTimeout(renderQuestion, 1300);
     }
 
+    /*
+      _afterHit: Rakip topa vurdu, puan say, top rakipten yavaş geri gidecek
+      hitter    = topu şu an vuran (rakip)
+      newTarget = topun gideceği (önceki oyuncu)
+    */
+    function _afterHit(hitter, newTarget) {
+      if (!state.running) return;
+
+      // Puan ekle
+      state.players[hitter].score += 1;
+      state.round  += 1;
+      state.streak += 1;
+      updateMeta();
+
+      const winner = state.players.findIndex(p => p.score >= state.target);
+      if (winner >= 0) { finishGame(winner); return; }
+
+      setFeedback(state.players[hitter].name + " topa vurdu! Karşıya süzülüyor…", "warn");
+
+      // Top hitter'dan newTarget'a YAVAŞ gider
+      launchSlowBall(hitter, newTarget, ()=>{
+        if (!state.running) return;
+        state.ballPhase = "arrived";
+      });
+
+      // Karşı oyuncudan soru sor (top uçarken)
+      state.current   = newTarget;
+      state.ballPhase = "slow";
+
+      const nxt = state.players[newTarget];
+      state.question  = generateQuestion();
+      state.questionStartedAt = performance.now();
+      state.turnToken += 1;
+      state.locked    = nxt.computer;
+      els.equation.textContent = state.question.text;
+      els.turn.textContent     = nxt.name + " cevaplıyor";
+      els.answerGrid.innerHTML = "";
+      buildAnswers(state.question.answer).forEach(v => {
+        const btn = document.createElement("button");
+        btn.type="button"; btn.className="answer-btn"; btn.textContent=v;
+        btn.addEventListener("click", ()=>submitAnswer(v,btn));
+        els.answerGrid.appendChild(btn);
+      });
+      renderPlayers();
+      startTimer(state.turnToken);
+      if (nxt.computer) runComputerTurn();
+    }
+
+    /* Süre/yanlış: top dışarı çıkar, karşı oyuncuya puan */
     function handleMiss(reason) {
       if (!state.running) return;
       stopTimer();
       state.locked = true;
-      const loser = state.current;
-      const scorer = nextIndex();
-      state.players[scorer].score += 1;
-      state.round += 1;
-      state.streak = 0;
-      Array.from(els.answerGrid.children).forEach(btn => {
-        btn.disabled = true;
-        if (Number(btn.textContent) === state.question.answer) btn.classList.add("is-correct");
-      });
-      playSound("out");
-      sendBallOut(loser);
-      const message = reason === "timeout"
-        ? state.players[loser].name + " süreyi kaçırdı. Top dışarı çıktı, set " + state.players[scorer].name + " oyuncusuna."
-        : "Top dışarı çıktı. Doğru cevap " + state.question.answer + ". Set " + state.players[scorer].name + " oyuncusuna.";
-      setFeedback(message, "bad");
-      updateMeta();
-      const winner = state.players.findIndex(player => player.score >= state.target);
-      if (winner >= 0) {
-        finishGame(winner);
-        return;
+
+      // Top uçuştaysa önce durdur
+      if (_flight) {
+        clearTimeout(_flight.bounceTimerId);
+        clearTimeout(_flight.arriveTimerId);
+        cancelAnimationFrame(_flight.rafId);
+        _flight = null;
       }
+
+      const loser  = state.current;
+      const scorer = nextIndex(loser);
+      state.players[scorer].score += 1;
+      state.round  += 1;
+      state.streak  = 0;
+
+      Array.from(els.answerGrid.children).forEach(btn=>{
+        btn.disabled=true;
+        if(Number(btn.textContent)===state.question.answer) btn.classList.add("is-correct");
+      });
+
+      playSound("out");
+      ejectBall(loser);   // topun o anki konumundan fırlar
+
+      const msg = reason==="timeout"
+        ? state.players[loser].name+" süreyi kaçırdı! Top dışarı — set "+state.players[scorer].name+"'a."
+        : "Yanlış! Doğrusu: "+state.question.answer+". Top dışarı — set "+state.players[scorer].name+"'a.";
+      setFeedback(msg,"bad");
+      updateMeta();
+
+      const winner = state.players.findIndex(p=>p.score>=state.target);
+      if (winner>=0){ finishGame(winner); return; }
+
+      // Scorer artık aktif, top onun yanına gelir
       state.current = scorer;
       renderPlayers();
-      window.setTimeout(() => {
-        setBallPosition(getBallTarget(state.current));
-        renderQuestion();
-      }, 1450);
+      setTimeout(()=>renderQuestion(), 1700);
     }
 
     function runComputerTurn() {
-      const delay = rand(900, 1800);
-      window.setTimeout(() => {
-        if (!state.running || !state.players[state.current].computer) return;
-        const accuracy = state.grade <= 2 ? 0.72 : 0.64;
+      const token = state.turnToken;
+      const delay = rand(1400, 3500);  // 10sn içinde
+      setTimeout(()=>{
+        if (!state.running || state.turnToken !== token) return;
+        if (!state.players[state.current].computer) return;
+        const accuracy = state.grade<=2 ? 0.75 : 0.65;
         let value = state.question.answer;
         if (Math.random() > accuracy) {
-          const buttons = Array.from(els.answerGrid.children);
-          const wrong = buttons.filter(btn => Number(btn.textContent) !== state.question.answer);
-          value = Number(pick(wrong).textContent);
+          const wrong = Array.from(els.answerGrid.children)
+            .filter(b => Number(b.textContent) !== state.question.answer);
+          if (wrong.length) value = Number(pick(wrong).textContent);
         }
-        const targetButton = Array.from(els.answerGrid.children).find(btn => Number(btn.textContent) === value);
-        submitAnswer(value, targetButton, true);
+        const btn = Array.from(els.answerGrid.children)
+          .find(b => Number(b.textContent) === value);
+        submitAnswer(value, btn, true);
       }, delay);
     }
 
-    function finishGame(winnerIndex) {
-      stopTimer();
-      state.running = false;
-      state.locked = true;
-      state.timeLeft = 0;
-      updateTimerView();
-      playSound("win");
-      renderPlayers(winnerIndex);
-      els.turn.textContent = "Maç bitti";
-      els.equation.textContent = "🏆";
-      setFeedback(state.players[winnerIndex].name + " maçı kazandı! Yeni maç için başlat düğmesine bas.", "good");
-      els.start.textContent = "Yeni Maç Başlat";
+    /* ═══════════════════════ KONFETİ ═══════════════════════ */
+    function launchConfetti(winnerIdx) {
+      const colors = ["#ffd166","#06d6a0","#118ab2","#ef476f","#a7f36b","#7357e8","#ffc8dd","#caffbf"];
+      const canvas = document.createElement("canvas");
+      canvas.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999;";
+      document.body.appendChild(canvas);
+      const ctx2d = canvas.getContext("2d");
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const pieces = Array.from({length:180},()=>({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height - canvas.height,
+        w: rand(8,16), h: rand(5,11),
+        r: Math.random()*Math.PI*2,
+        dr: (Math.random()-0.5)*0.18,
+        vy: rand(2,5) + Math.random()*3,
+        vx: (Math.random()-0.5)*3,
+        color: pick(colors),
+        life: 1
+      }));
+
+      let frame = 0;
+      function draw() {
+        ctx2d.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p => {
+          p.y  += p.vy; p.x += p.vx; p.r += p.dr; p.vy += 0.07;
+          p.life = Math.max(0, p.life - 0.004);
+          ctx2d.save();
+          ctx2d.globalAlpha = p.life;
+          ctx2d.fillStyle   = p.color;
+          ctx2d.translate(p.x+p.w/2, p.y+p.h/2);
+          ctx2d.rotate(p.r);
+          ctx2d.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          ctx2d.restore();
+        });
+        frame++;
+        if (frame < 260) requestAnimationFrame(draw);
+        else canvas.remove();
+      }
+      requestAnimationFrame(draw);
     }
 
+    /* ═══════════════════════ BİTİŞ ═══════════════════════ */
+    function finishGame(winnerIdx) {
+      stopTimer();
+      if (_flight) {
+        clearTimeout(_flight.bounceTimerId);
+        clearTimeout(_flight.arriveTimerId);
+        cancelAnimationFrame(_flight.rafId);
+        _flight = null;
+      }
+      if (state.ballFlightTimer) { clearTimeout(state.ballFlightTimer); state.ballFlightTimer=null; }
+      els.ball.getAnimations().forEach(a=>a.cancel());
+      state.running=false; state.locked=true;
+      state.timeLeft=0; state.ballPhase="out";
+      updateTimerView();
+      playSound("win");
+      launchConfetti(winnerIdx);
+      renderPlayers(winnerIdx);
+      els.turn.textContent="Maç bitti!";
+      els.equation.textContent="🏆";
+      setFeedback("🎉 "+state.players[winnerIdx].name+" maçı kazandı! Tebrikler! Yeni maç için başlat'a bas.","good");
+      els.start.textContent="Yeni Maç Başlat";
+    }
+
+    /* ═══════════════════════ BAŞLAT / SIFIRLA ═══════════════════════ */
     function startGame() {
       stopTimer();
+      if (_flight) {
+        clearTimeout(_flight.bounceTimerId);
+        clearTimeout(_flight.arriveTimerId);
+        cancelAnimationFrame(_flight.rafId);
+        _flight = null;
+      }
+      if (state.ballFlightTimer) { clearTimeout(state.ballFlightTimer); state.ballFlightTimer=null; }
       makePlayers();
-      state.running = true;
-      state.locked = false;
-      state.round = 0;
-      state.streak = 0;
-      state.timeLeft = 10;
-      setBallPosition(getBallTarget(0));
+      state.running=true; state.locked=false;
+      state.round=0; state.streak=0; state.timeLeft=10;
+      state.ballPhase="waiting";
+      if(els.ballShadow){els.ballShadow.style.transition="";els.ballShadow.style.opacity="";}
+      setBallPosition(PLAYER_ZONES[0]);
       els.setupScreen.classList.add("hidden");
-      els.start.textContent = "Yeni Maç";
+      els.start.textContent="Yeni Maç";
       playSound("serve");
-      updateMeta();
-      renderPlayers();
-      renderQuestion();
+      updateMeta(); renderPlayers(); renderQuestion();
     }
 
     function resetGame() {
       stopTimer();
-      state.running = false;
-      state.locked = true;
-      state.round = 0;
-      state.streak = 0;
-      state.timeLeft = 10;
-      makePlayers();
-      renderPlayers();
-      updateMeta();
-      updateTimerView();
-      els.equation.textContent = "?";
-      els.turn.textContent = "Oyunu başlat.";
-      els.answerGrid.innerHTML = "";
-      setFeedback("Sınıfı ve oyuncu modunu seç, sonra maçı başlat.", "");
-      els.start.textContent = "Maçı Başlat";
-      setBallPosition(getBallTarget(0));
+      if (_flight) {
+        clearTimeout(_flight.bounceTimerId);
+        clearTimeout(_flight.arriveTimerId);
+        cancelAnimationFrame(_flight.rafId);
+        _flight = null;
+      }
+      if (state.ballFlightTimer) { clearTimeout(state.ballFlightTimer); state.ballFlightTimer=null; }
+      els.ball.getAnimations().forEach(a=>a.cancel());
+      state.running=false; state.locked=true; state.round=0; state.streak=0;
+      state.timeLeft=10; state.ballPhase="waiting";
+      makePlayers(); renderPlayers(); updateMeta(); updateTimerView();
+      els.equation.textContent="?"; els.turn.textContent="Oyunu başlat."; els.answerGrid.innerHTML="";
+      setFeedback("Sınıfı ve oyuncu modunu seç, sonra maçı başlat.","");
+      els.start.textContent="Maçı Başlat";
+      if(els.ballShadow){els.ballShadow.style.transition="";els.ballShadow.style.opacity="";}
+      setBallPosition(PLAYER_ZONES[0]);
     }
 
-    function selectButton(groupId, value, attr, callback) {
-      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
-        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+    function selectButton(groupId, value, attr, cb) {
+      document.querySelectorAll("#"+groupId+" .choice-btn").forEach(b => {
+        b.classList.toggle("is-active", b.dataset[attr]===String(value));
       });
-      callback();
+      cb();
     }
 
     function renderOperationChoices() {
       const allowed = allowedOperations();
-      if (state.operation !== "mixed" && !allowed.includes(state.operation)) {
-        state.operation = "mixed";
-      }
-      document.querySelectorAll("#operationChoices .choice-btn").forEach(button => {
-        const op = button.dataset.operation;
-        const available = op === "mixed" || allowed.includes(op);
-        button.disabled = !available;
-        button.classList.toggle("is-active", op === state.operation);
+      if (state.operation!=="mixed" && !allowed.includes(state.operation)) state.operation="mixed";
+      document.querySelectorAll("#operationChoices .choice-btn").forEach(b => {
+        const op=b.dataset.operation;
+        const ok=op==="mixed"||allowed.includes(op);
+        b.disabled=!ok;
+        b.classList.toggle("is-active",op===state.operation);
       });
     }
 
-    document.querySelectorAll("#gradeChoices .choice-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        state.grade = Number(button.dataset.grade);
-        selectButton("gradeChoices", state.grade, "grade", () => {
-          renderOperationChoices();
-          resetGame();
-        });
+    document.querySelectorAll("#gradeChoices .choice-btn").forEach(b => {
+      b.addEventListener("click",()=>{
+        state.grade=Number(b.dataset.grade);
+        selectButton("gradeChoices",state.grade,"grade",()=>{ renderOperationChoices(); resetGame(); });
+      });
+    });
+    document.querySelectorAll("#modeChoices .choice-btn").forEach(b => {
+      b.addEventListener("click",()=>{ state.playMode=b.dataset.mode; selectButton("modeChoices",state.playMode,"mode",resetGame); });
+    });
+    document.querySelectorAll("#operationChoices .choice-btn").forEach(b => {
+      b.addEventListener("click",()=>{
+        if(b.disabled)return;
+        state.operation=b.dataset.operation;
+        selectButton("operationChoices",state.operation,"operation",resetGame);
       });
     });
 
-    document.querySelectorAll("#modeChoices .choice-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        state.playMode = button.dataset.mode;
-        selectButton("modeChoices", state.playMode, "mode", resetGame);
-      });
-    });
-
-    document.querySelectorAll("#operationChoices .choice-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        if (button.disabled) return;
-        state.operation = button.dataset.operation;
-        selectButton("operationChoices", state.operation, "operation", resetGame);
-      });
-    });
-
-    document.getElementById("setupToggle").addEventListener("click", () => {
-      els.setupScreen.classList.toggle("hidden");
-    });
-
-    document.getElementById("resetBtn").addEventListener("click", resetGame);
-    els.start.addEventListener("click", startGame);
-
-    els.soundToggle.addEventListener("click", () => {
-      state.soundOn = !state.soundOn;
-      els.soundToggle.classList.toggle("is-active", state.soundOn);
-      els.soundToggle.setAttribute("aria-pressed", String(state.soundOn));
-      els.soundToggle.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
-      if (state.soundOn) playSound("serve");
+    document.getElementById("setupToggle").addEventListener("click",()=>els.setupScreen.classList.toggle("hidden"));
+    document.getElementById("resetBtn").addEventListener("click",resetGame);
+    els.start.addEventListener("click",startGame);
+    els.soundToggle.addEventListener("click",()=>{
+      state.soundOn=!state.soundOn;
+      els.soundToggle.classList.toggle("is-active",state.soundOn);
+      els.soundToggle.setAttribute("aria-pressed",String(state.soundOn));
+      els.soundToggle.textContent=state.soundOn?"Ses Açık":"Ses Kapalı";
+      if(state.soundOn) playSound("serve");
     });
 
     renderOperationChoices();
     resetGame();
+
   </script>
 </body>
 </html>

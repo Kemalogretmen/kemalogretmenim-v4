@@ -926,7 +926,7 @@
         <div class="section-header">
           <span class="sec-tag teal">Son Eklenenler</span>
           <h2 class="sec-title">Canlı <span>İçerik Akışı</span></h2>
-          <p class="sec-sub">Yeni metinler, dokümanlar ve sınavlar eklendikçe burada kartlara dönüşür.</p>
+          <p class="sec-sub">Yeni metinler, dokümanlar, sınavlar ve oyunlar eklendikçe burada kartlara dönüşür.</p>
         </div>
         <div class="latest-controls">
           <select class="latest-select" id="latestGradeFilter" aria-label="Sınıfa göre filtrele">
@@ -1183,6 +1183,7 @@
         if (item && item.type === 'reading') return 'purple';
         if (item && item.type === 'exam') return 'coral';
         if (item && item.type === 'document') return 'teal';
+        if (item && item.type === 'game') return 'yellow';
         return RENKLER[index % RENKLER.length];
       }
 

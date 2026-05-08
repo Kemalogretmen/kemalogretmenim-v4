@@ -3,6 +3,7 @@
 
   const STORAGE_PREFIX = 'kemal_dokuman_annotations_v1_';
   const SHAPE_TOOLS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star', 'checkmark', 'cross'];
+  const TOOL_OPTIONS_KEYS = ['pen', 'highlighter', 'eraser', 'text'];
   const TOOL_DEFS = [
     {
       key: 'select',
@@ -278,6 +279,8 @@
     clipboard: null,
     pageWidth: 0,
     pageHeight: 0,
+    basePageWidth: 0,
+    basePageHeight: 0,
     bookWidth: 0,
     bookHeight: 0,
     zoom: 1,
@@ -300,6 +303,7 @@
       isRestoring: false,
     },
     toolbarCollapsed: false,
+    toolOptionsOpen: false,
     shapesOpen: false,
     protractor: {
       visible: false,
@@ -324,6 +328,22 @@
     lastViewportHeight: 0,
     lastFrameWidth: 0,
     lastFrameHeight: 0,
+    toolbarLeft: 18,
+    toolbarTop: 18,
+    toolbarDrag: {
+      active: false,
+      pointerId: null,
+      offsetX: 0,
+      offsetY: 0,
+    },
+    touchPointers: {},
+    pinch: {
+      active: false,
+      surface: '',
+      startDistance: 0,
+      startZoom: 1,
+    },
+    lastTouchY: 0,
     editMode: false,
     interactionsDirty: false,
     interactions: {
@@ -355,7 +375,7 @@
     if (!target || !target.closest || isNativeTextInput(target)) {
       return null;
     }
-    return target.closest('#bookFrame, #bookViewport, #bookRoot, #cropStage');
+    return target.closest('#bookFrame, #bookViewport, #bookRoot, #cropStage, #docToolbar, .viewer-stage');
   }
 
   function clearNativeSelection() {
@@ -407,14 +427,79 @@
       return false;
     }
     const metrics = captureViewportMetrics();
-    const widthChanged = Math.abs(metrics.viewportWidth - state.lastViewportWidth) > 2 ||
-      Math.abs(metrics.frameWidth - state.lastFrameWidth) > 2;
+    const widthChanged = Math.abs(metrics.viewportWidth - state.lastViewportWidth) > 10 ||
+      Math.abs(metrics.frameWidth - state.lastFrameWidth) > 10;
     if (widthChanged) {
       return false;
     }
     const heightChanged = Math.abs(metrics.viewportHeight - state.lastViewportHeight) > 2 ||
       Math.abs(metrics.frameHeight - state.lastFrameHeight) > 2;
     return heightChanged;
+  }
+
+  function trackTouchPointer(event, surface) {
+    if (event.pointerType !== 'touch') {
+      return;
+    }
+    state.touchPointers[event.pointerId] = {
+      clientX: event.clientX,
+      clientY: event.clientY,
+      surface: surface,
+    };
+  }
+
+  function releaseTouchPointer(pointerId) {
+    delete state.touchPointers[pointerId];
+    if (Object.keys(state.touchPointers).length < 2) {
+      state.pinch.active = false;
+      state.pinch.surface = '';
+    }
+  }
+
+  function getTouchPointerList(surface) {
+    return Object.keys(state.touchPointers).map(function(id) {
+      return state.touchPointers[id];
+    }).filter(function(point) {
+      return !surface || point.surface === surface;
+    });
+  }
+
+  function getTouchDistance(points) {
+    if (points.length < 2) {
+      return 0;
+    }
+    return Math.hypot(points[1].clientX - points[0].clientX, points[1].clientY - points[0].clientY);
+  }
+
+  function beginDocumentPinch(surface) {
+    const points = getTouchPointerList(surface);
+    if (points.length < 2) {
+      return false;
+    }
+    state.pinch.active = true;
+    state.pinch.surface = surface;
+    state.pinch.startDistance = Math.max(1, getTouchDistance(points));
+    state.pinch.startZoom = surface === 'crop' ? state.crop.zoom : state.zoom;
+    if (surface === 'crop') {
+      state.crop.canvas && state.crop.canvas.discardActiveObject();
+    } else {
+      const pageState = getActivePageState();
+      pageState && pageState.canvas && pageState.canvas.discardActiveObject();
+    }
+    return true;
+  }
+
+  function moveDocumentPinch() {
+    if (!state.pinch.active || !state.pinch.surface) {
+      return false;
+    }
+    const points = getTouchPointerList(state.pinch.surface);
+    if (points.length < 2) {
+      return false;
+    }
+    const distance = Math.max(1, getTouchDistance(points));
+    setZoom(state.pinch.startZoom * (distance / state.pinch.startDistance), { keepCenter: true });
+    return true;
   }
 
   function lockFabricNativeSurfaces(canvas) {
@@ -453,6 +538,9 @@
     });
 
     document.addEventListener('touchstart', function(event) {
+      if (event.touches && event.touches.length) {
+        state.lastTouchY = event.touches[0].clientY;
+      }
       if (event.touches && event.touches.length > 1 && getSelectionLockRoot(event.target)) {
         clearNativeSelection();
         event.preventDefault();
@@ -467,7 +555,22 @@
 
     document.addEventListener('touchmove', function(event) {
       if (!getViewerScrollLockRoot(event.target)) {
+        if (document.body.classList.contains('viewer-page') && event.touches && event.touches.length === 1 && !isNativeTextInput(event.target)) {
+          const scroller = document.scrollingElement || document.documentElement;
+          const currentY = event.touches[0].clientY;
+          const movingDown = currentY > state.lastTouchY;
+          const movingUp = currentY < state.lastTouchY;
+          const atTop = (scroller.scrollTop || 0) <= 0;
+          const atBottom = Math.ceil((scroller.scrollTop || 0) + window.innerHeight) >= scroller.scrollHeight;
+          if ((atTop && movingDown) || (atBottom && movingUp)) {
+            event.preventDefault();
+          }
+          state.lastTouchY = currentY;
+        }
         return;
+      }
+      if (event.touches && event.touches.length) {
+        state.lastTouchY = event.touches[0].clientY;
       }
       event.preventDefault();
     }, { passive: false, capture: true });
@@ -604,11 +707,39 @@
     return STORAGE_PREFIX + state.documentId;
   }
 
+  function getToolbarStorageKey() {
+    return getStorageKey() + '_toolbar';
+  }
+
+  function loadToolbarPosition() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(getToolbarStorageKey()) || 'null');
+      if (!parsed || typeof parsed !== 'object') {
+        return;
+      }
+      state.toolbarLeft = Number.isFinite(Number(parsed.left)) ? Number(parsed.left) : state.toolbarLeft;
+      state.toolbarTop = Number.isFinite(Number(parsed.top)) ? Number(parsed.top) : state.toolbarTop;
+    } catch (error) {
+      // Konum tercihi sadece kolaylık bilgisidir; okunamazsa varsayılan kullanılır.
+    }
+  }
+
+  function saveToolbarPosition() {
+    try {
+      localStorage.setItem(getToolbarStorageKey(), JSON.stringify({
+        left: state.toolbarLeft,
+        top: state.toolbarTop,
+      }));
+    } catch (error) {
+      // Yerel depolama doluysa araç kutusu yine çalışmaya devam eder.
+    }
+  }
+
   function normalizeInteractions(value) {
     const source = value && typeof value === 'object' ? value : {};
     return {
       version: 1,
-      answersHidden: source.answersHidden !== false,
+      answersHidden: true,
       magnifierEnabled: source.magnifierEnabled !== false,
       answersEnabled: source.answersEnabled !== false,
       hotspots: Array.isArray(source.hotspots) ? source.hotspots.filter(function(item) {
@@ -705,15 +836,38 @@
     }
   }
 
+  function retagAnswerObjectsForPage(pageState) {
+    if (!pageState || !pageState.canvas) {
+      return;
+    }
+    const answerHotspots = state.interactions.hotspots.filter(function(hotspot) {
+      return hotspot && hotspot.type === 'answer' && Number(hotspot.page) === Number(pageState.index);
+    });
+    if (!answerHotspots.length) {
+      return;
+    }
+    pageState.canvas.getObjects().forEach(function(object) {
+      if (!object || object._temp) {
+        return;
+      }
+      const matched = answerHotspots.find(function(hotspot) {
+        return objectIsInsideRect(object, rectToCanvas(hotspot.rect || {}, pageState));
+      });
+      if (matched) {
+        object.isAnswerObject = true;
+        object.answerHotspotId = matched.id;
+      }
+    });
+  }
+
   function setAnswerObjectsVisibility(pageState) {
     if (!pageState || state.editMode) {
       return;
     }
     const answersDisabled = state.interactions.answersEnabled === false;
-    const shouldHide = state.interactions.answersHidden !== false;
     pageState.canvas.getObjects().forEach(function(object) {
       if (object.isAnswerObject && object.answerHotspotId) {
-        object.visible = answersDisabled ? false : (shouldHide ? Boolean(state.revealedAnswers[object.answerHotspotId]) : true);
+        object.visible = answersDisabled ? false : Boolean(state.revealedAnswers[object.answerHotspotId]);
         object.evented = false;
         object.selectable = false;
       }
@@ -742,11 +896,31 @@
   }
 
   function persistAnnotationCache() {
-    localStorage.setItem(getStorageKey(), JSON.stringify({
-      pages: state.annotationCache.pages,
-      crop: state.annotationCache.crop || {},
-      updatedAt: new Date().toISOString(),
-    }));
+    try {
+      localStorage.setItem(getStorageKey(), JSON.stringify({
+        pages: state.annotationCache.pages,
+        crop: state.annotationCache.crop || {},
+        updatedAt: new Date().toISOString(),
+      }));
+    } catch (error) {
+      setStatus('Notlar bu cihazda kaydedilemedi; depolama alanını kontrol etmelisin.');
+    }
+  }
+
+  function flushAnnotationState() {
+    if (!state.annotationCache || typeof state.annotationCache !== 'object') {
+      return;
+    }
+    state.pages.forEach(function(pageState) {
+      if (!pageState || !pageState.canvas) {
+        return;
+      }
+      state.annotationCache.pages[String(pageState.index)] = getSnapshot(pageState);
+    });
+    if (state.crop.canvas && state.crop.hotspotId) {
+      state.annotationCache.crop[state.crop.hotspotId] = getCropSnapshot(state.crop.canvas);
+    }
+    persistAnnotationCache();
   }
 
   function setStatus(text) {
@@ -767,6 +941,44 @@
 
   function getBookFrame() {
     return qs('bookFrame');
+  }
+
+  function dockToolbarIntoBookFrame() {
+    const toolbar = qs('docToolbar');
+    const frame = getBookFrame();
+    if (!toolbar || !frame) {
+      return;
+    }
+    if (toolbar.parentElement !== frame) {
+      frame.appendChild(toolbar);
+    }
+    positionDocToolbar();
+  }
+
+  function positionDocToolbar() {
+    const toolbar = qs('docToolbar');
+    const frame = getBookFrame();
+    if (!toolbar || !frame) {
+      return;
+    }
+    const isCompact = window.matchMedia && window.matchMedia('(max-width: 860px)').matches;
+    if (isCompact) {
+      toolbar.style.left = '10px';
+      toolbar.style.top = 'auto';
+      toolbar.style.right = 'auto';
+      toolbar.style.bottom = '10px';
+      toolbar.classList.remove('is-near-right');
+      return;
+    }
+    const maxLeft = Math.max(10, frame.clientWidth - toolbar.offsetWidth - 10);
+    const maxTop = Math.max(10, frame.clientHeight - toolbar.offsetHeight - 10);
+    state.toolbarLeft = clamp(state.toolbarLeft, 10, maxLeft);
+    state.toolbarTop = clamp(state.toolbarTop, 10, maxTop);
+    toolbar.style.left = state.toolbarLeft + 'px';
+    toolbar.style.top = state.toolbarTop + 'px';
+    toolbar.style.right = 'auto';
+    toolbar.style.bottom = 'auto';
+    toolbar.classList.toggle('is-near-right', state.toolbarLeft > frame.clientWidth - 340);
   }
 
   function getDocProtractor() {
@@ -1092,8 +1304,17 @@
     return state.pages.get(state.focusPage) || state.pages.get(state.currentPage) || null;
   }
 
+  function getPageSnapshotData(pageState) {
+    const data = pageState.canvas.toDatalessJSON(['globalCompositeOperation', 'isAnswerObject', 'answerHotspotId']);
+    data.kemalCanvas = {
+      width: pageState.canvas.getWidth(),
+      height: pageState.canvas.getHeight(),
+    };
+    return data;
+  }
+
   function getSnapshot(pageState) {
-    return JSON.stringify(pageState.canvas.toDatalessJSON(['globalCompositeOperation', 'isAnswerObject', 'answerHotspotId']));
+    return JSON.stringify(getPageSnapshotData(pageState));
   }
 
   function getCropSnapshot(canvas) {
@@ -1118,6 +1339,131 @@
       delete state.annotationCache.crop[hotspotId];
     }
     persistAnnotationCache();
+  }
+
+  function scaleSnapshotObjectData(object, scaleX, scaleY) {
+    if (!object || typeof object !== 'object') {
+      return;
+    }
+    if (Number.isFinite(Number(object.left))) {
+      object.left = Number(object.left) * scaleX;
+    }
+    if (Number.isFinite(Number(object.top))) {
+      object.top = Number(object.top) * scaleY;
+    }
+    object.scaleX = Number(object.scaleX || 1) * scaleX;
+    object.scaleY = Number(object.scaleY || 1) * scaleY;
+  }
+
+  function getSnapshotObjectPoint(object, scaleX, scaleY) {
+    return {
+      x: Number(object.left || 0) * scaleX,
+      y: Number(object.top || 0) * scaleY,
+    };
+  }
+
+  function scoreSnapshotSourceSize(data, pageState, sourceWidth, sourceHeight) {
+    const targetWidth = pageState.canvas.getWidth();
+    const targetHeight = pageState.canvas.getHeight();
+    if (!(sourceWidth > 0) || !(sourceHeight > 0) || !(targetWidth > 0) || !(targetHeight > 0)) {
+      return null;
+    }
+    const scaleX = targetWidth / sourceWidth;
+    const scaleY = targetHeight / sourceHeight;
+    let checked = 0;
+    let score = 0;
+    data.objects.forEach(function(object) {
+      if (!object || !object.answerHotspotId) {
+        return;
+      }
+      const hotspot = findHotspot(object.answerHotspotId);
+      if (!hotspot || Number(hotspot.page) !== Number(pageState.index)) {
+        return;
+      }
+      const rect = rectToCanvas(hotspot.rect || {}, pageState);
+      const point = getSnapshotObjectPoint(object, scaleX, scaleY);
+      const padX = Math.max(16, rect.w * 0.25);
+      const padY = Math.max(16, rect.h * 0.35);
+      const inside = point.x >= rect.x - padX &&
+        point.x <= rect.x + rect.w + padX &&
+        point.y >= rect.y - padY &&
+        point.y <= rect.y + rect.h + padY;
+      const centerX = rect.x + rect.w / 2;
+      const centerY = rect.y + rect.h / 2;
+      const normalizedDistance = Math.hypot(
+        (point.x - centerX) / Math.max(1, rect.w),
+        (point.y - centerY) / Math.max(1, rect.h)
+      );
+      checked += 1;
+      score += (inside ? 100 : 0) - normalizedDistance;
+    });
+    return checked ? score : null;
+  }
+
+  function inferLegacySnapshotSourceSize(data, pageState) {
+    const targetWidth = pageState.canvas.getWidth();
+    const targetHeight = pageState.canvas.getHeight();
+    const candidates = [{
+      width: targetWidth,
+      height: targetHeight,
+    }];
+    if (state.documentKind !== 'image' && state.basePageWidth > 0 && state.basePageHeight > 0) {
+      ['single', 'spread'].forEach(function(mode) {
+        const width = getResponsivePageWidthForMode(state.basePageWidth, state.basePageHeight, mode);
+        const height = width * (state.basePageHeight / state.basePageWidth);
+        if (Math.abs(width - targetWidth) > 1 || Math.abs(height - targetHeight) > 1) {
+          candidates.push({ width: width, height: height });
+        }
+      });
+    }
+
+    let best = candidates[0];
+    let bestScore = scoreSnapshotSourceSize(data, pageState, best.width, best.height);
+    candidates.slice(1).forEach(function(candidate) {
+      const score = scoreSnapshotSourceSize(data, pageState, candidate.width, candidate.height);
+      if (score !== null && (bestScore === null || score > bestScore)) {
+        best = candidate;
+        bestScore = score;
+      }
+    });
+    return bestScore === null ? null : best;
+  }
+
+  function prepareSnapshotForPage(pageState, snapshot) {
+    let data = null;
+    try {
+      data = snapshot ? JSON.parse(snapshot) : null;
+    } catch (error) {
+      data = null;
+    }
+    if (!data || typeof data !== 'object') {
+      data = { version: window.fabric.version, objects: [] };
+    }
+    if (!Array.isArray(data.objects)) {
+      data.objects = [];
+    }
+
+    const hasCanvasMeta = data.kemalCanvas && Number(data.kemalCanvas.width || 0) > 0 && Number(data.kemalCanvas.height || 0) > 0;
+    const inferred = hasCanvasMeta ? null : inferLegacySnapshotSourceSize(data, pageState);
+    const source = hasCanvasMeta ? data.kemalCanvas : (inferred || {});
+    const sourceWidth = Number(source.width || 0);
+    const sourceHeight = Number(source.height || 0);
+    const targetWidth = pageState.canvas.getWidth();
+    const targetHeight = pageState.canvas.getHeight();
+    if (sourceWidth > 0 && sourceHeight > 0 && targetWidth > 0 && targetHeight > 0) {
+      const scaleX = targetWidth / sourceWidth;
+      const scaleY = targetHeight / sourceHeight;
+      if (Math.abs(scaleX - 1) > 0.001 || Math.abs(scaleY - 1) > 0.001) {
+        data.objects.forEach(function(object) {
+          scaleSnapshotObjectData(object, scaleX, scaleY);
+        });
+      }
+    }
+    data.kemalCanvas = {
+      width: targetWidth,
+      height: targetHeight,
+    };
+    return data;
   }
 
   function prepareEraserPath(path) {
@@ -1199,6 +1545,18 @@
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H3v5"></path><path d="m3 3 6 6"></path><path d="M16 21h5v-5"></path><path d="m21 21-6-6"></path></svg>';
   }
 
+  function isToolOptionsTool(tool) {
+    return TOOL_OPTIONS_KEYS.includes(tool);
+  }
+
+  function closeToolOptionsPanel() {
+    if (!state.toolOptionsOpen) {
+      return;
+    }
+    state.toolOptionsOpen = false;
+    syncToolbarUi();
+  }
+
   function syncToolbarUi() {
     const toolbar = qs('docToolbar');
     const shapePanel = qs('docShapePanel');
@@ -1208,10 +1566,13 @@
     const protractor = getDocProtractor();
     const activeTool = state.tool;
     const shapesVisible = state.shapesOpen || SHAPE_TOOL_KEYS.includes(activeTool) || INTERACTION_TOOL_KEYS.includes(activeTool);
+    const penPanelVisible = state.toolOptionsOpen && isToolOptionsTool(activeTool);
 
     if (toolbar) {
       toolbar.style.setProperty('--doc-accent-color', state.color || '#6C3DED');
       toolbar.classList.toggle('is-collapsed', !!state.toolbarCollapsed);
+      toolbar.classList.toggle('is-pen-panel-open', penPanelVisible);
+      toolbar.classList.toggle('is-page-panel-open', toolbar.classList.contains('is-page-panel-open') && !shapesVisible);
     }
     if (toggleBtn) {
       toggleBtn.innerHTML = getCollapseIconMarkup(!!state.toolbarCollapsed);
@@ -1223,6 +1584,12 @@
       shapeToggle.classList.toggle('is-active', shapesVisible);
       shapeToggle.classList.toggle('active', shapesVisible);
       shapeToggle.setAttribute('aria-expanded', shapesVisible ? 'true' : 'false');
+    }
+    if (qs('docPagePanelBtn')) {
+      const pageOpen = toolbar && toolbar.classList.contains('is-page-panel-open');
+      qs('docPagePanelBtn').classList.toggle('is-active', !!pageOpen);
+      qs('docPagePanelBtn').classList.toggle('active', !!pageOpen);
+      qs('docPagePanelBtn').setAttribute('aria-expanded', pageOpen ? 'true' : 'false');
     }
     if (protractorBtn) {
       protractorBtn.classList.toggle('is-active', !!state.protractor.visible);
@@ -1445,14 +1812,16 @@
 
   function loadSnapshot(pageState, snapshot) {
     return new Promise(function(resolve) {
+      const data = prepareSnapshotForPage(pageState, snapshot);
       pageState.isRestoring = true;
-      pageState.canvas.loadFromJSON(snapshot ? JSON.parse(snapshot) : { version: window.fabric.version, objects: [] }, function() {
+      pageState.canvas.loadFromJSON(data, function() {
         pageState.isRestoring = false;
         makeCanvasObjectsEditable(pageState.canvas);
+        retagAnswerObjectsForPage(pageState);
         setAnswerObjectsVisibility(pageState);
         pageState.canvas.renderAll();
         updateHistoryButtons();
-        resolve();
+        resolve(getSnapshot(pageState));
       });
     });
   }
@@ -1465,8 +1834,9 @@
     const current = pageState.history.pop();
     pageState.redo.push(current);
     const previous = pageState.history[pageState.history.length - 1];
-    await loadSnapshot(pageState, previous);
-    savePageSnapshot(pageState, previous);
+    const loaded = await loadSnapshot(pageState, previous);
+    pageState.history[pageState.history.length - 1] = loaded;
+    savePageSnapshot(pageState, loaded);
     updateHistoryButtons();
   }
 
@@ -1476,9 +1846,9 @@
       return;
     }
     const snapshot = pageState.redo.pop();
-    pageState.history.push(snapshot);
-    await loadSnapshot(pageState, snapshot);
-    savePageSnapshot(pageState, snapshot);
+    const loaded = await loadSnapshot(pageState, snapshot);
+    pageState.history.push(loaded);
+    savePageSnapshot(pageState, loaded);
     updateHistoryButtons();
   }
 
@@ -1991,14 +2361,35 @@
     updateHistoryButtons();
   }
 
-  function setTool(tool) {
+  function applyStylusPressureToBrush(canvas, event) {
+    if (!canvas || !canvas.isDrawingMode || !canvas.freeDrawingBrush || !['pen', 'highlighter', 'eraser'].includes(state.tool)) {
+      return;
+    }
+    const pressure = event && event.pointerType === 'pen' ? Number(event.pressure || 0) : 0;
+    if (!pressure || !Number.isFinite(pressure)) {
+      canvas.freeDrawingBrush.width = state.size;
+      return;
+    }
+    canvas.freeDrawingBrush.width = clamp(state.size * (0.65 + pressure * 1.1), 1, 36);
+  }
+
+  function setTool(tool, options) {
     if (tool === 'clear-area') {
       clearCurrentScope();
       return;
     }
     state.tool = tool;
+    if (isToolOptionsTool(tool)) {
+      state.toolOptionsOpen = options && Object.prototype.hasOwnProperty.call(options, 'openOptions')
+        ? !!options.openOptions
+        : true;
+    } else {
+      state.toolOptionsOpen = false;
+    }
     if (SHAPE_TOOL_KEYS.includes(tool) || INTERACTION_TOOL_KEYS.includes(tool)) {
       state.shapesOpen = true;
+    } else {
+      state.shapesOpen = false;
     }
     syncToolbarUi();
     applyToolToAllPages();
@@ -2009,6 +2400,15 @@
   function bindCanvasEvents(pageState) {
     const canvas = pageState.canvas;
 
+    canvas.on('mouse:down', function(opt) {
+      if (isToolOptionsTool(state.tool)) {
+        closeToolOptionsPanel();
+      }
+      applyStylusPressureToBrush(canvas, opt && opt.e);
+    });
+    canvas.on('mouse:move', function(opt) {
+      applyStylusPressureToBrush(canvas, opt && opt.e);
+    });
     canvas.on('path:created', function(event) {
       tagObjectForAnswerHotspot(pageState, event.path);
       if (state.tool === 'eraser') {
@@ -2197,9 +2597,6 @@
       const markerX = (Number(rect.x || 0) * 100).toFixed(4);
       const markerY = (Number(rect.y || 0) * 100).toFixed(4);
       const isAnswer = hotspot.type === 'answer';
-      if (isAnswer && !state.editMode && state.interactions.answersHidden === false) {
-        return '';
-      }
       const openClass = isAnswer && state.revealedAnswers[hotspot.id] ? ' is-open' : '';
       const outline = state.editMode
         ? '<span class="hotspot-outline" style="left:' + left + '%;top:' + top + '%;width:' + width + '%;height:' + height + '%"></span>'
@@ -2306,8 +2703,9 @@
 
     const saved = state.annotationCache.pages[String(pageNumber)];
     if (saved) {
-      await loadSnapshot(pageState, saved);
-      pageState.history = [saved];
+      const loaded = await loadSnapshot(pageState, saved);
+      pageState.history = [loaded];
+      savePageSnapshot(pageState, loaded);
     } else {
       const blank = getSnapshot(pageState);
       pageState.history = [blank];
@@ -2374,8 +2772,9 @@
 
     const saved = state.annotationCache.pages[String(pageNumber)];
     if (saved) {
-      await loadSnapshot(pageState, saved);
-      pageState.history = [saved];
+      const loaded = await loadSnapshot(pageState, saved);
+      pageState.history = [loaded];
+      savePageSnapshot(pageState, loaded);
     } else {
       const blank = getSnapshot(pageState);
       pageState.history = [blank];
@@ -2388,14 +2787,14 @@
     return nodes.shell;
   }
 
-  function getResponsivePageWidth(baseWidth, baseHeight) {
+  function getResponsivePageWidthForMode(baseWidth, baseHeight, mode) {
     const frame = getBookFrame();
     const viewportWidth = Math.max(
       320,
       (frame && frame.clientWidth ? frame.clientWidth : (window.innerWidth || 1280)) - 28
     );
     const isLandscape = baseWidth >= baseHeight;
-    if (state.viewMode === 'spread') {
+    if (mode === 'spread') {
       return Math.max(168, Math.min(isLandscape ? 620 : 560, (viewportWidth - 12) / 2));
     }
     if (viewportWidth < 760) {
@@ -2405,6 +2804,10 @@
       return Math.min(isLandscape ? 920 : 780, viewportWidth - 28);
     }
     return Math.min(isLandscape ? 1100 : 860, viewportWidth - 44);
+  }
+
+  function getResponsivePageWidth(baseWidth, baseHeight) {
+    return getResponsivePageWidthForMode(baseWidth, baseHeight, state.viewMode);
   }
 
   function getResponsiveImagePageSize(baseWidth, baseHeight) {
@@ -2535,9 +2938,17 @@
   }
 
   async function buildBook(targetPage) {
+    const hadLivePages = state.pages && state.pages.size;
+    if (hadLivePages) {
+      flushAnnotationState();
+    }
     state.annotationCache = loadAnnotationCache();
     if (state.documentRow && state.documentRow.etkilesim_json && state.documentRow.etkilesim_json.pages) {
-      state.annotationCache.pages = Object.assign({}, state.annotationCache.pages, state.documentRow.etkilesim_json.pages);
+      const localPages = state.annotationCache.pages || {};
+      const publishedPages = state.documentRow.etkilesim_json.pages || {};
+      state.annotationCache.pages = state.editMode && !hadLivePages
+        ? Object.assign({}, localPages, publishedPages)
+        : Object.assign({}, publishedPages, localPages);
     }
     state.pages.clear();
     state.documentKind = getDocumentKind(state.documentRow);
@@ -2571,6 +2982,8 @@
       state.pageWidth = getResponsivePageWidth(baseWidth, baseHeight);
       state.pageHeight = state.pageWidth * (baseHeight / baseWidth);
     }
+    state.basePageWidth = baseWidth;
+    state.basePageHeight = baseHeight;
     state.bookWidth = state.documentKind === 'image'
       ? state.pageWidth
       : (state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth);
@@ -2614,6 +3027,7 @@
     updateBookTransform();
     syncPageControls();
     showPage(landingPage, true);
+    positionDocToolbar();
     rememberViewportMetrics();
   }
 
@@ -3027,7 +3441,14 @@
     canvas.on('selection:created', syncSelectedObjectControls);
     canvas.on('selection:updated', syncSelectedObjectControls);
     canvas.on('selection:cleared', updateHistoryButtons);
+    canvas.on('mouse:move', function(opt) {
+      applyStylusPressureToBrush(canvas, opt && opt.e);
+    });
     canvas.on('mouse:down', function(opt) {
+      if (isToolOptionsTool(state.tool)) {
+        closeToolOptionsPanel();
+      }
+      applyStylusPressureToBrush(canvas, opt && opt.e);
       const pointer = canvas.getPointer(opt.e);
       if (state.tool === 'text') {
         const margin = 18;
@@ -3260,7 +3681,7 @@
       });
       const payload = {
         version: 1,
-        answersHidden: qs('answersHiddenInput') ? qs('answersHiddenInput').checked : true,
+        answersHidden: true,
         magnifierEnabled: state.interactions.magnifierEnabled !== false,
         answersEnabled: state.interactions.answersEnabled !== false,
         hotspots: state.interactions.hotspots,
@@ -3341,10 +3762,16 @@
       hideToolTooltip();
       const tool = button.getAttribute('data-tool');
       if (tool === 'clear-area') {
+        closeToolOptionsPanel();
         clearCurrentScope();
         return;
       }
-      setTool(tool);
+      if (isToolOptionsTool(tool) && tool === state.tool && state.toolOptionsOpen) {
+        state.toolOptionsOpen = false;
+        syncToolbarUi();
+        return;
+      }
+      setTool(tool, { openOptions: isToolOptionsTool(tool) });
     });
     container.addEventListener('mouseover', function(event) {
       const button = event.target.closest('[data-tool]');
@@ -3361,12 +3788,70 @@
     container.addEventListener('mouseleave', hideToolTooltip);
   }
 
+  function initDocToolbarDrag() {
+    const toolbar = qs('docToolbar');
+    const handle = toolbar ? toolbar.querySelector('.toolbar-header') : null;
+    const frame = getBookFrame();
+    if (!toolbar || !handle || !frame) {
+      return;
+    }
+    handle.addEventListener('pointerdown', function(event) {
+      if (event.target.closest && event.target.closest('button,input,select,textarea')) {
+        return;
+      }
+      const compact = window.matchMedia && window.matchMedia('(max-width: 860px)').matches;
+      if (compact) {
+        return;
+      }
+      const toolbarRect = toolbar.getBoundingClientRect();
+      state.toolbarDrag.active = true;
+      state.toolbarDrag.pointerId = event.pointerId;
+      state.toolbarDrag.offsetX = event.clientX - toolbarRect.left;
+      state.toolbarDrag.offsetY = event.clientY - toolbarRect.top;
+      toolbar.classList.add('is-dragging');
+      if (typeof handle.setPointerCapture === 'function') {
+        handle.setPointerCapture(event.pointerId);
+      }
+      event.preventDefault();
+    });
+    handle.addEventListener('pointermove', function(event) {
+      if (!state.toolbarDrag.active || event.pointerId !== state.toolbarDrag.pointerId) {
+        return;
+      }
+      const frameRect = frame.getBoundingClientRect();
+      const nextLeft = event.clientX - frameRect.left - state.toolbarDrag.offsetX;
+      const nextTop = event.clientY - frameRect.top - state.toolbarDrag.offsetY;
+      state.toolbarLeft = nextLeft;
+      state.toolbarTop = nextTop;
+      positionDocToolbar();
+      event.preventDefault();
+    });
+    function finishDrag(event) {
+      if (!state.toolbarDrag.active || (event && event.pointerId !== state.toolbarDrag.pointerId)) {
+        return;
+      }
+      state.toolbarDrag.active = false;
+      state.toolbarDrag.pointerId = null;
+      toolbar.classList.remove('is-dragging');
+      saveToolbarPosition();
+      if (event && typeof handle.releasePointerCapture === 'function') {
+        try {
+          handle.releasePointerCapture(event.pointerId);
+        } catch (error) {}
+      }
+    }
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+    handle.addEventListener('lostpointercapture', finishDrag);
+  }
+
   function setToolbarCollapsed(collapsed) {
     state.toolbarCollapsed = !!collapsed;
     syncToolbarUi();
   }
 
   function toggleShapePanel() {
+    state.toolOptionsOpen = false;
     state.shapesOpen = !state.shapesOpen;
     syncToolbarUi();
   }
@@ -3518,9 +4003,11 @@
 
   function bindUi() {
     installNativeSelectionLocks();
+    dockToolbarIntoBookFrame();
     renderToolButtons();
     renderShortcutUi();
     initDocProtractor();
+    initDocToolbarDrag();
     syncZoomButtons();
     updateViewModeButtons();
     updateSizeLabel();
@@ -3540,18 +4027,29 @@
     bindToolContainer(qs('docMainTools'));
     bindToolContainer(qs('docShapeTools'));
     qs('docShapeToggleBtn').addEventListener('click', toggleShapePanel);
+    if (qs('docPagePanelBtn')) {
+      qs('docPagePanelBtn').addEventListener('click', function() {
+        const toolbar = qs('docToolbar');
+        if (!toolbar) {
+          return;
+        }
+        toolbar.classList.toggle('is-page-panel-open');
+        state.toolOptionsOpen = false;
+        state.shapesOpen = false;
+        syncToolbarUi();
+      });
+    }
     Array.from(document.querySelectorAll('[data-prep-tool]')).forEach(function(button) {
       button.addEventListener('click', function() {
         setTool(button.getAttribute('data-prep-tool'));
       });
     });
     if (qs('answersHiddenInput')) {
-      qs('answersHiddenInput').checked = state.interactions.answersHidden !== false;
+      qs('answersHiddenInput').checked = true;
       qs('answersHiddenInput').addEventListener('change', function(event) {
-        state.interactions.answersHidden = event.target.checked;
-        markInteractionsDirty(event.target.checked
-          ? 'Cevaplar öğrencide gizlenecek. Yayınlayınca soru işaretiyle açılacak.'
-          : 'Cevaplar öğrencide açık görünecek. Yayınlayınca soru işareti eklenmeyecek.');
+        state.interactions.answersHidden = true;
+        event.target.checked = true;
+        markInteractionsDirty('Cevaplar öğrencide gizlenecek. Yayınlayınca sadece soru işaretiyle açılacak.');
         renderAllHotspots();
       });
     }
@@ -3693,6 +4191,7 @@
 
     const bookViewport = getBookViewport();
     const cropStage = getCropStage();
+    const bookFrameForPointers = getBookFrame();
     function finishPanning(event) {
       if (!state.isPanning) {
         return;
@@ -3703,6 +4202,52 @@
       state.isPanning = false;
       state.panPointerId = null;
       syncZoomButtons();
+    }
+
+    if (bookFrameForPointers) {
+      function getPinchSurface(target) {
+        if (!target || !target.closest || target.closest('#docToolbar, button, input, textarea, select')) {
+          return '';
+        }
+        if (isCropViewActive() && target.closest('#cropStage')) {
+          return 'crop';
+        }
+        if (target.closest('#bookFrame')) {
+          return 'book';
+        }
+        return '';
+      }
+      bookFrameForPointers.addEventListener('pointerdown', function(event) {
+        const surface = getPinchSurface(event.target);
+        if (!surface || event.pointerType !== 'touch') {
+          return;
+        }
+        trackTouchPointer(event, surface);
+        if (getTouchPointerList(surface).length >= 2 && beginDocumentPinch(surface)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+      bookFrameForPointers.addEventListener('pointermove', function(event) {
+        if (event.pointerType !== 'touch') {
+          return;
+        }
+        if (state.touchPointers[event.pointerId]) {
+          state.touchPointers[event.pointerId].clientX = event.clientX;
+          state.touchPointers[event.pointerId].clientY = event.clientY;
+        }
+        if (moveDocumentPinch()) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }, true);
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function(eventName) {
+        bookFrameForPointers.addEventListener(eventName, function(event) {
+          if (event.pointerType === 'touch') {
+            releaseTouchPointer(event.pointerId);
+          }
+        }, true);
+      });
     }
 
     if (cropStage) {
@@ -3911,16 +4456,30 @@
           rememberViewportMetrics();
           updateBookTransform();
           updateCropTransform();
+          positionDocToolbar();
           return;
         }
         if (state.pageCount && !state.isFlipping && !state.isRebuilding) {
+          flushAnnotationState();
           buildBook(state.focusPage || state.currentPage).catch(function() {
             updateBookTransform();
           });
           return;
         }
         updateBookTransform();
+        positionDocToolbar();
       }, 140);
+    });
+    window.addEventListener('orientationchange', function() {
+      flushAnnotationState();
+      window.setTimeout(positionDocToolbar, 220);
+    });
+    window.addEventListener('pagehide', flushAnnotationState);
+    window.addEventListener('beforeunload', flushAnnotationState);
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        flushAnnotationState();
+      }
     });
     window.addEventListener('scroll', hideToolTooltip, true);
 
@@ -3996,7 +4555,7 @@
     const displaySubjectLabel = displaySubjectMeta ? displaySubjectMeta.label : displaySubject;
     state.interactions = normalizeInteractions(documentRow.etkilesim_json || {});
     if (qs('answersHiddenInput')) {
-      qs('answersHiddenInput').checked = state.interactions.answersHidden !== false;
+      qs('answersHiddenInput').checked = true;
     }
     qs('viewerPill').textContent = '📚 ' + displayGradeLabel + ' · ' + displaySubjectLabel;
     qs('viewerTitle').textContent = documentRow.baslik;
@@ -4044,14 +4603,17 @@
 
   async function init() {
     const params = new URLSearchParams(window.location.search);
+    state.documentId = params.get('id') || '';
     state.editMode = params.get('edit') === '1';
     document.body.classList.toggle('is-interaction-edit', state.editMode);
     state.viewMode = loadViewModePreference();
+    loadToolbarPosition();
     bindUi();
     updateSizeLabel();
     syncZoomButtons();
     syncPageControls();
     await loadDocument();
+    dockToolbarIntoBookFrame();
     await buildBook();
     markDocumentAsRead();
   }

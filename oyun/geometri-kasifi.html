@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geometri Kaşifi - 3D Cisimler ve Açınımlar</title>
+  <meta name="description" content="Küp, prizma, silindir, koni ve küre gibi geometrik cisimlerin özellikleri ve açınımları.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --ink: #15213d;
+      --muted: #60708d;
+      --line: #dbe6f5;
+      --paper: #ffffff;
+      --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      
+      /* Geometri Teması - Eğitimsel, Net ve Canlı Mavi/Yeşil Tonları */
+      --hero-bg: linear-gradient(135deg, #0288D1, #26C6DA);
+      --board-bg: linear-gradient(180deg, #E1F5FE 0%, #B3E5FC 100%);
+      --board-border: #81D4FA;
+      
+      --cube: #FF5252;
+      --sq-prism: #FF4081;
+      --rect-prism: #7C4DFF;
+      --tri-prism: #FFC107;
+      --cylinder: #69F0AE;
+      --cone: #00E5FF;
+      --sphere: #E040FB;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--ink);
+      background: #f4f7fb;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 12px 14px 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(53, 167, 255, 0.14);
+      box-shadow: var(--shadow);
+    }
+
+    /* KEMAL ÖĞRETMENİM SİTE ÇAKIŞMA DÜZELTMESİ */
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      color: white;
+      background: var(--hero-bg);
+      min-height: 0 !important;
+      height: auto !important;
+    }
+
+    .hero-text { flex: 1 1 min-content; min-width: 250px; }
+    .hero h1 { margin: 6px 0 4px; font-family: var(--font-display, "Fredoka", system-ui, sans-serif); font-size: clamp(1.6rem, 3.5vw, 2.5rem); line-height: 1.05; }
+    .hero p { margin: 0; font-weight: 800; font-size: 0.95rem; line-height: 1.4; opacity: 0.95; }
+    .kicker { display: inline-flex; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.25); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; color: inherit; }
+
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stat { flex: 1; min-width: 80px; padding: 10px 14px; border-radius: 16px; background: rgba(255, 255, 255, 0.25); text-align: center; backdrop-filter: blur(10px); color: inherit; }
+    .stat span { display: block; font-size: 0.7rem; font-weight: 900; text-transform: uppercase; opacity: 0.8; }
+    .stat strong { display: block; margin-top: 2px; font-size: 1.3rem; font-weight: 900; }
+
+    .setup { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 14px 18px; background: #f8fbff; border-bottom: 1px solid var(--line); }
+    .setup-panel { border: 1px solid var(--line); border-radius: 22px; background: white; padding: 16px; box-shadow: 0 12px 24px rgba(21, 33, 61, 0.05); }
+    .section-title { margin: 0 0 10px; font-family: var(--font-display, "Fredoka", system-ui, sans-serif); font-size: 1.1rem; color: var(--ink); }
+
+    .choice-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    .choice-btn { border: 0; font-family: inherit; font-weight: 800; cursor: pointer; transition: all 0.2s ease; min-height: 68px; padding: 10px; border-radius: 16px; background: #f6f9ff; border: 2px solid var(--line); color: var(--ink); text-align: left; }
+    .choice-btn strong { display: block; font-size: 1rem; }
+    .choice-btn span { display: block; margin-top: 4px; color: var(--muted); font-size: 0.8rem; font-weight: 600;}
+    .choice-btn:hover { transform: translateY(-2px); }
+    .choice-btn.is-active { background: #E1F5FE; border-color: #0288D1; color: #01579B; box-shadow: 0 8px 16px rgba(2, 136, 209, 0.15); }
+
+    .control-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); background: white; }
+    .control-btn { border: 0; font-family: inherit; font-weight: 800; cursor: pointer; min-height: 44px; padding: 10px 16px; border-radius: 14px; background: #f6f9ff; border: 2px solid var(--line); color: var(--muted); transition: all 0.2s ease;}
+    .control-btn.is-active { background: #fff3ce; border-color: rgba(255, 209, 102, 0.8); color: #79530c; }
+
+    /* OYUN ALANI */
+    .board-wrap {
+      padding: clamp(16px, 4vw, 32px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      background: var(--board-bg);
+      border-bottom-left-radius: 30px;
+      border-bottom-right-radius: 30px;
+    }
+
+    /* SORU KARTLARI (DEDEKTİF VE DOĞRU YANLIŞ İÇİN) */
+    .question-card {
+      width: 100%;
+      max-width: 700px;
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+      border: 4px solid var(--board-border);
+      font-size: clamp(1.2rem, 3vw, 1.6rem);
+      font-weight: 900;
+      color: #01579B;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .question-visual {
+      width: 100%;
+      max-width: 250px;
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .question-visual svg { width: 100%; height: 100%; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.1)); }
+
+    /* SEÇENEKLER ALANI (CİSİMLER) */
+    .shapes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 900px;
+      justify-items: center;
+    }
+
+    .shape-btn {
+      width: 100%;
+      max-width: 130px;
+      aspect-ratio: 1;
+      background: white;
+      border: 4px solid white;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      padding: 10px;
+    }
+    
+    .shape-btn svg {
+      width: 75%;
+      height: 75%;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,0.15));
+      transition: transform 0.3s;
+    }
+    
+    .shape-btn span {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: var(--muted);
+    }
+
+    .shape-btn:hover {
+      transform: translateY(-5px) scale(1.05);
+      box-shadow: 0 14px 24px rgba(0,0,0,0.2);
+      border-color: #0288D1;
+    }
+    .shape-btn:hover svg { transform: scale(1.1); }
+
+    /* DOĞRU YANLIŞ BUTONLARI */
+    .tf-controls {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+      justify-content: center;
+    }
+    .tf-btn {
+      flex: 1;
+      padding: 16px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      color: white;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      transition: transform 0.2s;
+    }
+    .tf-btn:hover { transform: translateY(-4px) scale(1.05); }
+    .tf-btn.btn-true { background: #5ea51c; border-bottom: 6px solid #3c700e; }
+    .tf-btn.btn-false { background: #ff6868; border-bottom: 6px solid #cc3c3c; }
+
+    /* DURUM VE GERİ BİLDİRİM */
+    .shape-btn.is-correct, .tf-btn.is-correct { animation: pulseCorrect 0.5s ease; border-color: #5ea51c !important; background: #e9f9df !important; color: #2e6812 !important; }
+    .shape-btn.is-wrong, .tf-btn.is-wrong { animation: shake 0.4s ease; border-color: #ff6868 !important; background: #fff0f0 !important; color: #982727 !important; }
+
+    .feedback {
+      width: 100%;
+      max-width: 600px;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.4;
+      font-size: 1.1rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+    .feedback.good { background: #e9f9df; color: #28651d; transform: scale(1.02); border: 2px solid #a7f36b; }
+    .feedback.bad { background: #fff0f0; color: #982727; transform: scale(0.98); border: 2px solid #ffb3b3;}
+    .feedback.action { background: #E1F5FE; color: #01579B; border: 2px solid #81D4FA;}
+
+    .hidden { display: none !important; }
+
+    /* Animasyonlar */
+    @keyframes pulseCorrect { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+
+    @media (max-width: 600px) {
+      .page { padding: 10px 8px 40px; }
+      .game-shell { border-radius: 20px; }
+      .hero { flex-direction: column; align-items: stretch; text-align: center; }
+      .stats { justify-content: center; }
+      .choice-row { grid-template-columns: 1fr 1fr; }
+      .shapes-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .shape-btn span { font-size: 0.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="game-shell" aria-label="Geometri Kaşifi Oyunu">
+      <header class="hero">
+        <div class="hero-text">
+          <span class="kicker">Geometri • 3D Cisimler</span>
+          <h1>Geometri Kaşifi</h1>
+          <p>Küp, prizma, silindir ve küre! Özelliklerini keşfet, açınımlarını bul ve geometri ustası ol.</p>
+        </div>
+        <div class="stats">
+          <div class="stat"><span>Soru</span><strong id="levelText">1/10</strong></div>
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Oyun Modunu Seç</h2>
+          <div class="choice-row" id="modeChoices">
+            <button class="choice-btn is-active" type="button" data-mode="detective"><strong>Özellik Dedektifi</strong><span>İpuçlarından cismi bul</span></button>
+            <button class="choice-btn" type="button" data-mode="net"><strong>Açınım Ustası</strong><span>Açınımları zihninde katla</span></button>
+            <button class="choice-btn" type="button" data-mode="tf"><strong>Doğru mu Yanlış mı?</strong><span>Bilgilerini test et</span></button>
+          </div>
+        </div>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+      </nav>
+
+      <section class="board-wrap">
+        <div class="feedback action" id="feedback">Cismi bulmak için soruyu dikkatlice oku!</div>
+        
+        <div class="question-card" id="questionCard">
+          <span id="questionText">Soru metni buraya gelecek</span>
+          <div class="question-visual hidden" id="questionVisual"></div>
+        </div>
+
+        <div class="shapes-grid" id="shapesContainer">
+          </div>
+
+        <div class="tf-controls hidden" id="tfContainer">
+          <button class="tf-btn btn-true" data-ans="true">Doğru 👍</button>
+          <button class="tf-btn btn-false" data-ans="false">Yanlış 👎</button>
+        </div>
+
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  
+  <script>
+    // --- 1. GEOMETRİK CİSİMLER VE SVG ÇİZİMLERİ ---
+    // CSS destekli pseudo-3D izometrik ve açınım çizimleri
+    const SHAPES = {
+      cube: {
+        id: 'cube', name: 'Küp',
+        color: '#FF5252',
+        svg3D: `<svg viewBox="0 0 100 100"><polygon points="50,15 85,30 50,45 15,30" fill="#ff7a7a"/><polygon points="15,30 50,45 50,85 15,70" fill="#e53935"/><polygon points="85,30 50,45 50,85 85,70" fill="#d32f2f"/></svg>`,
+        svgNet: `<svg viewBox="0 0 100 100"><rect x="40" y="10" width="20" height="20" fill="#ff7a7a" stroke="#fff" stroke-width="2"/><rect x="40" y="30" width="20" height="20" fill="#e53935" stroke="#fff" stroke-width="2"/><rect x="40" y="50" width="20" height="20" fill="#d32f2f" stroke="#fff" stroke-width="2"/><rect x="40" y="70" width="20" height="20" fill="#ff7a7a" stroke="#fff" stroke-width="2"/><rect x="20" y="30" width="20" height="20" fill="#e53935" stroke="#fff" stroke-width="2"/><rect x="60" y="30" width="20" height="20" fill="#d32f2f" stroke="#fff" stroke-width="2"/></svg>`
+      },
+      sqPrism: {
+        id: 'sqPrism', name: 'Kare Prizma',
+        color: '#FF4081',
+        svg3D: `<svg viewBox="0 0 100 100"><polygon points="50,10 75,20 50,30 25,20" fill="#ff80ab"/><polygon points="25,20 50,30 50,90 25,80" fill="#f50057"/><polygon points="75,20 50,30 50,90 75,80" fill="#c51162"/></svg>`,
+        svgNet: `<svg viewBox="0 0 100 100"><rect x="40" y="15" width="20" height="15" fill="#ff80ab" stroke="#fff" stroke-width="2"/><rect x="40" y="30" width="20" height="40" fill="#f50057" stroke="#fff" stroke-width="2"/><rect x="40" y="70" width="20" height="15" fill="#ff80ab" stroke="#fff" stroke-width="2"/><rect x="25" y="30" width="15" height="40" fill="#c51162" stroke="#fff" stroke-width="2"/><rect x="60" y="30" width="15" height="40" fill="#c51162" stroke="#fff" stroke-width="2"/><rect x="75" y="30" width="15" height="40" fill="#f50057" stroke="#fff" stroke-width="2"/></svg>`
+      },
+      rectPrism: {
+        id: 'rectPrism', name: 'Dikdörtgen Prizma',
+        color: '#7C4DFF',
+        svg3D: `<svg viewBox="0 0 100 100"><polygon points="50,25 90,40 50,55 10,40" fill="#b388ff"/><polygon points="10,40 50,55 50,85 10,70" fill="#651fff"/><polygon points="90,40 50,55 50,85 90,70" fill="#6200ea"/></svg>`,
+        svgNet: `<svg viewBox="0 0 100 100"><rect x="35" y="10" width="30" height="15" fill="#b388ff" stroke="#fff" stroke-width="2"/><rect x="35" y="25" width="30" height="25" fill="#651fff" stroke="#fff" stroke-width="2"/><rect x="35" y="50" width="30" height="15" fill="#b388ff" stroke="#fff" stroke-width="2"/><rect x="35" y="65" width="30" height="25" fill="#651fff" stroke="#fff" stroke-width="2"/><rect x="20" y="25" width="15" height="25" fill="#6200ea" stroke="#fff" stroke-width="2"/><rect x="65" y="25" width="15" height="25" fill="#6200ea" stroke="#fff" stroke-width="2"/></svg>`
+      },
+      triPrism: {
+        id: 'triPrism', name: 'Üçgen Prizma',
+        color: '#FFC107',
+        svg3D: `<svg viewBox="0 0 100 100"><polygon points="50,15 80,45 20,45" fill="#ffe082"/><polygon points="20,45 50,15 50,85 20,95" fill="#ffb300"/><polygon points="80,45 50,15 50,85 80,95" fill="#ff8f00"/></svg>`,
+        svgNet: `<svg viewBox="0 0 100 100"><rect x="25" y="30" width="16" height="40" fill="#ffb300" stroke="#fff" stroke-width="2"/><rect x="41" y="30" width="18" height="40" fill="#ff8f00" stroke="#fff" stroke-width="2"/><rect x="59" y="30" width="16" height="40" fill="#ffb300" stroke="#fff" stroke-width="2"/><polygon points="41,30 59,30 50,10" fill="#ffe082" stroke="#fff" stroke-width="2"/><polygon points="41,70 59,70 50,90" fill="#ffe082" stroke="#fff" stroke-width="2"/></svg>`
+      },
+      cylinder: {
+        id: 'cylinder', name: 'Silindir',
+        color: '#69F0AE',
+        svg3D: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="25" rx="30" ry="12" fill="#b9f6ca"/><path d="M20,25 v50 a30,12 0 0,0 60,0 v-50 Z" fill="#00e676"/><path d="M20,25 a30,12 0 0,0 60,0" fill="none" stroke="#00c853" stroke-width="2"/></svg>`,
+        svgNet: `<svg viewBox="0 0 100 100"><circle cx="50" cy="15" r="12" fill="#b9f6ca" stroke="#fff" stroke-width="2"/><rect x="20" y="30" width="60" height="40" fill="#00e676" stroke="#fff" stroke-width="2"/><circle cx="50" cy="85" r="12" fill="#b9f6ca" stroke="#fff" stroke-width="2"/></svg>`
+      },
+      cone: {
+        id: 'cone', name: 'Koni',
+        color: '#00E5FF',
+        svg3D: `<svg viewBox="0 0 100 100"><path d="M50,15 L20,75 a30,12 0 0,0 60,0 Z" fill="#00b0ff"/><ellipse cx="50" cy="75" rx="30" ry="12" fill="#84ffff"/></svg>`,
+        svgNet: `<svg viewBox="0 0 100 100"><path d="M50,45 L10,15 A55,55 0 0,1 90,15 Z" fill="#00b0ff" stroke="#fff" stroke-width="2"/><circle cx="50" cy="75" r="15" fill="#84ffff" stroke="#fff" stroke-width="2"/></svg>`
+      },
+      sphere: {
+        id: 'sphere', name: 'Küre',
+        color: '#E040FB',
+        svg3D: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="url(#gradSphere)"/><defs><radialGradient id="gradSphere" cx="30%" cy="30%" r="70%"><stop offset="0%" stop-color="#ea80fc"/><stop offset="100%" stop-color="#aa00ff"/></radialGradient></defs><ellipse cx="50" cy="50" rx="40" ry="12" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-dasharray="4,4"/></svg>`,
+        svgNet: null // Kürenin net düzlemsel açınımı verilmez, sorulmaz.
+      }
+    };
+
+    // --- 2. SORU BANKALARI (PDF'e sadık kalınarak hazırlandı) ---
+    
+    // Dedektif İpuçları (Cisim Bulma)
+    const DETECTIVE_QUESTIONS = [
+      { text: "Bütün yüzlerim karesel bölgedir. 6 yüzüm, 8 köşem, 12 ayrıtım var. Ben kimim?", ans: "cube" },
+      { text: "2 yüzüm karesel, 4 yüzüm dikdörtgensel bölgedir. Bir hediye paketine benzerim.", ans: "sqPrism" },
+      { text: "Tüm yüzlerim (6 adet) dikdörtgensel bölgedir. Kitap veya kibrit kutusuna benzerim.", ans: "rectPrism" },
+      { text: "2 yüzüm üçgensel, 3 yüzüm dikdörtgensel bölgedir. Kamp çadırına benzerim.", ans: "triPrism" },
+      { text: "Ayrıt ve köşem yoktur. Alt ve üst tabanımla çember çizebilirsin. Soba borusuna benzerim.", ans: "cylinder" },
+      { text: "Ayrıt ve köşem yoktur. Sadece 1 dairesel yüzüm, 1 eğri yüzüm var. Tepe noktam vardır.", ans: "cone" },
+      { text: "Hiçbir köşem, ayrıtım veya düz yüzüm yoktur. Sadece 1 tane eğri yüzüm vardır.", ans: "sphere" }
+    ];
+
+    // Doğru/Yanlış Soruları
+    const TF_QUESTIONS = [
+      { text: "Kare prizmanın 3 tane karesel yüzü vardır.", ans: false },
+      { text: "Dikdörtgen prizmanın 8 köşesi vardır.", ans: true },
+      { text: "Silindirin 3 yüzü vardır (2 dairesel, 1 eğri).", ans: true },
+      { text: "Küpün tüm yüzleri karesel bölgedir.", ans: true },
+      { text: "Üçgen prizmanın toplam 5 yüzü vardır.", ans: true },
+      { text: "Koninin 1 köşesi ve 1 ayrıtı vardır.", ans: false },
+      { text: "Kare prizma ve küpün köşe sayıları birbirine eşittir.", ans: true },
+      { text: "Küpün 12 ayrıtı varken, kare prizmanın 9 ayrıtı vardır.", ans: false },
+      { text: "Silindirin eğri yüzü açıldığında bir dikdörtgensel bölge oluşur.", ans: true },
+      { text: "Kürenin alt ve üst tabanı daire şeklindedir.", ans: false }
+    ];
+
+    // Açınım soruları dinamik üretilecek (svgNet gösterilip cisim istenecek).
+
+    const state = {
+      mode: "detective",
+      currentQ: 0,
+      totalQ: 10,
+      score: 0,
+      soundOn: true,
+      locked: false,
+      questionData: null
+    };
+
+    const els = {
+      setup: document.getElementById("setupScreen"),
+      questionCard: document.getElementById("questionCard"),
+      questionText: document.getElementById("questionText"),
+      questionVisual: document.getElementById("questionVisual"),
+      shapesContainer: document.getElementById("shapesContainer"),
+      tfContainer: document.getElementById("tfContainer"),
+      levelText: document.getElementById("levelText"),
+      scoreText: document.getElementById("scoreText"),
+      feedback: document.getElementById("feedback"),
+      sound: document.getElementById("soundToggle")
+    };
+
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return null;
+      if (!audioContext) audioContext = new AudioContext();
+      if (audioContext.state === "suspended") audioContext.resume();
+      return audioContext;
+    }
+
+    function playTone(freq, type = "sine", duration = 0.15) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.1, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      oscillator.connect(gain).connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.05);
+    }
+
+    function playSuccess() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + i * 0.1);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.15, now + i * 0.1 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.3);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.1);
+        osc.stop(now + i * 0.1 + 0.3);
+      });
+    }
+
+    function playError() {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(150, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.3);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    }
+
+    function shuffle(array) {
+      return array.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function setFeedback(text, tone) {
+      els.feedback.className = "feedback" + (tone ? " " + tone : "");
+      els.feedback.textContent = text;
+    }
+
+    // Seçenek butonlarını (Cisimler) oluştur
+    function buildShapeButtons() {
+      els.shapesContainer.innerHTML = "";
+      Object.keys(SHAPES).forEach(key => {
+        const shape = SHAPES[key];
+        const btn = document.createElement("button");
+        btn.className = "shape-btn";
+        btn.dataset.id = key;
+        btn.innerHTML = `${shape.svg3D}<span>${shape.name}</span>`;
+        btn.onclick = () => handleShapeAnswer(key, btn);
+        els.shapesContainer.appendChild(btn);
+      });
+    }
+
+    function loadQuestion() {
+      state.locked = false;
+      els.levelText.textContent = `${state.currentQ + 1}/${state.totalQ}`;
+      
+      // UI Reset
+      document.querySelectorAll(".shape-btn, .tf-btn").forEach(b => {
+        b.classList.remove("is-correct", "is-wrong");
+      });
+
+      if (state.mode === "detective") {
+        els.shapesContainer.classList.remove("hidden");
+        els.tfContainer.classList.add("hidden");
+        els.questionVisual.classList.add("hidden");
+        
+        // Soru Seçimi
+        const qList = shuffle(DETECTIVE_QUESTIONS);
+        state.questionData = qList[state.currentQ % qList.length];
+        els.questionText.textContent = `"${state.questionData.text}"`;
+        setFeedback("Özellikleri okuyarak aşağıdan doğru cismi seç.", "action");
+      } 
+      else if (state.mode === "net") {
+        els.shapesContainer.classList.remove("hidden");
+        els.tfContainer.classList.add("hidden");
+        els.questionVisual.classList.remove("hidden");
+        
+        // Açınımı olan cisimleri filtrele (Küre hariç)
+        const netShapes = Object.keys(SHAPES).filter(k => SHAPES[k].svgNet !== null);
+        const ansKey = shuffle(netShapes)[0];
+        state.questionData = { ans: ansKey };
+        
+        els.questionText.textContent = "Yukarıdaki açınım (yüzey haritası) katlandığında hangi cisim oluşur?";
+        els.questionVisual.innerHTML = SHAPES[ansKey].svgNet;
+        setFeedback("Açınımı zihninde katla ve cismi bul.", "action");
+      }
+      else if (state.mode === "tf") {
+        els.shapesContainer.classList.add("hidden");
+        els.tfContainer.classList.remove("hidden");
+        els.questionVisual.classList.add("hidden");
+        
+        // Soru Seçimi
+        const qList = shuffle(TF_QUESTIONS);
+        state.questionData = qList[state.currentQ % qList.length];
+        els.questionText.textContent = `"${state.questionData.text}"`;
+        setFeedback("Yukarıdaki ifade doğru mu, yanlış mı?", "action");
+      }
+    }
+
+    function handleShapeAnswer(selectedKey, btnEl) {
+      if (state.locked) return;
+      state.locked = true;
+
+      const isCorrect = (selectedKey === state.questionData.ans);
+
+      if (isCorrect) {
+        btnEl.classList.add("is-correct");
+        playSuccess();
+        state.score += 10;
+        els.scoreText.textContent = state.score;
+        setFeedback("Harika! Doğru cismi buldun.", "good");
+        
+        // Eğer açınım modundaysa, cismin 3D halini de görselde göster (öğretici etki)
+        if(state.mode === "net") {
+           els.questionVisual.innerHTML = SHAPES[selectedKey].svg3D;
+        }
+
+        setTimeout(nextQuestion, 1500);
+      } else {
+        btnEl.classList.add("is-wrong");
+        playError();
+        setFeedback("Maalesef doğru cisim bu değil, tekrar düşün.", "bad");
+        
+        setTimeout(() => {
+          btnEl.classList.remove("is-wrong");
+          state.locked = false;
+        }, 800);
+      }
+    }
+
+    function handleTFAnswer(selectedBool, btnEl) {
+      if (state.locked) return;
+      state.locked = true;
+
+      const isCorrect = (selectedBool === state.questionData.ans);
+
+      if (isCorrect) {
+        btnEl.classList.add("is-correct");
+        playSuccess();
+        state.score += 10;
+        els.scoreText.textContent = state.score;
+        setFeedback("Tebrikler! Doğru bildin.", "good");
+        setTimeout(nextQuestion, 1500);
+      } else {
+        btnEl.classList.add("is-wrong");
+        playError();
+        setFeedback("Eyvah, bu ifade için cevabın hatalıydı.", "bad");
+        
+        // Doğru olanı parlat
+        const correctBtn = document.querySelector(`.tf-btn[data-ans="${state.questionData.ans}"]`);
+        setTimeout(() => {
+            correctBtn.classList.add("is-correct");
+        }, 300);
+
+        setTimeout(nextQuestion, 2000);
+      }
+    }
+
+    function nextQuestion() {
+      state.currentQ++;
+      if (state.currentQ >= state.totalQ) {
+        setFeedback(`Oyun Bitti! Toplam Puanın: ${state.score}`, "good");
+        state.locked = true;
+        // 3 saniye sonra başa sar
+        setTimeout(initGame, 3000);
+      } else {
+        loadQuestion();
+      }
+    }
+
+    function initGame() {
+      state.currentQ = 0;
+      state.score = 0;
+      els.scoreText.textContent = "0";
+      buildShapeButtons();
+      loadQuestion();
+    }
+
+    function selectButton(groupId, value, attr) {
+      document.querySelectorAll("#" + groupId + " .choice-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset[attr] === String(value));
+      });
+    }
+
+    // Olay Dinleyicileri
+    document.querySelectorAll("#modeChoices .choice-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.mode = button.dataset.mode;
+        selectButton("modeChoices", state.mode, "mode");
+        initGame();
+      });
+    });
+
+    document.querySelectorAll(".tf-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        const boolVal = button.dataset.ans === "true";
+        handleTFAnswer(boolVal, button);
+      });
+    });
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    els.sound.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.sound.classList.toggle("is-active", state.soundOn);
+      els.sound.setAttribute("aria-pressed", String(state.soundOn));
+      els.sound.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      if (state.soundOn) playTone(523.25, "sine", 0.1);
+    });
+
+    // Oyunu Başlat
+    initGame();
+  </script>
+</body>
+</html>
