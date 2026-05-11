@@ -152,6 +152,11 @@
     .q-cell-num{font-size:10px;color:var(--slate);font-weight:800}
     .q-bubble{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff}
     .q-bubble.ok{background:var(--ok)}.q-bubble.bad{background:var(--bad)}.q-bubble.blank{background:var(--blank);color:#64748b}
+    .outcome-row{grid-template-columns:170px 1fr}
+    .outcome-detail{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+    .outcome-text{font-size:13px;line-height:1.55;color:var(--navy);font-weight:700}
+    .outcome-stats{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:900;white-space:nowrap}
+    .outcome-stats span,.outcome-stats strong{padding:5px 8px;border-radius:999px;background:#f8fbff;border:1px solid var(--border)}
 
     .footer-note{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
     .footer-brand{font-size:12px;line-height:1.7;color:var(--slate)}
@@ -174,6 +179,8 @@
       .hero-card h2{font-size:30px}
       .student-score{font-size:46px}
       .matrix-row{grid-template-columns:1fr}
+      .outcome-detail{grid-template-columns:1fr}
+      .outcome-stats{justify-content:flex-start}
       .matrix-label{font-size:16px}
       .footer-note{flex-direction:column;align-items:flex-start}
     }
@@ -417,8 +424,8 @@
 
             <div class="matrix-head">
               <div>
-                <h3>🔎 Soru Bazlı Kompakt Değerlendirme</h3>
-                <p>Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.</p>
+                <h3 id="matrixTitle">🔎 Soru Bazlı Kompakt Değerlendirme</h3>
+                <p id="matrixDescription">Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.</p>
               </div>
               <div class="legend">
                 <span><i class="dot ok"></i> Doğru</span>

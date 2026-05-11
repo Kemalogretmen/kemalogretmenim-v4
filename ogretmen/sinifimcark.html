@@ -395,7 +395,7 @@
     .class-view.is-active { display: block; animation: fadeIn 0.28s ease; }
 
     .dojo-shell,
-    .teacher-wheel-shell { display: grid; grid-template-columns: 288px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .teacher-wheel-shell { display: grid; grid-template-columns: 328px minmax(0, 1fr); gap: 18px; align-items: start; }
     .dojo-sidebar,
     .dojo-main,
     .wheel-editor-card,
@@ -431,11 +431,26 @@
 
     .student-form-card,
     .random-control-card,
-    .wheel-help-card { padding: 18px; border-radius: 24px; background: linear-gradient(180deg, #ffffff, #faf8ff); border: 1.5px solid rgba(227,214,255,0.88); }
+    .wheel-help-card,
+    .student-list-card { padding: 18px; border-radius: 24px; background: linear-gradient(180deg, #ffffff, #faf8ff); border: 1.5px solid rgba(227,214,255,0.88); }
     .section-kicker { margin: 0 0 14px 0; font-size: 13px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em; }
     .gender-toggle { display: inline-flex; gap: 8px; padding: 6px; border-radius: 999px; background: #eef2ff; margin-bottom: 14px; }
     .gender-btn { min-width: 62px; border: none; border-radius: 999px; padding: 10px 14px; background: transparent; color: #7c89a3; cursor: pointer; font-weight: 900; transition: 0.2s; }
     .gender-btn.is-active { background: #fff; color: var(--purple); box-shadow: 0 6px 14px rgba(108,61,237,0.12); }
+    .student-color-picker { display: grid; gap: 10px; margin-bottom: 12px; }
+    .student-color-label { font-size: 12px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.06em; }
+    .student-color-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
+    .student-color-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid rgba(226,232,240,0.9); background: var(--swatch, #9ec5ff); box-shadow: inset 0 0 0 4px rgba(255,255,255,0.8), 0 6px 14px rgba(15,23,42,0.08); cursor: pointer; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+    .student-color-btn[data-student-color="#9ec5ff"] { --swatch: #9ec5ff; }
+    .student-color-btn[data-student-color="#9fe3b1"] { --swatch: #9fe3b1; }
+    .student-color-btn[data-student-color="#ffe38a"] { --swatch: #ffe38a; }
+    .student-color-btn[data-student-color="#ffb7d5"] { --swatch: #ffb7d5; }
+    .student-color-btn[data-student-color="#c8b5ff"] { --swatch: #c8b5ff; }
+    .student-color-btn[data-student-color="#737a8e"] { --swatch: #737a8e; }
+    .student-color-btn[data-student-color="#ff9d9d"] { --swatch: #ff9d9d; }
+    .student-color-btn[data-student-color="#f7fafc"] { --swatch: #f7fafc; }
+    .student-color-btn:hover { transform: translateY(-1px); box-shadow: inset 0 0 0 4px rgba(255,255,255,0.88), 0 10px 18px rgba(15,23,42,0.12); }
+    .student-color-btn.is-active { border-color: var(--purple); box-shadow: inset 0 0 0 4px rgba(255,255,255,0.92), 0 0 0 4px rgba(108,61,237,0.14), 0 12px 20px rgba(108,61,237,0.14); transform: translateY(-1px) scale(1.04); }
     .student-form-actions,
     .random-action-stack,
     .wheel-editor-actions { display: grid; gap: 10px; }
@@ -443,50 +458,84 @@
     .random-action-stack { margin-top: 14px; }
     .random-help-text,
     .wheel-help-card p { margin: 0; color: var(--slate); font-size: 13px; line-height: 1.5; font-weight: 800; }
+    .student-list-card { display: grid; gap: 12px; }
+    .student-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .student-list-head .section-kicker { margin-bottom: 0; }
+    .student-list-count { font-size: 11px; font-weight: 900; color: var(--slate); padding: 6px 10px; border-radius: 999px; background: #f1f5f9; border: 1px solid #e2e8f0; }
+    .student-side-list { display: grid; gap: 10px; max-height: 390px; overflow: auto; padding-right: 4px; }
+    .student-list-item { --student-accent: #9ec5ff; --student-accent-soft: rgba(158,197,255,0.16); padding: 10px 12px; border-radius: 20px; border: 1.5px solid rgba(227,214,255,0.86); background: linear-gradient(180deg, #ffffff, var(--student-accent-soft)); display: grid; gap: 10px; box-shadow: 0 8px 18px rgba(31,33,66,0.04); }
+    .student-list-main { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center; }
+    .student-list-meta { min-width: 0; }
+    .student-list-name { display: block; font-size: 14px; font-weight: 900; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .student-list-subline { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .student-list-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; font-size: 10px; font-weight: 900; }
+    .student-list-pill.status-active { background: #d1fae5; color: #0f766e; }
+    .student-list-pill.status-absent { background: #ffe4e6; color: #be123c; }
+    .student-list-pill.status-passive { background: #e2e8f0; color: #475569; }
+    .student-list-pill.color { background: rgba(255,255,255,0.76); color: #475569; border: 1px solid rgba(226,232,240,0.9); }
+    .student-list-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .student-list-btn { border: none; border-radius: 12px; padding: 8px 6px; cursor: pointer; font-size: 11px; font-weight: 900; background: #f8fafc; color: var(--navy); transition: transform 0.16s ease, box-shadow 0.16s ease; }
+    .student-list-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 14px rgba(15,23,42,0.08); }
+    .student-list-btn.image { background: #eef2ff; color: var(--purple); }
+    .student-list-btn.danger { background: #fff1f2; color: #e11d48; }
 
-    .selected-student-panel { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 18px 20px; border-radius: 28px; background: linear-gradient(135deg, rgba(108,61,237,0.1), rgba(22,199,178,0.08)); border: 2px solid rgba(202,184,255,0.92); margin-bottom: 16px; box-shadow: 0 16px 40px rgba(108,61,237,0.08); }
-    .selected-student-avatar { width: 74px; height: 74px; border-radius: 22px; display: grid; place-items: center; font-size: 32px; color: #fff; background: linear-gradient(135deg, var(--purple), #22c1c3); box-shadow: 0 16px 28px rgba(108,61,237,0.2); }
-    .selected-student-label { font-size: 12px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.08em; }
-    .selected-student-name { margin: 4px 0; font-family: 'Baloo 2', cursive; font-size: clamp(26px, 3vw, 36px); line-height: 0.98; color: var(--navy); }
+    .selected-student-panel { --student-accent: var(--purple); --student-accent-soft: rgba(108,61,237,0.12); --student-accent-strong: rgba(108,61,237,0.28); display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; padding: 16px 18px; border-radius: 28px; background: linear-gradient(135deg, var(--student-accent-soft), rgba(22,199,178,0.08)); border: 2px solid var(--student-accent-strong); margin-bottom: 12px; box-shadow: 0 16px 40px rgba(108,61,237,0.08); transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease; }
+    .selected-student-panel.is-picking { border-color: #a78bfa; box-shadow: 0 20px 42px rgba(108,61,237,0.16); animation: selectionPanelPulse 0.42s ease infinite alternate; }
+    .selected-student-panel.is-winner { animation: selectionPanelWin 0.52s cubic-bezier(0.22, 1, 0.36, 1); }
+    .selected-student-avatar { --student-accent: var(--purple); --student-accent-deep: #22c1c3; width: 72px; height: 72px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; color: #fff; background: linear-gradient(135deg, var(--student-accent), var(--student-accent-deep)); box-shadow: 0 16px 28px rgba(108,61,237,0.2); overflow: hidden; border: 4px solid rgba(255,255,255,0.92); }
+    .selected-student-avatar img,
+    .student-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .selected-student-label { font-size: 11px; font-weight: 900; color: var(--slate); text-transform: uppercase; letter-spacing: 0.08em; }
+    .selected-student-name { margin: 4px 0; font-family: 'Baloo 2', cursive; font-size: clamp(22px, 2.3vw, 30px); line-height: 1; color: var(--navy); }
     .selected-student-meta { margin: 0; color: #53627f; font-size: 14px; font-weight: 800; }
     .selected-student-actions { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    @keyframes selectionPanelPulse { from { transform: translateY(0); } to { transform: translateY(-2px) scale(1.01); } }
+    @keyframes selectionPanelWin {
+      0% { transform: scale(0.98); box-shadow: 0 16px 40px rgba(108,61,237,0.08); }
+      55% { transform: scale(1.02); box-shadow: 0 24px 52px rgba(16,185,129,0.22); }
+      100% { transform: scale(1); box-shadow: 0 16px 40px rgba(108,61,237,0.1); }
+    }
 
-    .class-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
-    .legend-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; border-radius: 999px; font-size: 13px; font-weight: 900; border: 1.5px solid transparent; }
+    .class-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .legend-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; border: 1.5px solid transparent; }
     .legend-pill.active { background: var(--soft-teal); color: #0f766e; border-color: #99f6e4; }
     .legend-pill.absent { background: var(--soft-red); color: #be123c; border-color: #fecdd3; }
     .legend-pill.passive { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
 
-    .student-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: 12px; max-height: 620px; overflow: auto; padding-right: 6px; align-content: start; }
-    .student-card { position: relative; padding: 12px; border-radius: 24px; background: #fff; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 12px 26px rgba(31,33,66,0.06); transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s; }
+    .student-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 10px; max-height: none; overflow: visible; padding-right: 0; align-content: start; }
+    .student-card { --student-accent: #9ec5ff; --student-accent-soft: rgba(158,197,255,0.16); position: relative; z-index: 0; isolation: isolate; overflow: visible; padding: 2px; border-radius: 24px; background: linear-gradient(180deg, rgba(227,214,255,0.82), rgba(255,255,255,0.94)); box-shadow: 0 10px 22px rgba(31,33,66,0.05); transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s; }
+    .student-card-body { position: relative; height: 100%; padding: 10px; border-radius: 22px; background: linear-gradient(180deg, #ffffff 0%, var(--student-accent-soft) 100%); border: 1px solid rgba(255,255,255,0.88); }
     .student-card:hover { transform: translateY(-3px); box-shadow: 0 18px 34px rgba(108,61,237,0.1); }
-    .student-card.is-highlighted { animation: studentPulse 0.34s ease infinite alternate; border-color: #f59e0b; box-shadow: 0 18px 34px rgba(245,158,11,0.28); }
-    .student-card.is-selected { border-color: var(--purple); box-shadow: 0 20px 36px rgba(108,61,237,0.22); }
-    .student-card.status-active { background: linear-gradient(180deg, #fff, #fbfffe); }
-    .student-card.status-absent { background: linear-gradient(180deg, #fff, #fff3f5); border-color: #fecdd3; }
-    .student-card.status-passive { background: linear-gradient(180deg, #fff, #f4f7fb); border-color: #dbe4ef; }
+    .student-card.is-highlighted { animation: studentPulse 0.18s ease infinite alternate; box-shadow: 0 18px 34px rgba(245,158,11,0.28); z-index: 2; background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+    .student-card.is-selected { background: linear-gradient(180deg, var(--student-accent-strong), rgba(108,61,237,0.16)); box-shadow: 0 20px 36px rgba(108,61,237,0.22); }
+    .student-card.is-winner { box-shadow: 0 22px 42px rgba(108,61,237,0.18); }
+    .student-card.is-winner::before { content: ''; position: absolute; inset: -3px; border-radius: 26px; background: conic-gradient(from 0deg, var(--student-accent), #fef08a, #67e8f9, #f9a8d4, var(--student-accent)); z-index: -1; animation: winnerRingSpin 2.1s linear infinite; }
+    .student-card.status-absent .student-card-body { background: linear-gradient(180deg, #ffffff 0%, #fff3f5 100%); }
+    .student-card.status-passive .student-card-body { background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%); }
     @keyframes studentPulse { from { transform: translateY(-2px) scale(1); } to { transform: translateY(-6px) scale(1.02); } }
+    @keyframes winnerRingSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    .student-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-    .student-avatar { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; font-size: 22px; color: #fff; box-shadow: inset 0 -8px 16px rgba(255,255,255,0.15), 0 10px 18px rgba(108,61,237,0.12); }
-    .student-avatar.girl { background: linear-gradient(135deg, #f97393, #fb7185); }
-    .student-avatar.boy { background: linear-gradient(135deg, #38bdf8, #6366f1); }
-    .student-badge { display: inline-flex; align-items: center; justify-content: center; padding: 6px 9px; border-radius: 999px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+    .student-card-top { position: relative; display: grid; justify-items: center; min-height: 58px; margin-bottom: 2px; }
+    .student-avatar { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; color: #ffffff; background: linear-gradient(135deg, var(--student-accent), var(--student-accent-deep, #4f46e5)); box-shadow: inset 0 -8px 16px rgba(255,255,255,0.12), 0 10px 18px rgba(108,61,237,0.12); overflow: hidden; border: 3px solid rgba(255,255,255,0.92); }
+    .student-avatar.small { width: 42px; height: 42px; }
+    .student-avatar-svg { width: 76%; height: 76%; display: block; color: #ffffff; }
+    .student-avatar-svg .avatar-hair { fill: currentColor; opacity: 0.2; }
+    .student-avatar-svg .avatar-line { fill: none; stroke: currentColor; stroke-width: 3.3; stroke-linecap: round; stroke-linejoin: round; }
+    .student-avatar-svg .avatar-fill { fill: currentColor; opacity: 0.16; }
+    .student-badge { display: inline-flex; align-items: center; justify-content: center; padding: 5px 8px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+    .student-card-top .student-badge { position: absolute; top: 0; right: 0; }
     .student-badge.active { background: var(--soft-teal); color: #0f766e; }
     .student-badge.absent { background: var(--soft-red); color: #be123c; }
     .student-badge.passive { background: #f1f5f9; color: #475569; }
-    .student-card-name { margin: 10px 0 2px; font-size: 16px; font-weight: 900; color: var(--navy); line-height: 1.08; word-break: break-word; }
-    .student-card-note { min-height: 0; margin: 0 0 10px; color: #6b7a94; font-size: 11px; font-weight: 800; }
-    .student-status-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
-    .mini-chip-btn { border: none; border-radius: 11px; padding: 8px 6px; font-size: 11px; font-weight: 900; cursor: pointer; transition: 0.16s; }
+    .student-card-name { margin: 8px 0 4px; font-size: 14px; font-weight: 900; color: var(--navy); line-height: 1.08; text-align: center; word-break: break-word; }
+    .student-card-note { min-height: 24px; margin: 0 0 8px; color: #6b7a94; font-size: 10px; font-weight: 800; line-height: 1.25; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .student-status-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .mini-chip-btn { border: none; border-radius: 10px; padding: 7px 4px; font-size: 10px; font-weight: 900; cursor: pointer; transition: 0.16s; }
     .mini-chip-btn.is-active { transform: translateY(-1px); box-shadow: 0 10px 18px rgba(0,0,0,0.1); }
     .mini-chip-btn.status-active { background: #d1fae5; color: #0f766e; }
     .mini-chip-btn.status-absent { background: #ffe4e6; color: #be123c; }
     .mini-chip-btn.status-passive { background: #e2e8f0; color: #475569; }
-    .student-card-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
-    .student-aux-btn { border: none; border-radius: 13px; padding: 8px 10px; cursor: pointer; font-size: 12px; font-weight: 900; background: #f8fafc; color: var(--navy); }
-    .student-aux-btn.danger { background: #fff1f2; color: #e11d48; }
 
     .class-empty-state { display: grid; place-items: center; min-height: 220px; border-radius: 28px; border: 2px dashed rgba(202,184,255,0.9); background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,240,255,0.9)); color: var(--slate); text-align: center; padding: 24px; }
     .class-empty-state strong { display: block; font-family: 'Baloo 2', cursive; font-size: 24px; color: var(--navy); margin-bottom: 8px; }
@@ -535,10 +584,12 @@
       .student-form-actions,
       .wheel-input-row,
       .wheel-editor-actions { grid-template-columns: 1fr; }
+      .student-color-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .student-list-actions { grid-template-columns: 1fr; }
       .wheel-option-item { grid-template-columns: auto minmax(0, 1fr) auto; }
       .wheel-option-item .wheel-inline-btn.danger { grid-column: span 3; }
       .shortcut-popover { right: auto; left: 0; }
-      .student-card-grid { grid-template-columns: repeat(auto-fill, minmax(126px, 1fr)); max-height: none; }
+      .student-card-grid { grid-template-columns: repeat(auto-fill, minmax(102px, 1fr)); max-height: none; }
     }
 
     /* --- MATEMATİK ARAÇLARI CSS --- */
@@ -944,8 +995,21 @@
                   <div class="student-form-card">
                     <p class="section-kicker">Öğrenci Ekle</p>
                     <div class="gender-toggle" id="studentGenderToggle">
-                      <button class="gender-btn is-active" type="button" data-student-gender="girl"><i class="fas fa-person-dress"></i> Kız</button>
-                      <button class="gender-btn" type="button" data-student-gender="boy"><i class="fas fa-person"></i> Erkek</button>
+                      <button class="gender-btn is-active" type="button" data-student-gender="girl"><i class="fas fa-user"></i> Kız</button>
+                      <button class="gender-btn" type="button" data-student-gender="boy"><i class="fas fa-user-tie"></i> Erkek</button>
+                    </div>
+                    <div class="student-color-picker">
+                      <span class="student-color-label">Kart rengi</span>
+                      <div class="student-color-grid">
+                        <button class="student-color-btn is-active" type="button" data-student-color="#9ec5ff" title="Pastel mavi" aria-label="Pastel mavi"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#9fe3b1" title="Pastel yeşil" aria-label="Pastel yeşil"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#ffe38a" title="Pastel sarı" aria-label="Pastel sarı"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#ffb7d5" title="Pastel pembe" aria-label="Pastel pembe"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#c8b5ff" title="Pastel mor" aria-label="Pastel mor"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#737a8e" title="Pastel siyah" aria-label="Pastel siyah"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#ff9d9d" title="Pastel kırmızı" aria-label="Pastel kırmızı"></button>
+                        <button class="student-color-btn" type="button" data-student-color="#f7fafc" title="Pastel beyaz" aria-label="Pastel beyaz"></button>
+                      </div>
                     </div>
                     <input type="text" id="studentNameInput" class="cls-input" placeholder="Öğrenci adı yazın">
                     <div class="student-form-actions">
@@ -959,6 +1023,15 @@
                     <div class="random-action-stack">
                       <button class="btn btn-primary" id="classRandomPickBtn" type="button"><i class="fas fa-wand-magic-sparkles"></i> Rastgele Seç</button>
                     </div>
+                  </div>
+
+                  <div class="student-list-card">
+                    <div class="student-list-head">
+                      <p class="section-kicker">Öğrenci Listesi</p>
+                      <span class="student-list-count" id="studentListCount">0 kayıt</span>
+                    </div>
+                    <div class="student-side-list" id="studentSideList"></div>
+                    <input type="file" id="studentImageInput" accept="image/*" hidden>
                   </div>
                 </aside>
 
@@ -1088,6 +1161,7 @@
         view: 'class',
         currentClassId: '',
         draftGender: 'girl',
+        draftColor: '#9ec5ff',
         selectedStudentId: '',
         highlightStudentId: '',
         classWinnerId: '',
@@ -1144,10 +1218,10 @@
       classTabs: [].slice.call(document.querySelectorAll('[data-class-view]')),
       classViews: { class: document.getElementById('classManagerView'), wheel: document.getElementById('classWheelView') },
       classSelector: document.getElementById('classSelector'), addClassBtn: document.getElementById('addClassBtn'), renameClassBtn: document.getElementById('renameClassBtn'), deleteClassBtn: document.getElementById('deleteClassBtn'),
-      studentGenderBtns: [].slice.call(document.querySelectorAll('[data-student-gender]')), studentNameInput: document.getElementById('studentNameInput'), addStudentBtn: document.getElementById('addStudentBtn'),
+      studentGenderBtns: [].slice.call(document.querySelectorAll('[data-student-gender]')), studentColorBtns: [].slice.call(document.querySelectorAll('[data-student-color]')), studentNameInput: document.getElementById('studentNameInput'), addStudentBtn: document.getElementById('addStudentBtn'),
       resetStatusesBtn: document.getElementById('resetStatusesBtn'), classRandomPickBtn: document.getElementById('classRandomPickBtn'), classRandomHint: document.getElementById('classRandomHint'),
       classTotalCount: document.getElementById('classTotalCount'), classActiveCount: document.getElementById('classActiveCount'), classAbsentCount: document.getElementById('classAbsentCount'), classPassiveCount: document.getElementById('classPassiveCount'),
-      studentCardGrid: document.getElementById('studentCardGrid'), selectedStudentAvatar: document.getElementById('selectedStudentAvatar'), selectedStudentName: document.getElementById('selectedStudentName'), selectedStudentMeta: document.getElementById('selectedStudentMeta'),
+      studentCardGrid: document.getElementById('studentCardGrid'), studentSideList: document.getElementById('studentSideList'), studentListCount: document.getElementById('studentListCount'), studentImageInput: document.getElementById('studentImageInput'), selectedStudentPanel: document.getElementById('selectedStudentPanel'), selectedStudentAvatar: document.getElementById('selectedStudentAvatar'), selectedStudentName: document.getElementById('selectedStudentName'), selectedStudentMeta: document.getElementById('selectedStudentMeta'),
       selectedKeepBtn: document.getElementById('selectedKeepBtn'), selectedPassiveBtn: document.getElementById('selectedPassiveBtn'),
       wheelItemInput: document.getElementById('wheelItemInput'), addWheelItemBtn: document.getElementById('addWheelItemBtn'), wheelBulkInput: document.getElementById('wheelBulkInput'), addWheelBulkBtn: document.getElementById('addWheelBulkBtn'),
       resetWheelOptionsBtn: document.getElementById('resetWheelOptionsBtn'), clearWheelOptionsBtn: document.getElementById('clearWheelOptionsBtn'), wheelOptionList: document.getElementById('wheelOptionList'), wheelItemCount: document.getElementById('wheelItemCount'),
@@ -1263,15 +1337,26 @@
     var CLASSROOM_STORAGE_KEY = 'kemal_teacher_tools_panel_v2';
     var LEGACY_CLASS_STORAGE_KEY = 'kemal_class_data';
     var W_COLORS = ['#ff6052', '#6c3ded', '#16c7b2', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#10b981', '#14b8a6', '#fb7185'];
+    var STUDENT_COLOR_OPTIONS = [
+      { label: 'Mavi', value: '#9ec5ff' },
+      { label: 'Yeşil', value: '#9fe3b1' },
+      { label: 'Sarı', value: '#ffe38a' },
+      { label: 'Pembe', value: '#ffb7d5' },
+      { label: 'Mor', value: '#c8b5ff' },
+      { label: 'Siyah', value: '#737a8e' },
+      { label: 'Kırmızı', value: '#ff9d9d' },
+      { label: 'Beyaz', value: '#f7fafc' }
+    ];
     var CLASS_STATUS_META = {
       active: { label: 'Aktif', note: 'Seçimde', className: 'active' },
       absent: { label: 'Yok', note: 'Yoklamada', className: 'absent' },
       passive: { label: 'Pasif', note: 'Beklemede', className: 'passive' }
     };
     var GENDER_META = {
-      girl: { label: 'Kız öğrenci', icon: 'fa-person-dress', className: 'girl' },
-      boy: { label: 'Erkek öğrenci', icon: 'fa-person', className: 'boy' }
+      girl: { label: 'Kız öğrenci', shortLabel: 'Kız', className: 'girl' },
+      boy: { label: 'Erkek öğrenci', shortLabel: 'Erkek', className: 'boy' }
     };
+    var pendingStudentImageId = '';
 
     function uid(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
     function escapeHtml(value) {
@@ -1279,13 +1364,84 @@
         return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
       });
     }
+    function hexToRgb(hex) {
+      var normalized = String(hex || '').replace('#', '').trim();
+      if(normalized.length === 3) normalized = normalized.split('').map(function(ch) { return ch + ch; }).join('');
+      if(!/^[0-9a-fA-F]{6}$/.test(normalized)) return { r: 158, g: 197, b: 255 };
+      return {
+        r: parseInt(normalized.slice(0, 2), 16),
+        g: parseInt(normalized.slice(2, 4), 16),
+        b: parseInt(normalized.slice(4, 6), 16)
+      };
+    }
+    function rgbaFromHex(hex, alpha) {
+      var rgb = hexToRgb(hex);
+      return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alpha + ')';
+    }
+    function getStudentColorMeta(colorValue) {
+      return STUDENT_COLOR_OPTIONS.find(function(option) { return option.value === colorValue; }) || STUDENT_COLOR_OPTIONS[0];
+    }
+    function getStudentAccentColor(student) {
+      var colorValue = student && student.accentColor ? String(student.accentColor) : '';
+      return getStudentColorMeta(colorValue).value;
+    }
+    function getStudentStyleVars(student) {
+      var accent = getStudentAccentColor(student);
+      var rgb = hexToRgb(accent);
+      var deep = 'rgb(' + Math.max(0, rgb.r - 28) + ',' + Math.max(0, rgb.g - 28) + ',' + Math.max(0, rgb.b - 18) + ')';
+      return '--student-accent:' + accent + ';'
+        + '--student-accent-soft:' + rgbaFromHex(accent, 0.18) + ';'
+        + '--student-accent-strong:' + rgbaFromHex(accent, 0.34) + ';'
+        + '--student-accent-deep:' + deep + ';';
+    }
+    function getStudentImageData(student) {
+      if(!student || !student.imageDataUrl) return '';
+      return /^data:image\//.test(student.imageDataUrl) ? student.imageDataUrl : '';
+    }
+    function getStudentAvatarSvg(gender) {
+      if(gender === 'boy') {
+        return ''
+          + '<svg class="student-avatar-svg" viewBox="0 0 64 64" aria-hidden="true">'
+          + '  <path class="avatar-fill" d="M19 24c1-8 7-13 13-13 6 0 12 5 13 13v4H19z"></path>'
+          + '  <circle class="avatar-line" cx="32" cy="24" r="9.5"></circle>'
+          + '  <path class="avatar-line" d="M22 23c2-6 6-9 10-9 5 0 9 3 10 9"></path>'
+          + '  <path class="avatar-line" d="M19 49c3-8 8-12 13-12s10 4 13 12"></path>'
+          + '  <path class="avatar-line" d="M24 35h16"></path>'
+          + '</svg>';
+      }
+      return ''
+        + '<svg class="student-avatar-svg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '  <path class="avatar-hair" d="M17 26c0-10 6-16 15-16 8 0 15 6 15 16v8h-6v-7c0-5-4-10-9-10-6 0-10 5-10 10v7h-5z"></path>'
+        + '  <circle class="avatar-line" cx="32" cy="24" r="9.5"></circle>'
+        + '  <path class="avatar-line" d="M22 25c2-7 6-11 10-11 5 0 9 4 10 11"></path>'
+        + '  <path class="avatar-line" d="M19 49c3-8 8-12 13-12s10 4 13 12"></path>'
+        + '  <path class="avatar-line" d="M27 35c1.5 2 3 3 5 3 2 0 3.5-1 5-3"></path>'
+        + '</svg>';
+    }
+    function renderStudentAvatarMarkup(student, extraClass) {
+      var imageData = getStudentImageData(student);
+      var className = 'student-avatar' + (extraClass ? ' ' + extraClass : '');
+      if(imageData) {
+        return '<div class="' + className + '"><img src="' + escapeHtml(imageData) + '" alt="' + escapeHtml(student && student.name ? student.name : 'Ogrenci') + '"></div>';
+      }
+      return '<div class="' + className + '">' + getStudentAvatarSvg(student && student.gender === 'boy' ? 'boy' : 'girl') + '</div>';
+    }
     function getDefaultWheelItems() {
       return ['24 ÷ 6', 'Ali', 'Sürpriz Soru', 'Masal Kahramanı', 'Eş Anlamlı Sözcük'].map(function(label, index) {
         return { id: uid('wheel'), label: label, color: W_COLORS[index % W_COLORS.length], enabled: true };
       });
     }
     function createClassroom(name) { return { id: uid('class'), name: name, students: [] }; }
-    function createStudent(name, gender) { return { id: uid('student'), name: name, gender: gender || 'girl', status: 'active' }; }
+    function createStudent(name, gender, accentColor, imageDataUrl) {
+      return {
+        id: uid('student'),
+        name: name,
+        gender: gender || 'girl',
+        status: 'active',
+        accentColor: getStudentColorMeta(accentColor).value,
+        imageDataUrl: imageDataUrl || ''
+      };
+    }
     function getCurrentClassroom() {
       var found = null;
       for(var i = 0; i < S.classroom.classes.length; i += 1) {
@@ -1340,13 +1496,13 @@
     function playStudentPickSound(step, totalSteps) {
       if(!S.alarmOn) return;
       var ratio = totalSteps > 0 ? step / totalSteps : 0;
-      beep(420 + ratio * 260, 0.045, 0.035);
+      beep(520 + ratio * 240, 0.04, 0.04);
     }
     function playStudentWinSound() {
       if(!S.alarmOn) return;
-      beep(740, 0.08, 0.08);
-      setTimeout(function() { beep(988, 0.12, 0.09); }, 120);
-      setTimeout(function() { beep(1244, 0.18, 0.11); }, 260);
+      beep(784, 0.06, 0.08);
+      setTimeout(function() { beep(1046, 0.1, 0.09); }, 90);
+      setTimeout(function() { beep(1318, 0.15, 0.11); }, 200);
     }
     function playWheelTickSound() {
       if(!S.alarmOn) return;
@@ -1372,7 +1528,9 @@
               id: String(student && student.id ? student.id : uid('student')),
               name: student && student.name ? String(student.name).trim() : 'Öğrenci ' + (index + 1),
               gender: index % 2 === 0 ? 'girl' : 'boy',
-              status: student && ['active', 'absent', 'passive'].indexOf(student.status) > -1 ? student.status : 'active'
+              status: student && ['active', 'absent', 'passive'].indexOf(student.status) > -1 ? student.status : 'active',
+              accentColor: getStudentColorMeta(student && student.accentColor).value,
+              imageDataUrl: student && /^data:image\//.test(student.imageDataUrl || '') ? student.imageDataUrl : ''
             };
           })
         });
@@ -1388,7 +1546,9 @@
             id: String(student && student.id ? student.id : uid('student')),
             name: name || ('Öğrenci ' + (studentIndex + 1)),
             gender: student && student.gender === 'boy' ? 'boy' : 'girl',
-            status: student && ['active', 'absent', 'passive'].indexOf(student.status) > -1 ? student.status : 'active'
+            status: student && ['active', 'absent', 'passive'].indexOf(student.status) > -1 ? student.status : 'active',
+            accentColor: getStudentColorMeta(student && student.accentColor).value,
+            imageDataUrl: student && /^data:image\//.test(student.imageDataUrl || '') ? student.imageDataUrl : ''
           };
         }) : [];
         return {
@@ -1417,6 +1577,7 @@
         view: source.view === 'wheel' ? 'wheel' : 'class',
         currentClassId: currentClassId,
         draftGender: source.draftGender === 'boy' ? 'boy' : 'girl',
+        draftColor: getStudentColorMeta(source.draftColor).value,
         selectedStudentId: String(source.selectedStudentId || ''),
         highlightStudentId: '',
         classWinnerId: String(source.classWinnerId || ''),
@@ -1434,6 +1595,7 @@
           view: S.classroom.view,
           currentClassId: S.classroom.currentClassId,
           draftGender: S.classroom.draftGender,
+          draftColor: S.classroom.draftColor,
           selectedStudentId: S.classroom.selectedStudentId,
           classWinnerId: S.classroom.classWinnerId,
           wheelRotation: S.classroom.wheelRotation,
@@ -1493,7 +1655,10 @@
     function renderSelectedStudent() {
       var current = getCurrentClassroom();
       var student = getStudentById(S.classroom.selectedStudentId || S.classroom.classWinnerId);
+      if(E.selectedStudentPanel) E.selectedStudentPanel.classList.toggle('is-picking', !!S.classroom.isPickingStudent);
       if(!student) {
+        if(E.selectedStudentPanel) E.selectedStudentPanel.removeAttribute('style');
+        if(E.selectedStudentAvatar) E.selectedStudentAvatar.removeAttribute('style');
         if(E.selectedStudentAvatar) E.selectedStudentAvatar.innerHTML = '<i class="fas fa-star"></i>';
         if(E.selectedStudentName) E.selectedStudentName.textContent = 'Henüz seçim yapılmadı';
         if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = current ? current.name + ' sınıfı hazır.' : 'Bir sınıf seçin.';
@@ -1503,7 +1668,13 @@
       }
       var gender = GENDER_META[student.gender] || GENDER_META.girl;
       var statusMeta = CLASS_STATUS_META[student.status] || CLASS_STATUS_META.active;
-      if(E.selectedStudentAvatar) E.selectedStudentAvatar.innerHTML = '<i class="fas ' + gender.icon + '"></i>';
+      if(E.selectedStudentPanel) E.selectedStudentPanel.setAttribute('style', getStudentStyleVars(student));
+      if(E.selectedStudentAvatar) {
+        E.selectedStudentAvatar.setAttribute('style', getStudentStyleVars(student));
+        E.selectedStudentAvatar.innerHTML = getStudentImageData(student)
+          ? '<img src="' + escapeHtml(getStudentImageData(student)) + '" alt="' + escapeHtml(student.name) + '">'
+          : getStudentAvatarSvg(student.gender);
+      }
       if(E.selectedStudentName) E.selectedStudentName.textContent = student.name;
       if(E.selectedStudentMeta) E.selectedStudentMeta.textContent = (current ? current.name : 'Sınıf') + ' • ' + statusMeta.label + ' • ' + gender.label;
       if(E.selectedKeepBtn) { E.selectedKeepBtn.disabled = false; E.selectedKeepBtn.textContent = student.status === 'active' ? 'Aktif Kalsın' : 'Aktif Yap'; }
@@ -1511,6 +1682,31 @@
         E.selectedPassiveBtn.disabled = false;
         E.selectedPassiveBtn.innerHTML = student.status === 'passive' ? '<i class="fas fa-play"></i> Aktife Dön' : '<i class="fas fa-pause"></i> Bu Tur Pasif Yap';
       }
+    }
+    function syncClassRandomUi() {
+      if(E.classRandomPickBtn) {
+        E.classRandomPickBtn.disabled = S.classroom.isPickingStudent || getEligibleStudents().length === 0;
+        E.classRandomPickBtn.innerHTML = S.classroom.isPickingStudent
+          ? '<i class="fas fa-bolt"></i> Seçiliyor...'
+          : '<i class="fas fa-wand-magic-sparkles"></i> Rastgele Seç';
+      }
+      if(E.selectedStudentPanel) E.selectedStudentPanel.classList.toggle('is-picking', !!S.classroom.isPickingStudent);
+    }
+    function setStudentCardHighlight(studentId) {
+      if(!E.studentCardGrid) return;
+      [].slice.call(E.studentCardGrid.querySelectorAll('[data-student-card-id]')).forEach(function(node) {
+        var isCurrent = !!studentId && node.getAttribute('data-student-card-id') === studentId;
+        node.classList.toggle('is-highlighted', isCurrent);
+      });
+    }
+    function pulseSelectedStudentPanel() {
+      if(!E.selectedStudentPanel) return;
+      E.selectedStudentPanel.classList.remove('is-winner');
+      void E.selectedStudentPanel.offsetWidth;
+      E.selectedStudentPanel.classList.add('is-winner');
+      setTimeout(function() {
+        if(E.selectedStudentPanel) E.selectedStudentPanel.classList.remove('is-winner');
+      }, 620);
     }
     function renderStudentCards() {
       if(!E.studentCardGrid) return;
@@ -1521,30 +1717,60 @@
       }
       var html = current.students.map(function(student) {
         var statusMeta = CLASS_STATUS_META[student.status] || CLASS_STATUS_META.active;
-        var gender = GENDER_META[student.gender] || GENDER_META.girl;
         var highlightClass = student.id === S.classroom.highlightStudentId ? ' is-highlighted' : '';
         var selectedClass = student.id === S.classroom.selectedStudentId ? ' is-selected' : '';
+        var winnerClass = student.id === S.classroom.classWinnerId ? ' is-winner' : '';
         return ''
-          + '<article class="student-card status-' + statusMeta.className + highlightClass + selectedClass + '" data-student-card-id="' + escapeHtml(student.id) + '">'
-          + '  <div class="student-card-top">'
-          + '    <div class="student-avatar ' + gender.className + '"><i class="fas ' + gender.icon + '"></i></div>'
-          + '    <span class="student-badge ' + statusMeta.className + '">' + statusMeta.label + '</span>'
-          + '  </div>'
-          + '  <h3 class="student-card-name">' + escapeHtml(student.name) + '</h3>'
-          + '  <p class="student-card-note">' + escapeHtml(statusMeta.note) + '</p>'
-          + '  <div class="student-status-actions">'
-          + '    <button class="mini-chip-btn status-active' + (student.status === 'active' ? ' is-active' : '') + '" type="button" data-action="status" data-status="active" data-student-id="' + escapeHtml(student.id) + '">Var</button>'
-          + '    <button class="mini-chip-btn status-absent' + (student.status === 'absent' ? ' is-active' : '') + '" type="button" data-action="status" data-status="absent" data-student-id="' + escapeHtml(student.id) + '">Yok</button>'
-          + '    <button class="mini-chip-btn status-passive' + (student.status === 'passive' ? ' is-active' : '') + '" type="button" data-action="status" data-status="passive" data-student-id="' + escapeHtml(student.id) + '">Pasif</button>'
-          + '  </div>'
-          + '  <div class="student-card-actions">'
-          + '    <button class="student-aux-btn" type="button" data-action="edit" data-student-id="' + escapeHtml(student.id) + '"><i class="fas fa-pen"></i> Düzenle</button>'
-          + '    <button class="student-aux-btn danger" type="button" data-action="delete" data-student-id="' + escapeHtml(student.id) + '"><i class="fas fa-trash"></i> Sil</button>'
+          + '<article class="student-card status-' + statusMeta.className + highlightClass + selectedClass + winnerClass + '" data-student-card-id="' + escapeHtml(student.id) + '" style="' + escapeHtml(getStudentStyleVars(student)) + '">'
+          + '  <div class="student-card-body">'
+          + '    <div class="student-card-top">'
+          +        renderStudentAvatarMarkup(student, '')
+          + '      <span class="student-badge ' + statusMeta.className + '">' + statusMeta.label + '</span>'
+          + '    </div>'
+          + '    <h3 class="student-card-name">' + escapeHtml(student.name) + '</h3>'
+          + '    <p class="student-card-note">' + escapeHtml(statusMeta.note) + '</p>'
+          + '    <div class="student-status-actions">'
+          + '      <button class="mini-chip-btn status-active' + (student.status === 'active' ? ' is-active' : '') + '" type="button" data-action="status" data-status="active" data-student-id="' + escapeHtml(student.id) + '">Var</button>'
+          + '      <button class="mini-chip-btn status-absent' + (student.status === 'absent' ? ' is-active' : '') + '" type="button" data-action="status" data-status="absent" data-student-id="' + escapeHtml(student.id) + '">Yok</button>'
+          + '      <button class="mini-chip-btn status-passive' + (student.status === 'passive' ? ' is-active' : '') + '" type="button" data-action="status" data-status="passive" data-student-id="' + escapeHtml(student.id) + '">Pasif</button>'
+          + '    </div>'
           + '  </div>'
           + '</article>';
       }).join('');
       E.studentCardGrid.innerHTML = html;
-      if(E.classRandomPickBtn) E.classRandomPickBtn.disabled = S.classroom.isPickingStudent || getEligibleStudents().length === 0;
+      syncClassRandomUi();
+    }
+    function renderStudentList() {
+      if(!E.studentSideList) return;
+      var current = getCurrentClassroom();
+      if(E.studentListCount) E.studentListCount.textContent = (current ? current.students.length : 0) + ' kayıt';
+      if(!current || current.students.length === 0) {
+        E.studentSideList.innerHTML = '<div class="class-empty-state" style="min-height:140px;"><div><strong>Liste hazır</strong>Öğrenciler burada yönetilir.</div></div>';
+        return;
+      }
+      E.studentSideList.innerHTML = current.students.map(function(student) {
+        var statusMeta = CLASS_STATUS_META[student.status] || CLASS_STATUS_META.active;
+        var gender = GENDER_META[student.gender] || GENDER_META.girl;
+        var colorMeta = getStudentColorMeta(getStudentAccentColor(student));
+        return ''
+          + '<div class="student-list-item" style="' + escapeHtml(getStudentStyleVars(student)) + '">'
+          + '  <div class="student-list-main">'
+          +        renderStudentAvatarMarkup(student, 'small')
+          + '    <div class="student-list-meta">'
+          + '      <strong class="student-list-name">' + escapeHtml(student.name) + '</strong>'
+          + '      <div class="student-list-subline">'
+          + '        <span class="student-list-pill status-' + statusMeta.className + '">' + escapeHtml(statusMeta.label) + '</span>'
+          + '        <span class="student-list-pill color">' + escapeHtml(gender.shortLabel) + ' • ' + escapeHtml(colorMeta.label) + '</span>'
+          + '      </div>'
+          + '    </div>'
+          + '  </div>'
+          + '  <div class="student-list-actions">'
+          + '    <button class="student-list-btn" type="button" data-list-action="edit" data-student-id="' + escapeHtml(student.id) + '">Düzenle</button>'
+          + '    <button class="student-list-btn image" type="button" data-list-action="image" data-student-id="' + escapeHtml(student.id) + '">Görsel</button>'
+          + '    <button class="student-list-btn danger" type="button" data-list-action="delete" data-student-id="' + escapeHtml(student.id) + '">Sil</button>'
+          + '  </div>'
+          + '</div>';
+      }).join('');
     }
     function renderWheelOptionList() {
       if(!E.wheelOptionList) return;
@@ -1629,10 +1855,12 @@
       renderClassStats();
       renderSelectedStudent();
       renderStudentCards();
+      renderStudentList();
       renderWheelOptionList();
       renderWheelResult();
       drawClassOptionWheel();
       E.studentGenderBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.studentGender === S.classroom.draftGender); });
+      E.studentColorBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.studentColor === S.classroom.draftColor); });
     }
 
     function setClassroomView(view) {
@@ -1677,6 +1905,7 @@
     function changeCurrentClassroom(classId) {
       S.classroom.currentClassId = classId;
       S.classroom.selectedStudentId = '';
+      S.classroom.highlightStudentId = '';
       S.classroom.classWinnerId = '';
       commitClassroomChanges();
     }
@@ -1685,7 +1914,7 @@
       if(!current || !E.studentNameInput) return;
       var name = E.studentNameInput.value.trim();
       if(!name) return;
-      current.students.push(createStudent(name, S.classroom.draftGender));
+      current.students.push(createStudent(name, S.classroom.draftGender, S.classroom.draftColor, ''));
       E.studentNameInput.value = '';
       S.classroom.selectedStudentId = '';
       commitClassroomChanges();
@@ -1699,6 +1928,41 @@
       student.name = nextName.trim();
       commitClassroomChanges();
     }
+    function updateStudentImage(studentId, imageDataUrl) {
+      var student = getStudentById(studentId);
+      if(!student) return;
+      student.imageDataUrl = imageDataUrl || '';
+      commitClassroomChanges();
+    }
+    function readStudentImageFile(file, callback) {
+      if(!file || !callback) return;
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var img = new Image();
+        img.onload = function() {
+          var side = Math.min(img.width, img.height);
+          var sx = Math.max(0, (img.width - side) / 2);
+          var sy = Math.max(0, (img.height - side) / 2);
+          var canvas = document.createElement('canvas');
+          canvas.width = 320;
+          canvas.height = 320;
+          var ctx = canvas.getContext('2d');
+          if(!ctx) return callback('');
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+          callback(canvas.toDataURL('image/jpeg', 0.88));
+        };
+        img.onerror = function() { callback(''); };
+        img.src = String(evt.target && evt.target.result ? evt.target.result : '');
+      };
+      reader.onerror = function() { callback(''); };
+      reader.readAsDataURL(file);
+    }
+    function openStudentImagePicker(studentId) {
+      if(!E.studentImageInput || !getStudentById(studentId)) return;
+      pendingStudentImageId = studentId;
+      E.studentImageInput.value = '';
+      E.studentImageInput.click();
+    }
     function deleteStudentFromCurrentClassroom(studentId) {
       var current = getCurrentClassroom();
       if(!current) return;
@@ -1707,6 +1971,7 @@
       if(!confirm('"' + student.name + '" öğrencisi silinsin mi?')) return;
       current.students = current.students.filter(function(item) { return item.id !== studentId; });
       if(S.classroom.selectedStudentId === studentId) S.classroom.selectedStudentId = '';
+      if(S.classroom.highlightStudentId === studentId) S.classroom.highlightStudentId = '';
       if(S.classroom.classWinnerId === studentId) S.classroom.classWinnerId = '';
       commitClassroomChanges();
     }
@@ -1751,33 +2016,53 @@
       if(S.classroom.isPickingStudent) return;
       if(eligible.length === 0) { alert('Seçim için en az bir aktif öğrenci gerekiyor.'); return; }
       S.classroom.isPickingStudent = true;
+      S.classroom.selectedStudentId = '';
       S.classroom.classWinnerId = '';
       renderClassroomWorkspace();
       var sequence = [];
-      var totalSteps = Math.max(eligible.length * 2, 15) + Math.floor(Math.random() * 6);
+      var totalSteps = Math.min(Math.max(eligible.length + 6, 10), 16);
+      var winner = eligible[Math.floor(Math.random() * eligible.length)];
       var lastId = '';
-      for(var i = 0; i < totalSteps; i += 1) {
+      for(var i = 0; i < totalSteps - 1; i += 1) {
         var pool = eligible.filter(function(student) { return eligible.length === 1 || student.id !== lastId; });
         var picked = pool[Math.floor(Math.random() * pool.length)];
         sequence.push(picked);
         lastId = picked.id;
       }
-      function advance(step) {
-        var student = sequence[step];
-        S.classroom.highlightStudentId = student.id;
-        renderStudentCards();
-        playStudentPickSound(step, totalSteps);
-        if(step < totalSteps - 1) {
-          setTimeout(function() { advance(step + 1); }, 65 + step * 18);
+      if(sequence.length && eligible.length > 1 && sequence[sequence.length - 1].id === winner.id) {
+        var altPool = eligible.filter(function(student) { return student.id !== winner.id; });
+        sequence[sequence.length - 1] = altPool[Math.floor(Math.random() * altPool.length)];
+      }
+      sequence.push(winner);
+      var duration = Math.min(2800, 1700 + totalSteps * 55 + Math.random() * 180);
+      var startTime = null;
+      var lastStep = -1;
+      function animate(now) {
+        if(startTime === null) startTime = now;
+        var progress = Math.min(1, (now - startTime) / duration);
+        var eased = 1 - Math.pow(1 - progress, 2.6);
+        var step = Math.min(totalSteps - 1, Math.floor(eased * totalSteps));
+        if(step !== lastStep) {
+          lastStep = step;
+          var student = sequence[step];
+          S.classroom.highlightStudentId = student.id;
+          setStudentCardHighlight(student.id);
+          playStudentPickSound(step, totalSteps);
+        }
+        if(progress < 1) {
+          requestAnimationFrame(animate);
           return;
         }
+        var student = sequence[totalSteps - 1];
         S.classroom.highlightStudentId = '';
+        setStudentCardHighlight('');
         S.classroom.classWinnerId = student.id;
         S.classroom.selectedStudentId = student.id;
         S.classroom.isPickingStudent = false;
         saveClassroomState();
         renderClassroomWorkspace();
         playStudentWinSound();
+        pulseSelectedStudentPanel();
         konfetiBaslat();
         scrollStudentCardIntoView(student.id);
         var winnerNameEl = document.getElementById('winnerModalName');
@@ -1785,7 +2070,7 @@
         if(winnerNameEl) winnerNameEl.textContent = student.name;
         if(winnerModalEl) winnerModalEl.classList.add('show');
       }
-      advance(0);
+      requestAnimationFrame(animate);
     }
 
     function addWheelItem(label) {
@@ -1909,6 +2194,13 @@
         renderClassroomWorkspace();
       });
     });
+    E.studentColorBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        S.classroom.draftColor = getStudentColorMeta(btn.dataset.studentColor).value;
+        saveClassroomState();
+        renderClassroomWorkspace();
+      });
+    });
     if(E.studentNameInput) E.studentNameInput.addEventListener('keydown', function(evt) {
       if(evt.key === 'Enter') { evt.preventDefault(); addStudentToCurrentClassroom(); }
     });
@@ -1923,8 +2215,28 @@
       var studentId = btn.getAttribute('data-student-id');
       var action = btn.getAttribute('data-action');
       if(action === 'status') setStudentStatus(studentId, btn.getAttribute('data-status'));
+    });
+    if(E.studentSideList) E.studentSideList.addEventListener('click', function(evt) {
+      var btn = evt.target.closest('[data-list-action]');
+      if(!btn) return;
+      var studentId = btn.getAttribute('data-student-id');
+      var action = btn.getAttribute('data-list-action');
       if(action === 'edit') editStudentName(studentId);
+      if(action === 'image') openStudentImagePicker(studentId);
       if(action === 'delete') deleteStudentFromCurrentClassroom(studentId);
+    });
+    if(E.studentImageInput) E.studentImageInput.addEventListener('change', function(evt) {
+      var file = evt.target && evt.target.files ? evt.target.files[0] : null;
+      var studentId = pendingStudentImageId;
+      pendingStudentImageId = '';
+      if(!file || !studentId) return;
+      readStudentImageFile(file, function(imageDataUrl) {
+        if(!imageDataUrl) {
+          alert('Görsel yüklenemedi. Lütfen başka bir dosya deneyin.');
+          return;
+        }
+        updateStudentImage(studentId, imageDataUrl);
+      });
     });
     if(E.wheelItemInput) E.wheelItemInput.addEventListener('keydown', function(evt) {
       if(evt.key === 'Enter') {

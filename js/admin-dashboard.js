@@ -35,6 +35,12 @@
     adminUsersLoading: false,
     adminUsersError: '',
     adminUserEditingEmail: '',
+    adminActivity: {
+      loading: false,
+      error: '',
+      events: [],
+      loaded: false,
+    },
     analytics: {
       days: 7,
       loadedDays: 0,
@@ -95,6 +101,58 @@
     } catch (error) {
       return String(value || '-');
     }
+  }
+
+  function formatRelativeTime(value) {
+    const time = new Date(value).getTime();
+    if (!Number.isFinite(time)) {
+      return 'Tarih yok';
+    }
+    const diffMs = Date.now() - time;
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    if (diffMs < minute) {
+      return 'Az önce';
+    }
+    if (diffMs < hour) {
+      return Math.max(1, Math.round(diffMs / minute)) + ' dk önce';
+    }
+    if (diffMs < day) {
+      return Math.max(1, Math.round(diffMs / hour)) + ' sa önce';
+    }
+    return Math.max(1, Math.round(diffMs / day)) + ' gün önce';
+  }
+
+  function getActivityAreaMeta(area) {
+    const map = {
+      main: { label: 'Ana Admin', em: '⚙️' },
+      reading: { label: 'Okuma Admin', em: '📚' },
+      exam: { label: 'Sınav Admin', em: '🧪' },
+      documents: { label: 'Doküman Yönetimi', em: '📄' },
+      content: { label: 'İçerik Yönetimi', em: '🧩' },
+    };
+    return map[area] || { label: area || 'Bilinmeyen Alan', em: '•' };
+  }
+
+  function getSubAdminActivityEvents() {
+    return (state.adminActivity.events || []).filter(function(event) {
+      return !event.isOwner;
+    });
+  }
+
+  function isRecentActivity(event) {
+    const time = new Date(event && event.createdAt ? event.createdAt : '').getTime();
+    return Number.isFinite(time) && Date.now() - time <= 24 * 60 * 60 * 1000;
+  }
+
+  function getRecentActivityCounts() {
+    return getSubAdminActivityEvents().filter(isRecentActivity).reduce(function(map, event) {
+      const area = event.area || 'main';
+      map[area] = (map[area] || 0) + 1;
+      map.all = (map.all || 0) + 1;
+      return map;
+    }, {});
   }
 
   function formatPathLabel(path) {
@@ -286,6 +344,152 @@
     }
   }
 
+  function appendActivityDot(target, count) {
+    if (!target || !count) {
+      return;
+    }
+    const dot = document.createElement('span');
+    dot.className = 'activity-dot';
+    dot.dataset.adminActivityDot = 'true';
+    dot.title = 'Son 24 saatte ' + count + ' yeni alt admin girişi var';
+    dot.textContent = '*';
+    target.appendChild(dot);
+  }
+
+  function applyActivityMarkers() {
+    document.querySelectorAll('[data-admin-activity-dot]').forEach(function(node) {
+      node.remove();
+    });
+    if (!isOwnerUser()) {
+      return;
+    }
+
+    const counts = getRecentActivityCounts();
+    const areaMap = {
+      reading: ['quick-okuma-editor', 'quick-okuma-sonuclari', 'quick-okuma-karne'],
+      exam: ['quick-sinav-admin'],
+      documents: ['quick-dokuman-yonetimi'],
+      content: ['quick-menu-yonetimi', 'quick-calisma-kagidi'],
+      main: ['quick-adminler', 'btn-adminler'],
+    };
+
+    Object.keys(areaMap).forEach(function(area) {
+      const count = counts[area] || 0;
+      areaMap[area].forEach(function(id) {
+        appendActivityDot(document.getElementById(id), count);
+      });
+    });
+
+    [
+      { area: 'reading', selector: '[data-admin-group="reading-admin"] .admin-nav-group-link .copy strong' },
+      { area: 'exam', selector: '[data-admin-group="exam-admin"] .admin-nav-group-link .copy strong' },
+      { area: 'documents', selector: '[data-admin-group="documents-admin"] .admin-nav-group-link .copy strong' },
+      { area: 'content', selector: '[data-admin-group="menu-admin"] .admin-nav-group-link .copy strong' },
+      { area: 'content', selector: '[data-admin-group="worksheet-admin"] .admin-nav-group-link .copy strong' },
+    ].forEach(function(item) {
+      appendActivityDot(document.querySelector(item.selector), counts[item.area] || 0);
+    });
+  }
+
+  function buildActivityRowsHtml(events, limit) {
+    const rows = events.slice(0, limit || 8);
+    if (!rows.length) {
+      return '<div class="analytics-empty">Henüz alt admin girişi kaydedilmedi.</div>';
+    }
+    return rows.map(function(event) {
+      const meta = getActivityAreaMeta(event.area);
+      return (
+        '<div class="activity-row">' +
+          '<div class="activity-main">' +
+            '<span class="activity-area-pill">' + meta.em + ' ' + escHtml(meta.label) + '</span>' +
+            '<strong>' + escHtml(event.displayName || event.email) + '</strong>' +
+            '<small>' + escHtml(event.email) + (event.path ? ' · ' + escHtml(event.path) : '') + '</small>' +
+          '</div>' +
+          '<div class="activity-time">' +
+            '<strong>' + escHtml(formatRelativeTime(event.createdAt)) + '</strong>' +
+            '<span>' + escHtml(formatDateTime(event.createdAt)) + '</span>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderAdminActivity() {
+    const overviewCard = document.getElementById('overviewActivityCard');
+    const overviewSummary = document.getElementById('overviewActivitySummary');
+    const overviewList = document.getElementById('overviewActivityList');
+    const adminSummary = document.getElementById('adminActivitySummary');
+    const adminList = document.getElementById('adminActivityList');
+    const adminStatus = document.getElementById('adminActivityStatus');
+
+    [overviewCard].forEach(function(el) {
+      if (el) {
+        el.style.display = isOwnerUser() ? '' : 'none';
+      }
+    });
+
+    applyActivityMarkers();
+
+    if (!isOwnerUser()) {
+      return;
+    }
+
+    const activity = state.adminActivity;
+    const events = getSubAdminActivityEvents();
+    const recentCounts = getRecentActivityCounts();
+
+    const summaryHtml = [
+      { key: 'all', label: 'Son 24 Saat', em: '⏱️' },
+      { key: 'reading', label: 'Okuma', em: '📚' },
+      { key: 'exam', label: 'Sınav', em: '🧪' },
+      { key: 'documents', label: 'Doküman', em: '📄' },
+    ].map(function(item) {
+      return (
+        '<div class="activity-summary-card">' +
+          '<span>' + item.em + '</span>' +
+          '<strong>' + String(recentCounts[item.key] || 0) + '</strong>' +
+          '<small>' + item.label + '</small>' +
+        '</div>'
+      );
+    }).join('');
+
+    if (overviewSummary) {
+      overviewSummary.innerHTML = summaryHtml;
+    }
+    if (adminSummary) {
+      adminSummary.innerHTML = summaryHtml;
+    }
+
+    if (activity.loading && !activity.loaded) {
+      if (overviewList) {
+        overviewList.innerHTML = '<div class="analytics-empty">Alt admin giriş hareketleri yükleniyor…</div>';
+      }
+      if (adminList) {
+        adminList.innerHTML = '<div class="analytics-empty">Alt admin giriş hareketleri yükleniyor…</div>';
+      }
+    } else if (activity.error) {
+      const message = '<div class="analytics-empty">' + escHtml(activity.error) + '</div>';
+      if (overviewList) {
+        overviewList.innerHTML = message;
+      }
+      if (adminList) {
+        adminList.innerHTML = message;
+      }
+    } else {
+      if (overviewList) {
+        overviewList.innerHTML = buildActivityRowsHtml(events, 5);
+      }
+      if (adminList) {
+        adminList.innerHTML = buildActivityRowsHtml(events, 12);
+      }
+    }
+
+    if (adminStatus) {
+      adminStatus.style.display = activity.error ? 'block' : 'none';
+      adminStatus.textContent = activity.error || '';
+    }
+  }
+
   function applyAccessControl() {
     const showSiteDashboard = canAccess('site_admin_dashboard');
     const ownerMode = isOwnerUser();
@@ -317,6 +521,7 @@
       state.currentPanel = 'overview';
     }
     renderAccessSummary();
+    renderAdminActivity();
   }
 
   function updateStats() {
@@ -405,6 +610,7 @@
     renderCurrentPanel();
     if (id === 'adminler') {
       loadAdminUsers(false);
+      loadAdminActivity(false);
     }
     if (id === 'analytics') {
       loadAnalytics(false);
@@ -716,6 +922,9 @@
 
     listEl.innerHTML = rows.length
       ? rows.map(function(row) {
+          const lastEvent = getSubAdminActivityEvents().find(function(event) {
+            return event.email === row.email;
+          });
           const permissionChips = row.isOwner
             ? '<span class="perm-chip">👑 Tüm Supabase panelleri</span>'
             : Object.keys(row.permissions || {}).filter(function(key) {
@@ -739,6 +948,11 @@
                 '</div>' +
               '</div>' +
               '<div class="perm-chip-wrap">' + permissionChips + '</div>' +
+              (!row.isOwner
+                ? '<div class="admin-last-login">' + (lastEvent
+                    ? 'Son giriş: <strong>' + escHtml(formatRelativeTime(lastEvent.createdAt)) + '</strong> · ' + escHtml(getActivityAreaMeta(lastEvent.area).label)
+                    : 'Henüz giriş kaydı yok') + '</div>'
+                : '') +
               '<div class="admin-row-actions">' +
                 (row.isOwner
                   ? '<button class="btn-secondary" onclick="resetAdminMemberForm()">Ana yönetici hesabı</button>'
@@ -775,6 +989,40 @@
       state.adminUsersError = window.kemalAdminAuth.humanizeError(error);
     } finally {
       state.adminUsersLoading = false;
+      renderAdminUsersPanel();
+    }
+  }
+
+  async function loadAdminActivity(force) {
+    if (!isOwnerUser()) {
+      state.adminActivity.events = [];
+      state.adminActivity.error = '';
+      state.adminActivity.loaded = true;
+      renderAdminActivity();
+      return;
+    }
+    if (state.adminActivity.loading && !force) {
+      return;
+    }
+    if (state.adminActivity.loaded && !force) {
+      renderAdminActivity();
+      return;
+    }
+
+    state.adminActivity.loading = true;
+    state.adminActivity.error = '';
+    renderAdminActivity();
+
+    try {
+      state.adminActivity.events = await window.kemalAdminAuth.listAdminLoginEvents({ limit: 120 });
+      state.adminActivity.loaded = true;
+    } catch (error) {
+      state.adminActivity.events = [];
+      state.adminActivity.loaded = true;
+      state.adminActivity.error = window.kemalAdminAuth.humanizeError(error);
+    } finally {
+      state.adminActivity.loading = false;
+      renderAdminActivity();
       renderAdminUsersPanel();
     }
   }
@@ -1011,6 +1259,7 @@
     switch (state.currentPanel) {
       case 'adminler':
         renderAdminUsersPanel();
+        renderAdminActivity();
         break;
       case 'analytics':
         renderAnalytics();
@@ -1037,6 +1286,7 @@
         renderMenuler();
         break;
       default:
+        renderAdminActivity();
         renderDuyurular();
         renderBadges();
         renderHizli();
@@ -1063,7 +1313,10 @@
       document.getElementById('adminEmailDisplay').value = '';
     }
     if (isOwnerUser()) {
-      await loadAdminUsers(false);
+      await Promise.all([
+        loadAdminUsers(false),
+        loadAdminActivity(false),
+      ]);
     }
     showPanel(getRequestedPanelFromHash() || 'overview');
   }

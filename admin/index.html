@@ -559,6 +559,129 @@
       background:#FEE2E2;
       color:#DC2626;
     }
+    .activity-dot {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:20px;
+      height:20px;
+      margin-left:auto;
+      border-radius:999px;
+      background:#FFF7ED;
+      color:#EA580C;
+      border:1px solid #FED7AA;
+      font-size:16px;
+      line-height:1;
+      font-weight:900;
+      box-shadow:0 6px 16px rgba(234,88,12,.14);
+    }
+    .admin-nav-group-link .copy strong .activity-dot {
+      width:18px;
+      height:18px;
+      margin-left:7px;
+      vertical-align:middle;
+    }
+    .activity-summary-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .activity-summary-card {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:14px 16px;
+      border-radius:16px;
+      border:2px solid var(--border);
+      background:#FAFAFF;
+    }
+    .activity-summary-card span {
+      font-size:22px;
+    }
+    .activity-summary-card strong {
+      font-family:'Fredoka','Nunito',sans-serif;
+      font-size:28px;
+      color:var(--purple);
+      line-height:1;
+    }
+    .activity-summary-card small {
+      font-size:12px;
+      color:var(--slate);
+      font-weight:800;
+    }
+    .activity-list {
+      display:grid;
+      gap:10px;
+    }
+    .activity-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border:2px solid var(--border);
+      border-radius:16px;
+      background:#FAFAFF;
+    }
+    .activity-main {
+      min-width:0;
+    }
+    .activity-main strong {
+      display:block;
+      margin-top:8px;
+      color:var(--navy);
+      font-size:14px;
+      font-weight:900;
+    }
+    .activity-main small {
+      display:block;
+      margin-top:4px;
+      color:var(--slate);
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:520px;
+    }
+    .activity-area-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 10px;
+      border-radius:999px;
+      background:#F0EBFF;
+      color:var(--purple);
+      font-size:11px;
+      font-weight:900;
+    }
+    .activity-time {
+      text-align:right;
+      flex-shrink:0;
+      color:var(--slate);
+    }
+    .activity-time strong {
+      display:block;
+      color:var(--purple);
+      font-size:13px;
+      font-weight:900;
+    }
+    .activity-time span {
+      display:block;
+      margin-top:4px;
+      font-size:12px;
+      font-weight:700;
+    }
+    .admin-last-login {
+      margin-top:10px;
+      color:var(--slate);
+      font-size:12px;
+      font-weight:800;
+    }
+    .admin-last-login strong {
+      color:var(--purple);
+    }
     .admin-row-actions {
       display:flex;
       gap:8px;
@@ -666,6 +789,8 @@
       .stats-row { grid-template-columns:1fr 1fr; }
       .form-row, .form-row-3 { grid-template-columns:1fr; }
       .admin-grid, .admin-permission-grid, .admin-permission-section-grid, .access-summary-grid { grid-template-columns:1fr; }
+      .activity-row { align-items:flex-start; flex-direction:column; }
+      .activity-time { text-align:left; }
     }
     @media (max-width:640px) {
       .main-area { padding:16px; }
@@ -931,6 +1056,14 @@
             <label style="margin-bottom:10px;">Bu hesap için açık yönetim panelleri</label>
             <div class="perm-chip-wrap" id="accessPermissionChips"></div>
           </div>
+        </div>
+        <div class="card" id="overviewActivityCard" style="display:none;">
+          <div class="card-title">🕒 Alt Admin Girişleri</div>
+          <p style="font-size:14px;color:var(--slate);line-height:1.7;margin-bottom:16px;">
+            Son 24 saatte hareket olan alanlarda menülerin yanında <strong>*</strong> işareti görünür.
+          </p>
+          <div class="activity-summary-grid" id="overviewActivitySummary"></div>
+          <div class="activity-list" id="overviewActivityList"></div>
         </div>
         <div class="card">
           <div class="card-title">ℹ️ Kullanım Rehberi</div>
@@ -1219,6 +1352,13 @@
           </div>
         </div>
 
+        <div class="card">
+          <div class="card-title">🕒 Son Alt Admin Girişleri</div>
+          <div id="adminActivityStatus" class="admin-help-box" style="display:none;"></div>
+          <div class="activity-summary-grid" id="adminActivitySummary"></div>
+          <div class="activity-list" id="adminActivityList"></div>
+        </div>
+
         <div class="admin-grid">
           <div class="card">
             <div class="card-title">➕ Alt Admin Ekle / Düzenle</div>
@@ -1279,8 +1419,8 @@
   <div class="toast" id="toast"></div>
 
 <script src="/js/site-data.js"></script>
-<script src="/js/admin-auth.js"></script>
-<script src="/js/admin-shell.js"></script>
-<script src="/js/admin-dashboard.js"></script>
+<script src="/js/admin-auth.js?v=20260511-1"></script>
+<script src="/js/admin-shell.js?v=20260505-1"></script>
+<script src="/js/admin-dashboard.js?v=20260511-1"></script>
 </body>
 </html>

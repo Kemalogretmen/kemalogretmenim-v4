@@ -355,6 +355,11 @@ body.theme-dark .size-value{color:var(--muted)}
 .section-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--slate);margin-bottom:8px}
 .section-bar{height:10px;border-radius:999px;background:#E2E8F0;overflow:hidden}
 .section-bar-fill{height:100%;border-radius:999px;background:linear-gradient(135deg,#2563EB,#38BDF8)}
+.outcome-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.outcome-item{padding:12px 13px;border-radius:14px;background:#F8FAFC;border:1px solid var(--border)}
+.outcome-title{font-size:13px;font-weight:800;line-height:1.45;color:var(--navy)}
+.outcome-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:11px;font-weight:800;color:var(--slate)}
+.outcome-meta span{padding:4px 8px;border-radius:999px;background:#fff;border:1px solid var(--border)}
 .karne-optic{background:var(--white);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;border:2px solid var(--border)}
 .karne-optic h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px}
 .ko-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
@@ -890,16 +895,17 @@ function buildResultSnapshot(status='completed'){
   const answerDetails=qs.map((q,i)=>{
     const a=ans[i];
     const sectionTitle=getQuestionSectionDisplay(q,i,P.exam.subject,P.exam.questionSections);
+    const learningOutcome=String(q?.learningOutcome||'').trim();
     if(!a){
       blank++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
     }
     if(a===q.correctAnswer){
       correct++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
     }
     wrong++;
-    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
+    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
   });
   let netCorrect=correct;
   if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
@@ -953,11 +959,13 @@ function getResultQuestionEntries(result){
         result?.subject||
         'Genel'
       ).trim();
+      const learningOutcome=String(item?.learningOutcome||question?.learningOutcome||'').trim();
       const outcome=item?.outcome||(selectedAnswer?(selectedAnswer===correctAnswer?'D':'Y'):'B');
       return{
         index,
         questionNo,
         sectionTitle,
+        learningOutcome,
         selectedAnswer,
         correctAnswer,
         outcome,
@@ -972,11 +980,13 @@ function getResultQuestionEntries(result){
     const selectedAnswer=String(result?.answers?.[index]||'').trim();
     const correctAnswer=String(question?.correctAnswer||'').trim();
     const sectionTitle=getQuestionSectionDisplay(question,index,result?.subject,result?.questionSections)||'Genel';
+    const learningOutcome=String(question?.learningOutcome||'').trim();
     const outcome=selectedAnswer?(selectedAnswer===correctAnswer?'D':'Y'):'B';
     return{
       index,
       questionNo,
       sectionTitle,
+      learningOutcome,
       selectedAnswer,
       correctAnswer,
       outcome,
@@ -1184,6 +1194,29 @@ function buildSectionSummary(result){
     const outcome=entry.outcome;
     if(outcome==='D') bucket.correct+=1;
     else if(outcome==='Y') bucket.wrong+=1;
+    else bucket.blank+=1;
+  });
+  return buckets.map(bucket=>Object.assign(bucket,{
+    score:bucket.total?Math.round(bucket.correct/bucket.total*100):0
+  }));
+}
+
+function buildLearningOutcomeSummary(result){
+  const buckets=[];
+  const byLabel=new Map();
+  getResultQuestionEntries(result).forEach(entry=>{
+    const label=String(entry.learningOutcome||'').trim();
+    if(!label) return;
+    let bucket=byLabel.get(label);
+    if(!bucket){
+      bucket={label,total:0,correct:0,wrong:0,blank:0,questions:[]};
+      byLabel.set(label,bucket);
+      buckets.push(bucket);
+    }
+    bucket.total+=1;
+    bucket.questions.push(entry.questionNo);
+    if(entry.outcome==='D') bucket.correct+=1;
+    else if(entry.outcome==='Y') bucket.wrong+=1;
     else bucket.blank+=1;
   });
   return buckets.map(bucket=>Object.assign(bucket,{
@@ -2515,6 +2548,7 @@ function renderKarne(){
   const questionEntries=getResultQuestionEntries(r);
   const scoreMeta=getScoreMeta(r.score);
   const sectionSummary=buildSectionSummary(r);
+  const outcomeSummary=buildLearningOutcomeSummary(r);
   const totalQuestions=r.total||questionEntries.length||0;
   const completionRate=totalQuestions?Math.round(((totalQuestions-r.blank)/totalQuestions)*100):0;
   const strongest=[...sectionSummary].sort((a,b)=>b.score-a.score||b.correct-a.correct)[0]||null;
@@ -2670,7 +2704,23 @@ function renderKarne(){
       </div>
       <div class="section-bar"><div class="section-bar-fill" style="width:${section.score}%;background:${getBarColor(section.score)}"></div></div>
     </div>
-  `).join('');
+  `).join('')+(outcomeSummary.length?`
+    <div class="outcome-list">
+      <div style="font-family:var(--fd);font-size:14px;font-weight:900;color:var(--navy);margin-top:2px">🎯 Kazanım / Öğrenme Çıktısı Analizi</div>
+      ${outcomeSummary.map(item=>`
+        <div class="outcome-item">
+          <div class="outcome-title">${escHtml(item.label)}</div>
+          <div class="outcome-meta">
+            <span>Sorular: ${item.questions.join(', ')}</span>
+            <span style="color:var(--green)">D: ${item.correct}</span>
+            <span style="color:var(--red)">Y: ${item.wrong}</span>
+            <span>B: ${item.blank}</span>
+            <span style="color:${getBarColor(item.score)}">%${item.score}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `:'');
   
   // Karne Optik (Geri Bildirim)
   const koHtml=questionEntries.map((entry,i)=>{
@@ -2805,6 +2855,7 @@ window.showQuestionModal=function(i){
   const statusBg=isB?'#64748B':isC?'#10B981':'#EF4444';
   const statusTxt=isB?'Boş bırakıldı':isC?'Doğru cevap!':'Yanlış cevap';
   const sectionTitle=entry.sectionTitle||getQuestionSectionTitle(q,i,r.questionSections);
+  const learningOutcome=entry.learningOutcome||q.learningOutcome||'';
   const visual=entry.imageUrl||q.imageUrl||q.imageData||'';
   const bodyHtml=visual
     ? `<img src="${visual}" style="max-width:100%;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.1)">`
@@ -2812,6 +2863,7 @@ window.showQuestionModal=function(i){
          <div style="font-size:13px;color:var(--slate);line-height:1.8">
            <div><strong>Soru No:</strong> ${entry.questionNo}</div>
            <div><strong>Bölüm:</strong> ${escHtml(sectionTitle||r.subject||'Genel')}</div>
+           ${learningOutcome?`<div><strong>Kazanım:</strong> ${escHtml(learningOutcome)}</div>`:''}
            <div><strong>Verilen Cevap:</strong> ${ua||'Boş'}</div>
            <div><strong>Doğru Cevap:</strong> ${ca||'—'}</div>
            <div><strong>Durum:</strong> ${isB?'Boş':isC?'Doğru':'Yanlış'}</div>

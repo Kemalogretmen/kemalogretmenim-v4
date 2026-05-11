@@ -117,6 +117,18 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .q-answer-chip:hover{border-color:var(--purple);color:var(--purple)}
 .q-answer-chip.active{background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 8px 16px rgba(108,61,237,.18)}
 .q-remove-btn{background:none;border:none;cursor:pointer;color:var(--red);font-size:18px;padding:2px 4px;line-height:1}
+.q-outcome-input{width:100%;min-height:58px;resize:vertical;padding:8px 9px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-family:var(--fb);font-size:11px;line-height:1.45;color:var(--navy);outline:none}
+.q-outcome-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,61,237,.08)}
+.q-outcome-label{width:100%;font-size:10px;font-weight:900;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;text-align:left}
+.result-actions{display:grid;grid-template-columns:repeat(2,minmax(92px,1fr));gap:7px;min-width:210px}
+.result-action{border:1.5px solid var(--border);border-radius:10px;padding:7px 9px;background:#fff;font-family:var(--fb);font-size:12px;font-weight:800;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all .16s;white-space:nowrap}
+.result-action:hover{transform:translateY(-1px);box-shadow:var(--sh-sm)}
+.result-action.exam{background:#EFF6FF;border-color:#BFDBFE;color:#2563EB}
+.result-action.center{background:#F5F3FF;border-color:#DDD6FE;color:#6D28D9}
+.result-action.outcome{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+.result-action.edit,.result-action.appeal{background:#FFF7ED;border-color:#FED7AA;color:#C2410C}
+.result-action.del{background:#fff;border-color:#FCA5A5;color:var(--red)}
+.result-action.disabled{background:#F8FAFC;border-color:var(--border);color:var(--muted);cursor:not-allowed;box-shadow:none;transform:none}
 .sortable-ghost{opacity:.45;background:#F5F3FF}
 .sortable-chosen{box-shadow:var(--sh-lg);border-color:rgba(108,61,237,.32)}
 
@@ -205,7 +217,7 @@ h1,h2,h3,h4{font-family:var(--fd)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/site-data.js"></script>
 <script>window.kemalAdminScope='default';</script>
-<script src="/js/admin-auth.js"></script>
+<script src="/js/admin-auth.js?v=20260511-1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -612,6 +624,7 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
     const selectedAnswer=String(selectedMap[questionNo]||'').trim().toUpperCase();
     const correctAnswer=String(question?.correctAnswer||'').trim().toUpperCase();
     const sectionTitle=String(question?.sectionTitle||findSectionLabel(questionNo,examMeta.questionSections)||examMeta.subject||'').trim();
+    const learningOutcome=String(question?.learningOutcome||'').trim();
     let outcome='B';
     if(selectedAnswer) outcome=selectedAnswer===correctAnswer?'D':'Y';
     if(outcome==='D') correct++;
@@ -622,6 +635,7 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
       questionId:question?.id||'',
       order:question?.order??index,
       sectionTitle,
+      learningOutcome,
       selectedAnswer,
       correctAnswer,
       outcome
@@ -803,6 +817,10 @@ function renderAnswerEditor(index,current){
   return getOPTS().map(opt=>`
     <button type="button" class="q-answer-chip ${current===opt?'active':''}" onclick="W.setQuestionAnswer(${index},'${opt}')">${opt}</button>
   `).join('');
+}
+function renderOutcomeEditor(index,value){
+  return `<label class="q-outcome-label" for="qOutcome${index}">Kazanım / Öğrenme Çıktısı</label>
+    <textarea class="q-outcome-input" id="qOutcome${index}" placeholder="İsteğe bağlı: Bu sorunun ölçtüğü kazanım..." oninput="W.setQuestionOutcome(${index},this.value)">${esc(value||'')}</textarea>`;
 }
 function initQuestionSortables(){
   destroyQuestionSortables();
@@ -1067,6 +1085,7 @@ function renderQList(){
         ${getQuestionSectionLabel(i)?`<div style="margin-top:3px"><span class="section-tag" style="font-size:9px">📚 ${esc(getQuestionSectionLabel(i))}</span></div>`:''}
       </div>
       <div class="q-answer-row" style="justify-content:center">${renderAnswerEditor(i,q.ans)}</div>
+      ${renderOutcomeEditor(i,q.learningOutcome)}
     </div>`).join('');
 }
 function renderPreviewQuestionList(){
@@ -1084,6 +1103,7 @@ function renderPreviewQuestionList(){
           <span class="text-xs text-muted">Farklı bir cevaba tıklayarak güncelleyebilirsiniz</span>
         </div>
         <div class="q-answer-row">${renderAnswerEditor(i,q.ans)}</div>
+        ${renderOutcomeEditor(i,q.learningOutcome)}
       </div>
       <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır">🗑</button>
     </div>`).join('');
@@ -1251,11 +1271,13 @@ function renderAdminResults(){
     const locationMeta=buildLocationText(r);
     const statusMeta=getResultProgressMeta(r.status);
     const appealMeta=getResultAppealMeta(r.id,r.examId);
+    const hasOutcomeDetails=(Array.isArray(r.answerDetails)?r.answerDetails:[]).some(item=>String(item?.learningOutcome||'').trim());
     const reportButtons=r.status==='in_progress'
-      ? `<button style="background:#F8FAFC;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;cursor:not-allowed;font-size:12px;font-weight:700" disabled>⏳ Tek Sınav</button>
-         <button style="background:#F8FAFC;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;cursor:not-allowed;font-size:12px;font-weight:700" disabled>⏳ Karne Merkezi</button>`
-      : `${hasExamPerm('exam_single_report')?`<button onclick="W.openResultKarne('${r.id}')" style="background:#EFF6FF;border:1.5px solid #BFDBFE;color:#2563EB;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#2563EB';this.style.color='#fff'" onmouseout="this.style.background='#EFF6FF';this.style.color='#2563EB'">📄 Tek Sınav</button>`:''}
-         ${hasExamPerm('exam_report_center')?`<button onclick="W.openStudentKarne('${r.id}')" style="background:#F5F3FF;border:1.5px solid #DDD6FE;color:#6D28D9;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#6D28D9';this.style.color='#fff'" onmouseout="this.style.background='#F5F3FF';this.style.color='#6D28D9'">📚 Karne Merkezi</button>`:''}`;
+      ? `<button class="result-action disabled" disabled>⏳ Tek Sınav</button>
+         <button class="result-action disabled" disabled>⏳ Karne Merkezi</button>`
+      : `${hasExamPerm('exam_single_report')?`<button class="result-action exam" onclick="W.openResultKarne('${r.id}')">📄 Tek Sınav</button>`:''}
+         ${hasExamPerm('exam_report_center')?`<button class="result-action center" onclick="W.openStudentKarne('${r.id}')">📚 Karne Merkezi</button>`:''}
+         ${hasExamPerm('exam_report_center')&&hasOutcomeDetails?`<button class="result-action outcome" onclick="W.openOutcomeKarne('${r.id}')" title="Kazanım / öğrenme çıktısı odaklı karne">🎯 Kazanım</button>`:''}`;
     return`<tr>
       <td style="font-weight:600;font-family:var(--fd)">
         <div>${esc(r.firstName)} ${esc(r.lastName)}</div>
@@ -1279,11 +1301,11 @@ function renderAdminResults(){
       </td>
       <td style="font-size:11px;color:var(--muted)">${fmtDT(r.date)}</td>
       <td>
-        <div class="flex gap-8" style="flex-wrap:wrap">
-          ${hasExamPerm('exam_results_edit')?`<button onclick="W.openResultEdit('${r.id}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#C2410C;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F97316';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#C2410C'">✏️ Düzenle</button>`:''}
-          ${hasExamPerm('exam_appeals')?`<button onclick="W.showExamAppeals('${r.examId}')" style="background:#FFF7ED;border:1.5px solid #FED7AA;color:#9A3412;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:700" onmouseover="this.style.background='#F59E0B';this.style.color='#fff'" onmouseout="this.style.background='#FFF7ED';this.style.color='#9A3412'">📝 İtirazlar</button>`:''}
+        <div class="result-actions">
+          ${hasExamPerm('exam_results_edit')?`<button class="result-action edit" onclick="W.openResultEdit('${r.id}')">✏️ Düzenle</button>`:''}
+          ${hasExamPerm('exam_appeals')?`<button class="result-action appeal" onclick="W.showExamAppeals('${r.examId}')">📝 İtirazlar</button>`:''}
           ${reportButtons}
-          ${hasExamPerm('exam_results_delete')?`<button onclick="W.delResult('${r.id}')" style="background:none;border:1.5px solid #FCA5A5;color:var(--red);border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;font-weight:600" onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='none'">🗑 Sil</button>`:''}
+          ${hasExamPerm('exam_results_delete')?`<button class="result-action del" onclick="W.delResult('${r.id}')">🗑 Sil</button>`:''}
         </div>
       </td>
     </tr>`;}).join('');
@@ -2203,7 +2225,7 @@ const W={
   closeCropModal(){removeCropModal();A.draftImg=null;A.draftAns=null;},
   confirmQ(){
     if(!A.draftAns){toast('Cevap seçin','error');return;}
-    A.questions.push({img:A.draftImg,ans:A.draftAns,order:A.questions.length});
+    A.questions.push({img:A.draftImg,ans:A.draftAns,learningOutcome:'',order:A.questions.length});
     syncQuestionOrder();
     removeCropModal();A.draftImg=null;A.draftAns=null;
     toast(`✓ Soru ${A.questions.length} eklendi!`,'success');
@@ -2227,6 +2249,10 @@ const W={
     A.cropTool=tool==='pan'?'pan':'crop';
     syncCropToolUI();
     setupCrop();
+  },
+  setQuestionOutcome(index,value){
+    if(!A.questions[index]) return;
+    A.questions[index].learningOutcome=String(value||'');
   },
   async publish(){
     await this.saveAs('active');
@@ -2305,6 +2331,7 @@ const W={
           imagePath:uploadedImage.imagePath||'',
           correctAnswer:A.questions[i].ans,
           sectionTitle:sectionData.assignments[i+1]||'',
+          learningOutcome:String(A.questions[i].learningOutcome||'').trim(),
           order:A.questions[i].order??i
         };
         const questionRef=await addDoc(collection(db,'questions'),questionPayload);
@@ -2405,6 +2432,7 @@ const W={
             img:data.imageData||data.imageUrl||'',
             ans:data.correctAnswer||'A',
             sectionTitle:data.sectionTitle||'',
+            learningOutcome:data.learningOutcome||data.outcome||data.kazanim||'',
             order:data.order??index
           };
         }),
@@ -2620,7 +2648,34 @@ const W={
       sube:result.sube||'',
       accountUid:result.accountUid||'',
       studentKey:getResultStudentKey(result),
-      focusResultId:result.id
+      focusResultId:result.id,
+      examId:result.examId||''
+    };
+    localStorage.setItem('kemal_exam_student_report_target_v1',JSON.stringify(payload));
+    window.open('/sinav_sitesi/ogrenci-karne.html','_blank');
+  },
+  openOutcomeKarne(id){
+    if(!requireExamPerm('exam_report_center','Kazanım karnesi')) return;
+    const result=A.results.find(item=>item.id===id);
+    if(!result){
+      toast('Öğrenci verisi bulunamadı','error');
+      return;
+    }
+    const hasOutcome=(Array.isArray(result.answerDetails)?result.answerDetails:[]).some(item=>String(item?.learningOutcome||'').trim());
+    if(!hasOutcome){
+      toast('Bu sınavda soru bazlı kazanım bulunmuyor.','error');
+      return;
+    }
+    const payload={
+      firstName:result.firstName||'',
+      lastName:result.lastName||'',
+      grade:result.grade||'',
+      sube:result.sube||'',
+      accountUid:result.accountUid||'',
+      studentKey:getResultStudentKey(result),
+      focusResultId:result.id,
+      examId:result.examId||'',
+      outcomeMode:true
     };
     localStorage.setItem('kemal_exam_student_report_target_v1',JSON.stringify(payload));
     window.open('/sinav_sitesi/ogrenci-karne.html','_blank');
@@ -3037,7 +3092,7 @@ const W={
           'Durum':getResultProgressMeta(r.status).label,
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
-          'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,
+          'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Kazanım / Öğrenme Çıktısı':item.learningOutcome||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,
           'Sonuç':outcome,'Verilen Cevap':item.selectedAnswer||'Boş','Doğru Cevap':item.correctAnswer||'—'
         });
       });

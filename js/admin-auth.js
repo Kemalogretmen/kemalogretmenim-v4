@@ -185,6 +185,7 @@
   };
 
   const ADMIN_USERS_TABLE = 'admin_users';
+  const ADMIN_LOGIN_EVENTS_TABLE = 'admin_login_events';
 
   function getConfig() {
     if (!window.kemalSiteStore) {
@@ -243,6 +244,31 @@
 
   function getCurrentPath() {
     return String(window.location && window.location.pathname ? window.location.pathname : '');
+  }
+
+  function getLoginAreaForPath(path) {
+    const currentPath = String(path || getCurrentPath());
+    if (currentPath.indexOf('/sinav_sitesi/admin.html') !== -1) {
+      return 'exam';
+    }
+    if (
+      currentPath.indexOf('/admin/okuma-editor.html') !== -1 ||
+      currentPath.indexOf('/admin/okuma-sonuclari.html') !== -1 ||
+      currentPath.indexOf('/admin/okuma-karne.html') !== -1 ||
+      currentPath.indexOf('/admin/oyunlar-admin.html') !== -1
+    ) {
+      return 'reading';
+    }
+    if (currentPath.indexOf('/admin/dokuman-yonetimi.html') !== -1) {
+      return 'documents';
+    }
+    if (
+      currentPath.indexOf('/admin/menu-yonetimi.html') !== -1 ||
+      currentPath.indexOf('/admin/calisma-kagidi-editor.html') !== -1
+    ) {
+      return 'content';
+    }
+    return 'main';
   }
 
   function normalizeEmail(value) {
@@ -341,8 +367,10 @@
     const message = String((error && error.message) || '');
     return (
       message.includes('relation "public.admin_users" does not exist') ||
+      message.includes('relation "public.admin_login_events" does not exist') ||
       message.includes('Could not find the table') ||
       message.includes('admin_users') && message.includes('column') ||
+      message.includes('admin_login_events') && message.includes('column') ||
       message.includes('schema cache')
     );
   }
@@ -390,6 +418,22 @@
       permissions: normalizePermissions(row && row.permissions ? row.permissions : null, isOwner),
       createdAt: row && row.created_at ? row.created_at : '',
       updatedAt: row && row.updated_at ? row.updated_at : '',
+      raw: row || {},
+    };
+  }
+
+  function normalizeLoginEventRow(row) {
+    const email = normalizeEmail(row && row.email ? row.email : '');
+    return {
+      id: row && row.id != null ? row.id : '',
+      email,
+      displayName: row && row.display_name ? String(row.display_name) : (email ? email.split('@')[0] : ''),
+      isOwner: !!(row && row.is_owner === true),
+      area: row && row.area ? String(row.area) : 'main',
+      scope: row && row.scope ? String(row.scope) : 'default',
+      path: row && row.path ? String(row.path) : '',
+      userAgent: row && row.user_agent ? String(row.user_agent) : '',
+      createdAt: row && row.created_at ? row.created_at : '',
       raw: row || {},
     };
   }
@@ -765,6 +809,71 @@
     clearAccessCache();
   }
 
+  async function recordAdminLogin(profile) {
+    const safeProfile = profile || accessCache || null;
+    const email = normalizeEmail(safeProfile && safeProfile.email ? safeProfile.email : '');
+    if (!email || (safeProfile && safeProfile.active === false)) {
+      return;
+    }
+
+    const path = String(window.location && window.location.pathname ? window.location.pathname : '') +
+      String(window.location && window.location.hash ? window.location.hash : '');
+    const area = getLoginAreaForPath(path);
+    const scope = getAuthScope();
+    const userAgent = String(window.navigator && window.navigator.userAgent ? window.navigator.userAgent : '');
+
+    try {
+      const rpcResult = await getClient().rpc('record_admin_login', {
+        login_area: area,
+        login_scope: scope,
+        login_path: path,
+        login_user_agent: userAgent,
+      });
+      if (!rpcResult.error) {
+        return;
+      }
+      throw rpcResult.error;
+    } catch (rpcError) {
+      try {
+        const insertResult = await getClient().from(ADMIN_LOGIN_EVENTS_TABLE).insert({
+          email,
+          display_name: safeProfile && safeProfile.displayName ? safeProfile.displayName : '',
+          is_owner: !!(safeProfile && safeProfile.isOwner),
+          area,
+          scope,
+          path,
+          user_agent: userAgent,
+        });
+        if (insertResult.error) {
+          throw insertResult.error;
+        }
+      } catch (insertError) {
+        console.warn('Admin giriş aktivitesi kaydedilemedi:', insertError || rpcError);
+      }
+    }
+  }
+
+  async function listAdminLoginEvents(options) {
+    const profile = await getAdminAccessProfile(true);
+    if (!profile) {
+      throw new Error('Önce yönetici girişi yapmalısın.');
+    }
+    if (!profile.isOwner && !profile.legacyMode) {
+      throw new Error('Giriş hareketlerini yalnızca ana yönetici görebilir.');
+    }
+
+    const limit = Math.max(1, Math.min(Number(options && options.limit ? options.limit : 80), 200));
+    const { data, error } = await getClient()
+      .from(ADMIN_LOGIN_EVENTS_TABLE)
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) {
+      throw error;
+    }
+    return (Array.isArray(data) ? data : []).map(normalizeLoginEventRow);
+  }
+
   async function ensureCurrentPageAccess(sessionLike) {
     const profile = await getAdminAccessProfile(true, sessionLike);
     if (!profile) {
@@ -864,7 +973,8 @@
       throw error;
     }
     try {
-      await ensureCurrentPageAccess(data.session);
+      const profile = await ensureCurrentPageAccess(data.session);
+      await recordAdminLogin(profile);
     } catch (accessError) {
       await getClient().auth.signOut().catch(function() {
         return null;
@@ -930,6 +1040,8 @@
       });
     },
     getCurrentPagePermission,
+    recordAdminLogin,
+    listAdminLoginEvents,
     hasPermission: function(key, profile) {
       return profileHasPermission(profile || accessCache, key);
     },

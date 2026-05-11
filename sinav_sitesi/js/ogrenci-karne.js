@@ -252,10 +252,56 @@ function getQuestionEntries(result) {
     return {
       questionNo,
       sectionTitle: String(item?.sectionTitle || result.subject || "Genel").trim(),
+      learningOutcome: String(item?.learningOutcome || "").trim(),
       selectedAnswer,
       correctAnswer,
       outcome,
     };
+  });
+}
+
+function isOutcomeMode() {
+  return !!S.target?.outcomeMode;
+}
+
+function buildOutcomeRows(result) {
+  const map = new Map();
+  getQuestionEntries(result).forEach(function(entry) {
+    const label = String(entry.learningOutcome || "").trim();
+    if (!label) {
+      return;
+    }
+    const subject = entry.sectionTitle || result.subject || "Genel";
+    const key = subject + "||" + label;
+    if (!map.has(key)) {
+      map.set(key, {
+        subject,
+        label,
+        total: 0,
+        correct: 0,
+        wrong: 0,
+        blank: 0,
+        questions: [],
+      });
+    }
+    const row = map.get(key);
+    row.total += 1;
+    row.questions.push(entry.questionNo);
+    if (entry.outcome === "D") row.correct += 1;
+    else if (entry.outcome === "Y") row.wrong += 1;
+    else row.blank += 1;
+  });
+  return Array.from(map.values()).map(function(row) {
+    row.score = row.total ? Math.round((row.correct / row.total) * 100) : 0;
+    return row;
+  });
+}
+
+function buildAllOutcomeRows() {
+  return S.reportResults.flatMap(function(result) {
+    return buildOutcomeRows(result).map(function(row) {
+      return Object.assign({ result }, row);
+    });
   });
 }
 
@@ -598,7 +644,7 @@ function renderHeader() {
   $("heroStudentMeta").textContent = student ? student.grade + ". Sınıf " + student.sube + " Şubesi" : "—";
   $("heroStudentChips").innerHTML =
     "<span class=\"student-chip\">" + esc(S.filters.subject || "Tüm Dersler") + "</span>" +
-    "<span class=\"student-chip\">" + esc(S.filters.examId ? "Tek Sınav Görünümü" : "Toplu Görünüm") + "</span>" +
+    "<span class=\"student-chip\">" + esc(isOutcomeMode() ? "Kazanım Odaklı" : (S.filters.examId ? "Tek Sınav Görünümü" : "Toplu Görünüm")) + "</span>" +
     "<span class=\"student-chip\">" + esc(formatDate(S.reportResults[0]?.dateObj || S.reportResults[0]?.date) + " - " + formatDate(S.reportResults[S.reportResults.length - 1]?.dateObj || S.reportResults[S.reportResults.length - 1]?.date)) + "</span>";
 
   $("heroScore").textContent = "%" + avgScore;
@@ -608,8 +654,12 @@ function renderHeader() {
     ". Öğrencinin ortalama yüzdelik dilimi %" +
     avgPercentile +
     ".";
-  $("heroHeadline").textContent = student ? student.firstName + " için Öğrenci Başarı İlerlemesi" : "Öğrenci Başarı İlerlemesi";
-  $("heroDescription").textContent = insight.summaryParagraph;
+  $("heroHeadline").textContent = student
+    ? student.firstName + (isOutcomeMode() ? " için Kazanım Odaklı Karne" : " için Öğrenci Başarı İlerlemesi")
+    : (isOutcomeMode() ? "Kazanım Odaklı Karne" : "Öğrenci Başarı İlerlemesi");
+  $("heroDescription").textContent = isOutcomeMode()
+    ? "Bu rapor, sınava eklenmiş kazanım ve öğrenme çıktıları üzerinden doğru, yanlış ve boş dağılımını gösterir. Ders başlıkları korunur; her kazanım ayrı satırda izlenir."
+    : insight.summaryParagraph;
   $("heroComparisonPill").textContent =
     latest
       ? "Son seçili sınavda grup ortalamasına göre " + deltaLabel + " puan fark"
@@ -795,6 +845,11 @@ function renderSelectedExam() {
     window.openExamKarneFromStudentReport(result.id);
   };
 
+  if (isOutcomeMode()) {
+    renderOutcomeMatrix();
+    return;
+  }
+
   // Tüm sınavların matrisini göster
   if (!S.reportResults.length) {
     $("matrixWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:22px;text-align:center;color:var(--muted);\">Sınav kaydı bulunamadı.</div>";
@@ -882,6 +937,54 @@ function renderSelectedExam() {
   }).join("");
 }
 
+function renderOutcomeMatrix() {
+  const rows = buildAllOutcomeRows();
+  if (!rows.length) {
+    $("matrixWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:22px;text-align:center;color:var(--muted);\">Seçili sınavda kazanım / öğrenme çıktısı girilmiş soru bulunamadı.</div>";
+    return;
+  }
+  const grouped = new Map();
+  rows.forEach(function(row) {
+    const title = row.result.examTitle || "Sınav";
+    if (!grouped.has(title)) grouped.set(title, []);
+    grouped.get(title).push(row);
+  });
+  $("matrixWrap").innerHTML = Array.from(grouped.entries()).map(function(pair) {
+    const title = pair[0];
+    const items = pair[1];
+    const result = items[0].result;
+    const body = items.map(function(item) {
+      const color = item.score >= 70 ? "var(--ok)" : item.score >= 50 ? "var(--amber)" : "var(--bad)";
+      return (
+        "<div class=\"matrix-row outcome-row\">" +
+          "<div>" +
+            "<div class=\"matrix-label\">" + esc(item.subject || result.subject || "Genel") + "</div>" +
+            "<div class=\"matrix-sub\">Sorular: " + esc(item.questions.join(", ")) + "</div>" +
+          "</div>" +
+          "<div class=\"outcome-detail\">" +
+            "<div class=\"outcome-text\">" + esc(item.label) + "</div>" +
+            "<div class=\"outcome-stats\">" +
+              "<span style=\"color:var(--ok)\">D: " + item.correct + "</span>" +
+              "<span style=\"color:var(--bad)\">Y: " + item.wrong + "</span>" +
+              "<span style=\"color:var(--blank)\">B: " + item.blank + "</span>" +
+              "<strong style=\"color:" + color + "\">%" + item.score + "</strong>" +
+            "</div>" +
+          "</div>" +
+        "</div>"
+      );
+    }).join("");
+    return (
+      "<div class=\"matrix-card\">" +
+        "<div class=\"matrix-card-head\">" +
+          "<strong>" + esc(shortTitle(title, 58)) + "</strong>" +
+          "<span>" + esc(result.formattedDate || "—") + " • Kazanım / öğrenme çıktısı odaklı analiz</span>" +
+        "</div>" +
+        "<div class=\"matrix-card-body\">" + body + "</div>" +
+      "</div>"
+    );
+  }).join("");
+}
+
 function getChartImage(chart, canvasId) {
   if (chart && typeof chart.toBase64Image === "function") {
     return chart.toBase64Image();
@@ -959,6 +1062,46 @@ function renderPrintableMatrix(result) {
 function buildAllPrintableMatrices() {
   if (!S.reportResults.length) {
     return "<div class=\"print-empty\">Soru bazli degerlendirme icin kayit bulunamadi.</div>";
+  }
+  if (isOutcomeMode()) {
+    const rows = buildAllOutcomeRows();
+    if (!rows.length) {
+      return "<div class=\"print-empty\">Kazanım odaklı değerlendirme için kayıt bulunamadı.</div>";
+    }
+    const grouped = new Map();
+    rows.forEach(function(row) {
+      const title = row.result.examTitle || "Sınav";
+      if (!grouped.has(title)) grouped.set(title, []);
+      grouped.get(title).push(row);
+    });
+    return Array.from(grouped.entries()).map(function(pair) {
+      const title = pair[0];
+      const items = pair[1];
+      const result = items[0].result;
+      const body = items.map(function(item) {
+        return (
+          "<div class=\"print-matrix-row\">" +
+            "<div class=\"print-matrix-label-wrap\">" +
+              "<div class=\"print-matrix-label\">" + esc(item.subject || result.subject || "Genel") + "</div>" +
+              "<div class=\"print-matrix-sub\">Sorular: " + esc(item.questions.join(", ")) + "</div>" +
+            "</div>" +
+            "<div style=\"font-size:12px;line-height:1.55;color:var(--navy)\">" +
+              "<strong>" + esc(item.label) + "</strong><br>" +
+              "<span style=\"color:#179b66;font-weight:700\">D:" + item.correct + "</span> " +
+              "<span style=\"color:#d94d4d;font-weight:700\">Y:" + item.wrong + "</span> " +
+              "<span style=\"color:#8391a7;font-weight:700\">B:" + item.blank + "</span> " +
+              "<span style=\"font-weight:800\">%" + item.score + "</span>" +
+            "</div>" +
+          "</div>"
+        );
+      }).join("");
+      return (
+        "<div class=\"print-panel break-avoid\">" +
+          "<div class=\"print-panel-head dark\"><strong>" + esc(shortTitle(title, 60)) + "</strong><span>" + esc(result.formattedDate || "—") + " • Kazanım / öğrenme çıktısı odaklı analiz</span></div>" +
+          "<div class=\"print-panel-body\">" + body + "</div>" +
+        "</div>"
+      );
+    }).join("");
   }
   return S.reportResults.slice().reverse().map(function(examResult) {
     return renderPrintableMatrix(examResult);
@@ -1053,8 +1196,8 @@ function buildPrintDocument() {
         "<div class=\"print-top\">" +
           "<div class=\"print-cover\">" +
             "<div class=\"print-kicker\">Sınav Karne Merkezi</div>" +
-            "<h1>" + esc(student ? student.firstName + " için gelişim raporu" : "Öğrenci gelişim raporu") + "</h1>" +
-            "<p>" + esc(insight.summaryParagraph) + "</p>" +
+            "<h1>" + esc(student ? student.firstName + (isOutcomeMode() ? " için kazanım karnesi" : " için gelişim raporu") : (isOutcomeMode() ? "Kazanım odaklı karne" : "Öğrenci gelişim raporu")) + "</h1>" +
+            "<p>" + esc(isOutcomeMode() ? "Bu rapor, sınava eklenen kazanım ve öğrenme çıktıları üzerinden öğrencinin doğru, yanlış ve boş dağılımını gösterir." : insight.summaryParagraph) + "</p>" +
             "<div class=\"print-pill\">" + esc(insight.dateRangeText) + "</div>" +
           "</div>" +
           "<div class=\"print-card\">" +
@@ -1062,7 +1205,7 @@ function buildPrintDocument() {
             "<div class=\"print-meta\">" + esc(student ? student.grade + ". Sınıf " + student.sube + " Şubesi" : "—") + "</div>" +
             "<div class=\"print-chip-row\">" +
               "<span class=\"print-chip\">" + esc(S.filters.subject || "Tüm Dersler") + "</span>" +
-              "<span class=\"print-chip\">" + esc(S.filters.examId ? "Tekli Karne" : "Toplu Karne") + "</span>" +
+              "<span class=\"print-chip\">" + esc(isOutcomeMode() ? "Kazanım Odaklı" : (S.filters.examId ? "Tekli Karne" : "Toplu Karne")) + "</span>" +
               "<span class=\"print-chip\">" + esc(S.reportResults.length + " sınav") + "</span>" +
             "</div>" +
             "<div class=\"print-score-kicker\">Seçili raporun ortalama başarı yüzdesi</div>" +
@@ -1093,8 +1236,8 @@ function buildPrintDocument() {
       "</section>" +
       "<section class=\"print-sheet\">" +
         "<section class=\"print-panel\"><div class=\"print-panel-head\"><strong>Sınav Geçmişi ve Kıyaslama Tablosu</strong><span>Öğrencinin seçili tüm sınav performansları</span></div><div class=\"print-panel-body\"><div class=\"print-table-wrap\"><table><thead><tr><th>Tarih</th><th>Sınav</th><th>Ders</th><th>Başarı</th><th>Katılım Ort.</th><th>Fark</th><th>Yüzdelik</th></tr></thead><tbody>" + buildPrintableHistoryRows() + "</tbody></table></div></div></section>" +
-        "<div class=\"print-section-title\">🔎 Soru Bazlı Kompakt Değerlendirme</div>" +
-        "<div class=\"print-section-sub\">Tüm denemelerdeki her dersin soru bazlı doğru/yanlış/boş matrisi aşağıda sıralanmaktadır.</div>" +
+        "<div class=\"print-section-title\">" + esc(isOutcomeMode() ? "🎯 Kazanım Odaklı Değerlendirme" : "🔎 Soru Bazlı Kompakt Değerlendirme") + "</div>" +
+        "<div class=\"print-section-sub\">" + esc(isOutcomeMode() ? "Kazanım ve öğrenme çıktıları ders başlığına göre listelenir; her kazanım için doğru, yanlış ve boş dağılımı verilir." : "Tüm denemelerdeki her dersin soru bazlı doğru/yanlış/boş matrisi aşağıda sıralanmaktadır.") + "</div>" +
         "<div style=\"display:flex;flex-direction:column;gap:14px;margin-top:12px;\">" + buildAllPrintableMatrices() + "</div>" +
         "<div class=\"print-footer\"><div><strong>By Kemal Öğretmen</strong><br>kemalogretmenim.com.tr</div><div>" + esc(insight.recommendationText) + "</div><div>Sayfa 2 / 2</div></div>" +
       "</section>" +
@@ -1356,6 +1499,7 @@ function exportExcel() {
         "Yüzdelik Dilim (%)": benchmark.rankPercent,
         "Soru No": entry.questionNo,
         "Bölüm": entry.sectionTitle || row.subject || "—",
+        "Kazanım / Öğrenme Çıktısı": entry.learningOutcome || "—",
         "Verilen Cevap": entry.selectedAnswer || "Boş",
         "Doğru Cevap": entry.correctAnswer || "—",
         "Sonuç": entry.outcome === "D" ? "Doğru" : entry.outcome === "Y" ? "Yanlış" : "Boş",
@@ -1388,6 +1532,14 @@ function renderReport() {
   }
   $("emptyReport").style.display = "none";
   $("reportWrap").style.display = "block";
+  if ($("matrixTitle")) {
+    $("matrixTitle").textContent = isOutcomeMode() ? "🎯 Kazanım Odaklı Değerlendirme" : "🔎 Soru Bazlı Kompakt Değerlendirme";
+  }
+  if ($("matrixDescription")) {
+    $("matrixDescription").textContent = isOutcomeMode()
+      ? "Sınava eklenen kazanım ve öğrenme çıktıları ders başlığına göre listelenir; doğru, yanlış ve boş sayıları her kazanım için ayrı gösterilir."
+      : "Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.";
+  }
   renderHeader();
   renderCharts();
   renderHistoryTable();

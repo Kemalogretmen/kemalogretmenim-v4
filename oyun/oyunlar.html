@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎮 Eğitim Oyunları — Kemal Öğretmenim</title>
+  <title>Eğitim Oyunları — Kemal Öğretmenim</title>
   <meta name="description" content="Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.">
   <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/oyunlar.html">
   <meta property="og:locale" content="tr_TR">
@@ -19,64 +19,201 @@
   <link rel="stylesheet" href="/css/style.css">
   <style>
 
+    :root {
+      --game-ink: #14092f;
+      --game-violet: #6C3DED;
+      --game-cyan: #1EC8D2;
+      --game-green: #31C48D;
+      --game-sun: #FFCF3F;
+      --game-coral: #FF6B57;
+    }
+
     /* ─── SAYFA BAŞLIĞI ─── */
     .games-hero {
-      background: linear-gradient(145deg, #1A1040 0%, #3B1F8C 50%, #6C3DED 100%);
-      padding: 56px 32px;
-      text-align: center;
+      background:
+        linear-gradient(135deg, rgba(20,9,47,.96), rgba(57,28,135,.92) 52%, rgba(30,200,210,.88)),
+        linear-gradient(90deg, #1A1040, #6C3DED);
+      padding: 34px 24px 38px;
       position: relative;
       overflow: hidden;
+      isolation: isolate;
     }
     .games-hero::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M40 0L80 40L40 80L0 40z'/%3E%3C/g%3E%3C/svg%3E");
+      background:
+        url("data:image/svg+xml,%3Csvg width='96' height='96' viewBox='0 0 96 96' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.08' stroke-width='2'%3E%3Cpath d='M0 48h96M48 0v96'/%3E%3C/g%3E%3Cpath d='M48 12l36 36-36 36-36-36z' fill='%23ffffff' fill-opacity='.04'/%3E%3C/svg%3E"),
+        linear-gradient(120deg, rgba(255,255,255,.10), transparent 38%);
+      z-index: -2;
     }
-    .games-hero-em {
-      font-size: 72px;
-      display: block;
-      margin-bottom: 16px;
-      animation: floatB 3s ease-in-out infinite;
+    .games-hero::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 7px;
+      background: linear-gradient(90deg, var(--game-sun), var(--game-coral), var(--game-cyan), var(--game-green), var(--game-violet));
+      z-index: 2;
+    }
+    .games-hero-inner {
+      width: min(1160px, 100%);
+      min-height: 224px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+      align-items: center;
+      gap: 34px;
       position: relative;
       z-index: 1;
+    }
+    .games-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      margin-bottom: 13px;
+      padding: 7px 11px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.90);
+      font-size: 13px;
+      font-weight: 900;
+      backdrop-filter: blur(10px);
     }
     .games-hero h1 {
-      font-size: clamp(28px, 5vw, 46px);
-      font-weight: 800;
+      max-width: 720px;
       color: white;
-      margin-bottom: 10px;
-      position: relative;
-      z-index: 1;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: .98;
+      margin: 0 0 12px;
     }
     .games-hero p {
-      color: rgba(255,255,255,.65);
-      font-size: 15px;
-      font-weight: 600;
-      position: relative;
-      z-index: 1;
+      max-width: 580px;
+      color: rgba(255,255,255,.78);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.55;
     }
-    /* Floating stars */
-    .star-bg {
+    .games-hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .games-hero-tags span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.14);
+      color: white;
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+    }
+    .games-hero-stage {
+      position: relative;
+      min-height: 210px;
+      display: grid;
+      place-items: center;
+    }
+    .hero-controller {
+      width: min(220px, 48vw);
+      height: auto;
+      color: white;
+      position: relative;
+      z-index: 3;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.25));
+      animation: floatB 3.6s ease-in-out infinite;
+    }
+    .hero-tile {
       position: absolute;
-      font-size: var(--fs, 22px);
-      animation: sparkle var(--dur, 3s) ease-in-out infinite;
+      width: var(--s, 58px);
+      height: var(--s, 58px);
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,.13);
+      color: white;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16), 0 16px 28px rgba(0,0,0,.16);
+      animation: heroDrift var(--dur, 4s) ease-in-out infinite;
       animation-delay: var(--d, 0s);
-      opacity: 0;
+    }
+    .hero-tile svg { width: 28px; height: 28px; }
+    .hero-tile.one { left: 16%; top: 12%; color: var(--game-sun); }
+    .hero-tile.two { right: 8%; top: 18%; color: var(--game-cyan); }
+    .hero-tile.three { left: 10%; bottom: 10%; color: var(--game-green); }
+    .hero-tile.four { right: 20%; bottom: 0; color: #FF9FBA; }
+    @keyframes heroDrift {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(3deg); }
+    }
+    .icon-svg {
+      width: 1em;
+      height: 1em;
+      display: inline-block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
     }
 
     /* ─── OYUN KATEGORİ FİLTRESİ ─── */
-    .filter-bar {
-      max-width: 1100px;
-      margin: 40px auto 0;
-      padding: 0 32px;
+    .games-catalog {
+      width: min(1160px, 100%);
+      margin: 0 auto;
+      padding: 24px 24px 64px;
+    }
+    .catalog-head {
       display: flex;
-      gap: 10px;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .catalog-title {
+      margin: 0;
+      color: var(--navy);
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .catalog-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 7px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: white;
+      color: var(--slate);
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-bar {
+      margin: 0;
+      display: flex;
+      gap: 9px;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-start;
     }
     .filter-btn {
-      padding: 9px 20px;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 15px;
       border-radius: 50px;
       border: 2px solid var(--border);
       background: white;
@@ -89,25 +226,29 @@
     }
     .filter-btn:hover, .filter-btn.active {
       border-color: var(--purple);
-      background: var(--purple);
+      background: linear-gradient(135deg, var(--purple), var(--purple-light));
       color: white;
       transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+    .filter-btn .icon-svg {
+      width: 18px;
+      height: 18px;
     }
 
     /* ─── OYUN KARTLARI GRID ─── */
     .games-grid {
-      max-width: 1100px;
-      margin: 30px auto 0;
-      padding: 0 32px 70px;
+      margin: 24px 0 0;
+      padding: 0;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 22px;
+      grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+      gap: 20px;
     }
 
     /* ─── OYUN KARTI ─── */
     .game-card {
       background: white;
-      border-radius: var(--r-lg);
+      border-radius: 8px;
       border: 2px solid var(--border);
       text-decoration: none;
       color: inherit;
@@ -116,17 +257,19 @@
       overflow: hidden;
       transition: all .35s cubic-bezier(.34,1.56,.64,1);
       position: relative;
+      min-height: 264px;
+      box-shadow: 0 14px 30px rgba(26,16,64,.06);
     }
     .game-card:hover {
-      transform: translateY(-10px) scale(1.02);
-      box-shadow: var(--shadow-md);
-      border-color: transparent;
+      transform: translateY(-8px);
+      box-shadow: 0 22px 42px rgba(26,16,64,.16);
+      border-color: rgba(108,61,237,.30);
     }
     .game-card[data-hidden="true"] { display: none; }
 
     /* Üst renkli bant */
     .gc-banner {
-      height: 110px;
+      height: 118px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -134,46 +277,84 @@
       overflow: hidden;
       flex-shrink: 0;
     }
+    .gc-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.18), transparent 55%),
+        url("data:image/svg+xml,%3Csvg width='46' height='46' viewBox='0 0 46 46' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 23h38M23 4v38' stroke='%23ffffff' stroke-opacity='.12' stroke-width='2'/%3E%3C/svg%3E");
+    }
     .gc-banner-em {
-      font-size: 56px;
+      width: 66px;
+      height: 66px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,.92);
+      color: var(--card-accent, var(--purple));
       position: relative;
       z-index: 2;
-      filter: drop-shadow(0 4px 12px rgba(0,0,0,.2));
+      box-shadow: 0 16px 30px rgba(0,0,0,.18), inset 0 -3px 0 rgba(26,16,64,.08);
       transition: transform .35s cubic-bezier(.34,1.56,.64,1);
     }
-    .game-card:hover .gc-banner-em { transform: scale(1.25) rotate(10deg); }
+    .gc-banner-em .icon-svg {
+      width: 38px;
+      height: 38px;
+      stroke-width: 2.4;
+    }
+    .game-card:hover .gc-banner-em { transform: scale(1.08) rotate(4deg); }
 
     /* Parıltı efekti */
     .gc-banner::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%);
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.24) 45%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform .6s ease;
       pointer-events: none;
     }
+    .game-card:hover .gc-banner::after { transform: translateX(100%); }
 
     /* Gradient renkleri — data-color ile */
+    .game-card[data-color="purple"] { --card-accent:#6C3DED; }
+    .game-card[data-color="coral"]  { --card-accent:#FF6052; }
+    .game-card[data-color="orange"] { --card-accent:#FF8A2A; }
+    .game-card[data-color="green"]  { --card-accent:#00A891; }
+    .game-card[data-color="yellow"] { --card-accent:#D69B00; }
+    .game-card[data-color="blue"]   { --card-accent:#0B78E3; }
+    .game-card[data-color="pink"]   { --card-accent:#D7337A; }
     .game-card[data-color="purple"] .gc-banner  { background: linear-gradient(135deg,#4A1FD0,#9B72F5); }
-    .game-card[data-color="coral"]  .gc-banner  { background: linear-gradient(135deg,#C0392B,#FF6052); }
-    .game-card[data-color="orange"] .gc-banner  { background: linear-gradient(135deg,#E65100,#FF9F43); }
+    .game-card[data-color="coral"]  .gc-banner  { background: linear-gradient(135deg,#C9473B,#FF7A5E); }
+    .game-card[data-color="orange"] .gc-banner  { background: linear-gradient(135deg,#D95C00,#FFB34D); }
     .game-card[data-color="green"]  .gc-banner  { background: linear-gradient(135deg,#00856A,#55EFC4); }
-    .game-card[data-color="yellow"] .gc-banner  { background: linear-gradient(135deg,#F5C800,#FFD93D); }
+    .game-card[data-color="yellow"] .gc-banner  { background: linear-gradient(135deg,#F3B700,#FFE06A); }
     .game-card[data-color="blue"]   .gc-banner  { background: linear-gradient(135deg,#0B64CA,#74B9FF); }
-    .game-card[data-color="pink"]   .gc-banner  { background: linear-gradient(135deg,#AD1457,#F48FB1); }
+    .game-card[data-color="pink"]   .gc-banner  { background: linear-gradient(135deg,#AD1457,#FFA3C7); }
 
     /* Kategori rozeti */
     .gc-category {
       position: absolute;
       top: 10px; right: 10px;
-      background: rgba(0,0,0,.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(20,9,47,.40);
       color: white;
       font-size: 10px;
       font-weight: 800;
-      padding: 3px 10px;
+      padding: 5px 9px;
       border-radius: 20px;
-      letter-spacing: .5px;
+      letter-spacing: 0;
       text-transform: uppercase;
       z-index: 3;
+      backdrop-filter: blur(10px);
+    }
+    .gc-category .icon-svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2.5;
     }
 
     /* Alt içerik */
@@ -186,16 +367,31 @@
     }
     .gc-title {
       font-family: var(--font-display);
-      font-size: 16px;
-      font-weight: 800;
+      font-size: 17px;
+      font-weight: 900;
       color: var(--navy);
       line-height: 1.25;
     }
     .gc-subtitle {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--slate);
-      font-weight: 600;
+      font-weight: 700;
       font-style: italic;
+      line-height: 1.45;
+    }
+    .gc-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .gc-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
     }
     .gc-play {
       display: flex;
@@ -208,16 +404,20 @@
     .gc-play-lbl {
       font-size: 13px;
       font-weight: 800;
-      color: var(--purple);
+      color: var(--card-accent, var(--purple));
     }
     .gc-play-arrow {
-      width: 32px; height: 32px;
-      background: var(--purple);
-      border-radius: 50%;
+      width: 34px; height: 34px;
+      background: var(--card-accent, var(--purple));
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       color: white;
-      font-size: 14px;
       transition: all .25s;
+    }
+    .gc-play-arrow .icon-svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2.6;
     }
     .game-card:hover .gc-play-arrow {
       background: var(--coral);
@@ -233,43 +433,157 @@
       color: var(--slate);
     }
     .empty-filter.show { display: block; }
-    .empty-filter span { font-size: 60px; display:block; margin-bottom:16px; }
+    .empty-filter span {
+      width: 60px;
+      height: 60px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 16px;
+      border-radius: 8px;
+      background: white;
+      color: var(--purple);
+      box-shadow: var(--shadow-sm);
+    }
+    .empty-filter .icon-svg { width: 32px; height: 32px; }
+
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 26px;
+      flex-wrap: wrap;
+    }
+    .pagination-bar[hidden] { display: none; }
+    .pagination-numbers {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .page-btn {
+      min-width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      background: white;
+      color: var(--navy);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+    .page-btn:hover:not(:disabled), .page-btn.active {
+      border-color: var(--purple);
+      background: var(--purple);
+      color: white;
+      transform: translateY(-2px);
+    }
+    .page-btn:disabled {
+      opacity: .42;
+      cursor: not-allowed;
+    }
+    .page-btn .icon-svg {
+      width: 17px;
+      height: 17px;
+    }
 
     @media (max-width:640px) {
-      .games-grid { padding: 0 16px 50px; }
-      .filter-bar { padding: 0 16px; }
-      .games-grid { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); gap:14px; }
-      .gc-banner  { height: 90px; }
-      .gc-banner-em { font-size: 44px; }
+      .games-hero { padding: 26px 16px 30px; }
+      .games-hero-inner {
+        min-height: auto;
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+      .games-hero-stage { min-height: 130px; }
+      .hero-controller { width: 150px; }
+      .hero-tile { --s: 42px; }
+      .hero-tile svg { width: 22px; height: 22px; }
+      .games-hero h1 { font-size: 38px; }
+      .games-hero p { font-size: 15px; }
+      .games-catalog { padding: 20px 16px 48px; }
+      .catalog-title { font-size: 26px; }
+      .catalog-head {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .filter-bar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        padding-bottom: 4px;
+      }
+      .filter-btn { white-space: nowrap; }
+      .games-grid { grid-template-columns: repeat(auto-fill,minmax(158px,1fr)); gap:14px; }
+      .game-card { min-height: 246px; }
+      .gc-banner  { height: 96px; }
+      .gc-banner-em { width: 56px; height: 56px; }
+      .gc-banner-em .icon-svg { width: 32px; height: 32px; }
+      .gc-body { padding: 15px; }
+      .gc-title { font-size: 15px; }
+      .gc-category { left: 8px; right: auto; top: 8px; max-width: calc(100% - 16px); }
     }
   </style>
 </head>
 <body>
 
-  <div class="games-hero">
-    <span class="star-bg" style="--fs:20px;--dur:2.5s;--d:.3s; top:15%; left:8%;">⭐</span>
-    <span class="star-bg" style="--fs:16px;--dur:3s;--d:1s;   top:70%; left:5%;">✨</span>
-    <span class="star-bg" style="--fs:18px;--dur:2.8s;--d:.7s; top:20%; right:7%;">🌟</span>
-    <span class="star-bg" style="--fs:14px;--dur:3.3s;--d:1.4s;bottom:15%; right:5%;">⭐</span>
-    <span class="games-hero-em">🎮</span>
-    <h1>1. Sınıf Oyunlar &amp; Etkinlikler</h1>
-    <p>Oyna, eğlen, öğren — en iyi kombinasyon!</p>
-  </div>
+  <section class="games-hero" aria-labelledby="gamesTitle">
+    <div class="games-hero-inner">
+      <div class="games-hero-copy">
+        <span class="games-kicker"><span data-icon="spark"></span> Oyun Merkezi</span>
+        <h1 id="gamesTitle">Eğitim Oyunları</h1>
+        <p>Matematikten hafızaya, dikkat oyunlarından strateji görevlerine kadar öğrenmeyi hareketli ve renkli hale getiren oyun alanı.</p>
+        <div class="games-hero-tags" aria-label="Oyun türleri">
+          <span><span data-icon="calculator"></span> Matematik</span>
+          <span><span data-icon="memory"></span> Hafıza</span>
+          <span><span data-icon="target"></span> Dikkat</span>
+        </div>
+      </div>
+      <div class="games-hero-stage" aria-hidden="true">
+        <span class="hero-tile one" style="--dur:3.8s;"><span data-icon="plus"></span></span>
+        <span class="hero-tile two" style="--dur:4.3s;--d:.4s;"><span data-icon="puzzle"></span></span>
+        <span class="hero-tile three" style="--dur:4.1s;--d:.7s;"><span data-icon="rocket"></span></span>
+        <span class="hero-tile four" style="--dur:3.7s;--d:.2s;"><span data-icon="music"></span></span>
+        <svg class="hero-controller" viewBox="0 0 220 150" role="img" aria-label="Oyun kolu">
+          <path d="M47 48C32 52 22 69 18 96c-3 20 2 33 14 36 12 4 25-11 36-35h84c11 24 24 39 36 35 12-3 17-16 14-36-4-27-14-44-29-48-14-4-35 7-50 14H97C82 55 61 44 47 48Z" fill="rgba(255,255,255,.92)"/>
+          <path d="M47 48C32 52 22 69 18 96c-3 20 2 33 14 36 12 4 25-11 36-35h84c11 24 24 39 36 35 12-3 17-16 14-36-4-27-14-44-29-48-14-4-35 7-50 14H97C82 55 61 44 47 48Z" fill="none" stroke="rgba(20,9,47,.48)" stroke-width="6"/>
+          <path d="M57 71v32M41 87h32" stroke="#14092f" stroke-width="9" stroke-linecap="round"/>
+          <circle cx="161" cy="76" r="10" fill="#FF6B57"/>
+          <circle cx="182" cy="93" r="10" fill="#31C48D"/>
+          <circle cx="145" cy="100" r="10" fill="#1EC8D2"/>
+          <circle cx="112" cy="85" r="11" fill="#6C3DED"/>
+        </svg>
+      </div>
+    </div>
+  </section>
 
-  <div class="filter-bar">
-    <button class="filter-btn active" onclick="filterGames('tümü', this)">Tümü</button>
-    <button class="filter-btn" onclick="filterGames('matematik', this)">🔢 Matematik</button>
-    <button class="filter-btn" onclick="filterGames('türkçe', this)">📝 Türkçe</button>
-    <button class="filter-btn" onclick="filterGames('fen', this)">🔬 Fen</button>
-    <button class="filter-btn" onclick="filterGames('hayat', this)">🌱 Hayat Bilgisi</button>
-    <button class="filter-btn" onclick="filterGames('strateji', this)">♟️ Strateji</button>
-    <button class="filter-btn" onclick="filterGames('hafıza', this)">🧠 Hafıza</button>
-    <button class="filter-btn" onclick="filterGames('bulmaca', this)">🧩 Bulmaca</button>
-  </div>
+  <main class="games-catalog" aria-label="Oyun kataloğu">
+    <div class="catalog-head">
+      <h2 class="catalog-title">Oyun Kataloğu</h2>
+      <span class="catalog-count" id="gamesCount"><span data-icon="gamepad"></span> Oyunlar yükleniyor</span>
+    </div>
 
-  <div class="games-grid" id="gamesGrid">
+    <div class="filter-bar" role="toolbar" aria-label="Oyun kategorileri">
+      <button class="filter-btn active" data-icon="grid" onclick="filterGames('tümü', this)">Tümü</button>
+      <button class="filter-btn" data-icon="calculator" onclick="filterGames('matematik', this)">Matematik</button>
+      <button class="filter-btn" data-icon="book" onclick="filterGames('türkçe', this)">Türkçe</button>
+      <button class="filter-btn" data-icon="flask" onclick="filterGames('fen', this)">Fen</button>
+      <button class="filter-btn" data-icon="leaf" onclick="filterGames('hayat', this)">Hayat Bilgisi</button>
+      <button class="filter-btn" data-icon="strategy" onclick="filterGames('strateji', this)">Strateji</button>
+      <button class="filter-btn" data-icon="memory" onclick="filterGames('hafıza', this)">Hafıza</button>
+      <button class="filter-btn" data-icon="puzzle" onclick="filterGames('bulmaca', this)">Bulmaca</button>
+    </div>
 
-    <a href="kizma_birader.html" class="game-card" data-color="orange" data-cat="strateji">
+    <div class="games-grid" id="gamesGrid">
+
+    <a href="kizma_birader.html" class="game-card" data-color="orange" data-cat="strateji" data-icon="dice" data-date="2026-04-05T20:11:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">♟️ Strateji</span>
         <span class="gc-banner-em">😤</span>
@@ -284,7 +598,7 @@
       </div>
     </a>
 
-    <a href="oyun1.html" class="game-card" data-color="purple" data-cat="matematik">
+    <a href="oyun1.html" class="game-card" data-color="purple" data-cat="matematik" data-icon="music" data-date="2026-05-08T00:53:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🎵</span>
@@ -299,7 +613,7 @@
       </div>
     </a>
 
-    <a href="oyun2.html" class="game-card" data-color="coral" data-cat="matematik">
+    <a href="oyun2.html" class="game-card" data-color="coral" data-cat="matematik" data-icon="numbers" data-date="2026-05-08T00:29:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🔢</span>
@@ -314,7 +628,7 @@
       </div>
     </a>
 
-    <a href="oyun3.html" class="game-card" data-color="green" data-cat="matematik">
+    <a href="oyun3.html" class="game-card" data-color="green" data-cat="matematik" data-icon="calculator" data-date="2026-05-08T00:44:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🧮</span>
@@ -329,7 +643,7 @@
       </div>
     </a>
 
-    <a href="oyun4.html" class="game-card" data-color="blue" data-cat="strateji">
+    <a href="oyun4.html" class="game-card" data-color="blue" data-cat="strateji" data-icon="trophy" data-date="2026-04-23T23:33:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">♟️ Strateji</span>
         <span class="gc-banner-em">🏆</span>
@@ -344,7 +658,7 @@
       </div>
     </a>
 
-    <a href="oyun5.html" class="game-card" data-color="yellow" data-cat="matematik">
+    <a href="oyun5.html" class="game-card" data-color="yellow" data-cat="matematik" data-icon="plus" data-date="2026-04-23T12:00:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">➕</span>
@@ -359,7 +673,7 @@
       </div>
     </a>
 
-    <a href="oyun6.html" class="game-card" data-color="green" data-cat="hayat">
+    <a href="oyun6.html" class="game-card" data-color="green" data-cat="hayat" data-icon="globe" data-date="2026-05-08T01:19:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🌱 Hayat Bilgisi</span>
         <span class="gc-banner-em">🌍</span>
@@ -374,7 +688,7 @@
       </div>
     </a>
 
-    <a href="saat-oyunu.html" class="game-card" data-color="blue" data-cat="matematik">
+    <a href="saat-oyunu.html" class="game-card" data-color="blue" data-cat="matematik" data-icon="clock" data-date="2026-04-06T23:52:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">⏰</span>
@@ -389,7 +703,7 @@
       </div>
     </a>
 
-    <a href="paralarimiz.html" class="game-card" data-color="green" data-cat="matematik">
+    <a href="paralarimiz.html" class="game-card" data-color="green" data-cat="matematik" data-icon="lira" data-date="2026-04-29T22:55:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">₺</span>
@@ -404,7 +718,7 @@
       </div>
     </a>
 
-    <a href="tarti-oyunu.html" class="game-card" data-color="purple" data-cat="matematik">
+    <a href="tarti-oyunu.html" class="game-card" data-color="purple" data-cat="matematik" data-icon="scale" data-date="2026-05-01T13:50:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">⚖️</span>
@@ -419,7 +733,7 @@
       </div>
     </a>
 
-    <a href="matematik-masa-tenisi.html" class="game-card" data-color="blue" data-cat="matematik">
+    <a href="matematik-masa-tenisi.html" class="game-card" data-color="blue" data-cat="matematik" data-icon="paddle" data-date="2026-05-08T07:51:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🏓</span>
@@ -434,7 +748,7 @@
       </div>
     </a>
 
-    <a href="esini-bul-hafiza.html" class="game-card" data-color="pink" data-cat="hafıza">
+    <a href="esini-bul-hafiza.html" class="game-card" data-color="pink" data-cat="hafıza" data-icon="memory" data-date="2026-05-06T21:01:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🧠 Hafıza</span>
         <span class="gc-banner-em">🧩</span>
@@ -449,7 +763,7 @@
       </div>
     </a>
 
-    <a href="sirali-hafiza.html" class="game-card" data-color="blue" data-cat="hafıza">
+    <a href="sirali-hafiza.html" class="game-card" data-color="blue" data-cat="hafıza" data-icon="music" data-date="2026-05-06T21:23:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🧠 Hafıza</span>
         <span class="gc-banner-em">💡</span>
@@ -464,7 +778,7 @@
       </div>
     </a>
 
-    <a href="oruntu-treni.html" class="game-card" data-color="coral" data-cat="matematik">
+    <a href="oruntu-treni.html" class="game-card" data-color="coral" data-cat="matematik" data-icon="train" data-date="2026-05-06T21:36:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🚂</span>
@@ -479,7 +793,7 @@
       </div>
     </a>
 
-    <a href="golge-dedektifi.html" class="game-card" data-color="green" data-cat="bulmaca">
+    <a href="golge-dedektifi.html" class="game-card" data-color="green" data-cat="bulmaca" data-icon="shadow" data-date="2026-05-06T21:42:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🧩 Bulmaca</span>
         <span class="gc-banner-em">🕵️</span>
@@ -494,7 +808,7 @@
       </div>
     </a>
 
-    <a href="minik-kodlamaci.html" class="game-card" data-color="purple" data-cat="strateji">
+    <a href="minik-kodlamaci.html" class="game-card" data-color="purple" data-cat="strateji" data-icon="robot" data-date="2026-05-06T21:46:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">♟️ Strateji</span>
         <span class="gc-banner-em">🤖</span>
@@ -509,7 +823,7 @@
       </div>
     </a>
 
-    <a href="geometri-kasifi.html" class="game-card" data-color="blue" data-cat="matematik">
+    <a href="geometri-kasifi.html" class="game-card" data-color="blue" data-cat="matematik" data-icon="cube" data-date="2026-05-07T23:50:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🧊</span>
@@ -525,22 +839,99 @@
     </a>
 
     <div class="empty-filter" id="emptyFilter">
-      <span>🔍</span>
+      <span data-icon="search"></span>
       <p>Bu kategoride henüz oyun yok. Yakında ekleniyor!</p>
     </div>
 
-  </div>
+    </div>
+
+    <div class="pagination-bar" id="paginationBar" hidden aria-label="Oyun sayfaları">
+      <button class="page-btn" type="button" id="pagePrev" aria-label="Önceki sayfa"></button>
+      <div id="pageNumbers" class="pagination-numbers" aria-label="Sayfa numaraları"></div>
+      <button class="page-btn" type="button" id="pageNext" aria-label="Sonraki sayfa"></button>
+    </div>
+  </main>
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
   <script>
     const OYUN_KEY = 'kemal_oyunlar';
+    const PAGE_SIZE = 12;
     let aktifKat = 'tümü';
+    let currentPage = 1;
 
-    // Admin panelinden eklenen oyunları yükle
     document.addEventListener('DOMContentLoaded', function() {
+      hydrateInlineIcons(document);
+      setupPaginationButtons();
       loadDynamicOyunlar();
+      sortGameCards();
+      hydrateGameCards();
+      filterGames(aktifKat, document.querySelector('.filter-btn.active') || document.querySelector('.filter-btn'));
     });
+
+    function iconSvg(name) {
+      const icons = {
+        spark: '<path d="M12 3l1.7 5.1L19 10l-5.3 1.9L12 17l-1.7-5.1L5 10l5.3-1.9L12 3Z"/><path d="M19 15l.9 2.6 2.6.9-2.6.9L19 23l-.9-2.6-2.6-.9 2.6-.9L19 15Z"/>',
+        gamepad: '<path d="M7.5 10h9c2.6 0 4.5 2 4.9 5.1l.2 1.3c.3 2-.8 3.6-2.5 3.6-1.2 0-2.1-.8-3.1-2.4l-.9-1.6H8.9L8 17.6C7 19.2 6.1 20 4.9 20c-1.7 0-2.8-1.6-2.5-3.6l.2-1.3C3 12 4.9 10 7.5 10Z"/><path d="M8 13v4M6 15h4"/><path d="M16.8 14.2h.1M18.8 16.2h.1"/>',
+        grid: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>',
+        calculator: '<path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0M8 18h6"/>',
+        book: '<path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H8a4 4 0 0 0-4 4V5.5Z"/><path d="M4 19V5.5M8 19h12"/>',
+        flask: '<path d="M9 3h6M10 3v5l-4.6 7.9A3.4 3.4 0 0 0 8.3 21h7.4a3.4 3.4 0 0 0 2.9-5.1L14 8V3"/><path d="M8 15h8"/>',
+        leaf: '<path d="M20 4C12 4 6 8.5 6 15a5 5 0 0 0 5 5c6.5 0 9-8 9-16Z"/><path d="M4 20c2.8-5.5 7-9.2 13-11"/>',
+        strategy: '<path d="M12 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/><path d="M9 9h6l1 7H8l1-7Z"/><path d="M7 21h10M8 16h8l2 5H6l2-5Z"/>',
+        memory: '<path d="M9 4a4 4 0 0 0-4 4c0 1 .4 1.9 1 2.6A4.5 4.5 0 0 0 8.5 19H10"/><path d="M15 4a4 4 0 0 1 4 4c0 1-.4 1.9-1 2.6A4.5 4.5 0 0 1 15.5 19H14"/><path d="M10 5v15M14 5v15M8 10h8M8.5 15h7"/>',
+        puzzle: '<path d="M9 3h6v4a2 2 0 1 0 0 4v4h-4a2 2 0 1 1-4 0H3V9h4a2 2 0 1 0 2-2V3Z"/><path d="M15 11h6v10h-8v-4"/>',
+        search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M16 16l5 5"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        rocket: '<path d="M5 19c4.5-.8 9.2-5.5 11.2-11.4L18 2l-5.6 1.8C6.5 5.8 1.8 10.5 1 15l5-1 3 3-4 2Z"/><path d="M12 7h.1M7 17l-3 3"/>',
+        music: '<path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
+        target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"/>',
+        dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>',
+        numbers: '<path d="M8 6h3v12M7 18h5M14 8.5A2.5 2.5 0 0 1 18.5 7c1.4 1.8-.5 4-4.5 8.5h5"/>',
+        trophy: '<path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"/><path d="M8 6H4a4 4 0 0 0 4 4M16 6h4a4 4 0 0 1-4 4M12 12v5M9 21h6M8 17h8"/>',
+        globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a13 13 0 0 1 0 18M12 3a13 13 0 0 0 0 18"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/>',
+        lira: '<path d="M9 3v18M15 7 6 10M15 11 6 14M9 21c4.4 0 7-2.2 8-6"/>',
+        scale: '<path d="M12 3v18M5 7h14M8 7l-4 7h8L8 7ZM16 7l-4 7h8l-4-7ZM8 21h8"/>',
+        paddle: '<path d="M7 14a5 5 0 1 1 7-7 5 5 0 0 1-7 7Z"/><path d="M10.5 13.5 20 23"/><circle cx="17" cy="7" r="2"/>',
+        train: '<path d="M6 4h12a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a2 2 0 0 1 2-2Z"/><path d="M8 4V2h8v2M7 9h10M8 18l-2 3M16 18l2 3M9 14h.1M15 14h.1"/>',
+        shadow: '<path d="M3 12s3.2-6 9-6 9 6 9 6-3.2 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="3"/><path d="M18 18l3 3"/>',
+        robot: '<rect x="5" y="7" width="14" height="12" rx="3"/><path d="M12 7V3M9 3h6M8.5 12h.1M15.5 12h.1M9 16h6"/>',
+        cube: '<path d="M12 2 21 7v10l-9 5-9-5V7l9-5Z"/><path d="M12 12 3 7M12 12l9-5M12 12v10"/>',
+        arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+        chevronLeft: '<path d="M15 18 9 12l6-6"/>',
+        chevronRight: '<path d="m9 18 6-6-6-6"/>'
+      };
+      const body = icons[name] || icons.gamepad;
+      return '<svg class="icon-svg" viewBox="0 0 24 24" aria-hidden="true">' + body + '</svg>';
+    }
+
+    function setIcon(el, name) {
+      if (!el) return;
+      el.innerHTML = iconSvg(name);
+    }
+
+    function iconNode(name) {
+      const wrap = document.createElement('span');
+      wrap.innerHTML = iconSvg(name);
+      return wrap.firstElementChild;
+    }
+
+    function hydrateInlineIcons(root) {
+      root.querySelectorAll('[data-icon]').forEach(el => {
+        if (el.classList.contains('game-card')) return;
+        const iconName = el.dataset.icon || 'gamepad';
+        if (el.matches('button')) {
+          if (!el.querySelector('.icon-svg')) {
+            el.insertAdjacentHTML('afterbegin', iconSvg(iconName));
+          }
+          return;
+        }
+        if (!el.querySelector('.icon-svg')) {
+          setIcon(el, iconName);
+        }
+      });
+    }
 
     function createMetaBadge(text, background, color) {
       const badge = document.createElement('span');
@@ -555,10 +946,69 @@
       return '/oyun/iframe-oyun.html?id=' + encodeURIComponent(id || '');
     }
 
+    const catIconMap = {
+      'tümü': 'grid',
+      'matematik': 'calculator',
+      'türkçe': 'book',
+      'fen': 'flask',
+      'hayat': 'leaf',
+      'strateji': 'strategy',
+      'hafıza': 'memory',
+      'bulmaca': 'puzzle',
+      'sosyal': 'globe',
+      'genel': 'gamepad'
+    };
+
+    const catTitleMap = {
+      'matematik': 'Matematik',
+      'türkçe': 'Türkçe',
+      'fen': 'Fen',
+      'hayat': 'Hayat Bilgisi',
+      'strateji': 'Strateji',
+      'hafıza': 'Hafıza',
+      'bulmaca': 'Bulmaca',
+      'sosyal': 'Sosyal',
+      'genel': 'Genel'
+    };
+
+    function resolveGameTimestamp(oyun) {
+      const raw = oyun.createdAt || oyun.updatedAt || '';
+      const parsed = Date.parse(raw);
+      if (!Number.isNaN(parsed)) return parsed;
+      const fromId = String(oyun.id || '').match(/(\d{11,})/);
+      return fromId ? Number(fromId[1]) : 0;
+    }
+
+    function pickDynamicIcon(emoji, cat) {
+      const emojiMap = {
+        '🎵': 'music',
+        '🔢': 'numbers',
+        '🧮': 'calculator',
+        '🏆': 'trophy',
+        '➕': 'plus',
+        '🌍': 'globe',
+        '⏰': 'clock',
+        '₺': 'lira',
+        '⚖️': 'scale',
+        '🏓': 'paddle',
+        '🧩': 'puzzle',
+        '💡': 'memory',
+        '🚂': 'train',
+        '🕵️': 'shadow',
+        '🤖': 'robot',
+        '🧊': 'cube',
+        '😤': 'dice',
+        '🎮': 'gamepad'
+      };
+      return emojiMap[String(emoji || '').trim()] || catIconMap[cat] || 'gamepad';
+    }
+
     function loadDynamicOyunlar() {
       try {
         const oyunlar = JSON.parse(localStorage.getItem(OYUN_KEY)||'[]');
-        const aktifler = oyunlar.filter(o => o.aktif);
+        const aktifler = oyunlar
+          .filter(o => o.aktif)
+          .sort((a, b) => resolveGameTimestamp(b) - resolveGameTimestamp(a));
         if (!aktifler.length) return;
 
         const grid = document.getElementById('gamesGrid');
@@ -572,16 +1022,6 @@
           'Türkçe':'türkçe','Matematik':'matematik','Fen':'fen',
           'Hayat Bilgisi':'hayat','Strateji':'strateji','Hafıza':'hafıza','Bulmaca':'bulmaca','Sosyal':'sosyal'
         };
-        const katLabelMap = {
-          'Türkçe':'📝 Türkçe',
-          'Matematik':'🔢 Matematik',
-          'Fen':'🔬 Fen',
-          'Hayat Bilgisi':'🌱 Hayat Bilgisi',
-          'Strateji':'♟️ Strateji',
-          'Hafıza':'🧠 Hafıza',
-          'Bulmaca':'🧩 Bulmaca',
-          'Sosyal':'🌍 Sosyal'
-        };
 
         aktifler.forEach((o, i) => {
           const renk = renkler[i % renkler.length];
@@ -589,6 +1029,7 @@
           const sinifTxt = o.sinif && o.sinif!=='Tümü' ? `${o.sinif}. Sınıf` : '';
           const sevTxt = o.sev && o.sev!=='Tümü' ? o.sev : '';
           const oyunHref = o.tip === 'iframe' ? buildIframeGameUrl(o.id) : o.url;
+          const createdTime = resolveGameTimestamp(o);
 
           const el = document.createElement('a');
           el.href = oyunHref || '#';
@@ -599,20 +1040,21 @@
           el.className = 'game-card';
           el.dataset.color = renk;
           el.dataset.cat = cat;
+          el.dataset.icon = pickDynamicIcon(o.emoji, cat);
+          el.dataset.date = createdTime ? new Date(createdTime).toISOString() : '';
 
           const banner = document.createElement('div');
           banner.className = 'gc-banner';
 
           const category = document.createElement('span');
           category.className = 'gc-category';
-          category.textContent = katLabelMap[o.kat] || ((o.kat || 'Genel') === 'Genel' ? '🎮 Genel' : o.kat);
+          category.textContent = catTitleMap[cat] || o.kat || 'Genel';
 
-          const bannerEmoji = document.createElement('span');
-          bannerEmoji.className = 'gc-banner-em';
-          bannerEmoji.textContent = o.emoji || '🎮';
+          const bannerIcon = document.createElement('span');
+          bannerIcon.className = 'gc-banner-em';
 
           banner.appendChild(category);
-          banner.appendChild(bannerEmoji);
+          banner.appendChild(bannerIcon);
 
           const body = document.createElement('div');
           body.className = 'gc-body';
@@ -644,7 +1086,6 @@
 
           const playArrow = document.createElement('span');
           playArrow.className = 'gc-play-arrow';
-          playArrow.textContent = '→';
 
           play.appendChild(playLabel);
           play.appendChild(playArrow);
@@ -665,21 +1106,115 @@
             grid.appendChild(el);
           }
         });
-        filterGames(aktifKat, document.querySelector('.filter-btn.active') || document.querySelector('.filter-btn'));
       } catch(e) { console.warn('Oyun yükleme hatası:', e); }
+    }
+
+    function sortGameCards() {
+      const grid = document.getElementById('gamesGrid');
+      const emptyState = document.getElementById('emptyFilter');
+      if (!grid) return;
+      Array.from(grid.querySelectorAll('.game-card'))
+        .sort((a, b) => getCardTime(b) - getCardTime(a))
+        .forEach(card => grid.insertBefore(card, emptyState));
+    }
+
+    function getCardTime(card) {
+      const parsed = Date.parse(card.dataset.date || '');
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+
+    function hydrateGameCards() {
+      document.querySelectorAll('.game-card').forEach(card => {
+        const cat = card.dataset.cat || 'genel';
+        const iconName = card.dataset.icon || catIconMap[cat] || 'gamepad';
+        const titleText = card.querySelector('.gc-title')?.textContent.trim() || 'Oyun';
+        const bannerIcon = card.querySelector('.gc-banner-em');
+        const category = card.querySelector('.gc-category');
+        const arrow = card.querySelector('.gc-play-arrow');
+
+        card.setAttribute('aria-label', titleText + ' oyununu aç');
+        setIcon(bannerIcon, iconName);
+        setIcon(arrow, 'arrow');
+
+        if (category) {
+          category.textContent = '';
+          category.appendChild(iconNode(catIconMap[cat] || 'gamepad'));
+          category.appendChild(document.createTextNode(catTitleMap[cat] || 'Genel'));
+        }
+      });
+    }
+
+    function setupPaginationButtons() {
+      const prev = document.getElementById('pagePrev');
+      const next = document.getElementById('pageNext');
+      setIcon(prev, 'chevronLeft');
+      setIcon(next, 'chevronRight');
+      if (prev) prev.addEventListener('click', () => goToPage(currentPage - 1));
+      if (next) next.addEventListener('click', () => goToPage(currentPage + 1));
+    }
+
+    function updateCatalogCount(count) {
+      const el = document.getElementById('gamesCount');
+      if (!el) return;
+      el.textContent = '';
+      el.appendChild(iconNode('gamepad'));
+      el.appendChild(document.createTextNode(count + ' oyun'));
+    }
+
+    function renderGames() {
+      const cards = Array.from(document.querySelectorAll('.game-card'));
+      const matches = cards.filter(card => aktifKat === 'tümü' || card.dataset.cat === aktifKat);
+      const visible = matches.length;
+      const totalPages = Math.max(1, Math.ceil(visible / PAGE_SIZE));
+      currentPage = Math.min(Math.max(currentPage, 1), totalPages);
+
+      cards.forEach(card => { card.dataset.hidden = 'true'; });
+      matches.forEach((card, index) => {
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        card.dataset.hidden = index >= start && index < end ? 'false' : 'true';
+      });
+
+      document.getElementById('emptyFilter').classList.toggle('show', visible === 0);
+      updateCatalogCount(visible);
+      updatePagination(totalPages, visible);
+    }
+
+    function updatePagination(totalPages, visible) {
+      const bar = document.getElementById('paginationBar');
+      const numbers = document.getElementById('pageNumbers');
+      const prev = document.getElementById('pagePrev');
+      const next = document.getElementById('pageNext');
+      if (!bar || !numbers || !prev || !next) return;
+
+      bar.hidden = visible <= PAGE_SIZE;
+      prev.disabled = currentPage <= 1;
+      next.disabled = currentPage >= totalPages;
+      numbers.textContent = '';
+
+      for (let page = 1; page <= totalPages; page++) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'page-btn' + (page === currentPage ? ' active' : '');
+        button.textContent = page;
+        button.setAttribute('aria-label', page + '. sayfa');
+        button.addEventListener('click', () => goToPage(page));
+        numbers.appendChild(button);
+      }
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      renderGames();
+      document.querySelector('.games-catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function filterGames(cat, btn) {
       aktifKat = cat;
+      currentPage = 1;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      let visible = 0;
-      document.querySelectorAll('.game-card').forEach(card => {
-        const match = cat === 'tümü' || card.dataset.cat === cat;
-        card.dataset.hidden = match ? 'false' : 'true';
-        if (match) visible++;
-      });
-      document.getElementById('emptyFilter').classList.toggle('show', visible === 0);
+      if (btn) btn.classList.add('active');
+      renderGames();
     }
   </script>
 </body>

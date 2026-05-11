@@ -206,6 +206,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.82rem;
+    table-layout: fixed;
   }
   .schedule-table th {
     background: var(--primary);
@@ -241,6 +242,135 @@
     outline: none;
     cursor: pointer;
     border-radius: 4px;
+  }
+
+  .program-settings-grid {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 16px;
+  }
+  .settings-panel {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .settings-panel h3 {
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-row label {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .settings-row select,
+  .teacher-map input,
+  .etut-input,
+  .etut-row input {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    outline: none;
+  }
+  .etut-manager {
+    border-top: 1px solid var(--border);
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+  .etut-manager h4 {
+    color: var(--primary);
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+  }
+  .etut-add {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .etut-input {
+    min-width: 0;
+    flex: 1;
+  }
+  .etut-list {
+    display: grid;
+    gap: 8px;
+  }
+  .etut-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px;
+  }
+  .etut-row input {
+    width: 100%;
+  }
+  .weekend-control {
+    display: grid;
+    grid-template-columns: 110px repeat(2, minmax(130px, auto));
+    gap: 8px 12px;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+  .weekend-control strong { color: var(--primary); }
+  .weekend-control label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .weekend-control input[disabled] + span {
+    color: var(--muted);
+  }
+  .teacher-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .teacher-map-row {
+    display: grid;
+    gap: 5px;
+  }
+  .teacher-map-row label {
+    color: var(--primary);
+    font-weight: 900;
+    font-size: 0.76rem;
+  }
+  .cell-teacher-preview,
+  .cell-teacher {
+    font-size: 0.66rem;
+    color: #334155;
+    font-weight: 800;
+    margin-top: 3px;
+  }
+  .cell-teacher {
+    font-style: normal;
+    color: #475569;
+  }
+  .plan-closed-note {
+    font-size: 0.68rem;
+    color: #64748b;
+    font-weight: 800;
+    margin-top: 6px;
   }
 
   /* Tatil hücresi */
@@ -330,7 +460,7 @@
     table-layout: fixed;
   }
   .plan-table col.lesson-col { width: 56px; }
-  .plan-table col.day-col { width: calc((100% - 56px) / 5); }
+  .plan-table col.day-col { width: auto; }
   .plan-table th {
     background: var(--primary);
     color: white;
@@ -489,28 +619,38 @@
 
   .exporting-a4 {
     width: 297mm !important;
-    min-height: 210mm !important;
+    height: 210mm !important;
     padding: 8mm !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     background: white !important;
+    overflow: hidden !important;
   }
   .exporting-a4 .plan-table {
     font-size: 0.62rem;
   }
+  .exporting-a4 .plan-cell,
+  .exporting-a4 .tatil-plan-cell {
+    min-height: calc(170mm / var(--lesson-count, 9));
+  }
   .exporting-a4 .plan-cell-inner {
-    min-height: 54px;
+    min-height: calc(170mm / var(--lesson-count, 9));
   }
 
   /* ===== PRINT ===== */
   @media print {
-    .header, .tabs, .week-nav, .no-print { display: none !important; }
+    .header, .tabs, .week-nav, .no-print, #kemalNavMount, #kemalFooterMount, #kemalAnnounceMount { display: none !important; }
     .page { padding: 0 !important; max-width: 297mm !important; }
     body { background: white; }
     .plan-table { font-size: 0.62rem; table-layout: fixed; }
     .card { box-shadow: none; border: none; break-inside: avoid; }
     #weekly-plan-card { width: 297mm; min-height: 210mm; padding: 8mm !important; margin: 0; }
     @page { size: 297mm 210mm; margin: 0; }
+  }
+
+  @media (max-width: 820px) {
+    .program-settings-grid { grid-template-columns: 1fr; }
+    .weekend-control { grid-template-columns: 1fr; }
   }
 
   /* ===== FOOTER ===== */
@@ -624,7 +764,7 @@
 
 <div class="header">
   <h1>📚 Öğretmen <span>Ders Planlama</span> Sistemi</h1>
-  <div class="header-right">2025-2026 Eğitim Öğretim Yılı</div>
+  <div class="header-right" id="education-year-label">Eğitim Öğretim Yılı</div>
 </div>
 
 <div class="tabs">
@@ -656,6 +796,43 @@
       <strong>Nasıl kullanılır?</strong> Her hücrede açılır listeden ders seçin veya listedeki dersin dışında bir ders yazabilmek için "Diğer (elle gir)" seçeneğini seçin. Kaydettiğinizde program tarayıcıya kaydedilir ve bir daha girmenize gerek kalmaz.
     </div>
 
+    <div class="program-settings-grid no-print">
+      <div class="settings-panel">
+        <h3>Program Ayarları</h3>
+        <div class="settings-row">
+          <label for="lesson-count-select">Günlük ders saati</label>
+          <select id="lesson-count-select" onchange="updateLessonCount(this.value)">
+            <option value="5">5 ders</option>
+            <option value="6">6 ders</option>
+            <option value="7">7 ders</option>
+            <option value="8">8 ders</option>
+            <option value="9">9 ders</option>
+            <option value="10">10 ders</option>
+          </select>
+        </div>
+        <div class="weekend-control">
+          <strong>Cumartesi</strong>
+          <label><input type="checkbox" id="weekend-Sat-enabled" onchange="updateWeekendSetting('Sat','enabled',this.checked)"><span>Programda göster</span></label>
+          <label><input type="checkbox" id="weekend-Sat-plan" onchange="updateWeekendSetting('Sat','planOpen',this.checked)"><span>Yıllık plana dahil</span></label>
+          <strong>Pazar</strong>
+          <label><input type="checkbox" id="weekend-Sun-enabled" onchange="updateWeekendSetting('Sun','enabled',this.checked)"><span>Programda göster</span></label>
+          <label><input type="checkbox" id="weekend-Sun-plan" onchange="updateWeekendSetting('Sun','planOpen',this.checked)"><span>Yıllık plana dahil</span></label>
+        </div>
+        <div class="etut-manager">
+          <h4>Etüt Öğretmenleri</h4>
+          <div class="etut-add">
+            <input type="text" class="etut-input" id="etut-teacher-input" placeholder="Örn. Kemal">
+            <button class="btn btn-secondary btn-sm" onclick="addEtutTeacher()">+ Etüt</button>
+          </div>
+          <div class="etut-list" id="etut-list"></div>
+        </div>
+      </div>
+      <div class="settings-panel">
+        <h3>Ders Öğretmenleri</h3>
+        <div class="teacher-map" id="teacher-map"></div>
+      </div>
+    </div>
+
     <div class="form-row no-print" style="margin-bottom:16px">
       <div class="form-group">
         <label>Resmi Tatil Günü Ekle (o günü tatil yap)</label>
@@ -666,16 +843,7 @@
 
     <div style="overflow-x:auto">
       <table class="schedule-table" id="schedule-table">
-        <thead>
-          <tr>
-            <th>Ders<br>Sırası</th>
-            <th>Pazartesi</th>
-            <th>Salı</th>
-            <th>Çarşamba</th>
-            <th>Perşembe</th>
-            <th>Cuma</th>
-          </tr>
-        </thead>
+        <thead id="schedule-head"></thead>
         <tbody id="schedule-body"></tbody>
       </table>
     </div>
@@ -821,16 +989,30 @@ let state = {
   programs: {},          // {sinifId: {Mon:[{ders, isHoliday}], ...}}
   yillikPlanlar: {},     // {dersAdi: [{hafta, kazanim, surec, ay}]}
   tatiller: [],          // [{start, end, name}]
+  settings: {
+    lessonCount: 9,
+    weekend: {
+      Sat: {enabled: false, planOpen: false},
+      Sun: {enabled: false, planOpen: false}
+    }
+  },
+  dersOgretmenleri: {},
+  etutler: [],
   currentWeek: 1,
   totalWeeks: 36
 };
 
-const GUNLER = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-const GUN_KEYS = ['Mon','Tue','Wed','Thu','Fri'];
+const DAY_DEFS = [
+  {key:'Mon', label:'Pazartesi', offset:0, weekend:false},
+  {key:'Tue', label:'Salı', offset:1, weekend:false},
+  {key:'Wed', label:'Çarşamba', offset:2, weekend:false},
+  {key:'Thu', label:'Perşembe', offset:3, weekend:false},
+  {key:'Fri', label:'Cuma', offset:4, weekend:false},
+  {key:'Sat', label:'Cumartesi', offset:5, weekend:true},
+  {key:'Sun', label:'Pazar', offset:6, weekend:true}
+];
+const ALL_GUN_KEYS = DAY_DEFS.map(d => d.key);
 const DATA_VERSION = 7;
-
-// Okul başlangıç tarihi
-const SCHOOL_START = new Date('2025-09-08');
 
 // Ders renkleri
 const DERS_RENK = {
@@ -854,11 +1036,83 @@ const DERSLER_LISTESI = [
   'DİĞER (Elle Gir)'
 ];
 
+function getSchoolYearStartYear(date = new Date()) {
+  return date.getMonth() >= 8 ? date.getFullYear() : date.getFullYear() - 1;
+}
+
+function getEducationYearLabel() {
+  const startYear = getSchoolYearStartYear();
+  return `${startYear}-${startYear + 1} Eğitim Öğretim Yılı`;
+}
+
+function getPlanYearForMonth(monthNumber) {
+  const startYear = getSchoolYearStartYear();
+  return Number(monthNumber) >= 9 ? startYear : startYear + 1;
+}
+
+function getFallbackSchoolStartDate() {
+  const startYear = getSchoolYearStartYear();
+  const start = new Date(startYear, 8, 8);
+  const day = start.getDay();
+  const diff = day === 1 ? 0 : (day === 0 ? 1 : 8 - day);
+  return new Date(start.getFullYear(), start.getMonth(), start.getDate() + diff);
+}
+
+function ensureStateDefaults() {
+  state.settings = state.settings || {};
+  state.settings.lessonCount = Math.min(10, Math.max(5, parseInt(state.settings.lessonCount, 10) || 9));
+  state.settings.weekend = state.settings.weekend || {};
+  ['Sat', 'Sun'].forEach(key => {
+    state.settings.weekend[key] = {
+      enabled: Boolean(state.settings.weekend[key] && state.settings.weekend[key].enabled),
+      planOpen: Boolean(state.settings.weekend[key] && state.settings.weekend[key].planOpen)
+    };
+    if (!state.settings.weekend[key].enabled) state.settings.weekend[key].planOpen = false;
+  });
+  state.dersOgretmenleri = state.dersOgretmenleri || {};
+  state.etutler = Array.isArray(state.etutler) ? state.etutler.filter(e => e && cleanCellText(e.name)) : [];
+  Object.keys(state.programs || {}).forEach(id => ensureProgramShape(state.programs[id]));
+}
+
+function getLessonCount() {
+  return Math.min(10, Math.max(5, parseInt(state.settings?.lessonCount, 10) || 9));
+}
+
+function getWeekendConfig(dayKey) {
+  ensureStateDefaults();
+  return state.settings.weekend[dayKey] || {enabled:false, planOpen:false};
+}
+
+function getActiveDayDefs() {
+  ensureStateDefaults();
+  return DAY_DEFS.filter(day => !day.weekend || getWeekendConfig(day.key).enabled);
+}
+
+function getActiveDayKeys() {
+  return getActiveDayDefs().map(day => day.key);
+}
+
+function isPlanningDay(dayKey) {
+  const day = DAY_DEFS.find(d => d.key === dayKey);
+  if (!day) return false;
+  return !day.weekend || (getWeekendConfig(dayKey).enabled && getWeekendConfig(dayKey).planOpen);
+}
+
+function getDayKeyFromDate(date) {
+  return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+}
+
+function buildWeekDatesFromMonday(monday) {
+  return getActiveDayDefs().map(day => new Date(monday.getTime() + day.offset * 86400000));
+}
+
 // ============================================================
 // INIT
 // ============================================================
 function init() {
   loadFromStorage();
+  ensureStateDefaults();
+  updateEducationYearLabel();
   updateTotalWeeksFromPlans();
   renderSinifList();
   renderUploadedFiles();
@@ -868,9 +1122,24 @@ function init() {
     setActiveSinif(state.siniflar[0].id);
   }
   renderLegend();
+  renderProgramSettings();
   document.getElementById('yukle-ders').addEventListener('change', function() {
     document.getElementById('diger-ders-group').style.display = this.value === 'DİĞER' ? 'flex' : 'none';
   });
+  const etutInput = document.getElementById('etut-teacher-input');
+  if (etutInput) {
+    etutInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addEtutTeacher();
+      }
+    });
+  }
+}
+
+function updateEducationYearLabel() {
+  const el = document.getElementById('education-year-label');
+  if (el) el.textContent = getEducationYearLabel();
 }
 
 function loadFromStorage() {
@@ -887,6 +1156,9 @@ function loadFromStorage() {
           activeSinif: parsed.activeSinif || null,
           programs: parsed.programs || {},
           tatiller: parsed.tatiller || [],
+          settings: parsed.settings || state.settings,
+          dersOgretmenleri: parsed.dersOgretmenleri || {},
+          etutler: parsed.etutler || [],
           currentWeek: parsed.currentWeek || 1,
           totalWeeks: parsed.totalWeeks || 36,
           yillikPlanlar: {},
@@ -943,6 +1215,7 @@ function deleteSinif(id) {
 function setActiveSinif(id) {
   state.activeSinif = id;
   renderSinifList();
+  renderProgramSettings();
   renderScheduleTable();
   document.getElementById('program-card').style.display = 'block';
   const sinif = state.siniflar.find(s => s.id === id);
@@ -973,10 +1246,251 @@ function renderSinifList() {
 
 function createEmptyProgram() {
   const prog = {};
-  GUN_KEYS.forEach(g => {
-    prog[g] = Array(9).fill(null).map(() => ({ders: 'Etüt', isHoliday: false}));
+  ALL_GUN_KEYS.forEach(g => {
+    prog[g] = createDefaultDayRows();
   });
   return prog;
+}
+
+function createDefaultDayRows() {
+  return Array(10).fill(null).map(() => ({ders: 'Etüt', isHoliday: false}));
+}
+
+function ensureProgramShape(prog) {
+  if (!prog) return;
+  ALL_GUN_KEYS.forEach(g => {
+    if (!Array.isArray(prog[g])) prog[g] = [];
+    while (prog[g].length < 10) {
+      prog[g].push({ders: 'Etüt', isHoliday: false});
+    }
+    prog[g].forEach(cell => {
+      if (cell && cell.isHoliday) {
+        cell.isHoliday = false;
+        if (!cell.ders) cell.ders = 'Etüt';
+      }
+    });
+  });
+}
+
+function renderProgramSettings() {
+  ensureStateDefaults();
+  const lessonSelect = document.getElementById('lesson-count-select');
+  if (lessonSelect) lessonSelect.value = String(getLessonCount());
+
+  ['Sat', 'Sun'].forEach(dayKey => {
+    const cfg = getWeekendConfig(dayKey);
+    const enabled = document.getElementById(`weekend-${dayKey}-enabled`);
+    const plan = document.getElementById(`weekend-${dayKey}-plan`);
+    if (enabled) enabled.checked = cfg.enabled;
+    if (plan) {
+      plan.checked = cfg.planOpen;
+      plan.disabled = !cfg.enabled;
+    }
+  });
+  renderEtutList();
+  renderTeacherMap();
+}
+
+function updateLessonCount(value) {
+  state.settings.lessonCount = Math.min(10, Math.max(5, parseInt(value, 10) || 9));
+  Object.keys(state.programs || {}).forEach(id => ensureProgramShape(state.programs[id]));
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+  renderWeeklyPlan();
+}
+
+function updateWeekendSetting(dayKey, field, value) {
+  const cfg = getWeekendConfig(dayKey);
+  cfg[field] = Boolean(value);
+  if (!cfg.enabled) cfg.planOpen = false;
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+  renderWeeklyPlan();
+}
+
+function makeEtutLabel(name) {
+  return `Etüt - ${cleanCellText(name)}`;
+}
+
+function getEtutLessonNames() {
+  ensureStateDefaults();
+  return state.etutler.map(e => makeEtutLabel(e.name));
+}
+
+function getDersSecenekleri() {
+  const other = 'DİĞER (Elle Gir)';
+  const base = DERSLER_LISTESI.filter(d => d !== other);
+  return [...base, ...getEtutLessonNames(), other];
+}
+
+function addEtutTeacher() {
+  const input = document.getElementById('etut-teacher-input');
+  const name = cleanCellText(input && input.value);
+  if (!name) {
+    alert('Lütfen etüt öğretmeninin adını girin.');
+    return;
+  }
+  const norm = normalizeDersKey(makeEtutLabel(name));
+  const exists = state.etutler.some(e => normalizeDersKey(makeEtutLabel(e.name)) === norm);
+  if (exists) {
+    alert('Bu isimle etüt zaten eklenmiş.');
+    return;
+  }
+  state.etutler.push({id: 'etut_' + Date.now(), name});
+  if (input) input.value = '';
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+}
+
+function updateEtutTeacher(id, value) {
+  const item = state.etutler.find(e => e.id === id);
+  if (!item) return;
+  const nextName = cleanCellText(value);
+  if (!nextName) {
+    renderEtutList();
+    return;
+  }
+  const oldLabel = makeEtutLabel(item.name);
+  const nextLabel = makeEtutLabel(nextName);
+  const nextNorm = normalizeDersKey(nextLabel);
+  const duplicate = state.etutler.some(e => e.id !== id && normalizeDersKey(makeEtutLabel(e.name)) === nextNorm);
+  if (duplicate) {
+    alert('Bu isimle etüt zaten eklenmiş.');
+    renderEtutList();
+    return;
+  }
+  item.name = nextName;
+  replaceLessonNameInPrograms(oldLabel, nextLabel);
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+  renderWeeklyPlan();
+}
+
+function deleteEtutTeacher(id) {
+  const item = state.etutler.find(e => e.id === id);
+  if (!item) return;
+  if (!confirm(`${item.name} adlı etüdü silmek istiyor musunuz? Programda seçili hücreler genel Etüt olarak kalacak.`)) return;
+  const oldLabel = makeEtutLabel(item.name);
+  replaceLessonNameInPrograms(oldLabel, 'Etüt');
+  state.etutler = state.etutler.filter(e => e.id !== id);
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+  renderWeeklyPlan();
+}
+
+function replaceLessonNameInPrograms(oldName, nextName) {
+  const oldNorm = normalizeDersKey(oldName);
+  Object.values(state.programs || {}).forEach(prog => {
+    ensureProgramShape(prog);
+    ALL_GUN_KEYS.forEach(g => {
+      (prog[g] || []).forEach(cell => {
+        if (cell && normalizeDersKey(cell.ders) === oldNorm) {
+          cell.ders = nextName;
+        }
+      });
+    });
+  });
+}
+
+function renderEtutList() {
+  const el = document.getElementById('etut-list');
+  if (!el) return;
+  if (!state.etutler.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.78rem">Henüz özel etüt eklenmedi.</div>';
+    return;
+  }
+  el.innerHTML = '';
+  state.etutler.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'etut-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = item.name;
+    input.placeholder = 'Etüt öğretmeni';
+    input.addEventListener('change', () => updateEtutTeacher(item.id, input.value));
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'btn btn-danger btn-sm';
+    del.textContent = 'Sil';
+    del.addEventListener('click', () => deleteEtutTeacher(item.id));
+
+    row.appendChild(input);
+    row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+
+function getProgramLessonNames() {
+  const names = new Map();
+  DERSLER_LISTESI
+    .filter(d => d !== 'DİĞER (Elle Gir)' && !normalizeDersKey(d).startsWith('ETUT'))
+    .forEach(d => names.set(normalizeDersKey(d), d));
+
+  Object.values(state.programs || {}).forEach(prog => {
+    ensureProgramShape(prog);
+    ALL_GUN_KEYS.forEach(g => {
+      (prog[g] || []).forEach(cell => {
+        const ders = cleanCellText(cell && cell.ders);
+        if (!ders || normalizeDersKey(ders).startsWith('ETUT')) return;
+        names.set(normalizeDersKey(ders), ders);
+      });
+    });
+  });
+  return Array.from(names.values());
+}
+
+function renderTeacherMap() {
+  const el = document.getElementById('teacher-map');
+  if (!el) return;
+  const lessons = getProgramLessonNames();
+  if (!lessons.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem">Ders ekledikçe öğretmen isimleri burada görünecek.</div>';
+    return;
+  }
+  el.innerHTML = '';
+  lessons.forEach(lesson => {
+    const key = normalizeDersKey(lesson);
+    const row = document.createElement('div');
+    row.className = 'teacher-map-row';
+
+    const label = document.createElement('label');
+    label.textContent = lesson;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Öğretmen adı';
+    input.value = state.dersOgretmenleri[key] || '';
+    input.addEventListener('input', () => {
+      state.dersOgretmenleri[key] = input.value.trim();
+      saveToStorage();
+    });
+    input.addEventListener('change', () => {
+      renderScheduleTable();
+      renderWeeklyPlan();
+    });
+
+    row.appendChild(label);
+    row.appendChild(input);
+    el.appendChild(row);
+  });
+}
+
+function getLessonTeacher(ders) {
+  const etut = findEtutByLessonName(ders);
+  if (etut) return etut.name;
+  return state.dersOgretmenleri?.[normalizeDersKey(ders)] || '';
+}
+
+function findEtutByLessonName(ders) {
+  const norm = normalizeDersKey(ders);
+  return state.etutler.find(e => normalizeDersKey(makeEtutLabel(e.name)) === norm) || null;
 }
 
 // ============================================================
@@ -987,97 +1501,126 @@ function renderScheduleTable() {
   if (!id) return;
   if (!state.programs[id]) state.programs[id] = createEmptyProgram();
   const prog = state.programs[id];
+  ensureProgramShape(prog);
+  const activeDays = getActiveDayDefs();
+  const lessonCount = getLessonCount();
+
+  const thead = document.getElementById('schedule-head');
+  if (thead) {
+    thead.innerHTML = `
+      <tr>
+        <th>Ders<br>Sırası</th>
+        ${activeDays.map(day => {
+          const planNote = day.weekend && !isPlanningDay(day.key) ? '<br><span style="font-weight:500;font-size:0.68rem">(plan dışı)</span>' : '';
+          return `<th>${day.label}${planNote}</th>`;
+        }).join('')}
+      </tr>
+    `;
+  }
 
   const tbody = document.getElementById('schedule-body');
   tbody.innerHTML = '';
 
-  for (let row = 0; row < 9; row++) {
+  for (let row = 0; row < lessonCount; row++) {
     const tr = document.createElement('tr');
     const numTd = document.createElement('td');
     numTd.className = 'ders-no';
     numTd.textContent = row + 1;
     tr.appendChild(numTd);
 
-    GUN_KEYS.forEach((gun, gi) => {
+    activeDays.forEach(day => {
+      const gun = day.key;
       const td = document.createElement('td');
       const cell = prog[gun][row];
 
-      if (cell && cell.isHoliday) {
-        td.innerHTML = '<div class="tatil-cell">RESMİ TATİL</div>';
-      } else {
-        const ders = cell ? cell.ders : 'Etüt';
-        const renk = getDersRenk(ders);
-        td.style.background = renk.bg;
+      const ders = cell ? cell.ders : 'Etüt';
+      const renk = getDersRenk(ders);
+      td.style.background = renk.bg;
 
-        // Select
-        const sel = document.createElement('select');
-        sel.className = 'cell-select';
-        sel.style.color = renk.dark;
-        sel.dataset.gun = gun;
-        sel.dataset.row = row;
+      // Select
+      const sel = document.createElement('select');
+      sel.className = 'cell-select';
+      sel.style.color = renk.dark;
+      sel.dataset.gun = gun;
+      sel.dataset.row = row;
 
-        DERSLER_LISTESI.forEach(d => {
-          const opt = document.createElement('option');
-          const dName = d.replace(' (Elle Gir)', '');
-          opt.value = d;
-          opt.textContent = d;
-          if (normalizeStr(d) === normalizeStr(ders) || normalizeStr(dName) === normalizeStr(ders)) opt.selected = true;
-          sel.appendChild(opt);
-        });
+      getDersSecenekleri().forEach(d => {
+        const opt = document.createElement('option');
+        const dName = d.replace(' (Elle Gir)', '');
+        opt.value = d;
+        opt.textContent = d;
+        if (normalizeStr(d) === normalizeStr(ders) || normalizeStr(dName) === normalizeStr(ders)) opt.selected = true;
+        sel.appendChild(opt);
+      });
 
-        // If ders is custom and not in list
-        const inList = DERSLER_LISTESI.some(d => normalizeStr(d) === normalizeStr(ders));
-        if (!inList && ders) {
-          const customOpt = document.createElement('option');
-          customOpt.value = ders;
-          customOpt.textContent = ders;
-          customOpt.selected = true;
-          sel.insertBefore(customOpt, sel.firstChild);
-        }
+      // If ders is custom and not in list
+      const inList = getDersSecenekleri().some(d => normalizeStr(d) === normalizeStr(ders));
+      if (!inList && ders) {
+        const customOpt = document.createElement('option');
+        customOpt.value = ders;
+        customOpt.textContent = ders;
+        customOpt.selected = true;
+        sel.insertBefore(customOpt, sel.firstChild);
+      }
 
-        sel.addEventListener('change', function() {
-          if (this.value === 'DİĞER (Elle Gir)') {
-            const custom = prompt('Ders adını girin:');
-            if (custom && custom.trim()) {
-              setCellDers(gun, row, custom.trim().toUpperCase());
-              renderScheduleTable();
-            } else {
-              this.value = ders;
-            }
-          } else {
-            setCellDers(gun, row, this.value);
+      sel.addEventListener('change', function() {
+        if (this.value === 'DİĞER (Elle Gir)') {
+          const custom = prompt('Ders adını girin:');
+          if (custom && custom.trim()) {
+            setCellDers(gun, row, custom.trim().toUpperCase());
             renderScheduleTable();
+          } else {
+            this.value = ders;
           }
-        });
+        } else {
+          setCellDers(gun, row, this.value);
+          renderScheduleTable();
+        }
+      });
 
-        td.appendChild(sel);
+      td.appendChild(sel);
+      const teacher = getLessonTeacher(ders);
+      if (teacher) {
+        const teacherDiv = document.createElement('div');
+        teacherDiv.className = 'cell-teacher-preview';
+        teacherDiv.textContent = teacher;
+        td.appendChild(teacherDiv);
       }
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
   }
+  renderTeacherMap();
 }
 
 function setCellDers(gun, row, ders) {
   const id = state.activeSinif;
   if (!id) return;
   if (!state.programs[id]) state.programs[id] = createEmptyProgram();
+  ensureProgramShape(state.programs[id]);
   state.programs[id][gun][row] = {ders, isHoliday: false};
 }
 
 function markHolidayOnSchedule() {
   const dateStr = document.getElementById('tatil-quick-date').value;
   if (!dateStr) { alert('Lütfen tarih seçin.'); return; }
-  const date = parseLocalDateInput(dateStr);
-  const dow = date.getDay(); // 0=sun,1=mon,...
-  if (dow === 0 || dow === 6) { alert('Seçilen gün hafta sonu!'); return; }
-  const gunKey = GUN_KEYS[dow - 1];
-  const id = state.activeSinif;
-  if (!id) return;
-  for (let r = 0; r < 9; r++) {
-    state.programs[id][gunKey][r] = {ders: '', isHoliday: true};
+  const dateKey = toDateKey(parseLocalDateInput(dateStr));
+  const alreadyExists = state.tatiller.some(t => {
+    const startKey = toDateKey(parseLocalDateInput(t.start));
+    const endKey = toDateKey(parseLocalDateInput(t.end || t.start));
+    return dateKey >= startKey && dateKey <= endKey;
+  });
+  if (alreadyExists) {
+    alert('Bu tarih zaten resmi tatil listesinde var.');
+    return;
   }
+  state.tatiller.push({start: dateStr, end: dateStr, name: 'Resmi Tatil'});
+  document.getElementById('tatil-quick-date').value = '';
+  saveToStorage();
+  renderTatilList();
   renderScheduleTable();
+  renderWeeklyPlan();
+  alert('Seçilen tarih resmi tatil olarak eklendi. Sadece o tarih tatil gösterilecek.');
 }
 
 function saveProgram() {
@@ -1091,6 +1634,7 @@ function resetProgram() {
   if (!confirm('Bu sınıfın programını sıfırlamak istiyor musunuz?')) return;
   state.programs[state.activeSinif] = createEmptyProgram();
   renderScheduleTable();
+  renderTeacherMap();
 }
 
 // ============================================================
@@ -1136,13 +1680,9 @@ function getWeekDates(weekNum) {
 
   // 2. Fallback: okul başlangıcından haftalık saymaya devam et
   // Ama ara tatilleri bilmiyoruz, bu yüzden plan yüklemesi önerilir
-  const days = [];
-  const startMs = SCHOOL_START.getTime();
+  const startMs = getFallbackSchoolStartDate().getTime();
   const weekStartMs = startMs + (weekNum - 1) * 7 * 24 * 3600 * 1000;
-  for (let i = 0; i < 5; i++) {
-    days.push(new Date(weekStartMs + i * 24 * 3600 * 1000));
-  }
-  return days;
+  return buildWeekDatesFromMonday(new Date(weekStartMs));
 }
 
 function getWeekDatesFromPlans(weekNum) {
@@ -1158,7 +1698,7 @@ function getWeekDatesFromPlans(weekNum) {
       // Eğer tarihStart zaten Pazartesi ise diff=0
       const corrDiff = dow === 0 ? 1 : (1 - dow);
       const monday = new Date(d.getTime() + corrDiff * 86400000);
-      return Array.from({length:5}, (_,i) => new Date(monday.getTime() + i*86400000));
+      return buildWeekDatesFromMonday(monday);
     }
   }
   return null;
@@ -1207,9 +1747,17 @@ function renderWeeklyPlan() {
       '<div style="text-align:center;color:var(--muted);padding:40px">Bu sınıf için program ayarlanmamış. Ders Programı Ayarla sekmesinden oluşturun.</div>';
     return;
   }
+  ensureProgramShape(prog);
 
   const w = state.currentWeek;
   const dates = getWeekDates(w);
+  const activeDays = getActiveDayDefs();
+  const lessonCount = getLessonCount();
+  const weeklyCard = document.getElementById('weekly-plan-card');
+  if (weeklyCard) {
+    weeklyCard.style.setProperty('--lesson-count', lessonCount);
+    weeklyCard.style.setProperty('--day-count', activeDays.length);
+  }
   const tarihLbl = getWeekTarihLabel(w);
   document.getElementById('week-label').textContent = `${w}. Hafta`;
   document.getElementById('week-jump').value = w;
@@ -1224,7 +1772,7 @@ function renderWeeklyPlan() {
   // Header row with dates
   const tarihBaslik = tarihLbl
     ? `${w}. Hafta — ${tarihLbl}`
-    : `${w}. Hafta (${formatDate(dates[0])} — ${formatDate(dates[4])})`;
+    : `${w}. Hafta (${formatDate(dates[0])} — ${formatDate(dates[dates.length - 1])})`;
 
   let html = `
     <div style="margin-bottom:8px; font-weight:800; color:var(--primary); font-size:0.9rem; text-align:center">
@@ -1234,35 +1782,33 @@ function renderWeeklyPlan() {
     <table class="plan-table">
     <colgroup>
       <col class="lesson-col">
-      <col class="day-col">
-      <col class="day-col">
-      <col class="day-col">
-      <col class="day-col">
-      <col class="day-col">
+      ${activeDays.map(() => `<col class="day-col" style="width:calc((100% - 56px) / ${activeDays.length})">`).join('')}
     </colgroup>
     <thead>
       <tr>
         <th style="width:50px">Ders<br>Sırası</th>
-        ${GUNLER.map((g, i) => {
+        ${activeDays.map((day, i) => {
           const d = dates[i];
           const holiday = isHolidayDate(d);
           const style = holiday ? 'background:#c53030;' : '';
-          return `<th style="${style}">${g}<br><span style="font-weight:400;font-size:0.75rem">${formatDate(d)}</span>${holiday ? `<br><span style="font-size:0.7rem">(${holiday})</span>` : ''}</th>`;
+          const planNote = day.weekend && !isPlanningDay(day.key) ? '<br><span style="font-size:0.68rem;font-weight:600">(plan dışı)</span>' : '';
+          return `<th style="${style}">${day.label}<br><span style="font-weight:400;font-size:0.75rem">${formatDate(d)}</span>${holiday ? `<br><span style="font-size:0.7rem">(${holiday})</span>` : planNote}</th>`;
         }).join('')}
       </tr>
     </thead>
     <tbody>
   `;
 
-  for (let row = 0; row < 9; row++) {
+  for (let row = 0; row < lessonCount; row++) {
     html += `<tr><td class="row-label-cell">${row + 1}. Ders</td>`;
 
-    GUN_KEYS.forEach((gun, gi) => {
+    activeDays.forEach((day, gi) => {
+      const gun = day.key;
       const date = dates[gi];
       const holidayName = isHolidayDate(date);
       const cell = prog[gun] && prog[gun][row];
 
-      if (holidayName || (cell && cell.isHoliday)) {
+      if (holidayName) {
         html += `<td><div class="tatil-plan-cell"><div class="tatil-plan-text">RESMİ TATİL</div></div></td>`;
         return;
       }
@@ -1270,12 +1816,18 @@ function renderWeeklyPlan() {
       const ders = cell ? cell.ders : 'Etüt';
       const dersNorm = normalizeDersKey(ders);
       const renk = getDersRenk(ders);
+      const teacher = getLessonTeacher(ders);
+      const planningOpen = isPlanningDay(gun);
 
       let kazanim = '';
       let surec = '';
       let allSurec = '';
 
-      if (dersNorm === 'ETÜT' || ders.toLowerCase().startsWith('etüt')) {
+      if (!planningOpen) {
+        kazanim = '';
+        surec = '';
+        allSurec = '';
+      } else if (dersNorm === 'ETÜT' || ders.toLowerCase().startsWith('etüt')) {
         kazanim = 'Etüt yapıldı';
         surec = 'Etüt yapıldı';
         allSurec = 'Etüt yapıldı';
@@ -1304,8 +1856,10 @@ function renderWeeklyPlan() {
           <div class="plan-cell" style="position:relative" ${hasMore ? `data-has-more="true"` : ''}>
             <div class="plan-cell-inner">
               <div class="cell-ders-name" style="color:${renk.dark}">${ders}</div>
+              ${teacher ? `<div class="cell-teacher">Öğretmen: ${escapeHtml(teacher)}</div>` : ''}
               <div class="cell-kazanim">${kazanim}</div>
               <div class="cell-surec">${surecTruncated}</div>
+              ${!planningOpen ? `<div class="plan-closed-note">Yıllık plan dağıtımı yapılmaz.</div>` : ''}
               ${hasMore ? `<div class="cell-popup-hint">Beklet: devamı</div>` : ''}
             </div>
             ${hasMore ? `<div class="surec-popup"><strong>Kalan süreç bileşenleri</strong><br>${escapeHtml(hiddenSurec).replace(/\n/g,'<br>')}</div>` : ''}
@@ -1373,15 +1927,18 @@ function getLessonOccurrenceInWeek(sinifId, gun, row, week, ders) {
   let count = 0;
   const prog = state.programs[sinifId];
   if (!prog) return 0;
+  ensureProgramShape(prog);
 
   const dates = getWeekDates(week);
-  for (let gi = 0; gi < GUN_KEYS.length; gi++) {
-    const g = GUN_KEYS[gi];
+  const activeDays = getActiveDayDefs();
+  for (let gi = 0; gi < activeDays.length; gi++) {
+    const g = activeDays[gi].key;
+    if (!isPlanningDay(g)) continue;
     const holidayName = dates[gi] ? isHolidayDate(dates[gi]) : null;
-    for (let r = 0; r < 9; r++) {
+    for (let r = 0; r < getLessonCount(); r++) {
       if (g === gun && r === row) return count;
       const cell = prog[g][r];
-      if (holidayName || (cell && cell.isHoliday)) continue;
+      if (holidayName) continue;
       if (cell && normalizeDersKey(cell.ders) === normalizeDersKey(ders)) {
         count++;
       }
@@ -1410,14 +1967,15 @@ function normalizeStr(str) {
 }
 
 function getDersRenk(ders) {
-  const norm = ders.toUpperCase();
+  const safeDers = String(ders || 'Etüt');
+  const norm = safeDers.toUpperCase();
   for (const [key, val] of Object.entries(DERS_RENK)) {
     if (norm.includes(key) || key.includes(norm.split(' ')[0])) return val;
   }
   if (norm.includes('ETÜT') || norm.includes('ETUT')) return DERS_RENK['ETÜT'];
   // Generate color from hash
   let hash = 0;
-  for (const c of ders) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+  for (const c of safeDers) hash = c.charCodeAt(0) + ((hash << 5) - hash);
   const hue = Math.abs(hash) % 360;
   return {bg:`hsl(${hue},55%,85%)`, dark:`hsl(${hue},55%,30%)`};
 }
@@ -1441,12 +1999,16 @@ async function captureWeeklyPlanCanvas() {
   card.classList.add('exporting-a4');
   await new Promise(resolve => requestAnimationFrame(resolve));
   try {
+    const width = card.offsetWidth;
+    const height = card.offsetHeight;
     return await html2canvas(card, {
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
-      windowWidth: card.scrollWidth,
-      windowHeight: card.scrollHeight
+      width,
+      height,
+      windowWidth: width,
+      windowHeight: height
     });
   } finally {
     card.classList.remove('exporting-a4');
@@ -1477,7 +2039,18 @@ async function downloadWeeklyPlanPdf() {
     if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('PDF hazırlama kütüphanesi yüklenemedi.');
     const pdf = new window.jspdf.jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
     const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
+    const pageW = 297;
+    const pageH = 210;
+    const imgRatio = canvas.width / canvas.height;
+    let drawW = pageW;
+    let drawH = drawW / imgRatio;
+    if (drawH > pageH) {
+      drawH = pageH;
+      drawW = drawH * imgRatio;
+    }
+    const x = (pageW - drawW) / 2;
+    const y = (pageH - drawH) / 2;
+    pdf.addImage(imgData, 'PNG', x, y, drawW, drawH);
     pdf.save(getWeeklyExportName('pdf'));
   } catch(err) {
     alert(err.message + ' Tarayıcı yazdırma penceresinden PDF olarak kaydedebilirsiniz.');
@@ -1660,7 +2233,7 @@ function parseHaftaTarihi(raw) {
   if (m) {
     const ay = AY_MAP[m[3].toLowerCase()];
     if (ay) {
-      const yil = m[4] ? +m[4] : (ay >= 9 ? 2025 : 2026);
+      const yil = m[4] ? +m[4] : getPlanYearForMonth(ay);
       return {
         start: new Date(yil, ay-1, +m[1]),
         end:   new Date(yil, ay-1, +m[2]),
@@ -1675,8 +2248,8 @@ function parseHaftaTarihi(raw) {
     const ay1 = AY_MAP[m[2].toLowerCase()];
     const ay2 = AY_MAP[m[4].toLowerCase()];
     if (ay1 && ay2) {
-      const yil1 = m[5] ? +m[5] : (ay1 >= 9 ? 2025 : 2026);
-      const yil2 = m[5] ? +m[5] : (ay2 >= 9 ? 2025 : 2026);
+      const yil1 = m[5] ? +m[5] : getPlanYearForMonth(ay1);
+      const yil2 = m[5] ? +m[5] : getPlanYearForMonth(ay2);
       return {
         start: new Date(yil1, ay1-1, +m[1]),
         end:   new Date(yil2, ay2-1, +m[3]),
@@ -1690,7 +2263,7 @@ function parseHaftaTarihi(raw) {
   if (m) {
     const ay = AY_MAP[m[2].toLowerCase()];
     if (ay) {
-      const yil = m[3] ? +m[3] : (ay >= 9 ? 2025 : 2026);
+      const yil = m[3] ? +m[3] : getPlanYearForMonth(ay);
       return { start: new Date(yil, ay-1, +m[1]), end: null, label: s };
     }
   }
