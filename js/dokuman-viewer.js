@@ -187,6 +187,7 @@
     H: 'pan',
     P: 'pen',
     B: 'highlighter',
+    M: 'highlighter',
     E: 'eraser',
     T: 'text',
     L: 'line',
@@ -205,7 +206,7 @@
         { key: 'V', label: 'Seçim aracı' },
         { key: 'H', label: 'El aracı' },
         { key: 'P', label: 'Kalem' },
-        { key: 'B', label: 'Vurgulayıcı' },
+        { key: 'B / M', label: 'Vurgulayıcı' },
         { key: 'E', label: 'Silgi' },
         { key: 'T', label: 'Yazı ekle' },
         { key: 'L', label: 'Düz çizgi' },
@@ -237,6 +238,16 @@
         { key: '-', label: 'Uzaklaştır' },
         { key: '0', label: 'Yakınlaştırmayı sıfırla' },
         { key: 'El + sürükle', label: 'Yakınlaştırılmış PDF üzerinde gezin' },
+      ],
+    },
+    {
+      title: 'Video',
+      videoOnly: true,
+      items: [
+        { key: 'V / H', label: 'Video kontrolüne geç' },
+        { key: 'Space / K', label: 'Videoyu oynat / duraklat' },
+        { key: 'M', label: 'Video sessiz / sesli' },
+        { key: 'F', label: 'Video alanını tam ekran yap' },
       ],
     },
     {
@@ -283,6 +294,8 @@
     basePageHeight: 0,
     bookWidth: 0,
     bookHeight: 0,
+    videoPlaying: false,
+    videoMuted: false,
     zoom: 1,
     panX: 0,
     panY: 0,
@@ -676,8 +689,89 @@
   }
 
   function getDocumentKind(row) {
+    if (row && (row.icerik_turu === 'video' || row.icerikTuru === 'video')) {
+      return 'video';
+    }
     const extension = getFileExtension(row && (row.dosya_adi || row.dosya_yolu || row.dosyaUrl));
     return IMAGE_EXTENSIONS.includes(extension) ? 'image' : 'pdf';
+  }
+
+  function getVideoEmbedUrl(row) {
+    if (!row) {
+      return '';
+    }
+    const rawUrl = window.kemalDocumentStore && typeof window.kemalDocumentStore.getVideoEmbedUrl === 'function'
+      ? window.kemalDocumentStore.getVideoEmbedUrl(row)
+      : (row.video_embed_url || row.video_url || row.dosya_yolu || row.dosyaUrl || '');
+    try {
+      const url = new URL(rawUrl, window.location.origin);
+      const host = url.hostname.replace(/^www\./, '').toLowerCase();
+      if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
+        url.searchParams.set('enablejsapi', '1');
+        url.searchParams.set('origin', window.location.origin);
+        url.searchParams.set('rel', url.searchParams.get('rel') || '0');
+      }
+      return url.href;
+    } catch (error) {
+      return rawUrl;
+    }
+  }
+
+  function isVideoDocumentActive() {
+    return state.documentRow && getDocumentKind(state.documentRow) === 'video';
+  }
+
+  function getActiveVideoFrame() {
+    return document.querySelector('.lesson-video-frame iframe');
+  }
+
+  function postYouTubeCommand(command, args) {
+    const iframe = getActiveVideoFrame();
+    if (!iframe || !iframe.contentWindow) {
+      return false;
+    }
+    iframe.contentWindow.postMessage(JSON.stringify({
+      event: 'command',
+      func: command,
+      args: Array.isArray(args) ? args : [],
+    }), '*');
+    return true;
+  }
+
+  function toggleVideoPlayback() {
+    if (!isVideoDocumentActive()) {
+      return false;
+    }
+    state.videoPlaying = !state.videoPlaying;
+    postYouTubeCommand(state.videoPlaying ? 'playVideo' : 'pauseVideo');
+    refreshStatus(state.videoPlaying ? 'Video oynatılıyor.' : 'Video duraklatıldı.');
+    return true;
+  }
+
+  function toggleVideoMuted() {
+    if (!isVideoDocumentActive()) {
+      return false;
+    }
+    state.videoMuted = !state.videoMuted;
+    postYouTubeCommand(state.videoMuted ? 'mute' : 'unMute');
+    refreshStatus(state.videoMuted ? 'Video sesi kapatıldı.' : 'Video sesi açıldı.');
+    return true;
+  }
+
+  function requestVideoFullscreen() {
+    if (!isVideoDocumentActive()) {
+      return false;
+    }
+    const frame = document.querySelector('.lesson-video-frame');
+    if (!frame) {
+      return false;
+    }
+    const request = frame.requestFullscreen || frame.webkitRequestFullscreen || frame.msRequestFullscreen;
+    if (request) {
+      request.call(frame);
+      return true;
+    }
+    return false;
   }
 
   function loadImageFromUrl(url) {
@@ -928,8 +1022,9 @@
   }
 
   function refreshStatus(prefixText) {
+    const surfaceLabel = state.documentKind === 'video' ? 'video üzerinde çalışıyorsun.' : ('Sayfa ' + state.focusPage + ' üzerinde çalışıyorsun.');
     const text = (prefixText ? prefixText + ' ' : '') +
-      'Araç: ' + getToolDef(state.tool).label + ' · Sayfa ' + state.focusPage + ' üzerinde çalışıyorsun.';
+      'Araç: ' + getToolDef(state.tool).label + ' · ' + surfaceLabel;
     setStatus(text.trim());
   }
 
@@ -1076,11 +1171,17 @@
     const shortcutGrid = qs('shortcutGrid');
 
     if (shortcutPill) {
-      shortcutPill.innerHTML = '<span>⌨️</span><strong>Kısayollar</strong><span>V seçim · H el · P kalem · T yazı · ← → sayfa · + / - zoom · ? yardım</span>';
+      const video = state.documentRow && getDocumentKind(state.documentRow) === 'video';
+      shortcutPill.innerHTML = video
+        ? '<span>⌨️</span><strong>Kısayollar</strong><span>V/H video kontrolü · Space/K oynat · P kalem · T yazı · + / - zoom · ? yardım</span>'
+        : '<span>⌨️</span><strong>Kısayollar</strong><span>V seçim · H el · P kalem · T yazı · ← → sayfa · + / - zoom · ? yardım</span>';
     }
 
     if (shortcutGrid) {
-      shortcutGrid.innerHTML = SHORTCUT_SECTIONS.map(function(section) {
+      const isVideoShortcutMode = state.documentRow && getDocumentKind(state.documentRow) === 'video';
+      shortcutGrid.innerHTML = SHORTCUT_SECTIONS.filter(function(section) {
+        return !section.videoOnly || isVideoShortcutMode;
+      }).map(function(section) {
         return (
           '<section class="shortcut-card">' +
             '<h4>' + section.title + '</h4>' +
@@ -1407,7 +1508,7 @@
       width: targetWidth,
       height: targetHeight,
     }];
-    if (state.documentKind !== 'image' && state.basePageWidth > 0 && state.basePageHeight > 0) {
+    if (state.documentKind !== 'image' && state.documentKind !== 'video' && state.basePageWidth > 0 && state.basePageHeight > 0) {
       ['single', 'spread'].forEach(function(mode) {
         const width = getResponsivePageWidthForMode(state.basePageWidth, state.basePageHeight, mode);
         const height = width * (state.basePageHeight / state.basePageWidth);
@@ -2312,7 +2413,8 @@
     const canvas = pageState.canvas;
     const visiblePages = getVisiblePages();
     const isVisible = visiblePages.includes(pageState.index);
-    const canInteract = isVisible && state.tool !== 'pan' && !state.isFlipping && !state.isRebuilding;
+    const videoPassThrough = Boolean(pageState.isVideoPage && (state.tool === 'select' || state.tool === 'pan'));
+    const canInteract = isVisible && state.tool !== 'pan' && !videoPassThrough && !state.isFlipping && !state.isRebuilding;
     const isInteractionTool = INTERACTION_TOOL_KEYS.includes(state.tool);
 
     canvas.isDrawingMode = false;
@@ -2327,6 +2429,9 @@
     }
     if (canvas.wrapperEl) {
       canvas.wrapperEl.style.pointerEvents = canInteract ? 'auto' : 'none';
+    }
+    if (pageState.wrapper) {
+      pageState.wrapper.classList.toggle('video-pointer-through', videoPassThrough);
     }
     lockFabricNativeSurfaces(canvas);
 
@@ -2645,6 +2750,7 @@
     shell.appendChild(footer);
     return {
       shell: shell,
+      surface: surface,
       pdfCanvas: pdfCanvas,
       annotationCanvas: annotationCanvas,
       hotspotLayer: hotspotLayer,
@@ -2787,6 +2893,75 @@
     return nodes.shell;
   }
 
+  async function initVideoPage(pageNumber) {
+    const width = state.pageWidth;
+    const height = state.pageHeight;
+    const nodes = createPageShell(pageNumber);
+    const videoUrl = getVideoEmbedUrl(state.documentRow);
+    nodes.pdfCanvas.width = Math.round(width);
+    nodes.pdfCanvas.height = Math.round(height);
+    nodes.pdfCanvas.style.width = width + 'px';
+    nodes.pdfCanvas.style.height = height + 'px';
+    nodes.pdfCanvas.style.display = 'none';
+    nodes.annotationCanvas.style.width = width + 'px';
+    nodes.annotationCanvas.style.height = height + 'px';
+    nodes.shell.style.width = width + 'px';
+    nodes.shell.style.height = height + 'px';
+
+    const frame = document.createElement('div');
+    frame.className = 'lesson-video-frame';
+    const iframe = document.createElement('iframe');
+    iframe.src = videoUrl;
+    iframe.title = state.documentRow && state.documentRow.baslik ? state.documentRow.baslik : 'Ders videosu';
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.appendChild(iframe);
+    nodes.surface.insertBefore(frame, nodes.annotationCanvas);
+
+    const fabricCanvas = new window.fabric.Canvas(nodes.annotationCanvas, {
+      preserveObjectStacking: true,
+      selection: false,
+      enableRetinaScaling: true,
+    });
+    fabricCanvas.setWidth(width);
+    fabricCanvas.setHeight(height);
+    lockFabricNativeSurfaces(fabricCanvas);
+
+    const pageState = {
+      index: pageNumber,
+      wrapper: nodes.shell,
+      canvas: fabricCanvas,
+      pdfCanvasEl: nodes.pdfCanvas,
+      annotationCanvasEl: nodes.annotationCanvas,
+      hotspotLayer: nodes.hotspotLayer,
+      history: [],
+      redo: [],
+      draft: null,
+      pointerStart: null,
+      pointerEnd: null,
+      isRestoring: false,
+      isVideoPage: true,
+    };
+
+    bindCanvasEvents(pageState);
+
+    const saved = state.annotationCache.pages[String(pageNumber)];
+    if (saved) {
+      const loaded = await loadSnapshot(pageState, saved);
+      pageState.history = [loaded];
+      savePageSnapshot(pageState, loaded);
+    } else {
+      const blank = getSnapshot(pageState);
+      pageState.history = [blank];
+      savePageSnapshot(pageState, blank);
+    }
+
+    setAnswerObjectsVisibility(pageState);
+    state.pages.set(pageNumber, pageState);
+    return nodes.shell;
+  }
+
   function getResponsivePageWidthForMode(baseWidth, baseHeight, mode) {
     const frame = getBookFrame();
     const viewportWidth = Math.max(
@@ -2850,8 +3025,8 @@
       const slot = visiblePages.indexOf(pageState.index);
       const keepActive = slot !== -1;
       pageState.wrapper.classList.toggle('is-active', keepActive);
-      pageState.wrapper.classList.toggle('is-spread-left', state.documentKind !== 'image' && state.viewMode === 'spread' && slot === 0);
-      pageState.wrapper.classList.toggle('is-spread-right', state.documentKind !== 'image' && state.viewMode === 'spread' && slot === 1);
+      pageState.wrapper.classList.toggle('is-spread-left', state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread' && slot === 0);
+      pageState.wrapper.classList.toggle('is-spread-right', state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread' && slot === 1);
       if (!keepActive) {
         pageState.canvas.discardActiveObject();
       }
@@ -2859,7 +3034,7 @@
     });
 
     if (!initial) {
-      if (state.documentKind !== 'image' && state.viewMode === 'spread') {
+      if (state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread') {
         if (direction === 'next') {
           flipFromState = state.pages.get(previousVisiblePages[previousVisiblePages.length - 1]) || null;
           flipToState = state.pages.get(visiblePages[0]) || null;
@@ -2958,7 +3133,12 @@
     let baseWidth = 0;
     let baseHeight = 0;
 
-    if (state.documentKind === 'image') {
+    if (state.documentKind === 'video') {
+      state.pdfDoc = null;
+      state.pageCount = 1;
+      baseWidth = 1600;
+      baseHeight = 900;
+    } else if (state.documentKind === 'image') {
       image = await loadImageFromUrl(state.documentRow.dosyaUrl);
       state.pdfDoc = null;
       state.pageCount = 1;
@@ -2974,7 +3154,11 @@
       baseHeight = baseViewport.height;
     }
 
-    if (state.documentKind === 'image') {
+    if (state.documentKind === 'video') {
+      const videoSize = getResponsiveImagePageSize(baseWidth, baseHeight);
+      state.pageWidth = videoSize.width;
+      state.pageHeight = videoSize.height;
+    } else if (state.documentKind === 'image') {
       const imageSize = getResponsiveImagePageSize(baseWidth, baseHeight);
       state.pageWidth = imageSize.width;
       state.pageHeight = imageSize.height;
@@ -2984,7 +3168,7 @@
     }
     state.basePageWidth = baseWidth;
     state.basePageHeight = baseHeight;
-    state.bookWidth = state.documentKind === 'image'
+    state.bookWidth = state.documentKind === 'image' || state.documentKind === 'video'
       ? state.pageWidth
       : (state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth);
     state.bookHeight = state.pageHeight;
@@ -2993,8 +3177,9 @@
     const panLayer = getBookPanLayer();
     const scaleLayer = getBookScaleLayer();
     root.innerHTML = '';
-    root.classList.toggle('is-spread', state.documentKind !== 'image' && state.viewMode === 'spread');
+    root.classList.toggle('is-spread', state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread');
     root.classList.toggle('is-image-document', state.documentKind === 'image');
+    root.classList.toggle('is-video-document', state.documentKind === 'video');
     root.style.width = state.bookWidth + 'px';
     root.style.height = state.bookHeight + 'px';
     panLayer.style.width = state.bookWidth + 'px';
@@ -3003,7 +3188,11 @@
     scaleLayer.style.height = state.bookHeight + 'px';
     updatePageTurnLayerSize();
 
-    if (state.documentKind === 'image') {
+    if (state.documentKind === 'video') {
+      const pageElement = await initVideoPage(1);
+      root.appendChild(pageElement);
+      setStatus('Ders videosu hazırlanıyor…');
+    } else if (state.documentKind === 'image') {
       const pageElement = await initImagePage(1, image);
       root.appendChild(pageElement);
       setStatus('Görsel doküman hazırlanıyor…');
@@ -3032,6 +3221,9 @@
   }
 
   async function buildAnnotatedPdfBytes() {
+    if (state.documentKind === 'video') {
+      throw new Error('Ders videosu için PDF indirme kullanılamaz.');
+    }
     if (state.documentKind === 'image') {
       const pdfDoc = await window.PDFLib.PDFDocument.create();
       const pageState = state.pages.get(1);
@@ -3743,7 +3935,8 @@
       return getToolDef(key);
     }).filter(Boolean).map(renderToolButtonMarkup).join('');
 
-    const shapeKeys = state.editMode ? SHAPE_TOOL_KEYS.concat(INTERACTION_TOOL_KEYS) : SHAPE_TOOL_KEYS;
+    const isVideoDocument = state.documentRow && getDocumentKind(state.documentRow) === 'video';
+    const shapeKeys = state.editMode && !isVideoDocument ? SHAPE_TOOL_KEYS.concat(INTERACTION_TOOL_KEYS) : SHAPE_TOOL_KEYS;
     shapeTarget.innerHTML = shapeKeys.map(function(key) {
       return getToolDef(key);
     }).filter(Boolean).map(renderToolButtonMarkup).join('');
@@ -4372,6 +4565,25 @@
         }
       }
 
+      if (!isTextEntry && !isShortcutModalOpen() && isVideoDocumentActive()) {
+        const lower = key.toLowerCase();
+        if (key === ' ' || lower === 'k') {
+          event.preventDefault();
+          toggleVideoPlayback();
+          return;
+        }
+        if (lower === 'm') {
+          event.preventDefault();
+          toggleVideoMuted();
+          return;
+        }
+        if (lower === 'f') {
+          event.preventDefault();
+          requestVideoFullscreen();
+          return;
+        }
+      }
+
       if (event.metaKey || event.ctrlKey || event.altKey || isTextEntry || isShortcutModalOpen()) {
         return;
       }
@@ -4539,6 +4751,10 @@
     }
 
     state.documentRow = documentRow;
+    const isVideoDocument = getDocumentKind(documentRow) === 'video';
+    document.body.classList.toggle('is-video-document', isVideoDocument);
+    renderToolButtons();
+    renderShortcutUi();
     const viewParams = new URLSearchParams(window.location.search);
     const contextGrade = parseInt(viewParams.get('sinif'), 10);
     const contextSubject = window.kemalDocumentStore.normalizeSubjectKey(viewParams.get('ders'));
@@ -4557,16 +4773,16 @@
     if (qs('answersHiddenInput')) {
       qs('answersHiddenInput').checked = true;
     }
-    qs('viewerPill').textContent = '📚 ' + displayGradeLabel + ' · ' + displaySubjectLabel;
+    qs('viewerPill').textContent = (isVideoDocument ? '🎬 ' : '📚 ') + displayGradeLabel + ' · ' + displaySubjectLabel;
     qs('viewerTitle').textContent = documentRow.baslik;
-    qs('viewerDesc').textContent = documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ders dokümanı.');
+    qs('viewerDesc').textContent = documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ' + (isVideoDocument ? 'ders videosu.' : 'ders dokümanı.'));
     qs('backSubjectLink').href = '/ders.html?sinif=' + encodeURIComponent(displayGrade) + '&ders=' + encodeURIComponent(displaySubject);
     qs('backSubjectLink').textContent = '← ' + displaySubjectLabel + ' dersine dön';
     document.title = documentRow.baslik + ' | Kemal Öğretmenim';
     if (window.kemalSeo) {
       window.kemalSeo.update({
         title: document.title,
-        description: documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ders dokümanı.'),
+        description: documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ' + (isVideoDocument ? 'ders videosu.' : 'ders dokümanı.')),
       });
     }
 
@@ -4589,9 +4805,9 @@
     }
 
     window.kemalContentProgress.markRead({
-      type: 'document',
+      type: getDocumentKind(state.documentRow) === 'video' ? 'video' : 'document',
       id: state.documentId,
-      title: state.documentRow.baslik || 'Dokuman',
+      title: state.documentRow.baslik || (getDocumentKind(state.documentRow) === 'video' ? 'Ders Videosu' : 'Dokuman'),
       href: '/dokuman.html?id=' + encodeURIComponent(state.documentId),
       grade: state.documentRow.sinif || '',
       subject: state.documentRow.ders || '',

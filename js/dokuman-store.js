@@ -156,10 +156,27 @@
     return response && response.data && response.data.publicUrl ? response.data.publicUrl : '';
   }
 
+  function getDocumentKind(item) {
+    return item && item.icerik_turu === 'video' ? 'video' : 'document';
+  }
+
+  function getVideoEmbedUrl(item) {
+    if (!item || getDocumentKind(item) !== 'video') {
+      return '';
+    }
+    return item.video_embed_url || item.video_url || item.dosya_yolu || '';
+  }
+
+  function getDocumentUrl(item) {
+    return getDocumentKind(item) === 'video'
+      ? getVideoEmbedUrl(item)
+      : getPublicFileUrl(item && item.dosya_yolu);
+  }
+
   async function listDocumentsBySubject(grade, subject, options) {
     const includeInactive = Boolean(options && options.includeInactive);
     const normalizedSubject = normalizeSubjectKey(subject);
-    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi';
+    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,dosya_boyutu,kapak_renk,sayfa_sayisi,icerik_turu,video_url,video_embed_url,video_provider,video_html,aktif,oturum_gerekli,siralama,olusturma_tarihi';
     const fallbackFields = 'id,baslik,aciklama,sinif,ders,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi';
     let query = getPublicClient()
       .from('dokumanlar')
@@ -172,7 +189,11 @@
     }
 
     let result = await query;
-    if (result.error && String(result.error.message || '').toLowerCase().includes('hedefler')) {
+    if (result.error && (
+      String(result.error.message || '').toLowerCase().includes('hedefler') ||
+      String(result.error.message || '').toLowerCase().includes('icerik_turu') ||
+      String(result.error.message || '').toLowerCase().includes('video_embed_url')
+    )) {
       query = getPublicClient()
         .from('dokumanlar')
         .select(fallbackFields)
@@ -197,7 +218,8 @@
       return Object.assign({}, item, {
         dersLabel: subjectMeta ? subjectMeta.label : normalizedSubject,
         sinifLabel: getGradeLabel(grade),
-        dosyaUrl: getPublicFileUrl(item.dosya_yolu),
+        dosyaUrl: getDocumentUrl(item),
+        icerikTuru: getDocumentKind(item),
         viewerUrl: buildViewerUrl(item.id, context),
       });
     });
@@ -228,7 +250,8 @@
       dersLabel: getSubjectMeta(item.ders) ? getSubjectMeta(item.ders).label : item.ders,
       sinifLabel: getGradeLabel(item.sinif),
       hedefler: getDocumentTargets(item),
-      dosyaUrl: getPublicFileUrl(item.dosya_yolu),
+      dosyaUrl: getDocumentUrl(item),
+      icerikTuru: getDocumentKind(item),
       viewerUrl: buildViewerUrl(item.id),
     });
   }
@@ -246,6 +269,8 @@
     normalizeSubjectKey: normalizeSubjectKey,
     getGradeLabel: getGradeLabel,
     getPublicFileUrl: getPublicFileUrl,
+    getDocumentKind: getDocumentKind,
+    getVideoEmbedUrl: getVideoEmbedUrl,
     buildViewerUrl: buildViewerUrl,
     getDocumentTargets: getDocumentTargets,
     listDocumentsBySubject: listDocumentsBySubject,

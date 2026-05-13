@@ -16,6 +16,7 @@
     editingId: null,
     selectedDocument: null,
     currentPdfMeta: null,
+    contentKind: 'document',
     targets: [],
     filters: {
       grade: '',
@@ -77,8 +78,8 @@
       return 'Supabase bucket bulunamadı. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde çalıştırıp `dokumanlar` bucket\'ını oluşturmalısın.';
     }
 
-    if (combined.includes('hedefler')) {
-      return 'Çoklu yayın hedefleri için Supabase şemasını güncellemelisin. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.';
+    if (combined.includes('hedefler') || combined.includes('icerik_turu') || combined.includes('video_embed_url')) {
+      return 'Doküman/video şeması için Supabase yapısını güncellemelisin. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.';
     }
 
     if (
@@ -163,6 +164,121 @@
   function getSelectedFile() {
     const input = document.getElementById('fPdf');
     return input && input.files && input.files.length ? input.files[0] : null;
+  }
+
+  function getContentKind(item) {
+    return item && item.icerik_turu === 'video' ? 'video' : 'document';
+  }
+
+  function isVideoMode() {
+    return state.contentKind === 'video';
+  }
+
+  function extractIframeSrc(value) {
+    const match = String(value || '').match(/<iframe[^>]+src=["']([^"']+)["'][^>]*>/i);
+    return match ? match[1] : '';
+  }
+
+  function parseYouTubeId(rawUrl) {
+    const value = String(rawUrl || '').trim();
+    if (!value) {
+      return '';
+    }
+    try {
+      const url = new URL(value, window.location.origin);
+      const host = url.hostname.replace(/^www\./, '').toLowerCase();
+      if (host === 'youtu.be') {
+        return url.pathname.split('/').filter(Boolean)[0] || '';
+      }
+      if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
+        if (url.pathname === '/watch') {
+          return url.searchParams.get('v') || '';
+        }
+        const parts = url.pathname.split('/').filter(Boolean);
+        const marker = ['embed', 'shorts', 'live'].find(function(key) {
+          return parts[0] === key;
+        });
+        if (marker && parts[1]) {
+          return parts[1];
+        }
+      }
+    } catch (error) {
+      return '';
+    }
+    return '';
+  }
+
+  function normalizeVideoInput(value) {
+    const raw = String(value || '').trim();
+    const src = extractIframeSrc(raw) || raw;
+    if (!src) {
+      return null;
+    }
+    const youtubeId = parseYouTubeId(src);
+    if (youtubeId) {
+      return {
+        originalUrl: raw,
+        embedUrl: 'https://www.youtube.com/embed/' + encodeURIComponent(youtubeId),
+        provider: 'youtube',
+        fileName: 'YouTube videosu',
+      };
+    }
+    try {
+      const url = new URL(src, window.location.origin);
+      return {
+        originalUrl: raw,
+        embedUrl: url.href,
+        provider: 'iframe',
+        fileName: 'Video bağlantısı',
+      };
+    } catch (error) {
+      throw new Error('Video için geçerli bir YouTube linki veya iframe src değeri girmelisin.');
+    }
+  }
+
+  function syncContentKindUi() {
+    const video = isVideoMode();
+    const fileBox = document.getElementById('fileBox');
+    const videoBox = document.getElementById('videoBox');
+    const contentHint = document.getElementById('contentHint');
+    const interactionBtn = document.getElementById('interactionQuickBtn');
+    const worksheetBtn = document.getElementById('worksheetQuickBtn');
+    const magnifierRow = document.getElementById('magnifierSwitchRow');
+    const answersRow = document.getElementById('answersSwitchRow');
+    const saveHint = document.getElementById('saveHint');
+
+    Array.from(document.querySelectorAll('[data-content-kind]')).forEach(function(button) {
+      button.classList.toggle('active', button.getAttribute('data-content-kind') === state.contentKind);
+    });
+    if (fileBox) fileBox.classList.toggle('is-hidden', video);
+    if (videoBox) videoBox.classList.toggle('is-hidden', !video);
+    if (magnifierRow) magnifierRow.classList.toggle('is-hidden', video);
+    if (answersRow) answersRow.classList.toggle('is-hidden', video);
+    if (worksheetBtn) worksheetBtn.classList.toggle('is-hidden', video);
+    if (interactionBtn) {
+      interactionBtn.textContent = video ? 'Video Üstünde Çizim Yap' : 'Büyüteç / Cevap Alanı Hazırla';
+    }
+    if (contentHint) {
+      contentHint.textContent = video
+        ? 'Video kayıtları dosya yüklemez; YouTube linki veya iframe adresi kaydedilir. Video, ders sayfasında ayrı “Ders Videoları” bölümünde görünür.'
+        : 'PDF, JPEG, PNG ve WebP dosyaları kalite düşürülmeden saklanır. Veritabanını ve ücretsiz kullanımı yormamak için üst sınır 50 MB.';
+    }
+    if (saveHint) {
+      saveHint.textContent = video
+        ? 'Kaydedince video ilgili ders sayfasındaki Ders Videoları bölümünde listelenir.'
+        : 'Kaydedince belge ilgili ders sayfasında listelenmeye hazır olur.';
+    }
+  }
+
+  function setContentKind(kind) {
+    state.contentKind = kind === 'video' ? 'video' : 'document';
+    state.currentPdfMeta = null;
+    const input = document.getElementById('fPdf');
+    if (isVideoMode() && input) {
+      input.value = '';
+    }
+    syncContentKindUi();
+    updateSummary();
   }
 
   function getDocumentById(id) {
@@ -298,6 +414,7 @@
     const file = getSelectedFile();
     const meta = state.currentPdfMeta || existing;
     const targets = state.targets.slice();
+    const videoInput = document.getElementById('fVideoInput') ? document.getElementById('fVideoInput').value.trim() : '';
     const pendingTarget = normalizeTarget({
       sinif: document.getElementById('fSinif').value,
       ders: document.getElementById('fDers').value,
@@ -308,6 +425,22 @@
       targets.length
         ? targets.map(getTargetLabel).join(' | ') + ' altında listelenecek. (' + activeLabel + ')'
         : (pendingTarget ? getTargetLabel(pendingTarget) + ' seçili. Çoklu yayın için Hedef Ekle ile listeye ekleyebilirsin. (' + activeLabel + ')' : 'Yayın hedefi eklediğinde yayın yolları burada görünür.');
+
+    if (isVideoMode()) {
+      let videoMetaText = 'Video linki girildiğinde ders videosu olarak kaydedilir.';
+      if (videoInput) {
+        try {
+          const video = normalizeVideoInput(videoInput);
+          videoMetaText = (video.provider === 'youtube' ? 'YouTube videosu' : 'Video bağlantısı') + ' · Ders videolarında listelenecek.';
+        } catch (error) {
+          videoMetaText = 'Video bağlantısı kontrol edilmeli.';
+        }
+      } else if (existing && getContentKind(existing) === 'video') {
+        videoMetaText = (existing.video_provider === 'youtube' ? 'YouTube videosu' : 'Video bağlantısı') + ' · Mevcut bağlantı korunacak.';
+      }
+      document.getElementById('summaryMeta').textContent = videoMetaText;
+      return;
+    }
 
     if (file) {
       document.getElementById('summaryMeta').textContent =
@@ -343,9 +476,10 @@
     state.editingId = null;
     state.selectedDocument = null;
     state.currentPdfMeta = null;
+    state.contentKind = 'document';
     state.targets = [];
     document.getElementById('editTitle').textContent = 'Yeni Doküman';
-    document.getElementById('editStatus').textContent = 'Yeni bir PDF veya görsel yükleyip birden fazla sınıf ve dersle eşleştirebilirsin.';
+    document.getElementById('editStatus').textContent = 'Yeni bir PDF, görsel veya ders videosunu birden fazla sınıf ve dersle eşleştirebilirsin.';
     document.getElementById('fBaslik').value = '';
     document.getElementById('fAciklama').value = '';
     document.getElementById('fSinif').value = '1';
@@ -357,8 +491,10 @@
     document.getElementById('fAnswersEnabled').checked = true;
     document.getElementById('fOturumGerekli').checked = false;
     document.getElementById('fPdf').value = '';
+    document.getElementById('fVideoInput').value = '';
     setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
     renderTargetList();
+    syncContentKindUi();
     updateSummary();
   }
 
@@ -412,11 +548,24 @@
 
     grid.innerHTML = filtered.map(function(item) {
       const targets = getDocumentTargets(item);
+      const contentKind = getContentKind(item);
+      const isVideo = contentKind === 'video';
       const badges = targets.length
         ? targets.slice(0, 4).map(function(target) {
           return '<div class="doc-badge">' + escHtml(getTargetLabel(target)) + '</div>';
         }).join('') + (targets.length > 4 ? '<div class="doc-badge">+' + (targets.length - 4) + ' hedef</div>' : '')
         : '<div class="doc-badge">Hedef yok</div>';
+      const metaHtml = isVideo
+        ? (
+          '<span>🎬 ' + escHtml(item.video_provider === 'youtube' ? 'YouTube videosu' : 'Video bağlantısı') + '</span>' +
+          '<span>✍️ Video üstü çizim</span>' +
+          '<span>📍 Ders videoları</span>'
+        )
+        : (
+          '<span>📄 ' + escHtml(item.dosya_adi || 'Dosya') + '</span>' +
+          '<span>📚 ' + Number(item.sayfa_sayisi || 0) + ' sayfa</span>' +
+          '<span>📦 ' + formatBytes(item.dosya_boyutu || 0) + '</span>'
+        );
       return (
         '<article class="doc-card">' +
           '<div class="doc-top">' +
@@ -425,15 +574,11 @@
           '</div>' +
           '<div class="doc-title">' + escHtml(item.baslik) + '</div>' +
           '<div class="doc-desc">' + escHtml(item.aciklama || 'Açıklama eklenmedi.') + '</div>' +
-          '<div class="doc-meta">' +
-            '<span>📄 ' + escHtml(item.dosya_adi || 'Dosya') + '</span>' +
-            '<span>📚 ' + Number(item.sayfa_sayisi || 0) + ' sayfa</span>' +
-            '<span>📦 ' + formatBytes(item.dosya_boyutu || 0) + '</span>' +
-          '</div>' +
+          '<div class="doc-meta">' + metaHtml + '</div>' +
           '<div class="doc-actions">' +
             (can('dokuman_duzenleme') ? '<button class="btn-edit" type="button" onclick="dokumanDuzenle(\'' + item.id + '\')">Düzenle</button>' : '') +
             '<a class="btn-open" href="' + escHtml(window.kemalDocumentStore.buildViewerUrl(item.id)) + '" target="_blank" rel="noreferrer">Aç</a>' +
-            (can('dokuman_duzenleme') ? '<button class="btn-worksheet" type="button" onclick="calismaKagidiDuzenle(\'' + item.id + '\')">Çalışma Kağıdı</button>' : '') +
+            (can('dokuman_duzenleme') && !isVideo ? '<button class="btn-worksheet" type="button" onclick="calismaKagidiDuzenle(\'' + item.id + '\')">Çalışma Kağıdı</button>' : '') +
           '</div>' +
           '<div class="doc-actions">' +
             (can('dokuman_duzenleme') ? '<button class="btn-open" type="button" onclick="durumDegistir(\'' + item.id + '\')">' + (item.aktif ? 'Pasife Al' : 'Aktife Al') + '</button>' : '') +
@@ -588,21 +733,38 @@
     const answersEnabled = document.getElementById('fAnswersEnabled').checked;
     const file = getSelectedFile();
     const existing = state.editingId ? getDocumentById(state.editingId) : null;
+    const contentKind = state.contentKind;
+    const videoInput = document.getElementById('fVideoInput').value.trim();
+    const video = contentKind === 'video'
+      ? (videoInput ? normalizeVideoInput(videoInput) : (existing && getContentKind(existing) === 'video' ? {
+        originalUrl: existing.video_url || existing.video_embed_url || existing.dosya_yolu || '',
+        embedUrl: existing.video_embed_url || existing.video_url || existing.dosya_yolu || '',
+        provider: existing.video_provider || 'iframe',
+        fileName: existing.dosya_adi || 'Video bağlantısı',
+      } : null))
+      : null;
 
     if (!title) {
-      throw new Error('Doküman başlığı zorunlu.');
+      throw new Error(contentKind === 'video' ? 'Ders videosu başlığı zorunlu.' : 'Doküman başlığı zorunlu.');
     }
     if (!targets.length || !primaryTarget) {
       throw new Error('En az bir yayın hedefi eklemelisin.');
     }
-    if (!existing && !file) {
+    if (contentKind === 'video' && !video) {
+      throw new Error('Ders videosu için YouTube linki veya iframe kodu girmelisin.');
+    }
+    if (contentKind === 'document' && existing && getContentKind(existing) === 'video' && !file) {
+      throw new Error('Video kaydını dokümana çevirmek için PDF veya görsel dosyası seçmelisin.');
+    }
+    if (contentKind === 'document' && !existing && !file) {
       throw new Error('Yeni kayıt için bir PDF veya görsel yüklemelisin.');
     }
-    if (file) {
+    if (contentKind === 'document' && file) {
       validateDocumentFile(file);
     }
 
     return {
+      contentKind: contentKind,
       title: title,
       description: description,
       grade: primaryTarget.sinif,
@@ -614,6 +776,7 @@
       magnifierEnabled: magnifierEnabled,
       answersEnabled: answersEnabled,
       file: file,
+      video: video,
       existing: existing,
     };
   }
@@ -631,7 +794,12 @@
       let fileSize = data.existing ? Number(data.existing.dosya_boyutu || 0) : 0;
       let pageCount = data.existing ? Number(data.existing.sayfa_sayisi || 0) : 0;
 
-      if (data.file) {
+      if (data.contentKind === 'video') {
+        filePath = data.video.embedUrl || data.video.originalUrl;
+        fileName = data.video.fileName || 'Video bağlantısı';
+        fileSize = 0;
+        pageCount = 1;
+      } else if (data.file) {
         const meta = state.currentPdfMeta || await extractDocumentMeta(data.file);
         filePath = await uploadDocumentFile(documentId, data.file, data.grade, data.subject, data.title);
         fileName = data.file.name;
@@ -649,11 +817,18 @@
         dosya_adi: fileName,
         dosya_boyutu: fileSize,
         sayfa_sayisi: pageCount,
+        icerik_turu: data.contentKind,
+        video_url: data.contentKind === 'video' ? data.video.originalUrl : null,
+        video_embed_url: data.contentKind === 'video' ? data.video.embedUrl : null,
+        video_provider: data.contentKind === 'video' ? data.video.provider : null,
+        video_html: data.contentKind === 'video' && data.video.originalUrl.indexOf('<iframe') !== -1 ? data.video.originalUrl : null,
         kapak_renk: data.coverColor,
         siralama: data.sortOrder,
         aktif: data.active,
         oturum_gerekli: false,
-        etkilesim_json: buildInteractionPayload(data.existing, data),
+        etkilesim_json: data.contentKind === 'video'
+          ? (data.existing && data.existing.etkilesim_json && typeof data.existing.etkilesim_json === 'object' ? data.existing.etkilesim_json : {})
+          : buildInteractionPayload(data.existing, data),
         guncelleme_tarihi: new Date().toISOString(),
       };
 
@@ -684,7 +859,7 @@
       state.selectedDocument = response.data;
       document.getElementById('editTitle').textContent = 'Düzenle: ' + response.data.baslik;
       document.getElementById('editStatus').textContent = 'Kayıt tamamlandı. İstersen bağlantıyı hemen açabilir veya listeye dönebilirsin.';
-      toast('Doküman kaydedildi.', 'success');
+      toast(data.contentKind === 'video' ? 'Ders videosu kaydedildi.' : 'Doküman kaydedildi.', 'success');
       await loadDocuments();
       openEditor(getDocumentById(response.data.id) || response.data);
       if (shouldPrepare) {
@@ -730,7 +905,8 @@
       return;
     }
 
-    const ok = window.confirm('"' + item.baslik + '" dokümanını silmek istiyor musun? Bu işlem yüklenen dosyayı da kaldırır.');
+    const isVideo = getContentKind(item) === 'video';
+    const ok = window.confirm('"' + item.baslik + '" ' + (isVideo ? 'ders videosunu' : 'dokümanını') + ' silmek istiyor musun?' + (isVideo ? '' : ' Bu işlem yüklenen dosyayı da kaldırır.'));
     if (!ok) {
       return;
     }
@@ -741,7 +917,7 @@
       return;
     }
 
-    if (item.dosya_yolu) {
+    if (!isVideo && item.dosya_yolu) {
       await getClient().storage.from(BUCKET_NAME).remove([item.dosya_yolu]);
     }
 
@@ -765,6 +941,8 @@
 
     state.editingId = doc.id;
     state.selectedDocument = doc;
+    state.contentKind = getContentKind(doc);
+    syncContentKindUi();
     document.getElementById('editTitle').textContent = 'Düzenle: ' + doc.baslik;
     document.getElementById('editStatus').textContent = 'ID: ' + doc.id.slice(0, 8) + '… · Görüntüleme bağlantısı hazır.';
     document.getElementById('fBaslik').value = doc.baslik || '';
@@ -777,7 +955,12 @@
     document.getElementById('fMagnifierEnabled').checked = interactionSettings.magnifierEnabled;
     document.getElementById('fAnswersEnabled').checked = interactionSettings.answersEnabled;
     document.getElementById('fOturumGerekli').checked = Boolean(doc.oturum_gerekli);
-    setFileInfo('Mevcut dosya: ' + (doc.dosya_adi || 'Dosya') + ' · ' + formatBytes(doc.dosya_boyutu || 0) + ' · ' + (doc.sayfa_sayisi || 0) + ' sayfa');
+    document.getElementById('fVideoInput').value = getContentKind(doc) === 'video' ? (doc.video_url || doc.video_embed_url || doc.dosya_yolu || '') : '';
+    if (getContentKind(doc) === 'video') {
+      setFileInfo('Video kaydı düzenleniyor. PDF/görsel yükleme alanı video modunda kapalıdır.');
+    } else {
+      setFileInfo('Mevcut dosya: ' + (doc.dosya_adi || 'Dosya') + ' · ' + formatBytes(doc.dosya_boyutu || 0) + ' · ' + (doc.sayfa_sayisi || 0) + ' sayfa');
+    }
     updateSummary();
   }
 
@@ -904,8 +1087,11 @@
   }
 
   function bindEvents() {
-    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fMagnifierEnabled', 'fAnswersEnabled'].forEach(function(id) {
+    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput'].forEach(function(id) {
       const element = document.getElementById(id);
+      if (!element) {
+        return;
+      }
       const eventName = id === 'fKapakRenk' || id === 'fAktif' || id === 'fMagnifierEnabled' || id === 'fAnswersEnabled' ? 'input' : 'input';
       element.addEventListener(eventName, updateSummary);
       if (id === 'fSinif' || id === 'fDers') {
@@ -914,6 +1100,11 @@
     });
 
     document.getElementById('fPdf').addEventListener('change', handleFileChange);
+    Array.from(document.querySelectorAll('[data-content-kind]')).forEach(function(button) {
+      button.addEventListener('click', function() {
+        setContentKind(button.getAttribute('data-content-kind'));
+      });
+    });
     document.getElementById('loginEmail').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         doLogin();
@@ -951,6 +1142,13 @@
   window.doLogout = doLogout;
   window.yeniDokuman = function() {
     resetForm();
+    showEditPanel();
+  };
+  window.yeniVideo = function() {
+    resetForm();
+    setContentKind('video');
+    document.getElementById('editTitle').textContent = 'Yeni Ders Videosu';
+    document.getElementById('editStatus').textContent = 'YouTube linki veya iframe kodu ekleyip videoyu sınıf ve derslere yayınlayabilirsin.';
     showEditPanel();
   };
   window.listeye = function() {

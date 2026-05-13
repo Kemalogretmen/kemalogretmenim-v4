@@ -379,6 +379,19 @@
     <div class="subject-doc-grid" id="subjectDocsGrid" style="display:none;"></div>
   </section>
 
+  <section class="section" style="padding-top:0;" id="subjectVideosSection">
+    <div class="section-header">
+      <span class="sec-tag">Ders Videoları</span>
+      <h2 class="sec-title" id="subjectVideosTitle">Video <span>Arşivi</span></h2>
+      <p class="sec-sub" id="subjectVideosLead">Bu sınıf ve derse özel eklenen ders videoları burada listelenir.</p>
+    </div>
+    <div class="subject-doc-state" id="subjectVideosState">
+      <span>⏳</span>
+      <p>Bu dersin videoları yükleniyor…</p>
+    </div>
+    <div class="subject-doc-grid" id="subjectVideosGrid" style="display:none;"></div>
+  </section>
+
   <section class="section">
     <div class="section-header">
       <span class="sec-tag">Hemen Başla</span>
@@ -454,6 +467,8 @@
       document.getElementById('subjectLead').textContent = data.description;
       document.getElementById('subjectDocsTitle').innerHTML = data.gradeLabel + ' <span>' + data.title.replace(data.gradeLabel + ' ', '') + ' PDF Arşivi</span>';
       document.getElementById('subjectDocsLead').textContent = data.gradeLabel + ' ' + data.title.replace(data.gradeLabel + ' ', '') + ' için yüklenen PDF dokümanlar yalnızca bu ders sayfasında listelenir.';
+      document.getElementById('subjectVideosTitle').innerHTML = data.gradeLabel + ' <span>' + data.title.replace(data.gradeLabel + ' ', '') + ' Video Arşivi</span>';
+      document.getElementById('subjectVideosLead').textContent = data.gradeLabel + ' ' + data.title.replace(data.gradeLabel + ' ', '') + ' için eklenen ders videoları bu alanda listelenir.';
       document.getElementById('subjectFocusTitle').textContent = data.icon + ' ' + data.gradeLabel + ' için odak alanı';
       document.getElementById('subjectFocusText').textContent = data.focus;
       document.getElementById('subjectPrimary').href = data.panelHref;
@@ -488,14 +503,27 @@
 
       const docsState = document.getElementById('subjectDocsState');
       const docsGrid = document.getElementById('subjectDocsGrid');
+      const videosState = document.getElementById('subjectVideosState');
+      const videosGrid = document.getElementById('subjectVideosGrid');
       try {
-        const documents = await window.kemalDocumentStore.listDocumentsBySubject(grade, subject);
+        const allItems = await window.kemalDocumentStore.listDocumentsBySubject(grade, subject);
+        const documents = allItems.filter(function(item) {
+          return (window.kemalDocumentStore.getDocumentKind ? window.kemalDocumentStore.getDocumentKind(item) : item.icerik_turu) !== 'video';
+        });
+        const videos = allItems.filter(function(item) {
+          return (window.kemalDocumentStore.getDocumentKind ? window.kemalDocumentStore.getDocumentKind(item) : item.icerik_turu) === 'video';
+        });
         if (!documents.length) {
           docsState.innerHTML = `
             <span>📭</span>
             <p>Bu ders için henüz yayınlanmış bir doküman yok. Yeni PDF yüklendiğinde burada otomatik görünecek.</p>`;
           docsGrid.style.display = 'none';
-          return;
+        }
+        if (!videos.length) {
+          videosState.innerHTML = `
+            <span>🎬</span>
+            <p>Bu ders için henüz yayınlanmış bir ders videosu yok. Video eklendiğinde burada otomatik görünecek.</p>`;
+          videosGrid.style.display = 'none';
         }
 
         const newestDocumentIds = new Set(documents
@@ -508,36 +536,78 @@
             return String(item.id);
           }));
 
-        docsGrid.innerHTML = documents.map(function(item) {
-          const statusMeta = getDocumentStatusMeta(item);
-          const isNew = newestDocumentIds.has(String(item.id));
-          return `
-            <a href="${item.viewerUrl}" class="subject-doc-card ${statusMeta ? 'is-complete' : ''}" style="--doc-color:${item.kapak_renk || data.color}">
-              <div class="subject-doc-head">
-                <span class="subject-doc-badge">📚 ${item.sinifLabel} · ${item.dersLabel}</span>
-                <div class="subject-doc-head-side">
-                  ${isNew ? '<span class="subject-doc-mini subject-doc-mini-new">🌟 Yeni</span>' : ''}
-                  ${statusMeta ? `<span class="subject-doc-mini subject-doc-mini-status">✅ ${statusMeta.label}</span>` : ''}
-                  <span class="subject-doc-pages">${item.sayfa_sayisi || '?'} sayfa</span>
+        if (documents.length) {
+          docsGrid.innerHTML = documents.map(function(item) {
+            const statusMeta = getDocumentStatusMeta(item);
+            const isNew = newestDocumentIds.has(String(item.id));
+            return `
+              <a href="${item.viewerUrl}" class="subject-doc-card ${statusMeta ? 'is-complete' : ''}" style="--doc-color:${item.kapak_renk || data.color}">
+                <div class="subject-doc-head">
+                  <span class="subject-doc-badge">📚 ${item.sinifLabel} · ${item.dersLabel}</span>
+                  <div class="subject-doc-head-side">
+                    ${isNew ? '<span class="subject-doc-mini subject-doc-mini-new">🌟 Yeni</span>' : ''}
+                    ${statusMeta ? `<span class="subject-doc-mini subject-doc-mini-status">✅ ${statusMeta.label}</span>` : ''}
+                    <span class="subject-doc-pages">${item.sayfa_sayisi || '?'} sayfa</span>
+                  </div>
                 </div>
-              </div>
-              <div class="subject-doc-title">${item.baslik}</div>
-              <p class="subject-doc-desc">${item.aciklama || 'Bu doküman açıldığında flipbook görünümünde görüntülenir; sayfa üstünde çizim, not alma ve çıktı alma araçlarıyla birlikte gelir.'}</p>
-              <div class="subject-doc-meta">
-                <span>📄 ${item.dosya_adi || 'PDF'}</span>
-                <span>✨ Sayfa bazlı not alma</span>
-                <span>🖨️ Yazdır / İndir</span>
-              </div>
-              <span class="subject-doc-cta">Dokümanı Aç →</span>
-            </a>`;
-        }).join('');
-        docsState.style.display = 'none';
-        docsGrid.style.display = 'grid';
+                <div class="subject-doc-title">${item.baslik}</div>
+                <p class="subject-doc-desc">${item.aciklama || 'Bu doküman açıldığında flipbook görünümünde görüntülenir; sayfa üstünde çizim, not alma ve çıktı alma araçlarıyla birlikte gelir.'}</p>
+                <div class="subject-doc-meta">
+                  <span>📄 ${item.dosya_adi || 'PDF'}</span>
+                  <span>✨ Sayfa bazlı not alma</span>
+                  <span>🖨️ Yazdır / İndir</span>
+                </div>
+                <span class="subject-doc-cta">Dokümanı Aç →</span>
+              </a>`;
+          }).join('');
+          docsState.style.display = 'none';
+          docsGrid.style.display = 'grid';
+        }
+
+        if (videos.length) {
+          const newestVideoIds = new Set(videos
+            .slice()
+            .sort(function(a, b) {
+              return getTimeValue(b.olusturma_tarihi) - getTimeValue(a.olusturma_tarihi);
+            })
+            .slice(0, 3)
+            .map(function(item) {
+              return String(item.id);
+            }));
+
+          videosGrid.innerHTML = videos.map(function(item) {
+            const isNew = newestVideoIds.has(String(item.id));
+            return `
+              <a href="${item.viewerUrl}" class="subject-doc-card" style="--doc-color:${item.kapak_renk || data.color}">
+                <div class="subject-doc-head">
+                  <span class="subject-doc-badge">🎬 ${item.sinifLabel} · ${item.dersLabel}</span>
+                  <div class="subject-doc-head-side">
+                    ${isNew ? '<span class="subject-doc-mini subject-doc-mini-new">🌟 Yeni</span>' : ''}
+                    <span class="subject-doc-pages">Video</span>
+                  </div>
+                </div>
+                <div class="subject-doc-title">${item.baslik}</div>
+                <p class="subject-doc-desc">${item.aciklama || 'Bu video açıldığında ders videosu izlenir; video üstünde kalem, yazı ve şekil araçlarıyla not alınabilir.'}</p>
+                <div class="subject-doc-meta">
+                  <span>▶️ Ders videosu</span>
+                  <span>✍️ Video üstü çizim</span>
+                  <span>📱 Tablet uyumlu</span>
+                </div>
+                <span class="subject-doc-cta">Videoyu Aç →</span>
+              </a>`;
+          }).join('');
+          videosState.style.display = 'none';
+          videosGrid.style.display = 'grid';
+        }
       } catch (error) {
         docsState.innerHTML = `
           <span>⚠️</span>
           <p>Dokümanlar şu anda yüklenemedi. Lütfen daha sonra tekrar dene.</p>`;
         docsGrid.style.display = 'none';
+        videosState.innerHTML = `
+          <span>⚠️</span>
+          <p>Ders videoları şu anda yüklenemedi. Lütfen daha sonra tekrar dene.</p>`;
+        videosGrid.style.display = 'none';
       }
 
       function getTimeValue(raw) {

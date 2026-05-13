@@ -20,6 +20,11 @@ create table if not exists public.dokumanlar (
   dosya_adi text not null,
   dosya_boyutu bigint not null default 0,
   sayfa_sayisi integer not null default 0,
+  icerik_turu text not null default 'document' check (icerik_turu in ('document', 'video')),
+  video_url text,
+  video_embed_url text,
+  video_provider text,
+  video_html text,
   kapak_renk text not null default '#6C3DED',
   etkilesim_json jsonb not null default '{}'::jsonb,
   siralama integer not null default 0,
@@ -38,6 +43,11 @@ alter table public.dokumanlar
   add column if not exists dosya_adi text,
   add column if not exists dosya_boyutu bigint not null default 0,
   add column if not exists sayfa_sayisi integer not null default 0,
+  add column if not exists icerik_turu text not null default 'document',
+  add column if not exists video_url text,
+  add column if not exists video_embed_url text,
+  add column if not exists video_provider text,
+  add column if not exists video_html text,
   add column if not exists kapak_renk text not null default '#6C3DED',
   add column if not exists etkilesim_json jsonb not null default '{}'::jsonb,
   add column if not exists siralama integer not null default 0,
@@ -60,6 +70,20 @@ alter table public.dokumanlar alter column sinif set not null;
 alter table public.dokumanlar alter column ders set not null;
 alter table public.dokumanlar alter column dosya_yolu set not null;
 alter table public.dokumanlar alter column dosya_adi set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'dokumanlar_icerik_turu_check'
+      and conrelid = 'public.dokumanlar'::regclass
+  ) then
+    alter table public.dokumanlar
+      add constraint dokumanlar_icerik_turu_check
+      check (icerik_turu in ('document', 'video'));
+  end if;
+end $$;
 
 alter table public.dokumanlar enable row level security;
 
@@ -85,6 +109,9 @@ create index if not exists idx_dokumanlar_targets_gin
 
 create index if not exists idx_dokumanlar_updated_at
   on public.dokumanlar (guncelleme_tarihi desc);
+
+create index if not exists idx_dokumanlar_type_active
+  on public.dokumanlar (icerik_turu, aktif, siralama, olusturma_tarihi desc);
 
 grant select on public.dokumanlar to anon;
 grant select, insert, update, delete on public.dokumanlar to authenticated;
