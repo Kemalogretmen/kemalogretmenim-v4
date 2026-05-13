@@ -43,7 +43,7 @@
     }
 
     .shape-page {
-      width: min(1240px, 100%);
+      width: min(1440px, 100%);
       margin: 0 auto;
       padding: 14px 14px 38px;
     }
@@ -113,8 +113,8 @@
 
     #game-container {
       position: relative;
-      height: min(760px, calc(100vh - 150px));
-      min-height: 620px;
+      height: min(860px, calc(100vh - 132px));
+      min-height: 680px;
       overflow: hidden;
       background: #eef7fb;
       isolation: isolate;
@@ -301,6 +301,34 @@
       font-weight: 800;
     }
 
+    .battle-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 14px 0 4px;
+      padding: 6px;
+      border-radius: 8px;
+      background: #f6f2ff;
+    }
+
+    .battle-option {
+      min-height: 50px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #5b5780;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 17px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .battle-option.active {
+      background: white;
+      color: var(--hunt-violet);
+      box-shadow: 0 6px 16px rgba(108, 61, 237, .16);
+    }
+
     .mode-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -416,7 +444,7 @@
       .shape-page { padding: 8px 8px 26px; }
       .game-topbar { align-items: stretch; flex-wrap: wrap; }
       .game-title { order: -1; width: 100%; }
-      #game-container { height: calc(100vh - 138px); min-height: 590px; }
+      #game-container { height: calc(100vh - 138px); min-height: 630px; }
       #hud {
         grid-template-columns: 1fr 1fr;
       }
@@ -425,13 +453,14 @@
       .hud-icon { width: 34px; height: 34px; flex-basis: 34px; font-size: 18px; }
       .hud-value { font-size: 19px; }
       .target-shape { min-width: 58px; height: 36px; font-size: 20px; }
+      .battle-toggle { grid-template-columns: 1fr; }
       .mode-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
       .back-link { min-height: 38px; padding-inline: 10px; font-size: 13px; }
       .sound-toggle { width: 40px; min-height: 38px; }
-      #game-container { min-height: 560px; }
+      #game-container { min-height: 590px; }
       #hud { top: 8px; left: 8px; right: 8px; gap: 7px; }
       .hud-box { border-width: 2px; }
       .modal { padding: 18px; }
@@ -445,7 +474,7 @@
         <a class="back-link" href="oyunlar.html">← Oyunlar</a>
         <div class="game-title">
           <h1>Şekil Avcısı 3D</h1>
-          <p>Hedef şekli topla, kuyruğunu büyüt, rekoru yakala.</p>
+          <p>Hedef şekli topla, kuyruğunu büyüt, yarışta öne geç.</p>
         </div>
         <button class="sound-toggle" id="soundToggle" type="button" aria-label="Sesi aç veya kapat">🔊</button>
       </div>
@@ -455,7 +484,7 @@
           <div class="hud-box">
             <span class="hud-icon">⭐</span>
             <div style="width:100%">
-              <span class="hud-label">Puan</span>
+              <span class="hud-label" id="primary-label">Puan</span>
               <span class="hud-value"><span id="score">0</span> / <span id="win-score">100</span></span>
               <div class="progress-wrap"><div id="progress-fill"></div></div>
             </div>
@@ -467,10 +496,10 @@
             </div>
           </div>
           <div class="hud-box mini-stat">
-            <span class="hud-icon">🧩</span>
+            <span class="hud-icon" id="side-icon">🧩</span>
             <div>
-              <span class="hud-label">Kuyruk</span>
-              <span class="hud-value" id="tail-count">2</span>
+              <span class="hud-label" id="side-label">Kuyruk</span>
+              <span class="hud-value" id="side-value">2</span>
             </div>
           </div>
         </div>
@@ -483,7 +512,11 @@
           <div class="modal">
             <div class="modal-mark">🧊</div>
             <h2>Şekil Avcısı</h2>
-            <p>Doğru şekilleri toplayarak büyü. Yanlış şekil kuyruğu küçültür; hedef değiştikçe dikkatini koru.</p>
+            <p>Doğru şekilleri toplayarak büyü. Tahta yarışında sol oyuncu WASD/sol alanı, sağ oyuncu ok tuşları/sağ alanı kullanır.</p>
+            <div class="battle-toggle" aria-label="Oyun modu">
+              <button class="battle-option active" type="button" data-player-mode="solo">Tek Oyuncu</button>
+              <button class="battle-option" type="button" data-player-mode="duel">Tahta Yarışı</button>
+            </div>
             <div class="mode-grid">
               <button class="mode-btn primary" type="button" data-grade="1">
                 1. Sınıf
@@ -552,32 +585,31 @@
     const ctx = canvas.getContext('2d');
     const container = document.getElementById('game-container');
 
-    const MAP_SIZE = 2500;
-    const TILE_SIZE = 58;
-    const MAX_FOODS = 72;
+    const MAP_SIZE = 3400;
+    const TILE_SIZE = 46;
+    const MAX_FOODS = 118;
     const POINTS_PER_ITEM = 5;
 
     let gameState = 'menu';
     let activeTargets = [];
     let currentTarget = null;
     let currentGrade = 1;
+    let currentPlayerMode = 'solo';
+    let currentWinner = null;
     let winScore = 100;
     let score = 0;
     let targetProgress = 0;
     let foods = [];
+    let players = [];
     let muted = false;
     let audioCtx = null;
     let animationFrame = null;
-    let isPointerDown = false;
+    const activePointers = new Map();
 
-    const snake = {
-      head: { x: MAP_SIZE / 2, y: MAP_SIZE / 2 },
-      parts: [],
-      history: [],
-      speed: 3.65,
-      spacing: 16,
-      angle: -Math.PI / 2
-    };
+    const PLAYER_META = [
+      { id: 1, name: '1. Oyuncu', icon: '🔵', color: '#1476d4', dark: '#0e5198', startX: MAP_SIZE * .34, startY: MAP_SIZE * .50, angle: 0 },
+      { id: 2, name: '2. Oyuncu', icon: '🟣', color: '#d93d84', dark: '#9e235f', startX: MAP_SIZE * .66, startY: MAP_SIZE * .50, angle: Math.PI }
+    ];
 
     function resizeCanvas() {
       const rect = container.getBoundingClientRect();
@@ -629,85 +661,143 @@
       }
     }
 
-    function handleDirectionInput(clientX, clientY) {
+    function getViewportForPlayer(player) {
+      if (currentPlayerMode !== 'duel' || players.length < 2) {
+        return { x: 0, y: 0, width: canvas.width, height: canvas.height };
+      }
+      const half = canvas.width / 2;
+      return player.id === 1
+        ? { x: 0, y: 0, width: half, height: canvas.height }
+        : { x: half, y: 0, width: canvas.width - half, height: canvas.height };
+    }
+
+    function getPointerPlayer(clientX) {
+      if (currentPlayerMode !== 'duel' || players.length < 2) return players[0];
+      const rect = canvas.getBoundingClientRect();
+      return (clientX - rect.left) < rect.width / 2 ? players[0] : players[1];
+    }
+
+    function handleDirectionInput(player, clientX, clientY) {
       if (gameState !== 'playing') return;
+      if (!player || !player.alive) return;
       const rect = canvas.getBoundingClientRect();
       const targetX = clientX - rect.left;
       const targetY = clientY - rect.top;
-      snake.angle = Math.atan2(targetY - canvas.height / 2, targetX - canvas.width / 2);
+      const viewport = getViewportForPlayer(player);
+      player.angle = Math.atan2(targetY - (viewport.y + viewport.height / 2), targetX - (viewport.x + viewport.width / 2));
     }
 
     canvas.addEventListener('pointerdown', event => {
-      isPointerDown = true;
+      const player = getPointerPlayer(event.clientX);
+      activePointers.set(event.pointerId, player ? player.id : 1);
       canvas.setPointerCapture?.(event.pointerId);
-      handleDirectionInput(event.clientX, event.clientY);
+      handleDirectionInput(player, event.clientX, event.clientY);
     });
 
     canvas.addEventListener('pointermove', event => {
-      if (isPointerDown || event.pointerType === 'touch' || event.pointerType === 'pen') {
-        handleDirectionInput(event.clientX, event.clientY);
+      if (activePointers.has(event.pointerId) || event.pointerType === 'touch' || event.pointerType === 'pen') {
+        const storedId = activePointers.get(event.pointerId);
+        const player = players.find(item => item.id === storedId) || getPointerPlayer(event.clientX);
+        handleDirectionInput(player, event.clientX, event.clientY);
       }
     });
 
-    canvas.addEventListener('pointerup', () => { isPointerDown = false; });
-    canvas.addEventListener('pointercancel', () => { isPointerDown = false; });
+    canvas.addEventListener('pointerup', event => { activePointers.delete(event.pointerId); });
+    canvas.addEventListener('pointercancel', event => { activePointers.delete(event.pointerId); });
     canvas.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
 
     window.addEventListener('keydown', event => {
       if (gameState !== 'playing') return;
-      const keyMap = {
-        ArrowUp: -Math.PI / 2,
+      const keyMapP1 = {
         w: -Math.PI / 2,
         W: -Math.PI / 2,
-        ArrowDown: Math.PI / 2,
         s: Math.PI / 2,
         S: Math.PI / 2,
-        ArrowLeft: Math.PI,
         a: Math.PI,
         A: Math.PI,
-        ArrowRight: 0,
         d: 0,
         D: 0
       };
-      if (Object.prototype.hasOwnProperty.call(keyMap, event.key)) {
+      const keyMapP2 = {
+        ArrowUp: -Math.PI / 2,
+        ArrowDown: Math.PI / 2,
+        ArrowLeft: Math.PI,
+        ArrowRight: 0
+      };
+      const p1 = players[0];
+      const p2 = players[1] || players[0];
+      if (Object.prototype.hasOwnProperty.call(keyMapP1, event.key) && p1) {
         event.preventDefault();
-        snake.angle = keyMap[event.key];
+        p1.angle = keyMapP1[event.key];
+      } else if (Object.prototype.hasOwnProperty.call(keyMapP2, event.key) && p2) {
+        event.preventDefault();
+        p2.angle = keyMapP2[event.key];
       }
     });
 
+    document.querySelectorAll('.battle-option').forEach(button => {
+      button.addEventListener('click', () => {
+        currentPlayerMode = button.dataset.playerMode || 'solo';
+        document.querySelectorAll('.battle-option').forEach(item => item.classList.remove('active'));
+        button.classList.add('active');
+      });
+    });
+
     document.querySelectorAll('.mode-btn').forEach(button => {
-      button.addEventListener('click', () => startGame(Number(button.dataset.grade)));
+      button.addEventListener('click', () => startGame(Number(button.dataset.grade), currentPlayerMode));
     });
 
     document.getElementById('saveScoreBtn').addEventListener('click', saveScoreAndReturn);
-    document.getElementById('restartBtn').addEventListener('click', () => startGame(currentGrade));
+    document.getElementById('restartBtn').addEventListener('click', () => startGame(currentGrade, currentPlayerMode));
     document.getElementById('soundToggle').addEventListener('click', () => {
       muted = !muted;
       document.getElementById('soundToggle').textContent = muted ? '🔇' : '🔊';
     });
 
-    function startGame(gradeSelection) {
+    function createPlayer(meta, gradeSelection) {
+      const player = {
+        id: meta.id,
+        name: meta.name,
+        icon: meta.icon,
+        color: meta.color,
+        dark: meta.dark,
+        head: { x: meta.startX, y: meta.startY },
+        parts: [
+          { shape: '★', color: meta.color, dark: meta.dark },
+          { shape: '★', color: '#20c5d3', dark: '#11818d' }
+        ],
+        history: [],
+        score: 0,
+        alive: true,
+        speed: gradeSelection === 1 ? 3.65 : 4.05,
+        spacing: 10,
+        angle: meta.angle
+      };
+
+      for (let i = 0; i < (player.parts.length + 5) * player.spacing; i++) {
+        player.history.push({
+          x: player.head.x - Math.cos(player.angle) * i * player.speed,
+          y: player.head.y - Math.sin(player.angle) * i * player.speed
+        });
+      }
+
+      return player;
+    }
+
+    function startGame(gradeSelection, modeSelection = 'solo') {
       cancelAnimationFrame(animationFrame);
       currentGrade = gradeSelection;
+      currentPlayerMode = modeSelection;
+      currentWinner = null;
       activeTargets = gradeSelection === 1 ? [...GRADE_1_TARGETS] : [...GRADE_2_TARGETS];
-      winScore = gradeSelection === 1 ? 100 : 120;
+      winScore = currentPlayerMode === 'duel' ? (gradeSelection === 1 ? 60 : 80) : (gradeSelection === 1 ? 100 : 120);
       score = 0;
       targetProgress = 0;
       foods = [];
       currentTarget = getNewTarget(null);
-
-      snake.head = { x: MAP_SIZE / 2, y: MAP_SIZE / 2 };
-      snake.parts = [
-        { shape: '★', color: '#6c3ded', dark: '#4320b0' },
-        { shape: '★', color: '#20c5d3', dark: '#11818d' }
-      ];
-      snake.history = [];
-      snake.angle = -Math.PI / 2;
-      snake.speed = gradeSelection === 1 ? 3.45 : 3.85;
-
-      for (let i = 0; i < (snake.parts.length + 4) * snake.spacing; i++) {
-        snake.history.push({ x: snake.head.x, y: snake.head.y + i * snake.speed });
-      }
+      players = currentPlayerMode === 'duel'
+        ? PLAYER_META.map(meta => createPlayer(meta, gradeSelection))
+        : [createPlayer({ ...PLAYER_META[0], startX: MAP_SIZE / 2, startY: MAP_SIZE / 2, angle: -Math.PI / 2 }, gradeSelection)];
 
       for (let i = 0; i < MAX_FOODS; i++) spawnFood();
 
@@ -737,13 +827,27 @@
     }
 
     function updateHud() {
+      const p1 = players[0];
+      const p2 = players[1];
+      score = p1 ? p1.score : 0;
+      document.getElementById('primary-label').textContent = currentPlayerMode === 'duel' ? '1. Oyuncu' : 'Puan';
       document.getElementById('score').textContent = score;
       document.getElementById('win-score').textContent = winScore;
+      if (!currentTarget) return;
       document.getElementById('target-text').textContent = currentTarget.name;
       document.getElementById('target-emoji').textContent = currentTarget.shape;
       document.getElementById('target-emoji').style.color = currentTarget.color;
-      document.getElementById('tail-count').textContent = snake.parts.length;
-      document.getElementById('progress-fill').style.width = Math.min((score / winScore) * 100, 100) + '%';
+      const leadScore = Math.max(...players.map(player => player.score), 0);
+      document.getElementById('progress-fill').style.width = Math.min((leadScore / winScore) * 100, 100) + '%';
+      if (currentPlayerMode === 'duel' && p2) {
+        document.getElementById('side-icon').textContent = p2.icon;
+        document.getElementById('side-label').textContent = '2. Oyuncu';
+        document.getElementById('side-value').textContent = p2.score + ' / ' + winScore;
+      } else {
+        document.getElementById('side-icon').textContent = '🧩';
+        document.getElementById('side-label').textContent = 'Kuyruk';
+        document.getElementById('side-value').textContent = p1 ? p1.parts.length : 2;
+      }
     }
 
     function showFlash(id) {
@@ -777,7 +881,7 @@
       const input = document.getElementById('player-name');
       const name = input.value.trim() || 'Şekil Avcısı';
       const scores = JSON.parse(localStorage.getItem('sekilAvcisi3DScores') || '[]');
-      scores.push({ name, score, grade: currentGrade, date: new Date().toISOString() });
+      scores.push({ name, score: currentWinner ? currentWinner.score : score, grade: currentGrade, date: new Date().toISOString() });
       localStorage.setItem('sekilAvcisi3DScores', JSON.stringify(scores.slice(-40)));
       input.value = '';
       document.getElementById('result-screen').classList.add('hidden');
@@ -790,56 +894,42 @@
     function gameLoop(timestamp) {
       if (gameState !== 'playing') return;
 
-      snake.head.x += Math.cos(snake.angle) * snake.speed;
-      snake.head.y += Math.sin(snake.angle) * snake.speed;
-
-      if (snake.head.x < TILE_SIZE) {
-        snake.head.x = TILE_SIZE;
-        snake.angle = Math.PI - snake.angle;
-      } else if (snake.head.x > MAP_SIZE - TILE_SIZE) {
-        snake.head.x = MAP_SIZE - TILE_SIZE;
-        snake.angle = Math.PI - snake.angle;
-      }
-
-      if (snake.head.y < TILE_SIZE) {
-        snake.head.y = TILE_SIZE;
-        snake.angle = -snake.angle;
-      } else if (snake.head.y > MAP_SIZE - TILE_SIZE) {
-        snake.head.y = MAP_SIZE - TILE_SIZE;
-        snake.angle = -snake.angle;
-      }
-
-      snake.history.unshift({ x: snake.head.x, y: snake.head.y });
-      const maxHistory = (snake.parts.length + 5) * snake.spacing;
-      if (snake.history.length > maxHistory) snake.history.length = maxHistory;
+      players.forEach(updatePlayerPosition);
 
       for (let i = foods.length - 1; i >= 0; i--) {
         const food = foods[i];
-        const hitDistance = TILE_SIZE * .92;
-        if (Math.hypot(snake.head.x - food.x, snake.head.y - food.y) < hitDistance) {
+        const hitDistance = TILE_SIZE * 1.02;
+        const player = players.find(item => item.alive && Math.hypot(item.head.x - food.x, item.head.y - food.y) < hitDistance);
+        if (player) {
           if (food.typeId === currentTarget.id) {
-            score += POINTS_PER_ITEM;
+            player.score += POINTS_PER_ITEM;
             targetProgress++;
-            snake.parts.push({ shape: food.label, color: food.color, dark: food.dark });
+            player.parts.push({ shape: food.label, color: food.color, dark: food.dark });
             playSound('eat');
 
-            if (targetProgress >= 3 && score < winScore) {
+            if (targetProgress >= 4 && player.score < winScore) {
               currentTarget = getNewTarget(currentTarget.id);
               targetProgress = 0;
               playSound('level');
               showFlash('level-flash');
             }
 
-            if (score >= winScore) {
-              finishGame(true);
+            if (player.score >= winScore) {
+              finishGame(true, player);
               return;
             }
           } else {
-            snake.parts.pop();
+            player.parts.pop();
             playSound('wrong');
             showFlash('damage-flash');
-            if (snake.parts.length <= 0) {
-              finishGame(false);
+            if (player.parts.length <= 0) {
+              player.alive = false;
+              if (currentPlayerMode === 'duel') {
+                const winner = players.find(item => item.alive);
+                finishGame(Boolean(winner), winner || player);
+              } else {
+                finishGame(false, player);
+              }
               return;
             }
           }
@@ -854,13 +944,50 @@
       animationFrame = requestAnimationFrame(gameLoop);
     }
 
-    function finishGame(won) {
+    function updatePlayerPosition(player) {
+      if (!player.alive) return;
+      player.head.x += Math.cos(player.angle) * player.speed;
+      player.head.y += Math.sin(player.angle) * player.speed;
+
+      if (player.head.x < TILE_SIZE) {
+        player.head.x = TILE_SIZE;
+        player.angle = Math.PI - player.angle;
+      } else if (player.head.x > MAP_SIZE - TILE_SIZE) {
+        player.head.x = MAP_SIZE - TILE_SIZE;
+        player.angle = Math.PI - player.angle;
+      }
+
+      if (player.head.y < TILE_SIZE) {
+        player.head.y = TILE_SIZE;
+        player.angle = -player.angle;
+      } else if (player.head.y > MAP_SIZE - TILE_SIZE) {
+        player.head.y = MAP_SIZE - TILE_SIZE;
+        player.angle = -player.angle;
+      }
+
+      player.history.unshift({ x: player.head.x, y: player.head.y });
+      const maxHistory = (player.parts.length + 6) * player.spacing;
+      if (player.history.length > maxHistory) player.history.length = maxHistory;
+    }
+
+    function finishGame(won, winner) {
       gameState = 'gameover';
       cancelAnimationFrame(animationFrame);
+      currentWinner = winner || players[0] || null;
       document.getElementById('result-screen').classList.remove('hidden');
-      document.getElementById('final-score').textContent = score;
+      document.getElementById('final-score').textContent = currentPlayerMode === 'duel'
+        ? players.map(player => player.score).join(' - ')
+        : (currentWinner ? currentWinner.score : score);
 
-      if (won) {
+      if (won && currentPlayerMode === 'duel') {
+        playSound('win');
+        throwConfetti();
+        document.getElementById('result-icon').textContent = '🏆';
+        document.getElementById('result-title').textContent = (winner ? winner.name : 'Bir oyuncu') + ' Kazandı!';
+        document.getElementById('result-message').textContent = 'Hedef puana ilk ulaşan yarışın galibi oldu.';
+        document.getElementById('save-score-area').classList.add('hidden');
+        document.getElementById('restartBtn').classList.remove('hidden');
+      } else if (won) {
         playSound('win');
         throwConfetti();
         document.getElementById('result-icon').textContent = '🏆';
@@ -881,9 +1008,37 @@
       ctx.fillStyle = '#eef7fb';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const cameraX = canvas.width / 2 - snake.head.x;
-      const cameraY = canvas.height / 2 - snake.head.y;
+      if (gameState !== 'playing' || !players.length) {
+        drawMenuPreview(timestamp);
+        return;
+      }
 
+      if (currentPlayerMode === 'duel' && players.length > 1) {
+        drawViewport(players[0], getViewportForPlayer(players[0]), timestamp);
+        drawViewport(players[1], getViewportForPlayer(players[1]), timestamp);
+        drawDivider();
+      } else {
+        drawViewport(players[0], getViewportForPlayer(players[0]), timestamp);
+      }
+    }
+
+    function drawMenuPreview(timestamp) {
+      ctx.save();
+      ctx.translate(canvas.width / 2 - MAP_SIZE / 2, canvas.height / 2 - MAP_SIZE / 2);
+      drawWorld();
+      ctx.restore();
+    }
+
+    function drawViewport(focusPlayer, viewport, timestamp) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(viewport.x, viewport.y, viewport.width, viewport.height);
+      ctx.clip();
+
+      ctx.fillStyle = '#eef7fb';
+      ctx.fillRect(viewport.x, viewport.y, viewport.width, viewport.height);
+      const cameraX = viewport.x + viewport.width / 2 - focusPlayer.head.x;
+      const cameraY = viewport.y + viewport.height / 2 - focusPlayer.head.y;
       ctx.save();
       ctx.translate(cameraX, cameraY);
 
@@ -895,26 +1050,65 @@
         renderQueue.push({ type: 'food', x: food.x, y: food.y + floatY, data: food });
       });
 
-      snake.parts.forEach((part, index) => {
-        const historyIndex = Math.min((index + 1) * snake.spacing, snake.history.length - 1);
-        const pos = snake.history[historyIndex];
-        if (pos) renderQueue.push({ type: 'part', x: pos.x, y: pos.y, data: part });
+      players.forEach(player => {
+        player.parts.forEach((part, index) => {
+          const historyIndex = Math.min((index + 1) * player.spacing, player.history.length - 1);
+          const pos = player.history[historyIndex];
+          if (pos) renderQueue.push({ type: 'part', x: pos.x, y: pos.y, data: part, player });
+        });
+        if (player.alive) {
+          renderQueue.push({ type: 'head', x: player.head.x, y: player.head.y, data: player });
+        }
       });
 
-      if (currentTarget) renderQueue.push({ type: 'head', x: snake.head.x, y: snake.head.y, data: currentTarget });
       renderQueue.sort((a, b) => a.y - b.y);
 
       renderQueue.forEach(item => {
         if (item.type === 'head') {
-          draw3DBlock(item.x, item.y, TILE_SIZE * 1.08, item.data.color, item.data.dark, item.data.shape, true);
+          draw3DBlock(item.x, item.y, TILE_SIZE * 1.05, item.data.color, item.data.dark, currentTarget.shape, true, item.data.angle);
+          drawPlayerName(item.x, item.y, item.data);
         } else if (item.type === 'part') {
-          draw3DBlock(item.x, item.y, TILE_SIZE * .92, item.data.color, item.data.dark, item.data.shape, false);
+          draw3DBlock(item.x, item.y, TILE_SIZE * .88, item.data.color, item.data.dark, item.data.shape, false, 0);
         } else {
-          draw3DBlock(item.x, item.y, TILE_SIZE * .84, item.data.color, item.data.dark, item.data.label, false);
+          draw3DBlock(item.x, item.y, TILE_SIZE * .72, item.data.color, item.data.dark, item.data.label, false, 0);
         }
       });
 
       ctx.restore();
+      drawViewportLabel(focusPlayer, viewport);
+      ctx.restore();
+    }
+
+    function drawDivider() {
+      const x = canvas.width / 2;
+      ctx.fillStyle = 'rgba(20, 19, 52, .18)';
+      ctx.fillRect(x - 3, 0, 6, canvas.height);
+      ctx.fillStyle = 'rgba(255, 255, 255, .80)';
+      ctx.fillRect(x - 1, 0, 2, canvas.height);
+    }
+
+    function drawViewportLabel(player, viewport) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, .92)';
+      roundedRect(viewport.x + 14, viewport.y + viewport.height - 62, 168, 44, 10);
+      ctx.fill();
+      ctx.fillStyle = player.color;
+      ctx.font = '900 14px "Nunito", system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(player.icon + ' ' + player.name, viewport.x + 26, viewport.y + viewport.height - 40);
+      ctx.fillStyle = '#141334';
+      ctx.fillText(player.score + ' / ' + winScore, viewport.x + 122, viewport.y + viewport.height - 40);
+      ctx.restore();
+    }
+
+    function drawPlayerName(cx, cy, player) {
+      if (currentPlayerMode !== 'duel') return;
+      ctx.fillStyle = player.color;
+      ctx.font = '900 15px "Nunito", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(player.id, cx, cy - TILE_SIZE * .82);
     }
 
     function drawWorld() {
@@ -949,7 +1143,7 @@
       ctx.strokeRect(0, 0, MAP_SIZE, MAP_SIZE);
     }
 
-    function draw3DBlock(cx, cy, size, topColor, sideColor, label, isHead) {
+    function draw3DBlock(cx, cy, size, topColor, sideColor, label, isHead, angle) {
       const depth = size * .45;
       const radius = Math.max(8, size * .16);
 
@@ -974,7 +1168,7 @@
       ctx.stroke();
 
       if (isHead) {
-        drawEyes(cx, cy, size);
+        drawEyes(cx, cy, size, angle || 0);
         return;
       }
 
@@ -985,12 +1179,12 @@
       ctx.fillText(label, cx, cy + size * .03);
     }
 
-    function drawEyes(cx, cy, size) {
+    function drawEyes(cx, cy, size, angle) {
       const eyeY = cy - size * .22;
       const leftX = cx - size * .23;
       const rightX = cx + size * .23;
-      const pupilX = Math.cos(snake.angle) * size * .045;
-      const pupilY = Math.sin(snake.angle) * size * .045;
+      const pupilX = Math.cos(angle) * size * .045;
+      const pupilY = Math.sin(angle) * size * .045;
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
