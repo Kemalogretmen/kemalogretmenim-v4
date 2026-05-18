@@ -120,38 +120,38 @@ create policy "calisma kagitlari auth manage"
 on public.calisma_kagitlari
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.current_admin_has_permission('calisma_kagidi'))
+with check (public.current_admin_has_permission('calisma_kagidi'));
 
 drop policy if exists "calisma alani auth manage" on public.calisma_kagidi_alanlari;
 create policy "calisma alani auth manage"
 on public.calisma_kagidi_alanlari
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.current_admin_has_permission('calisma_kagidi'))
+with check (public.current_admin_has_permission('calisma_kagidi'));
 
 drop policy if exists "calisma gonderim auth read" on public.calisma_kagidi_gonderimleri;
 create policy "calisma gonderim auth read"
 on public.calisma_kagidi_gonderimleri
 for select
 to authenticated
-using (true);
+using (public.current_admin_has_permission('calisma_kagidi'));
 
 drop policy if exists "calisma gonderim auth delete" on public.calisma_kagidi_gonderimleri;
 create policy "calisma gonderim auth delete"
 on public.calisma_kagidi_gonderimleri
 for delete
 to authenticated
-using (true);
+using (public.current_admin_has_permission('calisma_kagidi'));
 
 drop policy if exists "calisma gonderim auth update" on public.calisma_kagidi_gonderimleri;
 create policy "calisma gonderim auth update"
 on public.calisma_kagidi_gonderimleri
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.current_admin_has_permission('calisma_kagidi'))
+with check (public.current_admin_has_permission('calisma_kagidi'));
 
 create index if not exists idx_calisma_kagitlari_dokuman
   on public.calisma_kagitlari (dokuman_id, yayinda, aktif);

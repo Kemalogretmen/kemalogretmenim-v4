@@ -78,7 +78,7 @@
       return 'Supabase bucket bulunamadı. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde çalıştırıp `dokumanlar` bucket\'ını oluşturmalısın.';
     }
 
-    if (combined.includes('hedefler') || combined.includes('icerik_turu') || combined.includes('video_embed_url')) {
+    if (combined.includes('hedefler') || combined.includes('icerik_turu') || combined.includes('video_embed_url') || combined.includes('gizli')) {
       return 'Doküman/video şeması için Supabase yapısını güncellemelisin. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.';
     }
 
@@ -409,7 +409,9 @@
 
   function updateSummary() {
     const title = document.getElementById('fBaslik').value.trim();
-    const activeLabel = document.getElementById('fAktif').checked ? 'Aktif yayın' : 'Pasif kayıt';
+    const activeLabel = document.getElementById('fAktif').checked
+      ? (document.getElementById('fGizli').checked ? 'Gizli yayın' : 'Aktif yayın')
+      : 'Pasif kayıt';
     const existing = state.editingId ? getDocumentById(state.editingId) : null;
     const file = getSelectedFile();
     const meta = state.currentPdfMeta || existing;
@@ -487,6 +489,7 @@
     document.getElementById('fSiralama').value = '0';
     document.getElementById('fKapakRenk').value = '#6C3DED';
     document.getElementById('fAktif').checked = true;
+    document.getElementById('fGizli').checked = false;
     document.getElementById('fMagnifierEnabled').checked = true;
     document.getElementById('fAnswersEnabled').checked = true;
     document.getElementById('fOturumGerekli').checked = false;
@@ -538,6 +541,9 @@
       if (status === 'inactive' && item.aktif) {
         return false;
       }
+      if (status === 'hidden' && item.gizli !== true) {
+        return false;
+      }
       return true;
     });
 
@@ -570,8 +576,9 @@
         '<article class="doc-card">' +
           '<div class="doc-top">' +
             '<div class="doc-badges">' + badges + '</div>' +
-            '<div class="doc-status ' + (item.aktif ? 'on' : 'off') + '">' + (item.aktif ? 'Aktif' : 'Pasif') + '</div>' +
+            '<div class="doc-status ' + (item.aktif ? 'on' : 'off') + '">' + (item.aktif ? (item.gizli ? 'Gizli' : 'Aktif') : 'Pasif') + '</div>' +
           '</div>' +
+          '<div class="doc-meta"><span>' + (item.oturum_gerekli ? '🔐 Kayıtlı Kullanıcı' : '🌍 Herkese Açık') + '</span>' + (item.gizli ? '<span>👁️‍🗨️ Linkle erişim</span>' : '') + '</div>' +
           '<div class="doc-title">' + escHtml(item.baslik) + '</div>' +
           '<div class="doc-desc">' + escHtml(item.aciklama || 'Açıklama eklenmedi.') + '</div>' +
           '<div class="doc-meta">' + metaHtml + '</div>' +
@@ -582,6 +589,7 @@
           '</div>' +
           '<div class="doc-actions">' +
             (can('dokuman_duzenleme') ? '<button class="btn-open" type="button" onclick="durumDegistir(\'' + item.id + '\')">' + (item.aktif ? 'Pasife Al' : 'Aktife Al') + '</button>' : '') +
+            (can('dokuman_duzenleme') ? '<button class="btn-open" type="button" onclick="gizlilikDegistir(\'' + item.id + '\')">' + (item.gizli ? 'Listede Göster' : 'Gizle') + '</button>' : '') +
             (can('dokuman_silme') ? '<button class="btn-delete" type="button" onclick="dokumanSil(\'' + item.id + '\')">Sil</button>' : '') +
           '</div>' +
         '</article>'
@@ -729,6 +737,8 @@
     const sortOrder = parseInt(document.getElementById('fSiralama').value || '0', 10) || 0;
     const coverColor = document.getElementById('fKapakRenk').value || '#6C3DED';
     const active = document.getElementById('fAktif').checked;
+    const hidden = document.getElementById('fGizli').checked;
+    const sessionRequired = document.getElementById('fOturumGerekli').checked;
     const magnifierEnabled = document.getElementById('fMagnifierEnabled').checked;
     const answersEnabled = document.getElementById('fAnswersEnabled').checked;
     const file = getSelectedFile();
@@ -773,6 +783,8 @@
       sortOrder: sortOrder,
       coverColor: coverColor,
       active: active,
+      hidden: hidden,
+      sessionRequired: sessionRequired,
       magnifierEnabled: magnifierEnabled,
       answersEnabled: answersEnabled,
       file: file,
@@ -825,7 +837,8 @@
         kapak_renk: data.coverColor,
         siralama: data.sortOrder,
         aktif: data.active,
-        oturum_gerekli: false,
+        gizli: data.hidden,
+        oturum_gerekli: data.sessionRequired,
         etkilesim_json: data.contentKind === 'video'
           ? (data.existing && data.existing.etkilesim_json && typeof data.existing.etkilesim_json === 'object' ? data.existing.etkilesim_json : {})
           : buildInteractionPayload(data.existing, data),
@@ -896,6 +909,32 @@
     await loadDocuments();
   }
 
+  async function toggleHidden(documentId) {
+    if (!requirePermission('dokuman_duzenleme', 'Doküman düzenleme')) {
+      return;
+    }
+    const item = getDocumentById(documentId);
+    if (!item) {
+      return;
+    }
+
+    const response = await getClient()
+      .from('dokumanlar')
+      .update({
+        gizli: item.gizli !== true,
+        guncelleme_tarihi: new Date().toISOString(),
+      })
+      .eq('id', documentId);
+
+    if (response.error) {
+      toast(humanizeSupabaseError(response.error), 'error');
+      return;
+    }
+
+    toast(item.gizli ? 'İçerik listelerde gösterilecek.' : 'İçerik gizlendi, doğrudan linkle açılabilir.', 'success');
+    await loadDocuments();
+  }
+
   async function deleteDocument(documentId) {
     if (!requirePermission('dokuman_silme', 'Doküman silme')) {
       return;
@@ -951,6 +990,7 @@
     document.getElementById('fSiralama').value = String(doc.siralama || 0);
     document.getElementById('fKapakRenk').value = doc.kapak_renk || '#6C3DED';
     document.getElementById('fAktif').checked = Boolean(doc.aktif);
+    document.getElementById('fGizli').checked = doc.gizli === true;
     const interactionSettings = getInteractionSettings(doc);
     document.getElementById('fMagnifierEnabled').checked = interactionSettings.magnifierEnabled;
     document.getElementById('fAnswersEnabled').checked = interactionSettings.answersEnabled;
@@ -1087,12 +1127,12 @@
   }
 
   function bindEvents() {
-    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput'].forEach(function(id) {
+    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fGizli', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput'].forEach(function(id) {
       const element = document.getElementById(id);
       if (!element) {
         return;
       }
-      const eventName = id === 'fKapakRenk' || id === 'fAktif' || id === 'fMagnifierEnabled' || id === 'fAnswersEnabled' ? 'input' : 'input';
+      const eventName = id === 'fKapakRenk' || id === 'fAktif' || id === 'fGizli' || id === 'fMagnifierEnabled' || id === 'fAnswersEnabled' ? 'input' : 'input';
       element.addEventListener(eventName, updateSummary);
       if (id === 'fSinif' || id === 'fDers') {
         element.addEventListener('change', updateSummary);
@@ -1166,6 +1206,7 @@
     }
   };
   window.durumDegistir = toggleActive;
+  window.gizlilikDegistir = toggleHidden;
   window.dokumanSil = deleteDocument;
   window.kaydet = save;
   window.kaydetVeHazirla = function() {

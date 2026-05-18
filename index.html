@@ -347,10 +347,12 @@
       min-height: 38px;
       padding: 6px;
       border-radius: 12px;
-      transition: background .2s, transform .2s;
+      border: 1px solid transparent;
+      transition: background .2s, transform .2s, border-color .2s;
     }
     .platform-live-item:hover {
-      background: white;
+      background: var(--item-soft, white);
+      border-color: var(--item-border, var(--border));
       transform: translateX(3px);
     }
     .platform-live-icon {
@@ -359,8 +361,10 @@
       display: grid;
       place-items: center;
       border-radius: 10px;
-      background: var(--badge-bg);
+      background: var(--item-gradient, var(--badge-bg));
+      color: white;
       font-size: 15px;
+      box-shadow: 0 8px 18px rgba(15,23,42,.10);
     }
     .platform-live-copy {
       min-width: 0;
@@ -558,10 +562,13 @@
       border-radius: 18px;
       text-decoration: none;
       color: inherit;
-      transition: background .2s, transform .2s;
+      border: 1px solid transparent;
+      transition: background .2s, transform .2s, border-color .2s, box-shadow .2s;
     }
     .home-live-item:hover {
-      background: #F8F6FF;
+      background: var(--item-soft, #F8F6FF);
+      border-color: var(--item-border, var(--border));
+      box-shadow: 0 12px 26px rgba(15,23,42,.07);
       transform: translateX(4px);
     }
     .home-live-icon {
@@ -572,7 +579,9 @@
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      background: #F0EBFF;
+      background: var(--item-gradient, #F0EBFF);
+      color: white;
+      box-shadow: 0 10px 22px rgba(15,23,42,.12);
     }
     .home-live-meta {
       display: flex;
@@ -589,6 +598,18 @@
       font-size: 14px;
       font-weight: 900;
       line-height: 1.35;
+    }
+    .home-live-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 3px 7px;
+      background: var(--item-soft, #F8F6FF);
+      border: 1px solid var(--item-border, var(--border));
+      color: var(--item-color, var(--purple));
+      font-size: 10px;
+      font-weight: 900;
     }
     .home-live-empty {
       padding: 28px 20px;
@@ -725,12 +746,21 @@
       display: flex;
       flex-direction: column;
       gap: 11px;
+      position: relative;
+      overflow: hidden;
       transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .latest-card::before {
+      content: '';
+      position: absolute;
+      inset: 0 0 auto;
+      height: 6px;
+      background: var(--type-gradient, var(--card-color, var(--purple)));
     }
     .latest-card:hover {
       transform: translateY(-5px);
       box-shadow: var(--shadow-sm);
-      border-color: var(--card-color, var(--purple));
+      border-color: var(--type-color, var(--card-color, var(--purple)));
     }
     .latest-card-top {
       display: flex;
@@ -746,7 +776,22 @@
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      background: var(--card-soft, #F0EBFF);
+      background: var(--type-gradient, var(--card-soft, #F0EBFF));
+      color: white;
+      box-shadow: 0 10px 22px rgba(15,23,42,.13);
+    }
+    .latest-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-start;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--type-soft, #F0EBFF);
+      border: 1px solid var(--type-border, var(--border));
+      color: var(--type-color, var(--purple));
+      font-size: 11px;
+      font-weight: 900;
     }
     .latest-date {
       color: var(--muted);
@@ -775,6 +820,11 @@
       font-size: 11px;
       font-weight: 900;
       padding: 6px 9px;
+    }
+    .latest-tag.source {
+      background: var(--type-soft, #FAFAFF);
+      border-color: var(--type-border, var(--border));
+      color: var(--type-color, var(--slate));
     }
     .latest-empty {
       grid-column: 1 / -1;
@@ -1250,6 +1300,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
   <script src="/js/content-feed.js"></script>
   <script>
     const RENKLER = ['purple','coral','teal','yellow','navy'];
@@ -1286,6 +1337,37 @@
         return new Date(value).toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
       }
 
+      function icerikTuruMeta(item) {
+        const direct = item && item.contentMeta ? item.contentMeta : null;
+        if (direct && direct.color) return direct;
+        if (window.kemalContentFeed && typeof window.kemalContentFeed.getContentTypeMeta === 'function') {
+          return window.kemalContentFeed.getContentTypeMeta(item && (item.type || item.contentType));
+        }
+        const fallback = {
+          reading: { label:'Okuma Parçası', icon:'📖', color:'#6C3DED', soft:'#F1ECFF', border:'#D9CBFF', gradient:'linear-gradient(135deg,#6C3DED,#8B5CF6)' },
+          exam: { label:'Sınav', icon:'📋', color:'#D35400', soft:'#FFF0EC', border:'#FFD0C6', gradient:'linear-gradient(135deg,#FF6052,#FF9F43)' },
+          document: { label:'Doküman', icon:'📄', color:'#00856A', soft:'#E9FFFA', border:'#B7F0E6', gradient:'linear-gradient(135deg,#00A891,#00C9B1)' },
+          video: { label:'Ders Videosu', icon:'🎬', color:'#0B78E3', soft:'#ECF6FF', border:'#C8E4FF', gradient:'linear-gradient(135deg,#0B78E3,#4CC9F0)' },
+          game: { label:'Oyun', icon:'🎮', color:'#B7791F', soft:'#FFF8DD', border:'#FFE7A5', gradient:'linear-gradient(135deg,#FFD93D,#FF9F43)' },
+          content: { label:'Yeni İçerik', icon:'🌟', color:'#6C3DED', soft:'#F1ECFF', border:'#D9CBFF', gradient:'linear-gradient(135deg,#6C3DED,#4CC9F0)' }
+        };
+        return fallback[item && (item.type || item.contentType)] || fallback.content;
+      }
+
+      function icerikTuruStili(meta) {
+        const safe = meta || icerikTuruMeta(null);
+        return [
+          `--item-color:${esc(safe.color || '#6C3DED')}`,
+          `--item-soft:${esc(safe.soft || '#F1ECFF')}`,
+          `--item-border:${esc(safe.border || '#D9CBFF')}`,
+          `--item-gradient:${esc(safe.gradient || safe.color || '#6C3DED')}`,
+          `--type-color:${esc(safe.color || '#6C3DED')}`,
+          `--type-soft:${esc(safe.soft || '#F1ECFF')}`,
+          `--type-border:${esc(safe.border || '#D9CBFF')}`,
+          `--type-gradient:${esc(safe.gradient || safe.color || '#6C3DED')}`
+        ].join(';');
+      }
+
       function renkBelirle(item, index) {
         if (item && item.type === 'reading') return 'purple';
         if (item && item.type === 'exam') return 'coral';
@@ -1308,6 +1390,7 @@
                 renk: renkBelirle(item, index),
                 tarih: item.createdAt || '',
                 type: item.type || 'content',
+                accessScope: item.accessScope || 'public',
               }));
             }
           } catch (error) {
@@ -1324,6 +1407,7 @@
               emoji: h.emoji || '📌',
               renk: h.renk || 'purple',
               tarih: h.tarih || '',
+              accessScope: h.accessScope || 'public',
             }))
           : [];
 
@@ -1336,6 +1420,7 @@
               emoji: i.emoji || '🌟',
               renk: ['yellow','teal','coral','purple'][index % 4],
               tarih: i.tarih || '',
+              accessScope: i.accessScope || 'public',
             }))
           : [];
 
@@ -1376,18 +1461,21 @@
           return;
         }
         target.innerHTML = list.map((item, index) => {
-          const color = item.palette && item.palette.soft ? item.palette.soft : '#F0EBFF';
           const href = item.href || item.link || '#';
           const title = item.title || item.baslik || 'Yeni içerik';
+          const typeMeta = icerikTuruMeta(item);
           const meta = [
             item.gradeLabel || item.kategori || 'Güncel',
-            item.subjectLabel || item.contentTypeLabel || ''
+            item.subjectLabel || ''
           ].filter(Boolean).join(' · ');
           return `
-            <a href="${esc(href)}" class="home-live-item">
-              <span class="home-live-icon" style="background:${esc(color)}">${esc(item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+            <a href="${esc(href)}" class="home-live-item" style="${icerikTuruStili(typeMeta)}">
+              <span class="home-live-icon">${esc(typeMeta.icon || item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
               <span>
-                <span class="home-live-meta">${esc(kisaTarih(item.createdAt || item.tarih))} · ${esc(meta)}</span>
+                <span class="home-live-meta">
+                  <span class="home-live-type">${esc(typeMeta.label || item.contentTypeLabel || 'İçerik')}</span>
+                  <span>${esc(kisaTarih(item.createdAt || item.tarih))}${meta ? ' · ' + esc(meta) : ''}</span>
+                </span>
                 <span class="home-live-name">${esc(title)}</span>
               </span>
           </a>`;
@@ -1410,14 +1498,15 @@
             return;
           }
           target.innerHTML = list.map((item, index) => {
+            const typeMeta = icerikTuruMeta(item);
             const meta = [
               kisaTarih(item.createdAt || item.tarih),
               item.gradeLabel || '',
               item.subjectLabel || item.contentTypeLabel || ''
             ].filter(Boolean).join(' · ');
             return `
-              <a href="${esc(item.href || item.link || '#')}" class="platform-live-item">
-                <span class="platform-live-icon">${esc(item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+              <a href="${esc(item.href || item.link || '#')}" class="platform-live-item" style="${icerikTuruStili(typeMeta)}">
+                <span class="platform-live-icon">${esc(typeMeta.icon || item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
                 <span class="platform-live-copy">
                   <span class="platform-live-title">${esc(item.title || item.baslik || 'Yeni içerik')}</span>
                   <span class="platform-live-meta">${esc(meta)}</span>
@@ -1436,6 +1525,16 @@
           return [];
         }
 
+        async function getLockedGrade() {
+          if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== 'function') return null;
+          await window.kemalUserAuth.ready();
+          return typeof window.kemalUserAuth.getStudentGradeLevel === 'function'
+            ? window.kemalUserAuth.getStudentGradeLevel()
+            : null;
+        }
+
+        const lockedGrade = await getLockedGrade();
+
         let filterOptions = { grades: [], subjects: [] };
         try {
           filterOptions = await window.kemalContentFeed.getFilterOptions();
@@ -1444,9 +1543,16 @@
         }
 
         if (gradeSelect && gradeSelect.options.length <= 1) {
-          gradeSelect.innerHTML = '<option value="all">Tüm Sınıflar</option>' + filterOptions.grades.map(option =>
+          const gradeOptions = lockedGrade
+            ? filterOptions.grades.filter(option => String(option.value) === String(lockedGrade))
+            : filterOptions.grades;
+          gradeSelect.innerHTML = (lockedGrade ? '' : '<option value="all">Tüm Sınıflar</option>') + gradeOptions.map(option =>
             `<option value="${esc(option.value)}">${esc(option.label)}</option>`
           ).join('');
+          if (lockedGrade) {
+            gradeSelect.value = String(lockedGrade);
+            gradeSelect.disabled = true;
+          }
         }
         if (subjectSelect && subjectSelect.options.length <= 1) {
           subjectSelect.innerHTML = '<option value="all">Tüm Dersler</option>' + filterOptions.subjects.map(option =>
@@ -1455,7 +1561,7 @@
         }
 
         async function draw() {
-          const grade = gradeSelect && gradeSelect.value !== 'all' ? gradeSelect.value : '';
+          const grade = lockedGrade ? String(lockedGrade) : (gradeSelect && gradeSelect.value !== 'all' ? gradeSelect.value : '');
           const subject = subjectSelect && subjectSelect.value !== 'all' ? subjectSelect.value : '';
           let items = [];
           try {
@@ -1463,6 +1569,7 @@
               maxItems: 9,
               grade,
               subject,
+              includePublicOutsideGrade: Boolean(lockedGrade),
             });
           } catch (error) {
             items = [];
@@ -1477,17 +1584,27 @@
             const palette = item.palette || {};
             const color = palette.color || '#6C3DED';
             const soft = palette.soft || '#F0EBFF';
+            const typeMeta = icerikTuruMeta(item);
             return `
-              <a href="${esc(item.href || '#')}" class="latest-card" style="--card-color:${esc(color)};--card-soft:${esc(soft)}">
+              <a href="${esc(item.href || '#')}" class="latest-card" style="--card-color:${esc(color)};--card-soft:${esc(soft)};${icerikTuruStili(typeMeta)}"
+                data-reaction-type="${esc(item.type || item.contentType || 'content')}"
+                data-reaction-id="${esc(item.id || item.uid || item.href || item.title)}"
+                data-reaction-title="${esc(item.title || 'Yeni içerik')}"
+                data-reaction-href="${esc(item.href || '#')}"
+                data-reaction-grade="${esc(item.gradeLabel || '')}"
+                data-reaction-subject="${esc(item.subjectLabel || '')}"
+                data-reaction-source="${esc(item.contentTypeLabel || item.sourceLabel || 'İçerik')}"
+                data-access-scope="${esc(item.accessScope || 'public')}">
                 <div class="latest-card-top">
-                  <span class="latest-icon">${esc(item.icon || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+                  <span class="latest-icon">${esc(typeMeta.icon || item.icon || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
                   <span class="latest-date">${esc(kisaTarih(item.createdAt))}</span>
                 </div>
+                <span class="latest-type">${esc(typeMeta.label || item.contentTypeLabel || item.sourceLabel || 'İçerik')}</span>
                 <div class="latest-title">${esc(item.title || 'Yeni içerik')}</div>
                 <div class="latest-meta">
                   <span class="latest-tag">${esc(item.gradeLabel || 'Genel')}</span>
                   <span class="latest-tag">${esc(item.subjectLabel || 'İçerik')}</span>
-                  <span class="latest-tag">${esc(item.contentTypeLabel || item.sourceLabel || 'Kaynak')}</span>
+                  <span class="latest-tag source">${esc(item.contentTypeLabel || item.sourceLabel || 'Kaynak')}</span>
                 </div>
               </a>`;
           }).join('');
@@ -1521,7 +1638,7 @@
         const renk = h.renk || RENKLER[i % RENKLER.length];
         const tarihStr = formatTarih(h.tarih);
         return `
-          <a href="${esc(h.link||'#')}" class="haber-card">
+          <a href="${esc(h.link||'#')}" class="haber-card" data-access-scope="${esc(h.accessScope || 'public')}">
             <div class="haber-card-top">
               <div class="haber-em ${esc(renk)}">${esc(h.emoji||EMOJI_FALLBACK[i%8])}</div>
               <div>

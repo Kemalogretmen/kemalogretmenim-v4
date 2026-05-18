@@ -208,6 +208,31 @@ h1,h2,h3,h4{font-family:var(--fd)}
 @media(max-width:1180px){
   .q-panel{width:100%}
 }
+@media(max-width:860px){
+  body{overflow-x:hidden}
+  .page-pad{max-width:100%;padding:18px 14px}
+  .topbar{align-items:flex-start;flex-direction:column;gap:12px}
+  .step-row{overflow-x:auto;padding-bottom:8px}
+  .step-item{min-width:92px;flex:0 0 auto}
+  .step-line{min-width:28px;flex:0 0 28px}
+  .pdf-canvas-wrap{min-height:420px;max-height:65vh;padding:12px;border-radius:14px}
+  .q-item{width:118px}
+  .q-thumb{width:98px;height:62px}
+  .section-row,.category-row{grid-template-columns:1fr}
+  .result-actions{grid-template-columns:1fr;width:100%;min-width:0}
+  .modal-overlay{padding:12px}
+  .modal-box{max-height:calc(100vh - 24px);overflow:auto;padding:22px}
+  .data-table{min-width:720px}
+}
+@media(max-width:560px){
+  .p-6{padding:18px}
+  .btn{width:100%}
+  .sel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .step-label{display:none}
+  .pdf-canvas-wrap{min-height:340px}
+  #toast-wrap{left:12px;right:12px;bottom:14px}
+  .toast{max-width:none}
+}
 </style>
 </head>
 <body>
@@ -295,7 +320,7 @@ function createInitialState(overrides={}){
     questionSections:[],
     questions:[],
     pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:PDF_BASE_ZOOM,imgData:null,cropTool:'crop',
-    pubTitle:'',pubDur:30,pubDisplayOrder:'',editExamId:null,
+    pubTitle:'',pubDur:30,pubDisplayOrder:'',pubAccessScope:'public',pubHidden:false,editExamId:null,
     exams:[],results:[],appeals:[],
     appealInspect:null,
     rf:{grade:'',subject:'',name:'',examId:'',sube:''},
@@ -1167,6 +1192,22 @@ function renderStep4(){
           <input class="form-input" id="pubDisplayOrder" type="number" min="1" step="1" value="${A.pubDisplayOrder!==''?esc(A.pubDisplayOrder):''}" placeholder="Boşsa otomatik en üste" oninput="A.pubDisplayOrder=this.value">
           <p class="text-xs text-muted" style="margin-top:6px;line-height:1.6">Küçük sayı daha öne gelir. Boş bırakırsan bu sınav bulunduğu sınıfta otomatik olarak ilk sıraya alınır.</p>
         </div>
+        <div>
+          <label class="form-label">Erişim</label>
+          <select class="form-input" id="pubAccessScope" onchange="A.pubAccessScope=this.value">
+            <option value="public" ${A.pubAccessScope!=='registered'?'selected':''}>🌍 Herkese Açık</option>
+            <option value="registered" ${A.pubAccessScope==='registered'?'selected':''}>🔐 Sadece Kayıtlı Kullanıcı</option>
+          </select>
+          <p class="text-xs text-muted" style="margin-top:6px;line-height:1.6">Kayıtlı seçilirse kullanıcı sınava başlamadan önce hesap açmaya yönlendirilir.</p>
+        </div>
+        <div>
+          <label class="form-label">Görünürlük</label>
+          <select class="form-input" id="pubHidden" onchange="A.pubHidden=this.value==='true'">
+            <option value="false" ${A.pubHidden?'':'selected'}>👀 Listede Görünsün</option>
+            <option value="true" ${A.pubHidden?'selected':''}>🔗 Gizli, Linkle Açılır</option>
+          </select>
+          <p class="text-xs text-muted" style="margin-top:6px;line-height:1.6">Gizli sınav yayında kalır, listede görünmez ve paylaşılan linkle açılır.</p>
+        </div>
       </div>
       <div style="background:#F5F3FF;border:1.5px solid rgba(108,61,237,.2);padding:13px 16px;border-radius:var(--r);font-size:13px;color:var(--purple);display:flex;gap:16px;flex-wrap:wrap;font-weight:600">
         <span>📚 ${A.grade}. Sınıf</span>
@@ -1204,6 +1245,8 @@ function renderAdminExams(){
       const meta=getExamStatusMeta(status);
       const appealMeta=appealSummary[e.id]||{total:0,pending:0};
       const displayOrder=getExamDisplayOrder(e,index);
+      const accessLabel=e.accessScope==='registered'||e.authRequired?'🔐 Kayıtlı Kullanıcı':'🌍 Herkese Açık';
+      const visibilityLabel=e.hidden===true||e.gizli===true?'🔗 Gizli':'👀 Listede';
       const primaryAction=!hasExamPerm('exam_edit')?'':status==='active'
         ? `<button class="btn btn-sm btn-outline" onclick="W.setExamStatus('${e.id}','paused')">⏸ Pasife Al</button>`
         : `<button class="btn btn-sm btn-green" onclick="W.setExamStatus('${e.id}','active')">🚀 Aktif Et</button>`;
@@ -1222,6 +1265,8 @@ function renderAdminExams(){
             <div class="text-sm text-muted" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.grade}. Sınıf &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
               <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:11px;font-weight:800">${meta.icon} ${meta.label}</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:11px;font-weight:800">${accessLabel}</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#F0FDFA;color:#0F766E;font-size:11px;font-weight:800">${visibilityLabel}</span>
               <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${appealMeta.total?'#FFF7ED':'#F8FAFC'};color:${appealMeta.total?'#9A3412':'#64748B'};font-size:11px;font-weight:800">${appealMeta.total?'📝 '+appealMeta.total+' itiraz':'💬 İtiraz yok'}${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}</span>
               <span class="text-xs text-muted">📅 ${fmtDate(e.createdAt)}</span>
               ${e.updatedAt?`<span class="text-xs text-muted">✏️ ${fmtDate(e.updatedAt)} güncellendi</span>`:''}
@@ -1238,6 +1283,7 @@ function renderAdminExams(){
           ${hasExamPerm('exam_edit')?`<button class="btn btn-sm btn-primary" onclick="W.editExam('${e.id}')">✏️ Düzenle</button>`:''}
           ${primaryAction}
           ${secondaryAction}
+          ${hasExamPerm('exam_edit')?`<button class="btn btn-sm btn-outline" onclick="W.toggleExamHidden('${e.id}')">${e.hidden===true||e.gizli===true?'👀 Listede Göster':'🔗 Gizle'}</button>`:''}
           ${shareAction}
           ${hasExamPerm('exam_appeals')?`<button class="btn btn-sm btn-outline" onclick="W.showExamAppeals('${e.id}')">📝 İtirazlar</button>`:''}
           ${hasAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'])?`<button class="btn btn-sm btn-outline" onclick="W.showResults('${e.id}')">📊 Sonuçlar</button>`:''}
@@ -2263,6 +2309,8 @@ const W={
     }else if(!requireExamPerm('exam_create','Sınav oluşturma')) return;
     const t=(document.getElementById('pubTitle')?.value||A.pubTitle||A.examName).trim();
     const rawDisplayOrder=(document.getElementById('pubDisplayOrder')?.value??A.pubDisplayOrder??'').toString().trim();
+    const accessScope=(document.getElementById('pubAccessScope')?.value||A.pubAccessScope||'public')==='registered'?'registered':'public';
+    const hidden=(document.getElementById('pubHidden')?.value||String(A.pubHidden||false))==='true';
     if(!t){toast('Başlık girin','error');return;}
     if(!A.questions.length){toast('En az 1 soru ekleyin','error');return;}
     syncQuestionOrder();
@@ -2290,6 +2338,9 @@ const W={
         duration:A.pubDur,questionCount:A.questions.length,
         optionCount:A.optionCount,negativeMarking:A.negativeMarking,
         questionSections:sectionData.sections,
+        accessScope:accessScope,
+        authRequired:accessScope==='registered',
+        hidden:hidden,
         published:targetStatus==='active',
         status:targetStatus,
         updatedAt:serverTimestamp()
@@ -2425,6 +2476,8 @@ const W={
         pubTitle:exam.title||'',
         pubDur:exam.duration||0,
         pubDisplayOrder:Number.isFinite(Number(exam.displayOrder))?Number(exam.displayOrder):'',
+        pubAccessScope:exam.accessScope==='registered'||exam.authRequired?'registered':'public',
+        pubHidden:exam.hidden===true||exam.gizli===true,
         questions:qdocs.map((qd,index)=>{
           const data=qd.data()||{};
           return {
@@ -2469,6 +2522,26 @@ const W={
     }catch(e){
       hideLoad();
       toast('Durum güncellenemedi: '+e.message,'error');
+    }
+  },
+  async toggleExamHidden(id){
+    if(!requireExamPerm('exam_edit','Sınav görünürlüğü')) return;
+    const current=A.exams.find(exam=>exam.id===id);
+    if(!current) return;
+    const nextHidden=!(current.hidden===true||current.gizli===true);
+    showLoad('Sınav görünürlüğü güncelleniyor...');
+    try{
+      await updateDoc(doc(db,'exams',id),{
+        hidden:nextHidden,
+        updatedAt:serverTimestamp()
+      });
+      A.exams=sortAdminExamRecords(A.exams.map(exam=>exam.id===id?{...exam,hidden:nextHidden}:exam));
+      hideLoad();
+      setContent(renderAdminExams());
+      toast(nextHidden?'🔗 Sınav gizlendi, linkle açılabilir.':'👀 Sınav listelerde gösterilecek.','success');
+    }catch(e){
+      hideLoad();
+      toast('Görünürlük güncellenemedi: '+e.message,'error');
     }
   },
   async delExam(id){

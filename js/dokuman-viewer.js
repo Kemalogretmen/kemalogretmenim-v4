@@ -4322,11 +4322,14 @@
     if (qs('clearPageBtn')) {
       qs('clearPageBtn').addEventListener('click', clearCurrentPage);
     }
-    qs('downloadBtn').addEventListener('click', downloadAnnotatedPdf);
-    qs('printBtn').addEventListener('click', printAnnotatedPdf);
-    if (qs('saveInteractionsBtn')) {
-      qs('saveInteractionsBtn').addEventListener('click', savePublishedInteractions);
-    }
+	    qs('downloadBtn').addEventListener('click', downloadAnnotatedPdf);
+	    qs('printBtn').addEventListener('click', printAnnotatedPdf);
+	    if (qs('saveContentBtn')) {
+	      qs('saveContentBtn').addEventListener('click', saveCurrentDocumentForUser);
+	    }
+	    if (qs('saveInteractionsBtn')) {
+	      qs('saveInteractionsBtn').addEventListener('click', savePublishedInteractions);
+	    }
     qs('shortcutHelpBtn').addEventListener('click', toggleShortcutModal);
     qs('shortcutCloseBtn').addEventListener('click', closeShortcutModal);
     qs('shortcutModal').addEventListener('click', function(event) {
@@ -4766,6 +4769,23 @@
     });
     const displayGrade = hasContextTarget ? contextGrade : documentRow.sinif;
     const displaySubject = hasContextTarget ? contextSubject : documentRow.ders;
+    if (window.kemalUserAuth && typeof window.kemalUserAuth.ready === 'function') {
+      await window.kemalUserAuth.ready();
+      const accessMeta = { oturum_gerekli: Boolean(documentRow.oturum_gerekli) };
+      if (typeof window.kemalUserAuth.promptRegistration === 'function' && !window.kemalUserAuth.promptRegistration(accessMeta, window.location.pathname + window.location.search)) {
+        return;
+      }
+      const isPublicDocument = typeof window.kemalUserAuth.isContentPublic === 'function'
+        ? window.kemalUserAuth.isContentPublic(accessMeta)
+        : !Boolean(documentRow.oturum_gerekli);
+      if (typeof window.kemalUserAuth.getStudentGradeLevel === 'function') {
+        const lockedGrade = window.kemalUserAuth.getStudentGradeLevel();
+        const requestedGrade = parseInt(displayGrade, 10);
+        if (lockedGrade && Number.isFinite(requestedGrade) && requestedGrade !== lockedGrade && !isPublicDocument) {
+          throw new Error('Bu içerik farklı bir sınıfa ait. Hesabın ' + lockedGrade + '. sınıf olarak kayıtlı olduğu için yalnız kendi sınıfındaki döküman ve videoları görebilirsin.');
+        }
+      }
+    }
     const displaySubjectMeta = window.kemalDocumentStore.getSubjectMeta(displaySubject);
     const displayGradeLabel = window.kemalDocumentStore.getGradeLabel(displayGrade);
     const displaySubjectLabel = displaySubjectMeta ? displaySubjectMeta.label : displaySubject;
@@ -4785,37 +4805,136 @@
         description: documentRow.aciklama || (displayGradeLabel + ' için yüklenmiş ' + (isVideoDocument ? 'ders videosu.' : 'ders dokümanı.')),
       });
     }
+    mountDocumentReaction({
+      contentType: isVideoDocument ? 'video' : 'document',
+      contentId: state.documentId,
+      title: documentRow.baslik,
+      href: '/dokuman.html?id=' + encodeURIComponent(state.documentId),
+      grade: displayGradeLabel,
+      subject: displaySubjectLabel,
+      sourceLabel: isVideoDocument ? 'Video' : 'Doküman',
+    });
 
-    if (window.kemalCalismaKagidiStore && qs('worksheetBtn')) {
-      try {
-        const hasWorksheet = await window.kemalCalismaKagidiStore.hasPublishedWorksheet(state.documentId);
+	    if (window.kemalCalismaKagidiStore && qs('worksheetBtn')) {
+	      try {
+	        const hasWorksheet = await window.kemalCalismaKagidiStore.hasPublishedWorksheet(state.documentId);
         if (hasWorksheet) {
           qs('worksheetBtn').href = '/calisma-kagidi.html?id=' + encodeURIComponent(state.documentId);
           qs('worksheetBtn').style.display = 'inline-flex';
         }
       } catch (error) {
-        qs('worksheetBtn').style.display = 'none';
-      }
-    }
-  }
+	        qs('worksheetBtn').style.display = 'none';
+	      }
+	    }
+	    if (window.kemalUserAuth && typeof window.kemalUserAuth.ready === 'function') {
+	      window.kemalUserAuth.ready().then(updateSaveContentButton);
+	    } else {
+	      updateSaveContentButton();
+	    }
+	  }
 
-  function markDocumentAsRead() {
-    if (!window.kemalContentProgress || !state.documentId || !state.documentRow) {
+	  function mountDocumentReaction(meta, attempt) {
+    var target = document.querySelector('.viewer-hero-inner > div');
+    if (!target || !meta || !meta.contentId) {
       return;
     }
+    var existing = target.querySelector('.viewer-reaction-slot');
+    if (existing) {
+      existing.remove();
+    }
+    if (window.kemalContentReactions && typeof window.kemalContentReactions.mount === 'function') {
+      window.kemalContentReactions.mount(target, meta, { className: 'viewer-reaction-slot' });
+      return;
+    }
+    if ((attempt || 0) > 20) {
+      return;
+    }
+    window.setTimeout(function() {
+      mountDocumentReaction(meta, (attempt || 0) + 1);
+	    }, 160);
+	  }
 
-    window.kemalContentProgress.markRead({
-      type: getDocumentKind(state.documentRow) === 'video' ? 'video' : 'document',
-      id: state.documentId,
-      title: state.documentRow.baslik || (getDocumentKind(state.documentRow) === 'video' ? 'Ders Videosu' : 'Dokuman'),
-      href: '/dokuman.html?id=' + encodeURIComponent(state.documentId),
-      grade: state.documentRow.sinif || '',
-      subject: state.documentRow.ders || '',
-      meta: {
-        pageCount: state.pageCount || state.documentRow.sayfa_sayisi || 0,
-      },
-    });
-  }
+	  function getStudentAuthInfo() {
+	    if (!window.kemalUserAuth || typeof window.kemalUserAuth.getStudentInfo !== 'function') {
+	      return null;
+	    }
+	    var info = window.kemalUserAuth.getStudentInfo();
+	    return info && info.role === 'student' && info.accountUid ? info : null;
+	  }
+
+	  function getDocumentProgressPayload(isSaved) {
+	    var isVideo = getDocumentKind(state.documentRow) === 'video';
+	    var authInfo = getStudentAuthInfo();
+	    var meta = {
+	      accountUid: authInfo ? authInfo.accountUid : '',
+	      email: authInfo ? authInfo.email : '',
+	      pageCount: state.pageCount || state.documentRow.sayfa_sayisi || 0,
+	    };
+	    if (isSaved) {
+	      meta.saved = true;
+	      meta.savedAt = new Date().toISOString();
+	    }
+	    return {
+	      item: {
+	        type: isVideo ? 'video' : 'document',
+	        id: state.documentId,
+	        title: state.documentRow.baslik || (isVideo ? 'Ders Videosu' : 'Dokuman'),
+	        href: '/dokuman.html?id=' + encodeURIComponent(state.documentId),
+	        grade: state.documentRow.sinif || '',
+	        subject: state.documentRow.ders || '',
+	        meta: meta,
+	      },
+	      status: isVideo ? 'watched' : 'read',
+	    };
+	  }
+
+	  function updateSaveContentButton() {
+	    var button = qs('saveContentBtn');
+	    if (!button) {
+	      return;
+	    }
+	    var authInfo = getStudentAuthInfo();
+	    button.hidden = !authInfo || !window.kemalContentProgress || !state.documentId || !state.documentRow;
+	    if (button.hidden) {
+	      return;
+	    }
+	    var payload = getDocumentProgressPayload(false);
+	    var record = window.kemalContentProgress.getRecord(payload.item);
+	    var saved = Boolean(record && record.meta && record.meta.saved);
+	    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.75h12a1 1 0 0 1 1 1v15.5l-7-4.4-7 4.4V4.75a1 1 0 0 1 1-1z"></path></svg><span>' + (saved ? 'Kaydedildi' : 'Kaydet') + '</span>';
+	    button.classList.toggle('is-saved', saved);
+	  }
+
+	  function saveCurrentDocumentForUser() {
+	    if (!window.kemalContentProgress || !state.documentId || !state.documentRow) {
+	      return;
+	    }
+	    var authInfo = getStudentAuthInfo();
+	    if (!authInfo) {
+	      setStatus('Kaydetmek için öğrenci hesabınla giriş yapmalısın.');
+	      return;
+	    }
+	    var payload = getDocumentProgressPayload(true);
+	    window.kemalContentProgress.upsertRecord(payload.item, {
+	      status: payload.status,
+	      meta: payload.item.meta,
+	    });
+	    updateSaveContentButton();
+	    setStatus((getDocumentKind(state.documentRow) === 'video' ? 'Video' : 'Doküman') + ' hesabına kaydedildi.');
+	  }
+
+	  function markDocumentAsRead() {
+	    if (!window.kemalContentProgress || !state.documentId || !state.documentRow) {
+	      return;
+	    }
+
+	    var payload = getDocumentProgressPayload(false);
+	    window.kemalContentProgress.upsertRecord(payload.item, {
+	      status: payload.status,
+	      meta: payload.item.meta,
+	    });
+	    updateSaveContentButton();
+	  }
 
   async function init() {
     const params = new URLSearchParams(window.location.search);
@@ -4843,4 +4962,5 @@
       qs('viewerDesc').textContent = 'Bağlantıyı tekrar kontrol edip yeniden deneyebilirsin.';
     });
   });
+  window.addEventListener('kemal-user-auth-changed', updateSaveContentButton);
 })();

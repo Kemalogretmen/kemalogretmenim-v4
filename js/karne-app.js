@@ -281,11 +281,21 @@
     };
   }
 
+  function isTeacherSession() {
+    const auth = window.kemalUserAuth && typeof window.kemalUserAuth.getState === 'function'
+      ? window.kemalUserAuth.getState()
+      : {};
+    return !!(auth && auth.profile && auth.profile.role === 'teacher');
+  }
+
   async function saveResult(runtime, hedefWpm, comprehension, kelimeSayisi) {
     if (
       sessionStorage.getItem('okuma_karne_kaydedildi') === runtime.attemptId ||
       sessionStorage.getItem('okuma_karne_kuyrukta') === runtime.attemptId
     ) {
+      return;
+    }
+    if (isTeacherSession()) {
       return;
     }
 
@@ -310,6 +320,8 @@
         cevaplar: comprehension.detay,
         goruntuleme_modu: runtime.metin.goruntuleme_modu,
         completed_at: new Date().toISOString(),
+        account_uid: runtime.kullanici.accountUid || '',
+        email: runtime.kullanici.email || '',
         kullanici_bilgileri: {
           il: runtime.kullanici.il || '',
           okul: runtime.kullanici.okul || '',
@@ -417,11 +429,35 @@
       grade: runtime.kullanici && runtime.kullanici.sinif ? runtime.kullanici.sinif : '',
       subject: 'okuma-anlama',
       meta: {
+        accountUid: runtime.kullanici && runtime.kullanici.accountUid ? runtime.kullanici.accountUid : '',
+        email: runtime.kullanici && runtime.kullanici.email ? runtime.kullanici.email : '',
         attemptId: runtime.attemptId || '',
         wpm: runtime.wpm || 0,
         targetWpm: hedefWpm || 0,
         wordCount: kelimeSayisi || 0,
         comprehensionPercent: comprehension && comprehension.yuzde ? comprehension.yuzde : 0,
+        correct: comprehension && comprehension.dogru ? comprehension.dogru : 0,
+        wrong: comprehension && comprehension.yanlis ? comprehension.yanlis : 0,
+        total: comprehension && comprehension.toplam ? comprehension.toplam : 0,
+        durationSeconds: runtime.sureSn || 0,
+        date: new Date().toLocaleDateString('tr-TR'),
+        readingResult: {
+          ad: runtime.kullanici && runtime.kullanici.ad ? runtime.kullanici.ad : '',
+          soyad: runtime.kullanici && runtime.kullanici.soyad ? runtime.kullanici.soyad : '',
+          sinif: runtime.kullanici && runtime.kullanici.sinif ? runtime.kullanici.sinif : '',
+          sube: runtime.kullanici && runtime.kullanici.sube ? runtime.kullanici.sube : '',
+          metin_id: runtime.metin.id,
+          metin_adi: runtime.metin.baslik,
+          okuma_suresi_sn: runtime.sureSn || 0,
+          kelime_sayisi: kelimeSayisi || 0,
+          dakika_kelime: runtime.wpm || 0,
+          hedef_hiz: hedefWpm || 0,
+          dogru_sayisi: comprehension && comprehension.dogru ? comprehension.dogru : 0,
+          yanlis_sayisi: comprehension && comprehension.yanlis ? comprehension.yanlis : 0,
+          toplam_soru: comprehension && comprehension.toplam ? comprehension.toplam : 0,
+          anlama_yuzdesi: comprehension && comprehension.yuzde ? comprehension.yuzde : 0,
+          tarih: new Date().toISOString(),
+        },
       },
     });
   }

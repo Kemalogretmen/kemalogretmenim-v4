@@ -79,6 +79,7 @@ service cloud.firestore {
         && request.resource.data.questionCount <= 500
         && validOptCount(request.resource.data.optionCount)
         && request.resource.data.negativeMarking is bool
+        && (request.resource.data.keys().hasAny(['hidden']) == false || request.resource.data.hidden is bool)
         && request.resource.data.published is bool
         && request.resource.data.createdAt == request.time;
     }
@@ -95,6 +96,7 @@ service cloud.firestore {
         && request.resource.data.questionCount <= 500
         && validOptCount(request.resource.data.optionCount)
         && request.resource.data.negativeMarking is bool
+        && (request.resource.data.keys().hasAny(['hidden']) == false || request.resource.data.hidden is bool)
         && request.resource.data.published is bool
         && request.resource.data.createdAt == resource.data.createdAt;
     }
@@ -113,6 +115,12 @@ service cloud.firestore {
         && request.resource.data.status in ['active', 'paused', 'draft']
         && request.resource.data.published is bool
         && request.resource.data.published == (request.resource.data.status == 'active')
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validExamVisibilityUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hidden', 'updatedAt'])
+        && request.resource.data.hidden is bool
         && request.resource.data.updatedAt == request.time;
     }
 
@@ -229,7 +237,7 @@ service cloud.firestore {
     match /exams/{examId} {
       allow read: if hasExamPermission('exam_list') || resource.data.published == true;
       allow create: if hasExamPermission('exam_create') && validExamCreate();
-      allow update: if hasExamPermission('exam_edit') && (validExamUpdate() || validExamOrderUpdate() || validExamStatusUpdate());
+      allow update: if hasExamPermission('exam_edit') && (validExamUpdate() || validExamOrderUpdate() || validExamStatusUpdate() || validExamVisibilityUpdate());
       allow delete: if hasExamPermission('exam_delete');
     }
 

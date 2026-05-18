@@ -869,6 +869,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
   <script>
     const OYUN_KEY = 'kemal_oyunlar';
     const PAGE_SIZE = 12;
@@ -1057,6 +1058,7 @@
           el.dataset.cat = cat;
           el.dataset.icon = pickDynamicIcon(o.emoji, cat);
           el.dataset.date = createdTime ? new Date(createdTime).toISOString() : '';
+          el.dataset.accessScope = (o.accessScope === 'registered' || o.authRequired) ? 'registered' : 'public';
 
           const banner = document.createElement('div');
           banner.className = 'gc-banner';

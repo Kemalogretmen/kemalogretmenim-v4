@@ -142,6 +142,24 @@
       outline: none;
       transition: border-color .2s, background .2s;
     }
+    .verify-upload {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      background: #FAFAFF;
+    }
+    .verify-upload input {
+      background: white;
+      cursor: pointer;
+    }
+    .verify-help {
+      color: var(--slate);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.55;
+    }
     .school-row {
       grid-column: 1 / -1;
       display: grid;
@@ -168,7 +186,8 @@
       border-color: var(--purple);
       background: white;
     }
-    .role-only[hidden] { display: none; }
+    .role-only[hidden],
+    .form-field[hidden] { display: none !important; }
     .register-actions {
       grid-column: 1 / -1;
       display: flex;
@@ -248,13 +267,13 @@
   <main class="register-page">
     <section class="register-shell" aria-labelledby="registerTitle">
       <aside class="register-intro">
-        <span class="register-kicker">🔐 Yeni üyelik sistemi</span>
-        <h1 id="registerTitle">Öğretmen ve öğrenci hesaplarını ayıralım.</h1>
-        <p>Bu ilk adımda kayıt ekranını kuruyoruz. Sonraki adımda öğretmen onayı, sınıf oluşturma, öğrenci bağlama ve ayrı panelleri bu temel üzerine ekleyeceğiz.</p>
+        <span class="register-kicker">🔐 Üyelik sistemi</span>
+        <h1 id="registerTitle">Öğrenme geçmişin tek hesapta toplansın.</h1>
+        <p>Öğrenci hesabı ile okuduğun metinler, çözdüğün sınavlar, dokümanlar ve beğenilerin tüm cihazlarda saklanır. Öğretmen hesabı sınıf yönetimi için ayrıca kullanılabilir.</p>
         <div class="register-steps" aria-label="Kayıt sistemi yol haritası">
-          <div class="register-step"><span>1</span><div>Kayıt türünü seç: öğretmen veya öğrenci.</div></div>
-          <div class="register-step"><span>2</span><div>Supabase Auth ile güvenli kullanıcı oluştur.</div></div>
-          <div class="register-step"><span>3</span><div>Profil rolünü kaydet ve uygun panele yönlendir.</div></div>
+          <div class="register-step"><span>1</span><div>Ad, soyad, sınıf, şehir ve okul bilgilerini kaydet.</div></div>
+          <div class="register-step"><span>2</span><div>Mail ve şifre ile güvenli kullanıcı hesabı oluştur.</div></div>
+          <div class="register-step"><span>3</span><div>Sonraki girişlerde formlar otomatik dolsun.</div></div>
         </div>
       </aside>
 
@@ -271,9 +290,13 @@
         </div>
 
         <form class="register-form" id="registerForm" onsubmit="return false;">
-          <div class="form-field full">
-            <label for="fullName">Ad Soyad</label>
-            <input id="fullName" name="fullName" autocomplete="name" required>
+          <div class="form-field">
+            <label for="firstName">Ad</label>
+            <input id="firstName" name="firstName" autocomplete="given-name" required>
+          </div>
+          <div class="form-field">
+            <label for="lastName">Soyad</label>
+            <input id="lastName" name="lastName" autocomplete="family-name" required>
           </div>
           <div class="form-field">
             <label for="email">E-posta</label>
@@ -313,11 +336,38 @@
           </div>
           <div class="form-field full" id="manualSchoolField" hidden>
             <label for="manualSchool">Okul Adı</label>
-            <input id="manualSchool" name="manualSchool" placeholder="Okulunuzun tam adını yazın">
+            <input id="manualSchool" name="manualSchool" placeholder="Okulunuzun tam adını yazın" disabled>
           </div>
           <div class="form-field role-only teacher-fields">
             <label for="branch">Branş / Sınıf</label>
-            <input id="branch" name="branch" placeholder="Örn. Sınıf Öğretmeni">
+            <select id="branch" name="branch">
+              <option value="">Branş seçiniz</option>
+              <option value="Sınıf Öğretmeni">Sınıf Öğretmeni</option>
+              <option value="Okul Öncesi">Okul Öncesi</option>
+              <option value="İlkokul Genel">İlkokul Genel</option>
+              <option value="Ortaokul Türkçe">Ortaokul Türkçe</option>
+              <option value="Ortaokul Matematik">Ortaokul Matematik</option>
+              <option value="Ortaokul Fen Bilimleri">Ortaokul Fen Bilimleri</option>
+              <option value="Ortaokul Sosyal Bilgiler">Ortaokul Sosyal Bilgiler</option>
+              <option value="T.C. İnkılap Tarihi ve Atatürkçülük">T.C. İnkılap Tarihi ve Atatürkçülük</option>
+              <option value="Din Kültürü ve Ahlak Bilgisi">Din Kültürü ve Ahlak Bilgisi</option>
+              <option value="İngilizce">İngilizce</option>
+              <option value="Bilişim Teknolojileri">Bilişim Teknolojileri</option>
+              <option value="Rehberlik">Rehberlik</option>
+              <option value="Görsel Sanatlar">Görsel Sanatlar</option>
+              <option value="Müzik">Müzik</option>
+              <option value="Beden Eğitimi">Beden Eğitimi</option>
+              <option value="Özel Eğitim">Özel Eğitim</option>
+              <option value="Lise Genel">Lise Genel</option>
+              <option value="Genel">Genel</option>
+            </select>
+          </div>
+          <div class="form-field role-only teacher-fields full">
+            <label for="teacherVerificationFile">Öğretmen kimliği / çalışma belgesi</label>
+            <div class="verify-upload">
+              <input id="teacherVerificationFile" name="teacherVerificationFile" type="file" accept="image/jpeg,image/png,application/pdf">
+              <div class="verify-help">JPEG/PNG belgeler yüklenmeden önce küçültülür. PDF dosyaları veritabanına değil güvenli belge alanına yüklenir.</div>
+            </div>
           </div>
           <div class="form-field role-only student-fields" hidden>
             <label for="gradeLevel">Sınıf</label>
@@ -334,13 +384,18 @@
             </select>
           </div>
           <div class="form-field role-only student-fields" hidden>
+            <label for="studentBranch">Şube</label>
+            <input id="studentBranch" name="studentBranch" placeholder="Örn. A" maxlength="4">
+          </div>
+          <div class="form-field role-only student-fields" hidden>
             <label for="teacherCode">Öğretmen Kodu</label>
             <input id="teacherCode" name="teacherCode" placeholder="Varsa">
           </div>
           <div class="register-message" id="registerMessage" role="status" aria-live="polite"></div>
           <div class="register-actions">
-            <button class="register-submit" id="registerSubmit" type="submit" disabled>Kayıtlar Şimdilik Kapalı</button>
-            <a class="register-login" href="/index.html">Ana sayfaya dön</a>
+            <button class="register-submit" id="registerSubmit" type="submit">Kayıt Oluştur</button>
+            <button class="register-submit" id="registerGoogleBtn" type="button" style="background:#fff;color:var(--navy);border:2px solid var(--border);box-shadow:none;">Google ile Devam Et</button>
+            <a class="register-login" href="/giris.html">Zaten hesabım var</a>
           </div>
         </form>
       </section>
@@ -349,5 +404,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/meb-schools.js"></script>
+  <script src="/js/kayit.js"></script>
 </body>
 </html>

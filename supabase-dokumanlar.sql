@@ -29,6 +29,7 @@ create table if not exists public.dokumanlar (
   etkilesim_json jsonb not null default '{}'::jsonb,
   siralama integer not null default 0,
   aktif boolean not null default true,
+  gizli boolean not null default false,
   oturum_gerekli boolean not null default false,
   olusturma_tarihi timestamptz not null default now(),
   guncelleme_tarihi timestamptz not null default now()
@@ -52,6 +53,7 @@ alter table public.dokumanlar
   add column if not exists etkilesim_json jsonb not null default '{}'::jsonb,
   add column if not exists siralama integer not null default 0,
   add column if not exists aktif boolean not null default true,
+  add column if not exists gizli boolean not null default false,
   add column if not exists oturum_gerekli boolean not null default false,
   add column if not exists olusturma_tarihi timestamptz not null default now(),
   add column if not exists guncelleme_tarihi timestamptz not null default now();
@@ -91,18 +93,49 @@ drop policy if exists "dokumanlar public read active" on public.dokumanlar;
 create policy "dokumanlar public read active"
 on public.dokumanlar
 for select
-using (aktif = true and oturum_gerekli = false);
+using (aktif = true);
 
 drop policy if exists "dokumanlar auth manage" on public.dokumanlar;
-create policy "dokumanlar auth manage"
+drop policy if exists "dokumanlar auth read all" on public.dokumanlar;
+create policy "dokumanlar auth read all"
 on public.dokumanlar
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  public.current_admin_has_any_permission(array[
+    'dokuman_ekleme',
+    'dokuman_duzenleme',
+    'dokuman_silme'
+  ])
+);
+
+drop policy if exists "dokumanlar auth insert" on public.dokumanlar;
+create policy "dokumanlar auth insert"
+on public.dokumanlar
+for insert
+to authenticated
+with check (public.current_admin_has_permission('dokuman_ekleme'));
+
+drop policy if exists "dokumanlar auth update" on public.dokumanlar;
+create policy "dokumanlar auth update"
+on public.dokumanlar
+for update
+to authenticated
+using (public.current_admin_has_permission('dokuman_duzenleme'))
+with check (public.current_admin_has_permission('dokuman_duzenleme'));
+
+drop policy if exists "dokumanlar auth delete" on public.dokumanlar;
+create policy "dokumanlar auth delete"
+on public.dokumanlar
+for delete
+to authenticated
+using (public.current_admin_has_permission('dokuman_silme'));
 
 create index if not exists idx_dokumanlar_grade_subject_active
   on public.dokumanlar (sinif, ders, aktif, siralama, olusturma_tarihi desc);
+
+create index if not exists idx_dokumanlar_active_hidden
+  on public.dokumanlar (aktif, gizli, olusturma_tarihi desc);
 
 create index if not exists idx_dokumanlar_targets_gin
   on public.dokumanlar using gin (hedefler);
@@ -140,19 +173,31 @@ create policy "dokuman storage auth insert"
 on storage.objects
 for insert
 to authenticated
-with check (bucket_id = 'dokumanlar');
+with check (
+  bucket_id = 'dokumanlar'
+  and public.current_admin_has_permission('dokuman_ekleme')
+);
 
 drop policy if exists "dokuman storage auth update" on storage.objects;
 create policy "dokuman storage auth update"
 on storage.objects
 for update
 to authenticated
-using (bucket_id = 'dokumanlar')
-with check (bucket_id = 'dokumanlar');
+using (
+  bucket_id = 'dokumanlar'
+  and public.current_admin_has_permission('dokuman_duzenleme')
+)
+with check (
+  bucket_id = 'dokumanlar'
+  and public.current_admin_has_permission('dokuman_duzenleme')
+);
 
 drop policy if exists "dokuman storage auth delete" on storage.objects;
 create policy "dokuman storage auth delete"
 on storage.objects
 for delete
 to authenticated
-using (bucket_id = 'dokumanlar');
+using (
+  bucket_id = 'dokumanlar'
+  and public.current_admin_has_permission('dokuman_silme')
+);

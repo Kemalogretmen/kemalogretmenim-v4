@@ -41,11 +41,13 @@
     btn.textContent = isBusy ? 'Giriş yapılıyor...' : 'Giriş Yap';
   }
 
-  async function getUserProfile(email) {
+  async function getUserProfile(user) {
+    const userId = user && user.id ? user.id : '';
+    const email = user && user.email ? user.email : user;
     const result = await getClient()
       .from('user_profiles')
-      .select('role,approval_status,active,email,full_name')
-      .eq('email', normalizeEmail(email))
+      .select('id,role,approval_status,active,email,full_name,first_name,last_name,city,school_name,grade_level,branch')
+      .eq(userId ? 'id' : 'email', userId || normalizeEmail(email))
       .maybeSingle();
     if (result.error) {
       return null;
@@ -70,6 +72,11 @@
     return '/kayit.html';
   }
 
+  function profileNeedsCompletion(profile) {
+    if (!profile || profile.role !== 'student') return false;
+    return !profile.full_name || !profile.city || !profile.school_name || !profile.grade_level;
+  }
+
   async function handleLogin(event) {
     event.preventDefault();
     const email = normalizeEmail(document.getElementById('loginEmail').value);
@@ -84,9 +91,14 @@
       const result = await getClient().auth.signInWithPassword({ email, password });
       if (result.error) throw result.error;
 
-      const profile = await getUserProfile(email);
+      const user = result.data && result.data.user ? result.data.user : null;
+      const profile = await getUserProfile(user || email);
       if (profile && profile.active === false) {
         throw new Error('Bu hesap şu anda pasif durumda.');
+      }
+      if (profileNeedsCompletion(profile)) {
+        window.location.href = '/kayit.html?profil=tamamla';
+        return;
       }
       if (profile && profile.role === 'teacher' && profile.approval_status !== 'active') {
         window.location.href = '/ogretmen-paneli.html';
@@ -105,9 +117,62 @@
     }
   }
 
+  async function handleGoogleLogin() {
+    try {
+      const result = await getClient().auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/giris.html',
+        },
+      });
+      if (result.error) throw result.error;
+    } catch (error) {
+      showMessage('err', String(error && error.message ? error.message : error));
+    }
+  }
+
+  async function handlePasswordReset() {
+    const email = normalizeEmail(document.getElementById('loginEmail').value);
+    if (!email) {
+      showMessage('err', 'Şifre yenileme bağlantısı için e-posta adresini yazmalısın.');
+      return;
+    }
+    try {
+      const result = await getClient().auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/admin/reset-password.html',
+      });
+      if (result.error) throw result.error;
+      showMessage('ok', 'Şifre yenileme bağlantısı e-posta adresine gönderildi. Gelen kutusu ve spam klasörünü kontrol et.');
+    } catch (error) {
+      showMessage('err', String(error && error.message ? error.message : error));
+    }
+  }
+
+  async function routeExistingSession() {
+    try {
+      const sessionResult = await getClient().auth.getSession();
+      const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+      if (!session || !session.user) return;
+      const profile = await getUserProfile(session.user);
+      if (profileNeedsCompletion(profile)) {
+        window.location.href = '/kayit.html?profil=tamamla';
+        return;
+      }
+      const isAdmin = await hasAdminAccess(session.user.email);
+      window.location.href = routeForProfile(profile, isAdmin);
+    } catch (error) {
+      /* Oturum yoksa sessiz kal. */
+    }
+  }
+
   function init() {
     const form = document.getElementById('roleLoginForm');
     if (form) form.addEventListener('submit', handleLogin);
+    const googleBtn = document.getElementById('googleLoginBtn');
+    if (googleBtn) googleBtn.addEventListener('click', handleGoogleLogin);
+    const forgotBtn = document.getElementById('forgotPasswordBtn');
+    if (forgotBtn) forgotBtn.addEventListener('click', handlePasswordReset);
+    routeExistingSession();
   }
 
   if (document.readyState === 'loading') {

@@ -8,75 +8,134 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .student-panel{min-height:calc(100vh - 106px);background:#F8FAFC;padding:30px 18px 46px;color:#0F172A}
-    .student-shell{max-width:1180px;margin:0 auto}
-    .student-hero{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;box-shadow:0 14px 34px rgba(15,23,42,.05)}
-    .student-hero h1{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);margin:0 0 6px;color:#0F172A;letter-spacing:0}
-    .student-hero p{margin:0;color:#475569;font-weight:750;line-height:1.55}
-    .student-badge{display:inline-flex;border-radius:999px;padding:9px 14px;background:#DCFCE7;color:#166534;font-weight:900;white-space:nowrap}
+    .student-panel{min-height:calc(100vh - 106px);background:radial-gradient(circle at 10% 6%,rgba(255,216,77,.34),transparent 28%),radial-gradient(circle at 90% 12%,rgba(0,201,177,.18),transparent 30%),linear-gradient(180deg,#FFF8F0 0%,#F2FAFF 56%,#F7F2FF 100%);padding:28px 18px 48px;color:#111827}
+    .student-shell{max-width:1240px;margin:0 auto}
+    .student-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#6C3DED 0%,#2BB9FF 56%,#00C9B1 100%);border:0;border-radius:24px;padding:24px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:20px;align-items:stretch;box-shadow:0 24px 54px rgba(62,47,150,.20);color:#fff}
+    .student-hero::before{content:'✨ 📚 ⭐';position:absolute;right:28px;top:14px;font-size:32px;letter-spacing:14px;opacity:.22;pointer-events:none}
+    .student-hero::after{content:'';position:absolute;left:-80px;bottom:-110px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.16);pointer-events:none}
+    .student-profile-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+    .student-avatar{width:92px;height:92px;border-radius:24px;border:5px solid var(--merit-color,#FFD93D);background:linear-gradient(135deg,#FFF7AD,#E0F2FE);display:grid;place-items:center;overflow:hidden;color:#4A1FD0;font:950 30px var(--font-display);box-shadow:0 16px 34px rgba(15,23,42,.18)}
+    .student-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .student-hero h1{font-family:var(--font-display);font-size:clamp(28px,3vw,42px);margin:0 0 6px;color:#fff;letter-spacing:0;text-shadow:0 4px 18px rgba(26,16,64,.20)}
+    .student-hero p{margin:0;color:rgba(255,255,255,.88);font-weight:850;line-height:1.55;max-width:620px}
+    .student-badge{display:inline-flex;width:max-content;border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.20);border:1px solid rgba(255,255,255,.28);color:#fff;font-weight:950;margin-top:10px;backdrop-filter:blur(12px)}
     .student-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .student-btn,.student-link{border:0;border-radius:8px;padding:11px 14px;background:#4F46E5;color:#fff;font-weight:900;text-decoration:none;cursor:pointer;font-family:var(--font-body)}
-    .student-btn.secondary,.student-link.secondary{background:#fff;color:#0F172A;border:1px solid #CBD5E1}
+    .student-btn,.student-link{border:0;border-radius:999px;padding:11px 15px;background:linear-gradient(135deg,#6C3DED,#8E6CFF);color:#fff;font-weight:950;text-decoration:none;cursor:pointer;font-family:var(--font-body);box-shadow:0 10px 20px rgba(108,61,237,.16)}
+    .student-btn.secondary,.student-link.secondary{background:#fff;color:#1A1040;border:1px solid rgba(226,217,255,.95);box-shadow:0 10px 20px rgba(26,16,64,.08)}
     .student-btn.danger{background:#B91C1C}
-    .student-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
-    .student-stat{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:16px}
-    .student-stat span{display:block;color:#64748B;font-size:12px;font-weight:900;text-transform:uppercase}
+    .student-btn:disabled{opacity:.64;cursor:wait}
+    .merit-card{position:relative;z-index:1;border:1px solid rgba(255,255,255,.32);border-radius:20px;background:rgba(255,255,255,.18);padding:18px;display:grid;gap:12px;color:#fff;backdrop-filter:blur(18px) saturate(1.2)}
+    .merit-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .merit-title{font-size:12px;text-transform:uppercase;color:#64748B;font-weight:950;letter-spacing:.04em}
+    .merit-level{font-family:var(--font-display);font-size:26px;color:#fff}
+    .merit-points{font-weight:950;color:#FFF7AD}
+    .merit-stars{display:flex;gap:7px}
+    .merit-star{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#E5E7EB;color:#94A3B8;font-weight:950}
+    .merit-star.on{background:var(--merit-color,#2563EB);color:#fff}
+    .merit-bar{height:12px;border-radius:999px;background:#E2E8F0;overflow:hidden}
+    .merit-fill{height:100%;width:0;background:linear-gradient(90deg,var(--merit-color,#2563EB),#22C55E);border-radius:inherit;transition:width .25s ease}
+    .merit-note{font-size:13px;color:#64748B;font-weight:800;line-height:1.45}
+    .student-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
+    .student-stat{position:relative;overflow:hidden;background:#fff;border:1px solid rgba(226,217,255,.9);border-radius:18px;padding:18px 16px 16px 58px;box-shadow:0 16px 34px rgba(26,16,64,.06)}
+    .student-stat::before{position:absolute;left:16px;top:18px;width:30px;height:30px;border-radius:11px;display:grid;place-items:center;color:#fff;font-size:17px}
+    .student-stat:nth-child(1)::before{content:'🎒';background:#6C3DED}.student-stat:nth-child(2)::before{content:'📝';background:#FF8A2A}.student-stat:nth-child(3)::before{content:'🔖';background:#00A891}.student-stat:nth-child(4)::before{content:'⭐';background:#F59E0B}
+    .student-stat span{display:block;color:#64748B;font-size:12px;font-weight:950;text-transform:uppercase}
     .student-stat strong{display:block;color:#0F172A;font-family:var(--font-display);font-size:30px;line-height:1.1;margin-top:5px}
-    .student-tabs{display:flex;gap:8px;overflow:auto;padding:4px;margin:8px 0 16px}
-    .student-tab{border:1px solid #CBD5E1;background:#fff;color:#334155;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;white-space:nowrap}
-    .student-tab.active{background:#0F172A;color:#fff;border-color:#0F172A}
-    .student-section{display:none}
-    .student-section.active{display:block}
-    .student-grid{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:16px;align-items:start}
-    .student-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:18px;box-shadow:0 12px 28px rgba(15,23,42,.035)}
+    .student-tabs,.content-tabs{display:flex;gap:8px;overflow:auto;padding:4px;margin:8px 0 16px}
+    .student-tab,.content-tab{border:1px solid rgba(226,217,255,.95);background:#fff;color:#334155;border-radius:999px;padding:10px 14px;font-weight:950;cursor:pointer;white-space:nowrap;box-shadow:0 8px 18px rgba(26,16,64,.04);display:inline-flex;align-items:center;gap:8px}
+    .student-tab.active,.content-tab.active{background:linear-gradient(135deg,#6C3DED,#00A891);color:#fff;border-color:transparent}
+    .content-tab-count{min-width:24px;height:24px;border-radius:999px;display:inline-grid;place-items:center;padding:0 7px;background:#EEF2FF;color:#4F46E5;font-size:12px;font-weight:950}
+    .content-tab.active .content-tab-count{background:rgba(255,255,255,.22);color:#fff}
+    .student-section,.content-pane{display:none}
+    .student-section.active,.content-pane.active{display:block}
+    .student-grid{display:grid;grid-template-columns:minmax(280px,420px) minmax(0,1fr);gap:16px;align-items:start}
+    .student-card{background:rgba(255,255,255,.92);border:1px solid rgba(226,217,255,.95);border-radius:20px;padding:20px;box-shadow:0 18px 38px rgba(26,16,64,.055)}
     .student-card h2{font-family:var(--font-display);font-size:22px;margin:0 0 8px;color:#0F172A;letter-spacing:0}
     .student-card p{color:#64748B;font-weight:750;line-height:1.55;margin:0 0 14px}
     .student-form{display:grid;gap:12px}
-    .student-field label{display:block;font-size:12px;font-weight:900;color:#475569;margin-bottom:6px}
-    .student-field input{width:100%;border:1px solid #CBD5E1;border-radius:8px;background:#F8FAFC;color:#0F172A;font:800 14px var(--font-body);padding:11px 12px;outline:none}
+    .student-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .student-field label{display:block;font-size:12px;font-weight:950;color:#475569;margin-bottom:6px}
+    .student-field input,.student-field select{width:100%;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:11px 12px;outline:none}
     .student-field input[readonly]{background:#F1F5F9;color:#475569;cursor:not-allowed}
+    .student-filterbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 14px}
+    .student-filterbar input,.student-filterbar select{border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:10px 12px;min-width:190px}
+    .student-list{display:grid;gap:10px}
     .student-row{border:1px solid #E2E8F0;border-radius:10px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;background:#fff}
     .student-row-title{font-weight:950;color:#0F172A}
     .student-row-sub{font-size:13px;color:#64748B;font-weight:750;margin-top:4px;line-height:1.45}
-    .student-list{display:grid;gap:10px}
-    .student-empty{border:1px dashed #CBD5E1;border-radius:10px;padding:18px;color:#64748B;font-weight:800;text-align:center;background:#F8FAFC}
-    .student-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:900}
+    .student-row-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .student-assignment-preview{margin-top:10px;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;background:#F8FAFC;max-width:560px}
+    .student-assignment-preview iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
+    .student-table{display:grid;gap:8px}
+    .student-table-head,.student-table-row{display:grid;grid-template-columns:minmax(220px,1.5fr) repeat(5,minmax(82px,.55fr)) minmax(86px,.45fr);gap:8px;align-items:center}
+    .student-table-head{padding:0 10px;color:#64748B;font-size:12px;font-weight:950;text-transform:uppercase}
+    .student-table-row{border:1px solid #E2E8F0;border-radius:10px;background:#fff;padding:12px 10px;font-weight:850}
+    .student-table-row small{display:block;color:#64748B;font-weight:750;margin-top:3px}
+    .student-saved-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .student-saved-group{border:1px solid #E2E8F0;border-radius:10px;background:#fff;overflow:hidden}
+    .student-saved-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;background:#F8FAFC;border-bottom:1px solid #E2E8F0}
+    .student-saved-head h3{margin:0;color:#0F172A;font-family:var(--font-display);font-size:18px;letter-spacing:0}
+    .student-saved-group:nth-child(1) .student-saved-head{background:#F0F7FF}.student-saved-group:nth-child(2) .student-saved-head{background:#FFF7ED}.student-saved-group:nth-child(3) .student-saved-head{background:#ECFEFF}.student-saved-group:nth-child(4) .student-saved-head{background:#F0FDF4}.student-saved-group:nth-child(5) .student-saved-head{background:#F5F3FF}
+    .student-saved-body{display:grid;gap:0}
+    .student-saved-body .student-row{border:0;border-radius:0;border-bottom:1px solid #E2E8F0}
+    .student-saved-body .student-row:last-child{border-bottom:0}
+    .student-empty{border:1px dashed #CBD5E1;border-radius:10px;padding:18px;color:#64748B;font-weight:850;text-align:center;background:#F8FAFC}
+    .student-pill{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:950;white-space:nowrap}
     .student-pill.ok{background:#DCFCE7;color:#166534}
     .student-pill.warn{background:#FEF3C7;color:#92400E}
     .student-danger-zone{border:1px solid #FECACA;background:#FEF2F2;border-radius:10px;padding:16px}
     .student-danger-zone h3{font-size:18px;color:#991B1B;margin:0 0 8px}
     .student-danger-zone p{color:#7F1D1D;margin-bottom:12px}
+    .avatar-upload{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .student-toast{position:fixed;right:18px;bottom:18px;z-index:50;max-width:360px;background:#0F172A;color:#fff;border-radius:12px;padding:13px 15px;font-weight:850;box-shadow:0 20px 44px rgba(15,23,42,.28);display:none}
     .student-toast.show{display:block}
     .student-toast.error{background:#B91C1C}
-    @media(max-width:900px){.student-hero,.student-grid{grid-template-columns:1fr}.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:620px){.student-panel{padding:18px 12px 34px}.student-stats{grid-template-columns:1fr}.student-row{grid-template-columns:1fr}}
+    @media(max-width:960px){.student-hero,.student-grid,.student-saved-grid{grid-template-columns:1fr}.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-table-head{display:none}.student-table-row{grid-template-columns:1fr 1fr}.student-table-row>div:first-child{grid-column:1/-1}}
+    @media(max-width:620px){.student-panel{padding:18px 12px 34px}.student-profile-head,.student-two{grid-template-columns:1fr}.student-stats{grid-template-columns:1fr}.student-row{grid-template-columns:1fr}.student-table-row{grid-template-columns:1fr}.student-filterbar input,.student-filterbar select{width:100%;min-width:0}}
   </style>
 </head>
 <body>
   <main class="student-panel">
     <section class="student-shell">
       <div class="student-hero">
-        <div>
-          <h1>Öğrenci Paneli</h1>
-          <p id="studentIntro">Hesabın yükleniyor...</p>
-          <div class="student-actions">
-            <a class="student-link secondary" href="/index.html">Siteye Dön</a>
-            <button class="student-btn secondary" id="studentRefreshBtn" type="button">Yenile</button>
-            <button class="student-btn danger" id="studentLogoutBtn" type="button">Çıkış Yap</button>
+        <div class="student-profile-head">
+          <div class="student-avatar" id="studentAvatar">Ö</div>
+          <div>
+            <h1 id="studentPanelTitle">Öğrenci Paneli</h1>
+            <p id="studentIntro">Hesabın yükleniyor...</p>
+            <span class="student-badge" id="studentStatus">Kontrol ediliyor</span>
+            <div class="student-actions">
+              <a class="student-link secondary" href="/index.html">Siteye Dön</a>
+              <button class="student-btn secondary" id="studentRefreshBtn" type="button">Yenile</button>
+              <button class="student-btn danger" id="studentLogoutBtn" type="button">Çıkış Yap</button>
+            </div>
           </div>
         </div>
-        <span class="student-badge" id="studentStatus">Kontrol ediliyor</span>
+        <aside class="merit-card" id="studentMeritCard">
+          <div class="merit-top">
+            <div>
+              <div class="merit-title">Liyakat Seviyesi</div>
+              <div class="merit-level" id="meritLevelName">Acemi</div>
+            </div>
+            <div class="merit-points"><span id="meritPointCount">0</span> puan</div>
+          </div>
+          <div class="merit-stars" id="meritStars"></div>
+          <div class="merit-bar"><div class="merit-fill" id="meritFill"></div></div>
+          <div class="merit-note" id="meritNote">Bir sonraki yıldız için 50 puan.</div>
+        </aside>
       </div>
 
       <div class="student-stats">
         <div class="student-stat"><span>Sınıf</span><strong id="studentClassCount">0</strong></div>
         <div class="student-stat"><span>Aktif Ödev</span><strong id="studentAssignmentCount">0</strong></div>
+        <div class="student-stat"><span>İçerik</span><strong id="studentContentCount">0</strong></div>
         <div class="student-stat"><span>Liyakat</span><strong id="studentMeritCount">0</strong></div>
       </div>
 
       <div class="student-tabs">
         <button class="student-tab active" type="button" data-tab="tasks">Görevlerim</button>
+        <button class="student-tab" type="button" data-tab="progress">İçeriklerim</button>
+        <button class="student-tab" type="button" data-tab="saved">Kaydettiklerim</button>
         <button class="student-tab" type="button" data-tab="classes">Sınıflarım</button>
         <button class="student-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
       </div>
@@ -84,8 +143,50 @@
       <section class="student-section active" id="student-section-tasks">
         <div class="student-card">
           <h2>Ödevlerim</h2>
-          <p>Öğretmenin tarafından verilen aktif ödevler burada listelenir.</p>
           <div class="student-list" id="studentAssignmentList"></div>
+        </div>
+      </section>
+
+      <section class="student-section" id="student-section-progress">
+        <div class="student-card">
+          <h2>İçeriklerim</h2>
+          <div class="content-tabs">
+            <button class="content-tab active" type="button" data-content-tab="exams">Sınavlarım <span class="content-tab-count" id="studentExamTabCount">0</span></button>
+            <button class="content-tab" type="button" data-content-tab="readings">Okumalarım <span class="content-tab-count" id="studentReadingTabCount">0</span></button>
+          </div>
+          <div class="content-pane active" id="content-pane-exams">
+            <div class="student-filterbar">
+              <input id="studentExamFilter" type="search" placeholder="Sınav adı veya ders ara">
+              <select id="studentExamScoreFilter">
+                <option value="">Tüm başarılar</option>
+                <option value="85">85 ve üzeri</option>
+                <option value="50">50 ve üzeri</option>
+                <option value="0">50 altı</option>
+              </select>
+            </div>
+            <div class="student-table" id="studentExamList"></div>
+          </div>
+          <div class="content-pane" id="content-pane-readings">
+            <div class="student-filterbar">
+              <input id="studentReadingFilter" type="search" placeholder="Metin adı ara">
+              <select id="studentReadingStatusFilter">
+                <option value="">Tüm okumalar</option>
+                <option value="target">Hedef hıza ulaşanlar</option>
+                <option value="comprehension">Anlama 50 ve üzeri</option>
+              </select>
+            </div>
+            <div class="student-table" id="studentReadingList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="student-section" id="student-section-saved">
+        <div class="student-card">
+          <h2>Kaydettiklerim</h2>
+          <div class="student-filterbar">
+            <input id="studentSavedFilter" type="search" placeholder="Kaydedilen içeriklerde ara">
+          </div>
+          <div class="student-saved-grid" id="studentSavedGroups"></div>
         </div>
       </section>
 
@@ -93,7 +194,6 @@
         <div class="student-grid">
           <article class="student-card">
             <h2>Sınıfa Katıl</h2>
-            <p>Öğretmeninden aldığın sınıf kodunu girerek sınıfa bağlanabilirsin.</p>
             <form class="student-form" id="joinClassForm">
               <div class="student-field">
                 <label for="joinClassCode">Sınıf kodu</label>
@@ -113,30 +213,75 @@
         <div class="student-grid">
           <article class="student-card">
             <h2>Kişisel Bilgiler</h2>
-            <p>İsim ve e-posta hesap güvenliği için bu panelden değiştirilemez.</p>
-            <div class="student-form">
-              <div class="student-field">
-                <label for="studentAccountName">İsim</label>
-                <input id="studentAccountName" type="text" readonly>
+            <form class="student-form" id="studentProfileForm">
+              <div class="avatar-upload">
+                <div class="student-avatar" id="studentAccountAvatar">Ö</div>
+                <div>
+                  <input id="studentAvatarInput" type="file" accept="image/*" hidden>
+                  <button class="student-btn secondary" type="button" id="studentAvatarBtn">Görsel Ekle</button>
+                </div>
               </div>
-              <div class="student-field">
-                <label for="studentAccountEmail">E-posta</label>
-                <input id="studentAccountEmail" type="email" readonly>
+              <div class="student-two">
+                <div class="student-field">
+                  <label for="studentAccountName">İsim</label>
+                  <input id="studentAccountName" type="text" readonly>
+                </div>
+                <div class="student-field">
+                  <label for="studentAccountEmail">E-posta</label>
+                  <input id="studentAccountEmail" type="email" readonly>
+                </div>
               </div>
-              <div class="student-field">
-                <label for="studentAccountSchool">Okul</label>
-                <input id="studentAccountSchool" type="text" readonly>
+              <div class="student-two">
+                <div class="student-field">
+                  <label for="studentAccountCity">Şehir</label>
+                  <select id="studentAccountCity" autocomplete="address-level1">
+                    <option value="">Şehir seç</option>
+                  </select>
+                </div>
+                <div class="student-field">
+                  <label for="studentAccountSchool">Okul</label>
+                  <input id="studentAccountSchool" type="text" autocomplete="organization">
+                </div>
               </div>
-              <div class="student-field">
-                <label for="studentAccountGrade">Sınıf</label>
-                <input id="studentAccountGrade" type="text" readonly>
+              <div class="student-two">
+                <div class="student-field">
+                  <label for="studentAccountGrade">Sınıf</label>
+                  <select id="studentAccountGrade">
+                    <option value="">Sınıf seç</option>
+                    <option value="1">1. Sınıf</option>
+                    <option value="2">2. Sınıf</option>
+                    <option value="3">3. Sınıf</option>
+                    <option value="4">4. Sınıf</option>
+                    <option value="5">5. Sınıf</option>
+                    <option value="6">6. Sınıf</option>
+                    <option value="7">7. Sınıf</option>
+                    <option value="8">8. Sınıf</option>
+                  </select>
+                </div>
+                <div class="student-field">
+                  <label for="studentAccountBranch">Şube</label>
+                  <select id="studentAccountBranch">
+                    <option value="">Şube seç</option>
+                    <option value="A">A Şubesi</option>
+                    <option value="B">B Şubesi</option>
+                    <option value="C">C Şubesi</option>
+                    <option value="D">D Şubesi</option>
+                    <option value="E">E Şubesi</option>
+                    <option value="F">F Şubesi</option>
+                    <option value="G">G Şubesi</option>
+                    <option value="H">H Şubesi</option>
+                  </select>
+                </div>
               </div>
-            </div>
+              <button class="student-btn" type="submit" id="studentProfileSaveBtn">Bilgilerimi Kaydet</button>
+            </form>
           </article>
 
           <article class="student-card">
             <h2>Hesap Yönetimi</h2>
-            <p>Hesabını kapatırsan tekrar giriş yapamazsın; geçmiş ödev ve karne kayıtların korunur.</p>
+            <div class="student-actions" style="margin-bottom:14px">
+              <button class="student-btn secondary" type="button" id="studentPasswordResetBtn">Şifre Yenileme Maili Gönder</button>
+            </div>
             <div class="student-danger-zone">
               <h3>Hesap kapatma</h3>
               <p>Bu işlem profilini pasife alır ve oturumu kapatır.</p>
@@ -154,6 +299,8 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/content-progress.js"></script>
   <script src="/js/ogrenci-paneli.js"></script>
 </body>
 </html>

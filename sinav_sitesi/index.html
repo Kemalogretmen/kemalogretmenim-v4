@@ -53,6 +53,7 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .exam-grade-grid{display:grid;grid-template-columns:repeat(4,minmax(128px,1fr));gap:18px}
 .exam-grade-card{min-width:0;border:none;border-radius:28px;padding:14px;aspect-ratio:1/1;min-height:154px;text-align:center;cursor:pointer;transition:transform .24s cubic-bezier(.34,1.56,.64,1),box-shadow .24s ease,filter .24s ease;box-shadow:0 14px 28px var(--grade-shadow,rgba(15,23,42,.12));position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--fb)}
 .exam-grade-card:hover{transform:translateY(-5px) scale(1.025);box-shadow:0 20px 38px var(--grade-shadow,rgba(15,23,42,.16));filter:saturate(1.06)}
+.exam-grade-card.grade-locked{display:none}
 .exam-grade-card::before{content:'';position:absolute;inset:8px;border-radius:21px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.38);box-shadow:inset 0 1px 0 rgba(255,255,255,.48),0 12px 24px rgba(15,23,42,.10);backdrop-filter:blur(14px) saturate(1.24);-webkit-backdrop-filter:blur(14px) saturate(1.24)}
 .exam-grade-card::after{content:'';position:absolute;inset:0;background:linear-gradient(165deg,rgba(255,255,255,.22),rgba(255,255,255,.06) 45%,transparent 70%);opacity:.94}
 .exam-grade-card > *{position:relative;z-index:1}
@@ -121,11 +122,16 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .eib-item{font-size:12px;color:var(--slate);display:flex;align-items:center;gap:4px}
 .neg-warn{font-size:12px;color:var(--red);font-weight:700;display:flex;align-items:center;gap:5px;background:#FEF2F2;padding:8px 10px;border-radius:var(--r-sm);margin-top:8px;border:1px solid #FECACA}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-row.three{grid-template-columns:1fr 1fr 1.35fr}
 .fg{margin-bottom:14px}
+.fg[hidden]{display:none!important}
 .fg label{display:block;font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px}
 .fi,.fs{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:var(--r-sm);font-family:var(--fb);font-size:14px;color:var(--navy);background:var(--cream);outline:none;transition:all .2s;-webkit-appearance:none}
 .fi:focus,.fs:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,61,237,.1);background:var(--white)}
 .fi[readonly]{opacity:.7;cursor:default}
+.manual-school-toggle{display:inline-flex;align-items:center;gap:8px;margin:-4px 0 14px;color:var(--slate);font-size:13px;font-weight:800}
+.manual-school-toggle input{width:18px;height:18px;accent-color:var(--purple)}
+.manual-school-toggle.disabled{opacity:.55;cursor:not-allowed}
 .err-msg{color:var(--red);font-size:12px;font-weight:600;margin-top:8px;display:none;padding:8px 12px;background:#FEF2F2;border-radius:var(--r-sm)}
 .btn-row{display:flex;gap:10px;margin-top:4px}
 .btn{padding:11px 22px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--fb);font-size:14px;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
@@ -182,7 +188,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
   .grade-section{padding:0 14px 40px}
   .grade-banner{padding:18px 20px}
   .modal-box{padding:22px}
-  .form-row{grid-template-columns:1fr}
+  .form-row,.form-row.three{grid-template-columns:1fr}
 }
 @media(max-width:480px){
   .exam-hero-title{font-size:34px}
@@ -257,9 +263,18 @@ body.sinav-home-page .site-footer{margin-top:40px}
         </select>
       </div>
     </div>
-    <div class="form-row">
+    <div class="form-row three">
       <div class="fg"><label>İl *</label><select class="fs" id="cityInput"></select></div>
-      <div class="fg"><label>Okul *</label><input class="fi" id="schoolInput" placeholder="Okul adını yazın" type="text" autocomplete="organization"></div>
+      <div class="fg"><label>İlçe *</label><select class="fs" id="districtInput" disabled><option value="">Önce il seçin</option></select></div>
+      <div class="fg"><label>Okul *</label><select class="fs" id="schoolInput" autocomplete="organization" disabled><option value="">Önce il ve ilçe seçin</option></select></div>
+    </div>
+    <label class="manual-school-toggle disabled" id="examSchoolMissingLabel" for="examSchoolMissing">
+      <input id="examSchoolMissing" type="checkbox" disabled>
+      Okulum listede yok
+    </label>
+    <div class="fg" id="manualSchoolField" hidden>
+      <label>Okul Adı *</label>
+      <input class="fi" id="manualSchoolInput" placeholder="Okulunuzun tam adını yazın" type="text" autocomplete="organization" maxlength="120" disabled>
     </div>
     <div class="err-msg" id="modalErr">⚠️ Lütfen tüm alanları eksiksiz doldurun.</div>
     <div class="btn-row">
@@ -271,6 +286,8 @@ body.sinav-home-page .site-footer{margin-top:40px}
 
 <script src="/js/site-data.js"></script>
 <script src="/js/site.js"></script>
+<script src="/js/user-auth.js"></script>
+<script src="/js/meb-schools.js"></script>
 <script src="/js/content-progress.js"></script>
 <script type="module">
 import { db } from "./js/firebase.js";
@@ -319,6 +336,7 @@ const EXAM_CARD_THEMES=[
 let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:12,selExam:null,categoryMap:{},sort:'custom',questionFilter:'all'}; // Sayfada 12 sınav ayarı
 const TR_CITIES=window.kemalSiteStore?.getTurkeyCities?window.kemalSiteStore.getTurkeyCities():[];
 const LOW_QUALITY_TOKENS=['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
+const SCHOOL_MISSING_VALUE='__manual_school__';
 
 function fmtDate(ts){
   if(!ts)return'—';
@@ -388,6 +406,116 @@ function populateCitySelect(selectId){
   select.innerHTML=`<option value="">İl seçin</option>${TR_CITIES.map(city=>`<option value="${escHtml(city)}">${escHtml(city)}</option>`).join('')}`;
   if(current&&TR_CITIES.includes(current)) select.value=current;
 }
+async function populateDistrictSelect(){
+  const city=document.getElementById('cityInput')?.value||'';
+  const districtSelect=document.getElementById('districtInput');
+  const schoolSelect=document.getElementById('schoolInput');
+  const missingCheckbox=document.getElementById('examSchoolMissing');
+  const missingLabel=document.getElementById('examSchoolMissingLabel');
+  if(!districtSelect)return;
+  districtSelect.innerHTML='<option value="">İlçe yükleniyor...</option>';
+  districtSelect.disabled=true;
+  if(schoolSelect){
+    schoolSelect.innerHTML='<option value="">Önce il ve ilçe seçin</option>';
+    schoolSelect.disabled=true;
+  }
+  if(missingCheckbox){
+    missingCheckbox.checked=false;
+    missingCheckbox.disabled=true;
+  }
+  if(missingLabel)missingLabel.classList.add('disabled');
+  syncManualSchoolField();
+  if(!city||!window.kemalMebSchools){
+    districtSelect.innerHTML='<option value="">Önce il seçin</option>';
+    return;
+  }
+  const districts=await window.kemalMebSchools.getDistricts(city);
+  districtSelect.innerHTML='<option value="">İlçe seçin</option>'+districts.map(district=>`<option value="${escHtml(district)}">${escHtml(district)}</option>`).join('');
+  districtSelect.disabled=!districts.length;
+}
+async function loadExamSchoolSuggestions(){
+  const city=document.getElementById('cityInput')?.value||'';
+  const district=document.getElementById('districtInput')?.value||'';
+  const schoolSelect=document.getElementById('schoolInput');
+  const missingCheckbox=document.getElementById('examSchoolMissing');
+  const missingLabel=document.getElementById('examSchoolMissingLabel');
+  const auth=window.kemalUserAuth;
+  if(!city||!district||!schoolSelect)return;
+  schoolSelect.innerHTML='<option value="">Okullar yükleniyor...</option>';
+  schoolSelect.disabled=true;
+  if(missingCheckbox){
+    missingCheckbox.checked=false;
+    missingCheckbox.disabled=true;
+  }
+  if(missingLabel)missingLabel.classList.add('disabled');
+  syncManualSchoolField();
+  try{
+    let rows=window.kemalMebSchools?await window.kemalMebSchools.loadSchools({city,district}):[];
+    if(rows.length){
+      schoolSelect.innerHTML='<option value="">Okul seçin</option>'+rows.map(school=>`<option value="${escHtml(school.name)}">${escHtml(school.name)}</option>`).join('');
+      appendManualSchoolOption(schoolSelect);
+      if(missingCheckbox)missingCheckbox.disabled=false;
+      if(missingLabel)missingLabel.classList.remove('disabled');
+      schoolSelect.disabled=false;
+      syncManualSchoolField();
+      return;
+    }
+    if(!auth||typeof auth.getClient!=='function')throw new Error('Supabase istemcisi hazır değil.');
+    const result=await auth.getClient()
+      .from('schools')
+      .select('name,type')
+      .eq('city',city.toLocaleUpperCase('tr-TR'))
+      .eq('district',district.toLocaleUpperCase('tr-TR'))
+      .eq('active',true)
+      .order('name',{ascending:true})
+      .limit(500);
+    if(result.error)throw result.error;
+    rows=result.data||[];
+    schoolSelect.innerHTML='<option value="">Okul seçin</option>'+rows.map(school=>`<option value="${escHtml(school.name)}">${escHtml(school.name+(school.type?' - '+school.type:''))}</option>`).join('');
+    appendManualSchoolOption(schoolSelect);
+    if(missingCheckbox)missingCheckbox.disabled=false;
+    if(missingLabel)missingLabel.classList.remove('disabled');
+    schoolSelect.disabled=false;
+    syncManualSchoolField();
+  }catch{
+    const rows=window.kemalMebSchools?await window.kemalMebSchools.loadSchools({city,district}):[];
+    schoolSelect.innerHTML='<option value="">Okul seçin</option>'+rows.map(school=>`<option value="${escHtml(school.name)}">${escHtml(school.name)}</option>`).join('');
+    appendManualSchoolOption(schoolSelect);
+    if(missingCheckbox)missingCheckbox.disabled=false;
+    if(missingLabel)missingLabel.classList.remove('disabled');
+    schoolSelect.disabled=false;
+    syncManualSchoolField();
+  }
+}
+function appendManualSchoolOption(select){
+  if(!select)return;
+  select.insertAdjacentHTML('beforeend',`<option value="${SCHOOL_MISSING_VALUE}">Okulum listede yok</option>`);
+}
+function syncManualSchoolField(){
+  const schoolSelect=document.getElementById('schoolInput');
+  const field=document.getElementById('manualSchoolField');
+  const input=document.getElementById('manualSchoolInput');
+  const missingCheckbox=document.getElementById('examSchoolMissing');
+  const isManual=!!(missingCheckbox&&missingCheckbox.checked)||(schoolSelect&&schoolSelect.value===SCHOOL_MISSING_VALUE);
+  if(missingCheckbox)missingCheckbox.checked=isManual;
+  if(field)field.hidden=!isManual;
+  if(input)input.required=!!isManual;
+  if(input)input.disabled=!isManual;
+  if(schoolSelect){
+    const district=document.getElementById('districtInput')?.value||'';
+    schoolSelect.disabled=isManual||!district;
+  }
+  if(!isManual&&input)input.value='';
+}
+function getSelectedSchoolName(){
+  const schoolSelect=document.getElementById('schoolInput');
+  const manualInput=document.getElementById('manualSchoolInput');
+  const missingCheckbox=document.getElementById('examSchoolMissing');
+  if((missingCheckbox&&missingCheckbox.checked)||(schoolSelect&&schoolSelect.value===SCHOOL_MISSING_VALUE)){
+    return collapseSpaces(manualInput&&manualInput.value);
+  }
+  return collapseSpaces(schoolSelect&&schoolSelect.value);
+}
 function hasLowQualityText(value){
   const normalized=collapseSpaces(value).toLocaleLowerCase('tr-TR');
   if(!normalized) return true;
@@ -408,6 +536,101 @@ function validateSurname(value){
 function validateSchool(value){
   const normalized=collapseSpaces(value);
   return !hasLowQualityText(normalized);
+}
+function setValueIfEmpty(id,value){
+  const el=document.getElementById(id);
+  if(el&&!el.value&&value) el.value=value;
+}
+function setSelectByValueOrText(id,value){
+  const el=document.getElementById(id);
+  if(!el||el.value||!value)return;
+  const raw=String(value).trim();
+  const match=[...el.options].find(option=>
+    option.value.toLocaleLowerCase('tr-TR')===raw.toLocaleLowerCase('tr-TR')||
+    option.textContent.toLocaleLowerCase('tr-TR')===raw.toLocaleLowerCase('tr-TR')
+  );
+  if(match) el.value=match.value;
+}
+async function getAccountStudentInfo(){
+  if(!window.kemalUserAuth||!window.kemalUserAuth.ready) return null;
+  await window.kemalUserAuth.ready();
+  const info=window.kemalUserAuth.getStudentInfo?window.kemalUserAuth.getStudentInfo():null;
+  return info&&(info.role==='student'||info.role==='teacher')?info:null;
+}
+async function prefillExamStudentFromAccount(){
+  const info=await getAccountStudentInfo();
+  if(!info)return;
+  setValueIfEmpty('fnInput',info.firstName);
+  setValueIfEmpty('lnInput',info.lastName);
+  setValueIfEmpty('subeSelect',info.sube||(info.role==='teacher'?'Öğretmen':''));
+  setSelectByValueOrText('cityInput',info.city);
+  populateDistrictSelect().then(()=>{
+    setSelectByValueOrText('districtInput',info.district);
+    return loadExamSchoolSuggestions();
+  }).then(()=>{
+    setValueIfEmpty('schoolInput',info.school);
+  });
+}
+function getLockedStudentGrade(){
+  if(!window.kemalUserAuth||typeof window.kemalUserAuth.getStudentGradeLevel!=='function') return null;
+  return window.kemalUserAuth.getStudentGradeLevel();
+}
+function getExamAccessMeta(exam){
+  return {accessScope:exam?.accessScope||exam?.access_scope||exam?.visibility,authRequired:!!(exam?.authRequired||exam?.requiresAuth)};
+}
+function isExamPublic(exam){
+  return !window.kemalUserAuth||typeof window.kemalUserAuth.isContentPublic!=='function'
+    ? !(exam?.authRequired||exam?.requiresAuth)
+    : window.kemalUserAuth.isContentPublic(getExamAccessMeta(exam));
+}
+function requireExamAccess(exam){
+  if(!window.kemalUserAuth||typeof window.kemalUserAuth.promptRegistration!=='function') return true;
+  return window.kemalUserAuth.promptRegistration(getExamAccessMeta(exam),'/sinav_sitesi/index.html?examId='+encodeURIComponent(exam?.id||''));
+}
+async function getCompleteAccountStudentInfo(exam){
+  const info=await getAccountStudentInfo();
+  if(!info)return null;
+  if(info.role==='student'){
+    return info.firstName&&info.lastName&&info.grade&&info.sube&&info.city&&info.school?info:null;
+  }
+  return info.firstName&&info.lastName?Object.assign({},info,{
+    grade:exam?.grade||S.grade||info.grade||'',
+    sube:info.sube||'Öğretmen',
+    city:info.city||'-',
+    school:info.school||'Öğretmen incelemesi'
+  }):null;
+}
+async function startExamDirectlyForAccount(exam){
+  const info=await getCompleteAccountStudentInfo(exam);
+  if(!info)return false;
+  S.selExam=exam;
+  S.grade=exam.grade||S.grade||info.grade;
+  sessionStorage.setItem('sinav_student',JSON.stringify({
+    accountUid:info.accountUid||'',
+    email:info.email||'',
+    role:info.role||'',
+    firstName:capitalize(info.firstName),
+    lastName:capitalize(info.lastName),
+    grade:parseInt(info.grade,10)||info.grade,
+    sube:info.sube,
+    city:capitalize(info.city),
+    district:capitalize(info.district||''),
+    school:String(info.school||'').replace(/\s+/g,' ').trim()
+  }));
+  sessionStorage.setItem('sinav_examId',exam.id);
+  window.location.href=`sinav.html?examId=${exam.id}`;
+  return true;
+}
+function applyStudentGradeLock(){
+  const lockedGrade=getLockedStudentGrade();
+  if(!lockedGrade)return;
+  document.querySelectorAll('.exam-grade-card').forEach(card=>{
+    card.classList.toggle('grade-locked',parseInt(card.dataset.grade,10)!==lockedGrade);
+  });
+  const title=document.querySelector('.exam-grade-panel-title');
+  const text=document.querySelector('.exam-grade-panel-text');
+  if(title)title.textContent='Sınıfına Uygun Sınavlar';
+  if(text)text.textContent=lockedGrade+'. sınıf hesabınla yalnız sana uygun sınavlar listelenir.';
 }
 function escHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
@@ -452,8 +675,11 @@ async function loadCategoriesForGrade(grade){
     S.categoryMap[grade]=[...(DEFAULT_SUBJECTS[grade]||[])];
   }
 }
-function openExamModal(exam){
+async function openExamModal(exam){
   if(!exam)return;
+  if(window.kemalUserAuth&&typeof window.kemalUserAuth.ready==='function') await window.kemalUserAuth.ready();
+  if(!requireExamAccess(exam))return;
+  if(await startExamDirectlyForAccount(exam))return;
   S.selExam=exam;
   S.grade=exam.grade||S.grade;
   document.getElementById('eibContent').innerHTML=`
@@ -469,15 +695,28 @@ function openExamModal(exam){
   document.getElementById('lnInput').value='';
   document.getElementById('subeSelect').value='';
   document.getElementById('cityInput').value='';
+  document.getElementById('districtInput').innerHTML='<option value="">Önce il seçin</option>';
+  document.getElementById('districtInput').disabled=true;
+  document.getElementById('schoolInput').innerHTML='<option value="">Önce il ve ilçe seçin</option>';
+  document.getElementById('schoolInput').disabled=true;
   document.getElementById('schoolInput').value='';
+  document.getElementById('manualSchoolInput').value='';
+  const missingCheckbox=document.getElementById('examSchoolMissing');
+  const missingLabel=document.getElementById('examSchoolMissingLabel');
+  if(missingCheckbox){
+    missingCheckbox.checked=false;
+    missingCheckbox.disabled=true;
+  }
+  if(missingLabel)missingLabel.classList.add('disabled');
+  syncManualSchoolField();
   document.getElementById('modalErr').style.display='none';
   document.getElementById('studentModal').style.display='flex';
-  setTimeout(()=>document.getElementById('fnInput').focus(),100);
+  prefillExamStudentFromAccount().then(()=>setTimeout(()=>document.getElementById('fnInput').focus(),100));
 }
 
 function initUI(){
   document.getElementById('gradeCardsHero').innerHTML=GRADES.map(g=>`
-    <button type="button" class="exam-grade-card" style="background:${GC[g].bg};--grade-shadow:${GC[g].shadow}" onclick="window.selectGrade(${g})">
+    <button type="button" class="exam-grade-card" data-grade="${g}" style="background:${GC[g].bg};--grade-shadow:${GC[g].shadow}" onclick="window.selectGrade(${g})">
       <span class="exam-grade-card-title">
         <span class="exam-grade-card-no">${g}.</span>
         <span class="exam-grade-card-class">Sınıf</span>
@@ -487,6 +726,8 @@ function initUI(){
 }
 
 window.selectGrade=async function(g){
+  const lockedGrade=getLockedStudentGrade();
+  if(lockedGrade&&parseInt(g,10)!==lockedGrade) g=lockedGrade;
   S.grade=g;S.subject='Tümü';S.page=1;
   document.getElementById('heroSection').style.display='none';
   document.getElementById('gradeSection').style.display='block';
@@ -576,7 +817,9 @@ async function loadExams(g){
         snap={docs:psnap.docs.filter(d=>d.data()?.grade===g)};
       }
     }
-    S.exams=sortExamRecords(snap.docs.map(d=>({id:d.id,...d.data()})),'custom');
+    S.exams=sortExamRecords(snap.docs
+      .map(d=>({id:d.id,...d.data()}))
+      .filter(e=>e.hidden!==true&&e.gizli!==true),'custom');
   }catch(e){
     grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">⚠️</span><h3>Yükleme Hatası</h3><p>Sınavlar yüklenemedi, lütfen sayfayı yenileyin.</p></div>';
   }
@@ -609,7 +852,15 @@ function renderGrid(){
   grid.innerHTML=`<div class="exam-grid">${items.map((e,i)=>{
     const theme=getExamTheme(e,start+i);
     return `
-    <div class="ec ${getExamStatusMeta(e)?'is-complete':''}" style="--card-accent:${theme.accent};--card-bg:${theme.bg};--card-border:${theme.border};--card-shadow:${theme.shadow}" onclick="window.openModal('${e.id}')">
+    <div class="ec ${getExamStatusMeta(e)?'is-complete':''}" style="--card-accent:${theme.accent};--card-bg:${theme.bg};--card-border:${theme.border};--card-shadow:${theme.shadow}" onclick="window.openModal('${e.id}')"
+      data-reaction-type="exam"
+      data-reaction-id="${e.id}"
+      data-reaction-title="${escHtml(e.title)}"
+      data-reaction-href="/sinav_sitesi/index.html?examId=${encodeURIComponent(e.id)}"
+      data-reaction-grade="${escHtml((e.grade || S.grade) + '. Sınıf')}"
+      data-reaction-subject="${escHtml(e.subject || 'Sınav')}"
+      data-reaction-source="Sınav"
+      data-access-scope="${escHtml(isExamPublic(e) ? 'public' : 'registered')}">
       <div class="ec-head">
         <div class="ec-heading">
           <div class="ec-sub">${escHtml(e.subject||'Sınav')}</div>
@@ -660,10 +911,10 @@ function getExamStatusMeta(exam){
   });
 }
 
-window.openModal=function(examId){
+window.openModal=async function(examId){
   const exam=S.exams.find(e=>e.id===examId)||S.filtered.find(e=>e.id===examId);
   if(!exam)return;
-  openExamModal(exam);
+  await openExamModal(exam);
 };
 
 window.closeModal=function(){document.getElementById('studentModal').style.display='none';};
@@ -676,14 +927,27 @@ window.startExam=function(){
   const ln=document.getElementById('lnInput').value.trim();
   const sube=document.getElementById('subeSelect').value;
   const city=document.getElementById('cityInput').value.trim();
-  const school=document.getElementById('schoolInput').value.trim();
+  const district=document.getElementById('districtInput').value.trim();
+  const school=getSelectedSchoolName();
   const err=document.getElementById('modalErr');
-  if(!fn||!ln||!sube||!city||!school){err.textContent='⚠️ Lütfen ad, soyad, şube, il ve okul bilgilerini eksiksiz girin.';err.style.display='block';return;}
+  if(!fn||!ln||!sube||!city||!district||!school){err.textContent='⚠️ Lütfen ad, soyad, şube, il, ilçe ve okul bilgilerini eksiksiz girin.';err.style.display='block';return;}
   if(fn.length<2||ln.length<2){err.textContent='⚠️ Ad ve soyad en az 2 karakter olmalıdır.';err.style.display='block';return;}
   if(!validateSurname(ln)){err.textContent='⚠️ Soyad alanında anlamsız, tekrar eden veya geçersiz bir giriş görünüyor.';err.style.display='block';return;}
   if(city.length<2||school.length<2){err.textContent='⚠️ İl ve okul bilgileri en az 2 karakter olmalıdır.';err.style.display='block';return;}
   if(!validateSchool(school)){err.textContent='⚠️ Okul adı anlamsız veya tekrar eden bir giriş gibi görünüyor. Lütfen okul adını daha net yazın.';err.style.display='block';return;}
-  const student={firstName:capitalize(fn),lastName:capitalize(ln),grade:S.grade,sube,city:capitalize(city),school:school.replace(/\s+/g,' ').trim()};
+  const authInfo=window.kemalUserAuth&&window.kemalUserAuth.getStudentInfo?window.kemalUserAuth.getStudentInfo():null;
+  const student={
+    accountUid:authInfo&&(authInfo.role==='student'||authInfo.role==='teacher')?authInfo.accountUid:'',
+    email:authInfo&&(authInfo.role==='student'||authInfo.role==='teacher')?authInfo.email:'',
+    role:authInfo&&authInfo.role?authInfo.role:'',
+    firstName:capitalize(fn),
+    lastName:capitalize(ln),
+    grade:S.grade,
+    sube,
+    city:capitalize(city),
+    district:capitalize(district),
+    school:school.replace(/\s+/g,' ').trim()
+  };
   sessionStorage.setItem('sinav_student',JSON.stringify(student));
   sessionStorage.setItem('sinav_examId',S.selExam.id);
   window.location.href=`sinav.html?examId=${S.selExam.id}`;
@@ -692,7 +956,7 @@ window.startExam=function(){
 async function loadStats(){
   try{
     const snap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
-    const exams=snap.docs.map(d=>d.data());
+    const exams=snap.docs.map(d=>d.data()).filter(e=>e.hidden!==true&&e.gizli!==true);
     document.getElementById('statExams').textContent=exams.length+'+';
     document.getElementById('statQ').textContent=exams.reduce((s,e)=>s+(e.questionCount||0),0)+'+';
   }catch{}
@@ -717,10 +981,17 @@ async function handleSharedExamLink(examId){
     alert('Paylaşılan sınav bağlantısı artık aktif değil veya bulunamadı.');
     return;
   }
-  if(Number.isFinite(parseInt(exam.grade,10))){
-    await window.selectGrade(parseInt(exam.grade,10));
+  if(!requireExamAccess(exam))return;
+  const lockedGrade=getLockedStudentGrade();
+  const examGrade=parseInt(exam.grade,10);
+  if(lockedGrade&&Number.isFinite(examGrade)&&examGrade!==lockedGrade&&!isExamPublic(exam)){
+    await window.selectGrade(lockedGrade);
+    return;
   }
-  openExamModal(exam);
+  if(Number.isFinite(examGrade)){
+    await window.selectGrade(examGrade);
+  }
+  await openExamModal(exam);
 }
 
 async function initPage(){
@@ -728,7 +999,25 @@ async function initPage(){
   const urlG=urlParams.get('grade');
   const urlExamId=urlParams.get('examId')||urlParams.get('sinavId');
   populateCitySelect('cityInput');
+  const examCitySelect=document.getElementById('cityInput');
+  if(examCitySelect)examCitySelect.addEventListener('change',populateDistrictSelect);
+  const examDistrictSelect=document.getElementById('districtInput');
+  if(examDistrictSelect)examDistrictSelect.addEventListener('change',loadExamSchoolSuggestions);
+  const examSchoolSelect=document.getElementById('schoolInput');
+  if(examSchoolSelect)examSchoolSelect.addEventListener('change',syncManualSchoolField);
+  const examMissingSchool=document.getElementById('examSchoolMissing');
+  if(examMissingSchool)examMissingSchool.addEventListener('change',()=>{
+    const schoolSelect=document.getElementById('schoolInput');
+    if(!examMissingSchool.checked&&schoolSelect&&schoolSelect.value===SCHOOL_MISSING_VALUE){
+      schoolSelect.value='';
+    }
+    syncManualSchoolField();
+  });
   initUI();
+  if(window.kemalUserAuth&&window.kemalUserAuth.ready){
+    await window.kemalUserAuth.ready();
+    applyStudentGradeLock();
+  }
   await loadStats();
   if(urlExamId){
     await handleSharedExamLink(urlExamId);
@@ -740,6 +1029,7 @@ async function initPage(){
 }
 
 initPage();
+window.addEventListener('kemal-user-auth-changed',applyStudentGradeLock);
 </script>
 </body>
 </html>

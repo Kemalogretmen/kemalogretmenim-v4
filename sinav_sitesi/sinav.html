@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="/js/site-data.js"></script>
+<script src="/js/user-auth.js"></script>
 <script src="/js/content-progress.js"></script>
 <style>
 :root{
@@ -810,6 +812,11 @@ function isAdminKarneMode(){
   return getSearchParams().get('adminKarne')==='1';
 }
 
+function isTeacherSession(){
+  const auth=window.kemalUserAuth&&typeof window.kemalUserAuth.getState==='function'?window.kemalUserAuth.getState():{};
+  return !!(auth&&auth.profile&&auth.profile.role==='teacher');
+}
+
 function markExamCompleted(result){
   if(isAdminKarneMode()||!window.kemalContentProgress||!result||!result.examId) return;
   window.kemalContentProgress.markCompleted({
@@ -820,11 +827,47 @@ function markExamCompleted(result){
     grade:result.grade||'',
     subject:result.subject||'',
     meta:{
+      accountUid:result.accountUid||'',
+      email:result.email||'',
       score:result.score||0,
       correct:result.correct||0,
       wrong:result.wrong||0,
       blank:result.blank||0,
-      resultId:result.resultId||''
+      total:result.total||0,
+      netCorrect:result.netCorrect||0,
+      elapsed:result.elapsed||0,
+      duration:result.duration||0,
+      date:result.date||new Date().toLocaleDateString('tr-TR'),
+      resultId:result.resultId||'',
+      negativeMarking:!!result.negativeMarking,
+      answerDetails:Array.isArray(result.answerDetails)?result.answerDetails:[],
+      questionSections:Array.isArray(result.questionSections)?result.questionSections:[],
+      resultSnapshot:{
+        resultId:result.resultId||'',
+        accountUid:result.accountUid||'',
+        email:result.email||'',
+        firstName:result.firstName||'',
+        lastName:result.lastName||'',
+        grade:result.grade||'',
+        sube:result.sube||'',
+        city:result.city||'',
+        school:result.school||'',
+        studentKey:result.studentKey||'',
+        subject:result.subject||'',
+        examTitle:result.examTitle||'',
+        examId:result.examId||'',
+        correct:result.correct||0,
+        wrong:result.wrong||0,
+        blank:result.blank||0,
+        netCorrect:result.netCorrect||0,
+        score:result.score||0,
+        total:result.total||0,
+        negativeMarking:!!result.negativeMarking,
+        answerDetails:Array.isArray(result.answerDetails)?result.answerDetails:[],
+        questionSections:Array.isArray(result.questionSections)?result.questionSections:[],
+        elapsed:result.elapsed||0,
+        date:result.date||new Date().toLocaleDateString('tr-TR')
+      }
     }
   });
 }
@@ -914,6 +957,8 @@ function buildResultSnapshot(status='completed'){
   const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
   return{
     resultId:P.result?.resultId||'',
+    accountUid:P.student.accountUid||P.student.userId||'',
+    email:P.student.email||'',
     firstName:P.student.firstName,
     lastName:P.student.lastName,
     grade:P.student.grade,
@@ -924,6 +969,7 @@ function buildResultSnapshot(status='completed'){
     subject:P.exam.subject,
     examTitle:P.exam.title,
     examId:P.exam.id,
+    duration:P.exam.duration||0,
     correct,wrong,blank,netCorrect,score,total,
     negativeMarking:P.exam.negativeMarking,
     answers:{...ans},
@@ -1970,6 +2016,24 @@ async function init(){
       showLoadError('Sınav bulunamadı','Bu sınava ait kayıt yüklenemedi. Ana sınav sayfasına dönüp yeniden deneyebilirsin.');
       return;
     }
+    if(window.kemalUserAuth&&typeof window.kemalUserAuth.ready==='function'){
+      await window.kemalUserAuth.ready();
+      const accessMeta={accessScope:bundle.exam.accessScope||bundle.exam.access_scope||bundle.exam.visibility,authRequired:!!(bundle.exam.authRequired||bundle.exam.requiresAuth)};
+      if(typeof window.kemalUserAuth.promptRegistration==='function'&&!window.kemalUserAuth.promptRegistration(accessMeta,'/sinav_sitesi/index.html?examId='+encodeURIComponent(examId))){
+        return;
+      }
+      const isPublicExam=typeof window.kemalUserAuth.isContentPublic==='function'
+        ? window.kemalUserAuth.isContentPublic(accessMeta)
+        : !(bundle.exam.authRequired||bundle.exam.requiresAuth);
+      if(typeof window.kemalUserAuth.getStudentGradeLevel==='function'){
+        const lockedGrade=window.kemalUserAuth.getStudentGradeLevel();
+        const examGrade=parseInt(bundle.exam.grade,10);
+        if(lockedGrade&&Number.isFinite(examGrade)&&examGrade!==lockedGrade&&!isPublicExam){
+          showLoadError('Bu sınav farklı bir sınıfa ait','Hesabın '+lockedGrade+'. sınıf olarak kayıtlı olduğu için yalnız kendi sınıfındaki sınavları çözebilirsin.');
+          return;
+        }
+      }
+    }
     P.exam=bundle.exam;
     P.questions=bundle.questions;
     if(!P.questions.length){
@@ -2400,9 +2464,15 @@ function calcResult(){
 }
 
 async function persistResultRecord(result){
+  if(isTeacherSession()){
+    result.resultId='teacher-preview-'+Date.now();
+    return result.resultId;
+  }
   const resultRef=await addDoc(collection(db,'results'),{
     firstName:result.firstName,
     lastName:result.lastName,
+    accountUid:result.accountUid||'',
+    email:result.email||'',
     grade:result.grade,
     sube:result.sube,
     studentKey:result.studentKey,

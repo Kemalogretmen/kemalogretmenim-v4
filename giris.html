@@ -71,26 +71,48 @@
     .login-message.err { background:#FFF0EE; color:#C0392B; border:2px solid #FFC9C3; }
     .login-message.ok { background:#E8FFF4; color:#047857; border:2px solid #A8EDBD; }
     .login-register { display:inline-block; margin-top:18px; color:var(--purple); font-weight:900; text-decoration:none; }
+    .login-actions { display:grid; gap:10px; margin-top:12px; }
+    .login-alt-btn {
+      width:100%;
+      border:2px solid var(--border);
+      border-radius:999px;
+      padding:13px 18px;
+      background:#fff;
+      color:var(--navy);
+      font:900 14px var(--font-body);
+      cursor:pointer;
+    }
+    .login-help-row { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:14px; font-size:13px; font-weight:900; }
+    .login-help-row a, .login-help-row button { color:var(--purple); background:none; border:0; font:inherit; cursor:pointer; text-decoration:none; }
   </style>
 </head>
 <body>
   <main class="login-page">
     <section class="login-card">
       <h1>Giriş Yap</h1>
-      <p>Panel girişleri şimdilik yayından kaldırıldı. Site içeriklerini kayıt olmadan kullanabilirsin.</p>
+      <p>Öğrenci veya öğretmen hesabınla giriş yap; beğenilerin, okuma metinlerin, çözdüğün sınavlar ve dokümanların tek hesapta toplansın.</p>
       <form class="login-form" id="roleLoginForm" onsubmit="return false;">
         <label for="loginEmail">E-posta</label>
         <input id="loginEmail" type="email" autocomplete="username" required>
         <label for="loginPassword">Şifre</label>
         <input id="loginPassword" type="password" autocomplete="current-password" required>
-        <button id="loginSubmit" type="submit" disabled>Girişler Şimdilik Kapalı</button>
+        <button id="loginSubmit" type="submit">Giriş Yap</button>
       </form>
+      <div class="login-actions">
+        <button class="login-alt-btn" id="googleLoginBtn" type="button">Google ile Giriş Yap</button>
+      </div>
       <div class="login-message" id="loginMessage" role="status" aria-live="polite"></div>
+      <div class="login-help-row">
+        <button id="forgotPasswordBtn" type="button">Şifremi unuttum</button>
+        <span>•</span>
+        <a href="/kayit.html">Yeni kayıt oluştur</a>
+      </div>
       <a class="login-register" href="/index.html">Ana sayfaya dön</a>
     </section>
   </main>
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/giris.js"></script>
 </body>
 </html>

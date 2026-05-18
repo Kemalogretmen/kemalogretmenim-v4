@@ -176,7 +176,7 @@
   async function listDocumentsBySubject(grade, subject, options) {
     const includeInactive = Boolean(options && options.includeInactive);
     const normalizedSubject = normalizeSubjectKey(subject);
-    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,dosya_boyutu,kapak_renk,sayfa_sayisi,icerik_turu,video_url,video_embed_url,video_provider,video_html,aktif,oturum_gerekli,siralama,olusturma_tarihi';
+    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,dosya_boyutu,kapak_renk,sayfa_sayisi,icerik_turu,video_url,video_embed_url,video_provider,video_html,aktif,gizli,oturum_gerekli,siralama,olusturma_tarihi';
     const fallbackFields = 'id,baslik,aciklama,sinif,ders,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi';
     let query = getPublicClient()
       .from('dokumanlar')
@@ -185,14 +185,15 @@
       .order('olusturma_tarihi', { ascending: false });
 
     if (!includeInactive) {
-      query = query.eq('aktif', true).eq('oturum_gerekli', false);
+      query = query.eq('aktif', true);
     }
 
     let result = await query;
     if (result.error && (
       String(result.error.message || '').toLowerCase().includes('hedefler') ||
       String(result.error.message || '').toLowerCase().includes('icerik_turu') ||
-      String(result.error.message || '').toLowerCase().includes('video_embed_url')
+      String(result.error.message || '').toLowerCase().includes('video_embed_url') ||
+      String(result.error.message || '').toLowerCase().includes('gizli')
     )) {
       query = getPublicClient()
         .from('dokumanlar')
@@ -200,7 +201,7 @@
         .order('siralama', { ascending: true })
         .order('olusturma_tarihi', { ascending: false });
       if (!includeInactive) {
-        query = query.eq('aktif', true).eq('oturum_gerekli', false);
+        query = query.eq('aktif', true);
       }
       result = await query;
     }
@@ -209,6 +210,9 @@
     }
 
     return (result.data || []).filter(function(item) {
+      if (item && item.gizli === true) {
+        return false;
+      }
       return getDocumentTargets(item).some(function(target) {
         return target.sinif === Number(grade) && target.ders === normalizedSubject;
       });
@@ -234,7 +238,7 @@
       .limit(1);
 
     if (!includeInactive) {
-      query = query.eq('aktif', true).eq('oturum_gerekli', false);
+      query = query.eq('aktif', true);
     }
 
     const result = await query.maybeSingle();

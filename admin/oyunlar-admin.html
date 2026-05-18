@@ -207,6 +207,12 @@
             </div>
           </div>
 
+          <label>Erişim</label>
+          <select id="fErisim">
+            <option value="public">🌍 Herkese Açık</option>
+            <option value="registered">🔐 Sadece Kayıtlı Kullanıcı</option>
+          </select>
+
           <div style="display:flex;gap:10px;">
             <button class="btn-ekle" onclick="kaydetOyun()">💾 Kaydet</button>
             <button style="padding:12px 18px;border:2px solid var(--border);border-radius:50px;background:white;font-weight:800;font-size:13px;cursor:pointer;" onclick="formSifirla()">✕ İptal</button>
@@ -339,6 +345,7 @@ function kaydetOyun(){
   const sev=document.getElementById('fSeviye').value;
   const sinif=document.getElementById('fSinif').value;
   const emoji=document.getElementById('fEmoji').value.trim()||'🎮';
+  const accessScope=document.getElementById('fErisim').value==='registered'?'registered':'public';
   const aciklama=document.getElementById('fAciklama').value.trim();
   const editId=document.getElementById('editId').value;
   const recordId=editId || ('oyun_'+Date.now());
@@ -363,7 +370,7 @@ function kaydetOyun(){
     if(idx>-1){
       d[idx]={
         ...d[idx],
-        ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,
+        ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,accessScope,
         aktif:d[idx].aktif,
         createdAt:d[idx].createdAt || nowIso,
         updatedAt:nowIso
@@ -371,7 +378,7 @@ function kaydetOyun(){
     }
     toast('✅ Güncellendi!','success');
   } else {
-    d.unshift({id:recordId,ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,aktif:true,createdAt:nowIso,updatedAt:nowIso});
+    d.unshift({id:recordId,ad,url,iframe,tip,kat,sev,sinif,emoji,aciklama,accessScope,aktif:true,createdAt:nowIso,updatedAt:nowIso});
     toast('✅ Oyun eklendi!','success');
   }
 
@@ -385,6 +392,7 @@ function formSifirla(){
   document.getElementById('fKategori').value='Genel';
   document.getElementById('fSeviye').value='Tümü';
   document.getElementById('fSinif').value='Tümü';
+  document.getElementById('fErisim').value='public';
   document.getElementById('formTitle').textContent='➕ Yeni Oyun Ekle';
   document.getElementById('iframePreview').textContent='Kodu yapıştırınca oyun önizlemesi burada görünür…';
   tipSec('link');
@@ -403,6 +411,7 @@ function editOyun(id){
   document.getElementById('fKategori').value=o.kat||'Genel';
   document.getElementById('fSeviye').value=o.sev||'Tümü';
   document.getElementById('fSinif').value=o.sinif||'Tümü';
+  document.getElementById('fErisim').value=o.accessScope==='registered'||o.authRequired?'registered':'public';
   document.getElementById('formTitle').textContent='✏️ Oyunu Düzenle';
   tipSec(o.tip||'link');
   window.scrollTo(0,0);
@@ -452,6 +461,7 @@ function renderOyunlar(){
             ${o.kat?`<span class="ok-badge kat">${o.kat}</span>`:''}
             ${o.sinif&&o.sinif!=='Tümü'?`<span class="ok-badge sinif">${o.sinif}. Sınıf</span>`:''}
             ${o.sev&&o.sev!=='Tümü'?`<span class="ok-badge seviye">${o.sev}</span>`:''}
+            <span class="ok-badge" style="background:#EEF2FF;color:#4338CA;">${o.accessScope==='registered'||o.authRequired?'🔐 Kayıtlı':'🌍 Açık'}</span>
             ${!o.aktif?`<span class="ok-badge pasif">Pasif</span>`:''}
             <span class="ok-badge" style="background:#F5F5F5;color:#666;">${o.tip==='iframe'?'📦 Iframe':'🔗 Link'}</span>
           </div>

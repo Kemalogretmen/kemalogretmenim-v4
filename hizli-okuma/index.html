@@ -124,6 +124,7 @@
     .sinif-btn[data-s="6"] { --sinif-bg:linear-gradient(135deg,#41AEEB,#5AB9F0); --sinif-shadow:rgba(65,174,235,.24); }
     .sinif-btn[data-s="7"] { --sinif-bg:linear-gradient(135deg,#766DCA,#8C6ED0); --sinif-shadow:rgba(118,109,202,.24); }
     .sinif-btn[data-s="8"] { --sinif-bg:linear-gradient(135deg,#C252B7,#E34B8C); --sinif-shadow:rgba(194,82,183,.22); }
+    .sinif-btn.grade-locked { display:none; }
 
     /* ── ADIM 2: Metin Seç ── */
     #step2 {
@@ -375,7 +376,9 @@
 
     .giris-form-title { font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--navy); margin-bottom:18px; }
     .form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1.4fr; gap:14px; }
     .fg { margin-bottom:16px; }
+    .fg[hidden] { display:none !important; }
     .fg label { display:block; font-size:13px; font-weight:800; color:var(--slate); margin-bottom:7px; }
     .fg input, .fg select {
       width:100%; padding:11px 14px; border:2px solid var(--border);
@@ -383,6 +386,24 @@
       color:var(--navy); background:var(--cream); outline:none; transition:border-color .2s;
     }
     .fg input:focus, .fg select:focus { border-color:var(--purple); background:white; }
+    .manual-school-toggle {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      margin:-4px 0 14px;
+      color:var(--slate);
+      font-size:13px;
+      font-weight:900;
+    }
+    .manual-school-toggle input {
+      width:18px;
+      height:18px;
+      accent-color:var(--purple);
+    }
+    .manual-school-toggle.disabled {
+      opacity:.55;
+      cursor:not-allowed;
+    }
 
     .start-btn {
       width:100%; padding:14px; background:linear-gradient(135deg,var(--purple),var(--purple-light));
@@ -401,7 +422,8 @@
       .sinif-btn-num { font-size:44px; }
       .steps-wrap { padding:24px 16px; }
       .giris-card { padding:22px; }
-      .form-row-2 { grid-template-columns:1fr; }
+      .form-row-2,
+      .form-row-3 { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -545,15 +567,31 @@
           </div>
         </div>
 
-        <div class="form-row-2">
+        <div class="form-row-3">
           <div class="fg">
             <label>İl *</label>
             <select id="kullanici_il"></select>
           </div>
           <div class="fg">
-            <label>Okul *</label>
-            <input type="text" id="kullanici_okul" placeholder="Okul adını yazın" autocomplete="organization" maxlength="90">
+            <label>İlçe *</label>
+            <select id="kullanici_ilce" disabled>
+              <option value="">Önce il seçin</option>
+            </select>
           </div>
+          <div class="fg">
+            <label>Okul *</label>
+            <select id="kullanici_okul" autocomplete="organization" disabled>
+              <option value="">Önce il ve ilçe seçin</option>
+            </select>
+          </div>
+        </div>
+        <label class="manual-school-toggle disabled" id="okumaOkulListedeYokLabel" for="okumaOkulListedeYok">
+          <input id="okumaOkulListedeYok" type="checkbox" disabled>
+          Okulum listede yok
+        </label>
+        <div class="fg" id="okumaManuelOkulAlani" hidden>
+          <label>Okul Adı *</label>
+          <input type="text" id="kullanici_okul_manual" placeholder="Okulunuzun tam adını yazın" autocomplete="organization" maxlength="120" disabled>
         </div>
 
         <button class="start-btn" onclick="okumaBaslat()">🚀 Okumaya Başla!</button>
@@ -564,6 +602,8 @@
 
   <script src="/js/site-data.js?v=20260418-2"></script>
   <script src="/js/site.js?v=20260418-2"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/meb-schools.js"></script>
   <script src="/js/content-progress.js?v=20260418-2"></script>
   <script>
     const sbConfig = window.kemalSiteStore.getReadingConfig
@@ -578,6 +618,7 @@
       ? window.kemalSiteStore.getTurkeyCities()
       : [];
     const LOW_QUALITY_TOKENS = ['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
+    const SCHOOL_MISSING_VALUE = '__manual_school__';
     window.kemalReadingAuth = window.kemalReadingAuth || {
       enabled: false,
       entrySelector: '[data-auth-entry="reading-report"]',
@@ -620,6 +661,177 @@
       select.innerHTML = '<option value="">Seç…</option>' + TR_CITIES.map(function(city) {
         return '<option value="' + escHtml(city) + '">' + escHtml(city) + '</option>';
       }).join('');
+    }
+
+    async function populateDistrictSelect() {
+      const city = document.getElementById('kullanici_il')?.value || '';
+      const districtSelect = document.getElementById('kullanici_ilce');
+      const schoolSelect = document.getElementById('kullanici_okul');
+      const missingCheckbox = document.getElementById('okumaOkulListedeYok');
+      const missingLabel = document.getElementById('okumaOkulListedeYokLabel');
+      if (!districtSelect) return;
+      districtSelect.innerHTML = '<option value="">İlçe yükleniyor...</option>';
+      districtSelect.disabled = true;
+      if (schoolSelect) {
+        schoolSelect.innerHTML = '<option value="">Önce il ve ilçe seçin</option>';
+        schoolSelect.disabled = true;
+      }
+      if (missingCheckbox) {
+        missingCheckbox.checked = false;
+        missingCheckbox.disabled = true;
+      }
+      if (missingLabel) missingLabel.classList.add('disabled');
+      syncManualSchoolField();
+      if (!city || !window.kemalMebSchools) {
+        districtSelect.innerHTML = '<option value="">Önce il seçin</option>';
+        return;
+      }
+      const districts = await window.kemalMebSchools.getDistricts(city);
+      districtSelect.innerHTML = '<option value="">İlçe seçin</option>' + districts.map(function(district) {
+        return '<option value="' + escHtml(district) + '">' + escHtml(district) + '</option>';
+      }).join('');
+      districtSelect.disabled = !districts.length;
+    }
+
+    function appendManualSchoolOption(select) {
+      if (!select) return;
+      select.insertAdjacentHTML('beforeend', '<option value="' + SCHOOL_MISSING_VALUE + '">Okulum listede yok</option>');
+    }
+
+    function syncManualSchoolField() {
+      const schoolSelect = document.getElementById('kullanici_okul');
+      const field = document.getElementById('okumaManuelOkulAlani');
+      const input = document.getElementById('kullanici_okul_manual');
+      const missingCheckbox = document.getElementById('okumaOkulListedeYok');
+      const isManual = !!(missingCheckbox && missingCheckbox.checked) || (schoolSelect && schoolSelect.value === SCHOOL_MISSING_VALUE);
+      if (missingCheckbox) missingCheckbox.checked = isManual;
+      if (field) field.hidden = !isManual;
+      if (input) input.required = !!isManual;
+      if (input) input.disabled = !isManual;
+      if (schoolSelect) {
+        const district = document.getElementById('kullanici_ilce')?.value || '';
+        schoolSelect.disabled = isManual || !district;
+      }
+      if (!isManual && input) input.value = '';
+    }
+
+    function getSelectedSchoolName() {
+      const schoolSelect = document.getElementById('kullanici_okul');
+      const manualInput = document.getElementById('kullanici_okul_manual');
+      const missingCheckbox = document.getElementById('okumaOkulListedeYok');
+      if ((missingCheckbox && missingCheckbox.checked) || (schoolSelect && schoolSelect.value === SCHOOL_MISSING_VALUE)) {
+        return collapseSpaces(manualInput && manualInput.value);
+      }
+      return collapseSpaces(schoolSelect && schoolSelect.value);
+    }
+
+    async function loadSchoolSuggestions() {
+      const city = document.getElementById('kullanici_il')?.value || '';
+      const district = document.getElementById('kullanici_ilce')?.value || '';
+      const schoolSelect = document.getElementById('kullanici_okul');
+      const missingCheckbox = document.getElementById('okumaOkulListedeYok');
+      const missingLabel = document.getElementById('okumaOkulListedeYokLabel');
+      if (!city || !district || !schoolSelect) return;
+      schoolSelect.innerHTML = '<option value="">Okullar yükleniyor...</option>';
+      schoolSelect.disabled = true;
+      if (missingCheckbox) {
+        missingCheckbox.checked = false;
+        missingCheckbox.disabled = true;
+      }
+      if (missingLabel) missingLabel.classList.add('disabled');
+      syncManualSchoolField();
+      try {
+        let rows = window.kemalMebSchools
+          ? await window.kemalMebSchools.loadSchools({ city: city, district: district })
+          : [];
+        if (rows.length) {
+          schoolSelect.innerHTML = '<option value="">Okul seçin</option>' + rows.map(function(school) {
+            return '<option value="' + escHtml(school.name) + '">' + escHtml(school.name) + '</option>';
+          }).join('');
+          appendManualSchoolOption(schoolSelect);
+          if (missingCheckbox) missingCheckbox.disabled = false;
+          if (missingLabel) missingLabel.classList.remove('disabled');
+          schoolSelect.disabled = false;
+          syncManualSchoolField();
+          return;
+        }
+        const result = await sb
+          .from('schools')
+          .select('name,type')
+          .eq('city', city.toLocaleUpperCase('tr-TR'))
+          .eq('district', district.toLocaleUpperCase('tr-TR'))
+          .eq('active', true)
+          .order('name', { ascending: true })
+          .limit(500);
+        if (result.error) throw result.error;
+        rows = result.data || [];
+        schoolSelect.innerHTML = '<option value="">Okul seçin</option>' + rows.map(function(school) {
+          const label = school.name + (school.type ? ' - ' + school.type : '');
+          return '<option value="' + escHtml(school.name) + '">' + escHtml(label) + '</option>';
+        }).join('');
+        appendManualSchoolOption(schoolSelect);
+        if (missingCheckbox) missingCheckbox.disabled = false;
+        if (missingLabel) missingLabel.classList.remove('disabled');
+        schoolSelect.disabled = !rows.length;
+        syncManualSchoolField();
+      } catch (error) {
+        const rows = window.kemalMebSchools
+          ? await window.kemalMebSchools.loadSchools({ city: city, district: district })
+          : [];
+        schoolSelect.innerHTML = '<option value="">Okul seçin</option>' + rows.map(function(school) {
+          return '<option value="' + escHtml(school.name) + '">' + escHtml(school.name) + '</option>';
+        }).join('');
+        appendManualSchoolOption(schoolSelect);
+        if (missingCheckbox) missingCheckbox.disabled = false;
+        if (missingLabel) missingLabel.classList.remove('disabled');
+        schoolSelect.disabled = false;
+        syncManualSchoolField();
+      }
+    }
+
+    function setValueIfEmpty(id, value) {
+      const el = document.getElementById(id);
+      if (!el || !value) return;
+      if (!el.value) el.value = value;
+    }
+
+    function setSelectByValueOrText(id, value) {
+      const el = document.getElementById(id);
+      if (!el || !value) return;
+      const raw = String(value).trim();
+      const exact = Array.from(el.options).find(option => option.value === raw);
+      const textMatch = Array.from(el.options).find(option => {
+        return option.value.toLocaleLowerCase('tr-TR') === raw.toLocaleLowerCase('tr-TR') ||
+          option.textContent.toLocaleLowerCase('tr-TR') === raw.toLocaleLowerCase('tr-TR');
+      });
+      if (!el.value && (exact || textMatch)) {
+        el.value = (exact || textMatch).value;
+      }
+    }
+
+    function prefillReaderFromAccount(options) {
+      if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== 'function') return;
+      window.kemalUserAuth.ready().then(function() {
+        const info = window.kemalUserAuth.getStudentInfo ? window.kemalUserAuth.getStudentInfo() : null;
+        if (!info || (info.role !== 'student' && info.role !== 'teacher')) return;
+        applyStudentGradeLock();
+        setValueIfEmpty('kullanici_ad', info.firstName);
+        setValueIfEmpty('kullanici_soyad', info.lastName);
+        setValueIfEmpty('kullanici_sinif', info.grade);
+        setValueIfEmpty('kullanici_sube', info.sube || (info.role === 'teacher' ? 'Öğretmen' : ''));
+        setSelectByValueOrText('kullanici_il', info.city);
+        populateDistrictSelect().then(function() {
+          setSelectByValueOrText('kullanici_ilce', info.district);
+          return loadSchoolSuggestions();
+        }).then(function() {
+          setSelectByValueOrText('kullanici_okul', info.school);
+        });
+        const autoGrade = options && options.autoGrade && info.role === 'student' && info.grade && !sharedMetinId && !seciliSinif;
+        if (autoGrade) {
+          const grade = parseInt(info.grade, 10);
+          if (Number.isFinite(grade)) sinifSec(grade);
+        }
+      });
     }
 
     function hasLowQualityText(value) {
@@ -707,8 +919,92 @@
       });
     }
 
+    function getLockedStudentGrade() {
+      if (!window.kemalUserAuth || typeof window.kemalUserAuth.getStudentGradeLevel !== 'function') return null;
+      return window.kemalUserAuth.getStudentGradeLevel();
+    }
+
+    function getMetinAccessMeta(metin) {
+      return {
+        accessScope: metin && metin.accessScope,
+        oturum_gerekli: Boolean(metin && metin.oturum_gerekli),
+      };
+    }
+
+    function isMetinPublic(metin) {
+      return !window.kemalUserAuth || typeof window.kemalUserAuth.isContentPublic !== 'function'
+        ? !Boolean(metin && metin.oturum_gerekli)
+        : window.kemalUserAuth.isContentPublic(getMetinAccessMeta(metin));
+    }
+
+    function requireMetinAccess(metin) {
+      if (!window.kemalUserAuth || typeof window.kemalUserAuth.promptRegistration !== 'function') {
+        return true;
+      }
+      return window.kemalUserAuth.promptRegistration(
+        getMetinAccessMeta(metin),
+        '/hizli-okuma/index.html?metinId=' + encodeURIComponent(metin && metin.id || '')
+      );
+    }
+
+    async function getCompleteAccountStudentInfo() {
+      if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== 'function') return null;
+      await window.kemalUserAuth.ready();
+      const info = window.kemalUserAuth.getStudentInfo ? window.kemalUserAuth.getStudentInfo() : null;
+      if (!info || (info.role !== 'student' && info.role !== 'teacher')) return null;
+      if (info.role === 'student') {
+        return info.firstName && info.lastName && info.grade && info.sube && info.city && info.school ? info : null;
+      }
+      const selectedGrade = (seciliMetin && normalizeGradeList(seciliMetin)[0]) || seciliSinif || info.grade || '';
+      return info.firstName && info.lastName ? Object.assign({}, info, {
+        grade: selectedGrade,
+        sube: info.sube || 'Öğretmen',
+        city: info.city || '-',
+        school: info.school || 'Öğretmen incelemesi',
+      }) : null;
+    }
+
+    function saveReaderInfoFromAccount(info) {
+      sessionStorage.setItem('okuma_kullanici', JSON.stringify({
+        accountUid: info.accountUid || '',
+        email: info.email || '',
+        role: info.role || '',
+        ad: capitalizeWords(info.firstName),
+        soyad: capitalizeWords(info.lastName),
+        sinif: parseInt(info.grade, 10),
+        sube: info.sube,
+        il: capitalizeWords(info.city),
+        ilce: capitalizeWords(info.district),
+        okul: collapseSpaces(info.school),
+      }));
+    }
+
+    async function startReadingDirectlyForAccount() {
+      const info = await getCompleteAccountStudentInfo();
+      if (!info) return false;
+      saveReaderInfoFromAccount(info);
+      window.location.href = '/hizli-okuma/oku.html';
+      return true;
+    }
+
+    function applyStudentGradeLock() {
+      const lockedGrade = getLockedStudentGrade();
+      if (!lockedGrade) return;
+      document.querySelectorAll('.sinif-btn').forEach(button => {
+        button.classList.toggle('grade-locked', parseInt(button.dataset.s, 10) !== lockedGrade);
+      });
+      const title = document.querySelector('#step1 h2');
+      const lead = document.querySelector('#step1 p');
+      if (title) title.textContent = '🎒 Sınıfına Uygun Metinler';
+      if (lead) lead.textContent = lockedGrade + '. sınıf hesabınla sana uygun okuma metinleri gösteriliyor.';
+    }
+
     /* ── Adım 1 → 2: Sınıf Seç ── */
     async function sinifSec(sinif) {
+      const lockedGrade = getLockedStudentGrade();
+      if (lockedGrade && parseInt(sinif, 10) !== lockedGrade) {
+        sinif = lockedGrade;
+      }
       setSinifButtonState(sinif);
       seciliSinif = sinif;
 
@@ -746,15 +1042,26 @@
       aktifSayfa = 1;
 
       // sinif sütunu VEYA siniflar dizisi içinde eşleşen metinleri çek
-      const { data, error } = await sb
+      let metinResponse = await sb
         .from('metinler')
-        .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif,olusturma_tarihi')
+        .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif,gizli,oturum_gerekli,olusturma_tarihi')
         .eq('aktif', true)
         .order('olusturma_tarihi', { ascending: false });
 
+      if (metinResponse.error && /oturum_gerekli|gizli/i.test(metinResponse.error.message || '')) {
+        metinResponse = await sb
+          .from('metinler')
+          .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif,olusturma_tarihi')
+          .eq('aktif', true)
+          .order('olusturma_tarihi', { ascending: false });
+      }
+
+      const data = metinResponse.data;
+      const error = metinResponse.error;
+
       if (error) {
         const cached = getMetinCache();
-        tumMetinlerKaynak = cached.filter(m => normalizeGradeList(m).includes(parseInt(sinif, 10)));
+        tumMetinlerKaynak = cached.filter(m => m.gizli !== true && normalizeGradeList(m).includes(parseInt(sinif, 10)));
         applyMetinFilters();
         if (tumMetinler.length) {
           list.insertAdjacentHTML('afterbegin', '<div style="margin-bottom:14px;padding:12px 14px;border:1.5px solid #FCD34D;background:#FFF7ED;border-radius:14px;color:#9A3412;font-size:13px;font-weight:700;">⚠️ Canlı veritabanına ulaşılamadı. Son kaydedilmiş metin listesi gösteriliyor.</div>');
@@ -766,6 +1073,7 @@
 
       // İstemci tarafında filtrele: sinif sütunu veya siniflar dizisi eşleşsin
       tumMetinlerKaynak = await enrichMetinQuestionCounts((data || []).filter(m => {
+        if (m.gizli === true) return false;
         return normalizeGradeList(m).includes(parseInt(sinif, 10));
       }));
       saveMetinCache(tumMetinlerKaynak);
@@ -932,7 +1240,15 @@
         const isNew = yeniMetinIdSet.has(String(m.id));
         const renk = METIN_RENKLER[(baslangic + i) % METIN_RENKLER.length];
         return `
-          <div class="metin-card ${statusMeta ? 'is-complete' : ''}" style="--metin-accent:${renk.accent};--metin-bg:${renk.bg};--metin-border:${renk.border};--metin-shadow:${renk.shadow}" onclick="metinSec('${m.id}')">
+          <div class="metin-card ${statusMeta ? 'is-complete' : ''}" style="--metin-accent:${renk.accent};--metin-bg:${renk.bg};--metin-border:${renk.border};--metin-shadow:${renk.shadow}" onclick="metinSec('${m.id}')"
+            data-reaction-type="reading"
+            data-reaction-id="${m.id}"
+            data-reaction-title="${escHtml(m.baslik)}"
+            data-reaction-href="/hizli-okuma/index.html?metinId=${encodeURIComponent(m.id)}"
+            data-reaction-grade="${seciliSinif ? seciliSinif + '. Sınıf' : ''}"
+            data-reaction-subject="Okuma Anlama"
+            data-reaction-source="Hızlı Okuma"
+            data-access-scope="${m.oturum_gerekli ? 'registered' : 'public'}">
             <div class="mc-left">
               <div class="mc-no">${baslangic + i + 1}</div>
               <span class="mc-em">${em}</span>
@@ -995,6 +1311,14 @@
 
     /* ── Adım 2 → 3: Metin Seç ── */
     async function metinSec(metinId) {
+      if (window.kemalUserAuth && typeof window.kemalUserAuth.ready === 'function') {
+        await window.kemalUserAuth.ready();
+      }
+      const listedMetin = (tumMetinlerKaynak || []).find(item => String(item.id) === String(metinId)) || getCachedMetinById(metinId);
+      if (listedMetin && !requireMetinAccess(listedMetin)) {
+        return;
+      }
+
       // Tam metni ve soruları çek
       const { data: metin, error } = await sb
         .from('metinler')
@@ -1007,6 +1331,9 @@
         selectedMetin = getMetinDetailCache(metinId);
       }
       if (!selectedMetin) { alert('Metin yüklenemedi, lütfen tekrar deneyin.'); return; }
+      if (!requireMetinAccess(selectedMetin)) {
+        return;
+      }
 
       let soruResponse = await sb
         .from('sorular')
@@ -1099,6 +1426,10 @@
       saveMetinDetailCache(selectedMetin);
       sessionStorage.setItem('okuma_metin', JSON.stringify(selectedMetin));
 
+      if (await startReadingDirectlyForAccount()) {
+        return;
+      }
+
       // Bilgilendirme paneli
       const mod = selectedMetin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
       document.getElementById('seciliMetinAdi').textContent = selectedMetin.baslik;
@@ -1108,6 +1439,7 @@
       document.getElementById('step2').style.display = 'none';
       document.getElementById('step3').style.display = 'block';
       setStep(3);
+      prefillReaderFromAccount({ autoGrade: false });
     }
 
     /* ── Okumayı Başlat ── */
@@ -1117,9 +1449,10 @@
       const sinif = document.getElementById('kullanici_sinif').value;
       const sube  = document.getElementById('kullanici_sube').value;
       const il    = document.getElementById('kullanici_il').value.trim();
-      const okul  = document.getElementById('kullanici_okul').value.trim();
+      const ilce  = document.getElementById('kullanici_ilce').value.trim();
+      const okul  = getSelectedSchoolName();
 
-      if (!ad || !soyad || !sinif || !sube || !il || !okul) {
+      if (!ad || !soyad || !sinif || !sube || !il || !ilce || !okul) {
         alert('Lütfen tüm alanları doldurun!');
         return;
       }
@@ -1132,12 +1465,17 @@
         return;
       }
 
+      const authInfo = window.kemalUserAuth && window.kemalUserAuth.getStudentInfo ? window.kemalUserAuth.getStudentInfo() : null;
       sessionStorage.setItem('okuma_kullanici', JSON.stringify({
+        accountUid: authInfo && (authInfo.role === 'student' || authInfo.role === 'teacher') ? authInfo.accountUid : '',
+        email: authInfo && (authInfo.role === 'student' || authInfo.role === 'teacher') ? authInfo.email : '',
+        role: authInfo && authInfo.role ? authInfo.role : '',
         ad: capitalizeWords(ad),
         soyad: capitalizeWords(soyad),
         sinif: parseInt(sinif),
         sube,
         il: capitalizeWords(il),
+        ilce: capitalizeWords(ilce),
         okul: collapseSpaces(okul)
       }));
       window.location.href = '/hizli-okuma/oku.html';
@@ -1164,14 +1502,24 @@
       });
     }
 
-    function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
     async function resolveSharedMetin(metinId) {
-      const { data, error } = await sb
+      let response = await sb
         .from('metinler')
-        .select('id, baslik, sinif, siniflar, aktif')
+        .select('id, baslik, sinif, siniflar, aktif, gizli, oturum_gerekli')
         .eq('id', metinId)
         .maybeSingle();
+      if (response.error && /oturum_gerekli|gizli/i.test(response.error.message || '')) {
+        response = await sb
+          .from('metinler')
+          .select('id, baslik, sinif, siniflar, aktif')
+          .eq('id', metinId)
+          .maybeSingle();
+      }
+
+      const data = response.data;
+      const error = response.error;
 
       if (!error && data) {
         return data;
@@ -1192,6 +1540,12 @@
         alert('Paylaşılan okuma bağlantısı artık aktif değil veya bulunamadı.');
         return;
       }
+      if (window.kemalUserAuth && typeof window.kemalUserAuth.ready === 'function') {
+        await window.kemalUserAuth.ready();
+      }
+      if (!requireMetinAccess(sharedMetin)) {
+        return;
+      }
 
       const grades = normalizeGradeList(sharedMetin);
       const targetGrade = grades[0];
@@ -1199,12 +1553,46 @@
         alert('Bu metin için sınıf bilgisi bulunamadı.');
         return;
       }
+      const lockedGrade = getLockedStudentGrade();
+      if (lockedGrade && targetGrade !== lockedGrade && !isMetinPublic(sharedMetin)) {
+        await sinifSec(lockedGrade);
+        return;
+      }
 
       await sinifSec(targetGrade);
       await metinSec(sharedMetin.id);
     }
 
-    handleSharedMetinLink();
+    handleSharedMetinLink().then(function() {
+      prefillReaderFromAccount({ autoGrade: true });
+    });
+    const readingCitySelect = document.getElementById('kullanici_il');
+    if (readingCitySelect) {
+      readingCitySelect.addEventListener('change', populateDistrictSelect);
+    }
+    const readingDistrictSelect = document.getElementById('kullanici_ilce');
+    if (readingDistrictSelect) {
+      readingDistrictSelect.addEventListener('change', loadSchoolSuggestions);
+    }
+    const readingSchoolSelect = document.getElementById('kullanici_okul');
+    if (readingSchoolSelect) {
+      readingSchoolSelect.addEventListener('change', syncManualSchoolField);
+    }
+    const readingMissingSchool = document.getElementById('okumaOkulListedeYok');
+    if (readingMissingSchool) {
+      readingMissingSchool.addEventListener('change', function() {
+        const schoolSelect = document.getElementById('kullanici_okul');
+        if (!readingMissingSchool.checked && schoolSelect && schoolSelect.value === SCHOOL_MISSING_VALUE) {
+          schoolSelect.value = '';
+        }
+        syncManualSchoolField();
+      });
+    }
+    window.addEventListener('kemal-user-auth-ready', applyStudentGradeLock);
+    window.addEventListener('kemal-user-auth-changed', function() {
+      applyStudentGradeLock();
+      prefillReaderFromAccount({ autoGrade: false });
+    });
   </script>
 </body>
 </html>

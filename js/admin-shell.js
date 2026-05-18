@@ -12,6 +12,7 @@
           children: [
             { key: 'main-overview', label: 'Genel Bakış', href: '/admin/index.html#overview' },
             { key: 'main-analytics', label: 'Site Analizleri', href: '/admin/index.html#analytics' },
+            { key: 'main-reactions', label: 'Beğeni Analizi', href: '/admin/index.html#reactions' },
             { key: 'main-duyurular', label: 'Duyurular', href: '/admin/index.html#duyurular' },
             { key: 'main-badges', label: 'YENİ Rozetleri', href: '/admin/index.html#badges' },
             { key: 'main-hizli', label: 'Hızlı Erişim', href: '/admin/index.html#hizli' },
@@ -99,6 +100,7 @@
   const NAV_PERMISSION_MAP = {
     'main-overview': ['site_admin_dashboard'],
     'main-analytics': ['site_admin_dashboard'],
+    'main-reactions': ['site_admin_dashboard'],
     'main-duyurular': ['site_admin_dashboard'],
     'main-badges': ['site_admin_dashboard'],
     'main-hizli': ['site_admin_dashboard'],

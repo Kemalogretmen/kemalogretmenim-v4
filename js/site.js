@@ -231,6 +231,16 @@
     finishSent: false,
     heartbeatTimer: 0,
   };
+  const siteSearchState = {
+    bound: false,
+    loading: false,
+    items: null,
+    query: '',
+  };
+  let contentFeedScriptPromise = null;
+  let contentReactionsScriptPromise = null;
+  let contentSavesScriptPromise = null;
+  let userAuthScriptPromise = null;
 
   function safeTrim(value) {
     return String(value || '')
@@ -244,6 +254,10 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function escAttr(value) {
+    return escHtml(value).replace(/'/g, '&#39;');
   }
 
   function clampText(value, maxLength) {
@@ -1059,6 +1073,315 @@
     });
   }
 
+  function ensureScript(src, globalName) {
+    if (globalName && window[globalName]) {
+      return Promise.resolve(window[globalName]);
+    }
+
+    const existing = document.querySelector('script[src="' + src + '"]');
+    if (existing) {
+      return new Promise(function(resolve, reject) {
+        if (!globalName || window[globalName]) {
+          resolve(globalName ? window[globalName] : true);
+          return;
+        }
+        existing.addEventListener('load', function() {
+          resolve(globalName ? window[globalName] : true);
+        }, { once: true });
+        existing.addEventListener('error', reject, { once: true });
+      });
+    }
+
+    return new Promise(function(resolve, reject) {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = function() {
+        resolve(globalName ? window[globalName] : true);
+      };
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  }
+
+  function ensureContentFeed() {
+    if (window.kemalContentFeed) {
+      return Promise.resolve(window.kemalContentFeed);
+    }
+    if (!contentFeedScriptPromise) {
+      contentFeedScriptPromise = ensureScript('/js/content-feed.js', 'kemalContentFeed');
+    }
+    return contentFeedScriptPromise;
+  }
+
+  function ensureContentReactions() {
+    if (window.kemalContentReactions) {
+      return Promise.resolve(window.kemalContentReactions);
+    }
+    if (!contentReactionsScriptPromise) {
+      contentReactionsScriptPromise = ensureScript('/js/content-reactions.js', 'kemalContentReactions')
+        .catch(function() {
+          return null;
+        });
+    }
+    return contentReactionsScriptPromise;
+  }
+
+  function ensureContentSaves() {
+    if (window.kemalContentSaves) {
+      return Promise.resolve(window.kemalContentSaves);
+    }
+    if (!contentSavesScriptPromise) {
+      contentSavesScriptPromise = ensureScript('/js/content-saves.js', 'kemalContentSaves')
+        .catch(function() {
+          return null;
+        });
+    }
+    return contentSavesScriptPromise;
+  }
+
+  function scanContentControls(root) {
+    ensureContentReactions().then(function(api) {
+      if (api && typeof api.scheduleScan === 'function') api.scheduleScan(root || document);
+    });
+    ensureContentSaves().then(function(api) {
+      if (api && typeof api.scheduleScan === 'function') api.scheduleScan(root || document);
+    });
+  }
+
+  function ensureUserAuth() {
+    if (window.kemalUserAuth) {
+      return Promise.resolve(window.kemalUserAuth);
+    }
+    if (!userAuthScriptPromise) {
+      userAuthScriptPromise = ensureScript('/js/user-auth.js', 'kemalUserAuth')
+        .catch(function() {
+          return null;
+        });
+    }
+    return userAuthScriptPromise;
+  }
+
+  function getStaticSearchItems() {
+    return [
+      { uid: 'static:home', title: 'Ana Sayfa', href: '/index.html', icon: '🏠', gradeLabel: 'Genel', subjectLabel: 'Başlangıç', contentTypeLabel: 'Sayfa' },
+      { uid: 'static:latest', title: 'Yeni İçerikler', href: '/yeni.html', icon: '🌟', gradeLabel: 'Genel', subjectLabel: 'Güncel', contentTypeLabel: 'Liste' },
+      { uid: 'static:reading', title: 'Hızlı Okuma Merkezi', href: '/hizli-okuma/index.html', icon: '📖', gradeLabel: '1-8. Sınıf', subjectLabel: 'Okuma Anlama', contentTypeLabel: 'Merkez' },
+      { uid: 'static:games', title: 'Eğitim Oyunları', href: '/oyun/oyunlar.html', icon: '🎮', gradeLabel: 'Genel', subjectLabel: 'Oyunlar', contentTypeLabel: 'Merkez' },
+      { uid: 'static:exams', title: 'Sınav Merkezi', href: '/sinav_sitesi/index.html', icon: '📝', gradeLabel: '1-8. Sınıf', subjectLabel: 'Deneme ve Test', contentTypeLabel: 'Merkez' },
+      { uid: 'static:tools', title: 'Öğretmen Araçları', href: '/ogretmen-araclari.html', icon: '⏱️', gradeLabel: 'Öğretmen', subjectLabel: 'Araçlar', contentTypeLabel: 'Sayfa' },
+      { uid: 'static:certificate-studio', title: 'Belge ve Sertifika Stüdyosu', href: '/ogretmen/belge-studyo.html', icon: '🏅', gradeLabel: 'Öğretmen', subjectLabel: 'Belge Tasarımı', contentTypeLabel: 'Araç' },
+      { uid: 'static:plan', title: 'Öğretmen Ders Programı', href: '/ogretmen-ders-plani.html', icon: '📅', gradeLabel: 'Öğretmen', subjectLabel: 'Planlama', contentTypeLabel: 'Araç' },
+      { uid: 'static:about', title: 'Hakkımda', href: '/hakkimda.html', icon: '👨‍🏫', gradeLabel: 'Genel', subjectLabel: 'Kemal Öğretmen', contentTypeLabel: 'Sayfa' },
+      { uid: 'static:contact', title: 'İletişim', href: '/iletisim.html', icon: '✉️', gradeLabel: 'Genel', subjectLabel: 'Destek', contentTypeLabel: 'Sayfa' },
+      { uid: 'static:grade1', title: '1. Sınıf Paneli', href: '/siniflar/1-sinif.html', icon: '📕', gradeLabel: '1. Sınıf', subjectLabel: 'Panel', contentTypeLabel: 'Sınıf' },
+      { uid: 'static:grade2', title: '2. Sınıf Paneli', href: '/siniflar/2-sinif.html', icon: '📗', gradeLabel: '2. Sınıf', subjectLabel: 'Panel', contentTypeLabel: 'Sınıf' },
+      { uid: 'static:grade3', title: '3. Sınıf Paneli', href: '/siniflar/3-sinif.html', icon: '📘', gradeLabel: '3. Sınıf', subjectLabel: 'Panel', contentTypeLabel: 'Sınıf' },
+      { uid: 'static:grade4', title: '4. Sınıf Paneli', href: '/siniflar/4-sinif.html', icon: '📙', gradeLabel: '4. Sınıf', subjectLabel: 'Panel', contentTypeLabel: 'Sınıf' },
+      { uid: 'static:middle', title: 'Ortaokul Paneli', href: '/siniflar/ortaokul.html', icon: '🎒', gradeLabel: '5-8. Sınıf', subjectLabel: 'Panel', contentTypeLabel: 'Sınıf' },
+    ];
+  }
+
+  function normalizeSearchText(value) {
+    return safeTrim(value)
+      .toLocaleLowerCase('tr-TR')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function itemSearchBlob(item) {
+    return normalizeSearchText([
+      item.title,
+      item.gradeLabel,
+      item.subjectLabel,
+      item.contentTypeLabel,
+      item.sourceLabel,
+      item.href,
+    ].join(' '));
+  }
+
+  function getLockedStudentGrade() {
+    return window.kemalUserAuth && typeof window.kemalUserAuth.getStudentGradeLevel === 'function'
+      ? window.kemalUserAuth.getStudentGradeLevel()
+      : null;
+  }
+
+  function itemMatchesLockedGrade(item, lockedGrade) {
+    if (!lockedGrade || !item) return true;
+    if (window.kemalContentFeed && typeof window.kemalContentFeed.isPublicItem === 'function' && window.kemalContentFeed.isPublicItem(item)) {
+      return true;
+    }
+    const grades = Array.isArray(item.grades) ? item.grades : (item.grade ? [item.grade] : []);
+    if (!grades.length && !item.gradeLabel) return true;
+    return grades.some(function(grade) {
+      return String(grade) === String(lockedGrade);
+    }) || String(item.gradeLabel || '').indexOf(String(lockedGrade) + '.') === 0;
+  }
+
+  async function loadSiteSearchItems() {
+    if (siteSearchState.items) {
+      return siteSearchState.items;
+    }
+    siteSearchState.loading = true;
+    renderSiteSearch();
+
+    let dynamicItems = [];
+    try {
+      const feed = await ensureContentFeed();
+      dynamicItems = await feed.getAllItems({ forceRefresh: false });
+    } catch (error) {
+      dynamicItems = [];
+    }
+
+    const lockedGrade = getLockedStudentGrade();
+    const seen = {};
+    siteSearchState.items = getStaticSearchItems().concat(dynamicItems || []).filter(function(item) {
+      const key = (item.href || '') + '|' + (item.title || '');
+      if (!item || !item.title || seen[key]) {
+        return false;
+      }
+      if (!itemMatchesLockedGrade(item, lockedGrade)) {
+        return false;
+      }
+      seen[key] = true;
+      return true;
+    });
+    siteSearchState.loading = false;
+    renderSiteSearch();
+    return siteSearchState.items;
+  }
+
+  function buildSearchShell() {
+    return '' +
+      '<div class="site-search-overlay" id="siteSearchOverlay" aria-hidden="true">' +
+        '<div class="site-search-panel" role="dialog" aria-modal="true" aria-labelledby="siteSearchTitle">' +
+          '<div class="site-search-head">' +
+            '<div>' +
+              '<div class="site-search-kicker">Site içi arama</div>' +
+              '<h2 id="siteSearchTitle">İçerik bul</h2>' +
+            '</div>' +
+            '<button class="site-search-close" type="button" id="siteSearchClose" aria-label="Aramayı kapat">×</button>' +
+          '</div>' +
+          '<label class="site-search-box" for="siteSearchInput">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.2-4.2"></path></svg>' +
+            '<input id="siteSearchInput" type="search" autocomplete="off" placeholder="Doküman, test, okuma metni veya oyun ara">' +
+          '</label>' +
+          '<div class="site-search-status" id="siteSearchStatus">Aramak için en az 2 harf yaz.</div>' +
+          '<div class="site-search-results" id="siteSearchResults"></div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderSiteSearch() {
+    const status = document.getElementById('siteSearchStatus');
+    const results = document.getElementById('siteSearchResults');
+    const input = document.getElementById('siteSearchInput');
+    if (!status || !results || !input) {
+      return;
+    }
+
+    const query = normalizeSearchText(input.value);
+    siteSearchState.query = query;
+    if (siteSearchState.loading) {
+      status.textContent = 'İçerikler taranıyor...';
+      results.innerHTML = '';
+      return;
+    }
+    if (query.length < 2) {
+      status.textContent = 'Aramak için en az 2 harf yaz.';
+      results.innerHTML = '';
+      return;
+    }
+
+    const items = (siteSearchState.items || []).filter(function(item) {
+      return itemSearchBlob(item).indexOf(query) !== -1;
+    }).slice(0, 36);
+
+    status.textContent = items.length
+      ? items.length + ' sonuç bulundu'
+      : 'Sonuç bulunamadı';
+
+    results.innerHTML = items.length
+      ? items.map(function(item) {
+        return '' +
+          '<a class="site-search-result" href="' + escAttr(item.href || '#') + '" data-access-scope="' + escAttr(item.accessScope || 'public') + '">' +
+            '<span class="site-search-result-icon">' + escHtml(item.icon || '📄') + '</span>' +
+            '<span class="site-search-result-copy">' +
+              '<strong>' + escHtml(item.title || 'İçerik') + '</strong>' +
+              '<small>' + escHtml([item.gradeLabel, item.subjectLabel, item.contentTypeLabel || item.sourceLabel].filter(Boolean).join(' · ')) + '</small>' +
+            '</span>' +
+          '</a>';
+      }).join('')
+      : '<div class="site-search-empty">Bu kelimeyle eşleşen içerik bulunamadı.</div>';
+  }
+
+  function openSiteSearch() {
+    const overlay = document.getElementById('siteSearchOverlay');
+    const input = document.getElementById('siteSearchInput');
+    if (!overlay || !input) {
+      return;
+    }
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    window.setTimeout(function() {
+      input.focus();
+      input.select();
+    }, 40);
+    loadSiteSearchItems();
+  }
+
+  function closeSiteSearch() {
+    const overlay = document.getElementById('siteSearchOverlay');
+    if (!overlay) {
+      return;
+    }
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function initSiteSearch() {
+    const trigger = document.getElementById('siteSearchOpen');
+    const overlay = document.getElementById('siteSearchOverlay');
+    const close = document.getElementById('siteSearchClose');
+    const input = document.getElementById('siteSearchInput');
+    if (!trigger || !overlay || !close || !input || trigger.dataset.bound === '1') {
+      return;
+    }
+
+    trigger.dataset.bound = '1';
+    trigger.addEventListener('click', function(event) {
+      event.preventDefault();
+      openSiteSearch();
+    });
+    close.addEventListener('click', closeSiteSearch);
+    overlay.addEventListener('click', function(event) {
+      if (event.target === overlay) {
+        closeSiteSearch();
+      }
+    });
+    input.addEventListener('input', function() {
+      loadSiteSearchItems().then(renderSiteSearch);
+    });
+
+    if (!document.body.dataset.kemalSearchKeyBound) {
+      document.body.dataset.kemalSearchKeyBound = '1';
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeSiteSearch();
+        }
+        if (
+          (event.key === '/' || (event.key && event.key.toLocaleLowerCase('tr-TR') === 'k' && (event.metaKey || event.ctrlKey))) &&
+          !event.target.closest('input, textarea, select, [contenteditable="true"]')
+        ) {
+          event.preventDefault();
+          openSiteSearch();
+        }
+      });
+    }
+  }
+
   function buildExtraMenuItems(data) {
     const extraMenus = Array.isArray(data.ekMenuler)
       ? data.ekMenuler.filter(function(item) {
@@ -1078,6 +1401,97 @@
     return extraMenus.map(function(item) {
       return '<li class="nav-item nav-item-extra"><a href="' + item.url + '" class="nav-btn">' + item.ad + '</a></li>';
     }).join('');
+  }
+
+  function buildAccountBar() {
+    return '<div class="site-account-bar" id="siteAccountBar">' +
+      '<div class="site-account-inner">' +
+        '<span id="siteAccountSummary">Hesap bilgisi kontrol ediliyor…</span>' +
+        '<span class="site-account-sep" id="siteAccountSep">•</span>' +
+        '<a class="site-account-link strong" id="siteAccountPrimary" href="/giris.html">Giriş Yap</a>' +
+        '<a class="site-account-link" id="siteAccountSecondary" href="/kayit.html">Kayıt Ol</a>' +
+        '<button class="site-account-link site-account-button" id="siteAccountLogout" type="button" hidden>Çıkış</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function getAccountPanelHref(profile) {
+    if (window.kemalUserAuth && typeof window.kemalUserAuth.getPanelHref === 'function') {
+      return window.kemalUserAuth.getPanelHref(profile);
+    }
+    if (profile && profile.role === 'teacher') return '/ogretmen-paneli.html';
+    if (profile && profile.role === 'student') return '/ogrenci-paneli.html';
+    return '/giris.html';
+  }
+
+  function renderAccountBar(authState) {
+    const summary = document.getElementById('siteAccountSummary');
+    const primary = document.getElementById('siteAccountPrimary');
+    const secondary = document.getElementById('siteAccountSecondary');
+    const logout = document.getElementById('siteAccountLogout');
+    const sep = document.getElementById('siteAccountSep');
+    if (!summary || !primary || !secondary || !logout) {
+      return;
+    }
+
+    const state = authState || (window.kemalUserAuth && window.kemalUserAuth.getState ? window.kemalUserAuth.getState() : {});
+    const user = state && state.user;
+    const profile = state && state.profile;
+
+    if (user) {
+      const displayName = window.kemalUserAuth && window.kemalUserAuth.getDisplayName
+        ? window.kemalUserAuth.getDisplayName()
+        : ((profile && profile.full_name) || user.email || 'Hesabım');
+      summary.textContent = 'Merhaba, ' + displayName;
+      primary.textContent = 'Hesabım';
+      primary.href = getAccountPanelHref(profile);
+      secondary.textContent = profile && profile.role === 'teacher' ? 'Öğretmen Paneli' : 'Öğrenci Paneli';
+      secondary.href = getAccountPanelHref(profile);
+      logout.hidden = false;
+      if (sep) sep.hidden = false;
+      return;
+    }
+
+    summary.textContent = 'İlerlemeni saklamak için öğrenci hesabınla giriş yap.';
+    primary.textContent = 'Giriş Yap';
+    primary.href = '/giris.html';
+    secondary.textContent = 'Kayıt Ol';
+    secondary.href = '/kayit.html';
+    logout.hidden = true;
+    if (sep) sep.hidden = false;
+  }
+
+  function initSiteAccount() {
+    const logout = document.getElementById('siteAccountLogout');
+    if (document.body && document.body.dataset.kemalAccountBound !== '1') {
+      document.body.dataset.kemalAccountBound = '1';
+      window.addEventListener('kemal-user-auth-changed', function(event) {
+        renderAccountBar(event.detail || {});
+      });
+    }
+    if (logout && logout.dataset.bound !== '1') {
+      logout.dataset.bound = '1';
+      logout.addEventListener('click', function() {
+        ensureUserAuth().then(function(api) {
+          if (api && typeof api.signOut === 'function') {
+            api.signOut().then(function() {
+              renderAccountBar();
+              if (/\/(ogrenci-paneli|ogretmen-paneli)\.html$/.test(window.location.pathname)) {
+                window.location.href = '/giris.html';
+              }
+            });
+          }
+        });
+      });
+    }
+
+    ensureUserAuth().then(function(api) {
+      if (!api) {
+        renderAccountBar({ user: null, profile: null });
+        return;
+      }
+      return api.ready().then(renderAccountBar);
+    });
   }
 
   function buildNavbar(data) {
@@ -1118,6 +1532,10 @@
         '<img src="/gorseller/logo.png" alt="Kemal Öğretmenim" onerror="this.style.display=\'none\'">' +
         'Kemal Öğretmenim' +
       '</a>' +
+      '<button class="site-search-trigger" id="siteSearchOpen" type="button" aria-label="Site içinde ara">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.2-4.2"></path></svg>' +
+        '<span>Ara</span>' +
+      '</button>' +
       '<button class="hamburger" id="hamBtn" aria-label="Menüyü Aç/Kapat">' +
         '<span></span><span></span><span></span>' +
       '</button>' +
@@ -1142,6 +1560,7 @@
             '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
             '<a href="/ogretmen-ders-plani.html" class="dd-item"><span class="dd-icon">📅</span> Ders Programı</a>' +
             '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
+            '<a href="/ogretmen/belge-studyo.html" class="dd-item"><span class="dd-icon">🏅</span> Belge ve Sertifika Stüdyosu</a>' +
             '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
           '</div>' +
         '</li>' +
@@ -1235,7 +1654,7 @@
     }
 
     announceTarget.innerHTML = buildAnnounce(data);
-    navTarget.innerHTML = buildNavbar(data);
+    navTarget.innerHTML = buildAccountBar() + buildNavbar(data) + buildSearchShell();
     footerTarget.innerHTML = buildFooter();
   }
 
@@ -1539,6 +1958,9 @@
 
     if (isChromeEnabled()) {
       renderChrome(initialData);
+      initSiteSearch();
+      initSiteAccount();
+      scanContentControls(document);
     }
     repairLegacyLinks(document);
     initHamburger();
@@ -1556,6 +1978,9 @@
     await fetchDynamicMenuItems();
     if (isChromeEnabled()) {
       renderChrome(remoteData);
+      initSiteSearch();
+      initSiteAccount();
+      scanContentControls(document);
     }
     injectDynamicClassCards();
     repairLegacyLinks(document);
@@ -1581,6 +2006,9 @@
     const saved = await window.kemalSiteStore.saveSiteData(data, accessToken);
     if (isChromeEnabled()) {
       renderChrome(saved);
+      initSiteSearch();
+      initSiteAccount();
+      scanContentControls(document);
     }
     repairLegacyLinks(document);
     initHamburger();
@@ -1591,6 +2019,9 @@
   const seoState = initSeo();
   initAnalytics();
   const ready = hydrateChrome();
+  window.addEventListener('kemal-user-auth-changed', function() {
+    siteSearchState.items = null;
+  });
 
   window.kemalSiteRoutes = {
     buildSubjectUrl: buildSubjectUrl,
@@ -1611,6 +2042,9 @@
       const data = await getDataAsync();
       if (isChromeEnabled()) {
         renderChrome(data);
+        initSiteSearch();
+        initSiteAccount();
+        scanContentControls(document);
       }
       await fetchDynamicMenuItems();
       injectDynamicClassCards();

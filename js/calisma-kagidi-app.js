@@ -169,6 +169,27 @@
         description: qs('worksheetDesc').textContent,
       });
     }
+    mountWorksheetReaction();
+  }
+
+  function mountWorksheetReaction() {
+    var target = document.querySelector('.hero-inner > div');
+    if (!target || !state.documentId || !state.documentRow || !window.kemalContentReactions) {
+      return;
+    }
+    var existing = target.querySelector('.worksheet-reaction-slot');
+    if (existing) {
+      existing.remove();
+    }
+    window.kemalContentReactions.mount(target, {
+      contentType: 'worksheet',
+      contentId: state.documentId,
+      title: state.documentRow.baslik || 'Calisma kagidi',
+      href: '/calisma-kagidi.html?id=' + encodeURIComponent(state.documentId),
+      grade: state.documentRow.sinifLabel || '',
+      subject: state.documentRow.dersLabel || '',
+      sourceLabel: 'Çalışma Kağıdı',
+    }, { className: 'worksheet-reaction-slot' });
   }
 
   function syncInfoCards() {
@@ -301,12 +322,40 @@
   }
 
   function getStudentPayload() {
+    var authInfo = window.kemalUserAuth && window.kemalUserAuth.getStudentInfo
+      ? window.kemalUserAuth.getStudentInfo()
+      : null;
     return {
+      accountUid: authInfo && authInfo.role === 'student' ? authInfo.accountUid : '',
+      email: authInfo && authInfo.role === 'student' ? authInfo.email : '',
       ad: qs('studentName').value.trim(),
       soyad: qs('studentSurname').value.trim(),
       sinif: qs('studentGrade').value.trim(),
       sube: qs('studentSection').value.trim(),
     };
+  }
+
+  function setValueIfEmpty(id, value) {
+    var el = qs(id);
+    if (el && !el.value && value) {
+      el.value = value;
+    }
+  }
+
+  function prefillStudentFromAccount() {
+    if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== 'function') {
+      return;
+    }
+    window.kemalUserAuth.ready().then(function() {
+      var info = window.kemalUserAuth.getStudentInfo ? window.kemalUserAuth.getStudentInfo() : null;
+      if (!info || info.role !== 'student') {
+        return;
+      }
+      setValueIfEmpty('studentName', info.firstName);
+      setValueIfEmpty('studentSurname', info.lastName);
+      setValueIfEmpty('studentGrade', info.grade);
+      setValueIfEmpty('studentSection', info.sube);
+    });
   }
 
   function showResult(result) {
@@ -336,6 +385,7 @@
       grade: state.documentRow.sinif || '',
       subject: state.documentRow.ders || '',
       meta: {
+        accountUid: getStudentPayload().accountUid || '',
         score100: result && result.puan_100luk ? result.puan_100luk : 0,
         passed: Boolean(result && result.gecti),
       },
@@ -398,6 +448,8 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     bindUi();
+    prefillStudentFromAccount();
+    window.addEventListener('kemal-user-auth-changed', prefillStudentFromAccount);
     loadData()
       .then(renderPages)
       .catch(function(error) {

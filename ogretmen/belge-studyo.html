@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Belge ve Sertifika Stüdyosu | Kemal Öğretmenim</title>
+  <meta name="description" content="Öğretmenler için hazır şablonlarla hızlı sertifika, teşekkür belgesi ve sınıf içi ödül tasarlama aracı.">
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/belge-studyo.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="/js/belge-studyo.js" defer></script>
+</head>
+<body>
+  <div class="studio-app">
+    <header class="studio-topbar">
+      <a class="studio-brand" href="/ogretmen-araclari.html" aria-label="Öğretmen araçlarına dön">
+        <img src="/gorseller/logo.png" alt="Kemal Öğretmenim">
+        <span>
+          <strong>Belge ve Sertifika Stüdyosu</strong>
+          <small>Hazır şablonlarla hızlı belge oluştur</small>
+        </span>
+      </a>
+
+      <div class="top-tools" aria-label="Düzenleme araçları">
+        <button class="icon-btn" type="button" id="undoBtn" title="Geri al">↶</button>
+        <button class="icon-btn" type="button" id="redoBtn" title="İleri al">↷</button>
+        <span class="tool-sep"></span>
+        <button class="icon-btn" type="button" id="zoomOutBtn" title="Uzaklaştır">−</button>
+        <span class="zoom-label" id="zoomLabel">72%</span>
+        <button class="icon-btn" type="button" id="zoomInBtn" title="Yakınlaştır">+</button>
+        <button class="tool-btn" type="button" id="fitBtn">Sığdır</button>
+        <button class="tool-btn" type="button" id="blankBtn">Boş Sayfa</button>
+      </div>
+
+      <div class="top-actions">
+        <a class="tool-btn" href="/ogretmen-araclari.html">Araçlar</a>
+        <button class="export-btn print" type="button" id="printBtn">Yazdır</button>
+        <button class="export-btn png" type="button" id="pngBtn">PNG</button>
+        <button class="export-btn pdf" type="button" id="pdfBtn">PDF</button>
+      </div>
+    </header>
+
+    <div class="studio-layout">
+      <aside class="studio-sidebar left-panel">
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Hızlı Ekle</h2>
+            <span>metin, görsel, şekil</span>
+          </div>
+          <div class="quick-grid">
+            <button class="quick-card" type="button" id="addTextBtn">
+              <strong>Metin</strong>
+              <span>Başlık, ad soyad, açıklama</span>
+            </button>
+            <label class="quick-card" for="imageInput">
+              <strong>Görsel</strong>
+              <span>Fotoğraf, logo, imza yükle</span>
+            </label>
+            <input id="imageInput" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple>
+            <button class="quick-card" type="button" id="addBadgeBtn">
+              <strong>Rozet</strong>
+              <span>Başarı vurgusu ve mühür</span>
+            </button>
+            <button class="quick-card" type="button" id="addLineBtn">
+              <strong>Ayraç</strong>
+              <span>İmza çizgisi, bölüm ayracı</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Hazır Şablonlar</h2>
+            <span>tek tıkla başla</span>
+          </div>
+          <div class="segmented" id="templateTabs">
+            <button type="button" data-category="student" class="active">Öğrenci</button>
+            <button type="button" data-category="event">Etkinlik</button>
+            <button type="button" data-category="formal">Resmi</button>
+            <button type="button" data-category="custom">Özel</button>
+          </div>
+          <div class="template-list" id="templateList"></div>
+          <label class="template-upload" for="customTemplateInput">
+            <strong>Özel Şablon Yükle</strong>
+            <span>PNG/JPG görselini tuvale arka plan olarak ekle</span>
+          </label>
+          <input id="customTemplateInput" class="sr-only" type="file" accept="image/png,image/jpeg,image/webp" multiple>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Hazır Yazılar</h2>
+            <span>hızlı fikir</span>
+          </div>
+          <div class="quote-list" id="quoteList"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Şekiller</h2>
+            <span>tasarım ögeleri</span>
+          </div>
+          <div class="asset-grid" id="shapeGrid"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>İkonlar</h2>
+            <span>sınıf temaları</span>
+          </div>
+          <div class="asset-grid icon-grid" id="iconGrid"></div>
+        </section>
+      </aside>
+
+      <main class="studio-stage">
+        <div class="stage-strip">
+          <span>Ögeyi seçip sürükle. Üst kulp döndürür, sağ alt kulp büyütür.</span>
+          <strong id="canvasInfo">A4 Yatay</strong>
+        </div>
+        <div class="canvas-scroll" id="canvasScroll">
+          <div class="canvas-zoom" id="canvasZoom">
+            <section class="document-canvas" id="documentCanvas" aria-label="Belge tuvali"></section>
+          </div>
+        </div>
+      </main>
+
+      <aside class="studio-sidebar right-panel">
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Sayfa Ayarları</h2>
+          </div>
+          <div class="control-grid">
+            <button class="mini-btn" type="button" id="landscapeBtn">Yatay</button>
+            <button class="mini-btn" type="button" id="portraitBtn">Dikey</button>
+          </div>
+          <div class="control-grid">
+            <label class="field">
+              <span>Zemin</span>
+              <input type="color" id="pageBg" value="#fffaf2">
+            </label>
+            <label class="field">
+              <span>Çerçeve</span>
+              <input type="color" id="pageBorder" value="#d4af37">
+            </label>
+          </div>
+          <label class="field">
+            <span>Çerçeve Tipi</span>
+            <select id="pageBorderStyle">
+              <option value="double">Çift</option>
+              <option value="solid">Düz</option>
+              <option value="dashed">Kesik</option>
+              <option value="dotted">Noktalı</option>
+              <option value="none">Yok</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Öge Düzenle</h2>
+          </div>
+          <div class="empty-inspector" id="emptyInspector">
+            Düzenlemek için tuvalde bir öge seç.
+          </div>
+
+          <div class="inspector hidden" id="inspector">
+            <label class="field" id="textValueWrap">
+              <span>Metin</span>
+              <textarea id="textValue" spellcheck="false"></textarea>
+            </label>
+
+            <div class="control-grid">
+              <label class="field">
+                <span>X</span>
+                <input type="number" id="posX" step="1">
+              </label>
+              <label class="field">
+                <span>Y</span>
+                <input type="number" id="posY" step="1">
+              </label>
+            </div>
+
+            <div class="control-grid">
+              <label class="field">
+                <span>Genişlik</span>
+                <input type="number" id="itemW" min="20" step="1">
+              </label>
+              <label class="field">
+                <span>Yükseklik</span>
+                <input type="number" id="itemH" min="20" step="1">
+              </label>
+            </div>
+
+            <label class="field">
+              <span>Döndürme <output id="rotateOut">0°</output></span>
+              <input type="range" id="rotateRange" min="0" max="360" value="0">
+            </label>
+
+            <label class="field">
+              <span>Şeffaflık <output id="opacityOut">100%</output></span>
+              <input type="range" id="opacityRange" min="0.1" max="1" step="0.05" value="1">
+            </label>
+
+            <div class="control-grid" id="colorControls">
+              <label class="field">
+                <span>Renk</span>
+                <input type="color" id="itemColor" value="#1A1040">
+              </label>
+              <label class="field">
+                <span>Dolgu</span>
+                <input type="color" id="itemBg" value="#ffffff">
+              </label>
+            </div>
+
+            <div id="textControls">
+              <label class="field">
+                <span>Yazı Tipi</span>
+                <select id="fontFamily">
+                  <option value="Nunito">Nunito</option>
+                  <option value="Fredoka">Fredoka</option>
+                  <option value="Montserrat">Montserrat</option>
+                  <option value="Cinzel">Cinzel</option>
+                  <option value="Playfair Display">Playfair Display</option>
+                  <option value="Great Vibes">Great Vibes</option>
+                  <option value="Caveat">Caveat</option>
+                  <option value="Merriweather">Merriweather</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Yazı Boyutu <output id="fontSizeOut">32px</output></span>
+                <input type="range" id="fontSize" min="10" max="140" value="32">
+              </label>
+              <div class="align-row">
+                <button class="mini-btn" type="button" data-align="left">Sol</button>
+                <button class="mini-btn" type="button" data-align="center">Orta</button>
+                <button class="mini-btn" type="button" data-align="right">Sağ</button>
+              </div>
+            </div>
+
+            <div class="layer-actions">
+              <button class="mini-btn" type="button" id="bringForwardBtn">Öne</button>
+              <button class="mini-btn" type="button" id="sendBackwardBtn">Arkaya</button>
+              <button class="mini-btn" type="button" id="duplicateBtn">Kopyala</button>
+            </div>
+            <button class="danger-btn" type="button" id="deleteBtn">Seçili Ögeyi Sil</button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-head">
+            <h2>Katmanlar</h2>
+          </div>
+          <div class="layers-list" id="layersList"></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

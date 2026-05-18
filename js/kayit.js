@@ -2,12 +2,20 @@
   'use strict';
 
   const state = {
-    role: 'teacher',
+    role: 'student',
     client: null,
     locations: [],
     selectedSchools: [],
     lastSignupEmail: '',
+    completeMode: new URLSearchParams(window.location.search).get('profil') === 'tamamla',
+    existingUser: null,
+    existingProfile: null,
   };
+  const TEACHER_VERIFICATION_BUCKET = 'teacher-verifications';
+  const MAX_IMAGE_EDGE = 1600;
+  const IMAGE_QUALITY = 0.72;
+  const MAX_PDF_SIZE = 12 * 1024 * 1024;
+  const SCHOOL_MISSING_VALUE = '__manual_school__';
 
   function getConfig() {
     if (!window.kemalSiteStore || typeof window.kemalSiteStore.getConfig !== 'function') {
@@ -42,6 +50,16 @@
     return String(value || '').trim().toLocaleUpperCase('tr-TR');
   }
 
+  async function loadExternalSchools(city, district) {
+    if (!window.kemalMebSchools || typeof window.kemalMebSchools.loadSchools !== 'function') {
+      return [];
+    }
+    return window.kemalMebSchools.loadSchools({
+      city: city,
+      district: district,
+    });
+  }
+
   function escHtml(value) {
     return String(value || '')
       .replace(/&/g, '&amp;')
@@ -63,6 +81,13 @@
     }).join('');
   }
 
+  function appendManualSchoolOption(select) {
+    if (!select) {
+      return;
+    }
+    select.insertAdjacentHTML('beforeend', '<option value="' + SCHOOL_MISSING_VALUE + '">Okulum listede yok</option>');
+  }
+
   function setRole(nextRole) {
     state.role = nextRole === 'student' ? 'student' : 'teacher';
     document.querySelectorAll('.role-tab').forEach(function(tab) {
@@ -74,6 +99,11 @@
     document.querySelectorAll('.student-fields').forEach(function(field) {
       field.hidden = state.role !== 'student';
     });
+    const verificationFile = document.getElementById('teacherVerificationFile');
+    if (verificationFile) {
+      const hasExistingFile = !!(state.existingProfile && state.existingProfile.verification_file_path);
+      verificationFile.required = state.role === 'teacher' && !hasExistingFile;
+    }
   }
 
   function showMessage(type, text, actionHtml) {
@@ -138,6 +168,19 @@
     schoolSelect.disabled = true;
 
     try {
+      state.selectedSchools = await loadExternalSchools(city, district);
+      if (state.selectedSchools.length) {
+        setOptions(schoolSelect, state.selectedSchools, 'Okul seçiniz', function(school) {
+          return {
+            value: school.id,
+            label: school.name + (school.type ? ' - ' + school.type : ''),
+          };
+        });
+        appendManualSchoolOption(schoolSelect);
+        schoolSelect.disabled = false;
+        return;
+      }
+
       const result = await getClient()
         .from('schools')
         .select('id,meb_code,name,type')
@@ -157,10 +200,17 @@
           label: school.name + (school.type ? ' - ' + school.type : ''),
         };
       });
+      appendManualSchoolOption(schoolSelect);
       schoolSelect.disabled = false;
     } catch (error) {
-      state.selectedSchools = [];
-      setOptions(schoolSelect, [], 'Okul listesi henüz hazırlanmadı');
+      state.selectedSchools = await loadExternalSchools(city, district);
+      setOptions(schoolSelect, state.selectedSchools, state.selectedSchools.length ? 'Okul seçiniz' : 'Okul listesi henüz hazırlanmadı', function(school) {
+        return {
+          value: school.id,
+          label: school.name + (school.type ? ' - ' + school.type : ''),
+        };
+      });
+      appendManualSchoolOption(schoolSelect);
       schoolSelect.disabled = false;
     }
   }
@@ -170,12 +220,19 @@
     const field = document.getElementById('manualSchoolField');
     const input = document.getElementById('manualSchool');
     const schoolSelect = document.getElementById('school');
-    const isManual = !!(checkbox && checkbox.checked);
+    const isManual = !!(checkbox && checkbox.checked) || (schoolSelect && schoolSelect.value === SCHOOL_MISSING_VALUE);
+    if (checkbox) {
+      checkbox.checked = isManual;
+    }
     if (field) {
       field.hidden = !isManual;
     }
     if (input) {
       input.required = isManual;
+      input.disabled = !isManual;
+      if (!isManual) {
+        input.value = '';
+      }
     }
     if (schoolSelect) {
       schoolSelect.disabled = isManual || !normalizePlace(document.getElementById('district') && document.getElementById('district').value);
@@ -191,28 +248,153 @@
     submit.textContent = isBusy ? 'Kayıt oluşturuluyor...' : 'Kayıt Oluştur';
   }
 
+  function sanitizeFileName(name) {
+    const base = String(name || 'ogretmen-belgesi')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
+    return base || 'ogretmen-belgesi';
+  }
+
+  function getVerificationFile() {
+    const input = document.getElementById('teacherVerificationFile');
+    return input && input.files && input.files[0] ? input.files[0] : null;
+  }
+
+  function loadImage(file) {
+    return new Promise(function(resolve, reject) {
+      const url = URL.createObjectURL(file);
+      const image = new Image();
+      image.onload = function() {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      };
+      image.onerror = function() {
+        URL.revokeObjectURL(url);
+        reject(new Error('Belge görseli okunamadı.'));
+      };
+      image.src = url;
+    });
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(function(resolve, reject) {
+      canvas.toBlob(function(blob) {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Belge sıkıştırılamadı.'));
+        }
+      }, type, quality);
+    });
+  }
+
+  async function compressImageFile(file) {
+    const image = await loadImage(file);
+    const ratio = Math.min(1, MAX_IMAGE_EDGE / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+    const width = Math.max(1, Math.round((image.naturalWidth || image.width) * ratio));
+    const height = Math.max(1, Math.round((image.naturalHeight || image.height) * ratio));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+    const blob = await canvasToBlob(canvas, 'image/jpeg', IMAGE_QUALITY);
+    return {
+      blob,
+      fileName: sanitizeFileName(file.name || 'ogretmen-belgesi.jpg').replace(/\.[^.]+$/, '') + '.jpg',
+      contentType: 'image/jpeg',
+    };
+  }
+
+  async function prepareVerificationFile(file) {
+    if (!file) {
+      return null;
+    }
+    const type = String(file.type || '').toLowerCase();
+    if (type === 'image/jpeg' || type === 'image/png') {
+      return compressImageFile(file);
+    }
+    if (type === 'application/pdf' || /\.pdf$/i.test(file.name || '')) {
+      if (file.size > MAX_PDF_SIZE) {
+        throw new Error('PDF belge 12 MB altında olmalı. Lütfen dosyayı küçültüp tekrar yükleyin.');
+      }
+      return {
+        blob: file,
+        fileName: sanitizeFileName(file.name || 'ogretmen-belgesi.pdf'),
+        contentType: 'application/pdf',
+      };
+    }
+    throw new Error('Öğretmen belgesi için JPEG, PNG veya PDF yükleyebilirsin.');
+  }
+
+  async function uploadTeacherVerification(client, userId, file) {
+    const prepared = await prepareVerificationFile(file);
+    if (!prepared) {
+      return null;
+    }
+    const path = userId + '/' + Date.now() + '-' + prepared.fileName;
+    const upload = await client
+      .storage
+      .from(TEACHER_VERIFICATION_BUCKET)
+      .upload(path, prepared.blob, {
+        cacheControl: '3600',
+        contentType: prepared.contentType,
+        upsert: true,
+      });
+    if (upload.error) {
+      throw upload.error;
+    }
+    const update = await client
+      .from('user_profiles')
+      .update({
+        verification_status: 'submitted',
+        verification_file_path: path,
+        verification_file_name: prepared.fileName,
+        verification_file_type: prepared.contentType,
+        verification_submitted_at: new Date().toISOString(),
+        approval_status: 'pending',
+      })
+      .eq('id', userId);
+    if (update.error) {
+      throw update.error;
+    }
+    return path;
+  }
+
   function buildProfile(form) {
     const data = new FormData(form);
     const email = normalizeEmail(data.get('email'));
-    const fullName = String(data.get('fullName') || '').trim();
+    const firstName = String(data.get('firstName') || '').trim();
+    const lastName = String(data.get('lastName') || '').trim();
+    const fullName = [firstName, lastName].filter(Boolean).join(' ');
     const gradeValue = Number(data.get('gradeLevel') || 0);
     const schoolId = String(data.get('school') || '').trim();
     const matchedSchool = state.selectedSchools.find(function(school) {
       return String(school.id) === schoolId;
     }) || null;
-    const schoolMissing = data.get('schoolMissing') === 'on';
+    const isExternalSchool = matchedSchool && matchedSchool.external;
+    const schoolMissing = data.get('schoolMissing') === 'on' || schoolId === SCHOOL_MISSING_VALUE;
     const manualSchool = String(data.get('manualSchool') || '').trim();
 
     return {
       role: state.role,
       email,
+      first_name: firstName,
+      last_name: lastName,
       full_name: fullName,
       city: normalizePlace(data.get('city')),
       district: normalizePlace(data.get('district')),
-      school_id: schoolMissing ? null : (schoolId || null),
+      school_id: schoolMissing || isExternalSchool ? null : (schoolId || null),
       school_name: schoolMissing ? manualSchool : (matchedSchool ? matchedSchool.name : ''),
       school_missing: schoolMissing,
-      branch: state.role === 'teacher' ? String(data.get('branch') || '').trim() : '',
+      branch: state.role === 'teacher'
+        ? String(data.get('branch') || '').trim()
+        : String(data.get('studentBranch') || '').trim().toLocaleUpperCase('tr-TR'),
       grade_level: state.role === 'student' && gradeValue ? gradeValue : null,
       teacher_code: state.role === 'student' ? String(data.get('teacherCode') || '').trim() : '',
       approval_status: state.role === 'teacher' ? 'pending' : 'active',
@@ -239,13 +421,22 @@
     const formData = new FormData(form);
     const password = String(formData.get('password') || '');
     const passwordRepeat = String(formData.get('passwordRepeat') || '');
+    const verificationFile = getVerificationFile();
 
     const hasSchool = profile.school_missing ? profile.school_name : profile.school_id;
-    if (!profile.email || !profile.full_name || !profile.city || !profile.district || !hasSchool || password.length < 6) {
-      showMessage('err', 'Ad soyad, e-posta, il, ilçe, okul ve en az 6 karakter şifre gerekli.');
+    if (!profile.email || !profile.first_name || !profile.last_name || !profile.city || !profile.district || !hasSchool || (profile.role === 'student' && !profile.grade_level) || (!state.completeMode && password.length < 6)) {
+      showMessage('err', 'Ad, soyad, e-posta, sınıf, il, ilçe, okul ve en az 6 karakter şifre gerekli.');
       return;
     }
-    if (password !== passwordRepeat) {
+    if (profile.role === 'teacher' && !profile.branch) {
+      showMessage('err', 'Öğretmen kaydı için branş seçimi gerekli.');
+      return;
+    }
+    if (profile.role === 'teacher' && !verificationFile && !(state.existingProfile && state.existingProfile.verification_file_path)) {
+      showMessage('err', 'Öğretmen hesabı için öğretmen kimliği veya çalışma belgesi yüklemelisin.');
+      return;
+    }
+    if (!state.completeMode && password !== passwordRepeat) {
       showMessage('err', 'Şifre ve şifre tekrarı aynı olmalı.');
       return;
     }
@@ -253,6 +444,20 @@
     setBusy(true);
     try {
       const client = getClient();
+      if (state.completeMode && state.existingUser && state.existingUser.id) {
+        await saveProfile(client, state.existingUser.id, profile);
+        if (profile.role === 'teacher' && verificationFile) {
+          await uploadTeacherVerification(client, state.existingUser.id, verificationFile);
+        }
+        showMessage('ok', profile.role === 'teacher'
+          ? 'Öğretmen başvurun kaydedildi. Yönetici onayından sonra öğretmen panelin aktif olacak.'
+          : 'Profil bilgilerin kaydedildi. Öğrenci paneline yönlendiriliyorsun.');
+        window.setTimeout(function() {
+          window.location.href = profile.role === 'teacher' ? '/ogretmen-paneli.html' : '/ogrenci-paneli.html';
+        }, 700);
+        return;
+      }
+
       const redirectTo = window.location.origin + '/kayit.html';
       const signup = await client.auth.signUp({
         email: profile.email,
@@ -260,6 +465,8 @@
         options: {
           emailRedirectTo: redirectTo,
           data: {
+            first_name: profile.first_name,
+            last_name: profile.last_name,
             full_name: profile.full_name,
             role: profile.role,
             city: profile.city,
@@ -283,12 +490,18 @@
       const session = signup.data && signup.data.session ? signup.data.session : null;
       if (user && user.id && session) {
         await saveProfile(client, user.id, profile);
+        if (profile.role === 'teacher' && verificationFile) {
+          await uploadTeacherVerification(client, user.id, verificationFile);
+        }
       }
 
       form.reset();
       setRole(state.role);
+      const teacherMessage = user && user.id && session
+        ? 'Öğretmen kaydı ve doğrulama belgesi alındı. E-posta doğrulama ve yönetici onayı sonrası öğretmen paneli aktif olacak.'
+        : 'Öğretmen kaydı alındı. E-posta doğrulamasından sonra giriş yapıp öğretmen panelindeki belge alanından doğrulama belgeni gönderebilirsin.';
       showMessage('ok', profile.role === 'teacher'
-        ? 'Öğretmen kaydı alındı. E-posta doğrulama bağlantısı gelen kutuna gönderildi; doğrulama ve yönetici onayı sonrası öğretmen paneli açılacak.'
+        ? teacherMessage
         : 'Öğrenci kaydı oluşturuldu. E-posta doğrulama bağlantısı gelen kutuna gönderildi; doğrulama sonrası öğrenci paneli açılacak.',
         '<br><button type="button" id="resendConfirmBtn">Doğrulama mailini tekrar gönder</button>');
     } catch (error) {
@@ -296,6 +509,8 @@
       let friendly = raw;
       if (raw.includes('Signups not allowed')) {
         friendly = 'Supabase yeni kullanıcı kaydına izin vermiyor. Authentication > Sign In / Providers ekranında "Allow new users to sign up" ayarını açıp Save changes yapmalısın.';
+      } else if (raw.includes('teacher-verifications') || raw.includes('Bucket not found') || raw.includes('storage')) {
+        friendly = 'Öğretmen belge alanı henüz Supabase içinde hazır değil. supabase-ogretmen-paneli.sql dosyasını tekrar çalıştırmalıyız.';
       } else if (raw.includes('user_profiles') || raw.includes('schools')) {
         friendly = 'Kayıt tabloları henüz hazır değil. supabase-kullanici-profilleri.sql dosyasını Supabase SQL Editor içinde çalıştırmalıyız.';
       }
@@ -330,6 +545,90 @@
     }
   }
 
+  async function continueWithGoogle() {
+    try {
+      const result = await getClient().auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin + '/kayit.html?profil=tamamla',
+        },
+      });
+      if (result.error) throw result.error;
+    } catch (error) {
+      showMessage('err', String(error && error.message ? error.message : error));
+    }
+  }
+
+  function setInputValue(id, value) {
+    const el = document.getElementById(id);
+    if (el && value !== undefined && value !== null) {
+      el.value = value;
+    }
+  }
+
+  function splitName(value) {
+    const parts = String(value || '').trim().split(/\s+/).filter(Boolean);
+    return {
+      firstName: parts.slice(0, Math.max(1, parts.length - 1)).join(' '),
+      lastName: parts.length > 1 ? parts.slice(-1).join(' ') : '',
+    };
+  }
+
+  async function loadCompletionProfile() {
+    if (!state.completeMode) {
+      return;
+    }
+    try {
+      const sessionResult = await getClient().auth.getSession();
+      const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
+      state.existingUser = session ? session.user : null;
+      if (!state.existingUser) {
+        showMessage('err', 'Profil tamamlamak için önce giriş yapmalısın.');
+        return;
+      }
+      const profileResult = await getClient()
+        .from('user_profiles')
+        .select('*')
+        .eq('id', state.existingUser.id)
+        .maybeSingle();
+      const profile = profileResult.data || {};
+      state.existingProfile = profile;
+      const meta = state.existingUser.user_metadata || {};
+      const split = splitName(profile.full_name || meta.full_name || meta.name || '');
+      setRole(profile.role === 'teacher' ? 'teacher' : 'student');
+      setInputValue('firstName', profile.first_name || meta.first_name || split.firstName);
+      setInputValue('lastName', profile.last_name || meta.last_name || split.lastName);
+      setInputValue('email', profile.email || state.existingUser.email || '');
+      setInputValue('city', profile.city || '');
+      updateDistricts();
+      setInputValue('district', profile.district || '');
+      setInputValue('gradeLevel', profile.grade_level || '');
+      setInputValue('studentBranch', profile.branch || '');
+      setInputValue('branch', profile.branch || '');
+      setInputValue('manualSchool', profile.school_name || '');
+      const schoolMissing = document.getElementById('schoolMissing');
+      if (schoolMissing && profile.school_name) {
+        schoolMissing.checked = true;
+        syncManualSchool();
+      }
+      ['password', 'passwordRepeat'].forEach(function(id) {
+        const field = document.getElementById(id);
+        if (field) {
+          field.required = false;
+          const wrap = field.closest('.form-field');
+          if (wrap) wrap.hidden = true;
+        }
+      });
+      const emailField = document.getElementById('email');
+      if (emailField) emailField.readOnly = true;
+      const submit = document.getElementById('registerSubmit');
+      if (submit) submit.textContent = 'Profilimi Kaydet';
+      showMessage('ok', 'Google hesabınla giriş yapıldı. Devam etmek için eksik profil bilgilerini tamamla.');
+    } catch (error) {
+      showMessage('err', String(error && error.message ? error.message : error));
+    }
+  }
+
   function init() {
     document.querySelectorAll('.role-tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
@@ -350,6 +649,7 @@
     const citySelect = document.getElementById('city');
     const districtSelect = document.getElementById('district');
     const schoolMissing = document.getElementById('schoolMissing');
+    const schoolSelect = document.getElementById('school');
     if (citySelect) {
       citySelect.addEventListener('change', function() {
         updateDistricts();
@@ -363,13 +663,29 @@
       });
     }
     if (schoolMissing) {
-      schoolMissing.addEventListener('change', syncManualSchool);
+      schoolMissing.addEventListener('change', function() {
+        const schoolSelect = document.getElementById('school');
+        if (!schoolMissing.checked && schoolSelect && schoolSelect.value === SCHOOL_MISSING_VALUE) {
+          schoolSelect.value = '';
+        }
+        syncManualSchool();
+      });
+    }
+    if (schoolSelect) {
+      schoolSelect.addEventListener('change', syncManualSchool);
     }
 
-    setRole('teacher');
-    loadLocations().catch(function(error) {
-      showMessage('err', error.message || 'İl/ilçe listesi yüklenemedi.');
-    });
+    const googleBtn = document.getElementById('registerGoogleBtn');
+    if (googleBtn) {
+      googleBtn.addEventListener('click', continueWithGoogle);
+    }
+
+    setRole('student');
+    loadLocations()
+      .then(loadCompletionProfile)
+      .catch(function(error) {
+        showMessage('err', error.message || 'İl/ilçe listesi yüklenemedi.');
+      });
   }
 
   if (document.readyState === 'loading') {

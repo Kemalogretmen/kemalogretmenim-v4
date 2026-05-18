@@ -82,6 +82,57 @@
     pink: { label: 'Oyunlar', color: '#D7337A', soft: '#FFF0F7', border: '#FFD0E7' },
   };
 
+  var CONTENT_TYPE_META = {
+    reading: {
+      label: 'Okuma Parçası',
+      icon: '📖',
+      color: '#6C3DED',
+      soft: '#F1ECFF',
+      border: '#D9CBFF',
+      gradient: 'linear-gradient(135deg,#6C3DED,#8B5CF6)',
+    },
+    exam: {
+      label: 'Sınav',
+      icon: '📋',
+      color: '#D35400',
+      soft: '#FFF0EC',
+      border: '#FFD0C6',
+      gradient: 'linear-gradient(135deg,#FF6052,#FF9F43)',
+    },
+    document: {
+      label: 'Doküman',
+      icon: '📄',
+      color: '#00856A',
+      soft: '#E9FFFA',
+      border: '#B7F0E6',
+      gradient: 'linear-gradient(135deg,#00A891,#00C9B1)',
+    },
+    video: {
+      label: 'Ders Videosu',
+      icon: '🎬',
+      color: '#0B78E3',
+      soft: '#ECF6FF',
+      border: '#C8E4FF',
+      gradient: 'linear-gradient(135deg,#0B78E3,#4CC9F0)',
+    },
+    game: {
+      label: 'Oyun',
+      icon: '🎮',
+      color: '#B7791F',
+      soft: '#FFF8DD',
+      border: '#FFE7A5',
+      gradient: 'linear-gradient(135deg,#FFD93D,#FF9F43)',
+    },
+    content: {
+      label: 'Yeni İçerik',
+      icon: '🌟',
+      color: '#6C3DED',
+      soft: '#F1ECFF',
+      border: '#D9CBFF',
+      gradient: 'linear-gradient(135deg,#6C3DED,#4CC9F0)',
+    },
+  };
+
   function getSiteStore() {
     return window.kemalSiteStore || null;
   }
@@ -173,6 +224,10 @@
     };
   }
 
+  function getContentTypeMeta(type) {
+    return CONTENT_TYPE_META[String(type || '').trim().toLocaleLowerCase('tr-TR')] || CONTENT_TYPE_META.content;
+  }
+
   function getGradeLabels(grades) {
     return (Array.isArray(grades) ? grades : []).map(function(grade) {
       return getGradeMeta(grade).label;
@@ -204,6 +259,22 @@
     return value ? new Date(value).toISOString() : '';
   }
 
+  function getAccessScope(row) {
+    var raw = row && (row.accessScope || row.access_scope || row.visibility || row.access);
+    if (row && (row.oturum_gerekli === true || row.authRequired === true || row.requiresAuth === true || row.login_required === true)) {
+      return 'registered';
+    }
+    var value = String(raw || '').trim().toLocaleLowerCase('tr-TR');
+    if (value.indexOf('registered') !== -1 || value.indexOf('kayit') !== -1 || value.indexOf('kayıt') !== -1 || value.indexOf('uye') !== -1 || value.indexOf('üye') !== -1 || value.indexOf('auth') !== -1 || value.indexOf('login') !== -1 || value === 'private') {
+      return 'registered';
+    }
+    return 'public';
+  }
+
+  function isPublicItem(item) {
+    return getAccessScope(item) === 'public';
+  }
+
   function buildReadingItem(row) {
     var grades = normalizeGradeList(row);
     var primaryGrade = getPrimaryGrade(grades);
@@ -222,8 +293,10 @@
       subjectLabel: subjectMeta.label,
       contentType: 'reading',
       contentTypeLabel: 'Hızlı Okuma',
-      icon: subjectMeta.icon,
+      icon: getContentTypeMeta('reading').icon,
       sourceLabel: 'Hızlı Okuma',
+      contentMeta: getContentTypeMeta('reading'),
+      accessScope: getAccessScope(row),
       createdAt: formatIso(row.olusturma_tarihi),
       createdAtValue: getTimeValue(row.olusturma_tarihi),
       palette: gradeMeta,
@@ -256,6 +329,7 @@
     var gradeMeta = getGradeMeta(primaryTarget.sinif);
     var subjectMeta = getSubjectMeta(primaryTarget.ders);
     var isVideo = row.icerik_turu === 'video';
+    var typeMeta = getContentTypeMeta(isVideo ? 'video' : 'document');
     return {
       uid: (isVideo ? 'video:' : 'document:') + row.id,
       type: isVideo ? 'video' : 'document',
@@ -269,8 +343,10 @@
       subjectLabel: subjectMeta.label,
       contentType: isVideo ? 'video' : 'document',
       contentTypeLabel: isVideo ? 'Ders Videoları' : 'Dokümanlar',
-      icon: isVideo ? '🎬' : '📄',
+      icon: typeMeta.icon,
       sourceLabel: isVideo ? 'Ders Videosu' : 'Doküman',
+      contentMeta: typeMeta,
+      accessScope: getAccessScope(row),
       createdAt: formatIso(row.olusturma_tarihi),
       createdAtValue: getTimeValue(row.olusturma_tarihi),
       palette: gradeMeta,
@@ -284,6 +360,7 @@
   function buildExamItem(row, id) {
     var gradeMeta = getGradeMeta(row.grade);
     var subjectMeta = getSubjectMeta(row.subject);
+    var typeMeta = getContentTypeMeta('exam');
     return {
       uid: 'exam:' + id,
       type: 'exam',
@@ -297,8 +374,10 @@
       subjectLabel: subjectMeta.label,
       contentType: 'exam',
       contentTypeLabel: 'Sınavlar',
-      icon: '📝',
+      icon: typeMeta.icon,
       sourceLabel: 'Sınav',
+      contentMeta: typeMeta,
+      accessScope: getAccessScope(row),
       createdAt: formatIso(row.createdAt),
       createdAtValue: getTimeValue(row.createdAt),
       palette: gradeMeta,
@@ -373,6 +452,7 @@
     var gradeMeta = getGradeMeta(grade);
     var subjectMeta = getSubjectMeta('oyun');
     var timestamp = getGameTimestamp(row);
+    var typeMeta = getContentTypeMeta('game');
     return {
       uid: 'game:' + (row.id || index),
       type: 'game',
@@ -388,6 +468,8 @@
       contentTypeLabel: 'Oyunlar',
       icon: row.emoji || subjectMeta.icon,
       sourceLabel: 'Oyun',
+      contentMeta: typeMeta,
+      accessScope: getAccessScope(row),
       createdAt: timestamp ? new Date(timestamp).toISOString() : '',
       createdAtValue: timestamp,
       palette: gradeMeta,
@@ -403,6 +485,7 @@
     var timestamp = getTimeValue(card.getAttribute('data-date'));
     var href = normalizeCatalogHref(card.getAttribute('href'));
     var palette = GAME_COLOR_PALETTES[colorKey] || getGradeMeta(null);
+    var typeMeta = getContentTypeMeta('game');
 
     return {
       uid: 'static-game:' + href,
@@ -419,6 +502,11 @@
       contentTypeLabel: 'Oyun',
       icon: GAME_ICON_MAP[iconKey] || textFromElement(card, '.gc-banner-em') || '🎮',
       sourceLabel: 'Oyun',
+      contentMeta: typeMeta,
+      accessScope: getAccessScope({
+        accessScope: card.getAttribute('data-access-scope'),
+        authRequired: card.getAttribute('data-auth-required') === 'true',
+      }),
       createdAt: timestamp ? new Date(timestamp).toISOString() : '',
       createdAtValue: timestamp,
       palette: palette,
@@ -440,15 +528,25 @@
 
   async function fetchReadingItems() {
     var config = getReadingConfig();
-    var rows = await fetchSupabaseRows(
-      config,
-      'metinler',
-      'id,baslik,sinif,siniflar,aktif,olusturma_tarihi',
-      ['aktif=eq.true', 'order=olusturma_tarihi.desc']
-    );
+    var rows;
+    try {
+      rows = await fetchSupabaseRows(
+        config,
+        'metinler',
+        'id,baslik,sinif,siniflar,aktif,gizli,oturum_gerekli,olusturma_tarihi',
+        ['aktif=eq.true', 'order=olusturma_tarihi.desc']
+      );
+    } catch (error) {
+      rows = await fetchSupabaseRows(
+        config,
+        'metinler',
+        'id,baslik,sinif,siniflar,aktif,olusturma_tarihi',
+        ['aktif=eq.true', 'order=olusturma_tarihi.desc']
+      );
+    }
     return rows
       .filter(function(row) {
-        return row && row.id;
+        return row && row.id && row.gizli !== true;
       })
       .map(buildReadingItem);
   }
@@ -460,7 +558,7 @@
       rows = await fetchSupabaseRows(
         config,
         'dokumanlar',
-        'id,baslik,sinif,ders,hedefler,icerik_turu,aktif,oturum_gerekli,olusturma_tarihi',
+        'id,baslik,sinif,ders,hedefler,icerik_turu,aktif,gizli,oturum_gerekli,olusturma_tarihi',
         ['aktif=eq.true', 'order=olusturma_tarihi.desc']
       );
     } catch (error) {
@@ -473,7 +571,7 @@
     }
     return rows
       .filter(function(row) {
-        return row && row.id && row.oturum_gerekli !== true;
+        return row && row.id && row.gizli !== true;
       })
       .map(buildDocumentItem);
   }
@@ -489,6 +587,10 @@
     );
 
     return snapshot.docs
+      .filter(function(doc) {
+        var data = doc.data() || {};
+        return data.hidden !== true && data.gizli !== true;
+      })
       .map(function(doc) {
         return buildExamItem(doc.data() || {}, doc.id);
       })
@@ -555,6 +657,8 @@
         contentTypeLabel: 'Yeni İçerik',
         icon: item.emoji || '🌟',
         sourceLabel: 'Yeni İçerik',
+        contentMeta: getContentTypeMeta('content'),
+        accessScope: getAccessScope(item),
         createdAt: formatIso(item.tarih),
         createdAtValue: getTimeValue(item.tarih),
         palette: getGradeMeta(null),
@@ -613,6 +717,13 @@
       : parseInt(item.grade, 10) === safeGrade;
   }
 
+  function matchesLockedGrade(item, grade) {
+    if (isPublicItem(item)) {
+      return true;
+    }
+    return matchesGrade(item, grade);
+  }
+
   function matchesSubject(item, subject) {
     if (!subject || subject === 'all') {
       return true;
@@ -626,7 +737,10 @@
     var allItems = await getAllItems(settings);
     return sortByNewest(allItems)
       .filter(function(item) {
-        return matchesGrade(item, settings.grade) && matchesSubject(item, settings.subject);
+        var gradeMatches = settings.includePublicOutsideGrade
+          ? matchesLockedGrade(item, settings.grade)
+          : matchesGrade(item, settings.grade);
+        return gradeMatches && matchesSubject(item, settings.subject);
       })
       .slice(0, maxItems);
   }
@@ -687,8 +801,11 @@
     getFilterOptions: getFilterOptions,
     getGradeMeta: getGradeMeta,
     getSubjectMeta: getSubjectMeta,
+    getContentTypeMeta: getContentTypeMeta,
     normalizeSubjectKey: normalizeSubjectKey,
     matchesGrade: matchesGrade,
+    matchesLockedGrade: matchesLockedGrade,
+    isPublicItem: isPublicItem,
     matchesSubject: matchesSubject,
   };
 })();

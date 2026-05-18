@@ -9,6 +9,12 @@
       group: 'Genel Yönetim',
     },
     {
+      key: 'teacher_approvals',
+      label: 'Öğretmen Onayları',
+      description: 'Öğretmen kimlik/çalışma belgesi inceleme ve hesap onayı',
+      group: 'Genel Yönetim',
+    },
+    {
       key: 'menu_yonetimi',
       label: 'Menü & Ders Yönetimi',
       description: 'Üst menüye ders sayfaları ekleme',

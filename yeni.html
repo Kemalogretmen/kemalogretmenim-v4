@@ -329,6 +329,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
   <script src="/js/content-progress.js"></script>
   <script src="/js/content-feed.js"></script>
   <script>
@@ -363,7 +364,15 @@
           : date.toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
       }
 
-      function populateFilters(items) {
+      async function getLockedStudentGrade() {
+        if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== 'function') return null;
+        await window.kemalUserAuth.ready();
+        return typeof window.kemalUserAuth.getStudentGradeLevel === 'function'
+          ? window.kemalUserAuth.getStudentGradeLevel()
+          : null;
+      }
+
+      function populateFilters(items, lockedGrade) {
         const gradeMap = new Map();
         const subjectMap = new Map();
 
@@ -381,12 +390,18 @@
           }
         });
 
-        gradeFilter.innerHTML = '<option value="">Tüm sınıflar</option>' +
-          Array.from(gradeMap.entries())
+        const gradeEntries = Array.from(gradeMap.entries())
+          .filter(function(entry) { return !lockedGrade || String(entry[0]) === String(lockedGrade); });
+        gradeFilter.innerHTML = (lockedGrade ? '' : '<option value="">Tüm sınıflar</option>') +
+          gradeEntries
             .sort(function(a, b) { return Number(a[0]) - Number(b[0]); })
             .map(function(entry) {
               return `<option value="${entry[0]}">${escHtml(entry[1])}</option>`;
             }).join('');
+        if (lockedGrade) {
+          gradeFilter.value = String(lockedGrade);
+          gradeFilter.disabled = true;
+        }
 
         subjectFilter.innerHTML = '<option value="">Tüm dersler</option>' +
           Array.from(subjectMap.entries())
@@ -402,7 +417,9 @@
         const query = searchFilter.value.trim().toLocaleLowerCase('tr-TR');
 
         state.filtered = state.allItems.filter(function(item) {
-          const matchesGrade = !gradeValue || window.kemalContentFeed.matchesGrade(item, gradeValue);
+          const matchesGrade = !gradeValue || (lockedGrade && window.kemalContentFeed.matchesLockedGrade
+            ? window.kemalContentFeed.matchesLockedGrade(item, gradeValue)
+            : window.kemalContentFeed.matchesGrade(item, gradeValue));
           const matchesSubject = !subjectValue || window.kemalContentFeed.matchesSubject(item, subjectValue);
           const haystack = [
             item.title,
@@ -450,7 +467,15 @@
           ].filter(Boolean).join('');
 
           return `
-            <article class="new-item" style="--item-color:${palette.color};--item-soft:${palette.soft};--item-border:${palette.border};">
+            <article class="new-item" style="--item-color:${palette.color};--item-soft:${palette.soft};--item-border:${palette.border};"
+              data-reaction-type="${escHtml(item.type || item.contentType || 'content')}"
+              data-reaction-id="${escHtml(item.id || item.uid || item.href || item.title)}"
+              data-reaction-title="${escHtml(item.title || 'Yeni içerik')}"
+              data-reaction-href="${escHtml(item.href || '#')}"
+              data-reaction-grade="${escHtml(item.gradeLabel || '')}"
+              data-reaction-subject="${escHtml(item.subjectLabel || '')}"
+              data-reaction-source="${escHtml(item.contentTypeLabel || item.sourceLabel || 'İçerik')}"
+              data-access-scope="${escHtml(item.accessScope || 'public')}">
               <div class="new-item-top">
                 <div class="new-path">
                   <span class="new-pill grade">${escHtml(item.gradeLabel || 'Genel')}</span>
@@ -505,9 +530,11 @@
       subjectFilter.addEventListener('change', applyFilters);
       searchFilter.addEventListener('input', applyFilters);
 
+      let lockedGrade = null;
       try {
+        lockedGrade = await getLockedStudentGrade();
         state.allItems = window.kemalContentFeed
-          ? await window.kemalContentFeed.getLatestContent({ maxItems: 30, forceRefresh: true })
+          ? await window.kemalContentFeed.getLatestContent({ maxItems: 30, forceRefresh: true, includePublicOutsideGrade: Boolean(lockedGrade), grade: lockedGrade ? String(lockedGrade) : '' })
           : [];
       } catch (error) {
         state.allItems = [];
@@ -525,7 +552,7 @@
         return;
       }
 
-      populateFilters(state.allItems);
+      populateFilters(state.allItems, lockedGrade);
       state.filtered = state.allItems.slice();
       render();
     });

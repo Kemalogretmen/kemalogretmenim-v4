@@ -281,6 +281,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
   <script>
     const OYUN_KEY = 'kemal_oyunlar';
 
@@ -380,7 +381,7 @@
       document.getElementById('emptyState').hidden = true;
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       const gameId = getGameIdFromUrl();
       if (!gameId) {
         showEmpty('Oyun bağlantısında kimlik bilgisi bulunamadı. Lütfen oyunlar sayfasından tekrar deneyin.');
@@ -395,6 +396,14 @@
       if (!game) {
         showEmpty('Bu oyun kaydı bu tarayıcıda bulunamadı. Oyun admin paneli ile aynı tarayıcı/origin üzerinde olmalıdır.');
         return;
+      }
+
+      if (window.kemalUserAuth && typeof window.kemalUserAuth.ready === 'function') {
+        await window.kemalUserAuth.ready();
+        const accessMeta = { accessScope: game.accessScope || (game.authRequired ? 'registered' : 'public') };
+        if (typeof window.kemalUserAuth.promptRegistration === 'function' && !window.kemalUserAuth.promptRegistration(accessMeta, window.location.pathname + window.location.search)) {
+          return;
+        }
       }
 
       renderGame(game);

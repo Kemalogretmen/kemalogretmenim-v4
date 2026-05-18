@@ -21,6 +21,7 @@ as $$
     from public.user_profiles
     where id = auth.uid()
       and role = 'teacher'
+      and approval_status = 'active'
       and active = true
   );
 $$;
@@ -47,7 +48,192 @@ grant execute on function public.current_user_is_student() to authenticated;
 alter table if exists public.user_profiles
   add column if not exists account_status text not null default 'active',
   add column if not exists deactivated_at timestamptz,
-  add column if not exists deletion_requested_at timestamptz;
+  add column if not exists deletion_requested_at timestamptz,
+  add column if not exists verification_status text not null default 'not_submitted',
+  add column if not exists verification_file_path text not null default '',
+  add column if not exists verification_file_name text not null default '',
+  add column if not exists verification_file_type text not null default '',
+  add column if not exists verification_submitted_at timestamptz,
+  add column if not exists verification_reviewed_at timestamptz,
+  add column if not exists verification_reviewed_by text not null default '',
+  add column if not exists verification_review_note text not null default '';
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.table_constraints
+    where table_schema = 'public'
+      and table_name = 'user_profiles'
+      and constraint_name = 'user_profiles_verification_status_check'
+  ) then
+    alter table public.user_profiles drop constraint user_profiles_verification_status_check;
+  end if;
+end $$;
+
+alter table public.user_profiles
+  add constraint user_profiles_verification_status_check
+  check (verification_status in ('not_required', 'not_submitted', 'submitted', 'approved', 'rejected'));
+
+update public.user_profiles
+set verification_status = 'not_required'
+where role = 'student'
+  and verification_status = 'not_submitted';
+
+-- Öğretmen belgeleri dosya olarak Storage'da tutulur; profil tablosunda yalnızca dosya yolu saklanır.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'teacher-verifications',
+  'teacher-verifications',
+  false,
+  12582912,
+  array['image/jpeg', 'image/png', 'application/pdf']
+)
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "teacher_verifications upload own" on storage.objects;
+create policy "teacher_verifications upload own"
+on storage.objects
+for insert
+to authenticated
+with check (
+  bucket_id = 'teacher-verifications'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "teacher_verifications update own" on storage.objects;
+create policy "teacher_verifications update own"
+on storage.objects
+for update
+to authenticated
+using (
+  bucket_id = 'teacher-verifications'
+  and (storage.foldername(name))[1] = auth.uid()::text
+)
+with check (
+  bucket_id = 'teacher-verifications'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "teacher_verifications read own or admin" on storage.objects;
+create policy "teacher_verifications read own or admin"
+on storage.objects
+for select
+to authenticated
+using (
+  bucket_id = 'teacher-verifications'
+  and (
+    (storage.foldername(name))[1] = auth.uid()::text
+    or public.current_admin_has_any_permission(array['teacher_approvals', 'site_admin_dashboard'])
+  )
+);
+
+create or replace function public.list_teacher_verification_requests(p_status text default 'pending')
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  requested_status text := coalesce(nullif(trim(p_status), ''), 'pending');
+  result jsonb := '[]'::jsonb;
+begin
+  if not public.current_admin_has_any_permission(array['teacher_approvals', 'site_admin_dashboard']) then
+    raise exception 'permission denied';
+  end if;
+
+  select coalesce(jsonb_agg(to_jsonb(row_data) order by row_data.created_at desc), '[]'::jsonb)
+  into result
+  from (
+    select
+      id,
+      email,
+      full_name,
+      first_name,
+      last_name,
+      city,
+      district,
+      school_name,
+      branch,
+      approval_status,
+      verification_status,
+      verification_file_path,
+      verification_file_name,
+      verification_file_type,
+      verification_submitted_at,
+      verification_reviewed_at,
+      verification_reviewed_by,
+      verification_review_note,
+      active,
+      created_at,
+      updated_at
+    from public.user_profiles
+    where role = 'teacher'
+      and coalesce(active, true) = true
+      and (
+        requested_status = 'all'
+        or approval_status = requested_status
+      )
+  ) as row_data;
+
+  return result;
+end;
+$$;
+
+create or replace function public.review_teacher_verification(
+  p_teacher_id uuid,
+  p_decision text,
+  p_note text default ''
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  decision text := lower(coalesce(nullif(trim(p_decision), ''), ''));
+  row_data public.user_profiles%rowtype;
+begin
+  if not public.current_admin_has_any_permission(array['teacher_approvals', 'site_admin_dashboard']) then
+    raise exception 'permission denied';
+  end if;
+
+  if decision not in ('active', 'rejected', 'pending') then
+    raise exception 'invalid decision';
+  end if;
+
+  update public.user_profiles
+  set
+    approval_status = decision,
+    verification_status = case
+      when decision = 'active' then 'approved'
+      when decision = 'rejected' then 'rejected'
+      else verification_status
+    end,
+    verification_reviewed_at = now(),
+    verification_reviewed_by = public.current_admin_email(),
+    verification_review_note = left(coalesce(p_note, ''), 1000),
+    updated_at = now()
+  where id = p_teacher_id
+    and role = 'teacher'
+  returning *
+  into row_data;
+
+  if not found then
+    raise exception 'teacher not found';
+  end if;
+
+  return to_jsonb(row_data);
+end;
+$$;
+
+grant execute on function public.list_teacher_verification_requests(text) to authenticated;
+grant execute on function public.review_teacher_verification(uuid, text, text) to authenticated;
 
 -- ----------------------------------------------------------
 -- Siniflar
@@ -64,6 +250,22 @@ create table if not exists public.teacher_classes (
   updated_at timestamptz not null default now()
 );
 
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.teacher_classes'::regclass
+      and conname = 'teacher_classes_status_check'
+  ) then
+    alter table public.teacher_classes
+      drop constraint teacher_classes_status_check;
+  end if;
+  alter table public.teacher_classes
+    add constraint teacher_classes_status_check
+    check (status in ('active', 'completed', 'archived'));
+end $$;
+
 create index if not exists idx_teacher_classes_teacher on public.teacher_classes (teacher_id, status, created_at desc);
 create index if not exists idx_teacher_classes_invite_code on public.teacher_classes (upper(invite_code));
 
@@ -76,16 +278,7 @@ create policy "teacher_classes read related"
 on public.teacher_classes
 for select
 to authenticated
-using (
-  teacher_id = auth.uid()
-  or exists (
-    select 1
-    from public.teacher_class_students s
-    where s.class_id = teacher_classes.id
-      and s.student_profile_id = auth.uid()
-      and s.status <> 'removed'
-  )
-);
+using (teacher_id = auth.uid());
 
 drop policy if exists "teacher_classes teacher insert own" on public.teacher_classes;
 create policy "teacher_classes teacher insert own"
@@ -101,6 +294,13 @@ for update
 to authenticated
 using (teacher_id = auth.uid())
 with check (teacher_id = auth.uid() and public.current_user_is_teacher());
+
+drop policy if exists "teacher_classes teacher delete own" on public.teacher_classes;
+create policy "teacher_classes teacher delete own"
+on public.teacher_classes
+for delete
+to authenticated
+using (teacher_id = auth.uid() and public.current_user_is_teacher());
 
 -- ----------------------------------------------------------
 -- Sinif ogrencileri
@@ -161,6 +361,22 @@ for update
 to authenticated
 using (teacher_id = auth.uid() or student_profile_id = auth.uid())
 with check (teacher_id = auth.uid() or student_profile_id = auth.uid());
+
+drop policy if exists "teacher_classes read related" on public.teacher_classes;
+create policy "teacher_classes read related"
+on public.teacher_classes
+for select
+to authenticated
+using (
+  teacher_id = auth.uid()
+  or exists (
+    select 1
+    from public.teacher_class_students s
+    where s.class_id = teacher_classes.id
+      and s.student_profile_id = auth.uid()
+      and s.status <> 'removed'
+  )
+);
 
 create or replace function public.join_teacher_class_by_code(p_invite_code text)
 returns public.teacher_class_students
@@ -240,7 +456,7 @@ grant execute on function public.join_teacher_class_by_code(text) to authenticat
 create table if not exists public.teacher_contents (
   id uuid primary key default gen_random_uuid(),
   teacher_id uuid not null references public.user_profiles(id) on delete cascade,
-  content_type text not null check (content_type in ('reading', 'exam', 'document', 'worksheet', 'custom')),
+  content_type text not null check (content_type in ('reading', 'exam', 'document', 'worksheet', 'video', 'game', 'custom')),
   source_system text not null default 'supabase' check (source_system in ('supabase', 'firestore', 'external')),
   source_id text not null default '',
   title text not null,
@@ -257,6 +473,22 @@ create table if not exists public.teacher_contents (
 
 create index if not exists idx_teacher_contents_teacher on public.teacher_contents (teacher_id, content_type, status, created_at desc);
 create index if not exists idx_teacher_contents_visibility on public.teacher_contents (visibility, status);
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.teacher_contents'::regclass
+      and conname = 'teacher_contents_content_type_check'
+  ) then
+    alter table public.teacher_contents
+      drop constraint teacher_contents_content_type_check;
+  end if;
+  alter table public.teacher_contents
+    add constraint teacher_contents_content_type_check
+    check (content_type in ('reading', 'exam', 'document', 'worksheet', 'video', 'game', 'custom'));
+end $$;
 
 alter table public.teacher_contents enable row level security;
 grant select on public.teacher_contents to anon;
@@ -298,17 +530,37 @@ create table if not exists public.teacher_assignments (
   teacher_id uuid not null references public.user_profiles(id) on delete cascade,
   class_id uuid not null references public.teacher_classes(id) on delete cascade,
   title text not null,
-  content_type text not null check (content_type in ('reading', 'exam', 'document', 'worksheet', 'custom')),
+  content_type text not null check (content_type in ('reading', 'exam', 'document', 'worksheet', 'video', 'game', 'custom')),
   content_ref text not null default '',
   target_type text not null default 'class' check (target_type in ('class', 'students')),
   target_student_ids uuid[] not null default '{}',
   start_at date not null default current_date,
   due_at date,
   instructions text not null default '',
+  metadata jsonb not null default '{}'::jsonb,
   status text not null default 'active' check (status in ('draft', 'active', 'archived')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table if exists public.teacher_assignments
+  add column if not exists metadata jsonb not null default '{}'::jsonb;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.teacher_assignments'::regclass
+      and conname = 'teacher_assignments_content_type_check'
+  ) then
+    alter table public.teacher_assignments
+      drop constraint teacher_assignments_content_type_check;
+  end if;
+  alter table public.teacher_assignments
+    add constraint teacher_assignments_content_type_check
+    check (content_type in ('reading', 'exam', 'document', 'worksheet', 'video', 'game', 'custom'));
+end $$;
 
 create index if not exists idx_teacher_assignments_teacher on public.teacher_assignments (teacher_id, status, due_at);
 create index if not exists idx_teacher_assignments_class on public.teacher_assignments (class_id, status, due_at);
@@ -330,6 +582,10 @@ using (
     where s.student_profile_id = auth.uid()
       and s.status <> 'removed'
       and s.class_id = teacher_assignments.class_id
+      and (
+        teacher_assignments.target_type = 'class'
+        or s.id = any(teacher_assignments.target_student_ids)
+      )
   )
 );
 
@@ -357,6 +613,35 @@ for update
 to authenticated
 using (teacher_id = auth.uid())
 with check (teacher_id = auth.uid() and public.current_user_is_teacher());
+
+drop policy if exists "teacher_assignments teacher delete own" on public.teacher_assignments;
+create policy "teacher_assignments teacher delete own"
+on public.teacher_assignments
+for delete
+to authenticated
+using (teacher_id = auth.uid() and public.current_user_is_teacher());
+
+do $$
+begin
+  if to_regclass('public.user_content_progress') is not null then
+    execute 'drop policy if exists "user_content_progress teacher read assigned students" on public.user_content_progress';
+    execute $policy$
+      create policy "user_content_progress teacher read assigned students"
+      on public.user_content_progress
+      for select
+      to authenticated
+      using (
+        exists (
+          select 1
+          from public.teacher_class_students s
+          where s.teacher_id = auth.uid()
+            and s.status <> 'removed'
+            and s.student_profile_id = user_content_progress.user_id
+        )
+      )
+    $policy$;
+  end if;
+end $$;
 
 -- ----------------------------------------------------------
 -- Odev ilerleme
@@ -486,6 +771,7 @@ with check (teacher_id = auth.uid() and public.current_user_is_teacher());
 create or replace function public.touch_teacher_panel_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();

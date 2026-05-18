@@ -217,6 +217,7 @@
               <option value="">Tümü</option>
               <option value="active">Sadece aktif</option>
               <option value="inactive">Sadece pasif</option>
+              <option value="hidden">Sadece gizli</option>
             </select>
           </div>
           <div style="display:flex;align-items:flex-end;">
@@ -245,7 +246,7 @@
             <div class="pill-row">
               <span class="pill">📄 PDF / görsel yükleme</span>
               <span class="pill">🎯 Çoklu sınıf + ders hedefi</span>
-              <span class="pill">👀 Aktif / pasif yayın</span>
+              <span class="pill">👀 Aktif / pasif / gizli yayın</span>
             </div>
 
             <label>Doküman Başlığı</label>
@@ -307,6 +308,17 @@
               </label>
             </div>
 
+            <div class="switch-row">
+              <div class="switch-copy">
+                <strong>Gizli</strong>
+                <span>Açıksa listelerde görünmez; aktif olduğu sürece doğrudan linkle açılır.</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="fGizli">
+                <span class="slider"></span>
+              </label>
+            </div>
+
             <div class="switch-row" id="answersSwitchRow">
               <div class="switch-copy">
                 <strong>Büyüteç Alanları</strong>
@@ -331,11 +343,11 @@
 
             <div class="switch-row">
               <div class="switch-copy">
-                <strong>İleride Oturum Gerekli</strong>
-                <span>Şimdilik kapalı tutuyoruz; kullanıcı girişi geldiğinde açılabilecek hazır alan.</span>
+                <strong>Erişim</strong>
+                <span>Açıksa sadece kayıtlı kullanıcılar içeriği açabilir; kapalıysa herkese açık görünür.</span>
               </div>
               <label class="toggle">
-                <input type="checkbox" id="fOturumGerekli" disabled>
+                <input type="checkbox" id="fOturumGerekli">
                 <span class="slider"></span>
               </label>
             </div>

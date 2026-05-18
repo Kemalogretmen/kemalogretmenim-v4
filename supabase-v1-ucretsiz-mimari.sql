@@ -34,8 +34,11 @@ create policy "site_settings auth manage"
 on public.site_settings
 for all
 to authenticated
-using (true)
-with check (true);
+using (public.current_admin_has_permission('site_admin_dashboard'))
+with check (
+  key = 'site_content'
+  and public.current_admin_has_permission('site_admin_dashboard')
+);
 
 insert into public.site_settings (key, value_json)
 values ('site_content', '{}'::jsonb)
@@ -54,6 +57,8 @@ create table if not exists public.metinler (
   sinif integer,
   siniflar integer[] not null default '{}',
   aktif boolean not null default true,
+  gizli boolean not null default false,
+  oturum_gerekli boolean not null default false,
   goruntuleme_modu text not null default 'tam',
   hedef_hiz integer not null default 80,
   kelime_ms integer not null default 500,
@@ -71,6 +76,8 @@ alter table public.metinler
   add column if not exists plain_text text,
   add column if not exists siniflar integer[] not null default '{}',
   add column if not exists aktif boolean not null default true,
+  add column if not exists gizli boolean not null default false,
+  add column if not exists oturum_gerekli boolean not null default false,
   add column if not exists goruntuleme_modu text not null default 'tam',
   add column if not exists hedef_hiz integer not null default 80,
   add column if not exists kelime_ms integer not null default 500,
@@ -98,14 +105,44 @@ for select
 using (aktif = true);
 
 drop policy if exists "metinler auth manage" on public.metinler;
-create policy "metinler auth manage"
+drop policy if exists "metinler auth read all" on public.metinler;
+create policy "metinler auth read all"
 on public.metinler
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  public.current_admin_has_any_permission(array[
+    'okuma_metinleri',
+    'okuma_metni_ekleme',
+    'okuma_metni_duzenleme'
+  ])
+);
+
+drop policy if exists "metinler auth insert" on public.metinler;
+create policy "metinler auth insert"
+on public.metinler
+for insert
+to authenticated
+with check (public.current_admin_has_permission('okuma_metni_ekleme'));
+
+drop policy if exists "metinler auth update" on public.metinler;
+create policy "metinler auth update"
+on public.metinler
+for update
+to authenticated
+using (public.current_admin_has_permission('okuma_metni_duzenleme'))
+with check (public.current_admin_has_permission('okuma_metni_duzenleme'));
+
+drop policy if exists "metinler auth delete" on public.metinler;
+create policy "metinler auth delete"
+on public.metinler
+for delete
+to authenticated
+using (public.current_admin_has_permission('okuma_metni_duzenleme'));
 
 create index if not exists idx_metinler_aktif on public.metinler (aktif);
+create index if not exists idx_metinler_active_hidden
+  on public.metinler (aktif, gizli, olusturma_tarihi desc);
 create index if not exists idx_metinler_olusturma on public.metinler (olusturma_tarihi desc);
 create index if not exists idx_metinler_siniflar on public.metinler using gin (siniflar);
 
@@ -137,15 +174,50 @@ drop policy if exists "sorular public read" on public.sorular;
 create policy "sorular public read"
 on public.sorular
 for select
-using (true);
+using (
+  exists (
+    select 1
+    from public.metinler m
+    where m.id = sorular.metin_id
+      and m.aktif = true
+  )
+);
 
 drop policy if exists "sorular auth manage" on public.sorular;
-create policy "sorular auth manage"
+drop policy if exists "sorular auth read all" on public.sorular;
+create policy "sorular auth read all"
 on public.sorular
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  public.current_admin_has_any_permission(array[
+    'okuma_metinleri',
+    'okuma_metni_ekleme',
+    'okuma_metni_duzenleme'
+  ])
+);
+
+drop policy if exists "sorular auth insert" on public.sorular;
+create policy "sorular auth insert"
+on public.sorular
+for insert
+to authenticated
+with check (public.current_admin_has_permission('okuma_metni_ekleme'));
+
+drop policy if exists "sorular auth update" on public.sorular;
+create policy "sorular auth update"
+on public.sorular
+for update
+to authenticated
+using (public.current_admin_has_permission('okuma_metni_duzenleme'))
+with check (public.current_admin_has_permission('okuma_metni_duzenleme'));
+
+drop policy if exists "sorular auth delete" on public.sorular;
+create policy "sorular auth delete"
+on public.sorular
+for delete
+to authenticated
+using (public.current_admin_has_permission('okuma_metni_duzenleme'));
 
 create index if not exists idx_sorular_metin on public.sorular (metin_id, sira);
 
@@ -175,15 +247,51 @@ drop policy if exists "secenekler public read" on public.secenekler;
 create policy "secenekler public read"
 on public.secenekler
 for select
-using (true);
+using (
+  exists (
+    select 1
+    from public.sorular q
+    join public.metinler m on m.id = q.metin_id
+    where q.id = secenekler.soru_id
+      and m.aktif = true
+  )
+);
 
 drop policy if exists "secenekler auth manage" on public.secenekler;
-create policy "secenekler auth manage"
+drop policy if exists "secenekler auth read all" on public.secenekler;
+create policy "secenekler auth read all"
 on public.secenekler
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  public.current_admin_has_any_permission(array[
+    'okuma_metinleri',
+    'okuma_metni_ekleme',
+    'okuma_metni_duzenleme'
+  ])
+);
+
+drop policy if exists "secenekler auth insert" on public.secenekler;
+create policy "secenekler auth insert"
+on public.secenekler
+for insert
+to authenticated
+with check (public.current_admin_has_permission('okuma_metni_ekleme'));
+
+drop policy if exists "secenekler auth update" on public.secenekler;
+create policy "secenekler auth update"
+on public.secenekler
+for update
+to authenticated
+using (public.current_admin_has_permission('okuma_metni_duzenleme'))
+with check (public.current_admin_has_permission('okuma_metni_duzenleme'));
+
+drop policy if exists "secenekler auth delete" on public.secenekler;
+create policy "secenekler auth delete"
+on public.secenekler
+for delete
+to authenticated
+using (public.current_admin_has_permission('okuma_metni_duzenleme'));
 
 create index if not exists idx_secenekler_soru on public.secenekler (soru_id, sira);
 
@@ -233,29 +341,40 @@ drop policy if exists "sonuclar insert for public" on public.sonuclar;
 create policy "sonuclar insert for public"
 on public.sonuclar
 for insert
-with check (true);
+with check (
+  coalesce(trim(ad), '') <> ''
+  and coalesce(trim(soyad), '') <> ''
+  and sinif between 1 and 12
+  and coalesce(trim(sube), '') <> ''
+);
 
 drop policy if exists "sonuclar auth read" on public.sonuclar;
 create policy "sonuclar auth read"
 on public.sonuclar
 for select
 to authenticated
-using (true);
+using (
+  public.current_admin_has_any_permission(array[
+    'okuma_sonuclari',
+    'okuma_sonuclari_duzenleme',
+    'okuma_karne'
+  ])
+);
 
 drop policy if exists "sonuclar auth delete" on public.sonuclar;
 create policy "sonuclar auth delete"
 on public.sonuclar
 for delete
 to authenticated
-using (true);
+using (public.current_admin_has_permission('okuma_sonuclari_duzenleme'));
 
 drop policy if exists "sonuclar auth update" on public.sonuclar;
 create policy "sonuclar auth update"
 on public.sonuclar
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.current_admin_has_permission('okuma_sonuclari_duzenleme'))
+with check (public.current_admin_has_permission('okuma_sonuclari_duzenleme'));
 
 create index if not exists idx_sonuclar_tarih on public.sonuclar (olusturma_tarihi desc);
 create index if not exists idx_sonuclar_metin on public.sonuclar (metin_id);
@@ -299,14 +418,19 @@ drop policy if exists "site analytics public insert" on public.site_analytics_ev
 create policy "site analytics public insert"
 on public.site_analytics_events
 for insert
-with check (true);
+with check (
+  view_id is not null
+  and session_id is not null
+  and coalesce(trim(page_url), '') <> ''
+  and coalesce(trim(page_path), '') <> ''
+);
 
 drop policy if exists "site analytics auth read" on public.site_analytics_events;
 create policy "site analytics auth read"
 on public.site_analytics_events
 for select
 to authenticated
-using (true);
+using (public.current_admin_has_permission('site_admin_dashboard'));
 
 create index if not exists idx_site_analytics_created_at on public.site_analytics_events (created_at desc);
 create index if not exists idx_site_analytics_page_path on public.site_analytics_events (page_path);
@@ -330,7 +454,8 @@ as $$
   filtered_events as (
     select *
     from public.site_analytics_events
-    where created_at >= now() - make_interval(days => (select days from requested))
+    where public.current_admin_has_permission('site_admin_dashboard')
+      and created_at >= now() - make_interval(days => (select days from requested))
   ),
   page_views as (
     select distinct on (view_id)

@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  const OPTIONAL_METIN_COLUMNS = ['baslik_stil_json', 'plain_text'];
+  const OPTIONAL_METIN_COLUMNS = ['baslik_stil_json', 'plain_text', 'oturum_gerekli', 'gizli'];
   const OPTIONAL_QUESTION_COLUMNS = ['soru_tipi', 'ayar_json'];
   const PAGE_SIZE = 10;
   const QUESTION_TYPES = {
@@ -352,6 +352,8 @@
 
     document.getElementById('fBaslik').value = text && text.baslik ? text.baslik : '';
     document.getElementById('fAktif').value = text && typeof text.aktif === 'boolean' ? String(text.aktif) : 'true';
+    document.getElementById('fOturumGerekli').value = text && text.oturum_gerekli ? 'true' : 'false';
+    document.getElementById('fGizli').value = text && text.gizli ? 'true' : 'false';
 
     const titleStyle = parseOptionalJson(text && text.baslik_stil_json, {
       renk: '#1A1040',
@@ -405,10 +407,20 @@
     const grid = document.getElementById('metinCardGrid');
     grid.innerHTML = '<div class="loading-txt">⏳ Metinler yükleniyor…</div>';
 
-    const { data, error } = await getClient()
+    let response = await getClient()
       .from('metinler')
-      .select('id,baslik,siniflar,sinif,goruntuleme_modu,aktif,kelime_sayisi,olusturma_tarihi')
+      .select('id,baslik,siniflar,sinif,goruntuleme_modu,aktif,gizli,oturum_gerekli,kelime_sayisi,olusturma_tarihi')
       .order('olusturma_tarihi', { ascending: false });
+
+    if (response.error && /oturum_gerekli|gizli/i.test(response.error.message || '')) {
+      response = await getClient()
+        .from('metinler')
+        .select('id,baslik,siniflar,sinif,goruntuleme_modu,aktif,kelime_sayisi,olusturma_tarihi')
+        .order('olusturma_tarihi', { ascending: false });
+    }
+
+    const data = response.data;
+    const error = response.error;
 
     if (error) {
       grid.innerHTML = '<div class="bos-durum"><span>⚠️</span><p>Metinler yüklenemedi.</p></div>';
@@ -452,6 +464,8 @@
       const modeLabel = text.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
       const activeClass = text.aktif ? 'ac' : 'kap';
       const activeLabel = text.aktif ? '✅ Yayında' : '⏸️ Taslak';
+      const accessLabel = text.oturum_gerekli ? '🔐 Kayıtlı Kullanıcı' : '🌍 Herkese Açık';
+      const visibilityLabel = text.gizli ? '🔗 Gizli' : '👀 Listede';
       const shareButton = text.aktif
         ? '<button class="mk-btn-share" onclick="metinLinkKopyala(\'' + text.id + '\')">🔗 Kopyala</button>'
         : '';
@@ -463,6 +477,8 @@
           '<div class="mk-meta">' +
             '<span class="mk-mod ' + modeClass + '">' + modeLabel + '</span>' +
             '<span class="mk-aktif ' + activeClass + '">' + activeLabel + '</span>' +
+            '<span>' + accessLabel + '</span>' +
+            '<span>' + visibilityLabel + '</span>' +
           '</div>' +
           '<div class="mk-actions">' +
             '<button class="mk-btn-edit" onclick="metinYukle(\'' + text.id + '\')">✏️ Düzenle</button>' +
@@ -1061,6 +1077,8 @@
       sinif: grades[0],
       siniflar: grades,
       aktif: typeof active === 'boolean' ? active : document.getElementById('fAktif').value === 'true',
+      gizli: document.getElementById('fGizli').value === 'true',
+      oturum_gerekli: document.getElementById('fOturumGerekli').value === 'true',
       goruntuleme_modu: state.currentMode,
       hedef_hiz: parseInt(document.getElementById('fHedefHiz').value, 10) || 80,
       kelime_ms: parseInt(document.getElementById('fKelimeMs').value, 10) || 500,

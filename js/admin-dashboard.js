@@ -16,6 +16,8 @@
     overview: '📊 Genel Bakış',
     adminler: '👥 Alt Adminler',
     analytics: '📈 Site Analizleri',
+    reactions: '👍 Beğeni Analizi',
+    ogretmenler: '🪪 Öğretmen Onayları',
     duyurular: '📢 Duyurular',
     badges: '🔔 YENİ Rozetleri',
     hizli: '⚡ Hızlı Erişim',
@@ -47,6 +49,26 @@
       loading: false,
       summary: null,
       error: '',
+    },
+    reactions: {
+      days: 30,
+      loadedDays: 0,
+      loading: false,
+      report: null,
+      error: '',
+    },
+    userProfileCounts: {
+      students: null,
+      teachers: null,
+      pendingTeachers: null,
+      total: null,
+      error: '',
+    },
+    teacherApprovals: {
+      loading: false,
+      loaded: false,
+      error: '',
+      rows: [],
     },
   };
 
@@ -254,6 +276,7 @@
   function getOverviewQuickButtonMap() {
     return {
       'quick-analytics': 'site_admin_dashboard',
+      'quick-reactions': 'site_admin_dashboard',
       'quick-duyurular': 'site_admin_dashboard',
       'quick-yeni': 'site_admin_dashboard',
       'quick-badges': 'site_admin_dashboard',
@@ -265,6 +288,7 @@
       'quick-okuma-sonuclari': 'okuma_sonuclari',
       'quick-okuma-karne': 'okuma_karne',
       'quick-adminler': '__owner__',
+      'quick-ogretmenler': 'teacher_approvals',
       'quick-sinav-admin': 'exam_create',
     };
   }
@@ -272,6 +296,7 @@
   function getSidebarPermissionMap() {
     return {
       'btn-analytics': 'site_admin_dashboard',
+      'btn-reactions': 'site_admin_dashboard',
       'btn-duyurular': 'site_admin_dashboard',
       'btn-badges': 'site_admin_dashboard',
       'btn-hizli': 'site_admin_dashboard',
@@ -287,6 +312,7 @@
       'btn-okuma-sonuclar': 'okuma_sonuclari',
       'btn-okuma-karne': 'okuma_karne',
       'btn-adminler': '__owner__',
+      'btn-ogretmenler': 'teacher_approvals',
       'btn-yedek': '__owner__',
       'btn-sinav-admin': 'exam_create',
     };
@@ -514,7 +540,10 @@
 
     setElementVisible('statsRow', showSiteDashboard, 'grid');
 
-    if (!showSiteDashboard && ['analytics', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler', 'yedek'].includes(state.currentPanel)) {
+    if (!showSiteDashboard && ['analytics', 'reactions', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler', 'yedek'].includes(state.currentPanel)) {
+      state.currentPanel = 'overview';
+    }
+    if (!canAccess('teacher_approvals') && state.currentPanel === 'ogretmenler') {
       state.currentPanel = 'overview';
     }
     if (!ownerMode && state.currentPanel === 'adminler') {
@@ -530,6 +559,39 @@
     document.getElementById('sYeni').textContent = (data.yeniIcerikler || []).filter((item) => item.aktif).length;
     document.getElementById('sHizli').textContent = (data.hizliErisim || []).filter((item) => item.aktif).length;
     document.getElementById('sBadge').textContent = Object.values(data.menuBadges || {}).filter(Boolean).length;
+    const studentsEl = document.getElementById('sStudents');
+    const teachersEl = document.getElementById('sTeachers');
+    const pendingTeachersEl = document.getElementById('sTeacherPending');
+    if (studentsEl) studentsEl.textContent = state.userProfileCounts.students === null ? '-' : formatNumber(state.userProfileCounts.students);
+    if (teachersEl) teachersEl.textContent = state.userProfileCounts.teachers === null ? '-' : formatNumber(state.userProfileCounts.teachers);
+    if (pendingTeachersEl) pendingTeachersEl.textContent = state.userProfileCounts.pendingTeachers === null ? '-' : formatNumber(state.userProfileCounts.pendingTeachers);
+  }
+
+  async function loadUserProfileCounts() {
+    state.userProfileCounts = { students: null, teachers: null, pendingTeachers: null, total: null, error: '' };
+    updateStats();
+    try {
+      const client = window.kemalAdminAuth.getClient();
+      const result = await client.rpc('get_user_profile_counts');
+      if (result.error) throw result.error;
+      const row = result.data || {};
+      state.userProfileCounts = {
+        students: Number(row.students || row.student_count || 0),
+        teachers: Number(row.teachers || row.teacher_count || 0),
+        pendingTeachers: Number(row.pending_teachers || row.pending_teacher_count || 0),
+        total: Number(row.total || row.total_count || 0),
+        error: '',
+      };
+    } catch (error) {
+      state.userProfileCounts = {
+        students: null,
+        teachers: null,
+        pendingTeachers: null,
+        total: null,
+        error: window.kemalAdminAuth && window.kemalAdminAuth.humanizeError ? window.kemalAdminAuth.humanizeError(error) : String(error && error.message || error || ''),
+      };
+    }
+    updateStats();
   }
 
   async function persistData(successMessage) {
@@ -572,13 +634,17 @@
 
   function showPanel(id) {
     const ownerMode = isOwnerUser();
-    const siteDashboardPanels = ['analytics', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler'];
+    const siteDashboardPanels = ['analytics', 'reactions', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler'];
     if (siteDashboardPanels.includes(id) && !canAccess('site_admin_dashboard')) {
       toast('Bu içerik alanı için yetkin açık değil.', 'error');
       return;
     }
     if (id === 'adminler' && !ownerMode) {
       toast('Alt admin yönetimi yalnızca ana yöneticiye açık.', 'error');
+      return;
+    }
+    if (id === 'ogretmenler' && !canAccess('teacher_approvals')) {
+      toast('Öğretmen onayları için yetkin açık değil.', 'error');
       return;
     }
     if (id === 'yedek' && !ownerMode) {
@@ -612,8 +678,14 @@
       loadAdminUsers(false);
       loadAdminActivity(false);
     }
+    if (id === 'ogretmenler') {
+      loadTeacherApprovals(false);
+    }
     if (id === 'analytics') {
       loadAnalytics(false);
+    }
+    if (id === 'reactions') {
+      loadReactions(false);
     }
   }
 
@@ -705,9 +777,10 @@
               <span class="item-em">${item.emoji}</span>
               <div class="item-info">
                 <div class="item-name">${escHtml(item.baslik)}</div>
-                <div class="item-sub">${escHtml(item.tarih || '')} · ${escHtml(item.link)}</div>
+                <div class="item-sub">${escHtml(item.tarih || '')} · ${escHtml(item.link)} · ${item.accessScope === 'registered' || item.authRequired ? '🔐 Kayıtlı kullanıcı' : '🌍 Herkese açık'}</div>
               </div>
               <div class="item-actions">
+                <button class="btn-toggle ${item.accessScope === 'registered' || item.authRequired ? 'off' : 'on'}" onclick="toggleYeniAccess(${index})">${item.accessScope === 'registered' || item.authRequired ? 'Kayıtlı' : 'Herkes'}</button>
                 <button class="btn-toggle ${item.aktif ? 'on' : 'off'}" onclick="toggleYeni(${index})">${item.aktif ? 'Açık' : 'Kapalı'}</button>
                 <button class="btn-danger" onclick="delYeni(${index})">Sil</button>
               </div>
@@ -1027,6 +1100,152 @@
     }
   }
 
+  function approvalStatusLabel(value) {
+    if (value === 'active') return 'Onaylı';
+    if (value === 'rejected') return 'Reddedildi';
+    return 'Onay bekliyor';
+  }
+
+  async function attachVerificationUrls(rows) {
+    const client = window.kemalAdminAuth.getClient();
+    const list = Array.isArray(rows) ? rows : [];
+    return Promise.all(list.map(async function(row) {
+      const item = Object.assign({}, row || {});
+      const path = String(item.verification_file_path || '');
+      if (!path) {
+        item.verification_url = '';
+        return item;
+      }
+      try {
+        const signed = await client.storage
+          .from('teacher-verifications')
+          .createSignedUrl(path, 15 * 60);
+        item.verification_url = signed && signed.data ? signed.data.signedUrl : '';
+      } catch (error) {
+        item.verification_url = '';
+      }
+      return item;
+    }));
+  }
+
+  function renderTeacherApprovalsPanel() {
+    const listEl = document.getElementById('teacherApprovalsList');
+    const statusEl = document.getElementById('teacherApprovalsStatus');
+    if (!listEl || !statusEl) {
+      return;
+    }
+    if (!canAccess('teacher_approvals')) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Öğretmen başvurularını görüntüleme yetkin açık değil.';
+      listEl.innerHTML = '';
+      return;
+    }
+    if (state.teacherApprovals.loading) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Öğretmen başvuruları yükleniyor…';
+      listEl.innerHTML = '';
+      return;
+    }
+    if (state.teacherApprovals.error) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = state.teacherApprovals.error;
+      listEl.innerHTML = '';
+      return;
+    }
+    const rows = Array.isArray(state.teacherApprovals.rows) ? state.teacherApprovals.rows : [];
+    statusEl.style.display = rows.length ? 'none' : 'block';
+    statusEl.textContent = rows.length ? '' : 'Bu filtrede öğretmen başvurusu bulunmuyor.';
+    listEl.innerHTML = rows.map(function(row) {
+      const status = row.approval_status || 'pending';
+      const fileName = row.verification_file_name || row.verification_file_path || 'Belge yok';
+      const signedUrl = row.verification_url || '';
+      return (
+        '<div class="admin-user-row">' +
+          '<div class="admin-user-head">' +
+            '<div class="admin-user-title">' + escHtml(row.full_name || row.email || 'Öğretmen') +
+              '<small>' + escHtml(row.email || '-') + ' · ' + escHtml(row.branch || 'Branş yok') + '</small>' +
+            '</div>' +
+            '<div class="admin-badge-row">' +
+              '<span class="admin-pill ' + (status === 'active' ? 'active' : status === 'rejected' ? 'passive' : '') + '">' + escHtml(approvalStatusLabel(status)) + '</span>' +
+              '<span class="admin-pill">' + escHtml(row.city || '-') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="admin-last-login">' +
+            'Okul: <strong>' + escHtml(row.school_name || '-') + '</strong> · Başvuru: <strong>' + escHtml(row.verification_submitted_at ? formatDateTime(row.verification_submitted_at) : 'Belge bekleniyor') + '</strong>' +
+          '</div>' +
+          '<div class="admin-last-login">Belge: <strong>' + escHtml(fileName) + '</strong>' + (row.verification_review_note ? ' · Not: ' + escHtml(row.verification_review_note) : '') + '</div>' +
+          '<div class="admin-row-actions">' +
+            (signedUrl ? '<a class="btn-secondary" href="' + escHtml(signedUrl) + '" target="_blank" rel="noopener">📄 Belgeyi Aç</a>' : '<button class="btn-secondary" disabled>Belge yok</button>') +
+            '<button class="btn-save" onclick="reviewTeacherApproval(\'' + escHtml(row.id) + '\',\'active\')">✅ Onayla</button>' +
+            '<button class="btn-danger" onclick="reviewTeacherApproval(\'' + escHtml(row.id) + '\',\'rejected\')" style="padding:11px 22px;font-size:14px;">Reddet</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  async function loadTeacherApprovals(force) {
+    if (!canAccess('teacher_approvals')) {
+      state.teacherApprovals.rows = [];
+      state.teacherApprovals.error = '';
+      renderTeacherApprovalsPanel();
+      return;
+    }
+    if (state.teacherApprovals.loading && !force) {
+      return;
+    }
+    if (state.teacherApprovals.loaded && !force) {
+      renderTeacherApprovalsPanel();
+      return;
+    }
+    const filterEl = document.getElementById('teacherApprovalFilter');
+    const filter = filterEl && filterEl.value ? filterEl.value : 'pending';
+    state.teacherApprovals.loading = true;
+    state.teacherApprovals.error = '';
+    renderTeacherApprovalsPanel();
+    try {
+      const client = window.kemalAdminAuth.getClient();
+      const result = await client.rpc('list_teacher_verification_requests', { p_status: filter });
+      if (result.error) throw result.error;
+      state.teacherApprovals.rows = await attachVerificationUrls(result.data || []);
+      state.teacherApprovals.loaded = true;
+    } catch (error) {
+      state.teacherApprovals.rows = [];
+      state.teacherApprovals.loaded = true;
+      state.teacherApprovals.error = window.kemalAdminAuth.humanizeError(error);
+    } finally {
+      state.teacherApprovals.loading = false;
+      renderTeacherApprovalsPanel();
+    }
+  }
+
+  async function reviewTeacherApproval(teacherId, decision) {
+    const id = String(teacherId || '').trim();
+    const next = decision === 'active' ? 'active' : 'rejected';
+    if (!id) {
+      toast('Öğretmen kaydı bulunamadı.', 'error');
+      return;
+    }
+    const note = window.prompt(next === 'active' ? 'Onay notu eklemek ister misin?' : 'Red nedeni / inceleme notu yazın:', '');
+    if (note === null) {
+      return;
+    }
+    try {
+      const result = await window.kemalAdminAuth.getClient().rpc('review_teacher_verification', {
+        p_teacher_id: id,
+        p_decision: next,
+        p_note: note || '',
+      });
+      if (result.error) throw result.error;
+      toast(next === 'active' ? '✅ Öğretmen hesabı onaylandı.' : 'Başvuru reddedildi.', next === 'active' ? 'success' : 'error');
+      state.teacherApprovals.loaded = false;
+      await loadTeacherApprovals(true);
+      await loadUserProfileCounts();
+    } catch (error) {
+      toast(window.kemalAdminAuth.humanizeError(error), 'error');
+    }
+  }
+
   function renderAnalytics() {
     const analytics = state.analytics;
     const statusEl = document.getElementById('analyticsStatus');
@@ -1255,14 +1474,217 @@
     loadAnalytics(true);
   }
 
+  function getReactionTypeLabel(type) {
+    const map = {
+      document: 'Doküman',
+      video: 'Video',
+      worksheet: 'Çalışma Kağıdı',
+      reading: 'Okuma Metni',
+      exam: 'Sınav / Deneme',
+      game: 'Oyun',
+      content: 'İçerik',
+    };
+    return map[type] || type || 'İçerik';
+  }
+
+  function renderReactionRows(items, emptyMessage, tone) {
+    const rows = (Array.isArray(items) ? items : []).filter(function(item) {
+      return Number(tone === 'dislike' ? item.dislikes : item.likes) > 0;
+    }).slice(0, 12);
+    if (!rows.length) {
+      return emptyStateHtml(emptyMessage);
+    }
+    return rows.map(function(item) {
+      const likes = Number(item.likes || 0);
+      const dislikes = Number(item.dislikes || 0);
+      const total = Math.max(1, likes + dislikes);
+      const likeWidth = Math.round((likes / total) * 100);
+      const href = item.href || '#';
+      const title = item.title || getReactionTypeLabel(item.content_type) + ' #' + item.content_id;
+      const meta = [
+        getReactionTypeLabel(item.content_type),
+        item.grade,
+        item.subject || item.source_label,
+      ].filter(Boolean).join(' · ');
+      return (
+        '<div class="reaction-row">' +
+          '<div class="reaction-row-main">' +
+            '<div class="reaction-row-title">' +
+              '<a href="' + escHtml(href) + '" target="_blank" rel="noopener">' + escHtml(title) + '</a>' +
+              '<small>' + escHtml(meta || item.content_id || '') + '</small>' +
+            '</div>' +
+            '<div class="reaction-meter" aria-hidden="true">' +
+              '<span class="like" style="width:' + likeWidth + '%"></span>' +
+              '<span class="dislike" style="width:' + (100 - likeWidth) + '%"></span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="reaction-score">' +
+            '<span class="like">👍 ' + escHtml(formatNumber(likes)) + '</span>' +
+            '<span class="dislike">👎 ' + escHtml(formatNumber(dislikes)) + '</span>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderRecentReactionRows(items) {
+    const rows = (Array.isArray(items) ? items : []).slice(0, 14);
+    if (!rows.length) {
+      return emptyStateHtml('Henüz yeni beğeni kaydı yok.');
+    }
+    return rows.map(function(item) {
+      const isLike = item.reaction === 'like';
+      const title = item.title || getReactionTypeLabel(item.content_type) + ' #' + item.content_id;
+      return (
+        '<div class="reaction-row compact">' +
+          '<div class="reaction-row-main">' +
+            '<div class="reaction-row-title">' +
+              '<a href="' + escHtml(item.href || '#') + '" target="_blank" rel="noopener">' + escHtml(title) + '</a>' +
+              '<small>' + escHtml(getReactionTypeLabel(item.content_type) + ' · ' + formatDateTime(item.updated_at)) + '</small>' +
+            '</div>' +
+          '</div>' +
+          '<div class="reaction-score single ' + (isLike ? 'like' : 'dislike') + '">' + (isLike ? '👍 Beğeni' : '👎 Beğenmeme') + '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderReactions() {
+    const reactionState = state.reactions;
+    const statusEl = document.getElementById('reactionStatus');
+    const summaryEl = document.getElementById('reactionSummary');
+    const likedEl = document.getElementById('reactionTopLiked');
+    const dislikedEl = document.getElementById('reactionTopDisliked');
+    const recentEl = document.getElementById('reactionRecent');
+
+    [7, 30, 90].forEach(function(days) {
+      const button = document.getElementById('reactionDays' + days);
+      if (!button) return;
+      button.classList.toggle('on', reactionState.days === days);
+      button.classList.toggle('off', reactionState.days !== days);
+    });
+
+    if (!statusEl || !summaryEl || !likedEl || !dislikedEl || !recentEl) {
+      return;
+    }
+
+    if (reactionState.loading && !reactionState.report) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Beğeni verileri yükleniyor…';
+      summaryEl.style.display = 'none';
+      likedEl.innerHTML = emptyStateHtml('Veriler geldiğinde en sevilen içerikler burada görünecek.');
+      dislikedEl.innerHTML = emptyStateHtml('Veriler geldiğinde beğenilmeyen içerikler burada görünecek.');
+      recentEl.innerHTML = emptyStateHtml('Son reaksiyonlar burada görünecek.');
+      return;
+    }
+
+    if (reactionState.error) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = reactionState.error;
+      summaryEl.style.display = 'none';
+      likedEl.innerHTML = emptyStateHtml('Beğeni raporu okunamadı.');
+      dislikedEl.innerHTML = emptyStateHtml('Beğeni raporu okunamadı.');
+      recentEl.innerHTML = emptyStateHtml('Beğeni raporu okunamadı.');
+      return;
+    }
+
+    const report = reactionState.report || {};
+    const summary = report.summary || {};
+    const topLiked = Array.isArray(report.topLiked) ? report.topLiked : [];
+    const topDisliked = Array.isArray(report.topDisliked) ? report.topDisliked : [];
+    const recent = Array.isArray(report.recent) ? report.recent : [];
+
+    statusEl.style.display = reactionState.loading ? 'block' : 'none';
+    statusEl.textContent = reactionState.loading ? 'Beğeni verileri yenileniyor…' : '';
+    summaryEl.style.display = 'grid';
+    summaryEl.innerHTML = [
+      { label: 'Toplam Tepki', value: formatNumber(summary.total_reactions), sub: reactionState.days + ' günlük like/dislike toplamı' },
+      { label: 'Beğeni', value: formatNumber(summary.likes), sub: 'Kullanıcıların beğendiği içerikler' },
+      { label: 'Beğenmeme', value: formatNumber(summary.dislikes), sub: 'İyileştirme sinyali veren içerikler' },
+      { label: 'Etkileşen İçerik', value: formatNumber(summary.content_count), sub: formatNumber(summary.visitors) + ' tekil ziyaretçi tepkisi' },
+    ].map(function(card) {
+      return (
+        '<div class="analytics-card">' +
+          '<div class="analytics-card-label">' + escHtml(card.label) + '</div>' +
+          '<div class="analytics-card-value">' + escHtml(card.value) + '</div>' +
+          '<div class="analytics-card-sub">' + escHtml(card.sub) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    likedEl.innerHTML = renderReactionRows(topLiked, 'Henüz beğeni alan içerik yok.', 'like');
+    dislikedEl.innerHTML = renderReactionRows(topDisliked, 'Henüz beğenmeme alan içerik yok.', 'dislike');
+    recentEl.innerHTML = renderRecentReactionRows(recent);
+  }
+
+  async function loadReactions(force) {
+    if (state.reactions.loading) {
+      return;
+    }
+    if (!force && state.reactions.report && state.reactions.loadedDays === state.reactions.days) {
+      renderReactions();
+      return;
+    }
+
+    state.reactions.loading = true;
+    state.reactions.error = '';
+    renderReactions();
+
+    try {
+      if (!window.kemalContentReactions || typeof window.kemalContentReactions.getReport !== 'function') {
+        throw new Error('Beğeni modülü yüklenemedi.');
+      }
+      state.reactions.report = await window.kemalContentReactions.getReport({
+        days: state.reactions.days,
+        limit: 80,
+        client: window.kemalAdminAuth.getClient(),
+      });
+      state.reactions.loadedDays = state.reactions.days;
+    } catch (error) {
+      state.reactions.report = null;
+      state.reactions.loadedDays = 0;
+      state.reactions.error = /content_reactions|get_content_reaction/i.test(String(error && error.message || ''))
+        ? 'Beğeni analizi tablosu henüz kurulmamış görünüyor. `supabase-content-reactions.sql` dosyasını Supabase SQL Editor içinde çalıştırın.'
+        : window.kemalAdminAuth.humanizeError(error);
+    } finally {
+      state.reactions.loading = false;
+      renderReactions();
+    }
+  }
+
+  function setReactionDays(days) {
+    if (![7, 30, 90].includes(days)) {
+      return;
+    }
+    state.reactions.days = days;
+    state.reactions.error = '';
+    if (state.currentPanel === 'reactions') {
+      loadReactions(true);
+    } else {
+      renderReactions();
+    }
+  }
+
+  function refreshReactions() {
+    state.reactions.report = null;
+    state.reactions.loadedDays = 0;
+    loadReactions(true);
+  }
+
   function renderCurrentPanel() {
     switch (state.currentPanel) {
       case 'adminler':
         renderAdminUsersPanel();
         renderAdminActivity();
         break;
+      case 'ogretmenler':
+        renderTeacherApprovalsPanel();
+        break;
       case 'analytics':
         renderAnalytics();
+        break;
+      case 'reactions':
+        renderReactions();
         break;
       case 'duyurular':
         renderDuyurular();
@@ -1304,6 +1726,7 @@
     state.accessProfile = await window.kemalAdminAuth.getAdminAccessProfile(true);
     updateStats();
     applyAccessControl();
+    loadUserProfileCounts();
     document.getElementById('yeniTarih').value = new Date().toISOString().split('T')[0];
     document.getElementById('onecTarih').value = new Date().toISOString().split('T')[0];
     try {
@@ -1456,16 +1879,27 @@
     const aciklama = document.getElementById('yeniAciklama').value.trim();
     const link = document.getElementById('yeniLink').value.trim();
     const tarih = document.getElementById('yeniTarih').value;
+    const accessScope = document.getElementById('yeniErisim').value === 'registered' ? 'registered' : 'public';
     if (!baslik || !link) {
       toast('Başlık ve link zorunludur!', 'error');
       return;
     }
-    state.data.yeniIcerikler.unshift({ id: Date.now(), baslik, emoji, aciklama, link, tarih, aktif: true });
+    state.data.yeniIcerikler.unshift({ id: Date.now(), baslik, emoji, aciklama, link, tarih, accessScope, aktif: true });
     ['yeniBaslik', 'yeniEmoji', 'yeniAciklama', 'yeniLink'].forEach(function(id) {
       document.getElementById(id).value = '';
     });
     document.getElementById('yeniTarih').value = new Date().toISOString().split('T')[0];
+    document.getElementById('yeniErisim').value = 'public';
     persistData('✅ Yeni içerik kaydedildi!');
+  }
+
+  function toggleYeniAccess(index) {
+    const item = state.data.yeniIcerikler[index];
+    if (!item) return;
+    const isRegistered = item.accessScope === 'registered' || item.authRequired;
+    item.accessScope = isRegistered ? 'public' : 'registered';
+    item.authRequired = !isRegistered;
+    persistData('🔐 İçerik erişimi güncellendi');
   }
 
   function toggleYeni(index) {
@@ -1747,6 +2181,7 @@
   window.delOnec = delOnec;
   window.addYeni = addYeni;
   window.toggleYeni = toggleYeni;
+  window.toggleYeniAccess = toggleYeniAccess;
   window.delYeni = delYeni;
   window.updateStat = updateStat;
   window.addStat = addStat;
@@ -1760,11 +2195,15 @@
   window.toggleAdminMember = toggleAdminMember;
   window.removeAdminMember = removeAdminMember;
   window.sendAdminPasswordSetup = sendAdminPasswordSetup;
+  window.loadTeacherApprovals = loadTeacherApprovals;
+  window.reviewTeacherApproval = reviewTeacherApproval;
   window.changePassword = changePassword;
   window.exportData = exportData;
   window.resetConfirm = resetConfirm;
   window.setAnalyticsDays = setAnalyticsDays;
   window.refreshAnalytics = refreshAnalytics;
+  window.setReactionDays = setReactionDays;
+  window.refreshReactions = refreshReactions;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bootstrap);

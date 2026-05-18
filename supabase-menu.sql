@@ -25,6 +25,7 @@ on public.menu_ogeler (active, nav_key, sort_order);
 create or replace function public.touch_menu_ogeler_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -45,26 +46,29 @@ create policy "menu_ogeler public read active"
 on public.menu_ogeler
 for select
 to anon, authenticated
-using (active = true or auth.role() = 'authenticated');
+using (
+  active = true
+  or public.current_admin_has_permission('menu_yonetimi')
+);
 
 drop policy if exists "menu_ogeler authenticated insert" on public.menu_ogeler;
 create policy "menu_ogeler authenticated insert"
 on public.menu_ogeler
 for insert
 to authenticated
-with check (true);
+with check (public.current_admin_has_permission('menu_yonetimi'));
 
 drop policy if exists "menu_ogeler authenticated update" on public.menu_ogeler;
 create policy "menu_ogeler authenticated update"
 on public.menu_ogeler
 for update
 to authenticated
-using (true)
-with check (true);
+using (public.current_admin_has_permission('menu_yonetimi'))
+with check (public.current_admin_has_permission('menu_yonetimi'));
 
 drop policy if exists "menu_ogeler authenticated delete" on public.menu_ogeler;
 create policy "menu_ogeler authenticated delete"
 on public.menu_ogeler
 for delete
 to authenticated
-using (true);
+using (public.current_admin_has_permission('menu_yonetimi'));

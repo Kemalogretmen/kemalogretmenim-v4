@@ -8,24 +8,28 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    .teacher-panel{min-height:calc(100vh - 106px);padding:30px 18px 46px;background:#F8FAFC;color:#0F172A}
+    .teacher-panel{min-height:calc(100vh - 106px);padding:30px 18px 46px;background:radial-gradient(circle at 8% 4%,rgba(14,165,233,.16),transparent 28%),radial-gradient(circle at 92% 8%,rgba(245,158,11,.13),transparent 28%),linear-gradient(180deg,#F8FAFC 0%,#F1F5F9 100%);color:#0F172A}
     .teacher-shell{max-width:1260px;margin:0 auto}
-    .teacher-hero{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;box-shadow:0 14px 34px rgba(15,23,42,.05)}
-    .teacher-hero h1{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);color:#0F172A;margin:0 0 6px;letter-spacing:0}
-    .teacher-hero p{color:#475569;font-weight:750;line-height:1.55;margin:0;max-width:760px}
-    .teacher-badge{display:inline-flex;align-items:center;border-radius:999px;padding:9px 14px;background:#E0F2FE;color:#075985;font-weight:900;white-space:nowrap}
+    .teacher-hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 58%,#0F766E 100%);border:0;border-radius:24px;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;box-shadow:0 24px 54px rgba(15,23,42,.18);color:#fff}
+    .teacher-hero::before{content:'';position:absolute;right:-90px;top:-110px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.13)}
+    .teacher-profile-head{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+    .teacher-avatar{width:92px;height:92px;border-radius:22px;border:4px solid rgba(255,255,255,.82);background:linear-gradient(135deg,#E0F2FE,#FEF3C7);display:grid;place-items:center;overflow:hidden;color:#0F172A;font:950 30px var(--font-display);box-shadow:0 16px 34px rgba(15,23,42,.22)}
+    .teacher-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .teacher-hero h1{font-family:var(--font-display);font-size:clamp(28px,3vw,42px);color:#fff;margin:0 0 6px;letter-spacing:0}
+    .teacher-hero p{color:rgba(255,255,255,.86);font-weight:800;line-height:1.55;margin:0;max-width:760px}
+    .teacher-badge{position:relative;z-index:1;display:inline-flex;align-items:center;border-radius:999px;padding:9px 14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);color:#fff;font-weight:900;white-space:nowrap;backdrop-filter:blur(12px)}
     .teacher-top-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
-    .teacher-btn,.teacher-link{border:0;border-radius:8px;padding:11px 14px;background:#4F46E5;color:#fff;font-weight:900;text-decoration:none;cursor:pointer;font-family:var(--font-body)}
-    .teacher-btn.secondary,.teacher-link.secondary{background:#fff;color:#0F172A;border:1px solid #CBD5E1}
+    .teacher-btn,.teacher-link{border:0;border-radius:999px;padding:11px 15px;background:linear-gradient(135deg,#2563EB,#0F766E);color:#fff;font-weight:900;text-decoration:none;cursor:pointer;font-family:var(--font-body);box-shadow:0 10px 20px rgba(15,23,42,.12)}
+    .teacher-btn.secondary,.teacher-link.secondary{background:#fff;color:#0F172A;border:1px solid #CBD5E1;box-shadow:0 10px 20px rgba(15,23,42,.08)}
     .teacher-btn.danger{background:#B91C1C}
     .teacher-btn:disabled{opacity:.55;cursor:not-allowed}
     .teacher-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
-    .teacher-stat{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:16px}
+    .teacher-stat{background:rgba(255,255,255,.94);border:1px solid #E2E8F0;border-radius:18px;padding:18px;box-shadow:0 16px 34px rgba(15,23,42,.06)}
     .teacher-stat span{display:block;color:#64748B;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
     .teacher-stat strong{display:block;color:#0F172A;font-family:var(--font-display);font-size:30px;line-height:1.1;margin-top:5px}
     .teacher-tabs{display:flex;gap:8px;overflow:auto;padding:4px;margin:8px 0 16px}
     .teacher-tab{border:1px solid #CBD5E1;background:#fff;color:#334155;border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;white-space:nowrap}
-    .teacher-tab.active{background:#0F172A;color:#fff;border-color:#0F172A}
+    .teacher-tab.active{background:linear-gradient(135deg,#0F172A,#2563EB);color:#fff;border-color:transparent}
     .teacher-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
     .teacher-panel-card{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:18px;box-shadow:0 12px 28px rgba(15,23,42,.035)}
     .teacher-panel-card h2{font-family:var(--font-display);font-size:22px;color:#0F172A;margin:0 0 8px;letter-spacing:0}
@@ -60,6 +64,17 @@
     .teacher-section{display:none}
     .teacher-section.active{display:block}
     .teacher-note{padding:12px 14px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;color:#475569;font-weight:800;line-height:1.5;margin-bottom:14px}
+    .teacher-toolbar{display:grid;grid-template-columns:1.3fr .7fr .7fr;gap:10px;margin:10px 0 16px}
+    .teacher-toolbar input,.teacher-toolbar select{width:100%;border:1px solid #CBD5E1;border-radius:10px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:11px 12px}
+    .teacher-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .teacher-content-card{position:relative;border:1px solid #E2E8F0;border-radius:16px;background:#fff;padding:15px;display:grid;gap:10px;box-shadow:0 12px 26px rgba(15,23,42,.045)}
+    .teacher-content-card h3{margin:0;color:#0F172A;font-size:16px;line-height:1.25}
+    .teacher-content-meta{display:flex;gap:7px;flex-wrap:wrap;color:#64748B;font-size:12px;font-weight:900}
+    .teacher-content-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-right:96px}
+    .teacher-assignment-warning{display:none;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;border-radius:10px;padding:11px 12px;font-weight:850;line-height:1.45}
+    .teacher-assignment-warning.show{display:block}
+    .teacher-embed-preview{margin-top:10px;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;background:#F8FAFC}
+    .teacher-embed-preview iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
     .teacher-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
     .teacher-action-card{border:1px solid #E2E8F0;border-radius:10px;background:#fff;padding:16px;display:grid;gap:10px;align-content:start}
     .teacher-action-card strong{font-size:17px;color:#0F172A}
@@ -71,24 +86,37 @@
     .teacher-status-line{display:grid;gap:8px;margin-top:10px}
     .teacher-status-line div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #E2E8F0;padding-bottom:8px;color:#475569;font-weight:800}
     .teacher-status-line strong{color:#0F172A}
-    @media(max-width:980px){.teacher-hero{grid-template-columns:1fr}.teacher-top-actions{justify-content:flex-start}.teacher-layout,.teacher-account-grid{grid-template-columns:1fr}.teacher-stats,.teacher-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:640px){.teacher-panel{padding:18px 12px 34px}.teacher-row{grid-template-columns:1fr}.teacher-row-actions{justify-content:flex-start}.teacher-two,.teacher-stats,.teacher-action-grid{grid-template-columns:1fr}.teacher-table{font-size:13px}}
+    .teacher-approval-notice{display:none;margin:16px 0;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:12px;padding:18px;color:#7C2D12}
+    .teacher-approval-notice.show{display:block}
+    .teacher-approval-notice h2{font-family:var(--font-display);font-size:24px;margin:0 0 8px;color:#9A3412}
+    .teacher-approval-notice p{font-weight:800;line-height:1.55;margin:0 0 12px;color:#9A3412}
+    .teacher-approval-upload{display:grid;gap:10px;grid-template-columns:minmax(220px,1fr) auto;align-items:end;max-width:720px}
+    .teacher-approval-upload input{width:100%;border:1px solid #FDBA74;border-radius:8px;background:#fff;padding:10px;color:#0F172A;font-weight:800}
+    .teacher-locked .teacher-tabs,.teacher-locked .teacher-section:not(#section-account){display:none}
+    .teacher-locked #section-account{display:block}
+    @media(max-width:980px){.teacher-hero{grid-template-columns:1fr}.teacher-top-actions{justify-content:flex-start}.teacher-layout,.teacher-account-grid{grid-template-columns:1fr}.teacher-stats,.teacher-action-grid,.teacher-library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-toolbar{grid-template-columns:1fr}}
+    @media(max-width:640px){.teacher-panel{padding:18px 12px 34px}.teacher-profile-head{grid-template-columns:1fr}.teacher-row{grid-template-columns:1fr}.teacher-row-actions{justify-content:flex-start}.teacher-two,.teacher-stats,.teacher-action-grid,.teacher-approval-upload,.teacher-library-grid{grid-template-columns:1fr}.teacher-table{font-size:13px}.teacher-content-actions{padding-right:0}}
   </style>
 </head>
 <body>
   <main class="teacher-panel">
     <section class="teacher-shell">
       <div class="teacher-hero">
+        <div class="teacher-profile-head">
+          <div class="teacher-avatar" id="teacherHeroAvatar">Ö</div>
+          <div>
+            <h1>Öğretmen Paneli</h1>
+            <p id="teacherIntro">Hesabın yükleniyor...</p>
+          </div>
+        </div>
         <div>
-          <h1>Öğretmen Paneli</h1>
-          <p id="teacherIntro">Hesabın yükleniyor...</p>
+          <span class="teacher-badge" id="teacherStatus">Kontrol ediliyor</span>
           <div class="teacher-top-actions">
             <a class="teacher-link secondary" href="/index.html">Siteye Dön</a>
             <button class="teacher-btn secondary" id="refreshBtn" type="button">Yenile</button>
             <button class="teacher-btn danger" id="logoutBtn" type="button">Çıkış Yap</button>
           </div>
         </div>
-        <span class="teacher-badge" id="teacherStatus">Kontrol ediliyor</span>
       </div>
 
       <div class="teacher-stats">
@@ -98,11 +126,24 @@
         <div class="teacher-stat"><span>Yaklaşan</span><strong id="statDueSoon">0</strong></div>
       </div>
 
+      <div class="teacher-approval-notice" id="teacherApprovalNotice">
+        <h2>Öğretmen doğrulaması bekleniyor</h2>
+        <p id="teacherApprovalText">Sınıf ve ödev araçları yönetici onayından sonra açılacak.</p>
+        <div class="teacher-approval-upload" id="teacherApprovalUpload">
+          <label class="teacher-field" for="teacherVerificationFilePanel">
+            <span>Öğretmen kimliği / çalışma belgesi</span>
+            <input id="teacherVerificationFilePanel" type="file" accept="image/jpeg,image/png,application/pdf">
+          </label>
+          <button class="teacher-btn" id="uploadVerificationBtn" type="button">Belgeyi Gönder</button>
+        </div>
+      </div>
+
       <div class="teacher-tabs" role="tablist">
         <button class="teacher-tab active" type="button" data-tab="classes">Sınıflarım</button>
         <button class="teacher-tab" type="button" data-tab="assignments">Ödevler</button>
         <button class="teacher-tab" type="button" data-tab="reports">Karneler</button>
-        <button class="teacher-tab" type="button" data-tab="content">Ders Programı</button>
+        <button class="teacher-tab" type="button" data-tab="library">Kaydettiklerim</button>
+        <button class="teacher-tab" type="button" data-tab="content">Araçlar</button>
         <button class="teacher-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
       </div>
 
@@ -184,6 +225,9 @@
                     <option value="reading">Hızlı okuma</option>
                     <option value="exam">Sınav / deneme</option>
                     <option value="document">Doküman</option>
+                    <option value="worksheet">Çalışma kağıdı</option>
+                    <option value="video">Video</option>
+                    <option value="game">Oyun</option>
                     <option value="custom">Serbest bağlantı</option>
                   </select>
                 </div>
@@ -204,9 +248,17 @@
                 <select id="assignmentStudents" multiple size="5"></select>
               </div>
               <div class="teacher-field">
-                <label for="assignmentUrl">İçerik bağlantısı veya ID</label>
+                <label for="assignmentSavedContent">Kaydedilen içerikten seç</label>
+                <select id="assignmentSavedContent">
+                  <option value="">Kaydedilen içerik yok / elle bağlantı gir</option>
+                </select>
+              </div>
+              <div class="teacher-field">
+                <label for="assignmentUrl">İçerik bağlantısı, YouTube linki veya Wordwall iframe kodu</label>
                 <input id="assignmentUrl" type="text" placeholder="/hizli-okuma/oku.html?id=...">
               </div>
+              <div class="teacher-assignment-warning" id="assignmentWarning"></div>
+              <div id="assignmentPreview"></div>
               <div class="teacher-two">
                 <div class="teacher-field">
                   <label for="assignmentStart">Başlama tarihi</label>
@@ -240,16 +292,60 @@
         </div>
       </section>
 
+      <section class="teacher-section" id="section-library">
+        <div class="teacher-panel-card">
+          <h2>Kaydettiklerim</h2>
+          <p>Sitede gezerken kaydettiğin içerikler burada listelenir ve ödev formunda hızlıca seçilebilir.</p>
+          <div class="teacher-library-grid" id="teacherSavedList"></div>
+        </div>
+
+        <div class="teacher-panel-card" style="margin-top:16px">
+          <h2>Beğendiklerim</h2>
+          <p>Beğendiğin okuma, sınav, doküman, video ve oyunlar burada ayrı bir liste olarak görünür.</p>
+          <div class="teacher-library-grid" id="teacherLikedList"></div>
+        </div>
+      </section>
+
       <section class="teacher-section" id="section-content">
         <div class="teacher-panel-card">
-          <h2>Ders Programı</h2>
-          <p>Yıllık plan dosyalarını yükleyip haftalık ders programını A4 çıktı alınabilir şekilde hazırlayabileceğin planlama sayfası.</p>
+          <h2>Öğretmen Araçları</h2>
+          <p>Ders içi hızlı araçlara buradan ulaşabilirsin.</p>
           <div class="teacher-action-grid">
             <article class="teacher-action-card">
               <strong>Haftalık Ders Planı</strong>
               <span>Word veya Excel yıllık planlarını yükle; sistem öğrenme çıktıları ve süreç bileşenlerini ders programına otomatik yerleştirsin.</span>
               <span class="teacher-pill ok">Kullanıma hazır</span>
               <a class="teacher-link" href="/ogretmen-ders-plani.html" style="display:inline-flex;width:max-content;margin-top:12px">Ders Programını Aç</a>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Akıllı Tahta</strong>
+              <span>Tahta, çizim ve sınıf içi anlatım ekranını hızlıca aç.</span>
+              <span class="teacher-pill ok">🧑‍🏫 Tahta</span>
+              <a class="teacher-link" href="/ogretmen/beyaztahta.html" style="display:inline-flex;width:max-content;margin-top:12px">Akıllı Tahtayı Aç</a>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Matematik Araçları</strong>
+              <span>Matematik dersleri için pratik araç ve etkinlik ekranları.</span>
+              <span class="teacher-pill ok">➗ Matematik</span>
+              <a class="teacher-link" href="/ogretmen/matematik.html" style="display:inline-flex;width:max-content;margin-top:12px">Araçları Aç</a>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Belge ve Sertifika Stüdyosu</strong>
+              <span>Hazır şablonlar, hazır yazı fikirleri ve düzenleme araçlarıyla hızlı belge hazırla.</span>
+              <span class="teacher-pill ok">🏅 Belge Tasarımı</span>
+              <a class="teacher-link" href="/ogretmen/belge-studyo.html" style="display:inline-flex;width:max-content;margin-top:12px">Stüdyoyu Aç</a>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Sınıfım ve Çark</strong>
+              <span>Sınıf içi seçim, kura ve etkinlik çarkı kısayolu.</span>
+              <span class="teacher-pill ok">🎡 Çark</span>
+              <a class="teacher-link" href="/ogretmen/sinifimcark.html" style="display:inline-flex;width:max-content;margin-top:12px">Çarkı Aç</a>
+            </article>
+            <article class="teacher-action-card">
+              <strong>Kronometre</strong>
+              <span>Okuma, etkinlik ve yarışma sürelerini takip et.</span>
+              <span class="teacher-pill ok">⏱ Süre</span>
+              <a class="teacher-link" href="/ogretmen/kronometre.html" style="display:inline-flex;width:max-content;margin-top:12px">Kronometreyi Aç</a>
             </article>
           </div>
         </div>
@@ -259,11 +355,18 @@
         <div class="teacher-account-grid">
           <article class="teacher-panel-card">
             <h2>Kişisel Bilgiler</h2>
-            <p>İsim ve e-posta hesap güvenliği için bu panelden değiştirilemez.</p>
-            <div class="teacher-form">
+            <p>Profil fotoğrafını ve okul bilgini güncelleyebilirsin. E-posta hesap güvenliği için değiştirilemez.</p>
+            <form class="teacher-form" id="teacherProfileForm">
+              <div class="teacher-profile-head" style="grid-template-columns:auto minmax(0,1fr);color:#0F172A">
+                <div class="teacher-avatar" id="teacherAccountAvatar" style="width:82px;height:82px;border-color:#E2E8F0">Ö</div>
+                <div class="teacher-row-actions" style="justify-content:flex-start">
+                  <input id="accountAvatarInput" type="file" accept="image/jpeg,image/png" hidden>
+                  <button class="teacher-btn secondary" id="accountAvatarButton" type="button">Fotoğraf Seç</button>
+                </div>
+              </div>
               <div class="teacher-field">
                 <label for="accountName">İsim</label>
-                <input id="accountName" type="text" readonly>
+                <input id="accountName" type="text" placeholder="Ad soyad">
               </div>
               <div class="teacher-field">
                 <label for="accountEmail">E-posta</label>
@@ -281,9 +384,10 @@
               </div>
               <div class="teacher-field">
                 <label for="accountSchool">Okul</label>
-                <input id="accountSchool" type="text" readonly>
+                <input id="accountSchool" type="text" placeholder="Okul / kurum adı">
               </div>
-            </div>
+              <button class="teacher-btn" type="submit">Bilgileri Güncelle</button>
+            </form>
           </article>
 
           <article class="teacher-panel-card">
@@ -293,6 +397,9 @@
               <div><span>Kayıt e-postası</span><strong id="accountEmailSummary">-</strong></div>
               <div><span>Onay durumu</span><strong id="accountApprovalSummary">-</strong></div>
               <div><span>Aktiflik</span><strong id="accountActiveSummary">-</strong></div>
+            </div>
+            <div class="teacher-row-actions" style="justify-content:flex-start;margin-top:16px">
+              <button class="teacher-btn secondary" type="button" id="teacherPasswordResetBtn">Şifre Yenileme Maili Gönder</button>
             </div>
             <div class="teacher-danger-zone" style="margin-top:16px">
               <h3>Hesap kapatma</h3>
@@ -311,6 +418,11 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/content-progress.js"></script>
+  <script src="/js/content-feed.js"></script>
+  <script src="/js/content-reactions.js"></script>
+  <script src="/js/content-saves.js"></script>
   <script src="/js/ogretmen-paneli.js"></script>
 </body>
 </html>

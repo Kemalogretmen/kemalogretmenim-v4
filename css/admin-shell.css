@@ -1,5 +1,6 @@
 .admin-shell-body {
   min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
 }
 
 .admin-shell-app {
@@ -28,6 +29,8 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.08), 18px 0 44px rgba(26, 16, 64, 0.12);
+  padding-top: max(22px, env(safe-area-inset-top));
+  padding-bottom: max(22px, env(safe-area-inset-bottom));
 }
 
 .admin-nav-brand {
@@ -311,7 +314,9 @@
 .admin-shell-main {
   flex: 1;
   min-width: 0;
+  width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .admin-shell-main .topbar {
@@ -375,6 +380,7 @@
     position: relative;
     border-radius: 0 0 24px 24px;
     padding-bottom: 18px;
+    max-height: none;
   }
 }
 
