@@ -15,6 +15,12 @@
       group: 'Genel Yönetim',
     },
     {
+      key: 'user_management',
+      label: 'Kullanıcı Yönetimi',
+      description: 'Kayıtlı öğretmen ve öğrenci listelerini görüntüleme',
+      group: 'Genel Yönetim',
+    },
+    {
       key: 'menu_yonetimi',
       label: 'Menü & Ders Yönetimi',
       description: 'Üst menüye ders sayfaları ekleme',

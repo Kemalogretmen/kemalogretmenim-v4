@@ -763,6 +763,82 @@
       flex-wrap:wrap;
       margin-top:12px;
     }
+    .registered-user-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    .registered-user-toolbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .registered-user-search {
+      max-width:360px;
+      margin-bottom:0 !important;
+    }
+    .registered-user-list {
+      display:grid;
+      gap:10px;
+      max-height:620px;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .registered-user-row {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      padding:14px 16px;
+      border:2px solid var(--border);
+      border-radius:16px;
+      background:#FAFAFF;
+    }
+    .registered-user-main {
+      min-width:0;
+    }
+    .registered-user-title {
+      color:var(--navy);
+      font-size:14px;
+      font-weight:900;
+      line-height:1.35;
+    }
+    .registered-user-title small {
+      display:block;
+      margin-top:4px;
+      color:var(--slate);
+      font-size:12px;
+      font-weight:700;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:360px;
+    }
+    .registered-user-meta {
+      margin-top:8px;
+      color:var(--slate);
+      font-size:12px;
+      font-weight:800;
+      line-height:1.5;
+    }
+    .registered-user-side {
+      display:flex;
+      align-items:flex-end;
+      flex-direction:column;
+      gap:7px;
+      flex-shrink:0;
+      text-align:right;
+    }
+    .registered-user-side small {
+      color:var(--muted);
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+    }
     .admin-permission-grid {
       display:grid;
       grid-template-columns:1fr;
@@ -863,8 +939,10 @@
       .main-area { margin-left:70px; padding:20px; }
       .stats-row { grid-template-columns:1fr 1fr; }
       .form-row, .form-row-3 { grid-template-columns:1fr; }
-      .admin-grid, .admin-permission-grid, .admin-permission-section-grid, .access-summary-grid { grid-template-columns:1fr; }
+      .admin-grid, .admin-permission-grid, .admin-permission-section-grid, .access-summary-grid, .registered-user-grid { grid-template-columns:1fr; }
       .activity-row, .reaction-row { align-items:flex-start; flex-direction:column; }
+      .registered-user-row { flex-direction:column; }
+      .registered-user-side { align-items:flex-start; text-align:left; }
       .activity-time { text-align:left; }
       .reaction-score { align-items:flex-start; flex-direction:row; }
     }
@@ -994,6 +1072,9 @@
             </button>
             <button class="side-btn" onclick="showPanel('ogretmenler')" id="btn-ogretmenler">
               <span class="em">🪪</span><span>Öğretmen Onayları</span>
+            </button>
+            <button class="side-btn" onclick="showPanel('kullanicilar')" id="btn-kullanicilar">
+              <span class="em">👥</span><span>Kullanıcılar</span>
             </button>
             <button class="side-btn" onclick="showPanel('sifre')" id="btn-sifre">
               <span class="em">🔑</span><span>Şifre Değiştir</span>
@@ -1165,6 +1246,7 @@
             <button class="btn-add" onclick="window.location='/admin/okuma-karne.html'" id="quick-okuma-karne">📘 Okuma Karnesi</button>
             <button class="btn-add" onclick="showPanel('adminler')" id="quick-adminler">👥 Alt Adminler</button>
             <button class="btn-add" onclick="showPanel('ogretmenler')" id="quick-ogretmenler">🪪 Öğretmen Onayları</button>
+            <button class="btn-add" onclick="showPanel('kullanicilar')" id="quick-kullanicilar">👥 Kullanıcı Listeleri</button>
             <button class="btn-add" onclick="window.location='/sinav_sitesi/admin.html'" id="quick-sinav-admin">🧪 Sınav Yönetimi</button>
           </div>
         </div>
@@ -1595,6 +1677,31 @@
         </div>
       </div>
 
+      <!-- ══ KAYITLI KULLANICILAR ══ -->
+      <div class="panel" id="panel-kullanicilar">
+        <div class="card">
+          <div class="card-title">👥 Kayıtlı Kullanıcılar</div>
+          <div class="admin-help-box">
+            Bu ekran yalnızca yetkili adminlere açıktır. Öğretmen ve öğrenci kayıtları ayrı listelenir; alt adminlere bu alanı açmak için Alt Adminler bölümündeki Kullanıcı Yönetimi yetkisini işaretleyebilirsin.
+          </div>
+          <div class="registered-user-toolbar">
+            <input class="registered-user-search" type="text" id="registeredUserSearch" placeholder="Ad, e-posta, okul, şehir veya sınıf ara" oninput="updateRegisteredUserSearch(this.value)">
+            <button class="btn-add" onclick="loadRegisteredUsers(true)">🔄 Listeyi Yenile</button>
+          </div>
+          <div id="registeredUsersStatus" class="admin-help-box" style="display:none;"></div>
+        </div>
+        <div class="registered-user-grid">
+          <div class="card">
+            <div class="card-title">👩‍🏫 Öğretmenler <span class="badge" id="registeredTeacherCount">0 / 0</span></div>
+            <div class="registered-user-list" id="registeredTeachersList"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">🎒 Öğrenciler <span class="badge" id="registeredStudentCount">0 / 0</span></div>
+            <div class="registered-user-list" id="registeredStudentsList"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ YEDEK / SIFIRLA ══ -->
       <div class="panel" id="panel-yedek">
         <div class="card" style="max-width:520px;">
@@ -1616,9 +1723,9 @@
   <div class="toast" id="toast"></div>
 
 <script src="/js/site-data.js"></script>
-<script src="/js/admin-auth.js?v=20260511-1"></script>
-<script src="/js/admin-shell.js?v=20260505-1"></script>
+<script src="/js/admin-auth.js?v=20260520-1"></script>
+<script src="/js/admin-shell.js?v=20260520-1"></script>
 <script src="/js/content-reactions.js"></script>
-<script src="/js/admin-dashboard.js?v=20260511-1"></script>
+<script src="/js/admin-dashboard.js?v=20260520-1"></script>
 </body>
 </html>

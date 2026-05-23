@@ -124,6 +124,12 @@
     .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,201,177,.35);}
     .btn-secondary{padding:11px 18px;background:var(--bg);border:2px solid var(--border);border-radius:50px;font-weight:800;font-size:13px;cursor:pointer;color:var(--slate);}
     .hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:-6px;margin-bottom:12px;}
+    .source-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 12px;}
+    .source-btn{border:2px solid var(--border);background:white;color:var(--slate);border-radius:16px;padding:12px;text-align:left;font-weight:900;cursor:pointer;transition:all .2s;}
+    .source-btn span{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-top:4px;line-height:1.35;}
+    .source-btn.active{border-color:var(--purple);background:#F4EFFF;color:var(--purple);box-shadow:0 8px 22px rgba(108,61,237,.12);}
+    .external-url-box{display:grid;gap:8px;margin-top:10px;}
+    .external-url-box textarea{min-height:92px;}
     .target-picker{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:12px;}
     .target-picker select{margin-bottom:0;}
     .target-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:34px;}
@@ -264,7 +270,17 @@
             <div class="file-box" id="fileBox">
               <strong>Doküman Dosyası</strong>
               <p id="fileInfo">Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.</p>
-              <input type="file" id="fPdf" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp">
+              <div class="source-tabs" role="group" aria-label="Doküman kaynağı">
+                <button class="source-btn active" type="button" data-document-source="supabase">Supabase'e yükle<span>Mevcut sistem: dosya Supabase Storage içinde saklanır.</span></button>
+                <button class="source-btn" type="button" data-document-source="external">Harici link / R2 / Drive<span>Dosya dışarıda kalır, burada sadece bağlantı saklanır.</span></button>
+              </div>
+              <div id="localUploadBox">
+                <input type="file" id="fPdf" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp">
+              </div>
+              <div class="external-url-box is-hidden" id="externalUrlBox">
+                <textarea id="fExternalUrl" placeholder="Cloudflare R2 public URL, doğrudan PDF/görsel linki veya Google Drive dosya linki"></textarea>
+                <div class="hint">R2 ve doğrudan PDF/görsel linkleri tam doküman araçlarıyla çalışır. Google Drive için klasör linki değil, tek dosyanın paylaşım linki gerekir; Drive bazı dosyalarda CORS nedeniyle önizleme kısıtı çıkarabilir.</div>
+              </div>
             </div>
             <div class="file-box is-hidden" id="videoBox">
               <strong>Video Bağlantısı</strong>

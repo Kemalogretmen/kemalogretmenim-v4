@@ -18,6 +18,7 @@
     analytics: '📈 Site Analizleri',
     reactions: '👍 Beğeni Analizi',
     ogretmenler: '🪪 Öğretmen Onayları',
+    kullanicilar: '👥 Kayıtlı Kullanıcılar',
     duyurular: '📢 Duyurular',
     badges: '🔔 YENİ Rozetleri',
     hizli: '⚡ Hızlı Erişim',
@@ -69,6 +70,14 @@
       loaded: false,
       error: '',
       rows: [],
+    },
+    registeredUsers: {
+      loading: false,
+      loaded: false,
+      error: '',
+      students: [],
+      teachers: [],
+      query: '',
     },
   };
 
@@ -289,6 +298,7 @@
       'quick-okuma-karne': 'okuma_karne',
       'quick-adminler': '__owner__',
       'quick-ogretmenler': 'teacher_approvals',
+      'quick-kullanicilar': 'user_management',
       'quick-sinav-admin': 'exam_create',
     };
   }
@@ -313,6 +323,7 @@
       'btn-okuma-karne': 'okuma_karne',
       'btn-adminler': '__owner__',
       'btn-ogretmenler': 'teacher_approvals',
+      'btn-kullanicilar': 'user_management',
       'btn-yedek': '__owner__',
       'btn-sinav-admin': 'exam_create',
     };
@@ -546,6 +557,9 @@
     if (!canAccess('teacher_approvals') && state.currentPanel === 'ogretmenler') {
       state.currentPanel = 'overview';
     }
+    if (!canAccess('user_management') && state.currentPanel === 'kullanicilar') {
+      state.currentPanel = 'overview';
+    }
     if (!ownerMode && state.currentPanel === 'adminler') {
       state.currentPanel = 'overview';
     }
@@ -647,6 +661,10 @@
       toast('Öğretmen onayları için yetkin açık değil.', 'error');
       return;
     }
+    if (id === 'kullanicilar' && !canAccess('user_management')) {
+      toast('Kullanıcı listeleri için yetkin açık değil.', 'error');
+      return;
+    }
     if (id === 'yedek' && !ownerMode) {
       toast('Yedek ve sıfırlama alanı yalnızca ana yöneticiye açık.', 'error');
       return;
@@ -680,6 +698,9 @@
     }
     if (id === 'ogretmenler') {
       loadTeacherApprovals(false);
+    }
+    if (id === 'kullanicilar') {
+      loadRegisteredUsers(false);
     }
     if (id === 'analytics') {
       loadAnalytics(false);
@@ -1246,6 +1267,186 @@
     }
   }
 
+  function humanizeUserManagementError(error) {
+    const message = String((error && error.message) || '');
+    if (
+      message.includes('list_registered_users') ||
+      message.includes('Could not find the function public.list_registered_users')
+    ) {
+      return 'Kullanıcı listesi fonksiyonu henüz kurulmamış görünüyor. `supabase-admin-users.sql` dosyasını Supabase SQL Editor içinde tekrar çalıştırın.';
+    }
+    return window.kemalAdminAuth.humanizeError(error);
+  }
+
+  function getUserDisplayName(row) {
+    return row.full_name || [row.first_name, row.last_name].filter(Boolean).join(' ') || row.email || 'İsimsiz kullanıcı';
+  }
+
+  function accountStatusLabel(row) {
+    if (row.active === false || row.account_status === 'inactive') {
+      return 'Pasif';
+    }
+    if (row.deletion_requested_at) {
+      return 'Silme Talebi';
+    }
+    return 'Aktif';
+  }
+
+  function getRegisteredUserMeta(row) {
+    const pieces = [];
+    if (row.role === 'student' && row.grade_level) {
+      pieces.push(row.grade_level + '. sınıf' + (row.branch ? ' / ' + row.branch : ''));
+    } else if (row.role === 'teacher' && row.branch) {
+      pieces.push(row.branch);
+    }
+    if (row.school_name) {
+      pieces.push(row.school_name);
+    }
+    if (row.city || row.district) {
+      pieces.push([row.city, row.district].filter(Boolean).join(' / '));
+    }
+    return pieces.join(' · ');
+  }
+
+  function filterRegisteredRows(rows) {
+    const query = String(state.registeredUsers.query || '').trim().toLocaleLowerCase('tr-TR');
+    if (!query) {
+      return rows;
+    }
+    return rows.filter(function(row) {
+      return [
+        getUserDisplayName(row),
+        row.email,
+        row.school_name,
+        row.city,
+        row.district,
+        row.branch,
+        row.grade_level,
+        row.approval_status,
+      ].join(' ').toLocaleLowerCase('tr-TR').includes(query);
+    });
+  }
+
+  function renderRegisteredUserRows(rows, emptyMessage, role) {
+    const filteredRows = filterRegisteredRows(Array.isArray(rows) ? rows : []);
+    if (!filteredRows.length) {
+      return '<div class="analytics-empty">' + escHtml(emptyMessage) + '</div>';
+    }
+    return filteredRows.map(function(row) {
+      const accountStatus = accountStatusLabel(row);
+      const isPassive = accountStatus !== 'Aktif';
+      const meta = getRegisteredUserMeta(row) || (role === 'student' ? 'Sınıf / okul bilgisi yok' : 'Branş / okul bilgisi yok');
+      return (
+        '<div class="registered-user-row">' +
+          '<div class="registered-user-main">' +
+            '<div class="registered-user-title">' + escHtml(getUserDisplayName(row)) +
+              '<small>' + escHtml(row.email || '-') + '</small>' +
+            '</div>' +
+            '<div class="registered-user-meta">' + escHtml(meta) + '</div>' +
+          '</div>' +
+          '<div class="registered-user-side">' +
+            '<span class="admin-pill ' + (isPassive ? 'passive' : 'active') + '">' + escHtml(accountStatus) + '</span>' +
+            (role === 'teacher'
+              ? '<span class="admin-pill ' + (row.approval_status === 'active' ? 'active' : row.approval_status === 'rejected' ? 'passive' : '') + '">' + escHtml(approvalStatusLabel(row.approval_status)) + '</span>'
+              : '') +
+            '<small>Kayıt: ' + escHtml(row.created_at ? formatDateTime(row.created_at) : '-') + '</small>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderRegisteredUsersPanel() {
+    const statusEl = document.getElementById('registeredUsersStatus');
+    const studentsEl = document.getElementById('registeredStudentsList');
+    const teachersEl = document.getElementById('registeredTeachersList');
+    const studentCountEl = document.getElementById('registeredStudentCount');
+    const teacherCountEl = document.getElementById('registeredTeacherCount');
+    const searchEl = document.getElementById('registeredUserSearch');
+    if (!statusEl || !studentsEl || !teachersEl) {
+      return;
+    }
+    if (searchEl && searchEl.value !== state.registeredUsers.query) {
+      searchEl.value = state.registeredUsers.query;
+    }
+    if (!canAccess('user_management')) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Kayıtlı kullanıcı listelerini görüntüleme yetkin açık değil.';
+      studentsEl.innerHTML = '';
+      teachersEl.innerHTML = '';
+      return;
+    }
+    if (state.registeredUsers.loading) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Kullanıcı listeleri yükleniyor…';
+    } else if (state.registeredUsers.error) {
+      statusEl.style.display = 'block';
+      statusEl.textContent = state.registeredUsers.error;
+    } else {
+      statusEl.style.display = 'none';
+      statusEl.textContent = '';
+    }
+
+    const students = Array.isArray(state.registeredUsers.students) ? state.registeredUsers.students : [];
+    const teachers = Array.isArray(state.registeredUsers.teachers) ? state.registeredUsers.teachers : [];
+    const filteredStudents = filterRegisteredRows(students);
+    const filteredTeachers = filterRegisteredRows(teachers);
+    if (studentCountEl) {
+      studentCountEl.textContent = formatNumber(filteredStudents.length) + ' / ' + formatNumber(students.length);
+    }
+    if (teacherCountEl) {
+      teacherCountEl.textContent = formatNumber(filteredTeachers.length) + ' / ' + formatNumber(teachers.length);
+    }
+    studentsEl.innerHTML = state.registeredUsers.error
+      ? '<div class="analytics-empty">Öğrenci listesi okunamadı.</div>'
+      : renderRegisteredUserRows(students, 'Bu aramada öğrenci bulunmuyor.', 'student');
+    teachersEl.innerHTML = state.registeredUsers.error
+      ? '<div class="analytics-empty">Öğretmen listesi okunamadı.</div>'
+      : renderRegisteredUserRows(teachers, 'Bu aramada öğretmen bulunmuyor.', 'teacher');
+  }
+
+  async function loadRegisteredUsers(force) {
+    if (!canAccess('user_management')) {
+      state.registeredUsers.students = [];
+      state.registeredUsers.teachers = [];
+      state.registeredUsers.error = '';
+      renderRegisteredUsersPanel();
+      return;
+    }
+    if (state.registeredUsers.loading && !force) {
+      return;
+    }
+    if (state.registeredUsers.loaded && !force) {
+      renderRegisteredUsersPanel();
+      return;
+    }
+
+    state.registeredUsers.loading = true;
+    state.registeredUsers.error = '';
+    renderRegisteredUsersPanel();
+    try {
+      const result = await window.kemalAdminAuth.getClient().rpc('list_registered_users');
+      if (result.error) throw result.error;
+      const data = result.data || {};
+      state.registeredUsers.students = Array.isArray(data.students) ? data.students : [];
+      state.registeredUsers.teachers = Array.isArray(data.teachers) ? data.teachers : [];
+      state.registeredUsers.loaded = true;
+    } catch (error) {
+      state.registeredUsers.students = [];
+      state.registeredUsers.teachers = [];
+      state.registeredUsers.loaded = true;
+      state.registeredUsers.error = humanizeUserManagementError(error);
+    } finally {
+      state.registeredUsers.loading = false;
+      renderRegisteredUsersPanel();
+    }
+  }
+
+  function updateRegisteredUserSearch(value) {
+    state.registeredUsers.query = String(value || '');
+    renderRegisteredUsersPanel();
+  }
+
   function renderAnalytics() {
     const analytics = state.analytics;
     const statusEl = document.getElementById('analyticsStatus');
@@ -1679,6 +1880,9 @@
         break;
       case 'ogretmenler':
         renderTeacherApprovalsPanel();
+        break;
+      case 'kullanicilar':
+        renderRegisteredUsersPanel();
         break;
       case 'analytics':
         renderAnalytics();
@@ -2197,6 +2401,8 @@
   window.sendAdminPasswordSetup = sendAdminPasswordSetup;
   window.loadTeacherApprovals = loadTeacherApprovals;
   window.reviewTeacherApproval = reviewTeacherApproval;
+  window.loadRegisteredUsers = loadRegisteredUsers;
+  window.updateRegisteredUserSearch = updateRegisteredUserSearch;
   window.changePassword = changePassword;
   window.exportData = exportData;
   window.resetConfirm = resetConfirm;

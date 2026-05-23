@@ -360,6 +360,111 @@ begin
 end;
 $$;
 
+alter table if exists public.user_profiles
+  add column if not exists first_name text not null default '',
+  add column if not exists last_name text not null default '',
+  add column if not exists city text not null default '',
+  add column if not exists district text not null default '',
+  add column if not exists school_name text not null default '',
+  add column if not exists branch text not null default '',
+  add column if not exists grade_level integer,
+  add column if not exists approval_status text not null default 'active',
+  add column if not exists verification_status text not null default 'not_required',
+  add column if not exists account_status text not null default 'active',
+  add column if not exists last_login_at timestamptz,
+  add column if not exists deactivated_at timestamptz,
+  add column if not exists deletion_requested_at timestamptz,
+  add column if not exists active boolean not null default true;
+
+create or replace function public.list_registered_users()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  student_rows jsonb := '[]'::jsonb;
+  teacher_rows jsonb := '[]'::jsonb;
+begin
+  if not public.current_admin_has_permission('user_management') then
+    raise exception 'permission denied';
+  end if;
+
+  select coalesce(jsonb_agg(to_jsonb(row_data) order by row_data.created_at desc), '[]'::jsonb)
+  into student_rows
+  from (
+    select
+      id,
+      email,
+      role,
+      first_name,
+      last_name,
+      full_name,
+      city,
+      district,
+      school_name,
+      branch,
+      grade_level,
+      approval_status,
+      account_status,
+      active,
+      last_login_at,
+      deactivated_at,
+      deletion_requested_at,
+      created_at,
+      updated_at
+    from public.user_profiles
+    where role = 'student'
+      and not exists (
+        select 1
+        from public.admin_users au
+        where lower(au.email) = lower(user_profiles.email)
+          and au.active = true
+      )
+  ) as row_data;
+
+  select coalesce(jsonb_agg(to_jsonb(row_data) order by row_data.created_at desc), '[]'::jsonb)
+  into teacher_rows
+  from (
+    select
+      id,
+      email,
+      role,
+      first_name,
+      last_name,
+      full_name,
+      city,
+      district,
+      school_name,
+      branch,
+      grade_level,
+      approval_status,
+      verification_status,
+      account_status,
+      active,
+      last_login_at,
+      deactivated_at,
+      deletion_requested_at,
+      created_at,
+      updated_at
+    from public.user_profiles
+    where role = 'teacher'
+      and not exists (
+        select 1
+        from public.admin_users au
+        where lower(au.email) = lower(user_profiles.email)
+          and au.active = true
+      )
+  ) as row_data;
+
+  return jsonb_build_object(
+    'students', student_rows,
+    'teachers', teacher_rows
+  );
+end;
+$$;
+
 do $$
 begin
   if to_regclass('public.user_profiles') is not null then
@@ -398,6 +503,7 @@ grant execute on function public.current_admin_has_permission(text) to anon, aut
 grant execute on function public.current_admin_has_any_permission(text[]) to anon, authenticated;
 grant execute on function public.record_admin_login(text, text, text, text) to authenticated;
 grant execute on function public.get_user_profile_counts() to authenticated;
+grant execute on function public.list_registered_users() to authenticated;
 
 drop policy if exists "admin_users bootstrap owner insert" on public.admin_users;
 create policy "admin_users bootstrap owner insert"

@@ -145,6 +145,7 @@ service cloud.firestore {
     function resultKeysOk() {
       return request.resource.data.keys().hasOnly([
         'firstName','lastName','grade','sube',
+        'accountUid','email',
         'subject','examTitle','examId',
         'correct','wrong','blank','netCorrect','score','total',
         'negativeMarking','elapsed','date','answerDetails',
@@ -158,6 +159,10 @@ service cloud.firestore {
         && validTitle(request.resource.data.lastName, 40)
         && validGrade(request.resource.data.grade)
         && validSube(request.resource.data.sube)
+        && request.resource.data.accountUid is string
+        && request.resource.data.accountUid.size() <= 128
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 160
         && validTitle(request.resource.data.subject, 60)
         && validTitle(request.resource.data.examTitle, 140)
         && request.resource.data.examId is string

@@ -21,6 +21,7 @@
             { key: 'main-hakkimda', label: 'Hakkımda', href: '/admin/index.html#hakkimda' },
             { key: 'main-menuler', label: 'Ekstra Menü', href: '/admin/index.html#menuler' },
             { key: 'main-adminler', label: 'Alt Adminler', href: '/admin/index.html#adminler' },
+            { key: 'main-kullanicilar', label: 'Kullanıcılar', href: '/admin/index.html#kullanicilar' },
             { key: 'main-sifre', label: 'Şifre Değiştir', href: '/admin/index.html#sifre' },
             { key: 'main-yedek', label: 'Yedek / Sıfırla', href: '/admin/index.html#yedek' }
           ]
@@ -109,6 +110,7 @@
     'main-hakkimda': ['site_admin_dashboard'],
     'main-menuler': ['site_admin_dashboard'],
     'main-adminler': ['site_admin_dashboard'],
+    'main-kullanicilar': ['user_management'],
     'main-sifre': ['site_admin_dashboard'],
     'main-yedek': ['site_admin_dashboard'],
     'oyunlar-admin': ['oyun_ekleme'],

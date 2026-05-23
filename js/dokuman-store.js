@@ -152,6 +152,9 @@
     if (!path) {
       return '';
     }
+    if (/^https?:\/\//i.test(String(path))) {
+      return String(path);
+    }
     const response = getPublicClient().storage.from(BUCKET_NAME).getPublicUrl(path);
     return response && response.data && response.data.publicUrl ? response.data.publicUrl : '';
   }
@@ -167,16 +170,30 @@
     return item.video_embed_url || item.video_url || item.dosya_yolu || '';
   }
 
+  function getDocumentSource(item) {
+    const raw = String(item && (item.dosya_kaynak_turu || item.dosyaKaynakTuru) || '').trim().toLowerCase();
+    if (raw) {
+      return raw === 'storage' ? 'supabase' : raw;
+    }
+    return /^https?:\/\//i.test(String(item && item.dosya_yolu || '')) ? 'external' : 'supabase';
+  }
+
   function getDocumentUrl(item) {
-    return getDocumentKind(item) === 'video'
-      ? getVideoEmbedUrl(item)
-      : getPublicFileUrl(item && item.dosya_yolu);
+    if (getDocumentKind(item) === 'video') {
+      return getVideoEmbedUrl(item);
+    }
+    if (getDocumentSource(item) !== 'supabase') {
+      return item.harici_embed_url && item.harici_provider === 'google-drive'
+        ? (item.dosya_yolu || item.harici_url || item.harici_embed_url)
+        : (item.dosya_yolu || item.harici_url || item.harici_embed_url || '');
+    }
+    return getPublicFileUrl(item && item.dosya_yolu);
   }
 
   async function listDocumentsBySubject(grade, subject, options) {
     const includeInactive = Boolean(options && options.includeInactive);
     const normalizedSubject = normalizeSubjectKey(subject);
-    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,dosya_boyutu,kapak_renk,sayfa_sayisi,icerik_turu,video_url,video_embed_url,video_provider,video_html,aktif,gizli,oturum_gerekli,siralama,olusturma_tarihi';
+    const selectFields = 'id,baslik,aciklama,sinif,ders,hedefler,dosya_adi,dosya_yolu,dosya_boyutu,dosya_kaynak_turu,harici_url,harici_provider,harici_embed_url,kapak_renk,sayfa_sayisi,icerik_turu,video_url,video_embed_url,video_provider,video_html,aktif,gizli,oturum_gerekli,siralama,olusturma_tarihi';
     const fallbackFields = 'id,baslik,aciklama,sinif,ders,dosya_adi,dosya_yolu,kapak_renk,sayfa_sayisi,aktif,oturum_gerekli,siralama,olusturma_tarihi';
     let query = getPublicClient()
       .from('dokumanlar')
@@ -193,6 +210,7 @@
       String(result.error.message || '').toLowerCase().includes('hedefler') ||
       String(result.error.message || '').toLowerCase().includes('icerik_turu') ||
       String(result.error.message || '').toLowerCase().includes('video_embed_url') ||
+      String(result.error.message || '').toLowerCase().includes('dosya_kaynak') ||
       String(result.error.message || '').toLowerCase().includes('gizli')
     )) {
       query = getPublicClient()
@@ -224,6 +242,7 @@
         sinifLabel: getGradeLabel(grade),
         dosyaUrl: getDocumentUrl(item),
         icerikTuru: getDocumentKind(item),
+        dosyaKaynakTuru: getDocumentSource(item),
         viewerUrl: buildViewerUrl(item.id, context),
       });
     });
@@ -256,6 +275,7 @@
       hedefler: getDocumentTargets(item),
       dosyaUrl: getDocumentUrl(item),
       icerikTuru: getDocumentKind(item),
+      dosyaKaynakTuru: getDocumentSource(item),
       viewerUrl: buildViewerUrl(item.id),
     });
   }
@@ -275,6 +295,7 @@
     getPublicFileUrl: getPublicFileUrl,
     getDocumentKind: getDocumentKind,
     getVideoEmbedUrl: getVideoEmbedUrl,
+    getDocumentSource: getDocumentSource,
     buildViewerUrl: buildViewerUrl,
     getDocumentTargets: getDocumentTargets,
     listDocumentsBySubject: listDocumentsBySubject,

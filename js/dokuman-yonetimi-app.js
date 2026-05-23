@@ -17,6 +17,7 @@
     selectedDocument: null,
     currentPdfMeta: null,
     contentKind: 'document',
+    documentSource: 'supabase',
     targets: [],
     filters: {
       grade: '',
@@ -78,7 +79,7 @@
       return 'Supabase bucket bulunamadı. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde çalıştırıp `dokumanlar` bucket\'ını oluşturmalısın.';
     }
 
-    if (combined.includes('hedefler') || combined.includes('icerik_turu') || combined.includes('video_embed_url') || combined.includes('gizli')) {
+    if (combined.includes('hedefler') || combined.includes('icerik_turu') || combined.includes('video_embed_url') || combined.includes('gizli') || combined.includes('dosya_kaynak')) {
       return 'Doküman/video şeması için Supabase yapısını güncellemelisin. `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.';
     }
 
@@ -174,6 +175,21 @@
     return state.contentKind === 'video';
   }
 
+  function getDocumentSource(item) {
+    if (!item) {
+      return state.documentSource || 'supabase';
+    }
+    const raw = String(item.dosya_kaynak_turu || item.dosyaKaynakTuru || '').trim().toLowerCase();
+    if (raw) {
+      return raw === 'storage' ? 'supabase' : raw;
+    }
+    return /^https?:\/\//i.test(String(item.dosya_yolu || '')) ? 'external' : 'supabase';
+  }
+
+  function isExternalSource() {
+    return state.documentSource === 'external';
+  }
+
   function extractIframeSrc(value) {
     const match = String(value || '').match(/<iframe[^>]+src=["']([^"']+)["'][^>]*>/i);
     return match ? match[1] : '';
@@ -236,10 +252,92 @@
     }
   }
 
+  function getUrlExtension(rawUrl) {
+    try {
+      const url = new URL(String(rawUrl || '').trim(), window.location.origin);
+      return getFileExtension(url.pathname);
+    } catch (error) {
+      return getFileExtension(rawUrl);
+    }
+  }
+
+  function getExternalProvider(url) {
+    const host = String(url.hostname || '').replace(/^www\./, '').toLowerCase();
+    if (host === 'drive.google.com' || host === 'docs.google.com') {
+      return 'google-drive';
+    }
+    if (host.includes('.r2.dev') || host.includes('r2.cloudflarestorage.com')) {
+      return 'cloudflare-r2';
+    }
+    return 'direct-url';
+  }
+
+  function parseGoogleDriveFileId(url) {
+    const parts = url.pathname.split('/').filter(Boolean);
+    const fileIndex = parts.indexOf('d');
+    if (fileIndex >= 0 && parts[fileIndex + 1]) {
+      return parts[fileIndex + 1];
+    }
+    return url.searchParams.get('id') || '';
+  }
+
+  function normalizeExternalDocumentInput(value) {
+    const raw = String(value || '').trim();
+    if (!raw) {
+      return null;
+    }
+
+    let url;
+    try {
+      url = new URL(raw);
+    } catch (error) {
+      throw new Error('Harici doküman için geçerli bir bağlantı girmelisin.');
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+      throw new Error('Harici doküman bağlantısı http veya https ile başlamalı.');
+    }
+
+    const provider = getExternalProvider(url);
+    if (provider === 'google-drive') {
+      if (url.pathname.indexOf('/folders/') !== -1) {
+        throw new Error('Google Drive klasör linki değil, PDF/görsel dosyasının kendi paylaşım linkini eklemelisin.');
+      }
+      const fileId = parseGoogleDriveFileId(url);
+      if (!fileId) {
+        throw new Error('Google Drive dosya kimliği okunamadı. Dosyanın paylaşım linkini kopyalayıp tekrar dene.');
+      }
+      return {
+        provider: provider,
+        originalUrl: raw,
+        directUrl: 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId),
+        embedUrl: 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview',
+        fileName: 'Google Drive dosyası.pdf',
+        pageCount: 0,
+        fileSize: 0,
+      };
+    }
+
+    const extension = getUrlExtension(raw);
+    if (!['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
+      throw new Error('Harici link PDF, JPG, PNG veya WebP dosyasına doğrudan gitmeli. R2 kullanıyorsan public object URL kopyalanmalı.');
+    }
+    return {
+      provider: provider,
+      originalUrl: raw,
+      directUrl: url.href,
+      embedUrl: url.href,
+      fileName: decodeURIComponent((url.pathname.split('/').pop() || 'harici-dokuman.' + extension).split('?')[0]) || 'harici-dokuman.' + extension,
+      pageCount: extension === 'pdf' ? 0 : 1,
+      fileSize: 0,
+    };
+  }
+
   function syncContentKindUi() {
     const video = isVideoMode();
     const fileBox = document.getElementById('fileBox');
     const videoBox = document.getElementById('videoBox');
+    const localUploadBox = document.getElementById('localUploadBox');
+    const externalUrlBox = document.getElementById('externalUrlBox');
     const contentHint = document.getElementById('contentHint');
     const interactionBtn = document.getElementById('interactionQuickBtn');
     const worksheetBtn = document.getElementById('worksheetQuickBtn');
@@ -250,8 +348,13 @@
     Array.from(document.querySelectorAll('[data-content-kind]')).forEach(function(button) {
       button.classList.toggle('active', button.getAttribute('data-content-kind') === state.contentKind);
     });
+    Array.from(document.querySelectorAll('[data-document-source]')).forEach(function(button) {
+      button.classList.toggle('active', button.getAttribute('data-document-source') === state.documentSource);
+    });
     if (fileBox) fileBox.classList.toggle('is-hidden', video);
     if (videoBox) videoBox.classList.toggle('is-hidden', !video);
+    if (localUploadBox) localUploadBox.classList.toggle('is-hidden', video || isExternalSource());
+    if (externalUrlBox) externalUrlBox.classList.toggle('is-hidden', video || !isExternalSource());
     if (magnifierRow) magnifierRow.classList.toggle('is-hidden', video);
     if (answersRow) answersRow.classList.toggle('is-hidden', video);
     if (worksheetBtn) worksheetBtn.classList.toggle('is-hidden', video);
@@ -261,7 +364,9 @@
     if (contentHint) {
       contentHint.textContent = video
         ? 'Video kayıtları dosya yüklemez; YouTube linki veya iframe adresi kaydedilir. Video, ders sayfasında ayrı “Ders Videoları” bölümünde görünür.'
-        : 'PDF, JPEG, PNG ve WebP dosyaları kalite düşürülmeden saklanır. Veritabanını ve ücretsiz kullanımı yormamak için üst sınır 50 MB.';
+        : (isExternalSource()
+          ? 'Harici kaynakta dosya Supabase kotasını kullanmaz. R2 ve CORS açık doğrudan linkler mevcut doküman araçlarıyla çalışır; Drive için dosya linki gerekir.'
+          : 'PDF, JPEG, PNG ve WebP dosyaları kalite düşürülmeden saklanır. Veritabanını ve ücretsiz kullanımı yormamak için üst sınır 50 MB.');
     }
     if (saveHint) {
       saveHint.textContent = video
@@ -275,6 +380,17 @@
     state.currentPdfMeta = null;
     const input = document.getElementById('fPdf');
     if (isVideoMode() && input) {
+      input.value = '';
+    }
+    syncContentKindUi();
+    updateSummary();
+  }
+
+  function setDocumentSource(source) {
+    state.documentSource = source === 'external' ? 'external' : 'supabase';
+    state.currentPdfMeta = null;
+    const input = document.getElementById('fPdf');
+    if (isExternalSource() && input) {
       input.value = '';
     }
     syncContentKindUi();
@@ -417,6 +533,7 @@
     const meta = state.currentPdfMeta || existing;
     const targets = state.targets.slice();
     const videoInput = document.getElementById('fVideoInput') ? document.getElementById('fVideoInput').value.trim() : '';
+    const externalInput = document.getElementById('fExternalUrl') ? document.getElementById('fExternalUrl').value.trim() : '';
     const pendingTarget = normalizeTarget({
       sinif: document.getElementById('fSinif').value,
       ders: document.getElementById('fDers').value,
@@ -441,6 +558,27 @@
         videoMetaText = (existing.video_provider === 'youtube' ? 'YouTube videosu' : 'Video bağlantısı') + ' · Mevcut bağlantı korunacak.';
       }
       document.getElementById('summaryMeta').textContent = videoMetaText;
+      return;
+    }
+
+    if (isExternalSource()) {
+      if (externalInput) {
+        try {
+          const external = normalizeExternalDocumentInput(externalInput);
+          const providerLabel = external.provider === 'google-drive'
+            ? 'Google Drive'
+            : (external.provider === 'cloudflare-r2' ? 'Cloudflare R2' : 'Harici link');
+          document.getElementById('summaryMeta').textContent =
+            providerLabel + ' · ' + external.fileName + (external.pageCount ? ' · ' + external.pageCount + ' sayfa' : ' · Sayfa sayısı görüntüleyicide okunacak');
+        } catch (error) {
+          document.getElementById('summaryMeta').textContent = error.message;
+        }
+      } else if (existing && getDocumentSource(existing) !== 'supabase') {
+        document.getElementById('summaryMeta').textContent =
+          (existing.harici_provider || 'Harici link') + ' · ' + (existing.dosya_adi || 'Mevcut bağlantı');
+      } else {
+        document.getElementById('summaryMeta').textContent = 'Harici PDF/görsel bağlantısı girildiğinde burada görünecek.';
+      }
       return;
     }
 
@@ -479,6 +617,7 @@
     state.selectedDocument = null;
     state.currentPdfMeta = null;
     state.contentKind = 'document';
+    state.documentSource = 'supabase';
     state.targets = [];
     document.getElementById('editTitle').textContent = 'Yeni Doküman';
     document.getElementById('editStatus').textContent = 'Yeni bir PDF, görsel veya ders videosunu birden fazla sınıf ve dersle eşleştirebilirsin.';
@@ -495,6 +634,7 @@
     document.getElementById('fOturumGerekli').checked = false;
     document.getElementById('fPdf').value = '';
     document.getElementById('fVideoInput').value = '';
+    document.getElementById('fExternalUrl').value = '';
     setFileInfo('Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.');
     renderTargetList();
     syncContentKindUi();
@@ -556,6 +696,10 @@
       const targets = getDocumentTargets(item);
       const contentKind = getContentKind(item);
       const isVideo = contentKind === 'video';
+      const source = getDocumentSource(item);
+      const sourceLabel = source === 'supabase'
+        ? 'Supabase'
+        : (item.harici_provider === 'cloudflare-r2' ? 'Cloudflare R2' : (item.harici_provider === 'google-drive' ? 'Google Drive' : 'Harici link'));
       const badges = targets.length
         ? targets.slice(0, 4).map(function(target) {
           return '<div class="doc-badge">' + escHtml(getTargetLabel(target)) + '</div>';
@@ -569,6 +713,7 @@
         )
         : (
           '<span>📄 ' + escHtml(item.dosya_adi || 'Dosya') + '</span>' +
+          '<span>🔗 ' + escHtml(sourceLabel) + '</span>' +
           '<span>📚 ' + Number(item.sayfa_sayisi || 0) + ' sayfa</span>' +
           '<span>📦 ' + formatBytes(item.dosya_boyutu || 0) + '</span>'
         );
@@ -744,6 +889,19 @@
     const file = getSelectedFile();
     const existing = state.editingId ? getDocumentById(state.editingId) : null;
     const contentKind = state.contentKind;
+    const documentSource = contentKind === 'document' ? state.documentSource : 'supabase';
+    const externalInput = document.getElementById('fExternalUrl').value.trim();
+    const externalDocument = contentKind === 'document' && documentSource === 'external'
+      ? (externalInput ? normalizeExternalDocumentInput(externalInput) : (existing && getDocumentSource(existing) !== 'supabase' ? {
+        provider: existing.harici_provider || 'direct-url',
+        originalUrl: existing.harici_url || existing.dosya_yolu || '',
+        directUrl: existing.dosya_yolu || existing.harici_url || '',
+        embedUrl: existing.harici_embed_url || existing.harici_url || existing.dosya_yolu || '',
+        fileName: existing.dosya_adi || 'Harici doküman',
+        pageCount: Number(existing.sayfa_sayisi || 0),
+        fileSize: Number(existing.dosya_boyutu || 0),
+      } : null))
+      : null;
     const videoInput = document.getElementById('fVideoInput').value.trim();
     const video = contentKind === 'video'
       ? (videoInput ? normalizeVideoInput(videoInput) : (existing && getContentKind(existing) === 'video' ? {
@@ -764,17 +922,26 @@
       throw new Error('Ders videosu için YouTube linki veya iframe kodu girmelisin.');
     }
     if (contentKind === 'document' && existing && getContentKind(existing) === 'video' && !file) {
-      throw new Error('Video kaydını dokümana çevirmek için PDF veya görsel dosyası seçmelisin.');
+      if (documentSource !== 'external' || !externalDocument) {
+        throw new Error('Video kaydını dokümana çevirmek için PDF/görsel dosyası seçmeli veya harici doküman linki girmelisin.');
+      }
     }
-    if (contentKind === 'document' && !existing && !file) {
+    if (contentKind === 'document' && documentSource === 'external' && !externalDocument) {
+      throw new Error('Harici doküman için PDF/görsel bağlantısı girmelisin.');
+    }
+    if (contentKind === 'document' && documentSource === 'supabase' && existing && getDocumentSource(existing) !== 'supabase' && !file) {
+      throw new Error('Harici kayıt Supabase yüklemesine çevrilecekse yeni PDF veya görsel dosyası seçmelisin.');
+    }
+    if (contentKind === 'document' && documentSource === 'supabase' && !existing && !file) {
       throw new Error('Yeni kayıt için bir PDF veya görsel yüklemelisin.');
     }
-    if (contentKind === 'document' && file) {
+    if (contentKind === 'document' && documentSource === 'supabase' && file) {
       validateDocumentFile(file);
     }
 
     return {
       contentKind: contentKind,
+      documentSource: documentSource,
       title: title,
       description: description,
       grade: primaryTarget.sinif,
@@ -788,6 +955,7 @@
       magnifierEnabled: magnifierEnabled,
       answersEnabled: answersEnabled,
       file: file,
+      externalDocument: externalDocument,
       video: video,
       existing: existing,
     };
@@ -805,18 +973,35 @@
       let fileName = data.existing ? data.existing.dosya_adi : '';
       let fileSize = data.existing ? Number(data.existing.dosya_boyutu || 0) : 0;
       let pageCount = data.existing ? Number(data.existing.sayfa_sayisi || 0) : 0;
+      let externalProvider = data.existing ? (data.existing.harici_provider || null) : null;
+      let externalUrl = data.existing ? (data.existing.harici_url || null) : null;
+      let externalEmbedUrl = data.existing ? (data.existing.harici_embed_url || null) : null;
 
       if (data.contentKind === 'video') {
         filePath = data.video.embedUrl || data.video.originalUrl;
         fileName = data.video.fileName || 'Video bağlantısı';
         fileSize = 0;
         pageCount = 1;
+        externalProvider = null;
+        externalUrl = null;
+        externalEmbedUrl = null;
+      } else if (data.documentSource === 'external') {
+        filePath = data.externalDocument.directUrl || data.externalDocument.originalUrl;
+        fileName = data.externalDocument.fileName || 'Harici doküman';
+        fileSize = data.externalDocument.fileSize || 0;
+        pageCount = data.externalDocument.pageCount || 0;
+        externalProvider = data.externalDocument.provider || 'direct-url';
+        externalUrl = data.externalDocument.originalUrl || filePath;
+        externalEmbedUrl = data.externalDocument.embedUrl || filePath;
       } else if (data.file) {
         const meta = state.currentPdfMeta || await extractDocumentMeta(data.file);
         filePath = await uploadDocumentFile(documentId, data.file, data.grade, data.subject, data.title);
         fileName = data.file.name;
         fileSize = data.file.size || 0;
         pageCount = meta.pageCount || 0;
+        externalProvider = null;
+        externalUrl = null;
+        externalEmbedUrl = null;
       }
 
       const payload = {
@@ -830,6 +1015,10 @@
         dosya_boyutu: fileSize,
         sayfa_sayisi: pageCount,
         icerik_turu: data.contentKind,
+        dosya_kaynak_turu: data.contentKind === 'document' ? data.documentSource : 'video',
+        harici_url: externalUrl,
+        harici_provider: externalProvider,
+        harici_embed_url: externalEmbedUrl,
         video_url: data.contentKind === 'video' ? data.video.originalUrl : null,
         video_embed_url: data.contentKind === 'video' ? data.video.embedUrl : null,
         video_provider: data.contentKind === 'video' ? data.video.provider : null,
@@ -945,7 +1134,8 @@
     }
 
     const isVideo = getContentKind(item) === 'video';
-    const ok = window.confirm('"' + item.baslik + '" ' + (isVideo ? 'ders videosunu' : 'dokümanını') + ' silmek istiyor musun?' + (isVideo ? '' : ' Bu işlem yüklenen dosyayı da kaldırır.'));
+    const isSupabaseDocument = !isVideo && getDocumentSource(item) === 'supabase';
+    const ok = window.confirm('"' + item.baslik + '" ' + (isVideo ? 'ders videosunu' : 'dokümanını') + ' silmek istiyor musun?' + (isSupabaseDocument ? ' Bu işlem yüklenen Supabase dosyasını da kaldırır.' : ''));
     if (!ok) {
       return;
     }
@@ -956,7 +1146,7 @@
       return;
     }
 
-    if (!isVideo && item.dosya_yolu) {
+    if (isSupabaseDocument && item.dosya_yolu) {
       await getClient().storage.from(BUCKET_NAME).remove([item.dosya_yolu]);
     }
 
@@ -981,6 +1171,7 @@
     state.editingId = doc.id;
     state.selectedDocument = doc;
     state.contentKind = getContentKind(doc);
+    state.documentSource = state.contentKind === 'document' ? getDocumentSource(doc) : 'supabase';
     syncContentKindUi();
     document.getElementById('editTitle').textContent = 'Düzenle: ' + doc.baslik;
     document.getElementById('editStatus').textContent = 'ID: ' + doc.id.slice(0, 8) + '… · Görüntüleme bağlantısı hazır.';
@@ -996,8 +1187,13 @@
     document.getElementById('fAnswersEnabled').checked = interactionSettings.answersEnabled;
     document.getElementById('fOturumGerekli').checked = Boolean(doc.oturum_gerekli);
     document.getElementById('fVideoInput').value = getContentKind(doc) === 'video' ? (doc.video_url || doc.video_embed_url || doc.dosya_yolu || '') : '';
+    document.getElementById('fExternalUrl').value = state.contentKind === 'document' && state.documentSource !== 'supabase'
+      ? (doc.harici_url || doc.dosya_yolu || '')
+      : '';
     if (getContentKind(doc) === 'video') {
       setFileInfo('Video kaydı düzenleniyor. PDF/görsel yükleme alanı video modunda kapalıdır.');
+    } else if (state.documentSource !== 'supabase') {
+      setFileInfo('Harici kaynak: ' + (doc.harici_provider || 'Bağlantı') + ' · ' + (doc.dosya_adi || 'Harici doküman'));
     } else {
       setFileInfo('Mevcut dosya: ' + (doc.dosya_adi || 'Dosya') + ' · ' + formatBytes(doc.dosya_boyutu || 0) + ' · ' + (doc.sayfa_sayisi || 0) + ' sayfa');
     }
@@ -1127,7 +1323,7 @@
   }
 
   function bindEvents() {
-    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fGizli', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput'].forEach(function(id) {
+    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fGizli', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput', 'fExternalUrl'].forEach(function(id) {
       const element = document.getElementById(id);
       if (!element) {
         return;
@@ -1143,6 +1339,11 @@
     Array.from(document.querySelectorAll('[data-content-kind]')).forEach(function(button) {
       button.addEventListener('click', function() {
         setContentKind(button.getAttribute('data-content-kind'));
+      });
+    });
+    Array.from(document.querySelectorAll('[data-document-source]')).forEach(function(button) {
+      button.addEventListener('click', function() {
+        setDocumentSource(button.getAttribute('data-document-source'));
       });
     });
     document.getElementById('loginEmail').addEventListener('keydown', function(event) {

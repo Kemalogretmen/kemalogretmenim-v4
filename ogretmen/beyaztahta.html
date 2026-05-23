@@ -138,7 +138,7 @@
     /* PROFESYONEL BEYAZ TAHTA ARAÇ KUTUSU */
     /* ── YENİ KOMPAKT ARAÇ ÇUBUĞU ── */
     .pro-toolbar {
-      position: absolute; top: 16px; left: 16px; z-index: 30;
+      position: fixed; top: 16px; left: 16px; z-index: 1200;
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       background: rgba(255,255,255,0.95);
       backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -1419,26 +1419,71 @@
       positionBoardToolbar();
       scheduleBoardAutosave();
     }
+    function clampToolbarCoord(value, min, max) {
+      if(max < min) return min;
+      return Math.max(min, Math.min(max, value));
+    }
+    function mountBoardToolbar() {
+      if(!E.boardToolbar) return;
+      var target = fsEl() === E.boardStage ? E.boardStage : document.body;
+      if(E.boardToolbar.parentNode !== target) {
+        target.appendChild(E.boardToolbar);
+      }
+      E.boardToolbar.style.position = 'fixed';
+      E.boardToolbar.style.zIndex = '1200';
+    }
+    function getBoardToolbarBounds(toolbarWidth, toolbarHeight, padding) {
+      if(!E.boardStage) return null;
+      var rect = E.boardStage.getBoundingClientRect();
+      var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      var inset = typeof padding === 'number' ? padding : 10;
+      var left = Math.max(inset, rect.left + inset);
+      var right = Math.min(viewportWidth - inset, rect.right - inset);
+      var top = Math.max(inset, rect.top + inset);
+      var bottom = Math.min(viewportHeight - inset, rect.bottom - inset);
+      if(right <= left) right = Math.min(viewportWidth - inset, left + Math.max(0, toolbarWidth || 0));
+      if(bottom <= top) bottom = Math.min(viewportHeight - inset, top + Math.max(0, toolbarHeight || 0));
+      if(right <= left || bottom <= top) return null;
+      return {
+        left: left,
+        top: top,
+        right: right,
+        bottom: bottom,
+        width: Math.max(0, right - left),
+        height: Math.max(0, bottom - top)
+      };
+    }
     function positionBoardToolbar() {
       if(!E.boardStage || !E.boardToolbar || !E.boardPlane) return;
+      mountBoardToolbar();
       var mobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
-      var stageWidth = E.boardStage.clientWidth || 0;
-      var stageHeight = E.boardStage.clientHeight || 0;
+      var toolbarWidth = E.boardToolbar.offsetWidth || 62;
+      var toolbarHeight = E.boardToolbar.offsetHeight || 0;
+      var pad = mobile ? 8 : 10;
+      var bounds;
       if(mobile) {
-        var mobileWidth = Math.max(160, Math.min(Math.max(1, stageWidth - 16), Math.max(1, (S.board.displayWidth || stageWidth) - 16)));
-        var mobileTop = Math.min(Math.max(8, stageHeight - E.boardToolbar.offsetHeight - 8), Math.max(8, (S.board.displayHeight || stageHeight) - E.boardToolbar.offsetHeight - 8));
+        var rect = E.boardStage.getBoundingClientRect();
+        var viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+        var mobileWidth = Math.max(160, Math.min(Math.max(1, rect.width - 16), Math.max(1, viewportWidth - 16)));
         E.boardToolbar.style.width = mobileWidth + 'px';
-        E.boardToolbar.style.left = '8px';
-        E.boardToolbar.style.top = mobileTop + 'px';
+        bounds = getBoardToolbarBounds(mobileWidth, toolbarHeight, pad);
+        if(!bounds) return;
+        S.board.toolbarLeft = 0;
+        S.board.toolbarTop = clampToolbarCoord(S.board.toolbarTop, 0, Math.max(0, bounds.height - toolbarHeight));
+        E.boardToolbar.style.left = bounds.left + 'px';
+        E.boardToolbar.style.top = (bounds.top + S.board.toolbarTop) + 'px';
         E.boardToolbar.style.right = 'auto';
         E.boardToolbar.style.bottom = 'auto';
         return;
       }
       E.boardToolbar.style.width = '62px';
-      S.board.toolbarLeft = Math.max(10, Math.min(Math.max(10, (S.board.displayWidth || stageWidth) - E.boardToolbar.offsetWidth - 10), S.board.toolbarLeft));
-      S.board.toolbarTop = Math.max(10, Math.min(Math.max(10, (S.board.displayHeight || stageHeight) - E.boardToolbar.offsetHeight - 10), S.board.toolbarTop));
-      E.boardToolbar.style.left = S.board.toolbarLeft + 'px';
-      E.boardToolbar.style.top = S.board.toolbarTop + 'px';
+      bounds = getBoardToolbarBounds(toolbarWidth, toolbarHeight, pad);
+      if(!bounds) return;
+      S.board.toolbarLeft = clampToolbarCoord(S.board.toolbarLeft, 0, Math.max(0, bounds.width - toolbarWidth));
+      S.board.toolbarTop = clampToolbarCoord(S.board.toolbarTop, 0, Math.max(0, bounds.height - toolbarHeight));
+      E.boardToolbar.style.left = (bounds.left + S.board.toolbarLeft) + 'px';
+      E.boardToolbar.style.top = (bounds.top + S.board.toolbarTop) + 'px';
       E.boardToolbar.style.right = 'auto';
       E.boardToolbar.style.bottom = 'auto';
     }
@@ -1817,13 +1862,18 @@
         if(window.innerWidth <= 760) return; evt.preventDefault(); drag.active = true; drag.id = evt.pointerId; var rect = E.boardToolbar.getBoundingClientRect(); drag.dx = evt.clientX - rect.left; drag.dy = evt.clientY - rect.top; E.boardToolbar.classList.add('is-dragging'); E.boardToolbarHandle.setPointerCapture(evt.pointerId);
       });
       E.boardToolbarHandle.addEventListener('pointermove', function(evt){
-        if(!drag.active) return; evt.preventDefault(); var stageRect = E.boardStage.getBoundingClientRect(); var width = E.boardToolbar.offsetWidth; var height = E.boardToolbar.offsetHeight; var left = evt.clientX - stageRect.left - drag.dx; var top = evt.clientY - stageRect.top - drag.dy;
-        var contentLeft = E.boardStage.scrollLeft + left;
-        var contentTop = E.boardStage.scrollTop + top;
-        var maxLeft = Math.max(10, (S.board.displayWidth || stageRect.width) - width - 10);
-        var maxTop = Math.max(10, (S.board.displayHeight || stageRect.height) - height - 10);
-        S.board.toolbarLeft = Math.max(10, Math.min(maxLeft, contentLeft));
-        S.board.toolbarTop = Math.max(10, Math.min(maxTop, contentTop));
+        if(!drag.active) return;
+        evt.preventDefault();
+        var width = E.boardToolbar.offsetWidth;
+        var height = E.boardToolbar.offsetHeight;
+        var bounds = getBoardToolbarBounds(width, height, 10);
+        if(!bounds) return;
+        var left = evt.clientX - bounds.left - drag.dx;
+        var top = evt.clientY - bounds.top - drag.dy;
+        var maxLeft = Math.max(0, bounds.width - width);
+        var maxTop = Math.max(0, bounds.height - height);
+        S.board.toolbarLeft = clampToolbarCoord(left, 0, maxLeft);
+        S.board.toolbarTop = clampToolbarCoord(top, 0, maxTop);
         positionBoardToolbar();
       });
       function endDrag(evt) { if(!drag.active) return; drag.active = false; E.boardToolbar.classList.remove('is-dragging'); scheduleBoardAutosave(); try { E.boardToolbarHandle.releasePointerCapture(evt.pointerId); } catch(err) {} }
@@ -2152,6 +2202,9 @@
     var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel].filter(Boolean);
     function closeAllSubPanels() {
       allFloatPanels.forEach(function(panel) { panel.classList.remove('is-open'); });
+      S.board.shapesOpen = false;
+      if(E.shapePanel) E.shapePanel.classList.remove('is-open');
+      if(E.shapeToggleBtn) E.shapeToggleBtn.setAttribute('aria-expanded', 'false');
       positionBoardToolbar();
     }
     function togglePanel(panel) {
@@ -2160,6 +2213,9 @@
       closeAllSubPanels();
       if(!wasOpen) panel.classList.add('is-open');
       positionBoardToolbar();
+    }
+    function dismissBoardTransientUi() {
+      closeAllSubPanels();
     }
     function syncBoardColorSelection(color) {
       document.querySelectorAll('[data-board-color]').forEach(function(btn) {
@@ -2357,6 +2413,8 @@
         if(!E.boardStage) return;
         if(evt.target.closest && evt.target.closest('#boardToolbar')) return;
         evt.preventDefault();
+        if(typeof evt.button === 'number' && evt.button > 0) return;
+        dismissBoardTransientUi();
         if(evt.pointerType === 'touch') {
           trackBoardTouchPointer(evt);
           try { E.boardPreview.setPointerCapture(evt.pointerId); } catch(err) {}
@@ -2437,12 +2495,37 @@
     document.querySelectorAll('[data-shortcut-close]').forEach(function(b){
       b.addEventListener('click', closeShortcutPopovers);
     });
+    ['selectstart', 'dragstart', 'contextmenu'].forEach(function(eventName) {
+      document.addEventListener(eventName, function(evt) {
+        if(isEditableTarget(evt.target)) return;
+        if(evt.target.closest && evt.target.closest('#whiteboardStage')) {
+          evt.preventDefault();
+        }
+      }, true);
+    });
+    document.addEventListener('pointerdown', function(evt) {
+      if(isEditableTarget(evt.target)) return;
+      if(evt.target.closest && evt.target.closest('#whiteboardStage') && !(evt.target.closest && evt.target.closest('#boardToolbar'))) {
+        dismissBoardTransientUi();
+      }
+    }, true);
     updateClock(); setInterval(updateClock,1000);
 
     function toggleStageFs(){fsEl()===E.boardStage?exitFs():reqFs(E.boardStage);setTimeout(syncFsBtn,300);}
     if(E.boardFullscreenBtn) E.boardFullscreenBtn.addEventListener('click',toggleStageFs);
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(function(eventName) {
+      document.addEventListener(eventName, function() {
+        mountBoardToolbar();
+        setTimeout(function() {
+          resizeBoard();
+          positionBoardToolbar();
+        }, 20);
+      });
+    });
+    mountBoardToolbar();
     bindWhiteboardControls(); bindWhiteboardPointerEvents(); loadBoardFromMemory(); syncBoardUI(); initBoardDrag(); initProtractor(); resizeBoard();
     window.addEventListener('resize',resizeBoard);
+    window.addEventListener('scroll', positionBoardToolbar, { passive: true });
     document.addEventListener('keydown',function(e){
       if(isEditableTarget(e.target)) return;
       var k=e.key.toLowerCase();

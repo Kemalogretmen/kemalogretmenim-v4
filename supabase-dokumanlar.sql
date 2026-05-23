@@ -19,6 +19,10 @@ create table if not exists public.dokumanlar (
   dosya_yolu text not null,
   dosya_adi text not null,
   dosya_boyutu bigint not null default 0,
+  dosya_kaynak_turu text not null default 'supabase' check (dosya_kaynak_turu in ('supabase', 'external', 'video')),
+  harici_url text,
+  harici_provider text,
+  harici_embed_url text,
   sayfa_sayisi integer not null default 0,
   icerik_turu text not null default 'document' check (icerik_turu in ('document', 'video')),
   video_url text,
@@ -43,6 +47,10 @@ alter table public.dokumanlar
   add column if not exists dosya_yolu text,
   add column if not exists dosya_adi text,
   add column if not exists dosya_boyutu bigint not null default 0,
+  add column if not exists dosya_kaynak_turu text not null default 'supabase',
+  add column if not exists harici_url text,
+  add column if not exists harici_provider text,
+  add column if not exists harici_embed_url text,
   add column if not exists sayfa_sayisi integer not null default 0,
   add column if not exists icerik_turu text not null default 'document',
   add column if not exists video_url text,
@@ -61,6 +69,15 @@ alter table public.dokumanlar
 update public.dokumanlar
 set guncelleme_tarihi = coalesce(guncelleme_tarihi, olusturma_tarihi, now())
 where guncelleme_tarihi is null;
+
+update public.dokumanlar
+set dosya_kaynak_turu = case
+  when icerik_turu = 'video' then 'video'
+  when dosya_yolu ~* '^https?://' then 'external'
+  else 'supabase'
+end
+where dosya_kaynak_turu is null
+   or dosya_kaynak_turu not in ('supabase', 'external', 'video');
 
 update public.dokumanlar
 set hedefler = jsonb_build_array(jsonb_build_object('sinif', sinif, 'ders', ders))
@@ -84,6 +101,20 @@ begin
     alter table public.dokumanlar
       add constraint dokumanlar_icerik_turu_check
       check (icerik_turu in ('document', 'video'));
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'dokumanlar_dosya_kaynak_turu_check'
+      and conrelid = 'public.dokumanlar'::regclass
+  ) then
+    alter table public.dokumanlar
+      add constraint dokumanlar_dosya_kaynak_turu_check
+      check (dosya_kaynak_turu in ('supabase', 'external', 'video'));
   end if;
 end $$;
 
@@ -145,6 +176,9 @@ create index if not exists idx_dokumanlar_updated_at
 
 create index if not exists idx_dokumanlar_type_active
   on public.dokumanlar (icerik_turu, aktif, siralama, olusturma_tarihi desc);
+
+create index if not exists idx_dokumanlar_source_active
+  on public.dokumanlar (dosya_kaynak_turu, aktif, olusturma_tarihi desc);
 
 grant select on public.dokumanlar to anon;
 grant select, insert, update, delete on public.dokumanlar to authenticated;

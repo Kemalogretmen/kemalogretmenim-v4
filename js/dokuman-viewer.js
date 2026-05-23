@@ -332,6 +332,7 @@
     panOriginX: 0,
     panOriginY: 0,
     flipTimer: null,
+    flipStartedAt: 0,
     isFlipping: false,
     isRebuilding: false,
     flipAudioContext: null,
@@ -692,8 +693,22 @@
     if (row && (row.icerik_turu === 'video' || row.icerikTuru === 'video')) {
       return 'video';
     }
+    if (row && (row.harici_provider === 'google-drive' || row.hariciProvider === 'google-drive')) {
+      return 'external-preview';
+    }
     const extension = getFileExtension(row && (row.dosya_adi || row.dosya_yolu || row.dosyaUrl));
     return IMAGE_EXTENSIONS.includes(extension) ? 'image' : 'pdf';
+  }
+
+  function isSingleSurfaceDocumentKind(kind) {
+    return kind === 'image' || kind === 'video' || kind === 'external-preview';
+  }
+
+  function getExternalPreviewUrl(row) {
+    if (!row) {
+      return '';
+    }
+    return row.harici_embed_url || row.harici_url || row.dosya_yolu || row.dosyaUrl || '';
   }
 
   function getVideoEmbedUrl(row) {
@@ -1022,7 +1037,9 @@
   }
 
   function refreshStatus(prefixText) {
-    const surfaceLabel = state.documentKind === 'video' ? 'video üzerinde çalışıyorsun.' : ('Sayfa ' + state.focusPage + ' üzerinde çalışıyorsun.');
+    const surfaceLabel = state.documentKind === 'video'
+      ? 'video üzerinde çalışıyorsun.'
+      : (state.documentKind === 'external-preview' ? 'Drive önizlemesi üzerinde çalışıyorsun.' : ('Sayfa ' + state.focusPage + ' üzerinde çalışıyorsun.'));
     const text = (prefixText ? prefixText + ' ' : '') +
       'Araç: ' + getToolDef(state.tool).label + ' · ' + surfaceLabel;
     setStatus(text.trim());
@@ -1295,6 +1312,8 @@
     const back = getPageTurnBack();
 
     if (!layer || !sheet || !front || !back) {
+      state.isFlipping = false;
+      state.flipStartedAt = 0;
       return;
     }
 
@@ -1307,6 +1326,8 @@
     front.style.backgroundImage = '';
     back.style.backgroundImage = '';
     setPageTurnPosition('center');
+    state.isFlipping = false;
+    state.flipStartedAt = 0;
   }
 
   function createFlipNoiseBuffer(context) {
@@ -1381,24 +1402,46 @@
     const back = getPageTurnBack();
 
     if (!layer || !sheet || !front || !back || !fromState || !toState) {
+      state.isFlipping = false;
+      state.flipStartedAt = 0;
       return;
     }
 
-    clearPageTurnLayer();
-    updatePageTurnLayerSize();
-    setPageTurnPosition(slot || 'center');
-    front.style.backgroundImage = 'url("' + compositePageImage(fromState) + '")';
-    back.style.backgroundImage = 'url("' + compositePageImage(toState) + '")';
-    layer.className = 'page-turn-layer is-active ' + (direction === 'prev' ? 'is-prev' : 'is-next');
-    playPageTurnSound();
-
-    state.flipTimer = window.setTimeout(function() {
+    try {
       clearPageTurnLayer();
-      state.isFlipping = false;
+      state.isFlipping = true;
+      state.flipStartedAt = Date.now();
+      updatePageTurnLayerSize();
+      setPageTurnPosition(slot || 'center');
+      front.style.backgroundImage = 'url("' + compositePageImage(fromState) + '")';
+      back.style.backgroundImage = 'url("' + compositePageImage(toState) + '")';
+      layer.className = 'page-turn-layer is-active ' + (direction === 'prev' ? 'is-prev' : 'is-next');
+      playPageTurnSound();
+
+      state.flipTimer = window.setTimeout(function() {
+        clearPageTurnLayer();
+        applyToolToAllPages();
+        updateBookTransform();
+      }, PAGE_TURN_DURATION);
+    } catch (error) {
+      clearPageTurnLayer();
       applyToolToAllPages();
       updateBookTransform();
-      state.flipTimer = null;
-    }, PAGE_TURN_DURATION);
+      console.warn('Sayfa çevirme animasyonu atlandı:', error);
+    }
+  }
+
+  function shouldAnimatePageTurn(fromState, toState) {
+    if (!fromState || !toState || fromState === toState) {
+      return false;
+    }
+    if (state.pageCount > 8) {
+      return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return false;
+    }
+    return true;
   }
 
   function getActivePageState() {
@@ -1508,7 +1551,7 @@
       width: targetWidth,
       height: targetHeight,
     }];
-    if (state.documentKind !== 'image' && state.documentKind !== 'video' && state.basePageWidth > 0 && state.basePageHeight > 0) {
+    if (!isSingleSurfaceDocumentKind(state.documentKind) && state.basePageWidth > 0 && state.basePageHeight > 0) {
       ['single', 'spread'].forEach(function(mode) {
         const width = getResponsivePageWidthForMode(state.basePageWidth, state.basePageHeight, mode);
         const height = width * (state.basePageHeight / state.basePageWidth);
@@ -1869,6 +1912,9 @@
 
   function syncPageControls() {
     const turnLayer = getPageTurnLayer();
+    if (state.isFlipping && state.flipStartedAt && Date.now() - state.flipStartedAt > PAGE_TURN_DURATION + 700) {
+      clearPageTurnLayer();
+    }
     if (state.isFlipping && !state.flipTimer && (!turnLayer || !turnLayer.classList.contains('is-active'))) {
       state.isFlipping = false;
     }
@@ -2962,6 +3008,75 @@
     return nodes.shell;
   }
 
+  async function initExternalPreviewPage(pageNumber) {
+    const width = state.pageWidth;
+    const height = state.pageHeight;
+    const nodes = createPageShell(pageNumber);
+    const previewUrl = getExternalPreviewUrl(state.documentRow);
+    nodes.pdfCanvas.width = Math.round(width);
+    nodes.pdfCanvas.height = Math.round(height);
+    nodes.pdfCanvas.style.width = width + 'px';
+    nodes.pdfCanvas.style.height = height + 'px';
+    nodes.pdfCanvas.style.display = 'none';
+    nodes.annotationCanvas.style.width = width + 'px';
+    nodes.annotationCanvas.style.height = height + 'px';
+    nodes.shell.style.width = width + 'px';
+    nodes.shell.style.height = height + 'px';
+
+    const frame = document.createElement('div');
+    frame.className = 'lesson-video-frame external-document-frame';
+    const iframe = document.createElement('iframe');
+    iframe.src = previewUrl;
+    iframe.title = state.documentRow && state.documentRow.baslik ? state.documentRow.baslik : 'Doküman önizlemesi';
+    iframe.allow = 'autoplay';
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.appendChild(iframe);
+    nodes.surface.insertBefore(frame, nodes.annotationCanvas);
+
+    const fabricCanvas = new window.fabric.Canvas(nodes.annotationCanvas, {
+      preserveObjectStacking: true,
+      selection: false,
+      enableRetinaScaling: true,
+    });
+    fabricCanvas.setWidth(width);
+    fabricCanvas.setHeight(height);
+    lockFabricNativeSurfaces(fabricCanvas);
+
+    const pageState = {
+      index: pageNumber,
+      wrapper: nodes.shell,
+      canvas: fabricCanvas,
+      pdfCanvasEl: nodes.pdfCanvas,
+      annotationCanvasEl: nodes.annotationCanvas,
+      hotspotLayer: nodes.hotspotLayer,
+      history: [],
+      redo: [],
+      draft: null,
+      pointerStart: null,
+      pointerEnd: null,
+      isRestoring: false,
+      isVideoPage: true,
+      isExternalPreviewPage: true,
+    };
+
+    bindCanvasEvents(pageState);
+
+    const saved = state.annotationCache.pages[String(pageNumber)];
+    if (saved) {
+      const loaded = await loadSnapshot(pageState, saved);
+      pageState.history = [loaded];
+      savePageSnapshot(pageState, loaded);
+    } else {
+      const blank = getSnapshot(pageState);
+      pageState.history = [blank];
+      savePageSnapshot(pageState, blank);
+    }
+
+    setAnswerObjectsVisibility(pageState);
+    state.pages.set(pageNumber, pageState);
+    return nodes.shell;
+  }
+
   function getResponsivePageWidthForMode(baseWidth, baseHeight, mode) {
     const frame = getBookFrame();
     const viewportWidth = Math.max(
@@ -3025,8 +3140,8 @@
       const slot = visiblePages.indexOf(pageState.index);
       const keepActive = slot !== -1;
       pageState.wrapper.classList.toggle('is-active', keepActive);
-      pageState.wrapper.classList.toggle('is-spread-left', state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread' && slot === 0);
-      pageState.wrapper.classList.toggle('is-spread-right', state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread' && slot === 1);
+      pageState.wrapper.classList.toggle('is-spread-left', !isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread' && slot === 0);
+      pageState.wrapper.classList.toggle('is-spread-right', !isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread' && slot === 1);
       if (!keepActive) {
         pageState.canvas.discardActiveObject();
       }
@@ -3034,7 +3149,7 @@
     });
 
     if (!initial) {
-      if (state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread') {
+      if (!isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread') {
         if (direction === 'next') {
           flipFromState = state.pages.get(previousVisiblePages[previousVisiblePages.length - 1]) || null;
           flipToState = state.pages.get(visiblePages[0]) || null;
@@ -3050,10 +3165,13 @@
       }
     }
 
-    if (!initial && flipFromState && flipToState && flipFromState !== flipToState) {
+    const canAnimateTurn = !initial && shouldAnimatePageTurn(flipFromState, flipToState);
+
+    if (canAnimateTurn) {
       state.isFlipping = true;
     } else {
       state.isFlipping = false;
+      clearPageTurnLayer();
     }
 
     syncPageControls();
@@ -3062,14 +3180,14 @@
     updateBookTransform();
     refreshStatus(initial ? 'Doküman hazır.' : '');
 
-    if (!initial && flipFromState && flipToState && flipFromState !== flipToState) {
+    if (canAnimateTurn) {
       animatePageTurn(flipFromState, flipToState, direction, flipSlot);
     }
   }
 
   function goToPage(pageNumber) {
     syncPageControls();
-    if (!state.pageCount || state.isFlipping) {
+    if (!state.pageCount || state.isFlipping || state.isRebuilding) {
       return;
     }
     if (document.body.classList.contains('is-crop-view')) {
@@ -3138,6 +3256,11 @@
       state.pageCount = 1;
       baseWidth = 1600;
       baseHeight = 900;
+    } else if (state.documentKind === 'external-preview') {
+      state.pdfDoc = null;
+      state.pageCount = 1;
+      baseWidth = 1600;
+      baseHeight = 1100;
     } else if (state.documentKind === 'image') {
       image = await loadImageFromUrl(state.documentRow.dosyaUrl);
       state.pdfDoc = null;
@@ -3154,10 +3277,10 @@
       baseHeight = baseViewport.height;
     }
 
-    if (state.documentKind === 'video') {
-      const videoSize = getResponsiveImagePageSize(baseWidth, baseHeight);
-      state.pageWidth = videoSize.width;
-      state.pageHeight = videoSize.height;
+    if (state.documentKind === 'video' || state.documentKind === 'external-preview') {
+      const singleSize = getResponsiveImagePageSize(baseWidth, baseHeight);
+      state.pageWidth = singleSize.width;
+      state.pageHeight = singleSize.height;
     } else if (state.documentKind === 'image') {
       const imageSize = getResponsiveImagePageSize(baseWidth, baseHeight);
       state.pageWidth = imageSize.width;
@@ -3168,7 +3291,7 @@
     }
     state.basePageWidth = baseWidth;
     state.basePageHeight = baseHeight;
-    state.bookWidth = state.documentKind === 'image' || state.documentKind === 'video'
+    state.bookWidth = isSingleSurfaceDocumentKind(state.documentKind)
       ? state.pageWidth
       : (state.viewMode === 'spread' ? (state.pageWidth * 2) + 4 : state.pageWidth);
     state.bookHeight = state.pageHeight;
@@ -3177,9 +3300,10 @@
     const panLayer = getBookPanLayer();
     const scaleLayer = getBookScaleLayer();
     root.innerHTML = '';
-    root.classList.toggle('is-spread', state.documentKind !== 'image' && state.documentKind !== 'video' && state.viewMode === 'spread');
+    root.classList.toggle('is-spread', !isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread');
     root.classList.toggle('is-image-document', state.documentKind === 'image');
     root.classList.toggle('is-video-document', state.documentKind === 'video');
+    root.classList.toggle('is-preview-document', state.documentKind === 'external-preview');
     root.style.width = state.bookWidth + 'px';
     root.style.height = state.bookHeight + 'px';
     panLayer.style.width = state.bookWidth + 'px';
@@ -3192,6 +3316,10 @@
       const pageElement = await initVideoPage(1);
       root.appendChild(pageElement);
       setStatus('Ders videosu hazırlanıyor…');
+    } else if (state.documentKind === 'external-preview') {
+      const pageElement = await initExternalPreviewPage(1);
+      root.appendChild(pageElement);
+      setStatus('Google Drive önizlemesi hazırlanıyor…');
     } else if (state.documentKind === 'image') {
       const pageElement = await initImagePage(1, image);
       root.appendChild(pageElement);
@@ -3223,6 +3351,9 @@
   async function buildAnnotatedPdfBytes() {
     if (state.documentKind === 'video') {
       throw new Error('Ders videosu için PDF indirme kullanılamaz.');
+    }
+    if (state.documentKind === 'external-preview') {
+      throw new Error('Google Drive önizlemesi için PDF indirme kullanılamaz. Dosyayı Drive üzerinden indirebilirsin.');
     }
     if (state.documentKind === 'image') {
       const pdfDoc = await window.PDFLib.PDFDocument.create();
@@ -4754,8 +4885,10 @@
     }
 
     state.documentRow = documentRow;
-    const isVideoDocument = getDocumentKind(documentRow) === 'video';
+    const initialDocumentKind = getDocumentKind(documentRow);
+    const isVideoDocument = initialDocumentKind === 'video';
     document.body.classList.toggle('is-video-document', isVideoDocument);
+    document.body.classList.toggle('is-preview-document', initialDocumentKind === 'external-preview');
     renderToolButtons();
     renderShortcutUi();
     const viewParams = new URLSearchParams(window.location.search);
@@ -4949,7 +5082,16 @@
     syncPageControls();
     await loadDocument();
     dockToolbarIntoBookFrame();
-    await buildBook();
+    state.isRebuilding = true;
+    syncPageControls();
+    try {
+      await buildBook();
+    } finally {
+      state.isRebuilding = false;
+      syncPageControls();
+      updateHistoryButtons();
+      refreshStatus('Doküman hazır.');
+    }
     markDocumentAsRead();
   }
 
