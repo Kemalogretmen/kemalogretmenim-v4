@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📏 Ölçüm Atölyesi — Kemal Öğretmenim</title>
+  <meta name="description" content="1, 2, 3 ve 4. sınıflar için uzunluk, ağırlık, zaman ve hacim ölçülerini eğlenceli görevlerle pekiştiren matematik oyunu.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/olcum-atolyesi.html">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --measure-ink: #14213d;
+      --measure-muted: #64748b;
+      --measure-line: #d8e3f2;
+      --measure-board: #2b4162;
+      --measure-board-deep: #1a283c;
+      --measure-lime: #a7f36b;
+      --measure-sun: #ffd166;
+      --measure-blue: #2d7ff9;
+      --measure-coral: #ff6464;
+      --measure-violet: #7357e8;
+      --measure-shadow: 0 18px 42px rgba(20, 33, 61, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--measure-ink);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(115, 87, 232, 0.15), transparent 30%),
+        radial-gradient(circle at 85% 85%, rgba(45, 127, 249, 0.15), transparent 30%),
+        linear-gradient(180deg, #f0f4fc 0%, #eef7ff 100%);
+      min-height: 100vh;
+    }
+
+    .measure-page {
+      width: min(1240px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 18px 0 64px;
+    }
+
+    .measure-shell {
+      overflow: hidden;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(45, 127, 249, 0.14);
+      box-shadow: var(--measure-shadow);
+    }
+
+    .measure-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+      gap: 18px;
+      align-items: center;
+      padding: 24px;
+      background:
+        linear-gradient(135deg, var(--measure-board), var(--measure-board-deep)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 10px, transparent 10px 20px);
+      color: white;
+    }
+
+    .measure-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .measure-hero h1 {
+      margin: 10px 0 8px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      line-height: .98;
+    }
+
+    .measure-hero p {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 1rem;
+      line-height: 1.65;
+      font-weight: 700;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .hero-tags span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      font-size: 0.83rem;
+      font-weight: 900;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      padding: 14px 16px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .stat-card span {
+      display: block;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 0.72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .stat-card strong {
+      display: block;
+      margin-top: 6px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .measure-setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(300px, .95fr);
+      gap: 18px;
+      padding: 20px;
+      background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+      border-bottom: 1px solid var(--measure-line);
+    }
+
+    .setup-panel,
+    .setup-side {
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel-card {
+      border: 1px solid var(--measure-line);
+      border-radius: 28px;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 12px 28px rgba(20, 33, 61, 0.05);
+    }
+
+    .section-title {
+      margin: 0 0 14px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.25rem;
+      color: var(--measure-ink);
+    }
+
+    .section-subtitle {
+      margin: -6px 0 14px;
+      color: var(--measure-muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+      font-weight: 700;
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .choice-btn,
+    .control-btn,
+    .answer-btn,
+    .serve-btn,
+    .toggle-input {
+      border: 0;
+      font-family: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-btn {
+      padding: 16px;
+      border-radius: 18px;
+      background: #f6f9ff;
+      border: 2px solid var(--measure-line);
+      color: var(--measure-ink);
+      text-align: left;
+    }
+
+    .choice-btn strong { display: block; font-size: 1.05rem; }
+    .choice-btn span {
+      display: block;
+      color: var(--measure-muted);
+      font-size: 0.84rem;
+      margin-top: 6px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .choice-btn:hover:not(.is-disabled) { transform: translateY(-2px); }
+
+    .choice-btn.is-active {
+      background: #eef4ff;
+      border-color: var(--measure-blue);
+      color: var(--measure-board-deep);
+      box-shadow: 0 10px 20px rgba(45, 127, 249, 0.12);
+    }
+
+    .choice-btn.is-disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      filter: grayscale(.2);
+    }
+
+    .challenge-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #f7fbff, #f3f0ff);
+      border: 1px solid #dbe8ff;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: white;
+      border: 2px solid var(--measure-line);
+    }
+
+    .toggle-copy strong {
+      display: block;
+      font-size: 1rem;
+      color: var(--measure-ink);
+    }
+
+    .toggle-copy span {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--measure-muted);
+      font-weight: 700;
+    }
+
+    .toggle-input {
+      appearance: none;
+      width: 58px;
+      height: 34px;
+      border-radius: 999px;
+      background: #dbe4f1;
+      position: relative;
+      flex: 0 0 58px;
+    }
+
+    .toggle-input::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+      transition: transform .22s ease;
+    }
+
+    .toggle-input:checked {
+      background: linear-gradient(135deg, var(--measure-violet), var(--measure-blue));
+    }
+
+    .toggle-input:checked::after {
+      transform: translateX(24px);
+    }
+
+    .mode-note {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .mode-note span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(115, 87, 232, 0.08);
+      color: #4d3db5;
+      font-size: 0.8rem;
+      font-weight: 900;
+    }
+
+    .rule-list,
+    .record-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 12px;
+    }
+
+    .rule-list li {
+      padding: 14px;
+      border-radius: 16px;
+      background: #f8fafc;
+      color: #4a5b74;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .record-list li {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: #f8fbff;
+      border: 1px solid var(--measure-line);
+    }
+
+    .record-list li.is-current {
+      background: linear-gradient(135deg, #eef4ff, #f6f2ff);
+      border-color: #bcd3ff;
+      box-shadow: 0 10px 18px rgba(45, 127, 249, 0.10);
+    }
+
+    .record-label {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--measure-ink);
+    }
+
+    .record-meta {
+      display: block;
+      margin-top: 4px;
+      color: var(--measure-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .record-score {
+      min-width: 78px;
+      text-align: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: white;
+      color: var(--measure-violet);
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.2rem;
+      line-height: 1;
+      box-shadow: inset 0 0 0 2px rgba(115, 87, 232, 0.12);
+    }
+
+    .player-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .player-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--measure-muted);
+      font-size: .85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .player-input {
+      width: 100%;
+      min-height: 54px;
+      padding: 0 18px;
+      border-radius: 18px;
+      border: 2px solid var(--measure-line);
+      background: #f9fbff;
+      color: var(--measure-ink);
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      font-size: 1rem;
+      font-weight: 800;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+
+    .player-input:focus {
+      border-color: var(--measure-blue);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(45, 127, 249, 0.10);
+    }
+
+    .student-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .student-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #d8e3f2;
+      background: #f8fbff;
+      color: #3c4d67;
+      font-size: .82rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, color .18s ease;
+    }
+
+    .student-chip:hover {
+      transform: translateY(-1px);
+      border-color: var(--measure-blue);
+      color: var(--measure-blue);
+    }
+
+    .leaderboard-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .leaderboard-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f4f7ff;
+      color: #4f46b5;
+      font-size: .8rem;
+      font-weight: 900;
+    }
+
+    .leaderboard-empty {
+      padding: 18px;
+      border-radius: 18px;
+      background: #f8fbff;
+      border: 1px dashed #cfdaea;
+      color: var(--measure-muted);
+      font-size: .92rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .measure-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-top: 1px solid var(--measure-line);
+      border-bottom: 1px solid var(--measure-line);
+    }
+
+    .measure-controls-left {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .control-btn,
+    .serve-btn {
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: white;
+      border: 2px solid var(--measure-line);
+      color: var(--measure-muted);
+    }
+
+    .control-btn:hover { border-color: var(--measure-blue); color: var(--measure-blue); }
+
+    .serve-btn {
+      background: var(--measure-lime);
+      border-color: #8be66b;
+      color: #1a420b;
+      font-size: 1.05rem;
+      box-shadow: 0 10px 20px rgba(167, 243, 107, 0.3);
+    }
+
+    .serve-btn:hover { transform: scale(1.02); }
+
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: white;
+      border: 2px solid var(--measure-line);
+      color: var(--measure-ink);
+      font-size: 0.84rem;
+      font-weight: 900;
+    }
+
+    .arena-wrap {
+      padding: 24px;
+    }
+
+    .arena-topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .arena-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: white;
+      border: 2px solid var(--measure-line);
+      box-shadow: 0 10px 20px rgba(20, 33, 61, 0.06);
+      color: var(--measure-ink);
+    }
+
+    .arena-pill span {
+      color: var(--measure-muted);
+      font-size: .76rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .arena-pill strong {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .arena-pill.hearts strong {
+      color: #dc2626;
+      letter-spacing: .08em;
+    }
+
+    .workshop {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 390px;
+      padding: 18px;
+      background: repeating-linear-gradient(45deg, #f0f4fc, #f0f4fc 20px, #e8eef8 20px, #e8eef8 40px);
+      border-radius: 28px;
+      border: 4px dashed #c8d6e8;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .quest-card {
+      width: min(720px, 100%);
+      background: white;
+      padding: 24px 28px 30px;
+      text-align: center;
+      opacity: 0;
+      display: none;
+      position: relative;
+    }
+
+    .quest-head {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .quest-badge,
+    .quest-bonus {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 900;
+    }
+
+    .quest-badge {
+      background: #eef4ff;
+      color: #2457ad;
+    }
+
+    .quest-bonus {
+      background: #fff1d8;
+      color: #935500;
+    }
+
+    .quest-emoji {
+      font-size: 4rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .quest-text {
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      color: var(--measure-board-deep);
+      margin-bottom: 20px;
+    }
+
+    .playful-card {
+      border-radius: 36px;
+      border: 5px solid var(--measure-sun);
+      box-shadow: 0 20px 40px rgba(255, 209, 102, 0.3);
+      display: block;
+      animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .playful-card .quest-text {
+      font-size: 2.3rem;
+      color: #e63946;
+    }
+
+    .serious-card {
+      border-radius: 18px;
+      border: 2px solid var(--measure-board);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+      display: block;
+      animation: slideUpFade 0.5s ease-out forwards;
+    }
+
+    .serious-card .quest-text {
+      font-size: 2rem;
+      color: var(--measure-board-deep);
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+      60% { transform: scale(1.1) rotate(4deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    @keyframes slideUpFade {
+      0% { transform: translateY(40px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .timer-bar {
+      height: 12px;
+      background: #e2eaf4;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 15px;
+    }
+
+    .timer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--measure-lime), var(--measure-sun));
+      width: 100%;
+      transition: width 0.1s linear, background 0.3s ease;
+    }
+
+    .timer-fill.is-low {
+      background: linear-gradient(90deg, var(--measure-sun), var(--measure-coral));
+    }
+
+    .answer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .answer-btn {
+      min-height: 80px;
+      border-radius: 20px;
+      background: white;
+      border: 3px solid var(--measure-line);
+      color: var(--measure-ink);
+      font-size: 1.55rem;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.04);
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      border-color: var(--measure-blue);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(45, 127, 249, 0.15);
+    }
+
+    .answer-btn:disabled { cursor: default; }
+
+    .answer-btn.is-correct {
+      background: #e6fbda;
+      border-color: #8fe15b;
+      color: #245e18;
+      transform: scale(1.05);
+    }
+
+    .answer-btn.is-wrong {
+      background: #fff0f0;
+      border-color: var(--measure-coral);
+      color: #9e2626;
+      opacity: 0.7;
+    }
+
+    .feedback {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #eef5ff;
+      color: #38516d;
+      font-weight: 900;
+      text-align: center;
+      font-size: 1.02rem;
+      line-height: 1.55;
+    }
+
+    .feedback.good { background: #e9f9df; color: #28651d; }
+    .feedback.bad { background: #fff0f0; color: #982727; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 980px) {
+      .measure-hero,
+      .measure-setup {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 800px) {
+      .answer-grid { grid-template-columns: 1fr 1fr; }
+      .playful-card .quest-text { font-size: 1.8rem; }
+      .serious-card .quest-text { font-size: 1.55rem; }
+    }
+
+    @media (max-width: 620px) {
+      .measure-page { width: min(100% - 14px, 1240px); }
+      .measure-hero { padding: 18px; }
+      .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .measure-setup,
+      .arena-wrap { padding: 16px; }
+      .measure-controls { padding: 14px 16px; }
+      .answer-grid { grid-template-columns: 1fr; }
+      .choice-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="measure-page">
+    <section class="measure-shell">
+      <header class="measure-hero">
+        <div>
+          <span class="measure-kicker">🔢 Matematik • Ölçme Merkezi</span>
+          <h1>Ölçüm Atölyesi</h1>
+          <p>Uzunluk, ağırlık, zaman ve hacim görevleriyle ölçme becerilerini pekiştir. Sınıfını seç, adını yaz ve 3 canla hedef puana ulaşmaya çalış.</p>
+          <div class="hero-tags">
+            <span>📏 Uzunluk</span>
+            <span>⚖️ Ağırlık</span>
+            <span>⏰ Zaman</span>
+            <span>🥛 Hacim</span>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-card"><span>Puan</span><strong id="scoreText">0</strong></div>
+          <div class="stat-card"><span>En İyi</span><strong id="recordText">0</strong></div>
+          <div class="stat-card"><span>Hedef</span><strong id="targetText">100</strong></div>
+          <div class="stat-card"><span>Süre</span><strong id="timeText">15</strong></div>
+        </div>
+      </header>
+
+      <section class="measure-setup" id="setupScreen">
+        <div class="setup-panel">
+          <div class="panel-card">
+            <h2 class="section-title">Sınıf Seviyesi</h2>
+            <div class="choice-row" id="gradeChoices">
+              <button class="choice-btn is-active" type="button" data-grade="1"><strong>1. Sınıf</strong><span>Karış, adım, gün, para ve temel eksik bulma görevleri</span></button>
+              <button class="choice-btn" type="button" data-grade="2"><strong>2. Sınıf</strong><span>Metre, kilogram, saat ve bilinmeyenli ölçme ilişkileri</span></button>
+              <button class="choice-btn" type="button" data-grade="3"><strong>3. Sınıf</strong><span>Santimetre, gram, litre ve dönüşüm soruları</span></button>
+              <button class="choice-btn" type="button" data-grade="4"><strong>4. Sınıf</strong><span>Kilometre, ton, mililitre, saniye ve ustalık turları</span></button>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <h2 class="section-title">Ölçüm Türü</h2>
+            <div class="choice-row" id="topicChoices">
+              <button class="choice-btn is-active" type="button" data-topic="all"><strong>Karışık Atölye</strong><span>Tüm uygun ölçü birimleri</span></button>
+              <button class="choice-btn" type="button" data-topic="length"><strong>Uzunluk</strong><span>Karış, metre, santimetre ve kilometre</span></button>
+              <button class="choice-btn" type="button" data-topic="weight"><strong>Ağırlık</strong><span>Gram, kilogram, ton ve para ilişkileri</span></button>
+              <button class="choice-btn" type="button" data-topic="time"><strong>Zaman</strong><span>Gün, saat, dakika ve saniye</span></button>
+              <button class="choice-btn" type="button" data-topic="volume" id="volumeChoice"><strong>Hacim</strong><span>3. sınıftan itibaren litre ve mililitre görevleri</span></button>
+            </div>
+          </div>
+
+          <div class="challenge-card">
+            <div class="toggle-row">
+              <div class="toggle-copy">
+                <strong id="challengeTitle">Bir Üst Sınıf Karışsın</strong>
+                <span id="challengeCopy">Açıldığında soruların bir bölümü bir üst sınıf düzeyinden gelir. Doğru cevaplarda bonus puan kazanırsın.</span>
+              </div>
+              <input class="toggle-input" id="upperGradeToggle" type="checkbox" aria-label="Bir üst sınıf meydan okuması">
+            </div>
+            <div class="mode-note">
+              <span id="modeChip">Mod: 1. Sınıf • Karışık Atölye</span>
+              <span id="bonusChip">Bonus: Kapalı</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="setup-side">
+          <div class="panel-card">
+            <div class="player-stack">
+              <div>
+                <label class="player-label" for="playerNameInput">Öğrenci Adı</label>
+                <input class="player-input" id="playerNameInput" type="text" maxlength="32" placeholder="Adını yaz">
+              </div>
+              <div id="studentPickerWrap" hidden>
+                <span class="player-label">Kayıtlı Öğrenciler</span>
+                <div class="student-list" id="studentPicker"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card">
+            <div class="leaderboard-head">
+              <h2 class="section-title">Sınıf Skor Bordu</h2>
+              <span class="leaderboard-badge" id="leaderboardBadge">1. Sınıf</span>
+            </div>
+            <div id="leaderboardEmpty" class="leaderboard-empty">Bu sınıf için henüz kayıtlı skor yok.</div>
+            <ul class="record-list hidden" id="recordBoard"></ul>
+          </div>
+        </aside>
+      </section>
+
+      <nav class="measure-controls">
+        <div class="measure-controls-left">
+          <button class="control-btn" type="button" id="setupToggle">⚙️ Ayarları Göster / Gizle</button>
+          <div class="mode-pill" id="modePill">1. Sınıf • Karışık Atölye • Standart Mod</div>
+        </div>
+        <button class="serve-btn" type="button" id="startBtn">Atölyeyi Aç (Başla)</button>
+      </nav>
+
+      <section class="arena-wrap">
+        <div class="arena-topbar">
+          <div class="arena-pill">
+            <span>Oyuncu</span>
+            <strong id="playerBadgeText">Hazır</strong>
+          </div>
+          <div class="arena-pill hearts">
+            <span>Canlar</span>
+            <strong id="livesText">❤❤❤</strong>
+          </div>
+          <div class="arena-pill">
+            <span>Tur Puanı</span>
+            <strong id="turnScoreText">10 + süre bonusu</strong>
+          </div>
+        </div>
+        <div class="workshop">
+          <div class="quest-card" id="questCard">
+            <div class="quest-head">
+              <span class="quest-badge" id="questionGradeBadge">1. Sınıf Görevi</span>
+              <span class="quest-bonus" id="questionBonusBadge" hidden>Üst Sınıf Bonusu</span>
+            </div>
+            <div class="quest-emoji" id="questEmoji">❓</div>
+            <div class="quest-text" id="questText">Seviyeni seç ve atölyeyi başlat.</div>
+            <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+          </div>
+        </div>
+
+        <div class="answer-grid" id="answerGrid"></div>
+        <div class="feedback" id="feedback" aria-live="polite">Hazırsan adını yaz ve atölyeyi aç.</div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const SCORE_STORAGE_KEY = "kemal_olcum_atolyesi_scores_v2";
+
+    const state = {
+      grade: 1,
+      topic: "all",
+      upperMix: false,
+      playerName: "",
+      score: 0,
+      targetScore: 100,
+      lives: 3,
+      maxLives: 3,
+      question: null,
+      running: false,
+      timeLeft: 15,
+      roundSeconds: 15,
+      timerId: null,
+      store: {
+        leaderboards: {},
+        students: {}
+      }
+    };
+
+    const els = {
+      setup: document.getElementById("setupScreen"),
+      questCard: document.getElementById("questCard"),
+      questEmoji: document.getElementById("questEmoji"),
+      questText: document.getElementById("questText"),
+      questGradeBadge: document.getElementById("questionGradeBadge"),
+      questBonusBadge: document.getElementById("questionBonusBadge"),
+      timerFill: document.getElementById("timerFill"),
+      answerGrid: document.getElementById("answerGrid"),
+      feedback: document.getElementById("feedback"),
+      score: document.getElementById("scoreText"),
+      record: document.getElementById("recordText"),
+      target: document.getElementById("targetText"),
+      playerBadge: document.getElementById("playerBadgeText"),
+      lives: document.getElementById("livesText"),
+      turnScore: document.getElementById("turnScoreText"),
+      time: document.getElementById("timeText"),
+      startBtn: document.getElementById("startBtn"),
+      recordBoard: document.getElementById("recordBoard"),
+      leaderboardEmpty: document.getElementById("leaderboardEmpty"),
+      leaderboardBadge: document.getElementById("leaderboardBadge"),
+      upperGradeToggle: document.getElementById("upperGradeToggle"),
+      modePill: document.getElementById("modePill"),
+      modeChip: document.getElementById("modeChip"),
+      bonusChip: document.getElementById("bonusChip"),
+      challengeTitle: document.getElementById("challengeTitle"),
+      challengeCopy: document.getElementById("challengeCopy"),
+      volumeChoice: document.getElementById("volumeChoice"),
+      playerNameInput: document.getElementById("playerNameInput"),
+      studentPickerWrap: document.getElementById("studentPickerWrap"),
+      studentPicker: document.getElementById("studentPicker")
+    };
+
+    const baseEmojis = { length: "📏", weight: "⚖️", time: "⏰", volume: "🥛", money: "🪙" };
+    const nonStandardEmojis = {
+      "karış": "🖐️",
+      "adım": "👣",
+      "parmak": "☝️",
+      "ayak": "🦶",
+      "kulaç": "🤷"
+    };
+    const topicLabels = {
+      all: "Karışık Atölye",
+      length: "Uzunluk",
+      weight: "Ağırlık",
+      time: "Zaman",
+      volume: "Hacim"
+    };
+    const topicIcons = {
+      all: "🧪",
+      length: "📏",
+      weight: "⚖️",
+      time: "⏰",
+      volume: "🥛"
+    };
+
+    function rand(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function pick(items) {
+      return items[Math.floor(Math.random() * items.length)];
+    }
+
+    function shuffle(items) {
+      return items.slice().sort(() => Math.random() - 0.5);
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function loadStore() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || "{}");
+        if (!parsed || typeof parsed !== "object") {
+          return { leaderboards: {}, students: {} };
+        }
+        return {
+          leaderboards: parsed.leaderboards && typeof parsed.leaderboards === "object" ? parsed.leaderboards : {},
+          students: parsed.students && typeof parsed.students === "object" ? parsed.students : {}
+        };
+      } catch (error) {
+        return { leaderboards: {}, students: {} };
+      }
+    }
+
+    function saveStore() {
+      try {
+        localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(state.store));
+      } catch (error) {
+        /* Yerel depolama kapalıysa sessizce devam et. */
+      }
+    }
+
+    function getCurrentModeLabel() {
+      if (!state.upperMix) return state.grade + ". Sınıf • " + topicLabels[state.topic];
+      if (state.grade === 4) return "4. Sınıf Ustalık Turu • " + topicLabels[state.topic];
+      return state.grade + ". Sınıf + " + (state.grade + 1) + ". Sınıf • " + topicLabels[state.topic];
+    }
+
+    function getTargetScore(grade = state.grade) {
+      return grade <= 2 ? 100 : 120;
+    }
+
+    function formatShortDate(iso) {
+      if (!iso) return "Henüz oynanmadı";
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return "Henüz oynanmadı";
+      return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function getClassEntries(grade = state.grade) {
+      const key = String(grade);
+      const list = state.store.leaderboards[key];
+      return Array.isArray(list) ? list.slice() : [];
+    }
+
+    function getCurrentRecord() {
+      const entries = getClassEntries();
+      return entries.length ? Number(entries[0].score || 0) : 0;
+    }
+
+    function getClassStudents(grade = state.grade) {
+      const key = String(grade);
+      const list = state.store.students[key];
+      return Array.isArray(list) ? list.slice() : [];
+    }
+
+    function renderStudentPicker() {
+      const students = getClassStudents();
+      els.studentPickerWrap.hidden = !students.length;
+      els.studentPicker.innerHTML = students.map(name => (
+        '<button class="student-chip" type="button" data-student-name="' + escapeHtml(name) + '">' + escapeHtml(name) + "</button>"
+      )).join("");
+      els.studentPicker.querySelectorAll("[data-student-name]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.playerName = btn.dataset.studentName || "";
+          els.playerNameInput.value = state.playerName;
+          updateStartButtonState();
+        });
+      });
+    }
+
+    function renderRecordBoard() {
+      const entries = getClassEntries();
+      els.leaderboardBadge.textContent = state.grade + ". Sınıf";
+      if (!entries.length) {
+        els.recordBoard.classList.add("hidden");
+        els.leaderboardEmpty.classList.remove("hidden");
+        return;
+      }
+      els.recordBoard.classList.remove("hidden");
+      els.leaderboardEmpty.classList.add("hidden");
+      els.recordBoard.innerHTML = entries.map((entry, index) => {
+        const modeText = entry.upperMix ? "Üst sınıf açık" : "Standart";
+        return [
+          '<li' + (index === 0 ? ' class="is-current"' : "") + '>',
+          "<div>",
+          '<span class="record-label">' + escapeHtml(entry.name) + "</span>",
+          '<span class="record-meta">' + escapeHtml(modeText) + " • " + escapeHtml(topicLabels[entry.topic] || "Karışık Atölye") + " • " + escapeHtml(formatShortDate(entry.playedAt)) + "</span>",
+          "</div>",
+          '<div class="record-score">' + String(entry.score || 0) + "</div>",
+          "</li>"
+        ].join("");
+      }).join("");
+    }
+
+    function renderLives() {
+      els.lives.textContent = "❤".repeat(Math.max(0, state.lives)) + "·".repeat(Math.max(0, state.maxLives - state.lives));
+    }
+
+    function getTimeBonus(secondsLeft = state.timeLeft) {
+      return Math.max(0, Math.ceil(Math.max(0, secondsLeft) / 2));
+    }
+
+    function renderTurnScoreHint() {
+      const bonus = getTimeBonus();
+      els.turnScore.textContent = "10 + " + bonus;
+    }
+
+    function syncStats() {
+      els.score.textContent = String(state.score);
+      els.record.textContent = String(getCurrentRecord());
+      els.target.textContent = String(state.targetScore);
+      renderLives();
+      renderTurnScoreHint();
+      els.playerBadge.textContent = state.playerName || "Hazır";
+      els.time.textContent = String(Math.ceil(state.timeLeft || state.roundSeconds || 15));
+    }
+
+    function updateVolumeAvailability() {
+      const disabled = state.grade < 3;
+      els.volumeChoice.classList.toggle("is-disabled", disabled);
+      els.volumeChoice.setAttribute("aria-disabled", disabled ? "true" : "false");
+      if (disabled && state.topic === "volume") {
+        state.topic = "all";
+        document.querySelectorAll("#topicChoices .choice-btn").forEach(btn => {
+          btn.classList.toggle("is-active", btn.dataset.topic === "all");
+        });
+      }
+    }
+
+    function updateChallengeCopy() {
+      if (state.grade === 4) {
+        els.challengeTitle.textContent = "Ustalık Turu";
+        els.challengeCopy.textContent = "Açıldığında 4. sınıf görevleri daha hızlı ve daha zor bir karışımla gelir. Rekor ayrı tutulur.";
+      } else {
+        els.challengeTitle.textContent = "Bir Üst Sınıf Karışsın";
+        els.challengeCopy.textContent = "Açıldığında soruların bir bölümü " + (state.grade + 1) + ". sınıf düzeyinden gelir. Doğru bonus cevaplar 2 puan kazandırır.";
+      }
+    }
+
+    function updateModeUI() {
+      const modeLabel = getCurrentModeLabel();
+      els.modePill.textContent = modeLabel + (state.upperMix ? " • Bonus Açık" : " • Standart Mod");
+      els.modeChip.textContent = "Mod: " + modeLabel;
+      els.bonusChip.textContent = state.upperMix
+        ? (state.grade === 4 ? "Bonus: Ustalık Hızı Açık" : "Bonus: Üst Sınıf Açık")
+        : "Bonus: Kapalı";
+      updateChallengeCopy();
+      renderStudentPicker();
+      renderRecordBoard();
+      syncStats();
+    }
+
+    function getEffectiveRoundSeconds() {
+      const base = state.grade >= 3 ? 15 : 16;
+      if (!state.upperMix) return base;
+      if (state.grade === 4) return 12;
+      return Math.max(12, base - 2);
+    }
+
+    function getQuestionGrade() {
+      if (!state.upperMix) return state.grade;
+      if (state.grade === 4) return 4;
+      return Math.random() < 0.4 ? state.grade + 1 : state.grade;
+    }
+
+    function formatEquation(a, b, c, unit, emoji) {
+      const type = Math.random();
+      const u = [unit, emoji || ""].join(" ").trim();
+      if (type < 0.33) {
+        return { text: a + " " + u + " + " + b + " " + u + " = ?", ans: c };
+      }
+      if (type < 0.66) {
+        return { text: a + " " + u + " + ? = " + c + " " + u, ans: b };
+      }
+      if (Math.random() < 0.5) {
+        return { text: "? - " + b + " " + u + " = " + a + " " + u, ans: c };
+      }
+      return { text: c + " " + u + " - ? = " + a + " " + u, ans: b };
+    }
+
+    function genLength(grade) {
+      if (grade === 1 || grade === 2) {
+        if (grade === 1 || Math.random() < 0.5) {
+          const units = ["karış", "adım", "parmak", "ayak", "kulaç"];
+          const unit = pick(units);
+          const a = rand(2, 9);
+          const b = rand(2, 9);
+          const eq = formatEquation(a, b, a + b, unit, nonStandardEmojis[unit]);
+          return { text: eq.text, ans: eq.ans, type: "length" };
+        }
+        const a = rand(10, 40);
+        const b = rand(10, 40);
+        const eq = formatEquation(a, b, a + b, "m", "📏");
+        return { text: eq.text, ans: eq.ans, type: "length" };
+      }
+      if (grade === 3) {
+        if (Math.random() < 0.5) {
+          const a = rand(2, 8);
+          return { text: a + " metre = ? cm", ans: a * 100, type: "length" };
+        }
+        const a = rand(100, 400);
+        const b = rand(100, 400);
+        const eq = formatEquation(a, b, a + b, "cm", "📏");
+        return { text: eq.text, ans: eq.ans, type: "length" };
+      }
+      if (Math.random() < 0.5) {
+        const a = rand(2, 9);
+        return { text: a + " km = ? metre", ans: a * 1000, type: "length" };
+      }
+      const a = rand(2, 9) * 10;
+      return { text: a + " mm = ? cm", ans: a / 10, type: "length" };
+    }
+
+    function genWeight(grade) {
+      if (grade === 1) {
+        const a = rand(3, 10);
+        const b = rand(2, 8);
+        const eq = formatEquation(a, b, a + b, "TL", "🪙");
+        return { text: eq.text, ans: eq.ans, type: "money" };
+      }
+      if (grade === 2) {
+        const a = rand(5, 20);
+        const b = rand(5, 20);
+        const eq = formatEquation(a, b, a + b, "kg", "⚖️");
+        return { text: eq.text, ans: eq.ans, type: "weight" };
+      }
+      if (grade === 3) {
+        if (Math.random() < 0.5) return { text: "1 kilogram = ? gram", ans: 1000, type: "weight" };
+        return { text: "Yarım kilo = ? gram", ans: 500, type: "weight" };
+      }
+      const a = rand(2, 8);
+      return { text: a + " ton = ? kg", ans: a * 1000, type: "weight" };
+    }
+
+    function genTime(grade) {
+      if (grade === 1) {
+        const a = rand(2, 6);
+        const b = rand(2, 6);
+        const eq = formatEquation(a, b, a + b, "gün", "☀️");
+        return { text: eq.text, ans: eq.ans, type: "time" };
+      }
+      if (grade === 2) {
+        if (Math.random() < 0.5) return { text: "1 gün = ? saat", ans: 24, type: "time" };
+        return { text: "1 saat = ? dakika", ans: 60, type: "time" };
+      }
+      if (grade === 3) {
+        const a = rand(2, 4);
+        return { text: a + " saat = ? dakika", ans: a * 60, type: "time" };
+      }
+      const a = rand(2, 5);
+      return { text: a + " dakika = ? saniye", ans: a * 60, type: "time" };
+    }
+
+    function genVolume(grade) {
+      if (grade <= 2) return genLength(grade);
+      if (grade === 3) {
+        if (Math.random() < 0.5) {
+          const a = rand(2, 5);
+          return { text: a + " litre = ? yarım litre", ans: a * 2, type: "volume" };
+        }
+        const a = rand(2, 6);
+        const b = rand(1, 4);
+        const eq = formatEquation(a, b, a + b, "L", "🥛");
+        return { text: eq.text, ans: eq.ans, type: "volume" };
+      }
+      if (Math.random() < 0.5) {
+        const a = rand(2, 8);
+        return { text: a + " litre = ? mililitre", ans: a * 1000, type: "volume" };
+      }
+      const a = rand(250, 900);
+      const b = rand(100, 500);
+      const eq = formatEquation(a, b, a + b, "mL", "🥛");
+      return { text: eq.text, ans: eq.ans, type: "volume" };
+    }
+
+    function generateQuestion() {
+      const gradeUsed = getQuestionGrade();
+      let topicUsed = state.topic;
+      if (topicUsed === "all") {
+        const pool = gradeUsed <= 2 ? ["length", "weight", "time"] : ["length", "weight", "time", "volume"];
+        topicUsed = pick(pool);
+      }
+      if (topicUsed === "volume" && gradeUsed <= 2) {
+        topicUsed = "length";
+      }
+
+      let question;
+      if (topicUsed === "length") question = genLength(gradeUsed);
+      else if (topicUsed === "weight") question = genWeight(gradeUsed);
+      else if (topicUsed === "time") question = genTime(gradeUsed);
+      else question = genVolume(gradeUsed);
+
+      return {
+        text: question.text,
+        answer: question.ans,
+        emoji: baseEmojis[question.type] || "❓",
+        bonus: gradeUsed > state.grade || (state.upperMix && state.grade === 4),
+        gradeUsed,
+        topicUsed
+      };
+    }
+
+    function getAnswerStep(answer) {
+      if (answer < 20) return 1;
+      if (answer < 100) return 5;
+      if (answer < 500) return 10;
+      if (answer < 2000) return 100;
+      return 250;
+    }
+
+    function buildOptions(answer) {
+      const step = getAnswerStep(answer);
+      const set = new Set([answer]);
+      while (set.size < 4) {
+        const delta = step * rand(1, Math.max(2, state.grade + 1));
+        const candidate = Math.max(1, answer + (Math.random() < 0.5 ? -delta : delta));
+        set.add(candidate);
+      }
+      return shuffle(Array.from(set));
+    }
+
+    function updateTimerUI() {
+      els.time.textContent = String(Math.max(0, Math.ceil(state.timeLeft)));
+      const pct = Math.max(0, (state.timeLeft / state.roundSeconds) * 100);
+      els.timerFill.style.width = pct + "%";
+      els.timerFill.classList.toggle("is-low", state.timeLeft <= Math.max(4, state.roundSeconds * 0.3));
+      renderTurnScoreHint();
+    }
+
+    function stopTimer() {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.roundSeconds = getEffectiveRoundSeconds();
+      state.timeLeft = state.roundSeconds;
+      updateTimerUI();
+      state.timerId = setInterval(() => {
+        if (!state.running) {
+          stopTimer();
+          return;
+        }
+        state.timeLeft -= 0.1;
+        updateTimerUI();
+        if (state.timeLeft <= 0) {
+          handleAnswer(null, false, true);
+        }
+      }, 100);
+    }
+
+    function syncQuestionCard(question) {
+      els.questGradeBadge.textContent = question.gradeUsed + ". Sınıf • " + topicLabels[question.topicUsed];
+      els.questBonusBadge.hidden = !question.bonus;
+      els.questEmoji.style.display = "block";
+      els.questEmoji.textContent = topicIcons[question.topicUsed] || question.emoji || "❓";
+    }
+
+    function showNextQuestion() {
+      if (!state.running) return;
+      els.questCard.className = "quest-card";
+      setTimeout(() => {
+        state.question = generateQuestion();
+        syncQuestionCard(state.question);
+        els.questText.textContent = state.question.text;
+        els.answerGrid.innerHTML = "";
+        buildOptions(state.question.answer).forEach(option => {
+          const btn = document.createElement("button");
+          btn.className = "answer-btn";
+          btn.type = "button";
+          btn.textContent = String(option);
+          btn.onclick = () => handleAnswer(btn, option === state.question.answer);
+          els.answerGrid.appendChild(btn);
+        });
+        if (state.question.gradeUsed <= 2 && !state.question.bonus) {
+          els.questCard.classList.add("playful-card");
+        } else {
+          els.questCard.classList.add("serious-card");
+        }
+        setFeedback(state.question.bonus ? "Bonus seviye görevi geldi." : "Görevi tamamla!", "");
+        startTimer();
+      }, 100);
+    }
+
+    function normalizePlayerName(value) {
+      return String(value || "").replace(/\s+/g, " ").trim().slice(0, 32);
+    }
+
+    function updateStartButtonState() {
+      const valid = Boolean(normalizePlayerName(els.playerNameInput.value));
+      els.startBtn.disabled = !valid && !state.running;
+      els.startBtn.style.opacity = !valid && !state.running ? ".6" : "1";
+      els.startBtn.style.cursor = !valid && !state.running ? "not-allowed" : "pointer";
+    }
+
+    function saveResult() {
+      const name = normalizePlayerName(state.playerName || els.playerNameInput.value);
+      if (!name) return false;
+      const gradeKey = String(state.grade);
+      const playedAt = new Date().toISOString();
+      const entries = getClassEntries(state.grade);
+      const currentIndex = entries.findIndex(entry => String(entry.name || "").toLocaleLowerCase("tr-TR") === name.toLocaleLowerCase("tr-TR"));
+      const nextEntry = {
+        name,
+        score: state.score,
+        topic: state.topic,
+        upperMix: state.upperMix,
+        playedAt
+      };
+
+      if (currentIndex >= 0) {
+        if (state.score >= Number(entries[currentIndex].score || 0)) {
+          entries[currentIndex] = nextEntry;
+        } else {
+          entries[currentIndex].playedAt = playedAt;
+        }
+      } else {
+        entries.push(nextEntry);
+      }
+
+      entries.sort((a, b) => {
+        if ((b.score || 0) !== (a.score || 0)) return (b.score || 0) - (a.score || 0);
+        return new Date(b.playedAt || 0).getTime() - new Date(a.playedAt || 0).getTime();
+      });
+      state.store.leaderboards[gradeKey] = entries.slice(0, 12);
+
+      const students = getClassStudents(state.grade);
+      if (!students.some(student => student.toLocaleLowerCase("tr-TR") === name.toLocaleLowerCase("tr-TR"))) {
+        students.push(name);
+        students.sort((a, b) => a.localeCompare(b, "tr"));
+        state.store.students[gradeKey] = students;
+      }
+
+      saveStore();
+      return true;
+    }
+
+    function finishGame(reason) {
+      stopTimer();
+      state.running = false;
+      saveResult();
+      syncStats();
+      updateModeUI();
+      els.answerGrid.innerHTML = "";
+      els.questCard.className = "quest-card playful-card";
+      els.questEmoji.style.display = "block";
+      els.questEmoji.textContent = reason === "win" ? "🏆" : "💔";
+      els.questGradeBadge.textContent = state.grade + ". Sınıf Sonucu";
+      els.questBonusBadge.hidden = true;
+      if (reason === "win") {
+        els.questText.textContent = "Hedefe Ulaştın!";
+        setFeedback(state.playerName + " oyunu " + state.score + " puanla tamamladı. Skor borduna kaydedildi.", "good");
+      } else {
+        els.questText.textContent = "Canların Bitti!";
+        setFeedback(state.playerName + " oyunu " + state.score + " puanla bitirdi. Yeni bir tur başlatabilirsin.", "bad");
+      }
+      els.startBtn.textContent = "Yeniden Oyna";
+      els.startBtn.onclick = resetGame;
+    }
+
+    function setFeedback(text, type) {
+      els.feedback.className = "feedback" + (type ? " " + type : "");
+      els.feedback.textContent = text;
+    }
+
+    function handleAnswer(btn, isCorrect, timedOut) {
+      if (!state.running) return;
+      stopTimer();
+      Array.from(els.answerGrid.children).forEach(button => {
+        button.disabled = true;
+      });
+
+      if (isCorrect) {
+        const timeBonus = getTimeBonus();
+        const gain = 10 + timeBonus;
+        if (btn) btn.classList.add("is-correct");
+        state.score += gain;
+        syncStats();
+        if (state.score >= state.targetScore) {
+          finishGame("win");
+          return;
+        }
+        setFeedback("Doğru cevap! 10 temel puan ve " + timeBonus + " süre bonusu kazandın.", "good");
+        setTimeout(showNextQuestion, 1400);
+        return;
+      }
+
+      state.lives = Math.max(0, state.lives - 1);
+      if (btn) btn.classList.add("is-wrong");
+      Array.from(els.answerGrid.children).forEach(button => {
+        if (Number(button.textContent) === state.question.answer) {
+          button.classList.add("is-correct");
+        }
+      });
+      syncStats();
+      if (state.lives <= 0) {
+        setFeedback((timedOut ? "Süre doldu." : "Yanlış cevap.") + " Son can da gitti.", "bad");
+        setTimeout(() => finishGame("lose"), 900);
+        return;
+      }
+      setFeedback((timedOut ? "Süre doldu." : "Yanlış ölçüm.") + " Doğru cevap " + state.question.answer + ". 1 can gitti.", "bad");
+      setTimeout(showNextQuestion, 2200);
+    }
+
+    function startGame() {
+      const playerName = normalizePlayerName(els.playerNameInput.value);
+      if (!playerName) {
+        setFeedback("Başlamak için adını yaz.", "bad");
+        updateStartButtonState();
+        return;
+      }
+      state.playerName = playerName;
+      state.running = true;
+      state.score = 0;
+      state.targetScore = getTargetScore();
+      state.lives = state.maxLives;
+      els.setup.classList.add("hidden");
+      els.startBtn.textContent = "Atölyeyi Kapat (Sıfırla)";
+      els.startBtn.onclick = resetGame;
+      syncStats();
+      updateModeUI();
+      showNextQuestion();
+    }
+
+    function resetGame() {
+      stopTimer();
+      state.running = false;
+      state.score = 0;
+      state.targetScore = getTargetScore();
+      state.lives = state.maxLives;
+      els.setup.classList.remove("hidden");
+      els.startBtn.textContent = "Atölyeyi Aç (Başla)";
+      els.startBtn.onclick = startGame;
+      els.questCard.className = "quest-card";
+      els.questEmoji.textContent = "❓";
+      els.questEmoji.style.display = "block";
+      els.questText.textContent = "Seviyeni seç ve atölyeyi başlat.";
+      els.questGradeBadge.textContent = state.grade + ". Sınıf Görevi";
+      els.questBonusBadge.hidden = true;
+      els.answerGrid.innerHTML = "";
+      state.roundSeconds = getEffectiveRoundSeconds();
+      state.timeLeft = state.roundSeconds;
+      updateTimerUI();
+      syncStats();
+      updateModeUI();
+      setFeedback("Hazırsan adını yaz ve atölyeyi aç.", "");
+      updateStartButtonState();
+    }
+
+    function bindChoices() {
+      document.querySelectorAll("#gradeChoices .choice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll("#gradeChoices .choice-btn").forEach(item => item.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          state.grade = parseInt(btn.dataset.grade, 10);
+          state.targetScore = getTargetScore();
+          updateVolumeAvailability();
+          updateChallengeCopy();
+          resetGame();
+        });
+      });
+
+      document.querySelectorAll("#topicChoices .choice-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (btn.classList.contains("is-disabled")) return;
+          document.querySelectorAll("#topicChoices .choice-btn").forEach(item => item.classList.remove("is-active"));
+          btn.classList.add("is-active");
+          state.topic = btn.dataset.topic;
+          resetGame();
+        });
+      });
+
+      els.upperGradeToggle.addEventListener("change", () => {
+        state.upperMix = els.upperGradeToggle.checked;
+        resetGame();
+      });
+
+      els.playerNameInput.addEventListener("input", () => {
+        state.playerName = normalizePlayerName(els.playerNameInput.value);
+        updateStartButtonState();
+      });
+    }
+
+    document.getElementById("setupToggle").addEventListener("click", () => {
+      els.setup.classList.toggle("hidden");
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      state.store = loadStore();
+      bindChoices();
+      els.startBtn.onclick = startGame;
+      state.targetScore = getTargetScore();
+      updateVolumeAvailability();
+      state.roundSeconds = getEffectiveRoundSeconds();
+      state.timeLeft = state.roundSeconds;
+      updateTimerUI();
+      updateModeUI();
+      syncStats();
+      renderRecordBoard();
+      renderStudentPicker();
+      updateStartButtonState();
+    });
+  </script>
+</body>
+</html>

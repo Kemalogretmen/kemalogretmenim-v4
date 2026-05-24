@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gökçe'nin Hece Köprüsü - Kemal Öğretmenim</title>
+  <meta name="description" content="1. Sınıf okuma yazma süreci için hece birleştirme ve kelime oluşturma oyunu.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/hece_koprusu.html">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@700;900&display=swap');
+
+    :root {
+      --ink: #14213d;
+      --muted: #64748b;
+      --paper: #ffffff;
+      --line: #d8e3f2;
+      --sky: #38bdf8;
+      --grass-top: #4ade80;
+      --grass-side: #22c55e;
+      --dirt: #78350f;
+      --water-light: #60a5fa;
+      --water-deep: #2563eb;
+      --sky-deep: #0369a1;
+      --wood: #b45309;
+      --wood-light: #f59e0b;
+      --leaf: #16a34a;
+      --lime: #a7f36b;
+      --sun: #ffd166;
+      --blue: #2d7ff9;
+      --coral: #ff6464;
+      --shadow: 0 18px 42px rgba(20, 33, 61, 0.14);
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+
+    body {
+      margin: 0;
+      font-family: 'Nunito', system-ui, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 50% -20%, #e0f2fe 0%, #bae6fd 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 22px 14px 64px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 4px solid white;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+
+    /* Üst Bilgi Barı */
+    .bridge-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--sky);
+      position: relative;
+      overflow: hidden;
+      color: white;
+    }
+
+    .bridge-hero::after {
+      content: '☁️';
+      position: absolute;
+      font-size: 8rem;
+      opacity: 0.2;
+      right: 250px;
+      top: -20px;
+    }
+
+    .bridge-hero h1 {
+      margin: 6px 0 0;
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      line-height: 1.05;
+      text-shadow: 3px 3px 0px rgba(0,0,0,0.15);
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.9);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: var(--sky-deep);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .match-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(100px, 1fr));
+      gap: 12px;
+      z-index: 2;
+    }
+
+    .stat {
+      padding: 12px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.25);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.4);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+
+    .stat span {
+      display: block;
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 2px;
+      font-size: 1.6rem;
+      font-weight: 900;
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    .stat.timer strong { color: #fff3ce; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
+
+    /* Ayar Paneli */
+    .setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 20px;
+      padding: 24px;
+      background: #f8fafc;
+    }
+
+    .setup-panel, .rule-panel {
+      border-radius: 24px;
+      background: white;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      border: 2px solid var(--line);
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.4rem;
+      color: var(--ink);
+    }
+
+    .groups-wrapper {
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    .sound-group {
+      margin-bottom: 16px;
+      background: #f1f5f9;
+      padding: 16px;
+      border-radius: 20px;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .sound-group:hover { transform: translateY(-4px); background: #e0f2fe; }
+
+    .sound-group.is-active {
+      background: #eff6ff;
+      border-color: var(--blue);
+      box-shadow: 0 12px 24px rgba(45,127,249,0.2);
+    }
+
+    .sound-group h3 {
+      margin: 0 0 6px 0;
+      font-size: 1.1rem;
+      color: var(--blue);
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    .sound-group p {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 900;
+      color: var(--ink);
+      letter-spacing: 3px;
+    }
+
+    .rule-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+    .rule-list li { padding: 14px; border-radius: 16px; background: #fffbeb; color: #92400e; font-weight: 800; border: 2px dashed #fde68a; }
+
+    /* Alt Kontrol Barı */
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: white;
+      border-top: 2px solid var(--line);
+    }
+
+    .control-btn, .serve-btn {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      padding: 12px 20px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      font-size: 1.1rem;
+    }
+    
+    .control-btn {
+      background: #f1f5f9;
+      color: var(--muted);
+      box-shadow: 0 4px 0 #cbd5e1;
+    }
+    .control-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cbd5e1; }
+    .control-btn.is-active { background: #fef08a; color: #b45309; box-shadow: 0 4px 0 #fcd34d; }
+    
+    .serve-btn {
+      background: #22c55e;
+      color: white;
+      font-size: 1.3rem;
+      padding: 14px 30px;
+      box-shadow: 0 6px 0 #16a34a, 0 15px 20px rgba(34, 197, 94, 0.4);
+    }
+    .serve-btn:active { transform: translateY(6px); box-shadow: 0 0 0 #16a34a; }
+
+    .arena-wrap { padding: 24px; background: #f8fafc; }
+
+    /* ════ ÇİZGİ FİLM NEHİR ARENASI (GERÇEKÇİ DALGALAR) ════ */
+    .river-arena {
+      position: relative;
+      height: 600px;
+      background: var(--water-deep);
+      border-radius: 32px;
+      overflow: hidden;
+      border: 6px solid #e0f2fe;
+      box-shadow: inset 0 20px 50px rgba(0,0,0,0.2), 0 20px 40px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Çok Katmanlı Gerçekçi SVG Su Dalgaları */
+    .water-waves {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    
+    .wave-layer {
+      position: absolute;
+      width: 200%;
+      height: 100%;
+      background-repeat: repeat-x;
+      background-size: 50% 100%;
+    }
+
+    .wave-1 {
+      bottom: -30%;
+      background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1000 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 50 Q 250 0 500 50 T 1000 50 V 100 H 0 Z" fill="rgba(255,255,255,0.15)"/></svg>');
+      animation: moveWave 6s linear infinite;
+      z-index: 1;
+    }
+    
+    .wave-2 {
+      bottom: -40%;
+      background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1000 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 50 Q 250 100 500 50 T 1000 50 V 100 H 0 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+      animation: moveWave 9s linear infinite reverse;
+      z-index: 2;
+    }
+
+    .wave-3 {
+      bottom: -20%;
+      background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1000 100" xmlns="http://www.w3.org/2000/svg"><path d="M0 50 Q 250 20 500 50 T 1000 50 V 100 H 0 Z" fill="rgba(56,189,248,0.2)"/></svg>');
+      animation: moveWave 14s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes moveWave {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* Hedef Kelime Ekranı */
+    .target-word-display {
+      text-align: center;
+      padding: 25px;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+    }
+    .target-word-display h2 {
+      margin: 0;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 4.5rem;
+      color: white;
+      text-shadow: 0 6px 15px rgba(0,0,0,0.4), 0 2px 0 #1e3a8a;
+      letter-spacing: 8px;
+    }
+
+    /* Kıyılar ve Köprü Alanı */
+    .bridge-area {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      height: 160px;
+      padding: 0 40px;
+      position: absolute;
+      top: 150px;
+      left: 0; right: 0;
+      z-index: 10;
+    }
+
+    /* Kıyı Tasarımı (3D Çimenli Toprak) */
+    .bank {
+      width: 120px;
+      height: 60px;
+      background: var(--dirt);
+      border-radius: 20px;
+      position: relative;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.3);
+    }
+    .bank::before {
+      content: '';
+      position: absolute;
+      top: -15px; left: -5px; right: -5px; height: 35px;
+      background: var(--grass-top);
+      border-radius: 20px;
+      border-bottom: 8px solid var(--grass-side);
+    }
+
+    /* ════ GÖKÇE ZIPLAMA WRAPPER ════ */
+    /* Zıplama (X,Y ekseni) için dış div, nefes alma animasyonu için iç görsel */
+    .mascot-gokce-wrapper {
+      position: absolute;
+      bottom: 20px;
+      left: 10px;
+      width: 90px;
+      z-index: 20;
+    }
+
+    .mascot-img {
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 10px 8px rgba(0,0,0,0.4));
+      animation: idleBounce 2s infinite alternate ease-in-out;
+    }
+    
+    @keyframes idleBounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-8px); }
+    }
+
+    /* Köprü Yuvaları ve Kalaslar */
+    .bridge-slots-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      padding-top: 15px;
+    }
+
+    .bridge-slot {
+      width: 90px;
+      height: 40px;
+      border: 4px dashed rgba(255,255,255,0.4);
+      border-radius: 12px;
+      background: rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .bridge-slot.edge-slot {
+      width: 112px;
+      height: 52px;
+      border-radius: 16px;
+    }
+
+    .bridge-slot.filled {
+      border: none;
+      background: repeating-linear-gradient(90deg, var(--wood-light), var(--wood-light) 10px, var(--wood) 10px, var(--wood) 20px);
+      box-shadow: 0 8px 0 #78350f, 0 15px 20px rgba(0,0,0,0.3);
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      text-shadow: 1px 1px 0 #451a03;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    .bridge-slot.edge-slot.filled {
+      font-size: 1.75rem;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0) rotate(-10deg); }
+      70% { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    /* Yüzen Heceler (Nilüfer Yaprakları) */
+    .floating-stones-area {
+      position: absolute;
+      bottom: -6px;
+      left: 20px; right: 20px;
+      height: 220px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 25px;
+      padding-bottom: 12px;
+      z-index: 10;
+    }
+
+    .stone-btn {
+      border: 0;
+      width: 100px;
+      height: 100px;
+      background: var(--leaf);
+      border-radius: 50% 50% 50% 10%;
+      box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2), 0 10px 15px rgba(0,0,0,0.3);
+      font-family: 'Fredoka', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      animation: floatLeaf 4s ease-in-out infinite;
+      transition: transform 0.1s;
+    }
+
+    .stone-btn::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 80%; height: 2px;
+      background: rgba(255,255,255,0.2);
+      transform: translate(-50%, -50%) rotate(-45deg);
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .stone-btn:nth-child(even) { animation-delay: 0.7s; animation-duration: 3.5s; }
+    .stone-btn:nth-child(3n) { animation-delay: 1.2s; animation-duration: 4.5s; }
+
+    @keyframes floatLeaf {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(5deg); }
+    }
+
+    .stone-btn:active { transform: scale(0.9) !important; }
+
+    /* Yanlış Hecenin Batma Animasyonu */
+    .stone-btn.sink {
+      animation: sinkAnim 0.6s forwards;
+      pointer-events: none;
+    }
+
+    .goal-bank {
+      position: relative;
+      overflow: visible;
+    }
+
+    .goal-badge {
+      position: absolute;
+      top: -48px;
+      left: 50%;
+      transform: translateX(-50%);
+      min-width: 92px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #fff3ce, #ffd166);
+      color: #8a4b00;
+      text-align: center;
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 900;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.18);
+      border: 3px solid rgba(255,255,255,0.8);
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.35);
+    }
+
+    .goal-badge.is-earned {
+      animation: rewardBurst 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes rewardBurst {
+      0% { transform: translateX(-50%) scale(0.82); }
+      50% { transform: translateX(-50%) scale(1.18) rotate(-4deg); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+
+    @keyframes sinkAnim {
+      0% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+      40% { transform: scale(1.1) translateY(-10px) rotate(-10deg); opacity: 1; background: var(--coral); }
+      100% { transform: scale(0.4) translateY(80px) rotate(20deg); opacity: 0; }
+    }
+
+    /* Oyun Sonu & Liderlik Paneli */
+    .overlay-panel {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 35px;
+      border-radius: 32px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+      text-align: center;
+      z-index: 100;
+      width: 90%;
+      max-width: 450px;
+      border: 6px solid var(--lime);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .overlay-panel h2 {
+      margin: 0 0 20px;
+      font-family: 'Fredoka', sans-serif;
+      color: var(--blue);
+      font-size: 2.8rem;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+
+    .overlay-panel input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: 3px solid var(--line);
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
+      text-align: center;
+      color: var(--ink);
+    }
+    .overlay-panel input:focus { outline: none; border-color: var(--blue); background: #f0f9ff; }
+    
+    .scoreboard-list {
+      margin-top: 15px;
+      max-height: 180px;
+      overflow-y: auto;
+      text-align: left;
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 12px;
+      border: 2px solid var(--line);
+    }
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 2px dashed var(--line);
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--ink);
+    }
+    .score-item:last-child { border-bottom: none; }
+
+    .hidden { display: none !important; }
+
+    /* Custom Scrollbar */
+    .groups-wrapper::-webkit-scrollbar, .scoreboard-list::-webkit-scrollbar { width: 8px; }
+    .groups-wrapper::-webkit-scrollbar-track, .scoreboard-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+    .groups-wrapper::-webkit-scrollbar-thumb, .scoreboard-list::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+
+    @media (max-width: 800px) {
+      .setup { grid-template-columns: 1fr; }
+      .target-word-display h2 { font-size: 3rem; }
+      .stone-btn { width: 80px; height: 80px; font-size: 1.8rem; }
+      .bridge-slot { width: 65px; height: 35px; font-size: 1.4rem; }
+      .bridge-slot.edge-slot { width: 82px; height: 42px; }
+      .mascot-gokce-wrapper { width: 70px; }
+      .bank { width: 80px; }
+      .goal-badge { top: -42px; min-width: 78px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="game-shell">
+      <header class="bridge-hero">
+        <div>
+          <span class="kicker">Türkçe • Okuma Yazma</span>
+          <h1>Gökçe'nin Hece Köprüsü</h1>
+        </div>
+        <div class="match-stats">
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+          <div class="stat"><span>Can</span><strong id="livesText">❤❤❤</strong></div>
+          <div class="stat timer"><span>Süre</span><strong id="timerText">60 sn</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Hangi Ses Grubundayız?</h2>
+          <div class="groups-wrapper" id="groupChoices">
+            <div class="sound-group is-active" data-group="1">
+              <h3>1. Ses Grubu</h3>
+              <p>A, N, E, T, İ, L</p>
+            </div>
+            <div class="sound-group" data-group="2">
+              <h3>2. Ses Grubu</h3>
+              <p>O, K, U, R, I, M</p>
+            </div>
+            <div class="sound-group" data-group="3">
+              <h3>3. Ses Grubu</h3>
+              <p>Ü, S, Ö, Y, D, Z</p>
+            </div>
+            <div class="sound-group" data-group="4">
+              <h3>4. Ses Grubu</h3>
+              <p>Ç, B, G, C, Ş</p>
+            </div>
+            <div class="sound-group" data-group="5">
+              <h3>5. Ses Grubu</h3>
+              <p>P, H, V, Ğ, F, J</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="rule-panel">
+          <h2 class="section-title">Nasıl Oynanır?</h2>
+          <ul class="rule-list">
+            <li>Gökçe'yi karşıya geçirmek için <strong>1 dakika (60 saniye)</strong> süren var.</li>
+            <li>Yukarıdaki kelimeyi oluşturmak için yüzen yapraklardaki hecelere <strong>sırasıyla</strong> tıkla.</li>
+            <li><strong>Dikkat et!</strong> Nehirde <em>Tuzak Heceler</em> de yüzüyor. Yanlış yaprağa basarsan yaprak batar!</li>
+            <li>Köprüyü tamamladığında Gökçe kalaslara basarak karşıya zıplar ve sana bonus puanlar toplar.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+        <button class="serve-btn" type="button" id="startBtn">Maceraya Başla 🚀</button>
+      </nav>
+
+      <section class="arena-wrap">
+        <div class="river-arena" id="gameArea">
+          <div class="water-waves">
+            <div class="wave-layer wave-3"></div>
+            <div class="wave-layer wave-2"></div>
+            <div class="wave-layer wave-1"></div>
+          </div>
+
+          <div class="target-word-display">
+            <h2 id="targetWordText">GÖKÇE</h2>
+          </div>
+
+          <div class="bridge-area" id="bridgeArea">
+            <div class="bank" id="leftBank">
+              <div class="mascot-gokce-wrapper" id="gokce">
+                <img src="../gorseller/gokce.png" class="mascot-img" alt="Gökçe">
+              </div>
+            </div>
+            
+            <div class="bridge-slots-container" id="bridgeSlotsContainer"></div>
+
+            <div class="bank goal-bank" id="rightBank">
+              <div class="goal-badge" id="goalBadge">+10</div>
+            </div>
+          </div>
+
+          <div class="floating-stones-area" id="stonesArea">
+            </div>
+
+          <div class="overlay-panel hidden" id="gameOverPanel">
+            <h2>Süre Bitti! ⏰</h2>
+            <div style="font-weight: 900; font-size: 2rem; color: var(--blue); margin-bottom: 20px;">
+              Toplam Puan: <span id="finalScore" style="color: var(--coral);">0</span>
+            </div>
+            <input type="text" id="playerName" placeholder="Adını yaz şampiyon..." maxlength="15" autocomplete="off">
+            <button class="serve-btn" style="width: 100%; padding: 16px; margin-bottom: 10px;" id="saveScoreBtn">Skoru Kaydet 🏆</button>
+            <div class="scoreboard-list" id="mainScoreboard"></div>
+            <button class="control-btn" style="width: 100%; margin-top: 15px;" id="restartMenuBtn">Ana Menüye Dön</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    // MEB Müfredatına uygun kelime ve hece sözlüğü
+    const wordDictionary = {
+      1: [
+        { word: "AİLE", parts: ["A", "İ", "LE"] }, { word: "ANNE", parts: ["AN", "NE"] },
+        { word: "NİNE", parts: ["Nİ", "NE"] }, { word: "LALE", parts: ["LA", "LE"] },
+        { word: "ATLET", parts: ["AT", "LET"] }, { word: "ANTEN", parts: ["AN", "TEN"] },
+        { word: "İLAN", parts: ["İ", "LAN"] }, { word: "ALET", parts: ["A", "LET"] },
+        { word: "TENTEN", parts: ["TEN", "TEN"] }, { word: "NALAN", parts: ["NA", "LAN"] }
+      ],
+      2: [
+        { word: "OKUL", parts: ["O", "KUL"] }, { word: "ORMAN", parts: ["OR", "MAN"] },
+        { word: "LİMON", parts: ["Lİ", "MON"] }, { word: "ELMA", parts: ["EL", "MA"] },
+        { word: "ARMUT", parts: ["AR", "MUT"] }, { word: "MAKİNE", parts: ["MA", "Kİ", "NE"] },
+        { word: "RAKAM", parts: ["RA", "KAM"] }, { word: "KORU", parts: ["KO", "RU"] },
+        { word: "LOKUM", parts: ["LO", "KUM"] }, { word: "MOTOR", parts: ["MO", "TOR"] }
+      ],
+      3: [
+        { word: "YILDIZ", parts: ["YIL", "DIZ"] }, { word: "DÜDÜK", parts: ["DÜ", "DÜK"] },
+        { word: "AYNA", parts: ["AY", "NA"] }, { word: "SÖZLÜK", parts: ["SÖZ", "LÜK"] },
+        { word: "ÖZLEM", parts: ["ÖZ", "LEM"] }, { word: "YÜZÜK", parts: ["YÜ", "ZÜK"] },
+        { word: "DENİZ", parts: ["DE", "NİZ"] }, { word: "MÜZİK", parts: ["MÜ", "ZİK"] },
+        { word: "OYUN", parts: ["O", "YUN"] }, { word: "KÖY", parts: ["KÖY"] } 
+      ],
+      4: [
+        { word: "ÇİÇEK", parts: ["Çİ", "ÇEK"] }, { word: "ÇANTA", parts: ["ÇAN", "TA"] },
+        { word: "BABA", parts: ["BA", "BA"] }, { word: "GÜNEŞ", parts: ["GÜ", "NEŞ"] },
+        { word: "ŞEMSİYE", parts: ["ŞEM", "Sİ", "YE"] }, { word: "GECE", parts: ["GE", "CE"] },
+        { word: "ÇOCUK", parts: ["ÇO", "CUK"] }, { word: "BARDAK", parts: ["BAR", "DAK"] },
+        { word: "BALIK", parts: ["BA", "LIK"] }, { word: "CÜCE", parts: ["CÜ", "CE"] }
+      ],
+      5: [
+        { word: "KÖPEK", parts: ["KÖ", "PEK"] }, { word: "HAVUÇ", parts: ["HA", "VUÇ"] },
+        { word: "VAZO", parts: ["VA", "ZO"] }, { word: "FARE", parts: ["FA", "RE"] },
+        { word: "JÖLE", parts: ["JÖ", "LE"] }, { word: "PİLOT", parts: ["Pİ", "LOT"] },
+        { word: "AĞAÇ", parts: ["A", "ĞAÇ"] }, { word: "PARA", parts: ["PA", "RA"] },
+        { word: "HAFTA", parts: ["HAF", "TA"] }, { word: "FİDAN", parts: ["Fİ", "DAN"] }
+      ]
+    };
+
+    const state = {
+      activeGroup: 1,
+      score: 0,
+      timeLeft: 60,
+      running: false,
+      timerIntervalId: null,
+      soundOn: true,
+      currentWordObj: null,
+      expectedPartIndex: 0,
+      lives: 3,
+      animating: false,
+      crossingReward: 10
+    };
+
+    const els = {
+      setupScreen: document.getElementById('setupScreen'),
+      groupChoices: document.querySelectorAll('.sound-group'),
+      targetWordText: document.getElementById('targetWordText'),
+      scoreText: document.getElementById('scoreText'),
+      livesText: document.getElementById('livesText'),
+      timerText: document.getElementById('timerText'),
+      soundToggle: document.getElementById('soundToggle'),
+      setupToggle: document.getElementById('setupToggle'),
+      startBtn: document.getElementById('startBtn'),
+      bridgeSlotsContainer: document.getElementById('bridgeSlotsContainer'),
+      gokce: document.getElementById('gokce'),
+      leftBank: document.getElementById('leftBank'),
+      rightBank: document.getElementById('rightBank'),
+      stonesArea: document.getElementById('stonesArea'),
+      gameOverPanel: document.getElementById('gameOverPanel'),
+      finalScore: document.getElementById('finalScore'),
+      playerName: document.getElementById('playerName'),
+      saveScoreBtn: document.getElementById('saveScoreBtn'),
+      mainScoreboard: document.getElementById('mainScoreboard'),
+      restartMenuBtn: document.getElementById('restartMenuBtn'),
+      goalBadge: document.getElementById('goalBadge')
+    };
+
+    // --- Ses Altyapısı ---
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, type, duration, vol) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + duration);
+    }
+
+    function playSound(type) {
+      if (type === 'plop') {
+        playTone(600, 'sine', 0.1, 0.1); 
+        setTimeout(() => playTone(800, 'sine', 0.1, 0.1), 100);
+      } else if (type === 'jump') { // Gökçe'nin zıplama sesi
+        playTone(400, 'sine', 0.1, 0.1);
+        setTimeout(() => playTone(600, 'sine', 0.1, 0.1), 50);
+      } else if (type === 'success') {
+        playTone(523.25, 'sine', 0.1, 0.1); 
+        setTimeout(() => playTone(659.25, 'sine', 0.15, 0.1), 100);
+        setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 250);
+      } else if (type === 'wrong') {
+        playTone(200, 'sawtooth', 0.3, 0.1);
+        setTimeout(() => playTone(150, 'sawtooth', 0.3, 0.1), 150);
+      } else if (type === 'tick') {
+        playTone(800, 'sine', 0.05, 0.02);
+      } else if (type === 'over') {
+        playTone(300, 'triangle', 0.3, 0.1);
+        setTimeout(() => playTone(250, 'triangle', 0.3, 0.1), 300);
+      }
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function updateUI() {
+      els.scoreText.textContent = state.score;
+      els.livesText.textContent = '❤'.repeat(Math.max(state.lives, 0)) || '—';
+      els.timerText.textContent = state.timeLeft + ' sn';
+      if (state.timeLeft <= 10) els.timerText.parentElement.style.color = '#ff4757';
+      else els.timerText.parentElement.style.color = '';
+    }
+
+    function resetGokcePosition() {
+      els.gokce.getAnimations().forEach(anim => anim.cancel());
+      els.gokce.style.opacity = '1';
+      els.gokce.style.transform = 'translate(0px, 0px)';
+    }
+
+    function pulseGoalBadge() {
+      els.goalBadge.classList.remove('is-earned');
+      void els.goalBadge.offsetWidth;
+      els.goalBadge.classList.add('is-earned');
+      setTimeout(() => els.goalBadge.classList.remove('is-earned'), 600);
+    }
+
+    function loadNextWord() {
+      if (!state.running) return;
+      
+      const words = wordDictionary[state.activeGroup];
+      state.currentWordObj = words[Math.floor(Math.random() * words.length)];
+      state.expectedPartIndex = 0;
+      state.animating = false;
+      
+      els.targetWordText.textContent = state.currentWordObj.word;
+      
+      // Ekranı temizle
+      els.bridgeSlotsContainer.innerHTML = '';
+      els.stonesArea.innerHTML = '';
+      
+      // Gökçe'yi anında başlangıç noktasına ışınla
+      resetGokcePosition();
+      els.goalBadge.textContent = '+' + state.crossingReward;
+
+      // Yeni köprü slotlarını oluştur
+      state.currentWordObj.parts.forEach((_, index) => {
+        const slot = document.createElement('div');
+        slot.className = 'bridge-slot';
+        if (index === 0 || index === state.currentWordObj.parts.length - 1) {
+          slot.classList.add('edge-slot');
+        }
+        els.bridgeSlotsContainer.appendChild(slot);
+      });
+
+      // Tuzak Heceler
+      const allSyllablesInGroup = words.flatMap(w => w.parts);
+      let traps = [];
+      while(traps.length < 2) {
+        let randomSyllable = allSyllablesInGroup[Math.floor(Math.random() * allSyllablesInGroup.length)];
+        if(!state.currentWordObj.parts.includes(randomSyllable) && !traps.includes(randomSyllable)) {
+          traps.push(randomSyllable);
+        }
+      }
+
+      const combinedParts = [...state.currentWordObj.parts, ...traps];
+      const shuffledParts = shuffleArray(combinedParts);
+      
+      shuffledParts.forEach(part => {
+        const stone = document.createElement('button');
+        stone.className = 'stone-btn';
+        stone.textContent = part;
+        stone.addEventListener('click', () => handleStoneClick(stone, part));
+        els.stonesArea.appendChild(stone);
+      });
+    }
+
+    function handleStoneClick(stoneBtn, part) {
+      if (!state.running || state.animating || stoneBtn.classList.contains('sink')) return;
+
+      const expectedPart = state.currentWordObj.parts[state.expectedPartIndex];
+
+      if (part === expectedPart) {
+        playSound('plop');
+        
+        const slots = document.querySelectorAll('.bridge-slot');
+        const targetSlot = slots[state.expectedPartIndex];
+        
+        targetSlot.classList.add('filled');
+        targetSlot.textContent = part;
+        
+        stoneBtn.remove();
+        
+        state.expectedPartIndex++;
+
+        if (state.expectedPartIndex === state.currentWordObj.parts.length) {
+          wordCompleted();
+        }
+      } else {
+        handleWrongChoice(stoneBtn);
+      }
+    }
+
+    function handleWrongChoice(stoneBtn) {
+      state.animating = true;
+      playSound('wrong');
+      stoneBtn.classList.add('sink');
+      setTimeout(() => { if (stoneBtn.parentNode) stoneBtn.remove(); }, 600);
+
+      const baseOffset = els.leftBank.getBoundingClientRect().left;
+      const stoneRect = stoneBtn.getBoundingClientRect();
+      const targetX = stoneRect.left - baseOffset + (stoneRect.width / 2) - (els.gokce.offsetWidth / 2);
+
+      const jumpAnim = els.gokce.animate([
+        { transform: 'translate(0px, 0px)', opacity: 1 },
+        { transform: `translate(${targetX / 2}px, -72px)`, opacity: 1 },
+        { transform: `translate(${targetX}px, 42px)`, opacity: 1 }
+      ], { duration: 420, easing: 'ease-out', fill: 'forwards' });
+
+      jumpAnim.onfinish = () => {
+        playSound('jump');
+        const fallAnim = els.gokce.animate([
+          { transform: `translate(${targetX}px, 42px)`, opacity: 1 },
+          { transform: `translate(${targetX}px, 170px) rotate(10deg)`, opacity: 0.9 },
+          { transform: `translate(${targetX}px, 290px) rotate(22deg)`, opacity: 0 }
+        ], { duration: 420, easing: 'ease-in', fill: 'forwards' });
+
+        fallAnim.onfinish = () => {
+          loseLifeAndContinue();
+        };
+      };
+    }
+
+    function loseLifeAndContinue() {
+      if (!state.running) {
+        resetGokcePosition();
+        return;
+      }
+      state.lives = Math.max(0, state.lives - 1);
+      updateUI();
+      resetGokcePosition();
+      if (state.lives <= 0) {
+        endGame();
+        return;
+      }
+      setTimeout(() => {
+        if (state.running) loadNextWord();
+      }, 250);
+    }
+
+    // --- Gökçe'nin Zıplama Animasyonu ---
+    function wordCompleted() {
+      state.animating = true;
+      // Önce kalan tuzak yaprakları batır (temiz ekran)
+      document.querySelectorAll('.stone-btn').forEach(b => b.classList.add('sink'));
+
+      const slots = document.querySelectorAll('.bridge-slot');
+      const baseOffset = els.leftBank.getBoundingClientRect().left;
+      const targets = [];
+      
+      // Her bir slotun merkezine göre zıplama koordinatlarını hesapla
+      slots.forEach(slot => {
+        const rect = slot.getBoundingClientRect();
+        targets.push(rect.left - baseOffset - 10); // X ekseni düzeltmesi
+      });
+      // Son olarak karşı kıyıya zıpla
+      targets.push(els.rightBank.getBoundingClientRect().left - baseOffset + 10);
+
+      let currentX = 0;
+      let step = 0;
+
+      // Adım adım zıplama fonksiyonu
+      function nextJump() {
+        if (!state.running) return;
+        
+        if (step >= targets.length) {
+          playSound('success');
+          state.score += state.crossingReward;
+          updateUI();
+          pulseGoalBadge();
+          setTimeout(() => { if(state.running) loadNextWord(); }, 700);
+          return;
+        }
+
+        const targetX = targets[step];
+        // Web Animations API ile kavisli zıplama
+        const jumpAnim = els.gokce.animate([
+          { transform: `translate(${currentX}px, 0px)` },
+          { transform: `translate(${(currentX + targetX)/2}px, -80px)` }, // Havada tepe noktası
+          { transform: `translate(${targetX}px, -5px)` }
+        ], { duration: 300, easing: 'linear' });
+
+        jumpAnim.onfinish = () => {
+          els.gokce.style.transform = `translate(${targetX}px, -5px)`;
+          currentX = targetX;
+          playSound('jump');
+
+          step++;
+          setTimeout(nextJump, 50); // Bir sonraki zıplama öncesi minik bekleme
+        };
+      }
+      
+      // Zıplamayı başlat
+      nextJump();
+    }
+
+    function startGame() {
+      if(getAudioContext()) getAudioContext().resume();
+      els.setupScreen.classList.add('hidden');
+      els.gameOverPanel.classList.add('hidden');
+      
+      state.score = 0;
+      state.timeLeft = 60;
+      state.lives = 3;
+      state.running = true;
+      state.animating = false;
+      
+      els.startBtn.textContent = 'Macerayı Yeniden Başlat';
+      els.timerText.parentElement.style.color = '';
+      
+      els.playerName.style.display = 'block';
+      els.saveScoreBtn.style.display = 'block';
+      
+      updateUI();
+      loadNextWord();
+      
+      if(state.timerIntervalId) clearInterval(state.timerIntervalId);
+      
+      state.timerIntervalId = setInterval(() => {
+        if(!state.running) return;
+        state.timeLeft--;
+        
+        if(state.timeLeft <= 10 && state.timeLeft > 0) playSound('tick');
+        
+        updateUI();
+        
+        if (state.timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      state.running = false;
+      state.animating = false;
+      clearInterval(state.timerIntervalId);
+      playSound('over');
+      
+      document.querySelectorAll('.stone-btn').forEach(b => b.classList.add('sink'));
+      // Devam eden zıplamaları iptal etmek için WAAPI animasyonlarını temizle
+      resetGokcePosition();
+
+      setTimeout(() => {
+        els.gameOverPanel.classList.remove('hidden');
+        els.finalScore.textContent = state.score;
+        els.playerName.value = '';
+        els.playerName.focus();
+        loadScoreboard(); 
+      }, 800);
+    }
+
+    // --- Liderlik Tablosu ---
+    function loadScoreboard() {
+      const scores = JSON.parse(localStorage.getItem('kemal-kopru-scores') || '[]');
+      els.mainScoreboard.innerHTML = '';
+      
+      if (scores.length === 0) {
+        els.mainScoreboard.innerHTML += '<p style="color:var(--muted); font-size:1rem; text-align:center;">Henüz rekor kıran yok. İlk sen ol!</p>';
+        return;
+      }
+
+      scores.sort((a, b) => b.score - a.score).slice(0, 5).forEach((item, index) => {
+        const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+        const div = document.createElement('div');
+        div.className = 'score-item';
+        div.innerHTML = `<span>${medals[index]} ${item.name}</span> <span style="color:var(--lime); text-shadow:1px 1px 0 rgba(0,0,0,0.3);">${item.score} P</span>`;
+        els.mainScoreboard.appendChild(div);
+      });
+    }
+
+    function saveScore() {
+      const name = els.playerName.value.trim() || 'Öğrenci';
+      const scores = JSON.parse(localStorage.getItem('kemal-kopru-scores') || '[]');
+      
+      scores.push({ name: name, score: state.score });
+      localStorage.setItem('kemal-kopru-scores', JSON.stringify(scores));
+
+      els.playerName.style.display = 'none';
+      els.saveScoreBtn.style.display = 'none';
+      loadScoreboard(); 
+    }
+
+    // --- Event Listeners ---
+    els.groupChoices.forEach(group => {
+      group.addEventListener('click', () => {
+        els.groupChoices.forEach(g => g.classList.remove('is-active'));
+        group.classList.add('is-active');
+        state.activeGroup = parseInt(group.dataset.group);
+      });
+    });
+
+    els.soundToggle.addEventListener('click', () => {
+      state.soundOn = !state.soundOn;
+      els.soundToggle.classList.toggle('is-active', state.soundOn);
+      els.soundToggle.textContent = state.soundOn ? 'Ses Açık' : 'Ses Kapalı';
+      if(state.soundOn && getAudioContext()) getAudioContext().resume();
+    });
+
+    els.setupToggle.addEventListener('click', () => els.setupScreen.classList.toggle('hidden'));
+    els.startBtn.addEventListener('click', startGame);
+    els.saveScoreBtn.addEventListener('click', saveScore);
+    
+    els.restartMenuBtn.addEventListener('click', () => {
+      els.gameOverPanel.classList.add('hidden');
+      els.setupScreen.classList.remove('hidden');
+      els.bridgeSlotsContainer.innerHTML = '';
+      els.stonesArea.innerHTML = '';
+      els.startBtn.textContent = 'Maceraya Başla 🚀';
+      els.targetWordText.textContent = "GÖKÇE";
+      state.lives = 3;
+      state.animating = false;
+      updateUI();
+      resetGokcePosition();
+    });
+
+  </script>
+</body>
+</html>

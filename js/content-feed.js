@@ -434,6 +434,8 @@
     var labels = {
       'tümü': 'Oyunlar',
       matematik: 'Matematik',
+      'okuma-yazma': 'Okuma-Yazma',
+      'okuma yazma': 'Okuma-Yazma',
       'türkçe': 'Türkçe',
       turkce: 'Türkçe',
       fen: 'Fen',

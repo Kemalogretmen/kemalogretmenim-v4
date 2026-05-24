@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎈 Sesli Balonlar — Kemal Öğretmenim</title>
+  <meta name="description" content="1. sınıf okuma yazma süreci için harf ve ses tanıma becerilerini destekleyen 1 dakikalık balon oyunu.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/sesli-balonlar.html">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --balloon-ink: #14213d;
+      --balloon-muted: #64748b;
+      --balloon-line: #d8e3f2;
+      --balloon-sky: #87ceeb;
+      --balloon-sky-deep: #4ea8de;
+      --balloon-lime: #a7f36b;
+      --balloon-sun: #ffd166;
+      --balloon-blue: #2d7ff9;
+      --balloon-shadow: 0 18px 42px rgba(20, 33, 61, 0.14);
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--balloon-ink);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(255, 209, 102, 0.26), transparent 26%),
+        radial-gradient(circle at 90% 14%, rgba(45, 127, 249, 0.18), transparent 28%),
+        linear-gradient(180deg, #fbfff7 0%, #eef7ff 55%, #f8fbff 100%);
+      min-height: 100vh;
+    }
+
+    .balloon-page {
+      width: min(1240px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 10px 0 48px;
+    }
+
+    .game-shell {
+      overflow: hidden;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(45, 127, 249, 0.14);
+      box-shadow: var(--balloon-shadow);
+    }
+
+    .balloon-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 18px;
+      background:
+        linear-gradient(135deg, var(--balloon-sky-deep), var(--balloon-sky)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0 10px, transparent 10px 20px);
+      color: white;
+    }
+
+    .kicker {
+      display: inline-flex;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      font-size: 0.72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #0b3954;
+    }
+
+    .balloon-hero h1 {
+      margin: 4px 0 0;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: clamp(1.65rem, 2.6vw, 2.2rem);
+      line-height: 1.05;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+
+    .balloon-hero p {
+      margin: 6px 0 0;
+      max-width: 600px;
+      color: rgba(255,255,255,0.92);
+      font-size: 0.95rem;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .match-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(82px, 1fr));
+      gap: 8px;
+      min-width: 280px;
+    }
+
+    .stat {
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+
+    .stat span {
+      display: block;
+      color: rgba(255,255,255,0.9);
+      font-size: 0.74rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 3px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.25rem;
+      font-weight: 900;
+    }
+
+    .stat.timer strong {
+      color: #ffea00;
+      font-size: 1.2rem;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 16px;
+      padding: 16px 18px;
+    }
+
+    .setup-panel,
+    .rule-panel {
+      border: 1px solid var(--balloon-line);
+      border-radius: 24px;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 12px 28px rgba(20, 33, 61, 0.05);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.25rem;
+      color: var(--balloon-ink);
+    }
+
+    .groups-wrapper {
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+    .groups-wrapper::-webkit-scrollbar { width: 6px; }
+    .groups-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .groups-wrapper::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    .sound-group {
+      margin-bottom: 20px;
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 18px;
+      border: 1px dashed var(--balloon-line);
+    }
+
+    .sound-group h3 {
+      margin: 0 0 10px;
+      font-size: 1.1rem;
+      color: var(--balloon-muted);
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+    }
+
+    .choice-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      gap: 8px;
+    }
+
+    .choice-btn {
+      border: 2px solid var(--balloon-line);
+      border-radius: 14px;
+      background: #ffffff;
+      color: var(--balloon-ink);
+      cursor: pointer;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 1.6rem;
+      font-weight: 900;
+      padding: 10px 5px;
+      text-align: center;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .choice-btn span {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--balloon-muted);
+      margin-top: 2px;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      font-weight: 800;
+    }
+
+    .choice-btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .choice-btn.is-active {
+      background: #eef4ff;
+      border-color: var(--balloon-blue);
+      color: var(--balloon-blue);
+      box-shadow: 0 10px 20px rgba(45,127,249,0.15);
+    }
+
+    .rule-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule-list li {
+      padding: 12px 13px;
+      border-radius: 16px;
+      background: #f6f9ff;
+      color: #4a5b74;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: #f7fbff;
+      border-top: 1px solid var(--balloon-line);
+      border-bottom: 1px solid var(--balloon-line);
+    }
+
+    .control-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .control-btn,
+    .serve-btn {
+      font-family: inherit;
+      font-weight: 900;
+      padding: 10px 16px;
+      border-radius: 14px;
+      border: 2px solid var(--balloon-line);
+      background: white;
+      color: var(--balloon-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-btn.is-active { background: #fff3ce; border-color: rgba(255, 209, 102, 0.8); color: #79530c; }
+
+    .serve-btn {
+      background: var(--balloon-lime);
+      border-color: #8be66b;
+      color: #1a420b;
+      font-size: 1.1rem;
+      box-shadow: 0 10px 20px rgba(167, 243, 107, 0.3);
+    }
+
+    .serve-btn:hover { transform: translateY(-2px); }
+
+    .arena-wrap { padding: 14px 18px 20px; }
+
+    .sky-arena {
+      position: relative;
+      min-height: clamp(360px, 54vh, 470px);
+      background: linear-gradient(180deg, #60a5fa 0%, #bfdbfe 100%);
+      border-radius: 28px;
+      overflow: hidden;
+      border: 4px solid #eff6ff;
+      box-shadow: inset 0 20px 50px rgba(0,0,0,0.05);
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .sky-arena * {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .cloud {
+      position: absolute;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50px;
+      animation: drift linear infinite;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.25);
+      border-radius: 50%;
+    }
+
+    .c1 { width: 140px; height: 45px; top: 15%; left: -200px; animation-duration: 90s; }
+    .c1::before { width: 60px; height: 60px; top: -25px; left: 15px; }
+    .c1::after { width: 70px; height: 70px; top: -35px; right: 20px; }
+    .c2 { width: 180px; height: 55px; top: 45%; left: -250px; animation-duration: 120s; animation-delay: 5s; transform: scale(0.8); }
+    .c2::before { width: 70px; height: 70px; top: -35px; left: 20px; }
+    .c2::after { width: 90px; height: 90px; top: -45px; right: 25px; }
+    .c3 { width: 120px; height: 40px; top: 70%; left: -150px; animation-duration: 70s; animation-delay: 15s; transform: scale(0.6); opacity: 0.7; }
+    .c3::before { width: 50px; height: 50px; top: -20px; left: 15px; }
+    .c3::after { width: 60px; height: 60px; top: -30px; right: 15px; }
+
+    @keyframes drift {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(110vw); }
+    }
+
+    .balloon {
+      position: absolute;
+      bottom: -150px;
+      width: 80px;
+      height: 100px;
+      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      font-size: 3rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+      box-shadow: inset -10px -10px 20px rgba(0,0,0,0.1), inset 10px 10px 20px rgba(255,255,255,0.4);
+      animation: floatUp linear forwards;
+      z-index: 10;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .balloon::after {
+      content: '';
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 30px;
+      background: rgba(255,255,255,0.6);
+    }
+
+    .balloon::before {
+      content: '▲';
+      position: absolute;
+      bottom: -10px;
+      font-size: 10px;
+      color: inherit;
+      filter: brightness(0.8);
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-350px) rotate(4deg); }
+      100% { transform: translateY(-700px) rotate(-4deg); }
+    }
+
+    .pop-anim { animation: popOut 0.2s forwards; }
+
+    @keyframes popOut {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.8; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    .overlay-panel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 30px;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      z-index: 100;
+      width: 90%;
+      max-width: 420px;
+      border: 4px solid var(--balloon-line);
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .overlay-panel h2 {
+      margin: 0 0 15px;
+      font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
+      color: var(--balloon-blue);
+      font-size: 2.2rem;
+    }
+
+    .score-breakdown {
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid var(--balloon-line);
+    }
+
+    .overlay-panel input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid var(--balloon-line);
+      font-family: inherit;
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .overlay-panel input:focus { outline: none; border-color: var(--balloon-blue); }
+
+    .scoreboard-list {
+      margin-top: 15px;
+      max-height: 160px;
+      overflow-y: auto;
+      text-align: left;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px dashed var(--balloon-line);
+      font-weight: 800;
+      color: var(--balloon-ink);
+      gap: 10px;
+    }
+
+    .score-item:last-child { border-bottom: none; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .balloon-hero,
+      .setup { grid-template-columns: 1fr; }
+      .match-stats { min-width: 0; }
+      .balloon-hero p { max-width: none; }
+    }
+
+    @media (max-width: 620px) {
+      .balloon-page { width: min(100% - 14px, 1240px); }
+      .balloon-hero {
+        padding: 12px 14px;
+        gap: 10px;
+      }
+      .balloon-hero p {
+        font-size: 0.9rem;
+      }
+      .match-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .arena-wrap,
+      .control-row,
+      .setup { padding: 16px; }
+      .sky-arena {
+        min-height: 320px;
+      }
+    }
+
+    @media (pointer: coarse) {
+      .balloon {
+        width: 92px;
+        height: 116px;
+        font-size: 3.15rem;
+      }
+
+      .choice-btn,
+      .control-btn,
+      .serve-btn {
+        min-height: 52px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="balloon-page">
+    <section class="game-shell">
+      <header class="balloon-hero">
+        <div>
+          <span class="kicker">Türkçe • Okuma-Yazma</span>
+          <h1>Sesli Balonlar</h1>
+          <p>Seçtiğin sesi taşıyan balonları yakala, yanlışlara dikkat et ve 60 saniyede en yüksek puanı topla.</p>
+        </div>
+        <div class="match-stats">
+          <div class="stat"><span>Hedef</span><strong id="targetText">-</strong></div>
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+          <div class="stat timer"><span>Süre</span><strong id="timerText">60 sn</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Çalışılacak Sesi Seç</h2>
+          <div class="groups-wrapper">
+            <div class="sound-group">
+              <h3>1. Ses Grubu</h3>
+              <div class="choice-row">
+                <button class="choice-btn is-active" type="button" data-letter="A">A <span>a</span></button>
+                <button class="choice-btn" type="button" data-letter="N">N <span>n</span></button>
+                <button class="choice-btn" type="button" data-letter="E">E <span>e</span></button>
+                <button class="choice-btn" type="button" data-letter="T">T <span>t</span></button>
+                <button class="choice-btn" type="button" data-letter="İ">İ <span>i</span></button>
+                <button class="choice-btn" type="button" data-letter="L">L <span>l</span></button>
+              </div>
+            </div>
+            <div class="sound-group">
+              <h3>2. Ses Grubu</h3>
+              <div class="choice-row">
+                <button class="choice-btn" type="button" data-letter="O">O <span>o</span></button>
+                <button class="choice-btn" type="button" data-letter="K">K <span>k</span></button>
+                <button class="choice-btn" type="button" data-letter="U">U <span>u</span></button>
+                <button class="choice-btn" type="button" data-letter="R">R <span>r</span></button>
+                <button class="choice-btn" type="button" data-letter="I">I <span>ı</span></button>
+                <button class="choice-btn" type="button" data-letter="M">M <span>m</span></button>
+              </div>
+            </div>
+            <div class="sound-group">
+              <h3>3. Ses Grubu</h3>
+              <div class="choice-row">
+                <button class="choice-btn" type="button" data-letter="Ü">Ü <span>ü</span></button>
+                <button class="choice-btn" type="button" data-letter="S">S <span>s</span></button>
+                <button class="choice-btn" type="button" data-letter="Ö">Ö <span>ö</span></button>
+                <button class="choice-btn" type="button" data-letter="Y">Y <span>y</span></button>
+                <button class="choice-btn" type="button" data-letter="D">D <span>d</span></button>
+                <button class="choice-btn" type="button" data-letter="Z">Z <span>z</span></button>
+              </div>
+            </div>
+            <div class="sound-group">
+              <h3>4. Ses Grubu</h3>
+              <div class="choice-row">
+                <button class="choice-btn" type="button" data-letter="Ç">Ç <span>ç</span></button>
+                <button class="choice-btn" type="button" data-letter="B">B <span>b</span></button>
+                <button class="choice-btn" type="button" data-letter="G">G <span>g</span></button>
+                <button class="choice-btn" type="button" data-letter="C">C <span>c</span></button>
+                <button class="choice-btn" type="button" data-letter="Ş">Ş <span>ş</span></button>
+              </div>
+            </div>
+            <div class="sound-group">
+              <h3>5. Ses Grubu</h3>
+              <div class="choice-row">
+                <button class="choice-btn" type="button" data-letter="P">P <span>p</span></button>
+                <button class="choice-btn" type="button" data-letter="H">H <span>h</span></button>
+                <button class="choice-btn" type="button" data-letter="V">V <span>v</span></button>
+                <button class="choice-btn" type="button" data-letter="Ğ">Ğ <span>ğ</span></button>
+                <button class="choice-btn" type="button" data-letter="F">F <span>f</span></button>
+                <button class="choice-btn" type="button" data-letter="J">J <span>j</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="rule-panel">
+          <h2 class="section-title">Nasıl Oynanır?</h2>
+          <ul class="rule-list">
+            <li>Tam <strong>1 dakika</strong> süren var.</li>
+            <li>Seçtiğin sesi taşıyan doğru balonları patlat. Her doğru balon <strong>10 puan</strong> kazandırır.</li>
+            <li>Süre bitene kadar en yüksek skoru yapıp tabloya girmeye çalış.</li>
+          </ul>
+        </aside>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+        <button class="serve-btn" type="button" id="startBtn">Oyunu Başlat (60 sn)</button>
+      </nav>
+
+      <section class="arena-wrap">
+        <div class="sky-arena" id="gameArea">
+          <div class="cloud c1"></div>
+          <div class="cloud c2"></div>
+          <div class="cloud c3"></div>
+
+          <div class="overlay-panel hidden" id="gameOverPanel">
+            <h2>Süre Bitti! ⏰</h2>
+            <div class="score-breakdown">
+              <div style="font-weight:900;font-size:1.6rem;color:var(--balloon-blue);padding:5px;display:flex;justify-content:center;align-items:center;gap:10px;">
+                <span>Toplam Puan:</span> <span id="finalScore">0</span>
+              </div>
+            </div>
+
+            <input type="text" id="playerName" placeholder="İsmini yaz..." maxlength="15" autocomplete="off">
+            <button class="serve-btn" style="width:100%;padding:12px;" id="saveScoreBtn">Skoru Kaydet</button>
+
+            <div class="scoreboard-list" id="mainScoreboard"></div>
+
+            <button class="control-btn" style="width:100%;margin-top:10px;" id="restartMenuBtn">Ana Menüye Dön</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    const SCORE_STORAGE_KEY = "kemal-balloon-scores-v2";
+
+    const state = {
+      targetLetter: "A",
+      score: 0,
+      timeLeft: 60,
+      running: false,
+      balloonIntervalId: null,
+      timerIntervalId: null,
+      soundOn: true
+    };
+
+    const targetGroups = {
+      "A": ["A", "a"], "N": ["N", "n"], "E": ["E", "e"], "T": ["T", "t"], "İ": ["İ", "i"], "L": ["L", "l"],
+      "O": ["O", "o"], "K": ["K", "k"], "U": ["U", "u"], "R": ["R", "r"], "I": ["I", "ı"], "M": ["M", "m"],
+      "Ü": ["Ü", "ü"], "S": ["S", "s"], "Ö": ["Ö", "ö"], "Y": ["Y", "y"], "D": ["D", "d"], "Z": ["Z", "z"],
+      "Ç": ["Ç", "ç"], "B": ["B", "b"], "G": ["G", "g"], "C": ["C", "c"], "Ş": ["Ş", "ş"],
+      "P": ["P", "p"], "H": ["H", "h"], "V": ["V", "v"], "Ğ": ["Ğ", "ğ"], "F": ["F", "f"], "J": ["J", "j"]
+    };
+
+    const allLetters = [
+      "A","a","N","n","E","e","T","t","İ","i","L","l",
+      "O","o","K","k","U","u","R","r","I","ı","M","m",
+      "Ü","ü","S","s","Ö","ö","Y","y","D","d","Z","z",
+      "Ç","ç","B","b","G","g","C","c","Ş","ş",
+      "P","p","H","h","V","v","Ğ","ğ","F","f","J","j"
+    ];
+
+    const balloonColors = ["#ff6464", "#2d7ff9", "#a7f36b", "#ffd166", "#7357e8", "#f48fb1"];
+
+    const els = {
+      setupScreen: document.getElementById("setupScreen"),
+      letterChoices: document.querySelectorAll(".choice-btn"),
+      targetText: document.getElementById("targetText"),
+      scoreText: document.getElementById("scoreText"),
+      timerText: document.getElementById("timerText"),
+      soundToggle: document.getElementById("soundToggle"),
+      setupToggle: document.getElementById("setupToggle"),
+      startBtn: document.getElementById("startBtn"),
+      gameArea: document.getElementById("gameArea"),
+      gameOverPanel: document.getElementById("gameOverPanel"),
+      finalScore: document.getElementById("finalScore"),
+      playerName: document.getElementById("playerName"),
+      saveScoreBtn: document.getElementById("saveScoreBtn"),
+      mainScoreboard: document.getElementById("mainScoreboard"),
+      restartMenuBtn: document.getElementById("restartMenuBtn")
+    };
+
+    let audioCtx = null;
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(freq, type, duration, vol) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + duration);
+    }
+
+    function playSound(type) {
+      if (type === "correct") {
+        playTone(523.25, "sine", 0.1, 0.1);
+        setTimeout(() => playTone(659.25, "sine", 0.2, 0.1), 100);
+      } else if (type === "wrong") {
+        playTone(150, "sawtooth", 0.2, 0.05);
+        setTimeout(() => playTone(100, "sawtooth", 0.3, 0.05), 150);
+      } else if (type === "tick") {
+        playTone(800, "sine", 0.05, 0.02);
+      } else if (type === "over") {
+        playTone(300, "triangle", 0.3, 0.1);
+        setTimeout(() => playTone(250, "triangle", 0.3, 0.1), 300);
+        setTimeout(() => playTone(200, "triangle", 0.5, 0.1), 600);
+      }
+    }
+
+    function updateUI() {
+      els.scoreText.textContent = state.score;
+      els.timerText.textContent = state.timeLeft + " sn";
+      els.timerText.parentElement.style.color = state.timeLeft <= 10 ? "#ff4757" : "";
+    }
+
+    function spawnBalloon() {
+      if (!state.running) return;
+      const balloon = document.createElement("div");
+      balloon.className = "balloon";
+
+      const targets = targetGroups[state.targetLetter];
+      const isTarget = Math.random() < 0.40;
+      let letter = "";
+
+      if (isTarget) {
+        letter = targets[Math.floor(Math.random() * targets.length)];
+      } else {
+        const pool = allLetters.filter(value => !targets.includes(value));
+        letter = pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      balloon.textContent = letter;
+      balloon.dataset.isTarget = isTarget ? "true" : "false";
+
+      const color = balloonColors[Math.floor(Math.random() * balloonColors.length)];
+      balloon.style.backgroundColor = color;
+      if (color === "#ffd166" || color === "#a7f36b") balloon.style.color = "#14213d";
+      balloon.style.left = (Math.random() * 80 + 10) + "%";
+
+      const duration = Math.random() * 2.5 + 4.0;
+      balloon.style.animationDuration = duration + "s";
+
+      balloon.addEventListener("pointerdown", handleBalloonPress);
+      balloon.addEventListener("contextmenu", preventGameAreaBrowserActions);
+
+      els.gameArea.appendChild(balloon);
+      setTimeout(() => {
+        if (balloon.parentNode && state.running) balloon.remove();
+      }, duration * 1000);
+    }
+
+    function preventGameAreaBrowserActions(event) {
+      event.preventDefault();
+    }
+
+    function handleBalloonPress(event) {
+      if (!state.running) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const balloon = event.currentTarget;
+      if (balloon.classList.contains("pop-anim")) return;
+      balloon.style.pointerEvents = "none";
+
+      const isTarget = balloon.dataset.isTarget === "true";
+      if (isTarget) {
+        playSound("correct");
+        state.score += 10;
+        updateUI();
+        balloon.classList.add("pop-anim");
+        setTimeout(() => { if (balloon.parentNode) balloon.remove(); }, 200);
+        return;
+      }
+
+      playSound("wrong");
+      balloon.style.backgroundColor = "#64748b";
+      balloon.style.color = "white";
+      balloon.textContent = "❌";
+      balloon.classList.add("pop-anim");
+      setTimeout(() => { if (balloon.parentNode) balloon.remove(); }, 200);
+    }
+
+    function startGame() {
+      const ctx = getAudioContext();
+      if (ctx) ctx.resume();
+      els.setupScreen.classList.add("hidden");
+      document.querySelectorAll(".balloon").forEach(balloon => balloon.remove());
+      els.gameOverPanel.classList.add("hidden");
+
+      state.score = 0;
+      state.timeLeft = 60;
+      state.running = true;
+
+      els.targetText.textContent = state.targetLetter + " " + state.targetLetter.toLocaleLowerCase("tr-TR");
+      els.startBtn.textContent = "Oyunu Yeniden Başlat";
+      els.timerText.parentElement.style.color = "";
+      els.playerName.style.display = "block";
+      els.saveScoreBtn.style.display = "block";
+      updateUI();
+
+      clearInterval(state.balloonIntervalId);
+      clearInterval(state.timerIntervalId);
+
+      state.balloonIntervalId = setInterval(spawnBalloon, 900);
+      state.timerIntervalId = setInterval(() => {
+        if (!state.running) return;
+        state.timeLeft--;
+        if (state.timeLeft <= 10 && state.timeLeft > 0) playSound("tick");
+        updateUI();
+        if (state.timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      state.running = false;
+      clearInterval(state.balloonIntervalId);
+      clearInterval(state.timerIntervalId);
+      playSound("over");
+
+      document.querySelectorAll(".balloon").forEach(balloon => {
+        balloon.style.animationPlayState = "paused";
+      });
+
+      setTimeout(() => {
+        els.gameOverPanel.classList.remove("hidden");
+        els.finalScore.textContent = state.score;
+        els.playerName.value = "";
+        els.playerName.focus();
+        loadScoreboard();
+      }, 500);
+    }
+
+    function loadScoreboard() {
+      const scores = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || "[]");
+      els.mainScoreboard.innerHTML = '<h3 style="margin:0 0 10px;color:var(--balloon-blue);font-size:1.1rem;">🏆 Skor Tablosu</h3>';
+      if (scores.length === 0) {
+        els.mainScoreboard.innerHTML += '<p style="color:var(--balloon-muted);font-size:0.9rem;">Henüz kayıt yok. İlk sen ol!</p>';
+        return;
+      }
+
+      scores
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .slice(0, 5)
+        .forEach((item, index) => {
+          const medals = ["🥇", "🥈", "🥉", "🏅", "🏅"];
+          const div = document.createElement("div");
+          div.className = "score-item";
+          div.innerHTML = '<span>' + medals[index] + " " + escapeHtml(item.name) + '</span><span style="color:var(--balloon-lime);text-shadow:1px 1px 0 rgba(0,0,0,0.2);">' + String(item.score || 0) + " P</span>";
+          els.mainScoreboard.appendChild(div);
+        });
+    }
+
+    function saveScore() {
+      const name = els.playerName.value.trim() || "Öğrenci";
+      const scores = JSON.parse(localStorage.getItem(SCORE_STORAGE_KEY) || "[]");
+      scores.push({ name: name, score: state.score, letter: state.targetLetter, createdAt: new Date().toISOString() });
+      localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(scores));
+      els.playerName.style.display = "none";
+      els.saveScoreBtn.style.display = "none";
+      loadScoreboard();
+    }
+
+    els.letterChoices.forEach(btn => {
+      btn.addEventListener("click", () => {
+        els.letterChoices.forEach(item => item.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        state.targetLetter = btn.dataset.letter;
+        els.targetText.textContent = state.targetLetter + " " + state.targetLetter.toLocaleLowerCase("tr-TR");
+      });
+    });
+
+    els.soundToggle.addEventListener("click", () => {
+      state.soundOn = !state.soundOn;
+      els.soundToggle.classList.toggle("is-active", state.soundOn);
+      els.soundToggle.textContent = state.soundOn ? "Ses Açık" : "Ses Kapalı";
+      const ctx = getAudioContext();
+      if (state.soundOn && ctx) ctx.resume();
+    });
+
+    els.setupToggle.addEventListener("click", () => {
+      els.setupScreen.classList.toggle("hidden");
+    });
+
+    ["contextmenu", "selectstart", "dragstart"].forEach(eventName => {
+      els.gameArea.addEventListener(eventName, preventGameAreaBrowserActions);
+    });
+
+    els.startBtn.addEventListener("click", startGame);
+    els.saveScoreBtn.addEventListener("click", saveScore);
+    els.restartMenuBtn.addEventListener("click", () => {
+      els.gameOverPanel.classList.add("hidden");
+      els.setupScreen.classList.remove("hidden");
+      document.querySelectorAll(".balloon").forEach(balloon => balloon.remove());
+      els.startBtn.textContent = "Oyunu Başlat (60 sn)";
+    });
+
+    els.targetText.textContent = state.targetLetter + " " + state.targetLetter.toLocaleLowerCase("tr-TR");
+    els.timerText.textContent = "60 sn";
+  </script>
+</body>
+</html>

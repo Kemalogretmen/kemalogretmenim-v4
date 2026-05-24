@@ -269,12 +269,13 @@
 
     /* Üst renkli bant */
     .gc-banner {
-      height: 118px;
+      height: 138px;
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
       overflow: hidden;
+      padding: 14px;
       flex-shrink: 0;
     }
     .gc-banner::before {
@@ -286,8 +287,8 @@
         url("data:image/svg+xml,%3Csvg width='46' height='46' viewBox='0 0 46 46' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 23h38M23 4v38' stroke='%23ffffff' stroke-opacity='.12' stroke-width='2'/%3E%3C/svg%3E");
     }
     .gc-banner-em {
-      width: 66px;
-      height: 66px;
+      width: 60px;
+      height: 60px;
       display: grid;
       place-items: center;
       border-radius: 8px;
@@ -297,13 +298,58 @@
       z-index: 2;
       box-shadow: 0 16px 30px rgba(0,0,0,.18), inset 0 -3px 0 rgba(26,16,64,.08);
       transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      transform: translateY(10px);
     }
     .gc-banner-em .icon-svg {
       width: 38px;
       height: 38px;
       stroke-width: 2.4;
     }
-    .game-card:hover .gc-banner-em { transform: scale(1.08) rotate(4deg); }
+    .game-card:hover .gc-banner-em { transform: translateY(8px) scale(1.08) rotate(4deg); }
+
+    .gc-preview {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 12px;
+      top: 40px;
+      z-index: 1;
+      border-radius: 8px;
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.24);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 14px 26px rgba(20,9,47,.14);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 7px;
+      padding: 10px;
+      backdrop-filter: blur(8px);
+    }
+    .gc-preview-cell {
+      border-radius: 7px;
+      background: rgba(255,255,255,.26);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
+    }
+    .gc-preview-cell.is-wide {
+      grid-column: span 2;
+      justify-items: start;
+      padding: 0 10px;
+    }
+    .gc-preview-cell.is-soft {
+      background: rgba(255,255,255,.82);
+      color: var(--card-accent, var(--purple));
+    }
+    .gc-preview-cell .icon-svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.5;
+    }
 
     /* Parıltı efekti */
     .gc-banner::after {
@@ -523,8 +569,10 @@
       .filter-btn { white-space: nowrap; }
       .games-grid { grid-template-columns: repeat(auto-fill,minmax(158px,1fr)); gap:14px; }
       .game-card { min-height: 246px; }
-      .gc-banner  { height: 96px; }
-      .gc-banner-em { width: 56px; height: 56px; }
+      .gc-banner  { height: 112px; padding: 10px; }
+      .gc-preview { left: 10px; right: 10px; top: 34px; bottom: 9px; gap: 5px; padding: 7px; }
+      .gc-preview-cell { font-size: 11px; }
+      .gc-banner-em { width: 50px; height: 50px; transform: translateY(8px); }
       .gc-banner-em .icon-svg { width: 32px; height: 32px; }
       .gc-body { padding: 15px; }
       .gc-title { font-size: 15px; }
@@ -573,6 +621,7 @@
     <div class="filter-bar" role="toolbar" aria-label="Oyun kategorileri">
       <button class="filter-btn active" data-icon="grid" onclick="filterGames('tümü', this)">Tümü</button>
       <button class="filter-btn" data-icon="calculator" onclick="filterGames('matematik', this)">Matematik</button>
+      <button class="filter-btn" data-icon="book" onclick="filterGames('okuma-yazma', this)">Okuma-Yazma</button>
       <button class="filter-btn" data-icon="book" onclick="filterGames('türkçe', this)">Türkçe</button>
       <button class="filter-btn" data-icon="flask" onclick="filterGames('fen', this)">Fen</button>
       <button class="filter-btn" data-icon="leaf" onclick="filterGames('hayat', this)">Hayat Bilgisi</button>
@@ -582,6 +631,51 @@
     </div>
 
     <div class="games-grid" id="gamesGrid">
+
+    <a href="sesli-balonlar.html" class="game-card" data-color="coral" data-cat="okuma-yazma" data-icon="book" data-date="2026-05-24T19:30:00+03:00">
+      <div class="gc-banner">
+        <span class="gc-category">📝 Okuma-Yazma</span>
+        <span class="gc-banner-em">🎈</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">SESLİ BALONLAR</div>
+        <div class="gc-subtitle">"Doğru Sesi Bul, Balonu Patlat"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="hece_koprusu.html" class="game-card" data-color="green" data-cat="okuma-yazma" data-icon="book" data-date="2026-05-24T22:45:00+03:00">
+      <div class="gc-banner">
+        <span class="gc-category">📝 Okuma-Yazma</span>
+        <span class="gc-banner-em">🌉</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">HECE KÖPRÜSÜ</div>
+        <div class="gc-subtitle">"Doğru Heceyi Seç, Gökçe'yi Karşıya Geçir"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a href="olcum-atolyesi.html" class="game-card" data-color="purple" data-cat="matematik" data-icon="scale" data-date="2026-05-24T12:00:00+03:00">
+      <div class="gc-banner">
+        <span class="gc-category">🔢 Matematik</span>
+        <span class="gc-banner-em">📏</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">ÖLÇÜM ATÖLYESİ</div>
+        <div class="gc-subtitle">"Sınıfına Göre Ölç, Bonusla Rekor Kır"</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Oyna!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
 
     <a href="sekil-avcisi-3d.html" class="game-card" data-color="blue" data-cat="matematik" data-icon="cube" data-date="2026-05-12T14:50:00+03:00">
       <div class="gc-banner">
@@ -933,6 +1027,37 @@
       return wrap.firstElementChild;
     }
 
+    function buildGamePreview(iconName, cat) {
+      const preview = document.createElement('div');
+      preview.className = 'gc-preview';
+      preview.setAttribute('aria-hidden', 'true');
+
+      const sets = {
+        matematik: ['12', '+', '8', '?', '3D', '24'],
+        'okuma-yazma': ['A', 'E', 'L', 'Oku', 'Ses', '✓'],
+        'türkçe': ['A', 'B', 'C', 'Oku', 'Kelime', '?'],
+        fen: ['H2O', '⚡', 'Isı', '?', 'Deney', '✓'],
+        hayat: ['Ev', 'Okul', 'Yol', '?', 'Kural', '✓'],
+        strateji: ['1', '2', '3', 'Hamle', 'Plan', '★'],
+        hafıza: ['●', '■', '◆', '?', 'Eşleştir', '✓'],
+        bulmaca: ['?', 'A', 'B', 'İpucu', 'Gölge', '✓'],
+        sosyal: ['TR', '🌍', 'Harita', '?', 'Zaman', '✓'],
+        genel: ['Oyna', '★', '?', 'Seviye', 'Puan', '✓']
+      };
+      const values = sets[cat] || sets.genel;
+      values.forEach((value, index) => {
+        const cell = document.createElement('span');
+        cell.className = 'gc-preview-cell' + (index === 3 || index === 4 ? ' is-wide' : '') + (index === 5 ? ' is-soft' : '');
+        if (index === 5) {
+          cell.appendChild(iconNode(iconName || 'gamepad'));
+        } else {
+          cell.textContent = value;
+        }
+        preview.appendChild(cell);
+      });
+      return preview;
+    }
+
     function hydrateInlineIcons(root) {
       root.querySelectorAll('[data-icon]').forEach(el => {
         if (el.classList.contains('game-card')) return;
@@ -965,6 +1090,7 @@
     const catIconMap = {
       'tümü': 'grid',
       'matematik': 'calculator',
+      'okuma-yazma': 'book',
       'türkçe': 'book',
       'fen': 'flask',
       'hayat': 'leaf',
@@ -977,6 +1103,7 @@
 
     const catTitleMap = {
       'matematik': 'Matematik',
+      'okuma-yazma': 'Okuma-Yazma',
       'türkçe': 'Türkçe',
       'fen': 'Fen',
       'hayat': 'Hayat Bilgisi',
@@ -1035,6 +1162,7 @@
         }
         const renkler = ['purple','coral','orange','green','blue','yellow','pink'];
         const katMap = {
+          'Okuma-Yazma':'okuma-yazma','Okuma Yazma':'okuma-yazma',
           'Türkçe':'türkçe','Matematik':'matematik','Fen':'fen',
           'Hayat Bilgisi':'hayat','Strateji':'strateji','Hafıza':'hafıza','Bulmaca':'bulmaca','Sosyal':'sosyal'
         };
@@ -1145,11 +1273,15 @@
         const cat = card.dataset.cat || 'genel';
         const iconName = card.dataset.icon || catIconMap[cat] || 'gamepad';
         const titleText = card.querySelector('.gc-title')?.textContent.trim() || 'Oyun';
+        const banner = card.querySelector('.gc-banner');
         const bannerIcon = card.querySelector('.gc-banner-em');
         const category = card.querySelector('.gc-category');
         const arrow = card.querySelector('.gc-play-arrow');
 
         card.setAttribute('aria-label', titleText + ' oyununu aç');
+        if (banner && !banner.querySelector('.gc-preview')) {
+          banner.insertBefore(buildGamePreview(iconName, cat), bannerIcon || null);
+        }
         setIcon(bannerIcon, iconName);
         setIcon(arrow, 'arrow');
 
