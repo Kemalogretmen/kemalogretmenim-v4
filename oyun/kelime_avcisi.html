@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gökçe ile Uzayda Kelime Avı - Kemal Öğretmenim</title>
+  <meta name="description" content="1. Sınıf okuma yazma süreci için uzay temalı kelime bulma oyunu.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/kelime_avcisi.html">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@700;900&display=swap');
+
+    :root {
+      --ink: #14213d; --muted: #64748b; --paper: #ffffff; --line: #d8e3f2;
+      --space-dark: #0f172a; --space-light: #1e293b;
+      --meteor: #475569; --meteor-light: #64748b;
+      --lime: #a7f36b; --sun: #ffd166; --blue: #2d7ff9; --coral: #ff6464;
+    }
+
+    * { box-sizing: border-box; user-select: none; }
+
+    body {
+      margin: 0; font-family: 'Nunito', system-ui, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 100%);
+      min-height: 100vh;
+    }
+
+    .page { max-width: 1240px; margin: 0 auto; padding: 22px 14px 64px; }
+
+    .game-shell {
+      overflow: hidden; border-radius: 32px; background: rgba(255, 255, 255, 0.95);
+      border: 4px solid var(--blue); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+
+    /* Üst Bilgi Barı */
+    .space-hero {
+      display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px;
+      align-items: center; padding: 16px 24px; background: var(--space-dark);
+      color: white; border-bottom: 2px solid #334155; position: relative;
+    }
+
+    .space-hero h1 {
+      margin: 6px 0 0; font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.8rem, 3vw, 2.5rem); line-height: 1.05; text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+    }
+
+    .kicker {
+      display: inline-flex; padding: 6px 14px; border-radius: 999px;
+      background: rgba(255, 255, 255, 0.15); font-size: 0.8rem; font-weight: 900;
+      text-transform: uppercase; color: #cbd5e1; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
+
+    .match-stats { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 12px; z-index: 2; }
+
+    .stat {
+      padding: 10px 12px; border-radius: 20px; background: rgba(255, 255, 255, 0.1);
+      text-align: center; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+    .stat span { display: block; color: #94a3b8; font-size: 0.75rem; font-weight: 900; text-transform: uppercase; }
+    .stat strong { display: block; margin-top: 2px; font-size: 1.5rem; font-weight: 900; font-family: 'Fredoka', sans-serif; }
+    .stat.timer strong { color: var(--sun); text-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
+    .stat.hearts strong { color: #ff4757; font-size: 1.2rem; letter-spacing: 2px; }
+
+    /* Ayar Paneli */
+    .setup { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; padding: 24px; background: #f8fafc; }
+    .setup-panel, .rule-panel { border-radius: 24px; background: white; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 2px solid var(--line); }
+    .section-title { margin: 0 0 16px; font-family: 'Fredoka', sans-serif; font-size: 1.4rem; color: var(--ink); }
+    
+    .groups-wrapper { max-height: 350px; overflow-y: auto; padding-right: 10px; }
+    .sound-group {
+      margin-bottom: 16px; background: #f1f5f9; padding: 16px; border-radius: 20px;
+      border: 3px solid transparent; cursor: pointer; transition: all 0.2s;
+    }
+    .sound-group:hover { transform: translateY(-4px); background: #e0f2fe; }
+    .sound-group.is-active { background: #eff6ff; border-color: var(--blue); box-shadow: 0 12px 24px rgba(45,127,249,0.2); }
+    .sound-group h3 { margin: 0 0 6px 0; font-size: 1.1rem; color: var(--blue); font-family: 'Fredoka', sans-serif; }
+    .sound-group p { margin: 0; font-size: 1.3rem; font-weight: 900; color: var(--ink); letter-spacing: 3px; }
+    
+    .rule-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+    .rule-list li { padding: 14px; border-radius: 16px; background: #e0e7ff; color: #1e3a8a; font-weight: 800; border: 2px dashed #93c5fd; }
+
+    /* Alt Kontrol Barı */
+    .control-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 16px 24px; background: white; border-top: 2px solid var(--line); }
+    .control-btn, .serve-btn { font-family: 'Fredoka', sans-serif; font-weight: 700; padding: 12px 20px; border-radius: 16px; border: none; cursor: pointer; transition: all 0.2s; font-size: 1.1rem; }
+    .control-btn { background: #f1f5f9; color: var(--muted); box-shadow: 0 4px 0 #cbd5e1; }
+    .control-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cbd5e1; }
+    .control-btn.is-active { background: #fef08a; color: #b45309; box-shadow: 0 4px 0 #fcd34d; }
+    .serve-btn { background: var(--blue); color: white; font-size: 1.3rem; padding: 14px 30px; box-shadow: 0 6px 0 #1d4ed8, 0 15px 20px rgba(45, 127, 249, 0.4); }
+    .serve-btn:active { transform: translateY(6px); box-shadow: 0 0 0 #1d4ed8; }
+
+    /* ════ UZAY ARENASI (Canlı ve Renkli) ════ */
+    .arena-wrap { padding: 24px; background: #0f172a; }
+    .space-arena {
+      position: relative; height: 650px; border-radius: 32px;
+      overflow: hidden; border: 6px solid #1e293b; box-shadow: inset 0 20px 50px rgba(0,0,0,0.8);
+      cursor: crosshair;
+      /* Çocuklara özel canlı uzay bulutsusu efekti */
+      background-color: #020617;
+      background-image: 
+        radial-gradient(circle at 15% 25%, rgba(76, 29, 149, 0.6) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(30, 58, 138, 0.6) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, transparent 100%);
+    }
+
+    /* Yıldızlar Arka Planı */
+    .stars-bg {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        radial-gradient(1.5px 1.5px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+        radial-gradient(3px 3px at 160px 120px, rgba(255,255,255,0.7), rgba(0,0,0,0));
+      background-size: 200px 200px; z-index: 1; pointer-events: none; opacity: 0.6;
+      animation: twinkle 4s infinite alternate;
+    }
+    @keyframes twinkle { 0% { opacity: 0.4; } 100% { opacity: 0.8; } }
+
+    /* Radar Hedef Göstergesi */
+    .radar-display {
+      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.8); border: 3px solid var(--blue);
+      padding: 10px 50px; border-radius: 30px; z-index: 30;
+      box-shadow: 0 0 25px rgba(45, 127, 249, 0.6), inset 0 0 15px rgba(45, 127, 249, 0.4);
+    }
+    .radar-display h2 {
+      margin: 0; font-family: 'Fredoka', sans-serif; font-size: 2.8rem;
+      color: var(--sun); letter-spacing: 6px; text-shadow: 0 0 12px var(--sun);
+    }
+
+    /* Asteroitler */
+    .meteor-layer { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; }
+    .meteor-btn {
+      position: absolute;
+      width: 130px; height: 100px; border: none;
+      background: var(--meteor);
+      border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+      box-shadow: inset -12px -12px 0px rgba(0,0,0,0.5), inset 6px 6px 0px rgba(255,255,255,0.15);
+      font-family: 'Fredoka', sans-serif; font-size: 1.8rem; font-weight: 900;
+      color: white; text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+      display: flex; justify-content: center; align-items: center;
+      cursor: crosshair; transition: filter 0.2s;
+      animation: floatMeteor 5s infinite alternate ease-in-out;
+    }
+    .meteor-btn:hover { filter: brightness(1.2); }
+    .meteor-btn::before { 
+      content: ''; position: absolute; width: 20px; height: 20px; background: rgba(0,0,0,0.3);
+      border-radius: 50%; top: 20px; left: 25px; box-shadow: 40px 15px 0 5px rgba(0,0,0,0.25), 15px 50px 0 -2px rgba(0,0,0,0.3);
+    }
+
+    @keyframes floatMeteor {
+      0% { transform: translateY(0) rotate(-5deg); }
+      100% { transform: translateY(-15px) rotate(5deg); }
+    }
+
+    /* ════ GÖKÇE UZAY GEMİSİ (Sekron Takip ve Uç Noktası) ════ */
+    .spaceship-wrapper {
+      position: absolute; 
+      width: 170px; height: 170px; /* Gemiyi biraz daha büyüttük */
+      /* Transform Origin %15 %15 yaparak geminin SİVRİ UCUNU (sol üst) merkeze alıyoruz */
+      transform-origin: 15% 15%; 
+      transform: translate(-15%, -15%); /* Geminin ucu imlece denk gelsin */
+      pointer-events: none; z-index: 25; display: none; 
+    }
+    .spaceship-wrapper img { 
+      width: 100%; height: auto; 
+      filter: drop-shadow(0 0 20px rgba(45, 127, 249, 0.8)); 
+    }
+    
+    /* Gemi Hasar/Sarsıntı Efekti (Yanlış Cevapta) */
+    .spaceship-wrapper.shake img {
+      animation: shipDamage 0.4s forwards;
+    }
+    @keyframes shipDamage {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(45, 127, 249, 0.8)); transform: translate(0, 0); }
+      20% { filter: drop-shadow(0 0 40px var(--coral)); transform: translate(-10px, -5px); }
+      40% { filter: drop-shadow(0 0 40px var(--coral)); transform: translate(10px, 5px); }
+      60% { filter: drop-shadow(0 0 40px var(--coral)); transform: translate(-10px, 5px); }
+      80% { filter: drop-shadow(0 0 40px var(--coral)); transform: translate(10px, -5px); }
+    }
+
+    /* Asteroit Patlama Animasyonları */
+    .meteor-btn.explode { animation: explodeAnim 0.4s forwards; pointer-events: none; }
+    @keyframes explodeAnim {
+      0% { transform: scale(1); filter: brightness(1); }
+      40% { transform: scale(1.6); filter: brightness(2); background: var(--sun); color: transparent; box-shadow: 0 0 50px var(--sun); }
+      100% { transform: scale(2.5); opacity: 0; filter: brightness(3); }
+    }
+
+    /* Oyun Sonu Paneli */
+    .overlay-panel {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: white; padding: 35px; border-radius: 32px; box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+      text-align: center; z-index: 100; width: 90%; max-width: 450px; border: 6px solid var(--blue);
+      display: flex; flex-direction: column; cursor: default;
+    }
+    .overlay-panel h2 { margin: 0 0 20px; font-family: 'Fredoka', sans-serif; color: var(--blue); font-size: 2.8rem; }
+    .overlay-panel input { width: 100%; padding: 16px; border-radius: 16px; border: 3px solid var(--line); font-family: 'Fredoka', sans-serif; font-size: 1.3rem; margin-bottom: 15px; text-align: center; color: var(--ink); }
+    .overlay-panel input:focus { outline: none; border-color: var(--blue); background: #f0f9ff; }
+    .scoreboard-list { margin-top: 15px; max-height: 180px; overflow-y: auto; text-align: left; background: #f8fafc; border-radius: 16px; padding: 12px; border: 2px solid var(--line); }
+    .score-item { display: flex; justify-content: space-between; padding: 10px 12px; border-bottom: 2px dashed var(--line); font-weight: 800; font-size: 1.1rem; color: var(--ink); }
+    .score-item:last-child { border-bottom: none; }
+    .hidden { display: none !important; }
+
+    .groups-wrapper::-webkit-scrollbar, .scoreboard-list::-webkit-scrollbar { width: 8px; }
+    .groups-wrapper::-webkit-scrollbar-track, .scoreboard-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+    .groups-wrapper::-webkit-scrollbar-thumb, .scoreboard-list::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+
+    @media (max-width: 800px) {
+      .setup { grid-template-columns: 1fr; }
+      .radar-display h2 { font-size: 2.2rem; }
+      .meteor-btn { width: 100px; height: 80px; font-size: 1.4rem; }
+      .spaceship-wrapper { width: 130px; height: 130px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="game-shell">
+      <header class="space-hero">
+        <div>
+          <span class="kicker">Türkçe • Okuma Yazma</span>
+          <h1>Uzayda Kelime Avı</h1>
+        </div>
+        <div class="match-stats">
+          <div class="stat"><span>Puan</span><strong id="scoreText">0</strong></div>
+          <div class="stat timer"><span>Süre</span><strong id="timerText">60 sn</strong></div>
+          <div class="stat hearts"><span>Kalan Can</span><strong id="heartsText">❤️❤️❤️</strong></div>
+        </div>
+      </header>
+
+      <section class="setup" id="setupScreen">
+        <div class="setup-panel">
+          <h2 class="section-title">Hangi Uzay Sektöründeyiz?</h2>
+          <div class="groups-wrapper" id="groupChoices">
+            <div class="sound-group is-active" data-group="1"><h3>1. Ses Grubu</h3><p>A, N, E, T, İ, L</p></div>
+            <div class="sound-group" data-group="2"><h3>2. Ses Grubu</h3><p>O, K, U, R, I, M</p></div>
+            <div class="sound-group" data-group="3"><h3>3. Ses Grubu</h3><p>Ü, S, Ö, Y, D, Z</p></div>
+            <div class="sound-group" data-group="4"><h3>4. Ses Grubu</h3><p>Ç, B, G, C, Ş</p></div>
+            <div class="sound-group" data-group="5"><h3>5. Ses Grubu</h3><p>P, H, V, Ğ, F, J</p></div>
+          </div>
+        </div>
+        <aside class="rule-panel">
+          <h2 class="section-title">Uzay Görevi Nedir?</h2>
+          <ul class="rule-list">
+            <li><strong>60 saniye</strong> boyunca derin uzayı keşfet.</li>
+            <li>Gemi senin fareni/parmağını <strong>geriden takip ederek</strong> uçar.</li>
+            <li>Radardaki (yukarıdaki) kelimeyi bul! Doğru taşa tıkladığında geminin ucundan <strong>lazer ateşlenir</strong> ve taş patlar.</li>
+            <li>Yanlış hedefe vurursan gemi hasar alır ve <strong>1 can (kalp) kaybedersin</strong>. Canın biterse oyun biter!</li>
+          </ul>
+        </aside>
+      </section>
+
+      <nav class="control-row">
+        <div class="control-group">
+          <button class="control-btn is-active" type="button" id="soundToggle">Ses Açık</button>
+          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+        </div>
+        <button class="serve-btn" type="button" id="startBtn">Uzaya Fırla 🚀</button>
+      </nav>
+
+      <section class="arena-wrap">
+        <div class="space-arena" id="gameArea">
+          <div class="stars-bg"></div>
+          
+          <div class="radar-display hidden" id="radarDisplay">
+            <h2 id="targetWordText">AİLE</h2>
+          </div>
+
+          <div class="meteor-layer" id="meteorLayer"></div>
+
+          <div class="spaceship-wrapper" id="spaceship">
+            <img src="../gorseller/gokce2.png" alt="Gökçe Uzay Gemisi">
+          </div>
+
+          <div class="overlay-panel hidden" id="gameOverPanel">
+            <h2 id="gameOverTitle">Görev Tamamlandı! 🚀</h2>
+            <div style="font-weight: 900; font-size: 2rem; color: var(--blue); margin-bottom: 20px;">
+              Toplanan Puan: <span id="finalScore" style="color: var(--coral);">0</span>
+            </div>
+            <input type="text" id="playerName" placeholder="Uzaylı adını yaz..." maxlength="15" autocomplete="off">
+            <button class="serve-btn" style="width: 100%; padding: 16px; margin-bottom: 10px;" id="saveScoreBtn">Skoru Kaydet 🏆</button>
+            <div class="scoreboard-list" id="mainScoreboard"></div>
+            <button class="control-btn" style="width: 100%; margin-top: 15px;" id="restartMenuBtn">Üsse Dön (Ana Menü)</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script>
+    // MEB Sözlüğü
+    const wordDictionary = {
+      1: ["AİLE", "ANNE", "NİNE", "LALE", "ATLET", "ANTEN", "İLAN", "ALET", "TENTEN", "NALAN", "ETLİ", "NANE", "TANE"],
+      2: ["OKUL", "ORMAN", "LİMON", "ELMA", "ARMUT", "MAKİNE", "RAKAM", "KORU", "LOKUM", "MOTOR", "KİLO", "İLMEK"],
+      3: ["YILDIZ", "DÜDÜK", "AYNA", "SÖZLÜK", "ÖZLEM", "YÜZÜK", "DENİZ", "MÜZİK", "OYUN", "KÖY", "KEDİ", "DAYI"],
+      4: ["ÇİÇEK", "ÇANTA", "BABA", "GÜNEŞ", "ŞEMSİYE", "GECE", "ÇOCUK", "BARDAK", "BALIK", "CÜCE", "AĞAÇ", "ÇAY"],
+      5: ["KÖPEK", "HAVUÇ", "VAZO", "FARE", "JÖLE", "PİLOT", "AĞAÇ", "PARA", "HAFTA", "FİDAN", "JANDARMA", "HARF"]
+    };
+
+    const state = {
+      activeGroup: 1, score: 0, timeLeft: 60, lives: 3, running: false,
+      timerIntervalId: null, soundOn: true, currentTargetWord: ''
+    };
+
+    const els = {
+      setupScreen: document.getElementById('setupScreen'),
+      groupChoices: document.querySelectorAll('.sound-group'),
+      targetWordText: document.getElementById('targetWordText'),
+      radarDisplay: document.getElementById('radarDisplay'),
+      scoreText: document.getElementById('scoreText'),
+      timerText: document.getElementById('timerText'),
+      heartsText: document.getElementById('heartsText'),
+      soundToggle: document.getElementById('soundToggle'),
+      setupToggle: document.getElementById('setupToggle'),
+      startBtn: document.getElementById('startBtn'),
+      gameArea: document.getElementById('gameArea'),
+      meteorLayer: document.getElementById('meteorLayer'),
+      spaceship: document.getElementById('spaceship'),
+      gameOverPanel: document.getElementById('gameOverPanel'),
+      gameOverTitle: document.getElementById('gameOverTitle'),
+      finalScore: document.getElementById('finalScore'),
+      playerName: document.getElementById('playerName'),
+      saveScoreBtn: document.getElementById('saveScoreBtn'),
+      mainScoreboard: document.getElementById('mainScoreboard'),
+      restartMenuBtn: document.getElementById('restartMenuBtn')
+    };
+
+    // --- Ses Efektleri ---
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!state.soundOn) return null;
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      if (type === 'laser') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(800, t);
+        osc.frequency.exponentialRampToValueAtTime(200, t + 0.15);
+        gain.gain.setValueAtTime(0.1, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      } else if (type === 'boom') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.4);
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      } else if (type === 'error') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(150, t);
+        osc.frequency.linearRampToValueAtTime(80, t + 0.3);
+        gain.gain.setValueAtTime(0.15, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      } else if (type === 'tick') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(1000, t);
+        gain.gain.setValueAtTime(0.02, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      } else if (type === 'over') {
+        osc.type = 'sine'; osc.frequency.setValueAtTime(400, t); osc.frequency.linearRampToValueAtTime(150, t+0.6);
+        gain.gain.setValueAtTime(0.1, t); gain.gain.linearRampToValueAtTime(0.001, t+0.6);
+      }
+
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(t);
+      if(type === 'laser') osc.stop(t + 0.15);
+      else if(type === 'boom') osc.stop(t + 0.4);
+      else if(type === 'error') osc.stop(t + 0.3);
+      else if(type === 'tick') osc.stop(t + 0.05);
+      else if(type === 'over') osc.stop(t + 0.6);
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // ════ GEMİ FİZİĞİ (MESAFELİ TAKİP VE DÖNÜŞ) ════
+    let targetX = 0, targetY = 0;
+    let shipX = 0, shipY = 0; // shipX, shipY artık geminin tam UCU (Sivri kısmı)
+    let animFrameId;
+
+    function trackMouse(e) {
+      if(!state.running) return;
+      const rect = els.gameArea.getBoundingClientRect();
+      if(e.type === 'touchmove') {
+        e.preventDefault();
+        targetX = e.touches[0].clientX - rect.left;
+        targetY = e.touches[0].clientY - rect.top;
+      } else {
+        targetX = e.clientX - rect.left;
+        targetY = e.clientY - rect.top;
+      }
+    }
+
+    els.gameArea.addEventListener('mousemove', trackMouse);
+    els.gameArea.addEventListener('touchmove', trackMouse, {passive: false});
+
+    function gameLoop() {
+      if (!state.running) return;
+
+      const dx = targetX - shipX;
+      const dy = targetY - shipY;
+      const dist = Math.hypot(dx, dy);
+      
+      let followX = targetX;
+      let followY = targetY;
+      let angle = 0;
+
+      // Eğer imleç ile geminin ucu arasında 80px'den fazla mesafe varsa o yöne doğru ilerle
+      const offsetDist = 80; // 2-3 cm'lik boşluk
+      if (dist > 5) {
+        angle = Math.atan2(dy, dx);
+        // İmlecin offsetDist kadar gerisinde dur
+        followX = targetX - Math.cos(angle) * offsetDist;
+        followY = targetY - Math.sin(angle) * offsetDist;
+      }
+
+      // Yumuşak takip (lerp)
+      shipX += (followX - shipX) * 0.12;
+      shipY += (followY - shipY) * 0.12;
+
+      // Açı hesaplaması (-135 derece ofset, çünkü görselin ucu sol üstte)
+      let angleDeg = angle * 180 / Math.PI;
+      els.spaceship.style.transform = `translate(-15%, -15%) rotate(${angleDeg + 135}deg)`;
+      els.spaceship.style.left = `${shipX}px`;
+      els.spaceship.style.top = `${shipY}px`;
+
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    // ════ LAZER ATMA FONKSİYONU ════
+    function fireLaser(endX, endY, color, callback) {
+      // Lazer tam olarak shipX ve shipY'den (Geminin Ucundan) çıkıyor
+      const startX = shipX;
+      const startY = shipY;
+
+      const dx = endX - startX;
+      const dy = endY - startY;
+      const distance = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+      const laser = document.createElement('div');
+      laser.style.position = 'absolute';
+      laser.style.left = startX + 'px';
+      laser.style.top = startY + 'px';
+      laser.style.width = distance + 'px';
+      laser.style.height = '6px';
+      laser.style.background = color;
+      laser.style.boxShadow = `0 0 15px ${color}, 0 0 30px ${color}`;
+      laser.style.borderRadius = '3px';
+      laser.style.transformOrigin = '0 50%';
+      laser.style.zIndex = '24'; 
+      laser.style.pointerEvents = 'none';
+
+      els.gameArea.appendChild(laser);
+
+      laser.animate([
+        { transform: `rotate(${angle}deg) scaleX(0)`, opacity: 1 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 1 },
+        { transform: `rotate(${angle}deg) scaleX(1)`, opacity: 0 }
+      ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
+
+      setTimeout(() => { if(callback) callback(); }, 120);
+      setTimeout(() => { if(laser.parentNode) laser.remove(); }, 300);
+    }
+
+    // ════ ASTEROİT (GÖK TAŞI) DAĞILIMI ════
+    function loadNextLevel() {
+      if (!state.running) return;
+      els.meteorLayer.innerHTML = '';
+      
+      const words = wordDictionary[state.activeGroup];
+      const allWords = [...words];
+      shuffleArray(allWords);
+
+      state.currentTargetWord = allWords[0];
+      els.targetWordText.textContent = state.currentTargetWord;
+
+      let levelWords = [state.currentTargetWord];
+      for(let i=1; i<6; i++) {
+        if(allWords[i]) levelWords.push(allWords[i]);
+      }
+      shuffleArray(levelWords);
+
+      // Çakışmayı önlemek için ekranı 6 hücreye böl (2 satır x 3 sütun)
+      const cells = [
+        {x: 5, y: 15}, {x: 40, y: 15}, {x: 75, y: 15},
+        {x: 5, y: 65}, {x: 40, y: 65}, {x: 75, y: 65}
+      ];
+      shuffleArray(cells);
+
+      levelWords.forEach((word, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'meteor-btn';
+        btn.textContent = word;
+        
+        // Her hücrenin içinde hafif rastgelelik (overlap olmasın diye)
+        const cell = cells[index];
+        btn.style.left = (cell.x + Math.random() * 8) + '%';
+        btn.style.top = (cell.y + Math.random() * 10) + '%';
+        
+        btn.addEventListener('mousedown', () => handleMeteorClick(btn, word));
+        btn.addEventListener('touchstart', (e) => { e.preventDefault(); handleMeteorClick(btn, word); }, {passive: false});
+        els.meteorLayer.appendChild(btn);
+      });
+    }
+
+    function handleMeteorClick(btn, word) {
+      if(!state.running || btn.classList.contains('explode')) return;
+
+      const gameRect = els.gameArea.getBoundingClientRect();
+      const mRect = btn.getBoundingClientRect();
+      const meteorX = mRect.left - gameRect.left + (mRect.width / 2);
+      const meteorY = mRect.top - gameRect.top + (mRect.height / 2);
+
+      if(word === state.currentTargetWord) {
+        playSound('laser');
+        
+        // YEŞİL LAZER (Doğru)
+        fireLaser(meteorX, meteorY, 'var(--lime)', () => {
+             playSound('boom');
+             btn.classList.add('explode');
+             state.score += 20; 
+             updateUI();
+
+             // Tüm asteroitler bitmeden (patladıktan sonra) ekran temizlenip yenisi gelir
+             setTimeout(() => {
+                 if(state.running) loadNextLevel();
+             }, 600);
+        });
+
+      } else {
+        playSound('laser'); // Lazer çıkış sesi
+        
+        // KIRMIZI LAZER (Yanlış)
+        fireLaser(meteorX, meteorY, 'var(--coral)', () => {
+             playSound('error'); // Çarpma/Sarsıntı sesi
+             els.spaceship.classList.add('shake');
+             setTimeout(() => els.spaceship.classList.remove('shake'), 400);
+             
+             state.lives--;
+             updateUI();
+             
+             if(state.lives <= 0) {
+               endGame(false); // Can bittiği için kaybetme durumu
+             }
+        });
+      }
+    }
+
+    function updateUI() {
+      els.scoreText.textContent = state.score;
+      els.timerText.textContent = state.timeLeft + ' sn';
+      els.heartsText.textContent = '❤️'.repeat(state.lives) || '💔';
+      
+      if (state.timeLeft <= 10) els.timerText.parentElement.style.color = '#ff4757';
+      else els.timerText.parentElement.style.color = '';
+    }
+
+    function startGame() {
+      if(getAudioContext()) getAudioContext().resume();
+      els.setupScreen.classList.add('hidden');
+      els.gameOverPanel.classList.add('hidden');
+      els.radarDisplay.classList.remove('hidden');
+      els.spaceship.style.display = 'block';
+      
+      const rect = els.gameArea.getBoundingClientRect();
+      targetX = rect.width / 2;
+      targetY = rect.height / 2;
+      shipX = targetX; shipY = targetY;
+
+      state.score = 0; state.timeLeft = 60; state.lives = 3; state.running = true;
+      els.startBtn.textContent = 'Uzaya Yeniden Fırla';
+      els.playerName.style.display = 'block'; els.saveScoreBtn.style.display = 'block';
+      
+      updateUI();
+      loadNextLevel();
+      
+      cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(gameLoop);
+      
+      if(state.timerIntervalId) clearInterval(state.timerIntervalId);
+      
+      state.timerIntervalId = setInterval(() => {
+        if(!state.running) return;
+        state.timeLeft--;
+        if(state.timeLeft <= 10 && state.timeLeft > 0) playSound('tick');
+        updateUI();
+        if (state.timeLeft <= 0) endGame(true); // Süre bitti
+      }, 1000);
+    }
+
+    function endGame(isTimeUp) {
+      state.running = false;
+      clearInterval(state.timerIntervalId);
+      cancelAnimationFrame(animFrameId);
+      playSound('over');
+      
+      els.spaceship.style.display = 'none';
+      els.radarDisplay.classList.add('hidden');
+
+      setTimeout(() => {
+        els.gameOverPanel.classList.remove('hidden');
+        els.gameOverTitle.textContent = isTimeUp ? "Süre Bitti! ⏰" : "Gemi Hasar Aldı! 💥";
+        els.finalScore.textContent = state.score;
+        els.playerName.value = '';
+        els.playerName.focus();
+        loadScoreboard(); 
+      }, 800);
+    }
+
+    function loadScoreboard() {
+      const scores = JSON.parse(localStorage.getItem('kemal-uzay-scores')) || [];
+      els.mainScoreboard.innerHTML = '';
+      if (scores.length === 0) {
+        els.mainScoreboard.innerHTML += '<p style="color:var(--muted); font-size:1rem; text-align:center;">Henüz uzay fatihi yok. İlk sen ol!</p>';
+        return;
+      }
+      scores.sort((a, b) => b.score - a.score).slice(0, 5).forEach((item, index) => {
+        const medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+        const div = document.createElement('div');
+        div.className = 'score-item';
+        div.innerHTML = `<span>${medals[index]} ${item.name}</span> <span style="color:var(--blue);">${item.score} P</span>`;
+        els.mainScoreboard.appendChild(div);
+      });
+    }
+
+    function saveScore() {
+      const name = els.playerName.value.trim() || 'Astronot';
+      const scores = JSON.parse(localStorage.getItem('kemal-uzay-scores')) || [];
+      scores.push({ name: name, score: state.score });
+      localStorage.setItem('kemal-uzay-scores', JSON.stringify(scores));
+
+      els.playerName.style.display = 'none';
+      els.saveScoreBtn.style.display = 'none';
+      loadScoreboard(); 
+    }
+
+    // Dinleyiciler
+    els.groupChoices.forEach(group => {
+      group.addEventListener('click', () => {
+        els.groupChoices.forEach(g => g.classList.remove('is-active'));
+        group.classList.add('is-active');
+        state.activeGroup = parseInt(group.dataset.group);
+      });
+    });
+
+    els.soundToggle.addEventListener('click', () => {
+      state.soundOn = !state.soundOn;
+      els.soundToggle.classList.toggle('is-active', state.soundOn);
+      els.soundToggle.textContent = state.soundOn ? 'Ses Açık' : 'Ses Kapalı';
+      if(state.soundOn && getAudioContext()) getAudioContext().resume();
+    });
+
+    els.setupToggle.addEventListener('click', () => els.setupScreen.classList.toggle('hidden'));
+    els.startBtn.addEventListener('click', startGame);
+    els.saveScoreBtn.addEventListener('click', saveScore);
+    
+    els.restartMenuBtn.addEventListener('click', () => {
+      els.gameOverPanel.classList.add('hidden');
+      els.setupScreen.classList.remove('hidden');
+      els.meteorLayer.innerHTML = '';
+      els.startBtn.textContent = 'Uzaya Fırla 🚀';
+    });
+
+  </script>
+</body>
+</html>
