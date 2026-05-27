@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kayıt Ol — Kemal Öğretmenim</title>
-  <meta name="description" content="Kemal Öğretmenim öğretmen ve öğrenci kayıt ekranı.">
+  <meta name="description" content="Kemal Öğretmenim öğretmen, öğrenci ve veli kayıt ekranı.">
   <meta name="robots" content="noindex,nofollow">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="/css/style.css">
@@ -87,7 +87,7 @@
     .register-card { padding: 28px; }
     .role-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
       margin-bottom: 24px;
     }
@@ -269,11 +269,11 @@
       <aside class="register-intro">
         <span class="register-kicker">🔐 Üyelik sistemi</span>
         <h1 id="registerTitle">Öğrenme geçmişin tek hesapta toplansın.</h1>
-        <p>Öğrenci hesabı ile okuduğun metinler, çözdüğün sınavlar, dokümanlar ve beğenilerin tüm cihazlarda saklanır. Öğretmen hesabı sınıf yönetimi için ayrıca kullanılabilir.</p>
+        <p>Öğrenci, öğretmen ve veli hesaplarıyla öğrenme geçmişi, ödevler, karneler ve mesajlar tüm cihazlarda düzenli şekilde saklanır.</p>
         <div class="register-steps" aria-label="Kayıt sistemi yol haritası">
-          <div class="register-step"><span>1</span><div>Ad, soyad, sınıf, şehir ve okul bilgilerini kaydet.</div></div>
+          <div class="register-step"><span>1</span><div>Rolünü seçip gerekli kişisel bilgileri kaydet.</div></div>
           <div class="register-step"><span>2</span><div>Mail ve şifre ile güvenli kullanıcı hesabı oluştur.</div></div>
-          <div class="register-step"><span>3</span><div>Sonraki girişlerde formlar otomatik dolsun.</div></div>
+          <div class="register-step"><span>3</span><div>Panelinde sınıf, çocuk, ödev ve içerik bağlantılarını takip et.</div></div>
         </div>
       </aside>
 
@@ -286,6 +286,10 @@
           <button class="role-tab" type="button" data-role="student" aria-pressed="false">
             <strong>🎒 Öğrenci Kaydı</strong>
             <small>Çalışmaları çözmek, sonuçları görmek ve sınıfa bağlanmak için.</small>
+          </button>
+          <button class="role-tab" type="button" data-role="parent" aria-pressed="false">
+            <strong>👨‍👩‍👧 Veli Kaydı</strong>
+            <small>Çocuğunun ödev, karne ve öğretmen mesajlarını takip etmek için.</small>
           </button>
         </div>
 
@@ -390,6 +394,10 @@
           <div class="form-field role-only student-fields" hidden>
             <label for="teacherCode">Öğretmen Kodu</label>
             <input id="teacherCode" name="teacherCode" placeholder="Varsa">
+          </div>
+          <div class="form-field role-only parent-fields full" hidden>
+            <label for="parentLinkCode">Öğrenci Bağlantı Kodu</label>
+            <input id="parentLinkCode" name="parentLinkCode" placeholder="Öğretmenin verdiği kod varsa opsiyonel">
           </div>
           <div class="register-message" id="registerMessage" role="status" aria-live="polite"></div>
           <div class="register-actions">

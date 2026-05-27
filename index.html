@@ -435,10 +435,238 @@
       --badge-color: #00856A;
       --icon-bg: linear-gradient(135deg, #D9FFF6, #EDFFFB);
     }
+    .learning-showcase {
+      padding: 56px 32px 12px;
+      background: #FFFDF8;
+    }
+    .learning-showcase-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: .95fr 1.35fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+    .today-route {
+      border: 2px solid #EAE3FF;
+      border-radius: 8px;
+      background: #FFFFFF;
+      padding: 24px;
+      box-shadow: 0 16px 34px rgba(26,16,64,.08);
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+    .today-route-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .today-route-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .today-route-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      background: #FFF4D2;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+    .today-route h2 {
+      color: var(--navy);
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.04;
+      margin: 0;
+      font-weight: 900;
+    }
+    .today-route p {
+      color: var(--slate);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+    .route-steps {
+      display: grid;
+      gap: 10px;
+    }
+    .route-step {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #EEE7FF;
+      border-radius: 8px;
+      background: #FBFAFF;
+    }
+    .route-step span {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--step-bg);
+      color: var(--step-color);
+      font-weight: 900;
+    }
+    .route-step strong {
+      display: block;
+      color: var(--navy);
+      font-size: 14px;
+      line-height: 1.2;
+    }
+    .route-step small {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.25;
+    }
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .preview-card {
+      border: 2px solid #EAE3FF;
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: inherit;
+      text-decoration: none;
+      overflow: hidden;
+      box-shadow: 0 14px 28px rgba(26,16,64,.07);
+      transition: transform .22s, box-shadow .22s, border-color .22s;
+    }
+    .preview-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 22px 44px rgba(26,16,64,.13);
+      border-color: var(--preview-color);
+    }
+    .preview-art {
+      min-height: 178px;
+      padding: 18px;
+      display: grid;
+      align-items: end;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,0) 42%),
+        var(--preview-bg);
+    }
+    .preview-art::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: .55;
+    }
+    .preview-screen {
+      position: relative;
+      z-index: 1;
+      min-height: 116px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 16px 32px rgba(15,23,42,.18);
+      padding: 12px;
+      display: grid;
+      gap: 9px;
+    }
+    .preview-card.game-preview .preview-screen {
+      grid-template-columns: repeat(3, 1fr);
+      align-content: center;
+    }
+    .preview-tile {
+      min-height: 38px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: var(--tile-bg);
+      color: white;
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .preview-card.doc-preview .preview-screen {
+      grid-template-columns: 54px 1fr;
+      align-items: start;
+    }
+    .preview-page {
+      height: 92px;
+      border-radius: 6px;
+      background: #FFFFFF;
+      border: 2px solid #E9E4FF;
+      box-shadow: 0 8px 18px rgba(26,16,64,.08);
+      display: grid;
+      gap: 5px;
+      padding: 8px;
+    }
+    .preview-line {
+      height: 7px;
+      border-radius: 99px;
+      background: #E8E2FF;
+    }
+    .preview-line.short { width: 62%; }
+    .preview-lines {
+      display: grid;
+      gap: 9px;
+      padding-top: 5px;
+    }
+    .preview-lines span {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--line-bg, #E8E2FF);
+    }
+    .preview-lines span:nth-child(2) { width: 82%; }
+    .preview-lines span:nth-child(3) { width: 58%; }
+    .preview-body {
+      padding: 18px;
+      display: grid;
+      gap: 8px;
+    }
+    .preview-label {
+      color: var(--preview-color);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .preview-title {
+      color: var(--navy);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+    .preview-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .preview-meta span {
+      border-radius: 999px;
+      background: #FAFAFF;
+      border: 1px solid #EAE3FF;
+      color: var(--slate);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 6px 9px;
+    }
     @media(max-width:980px) {
       .platform-strip { margin-top: 0; padding: 32px 18px 0; }
       .platform-strip-inner { grid-template-columns: 1fr; }
       .platform-desc { min-height: 0; }
+      .learning-showcase { padding: 42px 18px 8px; }
+      .learning-showcase-inner { grid-template-columns: 1fr; }
     }
     .why-grid {
       display: grid;
@@ -616,6 +844,367 @@
       color: var(--slate);
       font-weight: 800;
       line-height: 1.5;
+    }
+    .hero .hero-inner {
+      width: 100%;
+      max-width: 1320px;
+      grid-template-columns: minmax(0, 1.3fr) minmax(320px, .72fr);
+      gap: 34px;
+    }
+    .hero-copy {
+      min-width: 0;
+    }
+    .home-showcase-panel {
+      position: relative;
+      min-height: min(650px, calc(100vh - 180px));
+      background: rgba(255,255,255,.96);
+      border: 2px solid rgba(234,227,255,.9);
+      border-radius: 28px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      display: block;
+    }
+    .home-showcase-stage {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: min(650px, calc(100vh - 180px));
+      overflow: hidden;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.40), rgba(255,255,255,.10)),
+        var(--showcase-soft, #F8F6FF);
+    }
+    .home-showcase-slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      color: inherit;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateX(32px) scale(.985);
+      pointer-events: none;
+      transition: opacity .62s ease, transform .62s ease, filter .62s ease;
+    }
+    .home-showcase-slide.active {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+    .home-showcase-slide[data-effect="fade"] {
+      transform: scale(1.02);
+      filter: blur(7px);
+    }
+    .home-showcase-slide[data-effect="fade"].active {
+      transform: scale(1);
+      filter: blur(0);
+    }
+    .home-showcase-slide[data-effect="rise"] {
+      transform: translateY(34px) scale(.985);
+    }
+    .home-showcase-slide[data-effect="rise"].active {
+      transform: translateY(0) scale(1);
+    }
+    .home-showcase-slide[data-effect="zoom"] {
+      transform: scale(.94);
+    }
+    .home-showcase-slide[data-effect="zoom"].active {
+      transform: scale(1);
+    }
+    .home-showcase-media {
+      position: absolute;
+      inset: 0;
+      min-height: 0;
+      border-radius: 0;
+      background: rgba(255,255,255,.82);
+      border: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+    .home-showcase-media img,
+    .home-showcase-media iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border: 0;
+      background: #fff;
+    }
+    .home-showcase-icon {
+      width: 112px;
+      height: 112px;
+      border-radius: 30px;
+      display: grid;
+      place-items: center;
+      background: white;
+      color: var(--showcase-color, var(--purple));
+      font-size: 56px;
+      box-shadow: 0 18px 34px rgba(15,23,42,.12);
+    }
+    .home-showcase-copy {
+      position: relative;
+      z-index: 2;
+      margin-top: auto;
+      padding: 26px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      min-width: 0;
+      width: min(760px, calc(100% - 52px));
+      margin-left: 26px;
+      margin-bottom: 72px;
+      border: 1px solid rgba(255,255,255,.58);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.70), rgba(255,255,255,.30)),
+        rgba(255,255,255,.34);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.72),
+        0 24px 60px rgba(26,16,64,.14);
+      backdrop-filter: blur(22px) saturate(1.45);
+      -webkit-backdrop-filter: blur(22px) saturate(1.45);
+      pointer-events: none;
+    }
+    .home-showcase-slide.is-video .home-showcase-copy {
+      width: min(980px, calc(100% - 420px));
+      margin-top: 68px;
+      margin-left: 54px;
+      margin-bottom: auto;
+      max-width: none;
+      padding: 12px 16px;
+      gap: 5px;
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.58), rgba(255,255,255,.20)),
+        rgba(255,255,255,.18);
+    }
+    .home-showcase-slide.is-media:not(.is-video) .home-showcase-copy {
+      width: auto;
+      margin: auto 42px 34px;
+      padding: 14px 18px;
+      gap: 6px;
+      max-height: 154px;
+      overflow: hidden;
+      border-radius: 20px;
+      align-content: start;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.60), rgba(255,255,255,.22)),
+        rgba(255,255,255,.20);
+    }
+    .home-showcase-slide.is-video .home-showcase-desc {
+      max-height: 38px;
+      font-size: 12px;
+      line-height: 1.32;
+    }
+    .home-showcase-slide.is-media .home-showcase-kind {
+      font-size: 10px;
+      padding: 4px 8px;
+    }
+    .home-showcase-slide.is-media .home-showcase-name {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      font-size: clamp(20px, 2vw, 30px);
+      line-height: 1.08;
+    }
+    .home-showcase-slide.is-media:not(.is-video) .home-showcase-desc {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      max-height: 44px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .home-showcase-slide.is-media .home-showcase-cta {
+      margin-top: 2px;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+    .home-showcase-slide.text-only .home-showcase-copy {
+      width: auto;
+      margin: 42px;
+      align-self: stretch;
+      justify-self: stretch;
+      place-content: center;
+      min-height: calc(100% - 84px);
+    }
+    .home-showcase-slide.text-only .home-showcase-media {
+      background:
+        radial-gradient(circle at 18% 12%, rgba(108,61,237,.16), transparent 34%),
+        radial-gradient(circle at 88% 84%, rgba(255,96,82,.15), transparent 36%),
+        linear-gradient(145deg, #F2EAFF 0%, #FFFBF5 52%, #FFF0EC 100%);
+    }
+    .home-showcase-slide.text-only .home-showcase-desc {
+      max-height: none;
+    }
+    .home-showcase-slide.is-intro .home-showcase-name .accent-purple {
+      color: #6C3DED;
+    }
+    .home-showcase-slide.is-intro .home-showcase-name .accent-orange {
+      color: #FF7043;
+    }
+    .home-showcase-kind {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid var(--showcase-border, var(--border));
+      color: var(--showcase-color, var(--purple));
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .home-showcase-name {
+      color: var(--navy);
+      font-family: var(--font-display);
+      font-size: clamp(26px, 3vw, 40px);
+      font-weight: 900;
+      line-height: 1.05;
+    }
+    .home-showcase-desc {
+      max-height: 120px;
+      overflow: hidden;
+      color: var(--slate);
+      font-size: clamp(14px, 1.35vw, 17px);
+      font-weight: 800;
+      line-height: 1.55;
+      max-width: 760px;
+    }
+    .home-showcase-desc p,
+    .home-showcase-desc div {
+      margin: 0 0 4px;
+    }
+    .home-showcase-desc a {
+      color: var(--showcase-color, var(--purple));
+      font-weight: 900;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      pointer-events: auto;
+    }
+    .home-showcase-cta {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--showcase-color, var(--purple));
+      color: white;
+      font-size: 13px;
+      font-weight: 900;
+      text-decoration: none;
+      pointer-events: auto;
+      box-shadow: 0 12px 28px rgba(26,16,64,.16);
+    }
+    .home-showcase-cta:hover {
+      filter: brightness(.96);
+      transform: translateY(-1px);
+    }
+    .home-showcase-controls {
+      position: absolute;
+      z-index: 4;
+      left: 18px;
+      right: 18px;
+      top: 16px;
+      bottom: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .home-showcase-dots {
+      display: flex;
+      gap: 6px;
+      min-width: 0;
+      flex-wrap: wrap;
+      padding: 9px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(234,227,255,.9);
+    }
+    .home-showcase-dot {
+      width: 8px;
+      height: 8px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--border);
+      cursor: pointer;
+      transition: width .2s, background .2s;
+    }
+    .home-showcase-dot.active {
+      width: 24px;
+      background: var(--showcase-color, var(--purple));
+    }
+    .home-showcase-nav {
+      display: flex;
+      gap: 7px;
+    }
+    .home-showcase-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: rgba(255,255,255,.9);
+      color: var(--navy);
+      cursor: pointer;
+      font-weight: 900;
+    }
+    .home-showcase-btn:hover {
+      border-color: var(--showcase-color, var(--purple));
+      color: var(--showcase-color, var(--purple));
+    }
+    .home-showcase-btn.is-paused {
+      width: auto;
+      padding: 0 13px;
+      border-radius: 999px;
+      color: var(--showcase-color, var(--purple));
+    }
+    .home-showcase-stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      pointer-events: none;
+    }
+    .home-showcase-stat {
+      min-width: 120px;
+      border-radius: 18px;
+      padding: 13px 16px;
+      background: rgba(255,255,255,.86);
+      border: 2px solid rgba(226,217,255,.95);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.82),
+        0 12px 30px rgba(26,16,64,.08);
+    }
+    .home-showcase-stat strong {
+      display: block;
+      color: var(--showcase-color, var(--purple));
+      font-family: var(--font-display);
+      font-size: 28px;
+      line-height: 1;
+    }
+    .home-showcase-stat span {
+      display: block;
+      margin-top: 6px;
+      color: var(--slate);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .home-showcase-empty {
+      height: 100%;
+      padding: 34px;
+      color: var(--slate);
+      font-weight: 800;
+      line-height: 1.55;
+      display: grid;
+      align-content: center;
+      min-height: min(650px, calc(100vh - 180px));
     }
     .audience-grid {
       display: grid;
@@ -837,6 +1426,19 @@
       background: #FAFAFF;
     }
     @media(max-width:980px) {
+      .hero .hero-inner {
+        grid-template-columns: 1fr;
+      }
+      .hero-visual {
+        order: 0;
+        max-width: 520px;
+        margin: 0 auto;
+      }
+      .home-showcase-panel,
+      .home-showcase-stage,
+      .home-showcase-empty {
+        min-height: 520px;
+      }
       .audience-grid,
       .latest-grid {
         grid-template-columns: 1fr;
@@ -856,15 +1458,97 @@
       .home-live-panel {
         border-radius: 22px;
       }
+      .home-showcase-panel {
+        min-height: 430px;
+        border-radius: 22px;
+      }
+      .home-showcase-stage,
+      .home-showcase-empty {
+        min-height: 430px;
+      }
       .home-live-head {
         align-items: flex-start;
         flex-direction: column;
+      }
+      .home-showcase-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .home-showcase-copy {
+        padding: 22px 18px 46px;
+      }
+      .home-showcase-slide.text-only .home-showcase-copy {
+        margin: 42px 24px 28px;
+        min-height: calc(100% - 70px);
+      }
+      .home-showcase-slide.is-media:not(.is-video) .home-showcase-copy {
+        width: auto;
+        margin: 0 18px 22px;
+        padding: 12px 14px;
+        gap: 5px;
+        border-radius: 18px;
+      }
+      .home-showcase-slide.is-media .home-showcase-name {
+        font-size: 20px;
+      }
+      .home-showcase-slide.is-media:not(.is-video) .home-showcase-desc {
+        max-height: 36px;
+        font-size: 12px;
+        line-height: 1.32;
+      }
+      .home-showcase-slide.is-media .home-showcase-cta {
+        padding: 7px 10px;
+        font-size: 11px;
+      }
+      .home-showcase-slide.is-video .home-showcase-copy {
+        width: auto;
+        margin: 62px 18px auto;
+      }
+      .home-showcase-name {
+        font-size: 28px;
+        line-height: 1.06;
+      }
+      .home-showcase-desc {
+        max-height: 96px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .home-showcase-controls {
+        left: 14px;
+        right: 14px;
+      }
+      .home-showcase-nav {
+        gap: 5px;
+      }
+      .home-showcase-btn {
+        width: 34px;
+        height: 34px;
+      }
+      .home-showcase-btn.is-paused {
+        padding: 0 10px;
+        font-size: 12px;
+      }
+      .home-showcase-stats {
+        gap: 8px;
+      }
+      .home-showcase-stat {
+        min-width: 96px;
+        padding: 10px 12px;
+      }
+      .home-showcase-stat strong {
+        font-size: 24px;
       }
       .latest-section {
         padding: 48px 18px;
       }
       .latest-select {
         width: 100%;
+      }
+      .showcase-grid {
+        grid-template-columns: 1fr;
+      }
+      .today-route {
+        padding: 20px;
       }
     }
   </style>
@@ -888,33 +1572,19 @@
     <span class="star-el" style="--sz:22px;--dur:2.8s;--delay:.5s; bottom:30%; left:3%;">✦</span>
 
     <div class="hero-inner">
-      <!-- Sol: Metin -->
-      <div>
-        <div class="hero-eyebrow">
-          <span>🎓</span> Öğrenci, veli ve öğretmenler için güncel eğitim merkezi
-        </div>
-        <h1 class="hero-h1">
-          Bilgiye <span class="c-purple">hızlı ulaş</span>,<br>
-          yenilikleri <span class="c-coral">kaçırma</span>
-        </h1>
-        <p class="hero-p">
-          Ders içerikleri, hızlı okuma metinleri, sınavlar, dokümanlar ve duyurular tek akışta toplanır. Siteye her girişte en güncel içeriklere daha kolay ulaşırsın.
-        </p>
-        <p class="hero-p">
-          Öğrenciler çalışacağı materyali, veliler takip edeceği bilgiyi, öğretmenler kullanacağı kaynağı hızlıca bulsun diye ana sayfa canlı bir eğitim panosu gibi çalışır.
-        </p>
-        <div class="hero-stats">
-          <div class="hstat">
-            <span class="hstat-n" id="statYil">21+</span>
-            <span class="hstat-l">Yıl Deneyim</span>
+      <!-- Sol: Kontrollü vitrin slayt sahnesi -->
+      <div class="hero-copy">
+        <div class="home-showcase-panel" id="homeShowcasePanel" aria-label="Ana sayfa vitrini">
+          <div class="home-showcase-stage" id="homeShowcaseStage">
+            <div class="home-showcase-empty">Vitrin içerikleri yükleniyor...</div>
           </div>
-          <div class="hstat">
-            <span class="hstat-n" id="statOgrenci">500+</span>
-            <span class="hstat-l">Öğrenci</span>
-          </div>
-          <div class="hstat">
-            <span class="hstat-n" id="statIcerik">200+</span>
-            <span class="hstat-l">İçerik</span>
+          <div class="home-showcase-controls">
+            <div class="home-showcase-dots" id="homeShowcaseDots" aria-label="Vitrin slaytları"></div>
+            <div class="home-showcase-nav">
+              <button class="home-showcase-btn is-paused" id="homeShowcasePause" type="button" aria-label="Slaytı durdur">⏸ Duraklat</button>
+              <button class="home-showcase-btn" id="homeShowcasePrev" type="button" aria-label="Önceki slayt">←</button>
+              <button class="home-showcase-btn" id="homeShowcaseNext" type="button" aria-label="Sonraki slayt">→</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1000,6 +1670,75 @@
           </div>
         </div>
         <a href="/oyun/oyunlar.html" class="platform-cta">Oyunları Aç →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="learning-showcase" aria-labelledby="learningShowcaseTitle">
+    <div class="learning-showcase-inner">
+      <div class="today-route">
+        <div class="today-route-top">
+          <span class="today-route-kicker">Canlı eğitim panosu</span>
+          <span class="today-route-icon">✨</span>
+        </div>
+        <h2 id="learningShowcaseTitle">Bugünün öğrenme rotası</h2>
+        <p>Öğrenci siteye geldiğinde düz liste yerine hemen deneyebileceği oyunları, açabileceği dokümanları ve devam edebileceği çalışmaları görür.</p>
+        <div class="route-steps">
+          <div class="route-step" style="--step-bg:#F0EBFF;--step-color:#6C3DED;">
+            <span>1</span>
+            <div><strong>Bir oyunla başla</strong><small>Matematik, dikkat veya hafıza pratiği</small></div>
+          </div>
+          <div class="route-step" style="--step-bg:#E9FFFA;--step-color:#00856A;">
+            <span>2</span>
+            <div><strong>PDF dokümanı aç</strong><small>Çalışma kağıdı, konu özeti veya etkinlik</small></div>
+          </div>
+          <div class="route-step" style="--step-bg:#FFF0EC;--step-color:#D35400;">
+            <span>3</span>
+            <div><strong>Son eklenenleri keşfet</strong><small>Yeni içerikler ana sayfada görünür</small></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="showcase-grid">
+        <a href="/oyun/oyunlar.html" class="preview-card game-preview" style="--preview-color:#00856A;--preview-bg:linear-gradient(135deg,#00A891,#55EFC4);">
+          <div class="preview-art">
+            <div class="preview-screen">
+              <span class="preview-tile" style="--tile-bg:#6C3DED;">+</span>
+              <span class="preview-tile" style="--tile-bg:#FF6052;">12</span>
+              <span class="preview-tile" style="--tile-bg:#FFB800;">?</span>
+              <span class="preview-tile" style="--tile-bg:#0B78E3;">3D</span>
+              <span class="preview-tile" style="--tile-bg:#00A891;">₺</span>
+              <span class="preview-tile" style="--tile-bg:#D7337A;">★</span>
+            </div>
+          </div>
+          <div class="preview-body">
+            <div class="preview-label">Oyun vitrini</div>
+            <div class="preview-title">Mini sahne önizlemeleriyle oyun kataloğu</div>
+            <div class="preview-meta"><span>Matematik</span><span>Hafıza</span><span>Dikkat</span></div>
+          </div>
+        </a>
+        <a href="/ders.html" class="preview-card doc-preview" style="--preview-color:#6C3DED;--preview-bg:linear-gradient(135deg,#6C3DED,#FFB84D);">
+          <div class="preview-art">
+            <div class="preview-screen">
+              <div class="preview-page">
+                <span class="preview-line"></span>
+                <span class="preview-line short"></span>
+                <span class="preview-line"></span>
+                <span class="preview-line short"></span>
+              </div>
+              <div class="preview-lines">
+                <span style="--line-bg:#6C3DED;"></span>
+                <span style="--line-bg:#00A891;"></span>
+                <span style="--line-bg:#FF6052;"></span>
+              </div>
+            </div>
+          </div>
+          <div class="preview-body">
+            <div class="preview-label">Doküman vitrini</div>
+            <div class="preview-title">PDF kapak hissi veren çalışma kartları</div>
+            <div class="preview-meta"><span>Çalışma kağıdı</span><span>Konu özeti</span><span>Etkinlik</span></div>
+          </div>
+        </a>
       </div>
     </div>
   </section>
@@ -1103,10 +1842,6 @@
   <!-- ─── KONU BANDINDA HIZLI ERİŞİM ─── -->
   <div class="subjects-band">
     <div class="subjects-row">
-      <a href="/1_sinif/okuma_anlama/1_okuma_anlama.html" class="subj-pill">
-        <span class="subj-pill-em">📖</span>
-        <span class="subj-pill-lbl">Okuma<br>Anlama(Eski)</span>
-      </a>
       <a href="/ders.html?sinif=1&ders=matematik" class="subj-pill">
         <span class="subj-pill-em">🔢</span>
         <span class="subj-pill-lbl">Matematik</span>
@@ -1307,7 +2042,12 @@
     const EMOJI_FALLBACK = ['📖','🎮','🔢','🔬','🌟','📝','🌱','⭐'];
 
     document.addEventListener('DOMContentLoaded', async function() {
-      const data = window.kemalSite ? await window.kemalSite.getDataAsync() : null;
+      const dataPromise = window.kemalSite
+        ? Promise.race([
+            window.kemalSite.getDataAsync(),
+            new Promise(resolve => window.setTimeout(() => resolve(null), 2500))
+          ])
+        : Promise.resolve(null);
 
       function esc(value) {
         return String(value || '')
@@ -1368,6 +2108,341 @@
         ].join(';');
       }
 
+      function sanitizeVitrinHtml(value) {
+        const template = document.createElement('template');
+        template.innerHTML = String(value || '');
+        const allowedTags = { A:true, B:true, BR:true, DIV:true, EM:true, FONT:true, I:true, LI:true, OL:true, P:true, SPAN:true, STRONG:true, U:true, UL:true };
+        function isSafeRichStyle(raw) {
+          const parts = String(raw || '').split(';').map(part => part.trim()).filter(Boolean);
+          return parts.length > 0 && parts.every(part =>
+            /^color:\s*#[0-9a-f]{3,6}$/i.test(part) ||
+            /^font-size:\s*(1[0-9]|2[0-9]|3[0-9]|4[0-8])px$/i.test(part)
+          );
+        }
+        function clean(node) {
+          Array.from(node.childNodes).forEach(child => {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+              if (!allowedTags[child.tagName]) {
+                child.replaceWith(document.createTextNode(child.textContent || ''));
+                return;
+              }
+              Array.from(child.attributes).forEach(attr => {
+                const name = attr.name.toLowerCase();
+                if (child.tagName === 'A' && name === 'href') {
+                  if (/^(https?:\/\/|\/|#)/i.test(attr.value)) {
+                    child.setAttribute('target', '_blank');
+                    child.setAttribute('rel', 'noopener noreferrer');
+                  } else {
+                    child.removeAttribute(attr.name);
+                  }
+                  return;
+                }
+                if (child.tagName === 'FONT' && (name === 'color' || name === 'size')) return;
+                if (child.tagName === 'SPAN' && name === 'style' && isSafeRichStyle(attr.value)) return;
+                child.removeAttribute(attr.name);
+              });
+              clean(child);
+            } else if (child.nodeType !== Node.TEXT_NODE) {
+              child.remove();
+            }
+          });
+        }
+        clean(template.content);
+        return template.innerHTML.trim();
+      }
+
+      function vitrinTuruMeta(type) {
+        const map = {
+          text: { label:'Mini Yazı', icon:'⭐', color:'#6C3DED', soft:'#F4EFFF', border:'#D9CBFF' },
+          image: { label:'Görsel', icon:'🖼️', color:'#00856A', soft:'#E9FFFA', border:'#B7F0E6' },
+          youtube: { label:'YouTube', icon:'▶', color:'#0B78E3', soft:'#ECF6FF', border:'#C8E4FF' },
+          document: { label:'Doküman', icon:'📄', color:'#D35400', soft:'#FFF0EC', border:'#FFD0C6' }
+        };
+        return map[type] || map.text;
+      }
+
+      function publicStorageUrl(path) {
+        if (!path) return '';
+        if (/^https?:\/\//i.test(path)) return path;
+        const config = window.kemalSiteStore && window.kemalSiteStore.getDocumentsConfig
+          ? window.kemalSiteStore.getDocumentsConfig()
+          : null;
+        if (!config || !config.supabaseUrl) return '';
+        return config.supabaseUrl.replace(/\/$/, '') + '/storage/v1/object/public/dokumanlar/' + String(path).split('/').map(encodeURIComponent).join('/');
+      }
+
+      async function fetchHomepageSlides() {
+        const config = window.kemalSiteStore && window.kemalSiteStore.getDocumentsConfig
+          ? window.kemalSiteStore.getDocumentsConfig()
+          : null;
+        if (!config || !config.supabaseUrl || !config.supabaseAnonKey) return [];
+        const fields = 'id,baslik,aciklama_html,makale_html,icerik_turu,ikon,tema_renk,media_url,media_path,media_fit,youtube_embed_url,youtube_video_id,dokuman_id,link_url,link_label,gecis_suresi_ms,siralama,aktif';
+        const url = config.supabaseUrl.replace(/\/$/, '') +
+          '/rest/v1/homepage_slides?select=' + encodeURIComponent(fields) +
+          '&aktif=eq.true&order=siralama.asc,olusturma_tarihi.desc&limit=5';
+        try {
+          const response = await fetch(url, {
+            headers: {
+              apikey: config.supabaseAnonKey,
+              Authorization: 'Bearer ' + config.supabaseAnonKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (!response.ok) return [];
+          const rows = await response.json();
+          return Array.isArray(rows) ? rows : [];
+        } catch (error) {
+          return [];
+        }
+      }
+
+      const TEMP_HOMEPAGE_SLIDES = [
+        {
+          id: 'temp-welcome',
+          baslik: 'Bilgiye hızlı ulaş, yenilikleri kaçırma',
+          aciklama_html: 'Ders içerikleri, sınavlar, dokümanlar ve duyurular tek akışta toplandı.',
+          icerik_turu: 'image',
+          ikon: '🎓',
+          tema_renk: '#6C3DED',
+          media_url: '/assets/vitrin-gecici/01-hos-geldiniz.png',
+          media_fit: 'contain',
+          link_url: '/ders.html',
+          link_label: 'Derslere Git',
+          gecis_suresi_ms: 5000,
+          siralama: 1
+        },
+        {
+          id: 'temp-documents',
+          baslik: 'Çalışma yaprakları yayında',
+          aciklama_html: 'Sınıfına uygun PDF, etkinlik ve tekrar içeriklerini hemen incele.',
+          icerik_turu: 'image',
+          ikon: '📄',
+          tema_renk: '#00856A',
+          media_url: '/assets/vitrin-gecici/02-dokumanlar.png',
+          media_fit: 'contain',
+          link_url: '/yeni.html',
+          link_label: 'Dokümanları Aç',
+          gecis_suresi_ms: 5000,
+          siralama: 2
+        },
+        {
+          id: 'temp-reading',
+          baslik: 'Okuma hızını takip et',
+          aciklama_html: 'Metni oku, sonucunu gör, gelişimini adım adım izle.',
+          icerik_turu: 'image',
+          ikon: '📖',
+          tema_renk: '#6C3DED',
+          media_url: '/assets/vitrin-gecici/03-hizli-okuma.png',
+          media_fit: 'contain',
+          link_url: '/hizli-okuma/index.html',
+          link_label: 'Hızlı Okumaya Git',
+          gecis_suresi_ms: 5000,
+          siralama: 3
+        },
+        {
+          id: 'temp-exams',
+          baslik: 'Kendini dene, sonucunu gör',
+          aciklama_html: 'Sınıf düzeyine uygun sınavlarla eksiklerini fark et.',
+          icerik_turu: 'image',
+          ikon: '📝',
+          tema_renk: '#FF7043',
+          media_url: '/assets/vitrin-gecici/04-sinav-merkezi.png',
+          media_fit: 'contain',
+          link_url: '/sinav_sitesi/index.html',
+          link_label: 'Sınavlara Git',
+          gecis_suresi_ms: 5000,
+          siralama: 4
+        },
+        {
+          id: 'temp-games',
+          baslik: 'Oynayarak pekiştir',
+          aciklama_html: 'Matematik, dikkat ve ders tekrarını eğlenceli hale getir.',
+          icerik_turu: 'image',
+          ikon: '🎮',
+          tema_renk: '#00856A',
+          media_url: '/assets/vitrin-gecici/05-egitim-oyunlari.png',
+          media_fit: 'contain',
+          link_url: '/oyun/oyunlar.html',
+          link_label: 'Oyunları Aç',
+          gecis_suresi_ms: 5000,
+          siralama: 5
+        }
+      ];
+
+      function renderHomepageShowcase(slides) {
+        const stage = document.getElementById('homeShowcaseStage');
+        const dots = document.getElementById('homeShowcaseDots');
+        const prev = document.getElementById('homeShowcasePrev');
+        const next = document.getElementById('homeShowcaseNext');
+        const panel = document.getElementById('homeShowcasePanel');
+        if (!stage || !dots || !prev || !next || !panel) return;
+
+        const defaultIntroSlide = {
+          id: 'default-intro',
+          baslik: 'Bilgiye hızlı ulaş, yenilikleri kaçırma',
+          aciklama_html: 'Ders içerikleri, hızlı okuma metinleri, sınavlar, dokümanlar ve duyurular tek akışta toplanır. Öğrenciler, veliler ve öğretmenler ihtiyaç duyduğu kaynağı hızlıca bulur.',
+          icerik_turu: 'text',
+          ikon: '🎓',
+          tema_renk: '#6C3DED',
+          link_url: '/ders.html',
+          link_label: 'Derslere Git',
+          gecis_suresi_ms: 5000,
+          is_intro: true
+        };
+        const publishedSlides = Array.isArray(slides) && slides.length ? slides : TEMP_HOMEPAGE_SLIDES;
+        const items = [defaultIntroSlide].concat(publishedSlides).slice(0, 6);
+        if (!items.length) {
+          stage.innerHTML = '<div class="home-showcase-empty">Vitrin içerikleri hazırlanıyor.</div>';
+          dots.innerHTML = '';
+          prev.disabled = true;
+          next.disabled = true;
+          return;
+        }
+
+        function slideStyle(item) {
+          const fallback = vitrinTuruMeta(item.icerik_turu);
+          const color = item.tema_renk || fallback.color;
+          return [
+            `--showcase-color:${esc(color)}`,
+            `--showcase-soft:${esc(fallback.soft)}`,
+            `--showcase-border:${esc(fallback.border)}`
+          ].join(';');
+        }
+
+        function mediaHtml(item) {
+          const type = item.icerik_turu || 'text';
+          const fallback = vitrinTuruMeta(type);
+          if (type === 'youtube' && item.youtube_embed_url) {
+            const joiner = item.youtube_embed_url.indexOf('?') === -1 ? '?' : '&';
+            const embedUrl = item.youtube_embed_url + joiner + 'rel=0&modestbranding=1';
+            return `<div class="home-showcase-media">
+              <iframe src="${esc(embedUrl)}" title="${esc(item.baslik || 'YouTube videosu')}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+            </div>`;
+          }
+          const mediaUrl = type === 'image' ? (item.media_url || publicStorageUrl(item.media_path)) : '';
+          const textMediaUrl = type === 'text' ? (item.media_url || publicStorageUrl(item.media_path)) : '';
+          if (textMediaUrl) {
+            return `<div class="home-showcase-media">
+              <img src="${esc(textMediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">
+            </div>`;
+          }
+          if (mediaUrl) {
+            return `<div class="home-showcase-media">
+              <img src="${esc(mediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">
+            </div>`;
+          }
+          return `<div class="home-showcase-media"><span class="home-showcase-icon">${esc(item.ikon || fallback.icon)}</span></div>`;
+        }
+
+        stage.innerHTML = items.map((item, index) => {
+          const typeMeta = vitrinTuruMeta(item.icerik_turu);
+          const articleHref = item.icerik_turu === 'text' && item.makale_html ? '/makale.html?id=' + encodeURIComponent(item.id) : '';
+          const href = articleHref || item.link_url || '#';
+          const linkLabel = articleHref ? 'Devamını Oku' : (item.link_label || 'İncele');
+          const desc = sanitizeVitrinHtml(item.aciklama_html || '');
+          const titleHtml = item.is_intro
+            ? 'Bilgiye <span class="accent-purple">hızlı ulaş</span>, yenilikleri <span class="accent-orange">kaçırma</span>'
+            : esc(item.baslik || 'Vitrin');
+          const effects = ['slide', 'fade', 'rise', 'zoom'];
+          const hasMedia = Boolean(item.media_url || item.media_path || (item.icerik_turu === 'youtube' && item.youtube_embed_url));
+          const slideClasses = [
+            'home-showcase-slide',
+            index === 0 ? 'active' : '',
+            hasMedia ? 'is-media' : '',
+            item.icerik_turu === 'youtube' ? 'is-video' : '',
+            item.icerik_turu === 'text' && !hasMedia ? 'text-only' : '',
+            item.is_intro ? 'is-intro' : ''
+          ].filter(Boolean).join(' ');
+          const statsHtml = item.is_intro ? `
+            <div class="home-showcase-stats">
+              <span class="home-showcase-stat"><strong>21+</strong><span>Yıl Deneyim</span></span>
+              <span class="home-showcase-stat"><strong>500+</strong><span>Öğrenci</span></span>
+              <span class="home-showcase-stat"><strong>200+</strong><span>İçerik</span></span>
+            </div>` : '';
+          return `
+            <article class="${slideClasses}" data-effect="${effects[index % effects.length]}" style="${slideStyle(item)}">
+              ${mediaHtml(item)}
+              <div class="home-showcase-copy">
+                <span class="home-showcase-kind">${esc(typeMeta.icon)} ${esc(typeMeta.label)}</span>
+                <div class="home-showcase-name">${titleHtml}</div>
+                <div class="home-showcase-desc">${desc || 'Kemal Öğretmen’in seçtiği içerik.'}</div>
+                ${statsHtml}
+                ${href !== '#' ? `<a class="home-showcase-cta" href="${esc(href)}">${esc(linkLabel)} →</a>` : ''}
+              </div>
+            </article>`;
+        }).join('');
+
+        dots.innerHTML = items.map((item, index) =>
+          `<button class="home-showcase-dot ${index === 0 ? 'active' : ''}" type="button" data-vitrin-index="${index}" aria-label="${index + 1}. slayt"></button>`
+        ).join('');
+
+        let activeIndex = 0;
+        let timer = 0;
+        let manualPaused = false;
+        let interactionPaused = false;
+        const pause = document.getElementById('homeShowcasePause');
+        function isPaused() {
+          return manualPaused || interactionPaused;
+        }
+        function syncPauseButton() {
+          if (!pause) return;
+          pause.textContent = manualPaused ? '▶ Devam Et' : '⏸ Duraklat';
+          pause.setAttribute('aria-label', manualPaused ? 'Slaytı devam ettir' : 'Slaytı durdur');
+        }
+
+        function go(index) {
+          activeIndex = (index + items.length) % items.length;
+          const activeItem = items[activeIndex];
+          panel.style.setProperty('--showcase-color', activeItem.tema_renk || vitrinTuruMeta(activeItem.icerik_turu).color);
+          stage.querySelectorAll('.home-showcase-slide').forEach((slide, idx) => slide.classList.toggle('active', idx === activeIndex));
+          dots.querySelectorAll('.home-showcase-dot').forEach((dot, idx) => dot.classList.toggle('active', idx === activeIndex));
+        }
+
+        function delayFor(index) {
+          const value = Number(items[index] && items[index].gecis_suresi_ms) || 4000;
+          return Math.max(3000, Math.min(10000, value));
+        }
+
+        function schedule() {
+          window.clearTimeout(timer);
+          if (items.length <= 1 || isPaused()) return;
+          timer = window.setTimeout(() => {
+            go(activeIndex + 1);
+            schedule();
+          }, delayFor(activeIndex));
+        }
+
+        prev.disabled = items.length <= 1;
+        next.disabled = items.length <= 1;
+        if (pause) {
+          pause.disabled = items.length <= 1;
+          pause.addEventListener('click', () => {
+            manualPaused = !manualPaused;
+            syncPauseButton();
+            if (manualPaused) {
+              window.clearTimeout(timer);
+            } else {
+              schedule();
+            }
+          });
+          syncPauseButton();
+        }
+        prev.addEventListener('click', () => { go(activeIndex - 1); schedule(); });
+        next.addEventListener('click', () => { go(activeIndex + 1); schedule(); });
+        dots.querySelectorAll('.home-showcase-dot').forEach(dot => {
+          dot.addEventListener('click', () => {
+            go(Number(dot.getAttribute('data-vitrin-index') || 0));
+            schedule();
+          });
+        });
+        panel.addEventListener('mouseenter', () => { interactionPaused = true; window.clearTimeout(timer); });
+        panel.addEventListener('mouseleave', () => { interactionPaused = false; schedule(); });
+        panel.addEventListener('focusin', () => { interactionPaused = true; window.clearTimeout(timer); });
+        panel.addEventListener('focusout', () => { interactionPaused = false; schedule(); });
+        go(0);
+        schedule();
+      }
+
       function renkBelirle(item, index) {
         if (item && item.type === 'reading') return 'purple';
         if (item && item.type === 'exam') return 'coral';
@@ -1379,7 +2454,10 @@
       async function guncelListeOlustur(siteData) {
         if (window.kemalContentFeed) {
           try {
-            const dynamicItems = await window.kemalContentFeed.getTickerItems({ maxItems: 5 });
+            const dynamicItems = await Promise.race([
+              window.kemalContentFeed.getTickerItems({ maxItems: 5 }),
+              new Promise(resolve => window.setTimeout(() => resolve([]), 2500))
+            ]);
             if (dynamicItems.length) {
               return dynamicItems.map((item, index) => ({
                 baslik: item.title,
@@ -1438,7 +2516,11 @@
           .slice(0, 5);
       }
 
+      renderHomepageShowcase([]);
+      fetchHomepageSlides().then(renderHomepageShowcase);
+
       /* ── HABERLER ── */
+      const data = await dataPromise;
       const haberler = await guncelListeOlustur(data);
       const cards    = document.getElementById('haberCards');
       const ticker   = document.getElementById('tickerTrack');
@@ -1515,6 +2597,9 @@
           }).join('');
         });
       }
+
+      renderHeroLive(liste);
+      renderPlatformLive([]);
 
       async function renderLatestStream() {
         const grid = document.getElementById('latestGrid');

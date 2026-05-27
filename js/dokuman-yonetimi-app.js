@@ -2,8 +2,10 @@
   'use strict';
 
   const BUCKET_NAME = window.kemalDocumentStore.getBucketName();
+  const HOMEPAGE_SLIDES_TABLE = 'homepage_slides';
   const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
   const MAX_DOCUMENT_SIZE_BYTES = 50 * 1024 * 1024;
+  const MAX_SHOWCASE_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
   const ALLOWED_FILE_TYPES = {
     pdf: { mime: 'application/pdf', extensions: ['pdf'], label: 'PDF' },
     jpeg: { mime: 'image/jpeg', extensions: ['jpg', 'jpeg'], label: 'JPEG' },
@@ -13,7 +15,9 @@
 
   const state = {
     documents: [],
+    showcaseSlides: [],
     editingId: null,
+    editingSlideId: null,
     selectedDocument: null,
     currentPdfMeta: null,
     contentKind: 'document',
@@ -84,6 +88,14 @@
     }
 
     if (
+      combined.includes('homepage_slides') ||
+      combined.includes('relation "public.homepage_slides" does not exist') ||
+      combined.includes('makale_html')
+    ) {
+      return 'Ana sayfa vitrini için Supabase yapısını kurmalısın. `supabase-ana-sayfa-vitrin.sql` dosyasını SQL Editor içinde çalıştır.';
+    }
+
+    if (
       combined.includes('could not find the table') ||
       combined.includes('schema cache') ||
       combined.includes('relation "public.dokumanlar" does not exist') ||
@@ -148,6 +160,19 @@
     }
   }
 
+  function validateShowcaseImage(file) {
+    if (!file) {
+      return;
+    }
+    const kind = getDocumentFileKind(file);
+    if (!['jpeg', 'png', 'webp'].includes(kind)) {
+      throw new Error('Vitrin görseli için yalnızca JPEG, PNG veya WebP yükleyebilirsin.');
+    }
+    if (file.size > MAX_SHOWCASE_IMAGE_SIZE_BYTES) {
+      throw new Error('Vitrin görseli en fazla ' + formatBytes(MAX_SHOWCASE_IMAGE_SIZE_BYTES) + ' olabilir.');
+    }
+  }
+
   function slugify(value) {
     return String(value || '')
       .toLowerCase()
@@ -160,6 +185,85 @@
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 60) || 'dokuman';
+  }
+
+  function stripHtml(value) {
+    const div = document.createElement('div');
+    div.innerHTML = String(value || '');
+    return div.textContent || div.innerText || '';
+  }
+
+  function sanitizeRichHtml(value) {
+    const template = document.createElement('template');
+    template.innerHTML = String(value || '');
+    const allowedTags = {
+      A: true,
+      B: true,
+      BR: true,
+      DIV: true,
+      EM: true,
+      FONT: true,
+      I: true,
+      LI: true,
+      OL: true,
+      P: true,
+      SPAN: true,
+      STRONG: true,
+      U: true,
+      UL: true,
+    };
+    function isSafeRichStyle(value) {
+      const parts = String(value || '').split(';').map(function(part) {
+        return part.trim();
+      }).filter(Boolean);
+      if (!parts.length) {
+        return false;
+      }
+      return parts.every(function(part) {
+        return /^color:\s*#[0-9a-f]{3,6}$/i.test(part) ||
+          /^font-size:\s*(1[0-9]|2[0-9]|3[0-9]|4[0-8])px$/i.test(part);
+      });
+    }
+
+    function clean(node) {
+      Array.from(node.childNodes).forEach(function(child) {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          if (!allowedTags[child.tagName]) {
+            child.replaceWith(document.createTextNode(child.textContent || ''));
+            return;
+          }
+
+          Array.from(child.attributes).forEach(function(attr) {
+            const name = attr.name.toLowerCase();
+            if (child.tagName === 'A' && name === 'href') {
+              if (/^(https?:\/\/|\/|#)/i.test(attr.value)) {
+                child.setAttribute('target', '_blank');
+                child.setAttribute('rel', 'noopener noreferrer');
+              } else {
+                child.removeAttribute(attr.name);
+              }
+              return;
+            }
+            if (child.tagName === 'FONT' && name === 'color') {
+              return;
+            }
+            if (child.tagName === 'FONT' && name === 'size') {
+              return;
+            }
+            if (child.tagName === 'SPAN' && name === 'style' && isSafeRichStyle(attr.value)) {
+              return;
+            }
+            child.removeAttribute(attr.name);
+          });
+          clean(child);
+        } else if (child.nodeType !== Node.TEXT_NODE) {
+          child.remove();
+        }
+      });
+    }
+
+    clean(template.content);
+    return template.innerHTML.trim();
   }
 
   function getSelectedFile() {
@@ -424,7 +528,7 @@
   }
 
   function getTargetLabel(target) {
-    const subjectMeta = window.kemalDocumentStore.getSubjectMeta(target.ders);
+    const subjectMeta = window.kemalDocumentStore.getSubjectMeta(target.ders, target.sinif);
     return window.kemalDocumentStore.getGradeLabel(target.sinif) + ' · ' + (subjectMeta ? subjectMeta.label : target.ders);
   }
 
@@ -464,6 +568,7 @@
     const first = state.targets[0];
     if (first) {
       document.getElementById('fSinif').value = String(first.sinif);
+      syncSubjectSelectForGrade('fDers', first.sinif, first.ders);
       document.getElementById('fDers').value = first.ders;
     }
     renderTargetList();
@@ -602,13 +707,33 @@
   }
 
   function showListPanel() {
+    document.getElementById('panelShowcaseList').style.display = 'none';
+    document.getElementById('panelShowcaseEdit').style.display = 'none';
     document.getElementById('panelEdit').style.display = 'none';
     document.getElementById('panelList').style.display = 'block';
   }
 
   function showEditPanel() {
     document.getElementById('panelList').style.display = 'none';
+    document.getElementById('panelShowcaseList').style.display = 'none';
+    document.getElementById('panelShowcaseEdit').style.display = 'none';
     document.getElementById('panelEdit').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showShowcaseListPanel() {
+    document.getElementById('panelList').style.display = 'none';
+    document.getElementById('panelEdit').style.display = 'none';
+    document.getElementById('panelShowcaseEdit').style.display = 'none';
+    document.getElementById('panelShowcaseList').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showShowcaseEditPanel() {
+    document.getElementById('panelList').style.display = 'none';
+    document.getElementById('panelEdit').style.display = 'none';
+    document.getElementById('panelShowcaseList').style.display = 'none';
+    document.getElementById('panelShowcaseEdit').style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -624,7 +749,7 @@
     document.getElementById('fBaslik').value = '';
     document.getElementById('fAciklama').value = '';
     document.getElementById('fSinif').value = '1';
-    document.getElementById('fDers').value = (window.kemalDocumentStore.getSubjects()[0] || {}).key || '';
+    syncSubjectSelectForGrade('fDers', 1);
     document.getElementById('fSiralama').value = '0';
     document.getElementById('fKapakRenk').value = '#6C3DED';
     document.getElementById('fAktif').checked = true;
@@ -642,18 +767,51 @@
   }
 
   function populateSelects() {
-    const subjects = window.kemalDocumentStore.getSubjects();
     document.getElementById('fSinif').innerHTML = GRADES.map(function(grade) {
       return '<option value="' + grade + '">' + window.kemalDocumentStore.getGradeLabel(grade) + '</option>';
     }).join('');
 
-    const subjectOptions = subjects.map(function(subject) {
+    syncSubjectSelectForGrade('fDers', document.getElementById('fSinif').value || 1);
+    syncFilterSubjectOptions();
+  }
+
+  function buildSubjectOptions(grade) {
+    const subjects = window.kemalDocumentStore.getSubjects(grade);
+    return subjects.map(function(subject) {
       return '<option value="' + subject.key + '">' + subject.icon + ' ' + subject.label + '</option>';
     }).join('');
+  }
 
-    document.getElementById('fDers').innerHTML = subjectOptions;
-    document.getElementById('filterSubject').innerHTML =
-      '<option value="">Tüm dersler</option>' + subjectOptions;
+  function syncSubjectSelectForGrade(selectId, grade, preferredValue) {
+    const select = document.getElementById(selectId);
+    if (!select) {
+      return;
+    }
+    const currentValue = preferredValue || select.value;
+    const subjectOptions = buildSubjectOptions(grade);
+    select.innerHTML = subjectOptions;
+    const hasCurrent = Array.from(select.options).some(function(option) {
+      return option.value === currentValue;
+    });
+    if (hasCurrent) {
+      select.value = currentValue;
+    } else if (select.options.length) {
+      select.selectedIndex = 0;
+    }
+  }
+
+  function syncFilterSubjectOptions() {
+    const select = document.getElementById('filterSubject');
+    if (!select) {
+      return;
+    }
+    const grade = document.getElementById('filterGrade') ? document.getElementById('filterGrade').value : '';
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">Tüm dersler</option>' + buildSubjectOptions(grade);
+    const hasCurrent = Array.from(select.options).some(function(option) {
+      return option.value === currentValue;
+    });
+    select.value = hasCurrent ? currentValue : '';
   }
 
   function renderDocuments() {
@@ -869,6 +1027,670 @@
     }
 
     return path;
+  }
+
+  function getShowcaseById(id) {
+    return state.showcaseSlides.find(function(item) {
+      return item.id === id;
+    }) || null;
+  }
+
+  function getSelectedShowcaseImage() {
+    const input = document.getElementById('sImage');
+    return input && input.files && input.files.length ? input.files[0] : null;
+  }
+
+  function getSelectedShowcaseTextImage() {
+    const input = document.getElementById('sTextImage');
+    return input && input.files && input.files.length ? input.files[0] : null;
+  }
+
+  function getStoragePublicUrl(path) {
+    if (!path) {
+      return '';
+    }
+    if (/^https?:\/\//i.test(String(path))) {
+      return String(path);
+    }
+    const response = getClient().storage.from(BUCKET_NAME).getPublicUrl(path);
+    return response && response.data && response.data.publicUrl ? response.data.publicUrl : '';
+  }
+
+  function getShowcaseTypeLabel(type) {
+    const map = {
+      text: 'Mini yazı',
+      image: 'Görsel',
+      youtube: 'YouTube',
+      document: 'Doküman',
+    };
+    return map[type] || 'Slayt';
+  }
+
+  function getShowcaseMediaUrl(item) {
+    if (!item) {
+      return '';
+    }
+    if (item.icerik_turu === 'image' || item.icerik_turu === 'text') {
+      return item.media_url || getStoragePublicUrl(item.media_path);
+    }
+    if (item.icerik_turu === 'youtube' && item.youtube_video_id) {
+      return 'https://img.youtube.com/vi/' + encodeURIComponent(item.youtube_video_id) + '/hqdefault.jpg';
+    }
+    return '';
+  }
+
+  function syncShowcaseTypeUi() {
+    const type = document.getElementById('sType') ? document.getElementById('sType').value : 'text';
+    const textBox = document.getElementById('sTextExtraBox');
+    if (textBox) {
+      textBox.classList.toggle('active', type === 'text');
+    }
+    ['Image', 'Youtube', 'Document'].forEach(function(name) {
+      const box = document.getElementById('s' + name + 'Box');
+      if (box) {
+        box.classList.toggle('active', type === name.toLowerCase());
+      }
+    });
+    updateShowcasePreview();
+  }
+
+  function populateShowcaseDocumentSelect(selectedId) {
+    const select = document.getElementById('sDocumentId');
+    if (!select) {
+      return;
+    }
+    const options = state.documents
+      .filter(function(item) { return item.aktif !== false; })
+      .map(function(item) {
+        return '<option value="' + escHtml(item.id) + '">' + escHtml(item.baslik || 'Başlıksız doküman') + '</option>';
+      });
+    select.innerHTML = options.length ? options.join('') : '<option value="">Aktif doküman bulunamadı</option>';
+    if (selectedId && Array.from(select.options).some(function(option) { return option.value === selectedId; })) {
+      select.value = selectedId;
+    }
+  }
+
+  function updateDocumentLinkField() {
+    const type = document.getElementById('sType') ? document.getElementById('sType').value : '';
+    if (type !== 'document') {
+      return;
+    }
+    const doc = getDocumentById(document.getElementById('sDocumentId').value);
+    const linkInput = document.getElementById('sLinkUrl');
+    if (doc && linkInput) {
+      linkInput.value = window.kemalDocumentStore.buildViewerUrl(doc.id);
+    }
+    updateShowcasePreview();
+  }
+
+  function updateShowcasePreview() {
+    const box = document.getElementById('sPreviewBox');
+    const icon = document.getElementById('sPreviewIcon');
+    const title = document.getElementById('sPreviewTitle');
+    const desc = document.getElementById('sPreviewDesc');
+    if (!box || !title || !desc) {
+      return;
+    }
+
+    const type = document.getElementById('sType').value;
+    const current = state.editingSlideId ? getShowcaseById(state.editingSlideId) : null;
+    const currentIcon = document.getElementById('sIcon').value.trim() || '⭐';
+    const currentTitle = document.getElementById('sBaslik').value.trim() || 'Başlık bekleniyor.';
+    const richHtml = sanitizeRichHtml(document.getElementById('sDescriptionEditor').innerHTML);
+    const imageFile = getSelectedShowcaseImage();
+    const textImageFile = getSelectedShowcaseTextImage();
+    box.className = 'showcase-preview';
+    box.style.borderColor = document.getElementById('sColor').value || '#E2D9FF';
+
+    title.textContent = currentTitle;
+    desc.innerHTML = richHtml || 'Açıklama yazıldığında burada görünür.';
+
+    if (type === 'text') {
+      const imageUrl = textImageFile
+        ? URL.createObjectURL(textImageFile)
+        : (current && current.icerik_turu === 'text' && !document.getElementById('sRemoveImage').checked ? getShowcaseMediaUrl(current) : '');
+      if (imageUrl) {
+        box.innerHTML = '<img alt="">';
+        box.querySelector('img').src = imageUrl;
+        if (textImageFile) {
+          box.querySelector('img').onload = function() { URL.revokeObjectURL(imageUrl); };
+        }
+        return;
+      }
+    }
+
+    if (type === 'image') {
+      box.classList.toggle('cover', document.getElementById('sMediaFit').value === 'cover');
+      const imageUrl = imageFile
+        ? URL.createObjectURL(imageFile)
+        : (current && current.icerik_turu === 'image' && !document.getElementById('sRemoveMainImage').checked ? getShowcaseMediaUrl(current) : '');
+      if (imageUrl) {
+        box.innerHTML = '<img alt="">';
+        box.querySelector('img').src = imageUrl;
+        if (imageFile) {
+          box.querySelector('img').onload = function() { URL.revokeObjectURL(imageUrl); };
+        }
+        return;
+      }
+    }
+
+    if (type === 'youtube') {
+      let video = null;
+      const value = document.getElementById('sYoutubeInput').value.trim();
+      try {
+        video = value ? normalizeVideoInput(value) : null;
+      } catch (error) {
+        video = null;
+      }
+      const youtubeId = video && video.provider === 'youtube'
+        ? parseYouTubeId(video.embedUrl || video.originalUrl)
+        : (current && current.youtube_video_id);
+      if (youtubeId) {
+        box.innerHTML = '<img alt=""><span class="showcase-preview-emoji" style="position:absolute;">▶</span>';
+        box.querySelector('img').src = 'https://img.youtube.com/vi/' + encodeURIComponent(youtubeId) + '/hqdefault.jpg';
+        box.classList.add('cover');
+        return;
+      }
+    }
+
+    box.innerHTML = '<span class="showcase-preview-emoji" id="sPreviewIcon"></span>';
+    box.querySelector('.showcase-preview-emoji').textContent = type === 'document' ? '📄' : currentIcon;
+  }
+
+  function resetShowcaseForm() {
+    state.editingSlideId = null;
+    document.getElementById('showcaseEditTitle').textContent = 'Yeni Vitrin Slaytı';
+    document.getElementById('showcaseEditStatus').textContent = 'Ana sayfada otomatik akışın yanında görünecek kontrollü bir slayt hazırla.';
+    document.getElementById('sType').value = 'text';
+    document.getElementById('sBaslik').value = '';
+    document.getElementById('sDescriptionEditor').innerHTML = '';
+    document.getElementById('sTextImage').value = '';
+    document.getElementById('sRemoveImage').checked = false;
+    document.getElementById('sArticleEditor').innerHTML = '';
+    document.getElementById('sImage').value = '';
+    document.getElementById('sRemoveMainImage').checked = false;
+    document.getElementById('sMediaFit').value = 'contain';
+    document.getElementById('sYoutubeInput').value = '';
+    populateShowcaseDocumentSelect();
+    document.getElementById('sSiralama').value = '0';
+    document.getElementById('sDuration').value = '4000';
+    document.getElementById('sIcon').value = '⭐';
+    document.getElementById('sColor').value = '#6C3DED';
+    document.getElementById('sLinkLabel').value = 'İncele';
+    document.getElementById('sLinkUrl').value = '';
+    document.getElementById('sActive').checked = true;
+    syncShowcaseTypeUi();
+  }
+
+  function renderShowcaseSlides() {
+    const grid = document.getElementById('showcaseGrid');
+    if (!grid) {
+      return;
+    }
+    if (!state.showcaseSlides.length) {
+      grid.innerHTML = '<div class="empty-box" style="grid-column:1/-1;"><span>✨</span><p>Henüz ana sayfa vitrin slaytı eklenmedi.</p></div>';
+      return;
+    }
+
+    grid.innerHTML = state.showcaseSlides.map(function(item) {
+      const mediaUrl = getShowcaseMediaUrl(item);
+      const preview = mediaUrl
+        ? '<div class="showcase-preview ' + (item.media_fit === 'cover' || item.icerik_turu === 'youtube' ? 'cover' : '') + '"><img src="' + escHtml(mediaUrl) + '" alt=""></div>'
+        : '<div class="showcase-preview"><span class="showcase-preview-emoji" style="color:' + escHtml(item.tema_renk || '#6C3DED') + '">' + escHtml(item.ikon || (item.icerik_turu === 'document' ? '📄' : '⭐')) + '</span></div>';
+      const desc = sanitizeRichHtml(item.aciklama_html || '');
+      return (
+        '<article class="showcase-card">' +
+          preview +
+          '<div class="doc-top">' +
+            '<div class="doc-badges"><span class="doc-badge">' + escHtml(getShowcaseTypeLabel(item.icerik_turu)) + '</span><span class="doc-badge">' + Number(item.gecis_suresi_ms || 4000) / 1000 + ' sn</span></div>' +
+            '<div class="doc-status ' + (item.aktif ? 'on' : 'off') + '">' + (item.aktif ? 'Aktif' : 'Pasif') + '</div>' +
+          '</div>' +
+          '<div class="showcase-card-title">' + escHtml(item.baslik || 'Başlıksız slayt') + '</div>' +
+          '<div class="showcase-card-desc">' + (desc || 'Açıklama eklenmedi.') + '</div>' +
+          '<div class="doc-meta"><span>↕️ Sıra ' + Number(item.siralama || 0) + '</span>' + (item.link_url ? '<span>🔗 Link var</span>' : '') + (item.makale_html ? '<span>📝 Makale var</span>' : '') + '</div>' +
+          '<div class="doc-actions">' +
+            (can('dokuman_duzenleme') ? '<button class="btn-edit" type="button" onclick="vitrinDuzenle(\'' + item.id + '\')">Düzenle</button>' : '') +
+            (can('dokuman_duzenleme') ? '<button class="btn-open" type="button" onclick="vitrinDurumDegistir(\'' + item.id + '\')">' + (item.aktif ? 'Pasife Al' : 'Aktife Al') + '</button>' : '') +
+            (can('dokuman_silme') ? '<button class="btn-delete" type="button" onclick="vitrinSil(\'' + item.id + '\')">Sil</button>' : '') +
+          '</div>' +
+        '</article>'
+      );
+    }).join('');
+  }
+
+  async function loadShowcaseSlides() {
+    const grid = document.getElementById('showcaseGrid');
+    if (grid) {
+      grid.innerHTML = '<div class="empty-box" style="grid-column:1/-1;"><span>⏳</span><p>Vitrin slaytları yükleniyor…</p></div>';
+    }
+
+    const result = await getClient()
+      .from(HOMEPAGE_SLIDES_TABLE)
+      .select('*')
+      .order('siralama', { ascending: true })
+      .order('olusturma_tarihi', { ascending: false });
+
+    if (result.error) {
+      state.showcaseSlides = [];
+      if (grid) {
+        grid.innerHTML = '<div class="empty-box" style="grid-column:1/-1;"><span>⚠️</span><p>Vitrin tablosu hazır değil.</p></div>';
+      }
+      toast(humanizeSupabaseError(result.error), 'error');
+      return;
+    }
+
+    state.showcaseSlides = result.data || [];
+    renderShowcaseSlides();
+  }
+
+  function buildShowcaseImagePath(slideId, title, fileName) {
+    const extension = getFileExtension(fileName) || 'jpg';
+    return [
+      'homepage-vitrin',
+      slideId,
+      Date.now() + '-' + slugify(title || fileName || 'vitrin') + '.' + extension,
+    ].join('/');
+  }
+
+  async function uploadShowcaseImage(slideId, file, title) {
+    validateShowcaseImage(file);
+    const path = buildShowcaseImagePath(slideId, title, file.name);
+    const kind = getDocumentFileKind(file);
+    const contentType = (ALLOWED_FILE_TYPES[kind] && ALLOWED_FILE_TYPES[kind].mime) || file.type || 'image/jpeg';
+    const response = await getClient().storage.from(BUCKET_NAME).upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: contentType,
+    });
+    if (response.error) {
+      throw response.error;
+    }
+    return {
+      path: path,
+      url: getStoragePublicUrl(path),
+    };
+  }
+
+  async function listShowcaseStoragePaths(slideId) {
+    const folder = 'homepage-vitrin/' + slideId;
+    const response = await getClient().storage.from(BUCKET_NAME).list(folder, {
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'name', order: 'asc' },
+    });
+    if (response.error) {
+      throw response.error;
+    }
+    return (response.data || [])
+      .filter(function(item) { return item && item.name && item.id !== null; })
+      .map(function(item) { return folder + '/' + item.name; });
+  }
+
+  async function cleanupShowcaseStorage(slideId, keepPath, knownPaths) {
+    let paths = Array.isArray(knownPaths) ? knownPaths.slice() : [];
+    try {
+      paths = paths.concat(await listShowcaseStoragePaths(slideId));
+    } catch (error) {
+      console.warn('Vitrin klasoru listelenemedi:', error);
+    }
+    const unique = {};
+    const removable = paths.filter(Boolean).filter(function(path) {
+      if (path === keepPath || unique[path]) {
+        return false;
+      }
+      unique[path] = true;
+      return true;
+    });
+    if (!removable.length) {
+      return true;
+    }
+    const response = await getClient().storage.from(BUCKET_NAME).remove(removable);
+    if (response.error) {
+      console.warn('Vitrin gorselleri silinemedi:', response.error);
+      return false;
+    }
+    return true;
+  }
+
+  function collectShowcasePayload() {
+    const type = document.getElementById('sType').value;
+    const title = document.getElementById('sBaslik').value.trim();
+    const existing = state.editingSlideId ? getShowcaseById(state.editingSlideId) : null;
+    const image = getSelectedShowcaseImage();
+    const textImage = getSelectedShowcaseTextImage();
+    const removeTextImage = document.getElementById('sRemoveImage').checked;
+    const removeMainImage = document.getElementById('sRemoveMainImage').checked;
+    const active = document.getElementById('sActive').checked;
+    const activeCount = state.showcaseSlides.filter(function(item) {
+      return item.aktif && item.id !== state.editingSlideId;
+    }).length;
+
+    if (!title) {
+      throw new Error('Vitrin slaytı için başlık zorunlu.');
+    }
+    if (active && activeCount >= 5) {
+      throw new Error('Ana sayfa vitrininde en fazla 5 aktif slayt olabilir. Önce bir slaytı pasife al.');
+    }
+
+    let youtube = null;
+    if (type === 'youtube') {
+      const input = document.getElementById('sYoutubeInput').value.trim();
+      youtube = input ? normalizeVideoInput(input) : null;
+      if (!youtube && !(existing && existing.icerik_turu === 'youtube' && existing.youtube_embed_url)) {
+        throw new Error('YouTube slaytı için geçerli bir YouTube linki veya iframe kodu girmelisin.');
+      }
+    }
+
+    let selectedDocument = null;
+    if (type === 'document') {
+      selectedDocument = getDocumentById(document.getElementById('sDocumentId').value);
+      if (!selectedDocument && !(existing && existing.dokuman_id)) {
+        throw new Error('Doküman slaytı için bir doküman seçmelisin.');
+      }
+    }
+
+    if (type === 'image') {
+      if (image) {
+        validateShowcaseImage(image);
+      } else if (removeMainImage || !(existing && existing.icerik_turu === 'image' && (existing.media_path || existing.media_url))) {
+        throw new Error('Görsel slaytı için bir görsel seçmelisin.');
+      }
+    }
+    if (type === 'text' && textImage) {
+      validateShowcaseImage(textImage);
+    }
+
+    const linkInput = document.getElementById('sLinkUrl').value.trim();
+    const documentLink = selectedDocument ? window.kemalDocumentStore.buildViewerUrl(selectedDocument.id) : '';
+
+    return {
+      existing: existing,
+      type: type,
+      title: title,
+      descriptionHtml: sanitizeRichHtml(document.getElementById('sDescriptionEditor').innerHTML),
+      articleHtml: type === 'text' ? sanitizeRichHtml(document.getElementById('sArticleEditor').innerHTML) : '',
+      icon: document.getElementById('sIcon').value.trim() || '⭐',
+      color: document.getElementById('sColor').value || '#6C3DED',
+      sortOrder: parseInt(document.getElementById('sSiralama').value || '0', 10) || 0,
+      duration: parseInt(document.getElementById('sDuration').value || '4000', 10) || 4000,
+      active: active,
+      linkLabel: document.getElementById('sLinkLabel').value.trim() || 'İncele',
+      linkUrl: type === 'document' ? documentLink : linkInput,
+      mediaFit: document.getElementById('sMediaFit').value === 'cover' ? 'cover' : 'contain',
+      image: image,
+      textImage: textImage,
+      removeTextImage: removeTextImage,
+      removeMainImage: removeMainImage,
+      youtube: youtube,
+      selectedDocument: selectedDocument,
+    };
+  }
+
+  async function saveShowcaseSlide() {
+    if (!requirePermission(state.editingSlideId ? 'dokuman_duzenleme' : 'dokuman_ekleme', state.editingSlideId ? 'Vitrin düzenleme' : 'Vitrin ekleme')) {
+      return;
+    }
+    let uploadedPathForRollback = '';
+    let rollbackSlideId = '';
+    try {
+      const data = collectShowcasePayload();
+      const slideId = state.editingSlideId || (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'slide_' + Date.now());
+      rollbackSlideId = slideId;
+      let mediaPath = data.existing ? data.existing.media_path : null;
+      let mediaUrl = data.existing ? data.existing.media_url : null;
+      const oldMediaPath = data.existing ? data.existing.media_path : '';
+
+      const uploadFile = data.type === 'image' ? data.image : (data.type === 'text' ? data.textImage : null);
+      if ((data.type === 'image' || data.type === 'text') && uploadFile) {
+        const uploaded = await uploadShowcaseImage(slideId, uploadFile, data.title);
+        mediaPath = uploaded.path;
+        mediaUrl = uploaded.url;
+        uploadedPathForRollback = uploaded.path;
+      } else if (
+        (data.type === 'text' && data.removeTextImage) ||
+        (data.type === 'image' && data.removeMainImage) ||
+        (data.type !== 'text' && data.type !== 'image')
+      ) {
+        mediaPath = null;
+        mediaUrl = null;
+      }
+
+      const payload = {
+        baslik: data.title,
+        aciklama_html: data.descriptionHtml,
+        makale_html: data.articleHtml || null,
+        icerik_turu: data.type,
+        ikon: data.icon,
+        tema_renk: data.color,
+        media_url: mediaUrl,
+        media_path: mediaPath,
+        media_fit: data.mediaFit,
+        youtube_url: data.type === 'youtube'
+          ? ((data.youtube && data.youtube.originalUrl) || (data.existing && data.existing.youtube_url) || null)
+          : null,
+        youtube_embed_url: data.type === 'youtube'
+          ? ((data.youtube && data.youtube.embedUrl) || (data.existing && data.existing.youtube_embed_url) || null)
+          : null,
+        youtube_video_id: data.type === 'youtube'
+          ? parseYouTubeId((data.youtube && data.youtube.embedUrl) || (data.existing && data.existing.youtube_embed_url) || '')
+          : null,
+        dokuman_id: data.type === 'document'
+          ? ((data.selectedDocument && data.selectedDocument.id) || (data.existing && data.existing.dokuman_id) || null)
+          : null,
+        link_url: data.linkUrl || null,
+        link_label: data.linkLabel,
+        gecis_suresi_ms: Math.max(3000, Math.min(10000, data.duration)),
+        siralama: data.sortOrder,
+        aktif: data.active,
+        guncelleme_tarihi: new Date().toISOString(),
+      };
+
+      let response;
+      if (state.editingSlideId) {
+        response = await getClient()
+          .from(HOMEPAGE_SLIDES_TABLE)
+          .update(payload)
+          .eq('id', state.editingSlideId)
+          .select()
+          .single();
+      } else {
+        response = await getClient()
+          .from(HOMEPAGE_SLIDES_TABLE)
+          .insert(Object.assign({
+            id: slideId,
+            olusturma_tarihi: new Date().toISOString(),
+          }, payload))
+          .select()
+          .single();
+      }
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      uploadedPathForRollback = '';
+      const cleanupOk = await cleanupShowcaseStorage(slideId, mediaPath, [oldMediaPath]);
+
+      toast(
+        cleanupOk
+          ? 'Vitrin slaytı kaydedildi.'
+          : 'Vitrin slaytı kaydedildi; eski görsel temizliği Supabase Storage üzerinde kontrol edilmeli.',
+        cleanupOk ? 'success' : 'error'
+      );
+      await loadShowcaseSlides();
+      openShowcaseEditor(getShowcaseById(response.data.id) || response.data);
+    } catch (error) {
+      if (uploadedPathForRollback) {
+        await cleanupShowcaseStorage(
+          rollbackSlideId,
+          '',
+          [uploadedPathForRollback]
+        );
+      }
+      toast(humanizeSupabaseError(error), 'error');
+    }
+  }
+
+  async function toggleShowcaseActive(slideId) {
+    if (!requirePermission('dokuman_duzenleme', 'Vitrin düzenleme')) {
+      return;
+    }
+    const item = getShowcaseById(slideId);
+    if (!item) {
+      return;
+    }
+    if (!item.aktif) {
+      const activeCount = state.showcaseSlides.filter(function(slide) { return slide.aktif; }).length;
+      if (activeCount >= 5) {
+        toast('En fazla 5 aktif slayt olabilir. Önce bir slaytı pasife al.', 'error');
+        return;
+      }
+    }
+
+    const response = await getClient()
+      .from(HOMEPAGE_SLIDES_TABLE)
+      .update({
+        aktif: !item.aktif,
+        guncelleme_tarihi: new Date().toISOString(),
+      })
+      .eq('id', slideId);
+
+    if (response.error) {
+      toast(humanizeSupabaseError(response.error), 'error');
+      return;
+    }
+
+    toast(item.aktif ? 'Vitrin slaytı pasife alındı.' : 'Vitrin slaytı aktifleştirildi.', 'success');
+    await loadShowcaseSlides();
+  }
+
+  async function deleteShowcaseSlide(slideId) {
+    if (!requirePermission('dokuman_silme', 'Vitrin silme')) {
+      return;
+    }
+    const item = getShowcaseById(slideId);
+    if (!item) {
+      return;
+    }
+    if (!window.confirm('"' + item.baslik + '" vitrin slaytını silmek istiyor musun?')) {
+      return;
+    }
+
+    const response = await getClient().from(HOMEPAGE_SLIDES_TABLE).delete().eq('id', slideId);
+    if (response.error) {
+      toast(humanizeSupabaseError(response.error), 'error');
+      return;
+    }
+    const cleanupOk = await cleanupShowcaseStorage(slideId, '', [item.media_path]);
+    toast(
+      cleanupOk
+        ? 'Vitrin slaytı ve görselleri silindi.'
+        : 'Vitrin slaytı silindi; Supabase Storage görsel temizliği kontrol edilmeli.',
+      cleanupOk ? 'success' : 'error'
+    );
+    if (state.editingSlideId === slideId) {
+      resetShowcaseForm();
+      showShowcaseListPanel();
+    }
+    await loadShowcaseSlides();
+  }
+
+  function openShowcaseEditor(item) {
+    const slide = item || null;
+    resetShowcaseForm();
+    showShowcaseEditPanel();
+    if (!slide) {
+      return;
+    }
+
+    state.editingSlideId = slide.id;
+    document.getElementById('showcaseEditTitle').textContent = 'Düzenle: ' + slide.baslik;
+    document.getElementById('showcaseEditStatus').textContent = 'ID: ' + slide.id.slice(0, 8) + '… · Ana sayfa vitrin kaydı.';
+    document.getElementById('sType').value = slide.icerik_turu || 'text';
+    document.getElementById('sBaslik').value = slide.baslik || '';
+    document.getElementById('sDescriptionEditor').innerHTML = sanitizeRichHtml(slide.aciklama_html || '');
+    document.getElementById('sTextImage').value = '';
+    document.getElementById('sRemoveImage').checked = false;
+    document.getElementById('sArticleEditor').innerHTML = sanitizeRichHtml(slide.makale_html || '');
+    document.getElementById('sImage').value = '';
+    document.getElementById('sRemoveMainImage').checked = false;
+    document.getElementById('sMediaFit').value = slide.media_fit || 'contain';
+    document.getElementById('sYoutubeInput').value = slide.youtube_url || slide.youtube_embed_url || '';
+    populateShowcaseDocumentSelect(slide.dokuman_id || '');
+    document.getElementById('sSiralama').value = String(slide.siralama || 0);
+    document.getElementById('sDuration').value = String(slide.gecis_suresi_ms || 4000);
+    document.getElementById('sIcon').value = slide.ikon || '⭐';
+    document.getElementById('sColor').value = slide.tema_renk || '#6C3DED';
+    document.getElementById('sLinkLabel').value = slide.link_label || 'İncele';
+    document.getElementById('sLinkUrl').value = slide.link_url || '';
+    document.getElementById('sActive').checked = slide.aktif !== false;
+    syncShowcaseTypeUi();
+  }
+
+  function execShowcaseCommand(command, value) {
+    const articleEditor = document.getElementById('sArticleEditor');
+    const editor = document.activeElement === articleEditor
+      ? articleEditor
+      : document.getElementById('sDescriptionEditor');
+    if (!editor) {
+      return;
+    }
+    editor.focus();
+    document.execCommand(command, false, value || null);
+    updateShowcasePreview();
+  }
+
+  function applyShowcaseFontSize(value) {
+    const size = String(value || '').trim();
+    if (!/^((1[0-9])|(2[0-9])|(3[0-9])|(4[0-8]))px$/.test(size)) {
+      return;
+    }
+    const editor = document.activeElement === document.getElementById('sArticleEditor')
+      ? document.getElementById('sArticleEditor')
+      : document.getElementById('sDescriptionEditor');
+    if (!editor) {
+      return;
+    }
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) {
+      return;
+    }
+    const range = selection.getRangeAt(0);
+    if (!editor.contains(range.commonAncestorContainer)) {
+      return;
+    }
+    if (range.collapsed) {
+      document.execCommand('fontSize', false, '4');
+      Array.from(editor.querySelectorAll('font[size="4"]')).forEach(function(font) {
+        const span = document.createElement('span');
+        span.style.fontSize = size;
+        span.innerHTML = font.innerHTML;
+        font.replaceWith(span);
+      });
+    } else {
+      const span = document.createElement('span');
+      span.style.fontSize = size;
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+      range.selectNodeContents(span);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+    document.getElementById('sFontSize').value = '';
+    updateShowcasePreview();
+  }
+
+  function addShowcaseLink() {
+    const url = window.prompt('Link adresi');
+    if (!url) {
+      return;
+    }
+    if (!/^(https?:\/\/|\/|#)/i.test(url)) {
+      toast('Link http, https, / veya # ile başlamalı.', 'error');
+      return;
+    }
+    execShowcaseCommand('createLink', url);
   }
 
   function collectPayload() {
@@ -1258,6 +2080,7 @@
   }
 
   function applyFilters() {
+    syncFilterSubjectOptions();
     state.filters.grade = document.getElementById('filterGrade').value;
     state.filters.subject = document.getElementById('filterSubject').value;
     state.filters.status = document.getElementById('filterStatus').value;
@@ -1268,6 +2091,7 @@
     document.getElementById('filterGrade').value = '';
     document.getElementById('filterSubject').value = '';
     document.getElementById('filterStatus').value = '';
+    syncFilterSubjectOptions();
     applyFilters();
   }
 
@@ -1310,8 +2134,13 @@
       if (session) {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        showListPanel();
         await loadDocuments();
+        if (window.location.hash === '#vitrin') {
+          showShowcaseListPanel();
+          await loadShowcaseSlides();
+        } else {
+          showListPanel();
+        }
         return;
       }
     } catch (error) {
@@ -1330,12 +2159,62 @@
       }
       const eventName = id === 'fKapakRenk' || id === 'fAktif' || id === 'fGizli' || id === 'fMagnifierEnabled' || id === 'fAnswersEnabled' ? 'input' : 'input';
       element.addEventListener(eventName, updateSummary);
-      if (id === 'fSinif' || id === 'fDers') {
+      if (id === 'fSinif') {
+        element.addEventListener('change', function() {
+          syncSubjectSelectForGrade('fDers', element.value);
+          updateSummary();
+        });
+      } else if (id === 'fDers') {
         element.addEventListener('change', updateSummary);
       }
     });
 
     document.getElementById('fPdf').addEventListener('change', handleFileChange);
+    ['sBaslik', 'sIcon', 'sColor', 'sSiralama', 'sDuration', 'sLinkLabel', 'sLinkUrl', 'sMediaFit', 'sYoutubeInput', 'sActive', 'sRemoveImage', 'sRemoveMainImage'].forEach(function(id) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.addEventListener('input', updateShowcasePreview);
+        element.addEventListener('change', updateShowcasePreview);
+      }
+    });
+    const showcaseEditor = document.getElementById('sDescriptionEditor');
+    if (showcaseEditor) {
+      showcaseEditor.addEventListener('input', updateShowcasePreview);
+    }
+    const showcaseArticleEditor = document.getElementById('sArticleEditor');
+    if (showcaseArticleEditor) {
+      showcaseArticleEditor.addEventListener('input', updateShowcasePreview);
+    }
+    const showcaseImage = document.getElementById('sImage');
+    if (showcaseImage) {
+      showcaseImage.addEventListener('change', function() {
+        const file = getSelectedShowcaseImage();
+        try {
+          validateShowcaseImage(file);
+        } catch (error) {
+          showcaseImage.value = '';
+          toast(error.message, 'error');
+        }
+        updateShowcasePreview();
+      });
+    }
+    const showcaseTextImage = document.getElementById('sTextImage');
+    if (showcaseTextImage) {
+      showcaseTextImage.addEventListener('change', function() {
+        const file = getSelectedShowcaseTextImage();
+        try {
+          validateShowcaseImage(file);
+        } catch (error) {
+          showcaseTextImage.value = '';
+          toast(error.message, 'error');
+        }
+        updateShowcasePreview();
+      });
+    }
+    const showcaseDocument = document.getElementById('sDocumentId');
+    if (showcaseDocument) {
+      showcaseDocument.addEventListener('change', updateDocumentLinkField);
+    }
     Array.from(document.querySelectorAll('[data-content-kind]')).forEach(function(button) {
       button.addEventListener('click', function() {
         setContentKind(button.getAttribute('data-content-kind'));
@@ -1366,7 +2245,7 @@
         const dynClient = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, {
           auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
         });
-        const res = await dynClient.from('menu_ogeler').select('ders_key,label,icon').eq('active', true);
+        const res = await dynClient.from('menu_ogeler').select('ders_key,label,icon,sinif,sort_order').eq('active', true);
         if (!res.error && window.kemalDocumentStore.mergeMenuItems) {
           window.kemalDocumentStore.mergeMenuItems(res.data || []);
         }
@@ -1396,6 +2275,43 @@
     showListPanel();
     loadDocuments();
   };
+  window.dokumanListesineGit = function() {
+    if (window.location.hash === '#vitrin') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    showListPanel();
+    loadDocuments();
+  };
+  window.vitrineGit = async function() {
+    if (window.location.hash !== '#vitrin') {
+      window.history.replaceState(null, '', '#vitrin');
+    }
+    showShowcaseListPanel();
+    await loadShowcaseSlides();
+  };
+  window.yeniVitrinSlayti = function() {
+    resetShowcaseForm();
+    showShowcaseEditPanel();
+  };
+  window.vitrinTurDegisti = function() {
+    syncShowcaseTypeUi();
+    updateDocumentLinkField();
+  };
+  window.vitrinKomut = execShowcaseCommand;
+  window.vitrinRenkUygula = function(color) {
+    execShowcaseCommand('foreColor', color);
+  };
+  window.vitrinFontBoyutuUygula = applyShowcaseFontSize;
+  window.vitrinLinkEkle = addShowcaseLink;
+  window.vitrinKaydet = saveShowcaseSlide;
+  window.vitrinDuzenle = function(id) {
+    const item = getShowcaseById(id);
+    if (item) {
+      openShowcaseEditor(item);
+    }
+  };
+  window.vitrinDurumDegistir = toggleShowcaseActive;
+  window.vitrinSil = deleteShowcaseSlide;
   window.uygulaFiltre = applyFilters;
   window.filtreTemizle = clearFilters;
   window.hedefEkle = addTargetFromControls;

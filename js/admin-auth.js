@@ -24,19 +24,19 @@
       key: 'menu_yonetimi',
       label: 'Menü & Ders Yönetimi',
       description: 'Üst menüye ders sayfaları ekleme',
-      group: 'Genel Yönetim',
+      group: 'Döküman ve Menü Paneli',
     },
     {
       key: 'calisma_kagidi',
       label: 'Çalışma Kağıtları',
       description: 'Çalışma kağıdı editörü ve alan yerleşimi',
-      group: 'İçerik Yönetimi',
+      group: 'Döküman ve Menü Paneli',
     },
     {
       key: 'oyun_ekleme',
       label: 'Oyun Yönetimi / Oyun Ekleme',
       description: 'Oyun kartlarını ekleme ve düzenleme',
-      group: 'Okuma Admin Paneli',
+      group: 'Döküman ve Menü Paneli',
     },
     {
       key: 'okuma_metinleri',
@@ -78,19 +78,19 @@
       key: 'dokuman_ekleme',
       label: 'Doküman Ekleme',
       description: 'Yeni PDF dokümanı yükleme',
-      group: 'Doküman Yönetimi',
+      group: 'Döküman ve Menü Paneli',
     },
     {
       key: 'dokuman_duzenleme',
       label: 'Doküman Düzenleme',
       description: 'Mevcut doküman bilgilerini güncelleme',
-      group: 'Doküman Yönetimi',
+      group: 'Döküman ve Menü Paneli',
     },
     {
       key: 'dokuman_silme',
       label: 'Doküman Silme',
       description: 'Doküman kaydı ve dosyasını silme',
-      group: 'Doküman Yönetimi',
+      group: 'Döküman ve Menü Paneli',
     },
     {
       key: 'exam_create',
@@ -207,20 +207,6 @@
   }
 
   function getAuthScope() {
-    if (typeof window.kemalAdminScope === 'string' && window.kemalAdminScope.trim()) {
-      return window.kemalAdminScope.trim();
-    }
-    const path = String(window.location && window.location.pathname ? window.location.pathname : '');
-    if (
-      path.endsWith('/admin/okuma-editor.html') ||
-      path.endsWith('/admin/okuma-sonuclari.html') ||
-      path.endsWith('/admin/okuma-karne.html')
-    ) {
-      return 'reading';
-    }
-    if (path.endsWith('/admin/dokuman-yonetimi.html')) {
-      return 'documents';
-    }
     return 'default';
   }
 

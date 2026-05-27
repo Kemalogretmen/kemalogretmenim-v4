@@ -9,7 +9,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <link rel="stylesheet" href="/css/admin-shell.css">
+  <link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -44,6 +44,8 @@
 
     #panelList{display:block;}
     #panelEdit{display:none;}
+    #panelShowcaseList{display:none;}
+    #panelShowcaseEdit{display:none;}
 
     .list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
     .list-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;font-weight:700;}
@@ -124,6 +126,26 @@
     .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(0,201,177,.35);}
     .btn-secondary{padding:11px 18px;background:var(--bg);border:2px solid var(--border);border-radius:50px;font-weight:800;font-size:13px;cursor:pointer;color:var(--slate);}
     .hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:-6px;margin-bottom:12px;}
+    .toolbar-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px;}
+    .tool-btn{width:36px;height:36px;border:2px solid var(--border);border-radius:10px;background:white;color:var(--navy);font-weight:900;cursor:pointer;display:grid;place-items:center;}
+    .tool-btn:hover{border-color:var(--purple);color:var(--purple);}
+    .tool-color{width:44px!important;height:36px!important;margin:0!important;border-radius:10px!important;}
+    .rich-editor{min-height:140px;padding:13px;border:2px solid var(--border);border-radius:10px;background:#FAFAFF;color:var(--navy);font-size:14px;line-height:1.65;outline:none;margin-bottom:12px;}
+    .rich-editor.tall{min-height:260px;}
+    .rich-editor:focus{border-color:var(--purple);background:white;}
+    .rich-editor:empty::before{content:attr(data-placeholder);color:var(--muted);}
+    .showcase-grid-admin{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .showcase-card{background:white;border:2px solid var(--border);border-radius:var(--r-lg);padding:18px;display:grid;gap:12px;box-shadow:0 10px 24px rgba(107,61,237,.06);}
+    .showcase-preview{height:150px;border-radius:16px;background:linear-gradient(135deg,#F8F6FF,#FFF7F1);border:1px solid var(--border);overflow:hidden;display:grid;place-items:center;position:relative;}
+    .showcase-preview img{width:100%;height:100%;object-fit:contain;background:white;}
+    .showcase-preview.cover img{object-fit:cover;}
+    .showcase-preview-emoji{font-size:44px;width:72px;height:72px;border-radius:22px;background:white;display:grid;place-items:center;box-shadow:0 14px 28px rgba(15,23,42,.10);}
+    .showcase-card-title{font-family:'Fredoka','Nunito',sans-serif;font-size:18px;font-weight:800;color:var(--navy);line-height:1.25;}
+    .showcase-card-desc{font-size:13px;color:var(--slate);line-height:1.55;min-height:38px;}
+    .showcase-card-desc p{margin:0 0 6px;}
+    .showcase-type-box{display:none;}
+    .showcase-type-box.active{display:block;}
+    .inline-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
     .source-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 12px;}
     .source-btn{border:2px solid var(--border);background:white;color:var(--slate);border-radius:16px;padding:12px;text-align:left;font-weight:900;cursor:pointer;transition:all .2s;}
     .source-btn span{display:block;font-size:11px;color:var(--muted);font-weight:800;margin-top:4px;line-height:1.35;}
@@ -153,6 +175,7 @@
       .save-bar{padding:12px;flex-direction:column;align-items:stretch;}
       .save-actions{width:100%;}
       .target-picker{grid-template-columns:1fr;}
+      .inline-grid{grid-template-columns:1fr;}
       .btn-save,.btn-secondary,.btn-main,.btn-ghost{justify-content:center;}
     }
   </style>
@@ -234,6 +257,196 @@
 
       <div class="panel">
         <div id="documentGrid" class="doc-grid"></div>
+      </div>
+    </section>
+
+    <section id="panelShowcaseList">
+      <div class="list-header">
+        <div>
+          <h1 class="list-title">Ana Sayfa Vitrini</h1>
+          <p class="list-sub">Bugün Ana Sayfada otomatik akışı aynı kalır. Bu bölüm, yanında gösterilecek en fazla 5 kontrollü slaytı yönetir.</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn-ghost" onclick="dokumanListesineGit()">← Dokümanlara Dön</button>
+          <button class="btn-main" onclick="yeniVitrinSlayti()">+ Yeni Slayt</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div id="showcaseGrid" class="showcase-grid-admin"></div>
+      </div>
+    </section>
+
+    <section id="panelShowcaseEdit">
+      <div class="edit-header">
+        <button class="btn-ghost" onclick="vitrineGit()">← Vitrine Dön</button>
+        <div>
+          <h1 class="edit-title" id="showcaseEditTitle">Yeni Vitrin Slaytı</h1>
+          <div class="status-line" id="showcaseEditStatus">Ana sayfada otomatik akışın yanında görünecek kontrollü bir slayt hazırla.</div>
+        </div>
+      </div>
+
+      <div class="edit-grid">
+        <div>
+          <div class="panel">
+            <div class="pill-row">
+              <span class="pill">✨ En fazla 5 aktif slayt</span>
+              <span class="pill">🎬 YouTube / görsel / yazı / doküman</span>
+              <span class="pill">🔗 İsteğe bağlı yönlendirme</span>
+            </div>
+
+            <label>Slayt Türü</label>
+            <select id="sType" onchange="vitrinTurDegisti()">
+              <option value="text">Başlıklı Mini Yazı</option>
+              <option value="image">Görsel</option>
+              <option value="youtube">YouTube Videosu</option>
+              <option value="document">Doküman Bağlantısı</option>
+            </select>
+
+            <label>Başlık</label>
+            <input type="text" id="sBaslik" placeholder="Örn: Bu haftanın çalışma önerisi">
+
+            <label>Açıklama</label>
+            <div class="toolbar-row" aria-label="Metin düzenleme araçları">
+              <button class="tool-btn" type="button" onclick="vitrinKomut('bold')" title="Kalın">B</button>
+              <button class="tool-btn" type="button" onclick="vitrinKomut('italic')" title="İtalik"><em>I</em></button>
+              <button class="tool-btn" type="button" onclick="vitrinKomut('underline')" title="Altı çizili"><u>U</u></button>
+              <button class="tool-btn" type="button" onclick="vitrinKomut('insertUnorderedList')" title="Madde listesi">•</button>
+              <button class="tool-btn" type="button" onclick="vitrinKomut('justifyLeft')" title="Sola hizala">≡</button>
+              <button class="tool-btn" type="button" onclick="vitrinLinkEkle()" title="Link ekle">🔗</button>
+              <select id="sFontSize" title="Yazı boyutu" onchange="vitrinFontBoyutuUygula(this.value)" style="width:auto;margin:0;height:36px;padding:0 10px;">
+                <option value="">Punto</option>
+                <option value="12px">12</option>
+                <option value="13px">13</option>
+                <option value="14px">14</option>
+                <option value="15px">15</option>
+                <option value="16px">16</option>
+                <option value="17px">17</option>
+                <option value="18px">18</option>
+                <option value="19px">19</option>
+                <option value="20px">20</option>
+                <option value="21px">21</option>
+                <option value="22px">22</option>
+                <option value="24px">24</option>
+                <option value="26px">26</option>
+                <option value="28px">28</option>
+                <option value="30px">30</option>
+                <option value="32px">32</option>
+                <option value="34px">34</option>
+                <option value="36px">36</option>
+              </select>
+              <input class="tool-color" type="color" id="sTextColor" value="#1A1040" title="Metin rengi" onchange="vitrinRenkUygula(this.value)">
+            </div>
+            <div class="rich-editor" id="sDescriptionEditor" contenteditable="true" data-placeholder="Kısa açıklama yaz. Kalın, italik, liste, renk ve link kullanabilirsin."></div>
+            <div class="hint">Ana sayfada alan dar olduğu için kısa, net metinler daha iyi görünür.</div>
+
+            <div class="showcase-type-box active" id="sTextExtraBox">
+              <label>Yazı Görseli (isteğe bağlı)</label>
+              <input type="file" id="sTextImage" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">
+              <div class="toggle-wrap" style="margin-top:4px;">
+                <span>Mevcut yazı görselini kaldır</span>
+                <label class="toggle">
+                  <input type="checkbox" id="sRemoveImage">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="hint">Görsel eklemezsen slayt alanı yazıya ayrılır. Görsel eklersen yazı cam panel olarak üzerinde görünür.</div>
+              <label>Makalenin Tam Metni (isteğe bağlı)</label>
+              <div class="rich-editor tall" id="sArticleEditor" contenteditable="true" data-placeholder="Devamını Oku ile açılacak gizli makale sayfasındaki tam yazıyı buraya yaz. Boş bırakırsan Devamını Oku gösterilmez."></div>
+            </div>
+
+            <div class="showcase-type-box" id="sImageBox">
+              <label>Görsel</label>
+              <input type="file" id="sImage" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">
+              <div class="toggle-wrap" style="margin-top:4px;">
+                <span>Mevcut görseli kaldır</span>
+                <label class="toggle">
+                  <input type="checkbox" id="sRemoveMainImage">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <label>Görsel Yerleşimi</label>
+              <select id="sMediaFit">
+                <option value="contain">Tamamı görünsün, bozulmadan sığsın</option>
+                <option value="cover">Alanı doldursun, gerekirse dengeli kırpılsın</option>
+              </select>
+              <div class="hint">Görsel asla sündürülmez. Tamamı görünsün seçeneği güvenli varsayılandır.</div>
+            </div>
+
+            <div class="showcase-type-box" id="sYoutubeBox">
+              <label>YouTube Linki veya Iframe</label>
+              <textarea id="sYoutubeInput" placeholder="https://youtu.be/VIDEO_ID veya YouTube iframe kodu"></textarea>
+            </div>
+
+            <div class="showcase-type-box" id="sDocumentBox">
+              <label>Doküman Seç</label>
+              <select id="sDocumentId"></select>
+              <div class="hint">Seçilen dokümanın görüntüleme linki otomatik kullanılır.</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2 style="font-family:'Fredoka','Nunito',sans-serif;font-size:18px;color:var(--purple);margin-bottom:12px;">Yayın ve Bağlantı</h2>
+            <div class="inline-grid">
+              <div>
+                <label>Sıralama</label>
+                <input type="number" id="sSiralama" min="0" step="1" value="0">
+              </div>
+              <div>
+                <label>Geçiş Süresi</label>
+                <select id="sDuration">
+                  <option value="3000">3 saniye</option>
+                  <option value="4000" selected>4 saniye</option>
+                  <option value="5000">5 saniye</option>
+                  <option value="7000">7 saniye</option>
+                </select>
+              </div>
+            </div>
+            <div class="inline-grid">
+              <div>
+                <label>İkon</label>
+                <input type="text" id="sIcon" maxlength="4" value="⭐">
+              </div>
+              <div>
+                <label>Tema Rengi</label>
+                <input type="color" id="sColor" value="#6C3DED">
+              </div>
+            </div>
+            <label>Buton Yazısı</label>
+            <input type="text" id="sLinkLabel" placeholder="İncele" value="İncele">
+            <label>Yönlendirme Linki</label>
+            <input type="text" id="sLinkUrl" placeholder="/ders.html veya https://...">
+            <div class="hint">Doküman türünde link otomatik doldurulur. Diğer türlerde boş bırakırsan buton gösterilmez.</div>
+            <div class="switch-row">
+              <div class="switch-copy">
+                <strong>Aktif Yayın</strong>
+                <span>Açıksa ana sayfada görünebilir. Aktif slayt sayısı 5 ile sınırlıdır.</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="sActive" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="panel">
+            <h2 style="font-family:'Fredoka','Nunito',sans-serif;font-size:18px;color:var(--purple);margin-bottom:12px;">Canlı Önizleme</h2>
+            <div class="showcase-preview" id="sPreviewBox">
+              <span class="showcase-preview-emoji" id="sPreviewIcon">⭐</span>
+            </div>
+            <div class="status-line" id="sPreviewTitle" style="margin-top:12px;">Başlık bekleniyor.</div>
+            <div class="hint" id="sPreviewDesc">Açıklama yazıldığında burada görünür.</div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="save-bar">
+        <div class="status-line" id="sSaveHint">Kaydedince ana sayfa vitrininde kullanılabilir.</div>
+        <div class="save-actions">
+          <button class="btn-secondary" onclick="vitrineGit()">Vazgeç</button>
+          <button class="btn-save" onclick="vitrinKaydet()">Kaydet</button>
+        </div>
       </div>
     </section>
 
@@ -408,7 +621,7 @@
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js?v=20260511-1"></script>
 <script src="/js/dokuman-store.js"></script>
-<script src="/js/admin-shell.js"></script>
+<script src="/js/admin-shell.js?v=20260526-2"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     if (!window.KemalAdminShell) {
@@ -416,7 +629,7 @@
     }
     window.KemalAdminShell.initStandalone({
       appId: 'app',
-      activeKey: 'dokuman-yonetimi',
+      activeKey: window.location.hash === '#vitrin' ? 'homepage-vitrin' : 'dokuman-yonetimi',
       homeHref: '/index.html',
       homeLabel: '🏠 Ana Site',
       utilityHref: '/index.html',

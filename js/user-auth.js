@@ -63,6 +63,14 @@
     return String(value || '').trim().toLocaleLowerCase('tr-TR');
   }
 
+  function normalizeRole(value) {
+    var role = clean(value).toLocaleLowerCase('tr-TR');
+    if (role === 'teacher' || role === 'student' || role === 'parent') {
+      return role;
+    }
+    return 'student';
+  }
+
   function clean(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
   }
@@ -129,7 +137,7 @@
     var split = splitName(name);
     var payload = {
       id: user.id,
-      role: meta.role === 'teacher' ? 'teacher' : 'student',
+      role: normalizeRole(meta.role),
       email: normalizeEmail(user.email),
       first_name: clean(meta.first_name || split.firstName),
       last_name: clean(meta.last_name || split.lastName),
@@ -142,7 +150,8 @@
       branch: clean(meta.branch),
       grade_level: meta.grade_level ? Number(meta.grade_level) : null,
       teacher_code: clean(meta.teacher_code),
-      approval_status: meta.role === 'teacher' ? 'pending' : 'active',
+      parent_link_code: clean(meta.parent_link_code),
+      approval_status: normalizeRole(meta.role) === 'teacher' ? 'pending' : 'active',
       account_status: 'active',
       auth_provider: clean(appMeta.provider || (Array.isArray(appMeta.providers) ? appMeta.providers[0] : '') || 'email'),
       active: true,
@@ -236,6 +245,9 @@
     }
     if (role === 'student') {
       return '/ogrenci-paneli.html';
+    }
+    if (role === 'parent') {
+      return '/veli-paneli.html';
     }
     return '/giris.html';
   }

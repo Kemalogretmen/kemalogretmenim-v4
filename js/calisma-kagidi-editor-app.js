@@ -152,7 +152,7 @@
 
   function buildDocumentLabel(row) {
     var gradeLabel = window.kemalDocumentStore.getGradeLabel(row.sinif);
-    var subjectMeta = window.kemalDocumentStore.getSubjectMeta(row.ders);
+    var subjectMeta = window.kemalDocumentStore.getSubjectMeta(row.ders, row.sinif);
     var subjectLabel = subjectMeta ? subjectMeta.label : row.ders;
     return gradeLabel + ' · ' + subjectLabel + ' · ' + row.baslik;
   }

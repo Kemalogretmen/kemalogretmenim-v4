@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veli Paneli — Kemal Öğretmenim</title>
+  <meta name="robots" content="noindex,nofollow">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .parent-panel{min-height:100vh;background:#f5f7fb;color:#0f172a}
+    .parent-shell{margin-left:286px;padding:28px 34px 44px}
+    .parent-sidebar{position:fixed;inset:0 auto 0 0;width:286px;height:100vh;padding:28px 22px;background:linear-gradient(180deg,#183B72 0%,#2F6697 58%,#5AA9D6 100%);display:flex;flex-direction:column;gap:10px;overflow-y:auto;z-index:20;box-shadow:18px 0 42px rgba(15,23,42,.12)}
+    .parent-sidebar-brand{display:grid;gap:10px;color:#fff;margin-bottom:20px}
+    .parent-sidebar-brand img{width:104px;height:104px;object-fit:contain;border-radius:24px;background:rgba(255,255,255,.12);padding:10px}
+    .parent-sidebar-brand strong{font-family:var(--font-display);font-size:24px;line-height:1.05;letter-spacing:0}
+    .parent-sidebar-brand span{display:inline-flex;width:max-content;max-width:100%;border-radius:10px;background:rgba(255,255,255,.92);color:#475569;padding:8px 12px;font-weight:950}
+    .parent-sidebar-label{color:rgba(255,255,255,.64);font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;margin:4px 0}
+    .parent-tab{width:100%;border:0;border-radius:14px;background:transparent;color:rgba(255,255,255,.82);padding:14px 15px;text-align:left;font-size:15px;font-weight:950;cursor:pointer}
+    .parent-tab.active{background:#55B7EE;color:#fff;box-shadow:0 12px 24px rgba(0,0,0,.12)}
+    .parent-sidebar-spacer{flex:1;min-height:20px}
+    .parent-sidebar-link{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.26);border-radius:14px;padding:13px 14px;font-weight:950;background:rgba(255,255,255,.10)}
+    .parent-hero{position:relative;overflow:hidden;background:#fff;border:1px solid #e2e8f0;border-radius:22px;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;box-shadow:0 18px 42px rgba(15,23,42,.07)}
+    .parent-hero::after{content:'';position:absolute;right:-88px;top:-108px;width:260px;height:260px;border-radius:50%;background:linear-gradient(135deg,rgba(85,183,238,.16),rgba(108,61,237,.10))}
+    .parent-profile-head{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+    .parent-avatar{width:92px;height:92px;border-radius:22px;border:4px solid #e2e8f0;background:linear-gradient(135deg,#E0F2FE,#FEF3C7);display:grid;place-items:center;overflow:hidden;color:#0F172A;font:950 30px var(--font-display)}
+    .parent-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .parent-hero h1{font-family:var(--font-display);font-size:40px;line-height:1.05;color:#0F172A;margin:0 0 6px;letter-spacing:0}
+    .parent-hero p{color:#64748B;font-weight:850;line-height:1.55;margin:0;max-width:760px}
+    .parent-badge{position:relative;z-index:1;display:inline-flex;border-radius:999px;padding:9px 14px;background:#EEF6FF;border:1px solid #D7EAFE;color:#2563EB;font-weight:950;white-space:nowrap}
+    .parent-actions{position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+    .parent-btn,.parent-link{border:0;border-radius:999px;padding:11px 15px;background:linear-gradient(135deg,#2563EB,#0F766E);color:#fff;font-weight:950;text-decoration:none;cursor:pointer;font-family:var(--font-body);box-shadow:0 10px 20px rgba(15,23,42,.12)}
+    .parent-btn.secondary,.parent-link.secondary{background:#fff;color:#0F172A;border:1px solid #CBD5E1;box-shadow:0 10px 20px rgba(15,23,42,.08)}
+    .parent-btn.danger{background:#B91C1C}
+    .parent-btn:disabled{opacity:.6;cursor:wait}
+    .parent-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
+    .parent-stat{position:relative;background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:18px;box-shadow:0 16px 34px rgba(15,23,42,.06)}
+    .parent-stat span{display:block;color:#64748B;font-size:12px;font-weight:950;text-transform:uppercase}
+    .parent-stat strong{display:block;color:#0F172A;font-family:var(--font-display);font-size:30px;line-height:1.1;margin-top:5px}
+    .parent-module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:22px 0 24px}
+    .parent-module-card{position:relative;min-height:190px;border:0;border-radius:18px;padding:28px 28px 24px;text-align:left;color:#fff;cursor:pointer;overflow:hidden;display:grid;align-content:space-between;box-shadow:0 18px 38px rgba(15,23,42,.12);transition:transform .18s ease,box-shadow .18s ease}
+    .parent-module-card:hover,.parent-module-card.active{transform:translateY(-4px);box-shadow:0 24px 46px rgba(15,23,42,.16)}
+    .parent-module-icon{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);font-size:34px}
+    .parent-module-card strong{font-family:var(--font-display);font-size:28px;line-height:1.08;letter-spacing:0;text-transform:uppercase}
+    .parent-module-card small{font-size:14px;font-weight:850;color:rgba(255,255,255,.82)}
+    .panel-notification-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;margin-left:8px;border-radius:999px;background:#EF4444;color:#fff;font-size:12px;font-weight:950;line-height:1;vertical-align:middle;box-shadow:0 8px 18px rgba(15,23,42,.16)}
+    .parent-module-card .panel-notification-badge{position:absolute;top:18px;right:18px;z-index:2;margin:0;background:#fff;color:#1D4ED8}
+    .parent-message-tabs,.parent-report-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+    .parent-message-tab,.parent-report-tab{border:1px solid #CBD5E1;background:#fff;color:#0F172A;border-radius:999px;padding:9px 13px;font:900 13px var(--font-body);cursor:pointer}
+    .parent-message-tab.active,.parent-report-tab.active{background:linear-gradient(135deg,#3B5FE2,#2B7A78);color:#fff;border-color:transparent}
+    .tone-pink{background:linear-gradient(135deg,#D93676,#ED2DF2)}.tone-purple{background:linear-gradient(135deg,#8B2EE6,#6840E8)}.tone-blue{background:linear-gradient(135deg,#4DB4E9,#2868F0)}.tone-orange{background:linear-gradient(135deg,#F7941D,#D97027)}.tone-teal{background:linear-gradient(135deg,#58E0C2,#0EA5A4)}.tone-yellow{background:linear-gradient(135deg,#FFE83D,#E8B72C)}
+    .parent-section{display:none}.parent-section.active{display:block}
+    .parent-grid{display:grid;grid-template-columns:minmax(280px,420px) minmax(0,1fr);gap:16px;align-items:start}
+    .parent-card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;box-shadow:0 12px 28px rgba(15,23,42,.035)}
+    .parent-card h2{font-family:var(--font-display);font-size:22px;margin:0 0 8px;color:#0F172A;letter-spacing:0}
+    .parent-card p{color:#64748B;font-weight:750;line-height:1.55;margin:0 0 14px}
+    .parent-form{display:grid;gap:12px}
+    .parent-account-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .parent-field label{display:block;font-size:12px;font-weight:950;color:#475569;margin-bottom:6px}
+    .parent-field input,.parent-field select,.parent-field textarea{width:100%;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:11px 12px;outline:none}
+    .parent-field input[readonly]{background:#F1F5F9;color:#475569;cursor:not-allowed}
+    .parent-field textarea{min-height:120px;resize:vertical}
+    .parent-list{display:grid;gap:10px}
+    .parent-row{border:1px solid #E2E8F0;border-radius:10px;padding:14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;background:#fff}
+    .parent-row.message-read,.parent-row.assignment-done{background:#F1F5F9;color:#64748B}
+    .parent-message-detail{margin-top:10px;padding:12px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;display:grid;gap:10px}
+    .parent-message-detail textarea{width:100%;min-height:82px;border:1px solid #CBD5E1;border-radius:8px;padding:10px;font:850 14px var(--font-body)}
+    .parent-row-title{font-weight:950;color:#0F172A}
+    .parent-row-sub{font-size:13px;color:#64748B;font-weight:750;margin-top:4px;line-height:1.45}
+    .parent-row-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .parent-pill{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;background:#F1F5F9;color:#475569;font-size:12px;font-weight:950;white-space:nowrap}
+    .parent-pill.ok{background:#DCFCE7;color:#166534}.parent-pill.warn{background:#FEF3C7;color:#92400E}
+    .parent-empty{border:1px dashed #CBD5E1;border-radius:10px;padding:18px;color:#64748B;font-weight:850;text-align:center;background:#F8FAFC}
+    .parent-filterbar{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 14px}.parent-filterbar select{border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:10px 12px;min-width:220px}
+    .parent-toast{position:fixed;right:18px;bottom:18px;z-index:50;max-width:360px;background:#0F172A;color:#fff;border-radius:12px;padding:13px 15px;font-weight:850;box-shadow:0 20px 44px rgba(15,23,42,.28);display:none}
+    .parent-toast.show{display:block}.parent-toast.error{background:#B91C1C}
+    @media(max-width:1100px){.parent-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.parent-hero,.parent-grid{grid-template-columns:1fr}.parent-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.parent-actions{justify-content:flex-start}}
+    @media(max-width:860px){.parent-shell{margin:0;padding:18px 14px 34px}.parent-sidebar{position:static;width:auto;height:auto;border-radius:0 0 22px 22px;flex-direction:row;align-items:center;overflow-x:auto;padding:14px}.parent-sidebar-brand{min-width:210px;margin:0}.parent-sidebar-brand img{display:none}.parent-sidebar-label,.parent-sidebar-spacer,.parent-sidebar-link{display:none}.parent-tab{width:auto;white-space:nowrap;min-width:max-content}.parent-module-grid,.parent-stats{grid-template-columns:1fr}.parent-row{grid-template-columns:1fr}.parent-row-actions{justify-content:flex-start}}
+  </style>
+</head>
+<body data-kemal-chrome="off">
+  <main class="parent-panel">
+    <nav class="parent-sidebar" aria-label="Veli paneli">
+      <div class="parent-sidebar-brand">
+        <img src="/gorseller/logo.png" alt="Kemal Öğretmenim">
+        <strong>Kemal Öğretmenim</strong>
+        <span id="parentSidebarName">Veli Paneli</span>
+      </div>
+      <div class="parent-sidebar-label">Panel</div>
+      <button class="parent-tab active" type="button" data-tab="home">Giriş</button>
+      <button class="parent-tab" type="button" data-tab="children">Çocuklarım</button>
+      <button class="parent-tab" type="button" data-tab="tasks">Ödevler</button>
+      <button class="parent-tab" type="button" data-tab="reports">Karneler</button>
+      <button class="parent-tab" type="button" data-tab="messages">Mesajlar</button>
+      <button class="parent-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
+      <div class="parent-sidebar-spacer"></div>
+      <a class="parent-sidebar-link" href="/index.html">Siteye Dön</a>
+    </nav>
+
+    <section class="parent-shell">
+      <div class="parent-hero">
+        <div class="parent-profile-head">
+          <div class="parent-avatar" id="parentAvatar">V</div>
+          <div>
+            <h1 id="parentPanelTitle">Veli Paneli</h1>
+            <p id="parentIntro">Çocuğunun ödevlerini, öğretmen mesajlarını ve gelişim kayıtlarını buradan takip edebilirsin.</p>
+          </div>
+        </div>
+        <div>
+          <span class="parent-badge" id="parentStatus">Kontrol ediliyor</span>
+          <div class="parent-actions">
+            <a class="parent-link secondary" href="/index.html">Siteye Dön</a>
+            <button class="parent-btn secondary" id="parentRefreshBtn" type="button">Yenile</button>
+            <button class="parent-btn danger" id="parentLogoutBtn" type="button">Çıkış Yap</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="parent-stats">
+        <div class="parent-stat"><span>Çocuk</span><strong id="parentChildCount">0</strong></div>
+        <div class="parent-stat"><span>Aktif Ödev</span><strong id="parentAssignmentCount">0</strong></div>
+        <div class="parent-stat"><span>Mesaj</span><strong id="parentMessageCount">0</strong></div>
+        <div class="parent-stat"><span>Karne Kaydı</span><strong id="parentReportCount">0</strong></div>
+      </div>
+
+      <section class="parent-section active" id="parent-section-home">
+        <div class="parent-module-grid">
+          <button class="parent-module-card parent-tab tone-pink" type="button" data-tab="children"><span class="parent-module-icon">👧</span><strong>Çocuklarım</strong><small>Bağlantı kodları ve çocuk listesi</small></button>
+          <button class="parent-module-card parent-tab tone-blue" type="button" data-tab="tasks"><span class="parent-module-icon">📝</span><strong>Ödevler</strong><small>Öğretmen tarafından verilen çalışmalar</small></button>
+          <button class="parent-module-card parent-tab tone-orange" type="button" data-tab="reports"><span class="parent-module-icon">📊</span><strong>Karneler</strong><small>Sınav, okuma ve liyakat özeti</small></button>
+          <button class="parent-module-card parent-tab tone-purple" type="button" data-tab="messages"><span class="parent-module-icon">💬</span><strong>Mesajlar</strong><small>Öğretmenle güvenli iletişim</small></button>
+          <button class="parent-module-card parent-tab tone-yellow" type="button" data-tab="account"><span class="parent-module-icon">👤</span><strong>Kişisel Bilgiler</strong><small>Profil ve hesap yönetimi</small></button>
+        </div>
+      </section>
+
+      <section class="parent-section" id="parent-section-children">
+        <div class="parent-grid">
+          <article class="parent-card">
+            <h2>Çocuğuma Bağlan</h2>
+            <p>Öğretmenin verdiği kodu girebilir veya öğrencinin hesabında kullanması için veli kodu oluşturabilirsin.</p>
+            <form class="parent-form" id="teacherCodeForm">
+              <div class="parent-field">
+                <label for="teacherParentCode">Öğretmen Bağlantı Kodu</label>
+                <input id="teacherParentCode" placeholder="Örn. A8K2M4P9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+              </div>
+              <div class="parent-field">
+                <label for="parentRelationship">Yakınlık</label>
+                <select id="parentRelationship">
+                  <option value="mother">Anne</option>
+                  <option value="father">Baba</option>
+                  <option value="parent">Veli</option>
+                  <option value="guardian">Vasi</option>
+                </select>
+              </div>
+              <button class="parent-btn" type="submit">Kodla Bağlan</button>
+            </form>
+            <div style="height:14px"></div>
+            <button class="parent-btn secondary" type="button" id="createParentCodeBtn">Öğrenci İçin Veli Kodu Oluştur</button>
+            <div class="parent-empty" id="parentCodeBox" style="margin-top:12px;display:none"></div>
+          </article>
+          <article class="parent-card">
+            <h2>Bağlı Çocuklarım</h2>
+            <div class="parent-list" id="parentChildList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="parent-section" id="parent-section-tasks">
+        <div class="parent-card">
+          <h2>Ödevler ve Çalışmalar</h2>
+          <div class="parent-filterbar">
+            <select id="parentChildFilter"></select>
+          </div>
+          <div class="parent-list" id="parentAssignmentList"></div>
+        </div>
+      </section>
+
+      <section class="parent-section" id="parent-section-reports">
+        <div class="parent-card">
+          <h2>Karne ve İlerleme</h2>
+          <div class="parent-filterbar">
+            <select id="parentReportChildFilter"></select>
+          </div>
+          <div class="parent-report-tabs" id="parentReportTabs"></div>
+          <div class="parent-list" id="parentReportList"></div>
+        </div>
+      </section>
+
+      <section class="parent-section" id="parent-section-messages">
+        <div class="parent-grid">
+          <article class="parent-card">
+            <h2>Mesaj Gönder</h2>
+            <form class="parent-form" id="parentMessageForm">
+              <div class="parent-field">
+                <label for="messageChild">Çocuk</label>
+                <select id="messageChild"></select>
+              </div>
+              <div class="parent-field">
+                <label for="messageRecipient">Alıcı</label>
+                <select id="messageRecipient">
+                  <option value="teacher">Öğretmen</option>
+                  <option value="student">Öğrenci</option>
+                </select>
+              </div>
+              <div class="parent-field">
+                <label for="messageSubject">Konu</label>
+                <input id="messageSubject" placeholder="Örn. Ödev hakkında">
+              </div>
+              <div class="parent-field">
+                <label for="messageBody">Mesaj</label>
+                <textarea id="messageBody" required></textarea>
+              </div>
+              <button class="parent-btn" type="submit">Mesajı Gönder</button>
+            </form>
+          </article>
+          <article class="parent-card">
+            <h2>Mesaj Kutusu</h2>
+            <div class="parent-message-tabs" id="parentMessageTabs"></div>
+            <div class="parent-list" id="parentMessageList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="parent-section" id="parent-section-account">
+        <div class="parent-grid">
+          <article class="parent-card">
+            <h2>Kişisel Bilgiler</h2>
+            <form class="parent-form" id="parentProfileForm">
+              <div class="parent-field"><label for="parentAccountName">İsim</label><input id="parentAccountName" readonly></div>
+              <div class="parent-field"><label for="parentAccountEmail">E-posta</label><input id="parentAccountEmail" type="email" readonly></div>
+              <div class="parent-field"><label for="parentAccountCity">Şehir</label><input id="parentAccountCity"></div>
+              <button class="parent-btn" type="submit">Bilgileri Güncelle</button>
+              <div class="parent-account-actions">
+                <button class="parent-btn secondary" id="parentPasswordResetBtn" type="button">Şifremi Yenile</button>
+                <button class="parent-btn secondary" id="parentDeactivateBtn" type="button">Hesabı Kapat</button>
+                <button class="parent-btn danger" id="parentDeleteRequestBtn" type="button">Silme Talebi</button>
+              </div>
+            </form>
+          </article>
+          <article class="parent-card">
+            <h2>İçerik Gönder</h2>
+            <p>Sitede beğendiğin bir bağlantıyı çocuğuna mesaj olarak gönderebilirsin.</p>
+            <form class="parent-form" id="sendContentForm">
+              <div class="parent-field"><label for="sendContentChild">Çocuk</label><select id="sendContentChild"></select></div>
+              <div class="parent-field"><label for="sendContentTitle">Başlık</label><input id="sendContentTitle" placeholder="Örn. Güzel bir okuma metni"></div>
+              <div class="parent-field"><label for="sendContentUrl">Bağlantı</label><input id="sendContentUrl" placeholder="/hizli-okuma/..."></div>
+              <button class="parent-btn secondary" type="submit">Çocuğuma Gönder</button>
+            </form>
+          </article>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div class="parent-toast" id="parentToast"></div>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/veli-paneli.js"></script>
+</body>
+</html>

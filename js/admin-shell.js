@@ -10,20 +10,20 @@
           description: 'Genel site ayarları ve yönetim',
           href: '/admin/index.html',
           children: [
-            { key: 'main-overview', label: 'Genel Bakış', href: '/admin/index.html#overview' },
-            { key: 'main-analytics', label: 'Site Analizleri', href: '/admin/index.html#analytics' },
-            { key: 'main-reactions', label: 'Beğeni Analizi', href: '/admin/index.html#reactions' },
-            { key: 'main-duyurular', label: 'Duyurular', href: '/admin/index.html#duyurular' },
-            { key: 'main-badges', label: 'YENİ Rozetleri', href: '/admin/index.html#badges' },
-            { key: 'main-hizli', label: 'Hızlı Erişim', href: '/admin/index.html#hizli' },
-            { key: 'main-onecikarlar', label: 'Öne Çıkanlar', href: '/admin/index.html#onecikarlar' },
-            { key: 'main-yeni', label: 'Yeni İçerikler', href: '/admin/index.html#yeni' },
-            { key: 'main-hakkimda', label: 'Hakkımda', href: '/admin/index.html#hakkimda' },
-            { key: 'main-menuler', label: 'Ekstra Menü', href: '/admin/index.html#menuler' },
-            { key: 'main-adminler', label: 'Alt Adminler', href: '/admin/index.html#adminler' },
-            { key: 'main-kullanicilar', label: 'Kullanıcılar', href: '/admin/index.html#kullanicilar' },
-            { key: 'main-sifre', label: 'Şifre Değiştir', href: '/admin/index.html#sifre' },
-            { key: 'main-yedek', label: 'Yedek / Sıfırla', href: '/admin/index.html#yedek' }
+            { key: 'main-overview', icon: '📊', label: 'Genel Bakış', description: 'Site durumu ve yönetim özetini aç', href: '/admin/index.html#overview' },
+            { key: 'main-analytics', icon: '📈', label: 'Site Analizleri', description: 'Ziyaret ve içerik istatistiklerini incele', href: '/admin/index.html#analytics' },
+            { key: 'main-reactions', icon: '👍', label: 'Beğeni Analizi', description: 'İçerik beğenilerini ve geri bildirimleri gör', href: '/admin/index.html#reactions' },
+            { key: 'main-duyurular', icon: '📢', label: 'Duyurular', description: 'Ana sayfa duyurularını yönet', href: '/admin/index.html#duyurular' },
+            { key: 'main-badges', icon: '🔔', label: 'YENİ Rozetleri', description: 'Yeni içerik rozetlerini düzenle', href: '/admin/index.html#badges' },
+            { key: 'main-hizli', icon: '⚡', label: 'Hızlı Erişim', description: 'Ana sayfa hızlı bağlantılarını ayarla', href: '/admin/index.html#hizli' },
+            { key: 'main-onecikarlar', icon: '📰', label: 'Öne Çıkanlar', description: 'Öne çıkan içerik alanını düzenle', href: '/admin/index.html#onecikarlar' },
+            { key: 'main-yeni', icon: '🌟', label: 'Yeni İçerikler', description: 'Yeni içerik akışını yönet', href: '/admin/index.html#yeni' },
+            { key: 'main-hakkimda', icon: '👤', label: 'Hakkımda', description: 'Hakkımda sayfası metinlerini güncelle', href: '/admin/index.html#hakkimda' },
+            { key: 'main-menuler', icon: '🔗', label: 'Ekstra Menü', description: 'Ek bağlantı ve menü alanlarını düzenle', href: '/admin/index.html#menuler' },
+            { key: 'main-adminler', icon: '🛡️', label: 'Alt Adminler', description: 'Yönetici erişimlerini ve yetkileri ayarla', href: '/admin/index.html#adminler' },
+            { key: 'main-kullanicilar', icon: '👥', label: 'Kullanıcılar', description: 'Kullanıcı kayıtlarını ve hesapları incele', href: '/admin/index.html#kullanicilar' },
+            { key: 'main-sifre', icon: '🔑', label: 'Şifre Değiştir', description: 'Yönetici hesabı şifresini güncelle', href: '/admin/index.html#sifre' },
+            { key: 'main-yedek', icon: '💾', label: 'Yedek / Sıfırla', description: 'Yedekleme ve sıfırlama araçlarını aç', href: '/admin/index.html#yedek' }
           ]
         }
       ]
@@ -32,48 +32,30 @@
       label: 'İçerik Yönetimi',
       groups: [
         {
-          id: 'games-admin',
-          icon: '🎮',
-          label: 'Oyunlar Yönetimi',
-          description: 'Oyun kartları ve bağlantıları',
-          href: '/admin/oyunlar-admin.html',
-          key: 'oyunlar-admin'
-        },
-        {
           id: 'reading-admin',
           icon: '📚',
           label: 'Okuma Admin',
           description: 'Metinler, sonuçlar ve karne',
           href: '/admin/okuma-editor.html',
           children: [
-            { key: 'okuma-editor', label: 'Okuma Metinleri', href: '/admin/okuma-editor.html' },
-            { key: 'okuma-sonuclari', label: 'Okuma Sonuçları', href: '/admin/okuma-sonuclari.html' },
-            { key: 'okuma-karne', label: 'Karne Merkezi', href: '/admin/okuma-karne.html' }
+            { key: 'okuma-editor', icon: '📝', label: 'Okuma Metinleri', description: 'Metinleri, soruları ve yayın durumunu düzenle', href: '/admin/okuma-editor.html' },
+            { key: 'okuma-sonuclari', icon: '📊', label: 'Okuma Sonuçları', description: 'Öğrenci okuma performanslarını incele', href: '/admin/okuma-sonuclari.html' },
+            { key: 'okuma-karne', icon: '📘', label: 'Karne Merkezi', description: 'Okuma karneleri ve raporlarını yönet', href: '/admin/okuma-karne.html' }
           ]
         },
         {
-          id: 'documents-admin',
-          icon: '📄',
-          label: 'Doküman Yönetimi',
-          description: 'PDF içerikler ve yayın akışı',
-          href: '/admin/dokuman-yonetimi.html',
-          key: 'dokuman-yonetimi'
-        },
-        {
-          id: 'menu-admin',
+          id: 'document-menu-admin',
           icon: '🗂️',
-          label: 'Menü & Ders Yönetimi',
-          description: 'Site navigasyonuna ders sayfaları ekle',
-          href: '/admin/menu-yonetimi.html',
-          key: 'menu-yonetimi'
-        },
-        {
-          id: 'worksheet-admin',
-          icon: '🧩',
-          label: 'Çalışma Kağıdı',
-          description: 'Etkileşimli çalışma kağıdı tasarımı',
-          href: '/admin/calisma-kagidi-editor.html',
-          key: 'calisma-kagidi-editor'
+          label: 'Döküman ve Menü Paneli',
+          description: 'Oyun, doküman, menü ve çalışma kağıdı',
+          href: '/admin/dokuman-yonetimi.html',
+          children: [
+            { key: 'oyunlar-admin', icon: '🎮', label: 'Oyunlar Yönetimi', description: 'Oyun kartları ve bağlantılarını düzenle', href: '/admin/oyunlar-admin.html' },
+            { key: 'homepage-vitrin', icon: '✨', label: 'Ana Sayfa Vitrini', description: 'Hero slaytlarını, görselleri ve videoları yönet', href: '/admin/dokuman-yonetimi.html#vitrin' },
+            { key: 'dokuman-yonetimi', icon: '📄', label: 'Doküman Yönetimi', description: 'PDF içerikler ve yayın akışını yönet', href: '/admin/dokuman-yonetimi.html' },
+            { key: 'menu-yonetimi', icon: '🗂️', label: 'Menü & Ders Yönetimi', description: 'Site navigasyonuna ders sayfaları ekle', href: '/admin/menu-yonetimi.html' },
+            { key: 'calisma-kagidi-editor', icon: '🧩', label: 'Çalışma Kağıdı', description: 'Etkileşimli çalışma kağıdı tasarımını aç', href: '/admin/calisma-kagidi-editor.html' }
+          ]
         }
       ]
     },
@@ -87,11 +69,11 @@
           description: 'Sınav, kategori ve sonuç yönetimi',
           href: '/sinav_sitesi/admin.html',
           children: [
-            { key: 'exam-create', label: 'Sınav Oluştur', href: '/sinav_sitesi/admin.html#create' },
-            { key: 'exam-categories', label: 'Kategoriler', href: '/sinav_sitesi/admin.html#categories' },
-            { key: 'exam-exams', label: 'Sınavlar', href: '/sinav_sitesi/admin.html#exams' },
-            { key: 'exam-results', label: 'Sonuçlar', href: '/sinav_sitesi/admin.html#results' },
-            { key: 'exam-student', label: 'Öğrenci Sayfası', href: '/sinav_sitesi/index.html' }
+            { key: 'exam-create', icon: '✏️', label: 'Sınav Oluştur', description: 'Yeni sınav hazırlama ve yayınlama alanı', href: '/sinav_sitesi/admin.html#create' },
+            { key: 'exam-categories', icon: '🏷️', label: 'Kategoriler', description: 'Sınav kategori düzenini yönet', href: '/sinav_sitesi/admin.html#categories' },
+            { key: 'exam-exams', icon: '🧪', label: 'Sınavlar', description: 'Yayındaki sınavları düzenle ve kontrol et', href: '/sinav_sitesi/admin.html#exams' },
+            { key: 'exam-results', icon: '📈', label: 'Sonuçlar', description: 'Sınav sonuçları ve raporlarını incele', href: '/sinav_sitesi/admin.html#results' },
+            { key: 'exam-student', icon: '🎓', label: 'Öğrenci Sayfası', description: 'Öğrenci sınav ekranını aç', href: '/sinav_sitesi/index.html' }
           ]
         }
       ]
@@ -114,6 +96,7 @@
     'main-sifre': ['site_admin_dashboard'],
     'main-yedek': ['site_admin_dashboard'],
     'oyunlar-admin': ['oyun_ekleme'],
+    'homepage-vitrin': ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme', 'site_admin_dashboard'],
     'okuma-editor': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
     'okuma-sonuclari': ['okuma_sonuclari', 'okuma_sonuclari_duzenleme'],
     'okuma-karne': ['okuma_karne'],
@@ -127,6 +110,133 @@
     'exam-student': ['exam_create', 'exam_categories', 'exam_list', 'exam_results', 'exam_appeals', 'exam_single_report', 'exam_report_center'],
     'exam-admin': ['exam_create', 'exam_categories', 'exam_list', 'exam_results', 'exam_appeals', 'exam_single_report', 'exam_report_center'],
   };
+
+  const QUICK_CARD_TONES = ['tone-pink', 'tone-blue', 'tone-orange', 'tone-purple', 'tone-teal', 'tone-yellow'];
+
+  function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, function(char) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char];
+    });
+  }
+
+  function stripLeadingUtilityIcon(label) {
+    return String(label || '')
+      .replace(/^(?:🏠|🌐|↩️|←)\s*/u, '')
+      .trim();
+  }
+
+  function getVisibleChildren(group, permissionProfile) {
+    return Array.isArray(group && group.children)
+      ? group.children.filter(function(child) { return profileCanSeeKey(child.key, permissionProfile); })
+      : [];
+  }
+
+  function findNavGroup(groupId) {
+    let found = null;
+    NAV_SECTIONS.some(function(section) {
+      return section.groups.some(function(group) {
+        if (group.id === groupId) {
+          found = group;
+          return true;
+        }
+        return false;
+      });
+    });
+    return found;
+  }
+
+  async function getQuickPermissionProfile() {
+    if (!window.kemalAdminAuth || typeof window.kemalAdminAuth.getAdminAccessProfile !== 'function') {
+      return null;
+    }
+    try {
+      return await window.kemalAdminAuth.getAdminAccessProfile(false);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function closeQuickPanel(main) {
+    if (!main) {
+      return;
+    }
+    const quickPanel = main.querySelector('[data-admin-shell-quick-panel]');
+    if (quickPanel) {
+      quickPanel.remove();
+    }
+    Array.prototype.slice.call(main.children).forEach(function(child) {
+      if (Object.prototype.hasOwnProperty.call(child.dataset, 'adminShellQuickHidden')) {
+        child.hidden = child.dataset.adminShellQuickHidden === 'true';
+        delete child.dataset.adminShellQuickHidden;
+      }
+    });
+  }
+
+  function buildQuickPanelHtml(group, children) {
+    const cards = children.map(function(child, index) {
+      const tone = QUICK_CARD_TONES[index % QUICK_CARD_TONES.length];
+      return '' +
+        '<a class="admin-shell-quick-card ' + tone + '" href="' + escapeHtml(child.href) + '">' +
+          '<span class="admin-shell-quick-card-icon">' + escapeHtml(child.icon || group.icon || '✨') + '</span>' +
+          '<strong>' + escapeHtml(child.label) + '</strong>' +
+          '<small>' + escapeHtml(child.description || group.description || 'Bu yönetim bölümünü aç') + '</small>' +
+        '</a>';
+    }).join('');
+
+    return '' +
+      '<section class="admin-shell-quick-panel" data-admin-shell-quick-panel>' +
+        '<div class="admin-shell-quick-hero">' +
+          '<div>' +
+            '<span class="admin-shell-quick-kicker">Hızlı erişim</span>' +
+            '<h1>' + escapeHtml(group.label) + '</h1>' +
+            '<p>' + escapeHtml(group.description || 'Bu panelin alt yönetim alanlarına hızlıca geçebilirsin.') + '</p>' +
+          '</div>' +
+          '<button class="admin-shell-quick-close" type="button" data-admin-shell-quick-close>Paneli Göster</button>' +
+        '</div>' +
+        '<div class="admin-shell-quick-grid">' + cards + '</div>' +
+      '</section>';
+  }
+
+  async function showGroupQuickPanel(root, groupId) {
+    const group = findNavGroup(groupId);
+    const layout = root && root.closest ? root.closest('.admin-shell-layout') : document.querySelector('.admin-shell-layout');
+    const main = layout ? layout.querySelector('.admin-shell-main') : null;
+    if (!group || !main) {
+      return;
+    }
+    const permissionProfile = await getQuickPermissionProfile();
+    const children = getVisibleChildren(group, permissionProfile);
+    if (!children.length) {
+      window.location.href = group.href;
+      return;
+    }
+
+    closeQuickPanel(main);
+    Array.prototype.slice.call(main.children).forEach(function(child) {
+      child.dataset.adminShellQuickHidden = String(child.hidden);
+      child.hidden = true;
+    });
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = buildQuickPanelHtml(group, children);
+    const panel = wrapper.firstElementChild;
+    main.insertBefore(panel, main.firstChild);
+
+    const closeButton = panel.querySelector('[data-admin-shell-quick-close]');
+    if (closeButton) {
+      closeButton.addEventListener('click', function() {
+        closeQuickPanel(main);
+      });
+    }
+
+    panel.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
 
   function isGroupActive(group, activeKey) {
     if (!activeKey) {
@@ -155,9 +265,7 @@
 
   function renderGroup(group, activeKey, permissionProfile) {
     const originalHasChildren = Array.isArray(group.children) && group.children.length > 0;
-    const visibleChildren = Array.isArray(group.children)
-      ? group.children.filter(function(child) { return profileCanSeeKey(child.key, permissionProfile); })
-      : [];
+    const visibleChildren = getVisibleChildren(group, permissionProfile);
     const canSeeGroupLink = profileCanSeeKey(group.key, permissionProfile);
     if ((!canSeeGroupLink && !visibleChildren.length) || (originalHasChildren && !visibleChildren.length)) {
       return '';
@@ -165,11 +273,12 @@
 
     const active = isGroupActive(group, activeKey);
     const hasChildren = visibleChildren.length > 0;
-    const groupHref = originalHasChildren && visibleChildren.length ? visibleChildren[0].href : group.href;
+    const groupHref = group.href || (visibleChildren[0] && visibleChildren[0].href) || '#';
+    const quickGroupAttr = originalHasChildren && visibleChildren.length ? ' data-admin-quick-group="' + group.id + '"' : '';
     const linkClass = 'admin-nav-group-link' + (active ? ' is-active' : '');
     let html = '<div class="admin-nav-group' + (active ? ' is-open' : '') + '" data-admin-group="' + group.id + '">';
     html += '<div class="admin-nav-group-head">';
-    html += '<a class="' + linkClass + '" href="' + groupHref + '"' + (group.key ? ' data-admin-permission-key="' + group.key + '"' : '') + '>';
+    html += '<a class="' + linkClass + '" href="' + groupHref + '"' + quickGroupAttr + (group.key ? ' data-admin-permission-key="' + group.key + '"' : '') + '>';
     html += '<span class="icon">' + group.icon + '</span>';
     html += '<span class="copy"><strong>' + group.label + '</strong><span>' + (group.description || '') + '</span></span>';
     html += '</a>';
@@ -195,7 +304,7 @@
     const activeKey = options && options.activeKey ? options.activeKey : '';
     const permissionProfile = options && options.permissionProfile ? options.permissionProfile : null;
     const utilityHref = options && options.homeHref ? options.homeHref : '/index.html';
-    const utilityLabel = options && options.homeLabel ? options.homeLabel : '🌐 Siteyi Aç';
+    const utilityLabel = stripLeadingUtilityIcon(options && options.homeLabel ? options.homeLabel : 'Siteyi Aç') || 'Siteyi Aç';
     return '' +
       '<aside class="admin-nav-sidebar">' +
         '<div class="admin-nav-brand">' +
@@ -239,6 +348,15 @@
         if (group) {
           group.classList.toggle('is-open');
         }
+      });
+    });
+    root.querySelectorAll('[data-admin-quick-group]').forEach(function(link) {
+      link.addEventListener('click', function(event) {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+          return;
+        }
+        event.preventDefault();
+        showGroupQuickPanel(root, link.getAttribute('data-admin-quick-group'));
       });
     });
     const logoutBtn = root.querySelector('[data-admin-logout]');
@@ -368,6 +486,7 @@
   window.KemalAdminShell = {
     bindSidebar: bindSidebar,
     initStandalone: initStandalone,
-    renderSidebar: renderSidebar
+    renderSidebar: renderSidebar,
+    showGroupQuickPanel: showGroupQuickPanel
   };
 })();

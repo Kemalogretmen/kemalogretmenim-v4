@@ -10,9 +10,12 @@
     { key: 'okuma-anlama', label: 'Okuma Anlama', icon: '📖' },
   ];
 
-  // Dinamik dersler Supabase'den yüklendikçe buraya eklenir
+  // Dinamik dersler Supabase'den yüklendikçe buraya eklenir.
+  // Her dinamik ders sınıf bilgisiyle tutulur; doküman hedefi seçerken
+  // başka sınıfa ait özel menülerin görünmesini engeller.
   let SUBJECTS = BASE_SUBJECTS.slice();
   let SUBJECT_MAP = buildSubjectMap(SUBJECTS);
+  let DYNAMIC_SUBJECTS = [];
 
   function buildSubjectMap(list) {
     return list.reduce(function(map, subject) {
@@ -21,17 +24,42 @@
     }, {});
   }
 
-  // menu_ogeler tablosundaki yeni dersleri SUBJECTS listesine ekler
+  function normalizeGrade(value) {
+    const grade = parseInt(value, 10);
+    return grade && GRADE_LABELS[grade] ? grade : 0;
+  }
+
+  function syncGlobalSubjects() {
+    SUBJECTS = BASE_SUBJECTS.slice();
+    SUBJECT_MAP = buildSubjectMap(SUBJECTS);
+    DYNAMIC_SUBJECTS.forEach(function(subject) {
+      if (SUBJECT_MAP[subject.key]) return;
+      const entry = { key: subject.key, label: subject.label, icon: subject.icon };
+      SUBJECTS.push(entry);
+      SUBJECT_MAP[entry.key] = entry;
+    });
+  }
+
+  // menu_ogeler tablosundaki yeni dersleri sınıf bilgisiyle ekler
   function mergeMenuItems(rows) {
     if (!Array.isArray(rows)) return;
+    const seen = {};
     rows.forEach(function(row) {
       var key = String(row.ders_key || '').trim().toLowerCase();
       if (!key) return;
-      if (SUBJECT_MAP[key]) return; // zaten var
-      var entry = { key: key, label: row.label || key, icon: row.icon || '📄' };
-      SUBJECTS.push(entry);
-      SUBJECT_MAP[key] = entry;
+      var grade = normalizeGrade(row.sinif);
+      var dedupeKey = (grade || 'all') + '::' + key;
+      if (seen[dedupeKey]) return;
+      seen[dedupeKey] = true;
+      DYNAMIC_SUBJECTS.push({
+        key: key,
+        label: row.label || key,
+        icon: row.icon || '📄',
+        sinif: grade,
+        sortOrder: Number(row.sort_order || 99),
+      });
     });
+    syncGlobalSubjects();
   }
 
   const SUBJECT_ALIASES = {
@@ -107,8 +135,38 @@
     return SUBJECT_ALIASES[raw] || raw;
   }
 
-  function getSubjectMeta(subjectKey) {
-    return SUBJECT_MAP[normalizeSubjectKey(subjectKey)] || null;
+  function getSubjects(grade) {
+    const safeGrade = normalizeGrade(grade);
+    if (!safeGrade) {
+      return SUBJECTS.slice();
+    }
+
+    const subjects = BASE_SUBJECTS.slice();
+    const map = buildSubjectMap(subjects);
+    DYNAMIC_SUBJECTS
+      .filter(function(subject) { return !subject.sinif || subject.sinif === safeGrade; })
+      .sort(function(a, b) { return a.sortOrder - b.sortOrder || a.label.localeCompare(b.label, 'tr'); })
+      .forEach(function(subject) {
+        if (map[subject.key]) return;
+        const entry = { key: subject.key, label: subject.label, icon: subject.icon };
+        subjects.push(entry);
+        map[entry.key] = entry;
+      });
+    return subjects;
+  }
+
+  function getSubjectMeta(subjectKey, grade) {
+    const key = normalizeSubjectKey(subjectKey);
+    const safeGrade = normalizeGrade(grade);
+    if (safeGrade) {
+      const gradeSubject = DYNAMIC_SUBJECTS.find(function(subject) {
+        return subject.sinif === safeGrade && subject.key === key;
+      });
+      if (gradeSubject) {
+        return gradeSubject;
+      }
+    }
+    return SUBJECT_MAP[key] || null;
   }
 
   function getGradeLabel(value) {
@@ -236,7 +294,7 @@
       });
     }).map(function(item) {
       var context = { sinif: Number(grade), ders: normalizedSubject };
-      var subjectMeta = getSubjectMeta(normalizedSubject);
+      var subjectMeta = getSubjectMeta(normalizedSubject, grade);
       return Object.assign({}, item, {
         dersLabel: subjectMeta ? subjectMeta.label : normalizedSubject,
         sinifLabel: getGradeLabel(grade),
@@ -270,7 +328,7 @@
 
     const item = result.data;
     return Object.assign({}, item, {
-      dersLabel: getSubjectMeta(item.ders) ? getSubjectMeta(item.ders).label : item.ders,
+      dersLabel: getSubjectMeta(item.ders, item.sinif) ? getSubjectMeta(item.ders, item.sinif).label : item.ders,
       sinifLabel: getGradeLabel(item.sinif),
       hedefler: getDocumentTargets(item),
       dosyaUrl: getDocumentUrl(item),
@@ -286,9 +344,7 @@
       return BUCKET_NAME;
     },
     getPublicClient: getPublicClient,
-    getSubjects: function() {
-      return SUBJECTS.slice();
-    },
+    getSubjects: getSubjects,
     getSubjectMeta: getSubjectMeta,
     normalizeSubjectKey: normalizeSubjectKey,
     getGradeLabel: getGradeLabel,

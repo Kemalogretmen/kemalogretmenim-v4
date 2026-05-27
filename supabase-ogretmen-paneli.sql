@@ -313,6 +313,8 @@ create table if not exists public.teacher_class_students (
   display_name text not null,
   email text not null default '',
   student_no text not null default '',
+  birth_date date,
+  parent_note text not null default '',
   status text not null default 'active' check (status in ('invited', 'active', 'removed')),
   merit_points integer not null default 0,
   joined_at timestamptz,
@@ -320,9 +322,14 @@ create table if not exists public.teacher_class_students (
   updated_at timestamptz not null default now()
 );
 
+alter table if exists public.teacher_class_students
+  add column if not exists birth_date date,
+  add column if not exists parent_note text not null default '';
+
 create index if not exists idx_teacher_class_students_class on public.teacher_class_students (class_id, status, display_name);
 create index if not exists idx_teacher_class_students_teacher on public.teacher_class_students (teacher_id, status);
 create index if not exists idx_teacher_class_students_profile on public.teacher_class_students (student_profile_id);
+create index if not exists idx_teacher_class_students_birth_date on public.teacher_class_students (birth_date);
 create unique index if not exists idx_teacher_class_students_unique_profile
   on public.teacher_class_students (class_id, student_profile_id)
   where student_profile_id is not null and status <> 'removed';

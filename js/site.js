@@ -740,10 +740,6 @@
       return '#';
     }
 
-    if (safeGrade === '1' && safeSubject === 'okuma-anlama') {
-      return '/1_sinif/okuma_anlama/1_okuma_anlama.html';
-    }
-
     return '/ders.html?sinif=' + encodeURIComponent(safeGrade) + '&ders=' + encodeURIComponent(safeSubject);
   }
 
@@ -892,7 +888,6 @@
         badgeKey: '1sinif',
         items: [
           { href: GRADE_META['1'].panelHref, label: GRADE_META['1'].panelLabel, icon: '🏠', panel: true },
-          { href: '/1_sinif/okuma_anlama/1_okuma_anlama.html', label: 'Eski Okuma Metinleri', icon: '📚' },
           { href: buildSubjectUrl('1', 'turkce'), label: 'Türkçe', icon: '📝' },
           { href: buildSubjectUrl('1', 'matematik'), label: 'Matematik', icon: '🔢' },
           { href: buildSubjectUrl('1', 'hayat-bilgisi'), label: 'Hayat Bilgisi', icon: '🌱' },
@@ -1393,7 +1388,8 @@
           url.indexOf('/giris.html') === 0 ||
           url.indexOf('/kayit.html') === 0 ||
           url.indexOf('/ogretmen-paneli.html') === 0 ||
-          url.indexOf('/ogrenci-paneli.html') === 0
+          url.indexOf('/ogrenci-paneli.html') === 0 ||
+          url.indexOf('/veli-paneli.html') === 0
         );
       })
       : [];
@@ -1421,6 +1417,7 @@
     }
     if (profile && profile.role === 'teacher') return '/ogretmen-paneli.html';
     if (profile && profile.role === 'student') return '/ogrenci-paneli.html';
+    if (profile && profile.role === 'parent') return '/veli-paneli.html';
     return '/giris.html';
   }
 
@@ -1445,7 +1442,9 @@
       summary.textContent = 'Merhaba, ' + displayName;
       primary.textContent = 'Hesabım';
       primary.href = getAccountPanelHref(profile);
-      secondary.textContent = profile && profile.role === 'teacher' ? 'Öğretmen Paneli' : 'Öğrenci Paneli';
+      secondary.textContent = profile && profile.role === 'teacher'
+        ? 'Öğretmen Paneli'
+        : (profile && profile.role === 'parent' ? 'Veli Paneli' : 'Öğrenci Paneli');
       secondary.href = getAccountPanelHref(profile);
       logout.hidden = false;
       if (sep) sep.hidden = false;
@@ -1783,7 +1782,7 @@
         return 'ortaokul';
       }
     }
-    if (path === '/1_sinif/okuma_anlama/1_okuma_anlama.html' || path.startsWith('/siniflar/1-sinif.html') || path.startsWith('/1_sinif/')) {
+    if (path.startsWith('/siniflar/1-sinif.html') || path.startsWith('/1_sinif/')) {
       return '1';
     }
     if (path.startsWith('/siniflar/2-sinif.html') || path.startsWith('/2_sinif/')) {

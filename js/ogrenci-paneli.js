@@ -11,6 +11,12 @@
     assignments: [],
     progress: [],
     merit: [],
+    messages: [],
+    messageProfiles: {},
+    messageTab: 'inbox',
+    activeMessageId: '',
+    parentLinks: [],
+    parentProfiles: {},
     teacherNames: {},
     avatarDraft: '',
     locations: [],
@@ -52,6 +58,23 @@
     return clean(value).toLocaleUpperCase('tr-TR');
   }
 
+  function normalizeCode(value) {
+    return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  }
+
+  function bindCodeInput(id) {
+    var input = qs(id);
+    if (!input) return;
+    var normalizeInput = function() {
+      var next = normalizeCode(input.value);
+      if (input.value !== next) input.value = next;
+    };
+    input.addEventListener('input', normalizeInput);
+    input.addEventListener('paste', function() {
+      window.setTimeout(normalizeInput, 0);
+    });
+  }
+
   function setSelectOptions(select, items, placeholder, mapper) {
     if (!select) return;
     var mapItem = mapper || function(item) {
@@ -90,6 +113,9 @@
 
   function humanizeError(error) {
     var message = String(error && error.message ? error.message : error || '');
+    if (message.indexOf('sender_deleted_at') >= 0 || message.indexOf('recipient_deleted_at') >= 0) {
+      return 'Panel mesaj güncelleme alanları Supabase içinde eksik görünüyor. supabase-panel-guncelleme-2026-05-27.sql dosyasını çalıştırmalısın.';
+    }
     if (message.indexOf('relation') >= 0 || message.indexOf('does not exist') >= 0) {
       return 'Gerekli Supabase tabloları henüz kurulmamış görünüyor. SQL dosyalarını tekrar çalıştırmalısın.';
     }
@@ -106,6 +132,61 @@
       return String(value || 'Tarih yok');
     }
     return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function sameId(a, b) {
+    return String(a || '') === String(b || '');
+  }
+
+  function getProfileName(profile) {
+    return clean(profile && (profile.full_name || [profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.email));
+  }
+
+  function getPersonName(id) {
+    if (sameId(id, state.user && state.user.id)) return 'Sen';
+    return state.teacherNames[id] || getProfileName(state.messageProfiles[id]) || 'Kullanıcı';
+  }
+
+  function isOwnMessageDeleted(message) {
+    return sameId(message.sender_id, state.user && state.user.id) ? !!message.sender_deleted_at : !!message.recipient_deleted_at;
+  }
+
+  function getUnreadMessageCount() {
+    return state.messages.filter(function(message) {
+      return sameId(message.recipient_id, state.user && state.user.id) && message.status !== 'read' && !message.recipient_deleted_at;
+    }).length;
+  }
+
+  function getMessageRows(tab) {
+    var selected = tab || state.messageTab || 'inbox';
+    return state.messages.filter(function(message) {
+      if (isOwnMessageDeleted(message) || message.status === 'archived') return false;
+      var mine = sameId(message.sender_id, state.user && state.user.id);
+      var received = sameId(message.recipient_id, state.user && state.user.id);
+      if (selected === 'sent') return mine;
+      if (selected === 'read') return received && message.status === 'read';
+      return received && message.status !== 'read';
+    }).sort(function(a, b) {
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    }).slice(0, 10);
+  }
+
+  function setPanelBadge(tabName, count) {
+    document.querySelectorAll('[data-tab="' + tabName + '"]').forEach(function(el) {
+      var badge = el.querySelector('.panel-notification-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'panel-notification-badge';
+        el.appendChild(badge);
+      }
+      badge.hidden = !count;
+      badge.textContent = String(count || '');
+    });
+  }
+
+  function renderPanelBadges() {
+    setPanelBadge('messages', getUnreadMessageCount());
+    setPanelBadge('tasks', 0);
   }
 
   function formatDuration(seconds) {
@@ -196,6 +277,20 @@
     return Array.isArray(assignment.target_student_ids) && assignment.target_student_ids.indexOf(membershipId) >= 0;
   }
 
+  function getMembershipForAssignment(assignment) {
+    return state.memberships.find(function(membership) {
+      return String(membership.class_id) === String(assignment && assignment.class_id) && targetIncludesStudent(assignment, membership.id);
+    }) || null;
+  }
+
+  function getProgressForAssignment(assignment) {
+    var membership = getMembershipForAssignment(assignment);
+    if (!membership) return {};
+    return state.progress.find(function(row) {
+      return String(row.assignment_id) === String(assignment.id) && String(row.student_membership_id) === String(membership.id);
+    }) || {};
+  }
+
   function getAssignmentMetadata(item) {
     return item && item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
   }
@@ -263,7 +358,7 @@
     if (!ref || /^<iframe/i.test(ref)) {
       return '<span class="student-pill warn">Önizleme</span>';
     }
-    return '<a class="student-pill ok" href="' + esc(safeHref(ref)) + '">Aç</a>';
+    return '<a class="student-pill ok" href="' + esc(safeHref(ref)) + '" data-assignment-open="' + esc(item.id) + '">Aç</a>';
   }
 
   function getInitials(profile) {
@@ -508,6 +603,30 @@
     }).join('');
   }
 
+  function renderParents() {
+    var box = qs('studentParentList');
+    if (!box) return;
+    var rows = state.parentLinks.filter(function(link) {
+      return link.status === 'active' || link.status === 'pending';
+    });
+    if (!rows.length) {
+      box.innerHTML = '<div class="student-empty">Henüz bağlı veli hesabı görünmüyor.</div>';
+      return;
+    }
+    var relationMap = { mother: 'Anne', father: 'Baba', parent: 'Veli', guardian: 'Vasi' };
+    box.innerHTML = rows.map(function(link) {
+      var profile = state.parentProfiles[link.parent_id] || {};
+      var approved = link.teacher_review_status === 'approved' || link.teacher_review_status === 'not_required';
+      return '<div class="student-row">' +
+        '<div>' +
+          '<div class="student-row-title">' + esc(getProfileName(profile) || 'Veli hesabı') + '</div>' +
+          '<div class="student-row-sub">' + esc(relationMap[link.relationship] || 'Veli') + ' · ' + esc(approved ? 'Bağlandı' : 'Öğretmen onayı bekliyor') + '</div>' +
+        '</div>' +
+        '<span class="student-pill ' + (approved ? 'ok' : 'warn') + '">' + esc(approved ? 'Aktif' : 'Beklemede') + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
   function renderAssignments() {
     var box = qs('studentAssignmentList');
     if (!box) return;
@@ -521,10 +640,11 @@
       return;
     }
     box.innerHTML = rows.map(function(item) {
-      var progress = state.progress.find(function(row) { return String(row.assignment_id) === String(item.id); }) || {};
+      var progress = getProgressForAssignment(item);
       var metadata = getAssignmentMetadata(item);
       var teacherName = metadata.teacherName || state.teacherNames[item.teacher_id] || '';
-      return '<div class="student-row">' +
+      var done = progress.status === 'completed';
+      return '<div class="student-row ' + (done ? 'assignment-done' : '') + '">' +
         '<div>' +
           '<div class="student-row-title">' + esc(item.title) + '</div>' +
           '<div class="student-row-sub">' + esc(getContentTypeLabel(item.content_type)) + ' · ' + formatDate(item.start_at) + ' - ' + formatDate(item.due_at) + '</div>' +
@@ -535,10 +655,86 @@
         '</div>' +
         '<div class="student-row-actions">' +
           renderAssignmentAction(item) +
-          '<span class="student-pill ' + (progress.status === 'completed' ? 'ok' : 'warn') + '">' + esc(getAssignmentStatusLabel(progress.status)) + '</span>' +
+          '<span class="student-pill ' + (done ? 'ok' : 'warn') + '">' + esc(done ? 'Yapıldı' : getAssignmentStatusLabel(progress.status)) + '</span>' +
         '</div>' +
       '</div>';
     }).join('');
+  }
+
+  function getTeacherMembershipRows() {
+    var seen = {};
+    return state.memberships.filter(function(item) {
+      if (!item || !item.teacher_id) return false;
+      var key = String(item.teacher_id) + ':' + String(item.class_id || '');
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function fillMessageTeachers() {
+    var select = qs('studentMessageTeacher');
+    if (!select) return;
+    var rows = getTeacherMembershipRows();
+    select.innerHTML = rows.length
+      ? rows.map(function(item) {
+        var classRow = item.teacher_classes || {};
+        var label = (state.teacherNames[item.teacher_id] || 'Öğretmen') +
+          (classRow.name ? ' · ' + classRow.name : '');
+        return '<option value="' + esc(item.id) + '">' + esc(label) + '</option>';
+      }).join('')
+      : '<option value="">Bağlı öğretmen yok</option>';
+    select.disabled = !rows.length;
+  }
+
+  function renderMessages() {
+    fillMessageTeachers();
+    var box = qs('studentMessageList');
+    if (!box) return;
+    var tabs = qs('studentMessageTabs');
+    if (tabs) {
+      var tabRows = [
+        { id: 'inbox', label: 'Gelen Mesajlar', count: getMessageRows('inbox').length },
+        { id: 'sent', label: 'Gönderilenler', count: getMessageRows('sent').length },
+        { id: 'read', label: 'Okunanlar', count: getMessageRows('read').length },
+      ];
+      tabs.innerHTML = tabRows.map(function(tab) {
+        return '<button class="student-message-tab ' + (state.messageTab === tab.id ? 'active' : '') + '" type="button" data-message-tab="' + esc(tab.id) + '">' + esc(tab.label) + ' <span>' + tab.count + '</span></button>';
+      }).join('');
+    }
+    var rows = getMessageRows();
+    if (!rows.length) {
+      box.innerHTML = '<div class="student-empty">Bu sekmede mesaj yok.</div>';
+      return;
+    }
+    box.innerHTML = rows.map(function(item) {
+      var mine = sameId(item.sender_id, state.user.id);
+      var otherId = mine ? item.recipient_id : item.sender_id;
+      var read = !mine && item.status === 'read';
+      var active = sameId(state.activeMessageId, item.id);
+      return '<div class="student-row ' + (read ? 'message-read' : '') + '">' +
+        '<div>' +
+          '<div class="student-row-title">' + esc(item.subject || 'Mesaj') + '</div>' +
+          '<div class="student-row-sub">' + esc(mine ? 'Alıcı: ' + getPersonName(otherId) : 'Gönderen: ' + getPersonName(otherId)) + ' · ' + esc(formatDate(item.created_at)) + '</div>' +
+          (active ? renderMessageDetail(item, mine) : '') +
+        '</div>' +
+        '<div class="student-row-actions">' +
+          '<span class="student-pill ' + (read ? '' : 'ok') + '">' + esc(mine ? 'Gönderildi' : (read ? 'Okundu' : 'Gelen')) + '</span>' +
+          '<button class="student-btn secondary" type="button" data-message-open="' + esc(item.id) + '">' + esc(active ? 'Kapat' : 'Oku') + '</button>' +
+          '<button class="student-btn danger" type="button" data-message-delete="' + esc(item.id) + '">Sil</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderMessageDetail(item, mine) {
+    return '<div class="student-message-detail">' +
+      '<div>' + esc(item.body || '') + '</div>' +
+      '<label class="student-field"><span>Cevap yaz</span><textarea data-message-reply-body="' + esc(item.id) + '" placeholder="Cevabını yaz"></textarea></label>' +
+      '<div class="student-row-actions">' +
+        '<button class="student-btn secondary" type="button" data-message-reply="' + esc(item.id) + '">' + esc(mine ? 'Tekrar Gönder' : 'Cevapla') + '</button>' +
+      '</div>' +
+    '</div>';
   }
 
   function filterText(value) {
@@ -764,16 +960,21 @@
     renderStats();
     renderAccount();
     renderClasses();
+    renderParents();
     renderAssignments();
+    renderMessages();
     renderContentProgress();
     renderSavedContent();
+    renderPanelBadges();
   }
 
   async function loadAssignmentTeacherNames() {
     state.teacherNames = {};
     var ids = Array.from(new Set(state.assignments.map(function(item) {
       return item.teacher_id;
-    }).filter(Boolean)));
+    }).concat(state.memberships.map(function(item) {
+      return item.teacher_id;
+    })).filter(Boolean)));
     if (!ids.length) return;
     try {
       var result = await getClient()
@@ -786,6 +987,79 @@
       });
     } catch (error) {
       state.teacherNames = {};
+    }
+  }
+
+  async function loadMessages() {
+    state.messages = [];
+    if (!state.user || !state.user.id) return;
+    try {
+      var result = await getClient()
+        .from('panel_messages')
+        .select('*')
+        .or('sender_id.eq.' + state.user.id + ',recipient_id.eq.' + state.user.id)
+        .order('created_at', { ascending: false })
+        .limit(80);
+      if (result.error) throw result.error;
+      state.messages = result.data || [];
+      await loadMessageProfiles();
+    } catch (error) {
+      state.messages = [];
+      state.messageProfiles = {};
+    }
+  }
+
+  async function loadParentLinks() {
+    state.parentLinks = [];
+    state.parentProfiles = {};
+    if (!state.user || !state.user.id) return;
+    try {
+      var result = await getClient()
+        .from('parent_student_links')
+        .select('*')
+        .eq('student_profile_id', state.user.id)
+        .in('status', ['active', 'pending'])
+        .order('created_at', { ascending: false });
+      if (result.error) throw result.error;
+      state.parentLinks = result.data || [];
+      var ids = Array.from(new Set(state.parentLinks.map(function(link) { return link.parent_id; }).filter(Boolean)));
+      if (ids.length) {
+        var profiles = await getClient()
+          .from('user_profiles')
+          .select('id,email,full_name,first_name,last_name')
+          .in('id', ids);
+        if (!profiles.error) {
+          (profiles.data || []).forEach(function(profile) {
+            state.parentProfiles[profile.id] = profile;
+          });
+        }
+      }
+    } catch (error) {
+      state.parentLinks = [];
+      state.parentProfiles = {};
+    }
+  }
+
+  async function loadMessageProfiles() {
+    state.messageProfiles = {};
+    var ids = Array.from(new Set(state.messages.reduce(function(list, message) {
+      list.push(message.sender_id, message.recipient_id);
+      return list;
+    }, []).filter(function(id) {
+      return id && !sameId(id, state.user && state.user.id) && !state.teacherNames[id];
+    })));
+    if (!ids.length) return;
+    try {
+      var result = await getClient()
+        .from('user_profiles')
+        .select('id,email,full_name,first_name,last_name')
+        .in('id', ids);
+      if (result.error) throw result.error;
+      (result.data || []).forEach(function(profile) {
+        state.messageProfiles[profile.id] = profile;
+      });
+    } catch (error) {
+      state.messageProfiles = {};
     }
   }
 
@@ -814,7 +1088,9 @@
       window.location.href = '/giris.html';
       return false;
     }
-    setText('studentIntro', (state.profile.full_name || state.user.email || 'Öğrenci') + ', bugün de küçük bir ilerleme büyük fark yaratır. Sınavlarını, okumalarını, kaydettiklerini ve yıldız yolculuğunu buradan takip edebilirsin.');
+    var displayName = state.profile.full_name || state.user.email || 'Öğrenci';
+    setText('studentIntro', displayName + ', bugün de küçük bir ilerleme büyük fark yaratır. Sınavlarını, okumalarını, kaydettiklerini ve yıldız yolculuğunu buradan takip edebilirsin.');
+    setText('studentSidebarName', displayName);
     setText('studentStatus', 'Aktif öğrenci');
     renderAccount();
     if (window.kemalContentProgress && typeof window.kemalContentProgress.syncRemote === 'function') {
@@ -839,6 +1115,8 @@
       state.progress = [];
       state.merit = [];
       state.teacherNames = {};
+      await loadParentLinks();
+      await loadMessages();
       renderAll();
       return;
     }
@@ -873,12 +1151,14 @@
     } else {
       state.merit = [];
     }
+    await loadParentLinks();
+    await loadMessages();
     renderAll();
   }
 
   async function joinClass(event) {
     event.preventDefault();
-    var code = String(qs('joinClassCode').value || '').trim().toLocaleUpperCase('tr-TR');
+    var code = normalizeCode(qs('joinClassCode').value);
     if (!code) return;
     try {
       var result = await getClient().rpc('join_teacher_class_by_code', { p_invite_code: code });
@@ -886,6 +1166,169 @@
       qs('joinClassForm').reset();
       toast('Sınıfa katıldın.');
       await loadData();
+    } catch (error) {
+      toast(humanizeError(error), 'error');
+    }
+  }
+
+  async function connectParentCode(event) {
+    event.preventDefault();
+    var code = normalizeCode(qs('studentParentCode') && qs('studentParentCode').value);
+    var relationship = qs('studentParentRelationship') ? qs('studentParentRelationship').value : 'parent';
+    if (!code) {
+      toast('Veli kodunu yazmalısın.', 'error');
+      return;
+    }
+    try {
+      var result = await getClient().rpc('connect_student_with_parent_code', {
+        p_code: code,
+        p_relationship: relationship,
+      });
+      if (result.error) throw result.error;
+      if (qs('studentParentCodeForm')) qs('studentParentCodeForm').reset();
+      toast('Veli hesabı öğrencine bağlandı.');
+      await loadData();
+    } catch (error) {
+      toast(humanizeError(error), 'error');
+    }
+  }
+
+  async function sendStudentMessage(event) {
+    event.preventDefault();
+    var membershipId = qs('studentMessageTeacher') ? qs('studentMessageTeacher').value : '';
+    var membership = state.memberships.find(function(item) { return String(item.id) === String(membershipId); }) || null;
+    var subject = clean(qs('studentMessageSubject') && qs('studentMessageSubject').value) || 'Öğrenci mesajı';
+    var body = clean(qs('studentMessageBody') && qs('studentMessageBody').value);
+    if (!membership || !membership.teacher_id) {
+      toast('Mesaj göndermek için bağlı bir öğretmen seçmelisin.', 'error');
+      return;
+    }
+    if (!body) {
+      toast('Mesajını yazmalısın.', 'error');
+      return;
+    }
+    try {
+      var result = await getClient().from('panel_messages').insert({
+        sender_id: state.user.id,
+        sender_role: 'student',
+        recipient_id: membership.teacher_id,
+        class_id: membership.class_id,
+        related_student_profile_id: state.user.id,
+        subject: subject,
+        body: body,
+      });
+      if (result.error) throw result.error;
+      if (qs('studentMessageForm')) qs('studentMessageForm').reset();
+      toast('Mesajın öğretmenine gönderildi.');
+      await loadMessages();
+      renderMessages();
+    } catch (error) {
+      toast(humanizeError(error), 'error');
+    }
+  }
+
+  async function openPanelMessage(messageId) {
+    var message = state.messages.find(function(item) { return sameId(item.id, messageId); }) || null;
+    if (!message) return;
+    if (sameId(state.activeMessageId, messageId)) {
+      state.activeMessageId = '';
+      renderMessages();
+      return;
+    }
+    state.activeMessageId = messageId;
+    if (sameId(message.recipient_id, state.user.id) && message.status !== 'read') {
+      try {
+        var result = await getClient()
+          .from('panel_messages')
+          .update({ status: 'read', read_at: new Date().toISOString() })
+          .eq('id', message.id)
+          .eq('recipient_id', state.user.id);
+        if (result.error) throw result.error;
+        message.status = 'read';
+        message.read_at = new Date().toISOString();
+      } catch (error) {
+        toast(humanizeError(error), 'error');
+      }
+    }
+    renderMessages();
+    renderPanelBadges();
+  }
+
+  async function deletePanelMessage(messageId) {
+    var message = state.messages.find(function(item) { return sameId(item.id, messageId); }) || null;
+    if (!message || !window.confirm('Mesaj bu panelden kaldırılsın mı?')) return;
+    var mine = sameId(message.sender_id, state.user.id);
+    var payload = mine ? { sender_deleted_at: new Date().toISOString() } : { recipient_deleted_at: new Date().toISOString() };
+    try {
+      var result = await getClient().from('panel_messages').update(payload).eq('id', message.id);
+      if (result.error) throw result.error;
+      Object.assign(message, payload);
+      state.activeMessageId = '';
+      renderMessages();
+      renderPanelBadges();
+      toast('Mesaj kaldırıldı.');
+    } catch (error) {
+      toast(humanizeError(error), 'error');
+    }
+  }
+
+  async function replyPanelMessage(messageId) {
+    var message = state.messages.find(function(item) { return sameId(item.id, messageId); }) || null;
+    if (!message) return;
+    var input = document.querySelector('[data-message-reply-body="' + messageId + '"]');
+    var body = clean(input && input.value);
+    if (!body) {
+      toast('Cevap metni gerekli.', 'error');
+      return;
+    }
+    var recipientId = sameId(message.sender_id, state.user.id) ? message.recipient_id : message.sender_id;
+    try {
+      var result = await getClient().from('panel_messages').insert({
+        sender_id: state.user.id,
+        sender_role: 'student',
+        recipient_id: recipientId,
+        class_id: message.class_id || null,
+        related_student_profile_id: state.user.id,
+        subject: message.subject && /^Re:/i.test(message.subject) ? message.subject : 'Re: ' + (message.subject || 'Mesaj'),
+        body: body,
+      });
+      if (result.error) throw result.error;
+      toast('Cevap gönderildi.');
+      await loadMessages();
+      renderMessages();
+    } catch (error) {
+      toast(humanizeError(error), 'error');
+    }
+  }
+
+  async function markAssignmentCompleted(assignmentId) {
+    var assignment = state.assignments.find(function(item) { return sameId(item.id, assignmentId); }) || null;
+    var membership = assignment ? getMembershipForAssignment(assignment) : null;
+    if (!assignment || !membership) return;
+    try {
+      var payload = {
+        assignment_id: assignment.id,
+        student_membership_id: membership.id,
+        student_profile_id: state.user.id,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        detail_json: { opened_from_panel: true },
+      };
+      var result = await getClient()
+        .from('teacher_assignment_progress')
+        .upsert(payload, { onConflict: 'assignment_id,student_membership_id' })
+        .select('*')
+        .maybeSingle();
+      if (result.error) throw result.error;
+      var row = result.data || payload;
+      var index = state.progress.findIndex(function(item) {
+        return sameId(item.assignment_id, assignment.id) && sameId(item.student_membership_id, membership.id);
+      });
+      if (index >= 0) state.progress[index] = Object.assign({}, state.progress[index], row);
+      else state.progress.push(row);
+      renderAssignments();
+      renderStats();
+      renderPanelBadges();
     } catch (error) {
       toast(humanizeError(error), 'error');
     }
@@ -1056,7 +1499,11 @@
   }
 
   function bindEvents() {
+    bindCodeInput('joinClassCode');
+    bindCodeInput('studentParentCode');
     if (qs('joinClassForm')) qs('joinClassForm').addEventListener('submit', joinClass);
+    if (qs('studentParentCodeForm')) qs('studentParentCodeForm').addEventListener('submit', connectParentCode);
+    if (qs('studentMessageForm')) qs('studentMessageForm').addEventListener('submit', sendStudentMessage);
     if (qs('studentProfileForm')) qs('studentProfileForm').addEventListener('submit', saveProfile);
     if (qs('studentAvatarBtn')) qs('studentAvatarBtn').addEventListener('click', function() { qs('studentAvatarInput').click(); });
     if (qs('studentAvatarInput')) qs('studentAvatarInput').addEventListener('change', handleAvatarFile);
@@ -1083,22 +1530,41 @@
     document.addEventListener('click', function(event) {
       var target = event.target;
       if (!target) return;
-      if (target.dataset.tab) {
+      var tabTarget = target.closest ? target.closest('[data-tab]') : null;
+      if (tabTarget && tabTarget.dataset.tab) {
         document.querySelectorAll('.student-tab').forEach(function(btn) {
-          btn.classList.toggle('active', btn.dataset.tab === target.dataset.tab);
+          btn.classList.toggle('active', btn.dataset.tab === tabTarget.dataset.tab);
         });
         document.querySelectorAll('.student-section').forEach(function(section) {
-          section.classList.toggle('active', section.id === 'student-section-' + target.dataset.tab);
+          section.classList.toggle('active', section.id === 'student-section-' + tabTarget.dataset.tab);
         });
       }
-      if (target.dataset.contentTab) {
+      var contentTabTarget = target.closest ? target.closest('[data-content-tab]') : null;
+      if (contentTabTarget && contentTabTarget.dataset.contentTab) {
         document.querySelectorAll('.content-tab').forEach(function(btn) {
-          btn.classList.toggle('active', btn.dataset.contentTab === target.dataset.contentTab);
+          btn.classList.toggle('active', btn.dataset.contentTab === contentTabTarget.dataset.contentTab);
         });
         document.querySelectorAll('.content-pane').forEach(function(section) {
-          section.classList.toggle('active', section.id === 'content-pane-' + target.dataset.contentTab);
+          section.classList.toggle('active', section.id === 'content-pane-' + contentTabTarget.dataset.contentTab);
         });
       }
+      var messageTab = target.closest ? target.closest('[data-message-tab]') : null;
+      if (messageTab) {
+        state.messageTab = messageTab.dataset.messageTab || 'inbox';
+        state.activeMessageId = '';
+        renderMessages();
+      }
+      var assignmentOpen = target.closest ? target.closest('[data-assignment-open]') : null;
+      if (assignmentOpen) {
+        event.preventDefault();
+        var href = assignmentOpen.getAttribute('href') || '#';
+        markAssignmentCompleted(assignmentOpen.dataset.assignmentOpen).then(function() {
+          if (href && href !== '#') window.location.href = href;
+        });
+      }
+      if (target.dataset.messageOpen) openPanelMessage(target.dataset.messageOpen);
+      if (target.dataset.messageDelete) deletePanelMessage(target.dataset.messageDelete);
+      if (target.dataset.messageReply) replyPanelMessage(target.dataset.messageReply);
       if (target.dataset.examKarne) openExamKarne(target.dataset.examKarne);
       if (target.dataset.readingKarne) openReadingKarne(target.dataset.readingKarne);
     });

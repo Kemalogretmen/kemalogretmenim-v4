@@ -55,7 +55,7 @@
     .student-form{display:grid;gap:12px}
     .student-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .student-field label{display:block;font-size:12px;font-weight:950;color:#475569;margin-bottom:6px}
-    .student-field input,.student-field select{width:100%;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:11px 12px;outline:none}
+    .student-field input,.student-field select,.student-field textarea{width:100%;border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:11px 12px;outline:none}
     .student-field input[readonly]{background:#F1F5F9;color:#475569;cursor:not-allowed}
     .student-filterbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 14px}
     .student-filterbar input,.student-filterbar select{border:1px solid #CBD5E1;border-radius:8px;background:#fff;color:#0F172A;font:850 14px var(--font-body);padding:10px 12px;min-width:190px}
@@ -90,11 +90,48 @@
     .student-toast{position:fixed;right:18px;bottom:18px;z-index:50;max-width:360px;background:#0F172A;color:#fff;border-radius:12px;padding:13px 15px;font-weight:850;box-shadow:0 20px 44px rgba(15,23,42,.28);display:none}
     .student-toast.show{display:block}
     .student-toast.error{background:#B91C1C}
-    @media(max-width:960px){.student-hero,.student-grid,.student-saved-grid{grid-template-columns:1fr}.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-table-head{display:none}.student-table-row{grid-template-columns:1fr 1fr}.student-table-row>div:first-child{grid-column:1/-1}}
-    @media(max-width:620px){.student-panel{padding:18px 12px 34px}.student-profile-head,.student-two{grid-template-columns:1fr}.student-stats{grid-template-columns:1fr}.student-row{grid-template-columns:1fr}.student-table-row{grid-template-columns:1fr}.student-filterbar input,.student-filterbar select{width:100%;min-width:0}}
+    .student-panel{min-height:100vh;padding:0;background:#F5F7FB}
+    .student-shell{max-width:none;margin:0 0 0 286px;padding:28px 34px 44px}
+    .student-tabs{position:fixed;inset:0 auto 0 0;width:286px;height:100vh;margin:0;padding:28px 22px;background:linear-gradient(180deg,#183B72 0%,#2F6697 58%,#5AA9D6 100%);display:flex;flex-direction:column;gap:10px;overflow-y:auto;z-index:20;box-shadow:18px 0 42px rgba(15,23,42,.12)}
+    .student-sidebar-brand{display:grid;gap:10px;color:#fff;margin-bottom:20px}
+    .student-sidebar-brand img{width:104px;height:104px;object-fit:contain;border-radius:24px;background:rgba(255,255,255,.12);padding:10px}
+    .student-sidebar-brand strong{font-family:var(--font-display);font-size:24px;line-height:1.05;letter-spacing:0}
+    .student-sidebar-brand span{display:inline-flex;width:max-content;max-width:100%;border-radius:10px;background:rgba(255,255,255,.92);color:#475569;padding:8px 12px;font-weight:950}
+    .student-sidebar-label{color:rgba(255,255,255,.64);font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.08em;margin:4px 0}
+    .student-sidebar-spacer{flex:1;min-height:20px}
+    .student-sidebar-link{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.26);border-radius:14px;padding:13px 14px;font-weight:950;background:rgba(255,255,255,.10)}
+    .student-tabs .student-tab{width:100%;border:0;border-radius:14px;background:transparent;color:rgba(255,255,255,.82);box-shadow:none;padding:14px 15px;text-align:left;justify-content:flex-start;font-size:15px}
+    .student-tabs .student-tab.active{background:#55B7EE;color:#fff;box-shadow:0 12px 24px rgba(0,0,0,.12)}
+    .student-hero{background:#fff;color:#0F172A;border-radius:22px;box-shadow:0 18px 42px rgba(15,23,42,.07);border:1px solid #E2E8F0}
+    .student-hero::before{color:#60A5FA;opacity:.18}.student-hero::after{background:linear-gradient(135deg,rgba(85,183,238,.16),rgba(108,61,237,.10))}
+    .student-hero h1{color:#0F172A;text-shadow:none}.student-hero p{color:#64748B}.student-badge{background:#EEF6FF;border-color:#D7EAFE;color:#2563EB}
+    .merit-card{background:linear-gradient(135deg,#F8FAFC,#EFF6FF);border-color:#DBEAFE;color:#0F172A}.merit-level{color:#0F172A}.merit-title,.merit-note{color:#64748B}
+    .student-module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin:22px 0 24px}
+    .student-module-card{position:relative;min-height:190px;border:0;border-radius:18px;padding:28px 28px 24px;text-align:left;color:#fff;cursor:pointer;overflow:hidden;display:grid;align-content:space-between;box-shadow:0 18px 38px rgba(15,23,42,.12);transition:transform .18s ease,box-shadow .18s ease}
+    .student-module-card::after{content:'';position:absolute;inset:auto -55px -75px auto;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.13)}
+    .student-module-card:hover,.student-module-card.active{transform:translateY(-4px);box-shadow:0 24px 46px rgba(15,23,42,.16)}
+    .student-module-icon{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18);font-size:34px}
+    .student-module-card strong{font-family:var(--font-display);font-size:28px;line-height:1.08;letter-spacing:0;text-transform:uppercase;position:relative;z-index:1}
+    .student-module-card small{font-size:14px;font-weight:850;color:rgba(255,255,255,.82);position:relative;z-index:1}
+    .panel-notification-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;margin-left:8px;border-radius:999px;background:#EF4444;color:#fff;font-size:12px;font-weight:950;line-height:1;vertical-align:middle;box-shadow:0 8px 18px rgba(15,23,42,.16)}
+    .student-module-card .panel-notification-badge{position:absolute;top:18px;right:18px;z-index:2;margin:0;background:#fff;color:#1D4ED8}
+    .student-message-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+    .student-message-tab{border:1px solid #CBD5E1;background:#fff;color:#0F172A;border-radius:999px;padding:9px 13px;font:900 13px var(--font-body);cursor:pointer}
+    .student-message-tab.active{background:linear-gradient(135deg,#3B5FE2,#2B7A78);color:#fff;border-color:transparent}
+    .student-row.message-read,.student-row.assignment-done{background:#F1F5F9;color:#64748B}
+    .student-message-detail{margin-top:10px;padding:12px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;display:grid;gap:10px}
+    .student-message-detail textarea{width:100%;min-height:82px;border:1px solid #CBD5E1;border-radius:8px;padding:10px;font:850 14px var(--font-body)}
+    .student-module-card.tone-pink{background:linear-gradient(135deg,#D93676,#ED2DF2)}
+    .student-module-card.tone-purple{background:linear-gradient(135deg,#8B2EE6,#6840E8)}
+    .student-module-card.tone-blue{background:linear-gradient(135deg,#4DB4E9,#2868F0)}
+    .student-module-card.tone-orange{background:linear-gradient(135deg,#F7941D,#D97027)}
+    .student-module-card.tone-yellow{background:linear-gradient(135deg,#FFE83D,#E8B72C)}
+    .student-card{border-radius:16px}
+    @media(max-width:1120px){.student-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.student-hero,.student-grid,.student-saved-grid{grid-template-columns:1fr}.student-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-table-head{display:none}.student-table-row{grid-template-columns:1fr 1fr}.student-table-row>div:first-child{grid-column:1/-1}}
+    @media(max-width:860px){.student-shell{margin:0;padding:18px 14px 34px}.student-tabs{position:static;width:auto;height:auto;border-radius:0 0 22px 22px;flex-direction:row;align-items:center;overflow-x:auto;padding:14px;margin:0 0 18px}.student-sidebar-brand{min-width:210px;margin:0}.student-sidebar-brand img{display:none}.student-sidebar-label,.student-sidebar-spacer,.student-sidebar-link{display:none}.student-tabs .student-tab{width:auto;white-space:nowrap;min-width:max-content}.student-module-grid{grid-template-columns:1fr}.student-module-card{min-height:160px}.student-profile-head,.student-two{grid-template-columns:1fr}.student-stats{grid-template-columns:1fr}.student-row{grid-template-columns:1fr}.student-table-row{grid-template-columns:1fr}.student-filterbar input,.student-filterbar select{width:100%;min-width:0}}
   </style>
 </head>
-<body>
+<body data-kemal-chrome="off">
   <main class="student-panel">
     <section class="student-shell">
       <div class="student-hero">
@@ -133,17 +170,90 @@
       </div>
 
       <div class="student-tabs">
-        <button class="student-tab active" type="button" data-tab="tasks">Görevlerim</button>
+        <div class="student-sidebar-brand">
+          <img src="/gorseller/logo.png" alt="Kemal Öğretmenim">
+          <strong>Kemal Öğretmenim</strong>
+          <span id="studentSidebarName">Öğrenci Paneli</span>
+        </div>
+        <div class="student-sidebar-label">Panel</div>
+        <button class="student-tab active" type="button" data-tab="home">Giriş</button>
+        <button class="student-tab" type="button" data-tab="tasks">Görevlerim</button>
+        <button class="student-tab" type="button" data-tab="messages">Mesajlar</button>
         <button class="student-tab" type="button" data-tab="progress">İçeriklerim</button>
         <button class="student-tab" type="button" data-tab="saved">Kaydettiklerim</button>
         <button class="student-tab" type="button" data-tab="classes">Sınıflarım</button>
         <button class="student-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
+        <div class="student-sidebar-spacer"></div>
+        <a class="student-sidebar-link" href="/index.html">Siteye Dön</a>
       </div>
 
-      <section class="student-section active" id="student-section-tasks">
+      <section class="student-section active" id="student-section-home">
+        <div class="student-module-grid">
+          <button class="student-module-card student-tab tone-pink" type="button" data-tab="tasks">
+            <span class="student-module-icon">📝</span>
+            <strong>Görevlerim</strong>
+            <small>Ödevler ve teslim durumu</small>
+          </button>
+          <button class="student-module-card student-tab tone-blue" type="button" data-tab="progress">
+            <span class="student-module-icon">📊</span>
+            <strong>İçeriklerim</strong>
+            <small>Sınavlarım ve okumalarım</small>
+          </button>
+          <button class="student-module-card student-tab tone-purple" type="button" data-tab="messages">
+            <span class="student-module-icon">💬</span>
+            <strong>Mesajlar</strong>
+            <small>Öğretmen ve veli mesajları</small>
+          </button>
+          <button class="student-module-card student-tab tone-orange" type="button" data-tab="saved">
+            <span class="student-module-icon">🔖</span>
+            <strong>Kaydettiklerim</strong>
+            <small>Beğendiğim içerikler</small>
+          </button>
+          <button class="student-module-card student-tab tone-purple" type="button" data-tab="classes">
+            <span class="student-module-icon">🏫</span>
+            <strong>Sınıflarım</strong>
+            <small>Sınıf kodu ve öğretmenler</small>
+          </button>
+          <button class="student-module-card student-tab tone-yellow" type="button" data-tab="account">
+            <span class="student-module-icon">👤</span>
+            <strong>Kişisel Bilgiler</strong>
+            <small>Profil ve hesap ayarları</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="student-section" id="student-section-tasks">
         <div class="student-card">
           <h2>Ödevlerim</h2>
           <div class="student-list" id="studentAssignmentList"></div>
+        </div>
+      </section>
+
+      <section class="student-section" id="student-section-messages">
+        <div class="student-grid">
+          <article class="student-card">
+            <h2>Öğretmene Mesaj</h2>
+            <form class="student-form" id="studentMessageForm">
+              <div class="student-field">
+                <label for="studentMessageTeacher">Öğretmen</label>
+                <select id="studentMessageTeacher"></select>
+              </div>
+              <div class="student-field">
+                <label for="studentMessageSubject">Konu</label>
+                <input id="studentMessageSubject" placeholder="Örn. Ödev hakkında">
+              </div>
+              <div class="student-field">
+                <label for="studentMessageBody">Mesaj</label>
+                <input id="studentMessageBody" placeholder="Mesajını yaz">
+              </div>
+              <button class="student-btn secondary" type="submit">Mesajı Gönder</button>
+            </form>
+          </article>
+          <article class="student-card">
+            <h2>Mesaj Kutum</h2>
+            <div class="student-message-tabs" id="studentMessageTabs"></div>
+            <div class="student-list" id="studentMessageList"></div>
+          </article>
         </div>
       </section>
 
@@ -197,7 +307,7 @@
             <form class="student-form" id="joinClassForm">
               <div class="student-field">
                 <label for="joinClassCode">Sınıf kodu</label>
-                <input id="joinClassCode" type="text" placeholder="Örn. K8ABCD2" required>
+                <input id="joinClassCode" type="text" placeholder="Örn. K8ABCD2" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" required>
               </div>
               <button class="student-btn" type="submit">Sınıfa Katıl</button>
             </form>
@@ -205,6 +315,30 @@
           <article class="student-card">
             <h2>Bağlı Sınıflarım</h2>
             <div class="student-list" id="studentClassList"></div>
+          </article>
+          <article class="student-card">
+            <h2>Bağlı Velilerim</h2>
+            <div class="student-list" id="studentParentList"></div>
+          </article>
+          <article class="student-card">
+            <h2>Veliye Bağla</h2>
+            <p>Velinin panelinde oluşturduğu özel kodu buraya yazarak hesabını anne, baba veya vasi hesabına bağlayabilirsin.</p>
+            <form class="student-form" id="studentParentCodeForm">
+              <div class="student-field">
+                <label for="studentParentCode">Veli kodu</label>
+                <input id="studentParentCode" type="text" placeholder="Örn. V8K2M4P9" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false">
+              </div>
+              <div class="student-field">
+                <label for="studentParentRelationship">Yakınlık</label>
+                <select id="studentParentRelationship">
+                  <option value="mother">Anne</option>
+                  <option value="father">Baba</option>
+                  <option value="parent">Veli</option>
+                  <option value="guardian">Vasi</option>
+                </select>
+              </div>
+              <button class="student-btn secondary" type="submit">Veliye Bağla</button>
+            </form>
           </article>
         </div>
       </section>

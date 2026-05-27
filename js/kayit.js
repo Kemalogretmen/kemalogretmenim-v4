@@ -89,7 +89,7 @@
   }
 
   function setRole(nextRole) {
-    state.role = nextRole === 'student' ? 'student' : 'teacher';
+    state.role = nextRole === 'teacher' || nextRole === 'parent' ? nextRole : 'student';
     document.querySelectorAll('.role-tab').forEach(function(tab) {
       tab.setAttribute('aria-pressed', tab.dataset.role === state.role ? 'true' : 'false');
     });
@@ -99,10 +99,38 @@
     document.querySelectorAll('.student-fields').forEach(function(field) {
       field.hidden = state.role !== 'student';
     });
+    document.querySelectorAll('.parent-fields').forEach(function(field) {
+      field.hidden = state.role !== 'parent';
+    });
+    const isParent = state.role === 'parent';
+    const city = document.getElementById('city');
+    const district = document.getElementById('district');
+    const districtWrap = district && district.closest ? district.closest('.form-field') : null;
+    const schoolRow = document.querySelector('.school-row');
+    const manualSchoolField = document.getElementById('manualSchoolField');
+    const schoolMissing = document.getElementById('schoolMissing');
+    const schoolSelect = document.getElementById('school');
+    const manualSchool = document.getElementById('manualSchool');
+    if (districtWrap) districtWrap.hidden = isParent;
+    if (schoolRow) schoolRow.hidden = isParent;
+    if (manualSchoolField && isParent) manualSchoolField.hidden = true;
+    if (district) {
+      district.required = !isParent;
+      district.disabled = isParent || !(city && city.value);
+    }
+    if (schoolSelect && isParent) schoolSelect.disabled = true;
+    if (schoolMissing) schoolMissing.disabled = isParent;
+    if (manualSchool && isParent) {
+      manualSchool.required = false;
+      manualSchool.disabled = true;
+    }
     const verificationFile = document.getElementById('teacherVerificationFile');
     if (verificationFile) {
       const hasExistingFile = !!(state.existingProfile && state.existingProfile.verification_file_path);
       verificationFile.required = state.role === 'teacher' && !hasExistingFile;
+    }
+    if (!isParent) {
+      syncManualSchool();
     }
   }
 
@@ -388,15 +416,16 @@
       last_name: lastName,
       full_name: fullName,
       city: normalizePlace(data.get('city')),
-      district: normalizePlace(data.get('district')),
-      school_id: schoolMissing || isExternalSchool ? null : (schoolId || null),
-      school_name: schoolMissing ? manualSchool : (matchedSchool ? matchedSchool.name : ''),
-      school_missing: schoolMissing,
+      district: state.role === 'parent' ? '' : normalizePlace(data.get('district')),
+      school_id: state.role === 'parent' || schoolMissing || isExternalSchool ? null : (schoolId || null),
+      school_name: state.role === 'parent' ? '' : (schoolMissing ? manualSchool : (matchedSchool ? matchedSchool.name : '')),
+      school_missing: state.role === 'parent' ? false : schoolMissing,
       branch: state.role === 'teacher'
         ? String(data.get('branch') || '').trim()
         : String(data.get('studentBranch') || '').trim().toLocaleUpperCase('tr-TR'),
       grade_level: state.role === 'student' && gradeValue ? gradeValue : null,
       teacher_code: state.role === 'student' ? String(data.get('teacherCode') || '').trim() : '',
+      parent_link_code: state.role === 'parent' ? String(data.get('parentLinkCode') || '').trim().toLocaleUpperCase('tr-TR') : '',
       approval_status: state.role === 'teacher' ? 'pending' : 'active',
     };
   }
@@ -423,9 +452,12 @@
     const passwordRepeat = String(formData.get('passwordRepeat') || '');
     const verificationFile = getVerificationFile();
 
+    const isParent = profile.role === 'parent';
     const hasSchool = profile.school_missing ? profile.school_name : profile.school_id;
-    if (!profile.email || !profile.first_name || !profile.last_name || !profile.city || !profile.district || !hasSchool || (profile.role === 'student' && !profile.grade_level) || (!state.completeMode && password.length < 6)) {
-      showMessage('err', 'Ad, soyad, e-posta, sınıf, il, ilçe, okul ve en az 6 karakter şifre gerekli.');
+    if (!profile.email || !profile.first_name || !profile.last_name || !profile.city || (!isParent && (!profile.district || !hasSchool)) || (profile.role === 'student' && !profile.grade_level) || (!state.completeMode && password.length < 6)) {
+      showMessage('err', isParent
+        ? 'Veli kaydı için ad, soyad, e-posta, şehir ve en az 6 karakter şifre gerekli.'
+        : 'Ad, soyad, e-posta, sınıf, il, ilçe, okul ve en az 6 karakter şifre gerekli.');
       return;
     }
     if (profile.role === 'teacher' && !profile.branch) {
@@ -451,9 +483,9 @@
         }
         showMessage('ok', profile.role === 'teacher'
           ? 'Öğretmen başvurun kaydedildi. Yönetici onayından sonra öğretmen panelin aktif olacak.'
-          : 'Profil bilgilerin kaydedildi. Öğrenci paneline yönlendiriliyorsun.');
+          : (profile.role === 'parent' ? 'Veli profilin kaydedildi. Veli paneline yönlendiriliyorsun.' : 'Profil bilgilerin kaydedildi. Öğrenci paneline yönlendiriliyorsun.'));
         window.setTimeout(function() {
-          window.location.href = profile.role === 'teacher' ? '/ogretmen-paneli.html' : '/ogrenci-paneli.html';
+          window.location.href = profile.role === 'teacher' ? '/ogretmen-paneli.html' : (profile.role === 'parent' ? '/veli-paneli.html' : '/ogrenci-paneli.html');
         }, 700);
         return;
       }
@@ -477,6 +509,7 @@
             branch: profile.branch,
             grade_level: profile.grade_level,
             teacher_code: profile.teacher_code,
+            parent_link_code: profile.parent_link_code,
           },
         },
       });
@@ -502,7 +535,9 @@
         : 'Öğretmen kaydı alındı. E-posta doğrulamasından sonra giriş yapıp öğretmen panelindeki belge alanından doğrulama belgeni gönderebilirsin.';
       showMessage('ok', profile.role === 'teacher'
         ? teacherMessage
-        : 'Öğrenci kaydı oluşturuldu. E-posta doğrulama bağlantısı gelen kutuna gönderildi; doğrulama sonrası öğrenci paneli açılacak.',
+        : (profile.role === 'parent'
+          ? 'Veli kaydı oluşturuldu. E-posta doğrulama bağlantısı gelen kutuna gönderildi; doğrulama sonrası veli paneli açılacak.'
+          : 'Öğrenci kaydı oluşturuldu. E-posta doğrulama bağlantısı gelen kutuna gönderildi; doğrulama sonrası öğrenci paneli açılacak.'),
         '<br><button type="button" id="resendConfirmBtn">Doğrulama mailini tekrar gönder</button>');
     } catch (error) {
       const raw = String(error && error.message ? error.message : error);
@@ -595,7 +630,7 @@
       state.existingProfile = profile;
       const meta = state.existingUser.user_metadata || {};
       const split = splitName(profile.full_name || meta.full_name || meta.name || '');
-      setRole(profile.role === 'teacher' ? 'teacher' : 'student');
+      setRole(profile.role === 'teacher' ? 'teacher' : (profile.role === 'parent' ? 'parent' : 'student'));
       setInputValue('firstName', profile.first_name || meta.first_name || split.firstName);
       setInputValue('lastName', profile.last_name || meta.last_name || split.lastName);
       setInputValue('email', profile.email || state.existingUser.email || '');
@@ -605,6 +640,7 @@
       setInputValue('gradeLevel', profile.grade_level || '');
       setInputValue('studentBranch', profile.branch || '');
       setInputValue('branch', profile.branch || '');
+      setInputValue('parentLinkCode', profile.parent_link_code || '');
       setInputValue('manualSchool', profile.school_name || '');
       const schoolMissing = document.getElementById('schoolMissing');
       if (schoolMissing && profile.school_name) {
