@@ -1,2 +1,13 @@
 .DS_Store
+.idea/
+node_modules/
 tmp/
+supabase/.temp/
+mobile-app/node_modules/
+mobile-app/android/
+mobile-app/ios/
+mobile-app/.expo/
+mobile-app/dist/
+mobile-app/build/
+mobile-app/*.log
+mobile-app/bugreport-*.zip

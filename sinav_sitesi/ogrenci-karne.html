@@ -47,6 +47,47 @@
     .filter-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px}
     .filter-meta{font-size:13px;line-height:1.7;color:var(--slate)}
     .clear-btn{border:none;border-radius:999px;padding:11px 16px;background:#f5f3ff;color:#6d28d9;font-family:var(--fd);font-size:13px;font-weight:800;cursor:pointer}
+    .legacy-filter,.legacy-degree{display:none!important}
+    .workflow-card{background:#fff;border:1.5px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+    .workflow-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+    .workflow-head h2{font-family:var(--fd);font-size:24px;font-weight:900}
+    .workflow-head p{font-size:13px;line-height:1.7;color:var(--slate);max-width:780px;margin-top:4px}
+    .workflow-steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .step-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:#f8fbff;border:1px solid #e0e8f4;color:#64748b;font-size:12px;font-weight:900}
+    .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .mode-card{border:1.5px solid var(--border);border-radius:22px;background:#fbfdff;padding:16px;text-align:left;cursor:pointer;transition:transform .16s,box-shadow .16s,border-color .16s}
+    .mode-card:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(19,36,61,.08)}
+    .mode-card.active{border-color:#3457d5;background:#edf2ff}
+    .mode-card strong{display:block;font-family:var(--fd);font-size:19px;font-weight:900;color:var(--navy)}
+    .mode-card span{display:block;margin-top:6px;font-size:12px;line-height:1.6;color:var(--slate)}
+    .flow-pane{display:none;border:1px solid #e3ebf5;border-radius:22px;padding:16px;background:#fbfdff}
+    .flow-pane.active{display:block}
+    .flow-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end}
+    .flow-field label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900;margin-bottom:6px}
+    .flow-field select,.flow-field input{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:15px;background:#fff;color:var(--navy);font-family:var(--fb);font-size:14px}
+    .report-type-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .type-btn{border:1.5px solid var(--border);border-radius:999px;padding:10px 13px;background:#fff;color:#475569;font-family:var(--fd);font-size:13px;font-weight:900;cursor:pointer}
+    .type-btn.active{border-color:#3457d5;background:#edf2ff;color:#2c4ac9}
+    .subject-checks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+    .subject-check{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:14px;background:#fff;font-size:12px;font-weight:900;color:#475569}
+    .flow-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+    .flow-note{font-size:12px;line-height:1.6;color:var(--slate)}
+    .primary-flow-btn{border:none;border-radius:999px;padding:12px 18px;background:linear-gradient(135deg,var(--blue),var(--blue-2));color:#fff;font-family:var(--fd);font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 12px 24px rgba(52,87,213,.18)}
+    .primary-flow-btn:disabled{opacity:.55;cursor:not-allowed}
+    .list-wrap{display:none}
+    .list-title{font-family:var(--fd);font-size:28px;font-weight:900}
+    .list-meta{font-size:13px;color:var(--slate);line-height:1.7;margin-top:5px}
+    .list-summary{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+    .list-summary span{padding:7px 10px;border-radius:999px;background:#f8fbff;border:1px solid #e0e8f4;color:#475569;font-size:12px;font-weight:900}
+    .list-table-wrap{overflow:auto;border:1.5px solid var(--border);border-radius:18px}
+    .list-table tbody tr:nth-child(even) td{background:#fbfdff}
+    .wrong-list{display:flex;gap:6px;flex-wrap:wrap}
+    .wrong-chip{display:inline-flex;padding:5px 8px;border-radius:999px;background:#fff7ed;color:#b45309;font-size:11px;font-weight:900}
+    .score-ring{--score:0;width:104px;height:104px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#3457d5 calc(var(--score)*1%),#e5edf7 0);position:relative;margin-left:auto;flex:0 0 auto}
+    .score-ring::before{content:"";position:absolute;inset:11px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #edf2f7}
+    .score-ring>div{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;text-align:center}
+    .summary-score .score-ring strong{display:block;font-family:var(--fd);font-size:22px;line-height:1;font-weight:900;color:#1d4ed8;margin:0}
+    .summary-score .score-ring span{display:block;margin-top:5px;font-size:9px;line-height:1;letter-spacing:.08em;font-weight:900;color:var(--muted);text-transform:uppercase}
 
     .empty-report{display:none;background:var(--card);border:1.5px solid var(--border);border-radius:28px;padding:38px;box-shadow:var(--shadow);text-align:center;color:var(--slate);font-size:15px;line-height:1.8}
 
@@ -59,6 +100,40 @@
     .sheet-bottom-left{left:18px;border-top:none;border-right:none}
     .sheet-bottom-right{right:18px;border-top:none;border-left:none}
     .sheet-main{flex:1}
+
+    .sheet::before,.sheet::after,.sheet-bottom-left,.sheet-bottom-right{display:none}
+    .sheet{min-height:auto;border-radius:24px;padding:24px;overflow:visible}
+    .report-command{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+    .identity-panel,.summary-panel,.insight-panel{background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 10px 28px rgba(19,36,61,.05)}
+    .identity-panel{display:flex;align-items:center;gap:14px}
+    .identity-avatar{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#334155,#1e40af);display:flex;align-items:center;justify-content:center;color:#fff;font-size:23px;flex:0 0 auto}
+    .identity-main{min-width:0;flex:1}
+    .identity-main h2{font-family:var(--fd);font-size:25px;font-weight:900;line-height:1.12}
+    .identity-main p{font-size:13px;color:var(--slate);margin-top:4px}
+    .identity-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+    .identity-chip{padding:6px 9px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:800}
+    .summary-panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+    .summary-kicker{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
+    .summary-title{font-family:var(--fd);font-size:21px;font-weight:900;margin-top:5px}
+    .summary-text{font-size:13px;line-height:1.65;color:var(--slate);margin-top:7px}
+    .summary-score{min-width:120px;text-align:right}
+    .summary-score strong{display:block;font-family:var(--fd);font-size:46px;line-height:1;color:#1d4ed8}
+    .summary-score span{display:block;margin-top:6px;font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+    .quick-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+    .quick-metric{background:#fff;border:1.5px solid var(--border);border-radius:18px;padding:14px 12px}
+    .quick-metric strong{display:block;font-family:var(--fd);font-size:27px;font-weight:900;color:#0f172a}
+    .quick-metric span{display:block;margin-top:6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900}
+    .insight-panel{margin-bottom:14px}
+    .insight-panel h3{font-family:var(--fd);font-size:20px;font-weight:900}
+    .insight-panel p{font-size:13px;line-height:1.7;color:var(--slate);margin-top:4px}
+    .student-strip{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;margin-bottom:14px;padding:18px;border:1.5px solid #cfe0f4;border-radius:22px;background:linear-gradient(135deg,#ffffff 0%,#f6fbff 54%,#eef7f1 100%);box-shadow:0 12px 30px rgba(19,36,61,.06);overflow:hidden}
+    .student-strip::before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#2563eb,#16a34a,#f59e0b)}
+    .student-avatar{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,#2563eb,#22c55e);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;box-shadow:0 16px 28px rgba(37,99,235,.18)}
+    .student-strip-main{min-width:0}
+    .student-strip-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;font-weight:900}
+    .student-strip h2{font-family:var(--fd);font-size:30px;font-weight:900;line-height:1.12;margin-top:3px}
+    .student-info-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .student-info-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#fff;border:1px solid #dbe7f3;color:#475569;font-size:12px;font-weight:900}
 
     .report-mast{display:grid;grid-template-columns:1.3fr .9fr;gap:16px;align-items:stretch;margin-bottom:16px}
     .brand-bar{background:linear-gradient(135deg,#123a34,#16624f);border-radius:24px;padding:20px 22px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -107,6 +182,11 @@
     .section-headline h3{font-family:var(--fd);font-size:22px;font-weight:900}
     .section-headline p{font-size:13px;line-height:1.7;color:var(--slate);max-width:760px}
     .history-table-wrap{overflow:auto;border:1.5px solid var(--border);border-radius:20px;margin-bottom:14px}
+    .history-row{cursor:pointer;transition:background .16s,box-shadow .16s}
+    .history-row:hover td{background:#f8fbff}
+    .history-row.active td{background:#eef2ff}
+    .history-exam-title{font-weight:800;color:var(--navy)}
+    .history-exam-sub{font-size:11px;color:var(--muted);margin-top:3px}
     table{width:100%;border-collapse:collapse}
     thead th{background:#f8fbff;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding:12px 10px;text-align:left;border-bottom:1px solid var(--border)}
     tbody td{padding:12px 10px;border-bottom:1px solid #edf2f7;font-size:12px;color:var(--navy)}
@@ -116,6 +196,26 @@
     .delta-pill.good{background:#ecfdf5;color:#047857}
     .delta-pill.warn{background:#fff7ed;color:#c2410c}
     .mini-btn{border:none;border-radius:999px;padding:8px 11px;background:var(--blue-soft);color:#2645be;font-size:12px;font-weight:800;cursor:pointer}
+    .rank-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px;margin:14px 0}
+    .rank-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .rank-head h3{font-family:var(--fd);font-size:20px;font-weight:900}
+    .rank-head p{font-size:12px;color:var(--slate);line-height:1.6;margin-top:4px}
+    .rank-tools{display:flex;gap:8px;flex-wrap:wrap}
+    .rank-tools select{border:1.5px solid var(--border);border-radius:14px;padding:10px 12px;background:#fff;color:var(--navy);font-family:var(--fb);font-weight:800;font-size:12px}
+    .rank-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:16px}
+    .rank-table .self-row td{background:#ecfdf5}
+    .degree-card{background:#fff;border:1.5px solid var(--border);border-radius:26px;box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+    .degree-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+    .degree-card-head h2{font-family:var(--fd);font-size:22px;font-weight:900}
+    .degree-card-head p{font-size:13px;line-height:1.65;color:var(--slate);max-width:760px;margin-top:4px}
+    .degree-controls{display:grid;grid-template-columns:1.4fr .8fr 1fr auto;gap:10px;margin-bottom:14px}
+    .degree-controls select,.degree-export-btn{width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:15px;background:#fff;color:var(--navy);font-family:var(--fb);font-size:13px;font-weight:800}
+    .degree-export-btn{border:none;background:#ecfdf5;color:#047857;cursor:pointer}
+    .degree-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .degree-summary span{display:inline-flex;padding:7px 10px;border-radius:999px;background:#f8fbff;border:1px solid #e0e8f4;color:#475569;font-size:12px;font-weight:900}
+    .degree-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:18px}
+    .degree-table .self-row td{background:#ecfdf5}
+    .private-rank-note{margin-top:12px;padding:10px 12px;border-radius:14px;background:#f8fbff;border:1px solid #e0e8f4;color:#64748b;font-size:12px;line-height:1.55;font-weight:800}
 
     .selected-top{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:14px}
     .selected-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px}
@@ -138,6 +238,14 @@
     .dot{width:12px;height:12px;border-radius:50%}
     .dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.dot.blank{background:var(--blank)}
     .matrix-wrap{display:flex;flex-direction:column;gap:12px}
+    .analysis-details{border:1.5px solid var(--border);border-radius:22px;background:#fff;margin-top:14px;overflow:hidden}
+    .analysis-details summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+    .analysis-details summary::-webkit-details-marker{display:none}
+    .analysis-summary-title{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--navy)}
+    .analysis-summary-desc{font-size:12px;line-height:1.6;color:var(--slate);margin-top:4px;max-width:820px}
+    .analysis-toggle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef2ff;color:#3341c5;font-weight:900;flex:0 0 auto}
+    .analysis-details[open] .analysis-toggle{transform:rotate(180deg)}
+    .analysis-body{border-top:1px solid var(--border);padding:14px 18px 18px}
     .matrix-card{border:1.5px solid var(--border);border-radius:20px;overflow:hidden;background:#fff}
     .matrix-card-head{background:linear-gradient(135deg,#123a34,#196451);padding:10px 14px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px}
     .matrix-card-head strong{font-family:var(--fd);font-size:18px;font-weight:900}
@@ -157,6 +265,13 @@
     .outcome-text{font-size:13px;line-height:1.55;color:var(--navy);font-weight:700}
     .outcome-stats{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;font-size:12px;font-weight:900;white-space:nowrap}
     .outcome-stats span,.outcome-stats strong{padding:5px 8px;border-radius:999px;background:#f8fbff;border:1px solid var(--border)}
+    .outcome-card{border:1px solid var(--border);border-radius:16px;padding:12px;background:#fbfdff}
+    .outcome-card + .outcome-card{margin-top:10px}
+    .outcome-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .outcome-card-title{font-weight:900;font-size:13px;line-height:1.45;color:var(--navy)}
+    .outcome-card-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px;font-size:11px;font-weight:900;color:var(--slate)}
+    .outcome-card-meta span{padding:5px 8px;border-radius:999px;background:#fff;border:1px solid var(--border)}
+    .outcome-alert{margin-top:8px;padding:8px 10px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:12px;line-height:1.55;font-weight:800}
 
     .footer-note{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
     .footer-brand{font-size:12px;line-height:1.7;color:var(--slate)}
@@ -166,14 +281,23 @@
 
     @media(max-width:1100px){
       .filter-grid,.metric-grid{grid-template-columns:repeat(2,1fr)}
-      .report-mast,.hero-row,.chart-row,.selected-top{grid-template-columns:1fr}
+      .report-mast,.hero-row,.chart-row,.selected-top,.report-command{grid-template-columns:1fr}
       .compare-strip,.benchmark-grid{grid-template-columns:1fr}
+      .quick-metrics{grid-template-columns:repeat(2,1fr)}
     }
     @media(max-width:720px){
       .topbar{flex-direction:column;padding:16px}
       .topbar-actions{width:100%}
       .topbar-btn{flex:1}
       .filter-grid,.metric-grid{grid-template-columns:1fr}
+      .quick-metrics{grid-template-columns:1fr}
+      .summary-panel{grid-template-columns:1fr}
+      .summary-score{text-align:left}
+      .mode-grid,.flow-grid,.subject-checks{grid-template-columns:1fr}
+      .score-ring{margin-left:0}
+      .student-strip{grid-template-columns:1fr}
+      .student-avatar{width:64px;height:64px}
+      .degree-controls{grid-template-columns:1fr}
       .sheet{padding:22px 18px 18px}
       .brand-title{font-size:28px}
       .hero-card h2{font-size:30px}
@@ -244,7 +368,88 @@
     </div>
 
     <div class="page-wrap">
-      <section class="filter-card screen-only">
+      <section class="workflow-card screen-only" id="workflowCard">
+        <div class="workflow-head">
+          <div>
+            <h2>Karne Merkezi Akışı</h2>
+            <p>Önce rapor türünü seç, sonra sınıf ve öğrenci ya da sınav kapsamını belirle. Bireysel karneler veliyle paylaşılabilir; toplu listeler yalnızca öğretmen değerlendirmesi içindir.</p>
+          </div>
+        </div>
+        <div class="workflow-steps">
+          <span class="step-pill">1 Rapor türü</span>
+          <span class="step-pill">2 Sınıf / öğrenci / sınav</span>
+          <span class="step-pill">3 Karne veya liste oluştur</span>
+        </div>
+        <div class="mode-grid">
+          <button class="mode-card" id="modeIndividualBtn" type="button">
+            <strong>Bireysel Karne</strong>
+            <span>Tek öğrenci için kazanım karnesi, tüm testler karnesi veya tek sınav karnesi oluştur.</span>
+          </button>
+          <button class="mode-card" id="modeListBtn" type="button">
+            <strong>Toplu Liste</strong>
+            <span>Seçilen sınava giren öğrencileri başarı sırasına göre toplu, il, ilçe, okul veya sınıf bazlı listele.</span>
+          </button>
+        </div>
+
+        <div class="flow-pane" id="individualFlowPane">
+          <div class="flow-grid">
+            <div class="flow-field">
+              <label>Sınıf</label>
+              <select id="flowGradeSelect"></select>
+            </div>
+            <div class="flow-field">
+              <label>Öğrenci Ara</label>
+              <input id="flowStudentSearch" type="search" placeholder="Ad veya soyad yaz">
+            </div>
+            <div class="flow-field" style="grid-column:span 2">
+              <label>Öğrenci</label>
+              <select id="flowStudentSelect"></select>
+            </div>
+          </div>
+          <div class="report-type-row">
+            <button class="type-btn" id="reportAllBtn" type="button">Tüm Testler Karnesi</button>
+            <button class="type-btn" id="reportOutcomeBtn" type="button">Kazanım Karnesi</button>
+          </div>
+          <div class="subject-checks" id="flowSubjectChecks"></div>
+          <div class="flow-actions">
+            <div class="flow-note" id="individualFlowNote">Öğrenci seçildikten sonra karne oluşturabilirsin.</div>
+            <button class="primary-flow-btn" id="generateIndividualBtn" type="button">Karne Oluştur</button>
+          </div>
+        </div>
+
+        <div class="flow-pane" id="listFlowPane">
+          <div class="flow-grid">
+            <div class="flow-field">
+              <label>Sınıf</label>
+              <select id="listGradeSelect"></select>
+            </div>
+            <div class="flow-field">
+              <label>Sınav</label>
+              <select id="listExamSelect"></select>
+            </div>
+            <div class="flow-field">
+              <label>Liste Türü</label>
+              <select id="listScopeSelect">
+                <option value="all">Toplu Liste</option>
+                <option value="city">İl Listesi</option>
+                <option value="district">İlçe Listesi</option>
+                <option value="school">Okul Listesi</option>
+                <option value="class">Sınıf Listesi</option>
+              </select>
+            </div>
+            <div class="flow-field">
+              <label>Kapsam</label>
+              <select id="listScopeValueSelect"></select>
+            </div>
+          </div>
+          <div class="flow-actions">
+            <div class="flow-note" id="listFlowNote">Sınıf seçildiğinde yalnızca o sınıfa ait sınavlar listelenir.</div>
+            <button class="primary-flow-btn" id="generateListBtn" type="button">Liste Oluştur</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="filter-card screen-only legacy-filter">
         <div class="filter-head">
           <div>
             <h2>Filtreli Karne Oluştur</h2>
@@ -275,8 +480,78 @@
         </div>
       </section>
 
+      <section class="degree-card screen-only legacy-degree" id="degreeCard">
+        <div class="degree-card-head">
+          <div>
+            <h2>🏅 Sınav Derece Listesi</h2>
+            <p>Bu alan yalnızca öğretmen ekranı içindir. Seçilen tek sınava ait katılımcılar listelenir; öğrenci karnesi ve veliyle paylaşılacak çıktılarda diğer öğrenci adları yer almaz.</p>
+          </div>
+        </div>
+        <div class="degree-controls">
+          <select id="degreeExamSelect"></select>
+          <select id="degreeScopeSelect">
+            <option value="all">Tüm Kullanıcılar</option>
+            <option value="city">İl Bazlı</option>
+            <option value="district">İlçe Bazlı</option>
+            <option value="school">Okul Bazlı</option>
+            <option value="class">Sınıf Bazlı</option>
+          </select>
+          <select id="degreeScopeValueSelect"></select>
+          <button class="degree-export-btn" id="degreeExcelBtn">Excel Al</button>
+        </div>
+        <div class="degree-summary" id="degreeSummary"></div>
+        <div class="degree-table-wrap">
+          <table class="degree-table">
+            <thead>
+              <tr>
+                <th>Sıra</th>
+                <th>Öğrenci</th>
+                <th>Sınıf</th>
+                <th>İl / İlçe</th>
+                <th>Okul</th>
+                <th>D/Y/B</th>
+                <th>Net</th>
+                <th>Puan</th>
+                <th>Başarı</th>
+              </tr>
+            </thead>
+            <tbody id="degreeTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
       <div class="empty-report" id="emptyReport">
         Seçili filtrelerde rapor oluşturacak kayıt bulunamadı. Farklı öğrenci, ders veya sınav seçerek tekrar deneyebilirsin.
+      </div>
+
+      <div class="list-wrap" id="listWrap">
+        <section class="sheet">
+          <div class="sheet-main">
+            <div class="student-strip">
+              <div class="student-avatar">🏅</div>
+              <div class="student-strip-main">
+                <div class="student-strip-kicker">Öğretmen Toplu Değerlendirme</div>
+                <div class="list-title" id="listTitle">Toplu Liste</div>
+                <div class="list-meta" id="listMeta">—</div>
+              </div>
+            </div>
+            <div class="list-summary" id="listSummary"></div>
+            <div class="list-table-wrap">
+              <table class="list-table">
+                <thead id="listTableHead"></thead>
+                <tbody id="listTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="footer-note">
+            <div class="footer-brand">
+              <strong>By Kemal Öğretmen</strong>
+              kemalogretmenim.com.tr
+            </div>
+            <div class="footer-center">Bu liste öğretmen değerlendirmesi için hazırlanmıştır; veliyle paylaşılacak bireysel karne değildir.</div>
+            <div class="footer-page">Toplu Liste</div>
+          </div>
+        </section>
       </div>
 
       <div class="report-wrap" id="reportWrap">
@@ -284,54 +559,52 @@
           <span class="sheet-bottom-left"></span>
           <span class="sheet-bottom-right"></span>
           <div class="sheet-main">
-            <div class="report-mast">
-              <div class="brand-bar">
-                <div>
-                  <div class="brand-title">Sınav Karnesi</div>
-                  <div class="brand-sub" id="reportYear">2025 - 2026 Öğretim Yılı</div>
-                  <div class="brand-line"></div>
+            <div class="student-strip">
+              <div class="student-avatar">🎓</div>
+              <div class="student-strip-main">
+                <div class="student-strip-kicker">Öğrenci Bilgi Şeridi</div>
+                <h2 id="heroStudentName">—</h2>
+                <div class="student-info-grid">
+                  <span class="student-info-pill" id="heroStudentMeta">—</span>
+                  <span class="student-info-pill" id="heroStudentSchool">Okul bilgisi</span>
+                  <span class="student-info-pill" id="reportYear">2025 - 2026 Öğretim Yılı</span>
                 </div>
-                <div class="brand-avatar">
-                  <div class="avatar">🎓</div>
-                  <div class="brand-pill" id="reportCountPill">0 sınav</div>
-                </div>
+                <div class="identity-chips" id="heroStudentChips"></div>
               </div>
-              <div class="student-card">
-                <div class="student-top">
-                  <div class="student-photo">🧿</div>
-                  <div>
-                    <div class="student-name" id="heroStudentName">—</div>
-                    <div class="student-meta" id="heroStudentMeta">—</div>
+            </div>
+            <div class="report-command">
+              <div class="summary-panel">
+                <div>
+                  <div class="summary-kicker">Karne Merkezi Özeti</div>
+                  <div class="summary-title" id="heroHeadline">Öğrenci Başarı İlerlemesi</div>
+                  <div class="summary-text" id="heroDescription">—</div>
+                  <div class="identity-chips" style="margin-top:10px">
+                    <span class="identity-chip" id="heroComparisonPill">—</span>
+                    <span class="identity-chip" id="reportCountPill">0 sınav</span>
                   </div>
                 </div>
-                <div class="student-chips" id="heroStudentChips"></div>
-                <div class="student-score-box">
-                  <div class="student-score-kicker">Seçili Raporun Ortalama Başarı Yüzdesi</div>
-                  <div class="student-score" id="heroScore">%0</div>
-                  <div class="student-score-note" id="heroScoreNote">—</div>
+                <div class="summary-score">
+                  <div class="score-ring" id="heroScoreRing" style="--score:0">
+                    <div>
+                      <strong id="heroScore">%0</strong>
+                      <span>Başarı</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="hero-row">
-              <div class="hero-card">
-                <div class="hero-kicker">Sınav Yolculuğu</div>
-                <h2 id="heroHeadline">Öğrenci Başarı İlerlemesi</h2>
-                <p id="heroDescription">—</p>
-                <div class="hero-chip" id="heroComparisonPill">—</div>
-              </div>
-              <div class="student-card">
-                <div class="student-score-kicker">Filtre Özeti</div>
-                <div class="student-score" id="filterSummaryScore">%0</div>
-                <div class="student-score-note" id="filterSummaryText">—</div>
-              </div>
+            <div class="quick-metrics">
+              <div class="quick-metric"><strong id="metricExamCount">0</strong><span>Toplam Sınav</span></div>
+              <div class="quick-metric"><strong id="metricTotalQuestions">0</strong><span>Çözülen Soru</span></div>
+              <div class="quick-metric"><strong id="metricAvgScore">%0</strong><span>Toplam Başarı</span></div>
+              <div class="quick-metric"><strong id="metricAvgBenchmark">%0</strong><span>Katılım Ortalaması</span></div>
             </div>
 
-            <div class="metric-grid">
-              <div class="metric-card"><strong id="metricExamCount">0</strong><span>Toplam Sınav</span></div>
-              <div class="metric-card"><strong id="metricAvgScore">%0</strong><span>Ortalama Başarı</span></div>
-              <div class="metric-card"><strong id="metricAvgBenchmark">%0</strong><span>Katılım Ortalaması</span></div>
-              <div class="metric-card"><strong id="metricAvgPercentile">%0</strong><span>Ort. Yüzdelik Dilim</span></div>
+            <div class="insight-panel">
+              <h3>Filtre Özeti</h3>
+              <p><strong id="filterSummaryScore">%0</strong> · <span id="filterSummaryText">—</span></p>
+              <p id="heroScoreNote">—</p>
             </div>
 
             <div class="chart-row">
@@ -393,6 +666,8 @@
                     <th>Tarih</th>
                     <th>Sınav</th>
                     <th>Ders</th>
+                    <th>D/Y/B</th>
+                    <th>Puan</th>
                     <th>Başarı</th>
                     <th>Katılım Ort.</th>
                     <th>Fark</th>
@@ -415,26 +690,51 @@
               <div class="selected-card selected-benchmark">
                 <div class="benchmark-pill" id="selectedBenchmarkPill">Katılımcı kıyası</div>
                 <div class="benchmark-grid">
-                  <div class="benchmark-item"><strong id="selectedScoreValue">%0</strong><span>Öğrenci Skoru</span></div>
-                  <div class="benchmark-item"><strong id="selectedBenchmarkValue">%0</strong><span>Katılım Ort.</span></div>
+                  <div class="benchmark-item"><strong id="selectedScoreValue">0 / 100</strong><span>Öğrenci Puanı</span></div>
+                  <div class="benchmark-item"><strong id="selectedBenchmarkValue">0</strong><span>Katılım Ort. Puan</span></div>
                   <div class="benchmark-item"><strong id="selectedPercentileValue">%0</strong><span>Yüzdelik Dilim</span></div>
                 </div>
               </div>
             </div>
 
-            <div class="matrix-head">
-              <div>
-                <h3 id="matrixTitle">🔎 Soru Bazlı Kompakt Değerlendirme</h3>
-                <p id="matrixDescription">Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.</p>
+            <div class="panel-card" id="wrongQuestionPanel" style="display:none;margin-bottom:14px">
+              <div class="panel-head">
+                <div>
+                  <h3>Yanlış / Boş Sorular</h3>
+                  <p>Tek sınav karnesinde öğrencinin yeniden bakması gereken soru numaraları.</p>
+                </div>
               </div>
-              <div class="legend">
-                <span><i class="dot ok"></i> Doğru</span>
-                <span><i class="dot bad"></i> Yanlış</span>
-                <span><i class="dot blank"></i> Boş</span>
-              </div>
+              <div class="wrong-list" id="wrongQuestionList"></div>
             </div>
 
-            <div class="matrix-wrap" id="matrixWrap"></div>
+            <details class="analysis-details" id="outcomeDetails" open>
+              <summary>
+                <div>
+                  <div class="analysis-summary-title">🎯 Kazanım / Öğrenme Çıktısı Analizi</div>
+                  <div class="analysis-summary-desc" id="outcomeDescription">Seçili sınavda girilen kazanımlar tek başlık altında toplanır; soru sayısı, doğru, yanlış, boş ve yüzdelik başarı birlikte gösterilir.</div>
+                </div>
+                <div class="analysis-toggle">⌄</div>
+              </summary>
+              <div class="analysis-body" id="outcomeWrap"></div>
+            </details>
+
+            <details class="analysis-details" id="matrixDetails">
+              <summary>
+                <div>
+                  <div class="analysis-summary-title" id="matrixTitle">🔎 Soru Bazlı Kompakt Değerlendirme</div>
+                  <div class="analysis-summary-desc" id="matrixDescription">Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla gösterilir.</div>
+                </div>
+                <div class="legend">
+                  <span><i class="dot ok"></i> Doğru</span>
+                  <span><i class="dot bad"></i> Yanlış</span>
+                  <span><i class="dot blank"></i> Boş</span>
+                </div>
+                <div class="analysis-toggle">⌄</div>
+              </summary>
+              <div class="analysis-body">
+                <div class="matrix-wrap" id="matrixWrap"></div>
+              </div>
+            </details>
           </div>
 
           <div class="footer-note">

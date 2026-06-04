@@ -273,6 +273,50 @@
     return String(value || '').trim().toLocaleLowerCase('tr-TR');
   }
 
+  function normalizeRole(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function isPanelPublicRole(role) {
+    return ['teacher', 'student', 'parent'].indexOf(normalizeRole(role)) !== -1;
+  }
+
+  function isAdminPublicRole(role) {
+    return ['admin', 'owner', 'super_admin'].indexOf(normalizeRole(role)) !== -1;
+  }
+
+  function publicProfileBlocksAdminAccess(profile) {
+    return !!(profile && isPanelPublicRole(profile.role));
+  }
+
+  function publicProfileBlocksLegacyOwner(profile) {
+    if (!profile) {
+      return false;
+    }
+    const role = normalizeRole(profile.role);
+    return !!(role && !isAdminPublicRole(role));
+  }
+
+  function buildDeniedAccessProfile(email, publicProfile, reason) {
+    const normalizedEmail = normalizeEmail(email);
+    return {
+      email: normalizedEmail,
+      displayName: publicProfile && publicProfile.full_name
+        ? String(publicProfile.full_name)
+        : (normalizedEmail ? normalizedEmail.split('@')[0] : ''),
+      active: false,
+      isOwner: false,
+      legacyMode: false,
+      permissions: createPermissionMap(false),
+      allowedPanels: [],
+      row: null,
+      rows: [],
+      publicRole: normalizeRole(publicProfile && publicProfile.role ? publicProfile.role : ''),
+      approvalStatus: publicProfile && publicProfile.approval_status ? publicProfile.approval_status : '',
+      denialReason: reason || 'not_admin',
+    };
+  }
+
   function createPermissionMap(allEnabled) {
     return ADMIN_PERMISSION_DEFS.reduce(function(map, item) {
       map[item.key] = !!allEnabled;
@@ -529,28 +573,17 @@
 
     accessCacheEmail = email;
     accessPromise = (async function() {
+      let publicProfile = null;
       try {
-        const publicProfile = await fetchPublicUserProfile(email);
+        publicProfile = await fetchPublicUserProfile(email);
         const rows = await fetchAdminRows();
         const normalizedRows = rows
           .map(normalizeAdminUserRow)
           .filter(function(row) { return !!row.email; });
 
         if (!normalizedRows.length) {
-          if (publicProfile && (publicProfile.role === 'teacher' || publicProfile.role === 'student')) {
-            accessCache = {
-              email,
-              displayName: publicProfile.full_name || email.split('@')[0],
-              active: false,
-              isOwner: false,
-              legacyMode: false,
-              permissions: createPermissionMap(false),
-              allowedPanels: [],
-              row: null,
-              rows: [],
-              publicRole: publicProfile.role,
-              approvalStatus: publicProfile.approval_status || '',
-            };
+          if (publicProfileBlocksLegacyOwner(publicProfile)) {
+            accessCache = buildDeniedAccessProfile(email, publicProfile, 'legacy_blocked_profile');
             return accessCache;
           }
           accessCache = buildLegacyOwnerProfile(email);
@@ -573,17 +606,19 @@
         });
 
         if (!matchedRow) {
-          accessCache = {
-            email,
-            displayName: email.split('@')[0],
-            active: false,
-            isOwner: false,
-            legacyMode: false,
-            permissions: createPermissionMap(false),
-            allowedPanels: [],
-            row: null,
-            rows: [],
-          };
+          accessCache = publicProfileBlocksAdminAccess(publicProfile)
+            ? buildDeniedAccessProfile(email, publicProfile, 'panel_role')
+            : {
+              email,
+              displayName: email.split('@')[0],
+              active: false,
+              isOwner: false,
+              legacyMode: false,
+              permissions: createPermissionMap(false),
+              allowedPanels: [],
+              row: null,
+              rows: [],
+            };
           return accessCache;
         }
 
@@ -604,6 +639,10 @@
         return profile;
       } catch (error) {
         if (isSetupError(error)) {
+          if (publicProfileBlocksLegacyOwner(publicProfile)) {
+            accessCache = buildDeniedAccessProfile(email, publicProfile, 'setup_blocked_profile');
+            return accessCache;
+          }
           accessCache = buildLegacyOwnerProfile(email);
           return accessCache;
         }
@@ -931,7 +970,7 @@
       return 'Bu e-posta adresi doğrulanmamış görünüyor.';
     }
     if (message.includes('Bu hesap için yönetici erişimi tanımlı değil')) {
-      return 'Bu hesap ana yönetim paneline yetkili değil. Öğretmen hesabıysan Giriş Yap ekranından öğretmen paneline yönlendirilmelisin.';
+      return 'Bu hesap yönetim paneline yetkili değil. Öğretmen, öğrenci ve veli hesapları yalnızca kendi panellerinden giriş yapmalıdır.';
     }
     if (message.includes('pasif durumda')) {
       return 'Bu yönetici hesabı şu anda pasif durumda.';

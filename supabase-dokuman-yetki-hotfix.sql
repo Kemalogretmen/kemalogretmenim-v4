@@ -13,6 +13,45 @@ as $$
   select lower(coalesce(auth.email(), auth.jwt() ->> 'email', ''))
 $$;
 
+create or replace function public.current_user_has_panel_profile()
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  current_email text := public.current_admin_email();
+  blocked boolean := false;
+begin
+  if coalesce(current_email, '') = '' then
+    return false;
+  end if;
+
+  if to_regclass('public.user_profiles') is null then
+    return false;
+  end if;
+
+  execute
+    'select exists (
+      select 1
+      from public.user_profiles
+      where lower(email) = $1
+        and role in (''teacher'', ''student'', ''parent'')
+        and not exists (
+          select 1
+          from public.admin_users au
+          where lower(au.email) = $1
+            and au.active = true
+        )
+    )'
+  into blocked
+  using current_email;
+
+  return coalesce(blocked, false);
+end;
+$$;
+
 create or replace function public.admin_permission_json_has(permission_json jsonb, permission_key text)
 returns boolean
 language sql
@@ -107,10 +146,13 @@ as $$
 declare
   current_email text := public.current_admin_email();
   has_owner boolean := false;
-  has_public_profile boolean := false;
   allowed boolean := false;
 begin
   if coalesce(current_email, '') = '' then
+    return false;
+  end if;
+
+  if public.current_user_has_panel_profile() then
     return false;
   end if;
 
@@ -139,22 +181,6 @@ begin
   into has_owner;
 
   if not has_owner then
-    if to_regclass('public.user_profiles') is not null then
-      execute
-        'select exists (
-          select 1
-          from public.user_profiles
-          where lower(email) = $1
-            and role in (''teacher'', ''student'')
-        )'
-      into has_public_profile
-      using current_email;
-
-      if has_public_profile then
-        return false;
-      end if;
-    end if;
-
     return true;
   end if;
 
@@ -163,6 +189,7 @@ end;
 $$;
 
 grant execute on function public.current_admin_email() to anon, authenticated;
+grant execute on function public.current_user_has_panel_profile() to anon, authenticated;
 grant execute on function public.admin_permission_json_has(jsonb, text) to anon, authenticated;
 grant execute on function public.current_admin_has_permission(text) to anon, authenticated;
 

@@ -48,6 +48,45 @@ as $$
   select lower(coalesce(auth.email(), auth.jwt() ->> 'email', ''))
 $$;
 
+create or replace function public.current_user_has_panel_profile()
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  current_email text := public.current_admin_email();
+  blocked boolean := false;
+begin
+  if coalesce(current_email, '') = '' then
+    return false;
+  end if;
+
+  if to_regclass('public.user_profiles') is null then
+    return false;
+  end if;
+
+  execute
+    'select exists (
+      select 1
+      from public.user_profiles
+      where lower(email) = $1
+        and role in (''teacher'', ''student'', ''parent'')
+        and not exists (
+          select 1
+          from public.admin_users au
+          where lower(au.email) = $1
+            and au.active = true
+        )
+    )'
+  into blocked
+  using current_email;
+
+  return coalesce(blocked, false);
+end;
+$$;
+
 create or replace function public.admin_users_is_empty()
 returns boolean
 language sql
@@ -80,13 +119,14 @@ stable
 security definer
 set search_path = public
 as $$
-  select exists (
-    select 1
-    from public.admin_users
-    where lower(email) = public.current_admin_email()
-      and active = true
-      and is_owner = true
-  )
+  select not public.current_user_has_panel_profile()
+    and exists (
+      select 1
+      from public.admin_users
+      where lower(email) = public.current_admin_email()
+        and active = true
+        and is_owner = true
+    )
 $$;
 
 create or replace function public.admin_permission_json_has(permission_json jsonb, permission_key text)
@@ -183,10 +223,13 @@ as $$
 declare
   current_email text := public.current_admin_email();
   has_owner boolean := false;
-  has_public_profile boolean := false;
   allowed boolean := false;
 begin
   if coalesce(current_email, '') = '' then
+    return false;
+  end if;
+
+  if public.current_user_has_panel_profile() then
     return false;
   end if;
 
@@ -215,23 +258,6 @@ begin
   into has_owner;
 
   if not has_owner then
-    if to_regclass('public.user_profiles') is not null then
-      execute
-        'select exists (
-          select 1
-          from public.user_profiles
-          where lower(email) = $1
-            and role in (''teacher'', ''student'')
-            and coalesce(active, true) = true
-        )'
-      into has_public_profile
-      using current_email;
-
-      if has_public_profile then
-        return false;
-      end if;
-    end if;
-
     return true;
   end if;
 
@@ -495,6 +521,7 @@ grant select, insert, update, delete on public.admin_users to authenticated;
 grant select, insert, delete on public.admin_login_events to authenticated;
 grant usage, select on sequence public.admin_login_events_id_seq to authenticated;
 grant execute on function public.current_admin_email() to anon, authenticated;
+grant execute on function public.current_user_has_panel_profile() to anon, authenticated;
 grant execute on function public.admin_users_is_empty() to authenticated;
 grant execute on function public.admin_users_has_owner() to authenticated;
 grant execute on function public.is_admin_owner() to authenticated;
@@ -511,7 +538,8 @@ on public.admin_users
 for insert
 to authenticated
 with check (
-  (public.admin_users_is_empty() or not public.admin_users_has_owner())
+  not public.current_user_has_panel_profile()
+  and (public.admin_users_is_empty() or not public.admin_users_has_owner())
   and lower(email) = public.current_admin_email()
   and active = true
   and is_owner = true
@@ -523,11 +551,13 @@ on public.admin_users
 for update
 to authenticated
 using (
-  not public.admin_users_has_owner()
+  not public.current_user_has_panel_profile()
+  and not public.admin_users_has_owner()
   and lower(email) = public.current_admin_email()
 )
 with check (
-  not public.admin_users_has_owner()
+  not public.current_user_has_panel_profile()
+  and not public.admin_users_has_owner()
   and lower(email) = public.current_admin_email()
   and active = true
   and is_owner = true
@@ -549,7 +579,10 @@ for select
 to authenticated
 using (
   public.is_admin_owner()
-  or lower(email) = public.current_admin_email()
+  or (
+    not public.current_user_has_panel_profile()
+    and lower(email) = public.current_admin_email()
+  )
 );
 
 drop policy if exists "admin_users owner update" on public.admin_users;
@@ -580,7 +613,8 @@ on public.admin_login_events
 for insert
 to authenticated
 with check (
-  lower(email) = public.current_admin_email()
+  not public.current_user_has_panel_profile()
+  and lower(email) = public.current_admin_email()
 );
 
 drop policy if exists "admin_login_events read own or owner" on public.admin_login_events;
@@ -590,7 +624,10 @@ for select
 to authenticated
 using (
   public.is_admin_owner()
-  or lower(email) = public.current_admin_email()
+  or (
+    not public.current_user_has_panel_profile()
+    and lower(email) = public.current_admin_email()
+  )
 );
 
 drop policy if exists "admin_login_events owner delete" on public.admin_login_events;

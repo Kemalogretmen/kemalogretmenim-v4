@@ -107,6 +107,46 @@
     return message || 'İşlem sırasında beklenmeyen bir hata oluştu.';
   }
 
+  function isMissingRpcFunction(error, functionName) {
+    const message = String(error && error.message ? error.message : '');
+    const details = String(error && error.details ? error.details : '');
+    const hint = String(error && error.hint ? error.hint : '');
+    const code = String(error && error.code ? error.code : '');
+    const combined = (message + ' ' + details + ' ' + hint + ' ' + code).toLowerCase();
+    return (
+      combined.includes('pgrst202') ||
+      combined.includes('schema cache') ||
+      combined.includes('could not find the function') ||
+      (
+        combined.includes(String(functionName || '').toLowerCase()) &&
+        (combined.includes('does not exist') || combined.includes('not found'))
+      )
+    );
+  }
+
+  async function deleteDocumentWithLegacyFlow(item, isSupabaseDocument) {
+    const documentId = item && item.id;
+    if (!documentId) {
+      return false;
+    }
+
+    const response = await getClient().from('dokumanlar').delete().eq('id', documentId);
+    if (response.error) {
+      toast(humanizeSupabaseError(response.error), 'error');
+      return false;
+    }
+
+    if (isSupabaseDocument && item.dosya_yolu) {
+      const storageResponse = await getClient().storage.from(BUCKET_NAME).remove([item.dosya_yolu]);
+      if (storageResponse.error) {
+        toast('Kayıt silindi fakat Supabase dosyası temizlenemedi: ' + humanizeSupabaseError(storageResponse.error), 'error');
+        return true;
+      }
+    }
+
+    return true;
+  }
+
   function ensurePdfWorker() {
     if (!window.pdfjsLib) {
       throw new Error('PDF kutuphanesi yuklenemedi.');
@@ -1962,21 +2002,36 @@
       return;
     }
 
-    const response = await getClient().from('dokumanlar').delete().eq('id', documentId);
-    if (response.error) {
-      toast(humanizeSupabaseError(response.error), 'error');
-      return;
-    }
+    const rpcResponse = await getClient().rpc('delete_dokuman_with_cleanup', {
+      p_dokuman_id: documentId,
+    });
+    let deleted = false;
+    let usedLegacyFlow = false;
 
-    if (isSupabaseDocument && item.dosya_yolu) {
-      await getClient().storage.from(BUCKET_NAME).remove([item.dosya_yolu]);
+    if (rpcResponse.error) {
+      if (!isMissingRpcFunction(rpcResponse.error, 'delete_dokuman_with_cleanup')) {
+        toast(humanizeSupabaseError(rpcResponse.error), 'error');
+        return;
+      }
+      usedLegacyFlow = true;
+      deleted = await deleteDocumentWithLegacyFlow(item, isSupabaseDocument);
+      if (!deleted) {
+        return;
+      }
+    } else {
+      deleted = true;
     }
 
     if (state.editingId === documentId) {
       resetForm();
       showListPanel();
     }
-    toast('Doküman silindi.', 'success');
+    toast(
+      usedLegacyFlow
+        ? 'Doküman silindi. Tam veritabanı temizliği için `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.'
+        : 'Doküman, bağlı kayıtlar ve varsa Supabase dosyası silindi.',
+      'success'
+    );
     await loadDocuments();
   }
 

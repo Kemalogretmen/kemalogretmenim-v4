@@ -66,10 +66,10 @@
   }
 
   function routeForProfile(profile, isAdmin) {
-    if (isAdmin) return '/admin/index.html';
     if (profile && profile.role === 'teacher') return '/ogretmen-paneli.html';
     if (profile && profile.role === 'student') return '/ogrenci-paneli.html';
     if (profile && profile.role === 'parent') return '/veli-paneli.html';
+    if (isAdmin) return '/admin/index.html';
     return '/kayit.html';
   }
 

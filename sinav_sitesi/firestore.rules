@@ -37,7 +37,8 @@ service cloud.firestore {
     }
 
     function validGrade(g) {
-      return g is int && g >= 1 && g <= 8;
+      return (g is int && g >= 1 && g <= 8)
+        || (g is string && g.matches('^[1-8]$'));
     }
 
     function validOptCount(n) {
@@ -49,7 +50,7 @@ service cloud.firestore {
     }
 
     function validSube(s) {
-      return s is string && s in ['A','B','C','D','E','F','G','H'];
+      return s is string && s.size() >= 1 && s.size() <= 20;
     }
 
     function validAnswer(a) {
@@ -57,13 +58,16 @@ service cloud.firestore {
     }
 
     function validCategoryWrite() {
-      return request.resource.data.keys().hasOnly(['grade', 'categories', 'sectionCategories', 'updatedAt'])
+      return request.resource.data.keys().hasOnly(['grade', 'categories', 'sectionCategories', 'lessonCatalog', 'updatedAt'])
         && validGrade(request.resource.data.grade)
         && request.resource.data.categories is list
         && request.resource.data.categories.size() >= 1
         && request.resource.data.categories.size() <= 20
         && request.resource.data.sectionCategories is list
         && request.resource.data.sectionCategories.size() <= 20
+        && request.resource.data.lessonCatalog is list
+        && request.resource.data.lessonCatalog.size() >= 1
+        && request.resource.data.lessonCatalog.size() <= 30
         && request.resource.data.updatedAt == request.time;
     }
 
@@ -147,7 +151,7 @@ service cloud.firestore {
         'firstName','lastName','grade','sube',
         'accountUid','email',
         'subject','examTitle','examId',
-        'correct','wrong','blank','netCorrect','score','total',
+        'correct','wrong','blank','netCorrect','score','score100','examScore','scoreScale','total',
         'negativeMarking','elapsed','date','answerDetails',
         'studentKey','questionSections'
       ]);
@@ -159,10 +163,20 @@ service cloud.firestore {
         && validTitle(request.resource.data.lastName, 40)
         && validGrade(request.resource.data.grade)
         && validSube(request.resource.data.sube)
-        && request.resource.data.accountUid is string
-        && request.resource.data.accountUid.size() <= 128
-        && request.resource.data.email is string
-        && request.resource.data.email.size() <= 160
+        && (
+          request.resource.data.keys().hasAny(['accountUid']) == false
+          || (
+            request.resource.data.accountUid is string
+            && request.resource.data.accountUid.size() <= 128
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['email']) == false
+          || (
+            request.resource.data.email is string
+            && request.resource.data.email.size() <= 160
+          )
+        )
         && validTitle(request.resource.data.subject, 60)
         && validTitle(request.resource.data.examTitle, 140)
         && request.resource.data.examId is string
@@ -179,24 +193,64 @@ service cloud.firestore {
         && request.resource.data.total <= 500
         && (request.resource.data.correct + request.resource.data.wrong + request.resource.data.blank) == request.resource.data.total
         && request.resource.data.negativeMarking is bool
-        && request.resource.data.netCorrect is int
+        && request.resource.data.netCorrect is number
         && request.resource.data.netCorrect >= 0
-        && request.resource.data.netCorrect <= request.resource.data.correct
+        && request.resource.data.netCorrect <= request.resource.data.total
         && (
           request.resource.data.negativeMarking == true
-          || request.resource.data.netCorrect == request.resource.data.correct
+          || request.resource.data.netCorrect <= request.resource.data.correct
         )
-        && request.resource.data.score is int
+        && request.resource.data.score is number
         && request.resource.data.score >= 0
         && request.resource.data.score <= 100
+        && (
+          request.resource.data.keys().hasAny(['score100']) == false
+          || (
+            request.resource.data.score100 is number
+            && request.resource.data.score100 >= 0
+            && request.resource.data.score100 <= 100
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['examScore']) == false
+          || (
+            request.resource.data.examScore is number
+            && request.resource.data.examScore >= 0
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['scoreScale']) == false
+          || (
+            request.resource.data.scoreScale is int
+            && request.resource.data.scoreScale >= 1
+            && request.resource.data.scoreScale <= 5000
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['examScore', 'scoreScale']) == false
+          || request.resource.data.examScore <= request.resource.data.scoreScale
+        )
         && request.resource.data.elapsed is int
         && request.resource.data.elapsed >= 0
         && request.resource.data.elapsed <= 14400
-        && request.resource.data.answerDetails is list
-        && request.resource.data.answerDetails.size() == request.resource.data.total
-        && request.resource.data.studentKey is string
-        && request.resource.data.studentKey.size() <= 160
-        && request.resource.data.questionSections is list
+        && (
+          request.resource.data.keys().hasAny(['answerDetails']) == false
+          || (
+            request.resource.data.answerDetails is list
+            && request.resource.data.answerDetails.size() <= request.resource.data.total
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['studentKey']) == false
+          || (
+            request.resource.data.studentKey is string
+            && request.resource.data.studentKey.size() <= 160
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['questionSections']) == false
+          || request.resource.data.questionSections is list
+        )
         && request.resource.data.date == request.time;
     }
 

@@ -443,6 +443,18 @@
     }
   }
 
+  async function findExistingProfileByEmail(client, email) {
+    const result = await client
+      .from('user_profiles')
+      .select('id,email,role')
+      .eq('email', email)
+      .maybeSingle();
+    if (result.error) {
+      return null;
+    }
+    return result.data || null;
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -487,6 +499,12 @@
         window.setTimeout(function() {
           window.location.href = profile.role === 'teacher' ? '/ogretmen-paneli.html' : (profile.role === 'parent' ? '/veli-paneli.html' : '/ogrenci-paneli.html');
         }, 700);
+        return;
+      }
+
+      const existingProfile = await findExistingProfileByEmail(client, profile.email);
+      if (existingProfile) {
+        showMessage('err', 'Bu e-posta adresiyle daha önce kayıt oluşturulmuş. Lütfen yeni kayıt yerine giriş yap.', '<br><button type="button" onclick="window.location.href=\'/giris.html\'">Giriş sayfasına git</button>');
         return;
       }
 

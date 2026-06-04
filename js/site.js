@@ -1680,6 +1680,11 @@
         const localNavRoot = document.getElementById('mainNav');
         if (window.innerWidth <= 1180 || (localNavRoot && localNavRoot.classList.contains('is-compact'))) {
           item.classList.toggle('open');
+          if (item.classList.contains('open')) {
+            window.setTimeout(function() {
+              item.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+            }, 80);
+          }
         }
       });
     });

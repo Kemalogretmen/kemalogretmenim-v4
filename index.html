@@ -845,6 +845,76 @@
       font-weight: 800;
       line-height: 1.5;
     }
+    .intro-film {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      background: #160f35;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .45s ease, visibility .45s ease;
+      visibility: hidden;
+    }
+    .intro-film.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+    }
+    .intro-film::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(22,15,53,.10), rgba(22,15,53,.72)),
+        radial-gradient(circle at 50% 12%, rgba(255,255,255,.18), transparent 32%);
+      pointer-events: none;
+    }
+    .intro-film-video {
+      width: min(100vw, 1600px);
+      height: min(100vh, 900px);
+      object-fit: cover;
+    }
+    .intro-film-brand {
+      position: absolute;
+      left: clamp(18px, 4vw, 56px);
+      right: clamp(18px, 4vw, 56px);
+      bottom: clamp(22px, 7vh, 72px);
+      z-index: 2;
+      color: white;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .intro-film-title {
+      font-size: clamp(34px, 5vw, 76px);
+      font-weight: 1000;
+      letter-spacing: 0;
+      line-height: .95;
+      text-shadow: 0 18px 40px rgba(0,0,0,.28);
+    }
+    .intro-film-subtitle {
+      margin-top: 12px;
+      color: rgba(255,255,255,.82);
+      font-size: clamp(14px, 1.7vw, 22px);
+      font-weight: 900;
+    }
+    .intro-film-skip {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.52);
+      border-radius: 999px;
+      background: rgba(255,255,255,.16);
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      padding: 12px 18px;
+      white-space: nowrap;
+      backdrop-filter: blur(16px);
+    }
     .hero .hero-inner {
       width: 100%;
       max-width: 1320px;
@@ -929,6 +999,17 @@
       object-fit: contain;
       border: 0;
       background: #fff;
+    }
+    .home-showcase-media-link {
+      width: 100%;
+      height: 100%;
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+    .home-showcase-media-link:focus-visible {
+      outline: 4px solid rgba(108,61,237,.42);
+      outline-offset: -8px;
     }
     .home-showcase-icon {
       width: 112px;
@@ -1538,6 +1619,14 @@
       .home-showcase-stat strong {
         font-size: 24px;
       }
+      .intro-film-brand {
+        align-items: flex-start;
+        bottom: 24px;
+        flex-direction: column;
+      }
+      .intro-film-skip {
+        align-self: flex-start;
+      }
       .latest-section {
         padding: 48px 18px;
       }
@@ -1556,6 +1645,18 @@
 <body>
 
   <!-- Navbar ve Footer js/site.js tarafından enjekte edilir -->
+  <div class="intro-film" id="introFilm" aria-hidden="true">
+    <video class="intro-film-video" id="introFilmVideo" muted playsinline preload="metadata" poster="/assets/vitrin-gecici/06-mobil-uygulama.svg">
+      <source src="/assets/intro/kemal-ogretmenim-intro.mp4" type="video/mp4">
+    </video>
+    <div class="intro-film-brand">
+      <div>
+        <div class="intro-film-title">Kemal Öğretmenim</div>
+        <div class="intro-film-subtitle">Okuma, oyun ve sınav için canlı öğrenme alanı.</div>
+      </div>
+      <button class="intro-film-skip" id="introFilmSkip" type="button">Geç</button>
+    </div>
+  </div>
 
   <!-- ─── HERO ─── -->
   <section class="hero">
@@ -2156,7 +2257,8 @@
           text: { label:'Mini Yazı', icon:'⭐', color:'#6C3DED', soft:'#F4EFFF', border:'#D9CBFF' },
           image: { label:'Görsel', icon:'🖼️', color:'#00856A', soft:'#E9FFFA', border:'#B7F0E6' },
           youtube: { label:'YouTube', icon:'▶', color:'#0B78E3', soft:'#ECF6FF', border:'#C8E4FF' },
-          document: { label:'Doküman', icon:'📄', color:'#D35400', soft:'#FFF0EC', border:'#FFD0C6' }
+          document: { label:'Doküman', icon:'📄', color:'#D35400', soft:'#FFF0EC', border:'#FFD0C6' },
+          mobile: { label:'Mobil Uygulama', icon:'📱', color:'#6C3DED', soft:'#F4EFFF', border:'#D9CBFF' }
         };
         return map[type] || map.text;
       }
@@ -2169,6 +2271,10 @@
           : null;
         if (!config || !config.supabaseUrl) return '';
         return config.supabaseUrl.replace(/\/$/, '') + '/storage/v1/object/public/dokumanlar/' + String(path).split('/').map(encodeURIComponent).join('/');
+      }
+
+      function isDownloadLink(url) {
+        return /\.apk(?:$|[?#])/i.test(String(url || ''));
       }
 
       async function fetchHomepageSlides() {
@@ -2269,6 +2375,22 @@
         }
       ];
 
+      const MOBILE_APP_DOWNLOAD_SLIDE = {
+        id: 'mobile-app-download',
+        baslik: 'Kemal Öğretmenim cebinde',
+        aciklama_html: 'Android uygulamasının v2 sürümünü indir, derslere ve panellere telefondan hızlıca ulaş.',
+        icerik_turu: 'mobile',
+        ikon: '📱',
+        tema_renk: '#6C3DED',
+        media_url: '/assets/vitrin-gecici/06-mobil-uygulama.svg',
+        media_fit: 'cover',
+        link_url: '/downloads/kemal-ogretmenim-v2.apk',
+        link_label: 'Android APK v2 İndir',
+        gecis_suresi_ms: 6000,
+        siralama: 0,
+        aktif: true
+      };
+
       function renderHomepageShowcase(slides) {
         const stage = document.getElementById('homeShowcaseStage');
         const dots = document.getElementById('homeShowcaseDots');
@@ -2289,7 +2411,10 @@
           gecis_suresi_ms: 5000,
           is_intro: true
         };
-        const publishedSlides = Array.isArray(slides) && slides.length ? slides : TEMP_HOMEPAGE_SLIDES;
+        const sourceSlides = Array.isArray(slides) && slides.length ? slides : TEMP_HOMEPAGE_SLIDES;
+        const publishedSlides = [MOBILE_APP_DOWNLOAD_SLIDE].concat(
+          sourceSlides.filter(item => item && item.id !== MOBILE_APP_DOWNLOAD_SLIDE.id && item.link_url !== MOBILE_APP_DOWNLOAD_SLIDE.link_url)
+        );
         const items = [defaultIntroSlide].concat(publishedSlides).slice(0, 6);
         if (!items.length) {
           stage.innerHTML = '<div class="home-showcase-empty">Vitrin içerikleri hazırlanıyor.</div>';
@@ -2312,6 +2437,12 @@
         function mediaHtml(item) {
           const type = item.icerik_turu || 'text';
           const fallback = vitrinTuruMeta(type);
+          const href = item.link_url || '';
+          const downloadAttr = isDownloadLink(href) ? ' download' : '';
+          function linkedMedia(innerHtml) {
+            if (!href || type === 'youtube') return innerHtml;
+            return `<a class="home-showcase-media-link" href="${esc(href)}"${downloadAttr} aria-label="${esc(item.link_label || item.baslik || 'Vitrin bağlantısı')}">${innerHtml}</a>`;
+          }
           if (type === 'youtube' && item.youtube_embed_url) {
             const joiner = item.youtube_embed_url.indexOf('?') === -1 ? '?' : '&';
             const embedUrl = item.youtube_embed_url + joiner + 'rel=0&modestbranding=1';
@@ -2323,12 +2454,14 @@
           const textMediaUrl = type === 'text' ? (item.media_url || publicStorageUrl(item.media_path)) : '';
           if (textMediaUrl) {
             return `<div class="home-showcase-media">
-              <img src="${esc(textMediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">
+              ${linkedMedia(`<img src="${esc(textMediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">`)}
             </div>`;
           }
-          if (mediaUrl) {
+          const genericMediaUrl = type !== 'youtube' && type !== 'text' ? (item.media_url || publicStorageUrl(item.media_path)) : '';
+          if (mediaUrl || genericMediaUrl) {
+            const imageUrl = mediaUrl || genericMediaUrl;
             return `<div class="home-showcase-media">
-              <img src="${esc(mediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">
+              ${linkedMedia(`<img src="${esc(imageUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">`)}
             </div>`;
           }
           return `<div class="home-showcase-media"><span class="home-showcase-icon">${esc(item.ikon || fallback.icon)}</span></div>`;
@@ -2338,6 +2471,7 @@
           const typeMeta = vitrinTuruMeta(item.icerik_turu);
           const articleHref = item.icerik_turu === 'text' && item.makale_html ? '/makale.html?id=' + encodeURIComponent(item.id) : '';
           const href = articleHref || item.link_url || '#';
+          const downloadAttr = isDownloadLink(href) ? ' download' : '';
           const linkLabel = articleHref ? 'Devamını Oku' : (item.link_label || 'İncele');
           const desc = sanitizeVitrinHtml(item.aciklama_html || '');
           const titleHtml = item.is_intro
@@ -2367,7 +2501,7 @@
                 <div class="home-showcase-name">${titleHtml}</div>
                 <div class="home-showcase-desc">${desc || 'Kemal Öğretmen’in seçtiği içerik.'}</div>
                 ${statsHtml}
-                ${href !== '#' ? `<a class="home-showcase-cta" href="${esc(href)}">${esc(linkLabel)} →</a>` : ''}
+                ${href !== '#' ? `<a class="home-showcase-cta" href="${esc(href)}"${downloadAttr}>${esc(linkLabel)} →</a>` : ''}
               </div>
             </article>`;
         }).join('');
@@ -2824,6 +2958,44 @@
     });
     const statEl = document.querySelector('.hero-stats');
     if (statEl) obs.observe(statEl);
+
+    (function initIntroFilm() {
+      const intro = document.getElementById('introFilm');
+      const video = document.getElementById('introFilmVideo');
+      const skip = document.getElementById('introFilmSkip');
+      if (!intro || !video || !skip) return;
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const getIntroShown = () => {
+        try { return sessionStorage.getItem('kemalIntroFilmShown') === '1'; }
+        catch (error) { return false; }
+      };
+      const setIntroShown = () => {
+        try { sessionStorage.setItem('kemalIntroFilmShown', '1'); }
+        catch (error) {}
+      };
+      const alreadyShown = getIntroShown();
+      if (reduceMotion || alreadyShown) return;
+
+      let done = false;
+      function closeIntro() {
+        if (done) return;
+        done = true;
+        setIntroShown();
+        intro.classList.remove('is-visible');
+        intro.setAttribute('aria-hidden', 'true');
+        try { video.pause(); } catch (error) {}
+      }
+
+      intro.classList.add('is-visible');
+      intro.setAttribute('aria-hidden', 'false');
+      skip.addEventListener('click', closeIntro);
+      video.addEventListener('ended', closeIntro);
+      setTimeout(closeIntro, 5200);
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(closeIntro);
+      }
+    })();
   </script>
 </body>
 </html>

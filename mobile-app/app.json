@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "Kemal Öğretmenim",
+    "slug": "kemal-ogretmenim",
+    "version": "0.2.0",
+    "scheme": "kemalogretmenim",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFBF5"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kemalogretmenim.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Profil ve öğretmen doğrulama dosyaları için kamera kullanılabilir.",
+        "NSPhotoLibraryUsageDescription": "Profil ve öğretmen doğrulama dosyaları için fotoğraf seçilebilir."
+      }
+    },
+    "android": {
+      "package": "com.kemalogretmenim.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#FFFBF5"
+      },
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "siteUrl": "https://kemalogretmenim.com.tr",
+      "supabaseUrl": "https://mwxcvlyrkptxrwgkmqum.supabase.co",
+      "supabaseAnonKey": "sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY",
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}

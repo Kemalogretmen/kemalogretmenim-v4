@@ -16,6 +16,24 @@ const S = {
     examId: "",
   },
   selectedResultId: "",
+  reportKind: "",
+  reportReady: false,
+  listReady: false,
+  flow: {
+    mode: "",
+    reportType: "all",
+    selectedSubjects: [],
+    studentSearch: "",
+    listExamKey: "",
+    listScope: "all",
+    listScopeValue: "",
+  },
+  rankScope: "all",
+  degree: {
+    examKey: "",
+    scope: "all",
+    scopeValue: "",
+  },
   progressChart: null,
   benchmarkChart: null,
 };
@@ -145,6 +163,10 @@ function average(values) {
     : 0;
 }
 
+function gradeLevels() {
+  return ["1", "2", "3", "4", "5", "6", "7", "8"];
+}
+
 function parseStoredTarget() {
   try {
     const parsed = JSON.parse(localStorage.getItem(TARGET_STORAGE_KEY) || "null");
@@ -161,13 +183,19 @@ function parseStoredTarget() {
 function normalizeResult(row) {
   const dateObj = toDateObject(row.date);
   const studentKey = getStudentIdentityKey(row);
+  const scoreScale = Number(row.scoreScale || 0) > 0 ? Number(row.scoreScale) : 100;
+  const examScore = Number.isFinite(Number(row.examScore)) ? Number(row.examScore) : Number(row.score || 0);
+  const score100 = Number.isFinite(Number(row.score100)) ? Number(row.score100) : Number(row.score || 0);
   return Object.assign({}, row, {
     studentKey,
     correct: Number(row.correct || 0),
     wrong: Number(row.wrong || 0),
     blank: Number(row.blank || 0),
     netCorrect: typeof row.netCorrect === "number" ? row.netCorrect : Number(row.netCorrect || row.correct || 0),
-    score: Number(row.score || 0),
+    score: score100,
+    score100: score100,
+    examScore: Math.round(examScore * 100) / 100,
+    scoreScale: scoreScale,
     total: Number(row.total || 0),
     elapsed: Number(row.elapsed || 0),
     answerDetails: Array.isArray(row.answerDetails) ? row.answerDetails : [],
@@ -179,6 +207,29 @@ function normalizeResult(row) {
     formattedDate: formatDate(dateObj || row.date),
     formattedDateTime: formatDateTime(dateObj || row.date),
   });
+}
+
+function getRankingScore(row) {
+  if (!row) return 0;
+  const examScore = Number(row.examScore);
+  if (Number.isFinite(examScore)) return examScore;
+  return Number(row.score100 || row.score || 0);
+}
+
+function formatPointValue(value) {
+  const num = Math.round((Number(value) || 0) * 100) / 100;
+  return Number.isInteger(num) ? String(num) : num.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function formatExamScore(row) {
+  const scale = Number(row?.scoreScale || 100) || 100;
+  return formatPointValue(row?.examScore || 0) + " / " + scale;
+}
+
+function averageExamScore(rows) {
+  return rows.length
+    ? Math.round((rows.reduce(function(total, row) { return total + getRankingScore(row); }, 0) / rows.length) * 100) / 100
+    : 0;
 }
 
 function isCompletedResult(row) {
@@ -225,20 +276,25 @@ function getBenchmarkStats(result) {
   if (!cohort.length) {
     return {
       avgScore: result.score || 0,
+      avgPoint: getRankingScore(result),
       rankPercent: 100,
       delta: 0,
+      pointDelta: 0,
       participantCount: 1,
     };
   }
   const avgScore = average(cohort.map(function(row) { return row.score || 0; }));
+  const avgPoint = averageExamScore(cohort);
   const lowerOrEqual = cohort.filter(function(row) {
-    return (row.score || 0) <= (result.score || 0);
+    return getRankingScore(row) <= getRankingScore(result);
   }).length;
   const rankPercent = Math.round((lowerOrEqual / cohort.length) * 100);
   return {
     avgScore,
+    avgPoint,
     rankPercent,
     delta: Math.round(((result.score || 0) - avgScore) * 10) / 10,
+    pointDelta: Math.round((getRankingScore(result) - avgPoint) * 100) / 100,
     participantCount: cohort.length,
   };
 }
@@ -261,7 +317,7 @@ function getQuestionEntries(result) {
 }
 
 function isOutcomeMode() {
-  return !!S.target?.outcomeMode;
+  return S.reportKind === "outcome" || !!S.target?.outcomeMode;
 }
 
 function buildOutcomeRows(result) {
@@ -282,14 +338,24 @@ function buildOutcomeRows(result) {
         wrong: 0,
         blank: 0,
         questions: [],
+        correctQuestions: [],
+        wrongQuestions: [],
+        blankQuestions: [],
       });
     }
     const row = map.get(key);
     row.total += 1;
     row.questions.push(entry.questionNo);
-    if (entry.outcome === "D") row.correct += 1;
-    else if (entry.outcome === "Y") row.wrong += 1;
-    else row.blank += 1;
+    if (entry.outcome === "D") {
+      row.correct += 1;
+      row.correctQuestions.push(entry.questionNo);
+    } else if (entry.outcome === "Y") {
+      row.wrong += 1;
+      row.wrongQuestions.push(entry.questionNo);
+    } else {
+      row.blank += 1;
+      row.blankQuestions.push(entry.questionNo);
+    }
   });
   return Array.from(map.values()).map(function(row) {
     row.score = row.total ? Math.round((row.correct / row.total) * 100) : 0;
@@ -369,6 +435,9 @@ function getStudentOptions() {
         lastName: row.lastName || "",
         grade: row.grade || "",
         sube: row.sube || "",
+        city: getRowCity(row),
+        district: getRowDistrict(row),
+        school: getRowSchool(row),
       });
     }
   });
@@ -414,6 +483,90 @@ function getExamOptions() {
     }
   });
   return Array.from(map.values());
+}
+
+function getStudentOptionsForGrade(grade, searchText) {
+  const previousGrade = S.filters.grade;
+  S.filters.grade = grade || "";
+  const search = normalizeKeyPart(searchText || "");
+  const students = getStudentOptions().filter(function(student) {
+    if (!search) {
+      return true;
+    }
+    return normalizeKeyPart(student.firstName + " " + student.lastName).includes(search);
+  });
+  S.filters.grade = previousGrade;
+  return students;
+}
+
+function getSelectedStudentResults() {
+  return S.allResults.filter(function(row) {
+    if (S.filters.grade && String(row.grade) !== String(S.filters.grade)) {
+      return false;
+    }
+    return matchesStudentSelection(row);
+  }).sort(function(a, b) {
+    return (a.dateObj?.getTime?.() || 0) - (b.dateObj?.getTime?.() || 0);
+  });
+}
+
+function getAvailableSubjectsForStudent(outcomeOnly) {
+  const subjects = new Set();
+  getSelectedStudentResults().forEach(function(row) {
+    if (outcomeOnly && !buildOutcomeRows(row).length) {
+      return;
+    }
+    subjects.add(row.subject || "Genel");
+  });
+  return Array.from(subjects).sort(function(a, b) { return a.localeCompare(b, "tr"); });
+}
+
+function getListExamOptions() {
+  const grade = String(S.filters.grade || "");
+  const map = new Map();
+  S.allResults.filter(isCompletedResult).forEach(function(row) {
+    if (grade && String(row.grade || "") !== grade) {
+      return;
+    }
+    const key = getExamComparisonKey(row);
+    if (!map.has(key)) {
+      map.set(key, {
+        key: key,
+        title: row.examTitle || "Sınav",
+        subject: row.subject || "Genel",
+        grade: row.grade || "",
+        dateObj: row.dateObj || null,
+        formattedDate: row.formattedDate || "—",
+        count: 0,
+      });
+    }
+    const item = map.get(key);
+    item.count += 1;
+    const time = row.dateObj?.getTime?.() || 0;
+    const currentTime = item.dateObj?.getTime?.() || 0;
+    if (time > currentTime) {
+      item.dateObj = row.dateObj || item.dateObj;
+      item.formattedDate = row.formattedDate || item.formattedDate;
+      item.title = row.examTitle || item.title;
+      item.subject = row.subject || item.subject;
+      item.grade = row.grade || item.grade;
+    }
+  });
+  return Array.from(map.values()).sort(function(a, b) {
+    return (b.dateObj?.getTime?.() || 0) - (a.dateObj?.getTime?.() || 0);
+  });
+}
+
+function getListExamRows() {
+  if (!S.flow.listExamKey) {
+    return [];
+  }
+  return S.allResults.filter(function(row) {
+    if (!isCompletedResult(row) || getExamComparisonKey(row) !== S.flow.listExamKey) {
+      return false;
+    }
+    return !S.filters.grade || String(row.grade || "") === String(S.filters.grade);
+  });
 }
 
 function setSelectOptions(selectId, options, placeholder, selectedValue, mapper) {
@@ -525,9 +678,498 @@ function renderFilterMeta() {
     : "Önce filtreleri seçerek rapor kapsamını belirle.";
 }
 
+function renderWorkflow() {
+  if (!$("workflowCard")) {
+    return;
+  }
+  if (!S.flow.mode) {
+    S.flow.mode = "individual";
+  }
+  $("modeIndividualBtn").classList.toggle("active", S.flow.mode === "individual");
+  $("modeListBtn").classList.toggle("active", S.flow.mode === "list");
+  $("individualFlowPane").classList.toggle("active", S.flow.mode === "individual");
+  $("listFlowPane").classList.toggle("active", S.flow.mode === "list");
+
+  if (!S.filters.grade) {
+    S.filters.grade = S.target?.grade ? String(S.target.grade) : "1";
+  }
+  setSelectOptions("flowGradeSelect", gradeLevels(), "Sınıf Seç", S.filters.grade, function(grade) {
+    return { value: grade, label: grade + ". Sınıf" };
+  });
+  setSelectOptions("listGradeSelect", gradeLevels(), "Sınıf Seç", S.filters.grade, function(grade) {
+    return { value: grade, label: grade + ". Sınıf" };
+  });
+
+  const students = getStudentOptionsForGrade(S.filters.grade, S.flow.studentSearch);
+  if (S.filters.studentKey && !students.some(function(student) { return student.studentKey === S.filters.studentKey; })) {
+    S.filters.studentKey = "";
+  }
+  setSelectOptions("flowStudentSelect", students, "Öğrenci Seç", S.filters.studentKey, function(student) {
+    return {
+      value: student.studentKey,
+      label: student.firstName + " " + student.lastName + " • " + student.grade + ". Sınıf " + student.sube,
+    };
+  });
+  $("flowStudentSearch").value = S.flow.studentSearch || "";
+
+  $("reportAllBtn").classList.toggle("active", S.flow.reportType === "all");
+  $("reportOutcomeBtn").classList.toggle("active", S.flow.reportType === "outcome");
+  const subjectOptions = getAvailableSubjectsForStudent(S.flow.reportType === "outcome");
+  if (S.flow.reportType === "outcome") {
+    if (!S.flow.selectedSubjects.length || S.flow.selectedSubjects.some(function(subject) { return !subjectOptions.includes(subject); })) {
+      S.flow.selectedSubjects = subjectOptions.slice();
+    }
+    $("flowSubjectChecks").style.display = "grid";
+    $("flowSubjectChecks").innerHTML = subjectOptions.length
+      ? subjectOptions.map(function(subject) {
+          const checked = S.flow.selectedSubjects.includes(subject) ? " checked" : "";
+          return "<label class=\"subject-check\"><input type=\"checkbox\" value=\"" + esc(subject) + "\"" + checked + "> " + esc(subject) + "</label>";
+        }).join("")
+      : "<div class=\"flow-note\" style=\"grid-column:1/-1\">Bu öğrenci için kazanım girilmiş sınav bulunamadı.</div>";
+    Array.from($("flowSubjectChecks").querySelectorAll("input[type='checkbox']")).forEach(function(input) {
+      input.addEventListener("change", function() {
+        S.flow.selectedSubjects = Array.from($("flowSubjectChecks").querySelectorAll("input[type='checkbox']:checked")).map(function(item) { return item.value; });
+      });
+    });
+  } else {
+    $("flowSubjectChecks").style.display = "none";
+    $("flowSubjectChecks").innerHTML = "";
+    S.flow.selectedSubjects = [];
+  }
+  $("generateIndividualBtn").disabled = !S.filters.studentKey || (S.flow.reportType === "outcome" && !subjectOptions.length);
+  $("individualFlowNote").textContent = S.flow.reportType === "outcome"
+    ? "Kazanım karnesi, yalnızca kazanım / öğrenme çıktısı girilmiş sınavları değerlendirir."
+    : "Tüm testler karnesinde öğrencinin girdiği sınavlar listelenir; her satırdan tek sınav karnesine geçilebilir.";
+
+  const listExams = getListExamOptions();
+  if (S.flow.listExamKey && !listExams.some(function(item) { return item.key === S.flow.listExamKey; })) {
+    S.flow.listExamKey = "";
+  }
+  if (!S.flow.listExamKey && listExams.length) {
+    S.flow.listExamKey = listExams[0].key;
+  }
+  setSelectOptions("listExamSelect", listExams, "Sınav Seç", S.flow.listExamKey, function(item) {
+    return {
+      value: item.key,
+      label: item.title + " • " + item.subject + " • " + item.formattedDate + " • " + item.count + " öğrenci",
+    };
+  });
+  $("listScopeSelect").value = S.flow.listScope || "all";
+  const listRows = getListExamRows();
+  const scopeOptions = getDegreeScopeOptions(listRows, S.flow.listScope);
+  if (S.flow.listScope === "all") {
+    S.flow.listScopeValue = "";
+    $("listScopeValueSelect").innerHTML = "<option value=\"\">Tüm kayıtlar</option>";
+    $("listScopeValueSelect").disabled = true;
+  } else {
+    $("listScopeValueSelect").disabled = false;
+    if (S.flow.listScopeValue && !scopeOptions.some(function(item) { return item.value === S.flow.listScopeValue; })) {
+      S.flow.listScopeValue = "";
+    }
+    if (!S.flow.listScopeValue && scopeOptions.length) {
+      S.flow.listScopeValue = scopeOptions[0].value;
+    }
+    setSelectOptions("listScopeValueSelect", scopeOptions, "Kapsam Seç", S.flow.listScopeValue, function(item) {
+      return { value: item.value, label: item.label + " • " + item.count + " öğrenci" };
+    });
+  }
+  $("generateListBtn").disabled = !S.flow.listExamKey || (S.flow.listScope !== "all" && !S.flow.listScopeValue);
+  $("listFlowNote").textContent = listExams.length
+    ? "Seçilen sınav için liste kapsamını belirleyip liste oluşturabilirsin."
+    : "Bu sınıfa ait tamamlanmış sınav kaydı bulunamadı.";
+}
+
 function formatSigned(value) {
   const numeric = Number(value || 0);
   return numeric >= 0 ? "+" + numeric : String(numeric);
+}
+
+function getQuestionTotal(row) {
+  return Number(row.total || 0) || getQuestionEntries(row).length || (Number(row.correct || 0) + Number(row.wrong || 0) + Number(row.blank || 0));
+}
+
+function getReportTotalQuestions() {
+  return S.reportResults.reduce(function(total, row) {
+    return total + getQuestionTotal(row);
+  }, 0);
+}
+
+function formatPercent(value) {
+  return "%" + Math.round(Number(value || 0));
+}
+
+function getStudentFullName(row) {
+  return [row?.firstName, row?.lastName].filter(Boolean).join(" ").trim() || "Öğrenci";
+}
+
+function getRowCity(row) {
+  return String(row?.city || row?.il || row?.province || "").trim();
+}
+
+function getRowDistrict(row) {
+  return String(row?.district || row?.ilce || row?.county || "").trim();
+}
+
+function getRowSchool(row) {
+  return String(row?.school || row?.schoolName || row?.okul || row?.institutionName || row?.kurum || "").trim();
+}
+
+function getLocationText(row) {
+  return [getRowCity(row), getRowDistrict(row), getRowSchool(row)].filter(Boolean).join(" / ") || "—";
+}
+
+function normalizeComparable(value) {
+  return normalizeKeyPart(value || "");
+}
+
+function getExamCohort(result, scope) {
+  if (!result) {
+    return [];
+  }
+  const base = S.allResults.filter(function(row) {
+    return isCompletedResult(row) && getExamComparisonKey(row) === getExamComparisonKey(result);
+  });
+  const selectedScope = scope || S.rankScope || "all";
+  if (selectedScope === "city") {
+    const city = normalizeComparable(getRowCity(result));
+    return city ? base.filter(function(row) { return normalizeComparable(getRowCity(row)) === city; }) : base;
+  }
+  if (selectedScope === "district") {
+    const city = normalizeComparable(getRowCity(result));
+    const district = normalizeComparable(getRowDistrict(result));
+    return district ? base.filter(function(row) {
+      return normalizeComparable(getRowDistrict(row)) === district && (!city || normalizeComparable(getRowCity(row)) === city);
+    }) : base;
+  }
+  if (selectedScope === "school") {
+    const school = normalizeComparable(getRowSchool(result));
+    return school ? base.filter(function(row) { return normalizeComparable(getRowSchool(row)) === school; }) : base;
+  }
+  if (selectedScope === "class") {
+    const grade = String(result.grade || "");
+    const sube = normalizeComparable(result.sube);
+    const school = normalizeComparable(getRowSchool(result));
+    return base.filter(function(row) {
+      const sameClass = String(row.grade || "") === grade && normalizeComparable(row.sube) === sube;
+      return sameClass && (!school || normalizeComparable(getRowSchool(row)) === school);
+    });
+  }
+  return base;
+}
+
+function sortRankingRows(rows) {
+  return rows.slice().sort(function(a, b) {
+    return (getRankingScore(b) - getRankingScore(a)) ||
+      (Number(b.score100 || b.score || 0) - Number(a.score100 || a.score || 0)) ||
+      (Number(b.netCorrect || b.correct || 0) - Number(a.netCorrect || a.correct || 0)) ||
+      (Number(a.elapsed || 999999) - Number(b.elapsed || 999999)) ||
+      getStudentFullName(a).localeCompare(getStudentFullName(b), "tr");
+  });
+}
+
+function getRankInfo(result, scope) {
+  const sorted = sortRankingRows(getExamCohort(result, scope));
+  const index = sorted.findIndex(function(row) { return row.id === result?.id; });
+  return {
+    rank: index >= 0 ? index + 1 : 0,
+    total: sorted.length,
+    rows: sorted,
+  };
+}
+
+function getReportTypeTitle() {
+  if (S.reportKind === "outcome") {
+    return "Kazanım Karnesi";
+  }
+  if (S.reportKind === "single") {
+    return "Tek Sınav Karnesi";
+  }
+  return "Tüm Testler Karnesi";
+}
+
+function buildReportRowsForCurrentSelection(kind, singleResult) {
+  if (kind === "single" && singleResult) {
+    return [singleResult];
+  }
+  let rows = getSelectedStudentResults();
+  if (kind === "outcome" && S.flow.selectedSubjects.length) {
+    rows = rows.filter(function(row) {
+      return S.flow.selectedSubjects.includes(row.subject || "Genel");
+    });
+  }
+  if (kind === "outcome") {
+    rows = rows.filter(function(row) {
+      return buildOutcomeRows(row).length > 0;
+    });
+  }
+  return rows;
+}
+
+function generateIndividualReport(kind, singleResult) {
+  S.flow.mode = "individual";
+  S.reportKind = kind || S.flow.reportType || "all";
+  S.reportReady = true;
+  S.listReady = false;
+  S.filters.subject = "";
+  S.filters.examId = "";
+  S.reportResults = buildReportRowsForCurrentSelection(S.reportKind, singleResult);
+  S.selectedResultId = singleResult?.id || S.reportResults[S.reportResults.length - 1]?.id || "";
+  renderWorkflow();
+  renderReport();
+  const output = $("reportWrap");
+  if (output && typeof output.scrollIntoView === "function") {
+    output.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function getListScopeTitle(scope) {
+  if (scope === "city") return "İl Listesi";
+  if (scope === "district") return "İlçe Listesi";
+  if (scope === "school") return "Okul Listesi";
+  if (scope === "class") return "Sınıf Listesi";
+  return "Toplu Liste";
+}
+
+function getFilteredListRows() {
+  const rows = getListExamRows();
+  if (S.flow.listScope === "all") {
+    return sortRankingRows(rows);
+  }
+  return sortRankingRows(rows.filter(function(row) {
+    return getDegreeScopeKey(row, S.flow.listScope) === S.flow.listScopeValue;
+  }));
+}
+
+function buildSubjectBreakdown(row) {
+  const entries = getQuestionEntries(row);
+  const map = new Map();
+  if (!entries.length) {
+    const key = row.subject || "Genel";
+    map.set(key, {
+      label: key,
+      correct: Number(row.correct || 0),
+      wrong: Number(row.wrong || 0),
+      blank: Number(row.blank || 0),
+    });
+    return Array.from(map.values());
+  }
+  entries.forEach(function(entry) {
+    const key = entry.sectionTitle || row.subject || "Genel";
+    if (!map.has(key)) {
+      map.set(key, { label: key, correct: 0, wrong: 0, blank: 0 });
+    }
+    const item = map.get(key);
+    if (entry.outcome === "D") item.correct += 1;
+    else if (entry.outcome === "Y") item.wrong += 1;
+    else item.blank += 1;
+  });
+  return Array.from(map.values());
+}
+
+function renderListReport() {
+  const listRows = getFilteredListRows();
+  const selectedExam = getListExamOptions().find(function(item) { return item.key === S.flow.listExamKey; }) || null;
+  const scopeTitle = getListScopeTitle(S.flow.listScope);
+  const scopeText = S.flow.listScope === "all"
+    ? "Tüm kayıtlar"
+    : ($("listScopeValueSelect")?.selectedOptions?.[0]?.textContent || "Seçili kapsam");
+  $("reportWrap").style.display = "none";
+  $("emptyReport").style.display = "none";
+  $("listWrap").style.display = "block";
+  $("listTitle").textContent = scopeTitle;
+  $("listMeta").textContent = selectedExam
+    ? selectedExam.title + " • " + selectedExam.subject + " • " + selectedExam.formattedDate
+    : "Sınav seçilmedi";
+  $("listSummary").innerHTML =
+    "<span>Liste adı: " + esc(scopeTitle) + "</span>" +
+    "<span>Sınıf: " + esc(S.filters.grade || "—") + ". Sınıf</span>" +
+    "<span>Kapsam: " + esc(scopeText) + "</span>" +
+    "<span>Katılımcı: " + listRows.length + "</span>" +
+    "<span>Ortalama başarı: " + formatPercent(average(listRows.map(function(row) { return row.score || 0; }))) + "</span>";
+
+  if (!listRows.length) {
+    $("listTableHead").innerHTML = "<tr><th>Bilgi</th></tr>";
+    $("listTableBody").innerHTML = "<tr><td style=\"text-align:center;color:var(--muted);padding:18px\">Bu seçim için liste verisi bulunamadı.</td></tr>";
+    return;
+  }
+  const subjectLabels = Array.from(new Set(listRows.flatMap(function(row) {
+    return buildSubjectBreakdown(row).map(function(item) { return item.label; });
+  })));
+  const multiSubject = subjectLabels.length > 1;
+  $("listTableHead").innerHTML =
+    "<tr>" +
+      "<th>Sıra</th><th>Öğrenci</th><th>Sınıf</th>" +
+      (multiSubject ? subjectLabels.map(function(label) { return "<th>" + esc(shortTitle(label, 18)) + " D/Y</th>"; }).join("") : "<th>D/Y/B</th>") +
+      "<th>Toplam Başarı</th>" +
+    "</tr>";
+  $("listTableBody").innerHTML = listRows.map(function(row, index) {
+    const breakdown = buildSubjectBreakdown(row);
+    const bySubject = new Map(breakdown.map(function(item) { return [item.label, item]; }));
+    const subjectCells = multiSubject
+      ? subjectLabels.map(function(label) {
+          const item = bySubject.get(label) || { correct: 0, wrong: 0, blank: 0 };
+          return "<td><span style=\"color:var(--ok);font-weight:900\">" + item.correct + "</span> / <span style=\"color:var(--bad);font-weight:900\">" + item.wrong + "</span></td>";
+        }).join("")
+      : "<td><span style=\"color:var(--ok);font-weight:900\">" + (row.correct || 0) + "</span> / <span style=\"color:var(--bad);font-weight:900\">" + (row.wrong || 0) + "</span> / <span style=\"color:var(--blank);font-weight:900\">" + (row.blank || 0) + "</span></td>";
+    return (
+      "<tr>" +
+        "<td><strong>" + (index + 1) + "</strong></td>" +
+        "<td>" + esc(getStudentFullName(row)) + "</td>" +
+        "<td>" + esc((row.grade || "—") + ". Sınıf " + (row.sube || "")) + "</td>" +
+        subjectCells +
+        "<td><span class=\"score-pill\">" + formatPercent(row.score) + "</span></td>" +
+      "</tr>"
+    );
+  }).join("");
+}
+
+function generateListReport() {
+  S.flow.mode = "list";
+  S.listReady = true;
+  S.reportReady = false;
+  renderWorkflow();
+  renderListReport();
+  const output = $("listWrap");
+  if (output && typeof output.scrollIntoView === "function") {
+    output.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function getDegreeExamOptions() {
+  const map = new Map();
+  S.allResults.filter(isCompletedResult).forEach(function(row) {
+    const key = getExamComparisonKey(row);
+    if (!map.has(key)) {
+      map.set(key, {
+        key: key,
+        title: row.examTitle || "Sınav",
+        subject: row.subject || "Genel",
+        grade: row.grade || "",
+        dateObj: row.dateObj || null,
+        formattedDate: row.formattedDate || "—",
+        count: 0,
+      });
+    }
+    const item = map.get(key);
+    item.count += 1;
+    const time = row.dateObj?.getTime?.() || 0;
+    const currentTime = item.dateObj?.getTime?.() || 0;
+    if (time > currentTime) {
+      item.dateObj = row.dateObj || item.dateObj;
+      item.formattedDate = row.formattedDate || item.formattedDate;
+      item.title = row.examTitle || item.title;
+      item.subject = row.subject || item.subject;
+      item.grade = row.grade || item.grade;
+    }
+  });
+  return Array.from(map.values()).sort(function(a, b) {
+    return (b.dateObj?.getTime?.() || 0) - (a.dateObj?.getTime?.() || 0);
+  });
+}
+
+function getDegreeExamRows() {
+  if (!S.degree.examKey) {
+    return [];
+  }
+  return S.allResults.filter(function(row) {
+    return isCompletedResult(row) && getExamComparisonKey(row) === S.degree.examKey;
+  });
+}
+
+function getClassScopeKey(row) {
+  return [
+    normalizeComparable(getRowSchool(row)),
+    String(row?.grade || ""),
+    normalizeComparable(row?.sube),
+  ].join("|");
+}
+
+function getDegreeScopeKey(row, scope) {
+  if (scope === "city") {
+    return normalizeComparable(getRowCity(row));
+  }
+  if (scope === "district") {
+    return [normalizeComparable(getRowCity(row)), normalizeComparable(getRowDistrict(row))].join("|");
+  }
+  if (scope === "school") {
+    return normalizeComparable(getRowSchool(row));
+  }
+  if (scope === "class") {
+    return getClassScopeKey(row);
+  }
+  return "all";
+}
+
+function getDegreeScopeLabel(row, scope) {
+  if (scope === "city") {
+    return getRowCity(row);
+  }
+  if (scope === "district") {
+    return [getRowCity(row), getRowDistrict(row)].filter(Boolean).join(" / ");
+  }
+  if (scope === "school") {
+    return getRowSchool(row);
+  }
+  if (scope === "class") {
+    return [
+      getRowSchool(row),
+      (row.grade ? row.grade + ". Sınıf" : "Sınıf") + (row.sube ? " " + row.sube : ""),
+    ].filter(Boolean).join(" • ");
+  }
+  return "Tüm Kullanıcılar";
+}
+
+function getDegreeScopeOptions(rows, scope) {
+  if (scope === "all") {
+    return [];
+  }
+  const map = new Map();
+  rows.forEach(function(row) {
+    const key = getDegreeScopeKey(row, scope);
+    const label = getDegreeScopeLabel(row, scope);
+    if (!key || !label) {
+      return;
+    }
+    if (!map.has(key)) {
+      map.set(key, { value: key, label: label, count: 0 });
+    }
+    map.get(key).count += 1;
+  });
+  return Array.from(map.values()).sort(function(a, b) {
+    return a.label.localeCompare(b.label, "tr");
+  });
+}
+
+function getDegreeRows() {
+  const rows = getDegreeExamRows();
+  if (S.degree.scope === "all") {
+    return sortRankingRows(rows);
+  }
+  return sortRankingRows(rows.filter(function(row) {
+    return getDegreeScopeKey(row, S.degree.scope) === S.degree.scopeValue;
+  }));
+}
+
+function syncDegreeSelections() {
+  const options = getDegreeExamOptions();
+  const selected = getSelectedResult();
+  const selectedKey = selected ? getExamComparisonKey(selected) : "";
+  if (!S.degree.examKey || !options.some(function(item) { return item.key === S.degree.examKey; })) {
+    S.degree.examKey = selectedKey && options.some(function(item) { return item.key === selectedKey; })
+      ? selectedKey
+      : (options[0]?.key || "");
+  }
+  if (!S.degree.scope) {
+    S.degree.scope = "all";
+  }
+  const rows = getDegreeExamRows();
+  const scopeOptions = getDegreeScopeOptions(rows, S.degree.scope);
+  if (S.degree.scope === "all") {
+    S.degree.scopeValue = "";
+  } else if (!S.degree.scopeValue || !scopeOptions.some(function(item) { return item.value === S.degree.scopeValue; })) {
+    S.degree.scopeValue = scopeOptions[0]?.value || "";
+  }
+  return { options: options, rows: rows, scopeOptions: scopeOptions };
 }
 
 function buildSubjectPerformanceSummary() {
@@ -632,9 +1274,12 @@ function renderHeader() {
   const latest = getSelectedResult();
   const metrics = S.reportResults.map(function(row) { return getBenchmarkStats(row); });
   const avgScore = average(S.reportResults.map(function(row) { return row.score || 0; }));
+  const avgPoint = averageExamScore(S.reportResults);
   const avgBenchmark = average(metrics.map(function(item) { return item.avgScore || 0; }));
   const avgPercentile = average(metrics.map(function(item) { return item.rankPercent || 0; }));
+  const totalQuestions = getReportTotalQuestions();
   const latestBenchmark = latest ? getBenchmarkStats(latest) : { avgScore: 0, delta: 0, rankPercent: 0, participantCount: 0 };
+  const latestRank = latest ? getRankInfo(latest, "all") : { rank: 0, total: 0 };
   const deltaLabel = formatSigned(latestBenchmark.delta);
   const insight = getReportInsights();
 
@@ -642,32 +1287,44 @@ function renderHeader() {
   $("reportCountPill").textContent = S.reportResults.length + " sınav";
   $("heroStudentName").textContent = student ? student.firstName + " " + student.lastName : "Öğrenci seç";
   $("heroStudentMeta").textContent = student ? student.grade + ". Sınıf " + student.sube + " Şubesi" : "—";
+  if ($("heroStudentSchool")) {
+    $("heroStudentSchool").textContent = student
+      ? (student.school || [student.city, student.district].filter(Boolean).join(" / ") || "Okul bilgisi yok")
+      : "Okul bilgisi";
+  }
   $("heroStudentChips").innerHTML =
     "<span class=\"student-chip\">" + esc(S.filters.subject || "Tüm Dersler") + "</span>" +
-    "<span class=\"student-chip\">" + esc(isOutcomeMode() ? "Kazanım Odaklı" : (S.filters.examId ? "Tek Sınav Görünümü" : "Toplu Görünüm")) + "</span>" +
+    "<span class=\"student-chip\">" + esc(getReportTypeTitle()) + "</span>" +
     "<span class=\"student-chip\">" + esc(formatDate(S.reportResults[0]?.dateObj || S.reportResults[0]?.date) + " - " + formatDate(S.reportResults[S.reportResults.length - 1]?.dateObj || S.reportResults[S.reportResults.length - 1]?.date)) + "</span>";
 
   $("heroScore").textContent = "%" + avgScore;
+  if ($("heroScoreRing")) {
+    $("heroScoreRing").style.setProperty("--score", String(Math.max(0, Math.min(100, avgScore))));
+  }
   $("heroScoreNote").textContent =
     "Seçili sınav grubunda ortalama katılım başarısı %" +
     avgBenchmark +
+    " ve ortalama puanı " +
+    formatPointValue(avgPoint) +
     ". Öğrencinin ortalama yüzdelik dilimi %" +
     avgPercentile +
     ".";
   $("heroHeadline").textContent = student
-    ? student.firstName + (isOutcomeMode() ? " için Kazanım Odaklı Karne" : " için Öğrenci Başarı İlerlemesi")
-    : (isOutcomeMode() ? "Kazanım Odaklı Karne" : "Öğrenci Başarı İlerlemesi");
+    ? student.firstName + " için " + getReportTypeTitle()
+    : getReportTypeTitle();
   $("heroDescription").textContent = isOutcomeMode()
     ? "Bu rapor, sınava eklenmiş kazanım ve öğrenme çıktıları üzerinden doğru, yanlış ve boş dağılımını gösterir. Ders başlıkları korunur; her kazanım ayrı satırda izlenir."
     : insight.summaryParagraph;
   $("heroComparisonPill").textContent =
     latest
-      ? "Son seçili sınavda grup ortalamasına göre " + deltaLabel + " puan fark"
+      ? "Seçili sınav: " + (latestRank.rank || "—") + " / " + (latestRank.total || "—") + " sıra · " + formatExamScore(latest) + " · " + deltaLabel + " yüzde fark"
       : "Karşılaştırma verisi bekleniyor";
 
   $("filterSummaryScore").textContent = latest ? "%" + (latest.score || 0) : "%0";
   $("filterSummaryText").textContent = latest
     ? shortTitle(latest.examTitle, 52) +
+      " • Puan " +
+      formatExamScore(latest) +
       " • Katılım ort. %" +
       latestBenchmark.avgScore +
       " • Yüzdelik %" +
@@ -675,9 +1332,11 @@ function renderHeader() {
     : "Filtrelenmiş kayıt bulunmuyor.";
 
   $("metricExamCount").textContent = String(S.reportResults.length);
+  if ($("metricTotalQuestions")) {
+    $("metricTotalQuestions").textContent = String(totalQuestions);
+  }
   $("metricAvgScore").textContent = "%" + avgScore;
   $("metricAvgBenchmark").textContent = "%" + avgBenchmark;
-  $("metricAvgPercentile").textContent = "%" + avgPercentile;
 
   $("compareStrip").innerHTML =
     "<div class=\"compare-card\"><strong>Genel Performans</strong><p>Seçili " + S.reportResults.length + " sınavda ortalama başarı %" + avgScore + ". " + insight.benchmarkText + "</p></div>" +
@@ -797,20 +1456,82 @@ function renderHistoryTable() {
       const benchmark = getBenchmarkStats(row);
       const deltaClass = benchmark.delta >= 0 ? "good" : "warn";
       const deltaLabel = benchmark.delta >= 0 ? "+" + benchmark.delta : String(benchmark.delta);
+      const active = row.id === S.selectedResultId ? " active" : "";
+      const actionLabel = S.reportKind === "single" ? "Açık" : "Bireysel Karnesi";
       return (
-        "<tr>" +
+        "<tr class=\"history-row" + active + "\" onclick=\"window.selectReportResult('" + row.id + "')\">" +
           "<td>" + esc(row.formattedDate) + "</td>" +
-          "<td>" + esc(shortTitle(row.examTitle, 34)) + "</td>" +
+          "<td><div class=\"history-exam-title\">" + esc(shortTitle(row.examTitle, 44)) + "</div><div class=\"history-exam-sub\">Detayı görmek için satıra tıkla</div></td>" +
           "<td>" + esc(row.subject || "—") + "</td>" +
+          "<td><span style=\"color:var(--ok);font-weight:900\">" + (row.correct || 0) + "</span> / <span style=\"color:var(--bad);font-weight:900\">" + (row.wrong || 0) + "</span> / <span style=\"color:var(--blank);font-weight:900\">" + (row.blank || 0) + "</span></td>" +
+          "<td><span class=\"score-pill\">" + esc(formatExamScore(row)) + "</span></td>" +
           "<td><span class=\"score-pill\">%" + (row.score || 0) + "</span></td>" +
           "<td>%" + benchmark.avgScore + "</td>" +
           "<td><span class=\"delta-pill " + deltaClass + "\">" + deltaLabel + "</span></td>" +
           "<td>%" + benchmark.rankPercent + "</td>" +
-          "<td class=\"screen-only\"><button class=\"mini-btn\" onclick=\"window.openExamKarneFromStudentReport('" + row.id + "')\">Tek Sınav</button></td>" +
+          "<td class=\"screen-only\"><button class=\"mini-btn\" onclick=\"event.stopPropagation();window.openSingleReportFromHistory('" + row.id + "')\">" + actionLabel + "</button></td>" +
         "</tr>"
       );
     })
     .join("");
+}
+
+function renderDegreePanel() {
+  if (!$("degreeCard")) {
+    return;
+  }
+  const synced = syncDegreeSelections();
+  const options = synced.options;
+  const baseRows = synced.rows;
+  const scopeOptions = synced.scopeOptions;
+  setSelectOptions("degreeExamSelect", options, "Sınav Seç", S.degree.examKey, function(item) {
+    return {
+      value: item.key,
+      label: item.title + " • " + item.subject + " • " + item.formattedDate + " • " + item.count + " öğrenci",
+    };
+  });
+  $("degreeScopeSelect").value = S.degree.scope || "all";
+  const scopeValueSelect = $("degreeScopeValueSelect");
+  if (S.degree.scope === "all") {
+    scopeValueSelect.innerHTML = "<option value=\"\">Tüm kayıtlar</option>";
+    scopeValueSelect.disabled = true;
+  } else {
+    scopeValueSelect.disabled = false;
+    setSelectOptions("degreeScopeValueSelect", scopeOptions, "Kapsam Seç", S.degree.scopeValue, function(item) {
+      return { value: item.value, label: item.label + " • " + item.count + " öğrenci" };
+    });
+  }
+  const rows = getDegreeRows();
+  const selectedStudentKey = S.filters.studentKey || "";
+  const selectedExam = options.find(function(item) { return item.key === S.degree.examKey; }) || null;
+  const avgScore = average(rows.map(function(row) { return row.score || 0; }));
+  const avgPoint = averageExamScore(rows);
+  $("degreeSummary").innerHTML =
+    "<span>" + esc(selectedExam ? selectedExam.title : "Sınav seçilmedi") + "</span>" +
+    "<span>Katılımcı: " + rows.length + " / " + baseRows.length + "</span>" +
+    "<span>Ortalama Başarı: %" + avgScore + "</span>" +
+    "<span>Ortalama Puan: " + esc(formatPointValue(avgPoint)) + "</span>" +
+    "<span>Kapsam: " + esc(S.degree.scope === "all" ? "Tüm kullanıcılar" : ($("degreeScopeValueSelect")?.selectedOptions?.[0]?.textContent || "—")) + "</span>";
+  if (!rows.length) {
+    $("degreeTableBody").innerHTML = "<tr><td colspan=\"9\" style=\"text-align:center;color:var(--muted);padding:18px\">Bu sınav ve kapsam için derece verisi bulunamadı.</td></tr>";
+    return;
+  }
+  $("degreeTableBody").innerHTML = rows.map(function(row, index) {
+    const isSelf = selectedStudentKey && row.studentKey === selectedStudentKey;
+    return (
+      "<tr class=\"" + (isSelf ? "self-row" : "") + "\">" +
+        "<td><strong>" + (index + 1) + "</strong></td>" +
+        "<td>" + esc(getStudentFullName(row)) + (isSelf ? " <span class=\"score-pill\">Seçili Öğrenci</span>" : "") + "</td>" +
+        "<td>" + esc((row.grade || "—") + ". Sınıf " + (row.sube || "")) + "</td>" +
+        "<td>" + esc([getRowCity(row), getRowDistrict(row)].filter(Boolean).join(" / ") || "—") + "</td>" +
+        "<td>" + esc(getRowSchool(row) || "—") + "</td>" +
+        "<td><span style=\"color:var(--ok);font-weight:900\">" + (row.correct || 0) + "</span> / <span style=\"color:var(--bad);font-weight:900\">" + (row.wrong || 0) + "</span> / <span style=\"color:var(--blank);font-weight:900\">" + (row.blank || 0) + "</span></td>" +
+        "<td>" + esc(String(row.netCorrect ?? row.correct ?? 0)) + "</td>" +
+        "<td><span class=\"score-pill\">" + esc(formatExamScore(row)) + "</span></td>" +
+        "<td><span class=\"score-pill\">" + formatPercent(row.score) + "</span></td>" +
+      "</tr>"
+    );
+  }).join("");
 }
 
 function renderSelectedExam() {
@@ -822,12 +1543,14 @@ function renderSelectedExam() {
     $("selectedBenchmarkValue").textContent = "%0";
     $("selectedPercentileValue").textContent = "%0";
     $("matrixWrap").innerHTML = "";
+    if ($("outcomeWrap")) $("outcomeWrap").innerHTML = "";
+    if ($("wrongQuestionPanel")) $("wrongQuestionPanel").style.display = "none";
     $("selectedExamAction").onclick = null;
     return;
   }
   const benchmark = getBenchmarkStats(result);
-  const deltaLabel = benchmark.delta >= 0 ? "+" + benchmark.delta : String(benchmark.delta);
-  const blocks = buildMatrixBlocks(result);
+  const rankInfo = getRankInfo(result, "all");
+  const totalQuestions = result.total || getQuestionEntries(result).length || 0;
 
   $("selectedExamTitle").textContent = result.examTitle || "Seçili Sınav";
   $("selectedExamMeta").textContent =
@@ -835,153 +1558,150 @@ function renderSelectedExam() {
     " • " +
     formatDateTime(result.dateObj || result.date) +
     " • " +
-    (result.total || getQuestionEntries(result).length) +
-    " soru";
-  $("selectedBenchmarkPill").textContent = "Katılımcı sayısı: " + benchmark.participantCount;
-  $("selectedScoreValue").textContent = "%" + (result.score || 0);
-  $("selectedBenchmarkValue").textContent = "%" + benchmark.avgScore;
+    totalQuestions +
+      " soru • Puan: " + formatExamScore(result) + " • D:" + (result.correct || 0) +
+    " Y:" + (result.wrong || 0) +
+    " B:" + (result.blank || 0);
+  $("selectedBenchmarkPill").textContent = "Puan sırası: " + (rankInfo.rank || "—") + " / " + (rankInfo.total || "—");
+  $("selectedScoreValue").textContent = formatExamScore(result);
+  $("selectedBenchmarkValue").textContent = formatPointValue(benchmark.avgPoint || 0) + " / " + (result.scoreScale || 100);
   $("selectedPercentileValue").textContent = "%" + benchmark.rankPercent;
+  $("selectedExamAction").textContent = S.reportKind === "single" ? "Bu Sınav Açık" : "Tek Sınav Karnesi";
   $("selectedExamAction").onclick = function() {
-    window.openExamKarneFromStudentReport(result.id);
+    generateIndividualReport("single", result);
   };
 
-  if (isOutcomeMode()) {
-    renderOutcomeMatrix();
-    return;
-  }
+  renderWrongQuestionPanel(result);
+  renderOutcomeMatrix(result);
+  renderQuestionMatrix();
+}
 
-  // Tüm sınavların matrisini göster
-  if (!S.reportResults.length) {
-    $("matrixWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:22px;text-align:center;color:var(--muted);\">Sınav kaydı bulunamadı.</div>";
+function renderWrongQuestionPanel(result) {
+  if (!$("wrongQuestionPanel") || !$("wrongQuestionList")) {
     return;
   }
-  $("matrixWrap").innerHTML = S.reportResults.slice().reverse().map(function(examResult) {
-    var examBenchmark = getBenchmarkStats(examResult);
-    var examDeltaLabel = formatSigned(examBenchmark.delta);
-    var allEntries = getQuestionEntries(examResult);
-    var examDate = examResult.formattedDate || "—";
-    var examSubject = examResult.subject || "Genel";
-    var headerHtml =
-      "<div class=\"matrix-card-head\">" +
-        "<strong>" + esc(shortTitle(examResult.examTitle, 52)) + "</strong>" +
-        "<span>" + esc(examSubject) + " • " + esc(examDate) +
-          " • " + (examResult.total || allEntries.length) + " soru" +
-          " • %" + (examResult.score || 0) +
-          " • Grup farkı: " + examDeltaLabel + " puan</span>" +
-      "</div>";
-    if (!allEntries.length) {
-      return (
-        "<div class=\"matrix-card\">" +
-          headerHtml +
-          "<div class=\"matrix-card-body\"><p style=\"padding:8px 0;color:var(--muted);font-size:13px;\">Bu sınava ait soru bazlı kayıt bulunamadı.</p></div>" +
-        "</div>"
-      );
+  if (S.reportKind !== "single") {
+    $("wrongQuestionPanel").style.display = "none";
+    $("wrongQuestionList").innerHTML = "";
+    return;
+  }
+  const issues = getQuestionEntries(result).filter(function(entry) {
+    return entry.outcome === "Y" || entry.outcome === "B";
+  });
+  $("wrongQuestionPanel").style.display = "block";
+  $("wrongQuestionList").innerHTML = issues.length
+    ? issues.map(function(entry) {
+        return "<span class=\"wrong-chip\">" + (entry.outcome === "B" ? "Boş" : "Yanlış") + " " + entry.questionNo + ". soru</span>";
+      }).join("")
+    : "<span class=\"score-pill\" style=\"background:#ecfdf5;color:#047857\">Yanlış veya boş soru yok</span>";
+}
+
+function renderQuestionMatrix() {
+  if (!S.reportResults.length) {
+    $("matrixWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:18px;text-align:center;color:var(--muted);\">Soru bazlı değerlendirme için kayıt bulunamadı.</div>";
+    return;
+  }
+  const matrixResults = S.reportKind === "single" ? [getSelectedResult()].filter(Boolean) : S.reportResults.slice().reverse();
+  $("matrixWrap").innerHTML = matrixResults.map(function(result) {
+  var examBenchmark = getBenchmarkStats(result);
+  var examDeltaLabel = formatSigned(examBenchmark.delta);
+  var allEntries = getQuestionEntries(result);
+  var examSubject = result.subject || "Genel";
+  if (!allEntries.length) {
+    return "<div class=\"panel-card\" style=\"padding:18px;text-align:center;color:var(--muted);\">" + esc(shortTitle(result.examTitle, 58)) + " için soru bazlı kayıt bulunamadı.</div>";
+  }
+  var sectionMap = new Map();
+  var sectionOrder = [];
+  allEntries.forEach(function(entry) {
+    var key = entry.sectionTitle || examSubject;
+    if (!sectionMap.has(key)) {
+      sectionMap.set(key, []);
+      sectionOrder.push(key);
     }
-    // Ders/bölüm bazında grupla
-    var sectionMap = new Map();
-    var sectionOrder = [];
-    allEntries.forEach(function(entry) {
-      var key = entry.sectionTitle || examSubject;
-      if (!sectionMap.has(key)) {
-        sectionMap.set(key, []);
-        sectionOrder.push(key);
-      }
-      sectionMap.get(key).push(entry);
-    });
-    var totalD = allEntries.filter(function(e) { return e.outcome === "D"; }).length;
-    var totalY = allEntries.filter(function(e) { return e.outcome === "Y"; }).length;
-    var totalB = allEntries.filter(function(e) { return e.outcome === "B"; }).length;
-    var rowsHtml = sectionOrder.map(function(secLabel) {
-      var items = sectionMap.get(secLabel);
-      var secD = items.filter(function(e) { return e.outcome === "D"; }).length;
-      var secY = items.filter(function(e) { return e.outcome === "Y"; }).length;
-      var secB = items.filter(function(e) { return e.outcome === "B"; }).length;
-      var cells = items.map(function(entry) {
-        var cls = entry.outcome === "D" ? "ok" : entry.outcome === "Y" ? "bad" : "blank";
-        var lbl = entry.outcome === "B" ? "•" : (entry.selectedAnswer || "•");
-        return (
-          "<div class=\"q-cell\">" +
-            "<div class=\"q-cell-num\">" + entry.questionNo + "</div>" +
-            "<div class=\"q-bubble " + cls + "\">" + esc(lbl) + "</div>" +
-          "</div>"
-        );
-      }).join("");
+    sectionMap.get(key).push(entry);
+  });
+  var totalD = allEntries.filter(function(e) { return e.outcome === "D"; }).length;
+  var totalY = allEntries.filter(function(e) { return e.outcome === "Y"; }).length;
+  var totalB = allEntries.filter(function(e) { return e.outcome === "B"; }).length;
+  var rowsHtml = sectionOrder.map(function(secLabel) {
+    var items = sectionMap.get(secLabel);
+    var secD = items.filter(function(e) { return e.outcome === "D"; }).length;
+    var secY = items.filter(function(e) { return e.outcome === "Y"; }).length;
+    var secB = items.filter(function(e) { return e.outcome === "B"; }).length;
+    var cells = items.map(function(entry) {
+      var cls = entry.outcome === "D" ? "ok" : entry.outcome === "Y" ? "bad" : "blank";
+      var lbl = entry.outcome === "B" ? "•" : (entry.selectedAnswer || "•");
       return (
-        "<div class=\"matrix-row\">" +
-          "<div>" +
-            "<div class=\"matrix-label\">" + esc(secLabel) + "</div>" +
-            "<div class=\"matrix-sub\">" + items.length + " soru — " +
-              "<span style=\"color:var(--ok);font-weight:800;\">D:" + secD + "</span> " +
-              "<span style=\"color:var(--bad);font-weight:800;\">Y:" + secY + "</span> " +
-              "<span style=\"color:var(--blank);font-weight:800;\">B:" + secB + "</span>" +
-            "</div>" +
-          "</div>" +
-          "<div class=\"matrix-cells\">" + cells + "</div>" +
+        "<div class=\"q-cell\">" +
+          "<div class=\"q-cell-num\">" + entry.questionNo + "</div>" +
+          "<div class=\"q-bubble " + cls + "\">" + esc(lbl) + "</div>" +
         "</div>"
       );
     }).join("");
-    var totalRow =
-      "<div style=\"display:flex;align-items:center;gap:16px;padding:10px 0 2px;border-top:2px solid var(--border);margin-top:6px;font-size:12px;font-weight:800;flex-wrap:wrap;\">" +
-        "<span style=\"color:var(--slate);\">TOPLAM → " + allEntries.length + " soru</span>" +
-        "<span style=\"color:var(--ok);\">✓ Doğru: " + totalD + "</span>" +
-        "<span style=\"color:var(--bad);\">✗ Yanlış: " + totalY + "</span>" +
-        "<span style=\"color:var(--blank);\">○ Boş: " + totalB + "</span>" +
-        "<span style=\"color:var(--slate);margin-left:auto;\">Katılım Ort: %" + examBenchmark.avgScore + " • Yüzdelik: %" + examBenchmark.rankPercent + "</span>" +
-      "</div>";
     return (
-      "<div class=\"matrix-card\">" +
-        headerHtml +
-        "<div class=\"matrix-card-body\">" + rowsHtml + totalRow + "</div>" +
+      "<div class=\"matrix-row\">" +
+        "<div>" +
+          "<div class=\"matrix-label\">" + esc(secLabel) + "</div>" +
+          "<div class=\"matrix-sub\">" + items.length + " soru — " +
+            "<span style=\"color:var(--ok);font-weight:800;\">D:" + secD + "</span> " +
+            "<span style=\"color:var(--bad);font-weight:800;\">Y:" + secY + "</span> " +
+            "<span style=\"color:var(--blank);font-weight:800;\">B:" + secB + "</span>" +
+          "</div>" +
+        "</div>" +
+        "<div class=\"matrix-cells\">" + cells + "</div>" +
       "</div>"
     );
   }).join("");
+  var totalRow =
+    "<div style=\"display:flex;align-items:center;gap:16px;padding:10px 0 2px;border-top:2px solid var(--border);margin-top:6px;font-size:12px;font-weight:800;flex-wrap:wrap;\">" +
+      "<span style=\"color:var(--slate);\">TOPLAM → " + allEntries.length + " soru</span>" +
+      "<span style=\"color:var(--ok);\">✓ Doğru: " + totalD + "</span>" +
+      "<span style=\"color:var(--bad);\">✗ Yanlış: " + totalY + "</span>" +
+      "<span style=\"color:var(--blank);\">○ Boş: " + totalB + "</span>" +
+      "<span style=\"color:var(--slate);margin-left:auto;\">Katılım Ort: %" + examBenchmark.avgScore + " • Yüzdelik: %" + examBenchmark.rankPercent + " • Grup farkı: " + examDeltaLabel + " puan</span>" +
+    "</div>";
+  return (
+    "<div class=\"matrix-card\">" +
+      "<div class=\"matrix-card-head\">" +
+        "<strong>" + esc(shortTitle(result.examTitle, 58)) + "</strong>" +
+        "<span>" + esc(examSubject) + " • " + esc(result.formattedDate || "—") + " • " + allEntries.length + " soru • %" + (result.score || 0) + "</span>" +
+      "</div>" +
+      "<div class=\"matrix-card-body\">" + rowsHtml + totalRow + "</div>" +
+    "</div>"
+  );
+  }).join("");
 }
 
-function renderOutcomeMatrix() {
-  const rows = buildAllOutcomeRows();
+function renderOutcomeMatrix(result) {
+  const rows = S.reportKind === "outcome"
+    ? buildAllOutcomeRows()
+    : (result ? buildOutcomeRows(result).map(function(row) { return Object.assign({ result: result }, row); }) : []);
   if (!rows.length) {
-    $("matrixWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:22px;text-align:center;color:var(--muted);\">Seçili sınavda kazanım / öğrenme çıktısı girilmiş soru bulunamadı.</div>";
+    $("outcomeWrap").innerHTML = "<div class=\"panel-card\" style=\"padding:18px;text-align:center;color:var(--muted);\">Bu seçimde kazanım / öğrenme çıktısı girilmiş soru bulunamadı.</div>";
     return;
   }
-  const grouped = new Map();
-  rows.forEach(function(row) {
-    const title = row.result.examTitle || "Sınav";
-    if (!grouped.has(title)) grouped.set(title, []);
-    grouped.get(title).push(row);
-  });
-  $("matrixWrap").innerHTML = Array.from(grouped.entries()).map(function(pair) {
-    const title = pair[0];
-    const items = pair[1];
-    const result = items[0].result;
-    const body = items.map(function(item) {
+  $("outcomeWrap").innerHTML = rows.map(function(item) {
       const color = item.score >= 70 ? "var(--ok)" : item.score >= 50 ? "var(--amber)" : "var(--bad)";
+      const issueQuestions = item.wrongQuestions.concat(item.blankQuestions);
+      const owner = item.result || result || {};
       return (
-        "<div class=\"matrix-row outcome-row\">" +
-          "<div>" +
-            "<div class=\"matrix-label\">" + esc(item.subject || result.subject || "Genel") + "</div>" +
-            "<div class=\"matrix-sub\">Sorular: " + esc(item.questions.join(", ")) + "</div>" +
-          "</div>" +
-          "<div class=\"outcome-detail\">" +
-            "<div class=\"outcome-text\">" + esc(item.label) + "</div>" +
-            "<div class=\"outcome-stats\">" +
-              "<span style=\"color:var(--ok)\">D: " + item.correct + "</span>" +
-              "<span style=\"color:var(--bad)\">Y: " + item.wrong + "</span>" +
-              "<span style=\"color:var(--blank)\">B: " + item.blank + "</span>" +
-              "<strong style=\"color:" + color + "\">%" + item.score + "</strong>" +
+        "<div class=\"outcome-card\">" +
+          "<div class=\"outcome-card-head\">" +
+            "<div>" +
+              "<div class=\"outcome-card-title\">" + esc(item.label) + "</div>" +
+              "<div class=\"matrix-sub\">" + esc(owner.examTitle || "Sınav") + " • " + esc(item.subject || owner.subject || "Genel") + " • Sorular: " + esc(item.questions.join(", ")) + "</div>" +
             "</div>" +
+            "<span class=\"score-pill\" style=\"color:" + color + "\">%" + item.score + "</span>" +
           "</div>" +
+          "<div class=\"outcome-card-meta\">" +
+            "<span>Soru sayısı: " + item.total + "</span>" +
+            "<span style=\"color:var(--ok)\">Doğru: " + item.correct + "</span>" +
+            "<span style=\"color:var(--bad)\">Yanlış: " + item.wrong + "</span>" +
+            "<span style=\"color:var(--blank)\">Boş: " + item.blank + "</span>" +
+          "</div>" +
+          (issueQuestions.length ? "<div class=\"outcome-alert\">Kontrol edilmesi gereken soru(lar): " + esc(issueQuestions.join(", ")) + "</div>" : "") +
         "</div>"
       );
-    }).join("");
-    return (
-      "<div class=\"matrix-card\">" +
-        "<div class=\"matrix-card-head\">" +
-          "<strong>" + esc(shortTitle(title, 58)) + "</strong>" +
-          "<span>" + esc(result.formattedDate || "—") + " • Kazanım / öğrenme çıktısı odaklı analiz</span>" +
-        "</div>" +
-        "<div class=\"matrix-card-body\">" + body + "</div>" +
-      "</div>"
-    );
   }).join("");
 }
 
@@ -1120,6 +1840,7 @@ function buildPrintableHistoryRows() {
           "<td>" + esc(row.formattedDate) + "</td>" +
           "<td>" + esc(row.examTitle || "Sınav") + "</td>" +
           "<td>" + esc(row.subject || "—") + "</td>" +
+          "<td>" + esc(formatExamScore(row)) + "</td>" +
           "<td><strong>%" + (row.score || 0) + "</strong></td>" +
           "<td>%" + benchmark.avgScore + "</td>" +
           "<td>" + esc(deltaLabel) + "</td>" +
@@ -1143,8 +1864,11 @@ function buildPrintDocument() {
   const focus = insight.focusSubject
     ? insight.focusSubject.label + " (%" + insight.focusSubject.avgScore + ")"
     : "—";
+  const studentSchool = student
+    ? (student.school || [student.city, student.district].filter(Boolean).join(" / ") || "Okul bilgisi yok")
+    : "—";
   const selectedSummary = selected
-    ? (selected.subject || "Genel") + " • " + formatDateTime(selected.dateObj || selected.date) + " • " + (selected.total || getQuestionEntries(selected).length) + " soru"
+    ? (selected.subject || "Genel") + " • " + formatDateTime(selected.dateObj || selected.date) + " • " + (selected.total || getQuestionEntries(selected).length) + " soru • " + formatExamScore(selected)
     : "Seçili sınav bulunamadı";
   return "<!DOCTYPE html>" +
     "<html lang=\"tr\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
@@ -1203,6 +1927,7 @@ function buildPrintDocument() {
           "<div class=\"print-card\">" +
             "<div class=\"print-name\">" + esc(student ? student.firstName + " " + student.lastName : "Öğrenci") + "</div>" +
             "<div class=\"print-meta\">" + esc(student ? student.grade + ". Sınıf " + student.sube + " Şubesi" : "—") + "</div>" +
+            "<div class=\"print-meta\" style=\"margin-top:5px\">" + esc(studentSchool) + "</div>" +
             "<div class=\"print-chip-row\">" +
               "<span class=\"print-chip\">" + esc(S.filters.subject || "Tüm Dersler") + "</span>" +
               "<span class=\"print-chip\">" + esc(isOutcomeMode() ? "Kazanım Odaklı" : (S.filters.examId ? "Tekli Karne" : "Toplu Karne")) + "</span>" +
@@ -1226,7 +1951,7 @@ function buildPrintDocument() {
         "</div>" +
         "<div class=\"print-detail-grid break-avoid\">" +
           "<div class=\"print-panel\"><div class=\"print-panel-head\"><strong>Akademik Odak Özeti</strong><span>Raporun en belirgin kuvvetli ve gelişebilir alanları</span></div><div class=\"print-panel-body\"><div class=\"print-focus-list\"><div class=\"print-focus-item\"><strong>Güçlü Alan</strong><p>" + esc(strongest) + "</p></div><div class=\"print-focus-item\"><strong>Odaklanılacak Alan</strong><p>" + esc(focus) + "</p></div></div></div></div>" +
-          "<div class=\"print-panel\"><div class=\"print-panel-head\"><strong>Son Seçili Sınav Özeti</strong><span>" + esc(selectedSummary) + "</span></div><div class=\"print-panel-body\"><div class=\"print-mini-grid\"><div class=\"print-mini\"><strong>%" + (selected ? selected.score || 0 : 0) + "</strong><span>Öğrenci Skoru</span></div><div class=\"print-mini\"><strong>%" + latestBenchmark.avgScore + "</strong><span>Katılım Ort.</span></div><div class=\"print-mini\"><strong>%" + latestBenchmark.rankPercent + "</strong><span>Yüzdelik</span></div></div></div></div>" +
+          "<div class=\"print-panel\"><div class=\"print-panel-head\"><strong>Son Seçili Sınav Özeti</strong><span>" + esc(selectedSummary) + "</span></div><div class=\"print-panel-body\"><div class=\"print-mini-grid\"><div class=\"print-mini\"><strong>" + esc(selected ? formatExamScore(selected) : "0 / 100") + "</strong><span>Öğrenci Puanı</span></div><div class=\"print-mini\"><strong>" + esc(formatPointValue(latestBenchmark.avgPoint || 0)) + "</strong><span>Katılım Ort. Puan</span></div><div class=\"print-mini\"><strong>%" + latestBenchmark.rankPercent + "</strong><span>Yüzdelik</span></div></div></div></div>" +
         "</div>" +
         "<div class=\"print-chart-grid\">" +
           "<div class=\"print-panel break-avoid\"><div class=\"print-panel-head\"><strong>Sınav Bazlı Başarı Grafiği</strong><span>Başarı ve net gelişimi</span></div><div class=\"print-panel-body\">" + (progressChartImage ? "<img class=\"print-chart\" src=\"" + progressChartImage + "\" alt=\"Başarı grafiği\">" : "<div class=\"print-empty\">Grafik görüntüsü hazırlanamadı.</div>") + "</div></div>" +
@@ -1235,7 +1960,7 @@ function buildPrintDocument() {
         "<div class=\"print-footer\"><div><strong>By Kemal Öğretmen</strong><br>kemalogretmenim.com.tr</div><div>Profesyonel öğrenci performans özeti</div><div>Sayfa 1 / 2</div></div>" +
       "</section>" +
       "<section class=\"print-sheet\">" +
-        "<section class=\"print-panel\"><div class=\"print-panel-head\"><strong>Sınav Geçmişi ve Kıyaslama Tablosu</strong><span>Öğrencinin seçili tüm sınav performansları</span></div><div class=\"print-panel-body\"><div class=\"print-table-wrap\"><table><thead><tr><th>Tarih</th><th>Sınav</th><th>Ders</th><th>Başarı</th><th>Katılım Ort.</th><th>Fark</th><th>Yüzdelik</th></tr></thead><tbody>" + buildPrintableHistoryRows() + "</tbody></table></div></div></section>" +
+        "<section class=\"print-panel\"><div class=\"print-panel-head\"><strong>Sınav Geçmişi ve Kıyaslama Tablosu</strong><span>Öğrencinin seçili tüm sınav performansları</span></div><div class=\"print-panel-body\"><div class=\"print-table-wrap\"><table><thead><tr><th>Tarih</th><th>Sınav</th><th>Ders</th><th>Puan</th><th>Başarı</th><th>Katılım Ort.</th><th>Fark</th><th>Yüzdelik</th></tr></thead><tbody>" + buildPrintableHistoryRows() + "</tbody></table></div></div></section>" +
         "<div class=\"print-section-title\">" + esc(isOutcomeMode() ? "🎯 Kazanım Odaklı Değerlendirme" : "🔎 Soru Bazlı Kompakt Değerlendirme") + "</div>" +
         "<div class=\"print-section-sub\">" + esc(isOutcomeMode() ? "Kazanım ve öğrenme çıktıları ders başlığına göre listelenir; her kazanım için doğru, yanlış ve boş dağılımı verilir." : "Tüm denemelerdeki her dersin soru bazlı doğru/yanlış/boş matrisi aşağıda sıralanmaktadır.") + "</div>" +
         "<div style=\"display:flex;flex-direction:column;gap:14px;margin-top:12px;\">" + buildAllPrintableMatrices() + "</div>" +
@@ -1287,7 +2012,11 @@ async function captureReportSheetCanvases() {
   if (typeof window.html2canvas !== "function") {
     throw new Error("html2canvas yüklenemedi");
   }
-  var sheets = Array.from(document.querySelectorAll("#reportWrap .sheet"));
+  var activeWrap = S.listReady ? $("listWrap") : $("reportWrap");
+  var sheets = activeWrap ? Array.from(activeWrap.querySelectorAll(".sheet")) : [];
+  if (!sheets.length) {
+    throw new Error("Çıktı alınacak karne veya liste bulunamadı.");
+  }
   var canvases = [];
   for (var i = 0; i < sheets.length; i += 1) {
     var sheet = sheets[i];
@@ -1390,15 +2119,18 @@ function downloadCanvasFile(canvas, fileName, format) {
 }
 
 async function exportReportAsImages(format) {
-  if (!S.reportResults.length) {
+  if (!S.reportResults.length && !S.listReady) {
+    window.alert("Önce karne veya liste oluşturmalısın.");
     return;
   }
   var student = getCurrentStudent();
-  var baseName = [
-    sanitizeFileNamePart(student?.firstName || "ogrenci"),
-    sanitizeFileNamePart(student?.lastName || "karne-merkezi"),
-    "karne-merkezi",
-  ].join("-");
+  var baseName = S.listReady
+    ? [sanitizeFileNamePart(getListScopeTitle(S.flow.listScope)), "sinav-listesi"].join("-")
+    : [
+        sanitizeFileNamePart(student?.firstName || "ogrenci"),
+        sanitizeFileNamePart(student?.lastName || "karne-merkezi"),
+        "karne-merkezi",
+      ].join("-");
   setExportButtonsState(true, format === "jpeg" ? "JPEG Hazırlanıyor..." : "PNG Hazırlanıyor...");
   try {
     var canvases = await captureReportSheetCanvases();
@@ -1420,36 +2152,27 @@ async function exportReportAsImages(format) {
 }
 
 async function printReport() {
-  if (!S.reportResults.length) {
-    window.print();
+  if (!S.reportResults.length && !S.listReady) {
+    window.alert("Önce karne veya liste oluşturmalısın.");
     return;
   }
   setPrintButtonState(true, "PDF Hazırlanıyor...");
   try {
-    var printDoc = buildPrintDocument();
-    var printWindow = null;
-    try {
-      printWindow = window.open("about:blank", "_blank");
-    } catch (openErr) {
-      printWindow = null;
+    var canvases = await captureReportSheetCanvases();
+    var imageUrls = canvases.map(function(canvas) {
+      return canvas.toDataURL("image/png");
+    });
+    var printDoc = buildA4ImagePrintDocument(imageUrls);
+    var printFrame = createPrintFrame();
+    var frameDoc = printFrame.contentWindow ? printFrame.contentWindow.document : null;
+    if (!frameDoc) {
+      removePrintFrame();
+      window.alert("Yazdırma penceresi açılamadı. Tarayıcınızda pop-up engelleyiciyi kapatıp tekrar deneyin.");
+      return;
     }
-    if (printWindow) {
-      try { printWindow.opener = null; } catch (e) {}
-      printWindow.document.open();
-      printWindow.document.write(printDoc);
-      printWindow.document.close();
-    } else {
-      var printFrame = createPrintFrame();
-      var frameDoc = printFrame.contentWindow ? printFrame.contentWindow.document : null;
-      if (!frameDoc) {
-        removePrintFrame();
-        window.alert("Yazdırma penceresi açılamadı. Tarayıcınızda pop-up engelleyiciyi kapatıp tekrar deneyin.");
-        return;
-      }
-      frameDoc.open();
-      frameDoc.write(printDoc);
-      frameDoc.close();
-    }
+    frameDoc.open();
+    frameDoc.write(printDoc);
+    frameDoc.close();
   } catch (error) {
     console.error(error);
     window.alert("PDF çıktısı hazırlanırken hata oluştu. Lütfen tekrar deneyin.");
@@ -1459,6 +2182,14 @@ async function printReport() {
 }
 
 function exportExcel() {
+  if (S.listReady) {
+    exportListExcel();
+    return;
+  }
+  if (!S.reportResults.length) {
+    window.alert("Önce karne oluşturmalısın.");
+    return;
+  }
   const summaryRows = S.reportResults
     .slice()
     .reverse()
@@ -1476,8 +2207,11 @@ function exportExcel() {
         "Yanlış": row.wrong || 0,
         "Boş": row.blank || 0,
         "Net": row.netCorrect ?? row.correct ?? 0,
+        "Sınav Puanı": getRankingScore(row),
+        "Puan Ölçeği": row.scoreScale || 100,
         "Başarı (%)": row.score || 0,
         "Katılım Ortalaması (%)": benchmark.avgScore,
+        "Katılım Ort. Puan": benchmark.avgPoint || 0,
         "Puan Farkı": benchmark.delta,
         "Yüzdelik Dilim (%)": benchmark.rankPercent,
       };
@@ -1510,14 +2244,107 @@ function exportExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryRows), "Karne Ozeti");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detailRows), "Soru Matris Verisi");
+  const outcomeRows = buildAllOutcomeRows().map(function(item) {
+    return {
+      "Sınav": item.result.examTitle || "—",
+      "Ders / Bölüm": item.subject || item.result.subject || "—",
+      "Kazanım / Öğrenme Çıktısı": item.label,
+      "Soru Sayısı": item.total,
+      "Sorular": item.questions.join(", "),
+      "Doğru": item.correct,
+      "Yanlış": item.wrong,
+      "Boş": item.blank,
+      "Başarı (%)": item.score,
+      "Hatalı / Boş Sorular": item.wrongQuestions.concat(item.blankQuestions).join(", ") || "—",
+    };
+  });
+  if (outcomeRows.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(outcomeRows), "Kazanim Analizi");
+  }
   XLSX.writeFile(
     wb,
     (getCurrentStudent()?.firstName || "ogrenci") + "_" + (getCurrentStudent()?.lastName || "karne") + "_sinav_karne_merkezi.xlsx"
   );
 }
 
+function exportListExcel() {
+  const rows = getFilteredListRows();
+  if (!rows.length) {
+    window.alert("Önce liste oluşturmalısın.");
+    return;
+  }
+  const selectedExam = getListExamOptions().find(function(item) { return item.key === S.flow.listExamKey; }) || null;
+  const scopeLabel = getListScopeTitle(S.flow.listScope);
+  const wb = XLSX.utils.book_new();
+  const listRows = rows.map(function(row, index) {
+    const breakdown = buildSubjectBreakdown(row).map(function(item) {
+      return item.label + " D:" + item.correct + " Y:" + item.wrong + " B:" + item.blank;
+    }).join(" | ");
+    return {
+      "Sıra": index + 1,
+      "Ad Soyad": getStudentFullName(row),
+      "Sınıf": row.grade + ". Sınıf",
+      "Şube": row.sube || "—",
+      "İl": getRowCity(row) || "—",
+      "İlçe": getRowDistrict(row) || "—",
+      "Okul": getRowSchool(row) || "—",
+      "Ders Dağılımı": breakdown,
+      "Doğru": row.correct || 0,
+      "Yanlış": row.wrong || 0,
+      "Boş": row.blank || 0,
+      "Net": row.netCorrect ?? row.correct ?? 0,
+      "Sınav Puanı": getRankingScore(row),
+      "Puan Ölçeği": row.scoreScale || 100,
+      "Başarı (%)": row.score || 0,
+      "Sınav": row.examTitle || selectedExam?.title || "—",
+      "Liste": scopeLabel,
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(listRows), "Toplu Liste");
+  XLSX.writeFile(wb, sanitizeFileNamePart(selectedExam?.title || "sinav") + "_" + sanitizeFileNamePart(scopeLabel) + ".xlsx");
+}
+
+function exportDegreeListExcel() {
+  const rows = getDegreeRows();
+  if (!rows.length) {
+    window.alert("Derece listesi için veri bulunamadı.");
+    return;
+  }
+  const selectedExam = getDegreeExamOptions().find(function(item) { return item.key === S.degree.examKey; }) || null;
+  const scopeLabel = S.degree.scope === "all"
+    ? "Tüm Kullanıcılar"
+    : ($("degreeScopeValueSelect")?.selectedOptions?.[0]?.textContent || "Seçili Kapsam");
+  const wb = XLSX.utils.book_new();
+  const rankingRows = rows.map(function(row, index) {
+    return {
+      "Sıra": index + 1,
+      "Ad Soyad": getStudentFullName(row),
+      "Sınıf": row.grade + ". Sınıf",
+      "Şube": row.sube || "—",
+      "İl": getRowCity(row) || "—",
+      "İlçe": getRowDistrict(row) || "—",
+      "Okul": getRowSchool(row) || "—",
+      "Doğru": row.correct || 0,
+      "Yanlış": row.wrong || 0,
+      "Boş": row.blank || 0,
+      "Net": row.netCorrect ?? row.correct ?? 0,
+      "Sınav Puanı": getRankingScore(row),
+      "Puan Ölçeği": row.scoreScale || 100,
+      "Başarı (%)": row.score || 0,
+      "Sınav": row.examTitle || selectedExam?.title || "—",
+      "Kapsam": scopeLabel,
+    };
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rankingRows), "Sinav Derece Listesi");
+  XLSX.writeFile(
+    wb,
+    sanitizeFileNamePart(selectedExam?.title || "sinav") + "_derece_listesi.xlsx"
+  );
+}
+
 function renderEmptyState() {
   $("reportWrap").style.display = "none";
+  $("listWrap").style.display = "none";
   $("emptyReport").style.display = "block";
 }
 
@@ -1526,19 +2353,33 @@ function renderReport() {
   $("errorState").style.display = "none";
   $("app").style.display = "block";
   renderFilterMeta();
+  renderWorkflow();
+  if (S.listReady) {
+    renderListReport();
+    return;
+  }
+  if (!S.reportReady) {
+    $("reportWrap").style.display = "none";
+    $("listWrap").style.display = "none";
+    $("emptyReport").style.display = "none";
+    return;
+  }
   if (!S.reportResults.length) {
     renderEmptyState();
     return;
   }
   $("emptyReport").style.display = "none";
+  $("listWrap").style.display = "none";
   $("reportWrap").style.display = "block";
   if ($("matrixTitle")) {
-    $("matrixTitle").textContent = isOutcomeMode() ? "🎯 Kazanım Odaklı Değerlendirme" : "🔎 Soru Bazlı Kompakt Değerlendirme";
+    $("matrixTitle").textContent = S.reportKind === "single" ? "🔎 Tek Sınav Soru Değerlendirme" : (isOutcomeMode() ? "🎯 Kazanım Odaklı Değerlendirme" : "🔎 Soru Bazlı Kompakt Değerlendirme");
   }
   if ($("matrixDescription")) {
     $("matrixDescription").textContent = isOutcomeMode()
-      ? "Sınava eklenen kazanım ve öğrenme çıktıları ders başlığına göre listelenir; doğru, yanlış ve boş sayıları her kazanım için ayrı gösterilir."
-      : "Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.";
+      ? "Seçilen derslerde kazanım / öğrenme çıktısı girilmiş sınavlar birlikte değerlendirilir."
+      : (S.reportKind === "single"
+        ? "Seçilen tek sınavın doğru, yanlış ve boş soru dağılımı gösterilir."
+        : "Öğrencinin tüm sınavlarının ders ve bölüm bazlı kompakt matrisi. Her sınav ayrı kartla, doğru yanıtlar yeşil, yanlışlar kırmızı, boşlar gri olarak gösterilir.");
   }
   renderHeader();
   renderCharts();
@@ -1548,7 +2389,10 @@ function renderReport() {
 
 function refreshReport() {
   syncFilterOptions();
-  applyFilters();
+  if (S.reportReady) {
+    S.reportResults = buildReportRowsForCurrentSelection(S.reportKind);
+    S.selectedResultId = S.reportResults[S.reportResults.length - 1]?.id || "";
+  }
   renderReport();
 }
 
@@ -1559,6 +2403,28 @@ window.openExamKarneFromStudentReport = function(id) {
   }
   localStorage.setItem(SINGLE_EXAM_STORAGE_KEY, JSON.stringify(result));
   window.open("/sinav_sitesi/sinav.html?examId=" + encodeURIComponent(result.examId) + "&adminKarne=1", "_blank");
+};
+
+window.openSingleReportFromHistory = function(id) {
+  const result = S.allResults.find(function(row) { return row.id === id; });
+  if (!result) {
+    return;
+  }
+  generateIndividualReport("single", result);
+};
+
+window.selectReportResult = function(id) {
+  if (!S.reportResults.some(function(row) { return row.id === id; })) {
+    return;
+  }
+  S.selectedResultId = id;
+  renderHeader();
+  renderHistoryTable();
+  renderSelectedExam();
+  const selectedTop = document.getElementById("selectedExamTitle");
+  if (selectedTop && typeof selectedTop.scrollIntoView === "function") {
+    selectedTop.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 };
 
 async function initApp() {
@@ -1613,6 +2479,73 @@ document.addEventListener("DOMContentLoaded", function() {
   $("jpegBtn").addEventListener("click", function() {
     exportReportAsImages("jpeg");
   });
+  $("modeIndividualBtn").addEventListener("click", function() {
+    S.flow.mode = "individual";
+    S.listReady = false;
+    renderReport();
+  });
+  $("modeListBtn").addEventListener("click", function() {
+    S.flow.mode = "list";
+    S.reportReady = false;
+    renderReport();
+  });
+  $("flowGradeSelect").addEventListener("change", function(event) {
+    S.filters.grade = event.target.value;
+    S.filters.studentKey = "";
+    S.flow.selectedSubjects = [];
+    S.reportReady = false;
+    renderReport();
+  });
+  $("flowStudentSearch").addEventListener("input", function(event) {
+    S.flow.studentSearch = event.target.value || "";
+    renderWorkflow();
+  });
+  $("flowStudentSelect").addEventListener("change", function(event) {
+    S.filters.studentKey = event.target.value || "";
+    S.flow.selectedSubjects = [];
+    S.reportReady = false;
+    renderReport();
+  });
+  $("reportAllBtn").addEventListener("click", function() {
+    S.flow.reportType = "all";
+    S.flow.selectedSubjects = [];
+    renderWorkflow();
+  });
+  $("reportOutcomeBtn").addEventListener("click", function() {
+    S.flow.reportType = "outcome";
+    S.flow.selectedSubjects = [];
+    renderWorkflow();
+  });
+  $("generateIndividualBtn").addEventListener("click", function() {
+    generateIndividualReport(S.flow.reportType || "all");
+  });
+  $("listGradeSelect").addEventListener("change", function(event) {
+    S.filters.grade = event.target.value;
+    S.flow.listExamKey = "";
+    S.flow.listScopeValue = "";
+    S.listReady = false;
+    renderReport();
+  });
+  $("listExamSelect").addEventListener("change", function(event) {
+    S.flow.listExamKey = event.target.value || "";
+    S.flow.listScopeValue = "";
+    S.listReady = false;
+    renderReport();
+  });
+  $("listScopeSelect").addEventListener("change", function(event) {
+    S.flow.listScope = event.target.value || "all";
+    S.flow.listScopeValue = "";
+    S.listReady = false;
+    renderReport();
+  });
+  $("listScopeValueSelect").addEventListener("change", function(event) {
+    S.flow.listScopeValue = event.target.value || "";
+    S.listReady = false;
+    renderReport();
+  });
+  $("generateListBtn").addEventListener("click", function() {
+    generateListReport();
+  });
   $("gradeFilter").addEventListener("change", function(event) {
     S.filters.grade = event.target.value;
     S.filters.studentKey = "";
@@ -1634,6 +2567,23 @@ document.addEventListener("DOMContentLoaded", function() {
   $("examFilter").addEventListener("change", function(event) {
     S.filters.examId = event.target.value;
     refreshReport();
+  });
+  $("degreeExamSelect").addEventListener("change", function(event) {
+    S.degree.examKey = event.target.value || "";
+    S.degree.scopeValue = "";
+    renderDegreePanel();
+  });
+  $("degreeScopeSelect").addEventListener("change", function(event) {
+    S.degree.scope = event.target.value || "all";
+    S.degree.scopeValue = "";
+    renderDegreePanel();
+  });
+  $("degreeScopeValueSelect").addEventListener("change", function(event) {
+    S.degree.scopeValue = event.target.value || "";
+    renderDegreePanel();
+  });
+  $("degreeExcelBtn").addEventListener("click", function() {
+    exportDegreeListExcel();
   });
   $("clearFiltersBtn").addEventListener("click", function() {
     S.filters.grade = S.target?.grade ? String(S.target.grade) : "";

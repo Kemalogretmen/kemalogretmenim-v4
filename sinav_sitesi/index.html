@@ -111,8 +111,8 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .pg:disabled{opacity:.3;cursor:not-allowed}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;animation:fadeUp .2s ease}
-.modal-box{background:var(--white);border-radius:var(--r-xl);padding:30px;width:100%;max-width:440px;box-shadow:var(--sh-lg);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;animation:fadeUp .2s ease;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal-box{background:var(--white);border-radius:var(--r-xl);padding:30px;width:100%;max-width:440px;max-height:calc(100dvh - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:var(--sh-lg);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
 @keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .modal-box h3{font-family:var(--fd);font-size:21px;font-weight:800;color:var(--navy);margin-bottom:6px}
 .modal-sub{font-size:14px;color:var(--slate);margin-bottom:22px;line-height:1.5}
@@ -177,6 +177,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
   .exam-grade-grid{grid-template-columns:repeat(2,minmax(128px,1fr));gap:16px}
 }
 @media(max-width:768px){
+  body.exam-modal-open{overflow:hidden}
   .exam-hero{gap:24px;padding:40px 16px 36px}
   .exam-hero-title{font-size:44px}
   .exam-hero-text{font-size:17px;max-width:none}
@@ -187,8 +188,21 @@ body.sinav-home-page .site-footer{margin-top:40px}
   .exam-grid{grid-template-columns:1fr}
   .grade-section{padding:0 14px 40px}
   .grade-banner{padding:18px 20px}
-  .modal-box{padding:22px}
+  .modal-overlay{align-items:flex-start;justify-content:center;height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;padding:0 0 max(12px,env(safe-area-inset-bottom));background:rgba(15,23,42,.58);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+  .modal-box{display:flex;flex-direction:column;width:100%;max-width:none;min-height:100vh;min-height:100dvh;height:auto;max-height:none;margin:0;padding:max(16px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));border-radius:0;box-shadow:none;overflow:visible;touch-action:auto}
+  .modal-box h3{position:sticky;top:0;z-index:4;background:#fff;font-size:20px;margin:0 -16px 6px;padding:10px 16px 8px;border-bottom:1px solid rgba(226,232,240,.8)}
+  .modal-sub{display:none}
+  .exam-info-box{padding:12px;margin-bottom:12px;border-radius:16px}
+  .eib-title{font-size:14px;margin-bottom:6px}
+  .eib-row{gap:8px}
+  .eib-item{font-size:11px}
   .form-row,.form-row.three{grid-template-columns:1fr}
+  .fg{margin-bottom:10px}
+  .fg label{font-size:12px}
+  .fi,.fs{font-size:16px;padding:12px 13px;border-radius:14px}
+  .manual-school-toggle{margin:0 0 12px;font-size:13px}
+  .btn-row{position:sticky;bottom:0;z-index:3;margin:2px -16px 0;padding:14px 16px max(10px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,0),#fff 24%)}
+  .btn{min-height:46px}
 }
 @media(max-width:480px){
   .exam-hero-title{font-size:34px}
@@ -710,8 +724,17 @@ async function openExamModal(exam){
   if(missingLabel)missingLabel.classList.add('disabled');
   syncManualSchoolField();
   document.getElementById('modalErr').style.display='none';
-  document.getElementById('studentModal').style.display='flex';
-  prefillExamStudentFromAccount().then(()=>setTimeout(()=>document.getElementById('fnInput').focus(),100));
+  const modal=document.getElementById('studentModal');
+  modal.style.display='flex';
+  document.body.classList.add('exam-modal-open');
+  modal.scrollTop=0;
+  const modalBox=modal.querySelector('.modal-box');
+  if(modalBox)modalBox.scrollTop=0;
+  prefillExamStudentFromAccount().then(()=>{
+    if(!window.matchMedia('(max-width: 768px)').matches){
+      setTimeout(()=>document.getElementById('fnInput').focus(),100);
+    }
+  });
 }
 
 function initUI(){
@@ -917,7 +940,10 @@ window.openModal=async function(examId){
   await openExamModal(exam);
 };
 
-window.closeModal=function(){document.getElementById('studentModal').style.display='none';};
+window.closeModal=function(){
+  document.getElementById('studentModal').style.display='none';
+  document.body.classList.remove('exam-modal-open');
+};
 document.getElementById('studentModal').addEventListener('click',function(e){if(e.target===this)window.closeModal();});
 
 // Sınav Başlat butonuna tıklandığında bilgileri alıp Sınav ekranına (sinav.html) yönlendirir.

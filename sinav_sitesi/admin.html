@@ -194,7 +194,7 @@ h1,h2,h3,h4{font-family:var(--fd)}
 
 /* SECTION EDITOR */
 .section-editor{display:flex;flex-direction:column;gap:12px}
-.section-row{display:grid;grid-template-columns:minmax(0,1.6fr) 110px 110px auto;gap:10px;align-items:end;padding:14px;border:1px solid var(--border);border-radius:var(--r);background:#F8FAFC}
+.section-row{display:grid;grid-template-columns:minmax(0,1.6fr) 110px 110px 130px auto;gap:10px;align-items:end;padding:14px;border:1px solid var(--border);border-radius:var(--r);background:#F8FAFC}
 .section-note{padding:12px 14px;border-radius:var(--r);background:#EEF2FF;color:var(--purple);font-size:12px;font-weight:600;line-height:1.6}
 .section-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:#EEF2FF;color:var(--purple);font-size:11px;font-weight:800}
 .category-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center}
@@ -242,7 +242,7 @@ h1,h2,h3,h4{font-family:var(--fd)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/js/site-data.js"></script>
 <script>window.kemalAdminScope='default';</script>
-<script src="/js/admin-auth.js?v=20260511-1"></script>
+<script src="/js/admin-auth.js?v=20260531-1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -288,12 +288,44 @@ function createDefaultCategoryMap(){
     return acc;
   },{});
 }
+const DEFAULT_SECTION_LESSONS=[
+  'Türkçe',
+  'Matematik',
+  'Hayat Bilgisi',
+  'Fen Bilimleri',
+  'Sosyal Bilgiler',
+  'İngilizce',
+  'Din Kültürü ve Ahlak Bilgisi',
+  'T.C. İnkılap Tarihi ve Atatürkçülük'
+];
 function createDefaultSectionCategoryMap(){
   return GRADES.reduce((acc,grade)=>{
     acc[grade]=(DEFAULT_SUBJECTS_BY_GRADE[grade]||[]).filter(item=>item==='Deneme'||item==='Agisler');
     return acc;
   },{});
 }
+function createDefaultLessonCatalogMap(){
+  return GRADES.reduce((acc,grade)=>{
+    acc[grade]=[...DEFAULT_SECTION_LESSONS];
+    return acc;
+  },{});
+}
+const LGS_LESSON_WEIGHTS={
+  turkce:4,
+  matematik:4,
+  'fen-bilimleri':4,
+  'fen':4,
+  't-c-inkilap-tarihi-ve-ataturkculuk':1,
+  'inkilap':1,
+  'inkilap-tarihi':1,
+  'din-kulturu-ve-ahlak-bilgisi':1,
+  'din-kulturu':1,
+  din:1,
+  ingilizce:1,
+  'yabanci-dil':1,
+  'sosyal-bilgiler':1,
+  'hayat-bilgisi':1
+};
 const ALL_OPTS=['A','B','C','D','E','F'];
 const auth=getAuth(app);
 
@@ -316,11 +348,13 @@ function createInitialState(overrides={}){
     optionCount:4,negativeMarking:false,
     categoryMap:createDefaultCategoryMap(),
     sectionCategoryMap:createDefaultSectionCategoryMap(),
+    lessonCatalogMap:createDefaultLessonCatalogMap(),
     categoryGrade:1,
     questionSections:[],
     questions:[],
     pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:PDF_BASE_ZOOM,imgData:null,cropTool:'crop',
     pubTitle:'',pubDur:30,pubDisplayOrder:'',pubAccessScope:'public',pubHidden:false,editExamId:null,
+    scoringMode:'auto',scoreScaleInput:'',
     exams:[],results:[],appeals:[],
     appealInspect:null,
     rf:{grade:'',subject:'',name:'',examId:'',sube:''},
@@ -418,6 +452,22 @@ function getConfiguredCategoriesForGrade(grade,map=A?.categoryMap){
 function getAvailableCategoriesForGrade(grade,extras=[]){
   return mergeCategoryLists(getConfiguredCategoriesForGrade(grade),extras);
 }
+function getEditableLessonCatalogForGrade(grade,map=A?.lessonCatalogMap){
+  const raw=Array.isArray(map?.[grade])?map[grade].map(item=>String(item??'')):[...DEFAULT_SECTION_LESSONS];
+  return raw.length?raw:[''];
+}
+function getConfiguredLessonCatalogForGrade(grade,map=A?.lessonCatalogMap){
+  const cleaned=sanitizeCategoryList(Array.isArray(map?.[grade])?map[grade]:DEFAULT_SECTION_LESSONS);
+  return cleaned.length?cleaned:sanitizeCategoryList(DEFAULT_SECTION_LESSONS);
+}
+function getSectionLessonSuggestions(grade,subject,sections=A?.questionSections){
+  const currentLabels=cloneQuestionSections(sections).map(section=>section.label).filter(Boolean);
+  return mergeCategoryLists(
+    getConfiguredLessonCatalogForGrade(grade),
+    subject?[subject]:[],
+    currentLabels
+  );
+}
 function isLegacySectionCategoryLabel(value){
   const key=normalizeKeyPart(value);
   return key==='deneme'||key==='agisler'||key==='lgs'||key.indexOf('deneme')>-1||key.indexOf('agis')>-1||key.indexOf('lgs')>-1;
@@ -460,6 +510,49 @@ function buildLocationText(source){
     String(source?.city||source?.il||'').trim(),
     String(source?.school||source?.okul||'').trim()
   ].filter(Boolean).join(' · ');
+}
+function parseTurkishDateTime(value){
+  const text=String(value||'').trim();
+  if(!text) return 0;
+  const match=text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{2}))?$/);
+  if(!match) return 0;
+  const [,day,month,year,hour='0',minute='0']=match;
+  const date=new Date(
+    Number(year),
+    Math.max(0,Number(month)-1),
+    Number(day),
+    Number(hour),
+    Number(minute),
+    0,
+    0
+  );
+  const time=date.getTime();
+  return Number.isFinite(time)?time:0;
+}
+function getResultDateValue(result){
+  const stamp=result?.date;
+  if(stamp&&typeof stamp.seconds==='number'){
+    const nanos=typeof stamp.nanoseconds==='number'?stamp.nanoseconds/1e6:0;
+    return stamp.seconds*1000+nanos;
+  }
+  if(stamp instanceof Date){
+    const time=stamp.getTime();
+    return Number.isFinite(time)?time:0;
+  }
+  const parsedText=parseTurkishDateTime(stamp);
+  if(parsedText) return parsedText;
+  const parsedNative=Date.parse(String(stamp||''));
+  if(Number.isFinite(parsedNative)) return parsedNative;
+  return 0;
+}
+function sortResultRecords(list){
+  return [...(list||[])].sort((a,b)=>{
+    const dateDiff=getResultDateValue(b)-getResultDateValue(a);
+    if(dateDiff!==0) return dateDiff;
+    const scoreDiff=Number(b?.score||0)-Number(a?.score||0);
+    if(scoreDiff!==0) return scoreDiff;
+    return String(a?.id||'').localeCompare(String(b?.id||''));
+  });
 }
 function getResultProgressMeta(status){
   if(status==='in_progress') return{label:'Devam Ediyor',bg:'#FEF3C7',color:'#92400E'};
@@ -518,12 +611,187 @@ function toSectionNumber(value){
   const num=parseInt(value,10);
   return Number.isFinite(num)?num:'';
 }
+function toPositiveDecimal(value){
+  if(value===null||value===undefined||value==='') return '';
+  const normalized=String(value).replace(',','.').trim();
+  if(!normalized) return '';
+  const num=Number(normalized);
+  return Number.isFinite(num)&&num>0?Math.round(num*100)/100:'';
+}
+function roundPointValue(value){
+  return Math.round((Number(value)||0)*100)/100;
+}
+function formatPointValue(value){
+  const num=roundPointValue(value);
+  if(!Number.isFinite(num)) return '0';
+  return Number.isInteger(num)?String(num):num.toFixed(2).replace(/\.?0+$/,'');
+}
+function isDenemeLikeCategory(subject){
+  const key=normalizeKeyPart(subject);
+  return !!key&&(key==='deneme'||key==='agisler'||key==='lgs'||key.indexOf('deneme')>-1||key.indexOf('agis')>-1||key.indexOf('lgs')>-1);
+}
+function getLessonWeight(label){
+  const key=normalizeKeyPart(label);
+  if(!key) return 1;
+  if(LGS_LESSON_WEIGHTS[key]) return LGS_LESSON_WEIGHTS[key];
+  const matchKey=Object.keys(LGS_LESSON_WEIGHTS).find(item=>key.indexOf(item)>-1||item.indexOf(key)>-1);
+  return matchKey?LGS_LESSON_WEIGHTS[matchKey]:1;
+}
+function resolveExamScoreScale(grade,subject,rawScaleInput){
+  const parsed=parseInt(String(rawScaleInput??'').trim(),10);
+  if(Number.isFinite(parsed)&&parsed>0) return parsed;
+  if(parseInt(grade,10)<=3) return 100;
+  return isDenemeLikeCategory(subject)?500:100;
+}
+function buildQuestionSectionLabels(totalQuestions,questionSections,subject,questions=[]){
+  return Array.from({length:totalQuestions},(_,index)=>{
+    const question=questions[index]||{};
+    return String(
+      question?.sectionTitle||
+      findSectionLabel(index+1,questionSections)||
+      subject||
+      'Genel'
+    ).trim()||'Genel';
+  });
+}
+function buildEvenPointDistribution(count,totalScale){
+  if(count<=0) return [];
+  const safeScale=Math.max(0,roundPointValue(totalScale));
+  const base=roundPointValue(safeScale/count);
+  const list=Array.from({length:count},()=>base);
+  const diff=roundPointValue(safeScale-list.reduce((sum,value)=>sum+value,0));
+  list[count-1]=roundPointValue((list[count-1]||0)+diff);
+  return list;
+}
+function assignRemainingPoints(pointList,totalScale,targetIndexes){
+  const indexes=targetIndexes.filter(index=>Number.isInteger(index)&&index>=0&&index<pointList.length);
+  if(!indexes.length) return pointList;
+  const specifiedSum=roundPointValue(pointList.reduce((sum,value)=>sum+(Number(value)||0),0));
+  const remaining=roundPointValue(totalScale-specifiedSum);
+  if(remaining<-0.01) throw new Error('Girilen puanlar toplam puanı aşıyor. Toplam puanı artır veya ders/soru puanlarını azalt.');
+  const evenPoints=buildEvenPointDistribution(indexes.length,Math.max(0,remaining));
+  indexes.forEach((index,itemIndex)=>{
+    pointList[index]=evenPoints[itemIndex];
+  });
+  return pointList;
+}
+function normalizePointListToScale(pointList,totalScale){
+  if(!pointList.length) return [];
+  const currentSum=roundPointValue(pointList.reduce((sum,value)=>sum+(Number(value)||0),0));
+  if(currentSum<=0) return buildEvenPointDistribution(pointList.length,totalScale);
+  const safeScale=Math.max(0,roundPointValue(totalScale));
+  const normalized=pointList.map((value,index)=>{
+    if(index===pointList.length-1) return 0;
+    return roundPointValue((Number(value)||0)/currentSum*safeScale);
+  });
+  const subtotal=roundPointValue(normalized.reduce((sum,value)=>sum+value,0));
+  normalized[pointList.length-1]=roundPointValue(safeScale-subtotal);
+  return normalized;
+}
+function resolveQuestionPoints(config){
+  const totalQuestions=config.questions.length;
+  if(!totalQuestions) return{scoreScale:resolveExamScoreScale(config.grade,config.subject,config.scoreScaleInput),questionPoints:[]};
+
+  const fallbackScale=resolveExamScoreScale(config.grade,config.subject,config.scoreScaleInput);
+  let resolvedScale=fallbackScale;
+  let questionPoints=[];
+  const explicitScale=String(config.scoreScaleInput??'').trim()!=='';
+  const labels=buildQuestionSectionLabels(totalQuestions,config.questionSections,config.subject,config.questions);
+
+  if(config.scoringMode==='question'){
+    const manualPoints=config.questions.map(question=>toPositiveDecimal(question?.pointValue));
+    const manualIndexes=manualPoints.reduce((list,value,index)=>{
+      if(value!=='') list.push(index);
+      return list;
+    },[]);
+    if(!explicitScale&&manualIndexes.length===totalQuestions){
+      resolvedScale=roundPointValue(manualPoints.reduce((sum,value)=>sum+Number(value||0),0))||fallbackScale;
+    }
+    questionPoints=Array.from({length:totalQuestions},(_,index)=>Number(manualPoints[index]||0));
+    if(!manualIndexes.length){
+      questionPoints=buildEvenPointDistribution(totalQuestions,resolvedScale);
+    }else if(manualIndexes.length<totalQuestions){
+      const emptyIndexes=questionPoints.reduce((list,value,index)=>{
+        if(!(value>0)) list.push(index);
+        return list;
+      },[]);
+      questionPoints=assignRemainingPoints(questionPoints,resolvedScale,emptyIndexes);
+    }else if(explicitScale){
+      const specifiedSum=roundPointValue(questionPoints.reduce((sum,value)=>sum+value,0));
+      if(Math.abs(specifiedSum-resolvedScale)>0.01){
+        throw new Error('Soru puanlarının toplamı belirlediğin toplam puanla eşleşmiyor. Toplam puanı düzelt veya boş sorular için otomatik dağıtım kullan.');
+      }
+    }
+  }else if(config.scoringMode==='section'){
+    const sections=cloneQuestionSections(config.questionSections).filter(section=>section.label&&section.start!==''&&section.end!=='');
+    if(!sections.length){
+      throw new Error('Ders bazlı puanlama için önce en az bir bölüm ekleyin.');
+    }
+    const sectionQuestionMap=new Map();
+    sections.forEach(section=>{
+      const indexes=[];
+      for(let questionNo=section.start;questionNo<=section.end;questionNo++) indexes.push(questionNo-1);
+      sectionQuestionMap.set(section.id||`${section.label}-${section.start}-${section.end}`,{section,indexes});
+    });
+    const coveredIndexes=new Set();
+    questionPoints=Array.from({length:totalQuestions},()=>0);
+    let hasManualSection=false;
+    sectionQuestionMap.forEach(({section,indexes})=>{
+      indexes.forEach(index=>coveredIndexes.add(index));
+      const sectionPoints=toPositiveDecimal(section.points);
+      if(sectionPoints==='') return;
+      hasManualSection=true;
+      const perQuestion=roundPointValue(Number(sectionPoints)/Math.max(indexes.length,1));
+      indexes.forEach(index=>{questionPoints[index]=perQuestion;});
+    });
+    const uncoveredIndexes=Array.from({length:totalQuestions},(_,index)=>index).filter(index=>!coveredIndexes.has(index)||!(questionPoints[index]>0));
+    if(!explicitScale&&hasManualSection&&uncoveredIndexes.length===0){
+      resolvedScale=roundPointValue(questionPoints.reduce((sum,value)=>sum+value,0))||fallbackScale;
+    }
+    if(!hasManualSection){
+      questionPoints=buildEvenPointDistribution(totalQuestions,resolvedScale);
+    }else if(uncoveredIndexes.length){
+      questionPoints=assignRemainingPoints(questionPoints,resolvedScale,uncoveredIndexes);
+    }else if(explicitScale){
+      const specifiedSum=roundPointValue(questionPoints.reduce((sum,value)=>sum+value,0));
+      if(Math.abs(specifiedSum-resolvedScale)>0.01){
+        throw new Error('Bölüm puanlarının toplamı belirlediğin toplam puanla eşleşmiyor. Toplam puanı düzelt veya bazı bölümleri otomatik dağıtıma bırak.');
+      }
+    }
+  }else{
+    if(parseInt(config.grade,10)>=4&&isDenemeLikeCategory(config.subject)){
+      const grouped=new Map();
+      labels.forEach((label,index)=>{
+        const key=label||config.subject||'Genel';
+        if(!grouped.has(key)) grouped.set(key,[]);
+        grouped.get(key).push(index);
+      });
+      const rawWeights=Array.from({length:totalQuestions},()=>0);
+      grouped.forEach((indexes,label)=>{
+        const coeff=getLessonWeight(label||config.subject||'Genel');
+        const perQuestion=coeff/Math.max(indexes.length,1);
+        indexes.forEach(index=>{rawWeights[index]=perQuestion;});
+      });
+      questionPoints=normalizePointListToScale(rawWeights,resolvedScale);
+    }else{
+      questionPoints=buildEvenPointDistribution(totalQuestions,resolvedScale);
+    }
+  }
+
+  const normalized=normalizePointListToScale(questionPoints,resolvedScale);
+  return{
+    scoreScale:resolvedScale,
+    questionPoints:normalized,
+    sectionLabels:labels
+  };
+}
 function normalizeSectionDraft(section,index){
   return{
     id:section?.id||`sec-${index+1}`,
     label:String(section?.label||section?.title||'').trim(),
     start:toSectionNumber(section?.start),
-    end:toSectionNumber(section?.end)
+    end:toSectionNumber(section?.end),
+    points:toPositiveDecimal(section?.points)
   };
 }
 function cloneQuestionSections(sections){
@@ -552,6 +820,7 @@ function prepareQuestionSections(totalQuestions,sections=A.questionSections){
     const label=String(section.label||'').trim();
     const start=toSectionNumber(section.start);
     const end=toSectionNumber(section.end);
+    const points=toPositiveDecimal(section.points);
     if(!label) throw new Error(`${index+1}. bölüm için ders adı girin.`);
     if(start===''||end==='') throw new Error(`${label} bölümü için başlangıç ve bitiş soru numaralarını girin.`);
     if(start<1||end<1||start>totalQuestions||end>totalQuestions){
@@ -564,7 +833,7 @@ function prepareQuestionSections(totalQuestions,sections=A.questionSections){
       }
       assignments[questionNo]=label;
     }
-    return{label,start,end};
+    return{label,start,end,points};
   });
   return{sections:normalized,assignments};
 }
@@ -609,6 +878,37 @@ async function uploadQuestionImage(examId,index,dataUrl){
   if(!publicUrl) throw new Error('Soru görseli bağlantısı oluşturulamadı.');
   return{imageUrl:publicUrl,imagePath:path};
 }
+function getQuestionImagePath(questionData){
+  const data=questionData&&typeof questionData.data==='function'?questionData.data():(questionData||{});
+  if(data.imagePath) return String(data.imagePath);
+  const imageUrl=String(data.imageUrl||'');
+  const markers=[
+    `/storage/v1/object/public/${QUESTION_IMAGE_BUCKET}/`,
+    `/storage/v1/object/sign/${QUESTION_IMAGE_BUCKET}/`
+  ];
+  const marker=markers.find(item=>imageUrl.includes(item));
+  if(!marker) return '';
+  const rawPath=imageUrl.split(marker)[1]?.split('?')[0]||'';
+  try{
+    return decodeURIComponent(rawPath);
+  }catch{
+    return rawPath;
+  }
+}
+async function removeQuestionImageFromStorage(questionData){
+  const imagePath=getQuestionImagePath(questionData);
+  if(!imagePath) return;
+  try{
+    const response=await getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).remove([imagePath]);
+    if(response.error) console.warn('Soru görseli silinemedi:', imagePath, response.error);
+  }catch(error){
+    console.warn('Soru görseli temizlenemedi:', imagePath, error);
+  }
+}
+async function deleteQuestionWithImage(questionDoc){
+  await removeQuestionImageFromStorage(questionDoc);
+  await deleteDoc(doc(db,'questions',questionDoc.id));
+}
 function deriveQuestionSectionsFromQuestions(questions){
   const derived=[];
   let current=null;
@@ -643,17 +943,25 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
   if((parseInt(result?.total,10)||0)!==totalQuestions) return null;
   if(details.length!==totalQuestions) return null;
   const selectedMap=buildResultAnswerMap(result);
+  const scoreScale=resolveExamScoreScale(examMeta.grade,examMeta.subject,examMeta.scoreScale||result?.scoreScale||'');
   let correct=0,wrong=0,blank=0;
+  let weightedCorrect=0,weightedWrong=0;
   const answerDetails=questions.map((question,index)=>{
     const questionNo=index+1;
     const selectedAnswer=String(selectedMap[questionNo]||'').trim().toUpperCase();
     const correctAnswer=String(question?.correctAnswer||'').trim().toUpperCase();
     const sectionTitle=String(question?.sectionTitle||findSectionLabel(questionNo,examMeta.questionSections)||examMeta.subject||'').trim();
     const learningOutcome=String(question?.learningOutcome||'').trim();
+    const pointValue=roundPointValue(question?.pointValue||(scoreScale/Math.max(totalQuestions,1)));
     let outcome='B';
     if(selectedAnswer) outcome=selectedAnswer===correctAnswer?'D':'Y';
-    if(outcome==='D') correct++;
-    else if(outcome==='Y') wrong++;
+    if(outcome==='D'){
+      correct++;
+      weightedCorrect=roundPointValue(weightedCorrect+pointValue);
+    }else if(outcome==='Y'){
+      wrong++;
+      weightedWrong=roundPointValue(weightedWrong+pointValue);
+    }
     else blank++;
     return{
       questionNo,
@@ -661,6 +969,7 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
       order:question?.order??index,
       sectionTitle,
       learningOutcome,
+      pointValue,
       selectedAnswer,
       correctAnswer,
       outcome
@@ -668,7 +977,10 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
   });
   let netCorrect=correct;
   if(examMeta.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
-  const score=totalQuestions?Math.round(netCorrect/totalQuestions*100):0;
+  const examScore=examMeta.negativeMarking
+    ? Math.max(0,roundPointValue(weightedCorrect-weightedWrong/3))
+    : roundPointValue(weightedCorrect);
+  const score100=scoreScale?Math.round(examScore/scoreScale*100):0;
   return{
     examTitle:examMeta.title||result.examTitle||'',
     subject:examMeta.subject||result.subject||'',
@@ -677,7 +989,10 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
     wrong,
     blank,
     netCorrect,
-    score,
+    score:score100,
+    score100,
+    examScore,
+    scoreScale,
     total:totalQuestions,
     negativeMarking:!!examMeta.negativeMarking,
     answerDetails,
@@ -830,6 +1145,7 @@ function resetBuilderState(nextPage='create'){
     page:nextPage,
     categoryMap:A.categoryMap||createDefaultCategoryMap(),
     sectionCategoryMap:A.sectionCategoryMap||createDefaultSectionCategoryMap(),
+    lessonCatalogMap:A.lessonCatalogMap||createDefaultLessonCatalogMap(),
     categoryGrade:A.categoryGrade||1,
     exams:A.exams||[],
     results:A.results||[],
@@ -1107,6 +1423,7 @@ function renderQList(){
       <img class="q-thumb" src="${q.img}" alt="">
       <div style="width:100%;text-align:center">
         <span class="ans-badge">${q.ans}</span>
+        ${q.pointValue?`<div style="margin-top:3px"><span class="section-tag" style="font-size:9px">💯 ${formatPointValue(q.pointValue)} puan</span></div>`:''}
         ${getQuestionSectionLabel(i)?`<div style="margin-top:3px"><span class="section-tag" style="font-size:9px">📚 ${esc(getQuestionSectionLabel(i))}</span></div>`:''}
       </div>
       <div class="q-answer-row" style="justify-content:center">${renderAnswerEditor(i,q.ans)}</div>
@@ -1125,9 +1442,14 @@ function renderPreviewQuestionList(){
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">
           <span class="ans-badge">${q.ans}</span>
           ${getQuestionSectionLabel(i)?`<span class="section-tag">📚 ${esc(getQuestionSectionLabel(i))}</span>`:''}
+          ${q.pointValue?`<span class="section-tag">💯 ${formatPointValue(q.pointValue)} puan</span>`:''}
           <span class="text-xs text-muted">Farklı bir cevaba tıklayarak güncelleyebilirsiniz</span>
         </div>
         <div class="q-answer-row">${renderAnswerEditor(i,q.ans)}</div>
+        ${A.scoringMode==='question'?`<div style="margin-top:10px">
+          <label class="form-label">Soru Puanı</label>
+          <input class="form-input" type="number" min="0" step="0.25" value="${q.pointValue!==''&&q.pointValue!==undefined?esc(q.pointValue):''}" placeholder="Boşsa otomatik dağıtılır" oninput="W.setQuestionPoint(${i},this.value)">
+        </div>`:''}
         ${renderOutcomeEditor(i,q.learningOutcome)}
       </div>
       <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır">🗑</button>
@@ -1143,11 +1465,13 @@ function refreshQuestionPanels(){
 }
 
 function renderSectionEditor(){
+  const lessonSuggestions=getSectionLessonSuggestions(A.grade,A.subject,A.questionSections);
+  const lessonOptions=lessonSuggestions.map(label=>`<option value="${esc(label)}"></option>`).join('');
   const rows=A.questionSections.length?A.questionSections.map((section,index)=>`
     <div class="section-row">
       <div>
         <label class="form-label">Ders / Bölüm Başlığı</label>
-        <input class="form-input" type="text" value="${esc(section.label)}" placeholder="Örn: Türkçe" oninput="W.updateSectionField(${index},'label',this.value)">
+        <input class="form-input" type="text" list="sectionLessonOptions" value="${esc(section.label)}" placeholder="Örn: Türkçe" oninput="W.updateSectionField(${index},'label',this.value)">
       </div>
       <div>
         <label class="form-label">Başlangıç</label>
@@ -1156,6 +1480,10 @@ function renderSectionEditor(){
       <div>
         <label class="form-label">Bitiş</label>
         <input class="form-input" type="number" min="1" max="${A.questions.length}" value="${section.end!==''?section.end:''}" placeholder="${A.questions.length}" oninput="W.updateSectionField(${index},'end',this.value)">
+      </div>
+      <div>
+        <label class="form-label">Bölüm Puanı</label>
+        <input class="form-input" type="number" min="0" step="0.25" value="${section.points!==''?esc(section.points):''}" placeholder="${A.scoringMode==='section'?'Boşsa otomatik':'Otomatik'}" oninput="W.updateSectionField(${index},'points',this.value)">
       </div>
       <button class="btn btn-red" type="button" style="height:42px" onclick="W.removeSection(${index})">Sil</button>
     </div>
@@ -1168,7 +1496,40 @@ function renderSectionEditor(){
       <button class="btn btn-outline" type="button" onclick="W.addSection()">+ Bölüm Ekle</button>
       <span class="text-xs text-muted" style="align-self:center">Toplam soru: ${A.questions.length}. Boşta kalan sorularda başlık gösterilmez.</span>
     </div>
+    <datalist id="sectionLessonOptions">${lessonOptions}</datalist>
     <div class="section-note" style="margin-top:14px">Örnek kullanım: 1-10 Türkçe, 11-20 Matematik, 21-25 Hayat Bilgisi, 26-30 Fen Bilimleri.</div>
+  </div>`;
+}
+
+function renderScoringEditor(){
+  const defaultScale=resolveExamScoreScale(A.grade,A.subject,'');
+  const autoLgs=parseInt(A.grade,10)>=4&&isDenemeLikeCategory(A.subject);
+  return`<div class="card p-6 mb-4">
+    <strong style="display:block;font-size:15px;margin-bottom:8px;font-family:var(--fd)">💯 Puanlama Ayarları</strong>
+    <p class="text-sm text-muted" style="margin-bottom:14px">İstersen puanlamayı otomatik bırakabilir, istersen ders bazlı ya da soru bazlı puan dağılımı tanımlayabilirsin. Sistem her durumda yüzde başarıyı da ayrıca üretir.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end">
+      <div>
+        <label class="form-label">Puanlama Türü</label>
+        <select class="form-input" onchange="W.setScoringMode(this.value)">
+          <option value="auto" ${A.scoringMode==='auto'?'selected':''}>Otomatik</option>
+          <option value="section" ${A.scoringMode==='section'?'selected':''}>Ders / Bölüm Bazlı</option>
+          <option value="question" ${A.scoringMode==='question'?'selected':''}>Soru Bazlı</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Toplam Puan</label>
+        <input class="form-input" id="scoreScaleInput" type="number" min="1" step="1" value="${A.scoreScaleInput!==''?esc(A.scoreScaleInput):''}" placeholder="${defaultScale}" oninput="A.scoreScaleInput=this.value">
+      </div>
+      <div style="grid-column:1 / -1">
+        <div class="section-note" style="margin-top:0">
+          ${autoLgs
+            ? 'Bu sınav deneme/LGS kategorisinde olduğu için toplam puan boş bırakılırsa otomatik olarak 500 puan esas alınır. Ders başlıkların Türkçe, Matematik, Fen Bilimleri, İngilizce, Din Kültürü ve İnkılap gibi alanlara göre LGS katsayı mantığıyla dağıtılır.'
+            : `Toplam puan boş bırakılırsa bu sınav varsayılan olarak ${defaultScale} puan üzerinden hesaplanır. 1-3. sınıflarda 100 puan, diğer ders/test türlerinde yine 100 puan varsayılır.`}
+          ${A.scoringMode==='section'?' Bölüm puanı girersen sistem o bölüm içindeki sorulara puanı otomatik dağıtır.':''}
+          ${A.scoringMode==='question'?' Soru puanı girersen sistem kalan boş sorulara puanı otomatik tamamlar.':''}
+        </div>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -1217,6 +1578,7 @@ function renderStep4(){
         <span>${A.negativeMarking?'⚠️ Puan kesintili':'✅ Puan kesintisiz'}</span>
       </div>
     </div>
+    ${renderScoringEditor()}
     ${shouldUseSections(A.subject)?renderSectionEditor():''}
     <div class="card mb-4" style="max-height:320px;overflow-y:auto">
       <div style="padding:13px 15px;border-bottom:1px solid var(--border);font-family:var(--fd);font-weight:700">Sorular Önizleme</div>
@@ -1312,6 +1674,8 @@ function renderAdminResults(){
     A.exams.map(exam=>exam.subject)
   ]).map(s=>`<option value="${esc(s)}" ${A.rf.subject===s?'selected':''}>${esc(s)}</option>`).join('');
   const subeOpts=['A','B','C','D','E','F','G','H'].map(s=>`<option value="${s}" ${A.rf.sube===s?'selected':''}>${s} Şubesi</option>`).join('');
+  const activeExam=A.rf.examId?(A.exams||[]).find(exam=>exam.id===A.rf.examId):null;
+  const hasActiveFilters=!!(A.rf.grade||A.rf.sube||A.rf.subject||A.rf.name||A.rf.examId);
   const rows=A.results.map(r=>{
     const sc=r.score;const col=sc>=70?'#059669':sc>=50?'#D97706':'#DC2626';
     const locationMeta=buildLocationText(r);
@@ -1361,7 +1725,11 @@ function renderAdminResults(){
         <h2 style="font-size:20px;margin-bottom:2px">Sınav Sonuçları</h2>
         <p class="text-sm text-muted">${A.results.length} kayıt</p>
       </div>
-      <button class="btn btn-green" onclick="W.exportXlsx()">📥 Excel'e Aktar</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="W.refreshResults()">🔄 Yenile</button>
+        ${hasActiveFilters?'<button class="btn btn-outline" onclick="W.clearResultFilters()">🧹 Filtreleri Temizle</button>':''}
+        <button class="btn btn-green" onclick="W.exportXlsx()">📥 Excel'e Aktar</button>
+      </div>
     </div>
     <div class="flex gap-8 mb-4 flex-wrap">
       <select class="form-input" style="width:130px" onchange="W.filterRes('grade',this.value)"><option value="">Tüm Sınıflar</option>${gOpts}</select>
@@ -1369,6 +1737,10 @@ function renderAdminResults(){
       <select class="form-input" style="width:150px" onchange="W.filterRes('subject',this.value)"><option value="">Tüm Dersler</option>${sOpts}</select>
       <input class="form-input" style="width:210px" type="text" placeholder="İsim, il veya okul ara..." value="${esc(A.rf.name||'')}" oninput="W.filterRes('name',this.value)">
     </div>
+    ${A.rf.examId?`<div class="section-note" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <span>🎯 Sonuçlar şu anda belirli bir sınava göre filtreleniyor: <strong>${esc(activeExam?.title||'Sınav bulunamadı')}</strong></span>
+      <button class="btn btn-outline" type="button" onclick="W.clearResultsExamFilter()">Tüm Sınavları Göster</button>
+    </div>`:''}
     <div class="card" style="overflow-x:auto">
       <table class="data-table">
         <thead><tr><th>Ad Soyad</th><th>Sınıf/Şube</th><th>Ders</th><th>Sınav</th><th>✓ D</th><th>✗ Y</th><th>○ B</th><th>Başarı</th><th>Tarih</th><th>İşlem</th></tr></thead>
@@ -1391,6 +1763,13 @@ function renderAdminCategories(){
         Bölümlü Sınav
       </label>
       ${hasExamPerm('exam_category_delete')?`<button class="btn btn-red" type="button" onclick="W.removeCategoryRow(${index})">Sil</button>`:''}
+    </div>
+  `).join('');
+  const lessonRows=getEditableLessonCatalogForGrade(selectedGrade).map((lesson,index)=>`
+    <div class="category-row">
+      <input class="form-input" type="text" value="${esc(lesson)}" placeholder="Örn: Türkçe" oninput="W.updateLessonField(${index},this.value)" ${hasExamPerm('exam_category_edit')?'':'disabled'}>
+      <span class="text-sm text-muted" style="align-self:center">Bölüm ekleme ekranında öneri olarak görünür</span>
+      ${hasExamPerm('exam_category_delete')?`<button class="btn btn-red" type="button" onclick="W.removeLessonRow(${index})">Sil</button>`:''}
     </div>
   `).join('');
   return`<div class="page-pad">
@@ -1420,6 +1799,23 @@ function renderAdminCategories(){
           </div>
           <div class="section-note" style="margin-top:14px">Örnek: Deneme, LGS veya Genel Tarama gibi kategorilerde <strong>Bölümlü Sınav</strong> açık olursa soru aralıklarına Türkçe, Matematik, Fen Bilimleri gibi başlıklar ekleyebilirsin.</div>
         </div>
+      </div>
+      <div class="card p-6" style="margin-top:18px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+          <div>
+            <strong style="display:block;font-size:18px;font-family:var(--fd)">${selectedGrade}. Sınıf Ders / Bölüm Önerileri</strong>
+            <span class="text-sm text-muted">Sınavda bölüm eklerken hızlı seçim için burada öneri ders isimleri tanımlayabilirsin. İstersen dilediğin kadar ekleyip sonradan düzenleyebilirsin.</span>
+          </div>
+          <span class="section-tag">Toplam ${sanitizeCategoryList(getEditableLessonCatalogForGrade(selectedGrade)).length} ders</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">${lessonRows}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-top:16px">
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${hasExamPerm('exam_category_create')?'<button class="btn btn-outline" type="button" onclick="W.addLessonRow()">+ Ders Ekle</button>':''}
+          </div>
+          ${hasAnyExamPerm(['exam_category_create','exam_category_edit','exam_category_delete'])?'<button class="btn btn-green" type="button" onclick="W.saveCategoryGrade()">💾 Ders Listesini Kaydet</button>':''}
+        </div>
+        <div class="section-note" style="margin-top:14px">Varsayılan öneri listesi Türkçe, Matematik, Hayat Bilgisi, Fen Bilimleri, Sosyal Bilgiler, İngilizce, Din Kültürü ve T.C. İnkılap Tarihi başlıklarını içerir; ama bu listeyi kendi okul düzenine göre özgürce değiştirebilirsin.</div>
       </div>
     </div>
   </div>`;
@@ -1833,10 +2229,41 @@ async function fbLoadResults(rf){
       res=res.filter(r=>`${r.firstName} ${r.lastName} ${buildLocationText(r)}`.toLowerCase().includes(queryText));
     }
     if(rf.examId) res=res.filter(r=>r.examId===rf.examId);
-    return res;
+    return sortResultRecords(res);
   }catch{
     const snap=await getDocs(collection(db,'results'));
-    return snap.docs.map(d=>({id:d.id,...d.data()})).map(r=>({...r,studentKey:getResultStudentKey(r)})).sort((a,b)=>(b.date?.seconds||0)-(a.date?.seconds||0));
+    let res=snap.docs.map(d=>({id:d.id,...d.data()})).map(r=>({...r,studentKey:getResultStudentKey(r)}));
+    if(rf.grade) res=res.filter(r=>r.grade==rf.grade);
+    if(rf.sube) res=res.filter(r=>r.sube===rf.sube);
+    if(rf.subject) res=res.filter(r=>r.subject===rf.subject);
+    if(rf.name){
+      const queryText=rf.name.toLowerCase();
+      res=res.filter(r=>`${r.firstName} ${r.lastName} ${buildLocationText(r)}`.toLowerCase().includes(queryText));
+    }
+    if(rf.examId) res=res.filter(r=>r.examId===rf.examId);
+    return sortResultRecords(res);
+  }
+}
+
+async function refreshResultsData(silent=false){
+  if(!currentUserIsAdmin||A.page!=='results') return;
+  if(!silent) showLoad();
+  try{
+    const [results,appeals,exams]=await Promise.all([
+      fbLoadResults(A.rf||{}),
+      fbLoadAppeals(),
+      A.exams?.length?Promise.resolve(A.exams):fbLoadExams('')
+    ]);
+    A.results=results;
+    A.appeals=appeals;
+    A.exams=exams;
+    if(!silent) render();
+    else setContent(renderAdminResults());
+  }catch(error){
+    console.error(error);
+    if(!silent) toast('Sonuçlar yenilenemedi','error');
+  }finally{
+    if(!silent) hideLoad();
   }
 }
 
@@ -1963,11 +2390,36 @@ async function fbLoadSectionCategoryConfigs(categoryMap){
   return defaults;
 }
 
+async function fbLoadLessonCatalogConfigs(){
+  const defaults=createDefaultLessonCatalogMap();
+  const applyRows=snap=>{
+    snap.docs.forEach(row=>{
+      const data=row.data()||{};
+      const grade=parseInt(data.grade,10);
+      if(!GRADES.includes(grade)) return;
+      const lessonCatalog=sanitizeCategoryList(data.lessonCatalog);
+      if(lessonCatalog.length) defaults[grade]=lessonCatalog;
+    });
+  };
+  try{
+    applyRows(await getDocs(query(collection(db,'examCategories'),orderBy('grade','asc'))));
+  }catch{
+    try{
+      applyRows(await getDocs(collection(db,'examCategories')));
+    }catch(error){
+      console.error(error);
+    }
+  }
+  return defaults;
+}
+
 async function syncCategoryConfigState(){
   const categoryMap=await fbLoadCategoryConfigs();
   const sectionCategoryMap=await fbLoadSectionCategoryConfigs(categoryMap);
+  const lessonCatalogMap=await fbLoadLessonCatalogConfigs();
   A.categoryMap=categoryMap;
   A.sectionCategoryMap=sectionCategoryMap;
+  A.lessonCatalogMap=lessonCatalogMap;
 }
 
 /* ── WINDOW HANDLERS ── */
@@ -2094,17 +2546,11 @@ const W={
       hideLoad();
     }
     if(page==='results'){
-      Object.assign(A.rf,opts);
-      showLoad();
-      const [results,appeals,exams]=await Promise.all([
-        fbLoadResults(A.rf),
-        fbLoadAppeals(),
-        A.exams?.length?Promise.resolve(A.exams):fbLoadExams('')
-      ]);
-      A.results=results;
-      A.appeals=appeals;
-      A.exams=exams;
-      hideLoad();
+      const nextRf={...(A.rf||{})};
+      nextRf.examId=Object.prototype.hasOwnProperty.call(opts,'examId')?(opts.examId||''):'';
+      Object.assign(nextRf,opts);
+      A.rf=nextRf;
+      await refreshResultsData(false);
     }
     render();
   },
@@ -2142,10 +2588,21 @@ const W={
       );
     }
   },
+  updateLessonField(index,value){
+    if(!hasExamPerm('exam_category_edit')) return;
+    if(!Array.isArray(A.lessonCatalogMap[A.categoryGrade])) A.lessonCatalogMap[A.categoryGrade]=getEditableLessonCatalogForGrade(A.categoryGrade);
+    A.lessonCatalogMap[A.categoryGrade][index]=String(value??'');
+  },
   addCategoryRow(){
     if(!requireExamPerm('exam_category_create','Kategori ekleme')) return;
     if(!Array.isArray(A.categoryMap[A.categoryGrade])) A.categoryMap[A.categoryGrade]=getEditableCategoriesForGrade(A.categoryGrade);
     A.categoryMap[A.categoryGrade].push('');
+    setContent(renderAdminCategories());
+  },
+  addLessonRow(){
+    if(!requireExamPerm('exam_category_create','Ders ekleme')) return;
+    if(!Array.isArray(A.lessonCatalogMap[A.categoryGrade])) A.lessonCatalogMap[A.categoryGrade]=getEditableLessonCatalogForGrade(A.categoryGrade);
+    A.lessonCatalogMap[A.categoryGrade].push('');
     setContent(renderAdminCategories());
   },
   removeCategoryRow(index){
@@ -2156,6 +2613,12 @@ const W={
     if(Array.isArray(A.sectionCategoryMap[A.categoryGrade])){
       A.sectionCategoryMap[A.categoryGrade]=A.sectionCategoryMap[A.categoryGrade].filter(item=>normalizeKeyPart(item)!==normalizeKeyPart(removedLabel));
     }
+    setContent(renderAdminCategories());
+  },
+  removeLessonRow(index){
+    if(!requireExamPerm('exam_category_delete','Ders silme')) return;
+    if(!Array.isArray(A.lessonCatalogMap[A.categoryGrade])) return;
+    A.lessonCatalogMap[A.categoryGrade].splice(index,1);
     setContent(renderAdminCategories());
   },
   toggleCategorySection(index,enabled){
@@ -2171,6 +2634,7 @@ const W={
     if(!requireExamPerm('exam_category_edit','Kategori düzenleme')) return;
     A.categoryMap[A.categoryGrade]=[...(DEFAULT_SUBJECTS_BY_GRADE[A.categoryGrade]||[])];
     A.sectionCategoryMap[A.categoryGrade]=[...createDefaultSectionCategoryMap()[A.categoryGrade]];
+    A.lessonCatalogMap[A.categoryGrade]=[...DEFAULT_SECTION_LESSONS];
     setContent(renderAdminCategories());
     toast('Varsayılan kategori listesi geri yüklendi. Kaydetmeyi unutma.','info');
   },
@@ -2179,8 +2643,13 @@ const W={
     const grade=A.categoryGrade;
     const categories=sanitizeCategoryList(A.categoryMap[grade]);
     const sectionCategories=getSectionEnabledCategoriesForGrade(grade,A.sectionCategoryMap,A.categoryMap);
+    const lessonCatalog=sanitizeCategoryList(A.lessonCatalogMap[grade]);
     if(!categories.length){
       toast('En az 1 kategori girin','error');
+      return;
+    }
+    if(!lessonCatalog.length){
+      toast('En az 1 ders/bölüm önerisi girin','error');
       return;
     }
     showLoad('Kategoriler kaydediliyor...');
@@ -2189,10 +2658,12 @@ const W={
         grade,
         categories,
         sectionCategories,
+        lessonCatalog,
         updatedAt:serverTimestamp()
       });
       A.categoryMap[grade]=[...categories];
       A.sectionCategoryMap[grade]=[...sectionCategories];
+      A.lessonCatalogMap[grade]=[...lessonCatalog];
       if(A.grade===grade&&!A.editExamId&&A.subject&&!isConfiguredCategoryForGrade(grade,A.subject,A.categoryMap)){
         A.subject=null;
         A.questionSections=[];
@@ -2221,19 +2692,33 @@ const W={
   },
   updateSectionField(index,key,value){
     if(!A.questionSections[index]) return;
-    A.questionSections[index][key]=key==='label'?String(value||''):toSectionNumber(value);
+    if(key==='label'){
+      A.questionSections[index][key]=String(value||'');
+    }else if(key==='points'){
+      A.questionSections[index][key]=toPositiveDecimal(value);
+    }else{
+      A.questionSections[index][key]=toSectionNumber(value);
+    }
     refreshQuestionPanels();
   },
   addSection(){
     const nextStart=A.questionSections.length
       ? ((toSectionNumber(A.questionSections[A.questionSections.length-1].end)||0)+1)
       : 1;
-    A.questionSections.push(normalizeSectionDraft({label:'',start:nextStart<=A.questions.length?nextStart:'',end:nextStart<=A.questions.length?nextStart:''},A.questionSections.length));
+    A.questionSections.push(normalizeSectionDraft({label:'',start:nextStart<=A.questions.length?nextStart:'',end:nextStart<=A.questions.length?nextStart:'',points:''},A.questionSections.length));
     this.reRenderStep4();
   },
   removeSection(index){
     A.questionSections.splice(index,1);
     this.reRenderStep4();
+  },
+  setScoringMode(mode){
+    A.scoringMode=['auto','section','question'].includes(mode)?mode:'auto';
+    this.reRenderStep4();
+  },
+  setQuestionPoint(index,value){
+    if(!A.questions[index]) return;
+    A.questions[index].pointValue=toPositiveDecimal(value);
   },
   nextStep(){
     if(A.step===2){
@@ -2271,7 +2756,7 @@ const W={
   closeCropModal(){removeCropModal();A.draftImg=null;A.draftAns=null;},
   confirmQ(){
     if(!A.draftAns){toast('Cevap seçin','error');return;}
-    A.questions.push({img:A.draftImg,ans:A.draftAns,learningOutcome:'',order:A.questions.length});
+    A.questions.push({img:A.draftImg,ans:A.draftAns,learningOutcome:'',pointValue:'',order:A.questions.length});
     syncQuestionOrder();
     removeCropModal();A.draftImg=null;A.draftAns=null;
     toast(`✓ Soru ${A.questions.length} eklendi!`,'success');
@@ -2321,6 +2806,20 @@ const W={
       toast(error.message,'error');
       return;
     }
+    let scoreConfig;
+    try{
+      scoreConfig=resolveQuestionPoints({
+        grade:A.grade,
+        subject:A.subject,
+        scoringMode:A.scoringMode,
+        scoreScaleInput:A.scoreScaleInput,
+        questions:A.questions,
+        questionSections:sectionData.sections
+      });
+    }catch(error){
+      toast(error.message,'error');
+      return;
+    }
     const isEdit=!!A.editExamId;
     const actionLabel=targetStatus==='active'
       ? (isEdit?'Sınav güncelleniyor...':'Sınav yayınlanıyor...')
@@ -2338,6 +2837,8 @@ const W={
         duration:A.pubDur,questionCount:A.questions.length,
         optionCount:A.optionCount,negativeMarking:A.negativeMarking,
         questionSections:sectionData.sections,
+        scoringMode:A.scoringMode,
+        scoreScale:scoreConfig.scoreScale,
         accessScope:accessScope,
         authRequired:accessScope==='registered',
         hidden:hidden,
@@ -2354,7 +2855,7 @@ const W={
         await updateDoc(doc(db,'exams',examId),payload);
         const existingQuestions=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
         for(const qd of existingQuestions.docs){
-          await deleteDoc(doc(db,'questions',qd.id));
+          await deleteQuestionWithImage(qd);
         }
       }else{
         const createPayload=Object.assign({},payload,{createdAt:serverTimestamp()});
@@ -2383,6 +2884,7 @@ const W={
           correctAnswer:A.questions[i].ans,
           sectionTitle:sectionData.assignments[i+1]||'',
           learningOutcome:String(A.questions[i].learningOutcome||'').trim(),
+          pointValue:scoreConfig.questionPoints[i]??0,
           order:A.questions[i].order??i
         };
         const questionRef=await addDoc(collection(db,'questions'),questionPayload);
@@ -2400,7 +2902,8 @@ const W={
           grade:A.grade,
           subject:A.subject,
           negativeMarking:A.negativeMarking,
-          questionSections:sectionData.sections
+          questionSections:sectionData.sections,
+          scoreScale:scoreConfig.scoreScale
         },writtenQuestions);
       }
 
@@ -2425,7 +2928,7 @@ const W={
       if(createdNewExam&&examId){
         try{
           for(const question of writtenQuestions){
-            await deleteDoc(doc(db,'questions',question.id));
+            await deleteQuestionWithImage(question);
           }
           await deleteDoc(doc(db,'exams',examId));
         }catch(cleanupError){
@@ -2466,6 +2969,7 @@ const W={
         editExamId:id,
         categoryMap:A.categoryMap||createDefaultCategoryMap(),
         sectionCategoryMap:A.sectionCategoryMap||createDefaultSectionCategoryMap(),
+        lessonCatalogMap:A.lessonCatalogMap||createDefaultLessonCatalogMap(),
         categoryGrade:A.categoryGrade||1,
         grade:exam.grade||null,
         subject:exam.subject||null,
@@ -2478,6 +2982,8 @@ const W={
         pubDisplayOrder:Number.isFinite(Number(exam.displayOrder))?Number(exam.displayOrder):'',
         pubAccessScope:exam.accessScope==='registered'||exam.authRequired?'registered':'public',
         pubHidden:exam.hidden===true||exam.gizli===true,
+        scoringMode:['auto','section','question'].includes(exam.scoringMode)?exam.scoringMode:'auto',
+        scoreScaleInput:Number.isFinite(Number(exam.scoreScale))?Number(exam.scoreScale):'',
         questions:qdocs.map((qd,index)=>{
           const data=qd.data()||{};
           return {
@@ -2486,6 +2992,7 @@ const W={
             ans:data.correctAnswer||'A',
             sectionTitle:data.sectionTitle||'',
             learningOutcome:data.learningOutcome||data.outcome||data.kazanim||'',
+            pointValue:toPositiveDecimal(data.pointValue),
             order:data.order??index
           };
         }),
@@ -2549,9 +3056,19 @@ const W={
     if(!confirm('Bu sınavı ve tüm sorularını silmek istiyor musunuz?\n\nBu işlem geri alınamaz!'))return;
     showLoad('Siliniyor...');
     try{
-      const qsnap=await getDocs(query(collection(db,'questions'),where('examId','==',id)));
+      const [qsnap,rsnap,asnap]=await Promise.all([
+        getDocs(query(collection(db,'questions'),where('examId','==',id))),
+        getDocs(query(collection(db,'results'),where('examId','==',id))),
+        getDocs(query(collection(db,'resultAppeals'),where('examId','==',id)))
+      ]);
       for(const qd of qsnap.docs){
-        await deleteDoc(doc(db,'questions',qd.id));
+        await deleteQuestionWithImage(qd);
+      }
+      for(const rd of rsnap.docs){
+        await deleteDoc(doc(db,'results',rd.id));
+      }
+      for(const ad of asnap.docs){
+        await deleteDoc(doc(db,'resultAppeals',ad.id));
       }
       await deleteDoc(doc(db,'exams',id));
       hideLoad();toast('Sınav silindi','success');
@@ -2560,12 +3077,30 @@ const W={
   },
   async showResults(examId){
     if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
-    A.rf.examId=examId;await this.nav('results');
+    await this.nav('results',{examId});
+  },
+  async clearResultsExamFilter(){
+    if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
+    await this.nav('results',{examId:''});
+  },
+  async refreshResults(){
+    if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
+    await refreshResultsData(false);
+  },
+  async clearResultFilters(){
+    if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
+    A.rf={grade:'',subject:'',name:'',examId:'',sube:''};
+    await refreshResultsData(false);
+    render();
   },
   async filterRes(key,val){
     if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
     clearTimeout(W._ft);
-    W._ft=setTimeout(async()=>{A.rf[key]=val;showLoad();A.results=await fbLoadResults(A.rf);hideLoad();setContent(renderAdminResults());},350);
+    W._ft=setTimeout(async()=>{
+      A.rf[key]=val;
+      await refreshResultsData(false);
+      setContent(renderAdminResults());
+    },350);
   },
   async delResult(id){
     if(!requireExamPerm('exam_results_delete','Sonuç silme')) return;
@@ -3140,6 +3675,8 @@ const W={
       'Ders':r.subject||'—','Sınav':r.examTitle||'—',
       'Doğru':r.correct,'Yanlış':r.wrong,'Boş':r.blank,
       'Net':r.netCorrect??'—',
+      'Sınav Puanı':r.examScore??r.score??'—',
+      'Puan Ölçeği':r.scoreScale??100,
       'Başarı (%)':r.score,'Tarih':fmtDT(r.date)
     }));
     const detailRows=[];
@@ -3153,6 +3690,7 @@ const W={
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Sınav':r.examTitle||'—','Soru No':'—',
+          'Sınav Puanı':r.examScore??r.score??'—','Puan Ölçeği':r.scoreScale??100,
           'Sonuç':'Detay yok','Verilen Cevap':'—','Doğru Cevap':'—'
         });
         return;
@@ -3166,6 +3704,7 @@ const W={
           'Üye UID':r.accountUid||'—',
           'Öğrenci Anahtarı':getResultStudentKey(r),
           'Ders':r.subject||'—','Bölüm / Üst Başlık':item.sectionTitle||r.subject||'—','Kazanım / Öğrenme Çıktısı':item.learningOutcome||'—','Sınav':r.examTitle||'—','Soru No':item.questionNo,
+          'Soru Puanı':item.pointValue??'—','Sınav Puanı':r.examScore??r.score??'—','Puan Ölçeği':r.scoreScale??100,
           'Sonuç':outcome,'Verilen Cevap':item.selectedAnswer||'Boş','Doğru Cevap':item.correctAnswer||'—'
         });
       });
@@ -3255,6 +3794,18 @@ window.addEventListener('hashchange',()=>{
   }else if(requestedPage&&currentUserIsAdmin&&!canOpenExamPage(requestedPage)){
     toast('Bu sınav alanı için yetkiniz yok.','error');
   }
+});
+let resultsRefreshTick=0;
+function queueResultsRefreshOnFocus(){
+  if(!currentUserIsAdmin||A.page!=='results') return;
+  const now=Date.now();
+  if(now-resultsRefreshTick<2500) return;
+  resultsRefreshTick=now;
+  refreshResultsData(true);
+}
+window.addEventListener('focus',queueResultsRefreshOnFocus);
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible') queueResultsRefreshOnFocus();
 });
 render();
 </script>

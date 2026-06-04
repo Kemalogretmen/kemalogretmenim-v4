@@ -60,7 +60,7 @@ body.theme-dark{
 .warn-start-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(108,61,237,.5)}
 
 /* EXAM SCREEN */
-#screenExam{display:none;height:100vh;overflow:hidden;flex-direction:column}
+#screenExam{display:none;height:100vh;height:100dvh;overflow:hidden;flex-direction:column}
 .exam-topbar{background:var(--navy);color:#fff;padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
 .etb-left{display:flex;align-items:center;gap:10px;min-width:0}
 .etb-grade-badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;color:#fff;white-space:nowrap;flex-shrink:0}
@@ -327,7 +327,7 @@ body.theme-dark .size-value{color:var(--muted)}
 .ks-mini{padding:12px 10px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
 .ks-mini strong{display:block;font-family:var(--fd);font-size:20px;font-weight:900;color:#fff}
 .ks-mini span{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.64);text-transform:uppercase;letter-spacing:.06em}
-.karne-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.karne-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
 .ks-card{background:var(--white);border-radius:var(--r-lg);padding:18px;text-align:center;border:2px solid var(--border)}
 .ks-n{font-family:var(--fd);font-size:32px;font-weight:900}
 .ks-l{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
@@ -403,16 +403,17 @@ body.theme-dark .size-value{color:var(--muted)}
   .optic-panel{display:none}
   .optic-fab{display:flex}
   .optic-drawer{display:flex}
-  .exam-q-wrap{padding:14px 16px}
+  .exam-q-wrap{justify-content:flex-start;padding:10px 10px;gap:8px}
   .question-media-shell{width:100%}
-  .toolbar-dock{width:min(104px,calc(100% - 16px))}
+  .toolbar-dock{width:min(96px,calc(100% - 16px));transform:translate3d(8px,8px,0)}
   .toolbar-dock.collapsed{width:auto;min-width:104px}
   .question-status-strip{padding:10px 12px}
   .status-pills,.status-actions{width:100%}
-  .exam-media-stage{width:100%;height:clamp(340px,52vh,520px)}
-  .exam-answers{gap:8px}
-  .ans-btn{padding:9px 14px;font-size:13px}
-  .exam-navrow{padding:12px 14px}
+  .exam-media-stage{width:100%;height:clamp(380px,calc(100dvh - 250px),620px);border-radius:18px;padding:7px}
+  .stage-workspace{border-radius:15px}
+  .exam-answers{gap:6px;padding:0;width:100%}
+  .ans-btn{flex:1 1 64px;justify-content:center;min-height:44px;padding:8px 10px;font-size:13px}
+  .exam-navrow{padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
   .exam-nav-main{max-width:none;width:100%}
   .finish-btn{margin-left:auto}
   .karne-spotlight{grid-template-columns:1fr}
@@ -435,7 +436,9 @@ body.theme-dark .size-value{color:var(--muted)}
   .finish-btn{width:100%;justify-content:center}
   .exam-section-banner{width:100%;justify-content:center;text-align:center;flex-wrap:wrap}
   .mini-action-btn{flex:1;justify-content:center}
-  .exam-media-stage{height:clamp(320px,48vh,460px)}
+  .question-status-strip{display:none}
+  .question-hint{display:none}
+  .exam-media-stage{height:clamp(380px,calc(100dvh - 218px),620px)}
   .ksp-headline{font-size:28px}
   .ksp-mini-stats{grid-template-columns:1fr}
   .chart-frame-bars{height:220px;min-height:220px;max-height:220px}
@@ -917,6 +920,33 @@ function buildStudentKey(source){
   ].filter(Boolean).join('|');
 }
 
+function roundPointValue(value){
+  return Math.round((Number(value)||0)*100)/100;
+}
+
+function resolveExamScoreScale(grade,subject,rawScaleInput){
+  const parsed=parseInt(String(rawScaleInput??'').trim(),10);
+  if(Number.isFinite(parsed)&&parsed>0) return parsed;
+  if(parseInt(grade,10)<=3) return 100;
+  const key=normalizeKeyPart(subject);
+  if(key&&(key==='deneme'||key==='agisler'||key==='lgs'||key.indexOf('deneme')>-1||key.indexOf('agis')>-1||key.indexOf('lgs')>-1)) return 500;
+  return 100;
+}
+
+function getQuestionPointValue(question,totalQuestions,examMeta){
+  const pointValue=Number(question?.pointValue);
+  if(Number.isFinite(pointValue)&&pointValue>0) return roundPointValue(pointValue);
+  const scale=resolveExamScoreScale(examMeta?.grade,examMeta?.subject,examMeta?.scoreScale);
+  return roundPointValue(scale/Math.max(totalQuestions,1));
+}
+
+function formatExamScoreValue(score,scale){
+  const safeScale=Number(scale)||100;
+  const safeScore=roundPointValue(score);
+  const scoreText=Number.isInteger(safeScore)?String(safeScore):safeScore.toFixed(2).replace(/\.?0+$/,'');
+  return `${scoreText} / ${safeScale}`;
+}
+
 function getStudentLocationParts(source){
   return [
     String(source?.city||source?.il||'').trim(),
@@ -934,26 +964,34 @@ function formatStudentMetaLine(source){
 function buildResultSnapshot(status='completed'){
   const qs=P.questions,ans=P.answers;
   let correct=0,wrong=0,blank=0;
+  let weightedCorrect=0,weightedWrong=0;
+  const scoreScale=resolveExamScoreScale(P.exam.grade,P.exam.subject,P.exam.scoreScale);
   const studentKey=buildStudentKey(P.student);
   const answerDetails=qs.map((q,i)=>{
     const a=ans[i];
     const sectionTitle=getQuestionSectionDisplay(q,i,P.exam.subject,P.exam.questionSections);
     const learningOutcome=String(q?.learningOutcome||'').trim();
+    const pointValue=getQuestionPointValue(q,qs.length,P.exam);
     if(!a){
       blank++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
     }
     if(a===q.correctAnswer){
       correct++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
+      weightedCorrect=roundPointValue(weightedCorrect+pointValue);
+      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
     }
     wrong++;
-    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
+    weightedWrong=roundPointValue(weightedWrong+pointValue);
+    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
   });
   let netCorrect=correct;
   if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
   const total=qs.length;
-  const score=Math.round(netCorrect/Math.max(total,1)*100);
+  const examScore=P.exam.negativeMarking
+    ? Math.max(0,roundPointValue(weightedCorrect-weightedWrong/3))
+    : roundPointValue(weightedCorrect);
+  const score100=scoreScale?Math.round(examScore/scoreScale*100):0;
   const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
   return{
     resultId:P.result?.resultId||'',
@@ -970,7 +1008,7 @@ function buildResultSnapshot(status='completed'){
     examTitle:P.exam.title,
     examId:P.exam.id,
     duration:P.exam.duration||0,
-    correct,wrong,blank,netCorrect,score,total,
+    correct,wrong,blank,netCorrect,score:score100,score100,examScore,scoreScale,total,
     negativeMarking:P.exam.negativeMarking,
     answers:{...ans},
     answerDetails,
@@ -1141,6 +1179,7 @@ async function openAdminKarne(){
       duration:0,
       optionCount:4,
       negativeMarking:!!storedResult.negativeMarking,
+      scoreScale:storedResult.scoreScale||100,
       questionSections:Array.isArray(storedResult.questionSections)?storedResult.questionSections:[]
     };
     const exam=bundle?.exam?Object.assign({},fallbackExam,bundle.exam):fallbackExam;
@@ -1179,6 +1218,9 @@ async function openAdminKarne(){
       blank:Number(storedResult.blank||0),
       netCorrect:typeof storedResult.netCorrect==='number'?storedResult.netCorrect:Number(storedResult.netCorrect||storedResult.correct||0),
       score:Number(storedResult.score||0),
+      score100:Number(storedResult.score100||storedResult.score||0),
+      examScore:Number.isFinite(Number(storedResult.examScore))?Number(storedResult.examScore):Number(storedResult.score||0),
+      scoreScale:Number(storedResult.scoreScale||exam.scoreScale||100),
       total:Number(storedResult.total||questions.length||(storedResult.answerDetails||[]).length||0),
       negativeMarking:typeof storedResult.negativeMarking==='boolean'?storedResult.negativeMarking:!!exam.negativeMarking,
       answers:answers,
@@ -2468,14 +2510,11 @@ async function persistResultRecord(result){
     result.resultId='teacher-preview-'+Date.now();
     return result.resultId;
   }
-  const resultRef=await addDoc(collection(db,'results'),{
+  const basePayload={
     firstName:result.firstName,
     lastName:result.lastName,
-    accountUid:result.accountUid||'',
-    email:result.email||'',
-    grade:result.grade,
+    grade:parseInt(result.grade,10)||result.grade,
     sube:result.sube,
-    studentKey:result.studentKey,
     subject:result.subject,
     examTitle:result.examTitle,
     examId:result.examId,
@@ -2487,12 +2526,77 @@ async function persistResultRecord(result){
     total:result.total,
     negativeMarking:result.negativeMarking||false,
     elapsed:result.elapsed,
-    answerDetails:result.answerDetails||[],
-    questionSections:result.questionSections||[],
     date:serverTimestamp()
-  });
-  result.resultId=resultRef.id;
-  return resultRef.id;
+  };
+  const payloadAttempts=[
+    {
+      name:'modern',
+      data:{
+        ...basePayload,
+        accountUid:result.accountUid||'',
+        email:result.email||'',
+        studentKey:result.studentKey,
+        score100:result.score100,
+        examScore:result.examScore,
+        scoreScale:result.scoreScale,
+        answerDetails:result.answerDetails||[],
+        questionSections:result.questionSections||[]
+      }
+    },
+    {
+      name:'legacy-v3',
+      data:{
+        ...basePayload,
+        answerDetails:result.answerDetails||[],
+        studentKey:result.studentKey||'',
+        questionSections:result.questionSections||[]
+      }
+    },
+    {
+      name:'legacy-v2',
+      data:{
+        ...basePayload,
+        answerDetails:result.answerDetails||[]
+      }
+    },
+    {
+      name:'legacy-v1',
+      data:{
+        ...basePayload,
+        accountUid:result.accountUid||'',
+        email:result.email||'',
+        studentKey:result.studentKey,
+        answerDetails:result.answerDetails||[],
+        questionSections:result.questionSections||[]
+      }
+    },
+    {
+      name:'legacy-v0',
+      data:{...basePayload}
+    }
+  ];
+  let lastError=null;
+  for(const attempt of payloadAttempts){
+    try{
+      const resultRef=await addDoc(collection(db,'results'),attempt.data);
+      result.resultId=resultRef.id;
+      if(attempt.name!=='modern'){
+        console.warn(`Sonuç kaydı ${attempt.name} uyumluluk moduyla oluşturuldu.`);
+      }
+      return resultRef.id;
+    }catch(error){
+      lastError=error;
+      const code=String(error?.code||'').trim().toLowerCase();
+      const message=String(error?.message||'').toLowerCase();
+      const canRetryLegacy=
+        code==='permission-denied'
+        || message.includes('missing or insufficient permissions')
+        || message.includes('permission denied');
+      if(!canRetryLegacy) throw error;
+      console.warn(`Sonuç kaydı ${attempt.name} şemasıyla reddedildi, sonraki uyumluluk katmanı deneniyor.`,error);
+    }
+  }
+  throw lastError||new Error('Sonuç kaydı oluşturulamadı.');
 }
 
 window.finishExam=async function(){
@@ -2623,6 +2727,10 @@ function renderKarne(){
   const completionRate=totalQuestions?Math.round(((totalQuestions-r.blank)/totalQuestions)*100):0;
   const strongest=[...sectionSummary].sort((a,b)=>b.score-a.score||b.correct-a.correct)[0]||null;
   const focus=[...sectionSummary].sort((a,b)=>a.score-b.score||b.blank-a.blank)[0]||null;
+  const formattedExamScore=formatExamScoreValue(
+    Number.isFinite(Number(r.examScore))?r.examScore:r.score,
+    r.scoreScale||100
+  );
   const backBtn=document.getElementById('karneBackBtn');
   const appealBtn=document.getElementById('appealResultBtn');
   if(backBtn){
@@ -2650,6 +2758,7 @@ function renderKarne(){
     <span class="km-item">📝 ${r.examTitle}</span>
     <span class="km-item">📚 ${r.subject}</span>
     <span class="km-item">⏱ ${fmtElapsed(r.elapsed)}</span>
+    <span class="km-item">💯 ${formattedExamScore}</span>
     ${r.negativeMarking?'<span class="km-item" style="background:#FEF2F2;color:var(--red)">⚠️ Puan Kesintili</span>':''}`;
   document.getElementById('karneSpotlight').innerHTML=`
     <div>
@@ -2661,7 +2770,7 @@ function renderKarne(){
       <div>
         <span class="ksp-score-badge">${scoreMeta.icon} ${scoreMeta.label}</span>
         <div class="ksp-score-value">%${r.score}</div>
-        <div class="ksp-score-sub">${totalQuestions} soruda ${r.correct} doğru, ${r.wrong} yanlış ve ${r.blank} boş ile sınav tamamlandı.</div>
+        <div class="ksp-score-sub">${totalQuestions} soruda ${r.correct} doğru, ${r.wrong} yanlış ve ${r.blank} boş ile sınav tamamlandı. Sınav puanı <strong>${formattedExamScore}</strong>.</div>
       </div>
       <div class="ksp-mini-stats">
         <div class="ks-mini"><strong>${r.netCorrect}</strong><span>Net</span></div>
@@ -2676,6 +2785,7 @@ function renderKarne(){
     <div class="ks-card"><div class="ks-n" style="color:var(--green)">${r.correct}</div><div class="ks-l">Doğru (D)</div></div>
     <div class="ks-card"><div class="ks-n" style="color:var(--red)">${r.wrong}</div><div class="ks-l">Yanlış (Y)</div></div>
     <div class="ks-card"><div class="ks-n" style="color:var(--muted)">${r.blank}</div><div class="ks-l">Boş (B)</div></div>
+    <div class="ks-card"><div class="ks-n" style="color:#2563EB">${formatExamScoreValue(r.examScore,r.scoreScale)}</div><div class="ks-l">Sınav Puanı</div></div>
     <div class="ks-card"><div class="ks-n" style="color:${scoreColor}">${r.score}%</div><div class="ks-l">Başarı (%)</div></div>`;
   
   // İlerleme Barları
@@ -2691,6 +2801,7 @@ function renderKarne(){
     <div class="sb-track"><div class="sb-fill" style="width:${bPct}%;background:var(--muted)"></div></div>
     <div class="sb-label"><span>🧩 Tamamlama</span><span>%${completionRate}</span></div>
     <div class="sb-track"><div class="sb-fill" style="width:${completionRate}%;background:#2563EB"></div></div>
+    <div style="margin-top:12px;padding:10px;background:#F8FAFC;border-radius:8px;font-size:13px;font-weight:700;color:var(--navy)">💯 Bu sınavın puan karşılığı: <strong>${formattedExamScore}</strong></div>
     ${r.negativeMarking?`<div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:8px;font-size:13px;font-weight:600;color:var(--red)">⚠️ Net puan hesaplaması: ${r.correct}D - ${Math.floor(r.wrong/3)}Y = <strong>${r.netCorrect} Net Doğru</strong></div>`:`<div style="margin-top:12px;padding:10px;background:#EFF6FF;border-radius:8px;font-size:13px;font-weight:600;color:#1D4ED8">📌 Bu sınavda net puanın doğrudan doğru sayın üzerinden hesaplandı: <strong>${r.netCorrect} net</strong></div>`}`;
   const statusBadge=document.getElementById('karneStatusBadge');
   statusBadge.textContent=`${scoreMeta.icon} ${scoreMeta.label}`;
