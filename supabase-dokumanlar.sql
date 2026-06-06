@@ -262,12 +262,12 @@ as $$
 declare
   v_doc public.dokumanlar%rowtype;
   v_doc_deleted integer := 0;
-  v_storage_deleted integer := 0;
   v_reactions_deleted integer := 0;
   v_progress_deleted integer := 0;
   v_worksheet_rows_deleted integer := 0;
   v_worksheet_submissions_deleted integer := 0;
   v_homepage_refs_cleared integer := 0;
+  v_storage_path text := null;
 begin
   if p_dokuman_id is null then
     raise exception 'Dokuman id zorunludur.';
@@ -358,16 +358,15 @@ begin
 
   if coalesce(v_doc.dosya_kaynak_turu, 'supabase') = 'supabase'
      and nullif(trim(v_doc.dosya_yolu), '') is not null then
-    delete from storage.objects
-    where bucket_id = 'dokumanlar'
-      and name = v_doc.dosya_yolu;
-    get diagnostics v_storage_deleted = row_count;
+    v_storage_path := v_doc.dosya_yolu;
   end if;
 
   return jsonb_build_object(
     'deleted', v_doc_deleted > 0,
     'documentId', p_dokuman_id::text,
-    'storageDeleted', v_storage_deleted,
+    'storageDeleted', 0,
+    'storagePath', v_storage_path,
+    'storageDeleteRequired', v_storage_path is not null,
     'reactionsDeleted', v_reactions_deleted,
     'progressDeleted', v_progress_deleted,
     'worksheetRowsDeleted', v_worksheet_rows_deleted,
@@ -445,7 +444,7 @@ security definer
 set search_path = public, storage
 as $$
 declare
-  v_storage_deleted integer := 0;
+  v_orphan_storage_count integer := 0;
   v_reactions_deleted integer := 0;
   v_progress_deleted integer := 0;
 begin
@@ -481,7 +480,8 @@ begin
 
   if to_regclass('public.homepage_slides') is not null then
     execute $cleanup$
-      delete from storage.objects o
+      select count(*)::integer
+      from storage.objects o
       where o.bucket_id = 'dokumanlar'
         and not exists (
           select 1
@@ -494,10 +494,12 @@ begin
           from public.homepage_slides h
           where h.media_path = o.name
         )
-    $cleanup$;
+    $cleanup$
+    into v_orphan_storage_count;
   else
     execute $cleanup$
-      delete from storage.objects o
+      select count(*)::integer
+      from storage.objects o
       where o.bucket_id = 'dokumanlar'
         and not exists (
           select 1
@@ -505,12 +507,14 @@ begin
           where coalesce(d.dosya_kaynak_turu, 'supabase') = 'supabase'
             and d.dosya_yolu = o.name
         )
-    $cleanup$;
+    $cleanup$
+    into v_orphan_storage_count;
   end if;
-  get diagnostics v_storage_deleted = row_count;
 
   return jsonb_build_object(
-    'storageDeleted', v_storage_deleted,
+    'storageDeleted', 0,
+    'orphanStorageCount', v_orphan_storage_count,
+    'storageCleanupNote', 'Supabase Storage dosyalari SQL ile dogrudan silinemez. Once list_orphan_dokuman_storage() ile listeleyip Storage API uzerinden silin.',
     'reactionsDeleted', v_reactions_deleted,
     'progressDeleted', v_progress_deleted
   );

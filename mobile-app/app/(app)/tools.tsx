@@ -11,7 +11,8 @@ type ToolItem = {
   title: string;
   subtitle: string;
   label: string;
-  path: string;
+  path?: string;
+  route?: '/reading';
   icon: IconName;
   color: string;
   soft: string;
@@ -23,7 +24,7 @@ const featuredTools: ToolItem[] = [
     title: 'Hızlı Okuma Stüdyosu',
     subtitle: 'Metin, süre ve karne akışını mobilde başlat.',
     label: 'Gelişim',
-    path: '/hizli-okuma/index.html',
+    route: '/reading',
     icon: 'timer-outline',
     color: '#6C3DED',
     soft: '#F2EAFF',
@@ -85,7 +86,11 @@ const secondaryTools: ToolItem[] = [
 ];
 
 function openTool(item: ToolItem) {
-  router.push({ pathname: '/webview', params: { path: item.path, title: item.title } });
+  if (item.route) {
+    router.push(item.route);
+    return;
+  }
+  router.push({ pathname: '/webview', params: { path: item.path || '/', title: item.title } });
 }
 
 function FeaturedTool({ item }: { item: ToolItem }) {
@@ -152,12 +157,12 @@ export default function ToolsScreen() {
 
       <Text style={styles.sectionTitle}>Ana mobil modüller</Text>
       {featuredTools.map((item) => (
-        <FeaturedTool key={item.path} item={item} />
+      <FeaturedTool key={item.path || item.route || item.title} item={item} />
       ))}
 
       <Text style={styles.sectionTitle}>Diğer araçlar</Text>
       {secondaryTools.map((item) => (
-        <CompactTool key={item.path} item={item} />
+        <CompactTool key={item.path || item.route || item.title} item={item} />
       ))}
     </Screen>
   );

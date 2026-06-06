@@ -206,7 +206,7 @@
     '/hakkimda.html': 'Kemal Öğretmen hakkında bilgiler, eğitim yaklaşımı ve yıllara dayanan öğretmenlik deneyimi.',
     '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
     '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
-    '/ogretmen-ders-plani.html': 'Öğretmenler için yıllık planlardan öğrenme çıktılarını okuyup haftalık ders programına yerleştiren ders planlama aracı.',
+    '/ogretmen-ajandasi/index.html': 'Öğretmenler için öğrenci takibi, sınav analizi, karne, ders programı ve akademik takvim içeren öğretmen ajandası.',
     '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, zamanlayıcı ve sınıf içi yardımcı araçlar.',
     '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
     '/oyun/oyunlar.html': 'Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.',
@@ -1166,7 +1166,7 @@
       { uid: 'static:exams', title: 'Sınav Merkezi', href: '/sinav_sitesi/index.html', icon: '📝', gradeLabel: '1-8. Sınıf', subjectLabel: 'Deneme ve Test', contentTypeLabel: 'Merkez' },
       { uid: 'static:tools', title: 'Öğretmen Araçları', href: '/ogretmen-araclari.html', icon: '⏱️', gradeLabel: 'Öğretmen', subjectLabel: 'Araçlar', contentTypeLabel: 'Sayfa' },
       { uid: 'static:certificate-studio', title: 'Belge ve Sertifika Stüdyosu', href: '/ogretmen/belge-studyo.html', icon: '🏅', gradeLabel: 'Öğretmen', subjectLabel: 'Belge Tasarımı', contentTypeLabel: 'Araç' },
-      { uid: 'static:plan', title: 'Öğretmen Ders Programı', href: '/ogretmen-ders-plani.html', icon: '📅', gradeLabel: 'Öğretmen', subjectLabel: 'Planlama', contentTypeLabel: 'Araç' },
+      { uid: 'static:agenda', title: 'Öğretmen Ajandası', href: '/ogretmen-ajandasi/index.html', icon: '📒', gradeLabel: 'Öğretmen', subjectLabel: 'Ajanda ve Takip', contentTypeLabel: 'Araç' },
       { uid: 'static:about', title: 'Hakkımda', href: '/hakkimda.html', icon: '👨‍🏫', gradeLabel: 'Genel', subjectLabel: 'Kemal Öğretmen', contentTypeLabel: 'Sayfa' },
       { uid: 'static:contact', title: 'İletişim', href: '/iletisim.html', icon: '✉️', gradeLabel: 'Genel', subjectLabel: 'Destek', contentTypeLabel: 'Sayfa' },
       { uid: 'static:grade1', title: '1. Sınıf Paneli', href: '/siniflar/1-sinif.html', icon: '📕', gradeLabel: '1. Sınıf', subjectLabel: 'Panel', contentTypeLabel: 'Sınıf' },
@@ -1556,7 +1556,7 @@
           '<div class="dropdown-panel">' +
             '<a href="/hakkimda.html" class="dd-item"><span class="dd-icon">👨‍🏫</span> Hakkımda</a>' +
             '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
-            '<a href="/ogretmen-ders-plani.html" class="dd-item"><span class="dd-icon">📅</span> Ders Programı</a>' +
+            '<a href="/ogretmen-ajandasi/index.html" class="dd-item"><span class="dd-icon">📒</span> Öğretmen Ajandası</a>' +
             '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
             '<a href="/ogretmen/belge-studyo.html" class="dd-item"><span class="dd-icon">🏅</span> Belge ve Sertifika Stüdyosu</a>' +
             '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
@@ -1594,7 +1594,7 @@
             '<li><a href="/hizli-okuma/index.html">📖 Hızlı Okuma</a></li>' +
             '<li><a href="/oyun/oyunlar.html">🎮 Oyunlar</a></li>' +
             '<li><a href="/sinav_sitesi/index.html">📝 Sınav Merkezi</a></li>' +
-            '<li><a href="/ogretmen-ders-plani.html">📅 Ders Programı</a></li>' +
+            '<li><a href="/ogretmen-ajandasi/index.html">📒 Öğretmen Ajandası</a></li>' +
             '<li><a href="/ogretmen-araclari.html">⏱️ Öğretmen Araçları</a></li>' +
             '<li><a href="/hakkimda.html">Hakkımda</a></li>' +
             '<li><a href="/iletisim.html">İletişim</a></li>' +
@@ -1775,7 +1775,7 @@
     if (path.startsWith('/oyun/')) {
       return 'oyunlar';
     }
-    if (path === '/hakkimda.html' || path === '/iletisim.html' || path === '/yeni.html' || path === '/ogretmen-ders-plani.html') {
+    if (path === '/hakkimda.html' || path === '/iletisim.html' || path === '/yeni.html' || path === '/ogretmen-ajandasi/index.html' || path.startsWith('/ogretmen-ajandasi/')) {
       return 'ogretmen';
     }
     if (path === '/ders.html') {

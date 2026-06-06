@@ -328,7 +328,7 @@
 
   function startAutoScan() {
     scheduleScan(document);
-    if ('MutationObserver' in window) {
+    if ('MutationObserver' in window && document.body) {
       var observer = new MutationObserver(function(mutations) {
         if (mutations.some(function(mutation) { return mutation.addedNodes && mutation.addedNodes.length; })) {
           scheduleScan(document);

@@ -147,6 +147,28 @@
     return true;
   }
 
+  function getStoragePathFromDeleteResult(data, item) {
+    if (data && typeof data === 'object' && typeof data.storagePath === 'string' && data.storagePath.trim()) {
+      return data.storagePath.trim();
+    }
+    if (item && typeof item.dosya_yolu === 'string' && item.dosya_yolu.trim()) {
+      return item.dosya_yolu.trim();
+    }
+    return '';
+  }
+
+  async function removeDocumentStorageFile(path) {
+    if (!path) {
+      return true;
+    }
+    const storageResponse = await getClient().storage.from(BUCKET_NAME).remove([path]);
+    if (storageResponse.error) {
+      toast('Doküman kaydı silindi fakat Supabase dosyası temizlenemedi: ' + humanizeSupabaseError(storageResponse.error), 'error');
+      return false;
+    }
+    return true;
+  }
+
   function ensurePdfWorker() {
     if (!window.pdfjsLib) {
       throw new Error('PDF kutuphanesi yuklenemedi.');
@@ -2007,6 +2029,7 @@
     });
     let deleted = false;
     let usedLegacyFlow = false;
+    let storageFileRemoved = !isSupabaseDocument;
 
     if (rpcResponse.error) {
       if (!isMissingRpcFunction(rpcResponse.error, 'delete_dokuman_with_cleanup')) {
@@ -2020,6 +2043,9 @@
       }
     } else {
       deleted = true;
+      if (isSupabaseDocument) {
+        storageFileRemoved = await removeDocumentStorageFile(getStoragePathFromDeleteResult(rpcResponse.data, item));
+      }
     }
 
     if (state.editingId === documentId) {
@@ -2029,8 +2055,10 @@
     toast(
       usedLegacyFlow
         ? 'Doküman silindi. Tam veritabanı temizliği için `supabase-dokumanlar.sql` dosyasını SQL Editor içinde tekrar çalıştır.'
-        : 'Doküman, bağlı kayıtlar ve varsa Supabase dosyası silindi.',
-      'success'
+        : (storageFileRemoved
+          ? 'Doküman, bağlı kayıtlar ve varsa Supabase dosyası silindi.'
+          : 'Doküman ve bağlı kayıtlar silindi. Supabase dosyası için Storage temizliği uyarısını kontrol et.'),
+      storageFileRemoved ? 'success' : 'error'
     );
     await loadDocuments();
   }

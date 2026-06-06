@@ -845,76 +845,6 @@
       font-weight: 800;
       line-height: 1.5;
     }
-    .intro-film {
-      position: fixed;
-      inset: 0;
-      z-index: 10000;
-      display: grid;
-      place-items: center;
-      background: #160f35;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .45s ease, visibility .45s ease;
-      visibility: hidden;
-    }
-    .intro-film.is-visible {
-      opacity: 1;
-      pointer-events: auto;
-      visibility: visible;
-    }
-    .intro-film::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(180deg, rgba(22,15,53,.10), rgba(22,15,53,.72)),
-        radial-gradient(circle at 50% 12%, rgba(255,255,255,.18), transparent 32%);
-      pointer-events: none;
-    }
-    .intro-film-video {
-      width: min(100vw, 1600px);
-      height: min(100vh, 900px);
-      object-fit: cover;
-    }
-    .intro-film-brand {
-      position: absolute;
-      left: clamp(18px, 4vw, 56px);
-      right: clamp(18px, 4vw, 56px);
-      bottom: clamp(22px, 7vh, 72px);
-      z-index: 2;
-      color: white;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 18px;
-    }
-    .intro-film-title {
-      font-size: clamp(34px, 5vw, 76px);
-      font-weight: 1000;
-      letter-spacing: 0;
-      line-height: .95;
-      text-shadow: 0 18px 40px rgba(0,0,0,.28);
-    }
-    .intro-film-subtitle {
-      margin-top: 12px;
-      color: rgba(255,255,255,.82);
-      font-size: clamp(14px, 1.7vw, 22px);
-      font-weight: 900;
-    }
-    .intro-film-skip {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,.52);
-      border-radius: 999px;
-      background: rgba(255,255,255,.16);
-      color: white;
-      cursor: pointer;
-      font: inherit;
-      font-size: 14px;
-      font-weight: 900;
-      padding: 12px 18px;
-      white-space: nowrap;
-      backdrop-filter: blur(16px);
-    }
     .hero .hero-inner {
       width: 100%;
       max-width: 1320px;
@@ -1044,7 +974,7 @@
         0 24px 60px rgba(26,16,64,.14);
       backdrop-filter: blur(22px) saturate(1.45);
       -webkit-backdrop-filter: blur(22px) saturate(1.45);
-      pointer-events: none;
+      pointer-events: auto;
     }
     .home-showcase-slide.is-video .home-showcase-copy {
       width: min(980px, calc(100% - 420px));
@@ -1619,14 +1549,6 @@
       .home-showcase-stat strong {
         font-size: 24px;
       }
-      .intro-film-brand {
-        align-items: flex-start;
-        bottom: 24px;
-        flex-direction: column;
-      }
-      .intro-film-skip {
-        align-self: flex-start;
-      }
       .latest-section {
         padding: 48px 18px;
       }
@@ -1645,19 +1567,6 @@
 <body>
 
   <!-- Navbar ve Footer js/site.js tarafından enjekte edilir -->
-  <div class="intro-film" id="introFilm" aria-hidden="true">
-    <video class="intro-film-video" id="introFilmVideo" muted playsinline preload="metadata" poster="/assets/vitrin-gecici/06-mobil-uygulama.svg">
-      <source src="/assets/intro/kemal-ogretmenim-intro.mp4" type="video/mp4">
-    </video>
-    <div class="intro-film-brand">
-      <div>
-        <div class="intro-film-title">Kemal Öğretmenim</div>
-        <div class="intro-film-subtitle">Okuma, oyun ve sınav için canlı öğrenme alanı.</div>
-      </div>
-      <button class="intro-film-skip" id="introFilmSkip" type="button">Geç</button>
-    </div>
-  </div>
-
   <!-- ─── HERO ─── -->
   <section class="hero">
     <!-- Arkaplan blob'ları -->
@@ -2378,14 +2287,14 @@
       const MOBILE_APP_DOWNLOAD_SLIDE = {
         id: 'mobile-app-download',
         baslik: 'Kemal Öğretmenim cebinde',
-        aciklama_html: 'Android uygulamasının v2 sürümünü indir, derslere ve panellere telefondan hızlıca ulaş.',
+        aciklama_html: 'Android uygulamasının v3 hazırlığı yayında; derslere, okuma alanına ve panellere telefondan hızlıca ulaş.',
         icerik_turu: 'mobile',
         ikon: '📱',
         tema_renk: '#6C3DED',
         media_url: '/assets/vitrin-gecici/06-mobil-uygulama.svg',
         media_fit: 'cover',
         link_url: '/downloads/kemal-ogretmenim-v2.apk',
-        link_label: 'Android APK v2 İndir',
+        link_label: 'Android APK İndir',
         gecis_suresi_ms: 6000,
         siralama: 0,
         aktif: true
@@ -2440,7 +2349,7 @@
           const href = item.link_url || '';
           const downloadAttr = isDownloadLink(href) ? ' download' : '';
           function linkedMedia(innerHtml) {
-            if (!href || type === 'youtube') return innerHtml;
+            if (!href || type === 'youtube' || isDownloadLink(href)) return innerHtml;
             return `<a class="home-showcase-media-link" href="${esc(href)}"${downloadAttr} aria-label="${esc(item.link_label || item.baslik || 'Vitrin bağlantısı')}">${innerHtml}</a>`;
           }
           if (type === 'youtube' && item.youtube_embed_url) {
@@ -2958,44 +2867,6 @@
     });
     const statEl = document.querySelector('.hero-stats');
     if (statEl) obs.observe(statEl);
-
-    (function initIntroFilm() {
-      const intro = document.getElementById('introFilm');
-      const video = document.getElementById('introFilmVideo');
-      const skip = document.getElementById('introFilmSkip');
-      if (!intro || !video || !skip) return;
-      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const getIntroShown = () => {
-        try { return sessionStorage.getItem('kemalIntroFilmShown') === '1'; }
-        catch (error) { return false; }
-      };
-      const setIntroShown = () => {
-        try { sessionStorage.setItem('kemalIntroFilmShown', '1'); }
-        catch (error) {}
-      };
-      const alreadyShown = getIntroShown();
-      if (reduceMotion || alreadyShown) return;
-
-      let done = false;
-      function closeIntro() {
-        if (done) return;
-        done = true;
-        setIntroShown();
-        intro.classList.remove('is-visible');
-        intro.setAttribute('aria-hidden', 'true');
-        try { video.pause(); } catch (error) {}
-      }
-
-      intro.classList.add('is-visible');
-      intro.setAttribute('aria-hidden', 'false');
-      skip.addEventListener('click', closeIntro);
-      video.addEventListener('ended', closeIntro);
-      setTimeout(closeIntro, 5200);
-      const playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(closeIntro);
-      }
-    })();
   </script>
 </body>
 </html>

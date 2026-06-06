@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kemal Öğretmenim",
     "slug": "kemal-ogretmenim",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "scheme": "kemalogretmenim",
     "orientation": "portrait",
     "icon": "./assets/logo.png",

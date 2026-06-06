@@ -13,6 +13,13 @@ function RootNavigator() {
   const { loading } = useAuth();
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => undefined);
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (!loading) {
       SplashScreen.hideAsync().catch(() => undefined);
     }
@@ -25,6 +32,7 @@ function RootNavigator() {
         <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
+        <Stack.Screen name="reading" />
         <Stack.Screen name="(app)" />
         <Stack.Screen name="webview" options={{ presentation: 'modal' }} />
       </Stack>
