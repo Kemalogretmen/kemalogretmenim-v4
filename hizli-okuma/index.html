@@ -143,7 +143,7 @@
 
     .metin-filter-panel {
       display:grid;
-      grid-template-columns:repeat(3,minmax(0,1fr));
+      grid-template-columns:repeat(4,minmax(0,1fr));
       gap:12px;
       background:rgba(255,255,255,.56);
       border:1.5px solid rgba(255,255,255,.72);
@@ -238,6 +238,15 @@
       justify-content: center;
     }
     .mc-em { font-size: 28px; }
+    .mc-thumb-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,.86);
+      box-shadow: 0 10px 20px rgba(15,23,42,.12);
+      background: rgba(255,255,255,.72);
+    }
     .mc-body {
       flex: 1; min-width: 0;
       padding:12px 12px;
@@ -351,6 +360,7 @@
 
     @media(max-width:900px) {
       .metin-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .metin-filter-panel { grid-template-columns: repeat(2,minmax(0,1fr)); }
     }
 
     @media(max-width:580px) {
@@ -601,7 +611,7 @@
   </div>
 
   <script src="/js/site-data.js?v=20260418-2"></script>
-  <script src="/js/site.js?v=20260418-2"></script>
+  <script src="/js/site.js?v=20260608-content-safety2"></script>
   <script src="/js/user-auth.js"></script>
   <script src="/js/meb-schools.js"></script>
   <script src="/js/content-progress.js?v=20260418-2"></script>
@@ -619,6 +629,20 @@
       : [];
     const LOW_QUALITY_TOKENS = ['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
     const SCHOOL_MISSING_VALUE = '__manual_school__';
+    const READING_LEVEL_LABELS = {
+      baslangic: 'Başlangıç',
+      gelisen: 'Gelişen',
+      akici: 'Akıcı',
+      ileri: 'İleri'
+    };
+    const READING_TYPE_LABELS = {
+      hikaye: 'Hikaye',
+      bilgilendirici: 'Bilgilendirici',
+      masal: 'Masal',
+      siir: 'Şiir',
+      diyalog: 'Diyalog',
+      egzersiz: 'Egzersiz'
+    };
     window.kemalReadingAuth = window.kemalReadingAuth || {
       enabled: false,
       entrySelector: '[data-auth-entry="reading-report"]',
@@ -645,6 +669,51 @@
       } catch (error) {
         return {};
       }
+    }
+
+    function normalizeTrainingProfile(value) {
+      const defaults = {
+        seviye: 'gelisen',
+        tur: 'hikaye',
+        tema: '',
+        kazanim: '',
+        tahmini_dk: 3,
+        rsvp: {
+          grup_boyutu: 1,
+          noktalama_duraklama_ms: 220,
+          ogrenci_hiz_kontrolu: false
+        },
+        gorsel: {
+          url: '',
+          alt: '',
+          aciklama: '',
+          konum: 'none',
+          fit: 'cover'
+        }
+      };
+      const raw = parseOptionalJson(value);
+      const profile = Object.assign({}, defaults, raw || {});
+      const rsvp = Object.assign({}, defaults.rsvp, profile.rsvp || {});
+      const visual = Object.assign({}, defaults.gorsel, profile.gorsel || {});
+      profile.seviye = READING_LEVEL_LABELS[profile.seviye] ? profile.seviye : defaults.seviye;
+      profile.tur = READING_TYPE_LABELS[profile.tur] ? profile.tur : defaults.tur;
+      profile.tema = collapseSpaces(profile.tema);
+      profile.kazanim = collapseSpaces(profile.kazanim);
+      profile.tahmini_dk = Math.max(1, Math.min(30, parseInt(profile.tahmini_dk, 10) || defaults.tahmini_dk));
+      rsvp.grup_boyutu = Math.max(1, Math.min(3, parseInt(rsvp.grup_boyutu, 10) || defaults.rsvp.grup_boyutu));
+      rsvp.noktalama_duraklama_ms = rsvp.noktalama_duraklama_ms === 0 ? 0 : (parseInt(rsvp.noktalama_duraklama_ms, 10) || defaults.rsvp.noktalama_duraklama_ms);
+      rsvp.ogrenci_hiz_kontrolu = !!rsvp.ogrenci_hiz_kontrolu;
+      visual.url = collapseSpaces(visual.url);
+      visual.alt = collapseSpaces(visual.alt);
+      visual.aciklama = collapseSpaces(visual.aciklama);
+      visual.konum = ['none', 'top', 'cover'].includes(visual.konum) ? visual.konum : (visual.url ? 'top' : defaults.gorsel.konum);
+      visual.fit = visual.fit === 'contain' ? 'contain' : 'cover';
+      if (!visual.url) {
+        visual.konum = 'none';
+      }
+      profile.rsvp = rsvp;
+      profile.gorsel = visual;
+      return profile;
     }
 
     function capitalizeWords(value) {
@@ -1019,6 +1088,7 @@
       // Sınıf seçiliyse giriş formunda da ayarla
       document.getElementById('kullanici_sinif').value = sinif;
       metinFiltreleri.tur = 'all';
+      metinFiltreleri.seviye = 'all';
       metinFiltreleri.siralama = 'newest';
       metinFiltreleri.soru = 'all';
 
@@ -1032,6 +1102,7 @@
     const SAYFA_BOYUT = 12;
     const metinFiltreleri = {
       tur: 'all',
+      seviye: 'all',
       siralama: 'newest',
       soru: 'all',
     };
@@ -1044,11 +1115,11 @@
       // sinif sütunu VEYA siniflar dizisi içinde eşleşen metinleri çek
       let metinResponse = await sb
         .from('metinler')
-        .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif,gizli,oturum_gerekli,olusturma_tarihi')
+        .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif,gizli,oturum_gerekli,egitim_json,olusturma_tarihi')
         .eq('aktif', true)
         .order('olusturma_tarihi', { ascending: false });
 
-      if (metinResponse.error && /oturum_gerekli|gizli/i.test(metinResponse.error.message || '')) {
+      if (metinResponse.error && /oturum_gerekli|gizli|egitim_json/i.test(metinResponse.error.message || '')) {
         metinResponse = await sb
           .from('metinler')
           .select('id,baslik,sinif,siniflar,goruntuleme_modu,hedef_hiz,kelime_sayisi,aktif,olusturma_tarihi')
@@ -1122,6 +1193,10 @@
       return 'Tüm soru sayıları';
     }
 
+    function getLevelFilterLabel(value) {
+      return value === 'all' ? 'Tüm seviyeler' : (READING_LEVEL_LABELS[value] || 'Gelişen');
+    }
+
     function renderMetinFilters() {
       const panel = document.getElementById('metinFilterPanel');
       if (!panel) return;
@@ -1132,6 +1207,14 @@
             <option value="all" ${metinFiltreleri.tur === 'all' ? 'selected' : ''}>Tüm türler</option>
             <option value="tam" ${metinFiltreleri.tur === 'tam' ? 'selected' : ''}>Tam metin</option>
             <option value="kelime" ${metinFiltreleri.tur === 'kelime' ? 'selected' : ''}>Kelime kelime</option>
+          </select>
+        </div>
+        <div>
+          <label>Seviye</label>
+          <select onchange="metinFiltreDegistir('seviye', this.value)">
+            ${['all', 'baslangic', 'gelisen', 'akici', 'ileri'].map(function(value) {
+              return '<option value="' + value + '" ' + (metinFiltreleri.seviye === value ? 'selected' : '') + '>' + getLevelFilterLabel(value) + '</option>';
+            }).join('')}
           </select>
         </div>
         <div>
@@ -1178,6 +1261,9 @@
     function applyMetinFilters() {
       tumMetinler = sortMetinler(tumMetinlerKaynak.filter(function(metin) {
         if (metinFiltreleri.tur !== 'all' && metin.goruntuleme_modu !== metinFiltreleri.tur) {
+          return false;
+        }
+        if (metinFiltreleri.seviye !== 'all' && normalizeTrainingProfile(metin.egitim_json).seviye !== metinFiltreleri.seviye) {
           return false;
         }
         return metinSoruSayisiEslesir(metin);
@@ -1235,7 +1321,15 @@
         const hiz    = m.hedef_hiz    ? `${m.hedef_hiz} k/dk` : '';
         const kw     = m.kelime_sayisi ? `${m.kelime_sayisi} kelime` : '';
         const soru   = Number.isFinite(Number(m.soru_sayisi)) ? `${Number(m.soru_sayisi)} soru` : '';
+        const profile = normalizeTrainingProfile(m.egitim_json);
+        const seviye = READING_LEVEL_LABELS[profile.seviye] || 'Gelişen';
+        const metinTuru = READING_TYPE_LABELS[profile.tur] || 'Hikaye';
+        const sure = profile.tahmini_dk ? `${profile.tahmini_dk} dk` : '';
         const em     = EMOJILER[(baslangic + i) % EMOJILER.length];
+        const visual = profile.gorsel || {};
+        const thumb = visual.url
+          ? `<img class="mc-thumb-img" src="${escHtml(visual.url)}" alt="${escHtml(visual.alt || visual.aciklama || m.baslik || 'Okuma metni görseli')}" loading="lazy">`
+          : `<span class="mc-em">${em}</span>`;
         const statusMeta = getReadingStatusMeta(m);
         const isNew = yeniMetinIdSet.has(String(m.id));
         const renk = METIN_RENKLER[(baslangic + i) % METIN_RENKLER.length];
@@ -1251,7 +1345,7 @@
             data-access-scope="${m.oturum_gerekli ? 'registered' : 'public'}">
             <div class="mc-left">
               <div class="mc-no">${baslangic + i + 1}</div>
-              <span class="mc-em">${em}</span>
+              ${thumb}
             </div>
             <div class="mc-body">
               <div class="mc-title-row">
@@ -1264,6 +1358,10 @@
                 ${kw ? `<span class="mc-chip">📊 ${kw}</span>` : ''}
                 ${soru ? `<span class="mc-chip">❔ ${soru}</span>` : ''}
                 ${hiz ? `<span class="mc-chip">🎯 ${hiz}</span>` : ''}
+                <span class="mc-chip">🎓 ${escHtml(seviye)}</span>
+                <span class="mc-chip">🏷️ ${escHtml(metinTuru)}</span>
+                ${sure ? `<span class="mc-chip">⏱️ ${sure}</span>` : ''}
+                ${profile.tema ? `<span class="mc-chip"># ${escHtml(profile.tema)}</span>` : ''}
               </div>
               ${statusMeta ? `<div class="mc-status-row"><span class="mc-status-badge ${statusMeta.tone}">✅ ${statusMeta.label}</span></div>` : ''}
             </div>
@@ -1432,9 +1530,17 @@
 
       // Bilgilendirme paneli
       const mod = selectedMetin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+      const selectedProfile = normalizeTrainingProfile(selectedMetin.egitim_json);
+      const selectedMeta = [
+        mod,
+        (selectedMetin.kelime_sayisi || '?') + ' kelime',
+        selectedMetin.sorular.length + ' anlama sorusu',
+        READING_LEVEL_LABELS[selectedProfile.seviye] || 'Gelişen',
+        READING_TYPE_LABELS[selectedProfile.tur] || 'Hikaye',
+        selectedProfile.kazanim || selectedProfile.tema || ''
+      ].filter(Boolean);
       document.getElementById('seciliMetinAdi').textContent = selectedMetin.baslik;
-      document.getElementById('seciliMetinMeta').textContent =
-        `${mod} · ${selectedMetin.kelime_sayisi || '?'} kelime · ${selectedMetin.sorular.length} anlama sorusu`;
+      document.getElementById('seciliMetinMeta').textContent = selectedMeta.join(' · ');
 
       document.getElementById('step2').style.display = 'none';
       document.getElementById('step3').style.display = 'block';
@@ -1463,6 +1569,17 @@
       if (!validateSchool(okul)) {
         alert('Okul adı anlamsız veya tekrar eden bir giriş gibi görünüyor. Lütfen okul adını daha net yazın.');
         return;
+      }
+      if (window.kemalContentSafety && typeof window.kemalContentSafety.validateFields === 'function') {
+        const safetyResult = window.kemalContentSafety.validateFields([
+          { element: document.getElementById('kullanici_ad'), label: 'ogrenci_adi', value: ad },
+          { element: document.getElementById('kullanici_soyad'), label: 'ogrenci_soyadi', value: soyad },
+          { element: document.getElementById('kullanici_okul_manual'), label: 'okul_adi', value: okul },
+        ], { surface: 'reading_student_info' });
+        if (!safetyResult.ok) {
+          alert(safetyResult.message);
+          return;
+        }
       }
 
       const authInfo = window.kemalUserAuth && window.kemalUserAuth.getStudentInfo ? window.kemalUserAuth.getStudentInfo() : null;

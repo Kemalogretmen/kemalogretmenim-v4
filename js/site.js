@@ -30,6 +30,289 @@
     return;
   }
 
+  const CONTENT_SAFETY_WARNING = 'Bu alanda ahlak kurallarına uygun olmayan kelime veya ifade kullanılamaz. Lütfen yazını düzelt.';
+  const CONTENT_SAFETY_COMPACT_TERMS = [
+    'motherfucker', 'sonofabitch', 'bullshit', 'asshole', 'dickhead', 'shithead',
+    'fuckface', 'fuckyou', 'fucker', 'fucking', 'fuck', 'bastard', 'bitch', 'slut',
+    'whore', 'pussy', 'dick', 'cock', 'wanker', 'idiot', 'stupid', 'moron',
+    'retard', 'retarded', 'loser', 'scumbag',
+    'aminakoyim', 'aminakodum', 'aminakoy', 'aminakod', 'amcik', 'amcuk',
+    'orospu', 'oruspu', 'siktir', 'sikerim', 'sikeyim', 'sikik', 'sikim',
+    'sokuk', 'gotveren', 'gotun', 'yarrak', 'yarak', 'yarraq', 'pezevenk',
+    'kahpe', 'kaltak', 'gerizekali', 'gerizekalli', 'salak', 'aptal', 'ibne',
+    'pic', 'pich', 'puşt', 'pust', 'haysiyetsiz', 'serefsiz', 'şerefsiz',
+    'asagilik', 'aşağılık'
+  ];
+  const CONTENT_SAFETY_TOKEN_TERMS = [
+    'amk', 'aq', 'got', 'bok', 'mal', 'damn', 'crap'
+  ];
+  const CONTENT_SAFETY_LEET_MAP = {
+    '@': 'a',
+    '4': 'a',
+    '3': 'e',
+    '1': 'i',
+    '!': 'i',
+    '|': 'i',
+    '0': 'o',
+    '5': 's',
+    '$': 's',
+    '7': 't'
+  };
+
+  function normalizeContentSafetyText(value) {
+    const mapped = String(value || '')
+      .toLocaleLowerCase('tr-TR')
+      .replace(/[ç]/g, 'c')
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ş]/g, 's')
+      .replace(/[ü]/g, 'u')
+      .replace(/[âîû]/g, function(match) {
+        return { 'â': 'a', 'î': 'i', 'û': 'u' }[match] || match;
+      })
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[@431!|05$7]/g, function(match) {
+        return CONTENT_SAFETY_LEET_MAP[match] || match;
+      })
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    const tokens = mapped ? mapped.split(/\s+/).filter(Boolean) : [];
+    return {
+      spaced: mapped,
+      tokens: tokens,
+      compact: tokens.join(''),
+    };
+  }
+
+  function findContentSafetyViolation(value) {
+    const normalized = normalizeContentSafetyText(value);
+    if (!normalized.compact) {
+      return null;
+    }
+    const compactTerms = CONTENT_SAFETY_COMPACT_TERMS
+      .map(function(term) { return normalizeContentSafetyText(term).compact; })
+      .filter(Boolean)
+      .sort(function(a, b) { return b.length - a.length; });
+    for (const term of compactTerms) {
+      if (normalized.compact.includes(term)) {
+        return { term: term, value: value };
+      }
+    }
+    const tokenTerms = CONTENT_SAFETY_TOKEN_TERMS
+      .map(function(term) { return normalizeContentSafetyText(term).compact; })
+      .filter(Boolean);
+    for (const term of tokenTerms) {
+      if (normalized.tokens.includes(term)) {
+        return { term: term, value: value };
+      }
+      if (normalized.compact === term) {
+        return { term: term, value: value };
+      }
+    }
+    return null;
+  }
+
+  function getContentSafetySessionId() {
+    const key = 'kemal_content_safety_session';
+    try {
+      const existing = localStorage.getItem(key);
+      if (existing) return existing;
+      const next = (window.crypto && window.crypto.randomUUID)
+        ? window.crypto.randomUUID()
+        : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+      localStorage.setItem(key, next);
+      return next;
+    } catch (error) {
+      return 'session-unavailable';
+    }
+  }
+
+  function isContentSafetyTextField(target) {
+    if (!target || target.disabled || target.readOnly) return false;
+    const tag = String(target.tagName || '').toLowerCase();
+    if (tag === 'textarea') return true;
+    if (target.isContentEditable) return true;
+    if (tag !== 'input') return false;
+    const type = String(target.type || 'text').toLowerCase();
+    return ['text', 'search', 'tel'].includes(type);
+  }
+
+  function buildContentSafetyPayload(field, violation, options) {
+    const element = field && field.element ? field.element : null;
+    const label = field && field.label ? field.label : '';
+    const config = window.kemalSiteStore && typeof window.kemalSiteStore.getConfig === 'function'
+      ? window.kemalSiteStore.getConfig()
+      : null;
+    return {
+      session_id: getContentSafetySessionId(),
+      surface: options && options.surface ? String(options.surface).slice(0, 80) : 'form',
+      field_name: label || (element && (element.name || element.id)) || '',
+      matched_key: violation && violation.term ? String(violation.term).slice(0, 80) : '',
+      page_path: String(window.location && window.location.pathname ? window.location.pathname : '').slice(0, 500),
+      page_url: String(window.location && window.location.href ? window.location.href : '').slice(0, 1000),
+      language: String(navigator.language || '').slice(0, 40),
+      timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '').slice(0, 80),
+      user_agent: String(navigator.userAgent || '').slice(0, 500),
+      event_payload: {
+        elementId: element && element.id ? element.id : '',
+        elementName: element && element.name ? element.name : '',
+        valueLength: field && field.value ? String(field.value).length : 0,
+      },
+      supabaseUrl: config ? config.supabaseUrl : '',
+      anonKey: config ? config.supabaseAnonKey : '',
+    };
+  }
+
+  async function getContentSafetyAccessToken() {
+    try {
+      if (!window.supabase || !window.kemalSiteStore || typeof window.kemalSiteStore.getConfig !== 'function') {
+        return '';
+      }
+      const config = window.kemalSiteStore.getConfig();
+      const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+        auth: { autoRefreshToken: false, persistSession: true, detectSessionInUrl: false },
+      });
+      const result = await client.auth.getSession();
+      return result && result.data && result.data.session ? result.data.session.access_token : '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  async function logContentSafetyViolation(field, violation, options) {
+    const payload = buildContentSafetyPayload(field, violation, options || {});
+    if (!payload.supabaseUrl || !payload.anonKey) return;
+    const token = await getContentSafetyAccessToken();
+    const headers = {
+      apikey: payload.anonKey,
+      Authorization: 'Bearer ' + (token || payload.anonKey),
+      'Content-Type': 'application/json',
+    };
+    const body = JSON.stringify(payload);
+    fetch(payload.supabaseUrl.replace(/\/+$/, '') + '/functions/v1/report-content-safety', {
+      method: 'POST',
+      headers: headers,
+      body: body,
+      keepalive: true,
+    }).catch(function() {
+      fetch(payload.supabaseUrl.replace(/\/+$/, '') + '/rest/v1/content_safety_events', {
+        method: 'POST',
+        headers: Object.assign({}, headers, { Prefer: 'resolution=ignore-duplicates' }),
+        body: JSON.stringify({
+          session_id: payload.session_id,
+          surface: payload.surface,
+          field_name: payload.field_name,
+          matched_key: payload.matched_key,
+          page_path: payload.page_path,
+          page_url: payload.page_url,
+          language: payload.language,
+          timezone: payload.timezone,
+          user_agent: payload.user_agent,
+          event_payload: payload.event_payload,
+        }),
+        keepalive: true,
+      }).catch(function() {});
+    });
+  }
+
+  function showContentSafetyWarning(message) {
+    let toast = document.getElementById('contentSafetyToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'contentSafetyToast';
+      toast.setAttribute('role', 'status');
+      toast.style.cssText = 'position:fixed;left:50%;bottom:22px;z-index:2147483647;max-width:min(560px,calc(100vw - 28px));transform:translate(-50%,16px);opacity:0;pointer-events:none;background:#C0392B;color:white;border-radius:14px;padding:13px 16px;box-shadow:0 18px 42px rgba(15,23,42,.22);font:800 14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:opacity .2s,transform .2s;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message || CONTENT_SAFETY_WARNING;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translate(-50%,0)';
+    window.clearTimeout(showContentSafetyWarning.timer);
+    showContentSafetyWarning.timer = window.setTimeout(function() {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%,16px)';
+    }, 4200);
+  }
+
+  function validateContentSafetyFields(fields, options) {
+    const list = Array.isArray(fields) ? fields : [];
+    for (const field of list) {
+      const value = field && Object.prototype.hasOwnProperty.call(field, 'value')
+        ? field.value
+        : (field && field.element ? field.element.value : '');
+      const violation = findContentSafetyViolation(value);
+      if (violation) {
+        const element = field && field.element ? field.element : null;
+        if (element && typeof element.setCustomValidity === 'function') {
+          element.setCustomValidity(CONTENT_SAFETY_WARNING);
+          if (typeof element.reportValidity === 'function') element.reportValidity();
+          window.setTimeout(function() { element.setCustomValidity(''); }, 1200);
+          if (typeof element.focus === 'function') element.focus();
+        }
+        showContentSafetyWarning(CONTENT_SAFETY_WARNING);
+        logContentSafetyViolation(field || {}, violation, options || {});
+        return {
+          ok: false,
+          message: CONTENT_SAFETY_WARNING,
+          field: field || {},
+          violation: violation,
+        };
+      }
+    }
+    return { ok: true };
+  }
+
+  function initContentSafety() {
+    document.addEventListener('input', function(event) {
+      const target = event.target;
+      if (!isContentSafetyTextField(target)) return;
+      if (!findContentSafetyViolation(target.value || target.textContent || '')) {
+        if (typeof target.setCustomValidity === 'function') target.setCustomValidity('');
+        return;
+      }
+      if (typeof target.setCustomValidity === 'function') {
+        target.setCustomValidity(CONTENT_SAFETY_WARNING);
+      }
+    }, true);
+
+    document.addEventListener('submit', function(event) {
+      const form = event.target;
+      if (!form || typeof form.querySelectorAll !== 'function') return;
+      const fields = Array.prototype.slice.call(form.querySelectorAll('input, textarea, [contenteditable="true"]'))
+        .filter(isContentSafetyTextField)
+        .map(function(element) {
+          return {
+            element: element,
+            label: element.name || element.id || 'metin_alani',
+            value: element.isContentEditable ? element.textContent : element.value,
+          };
+        });
+      const result = validateContentSafetyFields(fields, { surface: form.id || form.getAttribute('name') || 'form_submit' });
+      if (!result.ok) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }, true);
+  }
+
+  window.kemalContentSafety = {
+    warning: CONTENT_SAFETY_WARNING,
+    normalize: normalizeContentSafetyText,
+    findViolation: findContentSafetyViolation,
+    validateFields: validateContentSafetyFields,
+    assertCleanFields: function(fields, options) {
+      const result = validateContentSafetyFields(fields, options || {});
+      if (!result.ok) {
+        throw new Error(result.message);
+      }
+      return result;
+    },
+    logViolation: logContentSafetyViolation,
+    showWarning: showContentSafetyWarning,
+  };
+
   const GRADE_META = {
     '1': {
       label: '1. Sınıf',
@@ -207,6 +490,8 @@
     '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
     '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
     '/ogretmen-ajandasi/index.html': 'Öğretmenler için öğrenci takibi, sınav analizi, karne, ders programı ve akademik takvim içeren öğretmen ajandası.',
+    '/sinif-tahtasi.html': 'Akıllı tahta için öğretmen araçları merkezi: beyaz tahta, kronometre, çark, oyunlar, okuma ve belge araçları.',
+    '/sinif-kaynaklari.html': 'Sınıf düzeyine göre yayınlanmış dokümanlar, videolar ve etkileşimli çalışma kağıtları.',
     '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, zamanlayıcı ve sınıf içi yardımcı araçlar.',
     '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
     '/oyun/oyunlar.html': 'Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.',
@@ -1164,6 +1449,8 @@
       { uid: 'static:reading', title: 'Hızlı Okuma Merkezi', href: '/hizli-okuma/index.html', icon: '📖', gradeLabel: '1-8. Sınıf', subjectLabel: 'Okuma Anlama', contentTypeLabel: 'Merkez' },
       { uid: 'static:games', title: 'Eğitim Oyunları', href: '/oyun/oyunlar.html', icon: '🎮', gradeLabel: 'Genel', subjectLabel: 'Oyunlar', contentTypeLabel: 'Merkez' },
       { uid: 'static:exams', title: 'Sınav Merkezi', href: '/sinav_sitesi/index.html', icon: '📝', gradeLabel: '1-8. Sınıf', subjectLabel: 'Deneme ve Test', contentTypeLabel: 'Merkez' },
+      { uid: 'static:class-board', title: 'Sınıf Tahtası', href: '/sinif-tahtasi.html', icon: '🧑‍🏫', gradeLabel: 'Öğretmen', subjectLabel: 'Akıllı Tahta', contentTypeLabel: 'Merkez' },
+      { uid: 'static:class-resources', title: 'Sınıf Kaynakları', href: '/sinif-kaynaklari.html', icon: '📚', gradeLabel: '1-8. Sınıf', subjectLabel: 'Doküman ve Çalışma', contentTypeLabel: 'Merkez' },
       { uid: 'static:tools', title: 'Öğretmen Araçları', href: '/ogretmen-araclari.html', icon: '⏱️', gradeLabel: 'Öğretmen', subjectLabel: 'Araçlar', contentTypeLabel: 'Sayfa' },
       { uid: 'static:certificate-studio', title: 'Belge ve Sertifika Stüdyosu', href: '/ogretmen/belge-studyo.html', icon: '🏅', gradeLabel: 'Öğretmen', subjectLabel: 'Belge Tasarımı', contentTypeLabel: 'Araç' },
       { uid: 'static:agenda', title: 'Öğretmen Ajandası', href: '/ogretmen-ajandasi/index.html', icon: '📒', gradeLabel: 'Öğretmen', subjectLabel: 'Ajanda ve Takip', contentTypeLabel: 'Araç' },
@@ -1557,6 +1844,7 @@
             '<a href="/hakkimda.html" class="dd-item"><span class="dd-icon">👨‍🏫</span> Hakkımda</a>' +
             '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
             '<a href="/ogretmen-ajandasi/index.html" class="dd-item"><span class="dd-icon">📒</span> Öğretmen Ajandası</a>' +
+            '<a href="/sinif-tahtasi.html" class="dd-item"><span class="dd-icon">🧑‍🏫</span> Sınıf Tahtası</a>' +
             '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
             '<a href="/ogretmen/belge-studyo.html" class="dd-item"><span class="dd-icon">🏅</span> Belge ve Sertifika Stüdyosu</a>' +
             '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
@@ -1595,6 +1883,8 @@
             '<li><a href="/oyun/oyunlar.html">🎮 Oyunlar</a></li>' +
             '<li><a href="/sinav_sitesi/index.html">📝 Sınav Merkezi</a></li>' +
             '<li><a href="/ogretmen-ajandasi/index.html">📒 Öğretmen Ajandası</a></li>' +
+            '<li><a href="/sinif-tahtasi.html">🧑‍🏫 Sınıf Tahtası</a></li>' +
+            '<li><a href="/sinif-kaynaklari.html">📚 Sınıf Kaynakları</a></li>' +
             '<li><a href="/ogretmen-araclari.html">⏱️ Öğretmen Araçları</a></li>' +
             '<li><a href="/hakkimda.html">Hakkımda</a></li>' +
             '<li><a href="/iletisim.html">İletişim</a></li>' +
@@ -2020,6 +2310,7 @@
   }
 
   const seoState = initSeo();
+  initContentSafety();
   initAnalytics();
   const ready = hydrateChrome();
   window.addEventListener('kemal-user-auth-changed', function() {

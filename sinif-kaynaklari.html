@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sınıf Kaynakları — Kemal Öğretmenim</title>
+  <meta name="description" content="Sınıf düzeyine göre yayınlanmış dokümanlar, videolar ve etkileşimli çalışma kağıtları.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/sinif-kaynaklari.html">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --res-ink: #17213f;
+      --res-muted: #64748b;
+      --res-line: #e5def8;
+      --res-paper: #ffffff;
+      --res-lavender: #f4efff;
+      --res-violet: #6c3ded;
+      --res-teal: #00a891;
+      --res-coral: #ff6657;
+      --res-sun: #f5b700;
+      --res-shadow: 0 18px 42px rgba(35, 24, 82, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--res-ink);
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      background:
+        radial-gradient(circle at 8% 12%, rgba(255, 102, 87, 0.14), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(0, 168, 145, 0.16), transparent 28%),
+        linear-gradient(180deg, #fffaf3 0%, #f7f2ff 52%, #f3fbff 100%);
+    }
+
+    button,
+    select {
+      font: inherit;
+    }
+
+    .resource-page {
+      width: min(1220px, 100%);
+      margin: 0 auto;
+      padding: 22px 16px 64px;
+    }
+
+    .resource-hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, #291260 0%, #6c3ded 58%, #00a891 100%);
+      color: white;
+      padding: 26px;
+      box-shadow: var(--res-shadow);
+    }
+
+    .resource-hero::before,
+    .resource-hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      pointer-events: none;
+    }
+
+    .resource-hero::before {
+      width: 260px;
+      height: 260px;
+      right: -70px;
+      top: -100px;
+    }
+
+    .resource-hero::after {
+      width: 180px;
+      height: 180px;
+      left: -60px;
+      bottom: -90px;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .kicker {
+      display: inline-flex;
+      width: fit-content;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 13px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: var(--font-display, "Nunito", system-ui, sans-serif);
+      font-size: clamp(2.05rem, 5vw, 4rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .resource-hero p {
+      max-width: 780px;
+      margin: 12px 0 0;
+      color: rgba(255,255,255,0.8);
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .hero-link {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 0 15px;
+      background: rgba(255,255,255,0.14);
+      color: white;
+      text-decoration: none;
+      font-weight: 1000;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
+    }
+
+    .resource-controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      border: 1px solid var(--res-line);
+      border-radius: 24px;
+      background: rgba(255,255,255,0.92);
+      padding: 14px;
+      box-shadow: 0 12px 28px rgba(35,24,82,0.08);
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field label {
+      color: var(--res-muted);
+      font-size: 0.8rem;
+      font-weight: 1000;
+      text-transform: uppercase;
+    }
+
+    .field select {
+      min-height: 48px;
+      border: 2px solid var(--res-line);
+      border-radius: 15px;
+      background: #fff;
+      color: var(--res-ink);
+      padding: 0 12px;
+      font-weight: 900;
+      outline: none;
+    }
+
+    .field select:focus {
+      border-color: var(--res-violet);
+      box-shadow: 0 0 0 4px rgba(108,61,237,0.12);
+    }
+
+    .status-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0 12px;
+    }
+
+    .status-strip h2 {
+      margin: 0;
+      font-family: var(--font-display, "Nunito", system-ui, sans-serif);
+      font-size: clamp(1.45rem, 3vw, 2.1rem);
+      line-height: 1.1;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      border-radius: 999px;
+      background: white;
+      border: 1px solid var(--res-line);
+      color: var(--res-muted);
+      padding: 6px 11px;
+      font-size: 0.82rem;
+      font-weight: 1000;
+      box-shadow: 0 8px 18px rgba(35,24,82,0.05);
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 13px;
+    }
+
+    .resource-card {
+      min-height: 210px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      border: 1px solid var(--res-line);
+      border-radius: 20px;
+      background: white;
+      color: var(--res-ink);
+      padding: 15px;
+      text-decoration: none;
+      box-shadow: 0 10px 24px rgba(35,24,82,0.07);
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+    }
+
+    .resource-card:hover {
+      transform: translateY(-3px);
+      border-color: #cbbcff;
+      box-shadow: 0 16px 30px rgba(35,24,82,0.1);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .resource-icon {
+      width: 52px;
+      height: 52px;
+      display: grid;
+      place-items: center;
+      border-radius: 17px;
+      background: var(--res-lavender);
+      font-size: 1.55rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .badge {
+      min-height: 27px;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: #f5f1ff;
+      color: var(--res-violet);
+      font-size: 0.72rem;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .badge.worksheet {
+      background: #e9fff7;
+      color: var(--res-teal);
+    }
+
+    .badge.video {
+      background: #fff0ec;
+      color: var(--res-coral);
+    }
+
+    .resource-card h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      line-height: 1.18;
+      font-weight: 1000;
+    }
+
+    .resource-card p {
+      margin: 8px 0 0;
+      color: var(--res-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    .card-bottom {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      color: var(--res-muted);
+      font-size: 0.82rem;
+      font-weight: 900;
+    }
+
+    .open-label {
+      color: var(--res-violet);
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      display: none;
+      border: 1px dashed #cdbfff;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.78);
+      padding: 34px 20px;
+      text-align: center;
+      color: var(--res-muted);
+      font-weight: 900;
+    }
+
+    .empty-state.show {
+      display: block;
+    }
+
+    .empty-state span {
+      display: block;
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .subject-tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .subject-tile {
+      min-height: 72px;
+      border: 1px solid var(--res-line);
+      border-radius: 18px;
+      background: white;
+      color: var(--res-ink);
+      padding: 10px;
+      text-align: left;
+      font-weight: 1000;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(35,24,82,0.05);
+    }
+
+    .subject-tile.active {
+      border-color: var(--res-violet);
+      background: #f3edff;
+      color: var(--res-violet);
+    }
+
+    .subject-tile span {
+      display: block;
+      margin-top: 4px;
+      color: var(--res-muted);
+      font-size: 0.76rem;
+      font-weight: 900;
+    }
+
+    @media (max-width: 860px) {
+      .hero-inner,
+      .resource-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .resource-page {
+        padding: 10px 10px 46px;
+      }
+
+      .resource-hero,
+      .resource-controls,
+      .resource-card {
+        border-radius: 18px;
+      }
+
+      .resource-hero {
+        padding: 18px;
+      }
+
+      .resource-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="resource-page">
+    <section class="resource-hero">
+      <div class="hero-inner">
+        <div>
+          <span class="kicker" id="heroKicker">Sınıf kaynakları</span>
+          <h1 id="heroTitle">Dokümanlar ve Çalışmalar</h1>
+          <p id="heroDesc">Sınıfına uygun yayınlanmış dokümanları, videoları ve etkileşimli çalışma kağıtlarını buradan açabilirsin.</p>
+        </div>
+        <div class="hero-actions">
+          <a class="hero-link" href="/sinif-tahtasi.html">← Sınıf Tahtası</a>
+          <a class="hero-link" href="/index.html">Ana Sayfa</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="resource-controls" aria-label="Kaynak filtreleri">
+      <div class="field">
+        <label for="gradeSelect">Sınıf</label>
+        <select id="gradeSelect"></select>
+      </div>
+      <div class="field">
+        <label for="typeSelect">Kaynak Türü</label>
+        <select id="typeSelect">
+          <option value="all">Tüm kaynaklar</option>
+          <option value="document">Dokümanlar</option>
+          <option value="worksheet">Çalışma kağıtları</option>
+          <option value="video">Videolar</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="subjectSelect">Ders</label>
+        <select id="subjectSelect"></select>
+      </div>
+      <div class="field">
+        <label for="sortSelect">Sıralama</label>
+        <select id="sortSelect">
+          <option value="new">En yeni</option>
+          <option value="name">Ada göre</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="status-strip">
+      <div>
+        <h2 id="sectionTitle">Kaynaklar</h2>
+      </div>
+      <span class="status-pill" id="resourceCount">Yükleniyor</span>
+    </section>
+
+    <section class="subject-tiles" id="subjectTiles" aria-label="Ders kısayolları"></section>
+    <section class="resource-grid" id="resourceGrid" aria-label="Kaynak listesi"></section>
+    <div class="empty-state" id="emptyState">
+      <span>📭</span>
+      <p>Bu seçim için yayınlanmış kaynak bulunamadı.</p>
+    </div>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260608-content-safety2"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/dokuman-store.js"></script>
+  <script src="/js/calisma-kagidi-store.js"></script>
+  <script>
+    const grades = [1, 2, 3, 4, 5, 6, 7, 8];
+    const params = new URLSearchParams(window.location.search);
+    const initialType = params.get('tur') === 'calisma' ? 'worksheet' : (params.get('tur') || 'all');
+    const initialGrade = parseInt(params.get('sinif'), 10) || 0;
+
+    const gradeSelect = document.getElementById('gradeSelect');
+    const typeSelect = document.getElementById('typeSelect');
+    const subjectSelect = document.getElementById('subjectSelect');
+    const sortSelect = document.getElementById('sortSelect');
+    const subjectTiles = document.getElementById('subjectTiles');
+    const grid = document.getElementById('resourceGrid');
+    const empty = document.getElementById('emptyState');
+    const count = document.getElementById('resourceCount');
+    const sectionTitle = document.getElementById('sectionTitle');
+
+    let userInfo = null;
+    let selectedGrade = initialGrade || 1;
+    let selectedSubject = params.get('ders') || '';
+    let currentItems = [];
+
+    whenPageReady(init);
+
+    function whenPageReady(callback) {
+      if (document.readyState === 'complete') {
+        callback();
+        return;
+      }
+      window.addEventListener('load', callback, { once: true });
+    }
+
+    function waitForStores() {
+      const startedAt = Date.now();
+      return new Promise(resolve => {
+        function check() {
+          if (window.kemalDocumentStore && window.kemalCalismaKagidiStore) {
+            resolve(true);
+            return;
+          }
+          if (Date.now() - startedAt > 7000) {
+            resolve(false);
+            return;
+          }
+          window.setTimeout(check, 120);
+        }
+        check();
+      });
+    }
+
+    async function init() {
+      typeSelect.value = ['all', 'document', 'worksheet', 'video'].includes(initialType) ? initialType : 'all';
+      const storesReady = await waitForStores();
+      if (!storesReady) {
+        count.textContent = '0 kaynak';
+        empty.classList.add('show');
+        empty.querySelector('p').textContent = 'Kaynak sistemi şu anda yüklenemedi. Lütfen sayfayı yenileyip tekrar dene.';
+        return;
+      }
+      if (window.kemalUserAuth && typeof window.kemalUserAuth.ready === 'function') {
+        try {
+          await Promise.race([
+            window.kemalUserAuth.ready(),
+            new Promise(resolve => window.setTimeout(resolve, 2500))
+          ]);
+          userInfo = window.kemalUserAuth.getStudentInfo ? window.kemalUserAuth.getStudentInfo() : null;
+        } catch (error) {
+          userInfo = null;
+        }
+      }
+
+      const lockedGrade = getLockedStudentGrade();
+      if (lockedGrade) {
+        selectedGrade = lockedGrade;
+      } else if (!selectedGrade) {
+        selectedGrade = 1;
+      }
+
+      renderGradeOptions();
+      renderSubjectOptions();
+      syncHero();
+      await loadResources();
+
+      gradeSelect.addEventListener('change', async () => {
+        selectedGrade = Number(gradeSelect.value);
+        selectedSubject = '';
+        renderSubjectOptions();
+        await loadResources();
+      });
+      subjectSelect.addEventListener('change', async () => {
+        selectedSubject = subjectSelect.value;
+        renderSubjectTiles();
+        await loadResources();
+      });
+      typeSelect.addEventListener('change', loadResources);
+      sortSelect.addEventListener('change', renderResources);
+    }
+
+    function getLockedStudentGrade() {
+      if (!userInfo || userInfo.role !== 'student') return 0;
+      const grade = parseInt(userInfo.grade, 10);
+      return Number.isFinite(grade) && grade > 0 ? grade : 0;
+    }
+
+    function isTeacherLike() {
+      return userInfo && (userInfo.role === 'teacher' || userInfo.role === 'admin');
+    }
+
+    function renderGradeOptions() {
+      const lockedGrade = getLockedStudentGrade();
+      gradeSelect.innerHTML = grades.map(grade => {
+        const selected = grade === selectedGrade ? ' selected' : '';
+        return `<option value="${grade}"${selected}>${grade}. Sınıf</option>`;
+      }).join('');
+      gradeSelect.disabled = Boolean(lockedGrade);
+    }
+
+    function renderSubjectOptions() {
+      const subjects = window.kemalDocumentStore.getSubjects(selectedGrade);
+      selectedSubject = selectedSubject || (subjects[0] ? subjects[0].key : '');
+      subjectSelect.innerHTML = subjects.map(subject => {
+        const selected = subject.key === selectedSubject ? ' selected' : '';
+        return `<option value="${subject.key}"${selected}>${subject.icon || '📄'} ${subject.label}</option>`;
+      }).join('');
+      renderSubjectTiles();
+    }
+
+    function renderSubjectTiles() {
+      const subjects = window.kemalDocumentStore.getSubjects(selectedGrade);
+      subjectTiles.innerHTML = subjects.map(subject => {
+        const active = subject.key === selectedSubject ? ' active' : '';
+        return `<button class="subject-tile${active}" type="button" data-subject="${subject.key}">${subject.icon || '📄'} ${subject.label}<span>${selectedGrade}. sınıf kaynakları</span></button>`;
+      }).join('');
+      subjectTiles.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', async () => {
+          selectedSubject = button.dataset.subject;
+          subjectSelect.value = selectedSubject;
+          renderSubjectTiles();
+          await loadResources();
+        });
+      });
+    }
+
+    function syncHero() {
+      const lockedGrade = getLockedStudentGrade();
+      if (lockedGrade) {
+        document.getElementById('heroKicker').textContent = `${lockedGrade}. sınıf hesabınla uyumlu`;
+        document.getElementById('heroDesc').textContent = 'Giriş yaptığın öğrenci hesabına uygun sınıf kaynakları gösteriliyor.';
+        return;
+      }
+      if (isTeacherLike()) {
+        document.getElementById('heroKicker').textContent = 'Öğretmen görünümü';
+        document.getElementById('heroDesc').textContent = 'Tüm sınıflardaki yayınlanmış doküman, video ve çalışma kağıtlarını sınıf ve ders seçerek açabilirsin.';
+      }
+    }
+
+    async function loadResources() {
+      count.textContent = 'Yükleniyor';
+      grid.innerHTML = '';
+      empty.classList.remove('show');
+      sectionTitle.textContent = `${selectedGrade}. Sınıf Kaynakları`;
+
+      try {
+        const items = await window.kemalDocumentStore.listDocumentsBySubject(selectedGrade, selectedSubject);
+        currentItems = await Promise.all(items.map(async item => {
+          let hasWorksheet = false;
+          try {
+            hasWorksheet = Boolean(window.kemalCalismaKagidiStore && await window.kemalCalismaKagidiStore.hasPublishedWorksheet(item.id));
+          } catch (error) {
+            hasWorksheet = false;
+          }
+          return Object.assign({}, item, { hasWorksheet });
+        }));
+        renderResources();
+      } catch (error) {
+        currentItems = [];
+        count.textContent = '0 kaynak';
+        empty.classList.add('show');
+        empty.querySelector('p').textContent = 'Kaynaklar şu anda yüklenemedi. Lütfen daha sonra tekrar dene.';
+      }
+    }
+
+    function renderResources() {
+      const type = typeSelect.value;
+      let items = currentItems.filter(item => {
+        const kind = window.kemalDocumentStore.getDocumentKind(item);
+        if (type === 'worksheet') return item.hasWorksheet;
+        if (type === 'video') return kind === 'video';
+        if (type === 'document') return kind !== 'video';
+        return true;
+      });
+
+      if (sortSelect.value === 'name') {
+        items = items.slice().sort((a, b) => String(a.baslik || '').localeCompare(String(b.baslik || ''), 'tr'));
+      } else {
+        items = items.slice().sort((a, b) => Date.parse(b.olusturma_tarihi || '') - Date.parse(a.olusturma_tarihi || ''));
+      }
+
+      grid.innerHTML = items.map(renderCard).join('');
+      count.textContent = `${items.length} kaynak`;
+      empty.classList.toggle('show', items.length === 0);
+      if (!items.length) {
+        empty.querySelector('p').textContent = type === 'worksheet'
+          ? 'Bu ders için yayınlanmış çalışma kağıdı bulunamadı.'
+          : 'Bu seçim için yayınlanmış kaynak bulunamadı.';
+      }
+    }
+
+    function renderCard(item) {
+      const kind = window.kemalDocumentStore.getDocumentKind(item);
+      const isVideo = kind === 'video';
+      const href = typeSelect.value === 'worksheet' && item.hasWorksheet
+        ? `/calisma-kagidi.html?id=${encodeURIComponent(item.id)}`
+        : item.viewerUrl;
+      const action = typeSelect.value === 'worksheet' && item.hasWorksheet
+        ? 'Çalışmayı Aç →'
+        : (isVideo ? 'Videoyu Aç →' : 'Dokümanı Aç →');
+      const icon = item.hasWorksheet ? '🧩' : (isVideo ? '🎬' : '📚');
+      const desc = item.aciklama || (isVideo ? 'Ders videosunu açıp izleyebilirsin.' : 'PDF dokümanını açıp inceleyebilirsin.');
+      return `
+        <a class="resource-card" href="${escapeAttr(href)}" data-access-scope="${item.oturum_gerekli ? 'registered' : 'public'}">
+          <div class="card-top">
+            <span class="resource-icon">${icon}</span>
+            <span class="badges">
+              <span class="badge">${escapeHtml(item.sinifLabel || selectedGrade + '. Sınıf')}</span>
+              <span class="badge">${escapeHtml(item.dersLabel || '')}</span>
+              ${item.hasWorksheet ? '<span class="badge worksheet">Çalışma</span>' : ''}
+              ${isVideo ? '<span class="badge video">Video</span>' : ''}
+            </span>
+          </div>
+          <div>
+            <h3>${escapeHtml(item.baslik || 'Kaynak')}</h3>
+            <p>${escapeHtml(desc)}</p>
+          </div>
+          <div class="card-bottom">
+            <span>${isVideo ? 'Video' : (item.sayfa_sayisi ? item.sayfa_sayisi + ' sayfa' : 'PDF')}</span>
+            <span class="open-label">${action}</span>
+          </div>
+        </a>`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, '&#96;');
+    }
+  </script>
+</body>
+</html>

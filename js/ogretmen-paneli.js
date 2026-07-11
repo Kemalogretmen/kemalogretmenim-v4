@@ -117,6 +117,18 @@
     }, 3600);
   }
 
+  function validateSafeText(fields, surface) {
+    if (!window.kemalContentSafety || typeof window.kemalContentSafety.validateFields !== 'function') {
+      return true;
+    }
+    var result = window.kemalContentSafety.validateFields(fields, { surface: surface || 'teacher_panel' });
+    if (!result.ok) {
+      toast(result.message, 'error');
+      return false;
+    }
+    return true;
+  }
+
   function humanizeError(error) {
     var message = String(error && error.message ? error.message : error || '');
     if (message.indexOf('panel_messages') >= 0) {
@@ -1446,6 +1458,10 @@
     var grade = Number(qs('classGrade').value);
     var branch = qs('classBranch').value.trim().toLocaleUpperCase('tr-TR');
     if (!name || !grade) return;
+    if (!validateSafeText([
+      { element: qs('className'), label: 'sinif_adi', value: name },
+      { element: qs('classBranch'), label: 'sube', value: branch },
+    ], 'teacher_class')) return;
     try {
       var result = await getClient()
         .from('teacher_classes')
@@ -1481,6 +1497,10 @@
       toast('Öğrenci için sınıf ve ad soyad gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: qs('studentName'), label: 'ogrenci_ad_soyad', value: name },
+      { element: qs('studentNo'), label: 'ogrenci_no', value: qs('studentNo').value },
+    ], 'teacher_student')) return;
     try {
       var payload = {
         class_id: classId,
@@ -1525,6 +1545,10 @@
       toast('Seçili öğrenci hedefi için en az bir öğrenci seçmelisin.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: qs('assignmentTitle'), label: 'odev_basligi', value: title },
+      { element: qs('assignmentNote'), label: 'odev_yonerge', value: qs('assignmentNote').value },
+    ], 'teacher_assignment')) return;
     try {
       var selectedItem = state.selectedAssignmentItem || null;
       var contentRef = qs('assignmentUrl').value.trim();
@@ -1745,6 +1769,9 @@
       toast('Cevap metni gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: input, label: 'mesaj_cevabi', value: body },
+    ], 'teacher_message_reply')) return;
     var recipientId = sameId(message.sender_id, getTeacherId()) ? message.recipient_id : message.sender_id;
     try {
       var result = await getClient().from('panel_messages').insert({
@@ -1778,6 +1805,10 @@
       toast('Mesaj metni gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: qs('teacherMessageSubject'), label: 'mesaj_konusu', value: subject },
+      { element: qs('teacherMessageBody'), label: 'mesaj_metni', value: body },
+    ], 'teacher_message')) return;
     var recipients = [];
     var relatedStudent = null;
     var seenRecipients = {};
@@ -2030,6 +2061,10 @@
     if (!state.profile) return;
     var fullName = qs('accountName') ? qs('accountName').value.trim() : '';
     var school = qs('accountSchool') ? qs('accountSchool').value.trim() : '';
+    if (!validateSafeText([
+      { element: qs('accountName'), label: 'ad_soyad', value: fullName },
+      { element: qs('accountSchool'), label: 'okul_adi', value: school },
+    ], 'teacher_profile')) return;
     try {
       var payload = {
         full_name: fullName || state.profile.full_name || '',

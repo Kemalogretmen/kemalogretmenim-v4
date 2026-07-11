@@ -21,6 +21,20 @@
 
   const client = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
   const PENDING_RESULTS_KEY = 'kemal_okuma_pending_results_v1';
+  const LEVEL_LABELS = {
+    baslangic: 'Başlangıç',
+    gelisen: 'Gelişen',
+    akici: 'Akıcı',
+    ileri: 'İleri',
+  };
+  const TEXT_TYPE_LABELS = {
+    hikaye: 'Hikaye',
+    bilgilendirici: 'Bilgilendirici',
+    masal: 'Masal',
+    siir: 'Şiir',
+    diyalog: 'Diyalog',
+    egzersiz: 'Egzersiz',
+  };
 
   function stripHtml(value) {
     return (value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -31,6 +45,61 @@
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  function parseOptionalJson(value) {
+    if (!value) {
+      return {};
+    }
+    if (typeof value === 'object') {
+      return value;
+    }
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function normalizeTrainingProfile(value) {
+    const raw = parseOptionalJson(value);
+    const profile = Object.assign({
+      seviye: 'gelisen',
+      tur: 'hikaye',
+      tema: '',
+      kazanim: '',
+      tahmini_dk: 3,
+      rsvp: {},
+      gorsel: {
+        url: '',
+        alt: '',
+        aciklama: '',
+        konum: 'none',
+        fit: 'cover',
+      },
+    }, raw || {});
+    const visual = Object.assign({
+      url: '',
+      alt: '',
+      aciklama: '',
+      konum: 'none',
+      fit: 'cover',
+    }, profile.gorsel || {});
+    profile.seviye = LEVEL_LABELS[profile.seviye] ? profile.seviye : 'gelisen';
+    profile.tur = TEXT_TYPE_LABELS[profile.tur] ? profile.tur : 'hikaye';
+    profile.tema = String(profile.tema || '').trim();
+    profile.kazanim = String(profile.kazanim || '').trim();
+    profile.tahmini_dk = Math.max(1, Math.min(30, parseInt(profile.tahmini_dk, 10) || 3));
+    visual.url = String(visual.url || '').trim();
+    visual.alt = String(visual.alt || '').trim();
+    visual.aciklama = String(visual.aciklama || '').trim();
+    visual.konum = ['none', 'top', 'cover'].includes(visual.konum) ? visual.konum : (visual.url ? 'top' : 'none');
+    visual.fit = visual.fit === 'contain' ? 'contain' : 'cover';
+    if (!visual.url) {
+      visual.konum = 'none';
+    }
+    profile.gorsel = visual;
+    return profile;
   }
 
   function getUserLocationLine(kullanici) {
@@ -166,6 +235,8 @@
 
   function getFeedback(runtime, hedefWpm, comprehension) {
     const ad = runtime.kullanici.ad;
+    const profile = normalizeTrainingProfile(runtime.metin.egitim_json);
+    const focusText = profile.kazanim || profile.tema || '';
     const hizOran = hedefWpm ? runtime.wpm / hedefWpm : 0;
     const anlama = comprehension.toplam ? comprehension.yuzde : -1;
     const hizDurum = hizOran >= 1.15 ? 'yuksek' : hizOran >= 0.85 ? 'denge' : 'gelisiyor';
@@ -271,13 +342,17 @@
     const speed = chooseMessage(speedMessages[hizDurum], runtime.attemptId + '_speed');
     const comprehensionText = chooseMessage(comprehensionMessages[anlamaDurum], runtime.attemptId + '_comp');
     const action = chooseMessage(actionMessages[anahtar], runtime.attemptId + '_action');
+    const profileLine = focusText
+      ? '<br><br><strong>Çalışma Odağı:</strong> Bu metin ' + escHtml(focusText) + ' için seçilmiş. Bir sonraki tekrarında bu odağa özellikle dikkat et.'
+      : '';
 
     return {
       heading: headings[anahtar] || 'Okuma performansın değerlendirildi',
       html:
         '<strong>Okuma Hızı:</strong> ' + speed + '<br><br>' +
         '<strong>Anlama:</strong> ' + comprehensionText + '<br><br>' +
-        '<strong>Sana Önerim:</strong> ' + action,
+        '<strong>Sana Önerim:</strong> ' + action +
+        profileLine,
     };
   }
 
@@ -319,6 +394,7 @@
         attempt_id: runtime.attemptId || '',
         cevaplar: comprehension.detay,
         goruntuleme_modu: runtime.metin.goruntuleme_modu,
+        egitim_profili: normalizeTrainingProfile(runtime.metin.egitim_json),
         completed_at: new Date().toISOString(),
         account_uid: runtime.kullanici.accountUid || '',
         email: runtime.kullanici.email || '',
@@ -440,6 +516,7 @@
         wrong: comprehension && comprehension.yanlis ? comprehension.yanlis : 0,
         total: comprehension && comprehension.toplam ? comprehension.toplam : 0,
         durationSeconds: runtime.sureSn || 0,
+        educationProfile: normalizeTrainingProfile(runtime.metin.egitim_json),
         date: new Date().toLocaleDateString('tr-TR'),
         readingResult: {
           ad: runtime.kullanici && runtime.kullanici.ad ? runtime.kullanici.ad : '',

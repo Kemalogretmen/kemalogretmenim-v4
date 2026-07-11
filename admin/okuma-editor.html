@@ -63,6 +63,8 @@
     .mk-sinif-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;background:#F0EBFF;color:var(--purple);}
     .mk-title{font-family:'Fredoka','Nunito',sans-serif;font-size:16px;font-weight:700;color:var(--navy);line-height:1.3;}
     .mk-meta{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;}
+    .mk-profile{display:flex;gap:6px;flex-wrap:wrap;}
+    .mk-profile-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:#FFF7ED;color:#C2410C;font-size:11px;font-weight:900;}
     .mk-mod{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;}
     .mk-mod.tam{background:#EFF7FF;color:#185FA5;}
     .mk-mod.kelime{background:#F5EAFF;color:#7D3C98;}
@@ -107,6 +109,10 @@
     input:focus,select:focus{border-color:var(--purple);background:white;}
     input[type="color"]{height:42px;padding:3px 8px;cursor:pointer;}
     .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .form-row-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+    .inline-check{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:2px solid var(--border);border-radius:12px;background:#FAFAFF;color:var(--slate);font-size:13px;font-weight:800;margin-bottom:10px;cursor:pointer;}
+    .inline-check input{width:18px;height:18px;margin:0;accent-color:var(--purple);flex-shrink:0;}
+    .setting-note{font-size:12px;color:var(--muted);line-height:1.55;margin-top:-7px;margin-bottom:12px;}
 
     /* ─ ÇOK SINIF SEÇİMİ ─ */
     .sinif-check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
@@ -153,6 +159,8 @@
     .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before{content:'18';}
     .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="20px"]::before,
     .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="20px"]::before{content:'20';}
+    .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="22px"]::before,
+    .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="22px"]::before{content:'22';}
     .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
     .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before{content:'24';}
     .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="28px"]::before,
@@ -169,6 +177,28 @@
     .kw-count{font-family:'Fredoka','Nunito',sans-serif;font-size:20px;font-weight:700;color:var(--purple);}
 
     .yardim-metin{font-size:12px;color:var(--muted);line-height:1.6;margin:-4px 0 12px;}
+    .editor-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 14px;background:#FFF;border-top:2px solid var(--border);border-bottom:2px solid var(--border);}
+    .tool-group{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-right:8px;border-right:1px solid var(--border);}
+    .tool-group:last-child{border-right:0;}
+    .tool-btn{min-height:34px;padding:7px 10px;border:2px solid var(--border);border-radius:10px;background:#FAFAFF;color:var(--slate);font-size:12px;font-weight:900;cursor:pointer;transition:all .2s;}
+    .tool-btn:hover{border-color:var(--purple);color:var(--purple);background:#FFF;}
+    .tool-btn.icon{width:34px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:14px;}
+    .tool-swatch{width:28px;height:28px;border:2px solid rgba(15,23,42,.1);border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 3px rgba(255,255,255,.75);}
+    .tool-select{height:34px;padding:6px 9px;border:2px solid var(--border);border-radius:10px;background:#FAFAFF;color:var(--slate);font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;outline:none;}
+    .title-editor-shell{border:2px solid var(--border);border-radius:var(--r-md);overflow:hidden;background:white;margin-bottom:14px;}
+    .title-editor-shell:focus-within{border-color:var(--purple);}
+    .title-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#F8F7FF;border-bottom:2px solid var(--border);}
+    .title-editor .ql-container.ql-snow{border:none;}
+    .title-editor .ql-editor{min-height:72px;padding:16px 18px;font-family:'Fredoka','Nunito',sans-serif;font-size:28px;font-weight:800;line-height:1.25;color:var(--navy);}
+    .title-editor .ql-editor p{margin:0;}
+    .visual-studio-grid{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start;}
+    .visual-preview{min-height:210px;border:2px dashed var(--border);border-radius:18px;background:#FAFAFF;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;color:var(--muted);font-weight:900;text-align:center;padding:18px;}
+    .visual-preview.has-image{border-style:solid;background:#111827;padding:0;}
+    .visual-preview img{width:100%;height:100%;object-fit:var(--visual-fit,cover);display:block;}
+    .visual-preview-caption{position:absolute;left:10px;right:10px;bottom:10px;padding:8px 10px;border-radius:12px;background:rgba(15,23,42,.72);color:white;font-size:12px;font-weight:900;backdrop-filter:blur(8px);}
+    .visual-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+    .mini-btn{padding:8px 12px;border:2px solid var(--border);border-radius:12px;background:#FFF;color:var(--slate);font-size:12px;font-weight:900;cursor:pointer;}
+    .mini-btn:hover{border-color:var(--purple);color:var(--purple);}
 
     /* Başlık editörü araçları */
     .baslik-toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
@@ -244,6 +274,8 @@
       .topbar-links{width:100%;overflow:auto;padding-bottom:4px;}
       .main{padding:16px 12px;}
       .form-row-2{grid-template-columns:1fr;}
+      .form-row-3{grid-template-columns:1fr;}
+      .visual-studio-grid{grid-template-columns:1fr;}
       .sinif-check-grid{grid-template-columns:repeat(2,1fr);}
       .ql-editor{min-height:320px;padding:18px 16px;}
       .kaydet-bar{padding:12px;flex-direction:column;align-items:stretch;}
@@ -325,7 +357,40 @@
           <div class="kart">
             <div class="kart-title">📄 Temel Bilgiler</div>
             <label>Başlık *</label>
-            <input type="text" id="fBaslik" placeholder="Metnin başlığı…" style="font-size:18px;font-weight:800;">
+            <input type="hidden" id="fBaslik">
+            <div class="title-editor-shell">
+              <div class="title-toolbar" id="titleToolbar">
+                <button class="ql-bold" title="Kalın"></button>
+                <button class="ql-italic" title="İtalik"></button>
+                <button class="ql-underline" title="Altı çizili"></button>
+                <select class="ql-color"></select>
+                <select class="ql-size">
+                  <option value="22px">22</option>
+                  <option value="24px">24</option>
+                  <option value="28px" selected>28</option>
+                  <option value="32px">32</option>
+                  <option value="36px">36</option>
+                  <option value="42px">42</option>
+                </select>
+                <select class="ql-align"></select>
+                <button class="ql-clean" title="Temizle"></button>
+              </div>
+              <div class="title-editor" id="fBaslikRich"></div>
+            </div>
+            <div class="editor-tools" style="border:0;padding:0 0 14px;">
+              <div class="tool-group">
+                <button class="tool-btn icon" type="button" onclick="baslikArac('bold')" title="Seçili başlığı kalın yap">B</button>
+                <button class="tool-btn icon" type="button" onclick="baslikArac('italic')" title="Seçili başlığı italik yap">I</button>
+                <button class="tool-btn" type="button" onclick="baslikArac('bigger')">Büyüt</button>
+                <button class="tool-btn" type="button" onclick="baslikArac('smaller')">Küçült</button>
+              </div>
+              <div class="tool-group">
+                <button class="tool-swatch" type="button" onclick="baslikArac('color','#6C3DED')" style="background:#6C3DED" title="Mor"></button>
+                <button class="tool-swatch" type="button" onclick="baslikArac('color','#EF4444')" style="background:#EF4444" title="Kırmızı"></button>
+                <button class="tool-swatch" type="button" onclick="baslikArac('color','#047857')" style="background:#047857" title="Yeşil"></button>
+                <button class="tool-swatch" type="button" onclick="baslikArac('color','#0F172A')" style="background:#0F172A" title="Koyu"></button>
+              </div>
+            </div>
 
             <div class="form-row-2">
               <div>
@@ -403,6 +468,81 @@
             </div>
           </div>
 
+          <div class="kart">
+            <div class="kart-title">🎓 Eğitim Profili</div>
+            <p class="yardim-metin">Bu alanlar öğrenci tarafında metni doğru seviyede sunmak, filtrelemek ve okuma karnesinde daha anlamlı dönüt üretmek için kullanılır.</p>
+            <div class="form-row-3">
+              <div>
+                <label>Seviye / Kur</label>
+                <select id="fSeviye">
+                  <option value="baslangic">Başlangıç</option>
+                  <option value="gelisen" selected>Gelişen</option>
+                  <option value="akici">Akıcı</option>
+                  <option value="ileri">İleri</option>
+                </select>
+              </div>
+              <div>
+                <label>Metin Türü</label>
+                <select id="fMetinTuru">
+                  <option value="hikaye" selected>Hikaye</option>
+                  <option value="bilgilendirici">Bilgilendirici</option>
+                  <option value="masal">Masal</option>
+                  <option value="siir">Şiir</option>
+                  <option value="diyalog">Diyalog</option>
+                  <option value="egzersiz">Egzersiz</option>
+                </select>
+              </div>
+              <div>
+                <label>Tahmini Süre</label>
+                <input type="number" id="fTahminiSure" min="1" max="30" step="1" value="3" placeholder="Dakika">
+              </div>
+            </div>
+            <label>Tema / Etiket</label>
+            <input type="text" id="fTema" maxlength="60" placeholder="Örn: doğa, arkadaşlık, bilim, değerler">
+            <label>Kazanım / Odak</label>
+            <input type="text" id="fKazanim" maxlength="120" placeholder="Örn: Ana fikri bulma, ayrıntı yakalama, akıcı okuma">
+          </div>
+
+          <div class="kart">
+            <div class="kart-title">🖼️ Görsel Destekli Metin</div>
+            <p class="yardim-metin">Metne kapak veya okuma öncesi ipucu görseli ekleyebilirsin. Görsel öğrenci metin listesinde ve tam metin okuma ekranında görünür.</p>
+            <div class="visual-studio-grid">
+              <div>
+                <label>Görsel URL</label>
+                <input type="url" id="fGorselUrl" placeholder="https://...">
+                <div class="form-row-2">
+                  <div>
+                    <label>Görsel Konumu</label>
+                    <select id="fGorselKonum">
+                      <option value="none">Kullanma</option>
+                      <option value="top">Başlığın altında</option>
+                      <option value="cover">Kapak görseli</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Görsel Yerleşimi</label>
+                    <select id="fGorselFit">
+                      <option value="cover">Alanı doldur</option>
+                      <option value="contain">Tamamı görünsün</option>
+                    </select>
+                  </div>
+                </div>
+                <label>Alternatif Metin</label>
+                <input type="text" id="fGorselAlt" maxlength="120" placeholder="Örn: Ormanda kitap okuyan çocuk">
+                <label>Görsel Açıklaması</label>
+                <input type="text" id="fGorselAciklama" maxlength="160" placeholder="Öğrenciye görsel hakkında kısa ipucu">
+                <div class="visual-actions">
+                  <button class="mini-btn" type="button" onclick="gorselOnizle()">Önizle</button>
+                  <button class="mini-btn" type="button" onclick="gorselTemizle()">Temizle</button>
+                </div>
+              </div>
+              <div class="visual-preview" id="gorselPreview">
+                Görsel önizleme
+                <div class="visual-preview-caption" id="gorselPreviewCaption" style="display:none;"></div>
+              </div>
+            </div>
+          </div>
+
           <!-- ZENGİN METİN EDİTÖRÜ -->
           <div class="kart" style="padding:0;overflow:hidden;">
             <div style="padding:16px 22px 10px;">
@@ -454,6 +594,39 @@
                 <span class="ql-formats">
                   <button class="ql-clean"></button>
                 </span>
+              </div>
+              <div class="editor-tools">
+                <div class="tool-group">
+                  <button class="tool-btn" type="button" onclick="metinArac('satirbasi')">Satır Başı</button>
+                  <button class="tool-btn" type="button" onclick="metinArac('paragraf')">Paragraf Boşluğu</button>
+                  <button class="tool-btn" type="button" onclick="metinArac('indent')">Girinti</button>
+                  <button class="tool-btn" type="button" onclick="metinArac('outdent')">Girintiyi Azalt</button>
+                </div>
+                <div class="tool-group">
+                  <button class="tool-btn icon" type="button" onclick="metinArac('bold')" title="Kalın">B</button>
+                  <button class="tool-btn icon" type="button" onclick="metinArac('italic')" title="İtalik">I</button>
+                  <button class="tool-btn" type="button" onclick="metinArac('bigger')">Büyüt</button>
+                  <button class="tool-btn" type="button" onclick="metinArac('smaller')">Küçült</button>
+                </div>
+                <div class="tool-group">
+                  <button class="tool-swatch" type="button" onclick="metinArac('color','#6C3DED')" style="background:#6C3DED" title="Mor"></button>
+                  <button class="tool-swatch" type="button" onclick="metinArac('color','#EF4444')" style="background:#EF4444" title="Kırmızı"></button>
+                  <button class="tool-swatch" type="button" onclick="metinArac('color','#F59E0B')" style="background:#F59E0B" title="Turuncu"></button>
+                  <button class="tool-swatch" type="button" onclick="metinArac('color','#047857')" style="background:#047857" title="Yeşil"></button>
+                  <button class="tool-swatch" type="button" onclick="metinArac('color','#0F172A')" style="background:#0F172A" title="Koyu"></button>
+                </div>
+                <div class="tool-group">
+                  <select class="tool-select" onchange="metinArac('size', this.value); this.selectedIndex=0;">
+                    <option value="">Boyut</option>
+                    <option value="16px">16</option>
+                    <option value="18px">18</option>
+                    <option value="20px">20</option>
+                    <option value="24px">24</option>
+                    <option value="28px">28</option>
+                    <option value="32px">32</option>
+                  </select>
+                  <button class="tool-btn" type="button" onclick="metinArac('clear')">Biçimi Temizle</button>
+                </div>
               </div>
               <div id="fIcerik"></div>
             </div>
@@ -515,6 +688,21 @@
                   <span class="slider-val" id="kelimeMsVal">500ms</span>
                 </div>
                 <div style="font-size:12px;color:var(--muted);" id="kelimeMsAcik">Her kelime 0.5 sn ekranda kalır.</div>
+                <label style="margin-top:12px;">Kelime Grubu</label>
+                <select id="fKelimeGrup">
+                  <option value="1" selected>1 kelime</option>
+                  <option value="2">2 kelimelik blok</option>
+                  <option value="3">3 kelimelik blok</option>
+                </select>
+                <label class="inline-check" for="fNoktalamaDuraklama">
+                  <input type="checkbox" id="fNoktalamaDuraklama" checked>
+                  <span>Noktalama işaretlerinde kısa duraklama ekle</span>
+                </label>
+                <label class="inline-check" for="fOgrenciHizKontrol">
+                  <input type="checkbox" id="fOgrenciHizKontrol">
+                  <span>Öğrenci okuma sırasında hızı ayarlayabilsin</span>
+                </label>
+                <div class="setting-note">Bu ayarlar otomatik kelime modunda odak, ritim ve göz sıçraması çalışmasını güçlendirir.</div>
               </div>
             </div>
           </div>
@@ -560,6 +748,6 @@
     });
   });
 </script>
-<script src="/js/okuma-editor-app.js"></script>
+<script src="/js/okuma-editor-app.js?v=20260711-training"></script>
 </body>
 </html>

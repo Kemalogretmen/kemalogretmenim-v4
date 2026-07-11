@@ -2,7 +2,7 @@
   "expo": {
     "name": "Kemal Öğretmenim",
     "slug": "kemal-ogretmenim",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "scheme": "kemalogretmenim",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -18,6 +18,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kemalogretmenim.app",
+      "buildNumber": "4",
       "infoPlist": {
         "NSCameraUsageDescription": "Profil ve öğretmen doğrulama dosyaları için kamera kullanılabilir.",
         "NSPhotoLibraryUsageDescription": "Profil ve öğretmen doğrulama dosyaları için fotoğraf seçilebilir."
@@ -25,6 +26,7 @@
     },
     "android": {
       "package": "com.kemalogretmenim.app",
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#FFFBF5"
@@ -46,9 +48,13 @@
       "siteUrl": "https://kemalogretmenim.com.tr",
       "supabaseUrl": "https://mwxcvlyrkptxrwgkmqum.supabase.co",
       "supabaseAnonKey": "sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY",
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "e563b139-5c2e-4a94-af2b-418e8f03207d"
       }
-    }
+    },
+    "owner": "kemalogretmen"
   }
 }

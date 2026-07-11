@@ -137,6 +137,20 @@
     return 'Kaynak';
   }
 
+  function getDatabaseErrorHint(error) {
+    const message = String(error && error.message ? error.message : '');
+    const lower = message.toLocaleLowerCase('tr-TR');
+    if (
+      lower.includes('permission denied') ||
+      lower.includes('row-level security') ||
+      lower.includes('rls') ||
+      lower.includes('yetki')
+    ) {
+      return 'Supabase sonuclar okuma yetkisi eksik gorunuyor. SQL Editor icinde okuma karne sonuclar hotfix dosyasini calistirin.';
+    }
+    return 'Supabase baglantisi veya sonuclar tablosu kontrol edilmeli.';
+  }
+
   function setZoneState(kind, count) {
     const zone = document.getElementById('uz-' + kind);
     const icon = document.getElementById('uz-' + kind + '-icon');
@@ -443,11 +457,10 @@
       .select('*')
       .order('olusturma_tarihi', { ascending: true });
     if (response.error) {
+      const hint = getDatabaseErrorHint(response.error);
       dbIcon.textContent = '⚠️';
-      dbText.textContent = 'Veritabanina ulasilamadi';
-      if (!silent) {
-        setStatus('⚠️ Veritabani verileri yuklenemedi: ' + response.error.message, 'err');
-      }
+      dbText.textContent = 'Veritabani yetkisi kontrol edilmeli';
+      setStatus('⚠️ Veritabani verileri yuklenemedi: ' + response.error.message + ' — ' + hint, 'err');
       maybeAutoSelect();
       return;
     }

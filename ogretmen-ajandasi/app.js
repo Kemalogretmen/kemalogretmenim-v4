@@ -1,5 +1,8 @@
     const STORE_KEY = "kemalOgretmenAjandasi.v1";
     const LESSON_PLANNER_STORE_KEY = "ogretmen_plan_v2";
+    const CLOUD_SYNC_TABLE = "teacher_agenda_states";
+    const CLOUD_SYNC_MAX_BYTES = 6 * 1024 * 1024;
+    const CLOUD_SYNC_DEBOUNCE_MS = 2200;
     const SYSTEM_LOGO_SRC = "assets/kemal-kocar-logo-2025.png";
     const SYSTEM_LOGO_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAKMGlDQ1BJQ0MgUHJvZmlsZQAAeJydlndUVNcWh8+9d3qhzTAUKUPvvQ0gvTep0kRhmBlgKAMOMzSxIaICEUVEBBVBgiIGjIYisSKKhYBgwR6QIKDEYBRRUXkzslZ05eW9l5ffH2d9a5+99z1n733WugCQvP25vHRYCoA0noAf4uVKj4yKpmP7AQzwAAPMAGCyMjMCQj3DgEg+Hm70TJET+CIIgDd3xCsAN428g+h08P9JmpXBF4jSBInYgs3JZIm4UMSp2YIMsX1GxNT4FDHDKDHzRQcUsbyYExfZ8LPPIjuLmZ3GY4tYfOYMdhpbzD0i3pol5IgY8RdxURaXky3iWyLWTBWmcUX8VhybxmFmAoAiie0CDitJxKYiJvHDQtxEvBQAHCnxK47/igWcHIH4Um7pGbl8bmKSgK7L0qOb2doy6N6c7FSOQGAUxGSlMPlsult6WgaTlwvA4p0/S0ZcW7qoyNZmttbWRubGZl8V6r9u/k2Je7tIr4I/9wyi9X2x/ZVfej0AjFlRbXZ8scXvBaBjMwDy97/YNA8CICnqW/vAV/ehieclSSDIsDMxyc7ONuZyWMbigv6h/+nwN/TV94zF6f4oD92dk8AUpgro4rqx0lPThXx6ZgaTxaEb/XmI/3HgX5/DMISTwOFzeKKIcNGUcXmJonbz2FwBN51H5/L+UxP/YdiftDjXIlEaPgFqrDGQGqAC5Nc+gKIQARJzQLQD/dE3f3w4EL+8CNWJxbn/LOjfs8Jl4iWTm/g5zi0kjM4S8rMW98TPEqABAUgCKlAAKkAD6AIjYA5sgD1wBh7AFwSCMBAFVgEWSAJpgA+yQT7YCIpACdgBdoNqUAsaQBNoASdABzgNLoDL4Dq4AW6DB2AEjIPnYAa8AfMQBGEhMkSBFCBVSAsygMwhBuQIeUD+UAgUBcVBiRAPEkL50CaoBCqHqqE6qAn6HjoFXYCuQoPQPWgUmoJ+h97DCEyCqbAyrA2bwAzYBfaDw+CVcCK8Gs6DC+HtcBVcDx+D2+EL8HX4NjwCP4dnEYAQERqihhghDMQNCUSikQSEj6xDipFKpB5pQbqQXuQmMoJMI+9QGBQFRUcZoexR3qjlKBZqNWodqhRVjTqCakf1oG6iRlEzqE9oMloJbYC2Q/ugI9GJ6Gx0EboS3YhuQ19C30aPo99gMBgaRgdjg/HGRGGSMWswpZj9mFbMecwgZgwzi8ViFbAGWAdsIJaJFWCLsHuxx7DnsEPYcexbHBGnijPHeeKicTxcAa4SdxR3FjeEm8DN46XwWng7fCCejc/Fl+Eb8F34Afw4fp4gTdAhOBDCCMmEjYQqQgvhEuEh4RWRSFQn2hKDiVziBmIV8TjxCnGU+I4kQ9InuZFiSELSdtJh0nnSPdIrMpmsTXYmR5MF5O3kJvJF8mPyWwmKhLGEjwRbYr1EjUS7xJDEC0m8pJaki+QqyTzJSsmTkgOS01J4KW0pNymm1DqpGqlTUsNSs9IUaTPpQOk06VLpo9JXpSdlsDLaMh4ybJlCmUMyF2XGKAhFg+JGYVE2URoolyjjVAxVh+pDTaaWUL+j9lNnZGVkLWXDZXNka2TPyI7QEJo2zYeWSiujnaDdob2XU5ZzkePIbZNrkRuSm5NfIu8sz5Evlm+Vvy3/XoGu4KGQorBToUPhkSJKUV8xWDFb8YDiJcXpJdQl9ktYS4qXnFhyXwlW0lcKUVqjdEipT2lWWUXZSzlDea/yReVpFZqKs0qySoXKWZUpVYqqoypXtUL1nOozuizdhZ5Kr6L30GfUlNS81YRqdWr9avPqOurL1QvUW9UfaRA0GBoJGhUa3RozmqqaAZr5ms2a97XwWgytJK09Wr1ac9o62hHaW7Q7tCd15HV8dPJ0mnUe6pJ1nXRX69br3tLD6DH0UvT2693Qh/Wt9JP0a/QHDGADawOuwX6DQUO0oa0hz7DecNiIZORilGXUbDRqTDP2Ny4w7jB+YaJpEm2y06TX5JOplWmqaYPpAzMZM1+zArMus9/N9c1Z5jXmtyzIFp4W6y06LV5aGlhyLA9Y3rWiWAVYbbHqtvpobWPNt26xnrLRtImz2WczzKAyghiljCu2aFtX2/W2p23f2VnbCexO2P1mb2SfYn/UfnKpzlLO0oalYw7qDkyHOocRR7pjnONBxxEnNSemU73TE2cNZ7Zzo/OEi55Lsssxlxeupq581zbXOTc7t7Vu590Rdy/3Yvd+DxmP5R7VHo891T0TPZs9Z7ysvNZ4nfdGe/t57/Qe9lH2Yfk0+cz42viu9e3xI/mF+lX7PfHX9+f7dwXAAb4BuwIeLtNaxlvWEQgCfQJ3BT4K0glaHfRjMCY4KLgm+GmIWUh+SG8oJTQ29GjomzDXsLKwB8t1lwuXd4dLhseEN4XPRbhHlEeMRJpEro28HqUYxY3qjMZGh0c3Rs+u8Fixe8V4jFVMUcydlTorc1ZeXaW4KnXVmVjJWGbsyTh0XETc0bgPzEBmPXM23id+X/wMy421h/Wc7cyuYE9xHDjlnIkEh4TyhMlEh8RdiVNJTkmVSdNcN24192Wyd3Jt8lxKYMrhlIXUiNTWNFxaXNopngwvhdeTrpKekz6YYZBRlDGy2m717tUzfD9+YyaUuTKzU0AV/Uz1CXWFm4WjWY5ZNVlvs8OzT+ZI5/By+nL1c7flTuR55n27BrWGtaY7Xy1/Y/7oWpe1deugdfHrutdrrC9cP77Ba8ORjYSNKRt/KjAtKC94vSliU1ehcuGGwrHNXpubiySK+EXDW+y31G5FbeVu7d9msW3vtk/F7OJrJaYllSUfSlml174x+6bqm4XtCdv7y6zLDuzA7ODtuLPTaeeRcunyvPKxXQG72ivoFcUVr3fH7r5aaVlZu4ewR7hnpMq/qnOv5t4dez9UJ1XfrnGtad2ntG/bvrn97P1DB5wPtNQq15bUvj/IPXi3zquuvV67vvIQ5lDWoacN4Q293zK+bWpUbCxp/HiYd3jkSMiRniabpqajSkfLmuFmYfPUsZhjN75z/66zxailrpXWWnIcHBcef/Z93Pd3Tvid6D7JONnyg9YP+9oobcXtUHtu+0xHUsdIZ1Tn4CnfU91d9l1tPxr/ePi02umaM7Jnys4SzhaeXTiXd272fMb56QuJF8a6Y7sfXIy8eKsnuKf/kt+lK5c9L1/sdek9d8XhyumrdldPXWNc67hufb29z6qv7Sern9r6rfvbB2wGOm/Y3ugaXDp4dshp6MJN95uXb/ncun572e3BO8vv3B2OGR65y747eS/13sv7WffnH2x4iH5Y/EjqUeVjpcf1P+v93DpiPXJm1H2070nokwdjrLHnv2T+8mG88Cn5aeWE6kTTpPnk6SnPqRvPVjwbf57xfH666FfpX/e90H3xw2/Ov/XNRM6Mv+S/XPi99JXCq8OvLV93zwbNPn6T9mZ+rvitwtsj7xjvet9HvJ+Yz/6A/VD1Ue9j1ye/Tw8X0hYW/gUDmPP8uaxzGQAAGKtJREFUeNrVe3mUVdWV9++cc99Y9WouoIACFJAWjAJi2w6drhKHRo1GO1U4xCFxIAZFBWSlg1pF+7nSRpdGje0QOw5pMRa90mKMs1QhxjRh0hJBpECQYqjxDfe9O55z9vfHew+qoJikNN9317rrPYq7zn37t/f+7X323gf4Zi/W1NQkmpubDSIyiIgJIcAY6/8QY+Ccg4gYEYnm5majqalJAGD4//BiTU1NgojE/oLmriCAMgAjSktLR0UikZEAKgCEB3qYiHhDQ4PxTYExaIs2NDTwmpoaPn36dKm1zv+5+Kabbpo8efLk04ZVVU0pKy0bG4lGh4VD4WJhGGHOmdCatFLSdV3XtC27I5lKbN3T0dG6vrV11eOPP74WQGcfMERjYyMtWrRI/z+lcSISff5dfPfdd1+xdOlrTevWfbxrT0cnaep/aSKSisiXmqQiUvs/QEQ9vQlq/XR975tvvvXGAw88cDOAqr5ANDQ08L+55E1NTXvNvLq6euxvf/vbB1avWbvDTFt7BbFsV6cztp8yM34ylZbJVFolU2k9wK0SSVMlU2lppi3fsl2VB8Z1fWr99LOel19+5TcXXHDB1L5A/K14ghNRXgNV//ncc7/asGGjmRc6YzkymUrLRNLUKTNDZto66jtlZigHjExnbJkHo23LVtnUtOSlKVOmnAgAQgh8q9bQV+s/v6fhJ6vWrOsgInJ9TYlUxu9NmDqRylAilaFk6uiFT6XSZCZNSqfSlE6lyUyZZCZNSsaTOpVI+a7tEhHRxs82ZB576OFFAEI5DjK+ceGbm5vzLxn53rtv/4lIEhGR8mxfOpbWvkPad0h5NhFJ8jxJyaOxgFSabF9RmoiSOncTUSp3m7nPJJGUOS5ZsWbt6ssuvnhqziWMbywKNDc3G7W1tfJfZs6c3Jhw4YtJzxj++H8tk0nHFYZh9FuHNGFYSRi3XVWDSRPGwbJdcH7oV5FSMAoKsPuz9Ui+ugQs3gsIDggDEKLfzYQBxRgFlFT6xJOM5Oix9gd/+uMt9zQ2vpALvxoAHYlcR4QYERmMMXnrrbdff+fcO55N2Uqc/eNHJFBgQLADX8UZ4PhY9skOfPjMbJSWVUBKHwfJC0BKIVgQxc7NmxCfdQ0quvaAhUL7VET5V2S/EBGIiHGCEbdt1Tbzusi1dy18vqi4+DjGWOPRgGAcieYZY/JnP/v5nNvmzHl0eNVQmv/LFzUQNUJlUUipBmbJWBhf7kxh1fqtuPT8KiRND2IAAIgIgYCBeMZCzz0LUGUmoIcPB4jAOM/ZKNtnqlnhAa0hNWGM74nX/rqSMq6rZt96W4MiVsoYuz2nNHU4EIwjMfv58xfcNHfunY8Wl5QprSUXwuCMEZTSUHrg9QkajAMy//900HACNxzGV43zMGT9WuiKSjDSYEKAcQaw3J3XvgaYJkgAJaTwJgui8vqb2PFDKoUnlX/rrbPnKCKPMXZX3nK/FgBNTU2itrZWXnPNjy6efevsZ8rLK1RvIsUrymIsp4gjcJ3DkIxSYEWF2PKbp1G69BUYFRUgACxggAuRdSXG8l6QXVBpKACFRNjgEjbNuBQLrv4hlJTMlzIgIhH/llk3z08m47sYY4/klXjQeH6wtPbKK69UkydPHn/n3NtfGjN6FJnpNDMMMWhJBymFQFEhvmxuRujxXyJaWgrNGLghwA0BZnAwQ4AJAQiecwcGYgxBAHHPx59OOg033Ho7DNKQSkEIAdu2jXAkKm+84caHr7766vPPOeccmdtYHTEArLGxkSmlAv/2f+5/ecrkU4qSqbQWQvDBE14jGI1g15at8BoWoCRgQBkGeF+heXbXmPUAts+kiCB8Hy9XVuOSuXdhZHkZbNcD59mfJ4Rg6XSajx5VTbNnz3kxGo0Orauro4MlS3yg3RdjTD3w4IP3XHzRhaemM7YUQohBEz5PepaN7p/PRWWiByp6CNLrl+ll/X4pQqi6cTbOOe1UJM00joaThRDcdjx96tRTx82eM+cixhg1NDSIfgA0NjZyAKi/4orrjj9utPB8Xw2W9gUAn3F8dd89GPLpGlBJjvQMcRDSy/q91BoxpbDSVei4pB5XX3YZzHQGXycgSSmpKFZA59ZOvyEnL/UFgAFQAAITT5x4edZi9eDEfKWBWDG2L34Bpa81QZRXACxPegP4fc5dlNIIKY1220XLtH/ETTfPgvK8r138ISIhlWbjxo+vra6uHs45V3nl87q6Os4Yo0suuWTq2LHjxjquT4yxYwaAtAaiUexu/RjiqV8hWlwCzbDX7A8kvazfa63BtIZ0XDSNGIcr75yP0oIoPCm/Nidxzpnr+WrcuHHRa6+99jwi2ltF4j/96U8ZAJx77vnTh1cNg5RyUMyfEQGhEJy3X0dR2oQKhcA5zwo/EOnl/F5rQtRz8VK4GKfPmYfvHD8G6Ww4PjYeVorCoQBOnjz5vL5uwGtqaggARo8ZcxZjgNZ6UJyfkPXloYkekBBZRfN8Ts/3y/Tyfk8o9D28gyjKb5qNi/7xbKRSaQxGIpqvYQ4fPmIaAGEYhgLAeO5LoHJI5cTB7hUgC2hOTpZdmQ2wZSQNpTVCvosdIop7x9SjsPw4MGjIAoG7duvXgx93D//SJ1wHoIy1nNTU18HwUqb6+/rvvvve+EyrKzvc2SBX1RWtVLjc3N9u7+S1ScMYYw/fy//fhhx9mSCrZt8l0rRZrk+1KZTDjm9hclUyldQ9FTkoqcp1JHl2r0rNSomlaSMrMeg7fIaKQnl27KF7IuDJ+5Eokbdq48XG5HkSPwU0ZfujQIfz73/9GZ2cnJk2aBLfbjR07duDjjz/GzTffjJCQEGzdupXhw4dj9erVCAgIQFVVFfbv349ly5YhJSUFa9asweHDhwFg5MiR8PLywh//+EeMGjUKZ86cgUqlQps2bTBhwgSMHz8e0dHR2Lp1K1auXIkjR45g+fLlWL58OY4dO4axY8fi9OnTePbZZ3HkyBE8/PDDmDBhAm655RYMGDAA1dXVWLJkCfbs2YMyMjIwZMgQHD16FLt27cL06dMxY8YM3L59G9u3b8eECRPw9fUFgAEDBqCwsBCbN2/Gpk2b8N133+Hq1at49NFH8frrr+O5557D3Llz8eSTT2L06NGYPHkyVq9ejZUrV2L58uVYs2YNBg0ahAULFqB///74+OOP8dlnn2HAgAFYt24dpk2bhhdeeAHHjx/HokWL8PTpUzz55JOYMGECJk+ejC1btqB58+Y4fvw4unTpgu7du6O0tBQzZsxAZmYmBg8ejMTERKxcuRKrVq3CjBkz8Nlnn+HLL7/Eo48+ij179mD+/PkYMWIEunTpguHDh+PJJ5/EokWL8Pnnn+PSpUv4+OOP8fzzz+P555/HhAkTcOedd+Lw4cPYtm0bNmzYgK5du+L999/H+vXr8eyzz+L777/HqFGj8Nprr2Hq1KlYuHAhpk+fjgULFuD8+fPYtWsXHn/8cQwZMgTbtm3Drl278Oabb2LRokUYP348nnjiCZw9exYHDx7EsmXL8Pjjj2P8+PGYOXMmFixYgOXLl+PQoUM4fvw4Jk2ahIULF+LDDz/EqFGj8NBDD2H69Ol48skn8cILL+CKK67A4sWL8frrr+Pll1/GkSNH8Oijj+Lw4cPYvXs3Nm7ciKFDh+L555/HsGHD8OCDD+LQoUMYMWIEBg8ejODgYHz77bfYuHEjHn/8cWzatAkjR47EkiVL8Nprr2Hw4MF4+OGH8eyzz2L27NmYOHEiVq1ahf379+P111/Hrl27MHnyZLz88stYu3YtBg8ejK5du+L999/H4cOH8e677+LXX3/FmDFj8OCDD+LQoUMYMWIEtm/fjv379+P555/Hxo0b8fjjj+PQoUP4+uuv8eSTT+Lw4cPYu3cvrrjiCixatAjPPvss3n33XQwYMAA///wzbr31VowZMwYbN27E4sWL8eSTT+LkyZPYuHEjHn/8cSxatAiLFy/Gs88+i8TERHzzzTfYuHEjRo0ahU2bNuH48eOYOHEiBg8ejB49emD+/PkoKChAly5d8NRTT+H555/HsGHD8OCDD2LlypUYP348hg0bht69e+P999/H3Llz8cgjj+D111/HmTNn8OCDD+Lll1/G8uXL8fzzz+PQoUP44osv8OCDD2L27NmYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYODf5f8BUkRqbtB0q6MAAAAASUVORK5CYII=";
     const today = () => new Date().toISOString().slice(0, 10);
@@ -24,7 +27,23 @@
     let calendarCursor = new Date();
     let selectedCalendarDate = today();
     let activeBirthdayPopups = [];
+    let clockTimer = null;
     const selectedStudentIds = new Set();
+    const cloudSync = {
+      ready: false,
+      enabled: false,
+      mode: "local",
+      status: "Yerel mod",
+      detail: "Giriş yapılmazsa veriler bu tarayıcıda kalır.",
+      userId: "",
+      client: null,
+      timer: 0,
+      saving: false,
+      applyingRemote: false,
+      lastSavedAt: "",
+      lastLoadedAt: "",
+      lastError: ""
+    };
 
     const els = {};
 
@@ -34,13 +53,17 @@
       ensureInitialClass();
       compactStoredPhotos();
       renderAll();
+      initCloudSync();
       setInterval(checkDueReminders, 60000);
     });
 
     function bindElements() {
       [
         "activeClassSelect", "pageTitle", "pageSubtitle", "statsGrid", "teacherName", "schoolName",
-        "className", "classYear", "saveSettingsBtn", "deleteClassBtn", "studentSearch", "studentGrid",
+        "className", "classYear", "newClassName", "saveSettingsBtn", "addClassBtn", "deleteClassBtn",
+        "classListPanel", "topClockTime", "topClockDate", "cloudSyncBadge", "cloudSyncStatus",
+        "cloudSyncDetail", "cloudBackupStatus", "cloudSaveNowBtn", "cloudLoadNowBtn",
+        "cloudSaveNowBtnBackup", "cloudLoadNowBtnBackup", "studentSearch", "studentGrid",
         "addStudentBtn", "studentDialog", "studentDialogTitle", "closeStudentDialogBtn", "cancelStudentBtn",
         "saveStudentBtn", "deleteStudentBtn", "studentPhoto", "photoPreview", "studentPhotoFit",
         "studentPhotoX", "studentPhotoY", "centerStudentPhotoBtn", "studentNo", "studentBirth",
@@ -69,7 +92,9 @@
         "closePhotoCropBtn", "cancelPhotoCropBtn", "applyPhotoCropBtn", "cropFrame", "cropImage",
         "cropZoom", "cropCenterBtn", "scheduleDay", "schedulePeriod", "scheduleTime", "scheduleLesson",
         "scheduleGroup", "scheduleRoom", "scheduleColor", "scheduleNote", "saveScheduleItemBtn",
-        "clearScheduleFormBtn", "scheduleBoard", "scheduleSummary", "prevCalendarMonthBtn",
+        "clearScheduleFormBtn", "scheduleBoard", "scheduleSummary", "lessonPlannerFrame",
+        "lessonPlannerFocusDate", "lessonPlannerFocusInfo", "lessonPlannerPrevWeekBtn",
+        "lessonPlannerTodayBtn", "lessonPlannerNextWeekBtn", "prevCalendarMonthBtn",
         "nextCalendarMonthBtn", "todayCalendarBtn", "requestNotificationBtn", "calendarTitle",
         "calendarGrid", "calendarEventDate", "calendarEventType", "calendarEventTime",
         "calendarEventTitle", "calendarReminder", "calendarEventNote", "saveCalendarEventBtn",
@@ -94,8 +119,12 @@
         renderAll();
       });
 
-      els.quickAddClassBtn.addEventListener("click", () => showView("dashboardView"));
+      els.quickAddClassBtn.addEventListener("click", () => {
+        showView("dashboardView");
+        els.newClassName?.focus();
+      });
       els.saveSettingsBtn.addEventListener("click", saveSettingsAndClass);
+      els.addClassBtn.addEventListener("click", addClassFromPanel);
       els.teacherPhoto.addEventListener("change", handleTeacherPhotoUpload);
       els.schoolLogo.addEventListener("change", handleSchoolLogoUpload);
       els.deleteClassBtn.addEventListener("click", deleteActiveClass);
@@ -137,7 +166,12 @@
       els.reportStudent.addEventListener("change", () => { updateSubjectPicker(); buildReport(); });
       els.reportExam.addEventListener("change", () => { updateSubjectPicker(); buildReport(); });
       els.refreshReportBtn.addEventListener("click", buildReport);
-      els.reportType.addEventListener("change", () => { renderReportOptions(); buildReport(); });
+      els.reportType.addEventListener("change", () => {
+        if (els.reportType.value === "comparison") els.reportExam.value = "__all__";
+        renderReportOptions();
+        updateSubjectPicker();
+        buildReport();
+      });
       els.classListParents.addEventListener("change", buildReport);
       els.rankingExam.addEventListener("change", () => { renderRankingFilters(); buildReport(); });
       [els.rankingScope, els.rankingClassFilter, els.rankingSchoolFilter, els.rankingProvinceFilter]
@@ -155,8 +189,18 @@
       els.exportBackupBtn.addEventListener("click", exportBackup);
       els.importBackupBtn.addEventListener("click", importBackup);
       els.clearAllBtn.addEventListener("click", clearAllData);
+      els.cloudSaveNowBtn?.addEventListener("click", () => saveCloudNow({ manual: true }));
+      els.cloudLoadNowBtn?.addEventListener("click", () => loadCloudNow({ manual: true }));
+      els.cloudSaveNowBtnBackup?.addEventListener("click", () => saveCloudNow({ manual: true }));
+      els.cloudLoadNowBtnBackup?.addEventListener("click", () => loadCloudNow({ manual: true }));
       els.saveScheduleItemBtn?.addEventListener("click", saveScheduleItem);
       els.clearScheduleFormBtn?.addEventListener("click", clearScheduleForm);
+      els.lessonPlannerFrame?.addEventListener("load", syncLessonPlannerFrame);
+      els.lessonPlannerFocusDate?.addEventListener("change", () => setLessonPlannerFocusDate(els.lessonPlannerFocusDate.value));
+      els.lessonPlannerPrevWeekBtn?.addEventListener("click", () => shiftLessonPlannerFocus(-7));
+      els.lessonPlannerTodayBtn?.addEventListener("click", () => setLessonPlannerFocusDate(today()));
+      els.lessonPlannerNextWeekBtn?.addEventListener("click", () => shiftLessonPlannerFocus(7));
+      window.addEventListener("message", handleLessonPlannerMessage);
       els.prevCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(-1));
       els.nextCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(1));
       els.todayCalendarBtn.addEventListener("click", goTodayCalendar);
@@ -203,13 +247,15 @@
       input.calendarEvents = Array.isArray(input.calendarEvents) ? input.calendarEvents : [];
       input.birthdayReminderLog = input.birthdayReminderLog && typeof input.birthdayReminderLog === "object" ? input.birthdayReminderLog : {};
       input.birthdaySnoozeLog = input.birthdaySnoozeLog && typeof input.birthdaySnoozeLog === "object" ? input.birthdaySnoozeLog : {};
+      input.lessonPlannerFocusDate = isDateKey(input.lessonPlannerFocusDate) ? input.lessonPlannerFocusDate : today();
       return input;
     }
 
-    function saveState() {
+    function saveState(options = {}) {
       state.updatedAt = new Date().toISOString();
       try {
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        if (!options.skipCloud) queueCloudSave();
         return true;
       } catch (error) {
         console.error(error);
@@ -219,6 +265,323 @@
         toast(message);
         return false;
       }
+    }
+
+    async function initCloudSync() {
+      renderCloudSyncStatus();
+      if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== "function") {
+        setCloudSyncStatus("local", "Yerel mod", "Giriş altyapısı yüklenemediği için veriler bu tarayıcıda saklanıyor.");
+        return;
+      }
+      window.addEventListener("kemal-user-auth-changed", () => {
+        refreshCloudSyncAuth({ silent: true });
+      });
+      await refreshCloudSyncAuth();
+    }
+
+    async function refreshCloudSyncAuth(options = {}) {
+      setCloudSyncStatus("syncing", "Oturum kontrol ediliyor", "Kayıtlı öğretmen hesabı bulunursa bulut senkronu açılır.");
+      try {
+        const authState = await window.kemalUserAuth.ready();
+        const user = authState?.user || null;
+        const profile = authState?.profile || {};
+        if (!user?.id) {
+          disableCloudSync("Yerel mod", "Giriş yapılmadığı için ajanda verileri yalnızca bu tarayıcıda saklanıyor.");
+          return;
+        }
+        if (profile.role !== "teacher" || profile.active === false || (profile.approval_status && profile.approval_status !== "active")) {
+          disableCloudSync("Yerel mod", "Bulut senkron yalnızca aktif öğretmen hesaplarında çalışır.");
+          return;
+        }
+        cloudSync.client = window.kemalUserAuth.getClient();
+        cloudSync.userId = user.id;
+        cloudSync.enabled = true;
+        setCloudSyncStatus("syncing", "Bulut kontrol ediliyor", "Ajandanızın son bulut kaydı karşılaştırılıyor.");
+        await reconcileCloudState(options);
+      } catch (error) {
+        console.warn(error);
+        disableCloudSync("Yerel mod", "Bulut bağlantısı kurulamadı; yerel kayıt açık kalır.");
+      }
+    }
+
+    function disableCloudSync(status, detail) {
+      clearTimeout(cloudSync.timer);
+      cloudSync.ready = false;
+      cloudSync.enabled = false;
+      cloudSync.client = null;
+      cloudSync.userId = "";
+      setCloudSyncStatus("local", status, detail);
+    }
+
+    async function reconcileCloudState(options = {}) {
+      try {
+        const row = await fetchCloudRow();
+        if (!row) {
+          cloudSync.ready = true;
+          setCloudSyncStatus("ready", "Bulut hazır", localHasMeaningfulAgenda()
+            ? "Bu cihazdaki kayıt ilk değişiklikte buluta aktarılacak. İsterseniz Şimdi Buluta Kaydet düğmesini kullanın."
+            : "Bu öğretmen hesabı için henüz bulut ajandası yok.");
+          return;
+        }
+
+        const remoteTime = remoteUpdatedTime(row);
+        const localTime = Date.parse(state.updatedAt || "") || 0;
+        if (remoteTime && remoteTime > localTime + 2000) {
+          const shouldAsk = localHasMeaningfulAgenda() && localTime;
+          const shouldLoad = !shouldAsk || confirm("Bulutta bu cihazdakinden daha yeni bir Öğretmen Ajandası kaydı var. Buluttaki veriyi bu cihaza yükleyelim mi? Mevcut yerel kayıt güvenlik yedeği olarak saklanacak.");
+          if (shouldLoad) {
+            applyCloudRow(row);
+            cloudSync.ready = true;
+            cloudSync.lastLoadedAt = new Date().toISOString();
+            setCloudSyncStatus("ready", "Buluttan yüklendi", `Son bulut kaydı bu cihaza alındı. Veri boyutu: ${formatBytes(row.storage_bytes || 0)}.`);
+            if (!options.silent) toast("Buluttaki ajanda bu cihaza yüklendi.");
+            return;
+          }
+          cloudSync.ready = true;
+          setCloudSyncStatus("ready", "Yerel kayıt korunuyor", "Buluttaki yeni kayıt alınmadı. İsterseniz Yedek bölümünden daha sonra buluttan yükleyebilirsiniz.");
+          return;
+        }
+
+        if (localTime && localTime > remoteTime + 2000) {
+          await saveCloudNow({ silent: true });
+          return;
+        }
+
+        cloudSync.ready = true;
+        cloudSync.lastSavedAt = row.updated_at || row.client_updated_at || "";
+        setCloudSyncStatus("ready", "Bulut güncel", `Son kayıt: ${formatCloudDate(row.updated_at || row.client_updated_at)} · ${formatBytes(row.storage_bytes || 0)}.`);
+      } catch (error) {
+        console.warn(error);
+        setCloudSyncError(cloudErrorMessage(error));
+      }
+    }
+
+    function queueCloudSave() {
+      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId || cloudSync.applyingRemote) return;
+      clearTimeout(cloudSync.timer);
+      cloudSync.timer = setTimeout(() => {
+        saveCloudNow({ queued: true });
+      }, CLOUD_SYNC_DEBOUNCE_MS);
+      setCloudSyncStatus("syncing", "Buluta kaydedilecek", "Değişiklikler birkaç saniye içinde öğretmen hesabınıza aktarılır.");
+    }
+
+    async function saveCloudNow(options = {}) {
+      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId) {
+        if (options.manual) toast("Bulut senkron için aktif öğretmen hesabıyla giriş yapılmalı.");
+        renderCloudSyncStatus();
+        return false;
+      }
+      if (cloudSync.saving) return false;
+      clearTimeout(cloudSync.timer);
+      cloudSync.saving = true;
+      setCloudSyncStatus("syncing", "Buluta kaydediliyor", "Yerel ajanda verisi öğretmen hesabınıza aktarılıyor.");
+      try {
+        const snapshot = buildCloudSnapshot();
+        const bytes = payloadBytes(snapshot);
+        if (bytes > CLOUD_SYNC_MAX_BYTES) {
+          throw new Error(`Ajanda verisi bulut sınırını aşıyor (${formatBytes(bytes)}). Fotoğrafları küçültüp tekrar deneyin ya da JSON yedek kullanın.`);
+        }
+        const payload = {
+          user_id: cloudSync.userId,
+          agenda_state: snapshot.agendaState,
+          lesson_planner_state: snapshot.lessonPlannerState,
+          app_version: "teacher-agenda-v1",
+          storage_bytes: bytes,
+          client_updated_at: snapshot.agendaState.updatedAt || new Date().toISOString()
+        };
+        const result = await cloudSync.client
+          .from(CLOUD_SYNC_TABLE)
+          .upsert(payload, { onConflict: "user_id" })
+          .select("updated_at,storage_bytes")
+          .maybeSingle();
+        if (result.error) throw result.error;
+        cloudSync.ready = true;
+        cloudSync.lastSavedAt = result.data?.updated_at || new Date().toISOString();
+        setCloudSyncStatus("ready", "Buluta kaydedildi", `Son kayıt: ${formatCloudDate(cloudSync.lastSavedAt)} · ${formatBytes(bytes)}.`);
+        if (options.manual) toast("Ajanda buluta kaydedildi.");
+        return true;
+      } catch (error) {
+        console.warn(error);
+        setCloudSyncError(cloudErrorMessage(error));
+        if (options.manual) toast(cloudErrorMessage(error));
+        return false;
+      } finally {
+        cloudSync.saving = false;
+        renderCloudSyncStatus();
+      }
+    }
+
+    async function loadCloudNow(options = {}) {
+      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId) {
+        if (options.manual) toast("Buluttan yüklemek için aktif öğretmen hesabıyla giriş yapılmalı.");
+        renderCloudSyncStatus();
+        return false;
+      }
+      try {
+        setCloudSyncStatus("syncing", "Buluttan alınıyor", "Öğretmen hesabınızdaki son ajanda kaydı okunuyor.");
+        const row = await fetchCloudRow();
+        if (!row) {
+          setCloudSyncStatus("ready", "Bulut hazır", "Bu hesapta henüz bulut ajandası bulunamadı.");
+          if (options.manual) toast("Bulutta kayıtlı ajanda bulunamadı.");
+          return false;
+        }
+        const shouldLoad = !localHasMeaningfulAgenda() || confirm("Buluttaki son ajanda kaydı bu cihaza yüklensin mi? Mevcut yerel kayıt güvenlik yedeği olarak saklanacak.");
+        if (!shouldLoad) {
+          renderCloudSyncStatus();
+          return false;
+        }
+        applyCloudRow(row);
+        cloudSync.ready = true;
+        cloudSync.lastLoadedAt = new Date().toISOString();
+        setCloudSyncStatus("ready", "Buluttan yüklendi", `Son bulut kaydı bu cihaza alındı. Veri boyutu: ${formatBytes(row.storage_bytes || 0)}.`);
+        if (options.manual) toast("Buluttaki ajanda yüklendi.");
+        return true;
+      } catch (error) {
+        console.warn(error);
+        setCloudSyncError(cloudErrorMessage(error));
+        if (options.manual) toast(cloudErrorMessage(error));
+        return false;
+      }
+    }
+
+    async function fetchCloudRow() {
+      const result = await cloudSync.client
+        .from(CLOUD_SYNC_TABLE)
+        .select("agenda_state,lesson_planner_state,client_updated_at,updated_at,storage_bytes")
+        .eq("user_id", cloudSync.userId)
+        .maybeSingle();
+      if (result.error) throw result.error;
+      return result.data || null;
+    }
+
+    function applyCloudRow(row) {
+      const incoming = row?.agenda_state;
+      if (!incoming || !Array.isArray(incoming.classes) || !Array.isArray(incoming.students) || !Array.isArray(incoming.exams)) {
+        throw new Error("Buluttaki ajanda kaydı geçerli görünmüyor.");
+      }
+      writeLocalBackupBeforeCloud();
+      cloudSync.applyingRemote = true;
+      try {
+        state = normalizeState(JSON.parse(JSON.stringify(incoming)));
+        restoreLessonPlannerBackup(row.lesson_planner_state || null);
+        ensureInitialClass();
+        saveState({ skipCloud: true });
+        renderAll();
+      } finally {
+        cloudSync.applyingRemote = false;
+      }
+    }
+
+    function buildCloudSnapshot() {
+      return {
+        agendaState: JSON.parse(JSON.stringify(state)),
+        lessonPlannerState: readLessonPlannerBackup()
+      };
+    }
+
+    function writeLocalBackupBeforeCloud() {
+      try {
+        const backup = {
+          ...state,
+          lessonPlannerBackup: readLessonPlannerBackup(),
+          savedBeforeCloudLoadAt: new Date().toISOString()
+        };
+        localStorage.setItem(`${STORE_KEY}.bulut-oncesi-yedek`, JSON.stringify(backup));
+      } catch (error) {
+        console.warn("Bulut öncesi yerel yedek saklanamadı", error);
+      }
+    }
+
+    function localHasMeaningfulAgenda() {
+      return Boolean(
+        state.students.length ||
+        state.exams.length ||
+        state.scheduleItems?.length ||
+        state.calendarEvents?.length ||
+        (state.classes.length > 1) ||
+        state.teacher?.photo ||
+        state.teacher?.schoolLogo ||
+        state.teacher?.schoolName ||
+        readLessonPlannerBackup()
+      );
+    }
+
+    function payloadBytes(payload) {
+      const text = JSON.stringify(payload);
+      if (window.TextEncoder) return new TextEncoder().encode(text).length;
+      return new Blob([text]).size;
+    }
+
+    function remoteUpdatedTime(row) {
+      return Date.parse(row?.client_updated_at || row?.agenda_state?.updatedAt || row?.updated_at || "") || 0;
+    }
+
+    function setCloudSyncStatus(mode, status, detail) {
+      cloudSync.mode = mode;
+      cloudSync.status = status;
+      cloudSync.detail = detail;
+      cloudSync.lastError = mode === "error" ? detail : "";
+      renderCloudSyncStatus();
+    }
+
+    function setCloudSyncError(message) {
+      setCloudSyncStatus("error", "Bulut uyarısı", message);
+    }
+
+    function cloudErrorMessage(error) {
+      const text = String(error?.message || error || "");
+      if (error?.code === "42P01" || text.includes(CLOUD_SYNC_TABLE)) {
+        return "Bulut ajanda tablosu henüz Supabase üzerinde kurulmamış. SQL dosyasını çalıştırana kadar yerel kayıt devam eder.";
+      }
+      if (text.includes("JWT") || text.includes("auth")) {
+        return "Oturum doğrulanamadı. Tekrar giriş yaptıktan sonra bulut senkronu deneyin.";
+      }
+      return text || "Bulut senkron sırasında beklenmeyen bir hata oluştu.";
+    }
+
+    function renderCloudSyncStatus() {
+      const badge = els.cloudSyncBadge;
+      if (badge) {
+        badge.textContent = cloudSync.status || "Yerel mod";
+        badge.className = `badge ${cloudBadgeClass()}`;
+      }
+      if (els.cloudSyncStatus) {
+        els.cloudSyncStatus.textContent = cloudSync.enabled
+          ? "Kayıtlı öğretmen hesabı ile bulut senkron açık."
+          : "Giriş yapılmazsa veriler bu tarayıcıda kalır.";
+      }
+      if (els.cloudSyncDetail) {
+        els.cloudSyncDetail.textContent = cloudSync.detail || "";
+      }
+      if (els.cloudBackupStatus) {
+        els.cloudBackupStatus.textContent = `${cloudSync.status || "Yerel mod"} · ${cloudSync.detail || "Yerel JSON yedek sistemi çalışmaya devam eder."}`;
+      }
+      [els.cloudSaveNowBtn, els.cloudSaveNowBtnBackup].forEach((button) => {
+        if (button) button.disabled = !cloudSync.enabled || cloudSync.saving;
+      });
+      [els.cloudLoadNowBtn, els.cloudLoadNowBtnBackup].forEach((button) => {
+        if (button) button.disabled = !cloudSync.enabled || cloudSync.saving;
+      });
+    }
+
+    function cloudBadgeClass() {
+      if (cloudSync.mode === "ready") return "cloud-ready";
+      if (cloudSync.mode === "syncing") return "cloud-syncing";
+      if (cloudSync.mode === "error") return "cloud-error";
+      return "cloud-local";
+    }
+
+    function formatCloudDate(value) {
+      const date = value ? new Date(value) : null;
+      if (!date || Number.isNaN(date.getTime())) return "Henüz yok";
+      return date.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value || 0);
+      if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+      if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+      return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
     }
 
     function ensureInitialClass() {
@@ -268,6 +631,10 @@
       renderStudents();
       renderExams();
       renderSchedule();
+      renderTopClock();
+      startClock();
+      renderCloudSyncStatus();
+      renderLessonPlannerFocus();
       renderCalendar();
       renderUpdateExamSelect();
       renderReportSelectors();
@@ -279,7 +646,7 @@
 
     function renderClassSelect() {
       els.activeClassSelect.innerHTML = state.classes.map((item) => (
-        `<option value="${escapeHtml(item.id)}" ${item.id === state.activeClassId ? "selected" : ""}>${escapeHtml(item.name)} · ${escapeHtml(item.year || "")}</option>`
+        `<option value="${escapeHtml(item.id)}" ${item.id === state.activeClassId ? "selected" : ""}>${escapeHtml(classLabel(item))}</option>`
       )).join("");
     }
 
@@ -288,9 +655,63 @@
       els.teacherName.value = current?.teacherName || state.teacher?.name || "";
       els.schoolName.value = state.teacher?.schoolName || "";
       els.classYear.value = current?.year || "2025-2026";
-      els.className.value = "";
+      els.className.value = current?.name || "";
+      els.newClassName.value = "";
       renderTeacherPhoto();
       renderSchoolLogo();
+      renderClassManager();
+    }
+
+    function classLabel(item) {
+      return [item?.name || "Sınıfım", item?.year || ""].filter(Boolean).join(" · ");
+    }
+
+    function renderClassManager() {
+      if (!els.classListPanel) return;
+      els.classListPanel.innerHTML = state.classes.map((item) => {
+        const studentCount = state.students.filter((student) => student.classId === item.id).length;
+        const examCount = state.exams.filter((exam) => exam.classId === item.id).length;
+        const isActive = item.id === state.activeClassId;
+        const teacher = item.teacherName || state.teacher?.name || "Öğretmen";
+        return `
+          <div class="class-manager-row ${isActive ? "active" : ""}">
+            <div>
+              <strong>${escapeHtml(classLabel(item))}</strong>
+              <p>${escapeHtml(teacher)}${state.teacher?.schoolName ? ` · ${escapeHtml(state.teacher.schoolName)}` : ""}</p>
+              <div class="class-manager-meta">
+                <span class="badge blue">${studentCount} öğrenci</span>
+                <span class="badge green">${examCount} sınav</span>
+                ${isActive ? `<span class="badge gold">Aktif sınıf</span>` : ""}
+              </div>
+            </div>
+            <div class="class-manager-actions">
+              <button class="ghost-btn" data-select-class="${escapeHtml(item.id)}" ${isActive ? "disabled" : ""}>Seç</button>
+              <button class="primary-btn" data-edit-class="${escapeHtml(item.id)}">Düzenle</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+      els.classListPanel.querySelectorAll("[data-select-class]").forEach((button) => {
+        button.addEventListener("click", () => selectClassFromPanel(button.dataset.selectClass));
+      });
+      els.classListPanel.querySelectorAll("[data-edit-class]").forEach((button) => {
+        button.addEventListener("click", () => editClassFromPanel(button.dataset.editClass));
+      });
+    }
+
+    function selectClassFromPanel(classId) {
+      if (!state.classes.some((item) => item.id === classId)) return;
+      state.activeClassId = classId;
+      selectedStudentIds.clear();
+      saveState();
+      renderAll();
+    }
+
+    function editClassFromPanel(classId) {
+      selectClassFromPanel(classId);
+      els.className?.focus();
+      els.className?.select();
+      toast("Sınıf adını ve yılını panelden düzenleyebilirsiniz.");
     }
 
     function renderDashboard() {
@@ -1009,23 +1430,41 @@
       state.teacher.schoolName = els.schoolName.value.trim();
       const current = activeClass();
       if (current) {
+        current.name = cleanClassName(els.className.value) || current.name || "Sınıfım";
         current.teacherName = teacherName;
         current.year = els.classYear.value.trim() || current.year || "";
       }
-      const newClassName = els.className.value.trim();
-      if (newClassName) {
-        const classId = uid("class");
-        state.classes.push({
-          id: classId,
-          name: newClassName,
-          year: els.classYear.value.trim() || "2025-2026",
-          teacherName
-        });
-        state.activeClassId = classId;
-      }
       saveState();
       renderAll();
-      toast(newClassName ? "Yeni sınıf eklendi." : "Ayarlar kaydedildi.");
+      toast("Aktif sınıf bilgileri güncellendi.");
+    }
+
+    function addClassFromPanel() {
+      const teacherName = els.teacherName.value.trim() || state.teacher?.name || "Kemal Öğretmen";
+      const newClassName = cleanClassName(els.newClassName.value);
+      if (!newClassName) {
+        toast("Yeni sınıf adını yazın.");
+        els.newClassName.focus();
+        return;
+      }
+      const year = els.classYear.value.trim() || "2025-2026";
+      const sameClass = state.classes.find((item) => normalize(item.name) === normalize(newClassName) && normalize(item.year || "") === normalize(year));
+      if (sameClass && !confirm(`${classLabel(sameClass)} zaten var. Yine de aynı adla yeni sınıf eklensin mi?`)) return;
+      state.teacher = state.teacher || {};
+      state.teacher.name = teacherName;
+      state.teacher.schoolName = els.schoolName.value.trim();
+      const classId = uid("class");
+      state.classes.push({
+        id: classId,
+        name: newClassName,
+        year,
+        teacherName
+      });
+      state.activeClassId = classId;
+      selectedStudentIds.clear();
+      saveState();
+      renderAll();
+      toast(`${newClassName} sınıfı eklendi.`);
     }
 
     function deleteActiveClass() {
@@ -2037,6 +2476,78 @@
       els.scheduleSummary.innerHTML = todayItems.map((item) => lessonChipHtml(item, false)).join("") || `<div class="empty">Bugün için ders programı kaydı yok.</div>`;
     }
 
+    function renderTopClock() {
+      if (!els.topClockTime || !els.topClockDate) return;
+      const now = new Date();
+      els.topClockTime.textContent = now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+      els.topClockDate.textContent = now.toLocaleDateString("tr-TR", {
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function startClock() {
+      if (clockTimer) return;
+      clockTimer = setInterval(renderTopClock, 30000);
+    }
+
+    function renderLessonPlannerFocus(info = "") {
+      const focusDate = isDateKey(state.lessonPlannerFocusDate) ? state.lessonPlannerFocusDate : today();
+      state.lessonPlannerFocusDate = focusDate;
+      if (els.lessonPlannerFocusDate) els.lessonPlannerFocusDate.value = focusDate;
+      if (els.lessonPlannerFocusInfo) {
+        els.lessonPlannerFocusInfo.textContent = info || `${formatDate(focusDate)} tarihinin haftası açılacak. En son seçilen hafta tarayıcıda hatırlanır.`;
+      }
+    }
+
+    function setLessonPlannerFocusDate(value, options = {}) {
+      if (!isDateKey(value)) {
+        toast("Ders programı için geçerli bir tarih seçin.");
+        renderLessonPlannerFocus();
+        return;
+      }
+      state.lessonPlannerFocusDate = value;
+      if (!options.skipSave) saveState();
+      renderLessonPlannerFocus();
+      syncLessonPlannerFrame();
+    }
+
+    function shiftLessonPlannerFocus(dayDelta) {
+      const base = parseDateValue(state.lessonPlannerFocusDate) || new Date();
+      base.setDate(base.getDate() + dayDelta);
+      setLessonPlannerFocusDate(dateKey(base));
+    }
+
+    function syncLessonPlannerFrame() {
+      if (!els.lessonPlannerFrame?.contentWindow) return;
+      const focusDate = isDateKey(state.lessonPlannerFocusDate) ? state.lessonPlannerFocusDate : today();
+      els.lessonPlannerFrame.contentWindow.postMessage({
+        type: "kemal-ajanda-focus-week",
+        date: focusDate
+      }, "*");
+    }
+
+    function handleLessonPlannerMessage(event) {
+      const data = event.data || {};
+      if (data.type === "kemal-lesson-planner-data-changed") {
+        saveState();
+        return;
+      }
+      if (data.type !== "kemal-lesson-planner-week-changed") return;
+      if (isDateKey(data.focusDate)) {
+        state.lessonPlannerFocusDate = data.focusDate;
+        saveState();
+      }
+      const parts = [
+        data.week ? `${data.week}. hafta` : "",
+        data.range || "",
+        data.focusDate ? `${formatDate(data.focusDate)} odaklı` : ""
+      ].filter(Boolean);
+      renderLessonPlannerFocus(parts.length ? `Ders programı ${parts.join(" · ")} olarak hatırlandı.` : "");
+    }
+
     function scheduleCellHtml(items) {
       return items.sort((a, b) => String(a.time || "").localeCompare(String(b.time || ""))).map((item) => lessonChipHtml(item, true)).join("");
     }
@@ -2466,6 +2977,10 @@
       return `${validDate.getFullYear()}-${String(validDate.getMonth() + 1).padStart(2, "0")}-${String(validDate.getDate()).padStart(2, "0")}`;
     }
 
+    function isDateKey(value) {
+      return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "")) && !!parseDateValue(value);
+    }
+
     function birthDateMatches(birthDate, targetDate) {
       const birthParts = String(birthDate || "").split("-");
       const targetParts = String(targetDate || "").split("-");
@@ -2516,10 +3031,11 @@
 
     function renderReportOptions() {
       const type = els.reportType?.value || "academic";
+      const usesAcademicSelectors = type === "academic" || type === "comparison";
       document.querySelectorAll(".report-option-panel").forEach((panel) => panel.classList.remove("active"));
       [els.reportStudent, els.reportExam, els.subjectPicker].forEach((element) => {
         const field = element?.closest(".field");
-        if (field) field.style.display = type === "academic" ? "" : "none";
+        if (field) field.style.display = usesAcademicSelectors ? "" : "none";
       });
       if (type === "classList") els.classListOptions.classList.add("active");
       if (type === "rankingList") els.rankingReportOptions.classList.add("active");
@@ -2932,12 +3448,323 @@
       `;
     }
 
+    function buildComparisonReport() {
+      const student = state.students.find((item) => item.id === els.reportStudent.value) || activeStudents()[0];
+      if (!student) {
+        els.reportCard.className = "report-card";
+        els.reportCard.innerHTML = `<div class="empty">Karşılaştırmalı karne için önce öğrenci ekleyin.</div>`;
+        return;
+      }
+      const exams = comparisonExamSet(student.id);
+      if (exams.length < 2) {
+        els.reportCard.className = "report-card";
+        els.reportCard.innerHTML = `<div class="empty">Karşılaştırmalı karne için bu öğrencinin en az iki sınav sonucu olmalı. Sınav filtresini "Tüm sınavlar" yaparak tekrar deneyebilirsiniz.</div>`;
+        return;
+      }
+      const snapshots = exams.map((exam) => comparisonSnapshot(exam, student.id));
+      const first = snapshots[0];
+      const latest = snapshots[snapshots.length - 1];
+      const percentDelta = valueDelta(latest.percent, first.percent);
+      const subjects = comparisonSubjects(snapshots, selectedSubjects());
+      const trendChart = buildComparisonTrendChart(snapshots);
+      const examCountChart = buildExamCountStackedBars(snapshots);
+      const subjectDeltaCards = buildSubjectDeltaCards(snapshots, subjects);
+      const currentClass = activeClass();
+      const teacherName = currentClass?.teacherName || state.teacher?.name || "Kemal Öğretmen";
+      const feedback = buildComparisonFeedback(snapshots, subjects);
+
+      els.reportCard.className = "report-card";
+      els.reportCard.innerHTML = `
+        <div class="report-header">
+          <div>
+            <h2>${escapeHtml(fullName(student))}</h2>
+            <p>Karşılaştırmalı İzleme Karnesi · ${escapeHtml(currentClass?.name || "")} · ${snapshots.length} deneme</p>
+            <p>${escapeHtml(state.teacher?.schoolName || "")} ${state.teacher?.schoolName ? "·" : ""} ${escapeHtml(teacherName)}</p>
+          </div>
+          <div class="report-photo">${avatarHtml(student)}</div>
+        </div>
+        <div class="report-kpis">
+          <div class="report-kpi"><span>İlk Deneme Başarısı</span><b>${formatPercent(first.percent)}</b><p>${escapeHtml(first.exam.name)} · ${formatDate(first.exam.date)}</p></div>
+          <div class="report-kpi"><span>Son Deneme Başarısı</span><b class="${deltaClass(percentDelta)}">${formatPercent(latest.percent)}</b><p>${escapeHtml(latest.exam.name)} · ${formatDate(latest.exam.date)}</p></div>
+          <div class="report-kpi"><span>Başarı Değişimi</span><b class="${deltaClass(percentDelta)}">${formatPercentDelta(percentDelta)}</b><p>İlk denemeye göre</p></div>
+          <div class="report-kpi"><span>Doğru / Yanlış / Boş</span><b>${latest.d} / ${latest.y} / ${latest.b}</b><p>${countDeltaText(latest.d - first.d, "D")} · ${countDeltaText(latest.y - first.y, "Y")} · ${countDeltaText(latest.b - first.b, "B")}</p></div>
+        </div>
+        <h3 class="report-section-title">Deneme Başarı Grafiği</h3>
+        <div class="chart-panel">
+          <div class="chart-panel-title"><strong>Zaman içindeki başarı</strong><span>Deneme deneme gelişim</span></div>
+          ${trendChart}
+          <div class="badges">
+            <span class="badge blue">Çizgi: öğrencinin deneme başarı yüzdesi</span>
+            <span class="badge green">Yeşil artış</span>
+            <span class="badge red">Kırmızı düşüş</span>
+          </div>
+        </div>
+        <h3 class="report-section-title">Doğru-Yanlış-Boş Gelişimi</h3>
+        <div class="chart-panel">
+          <div class="chart-panel-title"><strong>Her denemede cevap dağılımı</strong><span>Yeşil doğru, turuncu yanlış, gri boş</span></div>
+          ${examCountChart}
+        </div>
+        ${subjectDeltaCards ? `
+          <h3 class="report-section-title">Ders Gelişim Özeti</h3>
+          ${subjectDeltaCards}
+        ` : ""}
+        <h3 class="report-section-title">Deneme Bazlı Sayısal Özet</h3>
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr><th>Deneme</th><th>Tarih</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Başarı</th><th>Sınıf Ort.</th><th>Tüm Katılımcılar Ort.</th><th>Önceki Denemeye Göre</th></tr>
+            </thead>
+            <tbody>
+              ${snapshots.map((item, index) => {
+                const prev = index > 0 ? snapshots[index - 1] : null;
+                const delta = prev ? valueDelta(item.percent, prev.percent) : null;
+                return `
+                  <tr>
+                    <td><strong>${escapeHtml(item.exam.name)}</strong></td>
+                    <td>${formatDate(item.exam.date)}</td>
+                    <td>${item.d}</td>
+                    <td>${item.y}</td>
+                    <td>${item.b}</td>
+                    <td class="${deltaClass(index ? valueDelta(item.percent, first.percent) : 0)}"><strong>${formatPercent(item.percent)}</strong></td>
+                    <td>${formatPercent(item.classAverage)}</td>
+                    <td>${formatPercent(item.generalAverage)}</td>
+                    <td>${prev ? `<span class="delta-pill ${deltaClass(delta)}">${formatPercentDelta(delta)}</span>` : `<span class="delta-pill status-mid">Başlangıç</span>`}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+        <h3 class="report-section-title">Ders Ders Karşılaştırma</h3>
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr><th>Ders</th>${snapshots.map((item) => `<th>${escapeHtml(shortExamLabel(item.exam))}</th>`).join("")}<th>İlk-Son Değişim</th></tr>
+            </thead>
+            <tbody>
+              ${subjects.map((subject) => {
+                const firstValue = firstFiniteSubjectPercent(snapshots, subject);
+                const lastValue = lastFiniteSubjectPercent(snapshots, subject);
+                const delta = valueDelta(lastValue, firstValue);
+                return `
+                  <tr>
+                    <td><strong>${escapeHtml(subject)}</strong></td>
+                    ${snapshots.map((item) => {
+                      const subjectResult = item.result.subjects?.[subject];
+                      return `<td>${subjectResult ? `<strong>${formatPercent(subjectResult.percent)}</strong><br><span style="color:#667085;font-size:12px">${subjectResult.d}D · ${subjectResult.y}Y · ${subjectResult.b}B</span>` : "-"}</td>`;
+                    }).join("")}
+                    <td><span class="delta-pill ${deltaClass(delta)}">${formatPercentDelta(delta)}</span></td>
+                  </tr>
+                `;
+              }).join("") || `<tr><td colspan="${snapshots.length + 2}">Seçili derslerde karşılaştırılacak veri yok.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+        <div class="feedback-grid">
+          ${feedback.map((item) => `<div class="feedback-card"><strong>${escapeHtml(item.title)}</strong>${escapeHtml(item.text)}</div>`).join("")}
+        </div>
+        ${reportFooterHtml()}
+      `;
+    }
+
+    function comparisonExamSet(studentId) {
+      return selectedExamSet()
+        .filter((exam) => exam.results?.[studentId] && isFiniteNumber(exam.results[studentId].total?.percent))
+        .sort((a, b) => `${a.date || ""} ${a.name || ""}`.localeCompare(`${b.date || ""} ${b.name || ""}`, "tr"));
+    }
+
+    function comparisonSnapshot(exam, studentId) {
+      const result = exam.results?.[studentId] || { subjects: {}, total: {} };
+      return {
+        exam,
+        result,
+        d: result.total?.d || 0,
+        y: result.total?.y || 0,
+        b: result.total?.b || 0,
+        percent: isFiniteNumber(result.total?.percent) ? result.total.percent : null,
+        classAverage: totalClassAverage(exam),
+        generalAverage: totalParticipantAverage(exam)
+      };
+    }
+
+    function comparisonSubjects(snapshots, selected) {
+      const all = Array.from(new Set(snapshots.flatMap((item) => Object.keys(item.result.subjects || {}))));
+      const pool = selected.length ? selected.filter((subject) => all.includes(subject)) : all;
+      return pool.sort((a, b) => a.localeCompare(b, "tr"));
+    }
+
+    function buildComparisonTrendChart(snapshots) {
+      const width = 860;
+      const height = 286;
+      const left = 50;
+      const right = 28;
+      const top = 28;
+      const bottom = 66;
+      const chartWidth = width - left - right;
+      const chartHeight = height - top - bottom;
+      const y = (value) => top + chartHeight - (clampPercent(value) / 100) * chartHeight;
+      const x = (index) => snapshots.length === 1 ? left + chartWidth / 2 : left + (chartWidth * index) / (snapshots.length - 1);
+      const points = snapshots.map((item, index) => `${x(index)},${y(item.percent)}`).join(" ");
+      const area = `${left},${top + chartHeight} ${points} ${x(snapshots.length - 1)},${top + chartHeight}`;
+      const grid = [0, 25, 50, 75, 100].map((tick) => {
+        const yy = y(tick);
+        return `<line class="grid-line" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"></line><text x="8" y="${yy + 4}">%${tick}</text>`;
+      }).join("");
+      return `
+        <svg class="comparison-trend-chart combo-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Denemeler arası başarı değişimini gösterir">
+          ${grid}
+          <polygon class="trend-area" points="${area}"></polygon>
+          <polyline class="trend-line" points="${points}"></polyline>
+          ${snapshots.map((item, index) => {
+            const label = shortExamLabel(item.exam);
+            return `
+              <circle class="trend-dot" cx="${x(index)}" cy="${y(item.percent)}" r="7"></circle>
+              <text x="${x(index)}" y="${Math.max(16, y(item.percent) - 12)}" text-anchor="middle">${formatPercent(item.percent)}</text>
+              <text x="${x(index)}" y="${height - 30}" text-anchor="middle">${escapeHtml(label)}</text>
+              <text x="${x(index)}" y="${height - 12}" text-anchor="middle">${formatDate(item.exam.date)}</text>
+            `;
+          }).join("")}
+        </svg>
+      `;
+    }
+
+    function buildExamCountStackedBars(snapshots) {
+      if (!snapshots.length) return `<div class="empty">Deneme dağılımı için veri yok.</div>`;
+      return `
+        <div class="stacked-analysis">
+          ${snapshots.map((item) => stackedCountRowHtml(shortExamLabel(item.exam), item.d, item.y, item.b, formatPercent(item.percent))).join("")}
+        </div>
+        ${countLegendHtml()}
+      `;
+    }
+
+    function buildSubjectStackedBars(subjects) {
+      if (!subjects.length) return `<div class="empty">Doğru-yanlış-boş dağılımı için seçili ders verisi yok.</div>`;
+      return `
+        <div class="stacked-analysis">
+          ${subjects.map((item) => stackedCountRowHtml(item.name, item.d, item.y, item.b, formatPercent(item.percent))).join("")}
+        </div>
+        ${countLegendHtml()}
+      `;
+    }
+
+    function stackedCountRowHtml(label, d, y, b, summary) {
+      const total = (d || 0) + (y || 0) + (b || 0);
+      const dWidth = percentWidth(d, total);
+      const yWidth = percentWidth(y, total);
+      const bWidth = percentWidth(b, total);
+      return `
+        <div class="stacked-row">
+          <div class="stacked-label">${escapeHtml(label)}</div>
+          <div class="stacked-track" aria-label="${escapeHtml(label)} doğru yanlış boş dağılımı">
+            <div class="stacked-segment correct" style="width:${dWidth}%"></div>
+            <div class="stacked-segment wrong" style="width:${yWidth}%"></div>
+            <div class="stacked-segment blank" style="width:${bWidth}%"></div>
+          </div>
+          <div class="stacked-values">${summary ? `${escapeHtml(summary)} · ` : ""}${formatNumber(d)}D · ${formatNumber(y)}Y · ${formatNumber(b)}B</div>
+        </div>
+      `;
+    }
+
+    function countLegendHtml() {
+      return `
+        <div class="chart-legend">
+          <span class="legend-pill"><i class="legend-dot correct"></i>Doğru</span>
+          <span class="legend-pill"><i class="legend-dot wrong"></i>Yanlış</span>
+          <span class="legend-pill"><i class="legend-dot blank"></i>Boş</span>
+        </div>
+      `;
+    }
+
+    function percentWidth(value, total) {
+      if (!total || !isFiniteNumber(value)) return 0;
+      return Math.max(0, Math.min(100, (value * 100) / total));
+    }
+
+    function buildSubjectDeltaCards(snapshots, subjects) {
+      const cards = subjects.map((subject) => {
+        const firstValue = firstFiniteSubjectPercent(snapshots, subject);
+        const lastValue = lastFiniteSubjectPercent(snapshots, subject);
+        const delta = valueDelta(lastValue, firstValue);
+        if (!isFiniteNumber(firstValue) && !isFiniteNumber(lastValue)) return "";
+        return `
+          <div class="subject-delta-card">
+            <span>${escapeHtml(subject)}</span>
+            <strong>${formatPercent(firstValue)} → ${formatPercent(lastValue)}</strong>
+            <b class="${deltaClass(delta)}">${formatPercentDelta(delta)}</b>
+          </div>
+        `;
+      }).filter(Boolean);
+      return cards.length ? `<div class="subject-delta-grid">${cards.join("")}</div>` : "";
+    }
+
+    function shortExamLabel(exam) {
+      const name = cleanName(exam?.name || "Deneme");
+      return name.length > 16 ? `${name.slice(0, 15)}…` : name;
+    }
+
+    function firstFiniteSubjectPercent(snapshots, subject) {
+      const item = snapshots.find((snapshot) => isFiniteNumber(snapshot.result.subjects?.[subject]?.percent));
+      return item?.result.subjects?.[subject]?.percent ?? null;
+    }
+
+    function lastFiniteSubjectPercent(snapshots, subject) {
+      const item = snapshots.slice().reverse().find((snapshot) => isFiniteNumber(snapshot.result.subjects?.[subject]?.percent));
+      return item?.result.subjects?.[subject]?.percent ?? null;
+    }
+
+    function formatPercentDelta(value) {
+      if (!isFiniteNumber(value)) return "-";
+      const sign = value > 0 ? "+" : "";
+      return `${sign}${formatNumber(value)} puan`;
+    }
+
+    function countDeltaText(value, label) {
+      if (!isFiniteNumber(value)) return `${label}: -`;
+      const sign = value > 0 ? "+" : "";
+      return `${label}: ${sign}${formatNumber(value)}`;
+    }
+
+    function deltaClass(value) {
+      if (!isFiniteNumber(value) || Math.abs(value) < .5) return "status-mid";
+      return value > 0 ? "status-high" : "status-low";
+    }
+
+    function valueDelta(next, previous) {
+      return isFiniteNumber(next) && isFiniteNumber(previous) ? next - previous : null;
+    }
+
+    function buildComparisonFeedback(snapshots, subjects) {
+      const first = snapshots[0];
+      const latest = snapshots[snapshots.length - 1];
+      const delta = valueDelta(latest.percent, first.percent);
+      const subjectDeltas = subjects.map((subject) => {
+        const start = firstFiniteSubjectPercent(snapshots, subject);
+        const end = lastFiniteSubjectPercent(snapshots, subject);
+        return { subject, delta: isFiniteNumber(start) && isFiniteNumber(end) ? end - start : null, latest: end };
+      }).filter((item) => isFiniteNumber(item.delta));
+      const best = subjectDeltas.slice().sort((a, b) => b.delta - a.delta)[0];
+      const focus = subjectDeltas.slice().filter((item) => isFiniteNumber(item.latest)).sort((a, b) => a.latest - b.latest)[0];
+      const trend = delta > .5
+        ? `${formatPercentDelta(delta)} artış var. Bu, çalışma düzeninin öğrencide karşılık bulduğunu gösteriyor.`
+        : delta < -.5
+          ? `${formatPercentDelta(delta)} düşüş görünüyor. Son denemedeki yanlış ve boşlar birlikte incelenmeli.`
+          : "İlk ve son deneme başarısı birbirine yakın. Küçük hedeflerle istikrarlı artış yakalanabilir.";
+      return [
+        { title: "Genel Değişim", text: trend },
+        { title: "En İyi Gelişim", text: best ? `${best.subject} dersinde ${formatPercentDelta(best.delta)} değişim var.` : "Ders bazlı gelişim için yeterli veri yok." },
+        { title: "Gelişim Odağı", text: focus ? `Son denemede ${focus.subject} ${formatPercent(focus.latest)} seviyesinde. Bu ders için kısa tekrar planı iyi olur.` : "Gelişim odağı için daha fazla sınav verisi eklenebilir." },
+        { title: "Veliye Kısa Not", text: "Bu karşılaştırma tek bir sonucu değil, öğrencinin zaman içindeki akademik yolculuğunu gösterir." }
+      ];
+    }
+
     function buildReport() {
       const type = els.reportType?.value || "academic";
       if (type === "classList") return buildClassListReport();
       if (type === "rankingList") return buildRankingListReport();
       if (type === "meetings") return buildMeetingReport();
       if (type === "studentSummary") return buildStudentSummaryReport();
+      if (type === "comparison") return buildComparisonReport();
       const student = state.students.find((item) => item.id === els.reportStudent.value) || activeStudents()[0];
       const exams = selectedExamSet();
       const subjects = selectedSubjects();
@@ -2959,6 +3786,7 @@
       const showRankingBlock = ranking.allowed;
       const feedback = buildFeedback(report);
       const comboChart = buildComboChart(report.subjects, averageLabel);
+      const subjectStackedBars = buildSubjectStackedBars(report.subjects);
       const rows = report.subjects.map((item) => {
         const status = compareStatus(item.percent, item.classAverage);
         const generalStatus = compareStatus(item.percent, item.generalAverage);
@@ -3021,12 +3849,18 @@
         ` : ""}
         <h3 class="report-section-title">Ders Başarı Grafiği</h3>
         <div class="chart-panel">
+          <div class="chart-panel-title"><strong>Ders bazlı başarı ve ortalamalar</strong><span>Öğrenci · Sınıf · ${escapeHtml(averageLabel)}</span></div>
           ${comboChart || `<div class="empty">Grafik için seçili ders verisi yok.</div>`}
           <div class="badges">
-            <span class="badge blue">Mavi sütun: öğrenci</span>
+            <span class="badge blue">Renkli sütunlar: öğrenci</span>
             <span class="badge gold">Turuncu çizgi: sınıf ort.</span>
             <span class="badge green">Mor kesik çizgi: ${escapeHtml(averageLabel)}</span>
           </div>
+        </div>
+        <h3 class="report-section-title">Doğru-Yanlış-Boş Dağılımı</h3>
+        <div class="chart-panel">
+          <div class="chart-panel-title"><strong>Derslerde cevap dağılımı</strong><span>Eksiklerin nereden geldiğini gösterir</span></div>
+          ${subjectStackedBars}
         </div>
         <h3 class="report-section-title">Ders Ders Analiz</h3>
         <div class="table-wrap">
@@ -3249,7 +4083,7 @@
           <polyline class="class-line" points="${classPoints}"></polyline>
           <polyline class="general-line" points="${generalPoints}"></polyline>
           ${subjects.map((item, index) => `<circle class="chart-dot-class" cx="${x(index)}" cy="${y(item.classAverage)}" r="6"></circle><circle class="chart-dot-general" cx="${x(index)}" cy="${y(item.generalAverage)}" r="6"></circle>`).join("")}
-          <text x="${left}" y="${height - 5}">Sütunlar: ders bazlı öğrenci başarısı · Turuncu çizgi: sınıf ort. · Mor kesik çizgi: ${escapeHtml(averageLabel)}</text>
+          <text x="${left}" y="${height - 5}">Renkli sütunlar: öğrenci başarısı · Turuncu çizgi: sınıf ort. · Mor kesik çizgi: ${escapeHtml(averageLabel)}</text>
         </svg>
       `;
     }
@@ -3491,6 +4325,7 @@
         return `${fullName(selected || {})}-ogrenci-bilgi-ozeti`;
       }
       const student = state.students.find((item) => item.id === els.reportStudent.value);
+      if (type === "comparison") return `${fullName(student || {})}-karsilastirmali-karne`;
       const exam = state.exams.find((item) => item.id === els.reportExam.value);
       return `${fullName(student || {})}-${exam?.name || "tum-sinavlar"}`;
     }
@@ -3571,6 +4406,10 @@
       els.pageTitle.textContent = pageMeta[viewId]?.[0] || "";
       els.pageSubtitle.textContent = pageMeta[viewId]?.[1] || "";
       if (viewId === "reportsView") buildReport();
+      if (viewId === "scheduleView") {
+        renderLessonPlannerFocus();
+        syncLessonPlannerFrame();
+      }
     }
 
     function deleteNote(studentId, noteId) {
@@ -3599,6 +4438,10 @@
 
     function cleanName(value) {
       return cleanCell(value).replace(/\s+/g, " ").trim();
+    }
+
+    function cleanClassName(value) {
+      return cleanName(value);
     }
 
     function cleanCell(value) {

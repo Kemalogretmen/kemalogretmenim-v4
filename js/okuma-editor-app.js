@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  const OPTIONAL_METIN_COLUMNS = ['baslik_stil_json', 'plain_text', 'oturum_gerekli', 'gizli'];
+  const OPTIONAL_METIN_COLUMNS = ['baslik_stil_json', 'plain_text', 'oturum_gerekli', 'gizli', 'egitim_json'];
   const OPTIONAL_QUESTION_COLUMNS = ['soru_tipi', 'ayar_json'];
   const PAGE_SIZE = 10;
   const QUESTION_TYPES = {
@@ -25,7 +25,21 @@
     'times-new-roman': '"Times New Roman", serif',
     'courier-new': '"Courier New", monospace',
   };
-  const SIZE_VALUES = ['14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '42px'];
+  const SIZE_VALUES = ['14px', '16px', '18px', '20px', '22px', '24px', '28px', '32px', '36px', '42px'];
+  const LEVEL_LABELS = {
+    baslangic: 'Başlangıç',
+    gelisen: 'Gelişen',
+    akici: 'Akıcı',
+    ileri: 'İleri',
+  };
+  const TEXT_TYPE_LABELS = {
+    hikaye: 'Hikaye',
+    bilgilendirici: 'Bilgilendirici',
+    masal: 'Masal',
+    siir: 'Şiir',
+    diyalog: 'Diyalog',
+    egzersiz: 'Egzersiz',
+  };
 
   const state = {
     editingId: null,
@@ -35,6 +49,7 @@
     activeFilter: 0,
     activePage: 1,
     quill: null,
+    titleQuill: null,
   };
 
   let toastTimer = null;
@@ -104,6 +119,150 @@
       }
     }
     return fallback;
+  }
+
+  function getDefaultTrainingProfile() {
+    return {
+      seviye: 'gelisen',
+      tur: 'hikaye',
+      tema: '',
+      kazanim: '',
+      tahmini_dk: 3,
+      rsvp: {
+        grup_boyutu: 1,
+        noktalama_duraklama_ms: 220,
+        ogrenci_hiz_kontrolu: false,
+      },
+      gorsel: {
+        url: '',
+        alt: '',
+        aciklama: '',
+        konum: 'none',
+        fit: 'cover',
+      },
+    };
+  }
+
+  function normalizeTrainingProfile(value) {
+    const defaults = getDefaultTrainingProfile();
+    const raw = parseOptionalJson(value, {});
+    const profile = Object.assign({}, defaults, raw || {});
+    const rsvp = Object.assign({}, defaults.rsvp, profile.rsvp || {});
+    const visual = Object.assign({}, defaults.gorsel, profile.gorsel || {});
+    profile.seviye = LEVEL_LABELS[profile.seviye] ? profile.seviye : defaults.seviye;
+    profile.tur = TEXT_TYPE_LABELS[profile.tur] ? profile.tur : defaults.tur;
+    profile.tema = String(profile.tema || '').trim();
+    profile.kazanim = String(profile.kazanim || '').trim();
+    profile.tahmini_dk = Math.max(1, Math.min(30, parseInt(profile.tahmini_dk, 10) || defaults.tahmini_dk));
+    rsvp.grup_boyutu = Math.max(1, Math.min(3, parseInt(rsvp.grup_boyutu, 10) || defaults.rsvp.grup_boyutu));
+    rsvp.noktalama_duraklama_ms = rsvp.noktalama_duraklama_ms === 0 ? 0 : (parseInt(rsvp.noktalama_duraklama_ms, 10) || defaults.rsvp.noktalama_duraklama_ms);
+    rsvp.ogrenci_hiz_kontrolu = !!rsvp.ogrenci_hiz_kontrolu;
+    visual.url = String(visual.url || '').trim();
+    visual.alt = String(visual.alt || '').trim();
+    visual.aciklama = String(visual.aciklama || '').trim();
+    visual.konum = ['none', 'top', 'cover'].includes(visual.konum) ? visual.konum : (visual.url ? 'top' : defaults.gorsel.konum);
+    visual.fit = visual.fit === 'contain' ? 'contain' : 'cover';
+    if (!visual.url) {
+      visual.konum = 'none';
+    }
+    profile.rsvp = rsvp;
+    profile.gorsel = visual;
+    return profile;
+  }
+
+  function renderVisualPreview() {
+    const preview = document.getElementById('gorselPreview');
+    const caption = document.getElementById('gorselPreviewCaption');
+    if (!preview) {
+      return;
+    }
+    const url = String(document.getElementById('fGorselUrl')?.value || '').trim();
+    const alt = String(document.getElementById('fGorselAlt')?.value || '').trim();
+    const explanation = String(document.getElementById('fGorselAciklama')?.value || '').trim();
+    const fit = document.getElementById('fGorselFit')?.value === 'contain' ? 'contain' : 'cover';
+    preview.classList.toggle('has-image', !!url);
+    preview.style.setProperty('--visual-fit', fit);
+    preview.innerHTML = '';
+    if (!url) {
+      preview.textContent = 'Görsel önizleme';
+      return;
+    }
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = alt || explanation || 'Okuma metni görseli';
+    img.loading = 'lazy';
+    img.onerror = function() {
+      preview.classList.remove('has-image');
+      preview.textContent = 'Görsel yüklenemedi';
+    };
+    preview.appendChild(img);
+    if (explanation) {
+      const captionNode = caption || document.createElement('div');
+      captionNode.className = 'visual-preview-caption';
+      captionNode.id = 'gorselPreviewCaption';
+      captionNode.textContent = explanation;
+      captionNode.style.display = '';
+      preview.appendChild(captionNode);
+    }
+  }
+
+  function clearVisualFields() {
+    ['fGorselUrl', 'fGorselAlt', 'fGorselAciklama'].forEach(function(id) {
+      const node = document.getElementById(id);
+      if (node) {
+        node.value = '';
+      }
+    });
+    const position = document.getElementById('fGorselKonum');
+    const fit = document.getElementById('fGorselFit');
+    if (position) {
+      position.value = 'none';
+    }
+    if (fit) {
+      fit.value = 'cover';
+    }
+    renderVisualPreview();
+  }
+
+  function setTrainingProfile(profile) {
+    const safe = normalizeTrainingProfile(profile);
+    document.getElementById('fSeviye').value = safe.seviye;
+    document.getElementById('fMetinTuru').value = safe.tur;
+    document.getElementById('fTahminiSure').value = String(safe.tahmini_dk);
+    document.getElementById('fTema').value = safe.tema;
+    document.getElementById('fKazanim').value = safe.kazanim;
+    document.getElementById('fKelimeGrup').value = String(safe.rsvp.grup_boyutu);
+    document.getElementById('fNoktalamaDuraklama').checked = safe.rsvp.noktalama_duraklama_ms > 0;
+    document.getElementById('fOgrenciHizKontrol').checked = safe.rsvp.ogrenci_hiz_kontrolu;
+    document.getElementById('fGorselUrl').value = safe.gorsel.url;
+    document.getElementById('fGorselAlt').value = safe.gorsel.alt;
+    document.getElementById('fGorselAciklama').value = safe.gorsel.aciklama;
+    document.getElementById('fGorselKonum').value = safe.gorsel.konum;
+    document.getElementById('fGorselFit').value = safe.gorsel.fit;
+    renderVisualPreview();
+  }
+
+  function getTrainingProfileFromForm() {
+    const hasPause = document.getElementById('fNoktalamaDuraklama').checked;
+    return normalizeTrainingProfile({
+      seviye: document.getElementById('fSeviye').value,
+      tur: document.getElementById('fMetinTuru').value,
+      tema: document.getElementById('fTema').value,
+      kazanim: document.getElementById('fKazanim').value,
+      tahmini_dk: document.getElementById('fTahminiSure').value,
+      rsvp: {
+        grup_boyutu: document.getElementById('fKelimeGrup').value,
+        noktalama_duraklama_ms: hasPause ? 220 : 0,
+        ogrenci_hiz_kontrolu: document.getElementById('fOgrenciHizKontrol').checked,
+      },
+      gorsel: {
+        url: document.getElementById('fGorselUrl').value,
+        alt: document.getElementById('fGorselAlt').value,
+        aciklama: document.getElementById('fGorselAciklama').value,
+        konum: document.getElementById('fGorselKonum').value,
+        fit: document.getElementById('fGorselFit').value,
+      },
+    });
   }
 
   function normalizeTextToken(value) {
@@ -249,11 +408,38 @@
     return clean;
   }
 
+  function normalizeTitleHtml(html) {
+    return normalizeEditorHtml(html)
+      .replace(/\sdata-[^=]+="[^"]*"/g, '')
+      .trim();
+  }
+
   function getPlainText() {
     if (!state.quill) {
       return '';
     }
     return state.quill.getText().replace(/\u00a0/g, ' ').trim();
+  }
+
+  function getTitlePlainText() {
+    if (!state.titleQuill) {
+      return (document.getElementById('fBaslik').value || '').trim();
+    }
+    return state.titleQuill.getText().replace(/\u00a0/g, ' ').trim();
+  }
+
+  function getTitleHtml() {
+    if (!state.titleQuill) {
+      return '';
+    }
+    return normalizeTitleHtml(state.titleQuill.root.innerHTML);
+  }
+
+  function syncTitleInput() {
+    const input = document.getElementById('fBaslik');
+    if (input) {
+      input.value = getTitlePlainText();
+    }
   }
 
   function updateWordCount() {
@@ -269,15 +455,20 @@
       renk: document.getElementById('fBaslikRenk').value,
       boyut: parseInt(document.getElementById('fBaslikBoyut').value, 10) || 28,
       hiza: document.getElementById('fBaslikHiza').value,
+      html: getTitleHtml(),
     };
   }
 
   function applyTitleStylePreview() {
-    const input = document.getElementById('fBaslik');
+    const input = state.titleQuill ? state.titleQuill.root : document.getElementById('fBaslik');
     const titleStyle = getTitleStyle();
     input.style.color = titleStyle.renk;
     input.style.fontSize = titleStyle.boyut + 'px';
     input.style.textAlign = titleStyle.hiza;
+    if (state.titleQuill) {
+      const align = titleStyle.hiza === 'left' ? false : titleStyle.hiza;
+      state.titleQuill.format('align', align, 'silent');
+    }
   }
 
   function applyEditorDefaultStyle() {
@@ -319,7 +510,19 @@
       theme: 'snow',
     });
 
+    state.titleQuill = new window.Quill('#fBaslikRich', {
+      modules: {
+        toolbar: '#titleToolbar',
+      },
+      placeholder: 'Metnin başlığını yaz. Bir bölümü seçip renklendirebilir veya büyütebilirsin.',
+      theme: 'snow',
+    });
+
     state.quill.on('text-change', updateWordCount);
+    state.titleQuill.on('text-change', function() {
+      syncTitleInput();
+      applyTitleStylePreview();
+    });
     applyEditorDefaultStyle();
     updateWordCount();
   }
@@ -354,15 +557,24 @@
     document.getElementById('fAktif').value = text && typeof text.aktif === 'boolean' ? String(text.aktif) : 'true';
     document.getElementById('fOturumGerekli').value = text && text.oturum_gerekli ? 'true' : 'false';
     document.getElementById('fGizli').value = text && text.gizli ? 'true' : 'false';
+    setTrainingProfile(text && text.egitim_json);
 
     const titleStyle = parseOptionalJson(text && text.baslik_stil_json, {
       renk: '#1A1040',
       boyut: 28,
       hiza: 'center',
     });
+    const titleHtml = normalizeTitleHtml(titleStyle.html || '');
+    state.titleQuill.setContents([]);
+    if (titleHtml) {
+      state.titleQuill.clipboard.dangerouslyPasteHTML(titleHtml);
+    } else if (text && text.baslik) {
+      state.titleQuill.setText(text.baslik);
+    }
     document.getElementById('fBaslikRenk').value = titleStyle.renk || '#1A1040';
     document.getElementById('fBaslikBoyut').value = String(titleStyle.boyut || 28);
     document.getElementById('fBaslikHiza').value = titleStyle.hiza || 'center';
+    syncTitleInput();
     applyTitleStylePreview();
 
     setCheckedGrades(text && text.siniflar, text && text.sinif);
@@ -409,10 +621,10 @@
 
     let response = await getClient()
       .from('metinler')
-      .select('id,baslik,siniflar,sinif,goruntuleme_modu,aktif,gizli,oturum_gerekli,kelime_sayisi,olusturma_tarihi')
+      .select('id,baslik,siniflar,sinif,goruntuleme_modu,aktif,gizli,oturum_gerekli,egitim_json,kelime_sayisi,olusturma_tarihi')
       .order('olusturma_tarihi', { ascending: false });
 
-    if (response.error && /oturum_gerekli|gizli/i.test(response.error.message || '')) {
+    if (response.error && /oturum_gerekli|gizli|egitim_json/i.test(response.error.message || '')) {
       response = await getClient()
         .from('metinler')
         .select('id,baslik,siniflar,sinif,goruntuleme_modu,aktif,kelime_sayisi,olusturma_tarihi')
@@ -466,6 +678,13 @@
       const activeLabel = text.aktif ? '✅ Yayında' : '⏸️ Taslak';
       const accessLabel = text.oturum_gerekli ? '🔐 Kayıtlı Kullanıcı' : '🌍 Herkese Açık';
       const visibilityLabel = text.gizli ? '🔗 Gizli' : '👀 Listede';
+      const profile = normalizeTrainingProfile(text.egitim_json);
+      const profileBadges =
+        '<div class="mk-profile">' +
+          '<span class="mk-profile-chip">🎓 ' + escHtml(LEVEL_LABELS[profile.seviye] || 'Gelişen') + '</span>' +
+          '<span class="mk-profile-chip">🏷️ ' + escHtml(TEXT_TYPE_LABELS[profile.tur] || 'Hikaye') + '</span>' +
+          (profile.tema ? '<span class="mk-profile-chip"># ' + escHtml(profile.tema) + '</span>' : '') +
+        '</div>';
       const shareButton = text.aktif
         ? '<button class="mk-btn-share" onclick="metinLinkKopyala(\'' + text.id + '\')">🔗 Kopyala</button>'
         : '';
@@ -474,6 +693,7 @@
           '<span class="mk-kw-chip">' + (text.kelime_sayisi || 0) + ' kelime</span>' +
           '<div class="mk-sinif-badges">' + gradeBadges + '</div>' +
           '<div class="mk-title">' + escHtml(text.baslik) + '</div>' +
+          profileBadges +
           '<div class="mk-meta">' +
             '<span class="mk-mod ' + modeClass + '">' + modeLabel + '</span>' +
             '<span class="mk-aktif ' + activeClass + '">' + activeLabel + '</span>' +
@@ -646,6 +866,97 @@
     const value = parseInt(document.getElementById('fKelimeMs').value, 10) || 500;
     document.getElementById('kelimeMsVal').textContent = value + 'ms';
     document.getElementById('kelimeMsAcik').textContent = 'Her kelime yaklaşık ' + (value / 1000).toFixed(2) + ' saniye ekranda kalır.';
+  }
+
+  function focusEditor(editor) {
+    if (!editor) {
+      return null;
+    }
+    editor.focus();
+    let range = editor.getSelection();
+    if (!range) {
+      range = { index: editor.getLength(), length: 0 };
+      editor.setSelection(range.index, 0, 'silent');
+    }
+    return range;
+  }
+
+  function getNextSize(current, direction) {
+    const safeCurrent = String(current || '18px');
+    let index = SIZE_VALUES.indexOf(safeCurrent);
+    if (index < 0) {
+      const numeric = parseInt(safeCurrent, 10) || 18;
+      index = SIZE_VALUES.findIndex(function(size) {
+        return parseInt(size, 10) >= numeric;
+      });
+      if (index < 0) {
+        index = SIZE_VALUES.length - 1;
+      }
+    }
+    return SIZE_VALUES[Math.max(0, Math.min(SIZE_VALUES.length - 1, index + direction))];
+  }
+
+  function applyInlineTool(editor, action, value) {
+    const range = focusEditor(editor);
+    if (!range) {
+      return;
+    }
+    const formats = editor.getFormat(range);
+    if (action === 'bold' || action === 'italic' || action === 'underline') {
+      editor.format(action, !formats[action]);
+      return;
+    }
+    if (action === 'color') {
+      editor.format('color', value);
+      return;
+    }
+    if (action === 'size') {
+      editor.format('size', value);
+      return;
+    }
+    if (action === 'bigger') {
+      editor.format('size', getNextSize(formats.size, 1));
+      return;
+    }
+    if (action === 'smaller') {
+      editor.format('size', getNextSize(formats.size, -1));
+      return;
+    }
+    if (action === 'clear') {
+      editor.removeFormat(range.index, Math.max(range.length, 1));
+    }
+  }
+
+  function applyTextTool(action, value) {
+    const editor = state.quill;
+    const range = focusEditor(editor);
+    if (!range) {
+      return;
+    }
+    if (action === 'satirbasi') {
+      editor.insertText(range.index, '\n    ', 'user');
+      editor.setSelection(range.index + 5, 0, 'silent');
+      return;
+    }
+    if (action === 'paragraf') {
+      editor.insertText(range.index + range.length, '\n\n', 'user');
+      editor.setSelection(range.index + range.length + 2, 0, 'silent');
+      return;
+    }
+    if (action === 'indent' || action === 'outdent') {
+      editor.formatLine(range.index, Math.max(range.length, 1), 'indent', action === 'indent' ? '+1' : '-1');
+      return;
+    }
+    applyInlineTool(editor, action, value);
+  }
+
+  function applyTitleTool(action, value) {
+    if (!state.titleQuill) {
+      return;
+    }
+    applyInlineTool(state.titleQuill, action, value);
+    syncTitleInput();
+    applyTitleStylePreview();
   }
 
   function renumberQuestions() {
@@ -1053,7 +1364,7 @@
   }
 
   function getMetinPayload(active) {
-    const title = document.getElementById('fBaslik').value.trim();
+    const title = getTitlePlainText();
     const plainText = getPlainText();
     const html = normalizeEditorHtml(state.quill.root.innerHTML);
     const grades = getSelectedGrades();
@@ -1079,6 +1390,7 @@
       aktif: typeof active === 'boolean' ? active : document.getElementById('fAktif').value === 'true',
       gizli: document.getElementById('fGizli').value === 'true',
       oturum_gerekli: document.getElementById('fOturumGerekli').value === 'true',
+      egitim_json: getTrainingProfileFromForm(),
       goruntuleme_modu: state.currentMode,
       hedef_hiz: parseInt(document.getElementById('fHedefHiz').value, 10) || 80,
       kelime_ms: parseInt(document.getElementById('fKelimeMs').value, 10) || 500,
@@ -1105,7 +1417,7 @@
         });
         response = await client.from('metinler').update(fallback).eq('id', state.editingId).select().single();
         if (!response.error) {
-          toast('Başlık stili için ek SQL güncellemesi gerekiyor; temel kayıt yapıldı.', 'error');
+          toast('Eğitim profili için ek SQL güncellemesi gerekiyor; temel kayıt yapıldı.', 'error');
           return response.data;
         }
       }
@@ -1123,7 +1435,7 @@
       });
       insertResponse = await client.from('metinler').insert(fallbackInsert).select().single();
       if (!insertResponse.error) {
-        toast('Başlık stili için ek SQL güncellemesi gerekiyor; temel kayıt yapıldı.', 'error');
+        toast('Eğitim profili için ek SQL güncellemesi gerekiyor; temel kayıt yapıldı.', 'error');
         return insertResponse.data;
       }
     }
@@ -1271,6 +1583,18 @@
     document.getElementById('fBaslikRenk').addEventListener('input', applyTitleStylePreview);
     document.getElementById('fBaslikBoyut').addEventListener('change', applyTitleStylePreview);
     document.getElementById('fBaslikHiza').addEventListener('change', applyTitleStylePreview);
+    ['fGorselUrl', 'fGorselAlt', 'fGorselAciklama'].forEach(function(id) {
+      const node = document.getElementById(id);
+      if (node) {
+        node.addEventListener('input', renderVisualPreview);
+      }
+    });
+    ['fGorselKonum', 'fGorselFit'].forEach(function(id) {
+      const node = document.getElementById(id);
+      if (node) {
+        node.addEventListener('change', renderVisualPreview);
+      }
+    });
   }
 
   document.addEventListener('DOMContentLoaded', async function() {
@@ -1315,6 +1639,10 @@
   window.modSec = setMode;
   window.ilerModDegis = updateProgressMode;
   window.kelimeMsDegis = updateWordIntervalText;
+  window.metinArac = applyTextTool;
+  window.baslikArac = applyTitleTool;
+  window.gorselOnizle = renderVisualPreview;
+  window.gorselTemizle = clearVisualFields;
   window.soruEkle = function(type, data) { addQuestion(type, data); };
   window.soruTipiDegis = changeQuestionType;
   window.soruSil = deleteQuestion;

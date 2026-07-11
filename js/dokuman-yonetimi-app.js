@@ -169,6 +169,71 @@
     return true;
   }
 
+  async function removeDocumentStorageFiles(paths) {
+    const unique = {};
+    const list = (Array.isArray(paths) ? paths : [])
+      .map(function(path) { return String(path || '').trim(); })
+      .filter(function(path) {
+        if (!path || unique[path]) {
+          return false;
+        }
+        unique[path] = true;
+        return true;
+      });
+    for (let i = 0; i < list.length; i += 100) {
+      const chunk = list.slice(i, i + 100);
+      const response = await getClient().storage.from(BUCKET_NAME).remove(chunk);
+      if (response.error) {
+        throw response.error;
+      }
+    }
+    return list.length;
+  }
+
+  async function cleanupOrphanDocumentStorage() {
+    if (!requirePermission('dokuman_silme', 'Depo temizliği')) {
+      return;
+    }
+
+    try {
+      const listResponse = await getClient().rpc('list_orphan_dokuman_storage');
+      if (listResponse.error) {
+        throw listResponse.error;
+      }
+
+      const rows = Array.isArray(listResponse.data) ? listResponse.data : [];
+      const paths = rows.map(function(row) { return row && row.name; }).filter(Boolean);
+      if (!paths.length) {
+        const artifactResponse = await getClient().rpc('cleanup_deleted_dokuman_artifacts');
+        if (artifactResponse.error) {
+          console.warn('Eski iz kayıtları temizlenemedi:', artifactResponse.error);
+        }
+        toast('Boşa düşmüş Supabase doküman dosyası bulunmadı.', 'success');
+        return;
+      }
+
+      const preview = paths.slice(0, 8).join('\n');
+      const extra = paths.length > 8 ? '\n… +' + (paths.length - 8) + ' dosya daha' : '';
+      const ok = window.confirm(
+        paths.length + ' kullanılmayan Supabase dosyası silinecek.\n\n' +
+        preview + extra +
+        '\n\nBu dosyalar doküman kayıtlarında veya ana sayfa vitrininde kullanılmıyor görünüyor. Devam edilsin mi?'
+      );
+      if (!ok) {
+        return;
+      }
+
+      const removedCount = await removeDocumentStorageFiles(paths);
+      const artifactResponse = await getClient().rpc('cleanup_deleted_dokuman_artifacts');
+      if (artifactResponse.error) {
+        console.warn('Eski iz kayıtları temizlenemedi:', artifactResponse.error);
+      }
+      toast(removedCount + ' kullanılmayan Supabase dosyası silindi.', 'success');
+    } catch (error) {
+      toast('Depo temizliği yapılamadı: ' + humanizeSupabaseError(error), 'error');
+    }
+  }
+
   function ensurePdfWorker() {
     if (!window.pdfjsLib) {
       throw new Error('PDF kutuphanesi yuklenemedi.');
@@ -1849,10 +1914,14 @@
     if (!requirePermission(state.editingId ? 'dokuman_duzenleme' : 'dokuman_ekleme', state.editingId ? 'Doküman düzenleme' : 'Doküman ekleme')) {
       return;
     }
+    let uploadedPathForRollback = '';
     try {
       const shouldPrepare = Boolean(options && options.openInteractionEditor);
       const data = collectPayload();
       const documentId = state.editingId || (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : 'doc_' + Date.now());
+      const oldSupabasePath = data.existing && getContentKind(data.existing) === 'document' && getDocumentSource(data.existing) === 'supabase'
+        ? String(data.existing.dosya_yolu || '').trim()
+        : '';
       let filePath = data.existing ? data.existing.dosya_yolu : '';
       let fileName = data.existing ? data.existing.dosya_adi : '';
       let fileSize = data.existing ? Number(data.existing.dosya_boyutu || 0) : 0;
@@ -1880,6 +1949,7 @@
       } else if (data.file) {
         const meta = state.currentPdfMeta || await extractDocumentMeta(data.file);
         filePath = await uploadDocumentFile(documentId, data.file, data.grade, data.subject, data.title);
+        uploadedPathForRollback = filePath;
         fileName = data.file.name;
         fileSize = data.file.size || 0;
         pageCount = meta.pageCount || 0;
@@ -1941,17 +2011,32 @@
         throw response.error;
       }
 
+      uploadedPathForRollback = '';
+      const shouldRemoveOldFile = oldSupabasePath && oldSupabasePath !== String(response.data.dosya_yolu || '').trim();
+      let oldFileRemoved = true;
+      if (shouldRemoveOldFile) {
+        oldFileRemoved = await removeDocumentStorageFile(oldSupabasePath);
+      }
+
       state.editingId = response.data.id;
       state.selectedDocument = response.data;
       document.getElementById('editTitle').textContent = 'Düzenle: ' + response.data.baslik;
       document.getElementById('editStatus').textContent = 'Kayıt tamamlandı. İstersen bağlantıyı hemen açabilir veya listeye dönebilirsin.';
-      toast(data.contentKind === 'video' ? 'Ders videosu kaydedildi.' : 'Doküman kaydedildi.', 'success');
+      toast(
+        oldFileRemoved
+          ? (data.contentKind === 'video' ? 'Ders videosu kaydedildi.' : 'Doküman kaydedildi.')
+          : 'Kayıt güncellendi; eski Supabase dosyası temizliği için Storage kontrol edilmeli.',
+        oldFileRemoved ? 'success' : 'error'
+      );
       await loadDocuments();
       openEditor(getDocumentById(response.data.id) || response.data);
       if (shouldPrepare) {
         window.location.href = window.kemalDocumentStore.buildViewerUrl(response.data.id) + '&edit=1';
       }
     } catch (error) {
+      if (uploadedPathForRollback) {
+        await removeDocumentStorageFile(uploadedPathForRollback);
+      }
       toast(humanizeSupabaseError(error), 'error');
     }
   }
@@ -2397,6 +2482,7 @@
   window.vitrinSil = deleteShowcaseSlide;
   window.uygulaFiltre = applyFilters;
   window.filtreTemizle = clearFilters;
+  window.depoTemizle = cleanupOrphanDocumentStorage;
   window.hedefEkle = addTargetFromControls;
   window.hedefSil = removeTarget;
   window.dokumanDuzenle = function(id) {

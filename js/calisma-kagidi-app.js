@@ -36,13 +36,45 @@
     var combined = String((error && error.message) || '') + ' ' + String((error && error.code) || '');
     var lowered = combined.toLowerCase();
     if (
+      lowered.indexOf('dokuman kimligi bulunamadi') !== -1 ||
+      lowered.indexOf('doküman kimliği bulunamadı') !== -1 ||
+      lowered.indexOf('invalid input syntax for type uuid') !== -1
+    ) {
+      return 'Bu sayfa tek başına açılmaz. Önce bir doküman seçip o dokümana bağlı çalışma kağıdını açmalısın.';
+    }
+    if (
       lowered.indexOf('calisma_kagitlari') !== -1 ||
       lowered.indexOf('calisma_kagidi_alanlari') !== -1 ||
       lowered.indexOf('submit_calisma_kagidi') !== -1
     ) {
-      return 'Bu calisma kagidi henuz yayinlanmamis ya da sistem kurulumu tamamlanmamis gorunuyor.';
+      return 'Bu çalışma kağıdı henüz yayınlanmamış ya da sistem kurulumu tamamlanmamış görünüyor.';
     }
     return (error && error.message) || 'Beklenmeyen bir hata oluştu.';
+  }
+
+  function isValidUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+  }
+
+  function showMissingDocumentState() {
+    qs('worksheetStage').innerHTML = [
+      '<div class="stage-empty">',
+        '<span>🧩</span>',
+        '<p>Çalışma kağıdı açmak için önce bir doküman seçmelisin.</p>',
+        '<p style="margin-top:10px;font-size:13px;color:#64748B;">Öğretmensen editörden çalışma kağıdı hazırlayabilir, öğrenciler için paylaşım bağlantısını doküman üzerinden açabilirsin.</p>',
+        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;">',
+          '<a href="/admin/calisma-kagidi-editor.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:#6C3DED;color:white;text-decoration:none;font-weight:800;">Editörü Aç</a>',
+          '<a href="/admin/dokuman-yonetimi.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:white;color:#6C3DED;text-decoration:none;font-weight:800;border:2px solid #E2D9FF;">Doküman Yönetimi</a>',
+        '</div>',
+      '</div>'
+    ].join('');
+    qs('worksheetTitle').textContent = 'Çalışma kağıdı seçilmedi';
+    qs('worksheetDesc').textContent = 'Bu ekran belirli bir dokümana bağlı çalışma kağıdını çözdürmek için kullanılır.';
+    qs('worksheetPill').textContent = '🧩 Çalışma Kağıdı';
+    qs('backToDocumentLink').href = '/admin/calisma-kagidi-editor.html';
+    qs('backToDocumentLink').textContent = 'Editörü aç';
+    qs('submitBtn').disabled = true;
+    qs('worksheetInstructions').textContent = 'Bir doküman seçildiğinde yönergeler burada görünür.';
   }
 
   function ensurePdfWorker() {
@@ -335,6 +367,22 @@
     };
   }
 
+  function validateSafeStudentPayload(payload) {
+    if (!window.kemalContentSafety || typeof window.kemalContentSafety.validateFields !== 'function') {
+      return true;
+    }
+    var result = window.kemalContentSafety.validateFields([
+      { element: qs('studentName'), label: 'ogrenci_adi', value: payload.ad },
+      { element: qs('studentSurname'), label: 'ogrenci_soyadi', value: payload.soyad },
+      { element: qs('studentSection'), label: 'sube', value: payload.sube },
+    ], { surface: 'worksheet_student_info' });
+    if (!result.ok) {
+      toast(result.message, 'error');
+      return false;
+    }
+    return true;
+  }
+
   function setValueIfEmpty(id, value) {
     var el = qs(id);
     if (el && !el.value && value) {
@@ -395,7 +443,9 @@
   async function submitWorksheet() {
     try {
       qs('submitBtn').disabled = true;
-      var result = await window.kemalCalismaKagidiStore.submitWorksheet(state.documentId, getStudentPayload(), state.answers);
+      var studentPayload = getStudentPayload();
+      if (!validateSafeStudentPayload(studentPayload)) return;
+      var result = await window.kemalCalismaKagidiStore.submitWorksheet(state.documentId, studentPayload, state.answers);
       showResult(result || {});
       markWorksheetCompleted(result || {});
       toast('Calisma kagidi gonderildi.', 'success');
@@ -410,7 +460,7 @@
     var params = new URLSearchParams(window.location.search);
     state.documentId = params.get('id') || '';
 
-    if (!state.documentId) {
+    if (!state.documentId || !isValidUuid(state.documentId)) {
       throw new Error('Dokuman kimligi bulunamadi.');
     }
 
@@ -453,9 +503,13 @@
     loadData()
       .then(renderPages)
       .catch(function(error) {
+        if (!state.documentId || !isValidUuid(state.documentId)) {
+          showMissingDocumentState();
+          return;
+        }
         qs('worksheetStage').innerHTML = '<div class="stage-empty"><span>⚠️</span><p>' + humanizeError(error) + '</p></div>';
-        qs('worksheetTitle').textContent = 'Calisma kagidi acilamadi';
-        qs('worksheetDesc').textContent = 'Baglantiyi kontrol edip yeniden deneyebilirsin.';
+        qs('worksheetTitle').textContent = 'Çalışma kağıdı açılamadı';
+        qs('worksheetDesc').textContent = 'Bağlantıyı kontrol edip yeniden deneyebilirsin.';
       });
   });
 })();

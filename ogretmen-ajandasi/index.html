@@ -212,6 +212,44 @@
       text-decoration: none;
     }
 
+    .cloud-sync-card {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #edf1f4;
+    }
+
+    .cloud-sync-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .cloud-sync-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .cloud-sync-actions button {
+      min-height: 30px;
+      padding: 5px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: var(--white);
+      color: #31566f;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .badge.cloud-local { background: var(--sun); color: #805f18; }
+    .badge.cloud-syncing { background: var(--sky); color: #245f93; }
+    .badge.cloud-ready { background: var(--mint); color: #176948; }
+    .badge.cloud-error { background: var(--rose); color: #9b3350; }
+
     .main {
       min-width: 0;
       padding: 20px;
@@ -219,7 +257,7 @@
 
     .topbar {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       gap: 14px;
       align-items: center;
       margin-bottom: 18px;
@@ -228,6 +266,9 @@
       border-radius: var(--radius);
       background: rgba(255, 253, 250, .84);
       backdrop-filter: blur(16px);
+      position: sticky;
+      top: 10px;
+      z-index: 20;
     }
 
     .topbar h2 {
@@ -238,6 +279,38 @@
     .topbar p {
       margin: 4px 0 0;
       color: var(--muted);
+    }
+
+    .top-clock {
+      display: grid;
+      gap: 2px;
+      min-width: 168px;
+      padding: 9px 12px;
+      border: 1px solid rgba(47, 126, 203, .18);
+      border-radius: 14px;
+      background: linear-gradient(145deg, #eef7ff, #fffdfa);
+      color: #2f4056;
+      box-shadow: 0 8px 22px rgba(39, 49, 63, .08);
+    }
+
+    .top-clock span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .top-clock strong {
+      color: #24354a;
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    .top-clock small {
+      color: #526071;
+      font-size: 12px;
+      font-weight: 800;
     }
 
     .class-switcher {
@@ -482,6 +555,54 @@
 
     .bulk-toolbar .actions {
       margin-left: auto;
+    }
+
+    .class-manager {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .class-manager-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, .72);
+    }
+
+    .class-manager-row.active {
+      border-color: rgba(35, 163, 107, .26);
+      background: linear-gradient(145deg, var(--mint), var(--white));
+    }
+
+    .class-manager-row strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .class-manager-row p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .class-manager-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .class-manager-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
     }
 
     .student-grid {
@@ -1079,6 +1200,25 @@
       background: linear-gradient(180deg, #ffffff, #fbfdff);
     }
 
+    .chart-panel-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .chart-panel-title strong {
+      color: #263445;
+      font-size: 14px;
+    }
+
+    .chart-panel-title span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .combo-chart {
       width: 100%;
       min-height: 260px;
@@ -1165,6 +1305,137 @@
       top: 0;
       opacity: .25;
       background: var(--lavender-strong);
+    }
+
+    .stacked-analysis {
+      display: grid;
+      gap: 10px;
+    }
+
+    .stacked-row {
+      display: grid;
+      grid-template-columns: minmax(96px, 150px) minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border: 1px solid #e3edf3;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .74);
+    }
+
+    .stacked-label {
+      min-width: 0;
+      color: #32435a;
+      font-size: 13px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stacked-track {
+      display: flex;
+      height: 22px;
+      border-radius: 999px;
+      background: #eef3f7;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(31, 48, 70, .04);
+    }
+
+    .stacked-segment {
+      min-width: 0;
+      height: 100%;
+    }
+
+    .stacked-segment.correct {
+      background: linear-gradient(90deg, #58bd84, #24a66f);
+    }
+
+    .stacked-segment.wrong {
+      background: linear-gradient(90deg, #f39a64, #e45f3d);
+    }
+
+    .stacked-segment.blank {
+      background: linear-gradient(90deg, #c9d6e3, #8fa5b9);
+    }
+
+    .stacked-values {
+      color: #4c5a6d;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #f5f8fb;
+      color: #3d4c60;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    .legend-dot.correct {
+      background: #24a66f;
+    }
+
+    .legend-dot.wrong {
+      background: #e45f3d;
+    }
+
+    .legend-dot.blank {
+      background: #8fa5b9;
+    }
+
+    .subject-delta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .subject-delta-card {
+      padding: 11px 12px;
+      border: 1px solid #dce7ee;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .subject-delta-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .subject-delta-card strong {
+      display: block;
+      margin: 4px 0;
+      color: #283647;
+      font-size: 15px;
+    }
+
+    .subject-delta-card b {
+      display: block;
+      font-size: 20px;
     }
 
     .feedback-grid {
@@ -1260,6 +1531,49 @@
 
     .report-table th {
       background: #eef7f8;
+    }
+
+    .comparison-trend-chart {
+      width: 100%;
+      min-height: 280px;
+      display: block;
+    }
+
+    .comparison-trend-chart text {
+      fill: #465364;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .comparison-trend-chart .trend-area {
+      fill: rgba(47, 126, 203, .12);
+    }
+
+    .comparison-trend-chart .trend-line {
+      fill: none;
+      stroke: #2563eb;
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .comparison-trend-chart .trend-dot {
+      fill: #2563eb;
+      stroke: #fff;
+      stroke-width: 4;
+    }
+
+    .delta-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--cloud);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
     }
 
     .official-report {
@@ -1494,6 +1808,37 @@
     .embedded-tool-shell {
       display: grid;
       gap: 12px;
+    }
+
+    .schedule-focus-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .schedule-focus-panel h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .schedule-focus-panel p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .schedule-date-control {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .schedule-date-control input {
+      min-width: 160px;
     }
 
     .embedded-tool-head {
@@ -1737,12 +2082,22 @@
     }
 
     @media (max-width: 700px) {
+      html,
+      body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
       .main {
         padding: 12px;
       }
 
       .topbar {
         grid-template-columns: 1fr;
+      }
+
+      .top-clock {
+        min-width: 0;
       }
 
       .class-switcher,
@@ -1752,8 +2107,48 @@
         min-width: 0;
       }
 
+      .schedule-focus-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .schedule-date-control {
+        justify-content: stretch;
+      }
+
+      .schedule-date-control > * {
+        flex: 1;
+      }
+
       .nav {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .class-manager-row {
+        grid-template-columns: 1fr;
+      }
+
+      .class-manager-actions {
+        justify-content: stretch;
+      }
+
+      .class-manager-actions button {
+        flex: 1;
+      }
+
+      input,
+      select,
+      textarea {
+        min-height: 46px;
+        font-size: 16px;
+      }
+
+      .actions {
+        align-items: stretch;
+      }
+
+      .actions button,
+      .actions a {
+        justify-content: center;
       }
 
       .form-grid,
@@ -1763,6 +2158,7 @@
       .report-kpis,
       .review-grid,
       .comparison-grid,
+      .subject-delta-grid,
       .ranking-grid,
       .feedback-grid {
         grid-template-columns: 1fr;
@@ -1798,6 +2194,49 @@
       .report-photo {
         width: 96px;
         height: 96px;
+      }
+
+      #examsView .panel {
+        padding: 14px;
+      }
+
+      #examsView .exam-row {
+        grid-template-columns: 1fr;
+        align-items: start;
+        border-radius: 16px;
+      }
+
+      #examsView .exam-row .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        width: 100%;
+      }
+
+      #examsView .exam-row .actions button {
+        width: 100%;
+        min-height: 42px;
+        padding: 8px;
+      }
+
+      .table-wrap {
+        margin-inline: -4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .stacked-row {
+        grid-template-columns: 1fr;
+      }
+
+      .stacked-values {
+        white-space: normal;
+      }
+
+      th,
+      td {
+        padding: 9px;
+        font-size: 13px;
       }
 
       .report-footer {
@@ -1853,7 +2292,15 @@
 
       <div class="side-card">
         <strong>kemalogretmenim.com.tr</strong>
-        <span class="badge gold">Bağımsız yerel sistem</span>
+        <span class="badge cloud-local" id="cloudSyncBadge">Yerel mod</span>
+        <div class="cloud-sync-card">
+          <p id="cloudSyncStatus">Giriş yapılmazsa veriler bu tarayıcıda kalır.</p>
+          <p id="cloudSyncDetail">Kayıtlı öğretmenlerde bulut senkronu açılır.</p>
+          <div class="cloud-sync-actions">
+            <button id="cloudSaveNowBtn" type="button">Buluta Kaydet</button>
+            <button id="cloudLoadNowBtn" type="button">Buluttan Al</button>
+          </div>
+        </div>
         <a href="https://kemalogretmenim.com.tr" target="_blank" rel="noopener">Siteye git</a>
       </div>
     </aside>
@@ -1863,6 +2310,11 @@
         <div>
           <h2 id="pageTitle">Panel</h2>
           <p id="pageSubtitle">Sınıfınızı, öğrencilerinizi ve deneme analizlerinizi tek yerden izleyin.</p>
+        </div>
+        <div class="top-clock" aria-live="polite">
+          <span>Bugün</span>
+          <strong id="topClockTime">--:--</strong>
+          <small id="topClockDate">Tarih yükleniyor</small>
         </div>
         <div class="class-switcher">
           <select id="activeClassSelect" aria-label="Aktif sınıf"></select>
@@ -1922,18 +2374,25 @@
                 <input id="schoolName" placeholder="Opsiyonel">
               </div>
               <div class="field">
-                <label for="className">Yeni sınıf adı</label>
+                <label for="className">Aktif sınıf adı</label>
                 <input id="className" placeholder="Örn. 2/A">
               </div>
               <div class="field">
                 <label for="classYear">Eğitim yılı</label>
                 <input id="classYear" placeholder="2025-2026">
               </div>
+              <div class="field full">
+                <label for="newClassName">Yeni sınıf ekle</label>
+                <input id="newClassName" placeholder="Örn. 1/B, 2/C, Hazırlık Grubu">
+              </div>
             </div>
             <div class="actions" style="margin-top:12px">
-              <button class="primary-btn" id="saveSettingsBtn">Kaydet / Sınıf Ekle</button>
+              <button class="primary-btn" id="saveSettingsBtn">Aktif Sınıfı Güncelle</button>
+              <button class="ghost-btn" id="addClassBtn">＋ Yeni Sınıf Ekle</button>
               <button class="danger-btn" id="deleteClassBtn">Aktif Sınıfı Sil</button>
             </div>
+            <h3 style="margin-top:18px">Sınıflarım</h3>
+            <div id="classListPanel" class="class-manager"></div>
           </div>
 
           <div class="panel">
@@ -2076,8 +2535,20 @@
       </section>
 
       <section id="scheduleView" class="content-view">
+        <div class="panel schedule-focus-panel">
+          <div>
+            <h3>Ders Programı</h3>
+            <p id="lessonPlannerFocusInfo">Bugünün haftası açılacak. Değiştirirseniz sistem bu haftayı hatırlar.</p>
+          </div>
+          <div class="schedule-date-control">
+            <button class="ghost-btn" id="lessonPlannerPrevWeekBtn">‹ Önceki Hafta</button>
+            <input id="lessonPlannerFocusDate" type="date" aria-label="Ders programı odak tarihi">
+            <button class="ghost-btn" id="lessonPlannerTodayBtn">Bugün</button>
+            <button class="ghost-btn" id="lessonPlannerNextWeekBtn">Sonraki Hafta ›</button>
+          </div>
+        </div>
         <div class="embedded-tool-shell">
-          <iframe class="embedded-tool-frame" src="ders-programi.html" title="Öğretmen Ders Planlama Sistemi"></iframe>
+          <iframe id="lessonPlannerFrame" class="embedded-tool-frame" src="ders-programi.html" title="Öğretmen Ders Planlama Sistemi"></iframe>
         </div>
       </section>
 
@@ -2155,6 +2626,7 @@
                 <label for="reportType">Rapor türü</label>
                 <select id="reportType">
                   <option value="academic">Akademik karne</option>
+                  <option value="comparison">Karşılaştırmalı karne</option>
                   <option value="rankingList">Sınav sıralama listesi</option>
                   <option value="classList">Resimli sınıf listesi</option>
                   <option value="meetings">Veli görüşme raporu</option>
@@ -2255,6 +2727,14 @@
       </section>
 
       <section id="backupView" class="content-view">
+        <div class="panel" style="margin-bottom:16px">
+          <h3>Bulut Senkron</h3>
+          <p id="cloudBackupStatus">Giriş yapan aktif öğretmenlerde ajanda verisi Supabase üzerinde güvenli şekilde saklanır. Giriş yapılmadığında sistem yerel yedek mantığıyla çalışmaya devam eder.</p>
+          <div class="actions">
+            <button class="primary-btn" id="cloudSaveNowBtnBackup" type="button">Şimdi Buluta Kaydet</button>
+            <button class="ghost-btn" id="cloudLoadNowBtnBackup" type="button">Buluttaki Son Kaydı Yükle</button>
+          </div>
+        </div>
         <div class="grid two">
           <div class="panel">
             <h3>Yedek Al</h3>
@@ -2587,6 +3067,8 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="../js/site-data.js"></script>
+  <script src="../js/user-auth.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

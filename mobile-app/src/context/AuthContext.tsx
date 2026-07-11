@@ -8,6 +8,7 @@ import { APP_CONFIG } from '@/constants/config';
 import { fetchProfile, findProfileByEmail, uploadTeacherVerification, upsertProfile } from '@/services/api';
 import { deactivatePushToken, registerPushToken } from '@/services/notifications';
 import { supabase } from '@/lib/supabase';
+import { assertContentFields } from '@/lib/contentSafety';
 import type { Profile, UserRole } from '@/types/domain';
 
 type AuthContextValue = {
@@ -261,6 +262,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
         throw new Error('Öğretmen kaydı için öğretmen kimliği veya çalışma belgesi yüklemelisin.');
       }
       const fullName = [input.firstName, input.lastName].filter(Boolean).join(' ').trim();
+      assertContentFields([
+        { label: 'ad', value: input.firstName },
+        { label: 'soyad', value: input.lastName },
+        { label: 'okul_adi', value: input.schoolName ?? '' },
+      ]);
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: emailAddress,
         password: input.password,

@@ -6,6 +6,7 @@ import { Alert, Text } from 'react-native';
 import { Button, Card, Field, Header, Screen, SelectField } from '@/components/ui';
 import { colors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { validateContentFields } from '@/lib/contentSafety';
 import { roleLabel } from '@/lib/format';
 import { uploadTeacherVerification } from '@/services/api';
 import {
@@ -92,6 +93,15 @@ export default function ProfileScreen() {
     }
     if (profile.role === 'teacher' && !profile.verification_file_path && !verificationFile) {
       Alert.alert('Eksik bilgi', 'Öğretmen profili için öğretmen kimliği veya çalışma belgesi yüklemelisin.');
+      return;
+    }
+    const safety = validateContentFields([
+      { label: 'ad', value: firstName },
+      { label: 'soyad', value: lastName },
+      { label: 'okul_adi', value: schoolName },
+    ]);
+    if (!safety.ok) {
+      Alert.alert('Uygun olmayan ifade', safety.message);
       return;
     }
     setBusy(true);

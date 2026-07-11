@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function AppLayout() {
   const { loading, profile } = useAuth();
+  const isTeacher = profile?.role === 'teacher';
 
   if (loading) {
     return (
@@ -40,7 +41,15 @@ export default function AppLayout() {
       <Tabs.Screen name="home" options={{ title: 'Panel', tabBarIcon: ({ color }) => <Ionicons name="grid-outline" color={color} size={22} /> }} />
       <Tabs.Screen name="assignments" options={{ title: 'Ödev', tabBarIcon: ({ color }) => <Ionicons name="clipboard-outline" color={color} size={22} /> }} />
       <Tabs.Screen name="messages" options={{ title: 'Mesaj', tabBarIcon: ({ color }) => <Ionicons name="mail-outline" color={color} size={22} /> }} />
-      <Tabs.Screen name="tools" options={{ title: 'İçerik', tabBarIcon: ({ color }) => <Ionicons name="sparkles-outline" color={color} size={22} /> }} />
+      <Tabs.Screen
+        name="tools"
+        options={{
+          title: isTeacher ? 'Ajanda' : 'İçerik',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name={isTeacher ? 'briefcase-outline' : 'sparkles-outline'} color={color} size={22} />
+          ),
+        }}
+      />
       <Tabs.Screen name="profile" options={{ title: 'Profil', tabBarIcon: ({ color }) => <Ionicons name="person-outline" color={color} size={22} /> }} />
     </Tabs>
   );

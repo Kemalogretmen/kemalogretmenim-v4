@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bilgi Düellosu - Kemal Öğretmenim</title>
+  <meta name="description" content="Sınıf içinde iki takımın sırayla yarıştığı, süreli ve jokerli bilgi yarışması.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --duel-ink: #15213d;
+      --duel-muted: #61708a;
+      --duel-line: #dbe6f5;
+      --duel-paper: #ffffff;
+      --duel-bg: #f5f8ff;
+      --duel-red: #ff5d5d;
+      --duel-blue: #2775ff;
+      --duel-green: #10a870;
+      --duel-yellow: #f2b705;
+      --duel-violet: #7048e8;
+      --duel-shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: var(--font-body, "Nunito", system-ui, sans-serif);
+      color: var(--duel-ink);
+      background:
+        radial-gradient(circle at 12% 10%, rgba(255, 93, 93, 0.16), transparent 26%),
+        radial-gradient(circle at 88% 14%, rgba(39, 117, 255, 0.18), transparent 28%),
+        linear-gradient(180deg, #fff9f0 0%, #edf5ff 55%, #f7fbff 100%);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .page {
+      width: min(1240px, 100%);
+      margin: 0 auto;
+      padding: 16px 14px 54px;
+    }
+
+    .duel-shell {
+      overflow: hidden;
+      border: 1px solid rgba(39, 117, 255, 0.14);
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: var(--duel-shadow);
+    }
+
+    .hero {
+      min-height: 0 !important;
+      height: auto !important;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 420px);
+      gap: 18px;
+      align-items: center;
+      padding: 18px 22px;
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(21, 33, 61, 0.98), rgba(112, 72, 232, 0.93) 55%, rgba(16, 168, 112, 0.9)),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 10px, transparent 10px 20px);
+    }
+
+    .kicker {
+      display: inline-flex;
+      width: fit-content;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 7px 0 6px;
+      font-family: var(--font-display, "Nunito", system-ui, sans-serif);
+      font-size: clamp(1.85rem, 3.4vw, 3rem);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      max-width: 720px;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .arena-preview {
+      min-height: 150px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .preview-team {
+      min-height: 112px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      font-weight: 900;
+    }
+
+    .preview-team.red { color: #ffd2d2; }
+    .preview-team.blue { color: #d8e7ff; }
+
+    .versus {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: white;
+      color: var(--duel-violet);
+      font-weight: 1000;
+      box-shadow: 0 14px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .setup {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .panel {
+      border: 1px solid var(--duel-line);
+      border-radius: 24px;
+      background: white;
+      padding: 18px;
+      box-shadow: 0 12px 28px rgba(21, 33, 61, 0.08);
+    }
+
+    .panel h2,
+    .panel h3 {
+      margin: 0 0 12px;
+      font-family: var(--font-display, "Nunito", system-ui, sans-serif);
+      line-height: 1.15;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      color: var(--duel-muted);
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 46px;
+      border: 2px solid var(--duel-line);
+      border-radius: 14px;
+      background: #f8fbff;
+      color: var(--duel-ink);
+      padding: 0 13px;
+      font-weight: 900;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--duel-violet);
+      box-shadow: 0 0 0 4px rgba(112, 72, 232, 0.12);
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .category-card {
+      min-height: 78px;
+      padding: 12px;
+      border: 2px solid var(--duel-line);
+      border-radius: 18px;
+      background: #f8fbff;
+      text-align: left;
+      color: var(--duel-ink);
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .category-card strong,
+    .category-card span {
+      display: block;
+    }
+
+    .category-card strong {
+      font-size: 0.98rem;
+      font-weight: 1000;
+    }
+
+    .category-card span {
+      margin-top: 4px;
+      color: var(--duel-muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .category-card.active {
+      border-color: var(--duel-violet);
+      background: #f0ebff;
+      transform: translateY(-2px);
+    }
+
+    .rule-list {
+      display: grid;
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rule-list li {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 10px;
+      align-items: center;
+      min-height: 48px;
+      padding: 10px;
+      border-radius: 16px;
+      background: #f8fbff;
+      color: var(--duel-muted);
+      font-weight: 800;
+    }
+
+    .rule-list b {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: white;
+      color: var(--duel-violet);
+      box-shadow: 0 6px 14px rgba(21, 33, 61, 0.08);
+    }
+
+    .primary-btn,
+    .ghost-btn,
+    .danger-btn {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      border-radius: 16px;
+      padding: 0 18px;
+      font-weight: 1000;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--duel-violet), var(--duel-blue));
+      color: white;
+      box-shadow: 0 14px 24px rgba(39, 117, 255, 0.23);
+    }
+
+    .ghost-btn {
+      border: 2px solid var(--duel-line);
+      background: white;
+      color: var(--duel-ink);
+    }
+
+    .danger-btn {
+      background: #fff0f0;
+      color: #c92a2a;
+    }
+
+    .primary-btn:hover,
+    .ghost-btn:hover,
+    .danger-btn:hover,
+    .answer-btn:hover,
+    .joker-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .primary-btn:disabled,
+    .ghost-btn:disabled,
+    .joker-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+      transform: none;
+    }
+
+    .setup-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .game {
+      display: none;
+      padding: 18px;
+      background: linear-gradient(180deg, #f8fbff, #ffffff);
+    }
+
+    body.playing .setup { display: none; }
+    body.playing .game { display: block; }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(180px, 0.8fr) minmax(180px, 1fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .team-card,
+    .round-card {
+      border: 1px solid var(--duel-line);
+      border-radius: 22px;
+      background: white;
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(21, 33, 61, 0.08);
+    }
+
+    .team-card {
+      display: grid;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .team-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 8px;
+      background: var(--team-color);
+    }
+
+    .team-card.active {
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--team-color) 25%, transparent), 0 16px 30px rgba(21, 33, 61, 0.12);
+    }
+
+    .team-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-left: 8px;
+    }
+
+    .team-name {
+      min-width: 0;
+      font-size: clamp(1.05rem, 2vw, 1.35rem);
+      font-weight: 1000;
+      overflow-wrap: anywhere;
+    }
+
+    .score {
+      font-size: clamp(2.2rem, 4.8vw, 4rem);
+      font-weight: 1000;
+      line-height: 1;
+      color: var(--team-color);
+      text-align: right;
+    }
+
+    .streak {
+      min-height: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-left: 8px;
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #e2e8f0;
+    }
+
+    .dot.good { background: var(--duel-green); }
+    .dot.bad { background: var(--duel-red); }
+
+    .round-card {
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 6px;
+    }
+
+    .round-card span {
+      color: var(--duel-muted);
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .round-card strong {
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      font-weight: 1000;
+    }
+
+    .timer-wrap {
+      width: 100%;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e8eef8;
+    }
+
+    .timer-bar {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--duel-green), var(--duel-yellow), var(--duel-red));
+      transition: width 0.3s linear;
+    }
+
+    .question-zone {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .question-card {
+      min-height: 380px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+      border: 1px solid var(--duel-line);
+      border-radius: 24px;
+      background: white;
+      padding: 18px;
+      box-shadow: 0 12px 28px rgba(21, 33, 61, 0.08);
+    }
+
+    .question-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef4ff;
+      color: var(--duel-blue);
+      font-size: 0.8rem;
+      font-weight: 1000;
+    }
+
+    .question-text {
+      display: flex;
+      align-items: center;
+      min-height: 112px;
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg, rgba(39, 117, 255, 0.08), rgba(112, 72, 232, 0.08)),
+        #f8fbff;
+      padding: 18px;
+      font-size: clamp(1.3rem, 2.8vw, 2rem);
+      font-weight: 1000;
+      line-height: 1.25;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+
+    .answer-btn {
+      min-height: 74px;
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border: 2px solid var(--duel-line);
+      border-radius: 18px;
+      background: #ffffff;
+      color: var(--duel-ink);
+      text-align: left;
+      font-weight: 900;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .answer-btn b {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      background: #edf4ff;
+      color: var(--duel-blue);
+      font-weight: 1000;
+    }
+
+    .answer-btn.correct {
+      border-color: var(--duel-green);
+      background: #ecfff7;
+    }
+
+    .answer-btn.wrong {
+      border-color: var(--duel-red);
+      background: #fff1f1;
+    }
+
+    .answer-btn.hidden-option {
+      visibility: hidden;
+    }
+
+    .answer-btn:disabled {
+      cursor: default;
+      transform: none;
+    }
+
+    .feedback {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-radius: 18px;
+      background: #f8fbff;
+      padding: 10px 12px;
+      color: var(--duel-muted);
+      font-weight: 900;
+    }
+
+    .feedback.good { color: #087f5b; background: #ecfff7; }
+    .feedback.bad { color: #c92a2a; background: #fff1f1; }
+
+    .side-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .joker-panel,
+    .control-panel {
+      border: 1px solid var(--duel-line);
+      border-radius: 22px;
+      background: white;
+      padding: 14px;
+      box-shadow: 0 12px 26px rgba(21, 33, 61, 0.08);
+    }
+
+    .joker-panel h3,
+    .control-panel h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .joker-list,
+    .control-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .joker-btn {
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-radius: 16px;
+      background: #f8fbff;
+      color: var(--duel-ink);
+      padding: 10px 12px;
+      font-weight: 1000;
+      text-align: left;
+    }
+
+    .joker-btn span {
+      color: var(--duel-muted);
+      font-size: 0.76rem;
+      font-weight: 900;
+    }
+
+    .control-list .ghost-btn,
+    .control-list .danger-btn {
+      width: 100%;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      z-index: 50;
+      max-width: min(520px, calc(100% - 28px));
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 18px;
+      background: rgba(21, 33, 61, 0.94);
+      color: white;
+      padding: 12px 16px;
+      font-weight: 900;
+      box-shadow: 0 14px 28px rgba(21, 33, 61, 0.22);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(21, 33, 61, 0.58);
+    }
+
+    .modal.show { display: grid; }
+
+    .modal-card {
+      width: min(560px, 100%);
+      border-radius: 26px;
+      background: white;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+    }
+
+    .winner-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 92px;
+      min-height: 92px;
+      margin-bottom: 10px;
+      border-radius: 26px;
+      background: #fff6d8;
+      color: #b17800;
+      font-size: 3rem;
+      font-weight: 1000;
+    }
+
+    .modal-card h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+    }
+
+    .modal-card p {
+      margin: 0 0 16px;
+      color: var(--duel-muted);
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .setup,
+      .question-zone {
+        grid-template-columns: 1fr;
+      }
+
+      .scoreboard {
+        grid-template-columns: 1fr;
+      }
+
+      .round-card {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 8px 8px 36px;
+      }
+
+      .duel-shell,
+      .panel,
+      .question-card,
+      .team-card,
+      .round-card,
+      .joker-panel,
+      .control-panel {
+        border-radius: 18px;
+      }
+
+      .hero {
+        padding: 16px;
+      }
+
+      .setup,
+      .game {
+        padding: 12px;
+      }
+
+      .form-grid,
+      .answers {
+        grid-template-columns: 1fr;
+      }
+
+      .arena-preview {
+        grid-template-columns: 1fr;
+      }
+
+      .versus {
+        width: 48px;
+        height: 48px;
+        margin: -6px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="duel-shell" aria-label="Bilgi Düellosu">
+      <header class="hero">
+        <div>
+          <span class="kicker">Sene sonu sınıf kapışması</span>
+          <h1>Bilgi Düellosu</h1>
+          <p>İki takım sırayla cevap verir, jokerlerini akıllıca kullanır ve final turunda şampiyon belli olur.</p>
+        </div>
+        <div class="arena-preview" aria-hidden="true">
+          <div class="preview-team red">A</div>
+          <div class="versus">VS</div>
+          <div class="preview-team blue">B</div>
+        </div>
+      </header>
+
+      <section class="setup" id="setup">
+        <div class="panel">
+          <h2>Oyunu Hazırla</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label for="teamA">Kırmızı takım</label>
+              <input id="teamA" type="text" value="Kırmızı Takım" maxlength="24">
+            </div>
+            <div class="field">
+              <label for="teamB">Mavi takım</label>
+              <input id="teamB" type="text" value="Mavi Takım" maxlength="24">
+            </div>
+            <div class="field">
+              <label for="gradeSelect">Sınıf düzeyi</label>
+              <select id="gradeSelect">
+                <option value="1">1. Sınıf</option>
+                <option value="2">2. Sınıf</option>
+                <option value="3" selected>3. Sınıf</option>
+                <option value="4">4. Sınıf</option>
+                <option value="mixed">Karışık</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="roundSelect">Soru sayısı</label>
+              <select id="roundSelect">
+                <option value="8">8 soru</option>
+                <option value="10" selected>10 soru</option>
+                <option value="12">12 soru</option>
+                <option value="16">16 soru</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="timeSelect">Süre</label>
+              <select id="timeSelect">
+                <option value="20">20 saniye</option>
+                <option value="30" selected>30 saniye</option>
+                <option value="45">45 saniye</option>
+                <option value="60">60 saniye</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="soundSelect">Ses</label>
+              <select id="soundSelect">
+                <option value="on" selected>Açık</option>
+                <option value="off">Kapalı</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>Kategori</label>
+              <div class="category-grid" id="categoryGrid">
+                <button class="category-card active" type="button" data-category="mixed">
+                  <strong>Karışık</strong>
+                  <span>Türkçe, matematik, fen, hayat bilgisi</span>
+                </button>
+                <button class="category-card" type="button" data-category="math">
+                  <strong>Matematik</strong>
+                  <span>Dört işlem, ölçme, problem</span>
+                </button>
+                <button class="category-card" type="button" data-category="turkish">
+                  <strong>Türkçe</strong>
+                  <span>Sözcük, anlam, yazım</span>
+                </button>
+                <button class="category-card" type="button" data-category="science">
+                  <strong>Fen ve Hayat</strong>
+                  <span>Doğa, güvenlik, yaşam</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="setup-actions">
+            <button class="primary-btn" id="startBtn" type="button">Düelloyu Başlat</button>
+            <button class="ghost-btn" id="demoBtn" type="button">Hızlı 6 Soru</button>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>Düello Kuralları</h3>
+          <ul class="rule-list">
+            <li><b>1</b><span>Her soru sıradaki takıma gelir; doğru cevap 10 puan kazandırır.</span></li>
+            <li><b>2</b><span>Yanlış cevapta sıra rakibe geçer, doğru seçenek tahtada görünür.</span></li>
+            <li><b>3</b><span>Her takım birer kez 50:50, çift cevap ve pas jokeri kullanabilir.</span></li>
+            <li><b>4</b><span>Son soruda doğru cevap 20 puandır; beraberlikte ani soru açılır.</span></li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="game" id="game" aria-live="polite">
+        <div class="scoreboard">
+          <article class="team-card" id="teamCard0" style="--team-color: var(--duel-red);">
+            <div class="team-top">
+              <div class="team-name" id="gameTeamA">Kırmızı Takım</div>
+              <div class="score" id="scoreA">0</div>
+            </div>
+            <div class="streak" id="streakA" aria-label="Kırmızı takım cevap geçmişi"></div>
+          </article>
+
+          <article class="round-card">
+            <span id="roundLabel">Soru 1 / 10</span>
+            <strong id="timerText">30</strong>
+            <div class="timer-wrap" aria-hidden="true">
+              <div class="timer-bar" id="timerBar"></div>
+            </div>
+          </article>
+
+          <article class="team-card" id="teamCard1" style="--team-color: var(--duel-blue);">
+            <div class="team-top">
+              <div class="team-name" id="gameTeamB">Mavi Takım</div>
+              <div class="score" id="scoreB">0</div>
+            </div>
+            <div class="streak" id="streakB" aria-label="Mavi takım cevap geçmişi"></div>
+          </article>
+        </div>
+
+        <div class="question-zone">
+          <article class="question-card">
+            <div class="question-meta">
+              <span class="pill" id="activeTeamPill">Sıra: Kırmızı Takım</span>
+              <span class="pill" id="categoryPill">Karışık</span>
+              <span class="pill" id="pointPill">10 puan</span>
+            </div>
+            <div class="question-text" id="questionText">Soru yükleniyor...</div>
+            <div class="answers" id="answers"></div>
+            <div class="feedback" id="feedback">
+              <span>Takım cevabı seçtiğinde sonuç burada görünecek.</span>
+              <button class="ghost-btn" id="nextBtn" type="button" disabled>Sonraki Soru</button>
+            </div>
+          </article>
+
+          <aside class="side-panel">
+            <div class="joker-panel">
+              <h3>Jokerler</h3>
+              <div class="joker-list">
+                <button class="joker-btn" type="button" data-joker="fifty">
+                  50:50 <span>İki seçenek kalır</span>
+                </button>
+                <button class="joker-btn" type="button" data-joker="double">
+                  Çift Cevap <span>Bir yanlış hakkı</span>
+                </button>
+                <button class="joker-btn" type="button" data-joker="pass">
+                  Pas <span>Yeni soru açılır</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="control-panel">
+              <h3>Kontrol</h3>
+              <div class="control-list">
+                <button class="ghost-btn" id="pauseBtn" type="button">Süreyi Durdur</button>
+                <button class="ghost-btn" id="fullscreenBtn" type="button">Tam Ekran</button>
+                <button class="danger-btn" id="restartBtn" type="button">Yeniden Kur</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <div class="modal" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="modal-card">
+      <div class="winner-badge" id="winnerBadge">🏆</div>
+      <h2 id="resultTitle">Düello Bitti</h2>
+      <p id="resultText">Sonuç hazırlanıyor.</p>
+      <div class="modal-actions">
+        <button class="primary-btn" id="againBtn" type="button">Aynı Ayarla Tekrar</button>
+        <button class="ghost-btn" id="setupAgainBtn" type="button">Yeni Oyun Kur</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questionBank = [
+      { grade: 1, category: 'math', subject: 'Matematik', q: '5 elmadan 2 tanesi yenirse kaç elma kalır?', options: ['2', '3', '4', '7'], answer: 1 },
+      { grade: 1, category: 'math', subject: 'Matematik', q: '10 sayısından sonra hangi sayı gelir?', options: ['9', '10', '11', '12'], answer: 2 },
+      { grade: 1, category: 'math', subject: 'Matematik', q: 'Bir üçgenin kaç köşesi vardır?', options: ['2', '3', '4', '5'], answer: 1 },
+      { grade: 1, category: 'turkish', subject: 'Türkçe', q: '"Kalem" sözcüğü kaç heceden oluşur?', options: ['1', '2', '3', '4'], answer: 1 },
+      { grade: 1, category: 'turkish', subject: 'Türkçe', q: 'Alfabemizin ilk harfi hangisidir?', options: ['B', 'A', 'C', 'E'], answer: 1 },
+      { grade: 1, category: 'science', subject: 'Hayat Bilgisi', q: 'Kırmızı ışıkta ne yapmalıyız?', options: ['Koşmalıyız', 'Durmalıyız', 'Oynamalıyız', 'Zıplamalıyız'], answer: 1 },
+      { grade: 1, category: 'science', subject: 'Hayat Bilgisi', q: 'Sabah kalkınca ilk olarak hangisi sağlıklı bir davranıştır?', options: ['Diş fırçalamak', 'Bağırmak', 'Oyuncak kırmak', 'Çöp atmak'], answer: 0 },
+
+      { grade: 2, category: 'math', subject: 'Matematik', q: '8 + 7 işleminin sonucu kaçtır?', options: ['14', '15', '16', '17'], answer: 1 },
+      { grade: 2, category: 'math', subject: 'Matematik', q: 'Bir düzine kaç tanedir?', options: ['10', '11', '12', '20'], answer: 2 },
+      { grade: 2, category: 'math', subject: 'Matematik', q: '25 sayısındaki 2 rakamının basamak değeri kaçtır?', options: ['2', '5', '20', '25'], answer: 2 },
+      { grade: 2, category: 'turkish', subject: 'Türkçe', q: '"Mutlu" sözcüğünün zıt anlamlısı hangisidir?', options: ['Neşeli', 'Üzgün', 'Sevinçli', 'Güzel'], answer: 1 },
+      { grade: 2, category: 'turkish', subject: 'Türkçe', q: 'Aşağıdakilerden hangisi özel addır?', options: ['şehir', 'kedi', 'Ankara', 'masa'], answer: 2 },
+      { grade: 2, category: 'science', subject: 'Hayat Bilgisi', q: 'Sınıfta söz almak için ne yapmalıyız?', options: ['El kaldırmalıyız', 'Bağırmalıyız', 'Koşmalıyız', 'Kapıyı çalmalıyız'], answer: 0 },
+      { grade: 2, category: 'science', subject: 'Fen', q: 'Bitkilerin büyümesi için hangisine ihtiyaç vardır?', options: ['Su', 'Taş', 'Oyuncak', 'Kumanda'], answer: 0 },
+
+      { grade: 3, category: 'math', subject: 'Matematik', q: '9 x 6 işleminin sonucu kaçtır?', options: ['45', '54', '56', '63'], answer: 1 },
+      { grade: 3, category: 'math', subject: 'Matematik', q: '1 metre kaç santimetredir?', options: ['10', '50', '100', '1000'], answer: 2 },
+      { grade: 3, category: 'math', subject: 'Matematik', q: 'Bir saatte kaç dakika vardır?', options: ['30', '45', '60', '90'], answer: 2 },
+      { grade: 3, category: 'turkish', subject: 'Türkçe', q: '"Hızlı" sözcüğünün eş anlamlısı hangisidir?', options: ['Yavaş', 'Çabuk', 'Küçük', 'Uzak'], answer: 1 },
+      { grade: 3, category: 'turkish', subject: 'Türkçe', q: 'Aşağıdaki cümlelerin hangisinin sonuna soru işareti gelir?', options: ['Bugün hava güzel', 'Kalemimi aldım', 'Saat kaç oldu', 'Kitap okuyorum'], answer: 2 },
+      { grade: 3, category: 'science', subject: 'Fen', q: 'Dünya hangi hareketiyle gece ve gündüzü oluşturur?', options: ['Kendi etrafında dönme', 'Ay etrafında dönme', 'Durma', 'Zıplama'], answer: 0 },
+      { grade: 3, category: 'science', subject: 'Hayat Bilgisi', q: 'Doğal afet sırasında güvenli bilgi almak için kimleri dinlemeliyiz?', options: ['Resmi görevlileri', 'Her duyduğumuzu', 'Sadece arkadaşları', 'Reklamları'], answer: 0 },
+
+      { grade: 4, category: 'math', subject: 'Matematik', q: '125 + 275 işleminin sonucu kaçtır?', options: ['300', '350', '400', '450'], answer: 2 },
+      { grade: 4, category: 'math', subject: 'Matematik', q: '3/4 kesri hangi ifadeye eşittir?', options: ['Dörtte üç', 'Üçte dört', 'Yarım', 'Bir bütün'], answer: 0 },
+      { grade: 4, category: 'math', subject: 'Matematik', q: 'Bir dikdörtgenin çevresi nasıl bulunur?', options: ['Kısa kenar x uzun kenar', 'Tüm kenarlar toplanır', 'Sadece uzun kenar alınır', 'Köşeler sayılır'], answer: 1 },
+      { grade: 4, category: 'turkish', subject: 'Türkçe', q: '"Kalbim pır pır ediyor" cümlesinde hangi söz sanatı vardır?', options: ['Benzetme', 'Abartma', 'Konuşturma', 'Seslenme'], answer: 1 },
+      { grade: 4, category: 'turkish', subject: 'Türkçe', q: 'Aşağıdakilerden hangisi deyimdir?', options: ['Etekleri zil çalmak', 'Mavi defter', 'Uzun yol', 'Sıcak çorba'], answer: 0 },
+      { grade: 4, category: 'science', subject: 'Fen', q: 'Mıknatıs hangi maddeleri çeker?', options: ['Tahta', 'Demir', 'Cam', 'Plastik'], answer: 1 },
+      { grade: 4, category: 'science', subject: 'Sosyal Bilgiler', q: 'Milli Mücadele hangi liderin önderliğinde başlamıştır?', options: ['Fatih Sultan Mehmet', 'Mustafa Kemal Atatürk', 'Mimar Sinan', 'Evliya Çelebi'], answer: 1 },
+
+      { grade: 'mixed', category: 'math', subject: 'Matematik', q: 'Bir haftada kaç gün vardır?', options: ['5', '6', '7', '8'], answer: 2 },
+      { grade: 'mixed', category: 'turkish', subject: 'Türkçe', q: '"Okul" sözcüğünün çoğulu hangisidir?', options: ['Okullu', 'Okullar', 'Okulum', 'Okulsuz'], answer: 1 },
+      { grade: 'mixed', category: 'science', subject: 'Genel Kültür', q: 'Türkiye Cumhuriyeti hangi yıl ilan edilmiştir?', options: ['1919', '1920', '1923', '1938'], answer: 2 },
+      { grade: 'mixed', category: 'science', subject: 'Fen', q: 'Suyun katı hali hangisidir?', options: ['Buhar', 'Buz', 'Yağmur', 'Bulut'], answer: 1 }
+    ];
+
+    const state = {
+      selectedCategory: 'mixed',
+      questions: [],
+      index: 0,
+      activeTeam: 0,
+      scores: [0, 0],
+      names: ['Kırmızı Takım', 'Mavi Takım'],
+      history: [[], []],
+      jokers: [
+        { fifty: true, double: true, pass: true },
+        { fifty: true, double: true, pass: true }
+      ],
+      doubleActive: false,
+      answered: false,
+      paused: false,
+      timeLimit: 30,
+      timeLeft: 30,
+      timer: null,
+      sound: true,
+      suddenDeath: false
+    };
+
+    const el = {
+      teamA: document.getElementById('teamA'),
+      teamB: document.getElementById('teamB'),
+      grade: document.getElementById('gradeSelect'),
+      rounds: document.getElementById('roundSelect'),
+      time: document.getElementById('timeSelect'),
+      sound: document.getElementById('soundSelect'),
+      start: document.getElementById('startBtn'),
+      demo: document.getElementById('demoBtn'),
+      gameTeamA: document.getElementById('gameTeamA'),
+      gameTeamB: document.getElementById('gameTeamB'),
+      scoreA: document.getElementById('scoreA'),
+      scoreB: document.getElementById('scoreB'),
+      streakA: document.getElementById('streakA'),
+      streakB: document.getElementById('streakB'),
+      teamCard0: document.getElementById('teamCard0'),
+      teamCard1: document.getElementById('teamCard1'),
+      roundLabel: document.getElementById('roundLabel'),
+      timerText: document.getElementById('timerText'),
+      timerBar: document.getElementById('timerBar'),
+      activeTeamPill: document.getElementById('activeTeamPill'),
+      categoryPill: document.getElementById('categoryPill'),
+      pointPill: document.getElementById('pointPill'),
+      questionText: document.getElementById('questionText'),
+      answers: document.getElementById('answers'),
+      feedback: document.getElementById('feedback'),
+      next: document.getElementById('nextBtn'),
+      pause: document.getElementById('pauseBtn'),
+      fullscreen: document.getElementById('fullscreenBtn'),
+      restart: document.getElementById('restartBtn'),
+      toast: document.getElementById('toast'),
+      modal: document.getElementById('resultModal'),
+      winnerBadge: document.getElementById('winnerBadge'),
+      resultTitle: document.getElementById('resultTitle'),
+      resultText: document.getElementById('resultText'),
+      again: document.getElementById('againBtn'),
+      setupAgain: document.getElementById('setupAgainBtn')
+    };
+
+    document.querySelectorAll('.category-card').forEach(button => {
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.category-card').forEach(item => item.classList.remove('active'));
+        button.classList.add('active');
+        state.selectedCategory = button.dataset.category;
+      });
+    });
+
+    el.start.addEventListener('click', () => startGame());
+    el.demo.addEventListener('click', () => startGame({ rounds: 6, time: 20 }));
+    el.next.addEventListener('click', nextQuestion);
+    el.pause.addEventListener('click', togglePause);
+    el.fullscreen.addEventListener('click', toggleFullscreen);
+    el.restart.addEventListener('click', returnToSetup);
+    el.again.addEventListener('click', () => {
+      el.modal.classList.remove('show');
+      startGame();
+    });
+    el.setupAgain.addEventListener('click', () => {
+      el.modal.classList.remove('show');
+      returnToSetup();
+    });
+
+    document.querySelectorAll('.joker-btn').forEach(button => {
+      button.addEventListener('click', () => useJoker(button.dataset.joker));
+    });
+
+    function startGame(overrides = {}) {
+      state.names = [
+        cleanName(el.teamA.value, 'Kırmızı Takım'),
+        cleanName(el.teamB.value, 'Mavi Takım')
+      ];
+      state.timeLimit = Number(overrides.time || el.time.value);
+      state.timeLeft = state.timeLimit;
+      state.sound = el.sound.value === 'on';
+      state.index = 0;
+      state.activeTeam = 0;
+      state.scores = [0, 0];
+      state.history = [[], []];
+      state.jokers = [
+        { fifty: true, double: true, pass: true },
+        { fifty: true, double: true, pass: true }
+      ];
+      state.doubleActive = false;
+      state.answered = false;
+      state.paused = false;
+      state.suddenDeath = false;
+      state.questions = pickQuestions(Number(overrides.rounds || el.rounds.value));
+
+      if (!state.questions.length) {
+        showToast('Bu ayarlara uygun soru bulunamadı. Karışık kategori ile tekrar dene.');
+        return;
+      }
+
+      document.body.classList.add('playing');
+      el.gameTeamA.textContent = state.names[0];
+      el.gameTeamB.textContent = state.names[1];
+      el.pause.textContent = 'Süreyi Durdur';
+      renderScoreboard();
+      renderQuestion();
+      playTone(520, 0.08);
+    }
+
+    function cleanName(value, fallback) {
+      const trimmed = String(value || '').trim();
+      return trimmed || fallback;
+    }
+
+    function pickQuestions(targetCount) {
+      const grade = el.grade.value;
+      const category = state.selectedCategory;
+      let pool = questionBank.filter(item => {
+        const gradeMatch = grade === 'mixed' || item.grade === Number(grade) || item.grade === 'mixed';
+        const categoryMatch = category === 'mixed' || item.category === category;
+        return gradeMatch && categoryMatch;
+      });
+
+      if (pool.length < targetCount) {
+        pool = questionBank.filter(item => category === 'mixed' || item.category === category);
+      }
+      if (pool.length < targetCount) {
+        pool = questionBank.slice();
+      }
+
+      return shuffle(pool).slice(0, targetCount);
+    }
+
+    function shuffle(items) {
+      const copy = items.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function renderScoreboard() {
+      el.scoreA.textContent = state.scores[0];
+      el.scoreB.textContent = state.scores[1];
+      el.teamCard0.classList.toggle('active', state.activeTeam === 0);
+      el.teamCard1.classList.toggle('active', state.activeTeam === 1);
+      renderHistory(el.streakA, state.history[0]);
+      renderHistory(el.streakB, state.history[1]);
+      renderJokers();
+    }
+
+    function renderHistory(container, history) {
+      container.textContent = '';
+      history.slice(-8).forEach(value => {
+        const dot = document.createElement('span');
+        dot.className = 'dot ' + (value ? 'good' : 'bad');
+        container.appendChild(dot);
+      });
+    }
+
+    function renderQuestion() {
+      clearInterval(state.timer);
+      state.answered = false;
+      state.doubleActive = false;
+      state.timeLeft = state.timeLimit;
+      const question = currentQuestion();
+      const total = state.questions.length;
+      const points = pointsForCurrentQuestion();
+
+      el.roundLabel.textContent = state.suddenDeath ? 'Ani soru' : `Soru ${state.index + 1} / ${total}`;
+      el.activeTeamPill.textContent = `Sıra: ${state.names[state.activeTeam]}`;
+      el.categoryPill.textContent = question.subject;
+      el.pointPill.textContent = `${points} puan`;
+      el.questionText.textContent = question.q;
+      el.feedback.className = 'feedback';
+      el.feedback.querySelector('span').textContent = 'Cevabı seçmeden önce joker kullanılabilir.';
+      el.next.disabled = true;
+      el.next.textContent = state.index + 1 >= state.questions.length ? 'Sonucu Göster' : 'Sonraki Soru';
+
+      renderAnswers(question);
+      renderScoreboard();
+      updateTimer();
+      state.timer = setInterval(tick, 1000);
+    }
+
+    function renderAnswers(question) {
+      el.answers.textContent = '';
+      question.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'answer-btn';
+        button.dataset.index = index;
+        button.innerHTML = `<b>${String.fromCharCode(65 + index)}</b><span>${option}</span>`;
+        button.addEventListener('click', () => answerQuestion(index));
+        el.answers.appendChild(button);
+      });
+    }
+
+    function currentQuestion() {
+      return state.questions[state.index];
+    }
+
+    function pointsForCurrentQuestion() {
+      if (state.suddenDeath) return 15;
+      return state.index === state.questions.length - 1 ? 20 : 10;
+    }
+
+    function answerQuestion(index) {
+      if (state.answered) return;
+      const question = currentQuestion();
+      const buttons = Array.from(el.answers.querySelectorAll('.answer-btn'));
+      const selected = buttons[index];
+      const correct = index === question.answer;
+
+      if (!correct && state.doubleActive) {
+        state.doubleActive = false;
+        selected.classList.add('wrong');
+        selected.disabled = true;
+        el.feedback.className = 'feedback bad';
+        el.feedback.querySelector('span').textContent = 'Çift cevap hakkı kullanıldı. Bir cevap daha seçebilirsin.';
+        playTone(180, 0.12);
+        return;
+      }
+
+      state.answered = true;
+      clearInterval(state.timer);
+      buttons.forEach(button => {
+        button.disabled = true;
+        const answerIndex = Number(button.dataset.index);
+        if (answerIndex === question.answer) button.classList.add('correct');
+      });
+
+      if (correct) {
+        const points = pointsForCurrentQuestion();
+        state.scores[state.activeTeam] += points;
+        state.history[state.activeTeam].push(true);
+        el.feedback.className = 'feedback good';
+        el.feedback.querySelector('span').textContent = `Doğru cevap! ${state.names[state.activeTeam]} ${points} puan aldı.`;
+        playTone(740, 0.12);
+        setTimeout(() => playTone(980, 0.1), 120);
+      } else {
+        selected.classList.add('wrong');
+        state.history[state.activeTeam].push(false);
+        el.feedback.className = 'feedback bad';
+        el.feedback.querySelector('span').textContent = `Cevap yanlış. Doğru cevap: ${question.options[question.answer]}`;
+        playTone(160, 0.16);
+      }
+
+      el.next.disabled = false;
+      renderScoreboard();
+    }
+
+    function tick() {
+      if (state.paused || state.answered) return;
+      state.timeLeft -= 1;
+      updateTimer();
+      if (state.timeLeft <= 5 && state.timeLeft > 0) {
+        playTone(420, 0.04);
+      }
+      if (state.timeLeft <= 0) {
+        timeUp();
+      }
+    }
+
+    function updateTimer() {
+      el.timerText.textContent = Math.max(0, state.timeLeft);
+      const percent = Math.max(0, state.timeLeft / state.timeLimit) * 100;
+      el.timerBar.style.width = percent + '%';
+    }
+
+    function timeUp() {
+      if (state.answered) return;
+      state.answered = true;
+      clearInterval(state.timer);
+      const question = currentQuestion();
+      state.history[state.activeTeam].push(false);
+      Array.from(el.answers.querySelectorAll('.answer-btn')).forEach(button => {
+        button.disabled = true;
+        if (Number(button.dataset.index) === question.answer) button.classList.add('correct');
+      });
+      el.feedback.className = 'feedback bad';
+      el.feedback.querySelector('span').textContent = `Süre bitti. Doğru cevap: ${question.options[question.answer]}`;
+      el.next.disabled = false;
+      renderScoreboard();
+      playTone(140, 0.18);
+    }
+
+    function nextQuestion() {
+      if (!state.answered) return;
+      if (state.index + 1 >= state.questions.length) {
+        if (state.scores[0] === state.scores[1] && !state.suddenDeath) {
+          addSuddenDeathQuestion();
+          return;
+        }
+        finishGame();
+        return;
+      }
+      state.index += 1;
+      state.activeTeam = state.activeTeam === 0 ? 1 : 0;
+      renderQuestion();
+    }
+
+    function addSuddenDeathQuestion() {
+      const used = new Set(state.questions.map(item => item.q));
+      const extra = shuffle(questionBank).find(item => !used.has(item.q));
+      if (!extra) {
+        finishGame();
+        return;
+      }
+      state.questions.push(extra);
+      state.index += 1;
+      state.activeTeam = state.activeTeam === 0 ? 1 : 0;
+      state.suddenDeath = true;
+      showToast('Beraberlik! Ani soru açıldı.');
+      renderQuestion();
+    }
+
+    function finishGame() {
+      clearInterval(state.timer);
+      const [a, b] = state.scores;
+      let title = 'Düello Berabere Bitti';
+      let text = `${state.names[0]} ${a} - ${b} ${state.names[1]}`;
+      let badge = '=';
+
+      if (a > b) {
+        title = `${state.names[0]} Kazandı`;
+        text = `${a} - ${b} skoruyla düellonun şampiyonu ${state.names[0]}.`;
+        badge = 'A';
+      } else if (b > a) {
+        title = `${state.names[1]} Kazandı`;
+        text = `${b} - ${a} skoruyla düellonun şampiyonu ${state.names[1]}.`;
+        badge = 'B';
+      }
+
+      el.winnerBadge.textContent = badge;
+      el.resultTitle.textContent = title;
+      el.resultText.textContent = text;
+      el.modal.classList.add('show');
+      playTone(660, 0.12);
+      setTimeout(() => playTone(880, 0.12), 130);
+      setTimeout(() => playTone(1040, 0.16), 260);
+    }
+
+    function useJoker(type) {
+      if (state.answered) return;
+      const teamJokers = state.jokers[state.activeTeam];
+      if (!teamJokers[type]) return;
+      teamJokers[type] = false;
+
+      if (type === 'fifty') {
+        useFifty();
+        showToast('50:50 jokeri kullanıldı.');
+      }
+
+      if (type === 'double') {
+        state.doubleActive = true;
+        showToast('Çift cevap hakkı aktif.');
+      }
+
+      if (type === 'pass') {
+        showToast('Pas jokeri kullanıldı. Yeni soru geliyor.');
+        const replacement = shuffle(questionBank).find(item => !state.questions.some(q => q.q === item.q));
+        if (replacement) state.questions[state.index] = replacement;
+        renderQuestion();
+        return;
+      }
+
+      renderJokers();
+      playTone(560, 0.08);
+    }
+
+    function useFifty() {
+      const question = currentQuestion();
+      const wrongIndexes = question.options
+        .map((_, index) => index)
+        .filter(index => index !== question.answer);
+      shuffle(wrongIndexes).slice(0, 2).forEach(index => {
+        const button = el.answers.querySelector(`[data-index="${index}"]`);
+        if (button) {
+          button.classList.add('hidden-option');
+          button.disabled = true;
+        }
+      });
+    }
+
+    function renderJokers() {
+      document.querySelectorAll('.joker-btn').forEach(button => {
+        const available = state.jokers[state.activeTeam][button.dataset.joker];
+        button.disabled = !available || state.answered;
+      });
+    }
+
+    function togglePause() {
+      state.paused = !state.paused;
+      el.pause.textContent = state.paused ? 'Süreyi Başlat' : 'Süreyi Durdur';
+      showToast(state.paused ? 'Süre durdu.' : 'Süre devam ediyor.');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    }
+
+    function returnToSetup() {
+      clearInterval(state.timer);
+      document.body.classList.remove('playing');
+      el.modal.classList.remove('show');
+    }
+
+    function showToast(message) {
+      el.toast.textContent = message;
+      el.toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => el.toast.classList.remove('show'), 1800);
+    }
+
+    function playTone(frequency, duration) {
+      if (!state.sound) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const context = new AudioContext();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        gain.gain.value = 0.05;
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+        oscillator.addEventListener('ended', () => context.close());
+      } catch (error) {
+        state.sound = false;
+      }
+    }
+  </script>
+</body>
+</html>

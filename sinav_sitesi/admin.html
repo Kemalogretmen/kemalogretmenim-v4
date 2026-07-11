@@ -364,6 +364,35 @@ function createInitialState(overrides={}){
 let A=createInitialState();
 const appEl=()=>document.getElementById('app');
 
+async function ensureSupabaseAdminSession(){
+  if(!window.kemalAdminAuth||typeof window.kemalAdminAuth.getSession!=='function'){
+    throw new Error('Supabase admin oturumu hazır değil. Sayfayı yenileyip tekrar giriş yapın.');
+  }
+  const session=await window.kemalAdminAuth.getSession();
+  if(!session){
+    throw new Error('Supabase admin oturumu bulunamadı. Çıkış yapıp tekrar giriş yapın.');
+  }
+  return session;
+}
+
+function formatAdminAuthError(error){
+  if(window.kemalAdminAuth&&typeof window.kemalAdminAuth.humanizeError==='function'){
+    return window.kemalAdminAuth.humanizeError(error);
+  }
+  return String(error&&error.message?error.message:error||'Bilinmeyen hata');
+}
+
+function formatPublishError(error){
+  const message=String(error&&error.message?error.message:error||'');
+  if(message.includes('row-level security')){
+    return 'Supabase yetki kontrolü sınav görseli yüklemeyi engelledi. Çıkış yapıp tekrar admin girişi yapın; sorun sürerse bu e-posta için Supabase admin_users kaydında exam_create/exam_edit yetkisini kontrol edin.';
+  }
+  if(message.includes('Supabase admin oturumu')){
+    return message;
+  }
+  return message||'İşlem sırasında beklenmeyen bir hata oluştu.';
+}
+
 function getRequestedPageFromHash(){
   const hash=String(window.location.hash||'').replace(/^#/,'').trim();
   return ['create','categories','exams','results'].includes(hash)?hash:'';
@@ -848,6 +877,10 @@ function getQuestionImageMime(dataUrl){
 }
 function getSupabaseUploadClient(){
   if(supabaseUploadClient) return supabaseUploadClient;
+  if(window.kemalAdminAuth&&typeof window.kemalAdminAuth.getClient==='function'){
+    supabaseUploadClient=window.kemalAdminAuth.getClient();
+    return supabaseUploadClient;
+  }
   if(!window.supabase) throw new Error('Supabase kütüphanesi yüklenemedi.');
   const cfg=window.kemalSiteStore?.getConfig?.();
   if(!cfg?.supabaseUrl||!cfg?.supabaseAnonKey){
@@ -864,6 +897,7 @@ async function dataUrlToBlob(dataUrl){
 }
 async function uploadQuestionImage(examId,index,dataUrl){
   if(!String(dataUrl||'').startsWith('data:')) return{imageUrl:dataUrl};
+  await ensureSupabaseAdminSession();
   const ext=getQuestionImageExtension(dataUrl);
   const mime=getQuestionImageMime(dataUrl);
   const path=`${examId}/q-${String(index+1).padStart(3,'0')}-${Date.now()}.${ext}`;
@@ -908,6 +942,45 @@ async function removeQuestionImageFromStorage(questionData){
 async function deleteQuestionWithImage(questionDoc){
   await removeQuestionImageFromStorage(questionDoc);
   await deleteDoc(doc(db,'questions',questionDoc.id));
+}
+async function listQuestionImageStoragePaths(folder='',depth=0){
+  if(depth>4) return[];
+  const found=[];
+  let offset=0;
+  while(true){
+    const response=await getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).list(folder,{
+      limit:1000,
+      offset,
+      sortBy:{column:'name',order:'asc'}
+    });
+    if(response.error) throw response.error;
+    const rows=response.data||[];
+    for(const item of rows){
+      if(!item||!item.name) continue;
+      const path=folder?`${folder}/${item.name}`:item.name;
+      if(item.id===null||item.metadata===null){
+        found.push(...await listQuestionImageStoragePaths(path,depth+1));
+      }else{
+        found.push(path);
+      }
+    }
+    if(rows.length<1000) break;
+    offset+=rows.length;
+  }
+  return found;
+}
+async function removeQuestionImageStoragePaths(paths){
+  const unique={};
+  const list=(Array.isArray(paths)?paths:[]).map(path=>String(path||'').trim()).filter(path=>{
+    if(!path||unique[path]) return false;
+    unique[path]=true;
+    return true;
+  });
+  for(let i=0;i<list.length;i+=100){
+    const response=await getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).remove(list.slice(i,i+100));
+    if(response.error) throw response.error;
+  }
+  return list.length;
 }
 function deriveQuestionSectionsFromQuestions(questions){
   const derived=[];
@@ -1658,9 +1731,12 @@ function renderAdminExams(){
         <h2 style="font-size:20px;margin-bottom:2px">Sınavlar</h2>
         <p class="text-sm text-muted">${A.exams.length} sınav listeleniyor · Görünüm sırası öğrenci sayfasındaki sınav kartlarını belirler.</p>
       </div>
-      <select class="form-input" style="width:150px" onchange="W.loadExamsFilter(this.value)">
-        <option value="">Tüm Sınıflar</option>${gOpts}
-      </select>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        ${hasExamPerm('exam_delete')?`<button class="btn btn-outline" type="button" onclick="W.cleanupExamStorage()">🧹 Boş Görselleri Temizle</button>`:''}
+        <select class="form-input" style="width:150px" onchange="W.loadExamsFilter(this.value)">
+          <option value="">Tüm Sınıflar</option>${gOpts}
+        </select>
+      </div>
     </div>
     ${cards}
   </div>`;
@@ -2437,11 +2513,17 @@ const W={
     try{
       await signInWithEmailAndPassword(auth,email,pass);
       if(window.kemalAdminAuth&&typeof window.kemalAdminAuth.signIn==='function'){
-        try{await window.kemalAdminAuth.signIn(email,pass);}catch(supabaseError){console.warn('Supabase admin yetki oturumu açılamadı:',supabaseError);}
+        try{
+          await window.kemalAdminAuth.signIn(email,pass);
+        }catch(supabaseError){
+          await signOut(auth).catch(()=>null);
+          console.warn('Supabase admin yetki oturumu açılamadı:',supabaseError);
+          throw new Error('Supabase admin oturumu açılamadı: '+formatAdminAuthError(supabaseError));
+        }
       }
     }catch(e){
       console.error(e);
-      if(err){err.textContent='⚠️ Giriş yapılamadı. E-posta/şifre kontrol edin.';err.style.display='block';}
+      if(err){err.textContent='⚠️ '+(e&&e.message?e.message:'Giriş yapılamadı. E-posta/şifre kontrol edin.');err.style.display='block';}
       toast('Giriş hatası','error');
     }finally{hideLoad();}
   },
@@ -2830,7 +2912,9 @@ const W={
     showLoad(actionLabel);
     let examId=A.editExamId;
     let createdNewExam=false;
+    let questionWritesCommitted=false;
     const writtenQuestions=[];
+    const uploadedQuestionImages=[];
     try{
       const payload={
         title:t,grade:A.grade,subject:A.subject,
@@ -2851,12 +2935,10 @@ const W={
         payload.displayOrder=explicitDisplayOrder;
       }
 
+      let existingQuestions=[];
       if(examId){
-        await updateDoc(doc(db,'exams',examId),payload);
-        const existingQuestions=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
-        for(const qd of existingQuestions.docs){
-          await deleteQuestionWithImage(qd);
-        }
+        const existingQuestionsSnap=await getDocs(query(collection(db,'questions'),where('examId','==',examId)));
+        existingQuestions=existingQuestionsSnap.docs;
       }else{
         const createPayload=Object.assign({},payload,{createdAt:serverTimestamp()});
         if(targetStatus==='active'){
@@ -2877,18 +2959,54 @@ const W={
       for(let i=0;i<A.questions.length;i++){
         showLoad(`${i+1}/${A.questions.length}. soru görseli yükleniyor...`);
         const uploadedImage=await uploadQuestionImage(examId,i,A.questions[i].img);
+        if(uploadedImage.imagePath){
+          uploadedQuestionImages.push({imagePath:uploadedImage.imagePath});
+        }
+        const preservedImagePath=uploadedImage.imagePath
+          ? uploadedImage.imagePath
+          : String(A.questions[i].imagePath||'');
         const questionPayload={
           examId:examId,
           imageUrl:uploadedImage.imageUrl,
-          imagePath:uploadedImage.imagePath||'',
+          imagePath:preservedImagePath,
           correctAnswer:A.questions[i].ans,
           sectionTitle:sectionData.assignments[i+1]||'',
           learningOutcome:String(A.questions[i].learningOutcome||'').trim(),
           pointValue:scoreConfig.questionPoints[i]??0,
           order:A.questions[i].order??i
         };
-        const questionRef=await addDoc(collection(db,'questions'),questionPayload);
-        writtenQuestions.push({id:questionRef.id,...questionPayload});
+        if(isEdit){
+          const questionRef=doc(collection(db,'questions'));
+          writtenQuestions.push({id:questionRef.id,...questionPayload,_ref:questionRef});
+        }else{
+          const questionRef=await addDoc(collection(db,'questions'),questionPayload);
+          writtenQuestions.push({id:questionRef.id,...questionPayload});
+        }
+      }
+
+      if(isEdit){
+        const batch=writeBatch(db);
+        batch.update(doc(db,'exams',examId),payload);
+        existingQuestions.forEach(qd=>batch.delete(doc(db,'questions',qd.id)));
+        writtenQuestions.forEach(question=>{
+          const ref=question._ref;
+          const cleanPayload={...question};
+          delete cleanPayload.id;
+          delete cleanPayload._ref;
+          batch.set(ref,cleanPayload);
+        });
+        await batch.commit();
+        questionWritesCommitted=true;
+        const keepImagePaths=writtenQuestions.reduce((map,question)=>{
+          if(question.imagePath) map[question.imagePath]=true;
+          return map;
+        },{});
+        for(const qd of existingQuestions){
+          const oldPath=getQuestionImagePath(qd);
+          if(oldPath&&!keepImagePaths[oldPath]){
+            await removeQuestionImageFromStorage({imagePath:oldPath});
+          }
+        }
       }
 
       if(createdNewExam&&targetStatus==='active'){
@@ -2930,13 +3048,20 @@ const W={
           for(const question of writtenQuestions){
             await deleteQuestionWithImage(question);
           }
+          for(const question of uploadedQuestionImages){
+            await removeQuestionImageFromStorage(question);
+          }
           await deleteDoc(doc(db,'exams',examId));
         }catch(cleanupError){
           console.error(cleanupError);
         }
+      }else if(!questionWritesCommitted){
+        for(const question of uploadedQuestionImages){
+          await removeQuestionImageFromStorage(question);
+        }
       }
       hideLoad();
-      toast('Hata: '+e.message,'error');
+      toast('Hata: '+formatPublishError(e),'error');
     }
   },
   async loadExamsFilter(gf){
@@ -2947,6 +3072,39 @@ const W={
     A.appeals=appeals;
     hideLoad();
     setContent(renderAdminExams());
+  },
+  async cleanupExamStorage(){
+    if(!requireExamPerm('exam_delete','Sınav görsel depo temizliği')) return;
+    showLoad('Kullanılmayan soru görselleri taranıyor...');
+    try{
+      await ensureSupabaseAdminSession();
+      const [storagePaths,questionSnap]=await Promise.all([
+        listQuestionImageStoragePaths(),
+        getDocs(collection(db,'questions'))
+      ]);
+      const usedPaths={};
+      questionSnap.docs.forEach(qd=>{
+        const path=getQuestionImagePath(qd);
+        if(path) usedPaths[path]=true;
+      });
+      const orphanPaths=storagePaths.filter(path=>!usedPaths[path]);
+      hideLoad();
+      if(!orphanPaths.length){
+        toast('Kullanılmayan sınav görseli bulunmadı.','success');
+        return;
+      }
+      const preview=orphanPaths.slice(0,8).join('\n');
+      const extra=orphanPaths.length>8?`\n… +${orphanPaths.length-8} görsel daha`:'';
+      const ok=confirm(`${orphanPaths.length} kullanılmayan sınav görseli silinecek.\n\n${preview}${extra}\n\nBu görseller hiçbir soru kaydında kullanılmıyor görünüyor. Devam edilsin mi?`);
+      if(!ok) return;
+      showLoad('Kullanılmayan sınav görselleri siliniyor...');
+      const removedCount=await removeQuestionImageStoragePaths(orphanPaths);
+      hideLoad();
+      toast(`${removedCount} kullanılmayan sınav görseli silindi.`,'success');
+    }catch(e){
+      hideLoad();
+      toast('Depo temizliği yapılamadı: '+formatPublishError(e),'error');
+    }
   },
   async editExam(id){
     if(!requireExamPerm('exam_edit','Sınav düzenleme')) return;
@@ -2993,6 +3151,7 @@ const W={
             sectionTitle:data.sectionTitle||'',
             learningOutcome:data.learningOutcome||data.outcome||data.kazanim||'',
             pointValue:toPositiveDecimal(data.pointValue),
+            imagePath:data.imagePath||getQuestionImagePath(data),
             order:data.order??index
           };
         }),

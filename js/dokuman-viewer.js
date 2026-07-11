@@ -4875,7 +4875,7 @@
     const params = new URLSearchParams(window.location.search);
     state.documentId = params.get('id') || '';
 
-    if (!state.documentId) {
+    if (!state.documentId || !isValidDocumentUuid(state.documentId)) {
       throw new Error('Doküman kimliği bulunamadı.');
     }
 
@@ -5038,6 +5038,35 @@
 	    button.classList.toggle('is-saved', saved);
 	  }
 
+  function isValidDocumentUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+  }
+
+  function showMissingDocumentState() {
+    var root = qs('bookRoot');
+    if (root) {
+      root.innerHTML = [
+        '<div class="book-empty">',
+          '<span>📚</span>',
+          '<p>Doküman açmak için önce bir doküman seçmelisin.</p>',
+          '<p style="margin-top:10px;font-size:13px;color:#64748B;">Bu görüntüleyici belirli bir doküman bağlantısıyla çalışır.</p>',
+          '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;">',
+            '<a href="/admin/dokuman-yonetimi.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:#6C3DED;color:white;text-decoration:none;font-weight:800;">Doküman Yönetimi</a>',
+            '<a href="/sinif-tahtasi.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:white;color:#6C3DED;text-decoration:none;font-weight:800;border:2px solid #E2D9FF;">Sınıf Tahtası</a>',
+          '</div>',
+        '</div>'
+      ].join('');
+    }
+    setStatus('Doküman seçilmedi.');
+    qs('viewerTitle').textContent = 'Doküman seçilmedi';
+    qs('viewerDesc').textContent = 'Bu ekran belirli bir PDF veya video dokümanını görüntülemek için kullanılır.';
+    var back = qs('backSubjectLink');
+    if (back) {
+      back.href = '/admin/dokuman-yonetimi.html';
+      back.textContent = '← Doküman Yönetimi';
+    }
+  }
+
 	  function saveCurrentDocumentForUser() {
 	    if (!window.kemalContentProgress || !state.documentId || !state.documentRow) {
 	      return;
@@ -5097,6 +5126,10 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     init().catch(function(error) {
+      if (!state.documentId || !isValidDocumentUuid(state.documentId)) {
+        showMissingDocumentState();
+        return;
+      }
       qs('bookRoot').innerHTML =
         '<div class="book-empty"><span>⚠️</span><p>' + (error && error.message ? error.message : 'Doküman açılamadı.') + '</p></div>';
       setStatus('Doküman açılamadı.');

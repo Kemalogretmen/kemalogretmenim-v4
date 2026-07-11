@@ -111,6 +111,18 @@
     }, 3600);
   }
 
+  function validateSafeText(fields, surface) {
+    if (!window.kemalContentSafety || typeof window.kemalContentSafety.validateFields !== 'function') {
+      return true;
+    }
+    var result = window.kemalContentSafety.validateFields(fields, { surface: surface || 'student_panel' });
+    if (!result.ok) {
+      toast(result.message, 'error');
+      return false;
+    }
+    return true;
+  }
+
   function humanizeError(error) {
     var message = String(error && error.message ? error.message : error || '');
     if (message.indexOf('sender_deleted_at') >= 0 || message.indexOf('recipient_deleted_at') >= 0) {
@@ -1207,6 +1219,10 @@
       toast('Mesajını yazmalısın.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: qs('studentMessageSubject'), label: 'mesaj_konusu', value: subject },
+      { element: qs('studentMessageBody'), label: 'mesaj_metni', value: body },
+    ], 'student_message')) return;
     try {
       var result = await getClient().from('panel_messages').insert({
         sender_id: state.user.id,
@@ -1281,6 +1297,9 @@
       toast('Cevap metni gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: input, label: 'mesaj_cevabi', value: body },
+    ], 'student_message_reply')) return;
     var recipientId = sameId(message.sender_id, state.user.id) ? message.recipient_id : message.sender_id;
     try {
       var result = await getClient().from('panel_messages').insert({
@@ -1344,6 +1363,9 @@
       grade_level: Number(qs('studentAccountGrade').value || 0) || null,
       branch: clean(qs('studentAccountBranch').value).toLocaleUpperCase('tr-TR'),
     };
+    if (!validateSafeText([
+      { element: qs('studentAccountSchool'), label: 'okul_adi', value: payload.school_name },
+    ], 'student_profile')) return;
     if (state.avatarDraft) {
       payload.avatar_url = state.avatarDraft;
     }

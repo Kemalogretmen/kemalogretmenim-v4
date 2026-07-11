@@ -62,6 +62,33 @@
       padding-bottom: 18px;
       border-bottom: 2px dashed var(--border);
     }
+    .kitap-baslik p { margin: 0; }
+    .kitap-baslik .ql-align-center { text-align: center; }
+    .kitap-baslik .ql-align-right { text-align: right; }
+    .kitap-baslik .ql-align-left { text-align: left; }
+    .okuma-visual {
+      margin: -6px auto 26px;
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      background: #F8FAFC;
+      border: 1px solid var(--border);
+      box-shadow: 0 14px 36px rgba(15,23,42,.08);
+    }
+    .okuma-visual img {
+      width: 100%;
+      max-height: 340px;
+      object-fit: var(--reading-visual-fit, cover);
+      display: block;
+      background: #F8FAFC;
+    }
+    .okuma-visual-caption {
+      padding: 12px 16px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.55;
+      background: white;
+    }
     .kitap-metin {
       background: white;
       border-radius: var(--r-xl);
@@ -71,6 +98,12 @@
       line-height: 2.0;
     }
     /* Metin içeriği — stil JS'den uygulanır */
+    .kitap-metin .ql-align-center { text-align: center; }
+    .kitap-metin .ql-align-right { text-align: right; }
+    .kitap-metin .ql-align-left { text-align: left; }
+    .kitap-metin .ql-indent-1 { padding-left: 3em; }
+    .kitap-metin .ql-indent-2 { padding-left: 6em; }
+    .kitap-metin .ql-indent-3 { padding-left: 9em; }
 
     .bitti-alani {
       text-align: center;
@@ -171,6 +204,36 @@
       font-weight: 700;
       white-space: nowrap;
     }
+    .kk-controls {
+      display: none;
+      position: absolute;
+      left: 50%;
+      bottom: 102px;
+      transform: translateX(-50%);
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      font-weight: 800;
+      backdrop-filter: blur(14px);
+    }
+    .kk-controls button {
+      width: 32px;
+      height: 32px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.14);
+      color: white;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .kk-controls button:hover { background: rgba(255,255,255,.24); }
+    .kk-speed-label { min-width: 72px; text-align: center; }
 
     /* Hazır Ekranı */
     #hazirEkran {
@@ -208,6 +271,7 @@
       .kk-top{padding:12px 16px;gap:12px;flex-wrap:wrap;}
       .kk-progress-wrap{left:16px;right:16px;bottom:48px;}
       .kk-click-hint{bottom:16px;max-width:calc(100% - 24px);text-align:center;}
+      .kk-controls{bottom:88px;max-width:calc(100% - 24px);}
     }
     @media(orientation:landscape) and (max-width:900px){
       .kitap-wrapper{max-width:100%;padding:0 18px;margin:18px auto;}
@@ -237,6 +301,10 @@
     </div>
     <div class="kitap-wrapper">
       <div class="kitap-baslik" id="tamMetinBaslik">—</div>
+      <div class="okuma-visual" id="okumaVisual" style="display:none;">
+        <img id="okumaVisualImg" alt="">
+        <div class="okuma-visual-caption" id="okumaVisualCaption" style="display:none;"></div>
+      </div>
       <div class="kitap-metin" id="tamMetinIcerik"></div>
     </div>
     <div class="bitti-alani">
@@ -259,11 +327,16 @@
       </div>
       <div class="kk-progress-txt" id="kkProgressTxt">0 / 0 kelime</div>
     </div>
+    <div class="kk-controls" id="kkControls">
+      <button type="button" onclick="kelimeHiziDegistir(-50)">−</button>
+      <span class="kk-speed-label" id="kkSpeedLabel">120 k/dk</span>
+      <button type="button" onclick="kelimeHiziDegistir(50)">+</button>
+    </div>
     <div class="kk-click-hint" id="kkHint">herhangi bir yere tıkla →</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/site-data.js?v=20260418-2"></script>
-  <script src="/js/okuma-screen.js?v=20260418-2"></script>
+  <script src="/js/okuma-screen.js?v=20260711-training"></script>
 </body>
 </html>

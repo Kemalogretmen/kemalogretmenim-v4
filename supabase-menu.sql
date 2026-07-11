@@ -40,12 +40,21 @@ for each row
 execute function public.touch_menu_ogeler_updated_at();
 
 alter table public.menu_ogeler enable row level security;
+grant select on public.menu_ogeler to anon, authenticated;
+grant insert, update, delete on public.menu_ogeler to authenticated;
 
 drop policy if exists "menu_ogeler public read active" on public.menu_ogeler;
 create policy "menu_ogeler public read active"
 on public.menu_ogeler
 for select
-to anon, authenticated
+to anon
+using (active = true);
+
+drop policy if exists "menu_ogeler authenticated read active or admin" on public.menu_ogeler;
+create policy "menu_ogeler authenticated read active or admin"
+on public.menu_ogeler
+for select
+to authenticated
 using (
   active = true
   or public.current_admin_has_permission('menu_yonetimi')

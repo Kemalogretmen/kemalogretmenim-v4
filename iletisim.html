@@ -133,6 +133,11 @@
       margin-top: 16px;
       font-size: 15px;
     }
+    .success-msg.error {
+      background: #FFF0EE;
+      border-color: #FF8A7A;
+      color: #9F1D16;
+    }
 
     @media (max-width:860px) {
       .contact-layout { grid-template-columns:1fr; }
@@ -194,7 +199,7 @@
       <!-- Sağ: Form -->
       <div class="contact-form-card">
         <h3>✉️ Mesaj Gönder</h3>
-        <form id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <form id="contactForm" action="" method="POST">
           <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="adSoyad">Ad Soyad *</label>
@@ -221,8 +226,8 @@
             <textarea class="form-textarea" id="mesaj" name="mesaj" placeholder="Mesajınızı buraya yazın…" required></textarea>
           </div>
           <button type="submit" class="form-submit">📨 Mesajı Gönder</button>
-          <div class="success-msg" id="successMsg">
-            ✅ Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağım.
+          <div class="success-msg" id="successMsg" role="status" aria-live="polite">
+            Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağım.
           </div>
         </form>
       </div>
@@ -231,15 +236,69 @@
   </section>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js"></script>
+  <script src="/js/site.js?v=20260608-content-safety2"></script>
   <script>
-    document.getElementById('contactForm').addEventListener('submit', function(e) {
+    const CONTACT_EMAIL = 'iletisim@kemalogretmenim.com.tr';
+    const CONTACT_FORM_ENDPOINT = '';
+
+    const contactForm = document.getElementById('contactForm');
+    const successMsg = document.getElementById('successMsg');
+
+    function showFormMessage(message, isError) {
+      successMsg.textContent = message;
+      successMsg.classList.toggle('error', Boolean(isError));
+      successMsg.style.display = 'block';
+      setTimeout(() => {
+        successMsg.style.display = 'none';
+      }, 6500);
+    }
+
+    contactForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      // Formspree veya başka servis bağlandıktan sonra gerçek gönderimi etkinleştir.
-      // Şimdilik başarı mesajını göster:
-      document.getElementById('successMsg').style.display = 'block';
-      this.reset();
-      setTimeout(() => document.getElementById('successMsg').style.display = 'none', 5000);
+      const submitButton = this.querySelector('[type="submit"]');
+      const formData = new FormData(this);
+      const name = (formData.get('adSoyad') || '').toString().trim();
+      const email = (formData.get('email') || '').toString().trim();
+      const topic = (formData.get('konu') || 'İletişim Formu').toString().trim() || 'İletişim Formu';
+      const message = (formData.get('mesaj') || '').toString().trim();
+
+      if (!name || !email || !message) {
+        showFormMessage('Lütfen ad soyad, e-posta ve mesaj alanlarını doldurun.', true);
+        return;
+      }
+
+      if (CONTACT_FORM_ENDPOINT) {
+        try {
+          submitButton.disabled = true;
+          submitButton.textContent = 'Gönderiliyor...';
+          const response = await fetch(CONTACT_FORM_ENDPOINT, {
+            method: 'POST',
+            headers: { Accept: 'application/json' },
+            body: formData
+          });
+          if (!response.ok) throw new Error('Mesaj servisi yanıt vermedi.');
+          showFormMessage('Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağım.');
+          this.reset();
+        } catch (error) {
+          showFormMessage('Mesaj gönderilemedi. Lütfen doğrudan ' + CONTACT_EMAIL + ' adresine yazın.', true);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = '📨 Mesajı Gönder';
+        }
+        return;
+      }
+
+      const body = [
+        'Ad Soyad: ' + name,
+        'E-posta: ' + email,
+        'Konu: ' + topic,
+        '',
+        message
+      ].join('\n');
+      window.location.href = 'mailto:' + CONTACT_EMAIL +
+        '?subject=' + encodeURIComponent(topic) +
+        '&body=' + encodeURIComponent(body);
+      showFormMessage('Mail uygulamanız açıldı. Mesajın ulaşması için açılan e-postayı göndermeniz gerekiyor.');
     });
   </script>
 </body>

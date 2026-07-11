@@ -262,11 +262,125 @@ function createMobileChromeScript(profile: Profile | null, session: unknown) {
     }
   }
 
+  function installMobileTeacherAgendaShell() {
+    if (!/^\\/ogretmen-ajandasi\\//.test(location.pathname)) return;
+    if (!document.getElementById('kemalMobileAgendaStyle')) {
+      var style = document.createElement('style');
+      style.id = 'kemalMobileAgendaStyle';
+      style.textContent = [
+        'html.kemal-mobile-agenda,html.kemal-mobile-agenda body{width:100%;max-width:100%;overflow-x:hidden;background:#F2FAFB!important}',
+        'html.kemal-mobile-agenda body{font-size:15px!important;-webkit-text-size-adjust:100%!important}',
+        'html.kemal-mobile-agenda .app{display:block!important;min-height:100vh!important;overflow-x:hidden!important;width:100%!important}',
+        'html.kemal-mobile-agenda .sidebar{position:sticky!important;top:0!important;height:auto!important;z-index:30!important;padding:10px!important;border-right:0!important;border-bottom:1px solid #DCE8EE!important;background:rgba(255,253,250,.96)!important;gap:9px!important}',
+        'html.kemal-mobile-agenda .brand{grid-template-columns:42px minmax(0,1fr)!important;gap:9px!important}',
+        'html.kemal-mobile-agenda .brand-mark{width:42px!important;height:42px!important;border-radius:10px!important}',
+        'html.kemal-mobile-agenda .brand h1{font-size:16px!important;line-height:1.08!important}',
+        'html.kemal-mobile-agenda .brand p{font-size:11px!important;margin-top:2px!important}',
+        'html.kemal-mobile-agenda .side-card{display:none!important}',
+        'html.kemal-mobile-agenda .nav{display:flex!important;gap:7px!important;overflow-x:auto!important;padding:1px 0 5px!important;scrollbar-width:none!important}',
+        'html.kemal-mobile-agenda .nav::-webkit-scrollbar{display:none!important}',
+        'html.kemal-mobile-agenda .nav button{flex:0 0 auto!important;min-height:38px!important;padding:8px 10px!important;border-radius:12px!important;font-size:13px!important}',
+        'html.kemal-mobile-agenda .main{padding:10px!important;min-width:0!important}',
+        'html.kemal-mobile-agenda .topbar{grid-template-columns:1fr!important;gap:10px!important;margin-bottom:10px!important;padding:12px!important;border-radius:16px!important}',
+        'html.kemal-mobile-agenda .topbar h2{font-size:21px!important}',
+        'html.kemal-mobile-agenda .class-switcher{display:grid!important;grid-template-columns:1fr!important;min-width:0!important;width:100%!important}',
+        'html.kemal-mobile-agenda .panel{border-radius:16px!important;padding:13px!important;box-shadow:0 10px 24px rgba(39,49,63,.08)!important}',
+        'html.kemal-mobile-agenda .grid.two,html.kemal-mobile-agenda .grid.three,html.kemal-mobile-agenda .form-grid,html.kemal-mobile-agenda .toolbar,html.kemal-mobile-agenda .profile-head,html.kemal-mobile-agenda .crop-workspace{grid-template-columns:1fr!important}',
+        'html.kemal-mobile-agenda input,html.kemal-mobile-agenda select,html.kemal-mobile-agenda textarea{min-height:46px!important;font-size:16px!important;border-radius:12px!important}',
+        'html.kemal-mobile-agenda textarea{min-height:110px!important}',
+        'html.kemal-mobile-agenda .actions{align-items:stretch!important;display:flex!important;flex-direction:column!important;gap:8px!important}',
+        'html.kemal-mobile-agenda .actions button,html.kemal-mobile-agenda .actions a{justify-content:center!important;min-height:46px!important;width:100%!important}',
+        'html.kemal-mobile-agenda .hero-actions,html.kemal-mobile-agenda .modal-foot.actions{flex-direction:column!important}',
+        'html.kemal-mobile-agenda .student-grid{grid-template-columns:1fr!important;gap:10px!important}',
+        'html.kemal-mobile-agenda .student-card{grid-template-columns:30px 58px minmax(0,1fr)!important;padding:12px!important;border-radius:16px!important}',
+        'html.kemal-mobile-agenda #examsView .panel{padding:13px!important}',
+        'html.kemal-mobile-agenda #examsView .form-grid{grid-template-columns:1fr!important;gap:10px!important}',
+        'html.kemal-mobile-agenda #examsView .exam-row{grid-template-columns:1fr!important;align-items:start!important;border-radius:16px!important;padding:12px!important}',
+        'html.kemal-mobile-agenda #examsView .exam-row .actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}',
+        'html.kemal-mobile-agenda #examsView .exam-row .actions button{min-height:42px!important;padding:8px!important;width:100%!important}',
+        'html.kemal-mobile-agenda .table-wrap{border-radius:14px!important;margin-left:-4px!important;margin-right:-4px!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}',
+        'html.kemal-mobile-agenda table{min-width:720px!important}',
+        'html.kemal-mobile-agenda th,html.kemal-mobile-agenda td{padding:9px!important;font-size:13px!important}',
+        'html.kemal-mobile-agenda .report-tools,html.kemal-mobile-agenda .report-options .form-grid,html.kemal-mobile-agenda .report-kpis,html.kemal-mobile-agenda .comparison-grid,html.kemal-mobile-agenda .ranking-grid,html.kemal-mobile-agenda .feedback-grid{grid-template-columns:1fr!important}',
+        'html.kemal-mobile-agenda .report-stage{margin-left:-8px!important;margin-right:-8px!important;overflow-x:auto!important;padding:8px!important;-webkit-overflow-scrolling:touch!important}',
+        'html.kemal-mobile-agenda .report-card{min-width:760px!important;max-width:760px!important;padding:14px!important}',
+        'html.kemal-mobile-agenda .report-header{grid-template-columns:minmax(0,1fr) 86px!important;padding:13px!important}',
+        'html.kemal-mobile-agenda .report-header h2{font-size:22px!important}',
+        'html.kemal-mobile-agenda .report-photo{width:86px!important;height:86px!important}',
+        'html.kemal-mobile-agenda dialog{width:calc(100vw - 18px)!important;max-width:calc(100vw - 18px)!important;border-radius:18px!important}',
+        'html.kemal-mobile-agenda .modal-body{max-height:72vh!important;padding:12px!important}',
+        'html.kemal-mobile-agenda .photo-preview{width:112px!important}',
+        'html.kemal-mobile-agenda .crop-workspace{gap:12px!important}',
+        'html.kemal-mobile-agenda .crop-frame{max-width:100%!important}',
+        'html.kemal-mobile-agenda .toast{left:10px!important;right:10px!important;bottom:calc(10px + env(safe-area-inset-bottom))!important;width:auto!important}',
+        'html.kemal-mobile-agenda body{padding-bottom:calc(18px + env(safe-area-inset-bottom))!important}'
+      ].join('\\n');
+      document.head.appendChild(style);
+    }
+    document.documentElement.classList.add('kemal-mobile-agenda');
+  }
+
+  function installMobileExamShell() {
+    if (!/^\\/sinav_sitesi\\//.test(location.pathname)) return;
+    if (!document.getElementById('kemalMobileExamStyle')) {
+      var style = document.createElement('style');
+      style.id = 'kemalMobileExamStyle';
+      style.textContent = [
+        'html.kemal-mobile-exam,html.kemal-mobile-exam body{width:100%;max-width:100%;overflow-x:hidden;background:#F8F6FF!important}',
+        'html.kemal-mobile-exam .site-header,html.kemal-mobile-exam .site-footer,html.kemal-mobile-exam .mobile-nav,html.kemal-mobile-exam .bottom-nav{display:none!important}',
+        'html.kemal-mobile-exam .exam-hero{display:grid!important;grid-template-columns:1fr!important;gap:18px!important;padding:20px 14px 24px!important}',
+        'html.kemal-mobile-exam .exam-hero-copy{text-align:left!important}',
+        'html.kemal-mobile-exam .exam-hero-badge{font-size:12px!important;margin-bottom:12px!important;padding:7px 12px!important}',
+        'html.kemal-mobile-exam .exam-hero-title{font-size:34px!important;line-height:1.04!important;margin-bottom:10px!important}',
+        'html.kemal-mobile-exam .exam-hero-text{font-size:15px!important;line-height:1.55!important;max-width:none!important}',
+        'html.kemal-mobile-exam .exam-hero-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin-top:14px!important}',
+        'html.kemal-mobile-exam .exam-hero-stat{min-width:0!important;border-radius:16px!important;padding:12px 9px!important}',
+        'html.kemal-mobile-exam .exam-stat-number{font-size:24px!important}',
+        'html.kemal-mobile-exam .exam-stat-label{font-size:9px!important;letter-spacing:.07em!important}',
+        'html.kemal-mobile-exam .exam-grade-panel{border-radius:22px!important;padding:16px!important}',
+        'html.kemal-mobile-exam .exam-grade-panel-title{font-size:23px!important;text-align:left!important}',
+        'html.kemal-mobile-exam .exam-grade-panel-text{text-align:left!important;margin:6px 0 14px!important;max-width:none!important}',
+        'html.kemal-mobile-exam .exam-grade-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}',
+        'html.kemal-mobile-exam .exam-grade-card{min-height:118px!important;border-radius:20px!important;padding:10px!important}',
+        'html.kemal-mobile-exam .exam-grade-card-no{font-size:46px!important}',
+        'html.kemal-mobile-exam .exam-grade-card-class{font-size:20px!important}',
+        'html.kemal-mobile-exam .grade-section{padding:0 12px 34px!important}',
+        'html.kemal-mobile-exam .grade-banner{border-radius:20px!important;padding:16px!important}',
+        'html.kemal-mobile-exam .grade-banner h2{font-size:22px!important}',
+        'html.kemal-mobile-exam .subj-filters{overflow-x:auto!important;flex-wrap:nowrap!important;padding-bottom:5px!important}',
+        'html.kemal-mobile-exam .sf-btn{flex:0 0 auto!important;min-height:38px!important}',
+        'html.kemal-mobile-exam .exam-filter-panel{grid-template-columns:1fr!important;border-radius:16px!important;padding:12px!important}',
+        'html.kemal-mobile-exam .exam-grid{grid-template-columns:1fr!important;gap:12px!important}',
+        'html.kemal-mobile-exam .ec{border-radius:18px!important;min-height:0!important}',
+        'html.kemal-mobile-exam .ec-head{min-height:96px!important;padding:18px 16px 13px!important}',
+        'html.kemal-mobile-exam .ec-body{padding:0 16px 16px!important}',
+        'html.kemal-mobile-exam .modal-overlay{padding:0!important}',
+        'html.kemal-mobile-exam .modal-box{border-radius:0!important;max-width:none!important;min-height:100dvh!important;padding:16px!important}',
+        'html.kemal-mobile-exam .exam-topbar{height:auto!important;min-height:48px!important;padding:7px 10px!important;gap:8px!important}',
+        'html.kemal-mobile-exam .etb-title{max-width:130px!important;font-size:12px!important}',
+        'html.kemal-mobile-exam .exam-q-wrap{justify-content:flex-start!important;padding:8px!important;gap:8px!important}',
+        'html.kemal-mobile-exam .question-status-strip{border-radius:16px!important;padding:9px 10px!important}',
+        'html.kemal-mobile-exam .exam-media-stage{height:clamp(330px,calc(100dvh - 270px),620px)!important;border-radius:18px!important;padding:7px!important}',
+        'html.kemal-mobile-exam .exam-answers{gap:7px!important;padding:0!important;width:100%!important}',
+        'html.kemal-mobile-exam .ans-btn{flex:1 1 62px!important;justify-content:center!important;min-height:46px!important;padding:8px 9px!important}',
+        'html.kemal-mobile-exam .exam-navrow{padding:8px 10px calc(8px + env(safe-area-inset-bottom))!important}',
+        'html.kemal-mobile-exam .exam-nav-main{max-width:none!important;width:100%!important}',
+        'html.kemal-mobile-exam .karne-body{padding:14px 12px 28px!important}',
+        'html.kemal-mobile-exam .karne-spotlight,html.kemal-mobile-exam .karne-grid{grid-template-columns:1fr!important}',
+        'html.kemal-mobile-exam .karne-topbar{padding:12px!important}'
+      ].join('\\n');
+      document.head.appendChild(style);
+    }
+    document.documentElement.classList.add('kemal-mobile-exam');
+  }
+
   function boot() {
     persistNativeSession();
     syncAccountBar();
     installReturnButton();
     installMobileReadingShell();
+    installMobileTeacherAgendaShell();
+    installMobileExamShell();
     if (session && session.access_token && window.kemalUserAuth && typeof window.kemalUserAuth.refresh === 'function' && !window.__KEMAL_MOBILE_AUTH_REFRESHED__) {
       window.__KEMAL_MOBILE_AUTH_REFRESHED__ = true;
       window.kemalUserAuth.refresh().then(syncAccountBar).catch(syncAccountBar);

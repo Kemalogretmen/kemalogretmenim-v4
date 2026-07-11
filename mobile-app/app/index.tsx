@@ -75,14 +75,14 @@ const teacherTools: MiniCard[] = [
   { title: 'Akıllı Tahta', icon: 'tablet-landscape-outline', color: '#7C4DFF', path: '/ogretmen/beyaztahta.html' },
   { title: 'Sınıf Yönetimi', icon: 'people-circle-outline', color: '#00A991', path: '/ogretmen-paneli.html' },
   { title: 'Araçlar', icon: 'construct-outline', color: '#FF7043', path: '/ogretmen-araclari.html' },
-  { title: 'Ders Programı', icon: 'calendar-outline', color: '#0B78E3', path: '/ogretmen-ders-plani.html' },
+  { title: 'Öğretmen Ajandası', icon: 'briefcase-outline', color: '#0B78E3', path: '/ogretmen-ajandasi/index.html' },
 ];
 
 const bottomNav = [
   { title: 'Ana Sayfa', icon: 'home-outline' as IconName, path: '/' },
   { title: 'Derslerim', icon: 'book-outline' as IconName, path: '/ders.html' },
   { title: 'Sınavlarım', icon: 'reader-outline' as IconName, path: '/sinav_sitesi/index.html' },
-  { title: 'Topluluk', icon: 'people-outline' as IconName, path: '/ogrenci-paneli.html' },
+  { title: 'Ajanda', icon: 'briefcase-outline' as IconName, path: '/ogretmen-ajandasi/index.html' },
   { title: 'Arama', icon: 'search-outline' as IconName, path: '/ders.html#arama' },
 ];
 

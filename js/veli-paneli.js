@@ -167,6 +167,18 @@
     }, 3600);
   }
 
+  function validateSafeText(fields, surface) {
+    if (!window.kemalContentSafety || typeof window.kemalContentSafety.validateFields !== 'function') {
+      return true;
+    }
+    var result = window.kemalContentSafety.validateFields(fields, { surface: surface || 'parent_panel' });
+    if (!result.ok) {
+      toast(result.message, 'error');
+      return false;
+    }
+    return true;
+  }
+
   function humanizeError(error) {
     var message = String(error && error.message ? error.message : error || '');
     if (message.indexOf('birth_date') >= 0 || message.indexOf('parent_note') >= 0 || message.indexOf('sender_deleted_at') >= 0 || message.indexOf('recipient_deleted_at') >= 0) {
@@ -724,6 +736,10 @@
       toast('Mesaj için çocuk ve mesaj metni gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: qs('messageSubject'), label: 'mesaj_konusu', value: subject },
+      { element: qs('messageBody'), label: 'mesaj_metni', value: body },
+    ], 'parent_message')) return;
     var recipientId = recipientType === 'student' ? link.student_profile_id : link.teacher_id;
     if (!recipientId) {
       toast('Bu bağlantıda alıcı hesabı bulunamadı.', 'error');
@@ -757,6 +773,9 @@
       toast('İçerik göndermek için çocuk ve bağlantı gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: qs('sendContentTitle'), label: 'icerik_basligi', value: title },
+    ], 'parent_content_message')) return;
     try {
       var result = await getClient().from('panel_messages').insert({
         sender_id: state.user.id,
@@ -830,6 +849,9 @@
       toast('Cevap metni gerekli.', 'error');
       return;
     }
+    if (!validateSafeText([
+      { element: input, label: 'mesaj_cevabi', value: body },
+    ], 'parent_message_reply')) return;
     var recipientId = sameId(message.sender_id, state.user.id) ? message.recipient_id : message.sender_id;
     try {
       var result = await getClient().from('panel_messages').insert({

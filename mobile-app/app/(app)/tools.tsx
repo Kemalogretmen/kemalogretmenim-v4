@@ -21,6 +21,16 @@ type ToolItem = {
 
 const featuredTools: ToolItem[] = [
   {
+    title: 'Öğretmen Ajandası',
+    subtitle: 'Sınıf listesi, sınav yükleme, karne, takvim ve veli görüşmelerini tek yerden yönet.',
+    label: 'Ajanda',
+    path: '/ogretmen-ajandasi/index.html',
+    icon: 'briefcase-outline',
+    color: '#0B78E3',
+    soft: '#EAF5FF',
+    accent: 'Sınıf takibi',
+  },
+  {
     title: 'Hızlı Okuma Stüdyosu',
     subtitle: 'Metin, süre ve karne akışını mobilde başlat.',
     label: 'Gelişim',
@@ -141,8 +151,8 @@ export default function ToolsScreen() {
   return (
     <Screen>
       <Header
-        title="Mobil İçerik Merkezi"
-        subtitle="Oyun, deneme ve hızlı okuma için mobil öncelikli başlangıç kartları."
+        title="Mobil Ajanda Merkezi"
+        subtitle="Öğretmen ajandası, deneme, hızlı okuma ve sınıf içi araçlara mobil başlangıç."
       />
 
       <View style={styles.routeCard}>
@@ -151,7 +161,7 @@ export default function ToolsScreen() {
         </View>
         <View style={styles.routeText}>
           <Text style={styles.routeTitle}>Önerilen sıra</Text>
-          <Text style={styles.routeDesc}>Hızlı okuma ile ısın, deneme ile ölç, oyunla pekiştir.</Text>
+          <Text style={styles.routeDesc}>Ajandadan sınıfını seç, denemeyi yükle, karneleri mobilde paylaş.</Text>
         </View>
       </View>
 

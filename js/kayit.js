@@ -143,6 +143,44 @@
     message.innerHTML = escHtml(text) + (actionHtml || '');
   }
 
+  function friendlyAuthError(error) {
+    const raw = String(error && error.message ? error.message : error || '');
+    const lower = raw.toLocaleLowerCase('tr-TR');
+    if (
+      lower.includes('email rate limit') ||
+      lower.includes('rate limit exceeded') ||
+      lower.includes('too many requests')
+    ) {
+      return 'Çok kısa sürede fazla kayıt/doğrulama maili istendiği için Supabase e-posta gönderimini geçici olarak durdurdu. Bir süre bekleyip aynı e-postayla tekrar deneyebilir ya da test için farklı bir e-posta kullanabilirsin.';
+    }
+    if (raw.includes('Signups not allowed')) {
+      return 'Supabase yeni kullanıcı kaydına izin vermiyor. Authentication > Sign In / Providers ekranında "Allow new users to sign up" ayarını açıp Save changes yapmalısın.';
+    }
+    if (raw.includes('Email not confirmed')) {
+      return 'Bu e-posta adresi henüz doğrulanmamış. Gelen kutusu, spam ve promosyonlar klasörlerini kontrol etmelisin.';
+    }
+    if (raw.includes('User already registered') || raw.includes('already registered')) {
+      return 'Bu e-posta adresiyle daha önce kayıt oluşturulmuş. Lütfen yeni kayıt yerine giriş yap.';
+    }
+    return raw || 'İşlem sırasında beklenmeyen bir hata oluştu.';
+  }
+
+  function validateSafeText(profile) {
+    if (!window.kemalContentSafety || typeof window.kemalContentSafety.validateFields !== 'function') {
+      return true;
+    }
+    const result = window.kemalContentSafety.validateFields([
+      { element: document.getElementById('firstName'), label: 'ad', value: profile.first_name },
+      { element: document.getElementById('lastName'), label: 'soyad', value: profile.last_name },
+      { element: document.getElementById('manualSchool'), label: 'okul_adi', value: profile.school_name },
+    ], { surface: 'register_profile' });
+    if (!result.ok) {
+      showMessage('err', result.message);
+      return false;
+    }
+    return true;
+  }
+
   async function loadLocations() {
     const response = await fetch('/data/turkey-cities.json', { cache: 'force-cache' });
     if (!response.ok) {
@@ -484,6 +522,9 @@
       showMessage('err', 'Şifre ve şifre tekrarı aynı olmalı.');
       return;
     }
+    if (!validateSafeText(profile)) {
+      return;
+    }
 
     setBusy(true);
     try {
@@ -559,10 +600,8 @@
         '<br><button type="button" id="resendConfirmBtn">Doğrulama mailini tekrar gönder</button>');
     } catch (error) {
       const raw = String(error && error.message ? error.message : error);
-      let friendly = raw;
-      if (raw.includes('Signups not allowed')) {
-        friendly = 'Supabase yeni kullanıcı kaydına izin vermiyor. Authentication > Sign In / Providers ekranında "Allow new users to sign up" ayarını açıp Save changes yapmalısın.';
-      } else if (raw.includes('teacher-verifications') || raw.includes('Bucket not found') || raw.includes('storage')) {
+      let friendly = friendlyAuthError(error);
+      if (raw.includes('teacher-verifications') || raw.includes('Bucket not found') || raw.includes('storage')) {
         friendly = 'Öğretmen belge alanı henüz Supabase içinde hazır değil. supabase-ogretmen-paneli.sql dosyasını tekrar çalıştırmalıyız.';
       } else if (raw.includes('user_profiles') || raw.includes('schools')) {
         friendly = 'Kayıt tabloları henüz hazır değil. supabase-kullanici-profilleri.sql dosyasını Supabase SQL Editor içinde çalıştırmalıyız.';
@@ -594,7 +633,7 @@
       state.lastSignupEmail = email;
       showMessage('ok', 'Doğrulama maili tekrar gönderildi. Gelen kutusu, spam ve promosyonlar klasörlerini kontrol et.');
     } catch (error) {
-      showMessage('err', String(error && error.message ? error.message : error));
+      showMessage('err', friendlyAuthError(error));
     }
   }
 
@@ -608,7 +647,7 @@
       });
       if (result.error) throw result.error;
     } catch (error) {
-      showMessage('err', String(error && error.message ? error.message : error));
+      showMessage('err', friendlyAuthError(error));
     }
   }
 

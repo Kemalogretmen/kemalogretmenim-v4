@@ -451,6 +451,24 @@
     outline: none;
   }
 
+  .week-date-focus {
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    outline: none;
+    min-width: 148px;
+  }
+
+  .week-date-note {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
   /* ===== HAFTALIK PLAN TABLOSU ===== */
   .plan-table {
     width: 100%;
@@ -872,6 +890,9 @@
         <select id="week-jump" onchange="jumpToWeek()" style="min-width:130px; padding:8px 10px; border:1.5px solid var(--border); border-radius:8px; font-family:Nunito; font-size:0.84rem">
           <option value="">-- Haftaya git --</option>
         </select>
+        <input id="week-date-focus" class="week-date-focus" type="date" onchange="focusWeekFromDateInput()" title="Bu tarihin haftasına git">
+        <button class="btn btn-secondary btn-sm" onclick="focusCurrentDateWeek()">Bugünün Haftası</button>
+        <span class="week-date-note" id="week-date-note"></span>
       </div>
       <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Yazdır / PDF</button>
       <button class="btn btn-primary btn-sm" onclick="downloadWeeklyPlanPdf()">PDF İndir</button>
@@ -998,6 +1019,7 @@ let state = {
   dersOgretmenleri: {},
   etutler: [],
   currentWeek: 1,
+  lastFocusDate: '',
   totalWeeks: 36
 };
 
@@ -1070,6 +1092,7 @@ function ensureStateDefaults() {
   });
   state.dersOgretmenleri = state.dersOgretmenleri || {};
   state.etutler = Array.isArray(state.etutler) ? state.etutler.filter(e => e && cleanCellText(e.name)) : [];
+  state.lastFocusDate = isDateKey(state.lastFocusDate) ? state.lastFocusDate : '';
   Object.keys(state.programs || {}).forEach(id => ensureProgramShape(state.programs[id]));
 }
 
@@ -1122,6 +1145,7 @@ function init() {
   }
   renderLegend();
   renderProgramSettings();
+  applyInitialWeekFocus();
   document.getElementById('yukle-ders').addEventListener('change', function() {
     document.getElementById('diger-ders-group').style.display = this.value === 'DİĞER' ? 'flex' : 'none';
   });
@@ -1159,6 +1183,7 @@ function loadFromStorage() {
           dersOgretmenleri: parsed.dersOgretmenleri || {},
           etutler: parsed.etutler || [],
           currentWeek: parsed.currentWeek || 1,
+          lastFocusDate: parsed.lastFocusDate || '',
           totalWeeks: parsed.totalWeeks || 36,
           yillikPlanlar: {},
           filesMeta: {},
@@ -1174,9 +1199,18 @@ function saveToStorage() {
   try {
     state.version = DATA_VERSION;
     localStorage.setItem('ogretmen_plan_v2', JSON.stringify(state));
+    notifyParentDataChanged();
   } catch(e) {
     alert('Tarayıcı hafızası dolu olabilir. Bazı veriler kaydedilemedi.');
   }
+}
+
+function notifyParentDataChanged() {
+  if (!window.parent || window.parent === window) return;
+  window.parent.postMessage({
+    type: 'kemal-lesson-planner-data-changed',
+    updatedAt: new Date().toISOString()
+  }, '*');
 }
 
 // ============================================================
@@ -1662,6 +1696,8 @@ function jumpToWeek() {
   const val = document.getElementById('week-jump').value;
   if (val) {
     state.currentWeek = parseInt(val);
+    rememberCurrentWeekFocus();
+    saveToStorage();
     renderWeeklyPlan();
   }
 }
@@ -1669,7 +1705,76 @@ function jumpToWeek() {
 function changeWeek(dir) {
   state.currentWeek = Math.max(1, Math.min(state.totalWeeks, state.currentWeek + dir));
   document.getElementById('week-jump').value = state.currentWeek;
+  rememberCurrentWeekFocus();
+  saveToStorage();
   renderWeeklyPlan();
+}
+
+function applyInitialWeekFocus() {
+  const queryDate = new URLSearchParams(window.location.search).get('focusDate');
+  const focusDate = isDateKey(queryDate) ? queryDate : (isDateKey(state.lastFocusDate) ? state.lastFocusDate : toDateKey(new Date()));
+  focusWeekByDate(focusDate, { silent: true });
+}
+
+function focusWeekFromDateInput() {
+  const value = document.getElementById('week-date-focus')?.value;
+  focusWeekByDate(value);
+}
+
+function focusCurrentDateWeek() {
+  focusWeekByDate(toDateKey(new Date()));
+}
+
+function focusWeekByDate(value, options = {}) {
+  if (!isDateKey(value)) return;
+  const date = parseLocalDateInput(value);
+  const week = findWeekByDate(date);
+  state.currentWeek = Math.max(1, Math.min(state.totalWeeks, week || state.currentWeek || 1));
+  state.lastFocusDate = toDateKey(date);
+  const input = document.getElementById('week-date-focus');
+  if (input) input.value = state.lastFocusDate;
+  saveToStorage();
+  renderWeeklyPlan();
+  if (!options.silent) announceWeekFocus();
+}
+
+function findWeekByDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const targetKey = toDateKey(date);
+  for (let w = 1; w <= state.totalWeeks; w++) {
+    const dates = getWeekDates(w);
+    if (!dates || !dates.length) continue;
+    const weekStart = dates[0];
+    const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6);
+    if (targetKey >= toDateKey(weekStart) && targetKey <= toDateKey(weekEnd)) return w;
+  }
+  const start = getFallbackSchoolStartDate();
+  const diffDays = Math.floor((date.getTime() - start.getTime()) / 86400000);
+  return Math.max(1, Math.min(state.totalWeeks, Math.floor(diffDays / 7) + 1));
+}
+
+function rememberCurrentWeekFocus() {
+  const dates = getWeekDates(state.currentWeek);
+  if (dates && dates.length) state.lastFocusDate = toDateKey(dates[0]);
+}
+
+function updateWeekFocusControls(dates, week) {
+  const input = document.getElementById('week-date-focus');
+  const note = document.getElementById('week-date-note');
+  const label = document.getElementById('week-label');
+  const jump = document.getElementById('week-jump');
+  const first = dates && dates.length ? dates[0] : null;
+  const last = dates && dates.length ? dates[dates.length - 1] : null;
+  const focusDate = isDateKey(state.lastFocusDate) ? state.lastFocusDate : (first ? toDateKey(first) : toDateKey(new Date()));
+  if (input) input.value = focusDate;
+  if (label) label.textContent = `${week}. Hafta`;
+  if (jump) jump.value = week;
+  if (note && first && last) note.textContent = `${week}. hafta · ${formatDate(first)} - ${formatDate(last)}`;
+}
+
+function announceWeekFocus() {
+  const note = document.getElementById('week-date-note');
+  if (note) note.textContent = `${state.currentWeek}. hafta hatırlandı.`;
 }
 
 function getWeekDates(weekNum) {
@@ -1721,6 +1826,10 @@ function parseLocalDateInput(value) {
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
+function isDateKey(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) && !Number.isNaN(parseLocalDateInput(value).getTime());
+}
+
 function isHolidayDate(date) {
   const dayKey = toDateKey(date);
   for (const t of state.tatiller) {
@@ -1732,10 +1841,14 @@ function isHolidayDate(date) {
 }
 
 function renderWeeklyPlan() {
+  const w = state.currentWeek;
+  const dates = getWeekDates(w);
+  updateWeekFocusControls(dates, w);
   const sinifId = document.getElementById('plan-sinif-select').value;
   if (!sinifId) {
     document.getElementById('weekly-plan-container').innerHTML =
       '<div style="text-align:center;color:var(--muted);padding:40px">Lütfen sınıf seçin.</div>';
+    notifyParentWeekFocus(dates, w);
     return;
   }
 
@@ -1744,12 +1857,11 @@ function renderWeeklyPlan() {
   if (!prog) {
     document.getElementById('weekly-plan-container').innerHTML =
       '<div style="text-align:center;color:var(--muted);padding:40px">Bu sınıf için program ayarlanmamış. Ders Programı Ayarla sekmesinden oluşturun.</div>';
+    notifyParentWeekFocus(dates, w);
     return;
   }
   ensureProgramShape(prog);
 
-  const w = state.currentWeek;
-  const dates = getWeekDates(w);
   const activeDays = getActiveDayDefs();
   const lessonCount = getLessonCount();
   const weeklyCard = document.getElementById('weekly-plan-card');
@@ -1873,6 +1985,20 @@ function renderWeeklyPlan() {
   html += '</tbody></table></div>';
   container.innerHTML = html;
   setupDelayedSurecPopups(container);
+  notifyParentWeekFocus(dates, w);
+}
+
+function notifyParentWeekFocus(dates, week) {
+  if (!window.parent || window.parent === window) return;
+  const first = dates && dates.length ? dates[0] : null;
+  const last = dates && dates.length ? dates[dates.length - 1] : null;
+  const focusDate = isDateKey(state.lastFocusDate) ? state.lastFocusDate : (first ? toDateKey(first) : '');
+  window.parent.postMessage({
+    type: 'kemal-lesson-planner-week-changed',
+    week,
+    focusDate,
+    range: first && last ? `${formatDate(first)} - ${formatDate(last)}` : ''
+  }, '*');
 }
 
 function splitSurecComponents(text) {
@@ -2705,14 +2831,23 @@ function renderTatilList() {
 // ============================================================
 // TABS
 // ============================================================
-function showTab(tabId) {
+function showTab(tabId, trigger) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
-  event.target.classList.add('active');
+  const eventTarget = typeof event !== 'undefined' ? event.target : null;
+  const button = trigger || (eventTarget && eventTarget.classList ? eventTarget : null) || document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
+  if (button?.classList) button.classList.add('active');
 
   if (tabId === 'tab-plan') renderWeeklyPlan();
 }
+
+window.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type !== 'kemal-ajanda-focus-week' || !isDateKey(data.date)) return;
+  showTab('tab-plan');
+  focusWeekByDate(data.date, { silent: true });
+});
 
 // ============================================================
 // LEGEND

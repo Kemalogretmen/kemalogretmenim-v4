@@ -120,10 +120,14 @@ Bu kadar! Navbar ve footer otomatik eklenir.
 1. https://formspree.io adresine üye ol (ücretsiz)
 2. Yeni bir form oluştur, form ID'ni al (örn: `xpzvwqkb`)
 3. `iletisim.html` dosyasında şu satırı güncelle:
-```html
-<form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+```js
+const CONTACT_FORM_ENDPOINT = '';
 ```
-`YOUR_FORM_ID` yerine kendi ID'ni yaz.
+Formspree endpoint'ini ekle:
+```js
+const CONTACT_FORM_ENDPOINT = 'https://formspree.io/f/xpzvwqkb';
+```
+Endpoint boş kalırsa form mesajı kaybetmez; kullanıcının mail uygulamasını hazır mesajla açar.
 
 ---
 

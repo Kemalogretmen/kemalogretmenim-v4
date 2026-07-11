@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { assertContentFields } from '@/lib/contentSafety';
 import type {
   Assignment,
   AssignmentProgress,
@@ -283,6 +284,10 @@ export async function sendMessage(input: {
   relatedStudentProfileId?: string | null;
   classId?: string | null;
 }) {
+  assertContentFields([
+    { label: 'mesaj_konusu', value: input.subject },
+    { label: 'mesaj_metni', value: input.body },
+  ]);
   const { data, error } = await supabase
     .from('panel_messages')
     .insert({
