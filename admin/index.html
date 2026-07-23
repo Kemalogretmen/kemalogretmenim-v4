@@ -198,6 +198,111 @@
     }
     .topbar .site-link:hover { transform:translateY(-1px); }
 
+    .ops-strip{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .ops-card{
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(180deg,#FFFFFF 0%,#FBFDFF 100%);
+      border:1px solid #E2E8F0;
+      border-radius:20px;
+      padding:18px;
+      box-shadow:0 16px 34px rgba(15,23,42,.055);
+    }
+    .ops-card::after{
+      content:'';
+      position:absolute;
+      right:-56px;
+      top:-70px;
+      width:150px;
+      height:150px;
+      border-radius:50%;
+      background:linear-gradient(135deg,rgba(85,183,238,.10),rgba(108,61,237,.06));
+      pointer-events:none;
+    }
+    .ops-card > *{position:relative;z-index:1}
+    .ops-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      background:#EEF6FF;
+      border:1px solid #D7EAFE;
+      color:#2563EB;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+    .ops-card h3{
+      font-family:'Fredoka','Nunito',sans-serif;
+      font-size:19px;
+      font-weight:700;
+      color:#0F172A;
+      margin-top:12px;
+      line-height:1.15;
+    }
+    .ops-card p{
+      font-size:13px;
+      line-height:1.65;
+      color:#64748B;
+      margin-top:8px;
+    }
+    .ops-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .ops-link{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:7px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1.5px solid #DCE6F3;
+      background:#fff;
+      color:#1E293B;
+      text-decoration:none;
+      font-family:'Nunito',sans-serif;
+      font-size:12px;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .18s,box-shadow .18s,border-color .18s,color .18s;
+      box-shadow:0 10px 18px rgba(15,23,42,.05);
+    }
+    .ops-link:hover{
+      transform:translateY(-1px);
+      border-color:var(--purple);
+      color:var(--purple);
+      box-shadow:0 14px 24px rgba(108,61,237,.12);
+    }
+    .ops-checks{
+      display:grid;
+      gap:10px;
+      margin-top:14px;
+    }
+    .ops-check{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:#F8FBFF;
+      border:1px solid #E2E8F0;
+      color:#475569;
+      font-size:12px;
+      font-weight:800;
+      line-height:1.55;
+    }
+    .ops-check strong{color:#0F172A}
+
     /* Stats row */
     .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:18px; }
     .stat-card {
@@ -221,13 +326,30 @@
     @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
     .card {
-      background:white; border-radius:16px; padding:24px;
-      border:1px solid #E2E8F0; margin-bottom:18px;
-      box-shadow:0 12px 28px rgba(15,23,42,.035);
+      position:relative;
+      overflow:hidden;
+      background:linear-gradient(180deg,#FFFFFF 0%,#FBFDFF 100%);
+      border-radius:22px;
+      padding:24px;
+      border:1px solid #E2E8F0;
+      margin-bottom:18px;
+      box-shadow:0 18px 38px rgba(15,23,42,.055);
     }
+    .card::after{
+      content:'';
+      position:absolute;
+      right:-68px;
+      top:-82px;
+      width:190px;
+      height:190px;
+      border-radius:50%;
+      background:linear-gradient(135deg,rgba(77,180,233,.08),rgba(108,61,237,.04));
+      pointer-events:none;
+    }
+    .card > *{position:relative;z-index:1}
     .card-title {
       font-family:'Fredoka','Nunito',sans-serif; font-size:20px; font-weight:700;
-      color:var(--purple); margin-bottom:20px;
+      color:#1E1B4B; margin-bottom:20px;
       display:flex; align-items:center; gap:8px;
     }
     .card-title .badge {
@@ -261,38 +383,46 @@
       border:none; border-radius:50px; cursor:pointer;
       font-family:'Nunito',sans-serif; font-weight:800; font-size:14px;
       transition:all .2s;
+      min-height:46px;
+      box-shadow:0 12px 24px rgba(108,61,237,.18);
     }
-    .btn-add:hover { background:var(--purple-dark); transform:translateY(-1px); }
+    .btn-add:hover { background:var(--purple-dark); transform:translateY(-1px); box-shadow:0 16px 28px rgba(108,61,237,.24); }
     .btn-save {
       display:flex; align-items:center; gap:6px;
       padding:11px 22px; background:var(--success); color:white;
       border:none; border-radius:50px; cursor:pointer;
       font-family:'Nunito',sans-serif; font-weight:800; font-size:14px;
       transition:all .2s;
+      min-height:46px;
+      box-shadow:0 12px 24px rgba(16,185,129,.18);
     }
-    .btn-save:hover { opacity:.9; transform:translateY(-1px); }
+    .btn-save:hover { opacity:.94; transform:translateY(-1px); box-shadow:0 16px 28px rgba(16,185,129,.24); }
     .btn-danger {
       padding:6px 14px; background:var(--danger); color:white;
       border:none; border-radius:8px; cursor:pointer;
       font-family:'Nunito',sans-serif; font-weight:700; font-size:12px;
-      transition:opacity .2s;
+      transition:all .2s;
+      box-shadow:0 8px 18px rgba(239,68,68,.16);
     }
-    .btn-danger:hover { opacity:.8; }
+    .btn-danger:hover { opacity:.92; transform:translateY(-1px); box-shadow:0 12px 22px rgba(239,68,68,.22); }
     .btn-toggle {
       padding:5px 12px; border:2px solid var(--border);
       border-radius:8px; cursor:pointer; font-family:'Nunito',sans-serif;
       font-weight:700; font-size:12px; background:white;
       transition:all .2s;
+      min-height:42px;
     }
-    .btn-toggle.on  { background:#DCFCE7; color:#15803D; border-color:#86EFAC; }
-    .btn-toggle.off { background:#FEE2E2; color:#DC2626; border-color:#FECACA; }
+    .btn-toggle:hover { transform:translateY(-1px); box-shadow:0 10px 18px rgba(15,23,42,.08); }
+    .btn-toggle.on  { background:#DCFCE7; color:#15803D; border-color:#86EFAC; box-shadow:0 10px 18px rgba(16,185,129,.12); }
+    .btn-toggle.off { background:#FEE2E2; color:#DC2626; border-color:#FECACA; box-shadow:0 10px 18px rgba(239,68,68,.12); }
 
     /* Liste */
-    .item-list { display:flex; flex-direction:column; gap:10px; margin-top:14px; }
+    .item-list { display:flex; flex-direction:column; gap:12px; margin-top:14px; }
     .item-row {
       display:flex; align-items:center; gap:12px;
-      padding:14px 16px; background:#FAFAFF;
-      border:2px solid var(--border); border-radius:12px;
+      padding:16px 18px; background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      border:1px solid #DCE6F3; border-radius:16px;
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .item-em  { font-size:24px; width:36px; text-align:center; flex-shrink:0; }
     .item-info { flex:1; min-width:0; }
@@ -359,10 +489,11 @@
       gap:14px;
     }
     .analytics-card {
-      background:#FAFAFF;
-      border:2px solid var(--border);
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      border:1px solid #DCE6F3;
       border-radius:16px;
       padding:18px;
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .analytics-card-label {
       font-size:12px;
@@ -387,12 +518,140 @@
     }
     .analytics-empty {
       padding:18px;
-      border:2px dashed var(--border);
+      border:1.5px dashed #CBD7E8;
       border-radius:16px;
       color:var(--slate);
-      background:#FAFAFF;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
       font-size:14px;
       line-height:1.7;
+    }
+    .health-toolbar {
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .health-toolbar p {
+      color:var(--slate);
+      font-size:14px;
+      font-weight:700;
+      line-height:1.6;
+      max-width:760px;
+    }
+    .health-summary {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .health-summary-card {
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      border:1px solid #DCE6F3;
+      border-radius:16px;
+      padding:16px;
+      display:grid;
+      gap:6px;
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
+    }
+    .health-summary-card strong {
+      font-family:'Fredoka','Nunito',sans-serif;
+      font-size:30px;
+      color:#0F172A;
+      line-height:1;
+    }
+    .health-summary-card span {
+      font-size:12px;
+      font-weight:900;
+      color:var(--slate);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .health-list {
+      display:grid;
+      gap:12px;
+    }
+    .health-row {
+      display:grid;
+      grid-template-columns:minmax(110px,150px) 1fr auto;
+      gap:14px;
+      align-items:center;
+      padding:14px 16px;
+      border:1px solid #DCE6F3;
+      border-radius:16px;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
+    }
+    .health-area {
+      color:#475569;
+      font-size:13px;
+      font-weight:900;
+    }
+    .health-main {
+      min-width:0;
+    }
+    .health-main strong {
+      display:block;
+      color:#0F172A;
+      font-size:14px;
+      font-weight:900;
+      margin-bottom:4px;
+    }
+    .health-main small {
+      color:var(--slate);
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      line-height:1.5;
+    }
+    .health-pill {
+      min-width:76px;
+      text-align:center;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:12px;
+      font-weight:950;
+      border:1px solid transparent;
+    }
+    .health-pill.ok {
+      color:#047857;
+      background:#ECFDF5;
+      border-color:#A7F3D0;
+    }
+    .health-pill.warn {
+      color:#B45309;
+      background:#FFFBEB;
+      border-color:#FDE68A;
+    }
+    .health-pill.missing {
+      color:#BE123C;
+      background:#FFF1F2;
+      border-color:#FECDD3;
+    }
+    .health-local-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+      gap:12px;
+    }
+    .health-local-card {
+      border:1px solid #DCE6F3;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
+    }
+    .health-local-card strong {
+      display:block;
+      color:#0F172A;
+      font-size:24px;
+      margin-bottom:4px;
+    }
+    .health-local-card span {
+      color:var(--slate);
+      font-size:13px;
+      font-weight:800;
+      line-height:1.5;
     }
     .analytics-list {
       display:grid;
@@ -400,9 +659,10 @@
     }
     .analytics-row {
       padding:14px 16px;
-      border:2px solid var(--border);
+      border:1px solid #DCE6F3;
       border-radius:14px;
-      background:#FAFAFF;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 24px rgba(15,23,42,.045);
     }
     .analytics-row-top {
       display:flex;
@@ -466,9 +726,10 @@
       justify-content:space-between;
       gap:14px;
       padding:14px 16px;
-      border:2px solid var(--border);
+      border:1px solid #DCE6F3;
       border-radius:16px;
-      background:#FAFAFF;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .reaction-row.compact {
       align-items:flex-start;
@@ -538,10 +799,11 @@
       margin-top:18px;
     }
     .access-summary-card {
-      background:#FAFAFF;
-      border:2px solid var(--border);
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      border:1px solid #DCE6F3;
       border-radius:16px;
       padding:18px;
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .access-summary-label {
       font-size:12px;
@@ -588,9 +850,9 @@
     }
     .admin-help-box {
       padding:16px 18px;
-      border:2px dashed var(--border);
+      border:1.5px dashed #CBD7E8;
       border-radius:16px;
-      background:#FAFAFF;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
       color:var(--slate);
       font-size:14px;
       line-height:1.7;
@@ -610,8 +872,9 @@
     .admin-user-row {
       padding:16px 18px;
       border-radius:16px;
-      border:2px solid var(--border);
-      background:#FAFAFF;
+      border:1px solid #DCE6F3;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .admin-user-head {
       display:flex;
@@ -696,8 +959,9 @@
       gap:10px;
       padding:14px 16px;
       border-radius:16px;
-      border:2px solid var(--border);
-      background:#FAFAFF;
+      border:1px solid #DCE6F3;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 24px rgba(15,23,42,.05);
     }
     .activity-summary-card span {
       font-size:22px;
@@ -723,9 +987,10 @@
       justify-content:space-between;
       gap:14px;
       padding:14px 16px;
-      border:2px solid var(--border);
+      border:1px solid #DCE6F3;
       border-radius:16px;
-      background:#FAFAFF;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .activity-main {
       min-width:0;
@@ -822,9 +1087,10 @@
       justify-content:space-between;
       gap:14px;
       padding:14px 16px;
-      border:2px solid var(--border);
+      border:1px solid #DCE6F3;
       border-radius:16px;
-      background:#FAFAFF;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
+      box-shadow:0 12px 26px rgba(15,23,42,.05);
     }
     .registered-user-main {
       min-width:0;
@@ -896,9 +1162,10 @@
       gap:10px;
       padding:12px 14px;
       border-radius:14px;
-      border:2px solid var(--border);
-      background:#FAFAFF;
+      border:1px solid #DCE6F3;
+      background:linear-gradient(180deg,#FFFFFF 0%,#F8FBFF 100%);
       transition:all .2s;
+      box-shadow:0 10px 22px rgba(15,23,42,.04);
     }
     .admin-permission-card:hover {
       border-color:var(--purple);
@@ -949,11 +1216,14 @@
       font-weight:800;
       font-size:14px;
       transition:all .2s;
+      min-height:46px;
+      box-shadow:0 10px 20px rgba(15,23,42,.05);
     }
     .btn-secondary:hover {
       border-color:var(--purple);
       color:var(--purple);
       transform:translateY(-1px);
+      box-shadow:0 14px 24px rgba(108,61,237,.12);
     }
 
     .admin-module-head {
@@ -1064,6 +1334,8 @@
       .admin-grid, .admin-permission-grid, .admin-permission-section-grid, .access-summary-grid, .registered-user-grid { grid-template-columns:1fr; }
       .admin-module-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .activity-row, .reaction-row { align-items:flex-start; flex-direction:column; }
+      .health-row { grid-template-columns:1fr; align-items:flex-start; }
+      .health-pill { width:max-content; }
       .registered-user-row { flex-direction:column; }
       .registered-user-side { align-items:flex-start; text-align:left; }
       .activity-time { text-align:left; }
@@ -1202,6 +1474,9 @@
             <button class="side-btn" onclick="showPanel('kullanicilar')" id="btn-kullanicilar">
               <span class="em">👥</span><span>Kullanıcılar</span>
             </button>
+            <button class="side-btn" onclick="showPanel('saglik')" id="btn-saglik">
+              <span class="em">🩺</span><span>Sistem Sağlığı</span>
+            </button>
             <button class="side-btn" onclick="showPanel('sifre')" id="btn-sifre">
               <span class="em">🔑</span><span>Şifre Değiştir</span>
             </button>
@@ -1305,6 +1580,52 @@
         </div>
       </div>
 
+      <div class="ops-strip">
+        <section class="ops-card">
+          <span class="ops-pill">Günlük Rota</span>
+          <h3>En çok kullanılan yönetim yolları</h3>
+          <p>Duyuru, alt admin ve sistem sağlığı alanları genelde günlük kontrol zincirinin ilk durağı olur.</p>
+          <div class="ops-actions">
+            <button class="ops-link" type="button" onclick="showPanel('duyurular')">📢 Duyurular</button>
+            <button class="ops-link" type="button" onclick="showPanel('adminler')">👥 Alt Adminler</button>
+            <button class="ops-link" type="button" onclick="showPanel('saglik')">🩺 Sistem Sağlığı</button>
+          </div>
+        </section>
+
+        <section class="ops-card">
+          <span class="ops-pill">İçerik Merkezleri</span>
+          <h3>Doğrudan editör ekranlarına geç</h3>
+          <p>Okuma, sınav ve doküman akışları için ayrı panelleri yeni sekmede hızlıca açabilirsin.</p>
+          <div class="ops-actions">
+            <a class="ops-link" href="/admin/okuma-editor.html">📚 Okuma Editörü</a>
+            <a class="ops-link" href="/sinav_sitesi/admin.html">🧪 Sınav Admin</a>
+            <a class="ops-link" href="/admin/dokuman-yonetimi.html">🗂️ Dokümanlar</a>
+          </div>
+        </section>
+
+        <section class="ops-card">
+          <span class="ops-pill">Canlı Kontrol</span>
+          <h3>Öğrenci yüzeyini tek tıkla doğrula</h3>
+          <p>Yayın sonrası görünüm kontrolü için ana siteyi, sınav akışını ve hızlı okuma girişini yeni sekmede aç.</p>
+          <div class="ops-actions">
+            <a class="ops-link" href="/index.html" target="_blank" rel="noopener">🏠 Ana Site</a>
+            <a class="ops-link" href="/sinav_sitesi/index.html" target="_blank" rel="noopener">✏️ Sınav Sayfası</a>
+            <a class="ops-link" href="/hizli-okuma/index.html" target="_blank" rel="noopener">📖 Okuma Sayfası</a>
+          </div>
+        </section>
+
+        <section class="ops-card">
+          <span class="ops-pill">Güvenli Akış</span>
+          <h3>Canlı sistemde küçük kontrol listesi</h3>
+          <p>Özellikle öğrenciler aktifken, görsel değişikliklerden sonra bu kısa akışla yayını teyit etmek güvenli olur.</p>
+          <div class="ops-checks">
+            <div class="ops-check"><span>1.</span><span><strong>Yönetim ekranını</strong> yenileyip ilgili kartın ve menünün göründüğünü kontrol et.</span></div>
+            <div class="ops-check"><span>2.</span><span><strong>Öğrenci sayfasını</strong> ayrı sekmede açıp görünüm ve aksiyon düğmelerini hızlıca gözden geçir.</span></div>
+            <div class="ops-check"><span>3.</span><span><strong>Sonuç veya sağlık paneline</strong> uğrayıp kayıt akışının normal ilerlediğini doğrula.</span></div>
+          </div>
+        </section>
+      </div>
+
       <!-- Stat Kartları -->
       <div class="stats-row" id="statsRow">
         <div class="stat-card">
@@ -1391,6 +1712,11 @@
               <span class="admin-module-icon">👤</span>
               <strong>Kullanıcılar</strong>
               <small>Öğretmen ve öğrenci kayıt listeleri</small>
+            </button>
+            <button class="admin-module-card tone-slate" type="button" onclick="showPanel('saglik')" id="quick-saglik">
+              <span class="admin-module-icon">🩺</span>
+              <strong>Sistem Sağlığı</strong>
+              <small>Kayıt, policy ve storage kontrolleri</small>
             </button>
             <a class="admin-module-card tone-pink" href="/admin/okuma-editor.html" id="quick-okuma-editor">
               <span class="admin-module-icon">📝</span>
@@ -1876,8 +2202,35 @@
           </div>
           <div class="card">
             <div class="card-title">🎒 Öğrenciler <span class="badge" id="registeredStudentCount">0 / 0</span></div>
-            <div class="registered-user-list" id="registeredStudentsList"></div>
+          <div class="registered-user-list" id="registeredStudentsList"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- ══ SİSTEM SAĞLIĞI ══ -->
+      <div class="panel" id="panel-saglik">
+        <div class="card">
+          <div class="health-toolbar">
+            <div>
+              <div class="card-title" style="margin-bottom:8px;">🩺 Kayıt ve Altyapı Sağlığı</div>
+              <p>
+                Hızlı okuma, öğrenci ilerleme, doküman temizliği ve Storage durumunun kritik parçaları burada kontrol edilir.
+                SQL güncellemesinden sonra bu ekranı yenilemek, tek tek sayfa gezerek kontrol etme ihtiyacını azaltır.
+              </p>
+            </div>
+            <button class="btn-add" onclick="loadSystemHealth(true)">🔄 Kontrol Et</button>
+          </div>
+          <div id="systemHealthStatus" class="admin-help-box" style="display:none;"></div>
+          <div class="health-summary" id="systemHealthSummary"></div>
+          <div class="health-list" id="systemHealthList"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📍 Bu Tarayıcıdaki Bekleyen Kayıtlar</div>
+          <div class="admin-help-box">
+            Bu alan yalnızca şu an kullandığın tarayıcıdaki yerel bekleme kuyruklarını gösterir. Öğrencilerin cihazındaki kuyruklar onların cihazında tutulur ve sayfa yeniden açıldığında otomatik tekrar denenir.
+          </div>
+          <div class="health-local-grid" id="localQueueHealth"></div>
         </div>
       </div>
 
@@ -1902,9 +2255,10 @@
   <div class="toast" id="toast"></div>
 
 <script src="/js/site-data.js"></script>
-<script src="/js/admin-auth.js?v=20260531-1"></script>
+<script src="/js/admin-auth.js?v=20260721-health-1"></script>
 <script src="/js/admin-shell.js?v=20260526-2"></script>
 <script src="/js/content-reactions.js"></script>
-<script src="/js/admin-dashboard.js?v=20260520-1"></script>
+<script src="/js/admin-system-health.js?v=20260721-modular-1"></script>
+<script src="/js/admin-dashboard.js?v=20260721-modular-1"></script>
 </body>
 </html>

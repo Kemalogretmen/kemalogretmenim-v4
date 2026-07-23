@@ -6,6 +6,14 @@
   const GRADES = [1, 2, 3, 4, 5, 6, 7, 8];
   const MAX_DOCUMENT_SIZE_BYTES = 50 * 1024 * 1024;
   const MAX_SHOWCASE_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+  const MIN_OPTIMIZED_SAVINGS_RATIO = 0.95;
+  const DOCUMENT_IMAGE_WEBP_QUALITY = 0.94;
+  const SHOWCASE_IMAGE_WEBP_QUALITY = 0.9;
+  const DOCUMENT_IMAGE_MAX_LONG_EDGE = 3600;
+  const SHOWCASE_IMAGE_MAX_LONG_EDGE = 1800;
+  const PDF_OPTIMIZE_MIN_BYTES = 4 * 1024 * 1024;
+  const PDF_RENDER_LONG_EDGE = 2200;
+  const PDF_JPEG_QUALITY = 0.88;
   const ALLOWED_FILE_TYPES = {
     pdf: { mime: 'application/pdf', extensions: ['pdf'], label: 'PDF' },
     jpeg: { mime: 'image/jpeg', extensions: ['jpg', 'jpeg'], label: 'JPEG' },
@@ -231,6 +239,49 @@
       toast(removedCount + ' kullanılmayan Supabase dosyası silindi.', 'success');
     } catch (error) {
       toast('Depo temizliği yapılamadı: ' + humanizeSupabaseError(error), 'error');
+    }
+  }
+
+  async function cleanupMissingDocumentStorageRecords() {
+    if (!requirePermission('dokuman_silme', 'Kırık kayıt temizliği')) {
+      return;
+    }
+
+    try {
+      const listResponse = await getClient().rpc('list_missing_dokuman_storage');
+      if (listResponse.error) {
+        throw listResponse.error;
+      }
+
+      const rows = Array.isArray(listResponse.data) ? listResponse.data : [];
+      if (!rows.length) {
+        toast('Storage dosyası eksik olan doküman kaydı bulunmadı.', 'success');
+        return;
+      }
+
+      const preview = rows.slice(0, 8).map(function(row) {
+        return (row.baslik || row.dosya_adi || row.id) + '\n  ' + (row.dosya_yolu || '');
+      }).join('\n');
+      const extra = rows.length > 8 ? '\n… +' + (rows.length - 8) + ' kayıt daha' : '';
+      const ok = window.confirm(
+        rows.length + ' doküman kaydının Storage dosyası eksik görünüyor.\n\n' +
+        preview + extra +
+        '\n\nBu kayıtlar siteden kaldırılacak ve bağlı ilerleme/tepki/çalışma kağıdı izleri temizlenecek. Devam edilsin mi?'
+      );
+      if (!ok) {
+        return;
+      }
+
+      const cleanupResponse = await getClient().rpc('cleanup_missing_dokuman_storage_records');
+      if (cleanupResponse.error) {
+        throw cleanupResponse.error;
+      }
+
+      const deletedCount = cleanupResponse.data && Number(cleanupResponse.data.deletedRecords || 0);
+      toast((deletedCount || rows.length) + ' kırık doküman kaydı temizlendi.', 'success');
+      await loadDocuments();
+    } catch (error) {
+      toast('Kırık kayıt temizliği yapılamadı: ' + humanizeSupabaseError(error), 'error');
     }
   }
 
@@ -597,7 +648,7 @@
         ? 'Video kayıtları dosya yüklemez; YouTube linki veya iframe adresi kaydedilir. Video, ders sayfasında ayrı “Ders Videoları” bölümünde görünür.'
         : (isExternalSource()
           ? 'Harici kaynakta dosya Supabase kotasını kullanmaz. R2 ve CORS açık doğrudan linkler mevcut doküman araçlarıyla çalışır; Drive için dosya linki gerekir.'
-          : 'PDF, JPEG, PNG ve WebP dosyaları kalite düşürülmeden saklanır. Veritabanını ve ücretsiz kullanımı yormamak için üst sınır 50 MB.');
+          : 'PDF ve görseller yüklemeden önce otomatik optimize edilir; sonuç gerçekten küçülmezse orijinal dosya korunur. Üst sınır 50 MB.');
     }
     if (saveHint) {
       saveHint.textContent = video
@@ -1052,6 +1103,175 @@
     return kind === 'jpeg' || kind === 'png' || kind === 'webp';
   }
 
+  function replaceFileExtension(fileName, extension) {
+    const cleanExtension = String(extension || '').replace(/^\./, '') || 'bin';
+    const base = String(fileName || 'dosya').replace(/\.[a-z0-9]+$/i, '') || 'dosya';
+    return base + '.' + cleanExtension;
+  }
+
+  function buildOptimizedFile(blob, originalFile, extension, mimeType) {
+    return new File(
+      [blob],
+      replaceFileExtension(originalFile && originalFile.name, extension),
+      {
+        type: mimeType,
+        lastModified: originalFile && originalFile.lastModified ? originalFile.lastModified : Date.now(),
+      }
+    );
+  }
+
+  function canvasToBlob(canvas, mimeType, quality) {
+    return new Promise(function(resolve, reject) {
+      canvas.toBlob(function(blob) {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Görsel çıktısı oluşturulamadı.'));
+        }
+      }, mimeType, quality);
+    });
+  }
+
+  async function loadImageElement(file) {
+    return new Promise(function(resolve, reject) {
+      const image = new Image();
+      const url = URL.createObjectURL(file);
+      image.onload = function() {
+        URL.revokeObjectURL(url);
+        resolve(image);
+      };
+      image.onerror = function() {
+        URL.revokeObjectURL(url);
+        reject(new Error('Görsel okunamadı.'));
+      };
+      image.src = url;
+    });
+  }
+
+  async function optimizeImageFile(file, options) {
+    const settings = Object.assign({
+      quality: DOCUMENT_IMAGE_WEBP_QUALITY,
+      maxLongEdge: DOCUMENT_IMAGE_MAX_LONG_EDGE,
+      forceWebp: true,
+    }, options || {});
+    const kind = getDocumentFileKind(file);
+    if (!['jpeg', 'png', 'webp'].includes(kind)) {
+      return { file: file, optimized: false, note: '' };
+    }
+    if (kind === 'webp' && file.size <= 1024 * 1024) {
+      return { file: file, optimized: false, note: '' };
+    }
+
+    try {
+      const image = await loadImageElement(file);
+      const sourceWidth = image.naturalWidth || image.width || 0;
+      const sourceHeight = image.naturalHeight || image.height || 0;
+      if (!sourceWidth || !sourceHeight) {
+        return { file: file, optimized: false, note: '' };
+      }
+      const longEdge = Math.max(sourceWidth, sourceHeight);
+      const scale = settings.maxLongEdge && longEdge > settings.maxLongEdge
+        ? settings.maxLongEdge / longEdge
+        : 1;
+      const width = Math.max(1, Math.round(sourceWidth * scale));
+      const height = Math.max(1, Math.round(sourceHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d', { alpha: true });
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(image, 0, 0, width, height);
+
+      const outputType = settings.forceWebp ? 'image/webp' : file.type || 'image/webp';
+      const outputExtension = outputType === 'image/webp' ? 'webp' : getFileExtension(file.name);
+      const blob = await canvasToBlob(canvas, outputType, settings.quality);
+      canvas.width = 1;
+      canvas.height = 1;
+      if (blob.size >= file.size * MIN_OPTIMIZED_SAVINGS_RATIO) {
+        return { file: file, optimized: false, note: '' };
+      }
+
+      const optimizedFile = buildOptimizedFile(blob, file, outputExtension, outputType);
+      const resizedText = scale < 1 ? ' · ' + sourceWidth + '×' + sourceHeight + ' px → ' + width + '×' + height + ' px' : '';
+      return {
+        file: optimizedFile,
+        optimized: true,
+        note: 'Görsel WebP olarak optimize edildi: ' + formatBytes(file.size) + ' → ' + formatBytes(optimizedFile.size) + resizedText,
+      };
+    } catch (error) {
+      console.warn('Görsel optimizasyonu atlandı:', error);
+      return { file: file, optimized: false, note: '' };
+    }
+  }
+
+  async function optimizePdfFile(file) {
+    if (file.size < PDF_OPTIMIZE_MIN_BYTES || !window.PDFLib) {
+      return { file: file, optimized: false, note: '' };
+    }
+    try {
+      ensurePdfWorker();
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const outputPdf = await window.PDFLib.PDFDocument.create();
+
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+        const page = await pdf.getPage(pageNumber);
+        const baseViewport = page.getViewport({ scale: 1 });
+        const longEdge = Math.max(baseViewport.width, baseViewport.height);
+        const scale = Math.min(2.6, Math.max(1.4, PDF_RENDER_LONG_EDGE / longEdge));
+        const viewport = page.getViewport({ scale: scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
+        const context = canvas.getContext('2d', { alpha: false });
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+        const blob = await canvasToBlob(canvas, 'image/jpeg', PDF_JPEG_QUALITY);
+        const imageBytes = await blob.arrayBuffer();
+        const embeddedImage = await outputPdf.embedJpg(imageBytes);
+        const outputPage = outputPdf.addPage([baseViewport.width, baseViewport.height]);
+        outputPage.drawImage(embeddedImage, {
+          x: 0,
+          y: 0,
+          width: baseViewport.width,
+          height: baseViewport.height,
+        });
+        canvas.width = 1;
+        canvas.height = 1;
+      }
+
+      const bytes = await outputPdf.save({ useObjectStreams: true });
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      if (blob.size >= file.size * MIN_OPTIMIZED_SAVINGS_RATIO) {
+        return { file: file, optimized: false, note: '' };
+      }
+
+      const optimizedFile = buildOptimizedFile(blob, file, 'pdf', 'application/pdf');
+      return {
+        file: optimizedFile,
+        optimized: true,
+        note: 'PDF optimize edildi: ' + formatBytes(file.size) + ' → ' + formatBytes(optimizedFile.size) + '. Not: büyük PDF sayfaları görüntü tabanlı yeniden paketlenir.',
+      };
+    } catch (error) {
+      console.warn('PDF optimizasyonu atlandı:', error);
+      return { file: file, optimized: false, note: '' };
+    }
+  }
+
+  async function prepareDocumentFileForUpload(file) {
+    const kind = getDocumentFileKind(file);
+    const result = ['jpeg', 'png', 'webp'].includes(kind)
+      ? await optimizeImageFile(file)
+      : (kind === 'pdf' ? await optimizePdfFile(file) : { file: file, optimized: false, note: '' });
+    const meta = await extractDocumentMeta(result.file);
+    return Object.assign({ meta: meta }, result);
+  }
+
   async function extractImageMeta(file) {
     validateDocumentFile(file);
     return new Promise(function(resolve, reject) {
@@ -1120,7 +1340,7 @@
       const meta = await extractDocumentMeta(file);
       state.currentPdfMeta = meta;
       const imageInfo = meta.width && meta.height ? ' · ' + meta.width + '×' + meta.height + ' px' : '';
-      setFileInfo(file.name + ' · ' + formatBytes(file.size) + ' · ' + meta.pageCount + ' sayfa' + imageInfo);
+      setFileInfo(file.name + ' · ' + formatBytes(file.size) + ' · ' + meta.pageCount + ' sayfa' + imageInfo + ' · Yüklemede otomatik optimizasyon denenir.');
       updateSummary();
     } catch (error) {
       setFileInfo(file.name + ' seçildi fakat dosya okunamadı.');
@@ -1140,6 +1360,7 @@
   }
 
   async function uploadDocumentFile(documentId, file, grade, subject, title) {
+    validateDocumentFile(file);
     const path = buildStoragePath(documentId, title, grade, subject, file.name);
     const kind = getDocumentFileKind(file);
     const contentType = (ALLOWED_FILE_TYPES[kind] && ALLOWED_FILE_TYPES[kind].mime) || file.type || 'application/octet-stream';
@@ -1421,10 +1642,16 @@
 
   async function uploadShowcaseImage(slideId, file, title) {
     validateShowcaseImage(file);
-    const path = buildShowcaseImagePath(slideId, title, file.name);
-    const kind = getDocumentFileKind(file);
-    const contentType = (ALLOWED_FILE_TYPES[kind] && ALLOWED_FILE_TYPES[kind].mime) || file.type || 'image/jpeg';
-    const response = await getClient().storage.from(BUCKET_NAME).upload(path, file, {
+    const optimized = await optimizeImageFile(file, {
+      quality: SHOWCASE_IMAGE_WEBP_QUALITY,
+      maxLongEdge: SHOWCASE_IMAGE_MAX_LONG_EDGE,
+      forceWebp: true,
+    });
+    const uploadFile = optimized.file;
+    const path = buildShowcaseImagePath(slideId, title, uploadFile.name);
+    const kind = getDocumentFileKind(uploadFile);
+    const contentType = (ALLOWED_FILE_TYPES[kind] && ALLOWED_FILE_TYPES[kind].mime) || uploadFile.type || 'image/webp';
+    const response = await getClient().storage.from(BUCKET_NAME).upload(path, uploadFile, {
       cacheControl: '3600',
       upsert: true,
       contentType: contentType,
@@ -1947,11 +2174,17 @@
         externalUrl = data.externalDocument.originalUrl || filePath;
         externalEmbedUrl = data.externalDocument.embedUrl || filePath;
       } else if (data.file) {
-        const meta = state.currentPdfMeta || await extractDocumentMeta(data.file);
-        filePath = await uploadDocumentFile(documentId, data.file, data.grade, data.subject, data.title);
+        document.getElementById('editStatus').textContent = 'Dosya optimize ediliyor ve yüklemeye hazırlanıyor…';
+        const prepared = await prepareDocumentFileForUpload(data.file);
+        const uploadFile = prepared.file;
+        const meta = prepared.meta;
+        if (prepared.note) {
+          document.getElementById('editStatus').textContent = prepared.note + ' Yükleniyor…';
+        }
+        filePath = await uploadDocumentFile(documentId, uploadFile, data.grade, data.subject, data.title);
         uploadedPathForRollback = filePath;
-        fileName = data.file.name;
-        fileSize = data.file.size || 0;
+        fileName = uploadFile.name;
+        fileSize = uploadFile.size || 0;
         pageCount = meta.pageCount || 0;
         externalProvider = null;
         externalUrl = null;
@@ -2483,6 +2716,7 @@
   window.uygulaFiltre = applyFilters;
   window.filtreTemizle = clearFilters;
   window.depoTemizle = cleanupOrphanDocumentStorage;
+  window.kirikKayitTemizle = cleanupMissingDocumentStorageRecords;
   window.hedefEkle = addTargetFromControls;
   window.hedefSil = removeTarget;
   window.dokumanDuzenle = function(id) {

@@ -153,7 +153,7 @@ service cloud.firestore {
         'subject','examTitle','examId',
         'correct','wrong','blank','netCorrect','score','score100','examScore','scoreScale','total',
         'negativeMarking','elapsed','date','answerDetails',
-        'studentKey','questionSections'
+        'studentKey','clientAttemptId','questionSections'
       ]);
     }
 
@@ -245,6 +245,13 @@ service cloud.firestore {
           || (
             request.resource.data.studentKey is string
             && request.resource.data.studentKey.size() <= 160
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['clientAttemptId']) == false
+          || (
+            request.resource.data.clientAttemptId is string
+            && request.resource.data.clientAttemptId.size() <= 160
           )
         )
         && (

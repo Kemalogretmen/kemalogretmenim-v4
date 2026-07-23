@@ -15,7 +15,7 @@
       --shadow:0 18px 44px rgba(19,36,61,.08);--fd:'Nunito',sans-serif;--fb:'Outfit',sans-serif;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:var(--fb);background:linear-gradient(180deg,#eef2ff 0%,#f7f8ff 38%,#f6f5fb 100%);color:var(--navy);min-height:100vh}
+    body{font-family:var(--fb);background:linear-gradient(180deg,#eef3ff 0%,#f9fbff 42%,#f5f7fb 100%);color:var(--navy);min-height:100vh}
     .loading-state,.error-state{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
     .state-card{max-width:480px;width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:28px;padding:36px 32px;box-shadow:var(--shadow);text-align:center}
     .state-card strong{display:block;font-family:var(--fd);font-size:26px;font-weight:900;margin-bottom:10px}
@@ -24,7 +24,7 @@
     @keyframes spin{to{transform:rotate(360deg)}}
 
     .app{display:none}
-    .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:18px 24px;background:rgba(247,248,255,.9);backdrop-filter:blur(14px);border-bottom:1px solid rgba(220,228,236,.92)}
+    .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:18px 24px;background:rgba(255,255,255,.88);backdrop-filter:blur(16px);border-bottom:1px solid rgba(217,228,245,.94);box-shadow:0 10px 30px rgba(15,23,42,.05)}
     .topbar-title h1{font-family:var(--fd);font-size:28px;font-weight:900}
     .topbar-title p{font-size:13px;color:var(--slate);margin-top:6px;line-height:1.6}
     .topbar-actions{display:flex;gap:10px;flex-wrap:wrap}
@@ -37,7 +37,7 @@
 
     .screen-only{}
     .page-wrap{max-width:1180px;margin:0 auto;padding:22px 16px 42px}
-    .filter-card{background:var(--card);border:1.5px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+    .filter-card{background:var(--card);border:1px solid #d9e4f5;border-radius:28px;box-shadow:0 20px 42px rgba(15,23,42,.07);padding:22px;margin-bottom:18px}
     .filter-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
     .filter-head h2{font-family:var(--fd);font-size:22px;font-weight:900}
     .filter-head p{font-size:13px;line-height:1.7;color:var(--slate);max-width:720px}
@@ -48,7 +48,7 @@
     .filter-meta{font-size:13px;line-height:1.7;color:var(--slate)}
     .clear-btn{border:none;border-radius:999px;padding:11px 16px;background:#f5f3ff;color:#6d28d9;font-family:var(--fd);font-size:13px;font-weight:800;cursor:pointer}
     .legacy-filter,.legacy-degree{display:none!important}
-    .workflow-card{background:#fff;border:1.5px solid var(--border);border-radius:28px;box-shadow:var(--shadow);padding:22px;margin-bottom:18px}
+    .workflow-card{background:#fff;border:1px solid #d9e4f5;border-radius:28px;box-shadow:0 20px 42px rgba(15,23,42,.07);padding:22px;margin-bottom:18px}
     .workflow-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
     .workflow-head h2{font-family:var(--fd);font-size:24px;font-weight:900}
     .workflow-head p{font-size:13px;line-height:1.7;color:var(--slate);max-width:780px;margin-top:4px}
@@ -78,7 +78,7 @@
     .list-title{font-family:var(--fd);font-size:28px;font-weight:900}
     .list-meta{font-size:13px;color:var(--slate);line-height:1.7;margin-top:5px}
     .list-summary{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
-    .list-summary span{padding:7px 10px;border-radius:999px;background:#f8fbff;border:1px solid #e0e8f4;color:#475569;font-size:12px;font-weight:900}
+    .list-summary span{padding:8px 11px;border-radius:999px;background:#f8fbff;border:1px solid #dbe7f5;color:#334155;font-size:12px;font-weight:900;box-shadow:0 8px 18px rgba(15,23,42,.04)}
     .list-table-wrap{overflow:auto;border:1.5px solid var(--border);border-radius:18px}
     .list-table tbody tr:nth-child(even) td{background:#fbfdff}
     .wrong-list{display:flex;gap:6px;flex-wrap:wrap}
@@ -104,6 +104,18 @@
     .sheet::before,.sheet::after,.sheet-bottom-left,.sheet-bottom-right{display:none}
     .sheet{min-height:auto;border-radius:24px;padding:24px;overflow:visible}
     .report-command{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:14px}
+    .report-command-hud{display:grid;gap:12px;margin-bottom:14px}
+    .report-guide{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 18px;border:1.5px solid #d9e4f5;border-radius:22px;background:linear-gradient(135deg,#f8fbff 0%,#eef2ff 100%);box-shadow:0 10px 22px rgba(15,23,42,.05)}
+    .report-guide-copy{display:grid;gap:6px;min-width:0;max-width:680px}
+    .report-guide-copy strong{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--navy)}
+    .report-guide-copy p{font-size:13px;line-height:1.75;color:var(--slate)}
+    .report-guide-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+    .report-guide-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:#fff;border:1px solid #dbe7f5;color:#334155;font-size:12px;font-weight:900;box-shadow:0 8px 18px rgba(15,23,42,.04)}
+    .report-jump-row{display:flex;gap:8px;flex-wrap:wrap;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none}
+    .report-jump-row::-webkit-scrollbar{display:none}
+    .report-jump-btn{border:none;border-radius:999px;padding:10px 14px;background:#fff;color:#334155;font-family:var(--fd);font-size:12px;font-weight:900;cursor:pointer;border:1px solid #dbe7f5;box-shadow:0 10px 20px rgba(15,23,42,.04);white-space:nowrap;transition:transform .16s,box-shadow .16s,border-color .16s,color .16s}
+    .report-jump-btn:hover{transform:translateY(-1px);border-color:#3457d5;color:#2645be;box-shadow:0 14px 28px rgba(52,87,213,.12)}
+    .report-jump-note{font-size:12px;line-height:1.6;color:var(--slate);padding:0 4px}
     .identity-panel,.summary-panel,.insight-panel{background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 10px 28px rgba(19,36,61,.05)}
     .identity-panel{display:flex;align-items:center;gap:14px}
     .identity-avatar{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,#334155,#1e40af);display:flex;align-items:center;justify-content:center;color:#fff;font-size:23px;flex:0 0 auto}
@@ -112,28 +124,34 @@
     .identity-main p{font-size:13px;color:var(--slate);margin-top:4px}
     .identity-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
     .identity-chip{padding:6px 9px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:800}
-    .summary-panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
-    .summary-kicker{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:900}
-    .summary-title{font-family:var(--fd);font-size:21px;font-weight:900;margin-top:5px}
-    .summary-text{font-size:13px;line-height:1.65;color:var(--slate);margin-top:7px}
+    .summary-panel{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;background:linear-gradient(135deg,#2940be 0%,#5068ee 100%);border:none;box-shadow:0 18px 36px rgba(59,91,219,.18)}
+    .summary-kicker{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.72);font-weight:900}
+    .summary-title{font-family:var(--fd);font-size:21px;font-weight:900;margin-top:5px;color:#fff}
+    .summary-text{font-size:13px;line-height:1.7;color:rgba(255,255,255,.84);margin-top:7px}
+    .summary-panel .identity-chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.12);color:#fff}
     .summary-score{min-width:120px;text-align:right}
-    .summary-score strong{display:block;font-family:var(--fd);font-size:46px;line-height:1;color:#1d4ed8}
-    .summary-score span{display:block;margin-top:6px;font-size:11px;font-weight:900;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+    .summary-score strong{display:block;font-family:var(--fd);font-size:46px;line-height:1;color:#fff}
+    .summary-score span{display:block;margin-top:6px;font-size:11px;font-weight:900;color:rgba(255,255,255,.72);letter-spacing:.08em;text-transform:uppercase}
     .quick-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-    .quick-metric{background:#fff;border:1.5px solid var(--border);border-radius:18px;padding:14px 12px}
+    .quick-metric{background:#fff;border:1px solid #d9e4f5;border-radius:18px;padding:14px 12px;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .quick-metric strong{display:block;font-family:var(--fd);font-size:27px;font-weight:900;color:#0f172a}
     .quick-metric span{display:block;margin-top:6px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900}
-    .insight-panel{margin-bottom:14px}
+    .insight-panel{margin-bottom:14px;border:1px solid #d9e4f5;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .insight-panel h3{font-family:var(--fd);font-size:20px;font-weight:900}
     .insight-panel p{font-size:13px;line-height:1.7;color:var(--slate);margin-top:4px}
-    .student-strip{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;margin-bottom:14px;padding:18px;border:1.5px solid #cfe0f4;border-radius:22px;background:linear-gradient(135deg,#ffffff 0%,#f6fbff 54%,#eef7f1 100%);box-shadow:0 12px 30px rgba(19,36,61,.06);overflow:hidden}
-    .student-strip::before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#2563eb,#16a34a,#f59e0b)}
-    .student-avatar{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,#2563eb,#22c55e);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;box-shadow:0 16px 28px rgba(37,99,235,.18)}
+    .insight-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;font-weight:900}
+    .insight-score-line{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:8px}
+    .insight-score-line strong{display:block;font-family:var(--fd);font-size:54px;line-height:1;color:#2854df}
+    .insight-score-line span{display:block;font-size:14px;font-weight:800;color:#475569;line-height:1.5;max-width:380px}
+    .student-strip{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;margin-bottom:14px;padding:20px;border:none;border-radius:24px;background:linear-gradient(135deg,#102544 0%,#173764 52%,#244da7 100%);box-shadow:0 20px 44px rgba(16,37,68,.18);overflow:hidden}
+    .student-strip::before{content:"";position:absolute;inset:auto 0 0;height:4px;background:linear-gradient(90deg,#60a5fa,#818cf8,#34d399)}
+    .student-avatar{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,#fb923c,#f97316);display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;box-shadow:0 16px 28px rgba(249,115,22,.24)}
     .student-strip-main{min-width:0}
-    .student-strip-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;font-weight:900}
-    .student-strip h2{font-family:var(--fd);font-size:30px;font-weight:900;line-height:1.12;margin-top:3px}
+    .student-strip-kicker{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.66);font-weight:900}
+    .student-strip h2,.student-strip .list-title{font-family:var(--fd);font-size:30px;font-weight:900;line-height:1.12;margin-top:3px;color:#fff}
+    .student-strip .list-meta{color:rgba(255,255,255,.72)}
     .student-info-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .student-info-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#fff;border:1px solid #dbe7f3;color:#475569;font-size:12px;font-weight:900}
+    .student-info-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:12px;font-weight:900}
 
     .report-mast{display:grid;grid-template-columns:1.3fr .9fr;gap:16px;align-items:stretch;margin-bottom:16px}
     .brand-bar{background:linear-gradient(135deg,#123a34,#16624f);border-radius:24px;padding:20px 22px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -168,27 +186,27 @@
     .metric-card span{display:block;margin-top:8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:900}
 
     .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-    .panel-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px}
+    .panel-card{background:#fff;border:1px solid #d9e4f5;border-radius:22px;padding:18px;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
     .panel-head h3{font-family:var(--fd);font-size:20px;font-weight:900}
     .panel-head p{font-size:12px;line-height:1.7;color:var(--slate);margin-top:4px}
     .chart-box{height:220px}
     .compare-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .compare-card{background:#f8fbff;border:1px solid #e0e8ff;border-radius:18px;padding:14px}
+    .compare-card{background:#f8fbff;border:1px solid #dbe7ff;border-radius:18px;padding:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
     .compare-card strong{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#4661c7;margin-bottom:8px}
     .compare-card p{font-size:14px;line-height:1.7;color:var(--slate)}
 
     .section-headline{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
     .section-headline h3{font-family:var(--fd);font-size:22px;font-weight:900}
     .section-headline p{font-size:13px;line-height:1.7;color:var(--slate);max-width:760px}
-    .history-table-wrap{overflow:auto;border:1.5px solid var(--border);border-radius:20px;margin-bottom:14px}
+    .history-table-wrap{overflow:auto;border:1px solid #d9e4f5;border-radius:20px;margin-bottom:14px;background:#fff;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .history-row{cursor:pointer;transition:background .16s,box-shadow .16s}
     .history-row:hover td{background:#f8fbff}
     .history-row.active td{background:#eef2ff}
     .history-exam-title{font-weight:800;color:var(--navy)}
     .history-exam-sub{font-size:11px;color:var(--muted);margin-top:3px}
     table{width:100%;border-collapse:collapse}
-    thead th{background:#f8fbff;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding:12px 10px;text-align:left;border-bottom:1px solid var(--border)}
+    thead th{background:#eef4ff;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);padding:12px 10px;text-align:left;border-bottom:1px solid var(--border)}
     tbody td{padding:12px 10px;border-bottom:1px solid #edf2f7;font-size:12px;color:var(--navy)}
     tbody tr:last-child td{border-bottom:none}
     .score-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:var(--blue-soft);color:#2c4ac9;font-weight:900}
@@ -196,7 +214,7 @@
     .delta-pill.good{background:#ecfdf5;color:#047857}
     .delta-pill.warn{background:#fff7ed;color:#c2410c}
     .mini-btn{border:none;border-radius:999px;padding:8px 11px;background:var(--blue-soft);color:#2645be;font-size:12px;font-weight:800;cursor:pointer}
-    .rank-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px;margin:14px 0}
+    .rank-card{background:#fff;border:1px solid #d9e4f5;border-radius:22px;padding:18px;margin:14px 0;box-shadow:0 12px 26px rgba(15,23,42,.05)}
     .rank-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
     .rank-head h3{font-family:var(--fd);font-size:20px;font-weight:900}
     .rank-head p{font-size:12px;color:var(--slate);line-height:1.6;margin-top:4px}
@@ -204,7 +222,7 @@
     .rank-tools select{border:1.5px solid var(--border);border-radius:14px;padding:10px 12px;background:#fff;color:var(--navy);font-family:var(--fb);font-weight:800;font-size:12px}
     .rank-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:16px}
     .rank-table .self-row td{background:#ecfdf5}
-    .degree-card{background:#fff;border:1.5px solid var(--border);border-radius:26px;box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+    .degree-card{background:#fff;border:1px solid #d9e4f5;border-radius:26px;box-shadow:0 18px 34px rgba(15,23,42,.06);padding:20px;margin-bottom:18px}
     .degree-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
     .degree-card-head h2{font-family:var(--fd);font-size:22px;font-weight:900}
     .degree-card-head p{font-size:13px;line-height:1.65;color:var(--slate);max-width:760px;margin-top:4px}
@@ -218,12 +236,12 @@
     .private-rank-note{margin-top:12px;padding:10px 12px;border-radius:14px;background:#f8fbff;border:1px solid #e0e8f4;color:#64748b;font-size:12px;line-height:1.55;font-weight:800}
 
     .selected-top{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-bottom:14px}
-    .selected-card{background:#fff;border:1.5px solid var(--border);border-radius:22px;padding:18px}
+    .selected-card{background:#fff;border:1px solid #d9e4f5;border-radius:22px;padding:18px;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .selected-title{font-family:var(--fd);font-size:26px;font-weight:900}
     .selected-meta{font-size:13px;line-height:1.7;color:var(--slate);margin-top:6px}
     .selected-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     .selected-btn{border:none;border-radius:999px;padding:10px 14px;background:#f5f3ff;color:#6d28d9;font-size:12px;font-weight:900;cursor:pointer}
-    .selected-benchmark{display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#123a34,#196451);color:#fff}
+    .selected-benchmark{display:flex;flex-direction:column;justify-content:space-between;background:linear-gradient(135deg,#123a34,#196451);color:#fff;box-shadow:0 18px 34px rgba(18,58,52,.18)}
     .benchmark-pill{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:800}
     .benchmark-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
     .benchmark-item{padding:12px;border-radius:18px;background:rgba(255,255,255,.08)}
@@ -238,7 +256,7 @@
     .dot{width:12px;height:12px;border-radius:50%}
     .dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.dot.blank{background:var(--blank)}
     .matrix-wrap{display:flex;flex-direction:column;gap:12px}
-    .analysis-details{border:1.5px solid var(--border);border-radius:22px;background:#fff;margin-top:14px;overflow:hidden}
+    .analysis-details{border:1px solid #d9e4f5;border-radius:22px;background:#fff;margin-top:14px;overflow:hidden;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .analysis-details summary{list-style:none;cursor:pointer;padding:16px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
     .analysis-details summary::-webkit-details-marker{display:none}
     .analysis-summary-title{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--navy)}
@@ -246,7 +264,7 @@
     .analysis-toggle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef2ff;color:#3341c5;font-weight:900;flex:0 0 auto}
     .analysis-details[open] .analysis-toggle{transform:rotate(180deg)}
     .analysis-body{border-top:1px solid var(--border);padding:14px 18px 18px}
-    .matrix-card{border:1.5px solid var(--border);border-radius:20px;overflow:hidden;background:#fff}
+    .matrix-card{border:1px solid #d9e4f5;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 10px 22px rgba(15,23,42,.05)}
     .matrix-card-head{background:linear-gradient(135deg,#123a34,#196451);padding:10px 14px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px}
     .matrix-card-head strong{font-family:var(--fd);font-size:18px;font-weight:900}
     .matrix-card-head span{font-size:12px;font-weight:800;color:rgba(255,255,255,.76)}
@@ -273,11 +291,14 @@
     .outcome-card-meta span{padding:5px 8px;border-radius:999px;background:#fff;border:1px solid var(--border)}
     .outcome-alert{margin-top:8px;padding:8px 10px;border-radius:12px;background:#fff7ed;color:#9a3412;font-size:12px;line-height:1.55;font-weight:800}
 
-    .footer-note{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
-    .footer-brand{font-size:12px;line-height:1.7;color:var(--slate)}
-    .footer-brand strong{display:block;color:var(--navy);font-family:var(--fd);font-size:15px}
-    .footer-center{font-size:11px;line-height:1.8;color:var(--muted);text-align:center;max-width:520px;margin:0 auto}
-    .footer-page{font-size:12px;font-weight:900;color:var(--navy);white-space:nowrap}
+    .footer-note{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:16px;padding-top:14px;border-top:1px solid #dce6f2}
+    .footer-brand{font-size:12px;line-height:1.7;color:#475569}
+    .footer-brand strong{display:block;color:#102544;font-family:var(--fd);font-size:15px}
+    .footer-center{font-size:11px;line-height:1.8;color:#64748b;text-align:center;max-width:520px;margin:0 auto}
+    .footer-page{font-size:12px;font-weight:900;color:#102544;white-space:nowrap}
+    body.report-export-mode{background:#fff}
+    body.report-export-mode .page-wrap{padding:0}
+    body.report-export-mode .sheet{box-shadow:none}
 
     @media(max-width:1100px){
       .filter-grid,.metric-grid{grid-template-columns:repeat(2,1fr)}
@@ -289,10 +310,13 @@
       .topbar{flex-direction:column;padding:16px}
       .topbar-actions{width:100%}
       .topbar-btn{flex:1}
+      .report-guide-copy strong{font-size:18px}
+      .report-guide-pills{width:100%}
       .filter-grid,.metric-grid{grid-template-columns:1fr}
       .quick-metrics{grid-template-columns:1fr}
       .summary-panel{grid-template-columns:1fr}
       .summary-score{text-align:left}
+      .insight-score-line{flex-direction:column;align-items:flex-start}
       .mode-grid,.flow-grid,.subject-checks{grid-template-columns:1fr}
       .score-ring{margin-left:0}
       .student-strip{grid-template-columns:1fr}
@@ -324,6 +348,7 @@
       .sheet:last-child{page-break-after:auto;break-after:auto}
       .sheet::before,.sheet::after,.sheet-bottom-left,.sheet-bottom-right{display:none!important}
       .topbar{display:none!important}
+      .report-command-hud{display:none!important}
       .panel-card,.metric-card,.compare-card,.history-table-wrap,.matrix-card,.selected-card,.benchmark-grid,.compare-strip{break-inside:avoid;page-break-inside:avoid}
       .chart-row,.hero-row,.report-mast,.metric-grid,.selected-top{page-break-inside:avoid}
       .brand-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact;background:linear-gradient(135deg,#123a34,#16624f)!important;color:#fff!important}
@@ -363,7 +388,7 @@
         <button class="topbar-btn btn-excel" id="excelBtn">📥 Excel İndir</button>
         <button class="topbar-btn btn-image" id="pngBtn">🖼️ PNG İndir</button>
         <button class="topbar-btn btn-image" id="jpegBtn">🖼️ JPEG İndir</button>
-        <button class="topbar-btn btn-print" id="printBtn">🖨️ Yazdır / PDF</button>
+        <button class="topbar-btn btn-print" id="printBtn">📄 PDF Çıktı Al</button>
       </div>
     </div>
 
@@ -559,7 +584,7 @@
           <span class="sheet-bottom-left"></span>
           <span class="sheet-bottom-right"></span>
           <div class="sheet-main">
-            <div class="student-strip">
+            <div class="student-strip" id="reportStudentSummary">
               <div class="student-avatar">🎓</div>
               <div class="student-strip-main">
                 <div class="student-strip-kicker">Öğrenci Bilgi Şeridi</div>
@@ -572,7 +597,30 @@
                 <div class="identity-chips" id="heroStudentChips"></div>
               </div>
             </div>
-            <div class="report-command">
+            <div class="report-command-hud screen-only">
+              <div class="report-guide">
+                <div class="report-guide-copy">
+                  <div class="insight-kicker">Rapor Kumandası</div>
+                  <strong>Uzun karnede ilgili bölüme tek dokunuşla geç</strong>
+                  <p>Önce üst özeti incele, sonra grafikler, sınav geçmişi, seçili sınav, kazanım analizi ve soru matrisi arasında hızlı dolaş. Böylece özellikle veli görüşmesi ve sınıf içi değerlendirmede zaman kazanırsın.</p>
+                </div>
+                <div class="report-guide-pills">
+                  <span class="report-guide-pill">⚡ Hızlı dolaşım</span>
+                  <span class="report-guide-pill">📌 Öğretmen odaklı kullanım</span>
+                  <span class="report-guide-pill">🖨 Çıktı öncesi hızlı kontrol</span>
+                </div>
+              </div>
+              <div class="report-jump-row">
+                <button class="report-jump-btn" type="button" data-report-jump="reportStudentSummary">🏁 Üst Özet</button>
+                <button class="report-jump-btn" type="button" data-report-jump="reportChartsSection">📈 Grafikler</button>
+                <button class="report-jump-btn" type="button" data-report-jump="reportHistorySection">🗂 Sınav Geçmişi</button>
+                <button class="report-jump-btn" type="button" data-report-jump="reportSelectedExamSection">📄 Seçili Sınav</button>
+                <button class="report-jump-btn" type="button" data-report-jump="reportOutcomeSection">🎯 Kazanımlar</button>
+                <button class="report-jump-btn" type="button" data-report-jump="reportMatrixSection">🧩 Soru Matrisi</button>
+              </div>
+              <div class="report-jump-note">İpucu: sınav geçmişi tablosunda satıra tıklarsan seçili sınav kutusu ve analiz alanları anında güncellenir.</div>
+            </div>
+            <div class="report-command" id="reportSummaryHub">
               <div class="summary-panel">
                 <div>
                   <div class="summary-kicker">Karne Merkezi Özeti</div>
@@ -602,12 +650,15 @@
             </div>
 
             <div class="insight-panel">
-              <h3>Filtre Özeti</h3>
-              <p><strong id="filterSummaryScore">%0</strong> · <span id="filterSummaryText">—</span></p>
+              <div class="insight-kicker">Filtre Özeti</div>
+              <div class="insight-score-line">
+                <strong id="filterSummaryScore">%0</strong>
+                <span id="filterSummaryText">—</span>
+              </div>
               <p id="heroScoreNote">—</p>
             </div>
 
-            <div class="chart-row">
+            <div class="chart-row" id="reportChartsSection">
               <div class="panel-card">
                 <div class="panel-head">
                   <div>
@@ -653,7 +704,7 @@
           <span class="sheet-bottom-left"></span>
           <span class="sheet-bottom-right"></span>
           <div class="sheet-main">
-            <div class="section-headline">
+            <div class="section-headline" id="reportHistorySection">
               <div>
                 <h3>🗂️ Sınav Geçmişi ve Kıyaslama Tablosu</h3>
                 <p>Her satır öğrencinin ilgili sınav performansını, aynı sınava katılan öğrencilerin ortalamasını ve yüzdelik dilimini birlikte gösterir.</p>
@@ -679,7 +730,7 @@
               </table>
             </div>
 
-            <div class="selected-top" style="margin-top:14px">
+            <div class="selected-top" id="reportSelectedExamSection" style="margin-top:14px">
               <div class="selected-card">
                 <div class="selected-title" id="selectedExamTitle">Seçili Sınav</div>
                 <div class="selected-meta" id="selectedExamMeta">—</div>
@@ -707,7 +758,7 @@
               <div class="wrong-list" id="wrongQuestionList"></div>
             </div>
 
-            <details class="analysis-details" id="outcomeDetails" open>
+            <details class="analysis-details" id="outcomeDetails" open data-report-anchor="reportOutcomeSection">
               <summary>
                 <div>
                   <div class="analysis-summary-title">🎯 Kazanım / Öğrenme Çıktısı Analizi</div>
@@ -718,7 +769,7 @@
               <div class="analysis-body" id="outcomeWrap"></div>
             </details>
 
-            <details class="analysis-details" id="matrixDetails">
+            <details class="analysis-details" id="matrixDetails" data-report-anchor="reportMatrixSection">
               <summary>
                 <div>
                   <div class="analysis-summary-title" id="matrixTitle">🔎 Soru Bazlı Kompakt Değerlendirme</div>
@@ -751,6 +802,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script type="module" src="/sinav_sitesi/js/ogrenci-karne.js"></script>
 </body>
 </html>

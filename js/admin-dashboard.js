@@ -19,6 +19,7 @@
     reactions: '👍 Beğeni Analizi',
     ogretmenler: '🪪 Öğretmen Onayları',
     kullanicilar: '👥 Kayıtlı Kullanıcılar',
+    saglik: '🩺 Sistem Sağlığı',
     duyurular: '📢 Duyurular',
     badges: '🔔 YENİ Rozetleri',
     hizli: '⚡ Hızlı Erişim',
@@ -299,6 +300,7 @@
       'quick-adminler': '__owner__',
       'quick-ogretmenler': 'teacher_approvals',
       'quick-kullanicilar': 'user_management',
+      'quick-saglik': 'system_health',
       'quick-sinav-admin': 'exam_create',
     };
   }
@@ -324,6 +326,7 @@
       'btn-adminler': '__owner__',
       'btn-ogretmenler': 'teacher_approvals',
       'btn-kullanicilar': 'user_management',
+      'btn-saglik': 'system_health',
       'btn-yedek': '__owner__',
       'btn-sinav-admin': 'exam_create',
     };
@@ -560,6 +563,9 @@
     if (!canAccess('user_management') && state.currentPanel === 'kullanicilar') {
       state.currentPanel = 'overview';
     }
+    if (!canAccess('system_health') && state.currentPanel === 'saglik') {
+      state.currentPanel = 'overview';
+    }
     if (!ownerMode && state.currentPanel === 'adminler') {
       state.currentPanel = 'overview';
     }
@@ -606,6 +612,41 @@
       };
     }
     updateStats();
+  }
+
+  function configureSystemHealthModule() {
+    if (!window.KemalAdminSystemHealth || typeof window.KemalAdminSystemHealth.configure !== 'function') {
+      return;
+    }
+    window.KemalAdminSystemHealth.configure({
+      canAccess: canAccess,
+      toast: toast,
+      getClient: function() {
+        return window.kemalAdminAuth.getClient();
+      },
+      humanizeError: function(error) {
+        return window.kemalAdminAuth && window.kemalAdminAuth.humanizeError
+          ? window.kemalAdminAuth.humanizeError(error)
+          : String(error && error.message || error || '');
+      },
+      formatNumber: formatNumber,
+      escHtml: escHtml,
+      emptyStateHtml: emptyStateHtml,
+    });
+  }
+
+  function renderSystemHealthPanel() {
+    if (window.KemalAdminSystemHealth && typeof window.KemalAdminSystemHealth.renderPanel === 'function') {
+      window.KemalAdminSystemHealth.renderPanel();
+    }
+  }
+
+  async function loadSystemHealth(force) {
+    if (!window.KemalAdminSystemHealth || typeof window.KemalAdminSystemHealth.load !== 'function') {
+      toast('Sistem sağlığı modülü yüklenemedi.', 'error');
+      return;
+    }
+    await window.KemalAdminSystemHealth.load(force);
   }
 
   async function persistData(successMessage) {
@@ -665,6 +706,10 @@
       toast('Kullanıcı listeleri için yetkin açık değil.', 'error');
       return;
     }
+    if (id === 'saglik' && !canAccess('system_health')) {
+      toast('Sistem sağlığı için yetkin açık değil.', 'error');
+      return;
+    }
     if (id === 'yedek' && !ownerMode) {
       toast('Yedek ve sıfırlama alanı yalnızca ana yöneticiye açık.', 'error');
       return;
@@ -701,6 +746,9 @@
     }
     if (id === 'kullanicilar') {
       loadRegisteredUsers(false);
+    }
+    if (id === 'saglik') {
+      loadSystemHealth(false);
     }
     if (id === 'analytics') {
       loadAnalytics(false);
@@ -1884,6 +1932,9 @@
       case 'kullanicilar':
         renderRegisteredUsersPanel();
         break;
+      case 'saglik':
+        renderSystemHealthPanel();
+        break;
       case 'analytics':
         renderAnalytics();
         break;
@@ -1928,6 +1979,7 @@
     buildPermissionCheckboxes();
     state.data = await window.kemalSiteStore.loadSiteData();
     state.accessProfile = await window.kemalAdminAuth.getAdminAccessProfile(true);
+    configureSystemHealthModule();
     updateStats();
     applyAccessControl();
     loadUserProfileCounts();
@@ -2403,6 +2455,7 @@
   window.reviewTeacherApproval = reviewTeacherApproval;
   window.loadRegisteredUsers = loadRegisteredUsers;
   window.updateRegisteredUserSearch = updateRegisteredUserSearch;
+  window.loadSystemHealth = loadSystemHealth;
   window.changePassword = changePassword;
   window.exportData = exportData;
   window.resetConfirm = resetConfirm;

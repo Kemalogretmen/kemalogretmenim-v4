@@ -21,6 +21,12 @@
       group: 'Genel Yönetim',
     },
     {
+      key: 'system_health',
+      label: 'Sistem Sağlığı',
+      description: 'Kritik kayıt, policy ve storage kontrollerini görüntüleme',
+      group: 'Genel Yönetim',
+    },
+    {
       key: 'menu_yonetimi',
       label: 'Menü & Ders Yönetimi',
       description: 'Üst menüye ders sayfaları ekleme',

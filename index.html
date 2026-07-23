@@ -18,6 +18,7 @@
   <meta name="twitter:description" content="1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik, fen bilimleri, sınav ve oyun içerikleri.">
   <meta name="twitter:image" content="https://kemalogretmenim.com.tr/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <style>
     /* ─── ANA SAYFA ÖZEL STILLER ─── */
 
@@ -234,12 +235,14 @@
       background: rgba(255,255,255,.92);
       backdrop-filter: blur(16px);
       border: 2px solid rgba(234,227,255,.9);
-      border-radius: 28px;
-      padding: 24px 22px;
+      border-radius: 22px;
+      padding: 20px 20px 18px;
       text-decoration: none;
       color: var(--navy);
       box-shadow: 0 18px 40px rgba(108,61,237,.12);
       transition: transform .28s, box-shadow .28s, border-color .28s;
+      display: flex;
+      flex-direction: column;
     }
     .platform-card a {
       color: inherit;
@@ -290,7 +293,7 @@
     }
     .platform-title {
       font-family: var(--font-display);
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
       margin-bottom: 8px;
       line-height: 1.05;
@@ -299,8 +302,8 @@
       color: var(--slate);
       line-height: 1.7;
       font-size: 14px;
-      min-height: 72px;
-      margin-bottom: 16px;
+      min-height: 0;
+      margin-bottom: 14px;
     }
     .platform-meta {
       display: flex;
@@ -311,12 +314,13 @@
     .platform-live {
       display: grid;
       gap: 8px;
-      min-height: 118px;
-      margin: 2px 0 18px;
+      min-height: 238px;
+      margin: 2px 0 16px;
       padding: 10px;
       border: 1px solid rgba(234,227,255,.9);
       border-radius: 18px;
       background: rgba(248,246,255,.62);
+      overflow: hidden;
     }
     .platform-live-head {
       display: flex;
@@ -344,7 +348,7 @@
       grid-template-columns: 28px 1fr;
       align-items: center;
       gap: 8px;
-      min-height: 38px;
+      min-height: 34px;
       padding: 6px;
       border-radius: 12px;
       border: 1px solid transparent;
@@ -407,6 +411,51 @@
       border: 1px solid var(--border);
       border-radius: 999px;
       padding: 6px 10px;
+    }
+    body.home-compact .learning-showcase,
+    body.home-compact #haberlerSection,
+    body.home-compact #latestSection,
+    body.home-compact .subjects-band,
+    body.home-compact .section {
+      display: none;
+    }
+    body.home-compact .platform-strip {
+      padding-bottom: 58px;
+      background: linear-gradient(180deg, #F3F0FF 0%, #FFFDF8 120px);
+    }
+    body.home-compact #kemalFooterMount {
+      display: none;
+    }
+    body.home-compact .platform-cta {
+      width: fit-content;
+      margin-top: auto;
+      border-radius: 999px;
+      padding: 10px 13px;
+      background: var(--badge-bg);
+      color: var(--badge-color);
+      border: 1px solid var(--badge-bg);
+    }
+    @media(max-width:700px) {
+      body.home-compact .platform-strip {
+        padding: 24px 18px 38px;
+        overflow: hidden;
+      }
+      body.home-compact .platform-strip-inner {
+        display: flex;
+        gap: 14px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        padding-bottom: 8px;
+      }
+      body.home-compact .platform-strip-inner::-webkit-scrollbar {
+        display: none;
+      }
+      body.home-compact .platform-card {
+        flex: 0 0 min(86vw, 340px);
+        scroll-snap-align: start;
+      }
     }
     .platform-cta {
       display: inline-flex;
@@ -738,11 +787,14 @@
     .home-live-panel {
       width: 100%;
       max-width: 500px;
+      min-height: var(--hero-panel-height);
       background: rgba(255,255,255,.94);
       border: 2px solid rgba(234,227,255,.9);
       border-radius: 28px;
       box-shadow: var(--shadow-lg);
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .home-live-head {
       display: flex;
@@ -781,6 +833,8 @@
       display: flex;
       flex-direction: column;
       padding: 8px;
+      flex: 1;
+      justify-content: flex-start;
     }
     .home-live-item {
       display: grid;
@@ -845,18 +899,200 @@
       font-weight: 800;
       line-height: 1.5;
     }
+    .hero {
+      background:
+        linear-gradient(180deg, rgba(23,24,58,.86) 0%, rgba(48,39,102,.78) 52%, rgba(64,103,125,.68) 100%),
+        url('/assets/vitrin-gecici/01-hos-geldiniz.png') center / cover no-repeat;
+      min-height: calc(100vh - 76px);
+      overflow: hidden;
+      position: relative;
+      --hero-panel-height: clamp(480px, 38vw, 560px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.28);
+    }
+    .hero::before,
+    .hero::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .hero::before {
+      top: 0;
+      height: 120px;
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0));
+    }
+    .hero::after {
+      bottom: 0;
+      height: 170px;
+      background: linear-gradient(180deg, rgba(243,240,255,0), rgba(243,240,255,.92));
+    }
+    .hero .blob,
+    .hero .star-el {
+      display: none;
+    }
     .hero .hero-inner {
       width: 100%;
       max-width: 1320px;
-      grid-template-columns: minmax(0, 1.3fr) minmax(320px, .72fr);
-      gap: 34px;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, .78fr);
+      gap: 22px 34px;
+      align-items: stretch;
+      padding-top: 34px;
+      padding-bottom: 54px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-gateway {
+      grid-column: 1 / -1;
+      color: white;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 560px);
+      gap: 24px;
+      align-items: end;
+    }
+    .hero-gateway-copy {
+      display: grid;
+      gap: 14px;
+      max-width: 800px;
+    }
+    .hero-gateway-kicker {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(255,255,255,.26);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,.14);
+      backdrop-filter: blur(12px);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .hero-gateway h1 {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 6vw, 78px);
+      font-weight: 950;
+      line-height: .96;
+      letter-spacing: 0;
+      margin: 0;
+      text-wrap: balance;
+    }
+    .hero-gateway h1 span {
+      color: #FFD93D;
+    }
+    .hero-gateway p {
+      max-width: 720px;
+      color: rgba(255,255,255,.88);
+      font-size: clamp(16px, 1.5vw, 20px);
+      font-weight: 800;
+      line-height: 1.55;
+      margin: 0;
+    }
+    .hero-gateway-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+    .hero-main-action,
+    .hero-secondary-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 46px;
+      border-radius: 999px;
+      padding: 12px 17px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 950;
+      line-height: 1;
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .hero-main-action {
+      background: #FFD93D;
+      color: #1A1040;
+      box-shadow: 0 16px 34px rgba(0,0,0,.22);
+    }
+    .hero-secondary-action {
+      color: white;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.28);
+      backdrop-filter: blur(12px);
+    }
+    .hero-main-action:hover,
+    .hero-secondary-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 36px rgba(0,0,0,.20);
+    }
+    .hero-role-panel {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+    .hero-role-link {
+      min-width: 0;
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: 8px;
+      padding: 14px 12px;
+      color: white;
+      text-decoration: none;
+      background: rgba(255,255,255,.14);
+      backdrop-filter: blur(18px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+      transition: transform .2s, background .2s, border-color .2s;
+    }
+    .hero-role-link:hover {
+      transform: translateY(-3px);
+      background: rgba(255,255,255,.20);
+      border-color: rgba(255,217,61,.75);
+    }
+    .hero-role-link.is-active {
+      background: rgba(255,217,61,.18);
+      border-color: rgba(255,217,61,.72);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.26),
+        0 16px 32px rgba(0,0,0,.16);
+    }
+    .hero-role-icon {
+      display: block;
+      font-size: 26px;
+      margin-bottom: 9px;
+    }
+    .hero-role-link strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 950;
+      line-height: 1.15;
+      margin-bottom: 5px;
+    }
+    .hero-role-link small {
+      display: block;
+      color: rgba(255,255,255,.76);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.35;
     }
     .hero-copy {
       min-width: 0;
+      display: flex;
+    }
+    .hero-visual {
+      display: flex;
+      align-items: stretch;
+    }
+    .hero-visual .home-live-panel {
+      max-width: none;
+      flex: 1;
     }
     .home-showcase-panel {
       position: relative;
-      min-height: min(650px, calc(100vh - 180px));
+      min-height: var(--hero-panel-height);
+      width: 100%;
       background: rgba(255,255,255,.96);
       border: 2px solid rgba(234,227,255,.9);
       border-radius: 28px;
@@ -868,7 +1104,7 @@
       position: relative;
       width: 100%;
       height: 100%;
-      min-height: min(650px, calc(100vh - 180px));
+      min-height: var(--hero-panel-height);
       overflow: hidden;
       background:
         linear-gradient(135deg, rgba(255,255,255,.40), rgba(255,255,255,.10)),
@@ -1215,7 +1451,7 @@
       line-height: 1.55;
       display: grid;
       align-content: center;
-      min-height: min(650px, calc(100vh - 180px));
+      min-height: var(--hero-panel-height);
     }
     .audience-grid {
       display: grid;
@@ -1440,12 +1676,20 @@
       .hero .hero-inner {
         grid-template-columns: 1fr;
       }
+      .hero-gateway {
+        grid-template-columns: 1fr;
+      }
+      .hero-role-panel {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
       .hero-visual {
         order: 0;
+        width: 100%;
         max-width: 520px;
         margin: 0 auto;
       }
       .home-showcase-panel,
+      .home-live-panel,
       .home-showcase-stage,
       .home-showcase-empty {
         min-height: 520px;
@@ -1466,8 +1710,75 @@
       }
     }
     @media(max-width:600px) {
+      .hero {
+        min-height: 0;
+      }
+      .hero .hero-inner {
+        padding-top: 26px;
+        padding-bottom: 36px;
+      }
+      .hero-gateway {
+        gap: 18px;
+      }
+      .hero-gateway-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      .hero-main-action,
+      .hero-secondary-action {
+        width: 100%;
+      }
+      .hero-role-panel {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .hero-role-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 86px;
+        padding: 10px 7px;
+        text-align: center;
+      }
+      .hero-role-icon {
+        margin: 0 0 5px;
+        font-size: 22px;
+      }
+      .hero-role-link strong {
+        margin: 0;
+        font-size: 12px;
+      }
+      .hero-role-link small {
+        display: none;
+      }
       .home-live-panel {
+        min-height: 380px;
         border-radius: 22px;
+      }
+      .home-live-list {
+        gap: 4px;
+      }
+      .home-live-item {
+        grid-template-columns: 38px 1fr;
+        gap: 9px;
+        padding: 9px;
+        border-radius: 15px;
+      }
+      .home-live-item:nth-child(n+4) {
+        display: none;
+      }
+      .home-live-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+        font-size: 18px;
+      }
+      .home-live-meta {
+        font-size: 10px;
+      }
+      .home-live-name {
+        font-size: 13px;
       }
       .home-showcase-panel {
         min-height: 430px;
@@ -1564,24 +1875,42 @@
     }
   </style>
 </head>
-<body>
+<body class="home-compact">
 
   <!-- Navbar ve Footer js/site.js tarafından enjekte edilir -->
   <!-- ─── HERO ─── -->
   <section class="hero">
-    <!-- Arkaplan blob'ları -->
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-
-    <!-- Dekoratif yıldızlar -->
-    <span class="star-el" style="--sz:24px;--dur:2.2s;--delay:.3s; top:12%; left:8%;">⭐</span>
-    <span class="star-el" style="--sz:18px;--dur:3s;--delay:1s;   top:70%; left:6%;">✨</span>
-    <span class="star-el" style="--sz:20px;--dur:2.5s;--delay:.8s; top:25%; right:5%;">🌟</span>
-    <span class="star-el" style="--sz:16px;--dur:3.2s;--delay:1.5s;bottom:20%; right:8%;">⭐</span>
-    <span class="star-el" style="--sz:22px;--dur:2.8s;--delay:.5s; bottom:30%; left:3%;">✦</span>
-
     <div class="hero-inner">
+      <div class="hero-gateway">
+        <div class="hero-gateway-copy">
+          <span class="hero-gateway-kicker" id="heroRoadmapKicker">Kemal Öğretmenim Eğitim Platformu</span>
+          <h1 id="heroRoadmapTitle">Öğrenme yolunu <span>hemen seç</span></h1>
+          <p id="heroRoadmapText">Hızlı okuma, sınavlar, dokümanlar ve eğitsel oyunlar tek yerde. Öğrenci çalışmaya başlar, öğretmen sınıfta kullanır, veli gelişimi takip eder.</p>
+          <div class="hero-gateway-actions" id="heroRoadmapActions">
+            <a href="/ogrenci-paneli.html" class="hero-main-action">Öğrenci Paneli</a>
+            <a href="/hizli-okuma/index.html" class="hero-secondary-action">Hızlı Okuma</a>
+            <a href="/sinav_sitesi/index.html" class="hero-secondary-action">Sınav Merkezi</a>
+          </div>
+        </div>
+        <div class="hero-role-panel" aria-label="Kullanıcı türüne göre hızlı giriş">
+          <a href="/ders.html" class="hero-role-link" data-roadmap-role="student">
+            <span class="hero-role-icon">🎒</span>
+            <strong>Öğrenci</strong>
+            <small>Ders, oyun, sınav ve okuma çalışmalarına başla.</small>
+          </a>
+          <a href="/ogretmen-paneli.html" class="hero-role-link" data-roadmap-role="teacher">
+            <span class="hero-role-icon">🧑‍🏫</span>
+            <strong>Öğretmen</strong>
+            <small>Sınıf, ödev, doküman ve araçlarını yönet.</small>
+          </a>
+          <a href="/veli-paneli.html" class="hero-role-link" data-roadmap-role="parent">
+            <span class="hero-role-icon">👨‍👩‍👧</span>
+            <strong>Veli</strong>
+            <small>Gelişim, içerik ve yönlendirmeleri takip et.</small>
+          </a>
+        </div>
+      </div>
+
       <!-- Sol: Kontrollü vitrin slayt sahnesi -->
       <div class="hero-copy">
         <div class="home-showcase-panel" id="homeShowcasePanel" aria-label="Ana sayfa vitrini">
@@ -2118,6 +2447,100 @@
         ].join(';');
       }
 
+      function renderHeroRoadmap(config) {
+        const kicker = document.getElementById('heroRoadmapKicker');
+        const title = document.getElementById('heroRoadmapTitle');
+        const text = document.getElementById('heroRoadmapText');
+        const actions = document.getElementById('heroRoadmapActions');
+        if (!kicker || !title || !text || !actions) return;
+        kicker.textContent = config.kicker;
+        title.innerHTML = config.titleHtml;
+        text.textContent = config.text;
+        actions.innerHTML = config.actions.map((action, index) => `
+          <a href="${esc(action.href)}" class="${index === 0 ? 'hero-main-action' : 'hero-secondary-action'}">${esc(action.label)}</a>
+        `).join('');
+        document.querySelectorAll('[data-roadmap-role]').forEach(card => {
+          card.classList.toggle('is-active', Boolean(config.role && card.dataset.roadmapRole === config.role));
+        });
+      }
+
+      function getHeroRoadmapConfig(authState) {
+        const profile = authState && authState.profile ? authState.profile : null;
+        const role = profile && profile.role ? String(profile.role) : '';
+        const displayName = window.kemalUserAuth && typeof window.kemalUserAuth.getDisplayName === 'function'
+          ? window.kemalUserAuth.getDisplayName()
+          : '';
+        const firstName = (displayName || '').split(' ').filter(Boolean)[0] || '';
+        const grade = profile && profile.grade_level ? String(profile.grade_level) : '';
+        const panelHref = window.kemalUserAuth && typeof window.kemalUserAuth.getPanelHref === 'function'
+          ? window.kemalUserAuth.getPanelHref(profile)
+          : '/giris.html';
+        if (role === 'teacher') {
+          return {
+            role,
+            kicker: firstName ? `Hoş geldin ${firstName}` : 'Öğretmen yol haritan hazır',
+            titleHtml: 'Sınıfını <span>tek ekrandan yönet</span>',
+            text: 'Öğrenci gelişimini izle, sınav ve okuma sonuçlarını kontrol et, dokümanlarını sınıf akışına hızlıca taşı.',
+            actions: [
+              { label: 'Öğretmen Paneli', href: panelHref },
+              { label: 'Sınıf Tahtası', href: '/sinif-tahtasi.html' },
+              { label: 'Sınav Yönetimi', href: '/sinav_sitesi/admin.html' },
+            ],
+          };
+        }
+        if (role === 'parent') {
+          return {
+            role,
+            kicker: firstName ? `Hoş geldin ${firstName}` : 'Veli takip alanın hazır',
+            titleHtml: 'Gelişimi <span>yakından takip et</span>',
+            text: 'Çocuğunun içeriklere, okuma çalışmalarına ve sınav akışına daha düzenli ulaşması için hızlı başlangıç noktaları burada.',
+            actions: [
+              { label: 'Veli Paneli', href: panelHref },
+              { label: 'Yeni İçerikler', href: '/yeni.html' },
+              { label: 'Hızlı Okuma', href: '/hizli-okuma/index.html' },
+            ],
+          };
+        }
+        if (role === 'student') {
+          return {
+            role,
+            kicker: firstName ? `Hoş geldin ${firstName}` : 'Öğrenci yol haritan hazır',
+            titleHtml: 'Kaldığın yerden <span>devam et</span>',
+            text: `${grade ? grade + '. sınıf içeriklerin, ' : ''}hızlı okuma, sınavlar ve eğitsel oyunlar tek ekranda seni bekliyor.`,
+            actions: [
+              { label: 'Öğrenci Paneli', href: panelHref },
+              { label: 'Sınıf İçeriklerim', href: grade ? `/ders.html?sinif=${encodeURIComponent(grade)}` : '/ders.html' },
+              { label: 'Sınav Çöz', href: '/sinav_sitesi/index.html' },
+            ],
+          };
+        }
+        return {
+          role: '',
+          kicker: 'Kemal Öğretmenim Eğitim Platformu',
+          titleHtml: 'Öğrenme yolunu <span>hemen seç</span>',
+          text: 'Hızlı okuma, sınavlar, dokümanlar ve eğitsel oyunlar tek yerde. Öğrenci çalışmaya başlar, öğretmen sınıfta kullanır, veli gelişimi takip eder.',
+          actions: [
+            { label: 'Öğrenci Paneli', href: '/ogrenci-paneli.html' },
+            { label: 'Hızlı Okuma', href: '/hizli-okuma/index.html' },
+            { label: 'Sınav Merkezi', href: '/sinav_sitesi/index.html' },
+          ],
+        };
+      }
+
+      function personalizeHeroRoadmap() {
+        renderHeroRoadmap(getHeroRoadmapConfig(null));
+        if (!window.kemalUserAuth || typeof window.kemalUserAuth.ready !== 'function') return;
+        window.kemalUserAuth.ready()
+          .then(state => renderHeroRoadmap(getHeroRoadmapConfig(state)))
+          .catch(() => renderHeroRoadmap(getHeroRoadmapConfig(null)));
+        window.addEventListener('kemal-user-auth-changed', () => {
+          const state = typeof window.kemalUserAuth.getState === 'function' ? window.kemalUserAuth.getState() : null;
+          renderHeroRoadmap(getHeroRoadmapConfig(state));
+        });
+      }
+
+      personalizeHeroRoadmap();
+
       function sanitizeVitrinHtml(value) {
         const template = document.createElement('template');
         template.innerHTML = String(value || '');
@@ -2571,6 +2994,7 @@
 
       const DEFAULT_HABERLER = [
         { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', kategori:'Hızlı Okuma', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün' },
+        { baslik:'Sınav Merkezi', aciklama:'Sınıfına uygun sınavları çöz, sonucunu ve gelişimini takip et.', kategori:'Sınav', link:'/sinav_sitesi/index.html', emoji:'📝', renk:'coral', tarih:'Güncel' },
         { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', kategori:'Platform', link:'/oyun/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
         { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', kategori:'Güncel', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
       ];
@@ -2580,7 +3004,7 @@
       function renderHeroLive(items) {
         const target = document.getElementById('heroLiveList');
         if (!target) return;
-        const list = (items && items.length ? items : liste).slice(0, 5);
+        const list = (items && items.length ? items : liste).slice(0, 4);
         if (!list.length) {
           target.innerHTML = '<div class="home-live-empty">Henüz gösterilecek güncel içerik yok.</div>';
           return;
@@ -2613,11 +3037,33 @@
           { id: 'examLiveList', type: 'exam', empty: 'Henüz yeni sınav yok.' },
           { id: 'gameLiveList', type: 'game', empty: 'Henüz yeni oyun yok.' },
         ];
+        const inferPlatformType = (item) => {
+          const direct = String(item && (item.type || item.contentType) || '').toLowerCase();
+          if (direct === 'reading' || direct === 'exam' || direct === 'game') return direct;
+          const text = [
+            item && item.kategori,
+            item && item.contentTypeLabel,
+            item && item.sourceLabel,
+            item && (item.title || item.baslik),
+            item && (item.href || item.link),
+          ].filter(Boolean).join(' ').toLocaleLowerCase('tr-TR');
+          if (/(sınav|sinav|test|quiz)/.test(text)) return 'exam';
+          if (/(oyun|game|duello)/.test(text)) return 'game';
+          if (/(okuma|hızlı|hizli|metin|parça|parca|hikaye)/.test(text)) return 'reading';
+          return '';
+        };
+        const seen = new Set();
+        const sourceItems = [...(items || []), ...liste].filter(item => {
+          const key = item && (item.id || item.uid || item.href || item.link || item.title || item.baslik);
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
 
         groups.forEach(group => {
           const target = document.getElementById(group.id);
           if (!target) return;
-          const list = (items || []).filter(item => item.type === group.type).slice(0, 4);
+          const list = sourceItems.filter(item => inferPlatformType(item) === group.type).slice(0, 5);
           if (!list.length) {
             target.innerHTML = `<div class="platform-live-empty">${esc(group.empty)}</div>`;
             return;

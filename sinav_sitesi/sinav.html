@@ -7,9 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="/js/site-data.js"></script>
 <script src="/js/user-auth.js"></script>
 <script src="/js/content-progress.js"></script>
+<script src="./js/exam-result-store.js?v=20260721-modular-1"></script>
 <style>
 :root{
   --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
@@ -81,27 +83,28 @@ body.theme-dark{
 .exam-section-banner{display:none;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:linear-gradient(135deg,#EFF6FF,#E0F2FE);border:1.5px solid #BFDBFE;color:#1D4ED8;font-size:13px;font-weight:800;box-shadow:0 8px 18px rgba(37,99,235,.08)}
 .exam-section-banner .section-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#2563EB}
 .question-media-shell{width:min(100%,1120px);display:flex;flex-direction:column;align-items:center;gap:12px}
-.toolbar-dock{position:absolute;top:0;left:0;z-index:25;display:flex;flex-direction:column;width:min(112px,calc(100% - 24px));border:1.5px solid var(--border);border-radius:26px;background:var(--panel-bg);box-shadow:0 16px 40px rgba(15,23,42,.12);backdrop-filter:blur(16px);overflow:visible;transform:translate3d(14px,14px,0);touch-action:none}
-.toolbar-dock.collapsed{width:auto;min-width:112px}
+.toolbar-dock{position:absolute;top:0;left:0;z-index:25;display:flex;flex-direction:column;width:min(88px,calc(100% - 24px));border:1.5px solid var(--border);border-radius:24px;background:var(--panel-bg);box-shadow:0 18px 44px rgba(15,23,42,.14);backdrop-filter:blur(18px);overflow:visible;transform:translate3d(14px,14px,0);touch-action:none}
+.toolbar-dock.collapsed{width:auto;min-width:88px}
 .toolbar-dock.is-dragging{box-shadow:0 22px 52px rgba(15,23,42,.18)}
-.toolbar-dock-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 10px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.08));cursor:grab}
+.toolbar-dock-head{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.1));cursor:grab}
 .toolbar-dock.collapsed .toolbar-dock-head{border-bottom:none}
 .toolbar-dock.is-dragging .toolbar-dock-head{cursor:grabbing}
-.toolbar-dock-title{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
-.toolbar-dock-head button{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:14px;font-weight:900;cursor:pointer;transition:all .18s}
+.toolbar-dock-title{display:inline-flex;align-items:center;justify-content:center;width:100%;gap:0;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
+.toolbar-dock-title span:last-child{display:none}
+.toolbar-dock-head button{position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:13px;font-weight:900;cursor:pointer;transition:all .18s}
 .toolbar-dock-head button:hover{border-color:var(--purple);color:var(--purple)}
-.toolbar-dock-body{padding:12px 10px;max-height:min(64vh,640px);overflow:auto}
+.toolbar-dock-body{padding:10px 8px;max-height:min(64vh,640px);overflow:auto}
 .toolbar-dock.collapsed .toolbar-dock-body{display:none}
-.drawing-toolbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-width:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;backdrop-filter:none}
+.drawing-toolbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;backdrop-filter:none}
 .toolbar-section{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-.tool-btn.compact{width:100%;min-height:56px;padding:8px 6px;flex-direction:column;justify-content:center;gap:4px;border-radius:18px}
-.tool-icon{font-size:19px;line-height:1}
-.tool-label-sm{font-size:10px;font-weight:900;letter-spacing:.04em;line-height:1.1;text-align:center}
+.tool-btn.compact{width:100%;min-height:50px;padding:8px 4px;flex-direction:column;justify-content:center;gap:4px;border-radius:16px}
+.tool-icon{font-size:18px;line-height:1}
+.tool-label-sm{font-size:9px;font-weight:900;letter-spacing:.04em;line-height:1.1;text-align:center}
 .tool-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px solid var(--border);border-radius:999px;background:var(--panel-surface);font-family:var(--fb);font-size:13px;font-weight:700;color:var(--slate);cursor:pointer;transition:all .18s}
 .tool-btn:hover{border-color:var(--purple);color:var(--purple)}
 .tool-btn.active{background:#EEF2FF;border-color:var(--purple);color:var(--purple-d);box-shadow:0 6px 18px rgba(108,61,237,.12)}
 .toolbar-divider{width:100%;height:1px;background:var(--border)}
-.toolbar-mini-label{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center}
+.toolbar-mini-label{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:center}
 .color-swatches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;justify-items:center;width:100%}
 .color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
 .color-swatch:hover{transform:translateY(-1px)}
@@ -112,18 +115,18 @@ body.theme-dark{
 .size-value{min-width:38px;font-size:12px;font-weight:700;color:var(--slate);text-align:center}
 .toolbar-dock .size-wrap input{width:100%}
 .zoom-stack{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-.zoom-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%}
-.zoom-btn{width:100%;min-height:42px;padding:0;border:1.5px solid var(--border);border-radius:14px;background:var(--panel-surface);font-family:var(--fd);font-size:20px;font-weight:900;color:var(--slate);cursor:pointer;transition:all .18s}
+.zoom-controls{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
+.zoom-btn{width:100%;min-height:38px;padding:0;border:1.5px solid var(--border);border-radius:12px;background:var(--panel-surface);font-family:var(--fd);font-size:20px;font-weight:900;color:var(--slate);cursor:pointer;transition:all .18s}
 .zoom-btn:hover{border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
-.zoom-value-pill{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:7px 10px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:12px;font-weight:900}
+.zoom-value-pill{display:inline-flex;align-items:center;justify-content:center;width:100%;min-width:0;padding:7px 8px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:11px;font-weight:900}
 .toolbar-action-stack{display:flex;flex-direction:column;gap:8px;width:100%}
-.pencil-panel{position:absolute;top:0;left:0;z-index:26;display:none;flex-direction:column;gap:12px;width:min(220px,calc(100% - 24px));padding:14px;border:1.5px solid var(--border);border-radius:24px;background:var(--panel-bg);box-shadow:0 18px 42px rgba(15,23,42,.16);backdrop-filter:blur(18px)}
+.pencil-panel{position:absolute;top:0;left:0;z-index:26;display:none;flex-direction:column;gap:12px;width:min(210px,calc(100% - 24px));padding:12px;border:1.5px solid var(--border);border-radius:22px;background:var(--panel-bg);box-shadow:0 18px 42px rgba(15,23,42,.16);backdrop-filter:blur(18px)}
 .pencil-panel.open{display:flex}
 .pencil-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .pencil-panel-title{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
 .pencil-panel-close{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:16px;font-weight:900;cursor:pointer;transition:all .18s}
 .pencil-panel-close:hover{border-color:var(--purple);color:var(--purple)}
-.pencil-panel .color-swatches{grid-template-columns:repeat(3,minmax(0,1fr))}
+.pencil-panel .color-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}
 .pencil-panel .size-wrap{align-items:stretch}
 .pencil-panel .size-wrap input{width:100%}
 .pencil-panel-note{font-size:11px;line-height:1.5;color:var(--muted)}
@@ -298,80 +301,118 @@ body.theme-dark .size-value{color:var(--muted)}
 .timeout-btn:hover{transform:translateY(-2px)}
 
 /* KARNE */
-#screenKarne{display:none;min-height:100vh;background:var(--cream)}
-.karne-topbar{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.ktb-left h2{font-family:var(--fd);font-size:18px;font-weight:800}
-.ktb-left p{font-size:13px;color:rgba(255,255,255,.6);margin-top:2px}
-.print-btn{padding:8px 18px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s}
+#screenKarne{display:none;min-height:100vh;background:linear-gradient(180deg,#EEF3FF 0%,#F9FBFF 45%,#F5F7FB 100%)}
+.karne-topbar{position:sticky;top:0;z-index:40;background:rgba(15,23,42,.96);color:#fff;padding:14px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;box-shadow:0 16px 34px rgba(15,23,42,.16);backdrop-filter:blur(14px)}
+.karne-topbar-copy{display:grid;gap:10px;min-width:0}
+.ktb-left h2{font-family:var(--fd);font-size:20px;font-weight:900}
+.ktb-left p{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px}
+.karne-topbar-meta{display:flex;gap:8px;flex-wrap:wrap}
+.karne-topbar-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);font-size:11px;font-weight:900;color:#fff;letter-spacing:.04em}
+.karne-actions-shell{display:flex;flex-direction:column;align-items:flex-end;gap:10px;min-width:min(100%,420px)}
+.karne-actions-row{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.karne-actions-note{font-size:12px;font-weight:700;color:rgba(255,255,255,.68);line-height:1.5;text-align:right}
+.print-btn{padding:9px 18px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
 .print-btn:hover{background:rgba(255,255,255,.25)}
 .print-btn[disabled]{opacity:.7;cursor:wait}
 .appeal-btn{padding:8px 18px;background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA;border-radius:50px;font-family:var(--fb);font-size:13px;font-weight:700;cursor:pointer;transition:all .18s}
 .appeal-btn:hover{background:#FEE2E2}
-.karne-body{max-width:1080px;margin:0 auto;padding:28px 24px}
-.karne-header{background:var(--white);border-radius:var(--r-xl);padding:24px;margin-bottom:20px;border:2px solid var(--border);display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.karne-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;color:#fff}
-.karne-student-info{flex:1}
-.karne-student-info h3{font-family:var(--fd);font-size:22px;font-weight:900;color:var(--navy)}
-.karne-student-info p{font-size:14px;color:var(--slate);margin-top:2px}
-.karne-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-.km-item{font-size:12px;color:var(--muted);background:var(--cream);padding:4px 10px;border-radius:50px;font-weight:600}
-.karne-spotlight{background:linear-gradient(135deg,#0F172A,#1E3A8A,#2563EB);border-radius:var(--r-xl);padding:24px 26px;margin-bottom:20px;color:#fff;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:18px;box-shadow:0 24px 40px rgba(30,64,175,.18)}
-.ksp-title{font-family:var(--fd);font-size:14px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.68);margin-bottom:10px}
-.ksp-headline{font-family:var(--fd);font-size:34px;font-weight:900;line-height:1.05;margin-bottom:10px}
-.ksp-text{font-size:14px;line-height:1.7;color:rgba(255,255,255,.84);max-width:560px}
-.ksp-score-panel{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;gap:16px}
-.ksp-score-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.16);font-size:12px;font-weight:800;width:max-content}
-.ksp-score-value{font-family:var(--fd);font-size:56px;font-weight:900;line-height:1;color:#fff}
-.ksp-score-sub{font-size:13px;color:rgba(255,255,255,.74);line-height:1.6}
-.ksp-mini-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.ks-mini{padding:12px 10px;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
-.ks-mini strong{display:block;font-family:var(--fd);font-size:20px;font-weight:900;color:#fff}
-.ks-mini span{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.64);text-transform:uppercase;letter-spacing:.06em}
-.karne-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
-.ks-card{background:var(--white);border-radius:var(--r-lg);padding:18px;text-align:center;border:2px solid var(--border)}
-.ks-n{font-family:var(--fd);font-size:32px;font-weight:900}
-.ks-l{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
-.karne-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
-.karne-card{background:var(--white);border-radius:var(--r-lg);padding:22px;border:2px solid var(--border)}
-.karne-card h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:16px}
-.chart-card{display:flex;flex-direction:column;justify-content:center;align-items:center}
-.chart-title-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.chart-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:12px;font-weight:800}
-.chart-frame{position:relative;width:100%;overflow:hidden}
+.karne-quicknav{position:sticky;top:88px;z-index:35;display:flex;gap:8px;flex-wrap:wrap;padding:12px 24px;background:rgba(238,243,255,.88);backdrop-filter:blur(12px);border-bottom:1px solid rgba(214,226,241,.9)}
+.karne-quicknav-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border:none;border-radius:999px;background:#fff;color:#334155;font-family:var(--fd);font-size:12px;font-weight:900;cursor:pointer;box-shadow:0 10px 18px rgba(15,23,42,.06);transition:transform .18s,box-shadow .18s,color .18s}
+.karne-quicknav-btn:hover{transform:translateY(-1px);box-shadow:0 14px 22px rgba(15,23,42,.10);color:#4338CA}
+.karne-body{padding:28px 24px 42px;display:flex;justify-content:center}
+.karne-sheet{width:min(1480px,calc(100vw - 32px));background:#fff;border:1px solid #D9E4F5;border-radius:30px;padding:24px;box-shadow:0 24px 60px rgba(15,23,42,.12)}
+.karne-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 22px;border-radius:26px;background:#102544;color:#fff;margin-bottom:14px}
+.karne-brand{display:flex;align-items:center;gap:18px;min-width:0}
+.karne-avatar{width:72px;height:72px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;color:#fff;background:linear-gradient(135deg,#3B82F6,#1D4ED8)}
+.karne-brand-copy{min-width:0}
+.karne-brand-title{font-family:var(--fd);font-size:28px;font-weight:900;letter-spacing:.02em;line-height:1.05}
+.karne-brand-sub{font-size:13px;line-height:1.6;color:rgba(255,255,255,.72);margin-top:6px}
+.karne-sheet-chip{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:18px;background:#3168F4;color:#fff;font-size:13px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.karne-info-grid{display:grid;grid-template-columns:1.15fr .56fr 1.2fr;gap:10px;margin-bottom:14px}
+.karne-info-row{display:grid;grid-template-columns:160px minmax(0,1fr);align-items:stretch;border:1px solid #D6E2F1;border-radius:16px;overflow:hidden;background:#fff}
+.karne-info-row.compact{grid-template-columns:118px minmax(0,1fr)}
+.karne-info-label{display:flex;align-items:center;padding:12px 16px;background:#ECF3FF;color:#2E63E6;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase}
+.karne-info-value{display:flex;align-items:center;padding:12px 16px;font-family:var(--fd);font-size:18px;font-weight:800;color:var(--navy);line-height:1.4}
+.karne-info-value.small{font-size:16px}
+.karne-info-span-2{grid-column:span 2}
+.save-status-card{margin:0 0 14px;padding:14px 16px;border-radius:18px;background:#fff;border:1px solid #D6E2F1;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;box-shadow:0 14px 28px rgba(15,23,42,.06)}
+.save-status-icon{width:40px;height:40px;border-radius:15px;display:grid;place-items:center;background:#EEF2FF;color:#4F46E5;font-size:20px;font-weight:900}
+.save-status-title{font-family:var(--fd);font-size:15px;font-weight:900;color:var(--navy);line-height:1.25}
+.save-status-text{margin-top:3px;font-size:12px;font-weight:700;line-height:1.5;color:var(--slate)}
+.save-status-card[data-state="saving"] .save-status-icon{background:#EFF6FF;color:#2563EB}
+.save-status-card[data-state="saved"] .save-status-icon{background:#DCFCE7;color:#15803D}
+.save-status-card[data-state="queued"] .save-status-icon{background:#FFF7ED;color:#C2410C}
+.save-status-card[data-state="error"] .save-status-icon{background:#FEE2E2;color:#DC2626}
+.karne-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.ks-card{border:1px solid #D6E2F1;border-radius:18px;overflow:hidden;background:#fff}
+.ks-head{display:flex;align-items:center;justify-content:center;padding:8px 10px;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#fff}
+.ks-body{display:flex;align-items:center;justify-content:center;min-height:72px;padding:12px 14px;background:#F8FBFF}
+.ks-n{font-family:var(--fd);font-size:36px;font-weight:900;line-height:1;color:var(--navy)}
+.ks-n.compact{font-size:30px}
+.karne-panels{display:grid;grid-template-columns:1.05fr 1.15fr 1.15fr;gap:12px;margin-bottom:14px}
+.karne-panel,.karne-section-block,.karne-question-block,.karne-feedback{border:1px solid #D6E2F1;border-radius:20px;background:#fff}
+.karne-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 18px;border-radius:20px 20px 0 0;background:#102544;color:#fff;font-family:var(--fd);font-size:14px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+.karne-panel-body{padding:16px}
+.chart-pill{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;background:#EEF3FF;color:#285FE5;font-size:11px;font-weight:900;letter-spacing:.03em}
+.distribution-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px;align-items:center}
+.donut-shell{position:relative;width:220px;height:220px;margin:0 auto}
+.chart-frame{position:relative;width:100%;height:100%}
 .chart-frame canvas{display:block!important;width:100%!important;height:100%!important}
-.chart-frame-donut{width:min(100%,220px);height:220px;max-width:220px;max-height:220px}
-.chart-frame-bars{height:280px;min-height:280px;max-height:280px}
-.karne-feedback{background:var(--white);border-radius:var(--r-lg);padding:24px;margin-bottom:20px;border:2px solid var(--border)}
-.karne-feedback h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.feedback-body{font-size:15px;color:var(--slate);line-height:1.8}
-.quote-box{margin-top:16px;padding:14px 16px;background:var(--cream);border-left:4px solid var(--purple);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;color:var(--slate);font-style:italic;line-height:1.6}
-.insight-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.insight-card{padding:16px;border-radius:18px;background:#F8FAFC;border:1px solid var(--border)}
-.insight-card h5{font-family:var(--fd);font-size:13px;font-weight:900;color:var(--navy);margin-bottom:8px}
-.insight-card p{font-size:13px;color:var(--slate);line-height:1.7}
-.section-list{display:flex;flex-direction:column;gap:12px}
-.section-item{padding:14px;border-radius:18px;background:#F8FAFC;border:1px solid var(--border)}
-.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
-.section-head strong{font-family:var(--fd);font-size:15px;font-weight:900;color:var(--navy)}
-.section-range{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.section-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--slate);margin-bottom:8px}
+.donut-center{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+.donut-center strong{font-family:var(--fd);font-size:24px;font-weight:900;color:#102544}
+.donut-center span{font-size:13px;font-weight:700;color:#64748B}
+.distribution-legend{display:grid;gap:12px}
+.distribution-item{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px;color:var(--navy)}
+.distribution-item strong{font-size:13px;font-weight:900}
+.distribution-dot{width:14px;height:14px;border-radius:50%}
+.distribution-foot{padding-top:12px;border-top:1px solid #E2E8F0;font-size:12px;line-height:1.7;color:#64748B}
+.metric-list{display:grid;gap:12px}
+.metric-row{display:grid;gap:8px}
+.metric-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--navy);font-weight:800}
+.metric-track{height:12px;border-radius:999px;background:#E2E8F0;overflow:hidden}
+.metric-fill{height:100%;border-radius:999px}
+.metric-note{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.metric-note span{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#F8FBFF;border:1px solid #D6E2F1;font-size:11px;font-weight:800;color:#475569}
+.analysis-stack{display:grid;gap:12px}
+.analysis-card{border-radius:16px;overflow:hidden;border:1px solid #D6E2F1;background:#fff}
+.analysis-card-head{padding:8px 14px;font-size:12px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:#fff}
+.analysis-card-body{padding:14px 16px;font-size:14px;line-height:1.55;color:var(--navy);font-weight:700;background:#FBFDFF}
+.analysis-card--strong .analysis-card-head{background:#1DBA83}
+.analysis-card--focus .analysis-card-head{background:#F59E0B}
+.analysis-card--goal .analysis-card-head{background:#EF4444}
+.karne-section-block{margin-bottom:14px}
+.section-performance-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:16px}
+.section-card{border:1px solid #D6E2F1;border-radius:18px;background:#F8FBFF;padding:14px}
+.section-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.section-card-title{font-family:var(--fd);font-size:15px;font-weight:900;color:var(--navy);line-height:1.25}
+.section-card-range{font-size:11px;font-weight:900;color:#64748B;letter-spacing:.05em;text-transform:uppercase}
+.section-card-score{display:inline-flex;align-items:center;justify-content:center;min-width:66px;height:38px;padding:0 12px;border-radius:12px;background:#EAF1FF;font-family:var(--fd);font-size:22px;font-weight:900;color:#285FE5}
+.section-card-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.section-card-meta span{padding:6px 9px;border-radius:999px;background:#fff;border:1px solid #D6E2F1;font-size:11px;font-weight:800;color:#475569}
 .section-bar{height:10px;border-radius:999px;background:#E2E8F0;overflow:hidden}
 .section-bar-fill{height:100%;border-radius:999px;background:linear-gradient(135deg,#2563EB,#38BDF8)}
-.outcome-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-.outcome-item{padding:12px 13px;border-radius:14px;background:#F8FAFC;border:1px solid var(--border)}
+.outcome-list{display:grid;gap:10px;padding:0 16px 16px}
+.outcome-item{padding:12px 14px;border-radius:14px;background:#F8FBFF;border:1px solid #D6E2F1}
 .outcome-title{font-size:13px;font-weight:800;line-height:1.45;color:var(--navy)}
 .outcome-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:11px;font-weight:800;color:var(--slate)}
-.outcome-meta span{padding:4px 8px;border-radius:999px;background:#fff;border:1px solid var(--border)}
-.karne-optic{background:var(--white);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;border:2px solid var(--border)}
-.karne-optic h4{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px}
+.outcome-meta span{padding:4px 8px;border-radius:999px;background:#fff;border:1px solid #D6E2F1}
+.karne-question-block{margin-bottom:14px}
+.question-grid-wrap{padding:16px}
 .ko-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap}
-.ko-leg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--slate)}
+.ko-leg{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--slate)}
 .ko-dot{width:14px;height:14px;border-radius:50%}
-.ko-grid{display:flex;flex-wrap:wrap;gap:6px}
-.ko-item{text-align:center;cursor:pointer;transition:all .18s}
-.ko-item:hover{transform:scale(1.1)}
-.ko-num{font-size:9px;color:var(--muted);margin-bottom:3px;font-weight:600}
-.ko-bub{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.ko-grid{display:grid;grid-template-columns:repeat(15,minmax(0,1fr));gap:8px}
+.ko-item{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:14px;border:1px solid #D6E2F1;background:#fff;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.ko-item:hover{transform:translateY(-1px);box-shadow:0 10px 18px rgba(15,23,42,.08);border-color:#AFC7F6}
+.ko-num{font-family:var(--fd);font-size:15px;font-weight:900;color:#2F63E7;min-width:16px}
+.ko-bub{margin-left:auto;min-width:34px;height:34px;padding:0 10px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900}
+.karne-feedback{padding:0;overflow:hidden}
+.feedback-strip{display:grid;grid-template-columns:220px minmax(0,1fr);align-items:stretch}
+.feedback-kicker{display:flex;align-items:center;padding:16px 18px;background:#EEF3FF;color:#2E63E6;font-family:var(--fd);font-size:14px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;border-right:1px solid #D6E2F1}
+.feedback-body{padding:16px 18px;font-size:15px;color:var(--navy);line-height:1.75;background:#F8FBFF}
+.sheet-footer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;margin-top:14px;padding:14px 18px;border-radius:20px;background:#102544;color:#fff;font-size:13px;font-weight:700}
+.sheet-footer div:last-child{text-align:right}
+.sheet-footer-center{justify-self:center;color:rgba(255,255,255,.76)}
 .appeal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin:18px 0 6px}
 .appeal-chip{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border-radius:16px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-family:var(--fb);font-size:13px;font-weight:800;color:var(--navy);transition:all .18s}
 .appeal-chip small{font-size:11px;font-weight:700;color:var(--muted)}
@@ -405,8 +446,8 @@ body.theme-dark .size-value{color:var(--muted)}
   .optic-drawer{display:flex}
   .exam-q-wrap{justify-content:flex-start;padding:10px 10px;gap:8px}
   .question-media-shell{width:100%}
-  .toolbar-dock{width:min(96px,calc(100% - 16px));transform:translate3d(8px,8px,0)}
-  .toolbar-dock.collapsed{width:auto;min-width:104px}
+  .toolbar-dock{width:min(82px,calc(100% - 16px));transform:translate3d(8px,8px,0)}
+  .toolbar-dock.collapsed{width:auto;min-width:82px}
   .question-status-strip{padding:10px 12px}
   .status-pills,.status-actions{width:100%}
   .exam-media-stage{width:100%;height:clamp(380px,calc(100dvh - 250px),620px);border-radius:18px;padding:7px}
@@ -416,20 +457,37 @@ body.theme-dark .size-value{color:var(--muted)}
   .exam-navrow{padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
   .exam-nav-main{max-width:none;width:100%}
   .finish-btn{margin-left:auto}
-  .karne-spotlight{grid-template-columns:1fr}
-  .ksp-mini-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .karne-stats{grid-template-columns:repeat(2,1fr)}
-  .karne-grid{grid-template-columns:1fr}
-  .karne-header{gap:14px}
-  .karne-body{padding:16px 14px}
-  .chart-frame-bars{height:250px;min-height:250px;max-height:250px}
-  .insight-grid{grid-template-columns:1fr}
+  .karne-topbar{padding:14px 16px}
+  .karne-topbar-copy,.karne-actions-shell{width:100%}
+  .karne-actions-shell{align-items:stretch}
+  .karne-actions-row{justify-content:flex-start}
+  .karne-actions-note{text-align:left}
+  .karne-quicknav{top:116px;padding:10px 12px;overflow:auto;flex-wrap:nowrap}
+  .karne-quicknav-btn{white-space:nowrap;flex:0 0 auto}
+  .karne-body{padding:16px 12px 30px}
+  .karne-sheet{width:min(100%,calc(100vw - 16px));padding:16px;border-radius:22px}
+  .karne-sheet-head{padding:16px;flex-direction:column;align-items:flex-start}
+  .karne-brand{gap:14px}
+  .karne-brand-title{font-size:22px}
+  .karne-info-grid{grid-template-columns:1fr}
+  .karne-info-span-2{grid-column:span 1}
+  .karne-info-row,.karne-info-row.compact{grid-template-columns:112px minmax(0,1fr)}
+  .karne-info-value{font-size:15px}
+  .karne-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .karne-panels{grid-template-columns:1fr}
+  .distribution-layout{grid-template-columns:1fr}
+  .distribution-legend{grid-template-columns:1fr}
+  .section-performance-grid{grid-template-columns:1fr}
+  .ko-grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .feedback-strip{grid-template-columns:1fr}
+  .feedback-kicker{border-right:none;border-bottom:1px solid #D6E2F1}
+  .sheet-footer{grid-template-columns:1fr;text-align:center}
+  .sheet-footer div:last-child,.sheet-footer-center{text-align:center;justify-self:center}
   .lb-hint{left:14px;right:68px;top:14px}
   .lb-controls{bottom:18px}
 }
 @media(max-width:480px){
   .modal-metrics{grid-template-columns:1fr}
-  .karne-stats{grid-template-columns:repeat(2,1fr)}
   .warn-card{padding:24px 20px}
   .tool-btn{padding:8px 12px}
   .exam-nav-btn{min-height:52px;font-size:15px}
@@ -439,22 +497,47 @@ body.theme-dark .size-value{color:var(--muted)}
   .question-status-strip{display:none}
   .question-hint{display:none}
   .exam-media-stage{height:clamp(380px,calc(100dvh - 218px),620px)}
-  .ksp-headline{font-size:28px}
-  .ksp-mini-stats{grid-template-columns:1fr}
-  .chart-frame-bars{height:220px;min-height:220px;max-height:220px}
+  .karne-stats{grid-template-columns:1fr}
+  .ko-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
   .lb-hint{font-size:11px;padding:8px 12px}
 }
+
+body.karne-export-mode #screenKarne{background:#fff!important}
+body.karne-export-mode .karne-body{padding:0!important}
+body.karne-export-mode .karne-sheet{width:1480px!important;min-height:1047px!important;border-radius:0!important;box-shadow:none!important;padding:32px!important}
+body.karne-export-mode .karne-sheet-head{flex-direction:row!important;align-items:center!important}
+body.karne-export-mode .karne-info-grid{grid-template-columns:1.15fr .56fr 1.2fr!important}
+body.karne-export-mode .karne-info-span-2{grid-column:span 2!important}
+body.karne-export-mode .karne-info-row,
+body.karne-export-mode .karne-info-row.compact{grid-template-columns:160px minmax(0,1fr)!important}
+body.karne-export-mode .karne-info-value{font-size:18px!important}
+body.karne-export-mode .karne-stats{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+body.karne-export-mode .karne-panels{grid-template-columns:1.05fr 1.15fr 1.15fr!important}
+body.karne-export-mode .distribution-layout{grid-template-columns:220px minmax(0,1fr)!important}
+body.karne-export-mode .section-performance-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+body.karne-export-mode .ko-grid{grid-template-columns:repeat(15,minmax(0,1fr))!important}
+body.karne-export-mode .feedback-strip{grid-template-columns:220px minmax(0,1fr)!important}
+body.karne-export-mode .feedback-kicker{border-right:1px solid #D6E2F1!important;border-bottom:none!important}
+body.karne-export-mode .sheet-footer{grid-template-columns:1fr auto 1fr!important;text-align:initial!important}
+body.karne-export-mode .sheet-footer-center{justify-self:center!important;text-align:center!important}
+body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
 
 /* PRINT */
 @media print{
   #screenWarn,#screenExam,#screenTimeout,#screenLoad{display:none!important}
   #screenKarne{display:block!important}
-  .karne-topbar .print-btn{display:none}
-  .karne-optic .ko-item{cursor:default}
+  .karne-topbar .print-btn,.karne-quicknav{display:none!important}
+  .save-status-card,.appeal-btn{display:none!important}
+  .ko-item{cursor:default}
   body{background:white!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .karne-body{max-width:100%;padding:16px}
-  .karne-feedback{break-inside:avoid}
+  #screenKarne{background:#fff!important}
+  .karne-body{padding:0!important}
+  .karne-sheet{width:297mm;min-height:210mm;border:none;box-shadow:none;border-radius:0;padding:8mm}
+  .karne-sheet-head,.karne-panel,.karne-section-block,.karne-question-block,.karne-feedback,.ks-card{break-inside:avoid}
+  .karne-sheet-chip{border-radius:14px}
+  .sheet-footer{margin-top:10px}
 }
+@page{size:A4 landscape;margin:0}
 </style>
 </head>
 <body>
@@ -656,73 +739,162 @@ body.theme-dark .size-value{color:var(--muted)}
 
 <div id="screenKarne" style="display:none">
   <div class="karne-topbar">
-    <div class="ktb-left">
-      <h2>📊 Sınav Karnesi</h2>
-      <p id="karneDate"></p>
+    <div class="karne-topbar-copy">
+      <div class="ktb-left">
+        <h2>📊 Sınav Karnesi</h2>
+        <p id="karneDate"></p>
+      </div>
+      <div class="karne-topbar-meta">
+        <span class="karne-topbar-pill">🧾 Tek sınav raporu</span>
+        <span class="karne-topbar-pill">📚 Bölüm bazlı analiz</span>
+        <span class="karne-topbar-pill">🖼 PNG · JPEG · PDF</span>
+      </div>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="appeal-btn" id="appealResultBtn" type="button" onclick="showAppealModal()" style="display:none">⚖️ Sonuca İtiraz Et</button>
-      <button class="print-btn" id="karnePngBtn" type="button" onclick="exportSingleKarneAsImage('png')">🖼️ PNG İndir</button>
-      <button class="print-btn" id="karneJpegBtn" type="button" onclick="exportSingleKarneAsImage('jpeg')">🖼️ JPEG İndir</button>
-      <button class="print-btn" onclick="window.print()">🖨️ PDF Çıktı Al</button>
-      <button class="print-btn" id="karneBackBtn" onclick="window.location.href='index.html'">← Ana Sayfa</button>
+    <div class="karne-actions-shell">
+      <div class="karne-actions-row">
+        <button class="appeal-btn" id="appealResultBtn" type="button" onclick="showAppealModal()" style="display:none">⚖️ Sonuca İtiraz Et</button>
+        <button class="print-btn" id="karnePngBtn" type="button" onclick="exportSingleKarneAsImage('png')">🖼️ PNG İndir</button>
+        <button class="print-btn" id="karneJpegBtn" type="button" onclick="exportSingleKarneAsImage('jpeg')">🖼️ JPEG İndir</button>
+        <button class="print-btn" id="karnePdfBtn" type="button" onclick="exportSingleKarneAsPdf()">📄 PDF Çıktı Al</button>
+        <button class="print-btn" id="karneBackBtn" onclick="window.location.href='index.html'">← Ana Sayfa</button>
+      </div>
+      <div class="karne-actions-note">Uzun raporda aşağıdaki hızlı geçiş düğmeleriyle ilgili bölümlere anında ulaşabilirsin.</div>
     </div>
   </div>
+  <div class="karne-quicknav">
+    <button class="karne-quicknav-btn" type="button" onclick="scrollKarneSection('singleKarneSheet')">🏁 Üst Bilgiler</button>
+    <button class="karne-quicknav-btn" type="button" onclick="scrollKarneSection('karneSummaryPanels')">📈 Grafikler</button>
+    <button class="karne-quicknav-btn" type="button" onclick="scrollKarneSection('karneSectionPerformance')">📚 Bölümler</button>
+    <button class="karne-quicknav-btn" type="button" onclick="scrollKarneSection('karneQuestionReview')">🧩 Sorular</button>
+    <button class="karne-quicknav-btn" type="button" onclick="scrollKarneSection('karneFeedbackSection')">💬 Genel Yorum</button>
+  </div>
   <div class="karne-body">
-    <div class="karne-header">
-      <div class="karne-avatar" id="karneAvatar">🎓</div>
-      <div class="karne-student-info">
-        <h3 id="karneStudentName"></h3>
-        <p id="karneStudentDetail"></p>
-        <div class="karne-meta" id="karneMeta"></div>
-      </div>
-    </div>
-    <div class="karne-spotlight" id="karneSpotlight"></div>
-    <div class="karne-stats" id="karneStats"></div>
-    <div class="karne-grid">
-      <div class="karne-card">
-        <h4>📈 Sonuç Özeti</h4>
-        <div id="scoreBars"></div>
-      </div>
-      <div class="karne-card chart-card">
-        <div class="chart-title-row">
-          <h4 style="margin-bottom:0">🎯 Cevap Dağılımı</h4>
-          <span class="chart-pill" id="karneStatusBadge"></span>
+    <div class="karne-sheet" id="singleKarneSheet">
+      <div class="karne-sheet-head">
+        <div class="karne-brand">
+          <div class="karne-avatar" id="karneAvatar">🎓</div>
+          <div class="karne-brand-copy">
+            <div class="karne-brand-title">SINAV BAŞARI KARNESİ</div>
+            <div class="karne-brand-sub" id="karneHeaderSubtitle">Öğrencinin performansını ölçen, karşılaştıran ve gelişim alanlarını görünür kılan ayrıntılı tek sınav raporu.</div>
+          </div>
         </div>
-        <div class="chart-frame chart-frame-donut">
-          <canvas id="donutChart"></canvas>
+        <div class="karne-sheet-chip" id="karneHeaderBadge">Tek Sınav Raporu</div>
+      </div>
+
+      <div class="karne-info-grid">
+        <div class="karne-info-row karne-info-span-2">
+          <div class="karne-info-label">Adı Soyadı</div>
+          <div class="karne-info-value" id="karneInfoName"></div>
+        </div>
+        <div class="karne-info-row compact">
+          <div class="karne-info-label">Sınıfı</div>
+          <div class="karne-info-value" id="karneInfoGrade"></div>
+        </div>
+        <div class="karne-info-row karne-info-span-2">
+          <div class="karne-info-label">Sınav</div>
+          <div class="karne-info-value small" id="karneInfoExam"></div>
+        </div>
+        <div class="karne-info-row">
+          <div class="karne-info-label">Okul</div>
+          <div class="karne-info-value small" id="karneInfoSchool"></div>
+        </div>
+        <div class="karne-info-row compact">
+          <div class="karne-info-label">Tarih</div>
+          <div class="karne-info-value" id="karneInfoDate"></div>
+        </div>
+        <div class="karne-info-row compact">
+          <div class="karne-info-label">Süre</div>
+          <div class="karne-info-value" id="karneInfoDuration"></div>
         </div>
       </div>
-    </div>
-    <div class="karne-grid">
-      <div class="karne-card">
-        <div class="chart-title-row">
-          <h4 style="margin-bottom:0">📚 Ders Bazlı Analiz</h4>
-          <span class="chart-pill">Grafikli Özet</span>
-        </div>
-        <div class="chart-frame chart-frame-bars">
-          <canvas id="sectionChart"></canvas>
+
+      <div class="save-status-card" id="examSaveStatus" data-state="saving" role="status" aria-live="polite">
+        <div class="save-status-icon" id="examSaveStatusIcon">⏳</div>
+        <div>
+          <div class="save-status-title" id="examSaveStatusTitle">Sonucun kaydediliyor</div>
+          <div class="save-status-text" id="examSaveStatusText">Sınav karnen hazırlandı; kayıt sistemiyle bağlantı kontrol ediliyor.</div>
         </div>
       </div>
-      <div class="karne-card">
-        <h4>🧭 Güçlü ve Gelişebilir Alanlar</h4>
-        <div class="insight-grid" id="karneInsights"></div>
-        <div class="section-list" id="karneSectionList"></div>
+
+      <div class="karne-stats" id="karneStats"></div>
+
+      <div class="karne-panels" id="karneSummaryPanels">
+        <section class="karne-panel">
+          <div class="karne-panel-head">
+            <span>Cevap Dağılımı</span>
+            <span class="chart-pill" id="karneStatusBadge"></span>
+          </div>
+          <div class="karne-panel-body distribution-layout">
+            <div class="donut-shell">
+              <div class="chart-frame">
+                <canvas id="donutChart"></canvas>
+              </div>
+              <div class="donut-center">
+                <strong id="donutCenterValue">%0</strong>
+                <span id="donutCenterLabel">başarı</span>
+              </div>
+            </div>
+            <div class="distribution-legend" id="karneDistributionLegend"></div>
+          </div>
+        </section>
+
+        <section class="karne-panel">
+          <div class="karne-panel-head">
+            <span>Puan Özeti</span>
+            <span class="chart-pill" id="karnePointBadge">100'lük Ölçek</span>
+          </div>
+          <div class="karne-panel-body">
+            <div class="metric-list" id="scoreBars"></div>
+          </div>
+        </section>
+
+        <section class="karne-panel">
+          <div class="karne-panel-head">
+            <span>Sınav Analizi</span>
+            <span class="chart-pill">Yorumlu Özet</span>
+          </div>
+          <div class="karne-panel-body">
+            <div class="analysis-stack" id="karneInsights"></div>
+          </div>
+        </section>
       </div>
-    </div>
-    <div class="karne-feedback">
-      <h4>💬 Değerlendirme</h4>
-      <div class="feedback-body" id="feedbackBody"></div>
-    </div>
-    <div class="karne-optic">
-      <h4>🔍 Soru İnceleme</h4>
-      <div class="ko-legend">
-        <div class="ko-leg"><div class="ko-dot" style="background:var(--green)"></div>Doğru</div>
-        <div class="ko-leg"><div class="ko-dot" style="background:var(--red)"></div>Yanlış</div>
-        <div class="ko-leg"><div class="ko-dot" style="background:var(--border)"></div>Boş</div>
+
+      <section class="karne-section-block" id="karneSectionPerformance">
+        <div class="karne-panel-head">
+          <span>Ders / Bölüm Performansı</span>
+          <span class="chart-pill">Konu Bazlı Görünüm</span>
+        </div>
+        <div class="section-performance-grid" id="karneSectionList"></div>
+        <div class="outcome-list" id="karneOutcomeList" style="display:none"></div>
+      </section>
+
+      <section class="karne-question-block" id="karneQuestionReview">
+        <div class="karne-panel-head">
+          <span>Soru Bazlı Değerlendirme</span>
+          <span class="chart-pill">İncelemek için tıkla</span>
+        </div>
+        <div class="question-grid-wrap">
+          <div class="ko-legend">
+            <div class="ko-leg"><div class="ko-dot" style="background:var(--green)"></div>Doğru</div>
+            <div class="ko-leg"><div class="ko-dot" style="background:var(--red)"></div>Yanlış</div>
+            <div class="ko-leg"><div class="ko-dot" style="background:#94A3B8"></div>Boş</div>
+          </div>
+          <div class="ko-grid" id="karneOptic"></div>
+        </div>
+      </section>
+
+      <section class="karne-feedback" id="karneFeedbackSection">
+        <div class="feedback-strip">
+          <div class="feedback-kicker">Genel Değerlendirme</div>
+          <div class="feedback-body" id="feedbackBody"></div>
+        </div>
+      </section>
+
+      <div class="sheet-footer">
+        <div>kemalogretmenim.com.tr</div>
+        <div class="sheet-footer-center">Doğru: yeşil &nbsp;|&nbsp; Yanlış: kırmızı &nbsp;|&nbsp; Boş: gri</div>
+        <div id="karneFooterTag">Öğrencinin gelişimini görünür kılan ölçme ve değerlendirme</div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Yanlış veya boş bıraktığın soruya tıklayarak soruyu inceleyebilirsin.</p>
-      <div class="ko-grid" id="karneOptic"></div>
     </div>
   </div>
 </div>
@@ -820,6 +992,43 @@ function isTeacherSession(){
   return !!(auth&&auth.profile&&auth.profile.role==='teacher');
 }
 
+function getExamResultStore(){
+  if(!window.KemalExamResultStore){
+    throw new Error('Sınav sonuç kayıt modülü yüklenemedi.');
+  }
+  return window.KemalExamResultStore;
+}
+
+function getExamAttemptId(){
+  return getExamResultStore().getAttemptId();
+}
+
+function resetExamAttemptId(){
+  return getExamResultStore().resetAttemptId();
+}
+
+function queuePendingExamResult(result){
+  return getExamResultStore().queueResult(result);
+}
+
+window.scrollKarneSection=function(targetId){
+  const target=document.getElementById(targetId);
+  if(!target)return;
+  target.scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+async function flushPendingExamResults(skipAttemptId=''){
+  return getExamResultStore().flushPendingResults(skipAttemptId);
+}
+
+window.KemalExamResultStore.configure({
+  db,
+  addDoc,
+  collection,
+  serverTimestamp,
+  isTeacherSession
+});
+
 function markExamCompleted(result){
   if(isAdminKarneMode()||!window.kemalContentProgress||!result||!result.examId) return;
   window.kemalContentProgress.markCompleted({
@@ -842,11 +1051,13 @@ function markExamCompleted(result){
       duration:result.duration||0,
       date:result.date||new Date().toLocaleDateString('tr-TR'),
       resultId:result.resultId||'',
+      clientAttemptId:result.clientAttemptId||'',
       negativeMarking:!!result.negativeMarking,
       answerDetails:Array.isArray(result.answerDetails)?result.answerDetails:[],
       questionSections:Array.isArray(result.questionSections)?result.questionSections:[],
       resultSnapshot:{
         resultId:result.resultId||'',
+        clientAttemptId:result.clientAttemptId||'',
         accountUid:result.accountUid||'',
         email:result.email||'',
         firstName:result.firstName||'',
@@ -995,6 +1206,7 @@ function buildResultSnapshot(status='completed'){
   const elapsed=P.exam.duration>0?(P.exam.duration*60-P.timeLeft):0;
   return{
     resultId:P.result?.resultId||'',
+    clientAttemptId:getExamAttemptId(),
     accountUid:P.student.accountUid||P.student.userId||'',
     email:P.student.email||'',
     firstName:P.student.firstName,
@@ -1083,6 +1295,63 @@ function getResultQuestionEntries(result){
 function toast(msg,type='success'){
   const el=document.createElement('div');el.className=`toast toast-${type}`;el.textContent=msg;
   document.getElementById('toastWrap').appendChild(el);setTimeout(()=>el.remove(),3000);
+}
+
+function setExamSaveStatus(state,title,text){
+  const card=document.getElementById('examSaveStatus');
+  if(!card) return;
+  const icon=document.getElementById('examSaveStatusIcon');
+  const titleEl=document.getElementById('examSaveStatusTitle');
+  const textEl=document.getElementById('examSaveStatusText');
+  const icons={saving:'⏳',saved:'✅',queued:'📡',error:'⚠️'};
+  card.dataset.state=state||'saving';
+  if(icon) icon.textContent=icons[state]||icons.saving;
+  if(titleEl) titleEl.textContent=title||'Sonuç kaydı kontrol ediliyor';
+  if(textEl) textEl.textContent=text||'';
+}
+
+function getPendingExamResultCount(){
+  try{
+    const store=getExamResultStore();
+    return typeof store.getPendingResults==='function'?store.getPendingResults().length:0;
+  }catch(error){
+    return 0;
+  }
+}
+
+function isExamResultQueued(result){
+  if(!result||!result.clientAttemptId) return false;
+  try{
+    const store=getExamResultStore();
+    const pending=typeof store.getPendingResults==='function'?store.getPendingResults():[];
+    return pending.some(item=>String(item&&item.clientAttemptId||'')===String(result.clientAttemptId||''));
+  }catch(error){
+    return false;
+  }
+}
+
+function setExamSaving(){
+  setExamSaveStatus('saving','Sonucun kaydediliyor','Sınav sonucun güvenli şekilde sisteme gönderiliyor.');
+}
+
+function setExamSaved(result,clearedCount=0){
+  const id=result&&result.resultId?String(result.resultId):'';
+  setExamSaveStatus(
+    'saved',
+    'Sonucun sisteme kaydedildi',
+    (clearedCount>0?'Ayrıca cihazda bekleyen '+clearedCount+' eski sınav sonucu da gönderildi. ':'')+
+    (id?'Kayıt numarası: '+id:'Sınav sonucun güvenli şekilde işlendi.')
+  );
+}
+
+function setExamQueued(){
+  const pendingCount=getPendingExamResultCount();
+  setExamSaveStatus(
+    'queued',
+    'Sonucun cihazda güvende',
+    'Bağlantı veya izin sorunu nedeniyle sonuç şimdilik cihazda bekliyor; sayfa tekrar açıldığında otomatik gönderilecek.'+
+    (pendingCount?' Bekleyen kayıt sayısı: '+pendingCount+'.':'')
+  );
 }
 
 function escHtml(value){
@@ -2047,6 +2316,7 @@ async function init(){
     await openAdminKarne();
     return;
   }
+  flushPendingExamResults().catch(error=>console.warn('Bekleyen sınav sonuçları gönderilemedi:',error));
   const student=JSON.parse(sessionStorage.getItem('sinav_student')||'null');
   const examId=getSearchParams().get('examId')||sessionStorage.getItem('sinav_examId');
   if(!student||!examId){window.location.href='index.html';return;}
@@ -2110,6 +2380,7 @@ function renderWarning(){
 }
 
 window.beginExam=function(){
+  resetExamAttemptId();
   renderExamUI();
   showScreen('screenExam');
   requestAnimationFrame(syncDrawingSurface);
@@ -2441,10 +2712,15 @@ function updateTimerUI(){
 async function timeUp(){
   clearInterval(P.timer);
   const result=calcResult();
+  setExamSaving();
   try{
     await persistResultRecord(result);
+    setExamSaved(result);
   }catch(error){
     console.error(error);
+    queuePendingExamResult(result);
+    setExamQueued();
+    toast('Süre doldu; sonuç karneye işlendi ve bağlantı düzelince otomatik tekrar gönderilecek.','error');
   }
   markExamCompleted(result);
   showScreen('screenTimeout');
@@ -2505,109 +2781,23 @@ function calcResult(){
   return P.result;
 }
 
-async function persistResultRecord(result){
-  if(isTeacherSession()){
-    result.resultId='teacher-preview-'+Date.now();
-    return result.resultId;
-  }
-  const basePayload={
-    firstName:result.firstName,
-    lastName:result.lastName,
-    grade:parseInt(result.grade,10)||result.grade,
-    sube:result.sube,
-    subject:result.subject,
-    examTitle:result.examTitle,
-    examId:result.examId,
-    correct:result.correct,
-    wrong:result.wrong,
-    blank:result.blank,
-    netCorrect:result.netCorrect,
-    score:result.score,
-    total:result.total,
-    negativeMarking:result.negativeMarking||false,
-    elapsed:result.elapsed,
-    date:serverTimestamp()
-  };
-  const payloadAttempts=[
-    {
-      name:'modern',
-      data:{
-        ...basePayload,
-        accountUid:result.accountUid||'',
-        email:result.email||'',
-        studentKey:result.studentKey,
-        score100:result.score100,
-        examScore:result.examScore,
-        scoreScale:result.scoreScale,
-        answerDetails:result.answerDetails||[],
-        questionSections:result.questionSections||[]
-      }
-    },
-    {
-      name:'legacy-v3',
-      data:{
-        ...basePayload,
-        answerDetails:result.answerDetails||[],
-        studentKey:result.studentKey||'',
-        questionSections:result.questionSections||[]
-      }
-    },
-    {
-      name:'legacy-v2',
-      data:{
-        ...basePayload,
-        answerDetails:result.answerDetails||[]
-      }
-    },
-    {
-      name:'legacy-v1',
-      data:{
-        ...basePayload,
-        accountUid:result.accountUid||'',
-        email:result.email||'',
-        studentKey:result.studentKey,
-        answerDetails:result.answerDetails||[],
-        questionSections:result.questionSections||[]
-      }
-    },
-    {
-      name:'legacy-v0',
-      data:{...basePayload}
-    }
-  ];
-  let lastError=null;
-  for(const attempt of payloadAttempts){
-    try{
-      const resultRef=await addDoc(collection(db,'results'),attempt.data);
-      result.resultId=resultRef.id;
-      if(attempt.name!=='modern'){
-        console.warn(`Sonuç kaydı ${attempt.name} uyumluluk moduyla oluşturuldu.`);
-      }
-      return resultRef.id;
-    }catch(error){
-      lastError=error;
-      const code=String(error?.code||'').trim().toLowerCase();
-      const message=String(error?.message||'').toLowerCase();
-      const canRetryLegacy=
-        code==='permission-denied'
-        || message.includes('missing or insufficient permissions')
-        || message.includes('permission denied');
-      if(!canRetryLegacy) throw error;
-      console.warn(`Sonuç kaydı ${attempt.name} şemasıyla reddedildi, sonraki uyumluluk katmanı deneniyor.`,error);
-    }
-  }
-  throw lastError||new Error('Sonuç kaydı oluşturulamadı.');
+async function persistResultRecord(result,options={}){
+  return getExamResultStore().persistResultRecord(result,options);
 }
 
 window.finishExam=async function(){
   clearInterval(P.timer);
   const r=calcResult();
+  setExamSaving();
 
   try{
     await persistResultRecord(r);
+    setExamSaved(r);
   }catch(error){
     console.error(error);
-    toast('Sonuç kaydı oluşturulamadı. Karne görüntülendi ancak itiraz gönderimi bu oturumda kapalı olabilir.','error');
+    queuePendingExamResult(r);
+    setExamQueued();
+    toast('Sonuç kaydı şu an gönderilemedi; karne korunuyor ve sonuç daha sonra otomatik tekrar gönderilecek.','error');
   }
 
   markExamCompleted(r);
@@ -2727,10 +2917,13 @@ function renderKarne(){
   const completionRate=totalQuestions?Math.round(((totalQuestions-r.blank)/totalQuestions)*100):0;
   const strongest=[...sectionSummary].sort((a,b)=>b.score-a.score||b.correct-a.correct)[0]||null;
   const focus=[...sectionSummary].sort((a,b)=>a.score-b.score||b.blank-a.blank)[0]||null;
+  const topOutcome=[...outcomeSummary].sort((a,b)=>a.score-b.score||b.blank-a.blank)[0]||null;
   const formattedExamScore=formatExamScoreValue(
     Number.isFinite(Number(r.examScore))?r.examScore:r.score,
     r.scoreScale||100
   );
+  const durationText=P.exam?.duration>0?`${P.exam.duration} dakika`:fmtElapsed(r.elapsed);
+  const generalMessage=generateFeedback(r.firstName,r.grade,r.subject,r.score,r.correct,r.wrong,r.blank,r.total);
   const backBtn=document.getElementById('karneBackBtn');
   const appealBtn=document.getElementById('appealResultBtn');
   if(backBtn){
@@ -2745,179 +2938,190 @@ function renderKarne(){
   if(appealBtn){
     appealBtn.style.display=!isAdminKarneMode()&&!!r.resultId?'inline-flex':'none';
   }
-  
-  // Tarih
+  if(isAdminKarneMode()||isTeacherSession()){
+    setExamSaveStatus('saved','Öğretmen önizlemesi','Bu karne kontrol amacıyla açıldı; öğrenci adına yeni sonuç kaydı oluşturulmadı.');
+  }else if(r.resultId){
+    setExamSaved(r);
+  }else if(isExamResultQueued(r)){
+    setExamQueued();
+  }else{
+    setExamSaveStatus('saving','Sonuç kaydı kontrol ediliyor','Kayıt numarası hazırlanıyor; birkaç saniye içinde durum güncellenecek.');
+  }
+
   document.getElementById('karneDate').textContent=r.date;
-  
-  // Öğrenci Bilgileri
+
   const av=document.getElementById('karneAvatar');
-  av.style.background=gc.bg;av.textContent='🎓';
-  document.getElementById('karneStudentName').textContent=`${r.firstName} ${r.lastName}`;
-  document.getElementById('karneStudentDetail').textContent=formatStudentMetaLine(r);
-  document.getElementById('karneMeta').innerHTML=`
-    <span class="km-item">📝 ${r.examTitle}</span>
-    <span class="km-item">📚 ${r.subject}</span>
-    <span class="km-item">⏱ ${fmtElapsed(r.elapsed)}</span>
-    <span class="km-item">💯 ${formattedExamScore}</span>
-    ${r.negativeMarking?'<span class="km-item" style="background:#FEF2F2;color:var(--red)">⚠️ Puan Kesintili</span>':''}`;
-  document.getElementById('karneSpotlight').innerHTML=`
-    <div>
-      <div class="ksp-title">Genel Görünüm</div>
-      <div class="ksp-headline">${scoreMeta.headline}</div>
-      <div class="ksp-text">${escHtml(r.firstName)} için hazırlanan bu ayrıntılı karne; başarı yüzdesini, net durumunu, ders bazlı performansı ve soru inceleme alanlarını birlikte gösterir. ${strongest?`Bugünkü en güçlü alanı <strong>${escHtml(strongest.label)}</strong>.`:''} ${focus&&focus.score<strongest?.score?`Tekrar önceliği olarak <strong>${escHtml(focus.label)}</strong> bölümü öne çıkıyor.`:''}</div>
-    </div>
-    <div class="ksp-score-panel">
-      <div>
-        <span class="ksp-score-badge">${scoreMeta.icon} ${scoreMeta.label}</span>
-        <div class="ksp-score-value">%${r.score}</div>
-        <div class="ksp-score-sub">${totalQuestions} soruda ${r.correct} doğru, ${r.wrong} yanlış ve ${r.blank} boş ile sınav tamamlandı. Sınav puanı <strong>${formattedExamScore}</strong>.</div>
-      </div>
-      <div class="ksp-mini-stats">
-        <div class="ks-mini"><strong>${r.netCorrect}</strong><span>Net</span></div>
-        <div class="ks-mini"><strong>%${completionRate}</strong><span>Tamamlama</span></div>
-        <div class="ks-mini"><strong>${sectionSummary.length}</strong><span>Bölüm</span></div>
-      </div>
-    </div>`;
-  
-  // İstatistikler
+  av.style.background=gc.bg;
+  av.textContent=(String(r.firstName||'Ö').trim().charAt(0)||'Ö').toUpperCase();
+  document.getElementById('karneHeaderSubtitle').textContent=`Öğrencinin performansını ölçen, karşılaştıran ve gelişim alanlarını görünür kılan ayrıntılı tek sınav raporu.`;
+  document.getElementById('karneHeaderBadge').textContent='Tek Sınav Raporu';
+  document.getElementById('karneInfoName').textContent=`${r.firstName} ${r.lastName}`;
+  document.getElementById('karneInfoGrade').textContent=`${r.grade}. Sınıf${r.sube?` ${r.sube}`:''}`;
+  document.getElementById('karneInfoSchool').textContent=`${r.schoolName||'Okul bilgisi girilmedi'}`;
+  document.getElementById('karneInfoExam').textContent=`${r.examTitle}`;
+  document.getElementById('karneInfoDate').textContent=r.date;
+  document.getElementById('karneInfoDuration').textContent=durationText;
+  document.getElementById('karneFooterTag').textContent=strongest
+    ? `${strongest.label} alanındaki performans öne çıktı, ${focus&&focus.label!==strongest.label?focus.label:'öncelikli tekrar'} bölümü sonraki çalışma için hedeflenebilir.`
+    : 'Öğrencinin gelişimini görünür kılan ölçme ve değerlendirme';
+
   const scoreColor=r.score>=70?'var(--green)':r.score>=50?'var(--yellow)':'var(--red)';
   document.getElementById('karneStats').innerHTML=`
-    <div class="ks-card"><div class="ks-n" style="color:var(--green)">${r.correct}</div><div class="ks-l">Doğru (D)</div></div>
-    <div class="ks-card"><div class="ks-n" style="color:var(--red)">${r.wrong}</div><div class="ks-l">Yanlış (Y)</div></div>
-    <div class="ks-card"><div class="ks-n" style="color:var(--muted)">${r.blank}</div><div class="ks-l">Boş (B)</div></div>
-    <div class="ks-card"><div class="ks-n" style="color:#2563EB">${formatExamScoreValue(r.examScore,r.scoreScale)}</div><div class="ks-l">Sınav Puanı</div></div>
-    <div class="ks-card"><div class="ks-n" style="color:${scoreColor}">${r.score}%</div><div class="ks-l">Başarı (%)</div></div>`;
-  
-  // İlerleme Barları
+    <div class="ks-card">
+      <div class="ks-head" style="background:#1DBA83">Doğru</div>
+      <div class="ks-body" style="background:#ECFDF5"><div class="ks-n" style="color:#059669">${r.correct}</div></div>
+    </div>
+    <div class="ks-card">
+      <div class="ks-head" style="background:#F04444">Yanlış</div>
+      <div class="ks-body" style="background:#FEF2F2"><div class="ks-n" style="color:#EF4444">${r.wrong}</div></div>
+    </div>
+    <div class="ks-card">
+      <div class="ks-head" style="background:#64748B">Boş</div>
+      <div class="ks-body" style="background:#F1F5F9"><div class="ks-n" style="color:#64748B">${r.blank}</div></div>
+    </div>
+    <div class="ks-card">
+      <div class="ks-head" style="background:#3168F4">Net</div>
+      <div class="ks-body" style="background:#EEF4FF"><div class="ks-n" style="color:#3168F4">${String(r.netCorrect).replace('.',',')}</div></div>
+    </div>
+    <div class="ks-card">
+      <div class="ks-head" style="background:#102544">Sınav Puanı</div>
+      <div class="ks-body" style="background:#F8FAFC"><div class="ks-n compact" style="color:#102544">${formattedExamScore}</div></div>
+    </div>`;
+
   const dPct=totalQuestions?Math.round(r.correct/totalQuestions*100):0;
   const yPct=totalQuestions?Math.round(r.wrong/totalQuestions*100):0;
   const bPct=totalQuestions?Math.round(r.blank/totalQuestions*100):0;
   document.getElementById('scoreBars').innerHTML=`
-    <div class="sb-label"><span>✅ Doğru</span><span>${r.correct} soru (${dPct}%)</span></div>
-    <div class="sb-track"><div class="sb-fill" style="width:${dPct}%;background:var(--green)"></div></div>
-    <div class="sb-label"><span>❌ Yanlış</span><span>${r.wrong} soru (${yPct}%)</span></div>
-    <div class="sb-track"><div class="sb-fill" style="width:${yPct}%;background:var(--red)"></div></div>
-    <div class="sb-label"><span>⭕ Boş</span><span>${r.blank} soru (${bPct}%)</span></div>
-    <div class="sb-track"><div class="sb-fill" style="width:${bPct}%;background:var(--muted)"></div></div>
-    <div class="sb-label"><span>🧩 Tamamlama</span><span>%${completionRate}</span></div>
-    <div class="sb-track"><div class="sb-fill" style="width:${completionRate}%;background:#2563EB"></div></div>
-    <div style="margin-top:12px;padding:10px;background:#F8FAFC;border-radius:8px;font-size:13px;font-weight:700;color:var(--navy)">💯 Bu sınavın puan karşılığı: <strong>${formattedExamScore}</strong></div>
-    ${r.negativeMarking?`<div style="margin-top:12px;padding:10px;background:#FEF2F2;border-radius:8px;font-size:13px;font-weight:600;color:var(--red)">⚠️ Net puan hesaplaması: ${r.correct}D - ${Math.floor(r.wrong/3)}Y = <strong>${r.netCorrect} Net Doğru</strong></div>`:`<div style="margin-top:12px;padding:10px;background:#EFF6FF;border-radius:8px;font-size:13px;font-weight:600;color:#1D4ED8">📌 Bu sınavda net puanın doğrudan doğru sayın üzerinden hesaplandı: <strong>${r.netCorrect} net</strong></div>`}`;
+    <div class="metric-row">
+      <div class="metric-top"><span>Başarı Yüzdesi</span><strong>%${r.score}</strong></div>
+      <div class="metric-track"><div class="metric-fill" style="width:${r.score}%;background:${scoreColor}"></div></div>
+    </div>
+    <div class="metric-row">
+      <div class="metric-top"><span>Tamamlama Oranı</span><strong>%${completionRate}</strong></div>
+      <div class="metric-track"><div class="metric-fill" style="width:${completionRate}%;background:#3168F4"></div></div>
+    </div>
+    <div class="metric-row">
+      <div class="metric-top"><span>Doğru Oranı</span><strong>%${dPct}</strong></div>
+      <div class="metric-track"><div class="metric-fill" style="width:${dPct}%;background:#1DBA83"></div></div>
+    </div>
+    <div class="metric-row">
+      <div class="metric-top"><span>Net Performans</span><strong>${String(r.netCorrect).replace('.',',')} net</strong></div>
+      <div class="metric-track"><div class="metric-fill" style="width:${Math.max(0,Math.min(100,totalQuestions?Math.round((r.netCorrect/totalQuestions)*100):0))}%;background:#102544"></div></div>
+    </div>
+    <div class="metric-note">
+      <span>💯 ${formattedExamScore}</span>
+      <span>🧩 ${sectionSummary.length} bölüm</span>
+      <span>⏱ ${fmtElapsed(r.elapsed)}</span>
+      ${r.negativeMarking?`<span>⚠️ 3 yanlış 1 doğru götürür</span>`:`<span>📘 Yanlış götürme yok</span>`}
+    </div>`;
   const statusBadge=document.getElementById('karneStatusBadge');
   statusBadge.textContent=`${scoreMeta.icon} ${scoreMeta.label}`;
   statusBadge.style.background=scoreMeta.bg;
   statusBadge.style.color=scoreMeta.color;
-  
-  // Yuvarlak Grafik (Donut Chart)
+  document.getElementById('karnePointBadge').textContent=`Puan Ölçeği ${r.scoreScale||100}`;
+  document.getElementById('donutCenterValue').textContent=`%${r.score}`;
+  document.getElementById('donutCenterLabel').textContent='başarı';
+  document.getElementById('karneDistributionLegend').innerHTML=`
+    <div class="distribution-item">
+      <span class="distribution-dot" style="background:#1DBA83"></span>
+      <span><strong>Doğru</strong></span>
+      <span>${r.correct} soru</span>
+    </div>
+    <div class="distribution-item">
+      <span class="distribution-dot" style="background:#F04444"></span>
+      <span><strong>Yanlış</strong></span>
+      <span>${r.wrong} soru</span>
+    </div>
+    <div class="distribution-item">
+      <span class="distribution-dot" style="background:#64748B"></span>
+      <span><strong>Boş</strong></span>
+      <span>${r.blank} soru</span>
+    </div>
+    <div class="distribution-foot">
+      Tamamlama: <strong>%${completionRate}</strong><br>
+      ${r.negativeMarking?`Yanlış götürme: <strong>3 yanlış = 1 doğru</strong>`:`Yanlış götürme uygulanmayan bir sınav`}<br>
+      Sınav puanı: <strong>${formattedExamScore}</strong>
+    </div>`;
+
+  if(sectionChartInstance){
+    sectionChartInstance.destroy();
+    sectionChartInstance=null;
+  }
   setTimeout(()=>{
     const ctx=document.getElementById('donutChart').getContext('2d');
     if(donutChartInstance) donutChartInstance.destroy();
     donutChartInstance=new Chart(ctx,{type:'doughnut',data:{
       labels:['Doğru','Yanlış','Boş'],
-      datasets:[{data:[r.correct,r.wrong,r.blank],backgroundColor:['#10B981','#EF4444','#CBD5E0'],borderWidth:3,borderColor:'#fff',hoverBorderColor:'#fff'}]
-    },options:{responsive:true,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} soru`}}}}});
-    const sectionCtx=document.getElementById('sectionChart').getContext('2d');
-    if(sectionChartInstance) sectionChartInstance.destroy();
-    sectionChartInstance=new Chart(sectionCtx,{
-      type:'bar',
-      data:{
-        labels:sectionSummary.map(item=>item.label),
-        datasets:[{
-          label:'Başarı (%)',
-          data:sectionSummary.map(item=>item.score),
-          backgroundColor:sectionSummary.map(item=>getBarColor(item.score)),
-          borderRadius:10,
-          borderSkipped:false
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        indexAxis:'y',
-        scales:{
-          x:{beginAtZero:true,max:100,grid:{color:'rgba(148,163,184,.18)'},ticks:{callback:value=>value+'%'}},
-          y:{grid:{display:false}}
-        },
-        plugins:{
-          legend:{display:false},
-          tooltip:{callbacks:{label:context=>`${context.raw}% başarı`}}
-        }
-      }
-    });
+      datasets:[{data:[r.correct,r.wrong,r.blank],backgroundColor:['#1DBA83','#F04444','#64748B'],borderWidth:5,borderColor:'#fff',hoverBorderColor:'#fff'}]
+    },options:{responsive:true,maintainAspectRatio:false,cutout:'63%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} soru`}}}}});
   },100);
-  
-  // Akıllı ve Samimi Dönüt
-  const fb=generateFeedback(r.firstName,r.grade,r.subject,r.score,r.correct,r.wrong,r.blank,r.total);
-  const sectionCoach=focus&&sectionSummary.length>1
-    ? `<br><br><strong>Ders bazlı öneri:</strong> ${escHtml(focus.label)} bölümünde ${focus.total} soruda %${focus.score} başarı görülüyor. Bu bölümdeki yanlış ve boş soruları yeniden incelemek sonraki sınavlarda belirgin fark oluşturabilir.`
-    : '';
-  document.getElementById('feedbackBody').innerHTML=`<p>${fb.text}${sectionCoach}</p><div class="quote-box">"${fb.quote}"</div>`;
   document.getElementById('karneInsights').innerHTML=`
-    <div class="insight-card">
-      <h5>🌟 En Güçlü Alan</h5>
-      <p>${strongest?`<strong>${escHtml(strongest.label)}</strong> bölümünde ${strongest.total} soruda %${strongest.score} başarı elde edildi.`:'Henüz bölüm bazlı veri bulunmuyor.'}</p>
+    <div class="analysis-card analysis-card--strong">
+      <div class="analysis-card-head">Güçlü Yön</div>
+      <div class="analysis-card-body">${strongest?`<strong>${escHtml(strongest.label)}</strong> bölümünde ${strongest.total} soruda %${strongest.score} başarı elde edildi. Kavram bilgisi ve uygulama becerisi bu bölümde güçlü görünüyor.`:'Bu sınav için bölüm bazlı güçlü alan analizi oluşturulamadı.'}</div>
     </div>
-    <div class="insight-card">
-      <h5>🎯 Kontrol Önceliği</h5>
-      <p>${focus?`Bir sonraki çalışmada <strong>${escHtml(focus.label)}</strong> bölümündeki ${focus.wrong} yanlış ve ${focus.blank} boş soruya öncelik vermek faydalı olur.`:'Genel tekrar ile başarıyı daha da güçlendirebilirsin.'}</p>
+    <div class="analysis-card analysis-card--focus">
+      <div class="analysis-card-head">Geliştirilecek Alan</div>
+      <div class="analysis-card-body">${focus?`<strong>${escHtml(focus.label)}</strong> bölümünde ${focus.wrong} yanlış ve ${focus.blank} boş soru bulunuyor. Yanlış yapılan soruların çözüm adımlarını yeniden incelemek sonraki performansa doğrudan katkı sağlar.`:'Öne çıkan bir zayıf alan görünmüyor; genel tekrar yeterli olabilir.'}</div>
     </div>
-    <div class="insight-card">
-      <h5>⏱️ Süre Kullanımı</h5>
-      <p>${P.exam.duration>0?`Sınavı ${fmtElapsed(r.elapsed)} sürede tamamladın. Kalan süreyi son kontrolde kullanmak, dikkat hatalarını azaltabilir.`:'Bu sınav sınırsız süreliydi; sakin ve kontrollü ilerlemen olumlu.'}</p>
-    </div>
-    <div class="insight-card">
-      <h5>📌 Net Değerlendirme</h5>
-      <p>${r.negativeMarking?`Yanlış götürme uygulandığı için net puanın <strong>${r.netCorrect}</strong> olarak hesaplandı.`:`Bu sınavda net puanın doğrudan doğru sayına eşit: <strong>${r.netCorrect}</strong>.`}</p>
+    <div class="analysis-card analysis-card--goal">
+      <div class="analysis-card-head">Öncelikli Hedef</div>
+      <div class="analysis-card-body">${topOutcome?`<strong>${escHtml(topOutcome.label)}</strong> kazanımına bağlı ${topOutcome.questions.length} soru için kısa tekrar planı hazırlanabilir. Ardından benzer yeni sorularla pekiştirme yapmak en verimli sonraki adım olur.`:`${r.negativeMarking?'Neti korumak için riskli sorularda dikkatli işaretleme pratiği yapılmalı.':'Boş ve yanlış kalan sorular için kısa tekrar planı oluşturmak başarıyı hızla yukarı taşıyabilir.'}`}</div>
     </div>`;
+
   document.getElementById('karneSectionList').innerHTML=sectionSummary.map(section=>`
-    <div class="section-item">
-      <div class="section-head">
+    <div class="section-card">
+      <div class="section-card-top">
         <div>
-          <strong>${escHtml(section.label)}</strong>
-          <div class="section-range">Sorular ${section.start}-${section.end}</div>
+          <div class="section-card-title">${escHtml(section.label)}</div>
+          <div class="section-card-range">Sorular ${section.start}-${section.end}</div>
         </div>
-        <span class="chart-pill" style="background:${scoreMeta.bg};color:${getBarColor(section.score)}">%${section.score}</span>
+        <div class="section-card-score" style="color:${getBarColor(section.score)}">%${section.score}</div>
       </div>
-      <div class="section-meta">
+      <div class="section-card-meta">
         <span>✅ ${section.correct} doğru</span>
         <span>❌ ${section.wrong} yanlış</span>
         <span>⭕ ${section.blank} boş</span>
       </div>
       <div class="section-bar"><div class="section-bar-fill" style="width:${section.score}%;background:${getBarColor(section.score)}"></div></div>
     </div>
-  `).join('')+(outcomeSummary.length?`
-    <div class="outcome-list">
-      <div style="font-family:var(--fd);font-size:14px;font-weight:900;color:var(--navy);margin-top:2px">🎯 Kazanım / Öğrenme Çıktısı Analizi</div>
-      ${outcomeSummary.map(item=>`
-        <div class="outcome-item">
-          <div class="outcome-title">${escHtml(item.label)}</div>
-          <div class="outcome-meta">
-            <span>Sorular: ${item.questions.join(', ')}</span>
-            <span style="color:var(--green)">D: ${item.correct}</span>
-            <span style="color:var(--red)">Y: ${item.wrong}</span>
-            <span>B: ${item.blank}</span>
-            <span style="color:${getBarColor(item.score)}">%${item.score}</span>
-          </div>
+  `).join('');
+  const outcomeList=document.getElementById('karneOutcomeList');
+  if(outcomeSummary.length){
+    outcomeList.style.display='grid';
+    outcomeList.innerHTML=outcomeSummary.map(item=>`
+      <div class="outcome-item">
+        <div class="outcome-title">${escHtml(item.label)}</div>
+        <div class="outcome-meta">
+          <span>Sorular: ${item.questions.join(', ')}</span>
+          <span style="color:var(--green)">D: ${item.correct}</span>
+          <span style="color:var(--red)">Y: ${item.wrong}</span>
+          <span>B: ${item.blank}</span>
+          <span style="color:${getBarColor(item.score)}">%${item.score}</span>
         </div>
-      `).join('')}
-    </div>
-  `:'');
-  
-  // Karne Optik (Geri Bildirim)
+      </div>
+    `).join('');
+  }else{
+    outcomeList.style.display='none';
+    outcomeList.innerHTML='';
+  }
+
   const koHtml=questionEntries.map((entry,i)=>{
     const ua=entry.selectedAnswer;const ca=entry.correctAnswer;
     const isC=entry.outcome==='D',isW=entry.outcome==='Y',isB=entry.outcome==='B';
-    const clr=isC?'var(--green)':isW?'var(--red)':'var(--border)';
+    const clr=isC?'var(--green)':isW?'var(--red)':'#94A3B8';
     const txt=isC?ca:isW?ua:'—';
     const sectionTitle=entry.sectionTitle;
     return `<div class="ko-item" onclick="showQuestionModal(${i})" title="${entry.questionNo}. Soru${sectionTitle?' — '+escHtml(sectionTitle):''}${isB?' (Boş)':isW?' — Doğru: '+ca+' / Verilen: '+ua:' — Doğru'}" >
       <div class="ko-num">${entry.questionNo}</div>
-      <div class="ko-bub" style="background:${clr};color:${isB?'var(--muted)':'#fff'}">${txt}</div>
+      <div class="ko-bub" style="background:${clr};color:#fff">${txt}</div>
     </div>`;
   }).join('');
   document.getElementById('karneOptic').innerHTML=koHtml;
-  
-  document.getElementById('karneDate').textContent=`Tarih: ${r.date}`;
+  const sectionCoach=focus&&sectionSummary.length>1
+    ? ` Öncelikli tekrar alanı olarak ${focus.label} bölümündeki yanlış ve boş sorular yeniden çözülebilir.`
+    : '';
+  document.getElementById('feedbackBody').innerHTML=`%${r.score} başarı, ${formattedExamScore} sınav puanı ve ${String(r.netCorrect).replace('.',',')} net ile bu sınav tamamlandı. ${generalMessage.text}${sectionCoach}`;
 }
 
 function fmtElapsed(s){if(!s)return'—';const m=Math.floor(s/60),sec=s%60;return`${m}dk ${sec}s`;}
@@ -2935,7 +3139,8 @@ function sanitizeKarneFileNamePart(value){
 function setSingleKarneExportState(disabled,label){
   [
     {id:'karnePngBtn',text:'🖼️ PNG İndir'},
-    {id:'karneJpegBtn',text:'🖼️ JPEG İndir'}
+    {id:'karneJpegBtn',text:'🖼️ JPEG İndir'},
+    {id:'karnePdfBtn',text:'📄 PDF İndir'}
   ].forEach(item=>{
     const button=document.getElementById(item.id);
     if(!button) return;
@@ -2946,20 +3151,27 @@ function setSingleKarneExportState(disabled,label){
 
 async function captureSingleKarneCanvas(){
   if(typeof window.html2canvas!=='function') throw new Error('html2canvas yüklenemedi');
-  const target=document.querySelector('#screenKarne .karne-body');
+  const target=document.getElementById('singleKarneSheet');
   if(!target) throw new Error('Karne alanı bulunamadı');
-  await new Promise(resolve=>setTimeout(resolve,180));
-  const targetWidth=1480;
-  const currentWidth=Math.max(target.offsetWidth||1,1);
-  const scale=Math.max(2,Math.min(3,targetWidth/currentWidth));
-  return window.html2canvas(target,{
-    backgroundColor:'#FAFAF7',
-    scale,
-    useCORS:true,
-    allowTaint:true,
-    logging:false,
-    imageTimeout:0
-  });
+  document.body.classList.add('karne-export-mode');
+  try{
+    await new Promise(resolve=>setTimeout(resolve,220));
+    const currentWidth=Math.max(target.scrollWidth||target.offsetWidth||1,1);
+    const targetWidth=3508;
+    const scale=Math.max(2,Math.min(2.8,targetWidth/currentWidth));
+    return await window.html2canvas(target,{
+      backgroundColor:'#FFFFFF',
+      scale,
+      width:target.scrollWidth||target.offsetWidth,
+      height:target.scrollHeight||target.offsetHeight,
+      useCORS:true,
+      allowTaint:true,
+      logging:false,
+      imageTimeout:0
+    });
+  }finally{
+    document.body.classList.remove('karne-export-mode');
+  }
 }
 
 function downloadSingleKarneCanvas(canvas,fileName,format){
@@ -3000,6 +3212,29 @@ function downloadSingleKarneCanvas(canvas,fileName,format){
   });
 }
 
+async function downloadSingleKarnePdf(canvas,fileName){
+  const jsPdfLib=window.jspdf&&window.jspdf.jsPDF?window.jspdf.jsPDF:null;
+  if(!jsPdfLib) throw new Error('PDF kütüphanesi yüklenemedi');
+  const pdf=new jsPdfLib({orientation:'landscape',unit:'mm',format:'a4'});
+  const pageWidth=pdf.internal.pageSize.getWidth();
+  const pageHeight=pdf.internal.pageSize.getHeight();
+  const margin=8;
+  const usableWidth=pageWidth-(margin*2);
+  const usableHeight=pageHeight-(margin*2);
+  const imageData=canvas.toDataURL('image/png');
+  const imageRatio=canvas.width/canvas.height;
+  let renderWidth=usableWidth;
+  let renderHeight=renderWidth/imageRatio;
+  if(renderHeight>usableHeight){
+    renderHeight=usableHeight;
+    renderWidth=renderHeight*imageRatio;
+  }
+  const offsetX=(pageWidth-renderWidth)/2;
+  const offsetY=(pageHeight-renderHeight)/2;
+  pdf.addImage(imageData,'PNG',offsetX,offsetY,renderWidth,renderHeight,undefined,'FAST');
+  pdf.save(fileName);
+}
+
 window.exportSingleKarneAsImage=async function(format){
   if(!P.result){
     toast('Karne henüz hazır değil.','error');
@@ -3019,6 +3254,29 @@ window.exportSingleKarneAsImage=async function(format){
   }catch(error){
     console.error(error);
     toast('Karne görseli hazırlanırken hata oluştu.','error');
+  }finally{
+    setSingleKarneExportState(false);
+  }
+};
+
+window.exportSingleKarneAsPdf=async function(){
+  if(!P.result){
+    toast('Karne henüz hazır değil.','error');
+    return;
+  }
+  const fileName=[
+    sanitizeKarneFileNamePart(P.result.firstName||'ogrenci'),
+    sanitizeKarneFileNamePart(P.result.lastName||'karne'),
+    sanitizeKarneFileNamePart(P.result.examTitle||'sinav-karnesi')
+  ].join('-')+'.pdf';
+  setSingleKarneExportState(true,'PDF Hazırlanıyor...');
+  try{
+    const canvas=await captureSingleKarneCanvas();
+    await downloadSingleKarnePdf(canvas,fileName);
+    toast('PDF karne indirildi.','success');
+  }catch(error){
+    console.error(error);
+    toast('PDF hazırlanırken hata oluştu.','error');
   }finally{
     setSingleKarneExportState(false);
   }

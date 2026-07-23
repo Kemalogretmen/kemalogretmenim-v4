@@ -252,6 +252,46 @@
     .karne-marka a { color: var(--purple); text-decoration: none; }
     .karne-marka-sep { color: var(--muted); }
     .print-watermark { display: none; }
+    .save-status-card {
+      margin: -10px 0 22px;
+      padding: 14px 16px;
+      border-radius: var(--r-lg);
+      background: rgba(255,255,255,.96);
+      border: 2px solid rgba(226,217,255,.9);
+      box-shadow: 0 14px 34px rgba(0,0,0,.18);
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .save-status-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: #F0EBFF;
+      color: var(--purple);
+      font-size: 19px;
+      font-weight: 900;
+    }
+    .save-status-title {
+      color: var(--navy);
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1.25;
+    }
+    .save-status-text {
+      margin-top: 3px;
+      color: var(--slate);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .save-status-card[data-state="saving"] .save-status-icon { background:#EFF6FF; color:#2563EB; }
+    .save-status-card[data-state="saved"] .save-status-icon { background:#DCFCE7; color:#15803D; }
+    .save-status-card[data-state="queued"] .save-status-icon { background:#FFF7ED; color:#C2410C; }
+    .save-status-card[data-state="error"] .save-status-icon { background:#FEE2E2; color:#DC2626; }
 
     /* ── PRINT / PDF STİLLERİ ── */
     @media print {
@@ -265,7 +305,7 @@
       /* Gizlenecekler */
       .karne-header, .karne-govde-alt,
       .navbar, .announce-bar, .site-footer,
-      .kbtn, .donut-badge { display: none !important; }
+      .kbtn, .donut-badge, .save-status-card { display: none !important; }
 
       /* Layout sıfırla */
       body { background: white !important; margin: 0 !important; padding: 0 !important; }
@@ -320,6 +360,14 @@
       </div>
       <div class="karne-title">Okuma Karnen Hazır! 🎉</div>
       <div class="karne-sub" id="karneSubTitle">Tebrikler, okumayı tamamladın!</div>
+    </div>
+
+    <div class="save-status-card" id="readingSaveStatus" data-state="saving" role="status" aria-live="polite">
+      <div class="save-status-icon" id="readingSaveStatusIcon">⏳</div>
+      <div>
+        <div class="save-status-title" id="readingSaveStatusTitle">Sonucun kaydediliyor</div>
+        <div class="save-status-text" id="readingSaveStatusText">Okuma karnen hazırlandı; kayıt sistemiyle bağlantı kontrol ediliyor.</div>
+      </div>
     </div>
 
     <div class="karne-kart" id="karneKart">
@@ -430,6 +478,6 @@
   <script src="/js/site.js?v=20260608-content-safety2"></script>
   <script src="/js/user-auth.js"></script>
   <script src="/js/content-progress.js?v=20260418-2"></script>
-  <script src="/js/karne-app.js?v=20260711-training"></script>
+  <script src="/js/karne-app.js?v=20260721-save-status"></script>
 </body>
 </html>

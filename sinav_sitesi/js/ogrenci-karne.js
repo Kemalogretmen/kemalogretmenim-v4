@@ -42,6 +42,23 @@ function $(id) {
   return document.getElementById(id);
 }
 
+function scrollStudentReportSection(targetId) {
+  const target = document.getElementById(targetId) || document.querySelector('[data-report-anchor="' + targetId + '"]');
+  if (!target) {
+    return;
+  }
+  const detailsParent = target.closest && target.closest("details");
+  if (detailsParent && !detailsParent.open) {
+    detailsParent.open = true;
+  }
+  if (target.tagName === "DETAILS" && !target.open) {
+    target.open = true;
+  }
+  window.requestAnimationFrame(function() {
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 function esc(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -2005,7 +2022,7 @@ function setPrintButtonState(disabled, label) {
   button.disabled = !!disabled;
   button.style.opacity = disabled ? "0.7" : "1";
   button.style.cursor = disabled ? "wait" : "pointer";
-  button.textContent = disabled && label ? label : "🖨️ Yazdır / PDF";
+  button.textContent = disabled && label ? label : "📄 PDF Çıktı Al";
 }
 
 async function captureReportSheetCanvases() {
@@ -2018,22 +2035,30 @@ async function captureReportSheetCanvases() {
     throw new Error("Çıktı alınacak karne veya liste bulunamadı.");
   }
   var canvases = [];
-  for (var i = 0; i < sheets.length; i += 1) {
-    var sheet = sheets[i];
-    var targetWidth = 1240;
-    var sheetWidth = Math.max(sheet.offsetWidth || 1, 1);
-    var scale = Math.max(2, Math.min(3, targetWidth / sheetWidth));
-    var canvas = await window.html2canvas(sheet, {
-      backgroundColor: "#ffffff",
-      scale: scale,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      imageTimeout: 0,
-    });
-    canvases.push(canvas);
+  document.body.classList.add("report-export-mode");
+  try {
+    await new Promise(function(resolve) { setTimeout(resolve, 220); });
+    for (var i = 0; i < sheets.length; i += 1) {
+      var sheet = sheets[i];
+      var exportWidth = 2480;
+      var sheetWidth = Math.max(sheet.scrollWidth || sheet.offsetWidth || 1, 1);
+      var scale = Math.max(2, Math.min(2.8, exportWidth / sheetWidth));
+      var canvas = await window.html2canvas(sheet, {
+        backgroundColor: "#ffffff",
+        scale: scale,
+        width: sheet.scrollWidth || sheet.offsetWidth,
+        height: sheet.scrollHeight || sheet.offsetHeight,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        imageTimeout: 0,
+      });
+      canvases.push(canvas);
+    }
+    return canvases;
+  } finally {
+    document.body.classList.remove("report-export-mode");
   }
-  return canvases;
 }
 
 function buildA4ImagePrintDocument(imageUrls) {
@@ -2118,6 +2143,39 @@ function downloadCanvasFile(canvas, fileName, format) {
   });
 }
 
+async function downloadPdfFromCanvases(canvases, fileName) {
+  var jsPdfLib = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
+  if (!jsPdfLib) {
+    throw new Error("PDF kütüphanesi yüklenemedi.");
+  }
+  if (!Array.isArray(canvases) || !canvases.length) {
+    throw new Error("PDF için karne sayfası bulunamadı.");
+  }
+
+  var pdf = new jsPdfLib({ orientation: "portrait", unit: "mm", format: "a4" });
+  canvases.forEach(function(canvas, index) {
+    if (index > 0) {
+      pdf.addPage("a4", "portrait");
+    }
+    var pageWidth = pdf.internal.pageSize.getWidth();
+    var pageHeight = pdf.internal.pageSize.getHeight();
+    var margin = 6;
+    var usableWidth = pageWidth - (margin * 2);
+    var usableHeight = pageHeight - (margin * 2);
+    var ratio = canvas.width / canvas.height;
+    var renderWidth = usableWidth;
+    var renderHeight = renderWidth / ratio;
+    if (renderHeight > usableHeight) {
+      renderHeight = usableHeight;
+      renderWidth = renderHeight * ratio;
+    }
+    var offsetX = (pageWidth - renderWidth) / 2;
+    var offsetY = (pageHeight - renderHeight) / 2;
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", offsetX, offsetY, renderWidth, renderHeight, undefined, "FAST");
+  });
+  pdf.save(fileName);
+}
+
 async function exportReportAsImages(format) {
   if (!S.reportResults.length && !S.listReady) {
     window.alert("Önce karne veya liste oluşturmalısın.");
@@ -2156,23 +2214,18 @@ async function printReport() {
     window.alert("Önce karne veya liste oluşturmalısın.");
     return;
   }
+  var student = getCurrentStudent();
+  var fileName = S.listReady
+    ? [sanitizeFileNamePart(getListScopeTitle(S.flow.listScope)), "sinav-listesi.pdf"].join("-")
+    : [
+        sanitizeFileNamePart(student?.firstName || "ogrenci"),
+        sanitizeFileNamePart(student?.lastName || "karne-merkezi"),
+        "karne-merkezi.pdf",
+      ].join("-");
   setPrintButtonState(true, "PDF Hazırlanıyor...");
   try {
     var canvases = await captureReportSheetCanvases();
-    var imageUrls = canvases.map(function(canvas) {
-      return canvas.toDataURL("image/png");
-    });
-    var printDoc = buildA4ImagePrintDocument(imageUrls);
-    var printFrame = createPrintFrame();
-    var frameDoc = printFrame.contentWindow ? printFrame.contentWindow.document : null;
-    if (!frameDoc) {
-      removePrintFrame();
-      window.alert("Yazdırma penceresi açılamadı. Tarayıcınızda pop-up engelleyiciyi kapatıp tekrar deneyin.");
-      return;
-    }
-    frameDoc.open();
-    frameDoc.write(printDoc);
-    frameDoc.close();
+    await downloadPdfFromCanvases(canvases, fileName);
   } catch (error) {
     console.error(error);
     window.alert("PDF çıktısı hazırlanırken hata oluştu. Lütfen tekrar deneyin.");
@@ -2464,6 +2517,7 @@ async function initApp() {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+  window.scrollStudentReportSection = scrollStudentReportSection;
   $("backBtn").addEventListener("click", function() {
     window.location.href = "/sinav_sitesi/admin.html";
   });
@@ -2478,6 +2532,11 @@ document.addEventListener("DOMContentLoaded", function() {
   });
   $("jpegBtn").addEventListener("click", function() {
     exportReportAsImages("jpeg");
+  });
+  Array.from(document.querySelectorAll("[data-report-jump]")).forEach(function(button) {
+    button.addEventListener("click", function() {
+      scrollStudentReportSection(button.getAttribute("data-report-jump"));
+    });
   });
   $("modeIndividualBtn").addEventListener("click", function() {
     S.flow.mode = "individual";

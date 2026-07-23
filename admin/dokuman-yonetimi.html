@@ -9,6 +9,7 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
@@ -218,6 +219,7 @@
           <button class="btn-main" onclick="yeniDokuman()">+ Yeni İçerik</button>
           <button class="btn-secondary" onclick="yeniVideo()">🎬 Ders Videosu Ekle</button>
           <button class="btn-ghost" onclick="depoTemizle()">🧹 Boş Depoyu Temizle</button>
+          <button class="btn-ghost" onclick="kirikKayitTemizle()">🧽 Kırık Kayıtları Temizle</button>
         </div>
       </div>
 
@@ -501,7 +503,7 @@
               <p>YouTube linkini veya YouTube iframe kodunu yapıştır. Kayıttan sonra video ders sayfasında açılır ve üzerinde çizim araçları kullanılabilir.</p>
               <textarea id="fVideoInput" placeholder="https://youtu.be/VIDEO_ID veya &lt;iframe src=&quot;https://www.youtube.com/embed/VIDEO_ID&quot;&gt;&lt;/iframe&gt;"></textarea>
             </div>
-            <div class="hint" id="contentHint">PDF, JPEG, PNG ve WebP dosyaları kalite düşürülmeden saklanır. Veritabanını ve ücretsiz kullanımı yormamak için üst sınır 50 MB.</div>
+            <div class="hint" id="contentHint">PDF ve görseller yüklemeden önce otomatik optimize edilir; sonuç gerçekten küçülmezse orijinal dosya korunur. Üst sınır 50 MB.</div>
           </div>
 
           <div class="panel">
@@ -638,6 +640,6 @@
     });
   });
 </script>
-<script src="/js/dokuman-yonetimi-app.js"></script>
+<script src="/js/dokuman-yonetimi-app.js?v=20260721-storage-optimizer"></script>
 </body>
 </html>

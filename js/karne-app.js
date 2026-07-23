@@ -19,7 +19,9 @@
       supabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
     };
 
-  const client = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+  const client = window.kemalUserAuth && typeof window.kemalUserAuth.getClient === 'function'
+    ? window.kemalUserAuth.getClient()
+    : window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
   const PENDING_RESULTS_KEY = 'kemal_okuma_pending_results_v1';
   const LEVEL_LABELS = {
     baslangic: 'Başlangıç',
@@ -189,23 +191,65 @@
     localStorage.setItem(PENDING_RESULTS_KEY, JSON.stringify(dedupePendingResults(list || [])));
   }
 
-  async function insertResultPayload(payload) {
-    let response = await client.from('sonuclar').insert(payload).select('id').maybeSingle();
+  function setReadingSaveStatus(state, title, text) {
+    const card = document.getElementById('readingSaveStatus');
+    if (!card) return;
+    const icon = document.getElementById('readingSaveStatusIcon');
+    const titleEl = document.getElementById('readingSaveStatusTitle');
+    const textEl = document.getElementById('readingSaveStatusText');
+    const icons = {
+      saving: '⏳',
+      saved: '✅',
+      queued: '📡',
+      error: '⚠️',
+    };
+    card.dataset.state = state || 'saving';
+    if (icon) icon.textContent = icons[state] || icons.saving;
+    if (titleEl) titleEl.textContent = title || 'Sonuç kaydı kontrol ediliyor';
+    if (textEl) textEl.textContent = text || '';
+  }
+
+  function shouldFallbackToDirectInsert(error) {
+    const message = String(error && error.message ? error.message : '').toLowerCase();
+    const details = String(error && error.details ? error.details : '').toLowerCase();
+    const hint = String(error && error.hint ? error.hint : '').toLowerCase();
+    const code = String(error && error.code ? error.code : '').toLowerCase();
+    const combined = message + ' ' + details + ' ' + hint + ' ' + code;
+    return combined.includes('submit_reading_result') ||
+      combined.includes('pgrst202') ||
+      combined.includes('schema cache') ||
+      combined.includes('could not find the function') ||
+      combined.includes('permission denied');
+  }
+
+  async function insertResultPayloadDirect(payload) {
+    let response = await client.from('sonuclar').insert(payload);
     if (response.error && response.error.message && response.error.message.includes('detay_json')) {
       const fallbackPayload = Object.assign({}, payload);
       delete fallbackPayload.detay_json;
-      response = await client.from('sonuclar').insert(fallbackPayload).select('id').maybeSingle();
+      response = await client.from('sonuclar').insert(fallbackPayload);
     }
     if (response.error) {
       throw response.error;
     }
-    return response.data || null;
+    return null;
+  }
+
+  async function insertResultPayload(payload) {
+    const rpcResponse = await client.rpc('submit_reading_result', { p_payload: payload });
+    if (!rpcResponse.error) {
+      return rpcResponse.data || null;
+    }
+    if (shouldFallbackToDirectInsert(rpcResponse.error)) {
+      return insertResultPayloadDirect(payload);
+    }
+    throw rpcResponse.error;
   }
 
   async function flushPendingResults() {
     const pending = getPendingResults();
     if (!pending.length) {
-      return;
+      return { before: 0, after: 0 };
     }
 
     const remaining = [];
@@ -218,6 +262,7 @@
     }
 
     setPendingResults(remaining);
+    return { before: pending.length, after: remaining.length };
   }
 
   function createStableIndex(base, listLength) {
@@ -364,13 +409,25 @@
   }
 
   async function saveResult(runtime, hedefWpm, comprehension, kelimeSayisi) {
-    if (
-      sessionStorage.getItem('okuma_karne_kaydedildi') === runtime.attemptId ||
-      sessionStorage.getItem('okuma_karne_kuyrukta') === runtime.attemptId
-    ) {
+    setReadingSaveStatus(
+      'saving',
+      'Sonucun kaydediliyor',
+      'Okuma sonucunu güvenli şekilde sisteme gönderiyoruz.'
+    );
+    if (sessionStorage.getItem('okuma_karne_kaydedildi') === runtime.attemptId) {
+      setReadingSaveStatus(
+        'saved',
+        'Sonucun sistemde kayıtlı',
+        'Bu okuma denemesi daha önce başarıyla kaydedilmiş.'
+      );
       return;
     }
     if (isTeacherSession()) {
+      setReadingSaveStatus(
+        'saved',
+        'Öğretmen önizlemesi',
+        'Bu ekran öğretmen kontrolü için açıldı; öğrenci adına yeni sonuç kaydı oluşturulmadı.'
+      );
       return;
     }
 
@@ -406,13 +463,49 @@
     };
 
     try {
-      await flushPendingResults();
+      const currentAttemptId = runtime.attemptId || '';
+      const wasQueued = currentAttemptId && getPendingResults().some(function(item) {
+        return getPayloadAttemptId(item) === currentAttemptId;
+      });
+
+      const flushReport = await flushPendingResults();
+      if (wasQueued) {
+        const stillQueued = getPendingResults().some(function(item) {
+          return getPayloadAttemptId(item) === currentAttemptId;
+        });
+        if (!stillQueued) {
+          sessionStorage.removeItem('okuma_karne_kuyrukta');
+          sessionStorage.setItem('okuma_karne_kaydedildi', runtime.attemptId);
+          setReadingSaveStatus(
+            'saved',
+            'Bekleyen sonuç gönderildi',
+            'Bağlantı düzeldi ve okuma sonucun sisteme aktarıldı.'
+          );
+          return;
+        }
+      }
+
       await insertResultPayload(payload);
+      const clearedCount = flushReport && flushReport.before > flushReport.after
+        ? flushReport.before - flushReport.after
+        : 0;
+      setReadingSaveStatus(
+        'saved',
+        'Sonucun sisteme kaydedildi',
+        clearedCount
+          ? 'Okuma sonucun kaydedildi; ayrıca cihazda bekleyen ' + clearedCount + ' eski kayıt da gönderildi.'
+          : 'Okuma sonucun güvenli şekilde sisteme işlendi.'
+      );
     } catch (error) {
       const pending = getPendingResults();
       pending.push(payload);
       setPendingResults(pending);
       sessionStorage.setItem('okuma_karne_kuyrukta', runtime.attemptId);
+      setReadingSaveStatus(
+        'queued',
+        'Sonucun cihazda güvende',
+        'Bağlantı veya izin sorunu nedeniyle sonuç şimdilik cihazda bekliyor; sayfa tekrar açıldığında otomatik gönderilecek.'
+      );
       console.warn('Sonuc kaydi gecici olarak yerel kuyruga alindi:', error.message);
       return;
     }
@@ -488,6 +581,7 @@
     sessionStorage.removeItem('okuma_wpm');
     sessionStorage.removeItem('okuma_cevaplar');
     sessionStorage.removeItem('okuma_karne_kaydedildi');
+    sessionStorage.removeItem('okuma_karne_kuyrukta');
     sessionStorage.setItem('okuma_attempt_id', 'attempt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     window.location.href = '/hizli-okuma/oku.html';
   }

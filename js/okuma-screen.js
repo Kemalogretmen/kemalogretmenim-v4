@@ -17,6 +17,9 @@
   let wordTimer = null;
   let wordBlockSizes = [];
   let currentKelimeMs = metin && metin.kelime_ms ? metin.kelime_ms : 500;
+  let questionLoadState = getQuestionCount() > 0 ? 'loaded' : 'idle';
+  let questionLoadPromise = null;
+  let readingClient = null;
 
   function getKullaniciMetaLine() {
     const parts = [
@@ -33,6 +36,144 @@
 
   function getQuestionCount() {
     return Array.isArray(metin.sorular) ? metin.sorular.length : 0;
+  }
+
+  function getReadingClient() {
+    if (readingClient) {
+      return readingClient;
+    }
+    const config = window.kemalSiteStore && window.kemalSiteStore.getReadingConfig
+      ? window.kemalSiteStore.getReadingConfig()
+      : window.kemalSiteStore.getConfig();
+    readingClient = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
+    });
+    return readingClient;
+  }
+
+  async function fetchQuestionRows() {
+    const client = getReadingClient();
+    const attempts = [
+      { table: 'sorular_public', columns: 'id, metin_id, soru_metni, sira, soru_tipi, ayar_json' },
+      { table: 'sorular_public', columns: 'id, metin_id, soru_metni, sira' },
+      { table: 'sorular', columns: 'id, metin_id, soru_metni, sira, soru_tipi, ayar_json' },
+      { table: 'sorular', columns: 'id, metin_id, soru_metni, sira' },
+    ];
+    let lastError = null;
+    let emptyResult = null;
+
+    for (const attempt of attempts) {
+      const response = await client
+        .from(attempt.table)
+        .select(attempt.columns)
+        .eq('metin_id', metin.id)
+        .order('sira');
+      if (!response.error && Array.isArray(response.data) && response.data.length) {
+        return { data: response.data, error: null };
+      }
+      if (!response.error) {
+        emptyResult = [];
+      } else {
+        lastError = response.error;
+      }
+    }
+
+    return emptyResult ? { data: emptyResult, error: null } : { data: null, error: lastError };
+  }
+
+  async function fetchChoiceRows(questionIds) {
+    if (!questionIds.length) {
+      return { data: [], error: null };
+    }
+    const client = getReadingClient();
+    const attempts = [
+      { table: 'secenekler_public', columns: 'id, soru_id, secenek_metni, sira, dogru_mu' },
+      { table: 'secenekler', columns: 'id, soru_id, secenek_metni, sira, dogru_mu' },
+    ];
+    let lastError = null;
+
+    for (const attempt of attempts) {
+      const response = await client
+        .from(attempt.table)
+        .select(attempt.columns)
+        .in('soru_id', questionIds)
+        .order('sira');
+      if (!response.error) {
+        return { data: response.data || [], error: null };
+      }
+      lastError = response.error;
+    }
+
+    return { data: null, error: lastError };
+  }
+
+  async function hydrateQuestions() {
+    if (getQuestionCount() > 0) {
+      questionLoadState = 'loaded';
+      return questionLoadState;
+    }
+    if (!metin.id) {
+      questionLoadState = 'empty';
+      return questionLoadState;
+    }
+    if (questionLoadPromise) {
+      return questionLoadPromise;
+    }
+
+    questionLoadState = 'loading';
+    questionLoadPromise = (async function() {
+      try {
+        const questionResponse = await fetchQuestionRows();
+        if (questionResponse.error || !Array.isArray(questionResponse.data)) {
+          throw questionResponse.error || new Error('Sorular alınamadı.');
+        }
+        if (!questionResponse.data.length) {
+          metin.sorular = [];
+          questionLoadState = 'empty';
+          return questionLoadState;
+        }
+
+        const questionIds = questionResponse.data.map(function(question) {
+          return question.id;
+        }).filter(Boolean);
+        const choiceResponse = await fetchChoiceRows(questionIds);
+        if (choiceResponse.error || !Array.isArray(choiceResponse.data)) {
+          throw choiceResponse.error || new Error('Soru seçenekleri alınamadı.');
+        }
+
+        const choiceMap = {};
+        choiceResponse.data.forEach(function(choice) {
+          if (!choiceMap[choice.soru_id]) {
+            choiceMap[choice.soru_id] = [];
+          }
+          choiceMap[choice.soru_id].push(choice);
+        });
+        metin.sorular = questionResponse.data.map(function(question) {
+          return Object.assign({}, question, {
+            soru_tipi: question.soru_tipi || '',
+            ayar_json: parseOptionalJson(question.ayar_json),
+            secenekler: (choiceMap[question.id] || []).sort(function(a, b) {
+              return (a.sira || 0) - (b.sira || 0);
+            }),
+          });
+        });
+        sessionStorage.setItem('okuma_metin', JSON.stringify(metin));
+        questionLoadState = 'loaded';
+        return questionLoadState;
+      } catch (error) {
+        console.warn('Anlama soruları yeniden yüklenemedi:', error && error.message ? error.message : error);
+        questionLoadState = 'error';
+        return questionLoadState;
+      } finally {
+        questionLoadPromise = null;
+      }
+    })();
+
+    return questionLoadPromise;
   }
 
   function parseTitleStyle() {
@@ -179,13 +320,25 @@
     timer = null;
   }
 
-  function startReading() {
+  async function startReading() {
+    const readyState = await hydrateQuestions();
+    if (readyState === 'error') {
+      const button = document.getElementById('hazirBtn');
+      if (button) {
+        button.textContent = '🔄 Soruları Tekrar Yükle';
+        button.disabled = false;
+      }
+      window.alert('Anlama soruları şu an yüklenemedi. Okumaya başlamadan önce lütfen tekrar deneyin.');
+      return;
+    }
+
     sessionStorage.setItem('okuma_attempt_id', 'attempt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
     sessionStorage.setItem('okuma_son_oturum', JSON.stringify({ metin: metin, kullanici: kullanici }));
     sessionStorage.removeItem('okuma_sure_sn');
     sessionStorage.removeItem('okuma_wpm');
     sessionStorage.removeItem('okuma_cevaplar');
     sessionStorage.removeItem('okuma_karne_kaydedildi');
+    sessionStorage.removeItem('okuma_karne_kuyrukta');
 
     document.getElementById('hazirEkran').style.display = 'none';
     const launch = function() {
@@ -343,19 +496,25 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', async function() {
     const modeLabel = metin.goruntuleme_modu === 'kelime'
       ? (metin.tikla_mod ? '⚡ Kelime Kelime (Tıklayarak)' : '⚡ Kelime Kelime (Otomatik)')
       : '📄 Tam Metin';
     document.getElementById('hazirBaslik').textContent = metin.baslik;
     document.getElementById('hazirKullanici').textContent = '👤 ' + kullanici.ad + ' ' + kullanici.soyad + ' · ' + getKullaniciMetaLine();
+    const readyButton = document.getElementById('hazirBtn');
+    readyButton.textContent = '⏳ Anlama soruları kontrol ediliyor…';
+    readyButton.disabled = true;
+    const readyState = await hydrateQuestions();
     document.getElementById('hazirBilgi').innerHTML =
       '<strong>' + modeLabel + '</strong><br>' +
       (metin.kelime_sayisi || '?') + ' kelime · ' +
-      ((metin.sorular || []).length ? (metin.sorular || []).length + ' anlama sorusu' : 'Anlama sorusu yok') +
+      (readyState === 'error'
+        ? 'Anlama soruları yeniden yüklenemedi'
+        : (getQuestionCount() ? getQuestionCount() + ' anlama sorusu' : 'Anlama sorusu yok')) +
       '<br><br>Hazır olduğunda başla butonuna bas.';
-    document.getElementById('hazirBtn').textContent = '🚀 Okumaya Başla!';
-    document.getElementById('hazirBtn').disabled = false;
+    readyButton.textContent = readyState === 'error' ? '🔄 Soruları Tekrar Yükle' : '🚀 Okumaya Başla!';
+    readyButton.disabled = false;
   });
 
   window.okumaBaslat = startReading;

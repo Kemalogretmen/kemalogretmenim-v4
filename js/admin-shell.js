@@ -22,6 +22,7 @@
             { key: 'main-menuler', icon: '🔗', label: 'Ekstra Menü', description: 'Ek bağlantı ve menü alanlarını düzenle', href: '/admin/index.html#menuler' },
             { key: 'main-adminler', icon: '🛡️', label: 'Alt Adminler', description: 'Yönetici erişimlerini ve yetkileri ayarla', href: '/admin/index.html#adminler' },
             { key: 'main-kullanicilar', icon: '👥', label: 'Kullanıcılar', description: 'Kullanıcı kayıtlarını ve hesapları incele', href: '/admin/index.html#kullanicilar' },
+            { key: 'main-saglik', icon: '🩺', label: 'Sistem Sağlığı', description: 'Kayıt, policy ve storage kontrollerini aç', href: '/admin/index.html#saglik' },
             { key: 'main-sifre', icon: '🔑', label: 'Şifre Değiştir', description: 'Yönetici hesabı şifresini güncelle', href: '/admin/index.html#sifre' },
             { key: 'main-yedek', icon: '💾', label: 'Yedek / Sıfırla', description: 'Yedekleme ve sıfırlama araçlarını aç', href: '/admin/index.html#yedek' }
           ]
@@ -93,6 +94,7 @@
     'main-menuler': ['site_admin_dashboard'],
     'main-adminler': ['site_admin_dashboard'],
     'main-kullanicilar': ['user_management'],
+    'main-saglik': ['system_health'],
     'main-sifre': ['site_admin_dashboard'],
     'main-yedek': ['site_admin_dashboard'],
     'oyunlar-admin': ['oyun_ekleme'],

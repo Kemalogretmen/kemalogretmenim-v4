@@ -522,3 +522,82 @@ end;
 $$;
 
 grant execute on function public.cleanup_deleted_dokuman_artifacts() to authenticated;
+
+-- Storage tarafindan elle silinmis ama dokumanlar tablosunda halen gorunen
+-- kirik Supabase dokuman kayitlarini bulmak ve temizlemek icin bakim fonksiyonlari.
+-- Once neyin silinecegini gormek icin:
+--   select * from public.list_missing_dokuman_storage();
+-- Tablo kayitlarini ve bagli izleri temizlemek icin:
+--   select public.cleanup_missing_dokuman_storage_records();
+create or replace function public.list_missing_dokuman_storage()
+returns table (
+  id uuid,
+  baslik text,
+  dosya_adi text,
+  dosya_yolu text,
+  olusturma_tarihi timestamptz
+)
+language plpgsql
+security definer
+set search_path = public, storage
+as $$
+begin
+  if not public.current_request_can_delete_dokuman() then
+    raise exception 'Dokuman silme yetkisi gerekli.';
+  end if;
+
+  return query
+    select
+      d.id,
+      d.baslik,
+      d.dosya_adi,
+      d.dosya_yolu,
+      d.olusturma_tarihi
+    from public.dokumanlar d
+    where coalesce(d.icerik_turu, 'document') = 'document'
+      and coalesce(d.dosya_kaynak_turu, 'supabase') = 'supabase'
+      and nullif(trim(d.dosya_yolu), '') is not null
+      and not exists (
+        select 1
+        from storage.objects o
+        where o.bucket_id = 'dokumanlar'
+          and o.name = d.dosya_yolu
+      )
+    order by d.olusturma_tarihi desc nulls last, d.baslik;
+end;
+$$;
+
+grant execute on function public.list_missing_dokuman_storage() to authenticated;
+
+create or replace function public.cleanup_missing_dokuman_storage_records()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, storage
+as $$
+declare
+  v_row record;
+  v_deleted integer := 0;
+  v_deleted_ids text[] := '{}';
+begin
+  if not public.current_request_can_delete_dokuman() then
+    raise exception 'Dokuman silme yetkisi gerekli.';
+  end if;
+
+  for v_row in
+    select id
+    from public.list_missing_dokuman_storage()
+  loop
+    perform public.delete_dokuman_with_cleanup(v_row.id);
+    v_deleted := v_deleted + 1;
+    v_deleted_ids := array_append(v_deleted_ids, v_row.id::text);
+  end loop;
+
+  return jsonb_build_object(
+    'deletedRecords', v_deleted,
+    'deletedIds', v_deleted_ids
+  );
+end;
+$$;
+
+grant execute on function public.cleanup_missing_dokuman_storage_records() to authenticated;

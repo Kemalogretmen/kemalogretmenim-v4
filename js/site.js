@@ -167,13 +167,10 @@
 
   async function getContentSafetyAccessToken() {
     try {
-      if (!window.supabase || !window.kemalSiteStore || typeof window.kemalSiteStore.getConfig !== 'function') {
+      if (!window.kemalUserAuth || typeof window.kemalUserAuth.getClient !== 'function') {
         return '';
       }
-      const config = window.kemalSiteStore.getConfig();
-      const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-        auth: { autoRefreshToken: false, persistSession: true, detectSessionInUrl: false },
-      });
+      const client = window.kemalUserAuth.getClient();
       const result = await client.auth.getSession();
       return result && result.data && result.data.session ? result.data.session.access_token : '';
     } catch (error) {
@@ -1358,6 +1355,41 @@
       return Promise.resolve(window[globalName]);
     }
 
+    function waitForExistingScript() {
+      const existing = document.querySelector('script[src="' + src + '"]');
+      if (!existing) {
+        return null;
+      }
+      return new Promise(function(resolve, reject) {
+        if (!globalName || window[globalName]) {
+          resolve(globalName ? window[globalName] : true);
+          return;
+        }
+        existing.addEventListener('load', function() {
+          resolve(globalName ? window[globalName] : true);
+        }, { once: true });
+        existing.addEventListener('error', reject, { once: true });
+      });
+    }
+
+    const pendingExisting = waitForExistingScript();
+    if (pendingExisting) {
+      return pendingExisting;
+    }
+
+    if (document.readyState === 'loading') {
+      return new Promise(function(resolve, reject) {
+        document.addEventListener('DOMContentLoaded', function() {
+          const lateExisting = waitForExistingScript();
+          if (lateExisting) {
+            lateExisting.then(resolve, reject);
+            return;
+          }
+          ensureScript(src, globalName).then(resolve, reject);
+        }, { once: true });
+      });
+    }
+
     const existing = document.querySelector('script[src="' + src + '"]');
     if (existing) {
       return new Promise(function(resolve, reject) {
@@ -2164,17 +2196,6 @@
       if (!window.kemalSiteStore) return;
       var config = window.kemalSiteStore.getConfig ? window.kemalSiteStore.getConfig() : null;
       if (!config || !config.supabaseUrl) return;
-      if (window.supabase) {
-        var client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-          auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
-        });
-        var result = await client.from('menu_ogeler').select('*').eq('active', true).order('sort_order', { ascending: true });
-        if (!result.error && Array.isArray(result.data)) {
-          dynamicNavItems = result.data;
-        }
-        return;
-      }
-
       var endpoint = config.supabaseUrl.replace(/\/$/, '') + '/rest/v1/menu_ogeler?select=*&active=eq.true&order=sort_order.asc';
       var response = await fetch(endpoint, {
         headers: {

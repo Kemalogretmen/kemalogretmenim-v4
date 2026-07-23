@@ -31,6 +31,7 @@
   --fd:'Nunito',sans-serif;--fb:'Outfit',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:100vh}
 
@@ -45,6 +46,21 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .exam-hero-stat{min-width:132px;padding:18px 18px 16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(108,61,237,.12);border-radius:20px;box-shadow:var(--sh-sm);backdrop-filter:blur(8px)}
 .exam-stat-number{font-family:var(--fd);font-size:34px;font-weight:900;color:var(--purple);line-height:1}
 .exam-stat-label{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin-top:8px}
+.exam-hero-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.exam-hero-continue{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border:none;border-radius:999px;background:linear-gradient(135deg,var(--navy),#1E293B);color:#fff;font-family:var(--fb);font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 16px 28px rgba(15,23,42,.18);transition:transform .2s ease,box-shadow .2s ease}
+.exam-hero-continue:hover{transform:translateY(-2px);box-shadow:0 20px 34px rgba(15,23,42,.22)}
+.exam-hero-hints{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.exam-hint-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.82);border:1.5px solid rgba(108,61,237,.10);color:var(--slate);font-size:12px;font-weight:800;box-shadow:var(--sh-sm)}
+
+.exam-journey{max-width:1260px;margin:0 auto;padding:0 28px 22px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.exam-journey-card{position:relative;overflow:hidden;background:rgba(255,255,255,.86);border:1.5px solid rgba(108,61,237,.10);border-radius:24px;padding:22px 22px 20px;box-shadow:0 16px 34px rgba(15,23,42,.08);backdrop-filter:blur(10px)}
+.exam-journey-card::after{content:'';position:absolute;inset:auto -35% -60% auto;width:180px;height:180px;background:radial-gradient(circle at center,rgba(139,92,246,.14),transparent 70%);pointer-events:none}
+.exam-journey-step{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:14px;background:rgba(108,61,237,.12);color:var(--purple);font-family:var(--fd);font-size:18px;font-weight:900;margin-bottom:14px}
+.exam-journey-card h3{font-family:var(--fd);font-size:20px;font-weight:900;color:var(--navy);margin-bottom:8px}
+.exam-journey-card p{font-size:14px;color:var(--slate);line-height:1.6}
+.exam-journey-card strong{color:var(--purple);font-weight:900}
+.exam-journey-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.exam-journey-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:#F8FAFC;border:1px solid #E2E8F0;color:var(--slate);font-size:11px;font-weight:900;letter-spacing:.04em}
 
 /* GRADE PANEL */
 .exam-grade-panel{width:100%;min-width:0;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.76));border:1.5px solid rgba(108,61,237,.12);border-radius:32px;padding:30px 34px;box-shadow:var(--sh-lg);backdrop-filter:blur(12px)}
@@ -76,10 +92,21 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .sf-btn{padding:8px 16px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border);background:var(--white);color:var(--slate);transition:all .18s;font-family:var(--fb)}
 .sf-btn:hover{border-color:var(--purple);color:var(--purple)}
 .sf-btn.active{background:var(--purple);border-color:var(--purple);color:#fff}
-.exam-filter-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:#fff;border:1.5px solid rgba(108,61,237,.14);border-radius:18px;padding:14px;margin-bottom:18px;box-shadow:var(--sh-sm)}
+.exam-filter-panel{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;background:#fff;border:1.5px solid rgba(108,61,237,.14);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:var(--sh-sm)}
 .exam-filter-panel label{display:block;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px}
 .exam-filter-panel select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:#F8FAFC;color:var(--navy);font-family:var(--fb);font-weight:700;outline:none}
 .exam-filter-panel select:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,61,237,.10);background:#fff}
+.exam-tool-field.wide{grid-column:auto}
+.exam-tool-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:#F8FAFC;color:var(--navy);font-family:var(--fb);font-size:14px;font-weight:700;outline:none}
+.exam-tool-input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,61,237,.10);background:#fff}
+.exam-tool-actions{display:flex;align-items:flex-end}
+.exam-tool-reset{width:100%;padding:11px 14px;border:none;border-radius:12px;background:linear-gradient(135deg,#F8FAFC,#EEF2FF);color:var(--navy);font-family:var(--fb);font-size:13px;font-weight:900;cursor:pointer;box-shadow:var(--sh-sm);transition:transform .18s ease,box-shadow .18s ease}
+.exam-tool-reset:hover{transform:translateY(-1px);box-shadow:0 12px 18px rgba(108,61,237,.12)}
+.exam-tools-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.82);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:12px 14px;margin-bottom:18px}
+.exam-summary-copy{font-size:13px;color:var(--slate);line-height:1.5}
+.exam-summary-copy strong{color:var(--navy)}
+.exam-summary-badges{display:flex;gap:8px;flex-wrap:wrap}
+.exam-summary-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#F8FAFC;border:1px solid #E2E8F0;color:var(--slate);font-size:11px;font-weight:900;letter-spacing:.04em}
 
 /* EXAM GRID */
 .exam-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-bottom:20px}
@@ -97,11 +124,25 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .ec-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.05em}
 .ec-chip-new{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA}
 .ec-chip-status{background:#ECFDF5;color:#047857;border:1px solid #A7F3D0}
+.ec-chip-access{background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE}
 .ec-meta{display:flex;gap:10px;flex-wrap:wrap}
 .ec-mi{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:3px}
 .ec-btn{width:100%;margin-top:auto;padding:11px 12px;border-radius:12px;border:none;font-family:var(--fb);font-size:13px;font-weight:900;cursor:pointer;transition:all .18s;background:var(--card-accent,#6C3DED);color:#fff;box-shadow:0 10px 18px var(--card-shadow,rgba(108,61,237,.20))}
 .ec-btn:hover{filter:saturate(1.08) brightness(.98);transform:translateY(-1px)}
 .ec.is-complete{border-color:#A7F3D0;box-shadow:0 8px 20px rgba(16,185,129,.10)}
+.exam-grid-loading .ec{pointer-events:none}
+.ec-skeleton{background:linear-gradient(135deg,#fff,#F8FAFC);border-color:#EAE8FF}
+.ec-skeleton::before{background:linear-gradient(90deg,transparent,rgba(108,61,237,.07),transparent);animation:skeletonSweep 1.6s linear infinite}
+.ec-skeleton .ec-head,.ec-skeleton .ec-body{background:transparent}
+.sk-line,.sk-pill,.sk-circle{display:block;background:linear-gradient(90deg,#EDF2F7,#F8FAFC,#EDF2F7);background-size:200% 100%;animation:skeletonPulse 1.3s ease-in-out infinite}
+.sk-circle{width:52px;height:52px;border-radius:18px}
+.sk-line{height:12px;border-radius:999px}
+.sk-line.lg{height:18px;width:86%}
+.sk-line.md{width:62%}
+.sk-line.sm{width:42%}
+.sk-pill{width:82px;height:28px;border-radius:999px}
+@keyframes skeletonPulse{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes skeletonSweep{0%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
 
 /* PAGINATION */
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
@@ -112,14 +153,25 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;animation:fadeUp .2s ease;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.modal-box{background:var(--white);border-radius:var(--r-xl);padding:30px;width:100%;max-width:440px;max-height:calc(100dvh - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:var(--sh-lg);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
+.modal-box{display:flex;flex-direction:column;background:var(--white);border-radius:var(--r-xl);padding:30px;width:100%;max-width:460px;max-height:calc(100dvh - 40px);overflow:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:var(--sh-lg);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
 @keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
-.modal-box h3{font-family:var(--fd);font-size:21px;font-weight:800;color:var(--navy);margin-bottom:6px}
+.modal-header{padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgba(226,232,240,.88)}
+.modal-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.modal-kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.modal-close{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:14px;border:1.5px solid var(--border);background:#fff;color:var(--slate);font-size:22px;font-weight:900;cursor:pointer;transition:all .18s}
+.modal-close:hover{border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
+.modal-box h3{font-family:var(--fd);font-size:21px;font-weight:800;color:var(--navy);margin-bottom:0}
+.modal-scroll-body{min-height:0;overflow-y:auto;padding-right:4px}
 .modal-sub{font-size:14px;color:var(--slate);margin-bottom:22px;line-height:1.5}
-.exam-info-box{background:var(--cream);border-radius:var(--r);padding:14px;margin-bottom:18px;border:1.5px solid var(--border)}
-.eib-title{font-family:var(--fd);font-size:15px;font-weight:800;color:var(--navy);margin-bottom:8px}
-.eib-row{display:flex;gap:12px;flex-wrap:wrap}
-.eib-item{font-size:12px;color:var(--slate);display:flex;align-items:center;gap:4px}
+.modal-helper-pills{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.modal-helper-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;background:#F8FAFC;border:1px solid #E2E8F0;color:var(--slate);font-size:11px;font-weight:900;letter-spacing:.03em}
+.exam-info-box{position:relative;overflow:hidden;background:linear-gradient(180deg,#FCFCFF,#F7F4FF);border-radius:18px;padding:16px;margin-bottom:18px;border:1.5px solid var(--border)}
+.exam-info-box::after{content:'';position:absolute;inset:auto -25% -60% auto;width:170px;height:170px;background:radial-gradient(circle at center,rgba(108,61,237,.12),transparent 70%);pointer-events:none}
+.eib-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;position:relative;z-index:1}
+.eib-title{font-family:var(--fd);font-size:16px;font-weight:900;color:var(--navy);line-height:1.35}
+.eib-type-pill{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:10px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.eib-row{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.eib-item{font-size:12px;color:var(--slate);display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.82);border:1px solid rgba(226,232,240,.95)}
 .neg-warn{font-size:12px;color:var(--red);font-weight:700;display:flex;align-items:center;gap:5px;background:#FEF2F2;padding:8px 10px;border-radius:var(--r-sm);margin-top:8px;border:1px solid #FECACA}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .form-row.three{grid-template-columns:1fr 1fr 1.35fr}
@@ -133,7 +185,8 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .manual-school-toggle input{width:18px;height:18px;accent-color:var(--purple)}
 .manual-school-toggle.disabled{opacity:.55;cursor:not-allowed}
 .err-msg{color:var(--red);font-size:12px;font-weight:600;margin-top:8px;display:none;padding:8px 12px;background:#FEF2F2;border-radius:var(--r-sm)}
-.btn-row{display:flex;gap:10px;margin-top:4px}
+.btn-row{display:flex;gap:10px;margin-top:4px;flex-wrap:wrap}
+.btn-row-note{flex:1 0 100%;font-size:12px;font-weight:700;line-height:1.5;color:var(--slate);padding:0 2px}
 .btn{padding:11px 22px;border-radius:var(--r);border:none;cursor:pointer;font-family:var(--fb);font-size:14px;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn-primary{background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;box-shadow:0 4px 15px rgba(108,61,237,.3)}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(108,61,237,.4)}
@@ -146,6 +199,7 @@ body{font-family:var(--fb);background:var(--cream);color:var(--navy);min-height:
 .empty-state-icon{font-size:48px;margin-bottom:14px;display:block}
 .empty-state h3{font-family:var(--fd);font-size:20px;font-weight:800;color:var(--navy);margin-bottom:8px}
 .empty-state p{font-size:14px}
+.empty-state-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
 
 /* SPINNER */
 .spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
@@ -169,12 +223,16 @@ body.sinav-home-page .site-footer{margin-top:40px}
   .exam-hero-copy{text-align:center}
   .exam-hero-text{margin:0 auto}
   .exam-hero-stats{justify-content:center}
+  .exam-hero-actions,.exam-hero-hints{justify-content:center}
   .exam-grade-panel{max-width:760px;margin:0 auto}
+  .exam-journey{grid-template-columns:1fr;padding:0 24px 20px}
 }
 @media(max-width:920px){
   .exam-hero{padding:44px 20px 40px}
   .exam-grade-panel{max-width:640px;padding:26px 24px;border-radius:28px}
   .exam-grade-grid{grid-template-columns:repeat(2,minmax(128px,1fr));gap:16px}
+  .exam-filter-panel{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .exam-tool-field.wide{grid-column:span 2}
 }
 @media(max-width:768px){
   body.exam-modal-open{overflow:hidden}
@@ -185,15 +243,26 @@ body.sinav-home-page .site-footer{margin-top:40px}
   .exam-grade-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .exam-grade-card{min-height:140px}
   .exam-filter-panel{grid-template-columns:1fr}
+  .exam-tool-field.wide{grid-column:auto}
+  .exam-tools-summary{padding:12px}
+  .exam-summary-copy{font-size:12px}
   .exam-grid{grid-template-columns:1fr}
   .grade-section{padding:0 14px 40px}
   .grade-banner{padding:18px 20px}
+  .exam-journey{padding:0 16px 18px}
+  .exam-journey-card{padding:18px}
   .modal-overlay{align-items:flex-start;justify-content:center;height:100vh;height:100dvh;overflow-y:auto;overflow-x:hidden;padding:0 0 max(12px,env(safe-area-inset-bottom));background:rgba(15,23,42,.58);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
-  .modal-box{display:flex;flex-direction:column;width:100%;max-width:none;min-height:100vh;min-height:100dvh;height:auto;max-height:none;margin:0;padding:max(16px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));border-radius:0;box-shadow:none;overflow:visible;touch-action:auto}
-  .modal-box h3{position:sticky;top:0;z-index:4;background:#fff;font-size:20px;margin:0 -16px 6px;padding:10px 16px 8px;border-bottom:1px solid rgba(226,232,240,.8)}
-  .modal-sub{display:none}
+  .modal-box{display:flex;flex-direction:column;width:100%;max-width:none;min-height:100vh;min-height:100dvh;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;margin:0;padding:max(16px,env(safe-area-inset-top)) 16px max(18px,env(safe-area-inset-bottom));border-radius:0;box-shadow:none;overflow:hidden;touch-action:auto}
+  .modal-header{position:sticky;top:0;z-index:4;background:#fff;margin:calc(-1 * max(16px,env(safe-area-inset-top))) -16px 8px;padding:max(16px,env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid rgba(226,232,240,.8)}
+  .modal-topbar{margin-bottom:6px}
+  .modal-box h3{font-size:20px}
+  .modal-scroll-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:0;padding-bottom:18px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .modal-sub{font-size:13px;margin-bottom:12px}
+  .modal-helper-pills{margin-bottom:12px}
+  .modal-helper-pill{font-size:10px;padding:8px 10px}
   .exam-info-box{padding:12px;margin-bottom:12px;border-radius:16px}
-  .eib-title{font-size:14px;margin-bottom:6px}
+  .eib-title-row{flex-direction:column;align-items:flex-start}
+  .eib-title{font-size:14px}
   .eib-row{gap:8px}
   .eib-item{font-size:11px}
   .form-row,.form-row.three{grid-template-columns:1fr}
@@ -201,17 +270,23 @@ body.sinav-home-page .site-footer{margin-top:40px}
   .fg label{font-size:12px}
   .fi,.fs{font-size:16px;padding:12px 13px;border-radius:14px}
   .manual-school-toggle{margin:0 0 12px;font-size:13px}
-  .btn-row{position:sticky;bottom:0;z-index:3;margin:2px -16px 0;padding:14px 16px max(10px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,0),#fff 24%)}
+  .btn-row{position:sticky;bottom:0;z-index:3;margin:2px -16px 0;padding:14px 16px max(10px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(255,255,255,0),#fff 24%);margin-top:auto}
   .btn{min-height:46px}
 }
 @media(max-width:480px){
   .exam-hero-title{font-size:34px}
+  .exam-hero-stat{min-width:110px;padding:16px 14px 14px}
+  .exam-hero-continue{width:100%;justify-content:center}
   .exam-grade-card{min-height:126px;padding:10px;border-radius:22px}
   .exam-grade-card::before{inset:7px;border-radius:17px}
   .exam-grade-card-title{padding:8px}
   .exam-grade-card-no{font-size:52px}
   .exam-grade-card-class{font-size:22px}
   .exam-grade-card-action{font-size:13px}
+  .modal-kicker{font-size:10px;padding:8px 10px}
+  .modal-close{width:38px;height:38px}
+  .btn-row{gap:8px}
+  .btn-row .btn{width:100%}
 }
 </style>
 </head>
@@ -233,12 +308,49 @@ body.sinav-home-page .site-footer{margin-top:40px}
         <div class="exam-hero-stat"><div class="exam-stat-number" id="statQ">—</div><div class="exam-stat-label">Soru</div></div>
         <div class="exam-hero-stat"><div class="exam-stat-number">8</div><div class="exam-stat-label">Sınıf</div></div>
       </div>
+      <div class="exam-hero-actions">
+        <button type="button" class="exam-hero-continue" id="heroResumeBtn" hidden></button>
+      </div>
+      <div class="exam-hero-hints">
+        <span class="exam-hint-chip">🧭 3 adımda sınava başla</span>
+        <span class="exam-hint-chip">📱 Mobil uyumlu çözüm akışı</span>
+        <span class="exam-hint-chip">📊 Sonuç karnesi otomatik oluşur</span>
+      </div>
     </div>
     <div class="exam-grade-panel">
       <h2 class="exam-grade-panel-title">Sınıfını Seç</h2>
       <p class="exam-grade-panel-text">Kartlardan uygun sınıf seviyeni seç. İstersen üst bardaki sınıf menülerinden de doğrudan ilgili alana geçebilirsin.</p>
       <div class="exam-grade-grid" id="gradeCardsHero"></div>
     </div>
+  </div>
+  <div class="exam-journey">
+    <article class="exam-journey-card">
+      <span class="exam-journey-step">1</span>
+      <h3>Sınıfını seç</h3>
+      <p>Uygun seviyeyi aç, yayınlanan sınavları tek yerde gör ve ders filtreleriyle alanı birkaç saniyede daralt.</p>
+      <div class="exam-journey-meta">
+        <span class="exam-journey-pill">🎯 Sınıf bazlı liste</span>
+        <span class="exam-journey-pill">📚 Ders filtresi</span>
+      </div>
+    </article>
+    <article class="exam-journey-card">
+      <span class="exam-journey-step">2</span>
+      <h3>Bilgilerini gir</h3>
+      <p>Ad, şube ve okul bilgilerini ekle. Sonrasında sınav ekranına geçer, çözümünü kaldığın yerden düzenli şekilde sürdürürsün.</p>
+      <div class="exam-journey-meta">
+        <span class="exam-journey-pill">🏫 Okul doğrulama</span>
+        <span class="exam-journey-pill">⚡ Hızlı giriş</span>
+      </div>
+    </article>
+    <article class="exam-journey-card">
+      <span class="exam-journey-step">3</span>
+      <h3>Karneni al</h3>
+      <p><strong id="journeyExamCount">—</strong> aktif sınav ve <strong id="journeyQuestionCount">—</strong> soru havuzundan üretilen sonuçlar anında karnene yansır.</p>
+      <div class="exam-journey-meta">
+        <span class="exam-journey-pill">🖼 PNG / JPEG</span>
+        <span class="exam-journey-pill">🧠 Detaylı analiz</span>
+      </div>
+    </article>
   </div>
 </div>
 
@@ -253,6 +365,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
     </div>
     <div class="subj-filters" id="subjFilters"></div>
     <div class="exam-filter-panel" id="examTools"></div>
+    <div class="exam-tools-summary" id="examToolsSummary"></div>
     <div id="examGrid"></div>
     <div class="pagination" id="pagination"></div>
   </div>
@@ -260,40 +373,54 @@ body.sinav-home-page .site-footer{margin-top:40px}
 
 <div id="studentModal" class="modal-overlay" style="display:none">
   <div class="modal-box">
-    <h3>✏️ Sınava Başla</h3>
-    <p class="modal-sub">Bilgilerini doğru gir — sonuçların sana özel kaydedilecek.</p>
-    <div class="exam-info-box" id="eibContent"></div>
-    <div class="form-row">
-      <div class="fg"><label>Ad *</label><input class="fi" id="fnInput" placeholder="Adınız" type="text" autocomplete="given-name"></div>
-      <div class="fg"><label>Soyad *</label><input class="fi" id="lnInput" placeholder="Soyadınız" type="text" autocomplete="family-name"></div>
-    </div>
-    <div class="form-row">
-      <div class="fg"><label>Sınıf</label><input class="fi" id="gradeInput" readonly></div>
-      <div class="fg"><label>Şube *</label>
-        <select class="fs" id="subeSelect">
-          <option value="">Şube seçin</option>
-          <option>A</option><option>B</option><option>C</option><option>D</option>
-          <option>E</option><option>F</option><option>G</option><option>H</option>
-        </select>
+    <div class="modal-header">
+      <div class="modal-topbar">
+        <span class="modal-kicker">Son Adım · Bilgilerini Gir</span>
+        <button class="modal-close" type="button" onclick="closeModal()" aria-label="Sınav giriş penceresini kapat">×</button>
       </div>
+      <h3>✏️ Sınava Başla</h3>
     </div>
-    <div class="form-row three">
-      <div class="fg"><label>İl *</label><select class="fs" id="cityInput"></select></div>
-      <div class="fg"><label>İlçe *</label><select class="fs" id="districtInput" disabled><option value="">Önce il seçin</option></select></div>
-      <div class="fg"><label>Okul *</label><select class="fs" id="schoolInput" autocomplete="organization" disabled><option value="">Önce il ve ilçe seçin</option></select></div>
+    <div class="modal-scroll-body">
+      <p class="modal-sub">Bilgilerini doğru gir — sonuçların sana özel kaydedilecek.</p>
+      <div class="modal-helper-pills">
+        <span class="modal-helper-pill">⚡ Hızlı giriş</span>
+        <span class="modal-helper-pill">🏫 Sonuçlar okul bilgine göre eşleşir</span>
+        <span class="modal-helper-pill">📊 Karne otomatik hazırlanır</span>
+      </div>
+      <div class="exam-info-box" id="eibContent"></div>
+      <div class="form-row">
+        <div class="fg"><label>Ad *</label><input class="fi" id="fnInput" placeholder="Adınız" type="text" autocomplete="given-name"></div>
+        <div class="fg"><label>Soyad *</label><input class="fi" id="lnInput" placeholder="Soyadınız" type="text" autocomplete="family-name"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Sınıf</label><input class="fi" id="gradeInput" readonly></div>
+        <div class="fg"><label>Şube *</label>
+          <select class="fs" id="subeSelect">
+            <option value="">Şube seçin</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+            <option>E</option><option>F</option><option>G</option><option>H</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row three">
+        <div class="fg"><label>İl *</label><select class="fs" id="cityInput"></select></div>
+        <div class="fg"><label>İlçe *</label><select class="fs" id="districtInput" disabled><option value="">Önce il seçin</option></select></div>
+        <div class="fg"><label>Okul *</label><select class="fs" id="schoolInput" autocomplete="organization" disabled><option value="">Önce il ve ilçe seçin</option></select></div>
+      </div>
+      <label class="manual-school-toggle disabled" id="examSchoolMissingLabel" for="examSchoolMissing">
+        <input id="examSchoolMissing" type="checkbox" disabled>
+        Okulum listede yok
+      </label>
+      <div class="fg" id="manualSchoolField" hidden>
+        <label>Okul Adı *</label>
+        <input class="fi" id="manualSchoolInput" placeholder="Okulunuzun tam adını yazın" type="text" autocomplete="organization" maxlength="120" disabled>
+      </div>
+      <div class="err-msg" id="modalErr">⚠️ Lütfen tüm alanları eksiksiz doldurun.</div>
     </div>
-    <label class="manual-school-toggle disabled" id="examSchoolMissingLabel" for="examSchoolMissing">
-      <input id="examSchoolMissing" type="checkbox" disabled>
-      Okulum listede yok
-    </label>
-    <div class="fg" id="manualSchoolField" hidden>
-      <label>Okul Adı *</label>
-      <input class="fi" id="manualSchoolInput" placeholder="Okulunuzun tam adını yazın" type="text" autocomplete="organization" maxlength="120" disabled>
-    </div>
-    <div class="err-msg" id="modalErr">⚠️ Lütfen tüm alanları eksiksiz doldurun.</div>
     <div class="btn-row">
+      <div class="btn-row-note">Karne ve sonuç kayıtları bu bilgilerle eşleşir. Bilgilerini doğru yazman yeterli.</div>
       <button class="btn btn-outline" onclick="closeModal()">İptal</button>
-      <button class="btn btn-primary btn-full" onclick="startExam()">İleri →</button>
+      <button class="btn btn-primary btn-full" onclick="startExam()">Sınav Ekranına Geç →</button>
     </div>
   </div>
 </div>
@@ -347,7 +474,7 @@ const EXAM_CARD_THEMES=[
   {accent:'#64748B',bg:'#F8FAFC',border:'#CBD5E1',shadow:'rgba(100,116,139,.16)'}
 ];
 
-let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:12,selExam:null,categoryMap:{},sort:'custom',questionFilter:'all'}; // Sayfada 12 sınav ayarı
+let S={grade:null,subject:'Tümü',exams:[],filtered:[],page:1,perPage:12,selExam:null,categoryMap:{},sort:'custom',questionFilter:'all',search:''}; // Sayfada 12 sınav ayarı
 const TR_CITIES=window.kemalSiteStore?.getTurkeyCities?window.kemalSiteStore.getTurkeyCities():[];
 const LOW_QUALITY_TOKENS=['asd','asdf','qwe','qwer','zxc','zxcv','abc','xxx','test','deneme','yok','none','null'];
 const SCHOOL_MISSING_VALUE='__manual_school__';
@@ -394,6 +521,15 @@ function getQuestionFilterLabel(value){
   if(value==='41+')return '41+ soru';
   return 'Tüm soru sayıları';
 }
+function normalizeExamSearch(value){
+  return String(value||'')
+    .toLocaleLowerCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^\p{L}\p{N}\s]/gu,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
 function matchesQuestionFilter(exam){
   const count=Number(exam&&exam.questionCount)||0;
   if(S.questionFilter==='1-10')return count>=1&&count<=10;
@@ -401,6 +537,17 @@ function matchesQuestionFilter(exam){
   if(S.questionFilter==='21-40')return count>=21&&count<=40;
   if(S.questionFilter==='41+')return count>=41;
   return true;
+}
+function matchesExamSearch(exam){
+  if(!S.search.trim())return true;
+  const haystack=normalizeExamSearch([
+    exam&&exam.title,
+    exam&&exam.subject,
+    exam&&exam.description,
+    exam&&exam.sinavAciklama,
+    exam&&exam.category
+  ].filter(Boolean).join(' '));
+  return haystack.includes(normalizeExamSearch(S.search));
 }
 function getHashIndex(value,length){
   const text=String(value||'');
@@ -413,6 +560,36 @@ function getExamTheme(exam,index){
 }
 function capitalize(s){return s.split(' ').map(w=>w?w[0].toUpperCase()+w.slice(1).toLowerCase():'').join(' ');}
 function collapseSpaces(s){return String(s??'').replace(/\s+/g,' ').trim();}
+function getStoredLastGrade(){
+  try{
+    const value=parseInt(localStorage.getItem('kemal_exam_last_grade')||'',10);
+    return GRADES.includes(value)?value:null;
+  }catch{
+    return null;
+  }
+}
+function setStoredLastGrade(grade){
+  try{
+    const value=parseInt(grade,10);
+    if(GRADES.includes(value)) localStorage.setItem('kemal_exam_last_grade',String(value));
+  }catch{}
+}
+function renderLastGradeShortcut(){
+  const button=document.getElementById('heroResumeBtn');
+  if(!button)return;
+  const lockedGrade=getLockedStudentGrade();
+  const lastGrade=lockedGrade||getStoredLastGrade();
+  if(!lastGrade){
+    button.hidden=true;
+    button.textContent='';
+    return;
+  }
+  button.hidden=false;
+  button.textContent=lockedGrade
+    ? `🎓 ${lastGrade}. sınıf sınavlarını aç`
+    : `↺ Son kaldığın yer: ${lastGrade}. sınıf`;
+  button.onclick=()=>window.selectGrade(lastGrade);
+}
 function populateCitySelect(selectId){
   const select=document.getElementById(selectId);
   if(!select) return;
@@ -637,7 +814,10 @@ async function startExamDirectlyForAccount(exam){
 }
 function applyStudentGradeLock(){
   const lockedGrade=getLockedStudentGrade();
-  if(!lockedGrade)return;
+  if(!lockedGrade){
+    renderLastGradeShortcut();
+    return;
+  }
   document.querySelectorAll('.exam-grade-card').forEach(card=>{
     card.classList.toggle('grade-locked',parseInt(card.dataset.grade,10)!==lockedGrade);
   });
@@ -645,6 +825,7 @@ function applyStudentGradeLock(){
   const text=document.querySelector('.exam-grade-panel-text');
   if(title)title.textContent='Sınıfına Uygun Sınavlar';
   if(text)text.textContent=lockedGrade+'. sınıf hesabınla yalnız sana uygun sınavlar listelenir.';
+  renderLastGradeShortcut();
 }
 function escHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
@@ -697,11 +878,14 @@ async function openExamModal(exam){
   S.selExam=exam;
   S.grade=exam.grade||S.grade;
   document.getElementById('eibContent').innerHTML=`
-    <div class="eib-title">${exam.title}</div>
+    <div class="eib-title-row">
+      <div class="eib-title">${exam.title}</div>
+      <span class="eib-type-pill">${escHtml(exam.subject||'Sınav')}</span>
+    </div>
     <div class="eib-row">
       <span class="eib-item">📝 ${exam.questionCount} soru</span>
-      <span class="eib-item">📚 ${exam.subject}</span>
       <span class="eib-item">⏱ ${exam.duration ? exam.duration + ' dakika' : 'Sınırsız'}</span>
+      <span class="eib-item">${isExamPublic(exam)?'🌍 Açık erişim':'🔐 Kayıtlı erişim'}</span>
     </div>
     ${exam.negativeMarking?'<div class="neg-warn">⚠️ Bu sınavda her 3 yanlış, 1 doğruyu götürecektir!</div>':''}`;
   document.getElementById('gradeInput').value=`${exam.grade||S.grade}. Sınıf`;
@@ -730,6 +914,8 @@ async function openExamModal(exam){
   modal.scrollTop=0;
   const modalBox=modal.querySelector('.modal-box');
   if(modalBox)modalBox.scrollTop=0;
+  const modalScrollBody=modal.querySelector('.modal-scroll-body');
+  if(modalScrollBody)modalScrollBody.scrollTop=0;
   prefillExamStudentFromAccount().then(()=>{
     if(!window.matchMedia('(max-width: 768px)').matches){
       setTimeout(()=>document.getElementById('fnInput').focus(),100);
@@ -746,12 +932,14 @@ function initUI(){
         <span class="exam-grade-card-action">Sınavları Gör</span>
       </span>
     </button>`).join('');
+  renderLastGradeShortcut();
 }
 
 window.selectGrade=async function(g){
   const lockedGrade=getLockedStudentGrade();
   if(lockedGrade&&parseInt(g,10)!==lockedGrade) g=lockedGrade;
-  S.grade=g;S.subject='Tümü';S.page=1;
+  S.grade=g;S.subject='Tümü';S.page=1;S.sort='custom';S.questionFilter='all';S.search='';
+  setStoredLastGrade(g);
   document.getElementById('heroSection').style.display='none';
   document.getElementById('gradeSection').style.display='block';
   const bn=document.getElementById('gradeBanner');
@@ -767,6 +955,7 @@ window.showHero=function(){
   document.getElementById('heroSection').style.display='block';
   document.getElementById('gradeSection').style.display='none';
   S.grade=null;
+  renderLastGradeShortcut();
   window.scrollTo({top:0,behavior:'smooth'});
 };
 
@@ -800,6 +989,13 @@ function renderExamTools(g){
       <select onchange="window.setExamTool('questionFilter',this.value)">
         ${['all','1-10','11-20','21-40','41+'].map(value=>`<option value="${value}" ${S.questionFilter===value?'selected':''}>${getQuestionFilterLabel(value)}</option>`).join('')}
       </select>
+    </div>
+    <div class="exam-tool-field wide">
+      <label>Sınav Ara</label>
+      <input class="exam-tool-input" type="search" value="${escHtml(S.search)}" placeholder="Sınav adı veya ders ara" oninput="window.setExamSearch(this.value)">
+    </div>
+    <div class="exam-tool-actions">
+      <button type="button" class="exam-tool-reset" onclick="window.resetExamTools()">Filtreleri Temizle</button>
     </div>`;
 }
 
@@ -823,10 +1019,47 @@ window.setExamTool=function(key,value){
   renderExamTools(S.grade);
   applyFilter();
 };
+window.setExamSearch=function(value){
+  S.search=value;
+  S.page=1;
+  applyFilter();
+};
+window.resetExamTools=function(){
+  S.subject='Tümü';
+  S.sort='custom';
+  S.questionFilter='all';
+  S.search='';
+  S.page=1;
+  renderSubjects(S.grade);
+  renderExamTools(S.grade);
+  applyFilter();
+};
 
 async function loadExams(g){
   const grid=document.getElementById('examGrid');
-  grid.innerHTML='<div class="spinner"></div>';
+  grid.innerHTML=`<div class="exam-grid exam-grid-loading">${Array.from({length:6},()=>`
+    <div class="ec ec-skeleton">
+      <div class="ec-head">
+        <div class="ec-heading">
+          <span class="sk-line md"></span>
+          <span class="sk-line lg" style="margin-top:10px"></span>
+        </div>
+        <span class="sk-circle"></span>
+      </div>
+      <div class="ec-body">
+        <div class="ec-flags">
+          <span class="sk-pill"></span>
+          <span class="sk-pill" style="width:96px"></span>
+        </div>
+        <div class="ec-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <span class="sk-line sm"></span>
+          <span class="sk-line sm"></span>
+          <span class="sk-line sm"></span>
+          <span class="sk-line sm"></span>
+        </div>
+        <span class="sk-line" style="height:42px;width:100%;margin-top:auto"></span>
+      </div>
+    </div>`).join('')}</div>`;
   try{
     let snap;
     try{
@@ -851,15 +1084,52 @@ async function loadExams(g){
 function applyFilter(){
   S.filtered=sortExamRecords(
     (S.subject==='Tümü'?[...S.exams]:S.exams.filter(e=>e.subject===S.subject))
+      .filter(matchesExamSearch)
       .filter(matchesQuestionFilter),
     S.sort
   );
-  renderGrid();renderPagination();
+  renderGrid();renderPagination();renderExamSummary();
+}
+
+function getActiveExamFilterBadges(){
+  const badges=[];
+  if(S.subject!=='Tümü')badges.push(`📚 ${S.subject}`);
+  if(S.questionFilter!=='all')badges.push(`📝 ${getQuestionFilterLabel(S.questionFilter)}`);
+  if(S.sort!=='custom'){
+    const sortLabels={
+      newest:'En yeni',
+      oldest:'En eski',
+      'most-questions':'Soru sayısı fazla',
+      'fewest-questions':'Soru sayısı az'
+    };
+    badges.push(`↕ ${sortLabels[S.sort]||S.sort}`);
+  }
+  if(S.search.trim())badges.push(`🔎 ${S.search.trim()}`);
+  return badges;
+}
+
+function renderExamSummary(){
+  const target=document.getElementById('examToolsSummary');
+  const sub=document.getElementById('gradeBannerSub');
+  if(!target)return;
+  const total=S.exams.length;
+  const shown=S.filtered.length;
+  const completed=S.exams.filter(exam=>!!getExamStatusMeta(exam)).length;
+  const badges=getActiveExamFilterBadges();
+  if(sub){
+    sub.textContent=`Toplam ${total} sınavdan ${shown} tanesi listeleniyor. ${completed} sınav için çalışma durumu işaretlenmiş.`;
+  }
+  target.innerHTML=`
+    <div class="exam-summary-copy"><strong>${shown}</strong> sınav görüntüleniyor. ${total?`Bu sınıfta toplam <strong>${total}</strong> yayın var.`:'Yeni sınavlar yayınlandığında burada görünecek.'}</div>
+    <div class="exam-summary-badges">
+      ${badges.length
+        ? badges.map(label=>`<span class="exam-summary-badge">${escHtml(label)}</span>`).join('')
+        : `<span class="exam-summary-badge">✨ Tüm filtreler açık</span><span class="exam-summary-badge">✅ ${completed} çalışma izi</span>`}
+    </div>`;
 }
 
 function renderGrid(){
   const grid=document.getElementById('examGrid');
-  const gc=GC[S.grade];
   const start=(S.page-1)*S.perPage;
   const items=S.filtered.slice(start,start+S.perPage);
   const newestExamIds=new Set(
@@ -869,7 +1139,10 @@ function renderGrid(){
       .map(item=>String(item.id))
   );
   if(!items.length){
-    grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">📭</span><h3>Sınav Bulunamadı</h3><p>Bu alanda henüz sınav yayınlanmamış.</p></div>';
+    const hasFilter=S.search.trim()||S.subject!=='Tümü'||S.questionFilter!=='all'||S.sort!=='custom';
+    grid.innerHTML=hasFilter
+      ? `<div class="empty-state"><span class="empty-state-icon">🧭</span><h3>Filtrelere Uyan Sınav Bulunamadı</h3><p>Arama metnini sadeleştirerek veya filtreleri temizleyerek daha fazla sınav görebilirsin.</p><div class="empty-state-actions"><button class="btn btn-primary" type="button" onclick="window.resetExamTools()">Filtreleri Temizle</button></div></div>`
+      : '<div class="empty-state"><span class="empty-state-icon">📭</span><h3>Sınav Bulunamadı</h3><p>Bu sınıf için henüz sınav yayınlanmamış. Yeni yayınlar eklendikçe burada görünecek.</p></div>';
     return;
   }
   grid.innerHTML=`<div class="exam-grid">${items.map((e,i)=>{
@@ -896,6 +1169,7 @@ function renderGrid(){
         <div class="ec-flags">
           ${newestExamIds.has(String(e.id))?'<span class="ec-chip ec-chip-new">🌟 YENİ</span>':''}
           ${getExamStatusMeta(e)?`<span class="ec-chip ec-chip-status">✅ ${escHtml(getExamStatusMeta(e).label)}</span>`:''}
+          <span class="ec-chip ec-chip-access">${isExamPublic(e)?'🌍 Açık erişim':'🔐 Kayıtlı erişim'}</span>
         </div>
         <div class="ec-meta">
           <span class="ec-mi">📝 ${e.questionCount||'?'} soru</span>
@@ -991,8 +1265,14 @@ async function loadStats(){
   try{
     const snap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
     const exams=snap.docs.map(d=>d.data()).filter(e=>e.hidden!==true&&e.gizli!==true);
-    document.getElementById('statExams').textContent=exams.length+'+';
-    document.getElementById('statQ').textContent=exams.reduce((s,e)=>s+(e.questionCount||0),0)+'+';
+    const examCount=exams.length;
+    const questionCount=exams.reduce((s,e)=>s+(e.questionCount||0),0);
+    document.getElementById('statExams').textContent=examCount+'+';
+    document.getElementById('statQ').textContent=questionCount+'+';
+    const journeyExamCount=document.getElementById('journeyExamCount');
+    const journeyQuestionCount=document.getElementById('journeyQuestionCount');
+    if(journeyExamCount)journeyExamCount.textContent=String(examCount);
+    if(journeyQuestionCount)journeyQuestionCount.textContent=String(questionCount);
   }catch{}
 }
 

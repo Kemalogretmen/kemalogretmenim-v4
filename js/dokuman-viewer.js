@@ -261,7 +261,7 @@
     },
   ];
   const VIEW_MODE_STORAGE_KEY = 'kemal_dokuman_view_mode';
-  const PAGE_TURN_DURATION = 920;
+  const PAGE_TURN_DURATION = 1050;
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 8;
   const ZOOM_STEP = 0.2;
@@ -1267,6 +1267,32 @@
     return composed.toDataURL('image/png');
   }
 
+  function createPageTurnImage(pageState) {
+    if (!pageState || !pageState.pdfCanvasEl || !pageState.annotationCanvasEl) {
+      return '';
+    }
+
+    pageState.canvas.renderAll();
+    const displayWidth = Math.max(1, Math.round(pageState.canvas.getWidth() || state.pageWidth || 1));
+    const displayHeight = Math.max(1, Math.round(pageState.canvas.getHeight() || state.pageHeight || 1));
+    const maxSnapshotWidth = 1280;
+    const snapshotScale = Math.min(1, maxSnapshotWidth / displayWidth);
+    const snapshotWidth = Math.max(1, Math.round(displayWidth * snapshotScale));
+    const snapshotHeight = Math.max(1, Math.round(displayHeight * snapshotScale));
+    const snapshot = document.createElement('canvas');
+    const context = snapshot.getContext('2d');
+
+    snapshot.width = snapshotWidth;
+    snapshot.height = snapshotHeight;
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, snapshotWidth, snapshotHeight);
+    context.drawImage(pageState.pdfCanvasEl, 0, 0, snapshotWidth, snapshotHeight);
+    context.drawImage(pageState.annotationCanvasEl, 0, 0, snapshotWidth, snapshotHeight);
+    return snapshot.toDataURL('image/jpeg', 0.88);
+  }
+
   function updatePageTurnLayerSize() {
     const layer = getPageTurnLayer();
     const sheet = getPageTurnSheet();
@@ -1413,8 +1439,13 @@
       state.flipStartedAt = Date.now();
       updatePageTurnLayerSize();
       setPageTurnPosition(slot || 'center');
-      front.style.backgroundImage = 'url("' + compositePageImage(fromState) + '")';
-      back.style.backgroundImage = 'url("' + compositePageImage(toState) + '")';
+      const frontImage = createPageTurnImage(fromState);
+      const backImage = createPageTurnImage(toState);
+      if (!frontImage || !backImage) {
+        throw new Error('Sayfa görüntüsü hazırlanamadı.');
+      }
+      front.style.backgroundImage = 'url("' + frontImage + '")';
+      back.style.backgroundImage = 'url("' + backImage + '")';
       layer.className = 'page-turn-layer is-active ' + (direction === 'prev' ? 'is-prev' : 'is-next');
       playPageTurnSound();
 
@@ -1433,9 +1464,6 @@
 
   function shouldAnimatePageTurn(fromState, toState) {
     if (!fromState || !toState || fromState === toState) {
-      return false;
-    }
-    if (state.pageCount > 8) {
       return false;
     }
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
