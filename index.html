@@ -3001,10 +3001,13 @@
 
         const liste = haberler.length ? haberler : DEFAULT_HABERLER;
 
+      const HERO_LIVE_LIMIT = 6;
+      const PLATFORM_LIVE_LIMIT = 5;
+
       function renderHeroLive(items) {
         const target = document.getElementById('heroLiveList');
         if (!target) return;
-        const list = (items && items.length ? items : liste).slice(0, 4);
+        const list = (items && items.length ? items : liste).slice(0, HERO_LIVE_LIMIT);
         if (!list.length) {
           target.innerHTML = '<div class="home-live-empty">Henüz gösterilecek güncel içerik yok.</div>';
           return;
@@ -3063,7 +3066,7 @@
         groups.forEach(group => {
           const target = document.getElementById(group.id);
           if (!target) return;
-          const list = sourceItems.filter(item => inferPlatformType(item) === group.type).slice(0, 5);
+          const list = sourceItems.filter(item => inferPlatformType(item) === group.type).slice(0, PLATFORM_LIVE_LIMIT);
           if (!list.length) {
             target.innerHTML = `<div class="platform-live-empty">${esc(group.empty)}</div>`;
             return;
@@ -3199,7 +3202,7 @@
       let latestItemsForCards = latestItemsForHero;
       if (window.kemalContentFeed) {
         try {
-          latestItemsForCards = await window.kemalContentFeed.getLatestContent({ maxItems: 60 });
+          latestItemsForCards = await window.kemalContentFeed.getAllItems();
         } catch (error) {
           latestItemsForCards = latestItemsForHero;
         }
