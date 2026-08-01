@@ -23,6 +23,9 @@
     if (raw === 'okuma' || raw === 'reading' || raw === 'metin') {
       return 'reading';
     }
+    if (raw === 'ebook' || raw === 'e-kitap' || raw === 'e_kitap') {
+      return 'ebook';
+    }
     if (raw === 'sinav' || raw === 'exam') {
       return 'exam';
     }
@@ -243,6 +246,9 @@
     }
     if (safeType === 'reading' && safeStatus === 'completed') {
       return 'Tamamlandı';
+    }
+    if (safeType === 'ebook' && safeStatus === 'completed') {
+      return 'Okundu';
     }
     if (safeStatus === 'completed') {
       return 'Yapıldı';

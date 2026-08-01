@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>E-Kitaplık - Kemal Öğretmenim</title>
+  <meta name="description" content="Sınıf düzeyine uygun kısa e-kitapları oku, anlama sorularını çöz ve ayrıntılı okuma karneni gör.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/hizli-okuma/e-kitaplar.html">
+  <link rel="stylesheet" href="/css/e-kitap.css?v=20260729-2">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
+</head>
+<body>
+  <header class="ebook-sitebar">
+    <a class="ebook-brand" href="/index.html">
+      <span class="ebook-brand-mark"><img src="/gorseller/logo.png" alt=""></span>
+      <span><strong>Kemal Öğretmenim</strong><small>E-Kitaplık</small></span>
+    </a>
+    <nav class="ebook-site-actions">
+      <a class="ebook-link" href="/hizli-okuma/index.html"><i data-lucide="gauge"></i><span>Hızlı Okuma</span></a>
+      <a class="ebook-link" href="/hizli-okuma/karne.html"><i data-lucide="chart-no-axes-column-increasing"></i><span>Okuma Karnem</span></a>
+      <a class="ebook-link" href="/index.html"><i data-lucide="house"></i><span>Ana Sayfa</span></a>
+    </nav>
+  </header>
+
+  <main class="ebook-shell">
+    <section class="library-head">
+      <div>
+        <span class="library-kicker"><i data-lucide="library"></i> Kısa ve ölçülebilir okuma</span>
+        <h1>E-Kitaplık</h1>
+        <p>Kitabını seç, sayfaları kendi ritminde çevir, ardından soruları tamamlayıp hız ve anlama karneni al.</p>
+      </div>
+      <div class="library-stats">
+        <div class="library-stat"><strong id="bookCount">0</strong><span>Kitap</span></div>
+        <div class="library-stat"><strong id="gradeCount">0</strong><span>Sınıf Düzeyi</span></div>
+      </div>
+    </section>
+
+    <section class="library-toolbar" aria-label="E-kitap filtreleri">
+      <div class="library-search">
+        <i data-lucide="search"></i>
+        <input type="search" id="bookSearch" placeholder="Kitap veya yazar ara" autocomplete="off">
+      </div>
+      <div class="grade-tabs" id="gradeTabs"></div>
+    </section>
+
+    <section class="ebook-grid" id="ebookGrid" aria-live="polite">
+      <div class="ebook-loading"><i data-lucide="loader-circle"></i><p>E-kitaplar yükleniyor...</p></div>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/content-progress.js?v=20260729-ebook"></script>
+  <script src="/js/content-saves.js?v=20260725-ebook"></script>
+  <script src="/js/e-kitaplik.js?v=20260729-2"></script>
+</body>
+</html>

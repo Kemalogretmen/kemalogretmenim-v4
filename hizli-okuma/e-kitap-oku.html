@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>E-Kitap Okuyucu - Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/e-kitap.css?v=20260729-2">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
+</head>
+<body class="reader-body">
+  <div class="reader-app">
+    <header class="reader-topbar">
+      <a class="ebook-link reader-back" href="/hizli-okuma/e-kitaplar.html" title="E-Kitaplığa dön">
+        <i data-lucide="arrow-left"></i><span>E-Kitaplık</span>
+      </a>
+      <div class="reader-title">
+        <strong id="topBookTitle">E-Kitap hazırlanıyor</strong>
+        <span id="topBookMeta">Kemal Öğretmenim</span>
+      </div>
+      <div class="reader-status">
+        <button class="ebook-button" id="saveBookAction" type="button" title="Kitabı kaydet"><i data-lucide="bookmark"></i><span>Kaydet</span></button>
+        <button class="ebook-button" id="likeBookAction" type="button" title="Kitabı beğen"><i data-lucide="heart"></i><span id="likeCount">0</span></button>
+        <div class="reader-timer" id="readerTimer">00:00</div>
+      </div>
+    </header>
+
+    <main class="reader-stage-wrap">
+      <section class="reader-intro active" id="introStage">
+        <div class="reader-intro-card">
+          <div class="intro-cover" id="introCover"><i data-lucide="book-open"></i></div>
+          <div class="intro-copy">
+            <h1 id="introTitle">E-Kitap</h1>
+            <div class="intro-author" id="introAuthor">Kemal Öğretmenim</div>
+            <p class="intro-description" id="introDescription">Kitap bilgileri yükleniyor...</p>
+            <div class="intro-metrics">
+              <div class="intro-metric"><strong id="introPages">0</strong><span>Sayfa</span></div>
+              <div class="intro-metric"><strong id="introWords">0</strong><span>Kelime</span></div>
+              <div class="intro-metric"><strong id="introTarget">0</strong><span>Hedef K/Dk</span></div>
+              <div class="intro-metric"><strong id="introMinutes">0</strong><span>Tahmini Dk</span></div>
+            </div>
+            <form class="reader-form" id="readerForm">
+              <div class="reader-form-heading">
+                <span><i data-lucide="user-round"></i></span>
+                <div>
+                  <strong>Okuyucu Bilgileri</strong>
+                  <small>Sonucun ve okuma karnen için bilgilerini tamamla.</small>
+                </div>
+              </div>
+              <div>
+                <label for="readerFirstName">Ad *</label>
+                <input type="text" id="readerFirstName" maxlength="30" autocomplete="given-name" placeholder="Adın" required>
+              </div>
+              <div>
+                <label for="readerLastName">Soyad *</label>
+                <input type="text" id="readerLastName" maxlength="30" autocomplete="family-name" placeholder="Soyadın" required>
+              </div>
+              <div>
+                <label for="readerGrade">Sınıf *</label>
+                <select id="readerGrade" required></select>
+              </div>
+              <div>
+                <label for="readerBranch">Şube *</label>
+                <select id="readerBranch" required>
+                  <option value="">Seç</option>
+                  <option value="A">A</option><option value="B">B</option>
+                  <option value="C">C</option><option value="D">D</option>
+                  <option value="E">E</option><option value="F">F</option>
+                  <option value="G">G</option><option value="H">H</option>
+                  <option value="Öğretmen">Öğretmen</option>
+                </select>
+              </div>
+              <div>
+                <label for="readerCity">İl *</label>
+                <select id="readerCity" required></select>
+              </div>
+              <div>
+                <label for="readerDistrict">İlçe *</label>
+                <select id="readerDistrict" disabled required>
+                  <option value="">Önce il seçin</option>
+                </select>
+              </div>
+              <div class="wide">
+                <label for="readerSchool">Okul *</label>
+                <select id="readerSchool" autocomplete="organization" disabled required>
+                  <option value="">Önce il ve ilçe seçin</option>
+                </select>
+              </div>
+              <label class="manual-school-toggle wide disabled" id="readerSchoolMissingLabel" for="readerSchoolMissing">
+                <input id="readerSchoolMissing" type="checkbox" disabled>
+                Okulum listede yok
+              </label>
+              <div class="wide" id="readerManualSchoolField" hidden>
+                <label for="readerSchoolManual">Okul Adı *</label>
+                <input type="text" id="readerSchoolManual" maxlength="120" autocomplete="organization" placeholder="Okulunun tam adını yaz" disabled>
+              </div>
+              <button class="reader-start" type="submit"><i data-lucide="book-open-check"></i><span>Kitabı Okumaya Başla</span></button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="reader-loading" id="loadingStage">
+        <div class="reader-loading-inner">
+          <i class="reader-loading-icon" data-lucide="loader-circle"></i>
+          <h2 id="loadingTitle">Kitap hazırlanıyor</h2>
+          <p id="loadingText">Sayfalar yüksek kalitede okuyucuya aktarılıyor.</p>
+          <div class="reader-loading-progress"><span id="loadingProgress"></span></div>
+        </div>
+      </section>
+
+      <section class="reader-error" id="errorStage">
+        <div class="reader-error-inner">
+          <i data-lucide="circle-alert" style="width:48px;height:48px;color:var(--ebook-coral)"></i>
+          <h2 id="errorTitle">Kitap açılamadı</h2>
+          <p id="errorText">Lütfen daha sonra tekrar deneyin.</p>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button class="ebook-button primary" id="retryButton" type="button">Tekrar Dene</button>
+            <a class="ebook-button" id="externalOpenButton" href="#" target="_blank" rel="noopener" style="display:none">Harici PDF'yi Aç</a>
+            <a class="ebook-button" href="/hizli-okuma/e-kitaplar.html">E-Kitaplığa Dön</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="reader-book-panel" id="bookStage">
+        <div class="book-viewport" id="bookViewport">
+          <aside class="thumbnail-drawer" id="thumbnailDrawer">
+            <div class="thumbnail-head">
+              <span>Sayfalar</span>
+              <button class="tool-button" id="closeThumbnails" type="button" title="Kapat"><i data-lucide="x"></i></button>
+            </div>
+            <div class="thumbnail-grid" id="thumbnailGrid"></div>
+          </aside>
+          <button class="reader-arrow prev" id="previousPage" type="button" title="Önceki sayfa"><i data-lucide="chevron-left"></i></button>
+          <div class="book-scale" id="bookScale">
+            <div class="book-root" id="bookRoot"></div>
+            <div class="reader-fallback-page" id="fallbackPage"></div>
+            <div class="external-frame-wrap" id="externalFrameWrap">
+              <iframe class="external-frame" id="externalFrame" title="Harici e-kitap" referrerpolicy="no-referrer"></iframe>
+            </div>
+          </div>
+          <button class="reader-arrow next" id="nextPage" type="button" title="Sonraki sayfa"><i data-lucide="chevron-right"></i></button>
+        </div>
+        <div class="reader-toolbar">
+          <button class="tool-button" id="thumbnailButton" type="button" title="Sayfa küçük resimleri"><i data-lucide="panel-left"></i></button>
+          <button class="tool-button" id="toolbarPrevious" type="button" title="Önceki sayfa"><i data-lucide="arrow-left"></i></button>
+          <div class="page-indicator" id="pageIndicator">1 / 1</div>
+          <button class="tool-button" id="toolbarNext" type="button" title="Sonraki sayfa"><i data-lucide="arrow-right"></i></button>
+          <button class="tool-button" id="zoomOutButton" type="button" title="Uzaklaştır"><i data-lucide="zoom-out"></i></button>
+          <button class="tool-button" id="zoomInButton" type="button" title="Yakınlaştır"><i data-lucide="zoom-in"></i></button>
+          <button class="tool-button" id="fitButton" type="button" title="Sayfayı ekrana sığdır"><i data-lucide="scan"></i></button>
+          <button class="tool-button" id="fullscreenButton" type="button" title="Tam ekran"><i data-lucide="maximize"></i></button>
+          <button class="finish-reading" id="finishReadingButton" type="button">Kitabı Bitirdim</button>
+        </div>
+      </section>
+
+      <section class="reader-quiz" id="quizStage">
+        <div class="quiz-wrap">
+          <div class="quiz-head">
+            <div>
+              <span class="library-kicker">Okuduğunu Anlama</span>
+              <h1>Kitap Sonu Soruları</h1>
+            </div>
+            <strong id="quizCounter">1 / 1</strong>
+          </div>
+          <div class="quiz-progress"><span id="quizProgress"></span></div>
+          <article class="quiz-card">
+            <div class="quiz-number" id="quizNumber">Soru 1</div>
+            <div class="quiz-question" id="quizQuestion"></div>
+            <div class="quiz-options" id="quizOptions"></div>
+          </article>
+          <div class="quiz-nav">
+            <button class="ebook-button" id="quizPrevious" type="button"><i data-lucide="arrow-left"></i>Önceki</button>
+            <button class="ebook-button primary" id="quizNext" type="button">Sonraki<i data-lucide="arrow-right"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="reader-report" id="reportStage">
+        <div class="report-wrap">
+          <div class="report-actions">
+            <button class="ebook-button" id="printReportButton" type="button"><i data-lucide="printer"></i>Yazdır</button>
+            <button class="ebook-button primary" id="downloadReportButton" type="button"><i data-lucide="download"></i>PDF İndir</button>
+            <a class="ebook-button" href="/hizli-okuma/e-kitaplar.html"><i data-lucide="library"></i>E-Kitaplık</a>
+          </div>
+          <article class="report-card" id="reportCard">
+            <div class="report-banner">
+              <div>
+                <span class="report-kicker">E-Kitap Okuma Karnesi</span>
+                <h1 id="reportStudent">Okuyucu</h1>
+                <p id="reportBook">E-Kitap</p>
+              </div>
+              <div class="report-score">
+                <div><strong id="reportComprehension">0%</strong><span>Anlama</span></div>
+              </div>
+            </div>
+            <div class="report-body">
+              <div class="report-metrics">
+                <div class="report-metric"><span>Okuma Hızı</span><strong id="reportWpm">0</strong><small>kelime/dk</small></div>
+                <div class="report-metric"><span>Aktif Süre</span><strong id="reportDuration">00:00</strong><small>dakika</small></div>
+                <div class="report-metric"><span>Doğru Cevap</span><strong id="reportCorrect">0/0</strong><small>soru</small></div>
+                <div class="report-metric"><span>Sayfa Hızı</span><strong id="reportPpm">0</strong><small>sayfa/dk</small></div>
+              </div>
+              <section class="report-section">
+                <h2>Hedef ve Okuyucu Grubu Kıyaslaması</h2>
+                <div class="compare-grid">
+                  <div class="chart-box"><canvas id="speedChart"></canvas></div>
+                  <div class="chart-box"><canvas id="comprehensionChart"></canvas></div>
+                </div>
+                <div class="benchmark-note" id="benchmarkNote"></div>
+              </section>
+              <section class="report-section">
+                <h2>Soru Cevap İncelemesi</h2>
+                <div class="answer-list" id="answerReview"></div>
+              </section>
+              <div class="save-state" id="resultSaveState">Sonuç kaydediliyor...</div>
+            </div>
+          </article>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/user-auth.js"></script>
+  <script src="/js/meb-schools.js"></script>
+  <script src="/js/content-progress.js?v=20260729-ebook"></script>
+  <script src="/js/e-kitap-okuyucu.js?v=20260729-2"></script>
+</body>
+</html>

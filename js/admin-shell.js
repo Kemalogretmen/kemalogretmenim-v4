@@ -40,6 +40,8 @@
           href: '/admin/okuma-editor.html',
           children: [
             { key: 'okuma-editor', icon: '📝', label: 'Okuma Metinleri', description: 'Metinleri, soruları ve yayın durumunu düzenle', href: '/admin/okuma-editor.html' },
+            { key: 'e-kitap-admin', icon: '📗', label: 'E-Kitap Yönetimi', description: 'PDF ve görsel kitapları, soruları ve yayın ayarlarını yönet', href: '/admin/e-kitap-yonetimi.html' },
+            { key: 'e-kitap-sonuclari', icon: '📈', label: 'E-Kitap Sonuçları', description: 'E-kitap hız, anlama ve öğrenci kayıtlarını incele', href: '/admin/e-kitap-sonuclari.html' },
             { key: 'okuma-sonuclari', icon: '📊', label: 'Okuma Sonuçları', description: 'Öğrenci okuma performanslarını incele', href: '/admin/okuma-sonuclari.html' },
             { key: 'okuma-karne', icon: '📘', label: 'Karne Merkezi', description: 'Okuma karneleri ve raporlarını yönet', href: '/admin/okuma-karne.html' }
           ]
@@ -100,6 +102,8 @@
     'oyunlar-admin': ['oyun_ekleme'],
     'homepage-vitrin': ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme', 'site_admin_dashboard'],
     'okuma-editor': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
+    'e-kitap-admin': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
+    'e-kitap-sonuclari': ['okuma_sonuclari', 'okuma_sonuclari_duzenleme', 'okuma_karne'],
     'okuma-sonuclari': ['okuma_sonuclari', 'okuma_sonuclari_duzenleme'],
     'okuma-karne': ['okuma_karne'],
     'dokuman-yonetimi': ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme'],

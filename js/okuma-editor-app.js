@@ -50,6 +50,7 @@
     activePage: 1,
     quill: null,
     titleQuill: null,
+    saving: false,
   };
 
   let toastTimer = null;
@@ -77,6 +78,22 @@
     toastTimer = setTimeout(function() {
       el.classList.remove('show');
     }, 3000);
+  }
+
+  function setSaveBusy(busy, active) {
+    state.saving = busy;
+    const publishButton = document.getElementById('publishReadingButton');
+    const draftButton = document.getElementById('draftReadingButton');
+    [publishButton, draftButton].forEach(function(button) {
+      if (!button) return;
+      button.disabled = busy;
+    });
+    if (publishButton) {
+      publishButton.textContent = busy && active ? '⏳ Yayınlanıyor…' : '💾 Yayınla';
+    }
+    if (draftButton) {
+      draftButton.textContent = busy && !active ? '⏳ Kaydediliyor…' : 'Taslak Kaydet';
+    }
   }
 
   async function copyToClipboard(text) {
@@ -812,12 +829,34 @@
 
   async function deleteQuestionsForText(textId) {
     const client = getClient();
-    const { data: existing } = await client.from('sorular').select('id').eq('metin_id', textId);
-    const ids = (existing || []).map(function(row) { return row.id; });
-    if (ids.length) {
-      await client.from('secenekler').delete().in('soru_id', ids);
+    const existingResponse = await client.from('sorular').select('id').eq('metin_id', textId);
+    if (existingResponse.error) {
+      throw existingResponse.error;
     }
-    await client.from('sorular').delete().eq('metin_id', textId);
+    const existing = existingResponse.data || [];
+    const ids = (existing || []).map(function(row) { return row.id; });
+    if (!ids.length) {
+      return 0;
+    }
+
+    const deleteResponse = await client
+      .from('sorular')
+      .delete()
+      .eq('metin_id', textId)
+      .select('id');
+    if (deleteResponse.error) {
+      throw deleteResponse.error;
+    }
+
+    const remainingResponse = await client.from('sorular').select('id').eq('metin_id', textId);
+    if (remainingResponse.error) {
+      throw remainingResponse.error;
+    }
+    if ((remainingResponse.data || []).length) {
+      throw new Error('Eski sorular silinemediği için yeni sorular eklenmedi. Okuma düzenleme yetkisini kontrol et.');
+    }
+
+    return ids.length;
   }
 
   async function deleteText(id, title) {
@@ -1444,6 +1483,31 @@
 
   async function saveQuestions(textId, questions) {
     const client = getClient();
+    const rpcResponse = await client.rpc('replace_reading_questions', {
+      p_metin_id: textId,
+      p_questions: questions,
+    });
+    if (!rpcResponse.error) {
+      if (Number(rpcResponse.data) !== questions.length) {
+        throw new Error('Kaydedilen soru sayısı beklenen sayı ile eşleşmedi.');
+      }
+      return;
+    }
+
+    const rpcErrorText = [
+      rpcResponse.error.message,
+      rpcResponse.error.details,
+      rpcResponse.error.hint,
+      rpcResponse.error.code,
+    ].filter(Boolean).join(' ').toLowerCase();
+    const rpcMissing = rpcErrorText.includes('replace_reading_questions') ||
+      rpcErrorText.includes('pgrst202') ||
+      rpcErrorText.includes('schema cache') ||
+      rpcErrorText.includes('could not find the function');
+    if (!rpcMissing) {
+      throw rpcResponse.error;
+    }
+
     await deleteQuestionsForText(textId);
 
     for (let i = 0; i < questions.length; i += 1) {
@@ -1498,6 +1562,12 @@
   }
 
   async function save(active) {
+    if (state.saving) {
+      toast('Kayıt işlemi devam ediyor; lütfen tamamlanmasını bekle.', 'error');
+      return;
+    }
+
+    setSaveBusy(true, active);
     try {
       const payload = getMetinPayload(active);
       const questions = collectQuestions();
@@ -1514,6 +1584,8 @@
       await loadTexts();
     } catch (error) {
       toast(error.message || 'Kaydetme sırasında bir sorun oluştu.', 'error');
+    } finally {
+      setSaveBusy(false, active);
     }
   }
 

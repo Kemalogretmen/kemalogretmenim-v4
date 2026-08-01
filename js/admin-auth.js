@@ -186,6 +186,8 @@
 
   const PAGE_PERMISSION_MAP = [
     { suffix: '/admin/okuma-editor.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
+    { suffix: '/admin/e-kitap-yonetimi.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
+    { suffix: '/admin/e-kitap-sonuclari.html', anyOf: ['okuma_sonuclari', 'okuma_sonuclari_duzenleme', 'okuma_karne'] },
     { suffix: '/admin/dokuman-yonetimi.html', anyOf: ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme'] },
     { suffix: '/admin/menu-yonetimi.html', key: 'menu_yonetimi' },
     { suffix: '/admin/calisma-kagidi-editor.html', key: 'calisma_kagidi' },
@@ -257,6 +259,8 @@
     }
     if (
       currentPath.indexOf('/admin/okuma-editor.html') !== -1 ||
+      currentPath.indexOf('/admin/e-kitap-yonetimi.html') !== -1 ||
+      currentPath.indexOf('/admin/e-kitap-sonuclari.html') !== -1 ||
       currentPath.indexOf('/admin/okuma-sonuclari.html') !== -1 ||
       currentPath.indexOf('/admin/okuma-karne.html') !== -1 ||
       currentPath.indexOf('/admin/oyunlar-admin.html') !== -1
