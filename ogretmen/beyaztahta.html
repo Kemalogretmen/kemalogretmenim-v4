@@ -4,13 +4,16 @@
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="description" content="Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, geri sayım ve yerel saat görünümü.">
   <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
   <meta property="og:site_name" content="Kemal Öğretmenim">
   <link rel="icon" href="/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>Beyaz Tahta — Kemal Öğretmenim</title>
+    <title>Akıllı Tahtam — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
 
@@ -353,7 +356,7 @@
       border-radius: 12px; background: #f8f5ff; border: 1px solid #ddd6fe; color: var(--purple); font-size: 12px; font-weight: 900;
     }
 
-    /* Beyaz Tahta Ana Sahne */
+    /* Akıllı Tahtam Ana Sahne */
     .board-shell { display: grid; gap: 12px; }
     .board-stage { position: relative; min-height: 80vh; border-radius: 26px; overflow: auto; background: #eef2f6; border: 2px solid rgba(227,214,255,0.9); box-shadow: inset 0 2px 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: flex-start; touch-action: none; overscroll-behavior: contain; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
     .board-plane { --board-bg:#ffffff; --board-grid-step:34px; position: relative; width: 100%; min-height: max(100%, 800px); background-color: var(--board-bg); box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: width 0.16s, height 0.16s, min-height 0.16s; overflow: hidden; transform: translateZ(0); }
@@ -881,7 +884,7 @@
   <div class="sub-back">
     <a href="../ogretmen-araclari.html">← Araçlar</a>
     <span style="font-size:20px">🖊</span>
-    <span class="sub-back-title">Beyaz Tahta</span>
+    <span class="sub-back-title">Akıllı Tahtam</span>
   </div>
   <main class="tools-page">
 
@@ -895,13 +898,13 @@
     <section class="workspace is-visible" id="whiteboardWorkspace" data-tool-panel="whiteboard">
       <article class="panel glass">
         <div class="panel-head">
-          <h2>Beyaz Tahta Sahnesi</h2>
+          <h2>Akıllı Tahtam Sahnesi</h2>
           <div class="tool-actions">
             <div class="shortcut-help">
               <button class="shortcut-help-btn" type="button" data-shortcut-target="boardShortcuts">!</button>
               <div class="shortcut-popover" id="boardShortcuts">
                 <div class="shortcut-popover-head">
-                  <p class="shortcut-popover-title">Beyaz Tahta Kısayolları</p>
+                  <p class="shortcut-popover-title">Akıllı Tahtam Kısayolları</p>
                   <button class="shortcut-close" type="button" data-shortcut-close>×</button>
                 </div>
                 <div class="shortcut-list">
@@ -1152,7 +1155,7 @@
 
   </main>
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260608-content-safety2"></script>
+  <script src="/js/site.js?v=20260901-smartboard"></script>
   <script>
 (function(){
   'use strict';
@@ -1178,7 +1181,7 @@
         shapePaletteTarget: 'stroke', shapeSize: 4,
         paletteTarget: 'stroke', size: 6, paper: 'white', pageSize: 'auto',
         backgroundColor: '#ffffff', zoom: 1, minZoom: 0.6, maxZoom: 3,
-        logicalWidth: 0, logicalHeight: 0, displayWidth: 0, displayHeight: 0,
+        logicalWidth: 0, logicalHeight: 0, displayWidth: 0, displayHeight: 0, pixelRatio: 1,
         drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
         startX: 0, startY: 0, points: [], lastPoint: null,
         panStartClientX: 0, panStartClientY: 0, toolbarLeft: 16, toolbarTop: 16, autosaveTimer: null,
@@ -1300,8 +1303,37 @@
     /* ── KRONOMETRE & SAAT ── */
     function getActivePage() { return S.board.pages[S.board.pageIndex]; }
     function cloneBoardItems(items) { return JSON.parse(JSON.stringify(items || [])); }
+    function simplifyBoardPoints(points, tool) {
+      if(!Array.isArray(points) || points.length < 3) return points || [];
+      var minDistance = Math.max(0.85, getStrokeMinDistance(tool || 'pen', 'pen') * 0.9);
+      var minDistanceSq = minDistance * minDistance;
+      var simplified = [points[0]];
+      var last = points[0];
+      for(var i = 1; i < points.length - 1; i += 1) {
+        var point = points[i];
+        var dx = point.x - last.x;
+        var dy = point.y - last.y;
+        if((dx * dx + dy * dy) >= minDistanceSq) {
+          simplified.push(point);
+          last = point;
+        }
+      }
+      simplified.push(points[points.length - 1]);
+      var maxPoints = 1800;
+      if(simplified.length <= maxPoints) return simplified;
+      var sampled = [simplified[0]];
+      var step = Math.ceil(simplified.length / maxPoints);
+      for(var j = step; j < simplified.length - 1; j += step) sampled.push(simplified[j]);
+      sampled.push(simplified[simplified.length - 1]);
+      return sampled;
+    }
+    function optimizeBoardItem(item) {
+      var copy = JSON.parse(JSON.stringify(item || {}));
+      if(copy.kind === 'path' && Array.isArray(copy.points)) copy.points = simplifyBoardPoints(copy.points, copy.tool);
+      return copy;
+    }
     function normalizeBoardPage(page) {
-      var items = cloneBoardItems(page && page.items ? page.items : []);
+      var items = (page && page.items ? page.items : []).map(optimizeBoardItem);
       return { items: items, undoStack: [cloneBoardItems(items)], undoIndex: 0 };
     }
     function scheduleBoardAutosave() {
@@ -1326,7 +1358,7 @@
           shapeSize: S.board.shapeSize,
           toolbarLeft: S.board.toolbarLeft,
           toolbarTop: S.board.toolbarTop,
-          pages: S.board.pages.map(function(page) { return { items: page.items || [] }; })
+          pages: S.board.pages.map(function(page) { return { items: (page.items || []).map(optimizeBoardItem) }; })
         }));
       } catch(err) {}
     }
@@ -1360,9 +1392,17 @@
     var boardCtx = null; var boardPreviewCtx = null;
 
     function boardCanDraw(tool) { return tool === 'pen' || tool === 'highlighter' || tool === 'chalk' || tool === 'pencil' || tool === 'eraser'; }
+    function getBoardPixelRatio(width, height) {
+      var nativeRatio = window.devicePixelRatio || 1;
+      var ratio = Math.min(nativeRatio, 1.35);
+      var maxPixels = 4800000;
+      var pixels = Math.max(1, width * height * ratio * ratio);
+      if(pixels > maxPixels) ratio = Math.max(0.75, Math.sqrt(maxPixels / Math.max(1, width * height)));
+      return ratio;
+    }
     function resizeBoard() {
       if(!E.boardPlane || !E.boardCanvas || !E.boardPreview) return;
-      var conf = PAGE_DIMENSIONS[S.board.pageSize]; var ratio = window.devicePixelRatio || 1; var w, h;
+      var conf = PAGE_DIMENSIONS[S.board.pageSize]; var w, h;
       var zoom = clampBoardZoom(S.board.zoom || 1);
       S.board.zoom = zoom;
       if(conf.w && conf.h) {
@@ -1383,19 +1423,41 @@
       E.boardPlane.style.setProperty('--board-bg', S.board.backgroundColor || '#ffffff');
       E.boardPlane.style.setProperty('--board-grid-step', Math.max(12, Math.round(34 * zoom)) + 'px');
       if(E.boardStage) E.boardStage.style.justifyContent = displayW <= E.boardStage.clientWidth ? 'center' : 'flex-start';
+      var ratio = getBoardPixelRatio(w, h);
+      S.board.pixelRatio = ratio;
       [E.boardCanvas, E.boardPreview].forEach(function(canvas) { canvas.width = Math.max(1, Math.floor(w * ratio)); canvas.height = Math.max(1, Math.floor(h * ratio)); canvas.style.width = displayW + 'px'; canvas.style.height = displayH + 'px'; });
-      boardCtx = E.boardCanvas.getContext('2d'); boardPreviewCtx = E.boardPreview.getContext('2d');
-      if(boardCtx) boardCtx.setTransform(ratio, 0, 0, ratio, 0, 0); if(boardPreviewCtx) boardPreviewCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      boardCtx = E.boardCanvas.getContext('2d', { desynchronized: true }); boardPreviewCtx = E.boardPreview.getContext('2d', { desynchronized: true });
+      if(boardCtx) { boardCtx.setTransform(ratio, 0, 0, ratio, 0, 0); boardCtx.imageSmoothingEnabled = false; }
+      if(boardPreviewCtx) { boardPreviewCtx.setTransform(ratio, 0, 0, ratio, 0, 0); boardPreviewCtx.imageSmoothingEnabled = false; }
       redrawBoard();
       positionBoardToolbar();
       updateBoardZoomUi();
     }
-    function clearPreview() { if(boardPreviewCtx && E.boardPreview) { boardPreviewCtx.clearRect(0, 0, E.boardPreview.width, E.boardPreview.height); } }
+    function clearPreview() { if(boardPreviewCtx && E.boardPreview) { boardPreviewCtx.clearRect(0, 0, S.board.logicalWidth || E.boardPreview.width, S.board.logicalHeight || E.boardPreview.height); } }
     function getBoardPoint(evt) {
       var rect = E.boardCanvas.getBoundingClientRect();
+      return getBoardPointFromRect(evt, rect);
+    }
+    function getBoardPointFromRect(evt, rect) {
       var scaleX = (S.board.logicalWidth || rect.width) / Math.max(1, rect.width);
       var scaleY = (S.board.logicalHeight || rect.height) / Math.max(1, rect.height);
       return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+    }
+    function getFastPointerEvents(evt, maxEvents) {
+      var events = typeof evt.getCoalescedEvents === 'function' ? evt.getCoalescedEvents() : [evt];
+      var limit = Math.max(1, maxEvents || 8);
+      if(events.length <= limit) return events;
+      var sampled = [];
+      var step = Math.ceil(events.length / limit);
+      for(var i = step - 1; i < events.length; i += step) sampled.push(events[i]);
+      if(sampled[sampled.length - 1] !== events[events.length - 1]) sampled.push(events[events.length - 1]);
+      return sampled;
+    }
+    function getStrokeMinDistance(tool, pointerType) {
+      if(tool === 'chalk' || tool === 'pencil') return 2.4;
+      if(tool === 'highlighter') return 1.8;
+      if(tool === 'eraser') return 1.35;
+      return pointerType === 'pen' ? 1.05 : 1.25;
     }
     function getBoardContentPoint(evt) {
       var rect = E.boardPlane.getBoundingClientRect();
@@ -1667,7 +1729,7 @@
 
     function redrawBoard() {
       if(!boardCtx || !E.boardCanvas) return;
-      boardCtx.clearRect(0, 0, E.boardCanvas.width, E.boardCanvas.height);
+      boardCtx.clearRect(0, 0, S.board.logicalWidth || E.boardCanvas.width, S.board.logicalHeight || E.boardCanvas.height);
       var page = getActivePage();
       page.items.forEach(function(item) { drawBoardItem(boardCtx, item); });
       Object.keys(S.board.activeStrokes || {}).forEach(function(pointerId) {
@@ -1692,7 +1754,15 @@
       page.undoIndex = page.undoStack.length - 1;
       scheduleBoardAutosave();
     }
-    function pushBoardItem(item) { getActivePage().items.push(item); saveSnapshot(); redrawBoard(); }
+    function pushBoardItem(item, skipRedraw) {
+      getActivePage().items.push(item);
+      saveSnapshot();
+      if(skipRedraw) {
+        if(E.boardStage) E.boardStage.classList.add('has-content');
+      } else {
+        redrawBoard();
+      }
+    }
 
     function commitTextOverlay(save) {
       var active = S.board.activeText; if(!active) return; var textarea = active.el; var text = textarea.value.trim();
@@ -1753,7 +1823,8 @@
       if(boardCanDraw(S.board.tool)) {
         var last = S.board.lastPoint || S.board.points[S.board.points.length - 1];
         var dxp = point.x - last.x; var dyp = point.y - last.y;
-        if((dxp * dxp + dyp * dyp) < 0.36) return;
+        var minDistance = getStrokeMinDistance(S.board.tool, evt && evt.pointerType ? evt.pointerType : 'mouse');
+        if((dxp * dxp + dyp * dyp) < minDistance * minDistance) return;
         S.board.points.push({ x: point.x, y: point.y });
         drawStrokeSegment(boardCtx, { tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size }, last, point);
         S.board.lastPoint = { x: point.x, y: point.y };
@@ -1766,7 +1837,7 @@
       if(S.board.tool === 'select') { if(S.board.selectedItem && S.board.selectAction) saveSnapshot(); S.board.drawing = false; S.board.selectAction = null; return; }
       if(S.board.tool === 'pan') { S.board.drawing = false; syncBoardUI(); return; }
       S.board.drawing = false; clearPreview();
-      if(boardCanDraw(S.board.tool)) { if(S.board.points.length === 1) S.board.points.push({ x: point.x + 0.1, y: point.y + 0.1 }); pushBoardItem({ kind: 'path', tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points.slice() }); } 
+      if(boardCanDraw(S.board.tool)) { if(S.board.points.length === 1) S.board.points.push({ x: point.x + 0.1, y: point.y + 0.1 }); pushBoardItem({ kind: 'path', tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points.slice() }, true); }
       else { pushBoardItem({ kind: 'shape', tool: S.board.tool, strokeColor: S.board.shapeStrokeColor, fillColor: S.board.shapeFillColor, fillEnabled: S.board.shapeFillEnabled, size: S.board.shapeSize, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
       S.board.points = [];
       S.board.lastPoint = null;
@@ -2292,7 +2363,8 @@
         size: S.board.size,
         pointerType: evt.pointerType || 'mouse',
         points: [{ x: point.x, y: point.y }],
-        lastPoint: { x: point.x, y: point.y }
+        lastPoint: { x: point.x, y: point.y },
+        minDistance: getStrokeMinDistance(S.board.tool, evt.pointerType || 'mouse')
       };
       S.board.activeStrokes[evt.pointerId] = stroke;
       drawStrokeSegment(boardCtx, stroke, point, { x: point.x + 0.1, y: point.y + 0.1 });
@@ -2300,13 +2372,15 @@
     function moveMultiStroke(evt) {
       var stroke = S.board.activeStrokes[evt.pointerId];
       if(!stroke) return;
-      var events = typeof evt.getCoalescedEvents === 'function' ? evt.getCoalescedEvents() : [evt];
+      var rect = E.boardCanvas.getBoundingClientRect();
+      var events = getFastPointerEvents(evt, stroke.tool === 'chalk' || stroke.tool === 'pencil' ? 4 : 8);
       events.forEach(function(ev) {
-        var point = getBoardPoint(ev);
+        var point = getBoardPointFromRect(ev, rect);
         var last = stroke.lastPoint;
         var dx = point.x - last.x;
         var dy = point.y - last.y;
-        if((dx * dx + dy * dy) < 0.36) return;
+        var minDistance = stroke.minDistance || 1.2;
+        if((dx * dx + dy * dy) < minDistance * minDistance) return;
         stroke.points.push({ x: point.x, y: point.y });
         drawStrokeSegment(boardCtx, stroke, last, point);
         stroke.lastPoint = { x: point.x, y: point.y };
@@ -2318,14 +2392,14 @@
       if(stroke.points.length === 1) {
         stroke.points.push({ x: stroke.points[0].x + 0.1, y: stroke.points[0].y + 0.1 });
       }
+      delete S.board.activeStrokes[evt.pointerId];
       pushBoardItem({
         kind: 'path',
         tool: stroke.tool,
         strokeColor: stroke.strokeColor,
         size: stroke.size,
         points: stroke.points.slice()
-      });
-      delete S.board.activeStrokes[evt.pointerId];
+      }, true);
     }
     function finishSinglePointer(evt) {
       if(S.board.activePointerId !== evt.pointerId || !S.board.drawing) return;
@@ -2457,8 +2531,9 @@
         }
         if(S.board.activePointerId !== evt.pointerId || !S.board.drawing) return;
         evt.preventDefault();
-        var events = typeof evt.getCoalescedEvents === 'function' ? evt.getCoalescedEvents() : [evt];
-        events.forEach(function(ev) { moveBoardDraw(getBoardPoint(ev), ev); });
+        var rect = E.boardCanvas.getBoundingClientRect();
+        var events = getFastPointerEvents(evt, 8);
+        events.forEach(function(ev) { moveBoardDraw(getBoardPointFromRect(ev, rect), ev); });
       }, { passive: false });
       E.boardPreview.addEventListener('pointerup', function(evt) {
         if(evt.pointerType === 'touch' && S.board.pinch.active) {

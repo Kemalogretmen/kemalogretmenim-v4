@@ -487,9 +487,9 @@
     '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
     '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
     '/ogretmen-ajandasi/index.html': 'Öğretmenler için öğrenci takibi, sınav analizi, karne, ders programı ve akademik takvim içeren öğretmen ajandası.',
-    '/sinif-tahtasi.html': 'Akıllı tahta için öğretmen araçları merkezi: beyaz tahta, kronometre, çark, oyunlar, okuma ve belge araçları.',
+    '/ogretmen/beyaztahta.html': 'Akıllı Tahtam ile çizim, yazı, şekil ve tam ekran anlatım alanını açın.',
     '/sinif-kaynaklari.html': 'Sınıf düzeyine göre yayınlanmış dokümanlar, videolar ve etkileşimli çalışma kağıtları.',
-    '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, zamanlayıcı ve sınıf içi yardımcı araçlar.',
+    '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları merkezi: tahta, kronometre, çark, matematik, okuma, belge ve kaynak araçları.',
     '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
     '/oyun/oyunlar.html': 'Eğitimi destekleyen öğretici oyunlar, tekrar çalışmaları ve eğlenceli etkinlikler.',
     '/sinav_sitesi/index.html': 'Sınıf düzeyine uygun online sınavlar, denemeler ve konu pekiştirme merkezi.',
@@ -1481,8 +1481,8 @@
       { uid: 'static:reading', title: 'Hızlı Okuma Merkezi', href: '/hizli-okuma/index.html', icon: '📖', gradeLabel: '1-8. Sınıf', subjectLabel: 'Okuma Anlama', contentTypeLabel: 'Merkez' },
       { uid: 'static:games', title: 'Eğitim Oyunları', href: '/oyun/oyunlar.html', icon: '🎮', gradeLabel: 'Genel', subjectLabel: 'Oyunlar', contentTypeLabel: 'Merkez' },
       { uid: 'static:exams', title: 'Sınav Merkezi', href: '/sinav_sitesi/index.html', icon: '📝', gradeLabel: '1-8. Sınıf', subjectLabel: 'Deneme ve Test', contentTypeLabel: 'Merkez' },
-      { uid: 'static:class-board', title: 'Sınıf Tahtası', href: '/sinif-tahtasi.html', icon: '🧑‍🏫', gradeLabel: 'Öğretmen', subjectLabel: 'Akıllı Tahta', contentTypeLabel: 'Merkez' },
       { uid: 'static:class-resources', title: 'Sınıf Kaynakları', href: '/sinif-kaynaklari.html', icon: '📚', gradeLabel: '1-8. Sınıf', subjectLabel: 'Doküman ve Çalışma', contentTypeLabel: 'Merkez' },
+      { uid: 'static:smart-board', title: 'Akıllı Tahtam', href: '/ogretmen/beyaztahta.html', icon: '🖊️', gradeLabel: 'Öğretmen', subjectLabel: 'Akıllı Tahta', contentTypeLabel: 'Araç' },
       { uid: 'static:tools', title: 'Öğretmen Araçları', href: '/ogretmen-araclari.html', icon: '⏱️', gradeLabel: 'Öğretmen', subjectLabel: 'Araçlar', contentTypeLabel: 'Sayfa' },
       { uid: 'static:certificate-studio', title: 'Belge ve Sertifika Stüdyosu', href: '/ogretmen/belge-studyo.html', icon: '🏅', gradeLabel: 'Öğretmen', subjectLabel: 'Belge Tasarımı', contentTypeLabel: 'Araç' },
       { uid: 'static:agenda', title: 'Öğretmen Ajandası', href: '/ogretmen-ajandasi/index.html', icon: '📒', gradeLabel: 'Öğretmen', subjectLabel: 'Ajanda ve Takip', contentTypeLabel: 'Araç' },
@@ -1876,7 +1876,7 @@
             '<a href="/hakkimda.html" class="dd-item"><span class="dd-icon">👨‍🏫</span> Hakkımda</a>' +
             '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
             '<a href="/ogretmen-ajandasi/index.html" class="dd-item"><span class="dd-icon">📒</span> Öğretmen Ajandası</a>' +
-            '<a href="/sinif-tahtasi.html" class="dd-item"><span class="dd-icon">🧑‍🏫</span> Sınıf Tahtası</a>' +
+            '<a href="/ogretmen/beyaztahta.html" class="dd-item"><span class="dd-icon">🖊️</span> Akıllı Tahtam</a>' +
             '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
             '<a href="/ogretmen/belge-studyo.html" class="dd-item"><span class="dd-icon">🏅</span> Belge ve Sertifika Stüdyosu</a>' +
             '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
@@ -1915,7 +1915,7 @@
             '<li><a href="/oyun/oyunlar.html">🎮 Oyunlar</a></li>' +
             '<li><a href="/sinav_sitesi/index.html">📝 Sınav Merkezi</a></li>' +
             '<li><a href="/ogretmen-ajandasi/index.html">📒 Öğretmen Ajandası</a></li>' +
-            '<li><a href="/sinif-tahtasi.html">🧑‍🏫 Sınıf Tahtası</a></li>' +
+            '<li><a href="/ogretmen/beyaztahta.html">🖊️ Akıllı Tahtam</a></li>' +
             '<li><a href="/sinif-kaynaklari.html">📚 Sınıf Kaynakları</a></li>' +
             '<li><a href="/ogretmen-araclari.html">⏱️ Öğretmen Araçları</a></li>' +
             '<li><a href="/hakkimda.html">Hakkımda</a></li>' +

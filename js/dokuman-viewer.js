@@ -5080,7 +5080,7 @@
           '<p style="margin-top:10px;font-size:13px;color:#64748B;">Bu görüntüleyici belirli bir doküman bağlantısıyla çalışır.</p>',
           '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px;">',
             '<a href="/admin/dokuman-yonetimi.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:#6C3DED;color:white;text-decoration:none;font-weight:800;">Doküman Yönetimi</a>',
-            '<a href="/sinif-tahtasi.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:white;color:#6C3DED;text-decoration:none;font-weight:800;border:2px solid #E2D9FF;">Sınıf Tahtası</a>',
+            '<a href="/ogretmen-araclari.html" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 16px;border-radius:999px;background:white;color:#6C3DED;text-decoration:none;font-weight:800;border:2px solid #E2D9FF;">Öğretmen Araçları</a>',
           '</div>',
         '</div>'
       ].join('');

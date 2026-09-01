@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Birim Küp ve Soru Hazırlama Aracı - Kemal Öğretmenim</title>
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        html { overscroll-behavior: none; }
+        body {
+            margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7f9fc; color: #172033; touch-action: none;
+        }
+        #kemalFooterMount { display: none; }
+        .cube-tool-shell {
+            position: relative; height: var(--cube-shell-height, calc(100vh - 74px)); min-height: 660px;
+            overflow: hidden; background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+        }
+        #canvas-container { position: absolute; inset: 0; z-index: 1; }
+        #canvas-container > canvas, #drawing-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+        #drawing-canvas { pointer-events: none; z-index: 5; touch-action: none; }
+        .cube-panel {
+            position: absolute; z-index: 12; width: 294px; display: grid; gap: 12px;
+            background: rgba(255,255,255,0.93); border: 1px solid rgba(203,213,225,0.88);
+            border-radius: 18px; padding: 14px; box-shadow: 0 18px 42px rgba(15,23,42,0.12);
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); pointer-events: auto;
+        }
+        .cube-left-panel { top: 18px; left: 18px; }
+        .cube-right-panel { top: 18px; right: 18px; }
+        .cube-panel-head { display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(226,232,240,.9); padding-bottom:12px; }
+        .cube-panel-icon { width:42px; height:42px; border-radius:14px; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg,#7c3aed,#2563eb); font-size:18px; }
+        .cube-panel-title { margin:0; font-size:15px; font-weight:900; line-height:1.1; color:#172033; }
+        .cube-panel-sub { margin:3px 0 0; font-size:11px; font-weight:800; color:#64748b; }
+        .group { display:grid; gap:8px; }
+        .group-title { font-size:11px; color:#64748b; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+        button {
+            min-height:42px; padding:9px 12px; border:1px solid #d8e1ee; background:#fff; cursor:pointer;
+            border-radius:12px; font-size:14px; font-weight:850; transition:transform .15s, box-shadow .15s, background .15s, border-color .15s;
+            display:inline-flex; align-items:center; justify-content:center; gap:8px; color:#334155;
+        }
+        button:hover { background:#f8fafc; border-color:#b9c7dc; }
+        button.active { background:#1476f2; color:#fff; border-color:#1476f2; box-shadow:0 10px 18px rgba(20,118,242,.22); }
+        button:active { transform:scale(.96); }
+        .tool-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .tool-grid.single { grid-template-columns:1fr; }
+        .color-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+        .pen-color-grid { grid-template-columns:repeat(3,1fr); }
+        .color-btn { width:100%; max-width:58px; justify-self:center; aspect-ratio:1; min-height:0; border-radius:999px; border:2px solid #fff; padding:0; box-shadow:0 0 0 1px rgba(15,23,42,.14); }
+        .pen-color-grid .color-btn { max-width:62px; }
+        .color-btn.active { border-color:#1f2937; transform:scale(1.08); box-shadow:0 0 0 3px rgba(20,118,242,.2), 0 9px 18px rgba(15,23,42,.18); }
+        #counter-badge {
+            display:flex; align-items:center; justify-content:center; gap:8px; min-height:48px;
+            background:linear-gradient(135deg, rgba(124,58,237,.1), rgba(20,118,242,.08));
+            border:1px solid rgba(124,58,237,.2); border-radius:14px; font-size:16px; font-weight:900; color:#172033;
+        }
+        #counter-badge i { color:#1476f2; }
+        #projections-panel { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; transition:opacity .2s, transform .2s; }
+        .proj-box { display:grid; gap:6px; justify-items:center; min-width:0; }
+        .proj-title { font-size:11px; font-weight:900; color:#64748b; }
+        .proj-canvas { width:100%; aspect-ratio:1; border:1px solid #d8e1ee; background:#fff; border-radius:12px; overflow:hidden; box-shadow:inset 0 0 10px rgba(15,23,42,.04); cursor:context-menu; }
+        .proj-canvas canvas { width:100% !important; height:100% !important; }
+        .projection-menu {
+            position:fixed; z-index:40; min-width:190px; display:none; gap:4px; padding:8px;
+            background:#fff; border:1px solid rgba(203,213,225,.95); border-radius:14px;
+            box-shadow:0 18px 38px rgba(15,23,42,.18); color:#172033;
+        }
+        .projection-menu.open { display:grid; }
+        .projection-menu button {
+            justify-content:flex-start; min-height:38px; border:0; border-radius:10px; box-shadow:none;
+            background:transparent; font-size:13px; color:#334155;
+        }
+        .projection-menu button:hover { background:#eef6ff; color:#1476f2; }
+        @media (max-width: 980px) {
+            body { overflow:auto; touch-action:manipulation; }
+            .cube-tool-shell { min-height:980px; height:var(--cube-shell-height, calc(100vh - 74px)); }
+            .cube-panel { width:calc(50% - 26px); }
+            .cube-right-panel { right:18px; }
+        }
+        @media (max-width: 720px) {
+            .cube-tool-shell { min-height:1120px; }
+            .cube-panel { width:calc(100% - 24px); left:12px; right:12px; }
+            .cube-left-panel { top:12px; }
+            .cube-right-panel { top:420px; }
+        }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <main class="cube-tool-shell" id="cubeToolShell">
+        <div id="canvas-container"><canvas id="drawing-canvas"></canvas></div>
+
+        <aside class="cube-panel cube-left-panel" id="toolbar" aria-label="Birim küp araçları">
+            <div class="cube-panel-head">
+                <span class="cube-panel-icon"><i class="fas fa-cube"></i></span>
+                <div>
+                    <p class="cube-panel-title">Birim Küp</p>
+                    <p class="cube-panel-sub">Yapı kur, görünüm çıkar, çıktı al</p>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Küp Araçları</span>
+                <div class="tool-grid">
+                    <button id="mode-add" class="active" onclick="setMode('add')" title="Küp Ekle"><i class="fas fa-cube"></i><i class="fas fa-plus"></i> Ekle</button>
+                    <button id="mode-remove" onclick="setMode('remove')" title="Küp Sil"><i class="fas fa-cube"></i><i class="fas fa-minus"></i> Sil</button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Küp Rengi</span>
+                <div class="color-grid">
+                    <button class="color-btn active cube-color" title="Yeşil" style="background:#8BC34A;" onclick="setCubeColor(this, 0x8BC34A)"></button>
+                    <button class="color-btn cube-color" title="Mavi" style="background:#2196F3;" onclick="setCubeColor(this, 0x2196F3)"></button>
+                    <button class="color-btn cube-color" title="Sarı" style="background:#FFC107;" onclick="setCubeColor(this, 0xFFC107)"></button>
+                    <button class="color-btn cube-color" title="Pembe" style="background:#E91E63;" onclick="setCubeColor(this, 0xE91E63)"></button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Yardımcılar</span>
+                <div class="tool-grid">
+                    <button id="toggle-counts-btn" onclick="toggleCounts()" title="Yapı Planı"><i class="fas fa-sort-numeric-up-alt"></i> Plan</button>
+                    <button id="toggle-proj-btn" class="active" onclick="toggleProjectionsPanel()" title="Yan Görünümler"><i class="fas fa-border-all"></i> Görünümler</button>
+                    <button id="proj-style-btn" onclick="toggleProjectionStyle()" title="Renkli / Çizgili Görünüm"><i class="fas fa-palette"></i> Renkli</button>
+                    <button id="bg-toggle-btn" onclick="cycleBackground()" title="Zemin Değiştir"><i class="fas fa-border-none"></i> Noktalı</button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Dosya</span>
+                <div class="tool-grid">
+                    <button onclick="clearAll()" title="Temizle"><i class="fas fa-trash"></i> Temizle</button>
+                    <button onclick="downloadCompositeImage('png')" class="active" title="PNG indir"><i class="fas fa-download"></i> PNG</button>
+                </div>
+            </div>
+        </aside>
+
+        <aside class="cube-panel cube-right-panel" aria-label="Kamera ve görünüm paneli">
+            <div id="counter-badge">
+                <i class="fas fa-cubes"></i> Küp Sayısı: <span id="cube-count">0</span>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Kamera</span>
+                <div class="tool-grid">
+                    <button id="mode-rotate" onclick="setMode('rotate')" title="Serbest Çevir"><i class="fas fa-hand-paper"></i> Çevir</button>
+                    <button onclick="setView('iso')" title="İzometrik"><i class="fas fa-cube"></i> İZO</button>
+                    <button onclick="zoomCamera(1.2)" title="Yakınlaştır"><i class="fas fa-search-plus"></i> Yakın</button>
+                    <button onclick="zoomCamera(0.8)" title="Uzaklaştır"><i class="fas fa-search-minus"></i> Uzak</button>
+                    <button onclick="setView('top')" title="Üstten Görünüm"><i class="fas fa-arrow-down"></i> ÜST</button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Kalem & Silgi</span>
+                <div class="tool-grid">
+                    <button id="mode-draw" onclick="setMode('draw')" title="Kalem"><i class="fas fa-pen"></i> Kalem</button>
+                    <button id="mode-erase" onclick="setMode('erase')" title="Silgi"><i class="fas fa-eraser"></i> Silgi</button>
+                </div>
+                <div class="color-grid pen-color-grid">
+                    <button class="color-btn active pen-color" title="Kırmızı" style="background:#D32F2F;" onclick="setPenColor(this, '#D32F2F')"></button>
+                    <button class="color-btn pen-color" title="Mavi" style="background:#1976D2;" onclick="setPenColor(this, '#1976D2')"></button>
+                    <button class="color-btn pen-color" title="Yeşil" style="background:#388E3C;" onclick="setPenColor(this, '#388E3C')"></button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Yan Görünümler</span>
+                <div id="projections-panel">
+                    <div class="proj-box">
+                        <span class="proj-title">Üstten</span>
+                        <div id="view-top" class="proj-canvas" data-view="top" data-label="Üstten"></div>
+                    </div>
+                    <div class="proj-box">
+                        <span class="proj-title">Önden</span>
+                        <div id="view-front" class="proj-canvas" data-view="front" data-label="Önden"></div>
+                    </div>
+                    <div class="proj-box">
+                        <span class="proj-title">Sağdan</span>
+                        <div id="view-right" class="proj-canvas" data-view="right" data-label="Sağdan"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div id="projection-menu" class="projection-menu" role="menu" aria-label="Görünüm işlemleri">
+            <button type="button" data-action="copy"><i class="fas fa-copy"></i> Görünümü Kopyala</button>
+            <button type="button" data-action="download"><i class="fas fa-download"></i> PNG Olarak Kaydet</button>
+        </div>
+    </main>
+
+    <script src="/js/site-data.js"></script>
+    <script src="/js/site.js?v=20260901-smartboard"></script>
+    <script>
+        let scene, camera, renderer, raycaster, mouse, controls;
+        let cubes = [];
+        let rollOverMesh;
+        let currentCubeColor = 0x8BC34A;
+        let currentMode = 'add';
+        let dotsHelper, gridHelper, basePlane;
+        let bgState = 'dots'; // 'dots', 'grid', 'none'
+        const cubeSize = 50;
+
+        let topCamera, frontCamera, rightCamera;
+        let topRenderer, frontRenderer, rightRenderer;
+        let isProjectionsVisible = true;
+        let projectionStyle = 'color';
+        let activeProjectionView = null;
+        
+        let showCounts = false;
+        let labelMeshes = [];
+
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const ctx = drawCanvas.getContext('2d', { willReadFrequently: true });
+        let isDrawing = false;
+        let currentPenColor = '#D32F2F';
+
+        function getStageSize() {
+            const rect = document.getElementById('canvas-container').getBoundingClientRect();
+            return {
+                width: Math.max(1, Math.round(rect.width || window.innerWidth)),
+                height: Math.max(1, Math.round(rect.height || window.innerHeight)),
+            };
+        }
+
+        function syncShellHeight() {
+            const shell = document.getElementById('cubeToolShell');
+            if (!shell) return;
+            const top = shell.getBoundingClientRect().top;
+            shell.style.setProperty('--cube-shell-height', Math.max(660, window.innerHeight - top) + 'px');
+        }
+
+        init3D();
+        initProjections();
+        initProjectionMenu();
+        init2D();
+        animate();
+        if (window.kemalSite && window.kemalSite.ready && typeof window.kemalSite.ready.finally === 'function') {
+            window.kemalSite.ready.finally(function() {
+                syncShellHeight();
+                onWindowResize();
+            });
+        }
+
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            syncShellHeight();
+            const stageSize = getStageSize();
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+            const aspect = stageSize.width / stageSize.height;
+            const d = 500;
+            camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 4000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(stageSize.width, stageSize.height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            container.insertBefore(renderer.domElement, drawCanvas);
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enabled = false; controls.enableDamping = true; controls.dampingFactor = 0.05;
+
+            setView('iso');
+
+            const ambientLight = new THREE.AmbientLight(0x707070);
+            scene.add(ambientLight);
+            
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.7);
+            dirLight1.position.set(300, 500, 400); dirLight1.castShadow = true;
+            dirLight1.shadow.mapSize.width = 2048; dirLight1.shadow.mapSize.height = 2048;
+            dirLight1.shadow.camera.left = -1000; dirLight1.shadow.camera.right = 1000;
+            dirLight1.shadow.camera.top = 1000; dirLight1.shadow.camera.bottom = -1000;
+            dirLight1.shadow.bias = -0.001;
+            scene.add(dirLight1);
+            
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+            dirLight2.position.set(-300, 200, -300); scene.add(dirLight2);
+
+            const rollOverGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            const rollOverMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, opacity: 0.5, transparent: true });
+            rollOverMesh = new THREE.Mesh(rollOverGeo, rollOverMaterial);
+            scene.add(rollOverMesh);
+
+            createBackgrounds();
+            raycaster = new THREE.Raycaster(); mouse = new THREE.Vector2();
+
+            renderer.domElement.addEventListener('pointermove', onPointerMove);
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function createBackgrounds() {
+            // Dots Background
+            const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#ffffff'; context.fillRect(0, 0, 128, 128);
+            context.fillStyle = '#999999'; context.beginPath(); context.arc(64, 64, 4, 0, Math.PI * 2); context.fill();
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping; texture.repeat.set(30, 30);
+            
+            const dotsGeo = new THREE.PlaneGeometry(2000, 2000);
+            const dotsMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
+            dotsHelper = new THREE.Mesh(dotsGeo, dotsMat); dotsHelper.rotation.x = -Math.PI / 2; dotsHelper.receiveShadow = true;
+            scene.add(dotsHelper);
+
+            // Grid Background
+            gridHelper = new THREE.GridHelper(2000, 40, 0x000000, 0xcccccc);
+            gridHelper.position.y = 0.1; // Prevent Z-fighting
+            gridHelper.visible = false;
+            scene.add(gridHelper);
+
+            // Base Invisible Plane for Raycasting
+            const geometry = new THREE.PlaneGeometry(2000, 2000); geometry.rotateX(-Math.PI / 2);
+            basePlane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ visible: false })); basePlane.receiveShadow = true;
+            scene.add(basePlane); cubes.push(basePlane);
+        }
+
+        function cycleBackground() {
+            const btn = document.getElementById('bg-toggle-btn');
+            if (bgState === 'dots') {
+                bgState = 'grid';
+                dotsHelper.visible = false;
+                gridHelper.visible = true;
+                btn.innerHTML = '<i class="fas fa-border-none"></i> Zemin: Kareli';
+            } else if (bgState === 'grid') {
+                bgState = 'none';
+                dotsHelper.visible = false;
+                gridHelper.visible = false;
+                btn.innerHTML = '<i class="fas fa-border-none"></i> Zemin: Boş';
+            } else {
+                bgState = 'dots';
+                dotsHelper.visible = true;
+                gridHelper.visible = false;
+                btn.innerHTML = '<i class="fas fa-border-none"></i> Zemin: Noktalı';
+            }
+        }
+
+        function initProjections() {
+            const aspect = 1; const d = 200; const projectionPreviewSize = 360;
+            const rendererOptions = { antialias: true, alpha: true, preserveDrawingBuffer: true };
+
+            topCamera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 4000);
+            topRenderer = new THREE.WebGLRenderer(rendererOptions); topRenderer.setClearColor(0xffffff, 1); topRenderer.setSize(projectionPreviewSize, projectionPreviewSize);
+            document.getElementById('view-top').appendChild(topRenderer.domElement);
+
+            frontCamera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 4000);
+            frontRenderer = new THREE.WebGLRenderer(rendererOptions); frontRenderer.setClearColor(0xffffff, 1); frontRenderer.setSize(projectionPreviewSize, projectionPreviewSize);
+            document.getElementById('view-front').appendChild(frontRenderer.domElement);
+
+            rightCamera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 4000);
+            rightRenderer = new THREE.WebGLRenderer(rendererOptions); rightRenderer.setClearColor(0xffffff, 1); rightRenderer.setSize(projectionPreviewSize, projectionPreviewSize);
+            document.getElementById('view-right').appendChild(rightRenderer.domElement);
+        }
+
+        function initProjectionMenu() {
+            const menu = document.getElementById('projection-menu');
+            document.querySelectorAll('.proj-canvas').forEach(box => {
+                box.title = `${box.dataset.label} görünümü kopyala veya PNG olarak kaydet`;
+                box.addEventListener('contextmenu', event => {
+                    event.preventDefault();
+                    activeProjectionView = box.dataset.view;
+                    openProjectionMenu(event.clientX, event.clientY);
+                });
+            });
+
+            menu.addEventListener('click', event => {
+                const button = event.target.closest('button[data-action]');
+                if (!button || !activeProjectionView) return;
+                closeProjectionMenu();
+                if (button.dataset.action === 'copy') copyProjectionView(activeProjectionView);
+                if (button.dataset.action === 'download') downloadProjectionView(activeProjectionView);
+            });
+
+            document.addEventListener('pointerdown', event => {
+                if (!event.target.closest('#projection-menu')) closeProjectionMenu();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape') closeProjectionMenu();
+            });
+        }
+
+        function openProjectionMenu(x, y) {
+            const menu = document.getElementById('projection-menu');
+            menu.classList.add('open');
+            const rect = menu.getBoundingClientRect();
+            menu.style.left = Math.min(x, window.innerWidth - rect.width - 12) + 'px';
+            menu.style.top = Math.min(y, window.innerHeight - rect.height - 12) + 'px';
+        }
+
+        function closeProjectionMenu() {
+            document.getElementById('projection-menu').classList.remove('open');
+        }
+
+        function getProjectionMeta(view) {
+            const map = {
+                top: { renderer: topRenderer, camera: topCamera, label: 'Üstten', file: 'birim-kup-ustten-gorunum.png' },
+                front: { renderer: frontRenderer, camera: frontCamera, label: 'Önden', file: 'birim-kup-onden-gorunum.png' },
+                right: { renderer: rightRenderer, camera: rightCamera, label: 'Sağdan', file: 'birim-kup-sagdan-gorunum.png' },
+            };
+            return map[view];
+        }
+
+        function withProjectionSceneState(callback) {
+            const rollOverWasVisible = rollOverMesh.visible;
+            const dotsWasVisible = dotsHelper.visible;
+            const gridWasVisible = gridHelper.visible;
+            const originalColors = [];
+
+            rollOverMesh.visible = false;
+            dotsHelper.visible = false;
+            gridHelper.visible = false;
+
+            if (projectionStyle === 'empty') {
+                cubes.forEach(c => {
+                    if (c !== basePlane) {
+                        originalColors.push(c.material.color.getHex());
+                        c.material.color.setHex(0xffffff);
+                        c.material.emissive.setHex(0xffffff);
+                    }
+                });
+            }
+
+            const result = callback();
+
+            if (projectionStyle === 'empty') {
+                let idx = 0;
+                cubes.forEach(c => {
+                    if (c !== basePlane) {
+                        c.material.color.setHex(originalColors[idx++]);
+                        c.material.emissive.setHex(0x000000);
+                    }
+                });
+            }
+
+            rollOverMesh.visible = rollOverWasVisible;
+            if(bgState === 'dots') dotsHelper.visible = dotsWasVisible;
+            if(bgState === 'grid') gridHelper.visible = gridWasVisible;
+            return result;
+        }
+
+        function getProjectionBlob(view) {
+            updateProjectionCameras();
+            const meta = getProjectionMeta(view);
+            const exportRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+            exportRenderer.setPixelRatio(1);
+            exportRenderer.setClearColor(0xffffff, 1);
+            exportRenderer.setSize(720, 720, false);
+            withProjectionSceneState(() => exportRenderer.render(scene, meta.camera));
+
+            return new Promise(resolve => {
+                exportRenderer.domElement.toBlob(blob => {
+                    exportRenderer.dispose();
+                    resolve(blob);
+                }, 'image/png', 1);
+            });
+        }
+
+        async function copyProjectionView(view) {
+            const meta = getProjectionMeta(view);
+            const blob = await getProjectionBlob(view);
+            try {
+                if (!navigator.clipboard || !window.ClipboardItem) throw new Error('Clipboard desteklenmiyor.');
+                await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                showProjectionToast(`${meta.label} görünümü kopyalandı.`);
+            } catch (error) {
+                downloadBlob(blob, meta.file);
+                showProjectionToast('Kopyalama desteklenmedi, PNG indirildi.');
+            }
+        }
+
+        async function downloadProjectionView(view) {
+            const meta = getProjectionMeta(view);
+            const blob = await getProjectionBlob(view);
+            downloadBlob(blob, meta.file);
+            showProjectionToast(`${meta.label} görünümü PNG olarak indirildi.`);
+        }
+
+        function downloadBlob(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = url;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function showProjectionToast(message) {
+            if (window.KemalToast && typeof window.KemalToast.show === 'function') {
+                window.KemalToast.show(message, 'success');
+                return;
+            }
+            console.info(message);
+        }
+
+        function toggleProjectionsPanel() {
+            isProjectionsVisible = !isProjectionsVisible;
+            const panel = document.getElementById('projections-panel');
+            const btn = document.getElementById('toggle-proj-btn');
+            if(isProjectionsVisible) {
+                panel.style.transform = 'scale(1)';
+                panel.style.opacity = '1'; panel.style.pointerEvents = 'auto'; btn.classList.add('active');
+            } else {
+                panel.style.transform = 'scale(0.96)';
+                panel.style.opacity = '0'; panel.style.pointerEvents = 'none'; btn.classList.remove('active');
+            }
+        }
+
+        function toggleProjectionStyle() {
+            const btn = document.getElementById('proj-style-btn');
+            if(projectionStyle === 'color') {
+                projectionStyle = 'empty';
+                btn.innerHTML = '<i class="fas fa-border-all"></i> İçi Boş';
+                btn.style.color = '#E91E63'; btn.style.borderColor = '#ccc';
+            } else {
+                projectionStyle = 'color';
+                btn.innerHTML = '<i class="fas fa-palette"></i> Renkli';
+                btn.style.color = ''; btn.style.borderColor = '#ccc';
+            }
+        }
+
+        function toggleCounts() {
+            showCounts = !showCounts;
+            const btn = document.getElementById('toggle-counts-btn');
+            if(showCounts) {
+                btn.classList.add('active');
+                setView('top');
+            } else {
+                btn.classList.remove('active');
+            }
+            updateCounts();
+        }
+
+        function updateCounter() {
+            document.getElementById('cube-count').innerText = cubes.length - 1;
+        }
+
+        function updateCounts() {
+            labelMeshes.forEach(mesh => scene.remove(mesh));
+            labelMeshes = [];
+            if (!showCounts) return;
+
+            const topMap = {}; const frontMap = {}; const rightMap = {};
+
+            cubes.forEach(c => {
+                if (c === basePlane) return;
+                const x = Math.round(c.position.x);
+                const y = Math.round(c.position.y);
+                const z = Math.round(c.position.z);
+
+                const keyTop = `${x}_${z}`;
+                if (!topMap[keyTop]) topMap[keyTop] = [];
+                topMap[keyTop].push(c);
+
+                const keyFront = `${x}_${y}`;
+                if (!frontMap[keyFront]) frontMap[keyFront] = [];
+                frontMap[keyFront].push(c);
+
+                const keyRight = `${z}_${y}`;
+                if (!rightMap[keyRight]) rightMap[keyRight] = [];
+                rightMap[keyRight].push(c);
+            });
+
+            function createLabel(text, pos, rotX, rotY, rotZ) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 128; canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, 128, 128);
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.beginPath(); ctx.arc(64, 64, 45, 0, Math.PI * 2); ctx.fill();
+                
+                ctx.lineWidth = 4; ctx.strokeStyle = '#333';
+                ctx.beginPath(); ctx.arc(64, 64, 45, 0, Math.PI * 2); ctx.stroke();
+                
+                ctx.font = 'bold 50px Arial';
+                ctx.fillStyle = '#000000';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(text, 64, 68);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });
+                const geo = new THREE.PlaneGeometry(cubeSize * 0.75, cubeSize * 0.75);
+                const mesh = new THREE.Mesh(geo, mat);
+                
+                mesh.position.copy(pos);
+                mesh.rotation.set(rotX, rotY, rotZ);
+                scene.add(mesh);
+                labelMeshes.push(mesh);
+            }
+
+            for (let key in topMap) {
+                const col = topMap[key];
+                const maxCube = col.reduce((prev, curr) => (curr.position.y > prev.position.y) ? curr : prev);
+                createLabel(col.length, new THREE.Vector3(maxCube.position.x, maxCube.position.y + cubeSize/2 + 0.5, maxCube.position.z), -Math.PI/2, 0, 0);
+            }
+
+            for (let key in frontMap) {
+                const col = frontMap[key];
+                const maxCube = col.reduce((prev, curr) => (curr.position.z > prev.position.z) ? curr : prev);
+                createLabel(col.length, new THREE.Vector3(maxCube.position.x, maxCube.position.y, maxCube.position.z + cubeSize/2 + 0.5), 0, 0, 0);
+            }
+
+            for (let key in rightMap) {
+                const col = rightMap[key];
+                const maxCube = col.reduce((prev, curr) => (curr.position.x > prev.position.x) ? curr : prev);
+                createLabel(col.length, new THREE.Vector3(maxCube.position.x + cubeSize/2 + 0.5, maxCube.position.y, maxCube.position.z), 0, Math.PI/2, 0);
+            }
+        }
+
+        function init2D() {
+            resizeCanvas2D();
+            drawCanvas.addEventListener('pointerdown', (e) => {
+                if(currentMode !== 'draw' && currentMode !== 'erase') return;
+                isDrawing = true;
+                const point = getDrawPoint(e);
+                ctx.beginPath(); ctx.moveTo(point.x, point.y);
+            });
+            drawCanvas.addEventListener('pointermove', (e) => {
+                if (!isDrawing) return; if(currentMode !== 'draw' && currentMode !== 'erase') return;
+                const point = getDrawPoint(e);
+                ctx.lineTo(point.x, point.y); ctx.stroke();
+            });
+            drawCanvas.addEventListener('pointerup', () => isDrawing = false);
+            drawCanvas.addEventListener('pointercancel', () => isDrawing = false);
+            drawCanvas.addEventListener('pointerout', () => isDrawing = false);
+        }
+
+        function getDrawPoint(event) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            return {
+                x: (event.clientX - rect.left) * dpr,
+                y: (event.clientY - rect.top) * dpr,
+            };
+        }
+
+        function resizeCanvas2D() {
+            const dpr = window.devicePixelRatio || 1; const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = drawCanvas.width || 1; tempCanvas.height = drawCanvas.height || 1;
+            tempCanvas.getContext('2d').drawImage(drawCanvas, 0, 0);
+            const rect = drawCanvas.getBoundingClientRect();
+            drawCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+            drawCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+            setupBrush(); ctx.drawImage(tempCanvas, 0, 0);
+        }
+
+        function setupBrush() {
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            if (currentMode === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 30; } 
+            else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentPenColor; ctx.lineWidth = 6; }
+        }
+
+        function onPointerMove(event) {
+            if (currentMode !== 'add' && currentMode !== 'remove') { rollOverMesh.visible = false; return; }
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+            raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(cubes);
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                rollOverMesh.position.copy(intersect.point).add(intersect.face.normal);
+                rollOverMesh.position.divideScalar(cubeSize).floor().multiplyScalar(cubeSize).addScalar(cubeSize / 2);
+                rollOverMesh.visible = currentMode === 'add';
+            } else { rollOverMesh.visible = false; }
+        }
+
+        function onPointerDown(event) {
+            if(event.target.tagName === 'CANVAS' && event.target !== drawCanvas && event.target !== renderer.domElement) return;
+            if (currentMode !== 'add' && currentMode !== 'remove') return;
+            
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+            raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(cubes);
+            
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                if (currentMode === 'add') {
+                    const voxelGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                    const voxelMat = new THREE.MeshLambertMaterial({ color: currentCubeColor, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+                    const voxel = new THREE.Mesh(voxelGeo, voxelMat);
+                    voxel.castShadow = true; voxel.receiveShadow = true;
+                    
+                    const edges = new THREE.EdgesGeometry(voxelGeo);
+                    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x222222, linewidth: 2 }));
+                    voxel.add(line);
+
+                    voxel.position.copy(intersect.point).add(intersect.face.normal);
+                    voxel.position.divideScalar(cubeSize).floor().multiplyScalar(cubeSize).addScalar(cubeSize / 2);
+                    
+                    scene.add(voxel); cubes.push(voxel); 
+                    updateCounter(); updateCounts();
+                } else if (currentMode === 'remove' && intersect.object !== basePlane) {
+                    scene.remove(intersect.object); cubes.splice(cubes.indexOf(intersect.object), 1); 
+                    updateCounter(); updateCounts();
+                }
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            ['add', 'remove', 'rotate', 'draw', 'erase'].forEach(m => document.getElementById('mode-' + m).classList.remove('active'));
+            document.getElementById('mode-' + mode).classList.add('active');
+
+            if (mode === 'rotate') { controls.enabled = true; drawCanvas.style.pointerEvents = 'none'; rollOverMesh.visible = false; }
+            else if (mode === 'draw' || mode === 'erase') { controls.enabled = false; drawCanvas.style.pointerEvents = 'auto'; rollOverMesh.visible = false; setupBrush(); }
+            else { controls.enabled = false; drawCanvas.style.pointerEvents = 'none'; rollOverMesh.visible = true; }
+        }
+
+        function setCubeColor(btn, colorHex) {
+            currentCubeColor = colorHex;
+            document.querySelectorAll('.cube-color').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+            if(currentMode !== 'add' && currentMode !== 'remove') setMode('add');
+        }
+
+        function setPenColor(btn, colorHex) {
+            currentPenColor = colorHex;
+            document.querySelectorAll('.pen-color').forEach(b => b.classList.remove('active')); btn.classList.add('active');
+            if(currentMode !== 'draw') setMode('draw'); setupBrush();
+        }
+
+        function setView(view) { 
+            controls.target.set(0,0,0); 
+            if (view === 'iso') { camera.position.set(500, 500, 500); }
+            else if (view === 'top') { camera.position.set(0, 1000, 0); }
+            camera.lookAt(0, 0, 0); controls.update(); 
+        }
+        
+        function zoomCamera(factor) { camera.zoom *= factor; camera.updateProjectionMatrix(); }
+        
+        function clearAll() {
+            const cubesToRemove = cubes.filter(c => c !== basePlane);
+            cubesToRemove.forEach(c => scene.remove(c)); cubes = [basePlane];
+            ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height); 
+            updateCounter(); updateCounts();
+        }
+
+        function downloadCompositeImage(format) {
+            rollOverMesh.visible = false; renderer.render(scene, camera); 
+            
+            const tempCanvas = document.createElement('canvas'); const dpr = window.devicePixelRatio || 1;
+            const stageBounds = renderer.domElement.getBoundingClientRect();
+            tempCanvas.width = Math.max(1, Math.round(stageBounds.width * dpr));
+            tempCanvas.height = Math.max(1, Math.round(stageBounds.height * dpr));
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.fillStyle = '#ffffff'; tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(renderer.domElement, 0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(drawCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            
+            if(isProjectionsVisible && document.getElementById('projections-panel').style.opacity !== '0') {
+                const panelBounds = document.getElementById('projections-panel').getBoundingClientRect();
+                const topBounds = document.getElementById('view-top').getBoundingClientRect();
+                const frontBounds = document.getElementById('view-front').getBoundingClientRect();
+                const rightBounds = document.getElementById('view-right').getBoundingClientRect();
+                
+                tempCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                tempCtx.beginPath(); tempCtx.roundRect((panelBounds.left - stageBounds.left) * dpr, (panelBounds.top - stageBounds.top) * dpr, panelBounds.width * dpr, panelBounds.height * dpr, 16 * dpr); tempCtx.fill();
+                
+                const boxSize = topBounds.width * dpr;
+                tempCtx.drawImage(topRenderer.domElement, (topBounds.left - stageBounds.left) * dpr, (topBounds.top - stageBounds.top) * dpr, boxSize, boxSize);
+                tempCtx.drawImage(frontRenderer.domElement, (frontBounds.left - stageBounds.left) * dpr, (frontBounds.top - stageBounds.top) * dpr, boxSize, boxSize);
+                tempCtx.drawImage(rightRenderer.domElement, (rightBounds.left - stageBounds.left) * dpr, (rightBounds.top - stageBounds.top) * dpr, boxSize, boxSize);
+                
+                tempCtx.fillStyle = '#333'; tempCtx.font = `bold ${15 * dpr}px sans-serif`; tempCtx.textAlign = 'center';
+                tempCtx.fillText('Üstten', ((topBounds.left - stageBounds.left) * dpr) + (boxSize/2), ((topBounds.top - stageBounds.top) * dpr) - (6 * dpr));
+                tempCtx.fillText('Önden', ((frontBounds.left - stageBounds.left) * dpr) + (boxSize/2), ((frontBounds.top - stageBounds.top) * dpr) - (6 * dpr));
+                tempCtx.fillText('Sağdan', ((rightBounds.left - stageBounds.left) * dpr) + (boxSize/2), ((rightBounds.top - stageBounds.top) * dpr) - (6 * dpr));
+            }
+            
+            const dataURL = tempCanvas.toDataURL(`image/${format}`, 1.0);
+            const link = document.createElement('a'); link.download = `matematik-soru-gorseli.${format}`; link.href = dataURL; link.click();
+            if(currentMode === 'add' || currentMode === 'remove') rollOverMesh.visible = true;
+        }
+
+        function onWindowResize() {
+            syncShellHeight();
+            const stageSize = getStageSize();
+            const aspect = stageSize.width / stageSize.height; const d = 500;
+            camera.left = -d * aspect; camera.right = d * aspect; camera.top = d; camera.bottom = -d;
+            camera.updateProjectionMatrix(); renderer.setSize(stageSize.width, stageSize.height); resizeCanvas2D();
+        }
+
+        function updateProjectionCameras() {
+            const box = new THREE.Box3();
+            let hasCubes = false;
+            cubes.forEach(c => { if(c !== basePlane) { box.expandByObject(c); hasCubes = true; } });
+
+            const center = new THREE.Vector3(0,0,0);
+            let frustumSize = 200;
+
+            if(hasCubes) {
+                box.getCenter(center);
+                const size = new THREE.Vector3(); box.getSize(size);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                frustumSize = Math.max(150, maxDim * 0.85);
+            }
+
+            [topCamera, frontCamera, rightCamera].forEach(cam => {
+                cam.left = -frustumSize; cam.right = frustumSize; cam.top = frustumSize; cam.bottom = -frustumSize;
+                cam.updateProjectionMatrix();
+            });
+
+            topCamera.position.set(center.x, center.y + 1000, center.z); topCamera.lookAt(center);
+            frontCamera.position.set(center.x, center.y, center.z + 1000); frontCamera.lookAt(center);
+            rightCamera.position.set(center.x + 1000, center.y, center.z); rightCamera.lookAt(center);
+        }
+
+        function renderProjectionPreviews() {
+            updateProjectionCameras();
+            withProjectionSceneState(() => {
+                topRenderer.render(scene, topCamera);
+                frontRenderer.render(scene, frontCamera);
+                rightRenderer.render(scene, rightCamera);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (controls.enabled) controls.update();
+            renderer.render(scene, camera);
+
+            if (isProjectionsVisible && document.getElementById('projections-panel').style.opacity !== '0') {
+                renderProjectionPreviews();
+            }
+        }
+    </script>
+</body>
+</html>

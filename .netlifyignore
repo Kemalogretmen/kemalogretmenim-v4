@@ -1,6 +1,9 @@
 mobile-app/
 node_modules/
 .git/
+.vscode/
 .idea/
 .DS_Store
 tmp/
+siteyi-yerelde-calistir.command
+vscode-ile-ac.command

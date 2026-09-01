@@ -503,7 +503,7 @@
     const verificationFile = getVerificationFile();
 
     const isParent = profile.role === 'parent';
-    const hasSchool = profile.school_missing ? profile.school_name : profile.school_id;
+    const hasSchool = profile.school_id || profile.school_name;
     if (!profile.email || !profile.first_name || !profile.last_name || !profile.city || (!isParent && (!profile.district || !hasSchool)) || (profile.role === 'student' && !profile.grade_level) || (!state.completeMode && password.length < 6)) {
       showMessage('err', isParent
         ? 'Veli kaydı için ad, soyad, e-posta, şehir ve en az 6 karakter şifre gerekli.'

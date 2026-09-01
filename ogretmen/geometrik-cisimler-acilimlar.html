@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geometrik Cisimler ve Katlanabilir Açılımlar - Kemal Öğretmenim</title>
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        html { overscroll-behavior: none; }
+        body {
+            margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f7f9fc; color: #172033; touch-action: none;
+        }
+        #kemalFooterMount { display: none; }
+        .geo-tool-shell {
+            position: relative; height: var(--geo-shell-height, calc(100vh - 74px)); min-height: 620px;
+            overflow: hidden; background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+        }
+        #canvas-container { position: absolute; inset: 0; z-index: 1; }
+        #drawing-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; touch-action: none; }
+        .geo-panel {
+            position: absolute; z-index: 12; width: 286px; display: grid; gap: 12px;
+            background: rgba(255,255,255,0.93); border: 1px solid rgba(203,213,225,0.88);
+            border-radius: 18px; padding: 14px; box-shadow: 0 18px 42px rgba(15,23,42,0.12);
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); pointer-events: auto;
+        }
+        .geo-left-panel { top: 18px; left: 18px; }
+        .geo-right-panel { top: 18px; right: 18px; }
+        .geo-panel-head { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(226,232,240,0.9); padding-bottom: 12px; }
+        .geo-panel-icon { width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, #2563eb, #0ea5e9); font-size: 18px; }
+        .geo-panel-title { margin: 0; font-size: 15px; font-weight: 900; line-height: 1.1; color: #172033; }
+        .geo-panel-sub { margin: 3px 0 0; font-size: 11px; font-weight: 800; color: #64748b; }
+        .group { display: grid; gap: 8px; }
+        .group-title { font-size: 11px; font-weight: 900; color: #64748b; letter-spacing: .08em; text-transform: uppercase; }
+        select {
+            width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid #d8e1ee; border-radius: 12px;
+            font-size: 14px; font-weight: 800; background: #fff; color: #172033; outline: none; cursor: pointer;
+        }
+        button {
+            min-height: 42px; padding: 9px 12px; border: 1px solid #d8e1ee; background: #fff; cursor: pointer;
+            border-radius: 12px; font-size: 14px; font-weight: 850; transition: transform .15s, box-shadow .15s, background .15s, border-color .15s;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #334155;
+        }
+        button:hover { background: #f8fafc; border-color: #b9c7dc; }
+        button.active { background: #1476f2; color: white; border-color: #1476f2; box-shadow: 0 10px 18px rgba(20,118,242,0.22); }
+        button:active { transform: scale(0.96); }
+        .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .color-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; }
+        .color-btn { width: 100%; aspect-ratio: 1; min-height: 0; border-radius: 999px; border: 2px solid #fff; padding: 0; box-shadow: 0 0 0 1px rgba(15,23,42,.14); }
+        .color-btn.active { border-color: #1f2937; transform: scale(1.08); box-shadow: 0 0 0 3px rgba(20,118,242,0.2), 0 9px 18px rgba(15,23,42,.18); }
+        .tumble-pad { display: grid; justify-items: center; gap: 7px; }
+        .tumble-row { display: flex; gap: 7px; justify-content: center; }
+        .tumble-btn { width: 42px; height: 42px; min-height: 42px; padding: 0; font-size: 15px; }
+        .tumble-btn.wide { width: 133px; font-size: 13px; }
+        #fold-panel {
+            position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 12;
+            background: rgba(255,255,255,0.94); padding: 15px 18px; border-radius: 18px;
+            box-shadow: 0 18px 42px rgba(15,23,42,0.16); display: grid; gap: 12px;
+            width: min(520px, calc(100% - 40px)); border: 1px solid rgba(203,213,225,0.85);
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); pointer-events: auto;
+        }
+        .slider-row { width: 100%; display: grid; grid-template-columns: auto 1fr 52px; align-items: center; gap: 12px; }
+        .slider-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; color: #334155; font-size: 14px; white-space: nowrap; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #1476f2; cursor: pointer; margin-top: -8px; box-shadow: 0 4px 10px rgba(20,118,242,0.35); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: #dbe3ef; border-radius: 999px; }
+        #percent-label { font-size: 16px; font-weight: 900; color: #1476f2; text-align: right; }
+        #auto-btn { justify-self: center; min-width: 178px; background: #15a46a; color: white; border: none; border-radius: 999px; }
+        #auto-btn.playing { background: #dc2626; }
+        .shape-note {
+            display: none; margin: 0; padding: 10px 11px; border-radius: 12px; background: #fff7ed;
+            border: 1px solid #fed7aa; color: #9a3412; font-size: 12px; font-weight: 800; line-height: 1.35;
+        }
+        .shape-note.show { display: block; }
+        @media (max-width: 980px) {
+            body { overflow: auto; touch-action: manipulation; }
+            .geo-tool-shell { min-height: 900px; height: var(--geo-shell-height, calc(100vh - 74px)); }
+            .geo-panel { width: calc(50% - 26px); }
+            .geo-right-panel { right: 18px; }
+            #fold-panel { bottom: 14px; }
+        }
+        @media (max-width: 720px) {
+            .geo-tool-shell { min-height: 960px; }
+            .geo-panel { width: calc(100% - 24px); left: 12px; right: 12px; }
+            .geo-left-panel { top: 12px; }
+            .geo-right-panel { top: 292px; }
+            #fold-panel { width: calc(100% - 24px); bottom: 12px; }
+            .slider-row { grid-template-columns: 1fr 52px; }
+            .slider-label { grid-column: 1 / -1; }
+        }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <main class="geo-tool-shell" id="geoToolShell">
+        <div id="canvas-container"></div>
+        <canvas id="drawing-canvas"></canvas>
+
+        <aside class="geo-panel geo-left-panel" id="toolbar" aria-label="Cisim ve açılım araçları">
+            <div class="geo-panel-head">
+                <span class="geo-panel-icon"><i class="fas fa-shapes"></i></span>
+                <div>
+                    <p class="geo-panel-title">Cisim Açılımları</p>
+                    <p class="geo-panel-sub">Matematik Araçları</p>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Cisim</span>
+            <select id="shape-select" onchange="changeShape(this.value)">
+                <option value="cube">Küp</option>
+                <option value="square">Kare Prizma</option>
+                <option value="rect">Dikdörtgenler Prizması</option>
+                <option value="tri">Üçgen Prizma</option>
+                <option value="squarePyramid">Kare Piramit</option>
+                <option value="triPyramid">Üçgen Piramit</option>
+                <option value="cylinder">Silindir</option>
+                <option value="cone">Koni</option>
+                <option value="sphere">Küre (Dilimli Model)</option>
+            </select>
+            </div>
+            <div class="group">
+                <span class="group-title">Açılım</span>
+            <select id="net-select" onchange="changeNet(this.value)">
+                <option value="1">Açılım 1 (Haç/Temel)</option>
+                <option value="2">Açılım 2 (Zigzag/Sıralı)</option>
+                <option value="3">Açılım 3 (T Şeklinde)</option>
+                <option value="4">Açılım 4 (L Şeklinde)</option>
+            </select>
+            </div>
+            <p class="shape-note" id="shapeNote"></p>
+        </aside>
+
+        <aside class="geo-panel geo-right-panel" aria-label="Sahne araçları">
+            <div class="group">
+                <span class="group-title">Araçlar</span>
+                <div class="mode-grid">
+                    <button id="mode-rotate" class="mode-btn active" onclick="setMode('rotate')" title="İncele"><i class="fas fa-eye"></i> İncele</button>
+                    <button id="mode-paint" class="mode-btn" onclick="setMode('paint')" title="Boya"><i class="fas fa-fill-drip"></i> Boya</button>
+                    <button id="mode-draw" class="mode-btn" onclick="setMode('draw')" title="Kalem"><i class="fas fa-pen"></i> Kalem</button>
+                    <button id="mode-erase" class="mode-btn" onclick="setMode('erase')" title="Silgi"><i class="fas fa-eraser"></i> Silgi</button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Renk</span>
+                <div class="color-grid">
+                    <button class="color-btn active" title="Mavi" style="background: #2196F3;" onclick="setColor(this, 0x2196F3)"></button>
+                    <button class="color-btn" title="Yeşil" style="background: #8BC34A;" onclick="setColor(this, 0x8BC34A)"></button>
+                    <button class="color-btn" title="Sarı" style="background: #FFEB3B;" onclick="setColor(this, 0xFFEB3B)"></button>
+                    <button class="color-btn" title="Kırmızı" style="background: #F44336;" onclick="setColor(this, 0xF44336)"></button>
+                    <button class="color-btn" title="Mor" style="background: #9C27B0;" onclick="setColor(this, 0x9C27B0)"></button>
+                    <button class="color-btn" title="Turuncu" style="background: #FF9800;" onclick="setColor(this, 0xFF9800)"></button>
+                    <button class="color-btn" title="Gri" style="background: #E0E0E0;" onclick="setColor(this, 0xE0E0E0)"></button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Modeli Çevir</span>
+                <div class="tumble-pad" id="tumble-panel">
+                    <div class="tumble-row">
+                        <button class="tumble-btn" onclick="tumbleModel('x', -1)" title="Yukarı"><i class="fas fa-chevron-up"></i></button>
+                    </div>
+                    <div class="tumble-row">
+                        <button class="tumble-btn" onclick="tumbleModel('z', -1)" title="Sola"><i class="fas fa-chevron-left"></i></button>
+                        <button class="tumble-btn" onclick="tumbleModel('x', 1)" title="Aşağı"><i class="fas fa-chevron-down"></i></button>
+                        <button class="tumble-btn" onclick="tumbleModel('z', 1)" title="Sağa"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <button class="tumble-btn wide" onclick="resetTumble()" title="Düzelt"><i class="fas fa-undo"></i> Düzelt</button>
+                </div>
+            </div>
+
+            <div class="group">
+                <span class="group-title">Ekran</span>
+                <div class="mode-grid">
+                    <button onclick="clearCanvas()" title="Çizimleri Sil"><i class="fas fa-trash"></i> Çizim</button>
+                    <button onclick="resetCamera()" title="Kamera Sıfırla"><i class="fas fa-video"></i> Kamera</button>
+                </div>
+            </div>
+        </aside>
+
+        <div id="fold-panel">
+            <div class="slider-row">
+                <span class="slider-label"><i class="fas fa-expand-arrows-alt"></i> Katlanma</span>
+                <input type="range" id="foldSlider" min="0" max="100" value="0">
+                <span id="percent-label">0%</span>
+            </div>
+            <button id="auto-btn" onclick="toggleAutoFold()"><i class="fas fa-play"></i> Otomatik Katla</button>
+        </div>
+    </main>
+
+    <script src="/js/site-data.js"></script>
+    <script src="/js/site.js?v=20260901-smartboard"></script>
+    <script>
+        let scene, camera, renderer, controls, raycaster, mouse;
+        
+        let pivotGroup = null;  // Yüksekliği ayarlayarak yere batmayı engeller
+        let tumbleGroup = null; // Kendi merkezi etrafında takla atmasını sağlar
+        let netGroup = null;    // Yüzeylerin katlanma animasyonunu barındırır
+        let hinges = [];
+        let morphParts = [];
+        
+        let targetModelQuaternion = new THREE.Quaternion();
+        
+        let currentShape = 'cube';
+        let currentNet = '1';
+        let currentMode = 'rotate';
+        let currentColor = 0x2196F3;
+        let currentPenColor = '#D32F2F';
+        
+        let isAutoFolding = false;
+        let foldProgress = 0;
+        let foldDirection = 1;
+        
+        const slider = document.getElementById('foldSlider');
+        const percentLabel = document.getElementById('percent-label');
+        const autoBtn = document.getElementById('auto-btn');
+        
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const ctx = drawCanvas.getContext('2d', { willReadFrequently: true });
+        let isDrawing = false;
+
+        function getStageSize() {
+            const rect = document.getElementById('canvas-container').getBoundingClientRect();
+            return {
+                width: Math.max(1, Math.round(rect.width || window.innerWidth)),
+                height: Math.max(1, Math.round(rect.height || window.innerHeight)),
+            };
+        }
+
+        function syncShellHeight() {
+            const shell = document.getElementById('geoToolShell');
+            if (!shell) return;
+            const top = shell.getBoundingClientRect().top;
+            shell.style.setProperty('--geo-shell-height', Math.max(620, window.innerHeight - top) + 'px');
+        }
+
+        init();
+        init2D();
+        animate();
+        if (window.kemalSite && window.kemalSite.ready && typeof window.kemalSite.ready.finally === 'function') {
+            window.kemalSite.ready.finally(function() {
+                syncShellHeight();
+                onWindowResize();
+            });
+        }
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            syncShellHeight();
+            const stageSize = getStageSize();
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf8fbff);
+            
+            camera = new THREE.PerspectiveCamera(45, stageSize.width / stageSize.height, 1, 5000);
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(stageSize.width, stageSize.height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 + 0.1;
+            
+            resetCamera();
+
+            // Işıklar
+            scene.add(new THREE.AmbientLight(0x888888));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(300, 500, 400);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048; dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.left = -500; dirLight.shadow.camera.right = 500;
+            dirLight.shadow.camera.top = 500; dirLight.shadow.camera.bottom = -500;
+            scene.add(dirLight);
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            fillLight.position.set(-300, 200, -300);
+            scene.add(fillLight);
+
+            // Zemin
+            const gridHelper = new THREE.GridHelper(2000, 40, 0xaaaaaa, 0xdddddd);
+            gridHelper.position.y = -0.5; scene.add(gridHelper);
+            const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0xf8fbff, depthWrite: false }));
+            ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground);
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+            slider.addEventListener('input', onSliderInput);
+            window.addEventListener('resize', onWindowResize);
+
+            buildCurrentNet();
+        }
+
+        // --- YAPI VE AÇILIM (NET) OLUŞTURUCU ---
+        
+        function createFace(w, h, isTriangle = false, colorHex) {
+            let geo;
+            if (isTriangle) {
+                const shape = new THREE.Shape();
+                shape.moveTo(-w/2, 0); shape.lineTo(w/2, 0); shape.lineTo(0, h); shape.lineTo(-w/2, 0);
+                geo = new THREE.ShapeGeometry(shape); geo.rotateX(-Math.PI/2);
+            } else {
+                geo = new THREE.PlaneGeometry(w, h); geo.rotateX(-Math.PI/2);
+            }
+            
+            const mat = new THREE.MeshLambertMaterial({
+                color: colorHex || currentColor, side: THREE.DoubleSide, transparent: true, opacity: 0.95,
+                polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x333333, linewidth: 2 })));
+            return mesh;
+        }
+
+        function createCircleFace(radius, segments, colorHex) {
+            const geo = new THREE.CircleGeometry(radius, segments || 80);
+            geo.rotateX(-Math.PI / 2);
+            const mat = new THREE.MeshLambertMaterial({
+                color: colorHex || currentColor, side: THREE.DoubleSide, transparent: true, opacity: 0.95,
+                polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x333333 })));
+            return mesh;
+        }
+
+        function createMorphSurface(columns, rows, mapper, colorHex) {
+            const positions = [];
+            const indices = [];
+            for (let y = 0; y <= rows; y += 1) {
+                for (let x = 0; x <= columns; x += 1) {
+                    positions.push(0, 0, 0);
+                }
+            }
+            for (let y = 0; y < rows; y += 1) {
+                for (let x = 0; x < columns; x += 1) {
+                    const a = y * (columns + 1) + x;
+                    const b = a + 1;
+                    const c = a + columns + 1;
+                    const d = c + 1;
+                    indices.push(a, c, b, b, c, d);
+                }
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geo.setIndex(indices);
+            const mat = new THREE.MeshLambertMaterial({
+                color: colorHex || currentColor, side: THREE.DoubleSide, transparent: true, opacity: 0.95,
+                polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            const part = {
+                mesh,
+                update: function(t) {
+                    const pos = geo.attributes.position;
+                    let i = 0;
+                    for (let yy = 0; yy <= rows; yy += 1) {
+                        const v = yy / rows;
+                        for (let xx = 0; xx <= columns; xx += 1) {
+                            const u = xx / columns;
+                            const p = mapper(u, v, t);
+                            pos.setXYZ(i, p.x, p.y, p.z);
+                            i += 1;
+                        }
+                    }
+                    pos.needsUpdate = true;
+                    geo.computeVertexNormals();
+                    geo.computeBoundingSphere();
+                }
+            };
+            part.update(0);
+            netGroup.add(mesh);
+            morphParts.push(part);
+            return part;
+        }
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+        function mixVec(a, b, t) {
+            return new THREE.Vector3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
+        }
+
+        function createMorphTriangle(openVerts, closedVerts, colorHex) {
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, 0,0,0, 0,0,0], 3));
+            geo.setIndex([0, 1, 2]);
+            const mat = new THREE.MeshLambertMaterial({
+                color: colorHex || currentColor, side: THREE.DoubleSide, transparent: true, opacity: 0.95,
+                polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+
+            const lineGeo = new THREE.BufferGeometry();
+            lineGeo.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0, 0,0,0, 0,0,0, 0,0,0], 3));
+            const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: 0x334155 }));
+            netGroup.add(mesh);
+            netGroup.add(line);
+
+            const part = {
+                mesh,
+                line,
+                update: function(t) {
+                    const pos = geo.attributes.position;
+                    const linePos = lineGeo.attributes.position;
+                    const points = openVerts.map(function(openPoint, index) {
+                        return mixVec(openPoint, closedVerts[index], t);
+                    });
+                    points.forEach(function(point, index) {
+                        pos.setXYZ(index, point.x, point.y, point.z);
+                        linePos.setXYZ(index, point.x, point.y + 0.35, point.z);
+                    });
+                    linePos.setXYZ(3, points[0].x, points[0].y + 0.35, points[0].z);
+                    pos.needsUpdate = true;
+                    linePos.needsUpdate = true;
+                    geo.computeVertexNormals();
+                    geo.computeBoundingSphere();
+                }
+            };
+            part.update(0);
+            morphParts.push(part);
+            return part;
+        }
+
+        function addMorphCircle(radius, openX, openZ, closedY, colorHex) {
+            const mesh = createCircleFace(radius, 96, colorHex);
+            netGroup.add(mesh);
+            const part = {
+                mesh,
+                update: function(t) {
+                    mesh.position.set(lerp(openX, 0, t), lerp(0, closedY, t), lerp(openZ, 0, t));
+                }
+            };
+            part.update(0);
+            morphParts.push(part);
+            return mesh;
+        }
+
+        function buildCylinderNet() {
+            const radius = 52;
+            const height = 132;
+            const circumference = 2 * Math.PI * radius;
+            createMorphSurface(64, 10, function(u, v, t) {
+                const flatX = (u - 0.5) * circumference;
+                const flatZ = (v - 0.5) * height;
+                const angle = (u - 0.5) * Math.PI * 2;
+                const folded = new THREE.Vector3(Math.sin(angle) * radius, (v - 0.5) * height, Math.cos(angle) * radius);
+                return mixVec(new THREE.Vector3(flatX, 0, flatZ), folded, t);
+            }, 0x4f8cff);
+            addMorphCircle(radius, 0, -height / 2 - radius - 16, -height / 2, 0xfff176);
+            addMorphCircle(radius, 0, height / 2 + radius + 16, height / 2, 0xa7f3d0);
+        }
+
+        function buildConeNet() {
+            const radius = 62;
+            const height = 142;
+            const slant = Math.sqrt(radius * radius + height * height);
+            const sectorAngle = (2 * Math.PI * radius) / slant;
+            createMorphSurface(56, 14, function(u, v, t) {
+                const radial = v * slant;
+                const sectorPhi = (u - 0.5) * sectorAngle;
+                const flat = new THREE.Vector3(Math.sin(sectorPhi) * radial, 0, Math.cos(sectorPhi) * radial - slant * 0.52);
+                const fullTheta = (u - 0.5) * Math.PI * 2;
+                const ringRadius = v * radius;
+                const folded = new THREE.Vector3(Math.sin(fullTheta) * ringRadius, (1 - v) * height, Math.cos(fullTheta) * ringRadius);
+                return mixVec(flat, folded, t);
+            }, 0xff8a65);
+            addMorphCircle(radius, 0, slant * 0.56 + radius + 18, 0, 0xa7f3d0);
+        }
+
+        function buildSphereNet() {
+            const strips = 8;
+            const radius = 82;
+            const goreHalf = Math.PI / strips;
+            const maxStripWidth = 2 * Math.PI * radius / strips;
+            const spacing = maxStripWidth + 18;
+            for (let strip = 0; strip < strips; strip += 1) {
+                createMorphSurface(6, 28, function(u, v, t) {
+                    const lat = (v - 0.5) * Math.PI;
+                    const local = (u - 0.5) * 2 * goreHalf;
+                    const foldedTheta = strip * 2 * goreHalf + local;
+                    const leafWidth = Math.max(1, maxStripWidth * Math.cos(lat));
+                    const flatX = (strip - (strips - 1) / 2) * spacing + (u - 0.5) * leafWidth;
+                    const flatZ = (v - 0.5) * Math.PI * radius;
+                    const folded = new THREE.Vector3(
+                        Math.cos(lat) * Math.sin(foldedTheta) * radius,
+                        Math.sin(lat) * radius,
+                        Math.cos(lat) * Math.cos(foldedTheta) * radius
+                    );
+                    return mixVec(new THREE.Vector3(flatX, 0, flatZ), folded, t);
+                }, strip % 2 ? 0x4dd0e1 : 0x64b5f6);
+            }
+        }
+
+        function createSquarePyramidNet() {
+            const side = 120;
+            const height = 125;
+            const triH = Math.sqrt(height * height + (side / 2) * (side / 2));
+            const base = createFace(side, side, false, 0xffecb3);
+            netGroup.add(base);
+            const nw = new THREE.Vector3(-side/2, 0, -side/2);
+            const ne = new THREE.Vector3(side/2, 0, -side/2);
+            const se = new THREE.Vector3(side/2, 0, side/2);
+            const sw = new THREE.Vector3(-side/2, 0, side/2);
+            const apex = new THREE.Vector3(0, height, 0);
+            createMorphTriangle([nw, ne, new THREE.Vector3(0, 0, -side/2 - triH)], [nw, ne, apex], 0x64b5f6);
+            createMorphTriangle([ne, se, new THREE.Vector3(side/2 + triH, 0, 0)], [ne, se, apex], 0x81c784);
+            createMorphTriangle([se, sw, new THREE.Vector3(0, 0, side/2 + triH)], [se, sw, apex], 0xff8a65);
+            createMorphTriangle([sw, nw, new THREE.Vector3(-side/2 - triH, 0, 0)], [sw, nw, apex], 0xba68c8);
+        }
+
+        function createTriangularPyramidNet() {
+            const side = 132;
+            const triH = side * Math.sqrt(3) / 2;
+            const a = new THREE.Vector3(-side/2, 0, triH/3);
+            const b = new THREE.Vector3(side/2, 0, triH/3);
+            const c = new THREE.Vector3(0, 0, -2*triH/3);
+            createMorphTriangle([a, b, c], [a, b, c], 0xffecb3);
+            const centroid = new THREE.Vector3(0, 0, 0);
+            const apex = new THREE.Vector3(0, side * Math.sqrt(2/3), 0);
+            createMorphTriangle([a, b, new THREE.Vector3(0, 0, triH/3 + triH)], [a, b, apex], 0x64b5f6);
+            const midBC = new THREE.Vector3((b.x + c.x) / 2, 0, (b.z + c.z) / 2);
+            const outBC = midBC.clone().sub(centroid).normalize();
+            createMorphTriangle([b, c, midBC.clone().add(outBC.multiplyScalar(triH))], [b, c, apex], 0x81c784);
+            const midCA = new THREE.Vector3((c.x + a.x) / 2, 0, (c.z + a.z) / 2);
+            const outCA = midCA.clone().sub(centroid).normalize();
+            createMorphTriangle([c, a, midCA.clone().add(outCA.multiplyScalar(triH))], [c, a, apex], 0xff8a65);
+        }
+
+        function createHinge(parent, childMesh, offsetX, offsetZ, rotAxis, foldAngleDeg) {
+            const hinge = new THREE.Group();
+            hinge.position.set(offsetX, 0, offsetZ);
+            parent.add(hinge);
+            
+            if(rotAxis === 'x') childMesh.position.set(0, 0, offsetZ > 0 ? childMesh.geometry.parameters.height/2 || offsetZ : -childMesh.geometry.parameters.height/2 || offsetZ);
+            if(rotAxis === 'z') childMesh.position.set(offsetX > 0 ? childMesh.geometry.parameters.width/2 || offsetX : -childMesh.geometry.parameters.width/2 || offsetX, 0, 0);
+            
+            if(!childMesh.geometry.parameters.width) { // Triangle
+                if(rotAxis === 'x') childMesh.position.set(0, 0, 0);
+            }
+
+            hinge.add(childMesh);
+            hinges.push({ group: hinge, axis: rotAxis, maxAngle: foldAngleDeg * (Math.PI / 180) });
+            return hinge;
+        }
+
+        function buildCurrentNet() {
+            if(pivotGroup) scene.remove(pivotGroup);
+            
+            pivotGroup = new THREE.Group();   // Master parent for Dynamic Floor Y-adjustment
+            tumbleGroup = new THREE.Group();  // Sub-parent for tumbling around the center
+            netGroup = new THREE.Group();     // Sub-parent for the faces
+            
+            tumbleGroup.add(netGroup);
+            pivotGroup.add(tumbleGroup);
+            scene.add(pivotGroup);
+            
+            hinges = [];
+            morphParts = [];
+
+            let w = 100, h = 100, d = 100;
+            let cy = 50; // Geometric center height of the folded shape
+            
+            if (currentShape === 'square') { w = 80; h = 160; d = 80; cy = 80; }
+            if (currentShape === 'rect') { w = 140; h = 80; d = 100; cy = 40; }
+            if (currentShape === 'tri') { w = 100; h = 100; d = 140; cy = (w * Math.sqrt(3)/2) / 2; }
+            if (currentShape === 'squarePyramid' || currentShape === 'triPyramid' || currentShape === 'cylinder' || currentShape === 'cone' || currentShape === 'sphere') { cy = 0; }
+            updateShapeNote();
+
+            // Kritik Çözüm 1: netGroup'u Y ekseninde şeklin merkezi kadar aşağı kaydırıyoruz.
+            // Bu sayede tumbleGroup kendi ekseni etrafında dönerken (takla atarken) 
+            // cisim "yerinde" sayarak merkeze göre döner, uzağa kaçmaz.
+            netGroup.position.set(0, -cy, 0);
+
+            if (currentShape === 'cylinder') {
+                document.getElementById('net-select').disabled = true;
+                buildCylinderNet();
+            } else if (currentShape === 'cone') {
+                document.getElementById('net-select').disabled = true;
+                buildConeNet();
+            } else if (currentShape === 'sphere') {
+                document.getElementById('net-select').disabled = true;
+                buildSphereNet();
+            } else if (currentShape === 'squarePyramid') {
+                document.getElementById('net-select').disabled = true;
+                createSquarePyramidNet();
+            } else if (currentShape === 'triPyramid') {
+                document.getElementById('net-select').disabled = true;
+                createTriangularPyramidNet();
+            } else if (currentShape === 'tri') {
+                document.getElementById('net-select').disabled = true;
+                const triH = w * Math.sqrt(3)/2; 
+                
+                const baseMesh = createFace(w, d); netGroup.add(baseMesh);
+
+                const rightMesh = createFace(w, d);
+                const rightHinge = new THREE.Group(); rightHinge.position.set(w/2, 0, 0);
+                rightMesh.position.set(w/2, 0, 0); rightHinge.add(rightMesh);
+                netGroup.add(rightHinge); hinges.push({group: rightHinge, axis: 'z', maxAngle: 120 * (Math.PI/180)});
+
+                const leftMesh = createFace(w, d);
+                const leftHinge = new THREE.Group(); leftHinge.position.set(-w/2, 0, 0);
+                leftMesh.position.set(-w/2, 0, 0); leftHinge.add(leftMesh);
+                netGroup.add(leftHinge); hinges.push({group: leftHinge, axis: 'z', maxAngle: -120 * (Math.PI/180)});
+
+                const frontTri = createFace(w, triH, true);
+                const frontHinge = new THREE.Group(); frontHinge.position.set(0, 0, d/2);
+                frontTri.position.set(0,0,0); frontTri.rotation.y = Math.PI;
+                frontHinge.add(frontTri); netGroup.add(frontHinge);
+                hinges.push({group: frontHinge, axis: 'x', maxAngle: -90 * (Math.PI/180)});
+
+                const backTri = createFace(w, triH, true);
+                const backHinge = new THREE.Group(); backHinge.position.set(0, 0, -d/2);
+                backTri.position.set(0,0,0); backHinge.add(backTri);
+                netGroup.add(backHinge); hinges.push({group: backHinge, axis: 'x', maxAngle: 90 * (Math.PI/180)});
+
+            } else {
+                document.getElementById('net-select').disabled = false;
+                
+                const baseMesh = createFace(w, d); netGroup.add(baseMesh);
+                const backMesh = createFace(w, h); const backHinge = createHinge(netGroup, backMesh, 0, -d/2, 'x', 90);
+                const topMesh = createFace(w, d); const topHinge = createHinge(backHinge, topMesh, 0, -h, 'x', 90);
+                const frontMesh = createFace(w, h); createHinge(topHinge, frontMesh, 0, -d, 'x', 90);
+
+                const leftMesh = createFace(h, d);
+                const rightMesh = createFace(h, d);
+
+                if (currentNet === '1') {
+                    createHinge(netGroup, leftMesh, -w/2, 0, 'z', -90);
+                    createHinge(netGroup, rightMesh, w/2, 0, 'z', 90);
+                } 
+                else if (currentNet === '2') {
+                    createHinge(netGroup, leftMesh, -w/2, 0, 'z', -90);
+                    createHinge(topHinge, rightMesh, w/2, -d/2, 'z', 90);
+                }
+                else if (currentNet === '3') {
+                    createHinge(backHinge, leftMesh, -w/2, -h/2, 'z', -90);
+                    createHinge(backHinge, rightMesh, w/2, -h/2, 'z', 90);
+                }
+                else if (currentNet === '4') {
+                    createHinge(topHinge, leftMesh, -w/2, -d/2, 'z', -90);
+                    createHinge(netGroup, rightMesh, w/2, 0, 'z', 90);
+                }
+            }
+            
+            tumbleGroup.quaternion.copy(targetModelQuaternion);
+            updateFold(slider.value / 100);
+        }
+
+        function updateFold(t) {
+            hinges.forEach(h => {
+                if (h.axis === 'x') h.group.rotation.x = t * h.maxAngle;
+                if (h.axis === 'z') h.group.rotation.z = t * h.maxAngle;
+            });
+            morphParts.forEach(part => part.update(t));
+        }
+
+        // --- MODELİ TAKLA ATTIRMA (TUMBLE) ---
+        // Kritik Çözüm 2: premultiply ile Dünya Eksenine Göre Çevirme
+        function tumbleModel(axis, dir) {
+            const q = new THREE.Quaternion();
+            const axisVec = new THREE.Vector3();
+            
+            // UI butonları ekran koordinatlarını temsil eder, 
+            // Bu yüzden "dünya" eksenlerine göre döndürmek mantıksız hareket etmesini engeller.
+            if(axis === 'x') axisVec.set(1, 0, 0);
+            if(axis === 'y') axisVec.set(0, 1, 0);
+            if(axis === 'z') axisVec.set(0, 0, 1);
+            
+            q.setFromAxisAngle(axisVec, dir * Math.PI / 2);
+            
+            // Mevcut rotasyonun üzerine dünya ekseninde rotasyon uygula
+            targetModelQuaternion.premultiply(q);
+        }
+        
+        function resetTumble() {
+            targetModelQuaternion.identity(); 
+        }
+
+        // --- BOYAMA VE ÇİZİM (KALEM) ARAÇLARI ---
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('mode-' + mode).classList.add('active');
+
+            if (mode === 'draw' || mode === 'erase') {
+                controls.enabled = false;
+                drawCanvas.style.pointerEvents = 'auto';
+                setupBrush();
+            } else {
+                controls.enabled = (mode === 'rotate');
+                drawCanvas.style.pointerEvents = 'none';
+            }
+        }
+
+        function setColor(btn, colorHex) {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (currentMode === 'draw' || currentMode === 'erase') {
+                currentPenColor = '#' + colorHex.toString(16).padStart(6, '0');
+                setMode('draw');
+            } else {
+                currentColor = colorHex;
+                setMode('paint');
+            }
+        }
+
+        function onPointerDown(event) {
+            if (currentMode !== 'paint') return;
+
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(netGroup.children, true);
+            if (intersects.length > 0) {
+                for(let i=0; i<intersects.length; i++) {
+                    if (intersects[i].object.type === 'Mesh') {
+                        intersects[i].object.material.color.setHex(currentColor);
+                        break;
+                    }
+                }
+            }
+        }
+
+        function init2D() {
+            resizeCanvas2D();
+            drawCanvas.addEventListener('pointerdown', (e) => {
+                if(currentMode !== 'draw' && currentMode !== 'erase') return;
+                isDrawing = true;
+                const point = getDrawPoint(e);
+                ctx.beginPath(); ctx.moveTo(point.x, point.y);
+            });
+            drawCanvas.addEventListener('pointermove', (e) => {
+                if (!isDrawing) return;
+                const point = getDrawPoint(e);
+                ctx.lineTo(point.x, point.y); ctx.stroke();
+            });
+            drawCanvas.addEventListener('pointerup', () => isDrawing = false);
+            drawCanvas.addEventListener('pointercancel', () => isDrawing = false);
+            drawCanvas.addEventListener('pointerout', () => isDrawing = false);
+        }
+
+        function getDrawPoint(event) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            return {
+                x: (event.clientX - rect.left) * dpr,
+                y: (event.clientY - rect.top) * dpr,
+            };
+        }
+
+        function resizeCanvas2D() {
+            const dpr = window.devicePixelRatio || 1;
+            const temp = document.createElement('canvas'); temp.width = drawCanvas.width; temp.height = drawCanvas.height;
+            temp.getContext('2d').drawImage(drawCanvas, 0, 0);
+            const rect = drawCanvas.getBoundingClientRect();
+            drawCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+            drawCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+            setupBrush(); ctx.drawImage(temp, 0, 0);
+        }
+
+        function setupBrush() {
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            if (currentMode === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = 30; } 
+            else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = currentPenColor; ctx.lineWidth = 6; }
+        }
+
+        function clearCanvas() { ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height); }
+
+        // --- GENEL KONTROLLER ---
+
+        function updateShapeNote() {
+            const note = document.getElementById('shapeNote');
+            if (!note) return;
+            if (currentShape === 'sphere') {
+                note.textContent = 'Küre düzleme tek parça kusursuz açılamaz; burada derslerde kullanılan dilimli küre modeli gösterilir.';
+                note.classList.add('show');
+            } else if (currentShape === 'cylinder' || currentShape === 'cone') {
+                note.textContent = 'Eğrisel yüzeyler gerçek açılım şekline göre kapatılır.';
+                note.classList.add('show');
+            } else {
+                note.textContent = '';
+                note.classList.remove('show');
+            }
+        }
+
+        function changeShape(type) { currentShape = type; buildCurrentNet(); }
+        function changeNet(type) { currentNet = type; buildCurrentNet(); }
+
+        function toggleAutoFold() {
+            isAutoFolding = !isAutoFolding;
+            if (isAutoFolding) {
+                autoBtn.innerHTML = '<i class="fas fa-pause"></i> Durdur'; autoBtn.classList.add('playing');
+                if(foldProgress >= 1) foldDirection = -1; else if(foldProgress <= 0) foldDirection = 1;
+            } else {
+                autoBtn.innerHTML = '<i class="fas fa-play"></i> Otomatik Katla'; autoBtn.classList.remove('playing');
+            }
+        }
+
+        function onSliderInput(e) {
+            isAutoFolding = false;
+            autoBtn.innerHTML = '<i class="fas fa-play"></i> Otomatik Katla'; autoBtn.classList.remove('playing');
+            foldProgress = e.target.value / 100; percentLabel.innerText = e.target.value + '%'; updateFold(foldProgress);
+        }
+
+        function resetCamera() {
+            camera.position.set(340, 330, 470);
+            if(controls) { controls.target.set(0, 42, 0); controls.update(); }
+            resetTumble();
+        }
+
+        function onWindowResize() {
+            syncShellHeight();
+            const stageSize = getStageSize();
+            camera.aspect = stageSize.width / stageSize.height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(stageSize.width, stageSize.height);
+            resizeCanvas2D();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(controls && controls.enabled) controls.update();
+
+            // Takla Animasyonunu Uygula
+            if(tumbleGroup) {
+                tumbleGroup.quaternion.slerp(targetModelQuaternion, 0.15);
+            }
+
+            // --- ZEMİNE BATMAYI ENGELLEYEN DİNAMİK YÜKSEKLİK HESAPLAMASI ---
+            // Kritik Çözüm 3: Modeli saniyede 60 kez tarayarak en alt noktasını (min.y) buluyor 
+            // ve bu noktanın her zaman yer düzlemi (0) üzerinde kalmasını sağlıyoruz.
+            if(tumbleGroup && pivotGroup) {
+                scene.updateMatrixWorld(true);
+                const box = new THREE.Box3().setFromObject(tumbleGroup);
+                
+                if(box.min.y !== Infinity) {
+                    pivotGroup.position.y += (0 - box.min.y);
+                }
+            }
+
+            if (isAutoFolding) {
+                foldProgress += 0.008 * foldDirection;
+                if (foldProgress > 1) { foldProgress = 1; foldDirection = -1; }
+                if (foldProgress < 0) { foldProgress = 0; foldDirection = 1; }
+                
+                const percent = Math.round(foldProgress * 100);
+                slider.value = percent; percentLabel.innerText = percent + '%';
+                updateFold(foldProgress);
+            }
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

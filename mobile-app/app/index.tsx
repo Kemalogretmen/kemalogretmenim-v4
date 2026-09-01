@@ -72,9 +72,8 @@ const middleGrades: MiniCard[] = [5, 6, 7, 8].map((grade, index) => ({
 }));
 
 const teacherTools: MiniCard[] = [
-  { title: 'Akıllı Tahta', icon: 'tablet-landscape-outline', color: '#7C4DFF', path: '/ogretmen/beyaztahta.html' },
+  { title: 'Öğretmen Araçları', icon: 'construct-outline', color: '#7C4DFF', path: '/ogretmen-araclari.html' },
   { title: 'Sınıf Yönetimi', icon: 'people-circle-outline', color: '#00A991', path: '/ogretmen-paneli.html' },
-  { title: 'Araçlar', icon: 'construct-outline', color: '#FF7043', path: '/ogretmen-araclari.html' },
   { title: 'Öğretmen Ajandası', icon: 'briefcase-outline', color: '#0B78E3', path: '/ogretmen-ajandasi/index.html' },
 ];
 

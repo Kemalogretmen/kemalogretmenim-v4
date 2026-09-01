@@ -1,0 +1,40 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Kemal Öğretmenim: Siteyi Yerelde Çalıştır (8087)",
+            "type": "shell",
+            "command": "python3 -m http.server 8087",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Kemal Öğretmenim: Siteyi Tarayıcıda Aç",
+            "type": "shell",
+            "command": "open http://localhost:8087/ogretmen-araclari.html",
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Kemal Öğretmenim: Projeyi VS Code'da Aç",
+            "type": "shell",
+            "command": "open -a \"Visual Studio Code\" \"${workspaceFolder}\"",
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
