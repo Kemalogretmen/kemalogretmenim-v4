@@ -8,6 +8,42 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap&subset=latin-ext');
 
+@font-face {
+  font-family: 'TTKB Dik Temel Abece';
+  src: url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbeceBody.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TTKB Dik Temel Abece';
+  src: url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbece-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ttkb-dik-temel';
+  src: url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbeceBody.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ttkb-dik-temel';
+  src: url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbece-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.ql-font-ttkb-dik-temel {
+  font-family: 'TTKB Dik Temel Abece', 'Nunito', sans-serif;
+}
+
 /* ─── CSS DEĞİŞKENLERİ ─── */
 :root {
   --purple:       #6C3DED;

@@ -9,6 +9,10 @@
   <link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
+    @font-face{font-family:'TTKB Dik Temel Abece';src:url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbeceBody.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
+    @font-face{font-family:'TTKB Dik Temel Abece';src:url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbece-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap;}
+    @font-face{font-family:'ttkb-dik-temel';src:url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbeceBody.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
+    @font-face{font-family:'ttkb-dik-temel';src:url('/fonts/ttkb-dik-temel-abece/TTKBDikTemelAbece-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap;}
     :root {
       --purple:#6C3DED;--purple-light:#9B72F5;--purple-dark:#4A1FD0;
       --coral:#FF6052;--teal:#00C9B1;--navy:#1A1040;
@@ -137,12 +141,15 @@
     .ql-snow .ql-picker-options{border-color:var(--border);}
     .ql-snow .ql-tooltip{z-index:30;}
     .ql-font-nunito{font-family:'Nunito',sans-serif;}
+    .ql-font-ttkb-dik-temel{font-family:'TTKB Dik Temel Abece','Nunito',sans-serif;}
     .ql-font-georgia{font-family:Georgia,serif;}
     .ql-font-arial{font-family:Arial,sans-serif;}
     .ql-font-times-new-roman{font-family:'Times New Roman',serif;}
     .ql-font-courier-new{font-family:'Courier New',monospace;}
     .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="nunito"]::before,
     .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="nunito"]::before{content:'Nunito';font-family:'Nunito',sans-serif;}
+    .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="ttkb-dik-temel"]::before,
+    .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="ttkb-dik-temel"]::before{content:'TTKB Dik Temel';font-family:'TTKB Dik Temel Abece','Nunito',sans-serif;}
     .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
     .ql-snow .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before{content:'Georgia';font-family:Georgia,serif;}
     .ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
@@ -560,6 +567,7 @@
                 <span class="ql-formats">
                   <select class="ql-font">
                     <option value="nunito" selected>Nunito</option>
+                    <option value="ttkb-dik-temel">TTKB Dik Temel</option>
                     <option value="georgia">Georgia</option>
                     <option value="arial">Arial</option>
                     <option value="times-new-roman">Times New Roman</option>
@@ -750,6 +758,6 @@
     });
   });
 </script>
-<script src="/js/okuma-editor-app.js?v=20260725-question-save-guard"></script>
+<script src="/js/okuma-editor-app.js?v=20260903-ttkb-font"></script>
 </body>
 </html>

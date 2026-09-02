@@ -266,6 +266,11 @@
     const fontMap = {
       nunito: 'Nunito, sans-serif',
       Nunito: 'Nunito, sans-serif',
+      'ttkb-dik-temel': '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif',
+      'TTKB Dik Temel': '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif',
+      'TTKB Dik Temel Abece': '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif',
+      "'TTKB Dik Temel Abece',ttkb-dik-temel,'Nunito',sans-serif": '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif',
+      "'TTKB Dik Temel Abece', ttkb-dik-temel, 'Nunito', sans-serif": '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif',
       georgia: 'Georgia, serif',
       'Georgia,serif': 'Georgia, serif',
       arial: 'Arial, sans-serif',

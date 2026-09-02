@@ -13,6 +13,7 @@
   const QUESTION_SELECT_LEGACY = 'id,soru_metni,sira,secenekler(id,secenek_metni,dogru_mu,sira)';
   const FONT_LABELS = {
     nunito: 'Nunito',
+    'ttkb-dik-temel': 'TTKB Dik Temel',
     georgia: 'Georgia',
     arial: 'Arial',
     'times-new-roman': 'Times New Roman',
@@ -20,6 +21,7 @@
   };
   const FONT_STACKS = {
     nunito: 'Nunito, sans-serif',
+    'ttkb-dik-temel': "'TTKB Dik Temel Abece', ttkb-dik-temel, 'Nunito', sans-serif",
     georgia: 'Georgia, serif',
     arial: 'Arial, sans-serif',
     'times-new-roman': '"Times New Roman", serif',
@@ -384,6 +386,11 @@
     const map = {
       Nunito: 'nunito',
       nunito: 'nunito',
+      'TTKB Dik Temel': 'ttkb-dik-temel',
+      'TTKB Dik Temel Abece': 'ttkb-dik-temel',
+      'ttkb-dik-temel': 'ttkb-dik-temel',
+      "'TTKB Dik Temel Abece',ttkb-dik-temel,'Nunito',sans-serif": 'ttkb-dik-temel',
+      "'TTKB Dik Temel Abece', ttkb-dik-temel, 'Nunito', sans-serif": 'ttkb-dik-temel',
       'Georgia,serif': 'georgia',
       Georgia: 'georgia',
       georgia: 'georgia',
