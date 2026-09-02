@@ -43,6 +43,13 @@ body.theme-dark{
 /* WARNING SCREEN */
 #screenWarn{display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px}
 .warn-card{background:rgba(255,255,255,.06);backdrop-filter:blur(16px);border:1.5px solid rgba(255,255,255,.12);border-radius:var(--r-xl);padding:40px;max-width:520px;width:100%}
+.warn-card.has-cover{max-width:940px;padding:24px}
+.warn-layout{display:block}
+.warn-card.has-cover .warn-layout{display:grid;grid-template-columns:minmax(280px,.86fr) minmax(360px,1.14fr);gap:28px;align-items:stretch}
+.warn-cover{display:none;min-height:420px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.warn-card.has-cover .warn-cover{display:block}
+.warn-cover img{width:100%;height:100%;display:block;object-fit:cover}
+.warn-content{min-width:0}
 .warn-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
 .warn-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--purple),var(--purple-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 18px rgba(108,61,237,.4)}
 .warn-logo-text{font-family:var(--fd);font-size:18px;font-weight:800;color:#fff}
@@ -438,6 +445,9 @@ body.theme-dark .size-value{color:var(--muted)}
 
 /* RESPONSIVE */
 @media(max-width:768px){
+  .warn-card.has-cover .warn-layout{grid-template-columns:1fr}
+  .warn-card.has-cover{max-width:560px}
+  .warn-card.has-cover .warn-cover{min-height:0;aspect-ratio:16/9}
   .exam-topbar{padding:0 14px}
   .etb-title{display:none}
   .theme-toggle span:last-child{display:none}
@@ -548,33 +558,40 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
 </div>
 
 <div id="screenWarn" style="display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);display:none;align-items:center;justify-content:center;padding:20px">
-  <div class="warn-card">
-    <div class="warn-logo">
+  <div class="warn-card" id="warnCard">
+    <div class="warn-layout">
+      <div class="warn-cover" id="warnCover" hidden>
+        <img id="warnCoverImage" alt="">
+      </div>
+      <div class="warn-content">
+        <div class="warn-logo">
       <div class="warn-logo-icon">📚</div>
       <div class="warn-logo-text">Kemal Öğretmenim</div>
-    </div>
-    <div class="warn-exam-title" id="warnTitle"></div>
-    <div class="warn-exam-sub" id="warnSub"></div>
-    <div class="warn-meta" id="warnMeta"></div>
-    <div id="warnNeg" style="display:none" class="warn-neg">
+        </div>
+        <div class="warn-exam-title" id="warnTitle"></div>
+        <div class="warn-exam-sub" id="warnSub"></div>
+        <div class="warn-meta" id="warnMeta"></div>
+        <div id="warnNeg" style="display:none" class="warn-neg">
       <div class="warn-neg-icon">⚠️</div>
       <div class="warn-neg-txt">
         <strong>DİKKAT: Bu sınavda puan kesintisi uygulanmaktadır!</strong><br>
         Her <strong>3 yanlış cevap</strong>, 1 doğru cevabı silecektir. Bilmediğin sorularda boş bırakmayı tercih edebilirsin.
       </div>
-    </div>
-    <div class="warn-rules">
+        </div>
+        <div class="warn-rules">
       <div class="warn-rule"><div class="warn-rule-dot"></div><span id="warnTimeRule">Sınav süresi dolduğunda sınav otomatik olarak sonlanacaktır.</span></div>
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sınav ekranını kapatma veya sayfa yenileme sınav kaydını silebilir.</span></div>
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sessiz, dikkat dağınıklığından uzak bir ortamda sınava gir.</span></div>
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sağdaki optik alanda veya şık butonlarından cevabını işaretleyebilirsin.</span></div>
-    </div>
-    <div class="warn-rules">
+        </div>
+        <div class="warn-rules">
       <div class="warn-rule"><div class="warn-rule-dot"></div><span id="warnShortcutAnswers">Klavye ile cevap işaretleme kullanabilirsin.</span></div>
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>Sol ve sağ ok tuşları ile sorular arasında geçiş yapabilirsin.</span></div>
       <div class="warn-rule"><div class="warn-rule-dot"></div><span>K kalem, S seçim, L silgi; + ve - ile yakınlaştırma, 0 ile yakınlaştırmayı sıfırlama yapar.</span></div>
+        </div>
+        <button class="warn-start-btn" onclick="beginExam()">🚀 BAŞLAT</button>
+      </div>
     </div>
-    <button class="warn-start-btn" onclick="beginExam()">🚀 BAŞLAT</button>
   </div>
 </div>
 
@@ -1116,6 +1133,11 @@ function normalizeKeyPart(value){
     .replace(/[\u0300-\u036f]/g,'')
     .replace(/[^a-z0-9]+/g,'-')
     .replace(/^-+|-+$/g,'');
+}
+
+function getExamGrades(exam){
+  const raw=Array.isArray(exam?.grades)&&exam.grades.length?exam.grades:[exam?.grade];
+  return [...new Set(raw.map(value=>parseInt(value,10)).filter(value=>value>=1&&value<=8))].sort((a,b)=>a-b);
 }
 
 function buildStudentKey(source){
@@ -2339,8 +2361,8 @@ async function init(){
         : !(bundle.exam.authRequired||bundle.exam.requiresAuth);
       if(typeof window.kemalUserAuth.getStudentGradeLevel==='function'){
         const lockedGrade=window.kemalUserAuth.getStudentGradeLevel();
-        const examGrade=parseInt(bundle.exam.grade,10);
-        if(lockedGrade&&Number.isFinite(examGrade)&&examGrade!==lockedGrade&&!isPublicExam){
+        const examGrades=getExamGrades(bundle.exam);
+        if(lockedGrade&&!examGrades.includes(lockedGrade)&&!isPublicExam){
           showLoadError('Bu sınav farklı bir sınıfa ait','Hesabın '+lockedGrade+'. sınıf olarak kayıtlı olduğu için yalnız kendi sınıfındaki sınavları çözebilirsin.');
           return;
         }
@@ -2367,6 +2389,22 @@ async function init(){
 function renderWarning(){
   const ex=P.exam,st=P.student;
   const lastOption=P.OPTS[P.OPTS.length-1]||'D';
+  const coverUrl=String(ex.coverImageUrl||'').trim();
+  const warnCard=document.getElementById('warnCard');
+  const warnCover=document.getElementById('warnCover');
+  const warnCoverImage=document.getElementById('warnCoverImage');
+  warnCard.classList.toggle('has-cover',!!coverUrl);
+  warnCover.hidden=!coverUrl;
+  if(coverUrl){
+    warnCoverImage.src=coverUrl;
+    warnCoverImage.alt=ex.title+' sınav kapak görseli';
+    warnCoverImage.onerror=()=>{
+      warnCover.hidden=true;
+      warnCard.classList.remove('has-cover');
+    };
+  }else{
+    warnCoverImage.removeAttribute('src');
+  }
   document.getElementById('warnTitle').textContent=ex.title;
   document.getElementById('warnSub').textContent=`${st.firstName} ${st.lastName} — ${formatStudentMetaLine(st)}`;
   document.getElementById('warnMeta').innerHTML=`

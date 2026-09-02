@@ -307,6 +307,34 @@
     };
   }
 
+  function renderReadyCover() {
+    const cover = document.getElementById('hazirKapak');
+    const image = document.getElementById('hazirKapakImg');
+    const icon = document.querySelector('.hazir-em');
+    if (!cover || !image) {
+      return;
+    }
+    const visual = getTrainingProfile().gorsel || {};
+    const showCover = !!visual.url && visual.konum === 'cover';
+    cover.style.display = showCover ? 'block' : 'none';
+    if (icon) {
+      icon.style.display = showCover ? 'none' : '';
+    }
+    if (!showCover) {
+      image.removeAttribute('src');
+      return;
+    }
+    cover.style.setProperty('--ready-cover-fit', visual.fit === 'contain' ? 'contain' : 'cover');
+    image.src = visual.url;
+    image.alt = visual.alt || visual.aciklama || metin.baslik || 'Okuma metni kapak görseli';
+    image.onerror = function() {
+      cover.style.display = 'none';
+      if (icon) {
+        icon.style.display = '';
+      }
+    };
+  }
+
   function startClock(displayId) {
     startedAt = Date.now();
     timer = window.setInterval(function() {
@@ -501,6 +529,7 @@
       ? (metin.tikla_mod ? '⚡ Kelime Kelime (Tıklayarak)' : '⚡ Kelime Kelime (Otomatik)')
       : '📄 Tam Metin';
     document.getElementById('hazirBaslik').textContent = metin.baslik;
+    renderReadyCover();
     document.getElementById('hazirKullanici').textContent = '👤 ' + kullanici.ad + ' ' + kullanici.soyad + ' · ' + getKullaniciMetaLine();
     const readyButton = document.getElementById('hazirBtn');
     readyButton.textContent = '⏳ Anlama soruları kontrol ediliyor…';

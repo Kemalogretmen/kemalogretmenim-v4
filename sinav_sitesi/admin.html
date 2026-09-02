@@ -112,6 +112,13 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .sel-card{padding:13px 8px;border:2px solid var(--border);border-radius:var(--r);text-align:center;cursor:pointer;font-weight:700;font-size:13px;transition:all .2s;background:var(--white);font-family:var(--fb)}
 .sel-card:hover{border-color:var(--purple);color:var(--purple);background:#F5F3FF}
 .sel-card.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple)}
+.sel-card.selected::after{content:'✓';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;border-radius:50%;background:var(--purple);color:#fff;font-size:11px;vertical-align:middle}
+.selection-note{margin-top:10px;padding:10px 12px;border-radius:10px;background:#F8FAFC;border:1px solid var(--border);font-size:12px;line-height:1.55;color:var(--slate)}
+.exam-cover-studio{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start;padding:16px;border:1.5px solid var(--border);border-radius:16px;background:linear-gradient(135deg,#F8FAFC,#F5F3FF);margin-top:16px}
+.exam-cover-preview{aspect-ratio:16/9;border:2px dashed #C4B5FD;border-radius:14px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--muted);font-size:12px;font-weight:700;text-align:center;padding:12px}
+.exam-cover-preview img{width:100%;height:100%;display:block;object-fit:cover}
+.exam-cover-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:720px){.exam-cover-studio{grid-template-columns:1fr}.exam-cover-preview{max-width:360px}}
 
 /* PDF / CANVAS */
 .pdf-layout{display:flex;flex-direction:column;gap:16px}
@@ -292,6 +299,7 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
+  deleteField,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {
   getAuth,
@@ -372,7 +380,7 @@ let supabaseUploadClient=null;
 function createInitialState(overrides={}){
   return Object.assign({
     page:'create',step:1,
-    grade:null,subject:null,examName:'',
+    grade:null,grades:[],subject:null,examName:'',
     optionCount:4,negativeMarking:false,
     categoryMap:createDefaultCategoryMap(),
     sectionCategoryMap:createDefaultSectionCategoryMap(),
@@ -382,6 +390,7 @@ function createInitialState(overrides={}){
     questions:[],
     pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:PDF_BASE_ZOOM,imgData:null,cropTool:'crop',
     pubTitle:'',pubDur:30,pubDisplayOrder:'',pubAccessScope:'public',pubHidden:false,editExamId:null,
+    coverImageUrl:'',coverImagePath:'',coverImageData:'',coverImageRemoved:false,
     scoringMode:'auto',scoreScaleInput:'',
     exams:[],results:[],appeals:[],
     appealInspect:null,
@@ -473,7 +482,24 @@ function hideLoad(){const el=document.getElementById('ld');if(el)el.style.displa
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fmtDate(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleDateString('tr-TR');}catch{return'';}}
 function fmtDT(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return'';}}
-function buildExamShareUrl(examId){return`${window.location.origin}/sinav_sitesi/index.html?examId=${encodeURIComponent(examId)}`;}
+function buildExamShareUrl(examId){return`${window.location.origin}/sinav/${encodeURIComponent(examId)}`;}
+function normalizeExamGrades(source){
+  const raw=Array.isArray(source?.grades)&&source.grades.length?source.grades:[source?.grade];
+  return [...new Set(raw.map(value=>parseInt(value,10)).filter(value=>GRADES.includes(value)))].sort((a,b)=>a-b);
+}
+function getSelectedExamGrades(){
+  const grades=normalizeExamGrades({grades:A.grades,grade:A.grade});
+  return grades.length?grades:(A.grade?[A.grade]:[]);
+}
+function examIncludesGrade(exam,grade){
+  return normalizeExamGrades(exam).includes(parseInt(grade,10));
+}
+function formatExamGrades(examOrGrades){
+  const grades=Array.isArray(examOrGrades)
+    ? normalizeExamGrades({grades:examOrGrades})
+    : normalizeExamGrades(examOrGrades);
+  return grades.map(grade=>`${grade}. Sınıf`).join(', ');
+}
 function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
 function sanitizeCategoryList(list){
   const seen=new Set();
@@ -940,6 +966,36 @@ async function uploadQuestionImage(examId,index,dataUrl){
   if(!publicUrl) throw new Error('Soru görseli bağlantısı oluşturulamadı.');
   return{imageUrl:publicUrl,imagePath:path};
 }
+async function uploadExamCover(examId,dataUrl){
+  if(!String(dataUrl||'').startsWith('data:')) return{imageUrl:String(dataUrl||''),imagePath:''};
+  await ensureSupabaseAdminSession();
+  const ext=getQuestionImageExtension(dataUrl);
+  const mime=getQuestionImageMime(dataUrl);
+  const path=`${examId}/cover-${Date.now()}.${ext}`;
+  const blob=await dataUrlToBlob(dataUrl);
+  const upload=await getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).upload(path,blob,{
+    cacheControl:'31536000',
+    upsert:false,
+    contentType:mime
+  });
+  if(upload.error) throw upload.error;
+  const publicUrl=getSupabaseUploadClient().storage.from(QUESTION_IMAGE_BUCKET).getPublicUrl(path).data?.publicUrl;
+  if(!publicUrl) throw new Error('Kapak görseli bağlantısı oluşturulamadı.');
+  return{imageUrl:publicUrl,imagePath:path};
+}
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(new Error('Görsel dosyası okunamadı.'));
+    reader.readAsDataURL(file);
+  });
+}
+async function prepareExamCoverFile(file){
+  if(!file||!String(file.type||'').startsWith('image/')) throw new Error('Kapak için JPG, PNG veya WEBP görsel seçin.');
+  if(file.size>5*1024*1024) throw new Error('Kapak görseli en fazla 5 MB olabilir.');
+  return fileToDataUrl(file);
+}
 function getQuestionImagePath(questionData){
   const data=questionData&&typeof questionData.data==='function'?questionData.data():(questionData||{});
   if(data.imagePath) return String(data.imagePath);
@@ -1085,7 +1141,7 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
   return{
     examTitle:examMeta.title||result.examTitle||'',
     subject:examMeta.subject||result.subject||'',
-    grade:examMeta.grade??result.grade,
+    grade:result.grade??examMeta.grade,
     correct,
     wrong,
     blank,
@@ -1213,7 +1269,7 @@ function sortAdminExamRecords(list){
 }
 function getExamPlacementList(grade,excludeId=''){
   return sortAdminExamRecords(
-    (A.exams||[]).filter(exam=>String(exam.grade)===String(grade)&&String(exam.id)!==String(excludeId))
+    (A.exams||[]).filter(exam=>examIncludesGrade(exam,grade)&&String(exam.id)!==String(excludeId))
   );
 }
 function clampRequestedExamOrder(value,max){
@@ -1413,7 +1469,7 @@ function getExamCommandDeckCards(){
       desc:'Yeni sınav akışını başlat, soruları yükle ve yayın öncesi düzeni kontrol et.',
       meta:A.questions.length
         ? `${A.questions.length} soru hazır · ${A.examName?`Taslak: ${A.examName}`:'Taslak açık'}`
-        : (A.grade&&A.subject?`${A.grade}. sınıf · ${A.subject}`:'4 adımlı yayın akışı')
+        : (getSelectedExamGrades().length&&A.subject?`${formatExamGrades(getSelectedExamGrades())} · ${A.subject}`:'4 adımlı yayın akışı')
     },
     {
       key:'categories',
@@ -1458,7 +1514,7 @@ function renderExamCommandDeck(){
   const cards=getExamCommandDeckCards();
   const pillItems=[];
   if(A.page==='create'){
-    if(A.grade) pillItems.push(`${A.grade}. sınıf`);
+    if(getSelectedExamGrades().length) pillItems.push(formatExamGrades(getSelectedExamGrades()));
     if(A.subject) pillItems.push(A.subject);
     if(A.questions.length) pillItems.push(`${A.questions.length} soru`);
   }else if(A.page==='categories'){
@@ -1521,22 +1577,24 @@ function renderCreate(){
 }
 
 function renderStep1(){
-  const gCards=GRADES.map(g=>`<div class="sel-card ${A.grade===g?'selected':''}" onclick="W.setGrade(${g})">${g}. Sınıf</div>`).join('');
-  const subs=A.grade?getAvailableCategoriesForGrade(A.grade,[A.subject]):[];
+  const selectedGrades=getSelectedExamGrades();
+  const gCards=GRADES.map(g=>`<div class="sel-card ${selectedGrades.includes(g)?'selected':''}" onclick="W.toggleGrade(${g})">${g}. Sınıf</div>`).join('');
+  const subs=selectedGrades.length?mergeCategoryLists(...selectedGrades.map(grade=>getAvailableCategoriesForGrade(grade,[A.subject]))):[];
   const sCards=subs.map(s=>`<div class="sel-card ${A.subject===s?'selected':''}" onclick='W.setSubject(${JSON.stringify(s)})'>${esc(s)}</div>`).join('');
   return`<div class="card p-6" style="max-width:560px">
     <div style="margin-bottom:22px">
-      <label class="form-label" style="font-size:14px;margin-bottom:10px">Sınıf Seçin</label>
+      <label class="form-label" style="font-size:14px;margin-bottom:10px">Sınıf veya Sınıfları Seçin</label>
       <div class="sel-grid">${gCards}</div>
+      <div class="selection-note">Bir sınav birden fazla düzeye uygunsa tüm ilgili sınıfları seçebilirsin. İlk sınıf ana sınıf olarak saklanır; eski sonuç ve karne kayıtlarıyla uyumluluk korunur.</div>
     </div>
-    ${A.grade?`<div style="margin-bottom:22px">
+    ${selectedGrades.length?`<div style="margin-bottom:22px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
         <label class="form-label" style="font-size:14px;margin-bottom:0">Kategori / Ders Seçin</label>
         <button class="btn btn-sm btn-outline" type="button" onclick="W.openCategoryManager()">🗂️ Kategorileri Düzenle</button>
       </div>
       <div class="sel-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${sCards||'<div class="text-sm text-muted">Bu sınıf için henüz kategori tanımlı değil.</div>'}</div>
     </div>`:''}
-    <div style="text-align:right"><button class="btn btn-primary btn-lg" onclick="W.nextStep()" ${!A.grade||!A.subject?'disabled':''}>Devam Et →</button></div>
+    <div style="text-align:right"><button class="btn btn-primary btn-lg" onclick="W.nextStep()" ${!selectedGrades.length||!A.subject?'disabled':''}>Devam Et →</button></div>
   </div>`;
 }
 
@@ -1547,7 +1605,7 @@ function renderStep2(){
     <div style="margin-bottom:20px">
       <label class="form-label" style="font-size:14px">Sınav Adı *</label>
       <input class="form-input" id="eName" type="text" placeholder="Örn: 1. Dönem Değerlendirme Sınavı" value="${esc(A.examName)}" style="font-size:15px;padding:12px">
-      <p class="text-sm text-muted" style="margin-top:5px">Seçilen: ${A.grade}. Sınıf — ${A.subject}</p>
+      <p class="text-sm text-muted" style="margin-top:5px">Seçilen: ${esc(formatExamGrades(getSelectedExamGrades()))} — ${A.subject}</p>
     </div>
     <div style="margin-bottom:20px">
       <label class="form-label" style="font-size:14px;margin-bottom:10px">Şık Sayısı</label>
@@ -1752,6 +1810,8 @@ function renderScoringEditor(){
 function renderStep4(){
   const title=A.pubTitle||A.examName;
   const editing=!!A.editExamId;
+  const selectedGrades=getSelectedExamGrades();
+  const coverPreview=A.coverImageData||(!A.coverImageRemoved?A.coverImageUrl:'');
   return`<div style="max-width:680px">
     <div class="card p-6 mb-4">
       <strong style="display:block;font-size:15px;margin-bottom:16px;font-family:var(--fd)">${editing?'🛠 Düzenleme Özeti':'📋 Sınav Bilgileri'}</strong>
@@ -1787,11 +1847,24 @@ function renderStep4(){
         </div>
       </div>
       <div style="background:#F5F3FF;border:1.5px solid rgba(108,61,237,.2);padding:13px 16px;border-radius:var(--r);font-size:13px;color:var(--purple);display:flex;gap:16px;flex-wrap:wrap;font-weight:600">
-        <span>📚 ${A.grade}. Sınıf</span>
+        <span>📚 ${esc(formatExamGrades(selectedGrades))}</span>
         <span>📖 ${A.subject}</span>
         <span>📝 ${A.questions.length} soru</span>
         <span>🔡 ${A.optionCount} şık</span>
         <span>${A.negativeMarking?'⚠️ Puan kesintili':'✅ Puan kesintisiz'}</span>
+        <button class="btn btn-sm btn-outline" type="button" onclick="W.goBuilderStep(1)" style="margin-left:auto">Sınıfları Değiştir</button>
+      </div>
+      <div class="exam-cover-studio">
+        <div>
+          <strong style="display:block;font-family:var(--fd);font-size:14px;margin-bottom:6px">🖼️ Sınav Kapak Görseli <span class="text-xs text-muted">(isteğe bağlı)</span></strong>
+          <p class="text-sm text-muted" style="line-height:1.65">Kapak, öğrenci sınava başlamadan önceki uyarı ekranında ve WhatsApp önizlemesinde kullanılır. Yazısız, sade ve yatay 16:9 bir görsel en iyi sonucu verir.</p>
+          <input type="file" id="examCoverFile" accept="image/jpeg,image/png,image/webp" hidden onchange="W.setExamCover(this)">
+          <div class="exam-cover-actions">
+            <button class="btn btn-sm btn-outline" type="button" onclick="document.getElementById('examCoverFile').click()">${coverPreview?'Görseli Değiştir':'Kapak Seç'}</button>
+            ${coverPreview?'<button class="btn btn-sm btn-red" type="button" onclick="W.clearExamCover()">Kapağı Kaldır</button>':''}
+          </div>
+        </div>
+        <div class="exam-cover-preview">${coverPreview?`<img src="${esc(coverPreview)}" alt="Sınav kapak önizlemesi">`:'16:9 kapak önizlemesi'}</div>
       </div>
     </div>
     ${renderScoringEditor()}
@@ -1821,6 +1894,8 @@ function renderAdminExams(){
     visibleExams.map((e,index)=>{
       const status=getExamStatus(e);
       const meta=getExamStatusMeta(status);
+      const examGrades=normalizeExamGrades(e);
+      const primaryGrade=examGrades[0]||e.grade;
       const appealMeta=appealSummary[e.id]||{total:0,pending:0};
       const displayOrder=getExamDisplayOrder(e,index);
       const accessLabel=e.accessScope==='registered'||e.authRequired?'🔐 Kayıtlı Kullanıcı':'🌍 Herkese Açık';
@@ -1837,10 +1912,10 @@ function renderAdminExams(){
       return `
       <div class="card p-4" style="margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0;font-family:var(--fd)" class="gc-${e.grade}">${e.grade}</div>
+          <div style="width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;flex-shrink:0;font-family:var(--fd)" class="gc-${primaryGrade}">${examGrades.length>1?examGrades.join('/'):(primaryGrade||'—')}</div>
           <div style="flex:1;min-width:0">
             <div style="font-weight:700;font-size:14px;font-family:var(--fd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.title)}</div>
-            <div class="text-sm text-muted" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.grade}. Sınıf &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
+            <div class="text-sm text-muted" style="margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(formatExamGrades(e))} &nbsp;·&nbsp; ${e.subject} &nbsp;·&nbsp; ${e.questionCount} soru &nbsp;·&nbsp; ${e.duration?e.duration+' dk':'Sınırsız'} &nbsp;·&nbsp; ${e.optionCount||4} şık ${e.negativeMarking?'&nbsp;·&nbsp; ⚠️ Puan kesintili':''}</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
               <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:${meta.bg};color:${meta.color};font-size:11px;font-weight:800">${meta.icon} ${meta.label}</span>
               <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:11px;font-weight:800">${accessLabel}</span>
@@ -2420,19 +2495,19 @@ function removeCropModal(){const el=document.getElementById('cropModal');if(el)e
 /* ── FIREBASE ── */
 async function fbLoadExams(gf){
   try{
-    const q=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf)),orderBy('createdAt','desc')):
-      query(collection(db,'exams'),orderBy('createdAt','desc'));
+    const q=query(collection(db,'exams'),orderBy('createdAt','desc'));
     const snap=await getDocs(q);
-    return sortAdminExamRecords(snap.docs.map(d=>({id:d.id,...d.data()})));
+    const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+    return sortAdminExamRecords(gf?rows.filter(exam=>examIncludesGrade(exam,gf)):rows);
   }catch(e1){
     try{
-      const q2=gf?query(collection(db,'exams'),where('grade','==',parseInt(gf))):query(collection(db,'exams'));
+      const q2=query(collection(db,'exams'));
       const snap=await getDocs(q2);
-      return sortAdminExamRecords(snap.docs.map(d=>({id:d.id,...d.data()})));
+      const rows=snap.docs.map(d=>({id:d.id,...d.data()}));
+      return sortAdminExamRecords(gf?rows.filter(exam=>examIncludesGrade(exam,gf)):rows);
     }catch(e2){
       const psnap=await getDocs(collection(db,'exams'));
-      const g=gf?parseInt(gf):null;
-      const docs=g?psnap.docs.filter(d=>d.data()?.grade===g):psnap.docs;
+      const docs=gf?psnap.docs.filter(d=>examIncludesGrade(d.data(),gf)):psnap.docs;
       return sortAdminExamRecords(docs.map(d=>({id:d.id,...d.data()})));
     }
   }
@@ -2711,7 +2786,7 @@ const W={
     if(!requireExamPerm('exam_edit','Sınav sıralama')) return;
     const current=A.exams.find(exam=>exam.id===id);
     if(!current) return;
-    const sameGrade=sortAdminExamRecords(A.exams.filter(exam=>String(exam.grade)===String(current.grade)));
+    const sameGrade=sortAdminExamRecords(A.exams.filter(exam=>examIncludesGrade(exam,current.grade)));
     const index=sameGrade.findIndex(exam=>exam.id===id);
     const targetIndex=index+direction;
     if(index<0||targetIndex<0||targetIndex>=sameGrade.length) return;
@@ -2787,7 +2862,30 @@ const W={
     if(A.page==='create') preserveCreateDraftOnReturn=true;
     this.nav('categories');
   },
-  setGrade(g){A.grade=g;A.subject=null;A.questionSections=[];setContent(renderCreate());},
+  setGrade(g){
+    A.grade=parseInt(g,10)||null;
+    A.grades=A.grade?[A.grade]:[];
+    A.subject=null;
+    A.questionSections=[];
+    setContent(renderCreate());
+  },
+  toggleGrade(g){
+    const grade=parseInt(g,10);
+    const current=getSelectedExamGrades();
+    const next=current.includes(grade)?current.filter(item=>item!==grade):[...current,grade].sort((a,b)=>a-b);
+    A.grades=next;
+    A.grade=next[0]||null;
+    if(A.subject&&!next.some(item=>getAvailableCategoriesForGrade(item,[A.subject]).includes(A.subject))){
+      A.subject=null;
+      A.questionSections=[];
+    }
+    setContent(renderCreate());
+  },
+  goBuilderStep(step){
+    A.step=Math.max(1,Math.min(4,parseInt(step,10)||1));
+    setContent(renderCreate());
+    afterCreateRender();
+  },
   setSubject(s){
     const nextSubject=sanitizeCategoryLabel(s);
     const changed=normalizeKeyPart(nextSubject)!==normalizeKeyPart(A.subject);
@@ -2948,6 +3046,24 @@ const W={
     if(!A.questions[index]) return;
     A.questions[index].pointValue=toPositiveDecimal(value);
   },
+  async setExamCover(input){
+    const file=input?.files?.[0];
+    if(!file) return;
+    try{
+      A.coverImageData=await prepareExamCoverFile(file);
+      A.coverImageRemoved=false;
+      this.reRenderStep4();
+      toast('Kapak görseli hazırlandı. Yayınlarken yüklenecek.','success');
+    }catch(error){
+      if(input) input.value='';
+      toast(error.message,'error');
+    }
+  },
+  clearExamCover(){
+    A.coverImageData='';
+    A.coverImageRemoved=true;
+    this.reRenderStep4();
+  },
   nextStep(){
     if(A.step===2){
       const v=document.getElementById('eName')?.value?.trim();
@@ -3024,7 +3140,9 @@ const W={
     const rawDisplayOrder=(document.getElementById('pubDisplayOrder')?.value??A.pubDisplayOrder??'').toString().trim();
     const accessScope=(document.getElementById('pubAccessScope')?.value||A.pubAccessScope||'public')==='registered'?'registered':'public';
     const hidden=(document.getElementById('pubHidden')?.value||String(A.pubHidden||false))==='true';
+    const selectedGrades=getSelectedExamGrades();
     if(!t){toast('Başlık girin','error');return;}
+    if(!selectedGrades.length){toast('En az bir sınıf seçin','error');return;}
     if(!A.questions.length){toast('En az 1 soru ekleyin','error');return;}
     syncQuestionOrder();
     let sectionData;
@@ -3063,7 +3181,7 @@ const W={
     const uploadedQuestionImages=[];
     try{
       const payload={
-        title:t,grade:A.grade,subject:A.subject,
+        title:t,grade:selectedGrades[0],grades:selectedGrades,subject:A.subject,
         duration:A.pubDur,questionCount:A.questions.length,
         optionCount:A.optionCount,negativeMarking:A.negativeMarking,
         questionSections:sectionData.sections,
@@ -3076,6 +3194,13 @@ const W={
         status:targetStatus,
         updatedAt:serverTimestamp()
       };
+      if(A.coverImageUrl&&!A.coverImageRemoved){
+        payload.coverImageUrl=A.coverImageUrl;
+        if(A.coverImagePath) payload.coverImagePath=A.coverImagePath;
+      }else if(isEdit&&A.coverImageRemoved){
+        payload.coverImageUrl=deleteField();
+        payload.coverImagePath=deleteField();
+      }
       const explicitDisplayOrder=rawDisplayOrder===''?null:clampRequestedExamOrder(rawDisplayOrder,getExamPlacementList(A.grade,isEdit?A.editExamId:'').length+1);
       if(isEdit&&explicitDisplayOrder!==null){
         payload.displayOrder=explicitDisplayOrder;
@@ -3094,6 +3219,14 @@ const W={
         const er=await addDoc(collection(db,'exams'),createPayload);
         examId=er.id;
         createdNewExam=true;
+      }
+
+      if(A.coverImageData){
+        showLoad('Sınav kapak görseli yükleniyor...');
+        const uploadedCover=await uploadExamCover(examId,A.coverImageData);
+        payload.coverImageUrl=uploadedCover.imageUrl;
+        payload.coverImagePath=uploadedCover.imagePath;
+        uploadedQuestionImages.push({imagePath:uploadedCover.imagePath});
       }
 
       if(!isEdit){
@@ -3155,7 +3288,7 @@ const W={
         }
       }
 
-      if(createdNewExam&&targetStatus==='active'){
+      if(createdNewExam&&(targetStatus==='active'||A.coverImageData)){
         await updateDoc(doc(db,'exams',examId),payload);
       }
 
@@ -3169,6 +3302,11 @@ const W={
           questionSections:sectionData.sections,
           scoreScale:scoreConfig.scoreScale
         },writtenQuestions);
+        const oldCoverPath=String(A.coverImagePath||'');
+        const nextCoverPath=String(payload.coverImagePath&&typeof payload.coverImagePath==='string'?payload.coverImagePath:'');
+        if(oldCoverPath&&(A.coverImageRemoved||nextCoverPath&&nextCoverPath!==oldCoverPath)){
+          await removeQuestionImageFromStorage({imagePath:oldCoverPath});
+        }
       }
 
       const successText=targetStatus==='active'
@@ -3275,7 +3413,8 @@ const W={
         sectionCategoryMap:A.sectionCategoryMap||createDefaultSectionCategoryMap(),
         lessonCatalogMap:A.lessonCatalogMap||createDefaultLessonCatalogMap(),
         categoryGrade:A.categoryGrade||1,
-        grade:exam.grade||null,
+        grade:normalizeExamGrades(exam)[0]||exam.grade||null,
+        grades:normalizeExamGrades(exam),
         subject:exam.subject||null,
         examName:exam.title||'',
         optionCount:exam.optionCount||4,
@@ -3286,6 +3425,10 @@ const W={
         pubDisplayOrder:Number.isFinite(Number(exam.displayOrder))?Number(exam.displayOrder):'',
         pubAccessScope:exam.accessScope==='registered'||exam.authRequired?'registered':'public',
         pubHidden:exam.hidden===true||exam.gizli===true,
+        coverImageUrl:exam.coverImageUrl||'',
+        coverImagePath:exam.coverImagePath||'',
+        coverImageData:'',
+        coverImageRemoved:false,
         scoringMode:['auto','section','question'].includes(exam.scoringMode)?exam.scoringMode:'auto',
         scoreScaleInput:Number.isFinite(Number(exam.scoreScale))?Number(exam.scoreScale):'',
         questions:qdocs.map((qd,index)=>{

@@ -41,6 +41,35 @@ service cloud.firestore {
         || (g is string && g.matches('^[1-8]$'));
     }
 
+    function validExamGrades() {
+      return request.resource.data.keys().hasAny(['grades']) == false
+        || (
+          request.resource.data.grades is list
+          && request.resource.data.grades.size() >= 1
+          && request.resource.data.grades.size() <= 8
+          && request.resource.data.grade in request.resource.data.grades
+        );
+    }
+
+    function validExamCover() {
+      return (
+          request.resource.data.keys().hasAny(['coverImageUrl']) == false
+          || (
+            request.resource.data.coverImageUrl is string
+            && request.resource.data.coverImageUrl.size() >= 1
+            && request.resource.data.coverImageUrl.size() <= 2048
+          )
+        )
+        && (
+          request.resource.data.keys().hasAny(['coverImagePath']) == false
+          || (
+            request.resource.data.coverImagePath is string
+            && request.resource.data.coverImagePath.size() >= 1
+            && request.resource.data.coverImagePath.size() <= 500
+          )
+        );
+    }
+
     function validOptCount(n) {
       return n is int && n >= 2 && n <= 6;
     }
@@ -74,6 +103,8 @@ service cloud.firestore {
     function validExamCreate() {
       return validTitle(request.resource.data.title, 140)
         && validGrade(request.resource.data.grade)
+        && validExamGrades()
+        && validExamCover()
         && validTitle(request.resource.data.subject, 60)
         && request.resource.data.duration is int
         && request.resource.data.duration >= 0
@@ -91,6 +122,8 @@ service cloud.firestore {
     function validExamUpdate() {
       return validTitle(request.resource.data.title, 140)
         && validGrade(request.resource.data.grade)
+        && validExamGrades()
+        && validExamCover()
         && validTitle(request.resource.data.subject, 60)
         && request.resource.data.duration is int
         && request.resource.data.duration >= 0

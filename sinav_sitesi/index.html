@@ -393,7 +393,7 @@ body.sinav-home-page .site-footer{margin-top:40px}
         <div class="fg"><label>Soyad *</label><input class="fi" id="lnInput" placeholder="Soyadınız" type="text" autocomplete="family-name"></div>
       </div>
       <div class="form-row">
-        <div class="fg"><label>Sınıf</label><input class="fi" id="gradeInput" readonly></div>
+        <div class="fg"><label>Sınıf *</label><select class="fs" id="gradeInput"></select></div>
         <div class="fg"><label>Şube *</label>
           <select class="fs" id="subeSelect">
             <option value="">Şube seçin</option>
@@ -785,7 +785,7 @@ async function getCompleteAccountStudentInfo(exam){
     return info.firstName&&info.lastName&&info.grade&&info.sube&&info.city&&info.school?info:null;
   }
   return info.firstName&&info.lastName?Object.assign({},info,{
-    grade:exam?.grade||S.grade||info.grade||'',
+    grade:getExamGradeForStudent(exam,S.grade||info.grade),
     sube:info.sube||'Öğretmen',
     city:info.city||'-',
     school:info.school||'Öğretmen incelemesi'
@@ -795,7 +795,7 @@ async function startExamDirectlyForAccount(exam){
   const info=await getCompleteAccountStudentInfo(exam);
   if(!info)return false;
   S.selExam=exam;
-  S.grade=exam.grade||S.grade||info.grade;
+  S.grade=getExamGradeForStudent(exam,info.grade||S.grade);
   sessionStorage.setItem('sinav_student',JSON.stringify({
     accountUid:info.accountUid||'',
     email:info.email||'',
@@ -828,6 +828,16 @@ function applyStudentGradeLock(){
   renderLastGradeShortcut();
 }
 function escHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function getExamGrades(exam){
+  const raw=Array.isArray(exam?.grades)&&exam.grades.length?exam.grades:[exam?.grade];
+  return [...new Set(raw.map(value=>parseInt(value,10)).filter(value=>value>=1&&value<=8))].sort((a,b)=>a-b);
+}
+function examIncludesGrade(exam,grade){return getExamGrades(exam).includes(parseInt(grade,10));}
+function getExamGradeForStudent(exam,preferredGrade){
+  const grades=getExamGrades(exam);
+  const preferred=parseInt(preferredGrade,10);
+  return grades.includes(preferred)?preferred:(grades[0]||preferredGrade||'');
+}
 function sanitizeCategoryLabel(value){return String(value??'').replace(/\s+/g,' ').trim();}
 function sanitizeCategoryList(list){
   const seen=new Set();
@@ -876,7 +886,7 @@ async function openExamModal(exam){
   if(!requireExamAccess(exam))return;
   if(await startExamDirectlyForAccount(exam))return;
   S.selExam=exam;
-  S.grade=exam.grade||S.grade;
+  S.grade=getExamGradeForStudent(exam,S.grade);
   document.getElementById('eibContent').innerHTML=`
     <div class="eib-title-row">
       <div class="eib-title">${exam.title}</div>
@@ -888,7 +898,10 @@ async function openExamModal(exam){
       <span class="eib-item">${isExamPublic(exam)?'🌍 Açık erişim':'🔐 Kayıtlı erişim'}</span>
     </div>
     ${exam.negativeMarking?'<div class="neg-warn">⚠️ Bu sınavda her 3 yanlış, 1 doğruyu götürecektir!</div>':''}`;
-  document.getElementById('gradeInput').value=`${exam.grade||S.grade}. Sınıf`;
+  const gradeInput=document.getElementById('gradeInput');
+  const examGrades=getExamGrades(exam);
+  gradeInput.innerHTML=examGrades.map(grade=>`<option value="${grade}" ${grade===parseInt(S.grade,10)?'selected':''}>${grade}. Sınıf</option>`).join('');
+  gradeInput.disabled=examGrades.length===1;
   document.getElementById('fnInput').value='';
   document.getElementById('lnInput').value='';
   document.getElementById('subeSelect').value='';
@@ -1061,20 +1074,10 @@ async function loadExams(g){
       </div>
     </div>`).join('')}</div>`;
   try{
-    let snap;
-    try{
-      snap=await getDocs(query(collection(db,'exams'),where('grade','==',g),where('published','==',true),orderBy('createdAt','desc')));
-    }catch(e1){
-      try{
-        snap=await getDocs(query(collection(db,'exams'),where('grade','==',g),where('published','==',true)));
-      }catch(e2){
-        // Son çare: sadece published çek, sınıfı JS'te filtrele (index gereksinimini azaltır)
-        const psnap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
-        snap={docs:psnap.docs.filter(d=>d.data()?.grade===g)};
-      }
-    }
+    const snap=await getDocs(query(collection(db,'exams'),where('published','==',true)));
     S.exams=sortExamRecords(snap.docs
       .map(d=>({id:d.id,...d.data()}))
+      .filter(exam=>examIncludesGrade(exam,g))
       .filter(e=>e.hidden!==true&&e.gizli!==true),'custom');
   }catch(e){
     grid.innerHTML='<div class="empty-state"><span class="empty-state-icon">⚠️</span><h3>Yükleme Hatası</h3><p>Sınavlar yüklenemedi, lütfen sayfayı yenileyin.</p></div>';
@@ -1153,7 +1156,7 @@ function renderGrid(){
       data-reaction-id="${e.id}"
       data-reaction-title="${escHtml(e.title)}"
       data-reaction-href="/sinav_sitesi/index.html?examId=${encodeURIComponent(e.id)}"
-      data-reaction-grade="${escHtml((e.grade || S.grade) + '. Sınıf')}"
+      data-reaction-grade="${escHtml((getExamGradeForStudent(e,S.grade) || S.grade) + '. Sınıf')}"
       data-reaction-subject="${escHtml(e.subject || 'Sınav')}"
       data-reaction-source="Sınav"
       data-access-scope="${escHtml(isExamPublic(e) ? 'public' : 'registered')}">
@@ -1229,6 +1232,7 @@ window.startExam=function(){
   const city=document.getElementById('cityInput').value.trim();
   const district=document.getElementById('districtInput').value.trim();
   const school=getSelectedSchoolName();
+  const selectedGrade=parseInt(document.getElementById('gradeInput').value,10)||S.grade;
   const err=document.getElementById('modalErr');
   if(!fn||!ln||!sube||!city||!district||!school){err.textContent='⚠️ Lütfen ad, soyad, şube, il, ilçe ve okul bilgilerini eksiksiz girin.';err.style.display='block';return;}
   if(fn.length<2||ln.length<2){err.textContent='⚠️ Ad ve soyad en az 2 karakter olmalıdır.';err.style.display='block';return;}
@@ -1250,7 +1254,7 @@ window.startExam=function(){
     role:authInfo&&authInfo.role?authInfo.role:'',
     firstName:capitalize(fn),
     lastName:capitalize(ln),
-    grade:S.grade,
+    grade:selectedGrade,
     sube,
     city:capitalize(city),
     district:capitalize(district),
@@ -1297,8 +1301,9 @@ async function handleSharedExamLink(examId){
   }
   if(!requireExamAccess(exam))return;
   const lockedGrade=getLockedStudentGrade();
-  const examGrade=parseInt(exam.grade,10);
-  if(lockedGrade&&Number.isFinite(examGrade)&&examGrade!==lockedGrade&&!isExamPublic(exam)){
+  const examGrades=getExamGrades(exam);
+  const examGrade=getExamGradeForStudent(exam,lockedGrade||S.grade);
+  if(lockedGrade&&!examGrades.includes(lockedGrade)&&!isExamPublic(exam)){
     await window.selectGrade(lockedGrade);
     return;
   }
