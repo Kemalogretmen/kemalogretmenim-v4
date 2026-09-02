@@ -2,7 +2,7 @@
   publish = "."
 
 [[redirects]]
-  from = "/sinav/:examId"
-  to = "/.netlify/functions/exam-share?examId=:examId"
+  from = "/sinav/:id"
+  to = "/.netlify/functions/exam-share?examId=:id"
   status = 200
   force = true

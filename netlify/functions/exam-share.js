@@ -91,7 +91,9 @@ function renderPage({ examId, exam }) {
 }
 
 exports.handler = async function handler(event) {
-  const examId = String(event.queryStringParameters?.examId || '').trim();
+  const rawPath = String(event.rawUrl || event.path || '');
+  const pathMatch = rawPath.match(/\/sinav\/([A-Za-z0-9_-]{6,128})(?:[/?#]|$)/);
+  const examId = String(event.queryStringParameters?.examId || pathMatch?.[1] || '').trim();
   if (!/^[A-Za-z0-9_-]{6,128}$/.test(examId)) {
     return { statusCode: 400, body: 'Geçersiz sınav bağlantısı.' };
   }
