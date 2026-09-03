@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelime Avı Tasarla — Kemal Öğretmenim</title>
+  <meta name="description" content="Öğretmenin kendi kelimeleriyle akıllı tahta ve çıktı uyumlu kelime avı hazırlama aracı.">
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/style.css?v=20260903-mb-tools">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{--ink:#14213d;--muted:#64748b;--line:#dbe5f4;--blue:#2563eb;--violet:#6c3ded;--teal:#0f9f75;--amber:#f59e0b}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(135deg,#f8fbff,#f4efff 48%,#fffaf1);font-family:'Nunito',system-ui,sans-serif;color:var(--ink)}
+    .sub-back{height:56px;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(227,214,255,.85);display:flex;align-items:center;gap:14px;padding:0 22px;box-shadow:0 2px 18px rgba(108,61,237,.08)}
+    .sub-back a{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:10px;background:rgba(108,61,237,.09);color:#6c3ded;font-weight:900;text-decoration:none}.sub-back-title{font-weight:900}
+    .word-app{width:min(1380px,calc(100% - 28px));margin:0 auto;padding:24px 0 34px;display:grid;grid-template-columns:380px 1fr;gap:18px}
+    .panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 38px rgba(20,33,61,.09)}
+    .builder{padding:20px;display:grid;gap:14px;align-self:start;position:sticky;top:14px}.chip{display:inline-flex;width:max-content;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:#f0ebff;border:1px solid #ddd2ff;color:#6c3ded;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+    h1{font-size:34px;line-height:1.05;margin:0}.lead{margin:0;color:var(--muted);font-weight:800;line-height:1.45}
+    label{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+    textarea,select,input{width:100%;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-weight:800;outline:none}
+    textarea{min-height:170px;padding:13px;line-height:1.5;resize:vertical;text-transform:uppercase}select,input{height:44px;padding:0 12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button{border:1.5px solid var(--line);border-radius:12px;min-height:44px;padding:0 14px;background:#fff;color:var(--ink);font:inherit;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}.primary{background:linear-gradient(135deg,var(--violet),var(--blue));border-color:transparent;color:#fff;box-shadow:0 14px 24px rgba(37,99,235,.2)}.success{background:linear-gradient(135deg,var(--teal),#18b889);border-color:transparent;color:#fff}.btn-row{display:flex;flex-wrap:wrap;gap:9px}
+    .stage{padding:20px;display:grid;gap:16px}.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.stage-head h2{font-size:30px;margin:0}.status{display:flex;gap:8px;flex-wrap:wrap}.pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-weight:900;font-size:13px}
+    .puzzle-wrap{display:grid;grid-template-columns:minmax(360px,1fr) 260px;gap:16px;align-items:start}.puzzle{display:grid;gap:4px;max-width:760px;margin:auto;padding:14px;border-radius:20px;background:#f8fbff;border:1px solid var(--line)}
+    .cell{aspect-ratio:1;border:1px solid #dbe5f4;border-radius:8px;background:#fff;display:grid;place-items:center;font-size:clamp(14px,2.1vw,24px);font-weight:900;color:#14213d;user-select:none}.cell.solution{background:#dff7ef;border-color:#8de1c5;color:#0f7d5d}.cell.selected{background:#eaf1ff;border-color:#8bb5ff;color:#2563eb}
+    .word-list{padding:16px;display:grid;gap:10px}.word-list h3{margin:0;font-size:18px}.words{display:flex;flex-wrap:wrap;gap:8px}.word-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-weight:900;color:var(--muted)}.word-chip.found{background:#ecfdf5;color:#0f7d5d;border-color:#a7f3d0}
+    .hint{padding:12px 14px;border-radius:14px;background:#fff7ed;color:#9a5b00;font-weight:850;line-height:1.45}
+    @media(max-width:980px){.word-app{grid-template-columns:1fr}.builder{position:static}.puzzle-wrap{grid-template-columns:1fr}.word-list{order:-1}}
+    @media print{.site-header,.site-footer,.sub-back,.builder,.stage-head .btn-row{display:none!important}.word-app{display:block;width:100%;padding:0}.stage{box-shadow:none;border:0}.puzzle-wrap{grid-template-columns:1fr}.word-list{box-shadow:none;border:0}.cell{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  </style>
+</head>
+<body>
+  <div class="sub-back">
+    <a href="../ogretmen-araclari.html"><i class="fas fa-arrow-left"></i> Araçlar</a>
+    <span style="font-size:20px">🔎</span>
+    <span class="sub-back-title">Kelime Avı Tasarla</span>
+  </div>
+  <main class="word-app">
+    <section class="builder panel">
+      <span class="chip"><i class="fas fa-puzzle-piece"></i> Bulmaca Atölyesi</span>
+      <h1>Kelime avını sınıfa göre kur.</h1>
+      <p class="lead">Ses grubu, tema, öğrenci isimleri veya haftanın kelimeleriyle hızlıca akıllı tahta ve çıktı uyumlu kelime avı üret.</p>
+      <div><label for="wordsInput">Kelimeler</label><textarea id="wordsInput">Jale
+Kalem
+Okuma
+Sınıf
+Ses
+Kitap
+Defter
+Hece</textarea></div>
+      <div class="grid-2">
+        <div><label for="gridSize">Izgara</label><select id="gridSize"><option value="8">8 x 8</option><option value="10" selected>10 x 10</option><option value="12">12 x 12</option><option value="14">14 x 14</option><option value="16">16 x 16</option></select></div>
+        <div><label for="directionMode">Yön</label><select id="directionMode"><option value="easy">Kolay</option><option value="normal" selected>Normal</option><option value="mixed">Karışık</option></select></div>
+      </div>
+      <div class="grid-2">
+        <div><label for="letterCase">Harf</label><select id="letterCase"><option value="upper" selected>Büyük</option><option value="lower">Küçük</option></select></div>
+        <div><label for="fillMode">Boş kareler</label><select id="fillMode"><option value="random" selected>Rastgele</option><option value="vowels">Sesliler ağırlıklı</option></select></div>
+      </div>
+      <div class="btn-row">
+        <button class="primary" id="generateBtn" type="button"><i class="fas fa-wand-magic-sparkles"></i> Oluştur</button>
+        <button id="solutionBtn" type="button"><i class="fas fa-eye"></i> Çözüm</button>
+        <button class="success" id="pngBtn" type="button"><i class="fas fa-download"></i> PNG</button>
+        <button id="printBtn" type="button"><i class="fas fa-print"></i> Yazdır</button>
+      </div>
+      <p class="hint">İpucu: Kelime listesindeki bir kelimeye tıklayınca çözüm konumu tahtada vurgulanır.</p>
+    </section>
+
+    <section class="stage panel" aria-label="Kelime avı çalışma alanı">
+      <div class="stage-head">
+        <div>
+          <span class="chip"><i class="fas fa-table-cells"></i> Hazır bulmaca</span>
+          <h2 id="puzzleTitle">Kelime Avı</h2>
+        </div>
+        <div class="status">
+          <span class="pill" id="placedCount">0 kelime</span>
+          <span class="pill" id="gridLabel">10 x 10</span>
+        </div>
+        <div class="btn-row">
+          <button id="clearSelectBtn" type="button"><i class="fas fa-eraser"></i> Seçimi Temizle</button>
+        </div>
+      </div>
+      <div class="puzzle-wrap">
+        <div class="puzzle" id="puzzleGrid" aria-label="Kelime avı ızgarası"></div>
+        <aside class="word-list panel">
+          <h3>Kelime Listesi</h3>
+          <div class="words" id="wordList"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260903-mb-tools"></script>
+  <script>
+    (function(){
+      const alphabet = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
+      const vowels = 'AEIİOÖUÜ';
+      const dirs = {
+        easy: [[1,0],[0,1]],
+        normal: [[1,0],[0,1],[1,1]],
+        mixed: [[1,0],[0,1],[1,1],[-1,1],[1,-1],[-1,0],[0,-1]]
+      };
+      const state = { size:10, grid:[], placed:[], show:false, selected:null };
+      const el = id => document.getElementById(id);
+      function cleanWord(word){
+        return word.trim().replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g,'').toLocaleUpperCase('tr-TR');
+      }
+      function words(){
+        return el('wordsInput').value.split(/\n|,|;/).map(cleanWord).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+      }
+      function emptyGrid(size){ return Array.from({length:size},()=>Array.from({length:size},()=>'')); }
+      function canPlace(word,x,y,dx,dy){
+        for(let i=0;i<word.length;i++){ const nx=x+dx*i, ny=y+dy*i; if(nx<0||ny<0||nx>=state.size||ny>=state.size) return false; const cell=state.grid[ny][nx]; if(cell && cell!==word[i]) return false; }
+        return true;
+      }
+      function place(word){
+        const options = dirs[el('directionMode').value] || dirs.normal;
+        for(let attempt=0;attempt<220;attempt++){
+          const [dx,dy] = options[Math.floor(Math.random()*options.length)];
+          const x = Math.floor(Math.random()*state.size), y = Math.floor(Math.random()*state.size);
+          if(!canPlace(word,x,y,dx,dy)) continue;
+          const cells=[]; for(let i=0;i<word.length;i++){ const nx=x+dx*i, ny=y+dy*i; state.grid[ny][nx]=word[i]; cells.push(`${nx}-${ny}`); }
+          state.placed.push({ word, cells }); return true;
+        }
+        return false;
+      }
+      function fill(){
+        const source = el('fillMode').value === 'vowels' ? alphabet + vowels + vowels : alphabet;
+        for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++) if(!state.grid[y][x]) state.grid[y][x]=source[Math.floor(Math.random()*source.length)];
+      }
+      function generate(){
+        state.size = Number(el('gridSize').value); state.grid = emptyGrid(state.size); state.placed=[]; state.show=false; state.selected=null;
+        words().sort((a,b)=>b.length-a.length).forEach(word => { if(word.length <= state.size) place(word); });
+        fill(); render();
+      }
+      function render(){
+        const lower = el('letterCase').value === 'lower';
+        const selectedCells = state.selected ? new Set(state.selected.cells) : new Set();
+        const solutionCells = new Set(state.show ? state.placed.flatMap(w=>w.cells) : []);
+        el('puzzleGrid').style.gridTemplateColumns = `repeat(${state.size}, minmax(0,1fr))`;
+        el('puzzleGrid').innerHTML = '';
+        for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++){
+          const key=`${x}-${y}`; const cell=document.createElement('button'); cell.type='button'; cell.className='cell';
+          if(solutionCells.has(key)) cell.classList.add('solution'); if(selectedCells.has(key)) cell.classList.add('selected');
+          cell.textContent = lower ? state.grid[y][x].toLocaleLowerCase('tr-TR') : state.grid[y][x];
+          cell.setAttribute('aria-label', `${x+1}. sütun ${y+1}. satır ${cell.textContent}`); el('puzzleGrid').appendChild(cell);
+        }
+        el('wordList').innerHTML = '';
+        state.placed.forEach(item => {
+          const chip=document.createElement('button'); chip.type='button'; chip.className='word-chip'; chip.textContent = lower ? item.word.toLocaleLowerCase('tr-TR') : item.word;
+          chip.addEventListener('click',()=>{ state.selected = state.selected === item ? null : item; render(); });
+          el('wordList').appendChild(chip);
+        });
+        el('placedCount').textContent = `${state.placed.length} kelime`;
+        el('gridLabel').textContent = `${state.size} x ${state.size}`;
+        el('solutionBtn').innerHTML = state.show ? '<i class="fas fa-eye-slash"></i> Gizle' : '<i class="fas fa-eye"></i> Çözüm';
+      }
+      function downloadPng(){
+        const cell=54, pad=42, side=state.size*cell+pad*2;
+        const canvas=document.createElement('canvas'); canvas.width=side; canvas.height=side+96; const ctx=canvas.getContext('2d');
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='#14213d'; ctx.font='900 32px Nunito, Arial'; ctx.fillText('Kelime Avı', pad, 44);
+        ctx.font='800 16px Nunito, Arial'; ctx.fillStyle='#64748b'; ctx.fillText(state.placed.map(x=>x.word).join('  ·  '), pad, side+62);
+        const solutions=new Set(state.show ? state.placed.flatMap(w=>w.cells) : []);
+        for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++){
+          const px=pad+x*cell, py=70+y*cell; ctx.fillStyle=solutions.has(`${x}-${y}`)?'#dff7ef':'#f8fbff'; ctx.fillRect(px,py,cell-4,cell-4); ctx.strokeStyle='#dbe5f4'; ctx.strokeRect(px,py,cell-4,cell-4);
+          ctx.fillStyle='#14213d'; ctx.font='900 24px Nunito, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(state.grid[y][x], px+cell/2-2, py+cell/2-2);
+        }
+        const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download='kelime-avi.png'; a.click();
+      }
+      el('generateBtn').addEventListener('click', generate);
+      el('solutionBtn').addEventListener('click',()=>{ state.show=!state.show; render(); });
+      el('clearSelectBtn').addEventListener('click',()=>{ state.selected=null; state.show=false; render(); });
+      el('pngBtn').addEventListener('click', downloadPng);
+      el('printBtn').addEventListener('click',()=>window.print());
+      ['gridSize','directionMode','letterCase','fillMode'].forEach(id=>el(id).addEventListener('change',generate));
+      generate();
+    })();
+  </script>
+</body>
+</html>

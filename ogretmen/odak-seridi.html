@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Odak Şeridi — Kemal Öğretmenim</title>
+  <meta name="description" content="Öğretmenler için satır odaklı hızlı okuma ve takip aracı.">
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/style.css?v=20260903-mb-tools">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root { --tool-ink:#14213d; --tool-muted:#64748b; --tool-line:#dbe5f4; --tool-blue:#2563eb; --tool-violet:#6c3ded; --tool-teal:#0f9f75; --reader-bg:#fff; --reader-ink:#14213d; --reader-band:#eef6ff; }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(135deg,#f5f0ff 0%,#f8fbff 48%,#fffaf2 100%);color:var(--tool-ink);font-family:'Nunito',system-ui,sans-serif}
+    .sub-back{position:relative;z-index:20;height:56px;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-bottom:1px solid rgba(227,214,255,.8);display:flex;align-items:center;gap:14px;padding:0 22px;box-shadow:0 2px 18px rgba(108,61,237,.08)}
+    .sub-back a{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:10px;background:rgba(108,61,237,.09);color:#6c3ded;font-weight:900;text-decoration:none}
+    .sub-back-title{font-weight:900;color:#172033}
+    .focus-app{width:min(1360px,calc(100% - 28px));margin:0 auto;padding:26px 0 34px}
+    .hero{display:grid;grid-template-columns:minmax(280px,.85fr) 1.15fr;gap:18px;align-items:stretch;margin-bottom:18px}
+    .panel{background:rgba(255,255,255,.92);border:1px solid var(--tool-line);border-radius:18px;box-shadow:0 16px 38px rgba(20,33,61,.09)}
+    .intro{padding:24px}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:#f0ebff;border:1px solid #ddd2ff;color:#6c3ded;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+    h1{font-size:clamp(32px,4vw,58px);line-height:.98;margin:18px 0 12px;letter-spacing:0}
+    .intro p{margin:0;color:var(--tool-muted);font-size:17px;font-weight:800;line-height:1.55}
+    .quick-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+    .metric{border:1px solid var(--tool-line);border-radius:14px;padding:12px;background:#fff}
+    .metric strong{display:block;font-size:22px}.metric span{font-size:12px;color:var(--tool-muted);font-weight:900}
+    .controls{padding:18px;display:grid;gap:14px}
+    .control-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    label{font-size:12px;font-weight:900;color:var(--tool-muted);text-transform:uppercase;letter-spacing:.05em}
+    textarea,select,input[type="range"]{width:100%;border:1.5px solid var(--tool-line);border-radius:12px;background:#fff;color:var(--tool-ink);font:inherit;font-weight:800;outline:none}
+    textarea{min-height:172px;padding:14px;line-height:1.5;resize:vertical;text-transform:none;letter-spacing:0}
+    select{height:44px;padding:0 12px}
+    input[type="file"]{width:100%;font-weight:800}
+    .btn-row{display:flex;flex-wrap:wrap;gap:10px}
+    button,.btn{border:1.5px solid var(--tool-line);border-radius:12px;min-height:44px;padding:0 14px;background:#fff;color:var(--tool-ink);font:inherit;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+    .primary{background:linear-gradient(135deg,var(--tool-violet),var(--tool-blue));border-color:transparent;color:#fff;box-shadow:0 14px 24px rgba(37,99,235,.20)}
+    .reader-panel{padding:18px}
+    .reader-shell{position:relative;min-height:520px;border-radius:20px;border:1.5px solid var(--tool-line);background:var(--reader-bg);overflow:hidden;display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.8)}
+    .reader-frame{position:relative;width:min(920px,90%);overflow:hidden;border-radius:18px;background:var(--reader-band);box-shadow:0 18px 40px rgba(15,23,42,.10)}
+    .reader-content{padding:20px 28px;white-space:pre-wrap;color:var(--reader-ink);font-size:var(--font-size,30px);line-height:var(--line-height,1.65);font-family:var(--reader-font,'Nunito',sans-serif);font-weight:800;transition:transform .25s ease;letter-spacing:0}
+    .reader-mask{position:absolute;left:0;right:0;height:42%;pointer-events:none;z-index:2;background:linear-gradient(to bottom,var(--reader-bg),rgba(255,255,255,0))}
+    .reader-mask.bottom{top:auto;bottom:0;transform:rotate(180deg)}
+    .reader-line{position:absolute;left:0;right:0;top:50%;height:var(--band-height,54px);transform:translateY(-50%);border-top:2px solid rgba(37,99,235,.35);border-bottom:2px solid rgba(37,99,235,.35);background:rgba(37,99,235,.06);pointer-events:none;z-index:1}
+    .reader-footer{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:12px;color:var(--tool-muted);font-weight:900}
+    .progress{flex:1;height:9px;border-radius:999px;background:#e8eef8;overflow:hidden}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--tool-violet),var(--tool-teal))}
+    body.theme-sepia{--reader-bg:#fff7e8;--reader-ink:#3f2f1d;--reader-band:#fff1d4}
+    body.theme-dark{--reader-bg:#14213d;--reader-ink:#f8fbff;--reader-band:#1f3157}
+    body.theme-dark .reader-mask{background:linear-gradient(to bottom,#14213d,rgba(20,33,61,0))}
+    @media(max-width:940px){.hero{grid-template-columns:1fr}.control-grid{grid-template-columns:1fr 1fr}.reader-shell{min-height:440px}}
+    @media(max-width:620px){.focus-app{width:min(100% - 16px,1360px)}.control-grid,.quick-metrics{grid-template-columns:1fr}.reader-frame{width:96%}.reader-content{padding:18px}}
+  </style>
+</head>
+<body>
+  <div class="sub-back">
+    <a href="../ogretmen-araclari.html"><i class="fas fa-arrow-left"></i> Araçlar</a>
+    <span style="font-size:20px">🎯</span>
+    <span class="sub-back-title">Odak Şeridi</span>
+  </div>
+
+  <main class="focus-app">
+    <section class="hero">
+      <div class="intro panel">
+        <span class="chip"><i class="fas fa-align-center"></i> Okuma takibi</span>
+        <h1>Satır satır odaklı okuma.</h1>
+        <p>Metni yapıştır, görünür satır sayısını seç ve öğrencinin gözünü tek odak alanında tut. Özellikle akıllı tahtada toplu okuma, bireysel takip ve dikkat çalışmaları için hazırlandı.</p>
+        <div class="quick-metrics">
+          <div class="metric"><strong id="wordCount">0</strong><span>kelime</span></div>
+          <div class="metric"><strong id="lineLabel">3</strong><span>satır odak</span></div>
+          <div class="metric"><strong id="speedLabel">3 sn</strong><span>otomatik hız</span></div>
+        </div>
+      </div>
+      <section class="controls panel" aria-label="Odak şeridi ayarları">
+        <label for="readingText">Okuma metni</label>
+        <textarea id="readingText" spellcheck="false">Jale yeni kitabını açtı. Öğretmeni önce başlığı okuttu. Sonra herkes sırayla bir cümle söyledi. Sınıfta sakin bir okuma düzeni oluştu. Çocuklar satırı takip ettikçe daha güvenli okumaya başladı.</textarea>
+        <div class="control-grid">
+          <div><label for="visibleLines">Görünür satır</label><select id="visibleLines"><option value="1">1 satır</option><option value="3" selected>3 satır</option><option value="5">5 satır</option></select></div>
+          <div><label for="fontSelect">Yazı tipi</label><select id="fontSelect"><option value="nunito">Nunito</option><option value="ttkb">TTKB Dik Temel</option><option value="georgia">Kitap Serif</option></select></div>
+          <div><label for="themeSelect">Ekran</label><select id="themeSelect"><option value="light">Açık</option><option value="sepia">Sepya</option><option value="dark">Koyu</option></select></div>
+          <div><label for="fontSize">Yazı boyutu</label><input id="fontSize" type="range" min="22" max="54" value="32"></div>
+          <div><label for="lineGap">Satır aralığı</label><input id="lineGap" type="range" min="13" max="22" value="16"></div>
+          <div><label for="autoSpeed">Otomatik hız</label><input id="autoSpeed" type="range" min="12" max="80" value="30"></div>
+        </div>
+        <div>
+          <label for="txtImport">TXT içe aktar</label>
+          <input id="txtImport" type="file" accept=".txt,text/plain">
+        </div>
+        <div class="btn-row">
+          <button class="primary" id="toggleAuto" type="button"><i class="fas fa-play"></i> Otomatik İlerlet</button>
+          <button id="prevLine" type="button"><i class="fas fa-chevron-up"></i> Yukarı</button>
+          <button id="nextLine" type="button"><i class="fas fa-chevron-down"></i> Aşağı</button>
+          <button id="sampleBtn" type="button"><i class="fas fa-wand-magic-sparkles"></i> Örnek Metin</button>
+          <button id="printBtn" type="button"><i class="fas fa-print"></i> Yazdır</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="reader-panel panel" aria-label="Odaklı okuma alanı">
+      <div class="reader-shell">
+        <div class="reader-frame" id="readerFrame">
+          <div class="reader-mask"></div>
+          <div class="reader-line"></div>
+          <div class="reader-content" id="readerContent"></div>
+          <div class="reader-mask bottom"></div>
+        </div>
+      </div>
+      <div class="reader-footer">
+        <span id="positionLabel">Başlangıç</span>
+        <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+        <span>Okumaya hazır</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260903-mb-tools"></script>
+  <script>
+    (function(){
+      const els = {
+        text: document.getElementById('readingText'), content: document.getElementById('readerContent'), frame: document.getElementById('readerFrame'),
+        lines: document.getElementById('visibleLines'), font: document.getElementById('fontSelect'), theme: document.getElementById('themeSelect'),
+        size: document.getElementById('fontSize'), gap: document.getElementById('lineGap'), speed: document.getElementById('autoSpeed'),
+        wordCount: document.getElementById('wordCount'), lineLabel: document.getElementById('lineLabel'), speedLabel: document.getElementById('speedLabel'),
+        pos: document.getElementById('positionLabel'), bar: document.getElementById('progressBar'), toggle: document.getElementById('toggleAuto')
+      };
+      let lineIndex = 0, maxLine = 0, timer = null;
+      const samples = [
+        'Ali okula erken geldi. Çantasından kitabını çıkardı. Önce başlığı okudu, sonra resme baktı. Öğretmeni sakin bir sesle okumaya başlamasını istedi. Ali her satırı dikkatle takip etti.',
+        'Bugün sınıfta yeni bir ses çalışıldı. Öğrenciler önce sesi dinledi. Sonra heceler oluşturdu. Herkes kendi defterine kısa kelimeler yazdı. Dersin sonunda küçük bir okuma oyunu oynandı.'
+      ];
+      function lineHeight(){ return Number(els.size.value) * (Number(els.gap.value) / 10); }
+      function refreshBounds(){
+        const visible = Number(els.lines.value);
+        maxLine = Math.max(0, Math.ceil((els.content.scrollHeight - 40) / lineHeight()) - visible);
+        lineIndex = Math.min(lineIndex, maxLine);
+        els.content.style.transform = `translateY(${-lineIndex * lineHeight()}px)`;
+        els.pos.textContent = maxLine ? `${lineIndex + 1}. satır / ${maxLine + 1}` : 'Başlangıç';
+        els.bar.style.width = maxLine ? `${Math.round((lineIndex / maxLine) * 100)}%` : '0%';
+      }
+      function render(){
+        const visible = Number(els.lines.value);
+        const size = Number(els.size.value);
+        const lh = lineHeight();
+        document.body.classList.toggle('theme-sepia', els.theme.value === 'sepia');
+        document.body.classList.toggle('theme-dark', els.theme.value === 'dark');
+        els.frame.style.height = `${(lh * visible) + 42}px`;
+        els.frame.style.setProperty('--font-size', `${size}px`);
+        els.frame.style.setProperty('--line-height', String(Number(els.gap.value) / 10));
+        els.frame.style.setProperty('--band-height', `${lh * visible}px`);
+        const fontMap = { nunito: "'Nunito', sans-serif", ttkb: "'TTKB Dik Temel Abece', 'Nunito', sans-serif", georgia: "Georgia, serif" };
+        els.frame.style.setProperty('--reader-font', fontMap[els.font.value]);
+        els.content.textContent = els.text.value.trim() || 'Okuma metnini buraya yazın.';
+        els.wordCount.textContent = (els.text.value.trim().match(/\S+/g) || []).length;
+        els.lineLabel.textContent = visible;
+        els.speedLabel.textContent = (Number(els.speed.value) / 10).toFixed(1).replace('.0','') + ' sn';
+        requestAnimationFrame(refreshBounds);
+      }
+      function step(delta){ lineIndex = Math.max(0, Math.min(maxLine, lineIndex + delta)); refreshBounds(); }
+      function stopAuto(){ clearInterval(timer); timer = null; els.toggle.innerHTML = '<i class="fas fa-play"></i> Otomatik İlerlet'; }
+      function startAuto(){ stopAuto(); timer = setInterval(() => { if (lineIndex >= maxLine) { stopAuto(); return; } step(1); }, Number(els.speed.value) * 100); els.toggle.innerHTML = '<i class="fas fa-pause"></i> Durdur'; }
+      ['input','change'].forEach(evt => document.addEventListener(evt, event => { if (event.target.closest('.focus-app')) render(); }));
+      document.getElementById('nextLine').addEventListener('click', () => step(1));
+      document.getElementById('prevLine').addEventListener('click', () => step(-1));
+      els.toggle.addEventListener('click', () => timer ? stopAuto() : startAuto());
+      document.getElementById('sampleBtn').addEventListener('click', () => { els.text.value = samples[Math.floor(Math.random() * samples.length)]; lineIndex = 0; render(); });
+      document.getElementById('printBtn').addEventListener('click', () => window.print());
+      document.getElementById('txtImport').addEventListener('change', event => {
+        const file = event.target.files && event.target.files[0]; if (!file) return;
+        file.text().then(text => { els.text.value = text; lineIndex = 0; render(); });
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>

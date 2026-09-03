@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sayı Yazma Atölyesi — Kemal Öğretmenim</title>
+  <meta name="description" content="1. sınıf için sayı yazma yönü, izleme ve üzerinden çizme aracı.">
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/style.css?v=20260903-mb-tools">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{--ink:#14213d;--muted:#64748b;--line:#dbe5f4;--violet:#6c3ded;--blue:#2563eb;--teal:#0f9f75;--red:#ef5b4d;--paper:#fff}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(135deg,#fff6f1 0%,#f8fbff 44%,#f3f0ff 100%);font-family:'Nunito',system-ui,sans-serif;color:var(--ink)}
+    .sub-back{height:56px;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(227,214,255,.85);display:flex;align-items:center;gap:14px;padding:0 22px;box-shadow:0 2px 18px rgba(108,61,237,.08)}
+    .sub-back a{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:10px;background:rgba(108,61,237,.09);color:#6c3ded;font-weight:900;text-decoration:none}
+    .sub-back-title{font-weight:900}
+    .number-app{width:min(1380px,calc(100% - 28px));margin:0 auto;padding:24px 0 34px;display:grid;grid-template-columns:360px 1fr;gap:18px}
+    .panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 38px rgba(20,33,61,.09)}
+    .side{padding:20px;display:grid;gap:14px;align-self:start;position:sticky;top:14px}
+    .chip{display:inline-flex;width:max-content;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:#f0ebff;border:1px solid #ddd2ff;color:#6c3ded;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
+    h1{font-size:34px;line-height:1.05;margin:0}
+    .lead{margin:0;color:var(--muted);font-weight:800;line-height:1.45}
+    .number-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    button,.btn{border:1.5px solid var(--line);border-radius:12px;min-height:44px;padding:0 14px;background:#fff;color:var(--ink);font:inherit;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+    .number-btn.active{background:linear-gradient(135deg,var(--red),#ff8a3d);border-color:transparent;color:#fff;box-shadow:0 12px 22px rgba(239,91,77,.18)}
+    .primary{background:linear-gradient(135deg,var(--violet),var(--blue));border-color:transparent;color:#fff;box-shadow:0 14px 24px rgba(37,99,235,.2)}
+    .success{background:linear-gradient(135deg,var(--teal),#18b889);border-color:transparent;color:#fff}
+    .btn-row{display:flex;flex-wrap:wrap;gap:9px}
+    label{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+    select,input{width:100%;height:44px;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-weight:800;padding:0 12px;outline:none}
+    .stage{padding:20px;display:grid;gap:16px}
+    .stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .stage-head h2{margin:0;font-size:32px}
+    .workspace{display:grid;grid-template-columns:minmax(360px,1fr) 420px;gap:16px;align-items:stretch}
+    .demo,.trace-card{padding:18px;display:grid;gap:12px}
+    .demo-board{min-height:490px;border:1.5px solid var(--line);border-radius:20px;background:linear-gradient(#fff,#fff),linear-gradient(135deg,#f4f8ff,#fff7f0);display:grid;place-items:center;overflow:hidden;position:relative}
+    .big-word{position:absolute;left:18px;top:18px;font-family:'TTKB Dik Temel Abece','Nunito',sans-serif;font-size:clamp(42px,5vw,72px);font-weight:800;color:rgba(20,33,61,.14);letter-spacing:0}
+    .digit-row{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;padding:58px 20px 20px}
+    .digit-svg{width:min(260px,36vw);height:340px;overflow:visible}
+    .guide-path{fill:none;stroke:#dbe5f4;stroke-width:18;stroke-linecap:round;stroke-linejoin:round}
+    .write-path{fill:none;stroke-width:18;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 8px 10px rgba(37,99,235,.18))}
+    .dot{fill:#ef5b4d;filter:drop-shadow(0 4px 8px rgba(239,91,77,.22))}
+    .trace-wrap{position:relative;border:1.5px solid var(--line);border-radius:20px;overflow:hidden;background:#fff}
+    .trace-canvas{display:block;width:100%;height:490px;touch-action:none;cursor:crosshair;background:
+      linear-gradient(to right,rgba(219,229,244,.85) 1px,transparent 1px),
+      linear-gradient(to bottom,rgba(219,229,244,.85) 1px,transparent 1px);
+      background-size:42px 42px}
+    .ghost-number{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-family:'TTKB Dik Temel Abece','Nunito',sans-serif;font-size:310px;font-weight:800;color:rgba(108,61,237,.10);letter-spacing:0}
+    .metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .metric{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px}
+    .metric strong{display:block;font-size:24px}.metric span{font-size:12px;color:var(--muted);font-weight:900}
+    .hint{padding:12px 14px;border-radius:14px;background:#fff7ed;color:#9a5b00;font-weight:850;line-height:1.45}
+    @media(max-width:1040px){.number-app,.workspace{grid-template-columns:1fr}.side{position:static}.digit-svg{width:210px;height:300px}}
+    @media(max-width:620px){.number-app{width:min(100% - 16px,1380px)}.number-grid{grid-template-columns:repeat(4,1fr)}.metric-row{grid-template-columns:1fr}.trace-canvas{height:390px}.ghost-number{font-size:230px}}
+    @media print{.site-header,.site-footer,.sub-back,.side,.stage-head .btn-row,.trace-card .btn-row{display:none!important}.number-app{display:block;width:100%;padding:0}.stage,.demo,.trace-card{box-shadow:none;border:0}.workspace{grid-template-columns:1fr}.trace-card{page-break-before:always}.demo-board,.trace-canvas{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  </style>
+</head>
+<body>
+  <div class="sub-back">
+    <a href="../ogretmen-araclari.html"><i class="fas fa-arrow-left"></i> Araçlar</a>
+    <span style="font-size:20px">✏️</span>
+    <span class="sub-back-title">Sayı Yazma Atölyesi</span>
+  </div>
+
+  <main class="number-app">
+    <aside class="side panel">
+      <span class="chip"><i class="fas fa-pencil-alt"></i> 1. sınıf aracı</span>
+      <h1>Sayı yazımını adım adım göster.</h1>
+      <p class="lead">Sayıyı seç, yazım yönünü tahtada oynat ve öğrencinin üzerinden çizerek pratik yapabileceği temiz bir çalışma alanı oluştur.</p>
+      <div class="number-grid" id="numberGrid" aria-label="Sayı seçimi"></div>
+      <div>
+        <label for="fontMode">Yazı görünümü</label>
+        <select id="fontMode">
+          <option value="ttkb" selected>TTKB Dik Temel</option>
+          <option value="nunito">Yuvarlak ekran</option>
+        </select>
+      </div>
+      <div>
+        <label for="speedRange">Animasyon hızı</label>
+        <input id="speedRange" type="range" min="45" max="170" value="95">
+      </div>
+      <div class="btn-row">
+        <button class="primary" id="playBtn" type="button"><i class="fas fa-play"></i> Yazımı Oynat</button>
+        <button id="printBtn" type="button"><i class="fas fa-print"></i> Yazdır</button>
+      </div>
+      <p class="hint">İpucu: Yazdırırken izleme sayfası ve boş pratik alanı ayrı ayrı hazırlanır.</p>
+    </aside>
+
+    <section class="stage panel" aria-label="Sayı yazma çalışma alanı">
+      <div class="stage-head">
+        <div>
+          <span class="chip"><i class="fas fa-route"></i> Yazım yönü</span>
+          <h2 id="numberTitle">0 sayısı</h2>
+        </div>
+        <div class="btn-row">
+          <button id="clearTraceBtn" type="button"><i class="fas fa-eraser"></i> Çizimi Temizle</button>
+          <button class="success" id="pngBtn" type="button"><i class="fas fa-download"></i> PNG</button>
+        </div>
+      </div>
+      <div class="metric-row">
+        <div class="metric"><strong id="selectedNumber">0</strong><span>seçili sayı</span></div>
+        <div class="metric"><strong id="digitCount">1</strong><span>basamak</span></div>
+        <div class="metric"><strong id="wordLabel">sıfır</strong><span>okunuş</span></div>
+      </div>
+      <div class="workspace">
+        <section class="demo panel" aria-label="Yazım animasyonu">
+          <span class="chip"><i class="fas fa-chalkboard"></i> Akıllı tahta gösterimi</span>
+          <div class="demo-board" id="demoBoard">
+            <div class="big-word" id="bigWord">sıfır</div>
+            <div class="digit-row" id="digitRow"></div>
+          </div>
+        </section>
+        <section class="trace-card panel" aria-label="Sayı üzerinden çizme alanı">
+          <span class="chip"><i class="fas fa-pen-nib"></i> Üzerinden çiz</span>
+          <div class="trace-wrap">
+            <div class="ghost-number" id="ghostNumber">0</div>
+            <canvas id="traceCanvas" class="trace-canvas" aria-label="Sayı çizme alanı"></canvas>
+          </div>
+          <div class="btn-row">
+            <button id="lighterBtn" type="button"><i class="fas fa-circle-half-stroke"></i> İz Soluk</button>
+            <button id="darkerBtn" type="button"><i class="fas fa-circle"></i> İz Belirgin</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260903-mb-tools"></script>
+  <script>
+    (function(){
+      const names = ['sıfır','bir','iki','üç','dört','beş','altı','yedi','sekiz','dokuz','on','on bir','on iki','on üç','on dört','on beş','on altı','on yedi','on sekiz','on dokuz','yirmi'];
+      const paths = {
+        0:'M50 12 C24 12 15 40 15 72 C15 111 28 132 50 132 C72 132 85 111 85 72 C85 40 76 12 50 12 Z',
+        1:'M50 16 L50 132 M35 34 L50 16 L66 34',
+        2:'M22 45 C30 16 74 15 81 43 C89 75 38 82 22 132 L84 132',
+        3:'M24 27 C48 9 82 19 80 48 C78 68 58 73 43 73 C61 73 86 84 82 112 C78 137 38 139 20 118',
+        4:'M78 96 L18 96 L65 16 L65 132',
+        5:'M78 18 L28 18 L24 65 C38 56 75 57 81 88 C88 124 44 143 18 115',
+        6:'M76 28 C56 8 20 23 20 77 C20 121 51 139 75 116 C98 94 78 60 48 68 C33 72 23 83 22 96',
+        7:'M18 20 L84 20 L40 132',
+        8:'M50 69 C25 69 23 15 50 15 C77 15 75 69 50 69 C22 69 18 129 50 129 C82 129 78 69 50 69',
+        9:'M24 118 C45 136 80 122 80 68 C80 24 50 5 25 26 C2 48 22 83 52 75 C67 72 77 60 78 48'
+      };
+      const els = {
+        grid: document.getElementById('numberGrid'), row: document.getElementById('digitRow'), title: document.getElementById('numberTitle'),
+        selected: document.getElementById('selectedNumber'), digitCount: document.getElementById('digitCount'), word: document.getElementById('wordLabel'),
+        bigWord: document.getElementById('bigWord'), ghost: document.getElementById('ghostNumber'), canvas: document.getElementById('traceCanvas'),
+        fontMode: document.getElementById('fontMode'), speed: document.getElementById('speedRange')
+      };
+      let current = 0, ghostAlpha = .10, drawing = false, ctx;
+      for (let i=0;i<=20;i++) {
+        const button = document.createElement('button');
+        button.className = 'number-btn';
+        button.type = 'button';
+        button.textContent = i;
+        button.setAttribute('aria-label', `${i} sayısını seç`);
+        button.addEventListener('click', () => selectNumber(i));
+        els.grid.appendChild(button);
+      }
+      function digitsOf(number){ return String(number).split('').map(Number); }
+      function selectNumber(number) {
+        current = number;
+        els.grid.querySelectorAll('.number-btn').forEach((button,index) => button.classList.toggle('active', index === number));
+        els.title.textContent = `${number} sayısı`;
+        els.selected.textContent = number;
+        els.digitCount.textContent = String(digitsOf(number).length);
+        els.word.textContent = names[number];
+        els.bigWord.textContent = names[number];
+        els.ghost.textContent = number;
+        renderDigits();
+        clearTrace();
+      }
+      function renderDigits() {
+        const font = els.fontMode.value === 'ttkb' ? "'TTKB Dik Temel Abece','Nunito',sans-serif" : "'Nunito',sans-serif";
+        els.ghost.style.fontFamily = font;
+        els.row.innerHTML = '';
+        digitsOf(current).forEach((digit,index) => {
+          const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+          svg.setAttribute('viewBox','0 0 100 150');
+          svg.setAttribute('class','digit-svg');
+          svg.innerHTML = `
+            <defs><linearGradient id="strokeGradient${index}" x1="0" x2="1"><stop offset="0" stop-color="#6c3ded"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs>
+            <path class="guide-path" d="${paths[digit]}"></path>
+            <path class="write-path" d="${paths[digit]}" stroke="url(#strokeGradient${index})"></path>
+            <circle class="dot" cx="50" cy="16" r="7"></circle>
+          `;
+          els.row.appendChild(svg);
+        });
+        prepareAnimation(false);
+      }
+      function prepareAnimation(play) {
+        els.row.querySelectorAll('.write-path').forEach(path => {
+          const length = path.getTotalLength();
+          path.style.strokeDasharray = length;
+          path.style.strokeDashoffset = play ? length : 0;
+          path.style.transition = 'none';
+          if (play) {
+            requestAnimationFrame(() => {
+              path.style.transition = `stroke-dashoffset ${Math.max(.7, 2.4 - Number(els.speed.value) / 85)}s ease`;
+              path.style.strokeDashoffset = 0;
+            });
+          }
+        });
+      }
+      function resizeCanvas() {
+        const rect = els.canvas.getBoundingClientRect();
+        const ratio = window.devicePixelRatio || 1;
+        const old = ctx && els.canvas.toDataURL ? els.canvas.toDataURL() : null;
+        els.canvas.width = Math.round(rect.width * ratio);
+        els.canvas.height = Math.round(rect.height * ratio);
+        ctx = els.canvas.getContext('2d');
+        ctx.scale(ratio, ratio);
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#2563eb';
+        if (old) {
+          const image = new Image();
+          image.onload = () => ctx.drawImage(image, 0, 0, rect.width, rect.height);
+          image.src = old;
+        }
+      }
+      function point(event) {
+        const rect = els.canvas.getBoundingClientRect();
+        const touch = event.touches && event.touches[0];
+        return { x:(touch ? touch.clientX : event.clientX) - rect.left, y:(touch ? touch.clientY : event.clientY) - rect.top };
+      }
+      function start(event){ drawing = true; const p = point(event); ctx.beginPath(); ctx.moveTo(p.x,p.y); event.preventDefault(); }
+      function move(event){ if(!drawing) return; const p = point(event); ctx.lineTo(p.x,p.y); ctx.stroke(); event.preventDefault(); }
+      function end(){ drawing = false; }
+      function clearTrace(){ if(!ctx) return; const rect = els.canvas.getBoundingClientRect(); ctx.clearRect(0,0,rect.width,rect.height); }
+      function downloadPng(){
+        const wrap = document.querySelector('.trace-wrap');
+        const rect = wrap.getBoundingClientRect();
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(rect.width * 2);
+        canvas.height = Math.round(rect.height * 2);
+        const out = canvas.getContext('2d');
+        out.scale(2,2);
+        out.fillStyle = '#ffffff';
+        out.fillRect(0,0,rect.width,rect.height);
+        out.fillStyle = `rgba(108,61,237,${ghostAlpha})`;
+        out.font = `800 ${Math.min(rect.width*.68, 310)}px ${els.fontMode.value === 'ttkb' ? 'TTKB Dik Temel Abece' : 'Nunito'}, Arial`;
+        out.textAlign = 'center';
+        out.textBaseline = 'middle';
+        out.fillText(String(current), rect.width/2, rect.height/2 + 20);
+        out.drawImage(els.canvas,0,0,rect.width,rect.height);
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = `sayi-yazma-${current}.png`;
+        a.click();
+      }
+      function setGhost(alpha){
+        ghostAlpha = alpha;
+        els.ghost.style.color = `rgba(108,61,237,${alpha})`;
+      }
+      els.fontMode.addEventListener('change', renderDigits);
+      document.getElementById('playBtn').addEventListener('click', () => prepareAnimation(true));
+      document.getElementById('clearTraceBtn').addEventListener('click', clearTrace);
+      document.getElementById('pngBtn').addEventListener('click', downloadPng);
+      document.getElementById('printBtn').addEventListener('click', () => window.print());
+      document.getElementById('lighterBtn').addEventListener('click', () => setGhost(.06));
+      document.getElementById('darkerBtn').addEventListener('click', () => setGhost(.18));
+      ['mousedown','touchstart'].forEach(type => els.canvas.addEventListener(type,start,{passive:false}));
+      ['mousemove','touchmove'].forEach(type => els.canvas.addEventListener(type,move,{passive:false}));
+      ['mouseup','mouseleave','touchend','touchcancel'].forEach(type => els.canvas.addEventListener(type,end));
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      selectNumber(0);
+    })();
+  </script>
+</body>
+</html>
