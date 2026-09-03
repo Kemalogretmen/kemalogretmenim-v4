@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Birim Küp ve Soru Hazırlama Aracı - Kemal Öğretmenim</title>
     
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=20260903-audit-polish">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -92,6 +92,7 @@
 </head>
 <body>
     <main class="cube-tool-shell" id="cubeToolShell">
+        <h1 class="sr-only">Birim Küp ve Soru Hazırlama Aracı</h1>
         <div id="canvas-container"><canvas id="drawing-canvas"></canvas></div>
 
         <aside class="cube-panel cube-left-panel" id="toolbar" aria-label="Birim küp araçları">
@@ -195,7 +196,7 @@
     </main>
 
     <script src="/js/site-data.js"></script>
-    <script src="/js/site.js?v=20260901-smartboard"></script>
+    <script src="/js/site.js?v=20260903-audit-polish"></script>
     <script>
         let scene, camera, renderer, raycaster, mouse, controls;
         let cubes = [];

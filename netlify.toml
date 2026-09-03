@@ -6,3 +6,8 @@
   to = "/.netlify/functions/exam-share?examId=:id"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/akilli-tahtam"
+  to = "/ogretmen/beyaztahta.html"
+  status = 301

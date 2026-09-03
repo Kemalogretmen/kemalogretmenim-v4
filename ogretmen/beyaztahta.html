@@ -11,7 +11,7 @@
   <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
   <meta property="og:site_name" content="Kemal Öğretmenim">
   <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=20260903-audit-polish">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Akıllı Tahtam — Kemal Öğretmenim</title>
   <style>
@@ -887,6 +887,7 @@
     <span class="sub-back-title">Akıllı Tahtam</span>
   </div>
   <main class="tools-page">
+    <h1 class="sr-only">Akıllı Tahtam</h1>
 
     <div class="time-bar glass">
       <div class="time-bar-label">⏱️ Öğretmen Araçları</div>
@@ -901,11 +902,11 @@
           <h2>Akıllı Tahtam Sahnesi</h2>
           <div class="tool-actions">
             <div class="shortcut-help">
-              <button class="shortcut-help-btn" type="button" data-shortcut-target="boardShortcuts">!</button>
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="boardShortcuts" aria-label="Akıllı Tahtam kısayollarını aç">!</button>
               <div class="shortcut-popover" id="boardShortcuts">
                 <div class="shortcut-popover-head">
                   <p class="shortcut-popover-title">Akıllı Tahtam Kısayolları</p>
-                  <button class="shortcut-close" type="button" data-shortcut-close>×</button>
+                  <button class="shortcut-close" type="button" data-shortcut-close aria-label="Kısayollar panelini kapat">×</button>
                 </div>
                 <div class="shortcut-list">
                   <div class="shortcut-row"><span class="shortcut-key">V</span><span>Seç aracı</span></div>
@@ -1106,9 +1107,9 @@
                     <button class="float-close-btn" data-close-panel="pageSubPanel">✕</button>
                   </div>
                   <div style="display:flex;justify-content:space-between;align-items:center;background:#f8f9fc;padding:6px 8px;border-radius:10px;">
-                    <button class="toolbar-btn" type="button" id="prevPageBtn" style="width:30px;height:30px;border-radius:9px;font-size:12px;"><i class="fas fa-chevron-left"></i></button>
+                    <button class="toolbar-btn" type="button" id="prevPageBtn" aria-label="Önceki sayfa" title="Önceki sayfa" style="width:30px;height:30px;border-radius:9px;font-size:12px;"><i class="fas fa-chevron-left"></i></button>
                     <span id="pageInfoDisplay" style="font-weight:900;color:var(--purple);font-size:13px;">1 / 1</span>
-                    <button class="toolbar-btn" type="button" id="nextPageBtn" style="width:30px;height:30px;border-radius:9px;font-size:12px;"><i class="fas fa-chevron-right"></i></button>
+                    <button class="toolbar-btn" type="button" id="nextPageBtn" aria-label="Sonraki sayfa" title="Sonraki sayfa" style="width:30px;height:30px;border-radius:9px;font-size:12px;"><i class="fas fa-chevron-right"></i></button>
                   </div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
                     <button class="toolbar-btn" type="button" id="addPageBtn" style="height:32px;font-size:12px;font-weight:800;border-radius:9px;gap:4px;"><i class="fas fa-plus"></i> Ekle</button>
@@ -1138,10 +1139,10 @@
                     <option value="a3h">A3 Yatay</option>
                   </select>
                   <div class="zoom-control-row">
-                    <button class="toolbar-btn" type="button" id="boardZoomOutBtn" style="width:34px;height:34px;border-radius:10px;font-size:13px;"><i class="fas fa-minus"></i></button>
+                    <button class="toolbar-btn" type="button" id="boardZoomOutBtn" aria-label="Uzaklaştır" title="Uzaklaştır" style="width:34px;height:34px;border-radius:10px;font-size:13px;"><i class="fas fa-minus"></i></button>
                     <span class="zoom-value" id="boardZoomValue">%100</span>
-                    <button class="toolbar-btn" type="button" id="boardZoomInBtn" style="width:34px;height:34px;border-radius:10px;font-size:13px;"><i class="fas fa-plus"></i></button>
-                    <button class="toolbar-btn" type="button" id="boardZoomResetBtn" style="width:34px;height:34px;border-radius:10px;font-size:12px;"><i class="fas fa-compress-arrows-alt"></i></button>
+                    <button class="toolbar-btn" type="button" id="boardZoomInBtn" aria-label="Yakınlaştır" title="Yakınlaştır" style="width:34px;height:34px;border-radius:10px;font-size:13px;"><i class="fas fa-plus"></i></button>
+                    <button class="toolbar-btn" type="button" id="boardZoomResetBtn" aria-label="Yakınlaştırmayı sıfırla" title="Yakınlaştırmayı sıfırla" style="width:34px;height:34px;border-radius:10px;font-size:12px;"><i class="fas fa-compress-arrows-alt"></i></button>
                   </div>
                 </div>
 
@@ -1155,7 +1156,7 @@
 
   </main>
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260901-smartboard"></script>
+  <script src="/js/site.js?v=20260903-audit-polish"></script>
   <script>
 (function(){
   'use strict';

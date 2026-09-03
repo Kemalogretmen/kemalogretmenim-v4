@@ -1770,7 +1770,17 @@
       return;
     }
 
-    summary.textContent = 'İlerlemeni saklamak için öğrenci hesabınla giriş yap.';
+    const currentPath = window.location.pathname || '';
+    const isTeacherArea =
+      currentPath === '/ogretmen-araclari.html' ||
+      currentPath === '/sinif-tahtasi.html' ||
+      currentPath === '/akilli-tahtam.html' ||
+      currentPath.indexOf('/ogretmen/') === 0 ||
+      currentPath.indexOf('/ogretmen-ajandasi/') === 0 ||
+      currentPath.indexOf('/admin/') === 0;
+    summary.textContent = isTeacherArea
+      ? 'Öğretmen araçlarını ve favorilerini saklamak için giriş yap.'
+      : 'İlerlemeni saklamak için giriş yap.';
     primary.textContent = 'Giriş Yap';
     primary.href = '/giris.html';
     secondary.textContent = 'Kayıt Ol';

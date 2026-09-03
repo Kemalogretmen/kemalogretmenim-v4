@@ -17,7 +17,7 @@
   <meta name="twitter:title" content="Kemal Öğretmenim — Eğitim Sevgi ile Başlar">
   <meta name="twitter:description" content="1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik, fen bilimleri, sınav ve oyun içerikleri.">
   <meta name="twitter:image" content="https://kemalogretmenim.com.tr/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=20260903-audit-polish">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <style>
     /* ─── ANA SAYFA ÖZEL STILLER ─── */
@@ -902,7 +902,7 @@
     .hero {
       background:
         linear-gradient(180deg, rgba(23,24,58,.86) 0%, rgba(48,39,102,.78) 52%, rgba(64,103,125,.68) 100%),
-        url('/assets/vitrin-gecici/01-hos-geldiniz.png') center / cover no-repeat;
+        url('/assets/vitrin-gecici/01-hos-geldiniz.jpg') center / cover no-repeat;
       min-height: calc(100vh - 76px);
       overflow: hidden;
       position: relative;
@@ -2373,7 +2373,7 @@
   </div>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260901-smartboard"></script>
+  <script src="/js/site.js?v=20260903-audit-polish"></script>
   <script src="/js/user-auth.js"></script>
   <script src="/js/content-feed.js"></script>
   <script>
@@ -2642,7 +2642,7 @@
           icerik_turu: 'image',
           ikon: '🎓',
           tema_renk: '#6C3DED',
-          media_url: '/assets/vitrin-gecici/01-hos-geldiniz.png',
+          media_url: '/assets/vitrin-gecici/01-hos-geldiniz.jpg',
           media_fit: 'contain',
           link_url: '/ders.html',
           link_label: 'Derslere Git',
@@ -2656,7 +2656,7 @@
           icerik_turu: 'image',
           ikon: '📄',
           tema_renk: '#00856A',
-          media_url: '/assets/vitrin-gecici/02-dokumanlar.png',
+          media_url: '/assets/vitrin-gecici/02-dokumanlar.jpg',
           media_fit: 'contain',
           link_url: '/yeni.html',
           link_label: 'Dokümanları Aç',
@@ -2670,7 +2670,7 @@
           icerik_turu: 'image',
           ikon: '📖',
           tema_renk: '#6C3DED',
-          media_url: '/assets/vitrin-gecici/03-hizli-okuma.png',
+          media_url: '/assets/vitrin-gecici/03-hizli-okuma.jpg',
           media_fit: 'contain',
           link_url: '/hizli-okuma/index.html',
           link_label: 'Hızlı Okumaya Git',
@@ -2684,7 +2684,7 @@
           icerik_turu: 'image',
           ikon: '📝',
           tema_renk: '#FF7043',
-          media_url: '/assets/vitrin-gecici/04-sinav-merkezi.png',
+          media_url: '/assets/vitrin-gecici/04-sinav-merkezi.jpg',
           media_fit: 'contain',
           link_url: '/sinav_sitesi/index.html',
           link_label: 'Sınavlara Git',
@@ -2698,7 +2698,7 @@
           icerik_turu: 'image',
           ikon: '🎮',
           tema_renk: '#00856A',
-          media_url: '/assets/vitrin-gecici/05-egitim-oyunlari.png',
+          media_url: '/assets/vitrin-gecici/05-egitim-oyunlari.jpg',
           media_fit: 'contain',
           link_url: '/oyun/oyunlar.html',
           link_label: 'Oyunları Aç',
@@ -2786,14 +2786,14 @@
           const textMediaUrl = type === 'text' ? (item.media_url || publicStorageUrl(item.media_path)) : '';
           if (textMediaUrl) {
             return `<div class="home-showcase-media">
-              ${linkedMedia(`<img src="${esc(textMediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">`)}
+              ${linkedMedia(`<img src="${esc(textMediaUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}" loading="lazy" decoding="async">`)}
             </div>`;
           }
           const genericMediaUrl = type !== 'youtube' && type !== 'text' ? (item.media_url || publicStorageUrl(item.media_path)) : '';
           if (mediaUrl || genericMediaUrl) {
             const imageUrl = mediaUrl || genericMediaUrl;
             return `<div class="home-showcase-media">
-              ${linkedMedia(`<img src="${esc(imageUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}">`)}
+              ${linkedMedia(`<img src="${esc(imageUrl)}" alt="${esc(item.baslik || 'Vitrin görseli')}" loading="lazy" decoding="async">`)}
             </div>`;
           }
           return `<div class="home-showcase-media"><span class="home-showcase-icon">${esc(item.ikon || fallback.icon)}</span></div>`;
