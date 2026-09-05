@@ -36,9 +36,14 @@ function getExamGrades(exam) {
   return [...new Set(raw.map(Number).filter((grade) => grade >= 1 && grade <= 8))].sort((a, b) => a - b);
 }
 
-function renderPage({ examId, exam }) {
+function isPreviewBot(userAgent) {
+  return /WhatsApp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|TelegramBot|Discordbot|Slackbot/i.test(String(userAgent || ''));
+}
+
+function renderPage({ examId, exam, previewBot, shareVersion }) {
   const targetUrl = SITE_ORIGIN + '/sinav_sitesi/index.html?examId=' + encodeURIComponent(examId);
-  const shareUrl = SITE_ORIGIN + '/sinav/' + encodeURIComponent(examId);
+  const canonicalUrl = SITE_ORIGIN + '/sinav/' + encodeURIComponent(examId);
+  const shareUrl = canonicalUrl + (shareVersion ? '?v=' + encodeURIComponent(shareVersion) : '');
   const grades = getExamGrades(exam);
   const gradeText = grades.map((grade) => grade + '. Sınıf').join(', ');
   const title = exam.title || 'Sınav';
@@ -47,8 +52,7 @@ function renderPage({ examId, exam }) {
   const description = [gradeText, subject, questionText, exam.duration ? exam.duration + ' dakika' : 'Sınırsız süre']
     .filter(Boolean)
     .join(' · ');
-  const requestedImage = String(exam.coverImageUrl || '');
-  const image = /^https:\/\//i.test(requestedImage) ? requestedImage : DEFAULT_IMAGE;
+  const image = DEFAULT_IMAGE;
 
   return `<!doctype html>
 <html lang="tr">
@@ -57,7 +61,7 @@ function renderPage({ examId, exam }) {
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${escapeHtml(title)} — Kemal Öğretmenim</title>
   <meta name="description" content="${escapeHtml(description)}">
-  <link rel="canonical" href="${escapeHtml(shareUrl)}">
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
   <meta property="og:locale" content="tr_TR">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Kemal Öğretmenim">
@@ -65,8 +69,12 @@ function renderPage({ examId, exam }) {
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:url" content="${escapeHtml(shareUrl)}">
   <meta property="og:image" content="${escapeHtml(image)}">
-  <meta property="og:image:alt" content="${escapeHtml(title + ' kapak görseli')}">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:image:secure_url" content="${escapeHtml(image)}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1000">
+  <meta property="og:image:height" content="1000">
+  <meta property="og:image:alt" content="Kemal Öğretmenim logosu">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="twitter:image" content="${escapeHtml(image)}">
@@ -85,7 +93,7 @@ function renderPage({ examId, exam }) {
     <p>${escapeHtml(description)}</p>
     <a href="${escapeHtml(targetUrl)}">Sınavı Aç</a>
   </main>
-  <script>window.location.replace(${JSON.stringify(targetUrl)});</script>
+  ${previewBot ? '' : `<script>window.location.replace(${JSON.stringify(targetUrl)});<\/script>`}
 </body>
 </html>`;
 }
@@ -117,7 +125,12 @@ exports.handler = async function handler(event) {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
       },
-      body: renderPage({ examId, exam }),
+      body: renderPage({
+        examId,
+        exam,
+        previewBot: isPreviewBot(event.headers?.['user-agent'] || event.headers?.['User-Agent']),
+        shareVersion: String(event.queryStringParameters?.v || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 24),
+      }),
     };
   } catch (error) {
     console.error('Exam share preview failed:', error);

@@ -8,6 +8,12 @@
   force = true
 
 [[redirects]]
+  from = "/okuma/:id"
+  to = "/.netlify/functions/reading-share?textId=:id"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/akilli-tahtam"
   to = "/ogretmen/beyaztahta.html"
   status = 301

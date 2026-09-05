@@ -482,7 +482,7 @@ function hideLoad(){const el=document.getElementById('ld');if(el)el.style.displa
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fmtDate(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleDateString('tr-TR');}catch{return'';}}
 function fmtDT(ts){if(!ts)return'';try{const d=ts.seconds?new Date(ts.seconds*1000):new Date(ts);return d.toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return'';}}
-function buildExamShareUrl(examId){return`${window.location.origin}/sinav/${encodeURIComponent(examId)}`;}
+function buildExamShareUrl(examId){return`${window.location.origin}/sinav/${encodeURIComponent(examId)}?v=2`;}
 function normalizeExamGrades(source){
   const raw=Array.isArray(source?.grades)&&source.grades.length?source.grades:[source?.grade];
   return [...new Set(raw.map(value=>parseInt(value,10)).filter(value=>GRADES.includes(value)))].sort((a,b)=>a-b);
@@ -2763,7 +2763,9 @@ const W={
     await copyText(uid,'UID kopyalandı');
   },
   async copyExamLink(id){
-    await copyText(buildExamShareUrl(id),'Sınav bağlantısı kopyalandı');
+    const exam=A.exams.find(item=>item.id===id);
+    const title=String(exam?.title||'Sınav').trim();
+    await copyText(`${title}\n${buildExamShareUrl(id)}`,'Sınav adı ve bağlantısı kopyalandı');
   },
   async updateExamDisplayOrder(id,value){
     if(!requireExamPerm('exam_edit','Sınav sıralama')) return;

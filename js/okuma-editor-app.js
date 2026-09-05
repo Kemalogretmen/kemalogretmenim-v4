@@ -123,7 +123,7 @@
   }
 
   function getReadingShareUrl(textId) {
-    return window.location.origin + '/hizli-okuma/index.html?metinId=' + encodeURIComponent(textId);
+    return window.location.origin + '/okuma/' + encodeURIComponent(textId) + '?v=2';
   }
 
   function parseOptionalJson(value, fallback) {
@@ -891,8 +891,12 @@
   }
 
   async function copyReadingLink(id) {
-    const success = await copyToClipboard(getReadingShareUrl(id));
-    toast(success ? 'Metin bağlantısı kopyalandı.' : 'Bağlantı kopyalanamadı.', success ? 'success' : 'error');
+    const text = state.allTexts.find(function(item) {
+      return item.id === id;
+    });
+    const title = String(text && text.baslik || 'Okuma metni').trim();
+    const success = await copyToClipboard(title + '\n' + getReadingShareUrl(id));
+    toast(success ? 'Metin adı ve bağlantısı kopyalandı.' : 'Bağlantı kopyalanamadı.', success ? 'success' : 'error');
   }
 
   function setMode(mode) {
