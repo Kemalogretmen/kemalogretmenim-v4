@@ -5,6 +5,8 @@
   var USER_STORAGE_PREFIX = STORAGE_KEY + '_user_';
   var STORE_VERSION = 1;
   var REMOTE_TABLE = 'user_content_progress';
+  // World snapshots have their own revision-aware writer. Never round-trip them here.
+  var DEDICATED_GAME_RECORD = 'matematik-vadisi:worlds:v1';
   var remoteState = {
     started: false,
     syncing: false,
@@ -305,6 +307,7 @@
     return Object.keys(store.records).map(function(key) {
       return Object.assign({}, store.records[key]);
     }).filter(function(record) {
+      if (record.id === DEDICATED_GAME_RECORD) return false;
       if (!userId) {
         return true;
       }
@@ -372,7 +375,7 @@
   }
 
   function rowToRecord(row) {
-    if (!row) {
+    if (!row || row.content_id === DEDICATED_GAME_RECORD) {
       return null;
     }
     var detail = row.detail_json && typeof row.detail_json === 'object' ? row.detail_json : {};
@@ -421,7 +424,7 @@
   async function pushRecordToRemote(record) {
     var userId = getAuthUserId();
     var client = getAuthClient();
-    if (!userId || !client || !record) {
+    if (!userId || !client || !record || record.id === DEDICATED_GAME_RECORD) {
       return;
     }
     if (getAuthRole() === 'teacher') {
@@ -455,6 +458,7 @@
         .from(REMOTE_TABLE)
         .select('*')
         .eq('user_id', userId)
+        .neq('content_id', DEDICATED_GAME_RECORD)
         .order('updated_at', { ascending: false })
         .limit(500);
       if (result.error) {

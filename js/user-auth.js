@@ -195,6 +195,7 @@
     state.session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
     state.user = state.session ? state.session.user : null;
     state.profile = state.user ? await loadProfile(state.user) : null;
+    state.error = '';
     state.ready = true;
     startActivityTracking();
     emit(CHANGE_EVENT);

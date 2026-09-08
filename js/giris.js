@@ -66,6 +66,10 @@
   }
 
   function routeForProfile(profile, isAdmin) {
+    if (profile && profile.active !== false && (profile.role !== 'teacher' || profile.approval_status === 'active')) {
+      const gameReturn = window.kemalGameAuthReturn?.take();
+      if (gameReturn) return gameReturn;
+    }
     if (profile && profile.role === 'teacher') return '/ogretmen-paneli.html';
     if (profile && profile.role === 'student') return '/ogrenci-paneli.html';
     if (profile && profile.role === 'parent') return '/veli-paneli.html';

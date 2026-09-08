@@ -538,7 +538,7 @@
           ? 'Öğretmen başvurun kaydedildi. Yönetici onayından sonra öğretmen panelin aktif olacak.'
           : (profile.role === 'parent' ? 'Veli profilin kaydedildi. Veli paneline yönlendiriliyorsun.' : 'Profil bilgilerin kaydedildi. Öğrenci paneline yönlendiriliyorsun.'));
         window.setTimeout(function() {
-          window.location.href = profile.role === 'teacher' ? '/ogretmen-paneli.html' : (profile.role === 'parent' ? '/veli-paneli.html' : '/ogrenci-paneli.html');
+          window.location.href = (profile.role !== 'teacher' && window.kemalGameAuthReturn?.take()) || (profile.role === 'teacher' ? '/ogretmen-paneli.html' : (profile.role === 'parent' ? '/veli-paneli.html' : '/ogrenci-paneli.html'));
         }, 700);
         return;
       }

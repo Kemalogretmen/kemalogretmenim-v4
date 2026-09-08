@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Matematik Vadisi — Kemal Öğretmenim</title>
+  <meta name="description" content="Anasınıfı ve 1–4. sınıflar için matematikle keşif, karakter geliştirme ve dünya kurma oyunu. Üyeler ilerlemelerini hesaplarına kaydedebilir.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/matematik-vadisi.html">
+  <meta property="og:title" content="Matematik Vadisi — Kemal Öğretmenim">
+  <meta property="og:description" content="Kahramanını seç, matematik görevlerini çöz ve kendi dünyanı kur.">
+  <meta property="og:image" content="https://kemalogretmenim.com.tr/gorseller/logo.png">
+  <meta name="theme-color" content="#183b2d">
+  <link rel="stylesheet" href="/css/matematik-vadisi.css?v=20260908-1">
+  <script defer src="/js/site-data.js"></script>
+  <script defer src="/js/user-auth.js"></script>
+  <script defer src="/js/matematik-vadisi-rules.js?v=20260908-1"></script>
+  <script defer src="/js/matematik-vadisi-store.js?v=20260908-1"></script>
+  <script defer src="/js/matematik-vadisi-engine.js?v=20260908-1"></script>
+  <script defer src="/js/matematik-vadisi-cloud.js?v=20260908-1"></script>
+</head>
+<body>
+<div class="mv-site-bar"><a href="/oyun/oyunlar.html">← Oyunlara dön</a><span>Kemal Öğretmenim</span></div>
+<section class="mv-account" aria-label="Hesap ve oyun kaydı">
+  <div><strong id="mv-account-name">Matematik Vadisi</strong><p id="mv-save-status" role="status">Oturumun kontrol ediliyor…</p></div>
+  <div class="mv-account-actions"><button id="mv-play-guest" type="button">Kaydetmeden oyna</button><a id="mv-sign-in" href="/giris.html?next=%2Foyun%2Fmatematik-vadisi.html">Giriş yap / Üye ol</a><a id="mv-account-panel" href="/ogrenci-paneli.html" hidden>Panelim</a><button id="mv-sign-out" type="button" hidden>Çıkış yap</button><button id="mv-cloud-save" type="button" hidden>Şimdi kaydet</button><button id="mv-cloud-retry" type="button" hidden>Yeniden dene</button><button id="mv-cloud-reload" type="button" hidden>Hesaptaki kaydı aç</button><button id="mv-cloud-keep" type="button" hidden>Bu dünyayı ayrı kopya olarak koru</button><button id="mv-claim-guest" type="button" hidden>Misafir dünyamı hesabıma ekle</button></div>
+</section>
+<main id="matematik-vadisi" aria-label="Matematik Vadisi" inert aria-busy="true">
+
+
+
+
+  <header class="mv-top">
+    <div class="mv-brand"><span class="mv-logo" aria-hidden="true"></span><div><div class="mv-kicker">KEMAL ÖĞRETMENİM</div><div class="mv-name">Matematik Vadisi</div></div></div>
+    <span class="mv-preview">KEŞFET · ÖĞREN · İNŞA ET</span>
+  </header>
+  <nav class="mv-nav" aria-label="Oyun ekranları">
+    <button type="button" data-view="world" aria-pressed="true"><i data-lucide="trees" aria-hidden="true"></i>Dünyam</button>
+    <button type="button" data-view="craft" aria-pressed="false"><i data-lucide="hammer" aria-hidden="true"></i>Atölye</button>
+    <button type="button" data-view="growth" aria-pressed="false">Geliştir</button>
+    <button type="button" data-view="hero" aria-pressed="false">Kahramanım</button>
+    <button type="button" data-view="players" aria-pressed="false"><i data-lucide="users-round" aria-hidden="true"></i>Oyuncular</button>
+    <span class="mv-current" id="mv-current">Deniz · 2. sınıf · Çarpma</span>
+  </nav>
+  <div class="mv-tools"><button type="button" id="mv-sound" aria-pressed="false">Ses: kapalı</button><button type="button" id="mv-pet" aria-pressed="true">Yoldaş: açık</button><button type="button" id="mv-pause">Mola ver</button><span class="mv-level" id="mv-hero-level">Gezgin · Seviye 1</span><span class="mv-time" id="mv-session-time">Oyun süresi 00:00 / 15 dk</span></div>
+  <section class="mv-break" id="mv-break" hidden aria-live="polite"><h2 id="mv-break-title">Biraz mola verelim</h2><p id="mv-break-text">Dünyan seni bekliyor. Hazır olduğunda kaldığın yerden devam edebilirsin.</p><button type="button" class="mv-primary" id="mv-resume">Hazırım, devam et</button><button type="button" class="mv-secondary" id="mv-break-settings">Yetişkin ayarları</button></section>
+  <section id="mv-play">
+    <div class="mv-quest-banner" aria-live="polite"><div class="mv-quest-seal" aria-hidden="true">!</div><div class="mv-quest-copy"><strong id="mv-quest-title">İlk evin için malzeme topla</strong><small id="mv-quest-detail">12 odun ve 6 taş gerekiyor.</small></div><span class="mv-quest-step" id="mv-quest-step">GÖREV 1 / 13</span></div>
+    <div class="mv-layout">
+      <div class="mv-world">
+        <div class="mv-world-head"><div class="mv-world-title" id="mv-world-name">Deniz’in Adası</div><div class="mv-world-sub" id="mv-world-sub">Yeşil Vadi · Başlangıç adası</div></div>
+        <canvas id="mv-canvas" role="img" aria-label="Ağaçlar, kayalar, dere, tuğla geçit ve karakterin bulunduğu izometrik voxel ada. Hareket ve hedef düğmeleri aşağıdadır."></canvas>
+        <div id="mv-marker" class="mv-marker">İlk odunun burada</div>
+        <section class="mv-question" id="mv-question" aria-label="Matematik sorusu" hidden>
+          <div class="mv-question-top"><span class="mv-eyebrow" id="mv-q-title">Tuğla geçit</span><button type="button" id="mv-q-close" aria-label="Sorudan vazgeç">Vazgeç ×</button></div>
+          <div class="mv-task-style" id="mv-task-style">İşlemi çöz</div>
+          <p class="mv-story-problem" id="mv-story-problem" hidden></p>
+          <div class="mv-plaque" id="mv-problem">3 × 2 = ?</div>
+          <div class="mv-q-caption" id="mv-q-caption">Doğru çekici seç.</div>
+          <div class="mv-answers" id="mv-answers"></div>
+          <div class="mv-activity" id="mv-activity" hidden>
+            <label for="mv-built-answer" id="mv-built-label">Cevabını oluştur</label>
+            <input id="mv-built-answer" inputmode="numeric" autocomplete="off" maxlength="4" pattern="[0-9]*" aria-label="Oluşturduğun cevap">
+            <div id="mv-group-board" class="mv-group-board" aria-label="Oluşturduğun nesne grubu"></div>
+            <div id="mv-group-controls" class="mv-group-controls"><button type="button" data-quantity="-1">Bir çıkar</button><button type="button" data-quantity="1">Bir ekle</button><button type="button" data-quantity="5">Beş ekle</button></div>
+            <div class="mv-number-keys" id="mv-number-keys" aria-label="Sayı tuşları"></div>
+            <button type="button" class="mv-primary" id="mv-manual-submit" data-input-answer="true">Cevabımı kontrol et</button>
+          </div>
+          <div class="mv-q-feedback" id="mv-q-feedback" aria-live="polite"></div>
+          <div id="mv-learning-support" hidden><div class="mv-learning-model" id="mv-learning-model"></div><div class="mv-learning-caption" id="mv-learning-caption"></div></div>
+          <button type="button" class="mv-q-hint" id="mv-hint">Bir ipucu al</button>
+        </section>
+      </div>
+      <aside class="mv-side">
+        <div>
+          <div class="mv-eyebrow">MACERA YOLUN</div><h3 id="mv-goal-title">Kendi yuvanı kur</h3><p id="mv-goal-desc">Ağaçlardan odun, kayalardan taş topla.</p>
+          <div id="mv-gather-progress">
+          <div class="mv-mission-art" aria-hidden="true"><div class="mv-house-mini"></div></div>
+          <div class="mv-resource-progress"><div class="mv-count-row"><span>Odun</span><span id="mv-wood-goal">0 / 12</span></div><div class="mv-track"><span id="mv-wood-bar" style="width:0%"></span></div></div>
+          <div class="mv-resource-progress"><div class="mv-count-row"><span>Taş</span><span id="mv-stone-goal">0 / 6</span></div><div class="mv-track"><span id="mv-stone-bar" style="width:0%"></span></div></div>
+          <button type="button" class="mv-primary mv-build-button" id="mv-build" disabled><i data-lucide="house" aria-hidden="true"></i>Kulübeyi kur</button>
+          </div>
+          <div id="mv-adventure-progress" hidden><div class="mv-side-progress"><div class="mv-count-row"><span id="mv-progress-label">Mağara ganimeti</span><span id="mv-progress-count">0 / 2</span></div><div class="mv-track"><span id="mv-progress-bar"></span></div></div><ol class="mv-journey" id="mv-journey"></ol></div>
+        </div>
+        <hr>
+        <div>
+          <div class="mv-life-row"><div><div class="mv-eyebrow" id="mv-life-title">CANIN</div><div class="mv-hearts" id="mv-hearts" aria-label="5 can">♥♥♥♥♥</div></div><button type="button" class="mv-secondary" id="mv-eat" disabled>Yemek ye</button></div>
+          <div class="mv-life-label" id="mv-life-note">Bir yanlış, bir can. Yeniden deneyebilirsin.</div>
+          <div class="mv-inventory" aria-label="Envanter"><div class="mv-slot"><span class="mv-item" aria-hidden="true"></span><b id="mv-wood">0</b><small>ODUN</small></div><div class="mv-slot"><span class="mv-item stone" aria-hidden="true"></span><b id="mv-stone">0</b><small>TAŞ</small></div><div class="mv-slot"><span class="mv-item food" aria-hidden="true"></span><b id="mv-food">0</b><small>YİYECEK</small></div></div>
+          <div class="mv-bag-extra" id="mv-bag-extra" hidden><span>Elmas <b id="mv-diamond">0</b></span><span>Lav <b id="mv-lava">0</b></span><span id="mv-armor">Zırh: yok</span></div>
+          <div class="mv-camp" id="mv-camp" hidden><h3>Kısa bir mola!</h3><p>Eşyaların seninle. Kampında dinlenip devam et.</p><button type="button" class="mv-primary" id="mv-rest">Kampa dön · Canları doldur</button></div>
+        </div>
+        <div class="mv-atelier" id="mv-atelier" hidden><div class="mv-eyebrow">SENİN TASARIMIN</div><h3>Ada yapıları</h3><p id="mv-placement-notice">İlk evini kurduktan sonra yeni adalarda inşa edebilirsin.</p><div class="mv-build-tools" id="mv-build-tools" hidden><label>Yapı seç<select id="mv-structure-kind"><option value="cottage">Kulübe</option><option value="tower">Seyir kulesi</option><option value="garden">Bahçe</option></select></label><p id="mv-structure-cost"></p><button type="button" class="mv-secondary" id="mv-find-place">Uygun yer bul</button><div class="mv-build-coordinates"><label>Sütun<input type="number" id="mv-place-x" min="2" max="14" value="3"></label><label>Satır<input type="number" id="mv-place-y" min="2" max="14" value="3"></label></div><button type="button" class="mv-primary" id="mv-place-confirm" disabled>Bu yere kur</button><p id="mv-building-count"></p></div></div>
+      </aside>
+    </div>
+    <div class="mv-bottom"><div><div class="mv-targets" aria-label="Oyun etkileşimleri"><button type="button" data-target="mission" id="mv-next-action">Ağaç kes</button><button type="button" data-target="tree"><i data-lucide="axe" aria-hidden="true"></i>Ağaç kes</button><button type="button" data-target="rock"><i data-lucide="pickaxe" aria-hidden="true"></i>Taş kır</button><button type="button" data-target="wall"><i data-lucide="hammer" aria-hidden="true"></i>Geçidi aç</button><button type="button" data-target="food"><i data-lucide="apple" aria-hidden="true"></i>Yiyecek topla</button></div><div class="mv-help">Boş kareye dokun: yürü · Görev hedefine dokun: işlemi çöz</div></div><div class="mv-drive" aria-label="Karakteri hareket ettir"><button type="button" data-move="left" aria-label="Sola yürü">←</button><button type="button" data-move="up" aria-label="Yukarı yürü">↑</button><button type="button" data-move="down" aria-label="Aşağı yürü">↓</button><button type="button" data-move="right" aria-label="Sağa yürü">→</button></div></div>
+    <div class="mv-status" id="mv-status" aria-live="polite">İlk kulüben için 12 odun ve 6 taş gerekiyor. Bir ağaca yaklaşarak başlayalım.</div>
+  </section>
+  <section class="mv-finish" id="mv-finish" hidden aria-label="Oyunu bitirme ekranı"><div class="mv-eyebrow">İLK MACERA TAMAMLANDI</div><div id="mv-finish-avatar"></div><h2 id="mv-finish-title">Vadi kahramanı!</h2><p id="mv-finish-name">Ender ejderhasını yendin.</p><div class="mv-finish-totals" id="mv-finish-totals"><span>5 Blaze ✓</span><span>5 Enderman ✓</span><span>5 portal adımı ✓</span><span>5 ejderha vuruşu ✓</span></div><p id="mv-finish-score"></p><button type="button" class="mv-primary" id="mv-continue-world">Dünyamı geliştirmeye devam et</button><button type="button" class="mv-secondary" id="mv-finish-players">Bugünlük tamam · Oyuncular</button></section>
+  <section class="mv-growth" id="mv-growth" hidden aria-label="Dünya ve kahraman geliştirme"><div class="mv-growth-head"><div><div class="mv-eyebrow">KENDİ DÜNYANI BÜYÜT</div><h2>Küçük projeler, yeni adalar</h2><p>Projen hazırlanırken gezebilir veya mola verebilirsin.</p></div><span class="mv-level" id="mv-growth-level">0 yolculuk deneyimi</span></div><div class="mv-projects">
+    <article class="mv-project"><span class="mv-project-symbol" aria-hidden="true">⌂</span><h3>Kuş yuvası</h3><p>Evine küçük bir kuş yuvası ekle.</p><small>2 odun + 1 taş · 20 saniye</small><div class="mv-project-state" id="mv-bird-state">Henüz yapılmadı</div><button type="button" class="mv-primary" data-project="bird">Yuvayı hazırla</button></article>
+    <article class="mv-project"><span class="mv-project-symbol" aria-hidden="true">❀</span><h3>Çiçek bahçesi</h3><p>Evinin yanına renkli çiçekler dik.</p><small>2 odun + 1 taş · 30 saniye</small><div class="mv-project-state" id="mv-garden-state">Henüz yapılmadı</div><button type="button" class="mv-primary" data-project="garden">Bahçeyi hazırla</button></article>
+    <article class="mv-project"><span class="mv-project-symbol" aria-hidden="true">✧</span><h3>Vadi feneri</h3><p>Evinin yoluna sıcak bir ışık ekle.</p><small>2 odun + 1 taş · 45 saniye</small><div class="mv-project-state" id="mv-beacon-state">Henüz yapılmadı</div><button type="button" class="mv-primary" data-project="beacon">Feneri hazırla</button></article>
+  </div><div class="mv-growth-notice" id="mv-growth-notice">Önce ilk evini kur. Projeler ana macerayı bekletmez.</div><div class="mv-growth-bottom"><div><h3>Ada atlasın</h3><p>Yeni adaların kaynakları ayrıdır. Topladığın eski kaynaklar yeniden oluşmaz.</p><div class="mv-growth-controls"><button type="button" class="mv-primary" id="mv-discover">Yeni ada keşfet</button></div><label>Gidilecek ada<select id="mv-island-choice"><option value="0">Ana ada</option></select></label><div class="mv-growth-controls"><button type="button" class="mv-secondary" id="mv-travel">Bu adaya git</button></div><p id="mv-island-count">1 ada keşfedildi.</p></div><div><h3>Öğrenme günlüğü</h3><p>Yolculuk deneyimi ve matematik çalışman ayrı izlenir.</p><div id="mv-learning-log" class="mv-journey"></div><p>İpucuyla tamamlanan sorular da dünyanı geliştirir.</p></div></div><details id="mv-adult-settings"><summary>Öğretmen / veli · Süre ayarı</summary><label>Bu oyuna ayrılan günlük süre<select id="mv-limit"><option value="10">10 dakika</option><option value="15" selected>15 dakika</option><option value="20">20 dakika</option><option value="30">30 dakika</option></select></label><div class="mv-growth-controls"><button type="button" class="mv-secondary" id="mv-apply-limit">Süreyi uygula</button></div><p>Üyelerin süre bilgisi dünyayla birlikte kaydedilir. Bu ayar bir mola hatırlatıcısıdır; şifreyle korunan ebeveyn kilidi değildir.</p></details></section>
+  <section class="mv-hero" id="mv-hero" hidden aria-label="Kahraman geliştirmeleri">
+    <div class="mv-hero-heading"><div><div class="mv-eyebrow">SENİN KAHRAMANIN</div><h2 id="mv-hero-name">Kahramanım</h2><p id="mv-hero-experience"></p></div><div id="mv-hero-portrait" aria-hidden="true"></div></div>
+    <p class="mv-hero-help">Görevleri tamamladıkça yeni görünümler açılır. İpucuyla çözdüğün görevler de seni geliştirir.</p>
+    <h3>Karakter görünümün</h3><div class="mv-skins" id="mv-hero-skins"></div>
+    <h3>Pelerinler ve başlıklar</h3><div class="mv-hero-items" id="mv-hero-items"></div>
+    <p id="mv-next-unlock" role="status"></p>
+  </section>
+  <section class="mv-profiles" id="mv-profiles" hidden>
+    <div><div class="mv-eyebrow">HER ÇOCUĞA BİR DÜNYA</div><h2>Kim oynuyor?</h2><p>Oyuncunu seç veya yeni bir maceraya başla.</p><div class="mv-player-list" id="mv-player-list"></div></div>
+    <form class="mv-form" id="mv-form"><h3>Yeni oyuncu</h3><div class="mv-fields"><label>Karakterinin adı<input id="mv-player-name" name="player" maxlength="20" placeholder="Örneğin: Ece" required autocomplete="off"></label><label>Sınıfın<select id="mv-grade"><option value="0">Anasınıfı</option><option value="1">1. sınıf</option><option value="2" selected>2. sınıf</option><option value="3">3. sınıf</option><option value="4">4. sınıf</option></select></label></div>
+      <fieldset><legend>Karakterini seç</legend><div class="mv-skins" id="mv-skins"></div></fieldset>
+      <fieldset><legend>Hangi konularla oynayalım?</legend><div class="mv-ops" id="mv-ops"></div></fieldset>
+      <div class="mv-fields"><label>Yolculuğun<select id="mv-route"><option value="adventure">Portal macerası</option><option value="calm">Sakin keşif · Can kaybı yok</option></select></label><label>Soru biçimi<select id="mv-practice"><option value="varied">Çeşitli görevler</option><option value="classic">Klasik işlemler</option></select></label></div>
+      <div class="mv-form-error" id="mv-form-error" role="alert"></div><button type="button" id="mv-create-player" class="mv-primary">Dünyamı oluştur <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+    </form>
+  </section>
+  <footer class="mv-session-note">Kendi hızında ilerle. Hazır olduğunda mola verebilirsin.</footer>
+</main>
+<noscript>Oyunu açmak için tarayıcında JavaScript etkin olmalı.</noscript>
+</body>
+</html>

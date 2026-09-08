@@ -7,3 +7,5 @@ node_modules/
 tmp/
 siteyi-yerelde-calistir.command
 vscode-ile-ac.command
+tests/
+docs/matematik-vadisi.md
