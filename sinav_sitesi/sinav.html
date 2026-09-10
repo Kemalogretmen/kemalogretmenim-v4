@@ -12,6 +12,7 @@
 <script src="/js/user-auth.js"></script>
 <script src="/js/content-progress.js"></script>
 <script src="./js/exam-result-store.js?v=20260721-modular-1"></script>
+<script src="./js/question-image-loader.js?v=20260909-1"></script>
 <style>
 :root{
   --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
@@ -90,22 +91,23 @@ body.theme-dark{
 .exam-section-banner{display:none;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:linear-gradient(135deg,#EFF6FF,#E0F2FE);border:1.5px solid #BFDBFE;color:#1D4ED8;font-size:13px;font-weight:800;box-shadow:0 8px 18px rgba(37,99,235,.08)}
 .exam-section-banner .section-kicker{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#2563EB}
 .question-media-shell{width:min(100%,1120px);display:flex;flex-direction:column;align-items:center;gap:12px}
-.toolbar-dock{position:absolute;top:0;left:0;z-index:25;display:flex;flex-direction:column;width:min(88px,calc(100% - 24px));border:1.5px solid var(--border);border-radius:24px;background:var(--panel-bg);box-shadow:0 18px 44px rgba(15,23,42,.14);backdrop-filter:blur(18px);overflow:visible;transform:translate3d(14px,14px,0);touch-action:none}
-.toolbar-dock.collapsed{width:auto;min-width:88px}
+.toolbar-dock{position:absolute;top:0;left:0;z-index:25;display:flex;flex-direction:column;width:min(80px,calc(100% - 24px));max-height:calc(100% - 24px);border:1.5px solid var(--border);border-radius:16px;background:var(--panel-bg);box-shadow:0 10px 28px rgba(15,23,42,.14);backdrop-filter:blur(18px);overflow:hidden;transform:translate3d(14px,14px,0)}
+.toolbar-dock.collapsed{width:80px}
 .toolbar-dock.is-dragging{box-shadow:0 22px 52px rgba(15,23,42,.18)}
-.toolbar-dock-head{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.1));cursor:grab}
+.toolbar-dock-head{position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;min-height:34px;padding:6px 32px 6px 8px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.1));cursor:grab;touch-action:none}
 .toolbar-dock.collapsed .toolbar-dock-head{border-bottom:none}
 .toolbar-dock.is-dragging .toolbar-dock-head{cursor:grabbing}
 .toolbar-dock-title{display:inline-flex;align-items:center;justify-content:center;width:100%;gap:0;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--slate)}
 .toolbar-dock-title span:last-child{display:none}
-.toolbar-dock-head button{position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:9px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:13px;font-weight:900;cursor:pointer;transition:all .18s}
+.toolbar-dock-head button{position:absolute;top:3px;right:4px;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-size:13px;font-weight:900;cursor:pointer;transition:all .18s}
 .toolbar-dock-head button:hover{border-color:var(--purple);color:var(--purple)}
-.toolbar-dock-body{padding:10px 8px;max-height:min(64vh,640px);overflow:auto}
+.toolbar-dock-body{padding:6px;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin}
 .toolbar-dock.collapsed .toolbar-dock-body{display:none}
-.drawing-toolbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;width:100%;min-width:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;backdrop-filter:none}
+.drawing-toolbar{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;width:100%;min-width:0;padding:0;background:transparent;border:none;border-radius:0;box-shadow:none;backdrop-filter:none}
 .toolbar-section{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-.tool-btn.compact{width:100%;min-height:50px;padding:8px 4px;flex-direction:column;justify-content:center;gap:4px;border-radius:16px}
-.tool-icon{font-size:18px;line-height:1}
+.toolbar-dock .toolbar-section{gap:5px}
+.tool-btn.compact{width:100%;min-height:36px;padding:5px 3px;justify-content:center;gap:4px;border-radius:10px}
+.tool-icon{font-size:15px;line-height:1;flex-shrink:0}
 .tool-label-sm{font-size:9px;font-weight:900;letter-spacing:.04em;line-height:1.1;text-align:center}
 .tool-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px solid var(--border);border-radius:999px;background:var(--panel-surface);font-family:var(--fb);font-size:13px;font-weight:700;color:var(--slate);cursor:pointer;transition:all .18s}
 .tool-btn:hover{border-color:var(--purple);color:var(--purple)}
@@ -121,12 +123,12 @@ body.theme-dark{
 .size-wrap input{accent-color:var(--purple)}
 .size-value{min-width:38px;font-size:12px;font-weight:700;color:var(--slate);text-align:center}
 .toolbar-dock .size-wrap input{width:100%}
-.zoom-stack{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
-.zoom-controls{display:grid;grid-template-columns:1fr;gap:8px;width:100%}
-.zoom-btn{width:100%;min-height:38px;padding:0;border:1.5px solid var(--border);border-radius:12px;background:var(--panel-surface);font-family:var(--fd);font-size:20px;font-weight:900;color:var(--slate);cursor:pointer;transition:all .18s}
+.zoom-stack{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.zoom-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;width:100%}
+.zoom-btn{width:100%;min-height:32px;padding:0;border:1.5px solid var(--border);border-radius:9px;background:var(--panel-surface);font-family:var(--fd);font-size:17px;font-weight:900;color:var(--slate);cursor:pointer;transition:all .18s}
 .zoom-btn:hover{border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
-.zoom-value-pill{display:inline-flex;align-items:center;justify-content:center;width:100%;min-width:0;padding:7px 8px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:11px;font-weight:900}
-.toolbar-action-stack{display:flex;flex-direction:column;gap:8px;width:100%}
+.zoom-value-pill{display:inline-flex;align-items:center;justify-content:center;width:100%;min-width:0;padding:3px 4px;border-radius:999px;background:#EEF2FF;color:#4338CA;font-size:10px;font-weight:900}
+.toolbar-action-stack{display:flex;flex-direction:column;gap:5px;width:100%}
 .pencil-panel{position:absolute;top:0;left:0;z-index:26;display:none;flex-direction:column;gap:12px;width:min(210px,calc(100% - 24px));padding:12px;border:1.5px solid var(--border);border-radius:22px;background:var(--panel-bg);box-shadow:0 18px 42px rgba(15,23,42,.16);backdrop-filter:blur(18px)}
 .pencil-panel.open{display:flex}
 .pencil-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -149,17 +151,18 @@ body.theme-dark{
 .mini-action-btn{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1.5px solid var(--border);background:var(--panel-surface);color:var(--slate);font-family:var(--fb);font-size:12px;font-weight:800;cursor:pointer;transition:all .18s}
 .mini-action-btn:hover:not(:disabled){border-color:var(--purple);color:var(--purple);transform:translateY(-1px)}
 .mini-action-btn:disabled{opacity:.45;cursor:not-allowed}
-.exam-media-stage{position:relative;width:min(100%,1120px);height:clamp(520px,72vh,900px);padding:10px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden;user-select:none;touch-action:none}
+.exam-media-stage{position:relative;width:min(100%,1120px);height:clamp(520px,72vh,900px);padding:10px;border-radius:24px;background:var(--panel-surface);box-shadow:var(--sh);overflow:hidden}
+.exam-media-stage,.exam-media-stage *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .exam-media-stage.mode-pencil{cursor:var(--cursor-pencil) 6 24,crosshair}
 .exam-media-stage.mode-eraser{cursor:cell}
 .exam-media-stage.mode-select{cursor:default}
 .exam-media-stage.mode-select.can-pan{cursor:grab}
 .exam-media-stage.mode-select.is-dragging{cursor:grabbing}
-.stage-workspace{position:relative;width:100%;height:100%;border:1.5px solid var(--stage-border);border-radius:20px;overflow:hidden;background:
+.stage-workspace{position:relative;width:100%;height:100%;border:1.5px solid var(--stage-border);border-radius:20px;overflow:hidden;touch-action:none;background:
   repeating-linear-gradient(0deg,transparent 0 35px,var(--stage-grid) 35px 36px),
   repeating-linear-gradient(90deg,transparent 0 35px,var(--stage-grid) 35px 36px),
   var(--stage-bg)}
-.question-transform-layer{position:absolute;inset:0;transform:translate3d(var(--question-pan-x,0px),var(--question-pan-y,0px),0) scale(var(--question-zoom,1));transform-origin:center center;transition:transform .16s ease;will-change:transform}
+.question-transform-layer{position:absolute;inset:0;transform:translate3d(var(--question-pan-x,0px),var(--question-pan-y,0px),0) scale(var(--question-zoom,1));transform-origin:center center;will-change:transform}
 .exam-q-img{
   position:absolute;
   inset:clamp(10px,1.6vw,18px);
@@ -173,13 +176,21 @@ body.theme-dark{
   image-rendering:auto;
   filter:drop-shadow(0 10px 24px rgba(15,23,42,.08));
 }
-.exam-media-stage.is-dragging .question-transform-layer{transition:none}
 .draw-canvas{position:absolute;inset:0;pointer-events:none;z-index:2}
+.question-image-status{position:absolute;inset:20px;z-index:3;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.question-image-status[hidden]{display:none}
+.question-image-status-card{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:330px;padding:22px;border:1.5px solid var(--border);border-radius:18px;background:var(--panel-bg);box-shadow:var(--sh);text-align:center}
+.question-image-status-card strong{font-family:var(--fd);font-size:17px;color:var(--navy)}
+.question-image-status-card p{font-size:13px;line-height:1.5;color:var(--slate)}
+.question-image-status-card button{pointer-events:auto}
+.question-image-status-card button[hidden]{display:none}
+.question-image-status-card .spinner[hidden]{display:none}
 .question-hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
 .exam-answers{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:0 10px}
 .ans-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border:2px solid #CBD5E0;border-radius:40px;background:var(--panel-surface);cursor:pointer;font-size:14px;font-weight:700;transition:all .18s;font-family:var(--fb);color:var(--navy)}
 .ans-btn:hover{border-color:var(--purple);color:var(--purple)}
-.ans-btn.selected{border-color:var(--purple);background:#EEF2FF;color:var(--purple-d)}
+.ans-btn.selected{border-color:#4C1D95;background:#6D28D9;color:#fff;box-shadow:0 0 0 3px #DDD6FE,0 4px 10px rgba(76,29,149,.22)}
+.ans-btn.selected .ans-circle{background:#fff;border-color:#fff;color:#5B21B6}
 .ans-circle{width:28px;height:28px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
 .exam-navrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0;flex-wrap:wrap}
 .exam-nav-main{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:380px;margin:0 auto}
@@ -205,7 +216,7 @@ body.theme-dark{
 .op-bubbles{display:flex;gap:3px;flex:1;flex-wrap:wrap}
 .op-bub{width:24px;height:24px;border-radius:50%;border:1.5px solid #CBD5E0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;cursor:pointer;transition:all .12s}
 .op-bub:hover{border-color:var(--purple)}
-.op-bub.sel{background:var(--purple);border-color:var(--purple);color:#fff}
+.op-bub.sel{background:#6D28D9;border-color:#4C1D95;color:#fff;box-shadow:0 0 0 2px #DDD6FE;font-weight:900}
 .op-bub.correct{background:var(--green);border-color:var(--green);color:#fff}
 .op-bub.wrong{background:var(--red);border-color:var(--red);color:#fff}
 .op-bub.blank{background:#E2E8F0;border-color:#CBD5E0;color:var(--muted)}
@@ -224,7 +235,7 @@ body.theme-dark{
 .od-item{text-align:center}
 .od-item-q{font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600}
 .od-bubble{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
-.od-bubble.sel{background:var(--purple);border-color:var(--purple);color:#fff}
+.od-bubble.sel{background:#6D28D9;border-color:#4C1D95;color:#fff;box-shadow:0 0 0 2px #DDD6FE;font-weight:900}
 
 body.theme-dark .drawing-toolbar,
 body.theme-dark .toolbar-dock,
@@ -253,8 +264,10 @@ body.theme-dark .appeal-chip{
 body.theme-dark .status-pill{background:#111827;border-color:var(--border)}
 body.theme-dark .op-row:hover,
 body.theme-dark .op-row.cur,
-body.theme-dark .ans-btn.selected,
 body.theme-dark .tool-btn.active{background:rgba(108,61,237,.16)}
+body.theme-dark .ans-btn.selected,
+body.theme-dark .op-bub.sel,
+body.theme-dark .od-bubble.sel{background:#6D28D9;border-color:#C4B5FD;color:#fff;box-shadow:0 0 0 2px #A78BFA}
 body.theme-dark .question-hint,
 body.theme-dark .op-qnum,
 body.theme-dark .toolbar-label,
@@ -456,8 +469,6 @@ body.theme-dark .size-value{color:var(--muted)}
   .optic-drawer{display:flex}
   .exam-q-wrap{justify-content:flex-start;padding:10px 10px;gap:8px}
   .question-media-shell{width:100%}
-  .toolbar-dock{width:min(82px,calc(100% - 16px));transform:translate3d(8px,8px,0)}
-  .toolbar-dock.collapsed{width:auto;min-width:82px}
   .question-status-strip{padding:10px 12px}
   .status-pills,.status-actions{width:100%}
   .exam-media-stage{width:100%;height:clamp(380px,calc(100dvh - 250px),620px);border-radius:18px;padding:7px}
@@ -624,7 +635,6 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
               <div class="toolbar-dock-body">
                 <div class="drawing-toolbar" id="drawingToolbar">
                   <div class="toolbar-section">
-                    <div class="toolbar-mini-label">Zoom</div>
                     <div class="zoom-stack">
                       <div class="zoom-controls">
                         <button class="zoom-btn" type="button" onclick="adjustQuestionZoom(10)" title="Yakınlaştır">＋</button>
@@ -688,8 +698,16 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
             </div>
             <div class="stage-workspace" id="stageWorkspace">
               <div class="question-transform-layer" id="questionTransformLayer">
-                <img class="exam-q-img" id="qImg" src="" alt="Soru görseli">
-                <canvas class="draw-canvas" id="drawCanvas" aria-hidden="true"></canvas>
+                <img class="exam-q-img" id="qImg" src="" alt="Soru görseli" draggable="false">
+              </div>
+              <canvas class="draw-canvas" id="drawCanvas" aria-hidden="true"></canvas>
+              <div class="question-image-status" id="questionImageStatus" role="status" aria-live="polite" hidden>
+                <div class="question-image-status-card">
+                  <div class="spinner" id="questionImageSpinner" aria-hidden="true"></div>
+                  <strong id="questionImageTitle">Soru görseli yükleniyor…</strong>
+                  <p id="questionImageDetail"></p>
+                  <button class="mini-action-btn" id="questionImageRetry" type="button" onclick="retryQuestionImage()" hidden>Yeniden dene</button>
+                </div>
               </div>
             </div>
           </div>
@@ -989,7 +1007,7 @@ let P={
     startScale:1
   }
 };
-const preloadedQuestionImages=new Set();
+let questionImageLoader=null;
 let donutChartInstance=null;
 let sectionChartInstance=null;
 const ADMIN_KARNE_STORAGE_KEY='kemal_exam_admin_karne_result_v1';
@@ -1689,7 +1707,9 @@ function findNextBlankQuestionIndex(startIndex=P.curQ){
 function syncCurrentAnswerButtons(){
   const currentAnswer=P.answers[P.curQ]||'';
   document.querySelectorAll('.ans-btn').forEach((button,index)=>{
-    button.classList.toggle('selected',P.OPTS[index]===currentAnswer);
+    const selected=P.OPTS[index]===currentAnswer;
+    button.classList.toggle('selected',selected);
+    button.setAttribute('aria-pressed',String(selected));
   });
 }
 
@@ -1899,6 +1919,7 @@ function clampQuestionPan(){
 function updateQuestionTransform(){
   clampQuestionPan();
   syncDrawingToolbar();
+  redrawDrawingCanvas();
 }
 
 function beginToolbarDrag(event){
@@ -1964,15 +1985,25 @@ function drawStoredStroke(ctx,stroke,width,height){
 
 function redrawDrawingCanvas(){
   const canvas=document.getElementById('drawCanvas');
-  if(!canvas) return;
+  const layer=document.getElementById('questionTransformLayer');
+  if(!canvas||!layer) return;
   const width=parseFloat(canvas.style.width)||0;
   const height=parseFloat(canvas.style.height)||0;
   if(!width||!height) return;
+  const canvasRect=canvas.getBoundingClientRect();
+  const layerRect=layer.getBoundingClientRect();
+  if(!canvasRect.width||!canvasRect.height||!layerRect.width||!layerRect.height) return;
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+  // Keep the canvas over the entire workspace; only the stored ink follows the question.
+  ctx.setTransform(
+    dpr*layerRect.width/canvasRect.width,0,
+    0,dpr*layerRect.height/canvasRect.height,
+    dpr*(layerRect.left-canvasRect.left)*width/canvasRect.width,
+    dpr*(layerRect.top-canvasRect.top)*height/canvasRect.height
+  );
   const drawing=getQuestionDrawing();
   drawing.strokes.forEach(stroke=>drawStoredStroke(ctx,stroke,width,height));
 }
@@ -1981,15 +2012,16 @@ function syncDrawingSurface(){
   const workspace=document.getElementById('stageWorkspace');
   const canvas=document.getElementById('drawCanvas');
   if(!workspace||!canvas) return;
-  const rect=workspace.getBoundingClientRect();
-  if(!rect.width||!rect.height) return;
+  const width=workspace.clientWidth;
+  const height=workspace.clientHeight;
+  if(!width||!height) return;
   const dpr=window.devicePixelRatio||1;
   canvas.style.left='0px';
   canvas.style.top='0px';
-  canvas.style.width=`${rect.width}px`;
-  canvas.style.height=`${rect.height}px`;
-  canvas.width=Math.round(rect.width*dpr);
-  canvas.height=Math.round(rect.height*dpr);
+  canvas.style.width=`${width}px`;
+  canvas.style.height=`${height}px`;
+  canvas.width=Math.round(width*dpr);
+  canvas.height=Math.round(height*dpr);
   clampQuestionPan();
   syncDrawingToolbar();
   redrawDrawingCanvas();
@@ -1997,21 +2029,29 @@ function syncDrawingSurface(){
 
 function getCanvasPoint(event){
   const canvas=document.getElementById('drawCanvas');
-  if(!canvas) return null;
+  const layer=document.getElementById('questionTransformLayer');
+  if(!canvas||!layer) return null;
   const rect=canvas.getBoundingClientRect();
   const clientX=event.clientX;
   const clientY=event.clientY;
   if(clientX==null||clientY==null) return null;
   if(clientX<rect.left||clientX>rect.right||clientY<rect.top||clientY>rect.bottom) return null;
+  const layerRect=layer.getBoundingClientRect();
+  if(!layerRect.width||!layerRect.height) return null;
+  // Points outside the scaled question can be negative or greater than one when normalized.
+  // They are still valid notes in the visible margins of the workspace after zooming out.
   return{
-    x:clientX-rect.left,
-    y:clientY-rect.top,
-    width:rect.width,
-    height:rect.height
+    x:clientX-layerRect.left,
+    y:clientY-layerRect.top,
+    width:layerRect.width,
+    height:layerRect.height
   };
 }
 
 function beginStageGesture(event){
+  if(event.button!==0||P.stageGesture) return;
+  const point=getCanvasPoint(event);
+  if(!point) return;
   const stage=document.getElementById('mediaStage');
   if(P.drawingTool==='select'){
     if(P.questionZoom<=100) return;
@@ -2029,8 +2069,6 @@ function beginStageGesture(event){
     event.preventDefault();
     return;
   }
-  const point=getCanvasPoint(event);
-  if(!point) return;
   const normalizedPoint={x:point.x/point.width,y:point.y/point.height};
   P.stageGesture={
     pointerId:event.pointerId,
@@ -2234,7 +2272,6 @@ function bindExamInteractions(){
   if(P.uiBound) return;
   P.uiBound=true;
   const stage=document.getElementById('mediaStage');
-  const img=document.getElementById('qImg');
   const toolbarDock=document.getElementById('toolbarDock');
   const toolbarHandle=document.getElementById('toolbarDragHandle');
   const pencilPanel=document.getElementById('pencilPanel');
@@ -2245,12 +2282,21 @@ function bindExamInteractions(){
   stage.addEventListener('pointermove',moveStageGesture);
   stage.addEventListener('pointerup',finishStageGesture);
   stage.addEventListener('pointercancel',finishStageGesture);
+  stage.addEventListener('lostpointercapture',finishStageGesture);
+  ['selectstart','dragstart','contextmenu'].forEach(eventName=>{
+    stage.addEventListener(eventName,event=>event.preventDefault());
+  });
   toolbarHandle?.addEventListener('pointerdown',beginToolbarDrag);
   ['pointerdown','click','wheel','touchstart'].forEach(eventName=>{
     toolbarDock?.addEventListener(eventName,event=>event.stopPropagation(),{passive:eventName==='wheel'?true:false});
     pencilPanel?.addEventListener(eventName,event=>event.stopPropagation(),{passive:eventName==='wheel'?true:false});
   });
-  img.addEventListener('load',()=>requestAnimationFrame(syncDrawingSurface));
+  ['pointerdown','click'].forEach(eventName=>{
+    document.getElementById('questionImageStatus')?.addEventListener(eventName,event=>event.stopPropagation());
+  });
+  window.addEventListener('online',()=>{
+    if(isExamScreenVisible()&&questionImageLoader?.getState().status==='error') window.retryQuestionImage();
+  });
   window.addEventListener('resize',()=>requestAnimationFrame(syncDrawingSurface));
   document.addEventListener('keydown',handleExamKeydown);
   window.addEventListener('pointermove',moveToolbarDrag);
@@ -2456,11 +2502,9 @@ function renderQuestion(i){
     sectionBanner.style.display='none';
     sectionBanner.innerHTML='';
   }
-  const img=document.getElementById('qImg');
-  img.src=q.imageUrl||q.imageData||'';
-  img.alt=`${i+1}. soru görseli`;
+  getQuestionImageLoader().show(getQuestionImageSrc(q));
   document.getElementById('examAnswers').innerHTML=P.OPTS.map(opt=>`
-    <button class="ans-btn ${curAns===opt?'selected':''}" onclick="pickAns('${opt}')" title="${opt} şıkkı (${opt} tuşu)">
+    <button class="ans-btn ${curAns===opt?'selected':''}" aria-pressed="${curAns===opt}" onclick="pickAns('${opt}')" title="${opt} şıkkı (${opt} tuşu)">
       <div class="ans-circle">${opt}</div>${opt} şıkkı
     </button>`).join('');
   document.getElementById('qProg').textContent=`${i+1} / ${qs.length}`;
@@ -2469,7 +2513,7 @@ function renderQuestion(i){
   // Update optic current row
   document.querySelectorAll('.op-row').forEach((r,j)=>r.classList.toggle('cur',j===i));
   syncDrawingToolbar();
-  if(img.complete) requestAnimationFrame(syncDrawingSurface);
+  requestAnimationFrame(syncDrawingSurface);
   preloadQuestionImages(i);
   updateOpticStats();
 }
@@ -2478,15 +2522,48 @@ function getQuestionImageSrc(question){
   return question?.imageUrl||question?.imageData||'';
 }
 
-function preloadQuestionImages(currentIndex){
-  const indexes=[currentIndex+1,currentIndex+2,currentIndex+3,currentIndex-1].filter(index=>index>=0&&index<P.questions.length);
-  indexes.forEach(index=>{
-    const src=getQuestionImageSrc(P.questions[index]);
-    if(!src||preloadedQuestionImages.has(src)) return;
-    preloadedQuestionImages.add(src);
-    const img=new Image();
-    img.src=src;
+function getQuestionImageLoader(){
+  if(questionImageLoader) return questionImageLoader;
+  questionImageLoader=window.KemalQuestionImages.create({
+    onState(state){
+      const ready=state.status==='ready';
+      const loading=state.status==='loading';
+      document.getElementById('questionImageStatus').hidden=ready;
+      document.getElementById('questionImageSpinner').hidden=!loading;
+      document.getElementById('questionImageRetry').hidden=loading||ready;
+      document.getElementById('stageWorkspace').setAttribute('aria-busy',String(loading));
+      if(!ready) document.getElementById('qImg').style.visibility='hidden';
+      document.getElementById('questionImageTitle').textContent=loading
+        ? 'Soru görseli yükleniyor…'
+        : 'Soru görseline ulaşılamadı';
+      document.getElementById('questionImageDetail').textContent=loading
+        ? (state.attempt>1?`Bağlantı yeniden deneniyor (${state.attempt}/${state.total}).`:'Lütfen biraz bekle.')
+        : 'Yeniden deneyebilir veya diğer soruya geçebilirsin. Cevapların ve çizimlerin korunur.';
+    },
+    onReady(image){
+      image.id='qImg';
+      image.className='exam-q-img';
+      image.alt=`${P.curQ+1}. soru görseli`;
+      image.draggable=false;
+      image.style.visibility='visible';
+      const previous=document.getElementById('qImg');
+      if(previous!==image) previous.replaceWith(image);
+      requestAnimationFrame(syncDrawingSurface);
+    }
   });
+  return questionImageLoader;
+}
+
+window.retryQuestionImage=function(){
+  getQuestionImageLoader().retry();
+  preloadQuestionImages(P.curQ);
+};
+
+function preloadQuestionImages(currentIndex){
+  const sources=[currentIndex+1,currentIndex+2]
+    .filter(index=>index<P.questions.length)
+    .map(index=>getQuestionImageSrc(P.questions[index]));
+  getQuestionImageLoader().preload(sources);
 }
 
 function renderOptic(){
@@ -2681,6 +2758,10 @@ window.clearCurrentDrawing=function(){
 };
 
 window.openImageLightbox=function(){
+  if(questionImageLoader?.getState().status!=='ready'){
+    toast('Soru görseli yüklendiğinde tam ekranı açabilirsin.','info');
+    return;
+  }
   const src=document.getElementById('qImg')?.src;
   if(!src) return;
   const lightbox=document.getElementById('imageLightbox');
