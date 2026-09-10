@@ -29,3 +29,9 @@ Bağlantı hatasında yalnız o hesap kimliğine ait bekleyen değişiklikler ye
 Kontroller: 15.000 temel matematik sorusu, sınıf/işlem sınırları, her iki görev yolunun tamamlanması, sonrasında ada inşası, kaynakların tükenmesi, yanlış cevaptan sonra yeniden deneme, karakter kuşanma/yükleme, misafir açılışı, hesap izolasyonu, çevrimdışı taslak kurtarma ve kayıt çakışması.
 
 Pedagojik olarak pilot kullanıma yönelik tasarımdır; tüm çocuklar için kanıtlanmış etkililik iddiası yoktur. Küçük öğrenci gruplarıyla yönerge anlaşılması, bağımsız çözüm, mola davranışı ve kaygı gözlemlenmelidir. Her etkileşimde soru sorulması bazı çocukları yorabilir; bu gözlem özellikle önemlidir.
+
+## 10 Eylül 2026 · Serbest gezinti
+
+Karakter dört yöne döner; arka görünüşte yüzü görünmez. Adımlar yumuşak geçişle, kol ve bacak hareketiyle çizilir. Hareketi azaltma tercihi varsa adım animasyonu atlanır. Geçici animasyon durumu kayda yazılmaz; tam kare konumu ve bakış yönü saklanır. Hesap değişikliği sürmekte olan yürüyüşü iptal eder.
+
+Ana ada, Çamlık, Sonbahar ve Buz Çiçeği rotaları ilk evden önce de ziyaret edilebilir. Ada keşfi, adalara dönüş, açılmış mağara/portal geçişleri, yiyecek toplama ve yemek yeme soru veya deneyim puanı üretmez. Kapalı portalı açma, yapı kurma ve diğer matematik görevleri sınıf/işlem seçimini korur. Aynı bölgeye dönüş kaynakları yenilemez.

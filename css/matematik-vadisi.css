@@ -67,3 +67,9 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,su
 #matematik-vadisi .mv-hero-item button{width:100%}
 @media(max-width:640px){body{padding:0 8px 20px}.mv-site-bar{padding:12px 4px}.mv-account{align-items:stretch;flex-direction:column;padding:14px}.mv-account-actions{justify-content:flex-start}#matematik-vadisi .mv-hero{padding:18px}#matematik-vadisi .mv-preview{display:none}#matematik-vadisi .mv-current{width:100%;margin-left:0}#matematik-vadisi .mv-question{inset:60px 8px auto;max-height:560px}#matematik-vadisi .mv-world:has(.mv-question:not([hidden])){min-height:680px}}
 @media(prefers-reduced-motion:reduce){#matematik-vadisi *,#matematik-vadisi *:before,#matematik-vadisi *:after{animation:none!important;transition:none!important}}
+
+#matematik-vadisi .mv-roaming{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 20px;background:var(--mv-panel);border-bottom:1px solid var(--mv-line)}
+#matematik-vadisi .mv-roaming>span{font-size:14px;font-weight:700;margin-right:4px}
+#matematik-vadisi .mv-roaming button{background:var(--mv-bg);color:var(--mv-ink);border:1px solid var(--mv-line);border-radius:7px;min-height:44px;padding:9px 13px;font-size:14px}
+#matematik-vadisi .mv-roaming button[aria-pressed=true]{background:#295a3d;color:#fffdf4;border-color:#295a3d}
+#matematik-vadisi .mv-roaming small{color:var(--mv-muted);font-size:12px}

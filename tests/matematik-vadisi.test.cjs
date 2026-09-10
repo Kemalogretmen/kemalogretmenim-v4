@@ -76,9 +76,9 @@ function engineHarness() {
   let clock=0,seq=0;const timers=new Map(),intervals=[];const base=Date.now();class ClockDate extends Date{constructor(...args){super(...(args.length?args:[base+clock]));}static now(){return base+clock;}}
   const sandbox={window,document,console,Date:ClockDate,crypto:require('node:crypto').webcrypto,performance:{now:()=>clock},setTimeout:fn=>{timers.set(++seq,fn);return seq;},clearTimeout:id=>timers.delete(id),setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:()=>1,cancelAnimationFrame:noop,ResizeObserver:class{observe(){}},getComputedStyle:()=>({getPropertyValue:()=>''}),matchMedia:()=>({matches:false}),devicePixelRatio:1};
   window.MatematikVadisiRules=rules;window.matchMedia=sandbox.matchMedia;window.getComputedStyle=sandbox.getComputedStyle;
-  const source=fs.readFileSync('js/matematik-vadisi-engine.js','utf8').replace('setupV4();setupSite();',`window.__test={generate,decorateQuestion,openQuestion,completeAction,allowed,sceneObjects,createIsland,canPlace,view,answer,render,dayState,getQuest,get player(){return player;},get question(){return question;}};setupV4();setupSite();`);
+  const source=fs.readFileSync('js/matematik-vadisi-engine.js','utf8').replace('setupV4();setupSite();',`window.__test={walk,move,interact,visitRegion,rearView,actorPosition,generate,decorateQuestion,openQuestion,completeAction,allowed,sceneObjects,createIsland,canPlace,view,answer,render,dayState,getQuest,get player(){return player;},get question(){return question;}};setupV4();setupSite();`);
   vm.runInNewContext(source,sandbox,{filename:'matematik-vadisi-engine.js'});
-  return {window,document,sandbox,advance(ms){clock+=ms;intervals.forEach(fn=>fn());},game:window.kemalMathGame,t:window.__test,flush(){for(let n=0;timers.size&&n<100;n++){const batch=[...timers.values()];timers.clear();batch.forEach(fn=>fn());}},create(grade=2,route='adventure'){
+  return {window,document,sandbox,async flushAsync(){for(let n=0;n<500;n++){const batch=[...timers.values()];timers.clear();batch.forEach(fn=>fn());await Promise.resolve();if(!timers.size){await Promise.resolve();if(!timers.size)break;}}},advance(ms){clock+=ms;intervals.forEach(fn=>fn());},game:window.kemalMathGame,t:window.__test,flush(){for(let n=0;timers.size&&n<100;n++){const batch=[...timers.values()];timers.clear();batch.forEach(fn=>fn());}},create(grade=2,route='adventure'){
     const $=id=>document.getElementById(id);$('mv-player-name').value='Ece';$('mv-grade').value=grade;$('mv-grade').dispatchEvent(new window.Event('change'));$('mv-route').value=route;$('mv-create-player').click();assert.equal(window.kemalMathGame.snapshot().players.length,1);
   }};
 }
@@ -144,4 +144,20 @@ test('short projects finish during a break and persist after reloading the world
 test('daily break finishes an open question, blocks the next action and survives a reload',()=>{
  const h=engineHarness();h.create();const p=h.t.player;p.day.limit=10;p.day.usedMs=599500;h.t.openQuestion(p.objects[0]);h.advance(1000);assert(h.t.question);h.t.answer(h.t.question.answer,h.document.getElementById('mv-manual-submit'));h.flush();assert.equal(p.wood,3);assert.equal(h.document.getElementById('mv-break').hidden,false);assert.equal(h.document.getElementById('mv-next-action').disabled,true);
  const saved=h.game.snapshot();h.game.replaceSnapshot(saved);assert.equal(h.t.player.day.usedMs,600500);assert.equal(h.t.player.day.limit,10);
+});
+
+test('walking turns the character, interpolates position, and persists only whole tiles',async()=>{
+ const h=engineHarness();h.create();const p=h.t.player;p.x=7;p.y=7;const completed=h.t.walk([[7,6]]);assert.equal(p.facing,'up');assert.equal(h.t.rearView(),true);assert(h.t.actorPosition().y<7&&h.t.actorPosition().y>6);assert.equal(h.game.snapshot().players[0].y,7);await h.flushAsync();await completed;assert.equal(p.y,6);
+ for(const [dir,expected]of [['right',[8,6]],['down',[8,7]],['left',[7,7]]]){h.t.move(dir);await h.flushAsync();assert.equal(p.facing,dir);assert.equal(p.x,expected[0]);assert.equal(p.y,expected[1]);}
+ const saved=h.game.snapshot();h.game.replaceSnapshot(saved);assert.equal(h.t.player.facing,'left');delete saved.players[0].facing;h.game.replaceSnapshot(saved);assert.equal(h.t.player.facing,'down');
+});
+test('account switch cancels an in-flight walk without moving the replacement character',async()=>{
+ const h=engineHarness();h.create();const saved=h.game.snapshot();const walking=h.t.walk([[7,6],[7,5]]);h.game.replaceSnapshot(saved);await h.flushAsync();await walking;assert.equal(h.t.player.x,7);assert.equal(h.t.player.y,7);assert.equal(h.t.actorPosition().y,7);
+});
+test('three scenic regions can be visited before building without math or farming experience',()=>{
+ const h=engineHarness();h.create();const p=h.t.player,experience=p.answered;
+ for(const id of [1,2,3]){h.document.querySelector('[data-region="'+id+'"]').click();assert.equal(p.region,id);assert.equal(p.zone,'frontier');assert.equal(h.t.question,null);assert.equal(p.answered,experience);}
+ const food=p.regions[2].objects.find(o=>o.type==='food');h.t.interact(food);assert(food.depleted);assert.equal(p.food,2);assert.equal(h.t.question,null);assert.equal(p.answered,experience);
+ h.t.visitRegion(0);h.t.visitRegion(3);assert(food.depleted);assert.equal(p.regions.length,3);assert.equal(p.food,2);assert.equal(p.ops[0],'mul');
+ const rock=p.regions[2].objects.find(o=>o.type==='rock');h.t.interact(rock);assert(h.t.question);assert.equal(h.t.question.op,'mul');
 });
