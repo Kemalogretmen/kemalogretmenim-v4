@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dikkat Dedektifi - Hafıza ve Odak Oyunu</title>
+  <meta name="description" content="Çocuklar için seçici dikkat, görsel hafıza ve kural takibi pratiği sunan eğitsel oyun.">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root { --ink:#15213d; --muted:#64748b; --line:#dce7f5; --violet:#6847e8; --mint:#0f9f83; --sun:#ffbd35; --coral:#f26d5b; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:var(--font-body,"Nunito",system-ui,sans-serif); background:radial-gradient(circle at 8% 4%,#fff2c9 0,transparent 24rem),radial-gradient(circle at 95% 18%,#d8f7ef 0,transparent 25rem),#f6f8fc; }
+    button { font:inherit; }
+    .page { width:min(1120px,100%); margin:0 auto; padding:16px 14px 52px; }
+    .back { display:inline-flex; align-items:center; gap:7px; margin:0 0 12px; color:#4e43a4; font-weight:900; text-decoration:none; }
+    .shell { overflow:hidden; border:1px solid #d9e3f1; border-radius:28px; background:white; box-shadow:0 20px 48px rgba(36,57,92,.13); }
+    .hero { display:flex; align-items:center; justify-content:space-between; gap:18px; min-height:0 !important; height:auto !important; padding:20px clamp(20px,4vw,34px); color:white; background:linear-gradient(120deg,#3d2e91,#6d4ee9 55%,#18a897); }
+    .eyebrow { display:inline-flex; padding:6px 11px; border-radius:999px; background:rgba(255,255,255,.16); font-size:.76rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase; }
+    h1,h2 { font-family:var(--font-display,"Fredoka",system-ui,sans-serif); }
+    .hero h1 { margin:8px 0 5px; font-size:clamp(1.85rem,4vw,2.65rem); line-height:1; }
+    .hero p { max-width:650px; margin:0; color:rgba(255,255,255,.9); font-weight:700; line-height:1.45; }
+    .hero-mark { display:grid; place-items:center; flex:0 0 auto; width:112px; height:112px; border:2px solid rgba(255,255,255,.24); border-radius:34px; background:rgba(255,255,255,.13); font-size:4rem; transform:rotate(5deg); }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:14px 18px; background:#fbfcff; border-bottom:1px solid var(--line); }
+    .stat { padding:9px 12px; border-radius:14px; background:white; border:1px solid var(--line); text-align:center; }
+    .stat span { display:block; color:var(--muted); font-size:.71rem; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
+    .stat strong { display:block; margin-top:2px; color:#332a72; font-size:1.2rem; }
+    .controls { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid var(--line); }
+    .level-choices { display:flex; flex-wrap:wrap; gap:8px; }
+    .choice,.utility,.primary { border:2px solid var(--line); border-radius:13px; padding:9px 12px; color:var(--ink); background:#fff; font-weight:900; cursor:pointer; transition:transform .18s ease,background .18s ease,border-color .18s ease; }
+    .choice:hover,.utility:hover,.primary:hover { transform:translateY(-2px); }
+    .choice[aria-pressed="true"] { color:white; background:var(--violet); border-color:var(--violet); }
+    .utility { color:#4d5d78; background:#f8fbff; }
+    .primary { padding:12px 18px; color:white; border-color:#5f45dc; background:linear-gradient(135deg,#7957ee,#4b36c2); box-shadow:0 8px 18px rgba(75,54,194,.23); }
+    .board-area { padding:clamp(16px,3.5vw,30px); background:linear-gradient(180deg,#f7f4ff 0,#f7fbff 100%); }
+    .mission { max-width:850px; margin:0 auto 16px; padding:13px 16px; border-radius:16px; color:#3f3971; background:#fff; border:1px solid #e2dbff; font-weight:800; line-height:1.42; text-align:center; }
+    .mission strong { color:#5b3cce; }
+    .scene { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(8px,1.7vw,15px); max-width:850px; min-height:360px; margin:auto; padding:clamp(15px,3vw,27px); border:7px solid #bce6d8; border-radius:26px; background:linear-gradient(165deg,#e8fff5 0 70%,#d1f0ff 70%); box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 12px 25px rgba(48,105,111,.12); }
+    .scene::before { content:""; position:absolute; inset:17px; pointer-events:none; border:2px dashed rgba(21,120,111,.14); border-radius:16px; }
+    .object { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:83px; padding:7px 4px; border:2px solid rgba(37,105,124,.14); border-radius:18px; color:var(--ink); background:rgba(255,255,255,.8); box-shadow:0 5px 0 rgba(55,129,145,.11); cursor:default; transition:transform .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease; }
+    .object .emoji { font-size:clamp(2rem,5vw,3.35rem); line-height:1; filter:drop-shadow(0 2px 1px rgba(0,0,0,.1)); }
+    .object .name { margin-top:5px; font-size:clamp(.68rem,1.8vw,.82rem); font-weight:900; }
+    .object.can-choose { cursor:pointer; }
+    .object.can-choose:hover { transform:translateY(-3px); border-color:#8a73ef; box-shadow:0 8px 0 rgba(111,83,222,.16); }
+    .object.is-picked { color:#12694f; border-color:#28ae82; background:#e5fff4; box-shadow:0 0 0 4px rgba(40,174,130,.18); pointer-events:none; }
+    .object.is-mistake { animation:shake .35s ease; color:#a94242; border-color:#ec8279; background:#fff1ef; }
+    .object.is-hint { animation:pulse 1s ease 2; }
+    .object.is-unknown .emoji { filter:grayscale(.25); }
+    .curtain { position:absolute; z-index:5; inset:0; display:grid; place-items:center; padding:24px; border-radius:19px; color:white; background:linear-gradient(135deg,rgba(62,43,143,.96),rgba(27,151,139,.96)); text-align:center; }
+    .curtain[hidden] { display:none; }
+    .curtain-card { max-width:490px; }
+    .curtain .big { display:block; margin-bottom:10px; font-size:3rem; }
+    .curtain h2 { margin:0 0 8px; font-size:clamp(1.45rem,4vw,2.2rem); }
+    .curtain p { margin:0 0 17px; font-weight:700; line-height:1.45; }
+    .helper-row { display:flex; justify-content:center; gap:10px; margin-top:16px; }
+    .hint { margin:16px auto 0; max-width:850px; color:#52617d; font-size:.88rem; font-weight:700; text-align:center; }
+    .result { max-width:850px; margin:18px auto 0; padding:16px; border-radius:18px; background:white; border:1px solid var(--line); text-align:center; }
+    .result[hidden] { display:none; }
+    .result h2 { margin:0 0 6px; color:#30286d; }
+    .result p { margin:0 0 13px; color:#56647d; font-weight:700; line-height:1.45; }
+    .live { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    @keyframes shake { 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+    @keyframes pulse { 50%{transform:scale(1.06);box-shadow:0 0 0 7px rgba(255,189,53,.32)} }
+    @media (max-width:600px) { .hero-mark{display:none}.stats{gap:6px;padding:10px}.stat{padding:8px 5px}.controls{padding:12px}.choice{font-size:.8rem;padding:8px}.scene{grid-template-columns:repeat(3,minmax(0,1fr));min-height:330px;border-width:5px}.object{min-height:76px}.object .name{font-size:.65rem} }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="oyunlar.html">← Oyun merkezine dön</a>
+    <section class="shell" aria-labelledby="gameTitle">
+      <header class="hero">
+        <div>
+          <span class="eyebrow">Dikkat · Görsel hafıza · Kural takibi</span>
+          <h1 id="gameTitle">Dikkat Dedektifi</h1>
+          <p>Sahneyi dikkatle incele, sonra değişen izleri bul. İleri turlarda yalnızca görev kuralına uyan izleri seç.</p>
+        </div>
+        <div class="hero-mark" aria-hidden="true">🕵️</div>
+      </header>
+
+      <div class="stats" aria-label="Oyun durumu">
+        <div class="stat"><span>Görev</span><strong id="roundText">1 / 5</strong></div>
+        <div class="stat"><span>Yıldız</span><strong id="scoreText">0</strong></div>
+        <div class="stat"><span>Odak</span><strong id="focusText">Hazır</strong></div>
+      </div>
+
+      <section class="controls" aria-label="Oyun ayarları">
+        <div>
+          <div class="level-choices" role="group" aria-label="Yaş seviyesi">
+            <button class="choice" type="button" data-level="easy" aria-pressed="true">1–2. sınıf</button>
+            <button class="choice" type="button" data-level="medium" aria-pressed="false">3–4. sınıf</button>
+            <button class="choice" type="button" data-level="hard" aria-pressed="false">5–7. sınıf</button>
+          </div>
+        </div>
+        <button class="utility" type="button" id="restart">↻ Yeni tur</button>
+      </section>
+
+      <section class="board-area">
+        <div class="mission" id="mission"><strong>Görev:</strong> Hazır olduğunda sahneyi incelemeye başla.</div>
+        <div class="scene" id="scene" aria-label="Dedektif sahnesi"></div>
+        <p class="hint" id="hint">Süre baskısı yok: sahne değiştiğinde istediğin kadar düşünebilirsin.</p>
+        <div class="result" id="result" hidden>
+          <h2 id="resultTitle">Harika gözlem!</h2>
+          <p id="resultText"></p>
+          <button class="primary" id="nextRound" type="button">Sonraki tur →</button>
+        </div>
+      </section>
+      <div class="live" id="announcer" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260901-smartboard"></script>
+  <script>
+    (() => {
+      const THINGS = [
+        { id:'apple', emoji:'🍎', changedEmoji:'🍐', name:'elma', changedName:'armut', group:'yiyecek', color:'kırmızı' },
+        { id:'book', emoji:'📘', changedEmoji:'📕', name:'kitap', changedName:'kitap', group:'okul eşyası', color:'mavi' },
+        { id:'pencil', emoji:'✏️', changedEmoji:'🖍️', name:'kalem', changedName:'boya kalemi', group:'okul eşyası', color:'sarı' },
+        { id:'bag', emoji:'🎒', changedEmoji:'🧳', name:'çanta', changedName:'valiz', group:'okul eşyası', color:'mor' },
+        { id:'turtle', emoji:'🐢', changedEmoji:'🐸', name:'kaplumbağa', changedName:'kurbağa', group:'canlı', color:'yeşil' },
+        { id:'flower', emoji:'🌸', changedEmoji:'🌻', name:'çiçek', changedName:'ayçiçeği', group:'canlı', color:'pembe' },
+        { id:'ball', emoji:'⚽', changedEmoji:'🏀', name:'top', changedName:'basketbol topu', group:'oyuncak', color:'siyah beyaz' },
+        { id:'car', emoji:'🚗', changedEmoji:'🚌', name:'araba', changedName:'otobüs', group:'oyuncak', color:'kırmızı' },
+        { id:'banana', emoji:'🍌', changedEmoji:'🥕', name:'muz', changedName:'havuç', group:'yiyecek', color:'sarı' },
+        { id:'fish', emoji:'🐟', changedEmoji:'🐙', name:'balık', changedName:'ahtapot', group:'canlı', color:'turuncu' },
+        { id:'kite', emoji:'🪁', changedEmoji:'🎈', name:'uçurtma', changedName:'balon', group:'oyuncak', color:'kırmızı' },
+        { id:'clock', emoji:'⏰', changedEmoji:'⌚', name:'saat', changedName:'kol saati', group:'eşya', color:'kırmızı' },
+        { id:'cup', emoji:'🥤', changedEmoji:'🧃', name:'bardak', changedName:'meyve suyu', group:'eşya', color:'mavi' },
+        { id:'star', emoji:'⭐', changedEmoji:'🌙', name:'yıldız', changedName:'ay', group:'doğa', color:'sarı' },
+        { id:'leaf', emoji:'🍀', changedEmoji:'🍁', name:'yonca', changedName:'yaprak', group:'doğa', color:'yeşil' }
+      ];
+      const QUESTIONS_PER_SESSION = 5;
+      const CONFIG = {
+        easy:   { items:6, changes:1, inspect:8, rule:false, label:'1–2. sınıf' },
+        medium: { items:9, changes:2, inspect:10, rule:true, label:'3–4. sınıf' },
+        hard:   { items:12,changes:3, inspect:12, rule:true, label:'5–7. sınıf' }
+      };
+      const els = {
+        scene:document.querySelector('#scene'), mission:document.querySelector('#mission'), hint:document.querySelector('#hint'),
+        round:document.querySelector('#roundText'), score:document.querySelector('#scoreText'), focus:document.querySelector('#focusText'),
+        result:document.querySelector('#result'), resultTitle:document.querySelector('#resultTitle'), resultText:document.querySelector('#resultText'),
+        next:document.querySelector('#nextRound'), announcer:document.querySelector('#announcer'), restart:document.querySelector('#restart')
+      };
+      const state = { level:'easy', round:1, score:0, sceneItems:[], required:[], distractors:[], phase:'intro', timer:null, mistakes:0, rule:null };
+      const shuffle = list => [...list].sort(() => Math.random() - .5);
+      const plural = n => n === 1 ? 'izi' : 'izi';
+      const say = message => { els.announcer.textContent = message; };
+      const updateProgress = () => { els.round.textContent = state.round + ' / ' + QUESTIONS_PER_SESSION; };
+
+      function getRule(items, number) {
+        const possibleGroups = ['canlı','okul eşyası','yiyecek','oyuncak','doğa'];
+        const possible = shuffle(possibleGroups).find(group => items.filter(item => item.group === group).length >= number);
+        if (possible) return { kind:'group', value:possible, text:`yalnızca <b>${possible}</b> olan değişiklikleri` };
+        const color = shuffle(['kırmızı','sarı','yeşil','mavi']).find(value => items.filter(item => item.color === value).length >= number);
+        return color ? { kind:'color', value:color, text:`yalnızca <b>${color}</b> olan değişiklikleri` } : null;
+      }
+      function matchesRule(item, rule) { return !rule || item[rule.kind] === rule.value; }
+      function makeRound() {
+        clearTimeout(state.timer);
+        const config = CONFIG[state.level];
+        state.phase = 'intro'; state.mistakes = 0; state.rule = null;
+        // İleri seviyelerde görev kuralının uygulanabilmesi için uygun bir sahne seç.
+        for (let attempt = 0; attempt < 30; attempt++) {
+          state.sceneItems = shuffle(THINGS).slice(0, config.items);
+          state.rule = config.rule ? getRule(state.sceneItems, config.changes) : null;
+          if (!config.rule || state.rule) break;
+        }
+        const valid = state.rule ? state.sceneItems.filter(item => matchesRule(item, state.rule)) : state.sceneItems;
+        state.required = shuffle(valid).slice(0, config.changes);
+        // Kuralı izlemek için ileri seviyelerde değişmiş ama seçilmemesi gereken bir dikkat dağıtıcı vardır.
+        state.distractors = state.rule ? shuffle(state.sceneItems.filter(item => !state.required.includes(item) && !matchesRule(item, state.rule))).slice(0, 1) : [];
+        renderIntro();
+      }
+      function objectCard(item, changed) {
+        const isChanged = changed && [...state.required, ...state.distractors].includes(item);
+        const button = document.createElement('button');
+        // Bulma aşamasında bütün kartlar tıklanabilir olmalı; aksi halde doğru cevap işaretlenmiş olur.
+        button.type = 'button'; button.className = 'object' + (changed ? ' can-choose' : '');
+        button.dataset.id = item.id;
+        button.setAttribute('aria-label','Sahnedeki nesne');
+        const emoji = isChanged ? item.changedEmoji : item.emoji;
+        const name = isChanged ? item.changedName : item.name;
+        button.innerHTML = `<span class="emoji" aria-hidden="true">${emoji}</span><span class="name">${name}</span>`;
+        if (changed) button.addEventListener('click', () => choose(item, button));
+        return button;
+      }
+      function renderObjects(changed) {
+        els.scene.innerHTML = '';
+        // Yerleşim inceleme ile bulma aşamasında sabittir; yalnızca seçili izler değişir.
+        state.sceneItems.forEach(item => els.scene.appendChild(objectCard(item, changed)));
+      }
+      function renderIntro() {
+        els.result.hidden = true;
+        renderObjects(false);
+        const config = CONFIG[state.level];
+        els.focus.textContent = 'İncele';
+        els.mission.innerHTML = `<strong>İnceleme turu:</strong> Nesnelerin yerlerini ve ayrıntılarını aklında tut.`;
+        els.hint.textContent = 'Hazır olduğunda başla; sahne ' + config.inspect + ' saniye açık kalacak.';
+        const curtain = makeCurtain('🔎','Sahneyi incelemeye hazır mısın?',`Bu görevde ${config.items} nesne var. Ardından sahnede ${config.changes} değişiklik olacak. Oturum toplam ${QUESTIONS_PER_SESSION} görevden oluşur.`, 'İncelemeye başla', startInspecting);
+        els.scene.appendChild(curtain);
+      }
+      function makeCurtain(icon, title, text, buttonText, action) {
+        const curtain = document.createElement('div'); curtain.className = 'curtain';
+        curtain.innerHTML = `<div class="curtain-card"><span class="big">${icon}</span><h2>${title}</h2><p>${text}</p><button class="primary" type="button">${buttonText}</button></div>`;
+        curtain.querySelector('button').addEventListener('click', action);
+        return curtain;
+      }
+      function startInspecting() {
+        const config = CONFIG[state.level];
+        state.phase = 'inspect';
+        els.focus.textContent = config.inspect + ' sn';
+        els.mission.innerHTML = `<strong>İncele:</strong> Nesnelerin hem yerini hem de ne olduğunu hatırla.`;
+        els.hint.textContent = 'Sahne birazdan değişecek…';
+        const curtain = els.scene.querySelector('.curtain'); if (curtain) curtain.remove();
+        let seconds = config.inspect;
+        const tick = () => {
+          els.focus.textContent = seconds + ' sn';
+          if (seconds-- <= 0) revealChanges(); else state.timer = setTimeout(tick,1000);
+        };
+        tick();
+      }
+      function revealChanges() {
+        state.phase = 'find';
+        renderObjects(true);
+        const targetText = state.rule ? state.rule.text : `değişen ${state.required.length} ${plural(state.required.length)}`;
+        els.focus.textContent = 'Bul';
+        els.mission.innerHTML = `<strong>Dedektif görevi:</strong> ${targetText} bul ve seç.`;
+        els.hint.textContent = state.rule ? 'Kural dışındaki değişiklik bir dikkat dağıtıcıdır; tüm kartlar seçilebilir, bu nedenle kuralı aklında tut.' : 'Tüm kartlar seçilebilir. Sahneye göre farklılaşan nesneyi bul.';
+        say('Sahne değişti. Değişen izleri bul.');
+      }
+      function choose(item, button) {
+        if (state.phase !== 'find' || button.classList.contains('is-picked')) return;
+        const correct = state.required.includes(item);
+        if (!correct) {
+          state.mistakes++;
+          button.classList.add('is-mistake');
+          els.focus.textContent = 'Tekrar bak';
+          els.hint.textContent = state.rule ? 'Bu değişiklik görev kuralına uymuyor. Kuralı yeniden düşün.' : 'Bu nesne değişmemiş. Sahneyi aklından geçir.';
+          say('Bu seçim görev için doğru değil. Yeniden dene.');
+          setTimeout(() => button.classList.remove('is-mistake'),450);
+          return;
+        }
+        button.classList.add('is-picked');
+        const found = document.querySelectorAll('.object.is-picked').length;
+        els.focus.textContent = found + '/' + state.required.length;
+        if (found === state.required.length) finishRound();
+        else { els.hint.textContent = 'Harika! Bir iz daha kaldı.'; say('Doğru izi buldun.'); }
+      }
+      function finishRound() {
+        state.phase = 'done';
+        const earned = Math.max(1, 3 - state.mistakes);
+        state.score += earned;
+        els.score.textContent = state.score;
+        els.focus.textContent = 'Başardın';
+        const skill = state.rule ? 'Kuralı aklında tutup dikkat dağıtıcıyı eledin.' : 'Sahnedeki değişikliği dikkatle hatırladın.';
+        const sessionComplete = state.round === QUESTIONS_PER_SESSION;
+        els.resultTitle.textContent = sessionComplete ? 'Dedektif oturumu tamamlandı!' : (state.mistakes ? 'İyi bir dedektif asla vazgeçmez!' : 'Harika gözlem!');
+        els.resultText.textContent = skill + ` Bu görevde ${earned} yıldız kazandın.` + (sessionComplete ? ` Oturum toplamın ${state.score} yıldız.` : '');
+        els.next.textContent = sessionComplete ? 'Yeni oturuma başla →' : `Sonraki görev (${state.round + 1}/${QUESTIONS_PER_SESSION}) →`;
+        els.result.hidden = false;
+        els.hint.textContent = 'Süre baskısı olmadan düşünmek de güçlü bir dikkat stratejisidir.';
+        say('Tur tamamlandı. ' + earned + ' yıldız kazandın.');
+      }
+      document.querySelectorAll('.choice').forEach(button => button.addEventListener('click', () => {
+        state.level = button.dataset.level; state.round = 1; state.score = 0;
+        updateProgress(); els.score.textContent = state.score;
+        document.querySelectorAll('.choice').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+        makeRound();
+      }));
+      els.restart.addEventListener('click', () => { state.round = 1; state.score = 0; updateProgress(); els.score.textContent = state.score; makeRound(); });
+      els.next.addEventListener('click', () => {
+        if (state.round === QUESTIONS_PER_SESSION) { state.round = 1; state.score = 0; els.score.textContent = state.score; }
+        else state.round++;
+        updateProgress();
+        makeRound();
+      });
+      updateProgress();
+      makeRound();
+    })();
+  </script>
+</body>
+</html>
