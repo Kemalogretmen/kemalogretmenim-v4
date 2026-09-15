@@ -522,6 +522,10 @@
     font-weight: 700;
     color: #1a202c;
     margin-bottom: 3px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
   }
 
   .cell-surec {
@@ -531,21 +535,20 @@
     font-style: italic;
   }
 
-  .cell-surec-more {
-    font-size: 0.66rem;
-    color: var(--accent);
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 2px;
-    display: none;
-  }
-
-  .cell-popup-hint {
-    color: var(--accent);
-    font-size: 0.65rem;
+  .learning-output-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 5px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.56);
+    color: var(--primary);
+    font-size: 0.64rem;
     font-weight: 800;
-    margin-top: 2px;
+    line-height: 1.2;
   }
+  .learning-output-more::before { content: '+'; font-size: 0.8rem; line-height: 0.7; }
 
   .tatil-plan-cell {
     min-height: 80px;
@@ -600,39 +603,51 @@
   }
   .popup-surec { font-size: 0.82rem; line-height: 1.6; color: var(--text); }
 
-  /* Hover popup */
-  .surec-popup {
-    position: absolute;
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
+  /* Öğrenme çıktıları ayrıntı penceresi */
+  .learning-output-popover {
+    position: fixed;
+    display: none;
     background: #2d3748;
     color: white;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 0.72rem;
+    padding: 13px 16px 12px;
+    border-radius: 12px;
+    font-size: 0.76rem;
     line-height: 1.5;
-    width: 260px;
-    z-index: 500;
+    width: min(340px, calc(100vw - 24px));
+    z-index: 1100;
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    pointer-events: auto;
-    display: none;
-    max-height: 180px;
+    max-height: min(280px, calc(100vh - 24px));
     overflow-y: auto;
   }
-  .surec-popup::after {
-    content: '';
+  .learning-output-popover.is-visible { display: block; }
+  .learning-output-popover h4 { font-size: 0.8rem; margin: 0 26px 8px 0; }
+  .learning-output-popover ol { margin: 0; padding-left: 18px; }
+  .learning-output-popover li + li { margin-top: 8px; }
+  .learning-output-popover-close {
     position: absolute;
-    top: -12px; left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-bottom-color: #2d3748;
+    top: 7px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
   }
-  .plan-cell.show-surec-popup {
-    overflow: visible;
-    z-index: 20;
+  .plan-cell[data-has-more="true"] { cursor: help; }
+  .plan-cell[data-has-more="true"]:focus-visible {
+    outline: 3px solid rgba(44,62,107,0.55);
+    outline-offset: -3px;
   }
-  .plan-cell.show-surec-popup .surec-popup { display: block; }
+
+  @media (max-width: 600px) {
+    .plan-cell { min-height: 68px; }
+    .plan-cell-inner { min-height: 68px; padding: 5px 6px; }
+    .cell-kazanim { -webkit-line-clamp: 3; }
+    .learning-output-popover { font-size: 0.8rem; }
+  }
 
   .exporting-a4 {
     width: 297mm !important;
@@ -1932,16 +1947,13 @@ function renderWeeklyPlan() {
 
       let kazanim = '';
       let surec = '';
-      let allSurec = '';
 
       if (!planningOpen) {
         kazanim = '';
         surec = '';
-        allSurec = '';
       } else if (dersNorm === 'ETÜT' || ders.toLowerCase().startsWith('etüt')) {
         kazanim = 'Etüt yapıldı';
         surec = 'Etüt yapıldı';
-        allSurec = 'Etüt yapıldı';
       } else {
         // Find kazanim from yillik plan
         const planKey = findPlanKey(ders);
@@ -1951,29 +1963,32 @@ function renderWeeklyPlan() {
           if (entry) {
             kazanim = entry.kazanim || '';
             const surecArr = splitSurecComponents(entry.surec);
-            surec = surecArr.slice(0,2).join(' ');
-            allSurec = entry.surec || '';
+            surec = surecArr.slice(0, 1).join(' ');
           }
         }
       }
 
       const surecTruncated = surec.length > 150 ? surec.substring(0,150) + '…' : surec;
-      const allSurecParts = splitSurecComponents(allSurec);
-      const hiddenSurec = allSurecParts.slice(2).join('\n');
-      const hasMore = hiddenSurec.trim().length > 0;
+      const learningOutcomes = splitLearningOutcomes(kazanim);
+      const visibleOutcome = learningOutcomes[0] || kazanim;
+      const hiddenOutcomes = learningOutcomes.slice(1);
+      const hasMore = hiddenOutcomes.length > 0;
+      const hiddenOutcomesHtml = hiddenOutcomes
+        .map(outcome => `<li>${escapeHtml(outcome).replace(/\n/g, '<br>')}</li>`)
+        .join('');
 
       html += `
         <td style="background:${renk.bg}">
-          <div class="plan-cell" style="position:relative" ${hasMore ? `data-has-more="true"` : ''}>
+          <div class="plan-cell" ${hasMore ? 'data-has-more="true" tabindex="0" role="button" aria-expanded="false" aria-label="Diğer öğrenme çıktılarını görüntülemek için üç saniye bekleyin"' : ''}>
             <div class="plan-cell-inner">
               <div class="cell-ders-name" style="color:${renk.dark}">${ders}</div>
               ${teacher ? `<div class="cell-teacher">Öğretmen: ${escapeHtml(teacher)}</div>` : ''}
-              <div class="cell-kazanim">${kazanim}</div>
+              <div class="cell-kazanim">${escapeHtml(visibleOutcome).replace(/\n/g,'<br>')}</div>
               <div class="cell-surec">${surecTruncated}</div>
               ${!planningOpen ? `<div class="plan-closed-note">Yıllık plan dağıtımı yapılmaz.</div>` : ''}
-              ${hasMore ? `<div class="cell-popup-hint">Beklet: devamı</div>` : ''}
+              ${hasMore ? `<span class="learning-output-more" title="Ayrıntılar için 3 saniye bekletin">${hiddenOutcomes.length} çıktı daha</span>` : ''}
             </div>
-            ${hasMore ? `<div class="surec-popup"><strong>Kalan süreç bileşenleri</strong><br>${escapeHtml(hiddenSurec).replace(/\n/g,'<br>')}</div>` : ''}
+            ${hasMore ? `<template class="learning-output-detail"><h4>Diğer öğrenme çıktıları</h4><ol>${hiddenOutcomesHtml}</ol></template>` : ''}
           </div>
         </td>
       `;
@@ -2014,23 +2029,127 @@ function splitSurecComponents(text) {
   return parts.length ? parts : [cleaned];
 }
 
+function splitLearningOutcomes(text) {
+  const cleaned = cleanCellText(text);
+  if (!cleaned) return [];
+
+  // Yıllık planlardaki çıktı kodları (ör. T.D.2.1.) yeni bir öğrenme çıktısını başlatır.
+  const outputCode = /(?=(?:[A-ZÇĞİÖŞÜ]{1,8}\.){1,4}\d+(?:\.\d+){1,4}\.?\s)/g;
+  const parts = cleaned.split(outputCode).map(part => part.trim()).filter(Boolean);
+  return parts.length ? parts : [cleaned];
+}
+
 function setupDelayedSurecPopups(root) {
+  const popoverId = 'learning-output-popover';
+  let popover = document.getElementById(popoverId);
+  if (!popover) {
+    popover = document.createElement('aside');
+    popover.id = popoverId;
+    popover.className = 'learning-output-popover';
+    popover.setAttribute('role', 'dialog');
+    popover.setAttribute('aria-live', 'polite');
+    document.body.appendChild(popover);
+  }
+
+  let activeCell = null;
+  let timer = null;
+  let touchStart = null;
+
+  const clearTimer = () => {
+    if (timer) window.clearTimeout(timer);
+    timer = null;
+  };
+
+  const close = () => {
+    clearTimer();
+    if (activeCell) activeCell.setAttribute('aria-expanded', 'false');
+    activeCell = null;
+    popover.classList.remove('is-visible');
+    popover.innerHTML = '';
+  };
+
+  const position = (point) => {
+    const gap = 14;
+    const width = popover.offsetWidth;
+    const height = popover.offsetHeight;
+    const left = Math.max(12, Math.min((point.x || 12) + gap, window.innerWidth - width - 12));
+    const top = Math.max(12, Math.min((point.y || 12) + gap, window.innerHeight - height - 12));
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+  };
+
+  const open = (cell, point) => {
+    const detail = cell.querySelector('.learning-output-detail');
+    if (!detail) return;
+    if (activeCell && activeCell !== cell) activeCell.setAttribute('aria-expanded', 'false');
+    activeCell = cell;
+    popover.innerHTML = `<button type="button" class="learning-output-popover-close" aria-label="Ayrıntıları kapat">×</button>${detail.innerHTML}`;
+    popover.querySelector('button').addEventListener('click', close);
+    popover.classList.add('is-visible');
+    cell.setAttribute('aria-expanded', 'true');
+    position(point);
+  };
+
+  const start = (cell, point) => {
+    clearTimer();
+    timer = window.setTimeout(() => open(cell, point), 3000);
+  };
+
   root.querySelectorAll('.plan-cell[data-has-more="true"]').forEach(cell => {
-    let timer = null;
-    const show = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => cell.classList.add('show-surec-popup'), 3500);
-    };
-    const hide = () => {
-      clearTimeout(timer);
-      cell.classList.remove('show-surec-popup');
-    };
-    cell.addEventListener('mouseenter', show);
-    cell.addEventListener('mouseleave', hide);
-    cell.addEventListener('touchstart', show, {passive:true});
-    cell.addEventListener('touchend', hide);
-    cell.addEventListener('touchcancel', hide);
+    let point = {x: 12, y: 12};
+    cell.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse') {
+        point = {x: event.clientX, y: event.clientY};
+        start(cell, point);
+      }
+    });
+    cell.addEventListener('pointermove', event => {
+      if (event.pointerType === 'mouse') point = {x: event.clientX, y: event.clientY};
+      if (event.pointerType !== 'mouse' && touchStart && Math.hypot(event.clientX - touchStart.x, event.clientY - touchStart.y) > 12) clearTimer();
+    });
+    cell.addEventListener('pointerleave', event => {
+      if (event.pointerType === 'mouse' && !popover.contains(event.relatedTarget)) close();
+    });
+    cell.addEventListener('pointerdown', event => {
+      if (event.pointerType === 'mouse') return;
+      touchStart = {x: event.clientX, y: event.clientY};
+      point = touchStart;
+      start(cell, point);
+    });
+    cell.addEventListener('pointerup', event => {
+      if (event.pointerType !== 'mouse') {
+        clearTimer();
+        touchStart = null;
+      }
+    });
+    cell.addEventListener('pointercancel', close);
+    cell.addEventListener('contextmenu', event => event.preventDefault());
+    cell.addEventListener('focus', () => start(cell, point));
+    cell.addEventListener('blur', () => {
+      if (!popover.contains(document.activeElement)) close();
+    });
+    cell.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        open(cell, point);
+      }
+      if (event.key === 'Escape') close();
+    });
   });
+
+  if (popover._cleanupDocumentListeners) popover._cleanupDocumentListeners();
+  const handleOutsidePointer = event => {
+    if (!popover.contains(event.target) && !event.target.closest('.plan-cell[data-has-more="true"]')) close();
+  };
+  const handleEscape = event => {
+    if (event.key === 'Escape') close();
+  };
+  document.addEventListener('pointerdown', handleOutsidePointer);
+  document.addEventListener('keydown', handleEscape);
+  popover._cleanupDocumentListeners = () => {
+    document.removeEventListener('pointerdown', handleOutsidePointer);
+    document.removeEventListener('keydown', handleEscape);
+  };
 }
 
 function getPlanEntryForSlot(planData, sinifId, gun, row, week, ders) {
