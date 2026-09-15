@@ -548,7 +548,17 @@
     font-weight: 800;
     line-height: 1.2;
   }
-  .learning-output-more::before { content: '+'; font-size: 0.8rem; line-height: 0.7; }
+  .learning-output-more::before {
+    content: 'i';
+    display: inline-grid;
+    place-items: center;
+    width: 11px;
+    height: 11px;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 0.58rem;
+    line-height: 1;
+  }
 
   .tatil-plan-cell {
     min-height: 80px;
@@ -1947,13 +1957,14 @@ function renderWeeklyPlan() {
 
       let kazanim = '';
       let surec = '';
+      let additionalOutcomes = [];
 
       if (!planningOpen) {
         kazanim = '';
         surec = '';
       } else if (dersNorm === 'ETÜT' || ders.toLowerCase().startsWith('etüt')) {
         kazanim = 'Etüt yapıldı';
-        surec = 'Etüt yapıldı';
+        surec = '';
       } else {
         // Find kazanim from yillik plan
         const planKey = findPlanKey(ders);
@@ -1962,33 +1973,30 @@ function renderWeeklyPlan() {
           const entry = getPlanEntryForSlot(planData, sinifId, gun, row, w, ders);
           if (entry) {
             kazanim = entry.kazanim || '';
-            const surecArr = splitSurecComponents(entry.surec);
-            surec = surecArr.slice(0, 1).join(' ');
+            surec = entry.surec || '';
+            additionalOutcomes = Array.isArray(entry.additionalOutcomes) ? entry.additionalOutcomes : [];
           }
         }
       }
 
-      const surecTruncated = surec.length > 150 ? surec.substring(0,150) + '…' : surec;
-      const learningOutcomes = splitLearningOutcomes(kazanim);
-      const visibleOutcome = learningOutcomes[0] || kazanim;
-      const hiddenOutcomes = learningOutcomes.slice(1);
-      const hasMore = hiddenOutcomes.length > 0;
-      const hiddenOutcomesHtml = hiddenOutcomes
-        .map(outcome => `<li>${escapeHtml(outcome).replace(/\n/g, '<br>')}</li>`)
-        .join('');
+      const hasMore = Boolean(surec || additionalOutcomes.length);
+      const additionalOutcomesHtml = additionalOutcomes.length
+        ? `<h4>Aynı hafta için diğer öğrenme çıktıları</h4><ol>${additionalOutcomes.map(outcome =>
+          `<li><strong>${escapeHtml(outcome.kazanim).replace(/\n/g, '<br>')}</strong>${outcome.surec ? `<br><span>${escapeHtml(outcome.surec).replace(/\n/g, '<br>')}</span>` : ''}</li>`
+        ).join('')}</ol>`
+        : '';
 
       html += `
         <td style="background:${renk.bg}">
-          <div class="plan-cell" ${hasMore ? 'data-has-more="true" tabindex="0" role="button" aria-expanded="false" aria-label="Diğer öğrenme çıktılarını görüntülemek için üç saniye bekleyin"' : ''}>
+          <div class="plan-cell" ${hasMore ? 'data-has-more="true" tabindex="0" role="button" aria-expanded="false" aria-label="Süreç bileşenlerini görüntülemek için üç saniye bekleyin"' : ''}>
             <div class="plan-cell-inner">
               <div class="cell-ders-name" style="color:${renk.dark}">${ders}</div>
               ${teacher ? `<div class="cell-teacher">Öğretmen: ${escapeHtml(teacher)}</div>` : ''}
-              <div class="cell-kazanim">${escapeHtml(visibleOutcome).replace(/\n/g,'<br>')}</div>
-              <div class="cell-surec">${surecTruncated}</div>
+              <div class="cell-kazanim">${escapeHtml(kazanim).replace(/\n/g,'<br>')}</div>
               ${!planningOpen ? `<div class="plan-closed-note">Yıllık plan dağıtımı yapılmaz.</div>` : ''}
-              ${hasMore ? `<span class="learning-output-more" title="Ayrıntılar için 3 saniye bekletin">${hiddenOutcomes.length} çıktı daha</span>` : ''}
+              ${hasMore ? `<span class="learning-output-more" title="Süreç bileşenleri için 3 saniye bekletin">Süreç ayrıntısı</span>` : ''}
             </div>
-            ${hasMore ? `<template class="learning-output-detail"><h4>Diğer öğrenme çıktıları</h4><ol>${hiddenOutcomesHtml}</ol></template>` : ''}
+            ${hasMore ? `<template class="learning-output-detail">${surec ? `<h4>Süreç bileşenleri</h4><div>${escapeHtml(surec).replace(/\n/g, '<br>')}</div>` : ''}${additionalOutcomesHtml}</template>` : ''}
           </div>
         </td>
       `;
@@ -2033,10 +2041,13 @@ function splitLearningOutcomes(text) {
   const cleaned = cleanCellText(text);
   if (!cleaned) return [];
 
-  // Yıllık planlardaki çıktı kodları (ör. T.D.2.1.) yeni bir öğrenme çıktısını başlatır.
-  const outputCode = /(?=(?:[A-ZÇĞİÖŞÜ]{1,8}\.){1,4}\d+(?:\.\d+){1,4}\.?\s)/g;
-  const parts = cleaned.split(outputCode).map(part => part.trim()).filter(Boolean);
-  return parts.length ? parts : [cleaned];
+  // Yıllık planlardaki çıktı kodları (ör. T.D.2.1., MAT.2.3.1., HB.2.1.1.)
+  // yeni bir öğrenme çıktısını başlatır. Kod dışındaki a), b), c) satırları
+  // süreç bileşeni olduğundan burada asla ayrı bir çıktı olarak alınmaz.
+  const outputCode = /(^|\n\s*)(?=(?:[A-ZÇĞİÖŞÜ]{1,8}\.){1,4}\d+(?:\.\d+){1,4}\.?\s)/gm;
+  const starts = Array.from(cleaned.matchAll(outputCode), match => match.index + match[0].length);
+  if (starts.length < 2) return [cleaned];
+  return starts.map((start, index) => cleaned.slice(start, starts[index + 1]).trim()).filter(Boolean);
 }
 
 function setupDelayedSurecPopups(root) {
@@ -2158,6 +2169,14 @@ function getPlanEntryForSlot(planData, sinifId, gun, row, week, ders) {
   const weeklyEntries = planData.filter(e => Number(e.hafta) === Number(week));
   if (weeklyEntries.length > 0) {
     const occurrence = getLessonOccurrenceInWeek(sinifId, gun, row, week, ders);
+    const scheduledEntry = weeklyEntries.find(entry =>
+      Number.isFinite(entry.slotStart) && Number.isFinite(entry.slotCount) &&
+      occurrence >= entry.slotStart && occurrence < entry.slotStart + entry.slotCount
+    );
+    if (scheduledEntry) return scheduledEntry;
+
+    // Önceki sürümlerde kaydedilmiş planlarda ders saati dağılımı yoktur.
+    // Bu kayıtlar yeniden yüklenene kadar eski sıralı eşleştirme korunur.
     return weeklyEntries[Math.min(occurrence, weeklyEntries.length - 1)];
   }
 
@@ -2697,80 +2716,156 @@ function parseSerbest(text) {
 
 
 function parseYillikPlanRows(tablesOrRows) {
-  const entries = [];
+  const sourceEntries = [];
   const tables = Array.isArray(tablesOrRows[0]?.[0]) ? tablesOrRows : [tablesOrRows];
 
   tables.forEach(rows => {
     if (!Array.isArray(rows) || rows.length < 2) return;
 
-    let headerRow = -1;
-    let subHeaderRow = -1;
-    for (let i = 0; i < Math.min(6, rows.length); i++) {
-      const rowStr = rows[i].join(' ').toUpperCase();
-      if (rowStr.includes('HAFTA') && (rowStr.includes('ÇIKTI') || rowStr.includes('KAZANIM') || rowStr.includes('ÖĞRENME'))) {
-        headerRow = i; break;
-      }
-    }
-    if (headerRow === -1) return;
-
-    let haftaCol = -1, kazanimCol = -1, surecCol = -1, ayCol = -1;
-    for (let i = headerRow; i < Math.min(headerRow + 3, rows.length); i++) {
-      const normRow = rows[i].map(normalizeDersKey);
-      if (normRow.some(c => c === 'OGRENME CIKTILARI' || c.includes('OGRENME CIKTILARI')) &&
-          normRow.some(c => c === 'SUREC BILESENLERI' || c.includes('SUREC BILESENLERI'))) {
-        subHeaderRow = i;
-        break;
-      }
-    }
-
-    const headerForCols = rows[subHeaderRow >= 0 ? subHeaderRow : headerRow];
-    headerForCols.forEach((cell, ci) => {
-      const c = normalizeDersKey(cell);
-      if (c === 'HAFTA' || c.endsWith(' HAFTA') || c.includes('HAFTA')) {
-        if (haftaCol === -1) haftaCol = ci;
-      }
-      if ((c === 'OGRENME CIKTILARI' || c.includes('OGRENME CIKTILARI') || c === 'KAZANIMLAR') && kazanimCol === -1) kazanimCol = ci;
-      if ((c === 'SUREC BILESENLERI' || c.includes('SUREC BILESENLERI')) && surecCol === -1) surecCol = ci;
-      if ((c === 'AY' || c.endsWith(' AY')) && ayCol === -1) ayCol = ci;
-    });
-
-    if (haftaCol === -1) haftaCol = 1;
-    if (kazanimCol === -1) kazanimCol = 5;
-    if (surecCol === -1) surecCol = 6;
-    if (surecCol === kazanimCol) surecCol = kazanimCol + 1;
-    if (ayCol === -1) ayCol = 0;
+    const schema = findAnnualPlanColumns(rows);
+    if (!schema) return;
 
     let currentWeekInfo = null;
-    for (let i = Math.max(headerRow, subHeaderRow) + 1; i < rows.length; i++) {
+    let currentMonth = '';
+    let currentHours = '';
+    for (let i = schema.headerRow + 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.every(c => !cleanCellText(c))) continue;
 
       const rowJoined = row.join(' ').toUpperCase();
       if (/ARA TAT[İI]L[İI]|YARIYIL TAT[İI]L[İI]/.test(rowJoined) && !/\d+\s*\.\s*HAFTA/i.test(rowJoined)) continue;
 
-      const weekInfo = extractWeekInfo(row[haftaCol]) || row.map(extractWeekInfo).find(Boolean);
-      if (weekInfo) currentWeekInfo = weekInfo;
+      const weekInfo = extractWeekInfo(row[schema.haftaCol]) || row.map(extractWeekInfo).find(Boolean);
+      if (weekInfo) {
+        currentWeekInfo = weekInfo;
+        currentHours = '';
+      }
       const effectiveWeekInfo = weekInfo || currentWeekInfo;
       if (!effectiveWeekInfo) continue;
 
-      const kazanim = cleanCellText(row[kazanimCol]);
-      const surec = cleanCellText(row[surecCol]);
+      const month = cleanCellText(row[schema.ayCol]);
+      if (month && !/OKUL TEMELLİ PLANLAMA/i.test(month)) currentMonth = month;
+
+      const hours = cleanCellText(row[schema.dersSaatiCol]);
+      if (hours) currentHours = hours;
+
+      const kazanim = cleanCellText(row[schema.kazanimCol]);
+      const surec = cleanCellText(row[schema.surecCol]);
       if (!isValidKazanimText(kazanim)) continue;
 
-      entries.push({
-        hafta: effectiveWeekInfo.hafta,
-        tarihLabel: effectiveWeekInfo.tarihRaw,
-        tarihStart: effectiveWeekInfo.tarih?.start || null,
-        tarihEnd: effectiveWeekInfo.tarih?.end || null,
-        kazanim,
-        surec,
-        ay: cleanCellText(row[ayCol])
+      const outcomes = splitLearningOutcomes(kazanim);
+      const processGroups = splitProcessGroups(surec, outcomes.length);
+      const hourParts = parseLessonHourParts(currentHours);
+      const hasExplicitOutcomeHours = outcomes.length > 1 && hourParts.length === outcomes.length;
+
+      outcomes.forEach((outcome, index) => {
+        sourceEntries.push({
+          hafta: effectiveWeekInfo.hafta,
+          tarihLabel: effectiveWeekInfo.tarihRaw,
+          tarihStart: effectiveWeekInfo.tarih?.start || null,
+          tarihEnd: effectiveWeekInfo.tarih?.end || null,
+          ay: currentMonth,
+          kazanim: outcome,
+          surec: processGroups[index] || '',
+          dersSaati: currentHours,
+          explicitSlotCount: hasExplicitOutcomeHours ? hourParts[index] : null
+        });
       });
     }
   });
 
-  entries.sort((a,b) => a.hafta - b.hafta);
-  return entries;
+  return assignLessonSlots(sourceEntries);
+}
+
+function findAnnualPlanColumns(rows) {
+  for (let rowIndex = 0; rowIndex < Math.min(12, rows.length); rowIndex++) {
+    const header = rows[rowIndex].map(normalizeDersKey);
+    const findColumn = matcher => header.findIndex(matcher);
+    const ayCol = findColumn(cell => cell === 'AY' || cell.endsWith(' AY'));
+    const haftaCol = findColumn(cell => cell === 'HAFTA' || cell.includes('HAFTA'));
+    const dersSaatiCol = findColumn(cell => cell.includes('DERS SAATI') || cell === 'SAAT');
+    const kazanimCol = findColumn(cell => cell === 'OGRENME CIKTILARI' || cell.includes('OGRENME CIKTILARI') || cell === 'KAZANIMLAR');
+    const surecCol = findColumn(cell => cell === 'SUREC BILESENLERI' || cell.includes('SUREC BILESENLERI'));
+    if ([ayCol, haftaCol, dersSaatiCol, kazanimCol, surecCol].every(column => column >= 0)) {
+      return {headerRow: rowIndex, ayCol, haftaCol, dersSaatiCol, kazanimCol, surecCol};
+    }
+  }
+  return null;
+}
+
+function parseLessonHourParts(value) {
+  return cleanCellText(value)
+    .match(/\d+/g)
+    ?.map(Number)
+    .filter(hours => Number.isFinite(hours) && hours > 0) || [];
+}
+
+function splitProcessGroups(text, outcomeCount) {
+  const cleaned = cleanCellText(text);
+  if (!cleaned) return Array(outcomeCount).fill('');
+  if (outcomeCount === 1) return [cleaned];
+
+  const blocks = cleaned.split(/\n\s*\n+/).map(cleanCellText).filter(Boolean);
+  if (blocks.length === outcomeCount) return blocks;
+
+  // Aynı hücrede iki çıktı için süreçler çoğu zaman ikinci "a)" satırında başlar.
+  const starts = cleaned.split(/(?=\n\s*a\))/i).map(cleanCellText).filter(Boolean);
+  if (starts.length === outcomeCount) return starts;
+
+  const groups = Array(outcomeCount).fill('');
+  groups[outcomeCount - 1] = cleaned;
+  return groups;
+}
+
+function assignLessonSlots(sourceEntries) {
+  const byWeek = new Map();
+  sourceEntries.forEach(entry => {
+    if (!byWeek.has(entry.hafta)) byWeek.set(entry.hafta, []);
+    byWeek.get(entry.hafta).push(entry);
+  });
+
+  const assigned = [];
+  byWeek.forEach(entries => {
+    const totalHours = parseLessonHourParts(entries.find(entry => entry.dersSaati)?.dersSaati || '').reduce((sum, value) => sum + value, 0);
+    if (!totalHours) {
+      assigned.push(...entries);
+      return;
+    }
+
+    const explicitTotal = entries.reduce((sum, entry) => sum + (entry.explicitSlotCount || 0), 0);
+    let slotCounts;
+    if (entries.length === 1) {
+      slotCounts = [totalHours];
+    } else if (explicitTotal === totalHours && entries.every(entry => entry.explicitSlotCount)) {
+      slotCounts = entries.map(entry => entry.explicitSlotCount);
+    } else if (entries.length <= totalHours) {
+      const base = Math.floor(totalHours / entries.length);
+      const remainder = totalHours % entries.length;
+      slotCounts = entries.map((entry, index) => base + (index < remainder ? 1 : 0));
+    } else {
+      slotCounts = entries.map((entry, index) => index < totalHours ? 1 : 0);
+    }
+
+    let slotStart = 0;
+    entries.forEach((entry, index) => {
+      const slotCount = slotCounts[index];
+      if (!slotCount) {
+        const target = assigned[assigned.length - 1];
+        if (target && target.hafta === entry.hafta) {
+          if (!target.additionalOutcomes) target.additionalOutcomes = [];
+          target.additionalOutcomes.push({kazanim: entry.kazanim, surec: entry.surec});
+        }
+        return;
+      }
+      entry.slotStart = slotStart;
+      entry.slotCount = slotCount;
+      slotStart += slotCount;
+      delete entry.explicitSlotCount;
+      assigned.push(entry);
+    });
+  });
+
+  return assigned.sort((a, b) => a.hafta - b.hafta || (a.slotStart || 0) - (b.slotStart || 0));
 }
 
 function isValidKazanimText(text) {
