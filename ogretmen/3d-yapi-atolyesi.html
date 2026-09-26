@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="description" content="Geometrik cisimlerle yapı kurma atölyesi.">
+  <title>3D Yapı Atölyesi - Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/ogretmen/3d-yapi-builder.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="/ogretmen/3d-yapi-builder.js"></script>
+</head>
+<body>
+  <main class="builder-shell">
+    <h1 class="sr-only">3D Yapı Atölyesi</h1>
+    <div id="stage"></div>
+    <div class="hint">Cismi sürükle · Boş alanı sürükleyerek görünümü döndür · Tekerlekle yakınlaş</div>
+    <aside class="builder-panel left-panel">
+      <div class="panel-head"><i class="panel-icon fas fa-cubes"></i><div><p class="panel-title">3D Yapı Atölyesi</p><p class="panel-sub">Matematik Araçları · Geometri</p></div></div>
+      <section><b>CİSİM EKLE</b><div class="grid shapes"><button data-shape="cube">🧊 Küp</button><button data-shape="box">🧱 Prizma</button><button data-shape="cylinder">🥫 Silindir</button><button data-shape="cone">🍦 Koni</button><button data-shape="sphere">⚽ Küre</button><button data-shape="roof">⛺ Üçgen prizma</button></div></section>
+      <section><b>RENK</b><div class="grid colors" id="colors"></div></section>
+      <div class="grid"><button id="bridge">🌉 Köprü</button><button id="robot">🤖 Robot</button><button id="house">🏠 Ev</button><button id="rocket">🚀 Roket</button><button id="tower">🗼 Kule</button></div>
+    </aside>
+    <aside class="builder-panel right-panel">
+      <div class="task"><b id="taskCount">GÖREV 1 / 5</b><span id="taskText">Kırmızı renkte bir küp ekle.</span><button class="primary" id="done">Yaptım ✓</button></div>
+      <div class="selected" id="selected"><b id="selectedName">Cisim seçili</b><div class="grid"><button id="rotate">↻ Döndür</button><button id="copy">▣ Kopyala</button><button id="remove">🗑 Sil</button><button id="fit">⇲ Alta uydur</button></div></div>
+      <section><b>KAMERA</b><div class="grid"><button id="iso">◈ İzometrik</button><button id="top">↓ Üstten</button><button id="near">＋ Yakın</button><button id="far">－ Uzak</button></div></section>
+      <div class="grid"><button id="clear">🧹 Temizle</button><button class="primary" id="photo">📷 Fotoğraf</button></div>
+      <p>Her cisim destek yüzeyini algılar; boşlukta bırakılan cisim yerçekimiyle zemine veya uygun bir yüzeye iner.</p>
+    </aside>
+  </main>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260926-dock-size-buttons"></script>
+</body>
+</html>

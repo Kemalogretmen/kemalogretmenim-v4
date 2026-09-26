@@ -1465,6 +1465,9 @@
             <button class="side-btn" onclick="showPanel('menuler')" id="btn-menuler">
               <span class="em">🔗</span><span>Ekstra Menü</span>
             </button>
+            <button class="side-btn" onclick="showPanel('dock')" id="btn-dock">
+              <span class="em">⌘</span><span>Kısayol Dock'u</span>
+            </button>
             <button class="side-btn" onclick="showPanel('adminler')" id="btn-adminler">
               <span class="em">👥</span><span>Alt Adminler</span>
             </button>
@@ -2082,6 +2085,40 @@
         </div>
       </div>
 
+      <!-- ══ KISAYOL DOCK ══ -->
+      <div class="panel" id="panel-dock">
+        <div class="card">
+          <div class="card-title">⌘ Sayfa Altı Kısayol Dock'u</div>
+          <p style="margin:-4px 0 18px;font-size:13px;color:var(--slate);line-height:1.55;">Normal sayfalarda görünür; hızlı okuma ve sınav/test ekranlarında otomatik gizlenir. Ziyaretçiler dock'u kapatabilir veya boyutunu değiştirebilir.</p>
+          <div class="form-row">
+            <div>
+              <label>Başlık</label>
+              <input type="text" id="dockBaslik" placeholder="Örn: Sınıf Panosu">
+            </div>
+            <div>
+              <label>Bağlantı</label>
+              <input type="text" id="dockLink" placeholder="/sinif-tahtasi.html">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label>Emoji (ikon yüklenmezse kullanılır)</label>
+              <input type="text" id="dockEmoji" placeholder="📌" maxlength="12">
+            </div>
+            <div>
+              <label>İkon görseli (PNG, JPG, SVG, WebP · en çok 2 MB)</label>
+              <input type="file" id="dockIconFile" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+            </div>
+          </div>
+          <button class="btn-add" onclick="addDockItem()">+ Dock Kısayolu Ekle</button>
+          <p id="dockUploadStatus" style="margin-top:12px;font-size:13px;color:var(--muted);"></p>
+        </div>
+        <div class="card">
+          <div class="card-title">⌘ Dock'taki Kısayollar</div>
+          <div class="item-list" id="dockList"></div>
+        </div>
+      </div>
+
       <!-- ══ ŞİFRE DEĞİŞTİR ══ -->
       <div class="panel" id="panel-sifre">
         <div class="card" style="max-width:440px;">
@@ -2261,6 +2298,6 @@
 <script src="/js/admin-shell.js?v=20260729-ebook"></script>
 <script src="/js/content-reactions.js"></script>
 <script src="/js/admin-system-health.js?v=20260721-modular-1"></script>
-<script src="/js/admin-dashboard.js?v=20260721-modular-1"></script>
+<script src="/js/admin-dashboard.js?v=20260926-dock-size-buttons"></script>
 </body>
 </html>

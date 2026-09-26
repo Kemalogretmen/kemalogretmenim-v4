@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Geometrik Cisimler ve Katlanabilir Açılımlar - Kemal Öğretmenim</title>
     
-    <link rel="stylesheet" href="/css/style.css?v=20260903-audit-polish">
+    <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -196,9 +196,10 @@
     </main>
 
     <script src="/js/site-data.js"></script>
-    <script src="/js/site.js?v=20260903-mb-tools"></script>
+    <script src="/js/site.js?v=20260926-dock-home"></script>
     <script>
         let scene, camera, renderer, controls, raycaster, mouse;
+        let floorObjects = [];
         
         let pivotGroup = null;  // Yüksekliği ayarlayarak yere batmayı engeller
         let tumbleGroup = null; // Kendi merkezi etrafında takla atmasını sağlar
@@ -289,9 +290,9 @@
 
             // Zemin
             const gridHelper = new THREE.GridHelper(2000, 40, 0xaaaaaa, 0xdddddd);
-            gridHelper.position.y = -0.5; scene.add(gridHelper);
+            gridHelper.position.y = -0.5; scene.add(gridHelper); floorObjects.push(gridHelper);
             const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0xf8fbff, depthWrite: false }));
-            ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground);
+            ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground); floorObjects.push(ground);
 
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
@@ -325,7 +326,20 @@
             return mesh;
         }
 
-        function createCircleFace(radius, segments, colorHex) {
+        function createCircleOutline(radius, segments, colorHex) {
+            const points = [];
+            const count = segments || 96;
+            for (let i = 0; i < count; i += 1) {
+                const angle = (i / count) * Math.PI * 2;
+                points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.65, Math.sin(angle) * radius));
+            }
+            return new THREE.LineLoop(
+                new THREE.BufferGeometry().setFromPoints(points),
+                new THREE.LineBasicMaterial({ color: colorHex || 0x333333 })
+            );
+        }
+
+        function createCircleFace(radius, segments, colorHex, edgeColor) {
             const geo = new THREE.CircleGeometry(radius, segments || 80);
             geo.rotateX(-Math.PI / 2);
             const mat = new THREE.MeshLambertMaterial({
@@ -334,11 +348,11 @@
             });
             const mesh = new THREE.Mesh(geo, mat);
             mesh.castShadow = true; mesh.receiveShadow = true;
-            mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x333333 })));
+            mesh.add(createCircleOutline(radius, segments || 80, edgeColor || 0x333333));
             return mesh;
         }
 
-        function createMorphSurface(columns, rows, mapper, colorHex) {
+        function createMorphSurface(columns, rows, mapper, colorHex, startAt, endAt, opacityMapper) {
             const positions = [];
             const indices = [];
             for (let y = 0; y <= rows; y += 1) {
@@ -367,13 +381,21 @@
             const part = {
                 mesh,
                 update: function(t) {
+                    const localT = stagedProgress(t, startAt, endAt);
+                    if (opacityMapper) {
+                        const nextOpacity = opacityMapper(localT, t);
+                        const wasTransparent = mat.transparent;
+                        mat.opacity = nextOpacity;
+                        mat.transparent = nextOpacity < 0.999;
+                        if (mat.transparent !== wasTransparent) mat.needsUpdate = true;
+                    }
                     const pos = geo.attributes.position;
                     let i = 0;
                     for (let yy = 0; yy <= rows; yy += 1) {
                         const v = yy / rows;
                         for (let xx = 0; xx <= columns; xx += 1) {
                             const u = xx / columns;
-                            const p = mapper(u, v, t);
+                            const p = mapper(u, v, localT);
                             pos.setXYZ(i, p.x, p.y, p.z);
                             i += 1;
                         }
@@ -392,6 +414,18 @@
         function lerp(a, b, t) { return a + (b - a) * t; }
         function mixVec(a, b, t) {
             return new THREE.Vector3(lerp(a.x, b.x, t), lerp(a.y, b.y, t), lerp(a.z, b.z, t));
+        }
+        function clamp01(value) { return Math.max(0, Math.min(1, value)); }
+        function easeInOut(value) {
+            const t = clamp01(value);
+            return t * t * (3 - 2 * t);
+        }
+        function stagedProgress(t, startAt, endAt) {
+            if (startAt == null && endAt == null) return clamp01(t);
+            const start = startAt == null ? 0 : startAt;
+            const end = endAt == null ? 1 : endAt;
+            if (end <= start) return t >= end ? 1 : 0;
+            return easeInOut((t - start) / (end - start));
         }
 
         function createMorphTriangle(openVerts, closedVerts, colorHex) {
@@ -436,13 +470,25 @@
             return part;
         }
 
-        function addMorphCircle(radius, openX, openZ, closedY, colorHex) {
-            const mesh = createCircleFace(radius, 96, colorHex);
+        function addMorphCircle(radius, openX, openZ, closedY, colorHex, startAt, endAt, closedX, closedZ, opacityMapper, edgeColor) {
+            const mesh = createCircleFace(radius, 96, colorHex, edgeColor);
             netGroup.add(mesh);
             const part = {
                 mesh,
                 update: function(t) {
-                    mesh.position.set(lerp(openX, 0, t), lerp(0, closedY, t), lerp(openZ, 0, t));
+                    const localT = stagedProgress(t, startAt, endAt);
+                    if (opacityMapper) {
+                        const nextOpacity = opacityMapper(localT, t);
+                        const wasTransparent = mesh.material.transparent;
+                        mesh.material.opacity = nextOpacity;
+                        mesh.material.transparent = nextOpacity < 0.999;
+                        if (mesh.material.transparent !== wasTransparent) mesh.material.needsUpdate = true;
+                    }
+                    mesh.position.set(
+                        lerp(openX, closedX == null ? 0 : closedX, localT),
+                        lerp(0, closedY, localT),
+                        lerp(openZ, closedZ == null ? 0 : closedZ, localT)
+                    );
                 }
             };
             part.update(0);
@@ -450,19 +496,83 @@
             return mesh;
         }
 
+        function addMorphCirclePath(radius, mapper, colorHex, startAt, endAt, opacityMapper, edgeColor) {
+            const mesh = createCircleFace(radius, 96, colorHex, edgeColor);
+            netGroup.add(mesh);
+            const part = {
+                mesh,
+                update: function(t) {
+                    const localT = stagedProgress(t, startAt, endAt);
+                    if (opacityMapper) {
+                        const nextOpacity = opacityMapper(localT, t);
+                        const wasTransparent = mesh.material.transparent;
+                        mesh.material.opacity = nextOpacity;
+                        mesh.material.transparent = nextOpacity < 0.999;
+                        if (mesh.material.transparent !== wasTransparent) mesh.material.needsUpdate = true;
+                    }
+                    const point = mapper(localT, t);
+                    mesh.position.set(point.x, point.y, point.z);
+                }
+            };
+            part.update(0);
+            morphParts.push(part);
+            return mesh;
+        }
+
+        function addMorphLine(pointCount, mapper, colorHex, startAt, endAt) {
+            const geo = new THREE.BufferGeometry();
+            const positions = new Array(pointCount * 3).fill(0);
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: colorHex || 0x334155, linewidth: 3 }));
+            netGroup.add(line);
+            const part = {
+                line,
+                update: function(t) {
+                    const localT = stagedProgress(t, startAt, endAt);
+                    const pos = geo.attributes.position;
+                    for (let i = 0; i < pointCount; i += 1) {
+                        const p = mapper(i / (pointCount - 1), localT);
+                        pos.setXYZ(i, p.x, p.y + 0.7, p.z);
+                    }
+                    pos.needsUpdate = true;
+                    geo.computeBoundingSphere();
+                }
+            };
+            part.update(0);
+            morphParts.push(part);
+            return line;
+        }
+
         function buildCylinderNet() {
             const radius = 52;
             const height = 132;
             const circumference = 2 * Math.PI * radius;
-            createMorphSurface(64, 10, function(u, v, t) {
+            const capCenterZ = 0;
+            function cylinderPoint(u, v, t) {
                 const flatX = (u - 0.5) * circumference;
-                const flatZ = (v - 0.5) * height;
-                const angle = (u - 0.5) * Math.PI * 2;
-                const folded = new THREE.Vector3(Math.sin(angle) * radius, (v - 0.5) * height, Math.cos(angle) * radius);
-                return mixVec(new THREE.Vector3(flatX, 0, flatZ), folded, t);
-            }, 0x4f8cff);
-            addMorphCircle(radius, 0, -height / 2 - radius - 16, -height / 2, 0xfff176);
-            addMorphCircle(radius, 0, height / 2 + radius + 16, height / 2, 0xa7f3d0);
+                const flatZ = radius + v * height;
+                if (t <= 0.001) return new THREE.Vector3(flatX, 0, flatZ);
+                const liftT = stagedProgress(t, 0, 0.42);
+                const angle = (u - 0.5) * Math.PI * 2 * t;
+                const bendRadius = radius / t;
+                return new THREE.Vector3(
+                    Math.sin(angle) * bendRadius,
+                    v * height * liftT,
+                    capCenterZ + radius + (Math.cos(angle) - 1) * bendRadius + v * height * (1 - liftT)
+                );
+            }
+            createMorphSurface(64, 10, cylinderPoint, 0x7c83e6, 0, 1, function() { return 0.92; });
+            addMorphLine(80, function(u, t) { return cylinderPoint(u, 0, t); }, 0xd6de00, 0, 1);
+            addMorphLine(80, function(u, t) { return cylinderPoint(u, 1, t); }, 0xd6de00, 0, 1);
+            addMorphLine(16, function(v, t) { return cylinderPoint(0, v, t); }, 0xd6de00, 0, 1);
+            addMorphLine(16, function(v, t) { return cylinderPoint(1, v, t); }, 0xd6de00, 0, 1);
+            addMorphCircle(radius, 0, capCenterZ, 0, 0x8f91df, 0, 1, 0, capCenterZ, function() { return 0.96; }, 0xd6de00);
+            addMorphCirclePath(radius, function(t) {
+                const liftT = stagedProgress(t, 0, 0.42);
+                const settleT = stagedProgress(t, 0.55, 1);
+                const tangentZ = capCenterZ + height * (1 - liftT) + radius * 2;
+                return new THREE.Vector3(0, height * liftT, lerp(tangentZ, capCenterZ, settleT));
+            }, 0x8f91df, 0, 1, function() { return 0.96; }, 0xd6de00);
         }
 
         function buildConeNet() {
@@ -470,16 +580,36 @@
             const height = 142;
             const slant = Math.sqrt(radius * radius + height * height);
             const sectorAngle = (2 * Math.PI * radius) / slant;
-            createMorphSurface(56, 14, function(u, v, t) {
-                const radial = v * slant;
+            const capCenterZ = 0;
+            const flatApex = new THREE.Vector3(0, 0, capCenterZ + radius + slant);
+            const foldedApex = new THREE.Vector3(0, height, capCenterZ);
+            function conePoint(u, v, t) {
                 const sectorPhi = (u - 0.5) * sectorAngle;
-                const flat = new THREE.Vector3(Math.sin(sectorPhi) * radial, 0, Math.cos(sectorPhi) * radial - slant * 0.52);
-                const fullTheta = (u - 0.5) * Math.PI * 2;
-                const ringRadius = v * radius;
-                const folded = new THREE.Vector3(Math.sin(fullTheta) * ringRadius, (1 - v) * height, Math.cos(fullTheta) * ringRadius);
-                return mixVec(flat, folded, t);
-            }, 0xff8a65);
-            addMorphCircle(radius, 0, slant * 0.56 + radius + 18, 0, 0xa7f3d0);
+                const flatBase = new THREE.Vector3(
+                    Math.sin(sectorPhi) * slant,
+                    0,
+                    capCenterZ + radius + slant - Math.cos(sectorPhi) * slant
+                );
+                const flatPoint = mixVec(flatApex, flatBase, v);
+                if (t <= 0.001) return flatPoint;
+
+                const angle = (u - 0.5) * Math.PI * 2 * t;
+                const bendRadius = radius / t;
+                const wrappedBase = new THREE.Vector3(
+                    Math.sin(angle) * bendRadius,
+                    0,
+                    capCenterZ + radius + (Math.cos(angle) - 1) * bendRadius
+                );
+                const basePoint = mixVec(flatBase, wrappedBase, t);
+                const apexLiftT = stagedProgress(t, 0, 0.65);
+                const apexPoint = mixVec(flatApex, foldedApex, apexLiftT);
+                return mixVec(apexPoint, basePoint, v);
+            }
+            createMorphSurface(56, 14, conePoint, 0xff8a65, 0, 1, function() { return 0.9; });
+            addMorphLine(80, function(u, t) { return conePoint(u, 1, t); }, 0xd6de00, 0, 1);
+            addMorphLine(16, function(v, t) { return conePoint(0, v, t); }, 0xd6de00, 0, 1);
+            addMorphLine(16, function(v, t) { return conePoint(1, v, t); }, 0xd6de00, 0, 1);
+            addMorphCircle(radius, 0, capCenterZ, 0, 0x8f91df, 0, 1, 0, capCenterZ, function() { return 0.96; }, 0xd6de00);
         }
 
         function buildSphereNet() {
@@ -579,6 +709,7 @@
             if (currentShape === 'rect') { w = 140; h = 80; d = 100; cy = 40; }
             if (currentShape === 'tri') { w = 100; h = 100; d = 140; cy = (w * Math.sqrt(3)/2) / 2; }
             if (currentShape === 'squarePyramid' || currentShape === 'triPyramid' || currentShape === 'cylinder' || currentShape === 'cone' || currentShape === 'sphere') { cy = 0; }
+            updateFloorVisibility();
             updateShapeNote();
 
             // Kritik Çözüm 1: netGroup'u Y ekseninde şeklin merkezi kadar aşağı kaydırıyoruz.
@@ -667,6 +798,23 @@
                 if (h.axis === 'z') h.group.rotation.z = t * h.maxAngle;
             });
             morphParts.forEach(part => part.update(t));
+            keepModelAboveGround();
+        }
+
+        function keepModelAboveGround() {
+            if (!tumbleGroup || !pivotGroup) return;
+            scene.updateMatrixWorld(true);
+            const box = new THREE.Box3().setFromObject(tumbleGroup);
+            if (box.min.y !== Infinity) {
+                const groundClearance = currentShape === 'cylinder' ? 8 : 0;
+                pivotGroup.position.y += (groundClearance - box.min.y);
+            }
+        }
+
+        function updateFloorVisibility() {
+            floorObjects.forEach(function(object) {
+                object.visible = currentShape !== 'cylinder' && currentShape !== 'cone';
+            });
         }
 
         // --- MODELİ TAKLA ATTIRMA (TUMBLE) ---
@@ -793,7 +941,7 @@
                 note.textContent = 'Küre düzleme tek parça kusursuz açılamaz; burada derslerde kullanılan dilimli küre modeli gösterilir.';
                 note.classList.add('show');
             } else if (currentShape === 'cylinder' || currentShape === 'cone') {
-                note.textContent = 'Eğrisel yüzeyler gerçek açılım şekline göre kapatılır.';
+                note.textContent = 'Tabanlar yan yüzeye temas eden gerçek açılım düzeninden kapanır.';
                 note.classList.add('show');
             } else {
                 note.textContent = '';
@@ -844,18 +992,6 @@
                 tumbleGroup.quaternion.slerp(targetModelQuaternion, 0.15);
             }
 
-            // --- ZEMİNE BATMAYI ENGELLEYEN DİNAMİK YÜKSEKLİK HESAPLAMASI ---
-            // Kritik Çözüm 3: Modeli saniyede 60 kez tarayarak en alt noktasını (min.y) buluyor 
-            // ve bu noktanın her zaman yer düzlemi (0) üzerinde kalmasını sağlıyoruz.
-            if(tumbleGroup && pivotGroup) {
-                scene.updateMatrixWorld(true);
-                const box = new THREE.Box3().setFromObject(tumbleGroup);
-                
-                if(box.min.y !== Infinity) {
-                    pivotGroup.position.y += (0 - box.min.y);
-                }
-            }
-
             if (isAutoFolding) {
                 foldProgress += 0.008 * foldDirection;
                 if (foldProgress > 1) { foldProgress = 1; foldDirection = -1; }
@@ -864,6 +1000,8 @@
                 const percent = Math.round(foldProgress * 100);
                 slider.value = percent; percentLabel.innerText = percent + '%';
                 updateFold(foldProgress);
+            } else {
+                keepModelAboveGround();
             }
             renderer.render(scene, camera);
         }

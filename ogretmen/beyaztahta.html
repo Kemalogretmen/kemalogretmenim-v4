@@ -11,8 +11,9 @@
   <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
   <meta property="og:site_name" content="Kemal Öğretmenim">
   <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=20260903-audit-polish">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="/css/whiteboard-icons.css?v=20260926-math1">
+  <link rel="stylesheet" href="/css/whiteboard-math.css?v=20260926-math1">
     <title>Akıllı Tahtam — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
@@ -375,27 +376,141 @@
         ),
         var(--board-bg);
     }
-    .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-user-drag:none; }
+    .board-surface { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-user-drag:none; contain: strict; }
     .board-overlay-text { position: absolute; min-width: 150px; min-height: 50px; resize: both; padding: 10px; border-radius: 12px; border: 2px dashed var(--purple); background: rgba(255,255,255,0.95); color: var(--navy); font: 800 24px/1.3 'Nunito', sans-serif; outline: none; z-index: 12; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
 
-    /* AÇIÖLÇER (İLETKİ) CSS */
-    .board-protractor {
-      position: absolute; left: 0; top: 0; width: 440px; height: 240px; display: none; z-index: 50;
-      transform-origin: 220px 220px;
+    /* Kum Havuzu modu */
+    .sandbox-layer {
+      position: absolute; inset: 0; z-index: 18; display: none;
+      padding: clamp(14px, 2.2vw, 30px);
+      background:
+        radial-gradient(circle at 18% 10%, rgba(255,255,255,0.76), transparent 30%),
+        linear-gradient(135deg, rgba(222,246,255,0.95), rgba(246,251,255,0.92) 44%, rgba(255,248,232,0.86));
+      touch-action: none;
     }
-    .protractor-svg-wrapper { width: 100%; height: 100%; cursor: grab; }
-    .protractor-svg-wrapper:active { cursor: grabbing; }
-    .protractor-control {
-      position: absolute; width: 36px; height: 36px; border-radius: 50%; background: #fff;
-      border: 2px solid var(--purple); color: var(--purple); display: grid; place-items: center;
-      font-size: 18px; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer;
-      user-select: none; touch-action: none; transition: transform 0.1s;
+    .board-plane.sand-mode .sandbox-layer { display: grid; }
+    .board-plane.sand-mode .board-surface { pointer-events: none; }
+    .sandbox-wrap {
+      min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+      padding: clamp(10px, 1.6vw, 18px);
+      border-radius: clamp(22px, 3vw, 38px);
+      background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
+      border: 2px solid rgba(202,184,255,0.86);
+      box-shadow: 0 26px 54px rgba(108,61,237,0.16), inset 0 1px 0 rgba(255,255,255,0.78);
+      overflow: hidden;
     }
-    .protractor-control:active { transform: scale(0.9); }
-    .protractor-control.close { top: 10px; right: 0; border-color: #dc2626; color: #dc2626; font-size: 14px; }
-    .protractor-control.rotate { top: -18px; left: 50%; transform: translateX(-50%); cursor: ew-resize; }
-    .protractor-control.rotate:active { transform: translateX(-50%) scale(0.9); }
-    .protractor-control.resize { bottom: -10px; right: 10px; cursor: nwse-resize; font-size: 14px; }
+    .sandbox-topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      padding: 4px 4px 0;
+    }
+    .sandbox-title { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
+    .sandbox-title-icon {
+      width: 42px; height: 42px; border-radius: 16px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #fbbf24, #f97316); color: #fff;
+      box-shadow: 0 10px 20px rgba(249,115,22,0.22);
+    }
+    .sandbox-title strong { display: block; font-family: 'Baloo 2', cursive; font-size: clamp(22px, 2.8vw, 34px); line-height: 0.95; color: #7c3f16; }
+    .sandbox-title span:last-child { display: block; margin-top: 3px; color: #7c6a56; font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
+    .sandbox-letter-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+    .sand-chip,
+    .sand-mini-btn {
+      border: none; cursor: pointer; font: inherit; font-weight: 900; -webkit-tap-highlight-color: transparent;
+      transition: transform .12s, box-shadow .12s, background .12s;
+    }
+    .sand-chip {
+      min-width: 34px; height: 34px; padding: 0 10px; border-radius: 12px;
+      background: #fff8dc; color: #7c3f16; border: 1.5px solid rgba(202,138,4,0.28);
+      box-shadow: 0 5px 10px rgba(124,63,22,0.08);
+    }
+    .sand-chip.is-active {
+      background: linear-gradient(135deg, #6c3ded, #9b72f5); color: #fff; border-color: transparent;
+      box-shadow: 0 8px 18px rgba(108,61,237,0.24); transform: translateY(-1px);
+    }
+    .sand-mini-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .sand-mode-switch { display: inline-flex; gap: 3px; padding: 3px; border: 1px solid #d9d2e8; border-radius: 8px; background: #fff; }
+    .sand-mode-switch button { min-height: 38px; padding: 6px 10px; border: 0; border-radius: 5px; background: transparent; color: #5b4b72; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+    .sand-mode-switch button[aria-pressed="true"] { background: #6c3ded; color: #fff; }
+    .sand-mode-switch button:focus-visible { outline: 2px solid #1584ca; outline-offset: 2px; }
+    .sandbox-layer.is-plain .sandbox-letter-row, .sandbox-layer.is-plain #sandRandomBtn { visibility: hidden; }
+    .sand-mini-btn {
+      min-height: 36px; padding: 0 12px; border-radius: 13px;
+      background: rgba(255,255,255,0.88); color: #5b4b72; border: 1.5px solid rgba(227,214,255,0.9);
+      box-shadow: 0 6px 14px rgba(32,16,74,0.08);
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .sand-mini-btn:active,
+    .sand-chip:active { transform: scale(0.94); }
+    .sand-mini-btn.danger { color: #dc2626; background: #fff1f2; border-color: #fecdd3; }
+    .sandbox-bed {
+      position: relative; min-height: 480px; border-radius: clamp(22px, 3vw, 34px);
+      overflow: hidden; cursor: none; touch-action: none;
+      background: #a77745;
+      border: clamp(12px, 2vw, 24px) solid #c9853c;
+      box-shadow:
+        inset 0 18px 32px rgba(67,34,11,0.42),
+        inset 0 -16px 26px rgba(255,244,210,0.18),
+        0 18px 34px rgba(124,63,22,0.2);
+    }
+    .sandbox-bed::before {
+      content: ""; position: absolute; inset: -2px; pointer-events: none; z-index: 14;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.16), transparent 12%, transparent 88%, rgba(67,34,11,0.18)),
+        linear-gradient(180deg, rgba(67,34,11,0.2), transparent 14%, transparent 82%, rgba(67,34,11,0.16));
+      mix-blend-mode: multiply;
+    }
+    .sandbox-bottom,
+    .sandbox-canvas,
+    .sandbox-guide,
+    .sandbox-cursor { position: absolute; inset: 0; }
+    .sandbox-bottom { z-index: 1; background-color: #a9794b; }
+    .sandbox-canvas { z-index: 5; width: 100%; height: 100%; display: block; touch-action: none; }
+    .sandbox-guide {
+      z-index: 8; display: grid; place-items: center; pointer-events: none;
+      color: rgba(93,58,28,0.22); text-align: center; white-space: pre-line;
+      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(110px, 22vw, 280px);
+      line-height: .85; letter-spacing: 0;
+      text-shadow: 0 2px 0 rgba(255,255,255,0.2);
+    }
+    .sandbox-cursor {
+      z-index: 16; width: 58px; height: 58px; inset: auto; left: 0; top: 0; pointer-events: none;
+      display: none; align-items: center; justify-content: center;
+      filter: drop-shadow(0 10px 10px rgba(67,34,11,0.22));
+      transform: translate(-100px, -100px);
+    }
+    .sandbox-cursor.is-visible { display: flex; }
+    .sandbox-cursor svg { width: 58px; height: 58px; }
+    .sandbox-bed.is-shaking { animation: sandShake .38s ease; }
+    @keyframes sandShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px) rotate(-.35deg); }
+      50% { transform: translateX(5px) rotate(.35deg); }
+      75% { transform: translateX(-4px) rotate(-.25deg); }
+    }
+    .sand-tools-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .sand-tool-btn {
+      height: 36px; border-radius: 10px; border: 1.5px solid rgba(227,214,255,.78);
+      background: #fff; color: #6b7280; cursor: pointer; font-size: 15px;
+      display: grid; place-items: center; transition: transform .12s, box-shadow .12s, color .12s, background .12s;
+    }
+    .sand-tool-btn.is-active {
+      background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff; border-color: transparent;
+      box-shadow: 0 7px 15px rgba(249,115,22,0.22);
+    }
+    .sand-target-input {
+      width: 100%; height: 34px; border-radius: 10px; border: 1.5px solid #e2e8f0;
+      padding: 0 10px; background: #f8fafc; color: var(--navy); font: 900 14px 'Nunito', sans-serif;
+      outline: none;
+    }
+    .sand-target-input:focus { border-color: #c4b5fd; box-shadow: 0 0 0 4px rgba(108,61,237,0.08); }
+
+    @media (max-width: 760px) {
+      .sandbox-layer { padding: 8px; }
+      .sandbox-wrap { border-radius: 22px; padding: 10px; gap: 8px; }
+      .sandbox-bed { min-height: 420px; border-width: 12px; }
+      .sandbox-title span:last-child { display: none; }
+      .sand-mini-btn { min-height: 34px; padding: 0 10px; }
+    }
+
 
     #whiteboardStage:fullscreen, #whiteboardStage:-webkit-full-screen { width: 100%; height: 100%; max-width: none; padding: 28px; border-radius: 0; overflow: auto; }
     #whiteboardStage:fullscreen .pro-toolbar, #whiteboardStage:-webkit-full-screen .pro-toolbar { top: 24px; left: 24px; }
@@ -878,6 +993,41 @@
   .sub-back a:hover{background:rgba(108,61,237,0.17);}
   .sub-back-title{font-size:17px;font-weight:900;color:#1e2a4a;}
   .tools-page{padding-top:24px!important;}
+  /* Keep the writing surface wide and inexpensive to composite on classroom boards. */
+  .tools-page { width: calc(100% - 16px); max-width: none; }
+  #whiteboardWorkspace > .panel { padding: 10px; border-radius: 8px; box-shadow: none; }
+  #whiteboardWorkspace .panel-head { margin-bottom: 10px; gap: 12px; flex-wrap: wrap; }
+  #whiteboardWorkspace .panel-head h2 { font-size: 22px; }
+  .tools-page .glass, .pro-toolbar, .float-panel, .sub-back {
+    backdrop-filter: none; -webkit-backdrop-filter: none; background-color: #fff;
+  }
+  .tools-page .time-bar { padding: 8px 16px; margin-bottom: 10px; border-radius: 8px; }
+  #whiteboardStage { height: 78vh; min-height: 360px; border-radius: 6px; }
+  #whiteboardStage:fullscreen { height: 100vh; border: 0; border-radius: 0; }
+  #boardPlane { flex-shrink: 0; transition: none; box-shadow: none; }
+  .pro-toolbar { border-radius: 8px; padding: 5px 7px; gap: 2px; box-shadow: 0 3px 12px #17233b1a; }
+  .toolbar-btn { border-radius: 8px; transition: background-color .12s, color .12s; }
+  .toolbar-btn.is-active { background: #6c3ded; box-shadow: none; transform: none; }
+  .float-panel { border-radius: 8px; box-shadow: 0 4px 16px #17233b20; max-height: min(480px, 65vh); overflow-y: auto; }
+  .float-panel.is-open { animation: none; }
+  .toolbar-btn i { font-size: 19px; }
+  .sandbox-layer { bottom: auto; padding: 10px 10px 10px 86px; }
+  .sandbox-wrap { border-radius: 8px; padding: 10px; box-shadow: none; }
+  .sandbox-bed { min-height: 180px; border-radius: 8px; }
+  .sandbox-title strong { font-size: 24px; }
+  @media (max-width:760px) {
+    .tools-page { width: calc(100% - 8px); }
+    #whiteboardWorkspace > .panel { padding: 4px; }
+    #whiteboardWorkspace .tool-actions { gap: 4px; flex-wrap: wrap; }
+    #whiteboardWorkspace .tool-actions .btn { padding: 9px; }
+    .pro-toolbar .toolbar-btn { width: 40px; height: 40px; }
+    .pro-toolbar { overflow: visible; max-height: none; }
+    .pro-toolbar .toolbar-main { overflow-x: auto; }
+    .pro-toolbar .tool-grid-4 { flex-wrap: nowrap; flex-direction: row; justify-content: flex-start; }
+    .pro-toolbar .float-panel { max-height: min(360px, 44vh); }
+    .sandbox-layer { padding: 8px 8px 82px; }
+    .sandbox-title { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -935,11 +1085,52 @@
               <canvas class="board-surface" id="whiteboardCanvas"></canvas>
               <canvas class="board-surface" id="whiteboardPreviewCanvas" aria-hidden="true"></canvas>
               
-              <div id="boardProtractor" class="board-protractor" aria-hidden="true">
-                  <div id="protractorHandleRotate" class="protractor-control rotate" title="Döndür">↻</div>
-                  <div id="protractorHandleResize" class="protractor-control resize" title="Boyutlandır">⤡</div>
-                  <div id="protractorHandleClose" class="protractor-control close" title="Kapat">✖</div>
-                  <div id="protractorSvgContainer" class="protractor-svg-wrapper"></div>
+              <div class="sandbox-layer" id="sandboxLayer" aria-hidden="true">
+                <div class="sandbox-wrap">
+                  <div class="sandbox-topbar">
+                    <div class="sandbox-title">
+                      <span class="sandbox-title-icon"><i class="fas fa-umbrella-beach"></i></span>
+                      <span>
+                        <strong>Kum Havuzu</strong>
+                        <span>Harf ve ses yazma alanı</span>
+                      </span>
+                    </div>
+                    <div class="sandbox-letter-row" id="sandLetterRow" aria-label="Kum havuzu harfleri">
+                      <button class="sand-chip is-active" type="button" data-sand-target="A">A</button>
+                      <button class="sand-chip" type="button" data-sand-target="N">N</button>
+                      <button class="sand-chip" type="button" data-sand-target="E">E</button>
+                      <button class="sand-chip" type="button" data-sand-target="T">T</button>
+                      <button class="sand-chip" type="button" data-sand-target="İ">İ</button>
+                      <button class="sand-chip" type="button" data-sand-target="L">L</button>
+                      <button class="sand-chip" type="button" data-sand-target="O">O</button>
+                      <button class="sand-chip" type="button" data-sand-target="K">K</button>
+                      <button class="sand-chip" type="button" data-sand-target="R">R</button>
+                      <button class="sand-chip" type="button" data-sand-target="İ">İ</button>
+                      <button class="sand-chip" type="button" data-sand-target="M">M</button>
+                      <button class="sand-chip" type="button" data-sand-target="Ü">Ü</button>
+                      <button class="sand-chip" type="button" data-sand-target="S">S</button>
+                      <button class="sand-chip" type="button" data-sand-target="Ö">Ö</button>
+                      <button class="sand-chip" type="button" data-sand-target="Y">Y</button>
+                      <button class="sand-chip" type="button" data-sand-target="D">D</button>
+                      <button class="sand-chip" type="button" data-sand-target="Z">Z</button>
+                    </div>
+                    <div class="sand-mini-actions">
+                      <div class="sand-mode-switch" role="group" aria-label="Kum havuzu arka planı">
+                        <button type="button" data-sand-mode="guided" aria-pressed="true">Harfli</button>
+                        <button type="button" data-sand-mode="plain" aria-pressed="false">Sadece kum</button>
+                      </div>
+                      <button class="sand-mini-btn" type="button" id="sandRandomBtn"><i class="fas fa-random"></i> Rastgele</button>
+                      <button class="sand-mini-btn danger" type="button" id="sandClearTopBtn"><i class="fas fa-broom"></i> Temizle</button>
+                      <button class="sand-mini-btn" type="button" id="sandCloseBtn" aria-label="Kum havuzunu kapat"><i class="fas fa-times"></i></button>
+                    </div>
+                  </div>
+                  <div class="sandbox-bed" id="sandboxBed">
+                    <div class="sandbox-bottom" id="sandBottomLayer"></div>
+                    <canvas class="sandbox-canvas" id="sandCanvas"></canvas>
+                    <div class="sandbox-guide" id="sandGuideText">A</div>
+                    <div class="sandbox-cursor" id="sandCursor" aria-hidden="true"></div>
+                  </div>
+                </div>
               </div>
 
               <section class="board-toolbar pro-toolbar" id="boardToolbar" style="position:absolute;top:16px;left:16px;">
@@ -966,8 +1157,12 @@
                       <i class="fas fa-shapes"></i>
                     </button>
 
-                    <button class="toolbar-btn" type="button" id="boardProtractorBtn" title="İletki / Açıölçer">
+                    <button class="toolbar-btn" type="button" id="boardProtractorBtn" title="Matematik Araçları" aria-label="Matematik Araçları" aria-controls="mathSubPanel">
                       <i class="fas fa-drafting-compass"></i>
+                    </button>
+
+                    <button class="toolbar-btn" type="button" id="sandGroupBtn" title="Kum Havuzu">
+                      <i class="fas fa-umbrella-beach"></i>
                     </button>
 
                     <button class="toolbar-btn" type="button" data-board-tool="text" title="Yazı Ekle">
@@ -989,8 +1184,54 @@
                   </div>
                 </div>
 
+                <div class="float-panel" id="mathSubPanel">
+                  <div class="float-panel-head">
+                    <span class="float-panel-title">Matematik Araçları</span>
+                    <button class="float-close-btn" type="button" data-close-panel="mathSubPanel" aria-label="Matematik panelini kapat">×</button>
+                  </div>
+                  <div class="math-tool-tabs" role="group" aria-label="Matematik aracı">
+                    <button type="button" data-math-tool="protractor" aria-pressed="true"><i class="fas fa-ruler-combined"></i>İletki</button>
+                    <button type="button" data-math-tool="compass" aria-pressed="false"><i class="fas fa-drafting-compass"></i>Pergel</button>
+                    <button type="button" data-math-tool="ruler" aria-pressed="false"><i class="fas fa-ruler-horizontal"></i>Cetvel</button>
+                  </div>
+                  <label class="math-field" id="mathLengthField" hidden><span id="mathLengthLabel">Uzunluk (birim)</span><input id="mathLength" type="number" min="2" max="20" step="0.5" value="10"></label>
+                  <label class="math-field"><span>Döndürme (°)</span><input id="mathRotation" type="number" min="-180" max="180" step="1" value="0"></label>
+                  <label class="math-field" id="mathAngleField"><span>Açı (°)</span><input id="mathAngle" type="number" min="0" max="180" step="1" value="60"></label>
+                  <div class="math-options" id="mathCircleOptions" hidden>
+                    <label><input type="radio" name="mathCircleType" value="circle" checked>Çember</label>
+                    <label><input type="radio" name="mathCircleType" value="disk">Daire</label>
+                  </div>
+                  <div class="math-actions">
+                    <button class="math-draw" id="mathDraw" type="button" disabled>Açı çiz</button>
+                    <button id="mathCenter" type="button" title="Görünür alana getir" aria-label="Görünür alana getir"><i class="fas fa-crosshairs"></i></button>
+                    <button id="mathHide" type="button" title="Aracı kaldır" aria-label="Aracı kaldır"><i class="fas fa-times"></i></button>
+                  </div>
+                </div>
+
+                <!-- KUM HAVUZU YÜZEN PANELİ -->
+                <div class="float-panel" id="sandSubPanel">
+                  <div class="float-panel-head">
+                    <span class="float-panel-title">Kum Havuzu</span>
+                    <button class="float-close-btn" data-close-panel="sandSubPanel">✕</button>
+                  </div>
+                  <div class="sand-tools-row">
+                    <button class="sand-tool-btn is-active" type="button" data-sand-tool="finger" title="Parmak"><i class="fas fa-hand-pointer"></i></button>
+                    <button class="sand-tool-btn" type="button" data-sand-tool="rake" title="Tırmık"><i class="fas fa-grip-lines"></i></button>
+                    <button class="sand-tool-btn" type="button" data-sand-tool="star" title="Yıldız"><i class="fas fa-star"></i></button>
+                  </div>
+                  <div>
+                    <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Hedef Yazı</div>
+                    <input class="sand-target-input" id="sandTargetInput" type="text" maxlength="12" value="A" aria-label="Kum havuzu hedef yazısı">
+                  </div>
+                  <div class="sand-mode-switch" role="group" aria-label="Kum havuzu arka planı">
+                    <button type="button" data-sand-mode="guided" aria-pressed="true">Harfli</button>
+                    <button type="button" data-sand-mode="plain" aria-pressed="false">Sadece kum</button>
+                  </div>
+                  <button class="sand-mini-btn danger" type="button" id="sandClearPanelBtn"><i class="fas fa-broom"></i> Temizle</button>
+                </div>
+
                 <!-- KALEM YÜZEN PANELİ -->
-                <div class="float-panel is-open" id="penSubPanel">
+                <div class="float-panel" id="penSubPanel">
                   <div class="float-panel-head">
                     <span class="float-panel-title">Kalem Araçları</span>
                     <button class="float-close-btn" data-close-panel="penSubPanel">✕</button>
@@ -1156,7 +1397,8 @@
 
   </main>
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260903-mb-tools"></script>
+  <script src="/js/site.js?v=20260926-workspace-focus"></script>
+  <script src="/js/whiteboard-math.js?v=20260926-math1"></script>
   <script>
 (function(){
   'use strict';
@@ -1186,13 +1428,17 @@
         drawing: false, dragToolbar: false, shapesOpen: false, toolbarCollapsed: false,
         startX: 0, startY: 0, points: [], lastPoint: null,
         panStartClientX: 0, panStartClientY: 0, toolbarLeft: 16, toolbarTop: 16, autosaveTimer: null,
-        activePointerId: null, activePointerType: null, activeStrokes: {}, touchPointers: {}, pinch: { active: false, startDistance: 0, startZoom: 1 },
+        activePointerId: null, activePointerType: null, activeStrokes: {}, strokeFrame: null, touchPointers: {}, pinch: { active: false, startDistance: 0, startZoom: 1 },
         pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
         pageIndex: 0,
         selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
         activeText: null, textAlign: 'left', textWeight: '800', textStyle: 'normal', textSize: 32
       },
-      protractor: { visible: false, x: 0, y: 0, scale: 1, rot: 0 },
+      sand: {
+        active: false, tool: 'finger', target: 'A', guideVisible: true,
+        drawing: false, pointerId: null, lastPoint: null, lastStamp: null, pixelRatio: 1, logicalWidth: 0, logicalHeight: 0,
+        topPattern: null, bottomPattern: null, cursorVisible: false
+      },
       mathCalcExpr: '0',
       mathMode: 'calc',
       coinRot: 0,
@@ -1258,6 +1504,10 @@
       prevPageBtn: document.getElementById('prevPageBtn'), nextPageBtn: document.getElementById('nextPageBtn'), addPageBtn: document.getElementById('addPageBtn'), deletePageBtn: document.getElementById('deletePageBtn'),
       pageInfoDisplay: document.getElementById('pageInfoDisplay'), pageSizeSelect: document.getElementById('pageSizeSelect'), boardProtractorBtn: document.getElementById('boardProtractorBtn'),
       boardZoomOutBtn: document.getElementById('boardZoomOutBtn'), boardZoomValue: document.getElementById('boardZoomValue'), boardZoomInBtn: document.getElementById('boardZoomInBtn'), boardZoomResetBtn: document.getElementById('boardZoomResetBtn'),
+      sandGroupBtn: document.getElementById('sandGroupBtn'), sandboxLayer: document.getElementById('sandboxLayer'), sandboxBed: document.getElementById('sandboxBed'), sandCanvas: document.getElementById('sandCanvas'),
+      sandBottomLayer: document.getElementById('sandBottomLayer'), sandGuideText: document.getElementById('sandGuideText'), sandCursor: document.getElementById('sandCursor'), sandTargetInput: document.getElementById('sandTargetInput'),
+      sandToolBtns: [].slice.call(document.querySelectorAll('[data-sand-tool]')), sandTargetBtns: [].slice.call(document.querySelectorAll('[data-sand-target]')), sandRandomBtn: document.getElementById('sandRandomBtn'),
+      sandClearTopBtn: document.getElementById('sandClearTopBtn'), sandClearPanelBtn: document.getElementById('sandClearPanelBtn'), sandCloseBtn: document.getElementById('sandCloseBtn'), sandModeBtns: Array.from(document.querySelectorAll('[data-sand-mode]')),
       classTabs: [].slice.call(document.querySelectorAll('[data-class-view]')),
       classViews: { class: document.getElementById('classManagerView'), wheel: document.getElementById('classWheelView') },
       classSelector: document.getElementById('classSelector'), addClassBtn: document.getElementById('addClassBtn'), renameClassBtn: document.getElementById('renameClassBtn'), deleteClassBtn: document.getElementById('deleteClassBtn'),
@@ -1339,10 +1589,14 @@
     }
     function scheduleBoardAutosave() {
       if(S.board.autosaveTimer) clearTimeout(S.board.autosaveTimer);
-      S.board.autosaveTimer = setTimeout(saveBoardToMemory, 160);
+      S.board.autosaveTimer = setTimeout(saveBoardToMemory, 1800);
     }
     function saveBoardToMemory() {
       if(S.board.autosaveTimer) { clearTimeout(S.board.autosaveTimer); S.board.autosaveTimer = null; }
+      if(S.board.drawing || Object.keys(S.board.activeStrokes).length || S.board.pinch.active || S.sand.drawing) {
+        scheduleBoardAutosave();
+        return;
+      }
       try {
         localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify({
           version: 1,
@@ -1359,7 +1613,7 @@
           shapeSize: S.board.shapeSize,
           toolbarLeft: S.board.toolbarLeft,
           toolbarTop: S.board.toolbarTop,
-          pages: S.board.pages.map(function(page) { return { items: (page.items || []).map(optimizeBoardItem) }; })
+          pages: S.board.pages.map(function(page) { return { items: page.items || [] }; })
         }));
       } catch(err) {}
     }
@@ -1390,15 +1644,15 @@
     function nextPage() { if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
     function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); scheduleBoardAutosave(); }
 
-    var boardCtx = null; var boardPreviewCtx = null;
+    var boardCtx = null; var boardPreviewCtx = null; var sandCtx = null; var mathTools = null;
 
     function boardCanDraw(tool) { return tool === 'pen' || tool === 'highlighter' || tool === 'chalk' || tool === 'pencil' || tool === 'eraser'; }
     function getBoardPixelRatio(width, height) {
       var nativeRatio = window.devicePixelRatio || 1;
-      var ratio = Math.min(nativeRatio, 1.35);
-      var maxPixels = 4800000;
+      var ratio = Math.min(nativeRatio, 1.1);
+      var maxPixels = 2800000;
       var pixels = Math.max(1, width * height * ratio * ratio);
-      if(pixels > maxPixels) ratio = Math.max(0.75, Math.sqrt(maxPixels / Math.max(1, width * height)));
+      if(pixels > maxPixels) ratio = Math.max(0.55, Math.sqrt(maxPixels / Math.max(1, width * height)));
       return ratio;
     }
     function resizeBoard() {
@@ -1426,11 +1680,21 @@
       if(E.boardStage) E.boardStage.style.justifyContent = displayW <= E.boardStage.clientWidth ? 'center' : 'flex-start';
       var ratio = getBoardPixelRatio(w, h);
       S.board.pixelRatio = ratio;
-      [E.boardCanvas, E.boardPreview].forEach(function(canvas) { canvas.width = Math.max(1, Math.floor(w * ratio)); canvas.height = Math.max(1, Math.floor(h * ratio)); canvas.style.width = displayW + 'px'; canvas.style.height = displayH + 'px'; });
+      var backingChanged = !boardCtx;
+      [E.boardCanvas, E.boardPreview].forEach(function(canvas) {
+        var nextWidth = Math.max(1, Math.floor(w * ratio));
+        var nextHeight = Math.max(1, Math.floor(h * ratio));
+        if(canvas.width !== nextWidth || canvas.height !== nextHeight) {
+          canvas.width = nextWidth; canvas.height = nextHeight; backingChanged = true;
+        }
+        canvas.style.width = displayW + 'px'; canvas.style.height = displayH + 'px';
+      });
       boardCtx = E.boardCanvas.getContext('2d', { desynchronized: true }); boardPreviewCtx = E.boardPreview.getContext('2d', { desynchronized: true });
       if(boardCtx) { boardCtx.setTransform(ratio, 0, 0, ratio, 0, 0); boardCtx.imageSmoothingEnabled = false; }
       if(boardPreviewCtx) { boardPreviewCtx.setTransform(ratio, 0, 0, ratio, 0, 0); boardPreviewCtx.imageSmoothingEnabled = false; }
-      redrawBoard();
+      if(backingChanged) redrawBoard();
+      resizeSandbox();
+      if(mathTools) mathTools.resize();
       positionBoardToolbar();
       updateBoardZoomUi();
     }
@@ -1446,6 +1710,7 @@
     }
     function getFastPointerEvents(evt, maxEvents) {
       var events = typeof evt.getCoalescedEvents === 'function' ? evt.getCoalescedEvents() : [evt];
+      if(!events.length) events = [evt];
       var limit = Math.max(1, maxEvents || 8);
       if(events.length <= limit) return events;
       var sampled = [];
@@ -1455,10 +1720,10 @@
       return sampled;
     }
     function getStrokeMinDistance(tool, pointerType) {
-      if(tool === 'chalk' || tool === 'pencil') return 2.4;
-      if(tool === 'highlighter') return 1.8;
-      if(tool === 'eraser') return 1.35;
-      return pointerType === 'pen' ? 1.05 : 1.25;
+      if(tool === 'chalk' || tool === 'pencil') return 3;
+      if(tool === 'highlighter') return 2.2;
+      if(tool === 'eraser') return 1.8;
+      return pointerType === 'pen' ? 1.3 : 1.55;
     }
     function getBoardContentPoint(evt) {
       var rect = E.boardPlane.getBoundingClientRect();
@@ -1533,7 +1798,7 @@
         bounds = getBoardToolbarBounds(mobileWidth, toolbarHeight, pad);
         if(!bounds) return;
         S.board.toolbarLeft = 0;
-        S.board.toolbarTop = clampToolbarCoord(S.board.toolbarTop, 0, Math.max(0, bounds.height - toolbarHeight));
+        S.board.toolbarTop = Math.max(0, bounds.height - toolbarHeight);
         E.boardToolbar.style.left = bounds.left + 'px';
         E.boardToolbar.style.top = (bounds.top + S.board.toolbarTop) + 'px';
         E.boardToolbar.style.right = 'auto';
@@ -1551,6 +1816,244 @@
       E.boardToolbar.style.bottom = 'auto';
     }
 
+    function parseHexColor(hex) {
+      var value = String(hex || '#d8b16f').replace('#', '');
+      if(value.length === 3) value = value.split('').map(function(ch) { return ch + ch; }).join('');
+      return {
+        r: parseInt(value.slice(0, 2), 16) || 0,
+        g: parseInt(value.slice(2, 4), 16) || 0,
+        b: parseInt(value.slice(4, 6), 16) || 0
+      };
+    }
+    function createSandTextureCanvas(baseColor, noiseIntensity, size) {
+      var tile = document.createElement('canvas');
+      tile.width = size;
+      tile.height = size;
+      var ctx = tile.getContext('2d');
+      var base = parseHexColor(baseColor);
+      var img = ctx.createImageData(size, size);
+      for(var i = 0; i < img.data.length; i += 4) {
+        var fleck = Math.random() > 0.965 ? 34 : 0;
+        var shade = (Math.random() - 0.5) * noiseIntensity + fleck;
+        img.data[i] = Math.max(0, Math.min(255, base.r + shade));
+        img.data[i + 1] = Math.max(0, Math.min(255, base.g + shade * 0.82));
+        img.data[i + 2] = Math.max(0, Math.min(255, base.b + shade * 0.46));
+        img.data[i + 3] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      return tile;
+    }
+    function ensureSandPatterns() {
+      if(!sandCtx) return;
+      if(!S.sand.topPattern) {
+        var topTile = createSandTextureCanvas('#dfbf82', 38, 96);
+        S.sand.topPattern = sandCtx.createPattern(topTile, 'repeat');
+      }
+      if(!S.sand.bottomPattern && E.sandBottomLayer) {
+        var bottomTile = createSandTextureCanvas('#a9794b', 32, 96);
+        S.sand.bottomPattern = bottomTile;
+        E.sandBottomLayer.style.backgroundImage = 'url(' + bottomTile.toDataURL('image/png') + ')';
+        E.sandBottomLayer.style.backgroundSize = '96px 96px';
+      }
+    }
+    function fillSandTop() {
+      if(!sandCtx || !E.sandCanvas) return;
+      ensureSandPatterns();
+      var w = S.sand.logicalWidth;
+      var h = S.sand.logicalHeight;
+      sandCtx.save();
+      sandCtx.globalCompositeOperation = 'source-over';
+      sandCtx.globalAlpha = 1;
+      sandCtx.fillStyle = S.sand.topPattern || '#dfbf82';
+      sandCtx.fillRect(0, 0, w, h);
+      sandCtx.restore();
+    }
+    function resizeSandbox() {
+      if(!E.sandboxBed || !E.sandCanvas) return;
+      if(!S.sand.active) return;
+      E.sandboxLayer.style.height = Math.max(540, E.boardStage.clientHeight) + 'px';
+      // The canvas occupies the bed's inner area, excluding its wooden border.
+      var width = E.sandCanvas.clientWidth;
+      var height = E.sandCanvas.clientHeight;
+      if(width < 4 || height < 4) return;
+      var nativeRatio = window.devicePixelRatio || 1;
+      var ratio = Math.min(nativeRatio, 1.2);
+      var maxPixels = 2200000;
+      var pixels = width * height * ratio * ratio;
+      if(pixels > maxPixels) ratio = Math.max(0.65, Math.sqrt(maxPixels / Math.max(1, width * height)));
+      var nextW = Math.max(1, Math.floor(width * ratio));
+      var nextH = Math.max(1, Math.floor(height * ratio));
+      if(E.sandCanvas.width === nextW && E.sandCanvas.height === nextH && S.sand.logicalWidth === width && S.sand.logicalHeight === height && sandCtx) return;
+      S.sand.logicalWidth = width;
+      S.sand.logicalHeight = height;
+      S.sand.pixelRatio = ratio;
+      E.sandCanvas.width = nextW;
+      E.sandCanvas.height = nextH;
+      sandCtx = E.sandCanvas.getContext('2d', { desynchronized: true });
+      if(sandCtx) {
+        sandCtx.setTransform(nextW / width, 0, 0, nextH / height, 0, 0);
+        sandCtx.imageSmoothingEnabled = false;
+      }
+      S.sand.topPattern = null;
+      fillSandTop();
+    }
+    function setSandTarget(value) {
+      var next = String(value || '').trim().toLocaleUpperCase('tr-TR');
+      if(!next) next = 'A';
+      S.sand.target = next.slice(0, 12);
+      syncSandboxUI();
+    }
+    function setSandTool(tool) {
+      S.sand.tool = ['finger', 'rake', 'star'].indexOf(tool) > -1 ? tool : 'finger';
+      syncSandboxUI();
+    }
+    function syncSandboxUI() {
+      if(E.sandGuideText) {
+        E.sandGuideText.textContent = S.sand.guideVisible ? S.sand.target : '';
+        E.sandGuideText.style.opacity = S.sand.guideVisible ? '1' : '0';
+      }
+      if(E.sandTargetInput && E.sandTargetInput.value !== S.sand.target) E.sandTargetInput.value = S.sand.target;
+      E.sandToolBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.sandTool === S.sand.tool); });
+      E.sandTargetBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.sandTarget === S.sand.target); });
+      E.sandModeBtns.forEach(function(btn) { btn.setAttribute('aria-pressed', String((btn.dataset.sandMode === 'guided') === S.sand.guideVisible)); });
+      if(E.sandboxLayer) E.sandboxLayer.classList.toggle('is-plain', !S.sand.guideVisible);
+      if(E.sandTargetInput) E.sandTargetInput.disabled = !S.sand.guideVisible;
+      updateSandCursorIcon();
+    }
+    function setSandboxMode(active) {
+      S.sand.active = !!active;
+      if(active && mathTools) mathTools.hide();
+      commitTextOverlay(true);
+      if(S.sand.active) {
+        closeAllSubPanels();
+        E.boardStage.scrollTop = 0;
+        E.boardStage.scrollLeft = 0;
+      } else if(sandSubPanel) {
+        sandSubPanel.classList.remove('is-open');
+      }
+      syncBoardUI();
+      if(S.sand.active) resizeSandbox();
+    }
+    function clearSand(playShake) {
+      if(playShake && E.sandboxBed) {
+        E.sandboxBed.classList.remove('is-shaking');
+        void E.sandboxBed.offsetWidth;
+        E.sandboxBed.classList.add('is-shaking');
+        setTimeout(function() { if(E.sandboxBed) E.sandboxBed.classList.remove('is-shaking'); }, 420);
+      }
+      fillSandTop();
+    }
+    function getSandPoint(evt) {
+      return getSandPointFromRect(evt, E.sandCanvas.getBoundingClientRect());
+    }
+    function getSandPointFromRect(evt, rect) {
+      return {
+        x: (evt.clientX - rect.left) * S.sand.logicalWidth / Math.max(1, rect.width),
+        y: (evt.clientY - rect.top) * S.sand.logicalHeight / Math.max(1, rect.height)
+      };
+    }
+    function drawSandGroove(from, to, width) {
+      if(!sandCtx || !from || !to) return;
+      var dx = to.x - from.x;
+      var dy = to.y - from.y;
+      var angle = Math.atan2(dy, dx);
+      var nx = Math.cos(angle + Math.PI / 2);
+      var ny = Math.sin(angle + Math.PI / 2);
+      sandCtx.save();
+      sandCtx.globalCompositeOperation = 'destination-out';
+      sandCtx.globalAlpha = 0.94;
+      sandCtx.lineCap = 'round';
+      sandCtx.lineJoin = 'round';
+      sandCtx.lineWidth = width;
+      sandCtx.beginPath();
+      sandCtx.moveTo(from.x, from.y);
+      sandCtx.lineTo(to.x, to.y);
+      sandCtx.stroke();
+      sandCtx.globalCompositeOperation = 'source-over';
+      sandCtx.globalAlpha = 0.22;
+      sandCtx.strokeStyle = 'rgba(255,246,211,0.72)';
+      sandCtx.lineWidth = Math.max(2, width * 0.1);
+      [-0.5, 0.5].forEach(function(side) {
+        var ox = nx * width * side;
+        var oy = ny * width * side;
+        sandCtx.beginPath();
+        sandCtx.moveTo(from.x + ox, from.y + oy);
+        sandCtx.lineTo(to.x + ox, to.y + oy);
+        sandCtx.stroke();
+      });
+      sandCtx.restore();
+    }
+    function drawSandRake(from, to) {
+      var dx = to.x - from.x;
+      var dy = to.y - from.y;
+      var angle = Math.atan2(dy, dx);
+      var nx = Math.cos(angle + Math.PI / 2);
+      var ny = Math.sin(angle + Math.PI / 2);
+      var tines = 4;
+      var spacing = 17;
+      var start = -((tines - 1) * spacing) / 2;
+      for(var i = 0; i < tines; i += 1) {
+        var offset = start + i * spacing;
+        drawSandGroove(
+          { x: from.x + nx * offset, y: from.y + ny * offset },
+          { x: to.x + nx * offset, y: to.y + ny * offset },
+          10
+        );
+      }
+    }
+    function drawSandStar(point) {
+      if(!sandCtx || !point) return;
+      var spikes = 5;
+      var outer = 22;
+      var inner = 10;
+      var rot = Math.PI * 1.5;
+      sandCtx.save();
+      sandCtx.beginPath();
+      sandCtx.moveTo(point.x, point.y - outer);
+      for(var i = 0; i < spikes; i += 1) {
+        sandCtx.lineTo(point.x + Math.cos(rot) * outer, point.y + Math.sin(rot) * outer);
+        rot += Math.PI / spikes;
+        sandCtx.lineTo(point.x + Math.cos(rot) * inner, point.y + Math.sin(rot) * inner);
+        rot += Math.PI / spikes;
+      }
+      sandCtx.closePath();
+      sandCtx.globalCompositeOperation = 'destination-out';
+      sandCtx.globalAlpha = 0.9;
+      sandCtx.fill();
+      sandCtx.globalCompositeOperation = 'source-over';
+      sandCtx.globalAlpha = 0.55;
+      sandCtx.lineWidth = 3;
+      sandCtx.strokeStyle = 'rgba(255,248,220,0.68)';
+      sandCtx.stroke();
+      sandCtx.restore();
+    }
+    function drawSandMove(from, to) {
+      if(S.sand.tool === 'rake') drawSandRake(from, to);
+      else drawSandGroove(from, to, 42);
+    }
+    function updateSandCursorIcon() {
+      if(!E.sandCursor) return;
+      if(S.sand.tool === 'rake') {
+        E.sandCursor.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M18 8h28v10H18z" fill="#8b5a2b"/><path d="M25 18h14v36H25z" fill="#b7793b"/><path d="M11 50h42" stroke="#7c3f16" stroke-width="6" stroke-linecap="round"/><path d="M17 38v16M27 38v16M37 38v16M47 38v16" stroke="#7c3f16" stroke-width="5" stroke-linecap="round"/></svg>';
+      } else if(S.sand.tool === 'star') {
+        E.sandCursor.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6l7.2 15.2L56 23.6 43.8 35.4 46.8 52 32 44.1 17.2 52l3-16.6L8 23.6l16.8-2.4L32 6z" fill="#facc15" stroke="#b45309" stroke-width="3" stroke-linejoin="round"/></svg>';
+      } else {
+        E.sandCursor.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M15 7c0-3 2.3-5 5-5s5 2 5 5v24h2V19c0-2.8 2.2-5 5-5s5 2.2 5 5v12h2V22c0-2.8 2.2-5 5-5s5 2.2 5 5v13h2c4 0 7 3.2 7 7v5c0 9.4-7.6 17-17 17H31C18.8 64 9 54.2 9 42v-6c0-4 2.1-7.6 5.5-9.6l.5-.3V7z" fill="#ffd0a6" stroke="#a85f32" stroke-width="2.8"/><path d="M17 7c0-1.7 1.3-3 3-3s3 1.3 3 3v8h-6V7z" fill="#fff4e8"/></svg>';
+      }
+    }
+    function updateSandCursor(evt) {
+      if(!E.sandCursor || !E.sandboxBed) return;
+      var point = getSandPoint(evt);
+      // Match each SVG's contact point to the canvas's drawing coordinate.
+      var hotspot = S.sand.tool === 'finger' ? { x: 20, y: 2 } : S.sand.tool === 'rake' ? { x: 32, y: 54 } : { x: 32, y: 32 };
+      var scale = 58 / 64;
+      E.sandCursor.style.transform = 'translate(' + (point.x - hotspot.x * scale) + 'px, ' + (point.y - hotspot.y * scale) + 'px)';
+      E.sandCursor.classList.add('is-visible');
+    }
+    function hideSandCursor() {
+      if(E.sandCursor) E.sandCursor.classList.remove('is-visible');
+    }
+
     function syncBoardUI() {
       var activeColor = S.board.strokeColor;
       var activeShapeColor = S.board.shapePaletteTarget === 'fill' ? S.board.shapeFillColor : S.board.shapeStrokeColor;
@@ -1560,6 +2063,9 @@
       var shapeGroup = document.getElementById('shapeGroupBtn');
       if(penGroup) penGroup.classList.toggle('is-active', boardCanDraw(S.board.tool));
       if(shapeGroup) shapeGroup.classList.toggle('is-active', !boardCanDraw(S.board.tool) && ['line','ray','dashline','rect','square','circle','triangle','star','segment','infiniteLine'].indexOf(S.board.tool) > -1);
+      if(E.sandGroupBtn) E.sandGroupBtn.classList.toggle('is-active', S.sand.active);
+      if(E.boardPlane) E.boardPlane.classList.toggle('sand-mode', S.sand.active);
+      if(E.sandboxLayer) E.sandboxLayer.setAttribute('aria-hidden', S.sand.active ? 'false' : 'true');
       // Renk butonları — her seferinde taze DOM sorgusu (scope sorunu yok)
       document.querySelectorAll('[data-board-color]').forEach(function(btn) {
         var match = btn.dataset.boardColor === activeColor;
@@ -1594,6 +2100,7 @@
       E.textStyleBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textStyle === S.board.textStyle); });
       if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid', 'board-paper-guide'); E.boardPlane.classList.add('board-paper-' + S.board.paper); E.boardPlane.style.setProperty('--board-bg', S.board.backgroundColor || '#ffffff'); }
       if(E.boardPreview) E.boardPreview.style.cursor = S.board.tool === 'pan' ? 'grab' : (S.board.tool === 'select' ? 'default' : (S.board.tool === 'text' ? 'text' : 'crosshair'));
+      syncSandboxUI();
       if(E.shapePanel) E.shapePanel.classList.toggle('is-open', S.board.shapesOpen);
       if(E.shapeToggleBtn) E.shapeToggleBtn.setAttribute('aria-expanded', S.board.shapesOpen ? 'true' : 'false');
       if(E.boardFillToggleBtn) { E.boardFillToggleBtn.classList.toggle('is-active', !S.board.shapeFillEnabled); E.boardFillToggleBtn.innerHTML = S.board.shapeFillEnabled ? 'Dolu' : 'Boş'; }
@@ -1683,6 +2190,43 @@
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     }
+    function compactLivePoints(points, maxPoints) {
+      if(!points || points.length <= maxPoints) return points || [];
+      var sampled = [];
+      var step = Math.ceil(points.length / maxPoints);
+      for(var i = step - 1; i < points.length; i += step) sampled.push(points[i]);
+      if(sampled[sampled.length - 1] !== points[points.length - 1]) sampled.push(points[points.length - 1]);
+      return sampled;
+    }
+    function drawLiveStrokeBatch(ctx, item, from, points) {
+      if(!ctx || !from || !points || !points.length) return;
+      applyBoardBrush(ctx, item);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      points.forEach(function(point) { ctx.lineTo(point.x, point.y); });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    function flushBoardStroke(stroke) {
+      if(!stroke || !stroke.pendingPoints || !stroke.pendingPoints.length) return;
+      var points = compactLivePoints(stroke.pendingPoints, stroke.tool === 'chalk' || stroke.tool === 'pencil' ? 44 : 96);
+      stroke.pendingPoints = [];
+      var from = stroke.drawPoint || stroke.points[0] || points[0];
+      drawLiveStrokeBatch(boardCtx, stroke, from, points);
+      stroke.drawPoint = points[points.length - 1];
+    }
+    function flushBoardStrokeFrame() {
+      S.board.strokeFrame = null;
+      Object.keys(S.board.activeStrokes || {}).forEach(function(pointerId) {
+        flushBoardStroke(S.board.activeStrokes[pointerId]);
+      });
+    }
+    function scheduleBoardStrokeFrame() {
+      if(S.board.strokeFrame !== null) return;
+      S.board.strokeFrame = requestAnimationFrame(flushBoardStrokeFrame);
+    }
     function drawArrowHead(ctx, from, to, color, width) { var angle = Math.atan2(to.y - from.y, to.x - from.x); var len = Math.max(16, width * 3.5); var wing = Math.max(8, width * 1.5); ctx.save(); ctx.fillStyle = color; ctx.translate(to.x, to.y); ctx.rotate(angle); ctx.beginPath(); var tipShift = width / 2; ctx.translate(tipShift, 0); ctx.moveTo(0, 0); ctx.lineTo(-len, wing); ctx.lineTo(-len * 0.75, 0); ctx.lineTo(-len, -wing); ctx.closePath(); ctx.fill(); ctx.restore(); }
     function drawStarPath(ctx, x1, y1, x2, y2) { var cx = (x1 + x2) / 2; var cy = (y1 + y2) / 2; var radius = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1)) / 2; var inner = radius * 0.46; ctx.beginPath(); for(var i = 0; i < 10; i += 1) { var angle = (-90 + i * 36) * Math.PI / 180; var r = i % 2 === 0 ? radius : inner; var px = cx + Math.cos(angle) * r; var py = cy + Math.sin(angle) * r; if(i === 0) { ctx.moveTo(px, py); } else { ctx.lineTo(px, py); } } ctx.closePath(); }
     
@@ -1755,9 +2299,20 @@
       page.undoIndex = page.undoStack.length - 1;
       scheduleBoardAutosave();
     }
+    function saveAppendSnapshot(item) {
+      var page = getActivePage();
+      page.undoStack.splice(page.undoIndex + 1);
+      var previous = page.undoStack[page.undoIndex] || [];
+      var next = previous.slice();
+      next.push(optimizeBoardItem(item));
+      page.undoStack.push(next);
+      if(page.undoStack.length > MAX_BOARD_UNDO) page.undoStack.shift();
+      page.undoIndex = page.undoStack.length - 1;
+      scheduleBoardAutosave();
+    }
     function pushBoardItem(item, skipRedraw) {
       getActivePage().items.push(item);
-      saveSnapshot();
+      saveAppendSnapshot(item);
       if(skipRedraw) {
         if(E.boardStage) E.boardStage.classList.add('has-content');
       } else {
@@ -1818,7 +2373,6 @@
         var clientY = evt && typeof evt.clientY === 'number' ? evt.clientY : point.y;
         E.boardStage.scrollLeft = S.board.panStartLeft - (clientX - S.board.panStartClientX);
         E.boardStage.scrollTop = S.board.panStartTop - (clientY - S.board.panStartClientY);
-        positionBoardToolbar();
         return;
       }
       if(boardCanDraw(S.board.tool)) {
@@ -1838,13 +2392,17 @@
       if(S.board.tool === 'select') { if(S.board.selectedItem && S.board.selectAction) saveSnapshot(); S.board.drawing = false; S.board.selectAction = null; return; }
       if(S.board.tool === 'pan') { S.board.drawing = false; syncBoardUI(); return; }
       S.board.drawing = false; clearPreview();
-      if(boardCanDraw(S.board.tool)) { if(S.board.points.length === 1) S.board.points.push({ x: point.x + 0.1, y: point.y + 0.1 }); pushBoardItem({ kind: 'path', tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: S.board.points.slice() }, true); }
+      if(boardCanDraw(S.board.tool)) { if(S.board.points.length === 1) S.board.points.push({ x: point.x + 0.1, y: point.y + 0.1 }); pushBoardItem({ kind: 'path', tool: S.board.tool, strokeColor: S.board.strokeColor, size: S.board.size, points: simplifyBoardPoints(S.board.points, S.board.tool) }, true); }
       else { pushBoardItem({ kind: 'shape', tool: S.board.tool, strokeColor: S.board.shapeStrokeColor, fillColor: S.board.shapeFillColor, fillEnabled: S.board.shapeFillEnabled, size: S.board.shapeSize, start: { x: S.board.startX, y: S.board.startY }, end: { x: point.x, y: point.y } }); }
       S.board.points = [];
       S.board.lastPoint = null;
     }
 
     function setBoardTool(tool) {
+      if(S.sand.active) {
+        S.sand.active = false;
+        if(sandSubPanel) sandSubPanel.classList.remove('is-open');
+      }
       S.board.tool = tool;
       if(boardCanDraw(tool) || tool === 'text') S.board.paletteTarget = 'stroke';
       if(['rect','square','circle','star'].indexOf(tool) > -1) { S.board.shapesOpen = true; }
@@ -1953,93 +2511,6 @@
       if(E.boardStage) E.boardStage.addEventListener('scroll', positionBoardToolbar, { passive: true });
     }
 
-    function initProtractor() {
-      const protractor = document.getElementById('boardProtractor');
-      const svgContainer = document.getElementById('protractorSvgContainer');
-      const btnClose = document.getElementById('protractorHandleClose');
-      const btnRotate = document.getElementById('protractorHandleRotate');
-      const btnResize = document.getElementById('protractorHandleResize');
-      if(!protractor || !svgContainer) return;
-      
-      let svg = '<svg viewBox="-220 -220 440 240" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><path d="M -200 0 A 200 200 0 0 1 200 0 Z" fill="rgba(255, 255, 255, 0.45)" stroke="#1a1040" stroke-width="2"/><path d="M -150 0 A 150 150 0 0 1 150 0" fill="none" stroke="#1a1040" stroke-width="1.5"/><circle cx="0" cy="0" r="6" fill="none" stroke="#1a1040" stroke-width="2"/><line x1="-20" y1="0" x2="20" y2="0" stroke="#1a1040" stroke-width="2"/><line x1="0" y1="-20" x2="0" y2="0" stroke="#1a1040" stroke-width="2"/>';
-          
-      for (let i = 0; i <= 180; i++) {
-          let a = i * Math.PI / 180; let is10 = i % 10 === 0; let is5 = i % 5 === 0; let outer = 200; let inner = is10 ? 180 : (is5 ? 188 : 194);
-          let x1 = -Math.cos(a) * outer, y1 = -Math.sin(a) * outer; let x2 = -Math.cos(a) * inner, y2 = -Math.sin(a) * inner;
-          let innerLine = is10 ? '<line x1="'+(-Math.cos(a)*150)+'" y1="'+(-Math.sin(a)*150)+'" x2="'+(-Math.cos(a)*140)+'" y2="'+(-Math.sin(a)*140)+'" stroke="#1a1040" stroke-width="1.5"/>' : '';
-          let text = '';
-          if (is10) {
-              let tx1 = -Math.cos(a) * 168, ty1 = -Math.sin(a) * 168; let tx2 = -Math.cos(a) * 125, ty2 = -Math.sin(a) * 125;
-              text += '<text x="'+tx1+'" y="'+ty1+'" font-family="Nunito, sans-serif" font-size="11" font-weight="900" fill="#1a1040" text-anchor="middle" dominant-baseline="middle" transform="rotate('+(i-90)+' '+tx1+' '+ty1+')">'+i+'</text>';
-              text += '<text x="'+tx2+'" y="'+ty2+'" font-family="Nunito, sans-serif" font-size="9" font-weight="900" fill="#1a1040" text-anchor="middle" dominant-baseline="middle" transform="rotate('+(i-90)+' '+tx2+' '+ty2+')">'+(180-i)+'</text>';
-          }
-          svg += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#1a1040" stroke-width="'+(is10 ? 2 : 1)+'"/>'+innerLine+text;
-      }
-      svg += '</svg>';
-      svgContainer.innerHTML = svg;
-
-      let state = S.protractor; let activeAction = null; let startMouse = {x: 0, y: 0}; let startState = {x: 0, y: 0, rot: 0, scale: 1};
-
-      function updateTransform() { protractor.style.transform = 'translate(calc('+state.x+'px - 50%), calc('+state.y+'px - 100%)) rotate('+state.rot+'deg) scale('+state.scale+')'; }
-      function getPt(e) { return { x: e.clientX, y: e.clientY }; }
-      function onPointerDown(e, action) {
-        e.preventDefault(); e.stopPropagation();
-        activeAction = action; startMouse = getPt(e); startState = { x: state.x, y: state.y, rot: state.rot, scale: state.scale };
-        if(e.currentTarget && typeof e.currentTarget.setPointerCapture === 'function') {
-          try { e.currentTarget.setPointerCapture(e.pointerId); } catch(err) {}
-        }
-        document.addEventListener('pointermove', onPointerMove, {passive: false});
-        document.addEventListener('pointerup', onPointerUp);
-        document.addEventListener('pointercancel', onPointerUp);
-      }
-
-      svgContainer.addEventListener('pointerdown', e => onPointerDown(e, 'drag'));
-      btnRotate.addEventListener('pointerdown', e => onPointerDown(e, 'rotate'));
-      btnResize.addEventListener('pointerdown', e => onPointerDown(e, 'resize'));
-      btnClose.addEventListener('click', e => { e.preventDefault(); state.visible = false; protractor.style.display = 'none'; });
-
-      function onPointerMove(e) {
-          if (!activeAction) return; e.preventDefault();
-          let currentBoardPt = getBoardContentPoint(e); let startBoardPt = getBoardContentPoint({clientX: startMouse.x, clientY: startMouse.y});
-          let dx = currentBoardPt.x - startBoardPt.x; let dy = currentBoardPt.y - startBoardPt.y;
-
-          if (activeAction === 'drag') { state.x = startState.x + dx; state.y = startState.y + dy; } 
-          else if (activeAction === 'rotate') {
-              let cx = startState.x; let cy = startState.y;
-              let angle1 = Math.atan2(startBoardPt.y - cy, startBoardPt.x - cx);
-              let angle2 = Math.atan2(currentBoardPt.y - cy, currentBoardPt.x - cx);
-              state.rot = startState.rot + (angle2 - angle1) * 180 / Math.PI;
-          } 
-          else if (activeAction === 'resize') {
-              let cx = startState.x; let cy = startState.y;
-              let d1 = Math.hypot(startBoardPt.x - cx, startBoardPt.y - cy);
-              let d2 = Math.hypot(currentBoardPt.x - cx, currentBoardPt.y - cy);
-              state.scale = Math.max(0.5, Math.min(3, startState.scale * (d2 / d1)));
-          }
-          updateTransform();
-      }
-
-      function onPointerUp() { activeAction = null; document.removeEventListener('pointermove', onPointerMove); document.removeEventListener('pointerup', onPointerUp); document.removeEventListener('pointercancel', onPointerUp); }
-
-      function toggleProtractorTool(evt) {
-            if(evt) { evt.preventDefault(); evt.stopPropagation(); }
-            state.visible = !state.visible;
-            if (state.visible) {
-                protractor.style.display = 'block';
-                if (state.x === 0 && state.y === 0 && E.boardStage) {
-                    var scrollLeft = E.boardStage.scrollLeft; var scrollTop = E.boardStage.scrollTop;
-                    var visibleWidth = E.boardStage.clientWidth; var visibleHeight = E.boardStage.clientHeight;
-                    state.x = scrollLeft + (visibleWidth / 2);
-                    state.y = scrollTop + Math.max(260, Math.min(340, visibleHeight * 0.38));
-                }
-                updateTransform();
-            } else { protractor.style.display = 'none'; }
-      }
-      if(E.boardProtractorBtn) {
-        E.boardProtractorBtn.addEventListener('pointerdown', toggleProtractorTool);
-        E.boardProtractorBtn.addEventListener('click', function(evt) { evt.preventDefault(); });
-      }
-    }
 
     function initNumberWheel() {
       const slider = document.getElementById('wheelDigitCount');
@@ -2271,8 +2742,10 @@
     var penSubPanel = document.getElementById('penSubPanel');
     var shapeSubPanel = document.getElementById('shapeSubPanel');
     var pageSubPanel = document.getElementById('pageSubPanel');
-    var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel].filter(Boolean);
+    var sandSubPanel = document.getElementById('sandSubPanel');
+    var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel, sandSubPanel, document.getElementById('mathSubPanel')].filter(Boolean);
     function closeAllSubPanels() {
+      if(!allFloatPanels.some(function(panel) { return panel.classList.contains('is-open'); }) && !S.board.shapesOpen) return;
       allFloatPanels.forEach(function(panel) { panel.classList.remove('is-open'); });
       S.board.shapesOpen = false;
       if(E.shapePanel) E.shapePanel.classList.remove('is-open');
@@ -2305,6 +2778,7 @@
     }
     function trackBoardTouchPointer(evt) {
       if(evt.pointerType !== 'touch') return;
+      if(evt.type !== 'pointerdown' && !S.board.touchPointers[evt.pointerId]) return;
       S.board.touchPointers[evt.pointerId] = { clientX: evt.clientX, clientY: evt.clientY };
     }
     function releaseBoardTouchPointer(pointerId) {
@@ -2347,16 +2821,23 @@
       S.board.pinch.active = true;
       S.board.pinch.startDistance = Math.max(1, getTouchDistance(points));
       S.board.pinch.startZoom = S.board.zoom || 1;
+      S.board.pinch.center = getTouchCenter(points);
     }
     function moveBoardPinch() {
       var points = getBoardTouchPointers();
       if(!S.board.pinch.active || points.length < 2) return false;
       var distance = Math.max(1, getTouchDistance(points));
       var center = getTouchCenter(points);
-      setBoardZoom(S.board.pinch.startZoom * (distance / S.board.pinch.startDistance), center);
+      var previousCenter = S.board.pinch.center;
+      var zoom = clampBoardZoom(S.board.pinch.startZoom * (distance / S.board.pinch.startDistance));
+      if(Math.abs(zoom - S.board.zoom) > 0.025) setBoardZoom(zoom, previousCenter);
+      E.boardStage.scrollLeft -= center.clientX - previousCenter.clientX;
+      E.boardStage.scrollTop -= center.clientY - previousCenter.clientY;
+      S.board.pinch.center = center;
       return true;
     }
     function beginMultiStroke(evt) {
+      if(S.board.autosaveTimer) { clearTimeout(S.board.autosaveTimer); S.board.autosaveTimer = null; }
       var point = getBoardPoint(evt);
       var stroke = {
         tool: S.board.tool,
@@ -2365,6 +2846,9 @@
         pointerType: evt.pointerType || 'mouse',
         points: [{ x: point.x, y: point.y }],
         lastPoint: { x: point.x, y: point.y },
+        drawPoint: { x: point.x, y: point.y },
+        pendingPoints: [],
+        rect: E.boardCanvas.getBoundingClientRect(),
         minDistance: getStrokeMinDistance(S.board.tool, evt.pointerType || 'mouse')
       };
       S.board.activeStrokes[evt.pointerId] = stroke;
@@ -2373,8 +2857,9 @@
     function moveMultiStroke(evt) {
       var stroke = S.board.activeStrokes[evt.pointerId];
       if(!stroke) return;
-      var rect = E.boardCanvas.getBoundingClientRect();
-      var events = getFastPointerEvents(evt, stroke.tool === 'chalk' || stroke.tool === 'pencil' ? 4 : 8);
+      var rect = stroke.rect;
+      var sampleLimit = stroke.tool === 'chalk' || stroke.tool === 'pencil' ? 3 : (stroke.pointerType === 'pen' ? 6 : 5);
+      var events = getFastPointerEvents(evt, sampleLimit);
       events.forEach(function(ev) {
         var point = getBoardPointFromRect(ev, rect);
         var last = stroke.lastPoint;
@@ -2383,23 +2868,27 @@
         var minDistance = stroke.minDistance || 1.2;
         if((dx * dx + dy * dy) < minDistance * minDistance) return;
         stroke.points.push({ x: point.x, y: point.y });
-        drawStrokeSegment(boardCtx, stroke, last, point);
+        stroke.pendingPoints.push({ x: point.x, y: point.y });
         stroke.lastPoint = { x: point.x, y: point.y };
       });
+      if(stroke.pendingPoints.length) scheduleBoardStrokeFrame();
     }
     function endMultiStroke(evt) {
       var stroke = S.board.activeStrokes[evt.pointerId];
       if(!stroke) return;
+      if(evt.type !== 'pointercancel') moveMultiStroke(evt);
+      flushBoardStroke(stroke);
       if(stroke.points.length === 1) {
         stroke.points.push({ x: stroke.points[0].x + 0.1, y: stroke.points[0].y + 0.1 });
       }
+      var finalPoints = simplifyBoardPoints(stroke.points, stroke.tool);
       delete S.board.activeStrokes[evt.pointerId];
       pushBoardItem({
         kind: 'path',
         tool: stroke.tool,
         strokeColor: stroke.strokeColor,
         size: stroke.size,
-        points: stroke.points.slice()
+        points: finalPoints
       }, true);
     }
     function finishSinglePointer(evt) {
@@ -2409,6 +2898,124 @@
       S.board.activePointerId = null;
       S.board.activePointerType = null;
       try { E.boardPreview.releasePointerCapture(evt.pointerId); } catch(err) {}
+    }
+    function bindSandboxControls() {
+      if(E.sandGroupBtn) E.sandGroupBtn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        if(S.sand.active) togglePanel(sandSubPanel);
+        else setSandboxMode(true);
+      });
+      if(E.sandCloseBtn) E.sandCloseBtn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        setSandboxMode(false);
+      });
+      E.sandToolBtns.forEach(function(btn) {
+        btn.addEventListener('click', function(evt) {
+          evt.preventDefault();
+          setSandTool(btn.dataset.sandTool);
+        });
+      });
+      E.sandTargetBtns.forEach(function(btn) {
+        btn.addEventListener('click', function(evt) {
+          evt.preventDefault();
+          setSandTarget(btn.dataset.sandTarget);
+          clearSand(true);
+        });
+      });
+      if(E.sandTargetInput) {
+        E.sandTargetInput.addEventListener('input', function() {
+          setSandTarget(E.sandTargetInput.value);
+        });
+      }
+      if(E.sandRandomBtn) E.sandRandomBtn.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        var targets = E.sandTargetBtns.map(function(btn) { return btn.dataset.sandTarget; }).filter(Boolean);
+        if(!targets.length) targets = ['A', 'N', 'E', 'T', 'İ', 'L', 'O', 'K', 'R', 'İ', 'M', 'Ü', 'S', 'Ö', 'Y', 'D', 'Z'];
+        setSandTarget(targets[Math.floor(Math.random() * targets.length)]);
+        clearSand(true);
+      });
+      [E.sandClearTopBtn, E.sandClearPanelBtn].forEach(function(btn) {
+        if(btn) btn.addEventListener('click', function(evt) {
+          evt.preventDefault();
+          clearSand(true);
+        });
+      });
+      E.sandModeBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          S.sand.guideVisible = btn.dataset.sandMode === 'guided';
+          syncSandboxUI();
+        });
+      });
+      syncSandboxUI();
+    }
+    function bindSandboxPointerEvents() {
+      if(!E.sandCanvas) return;
+      E.sandCanvas.addEventListener('pointerenter', function(evt) {
+        if(!S.sand.active) return;
+        updateSandCursor(evt);
+      });
+      E.sandCanvas.addEventListener('pointermove', function(evt) {
+        if(!S.sand.active) return;
+        if(S.sand.drawing && S.sand.pointerId !== evt.pointerId) return;
+        updateSandCursor(evt);
+        if(!S.sand.drawing || S.sand.pointerId !== evt.pointerId) return;
+        evt.preventDefault();
+        var rect = E.sandCanvas.getBoundingClientRect();
+        var events = getFastPointerEvents(evt, S.sand.tool === 'star' ? 4 : 7);
+        events.forEach(function(ev) {
+          var point = getSandPointFromRect(ev, rect);
+          if(S.sand.tool === 'star') {
+            var stamp = S.sand.lastStamp || point;
+            if(Math.hypot(point.x - stamp.x, point.y - stamp.y) > 58) {
+              drawSandStar(point);
+              S.sand.lastStamp = point;
+            }
+            S.sand.lastPoint = point;
+            return;
+          }
+          var last = S.sand.lastPoint || point;
+          var dx = point.x - last.x;
+          var dy = point.y - last.y;
+          var minDistance = S.sand.tool === 'rake' ? 2.4 : 1.5;
+          if((dx * dx + dy * dy) < minDistance * minDistance) return;
+          drawSandMove(last, point);
+          S.sand.lastPoint = point;
+        });
+      }, { passive: false });
+      E.sandCanvas.addEventListener('pointerdown', function(evt) {
+        if(!S.sand.active) return;
+        if(S.sand.drawing) return;
+        if(typeof evt.button === 'number' && evt.button > 0) return;
+        evt.preventDefault();
+        dismissBoardTransientUi();
+        E.sandboxBed.classList.remove('is-shaking');
+        resizeSandbox();
+        S.sand.drawing = true;
+        S.sand.pointerId = evt.pointerId;
+        var point = getSandPoint(evt);
+        S.sand.lastPoint = point;
+        S.sand.lastStamp = point;
+        updateSandCursor(evt);
+        if(S.sand.tool === 'star') drawSandStar(point);
+        else drawSandMove(point, { x: point.x + 0.1, y: point.y + 0.1 });
+        try { E.sandCanvas.setPointerCapture(evt.pointerId); } catch(err) {}
+      }, { passive: false });
+      function finishSandPointer(evt) {
+        if(S.sand.pointerId !== evt.pointerId) return;
+        evt.preventDefault();
+        S.sand.drawing = false;
+        S.sand.pointerId = null;
+        S.sand.lastPoint = null;
+        S.sand.lastStamp = null;
+        if(evt.pointerType !== 'mouse' || evt.type === 'pointercancel') hideSandCursor();
+        try { E.sandCanvas.releasePointerCapture(evt.pointerId); } catch(err) {}
+      }
+      E.sandCanvas.addEventListener('pointerup', finishSandPointer);
+      E.sandCanvas.addEventListener('pointercancel', finishSandPointer);
+      E.sandCanvas.addEventListener('pointerleave', function() {
+        if(!S.sand.drawing) hideSandCursor();
+      });
     }
     function bindWhiteboardControls() {
       document.querySelectorAll('[data-close-panel]').forEach(function(btn) {
@@ -2599,8 +3206,25 @@
       });
     });
     mountBoardToolbar();
-    bindWhiteboardControls(); bindWhiteboardPointerEvents(); loadBoardFromMemory(); syncBoardUI(); initBoardDrag(); initProtractor(); resizeBoard();
-    window.addEventListener('resize',resizeBoard);
+    bindWhiteboardControls(); bindWhiteboardPointerEvents(); bindSandboxControls(); bindSandboxPointerEvents(); loadBoardFromMemory(); syncBoardUI(); initBoardDrag(); resizeBoard();
+    mathTools = window.initWhiteboardMathTools({
+      plane: E.boardPlane, stage: E.boardStage, button: E.boardProtractorBtn,
+      zoom: function() { return S.board.zoom || 1; },
+      color: function() { return S.board.strokeColor; },
+      size: function() { return S.board.size; },
+      activate: function() { if(S.sand.active) setSandboxMode(false); commitTextOverlay(true); },
+      togglePanel: togglePanel,
+      commit: function(item) { pushBoardItem(item, true); drawBoardItem(boardCtx, item); }
+    });
+    var boardResizeTimer;
+    window.addEventListener('resize', function() {
+      clearTimeout(boardResizeTimer);
+      boardResizeTimer = setTimeout(resizeBoard, 150);
+    });
+    window.addEventListener('pagehide', saveBoardToMemory);
+    document.addEventListener('visibilitychange', function() {
+      if(document.hidden) saveBoardToMemory();
+    });
     window.addEventListener('scroll', positionBoardToolbar, { passive: true });
     document.addEventListener('keydown',function(e){
       if(isEditableTarget(e.target)) return;
@@ -2610,6 +3234,9 @@
       if(k==='c') setBoardTool('chalk');
       if(k==='k') setBoardTool('pencil');
       if(k==='e') setBoardTool('eraser');
+      if(k==='v') setBoardTool('select');
+      if(k==='t') setBoardTool('text');
+      if(k==='m') setBoardTool('pan');
       if(k==='z'&&(e.ctrlKey||e.metaKey)){e.preventDefault();undoBoard();}
     });
 

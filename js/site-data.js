@@ -120,6 +120,15 @@
       ],
     },
     ekMenuler: [],
+    kisayolDock: [
+      { id: 'whiteboard', baslik: 'Beyaz Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
+      { id: 'stopwatch', baslik: 'Kronometre', link: '/ogretmen/kronometre.html', emoji: '⏱️', iconUrl: '/assets/dock-icons/kronometre.svg', aktif: true },
+      { id: 'math', baslik: 'Matematik Araçları', link: '/ogretmen/matematik.html', emoji: '➗', iconUrl: '/assets/dock-icons/matematik.svg', aktif: true },
+      { id: 'unit-cubes', baslik: 'Birim Küpler', link: '/ogretmen/birim-kup-uygulamasi.html', emoji: '🧊', iconUrl: '/assets/dock-icons/birim-kupler.svg', aktif: true },
+      { id: '3d-builder', baslik: '3D Yapı Atölyesi', link: '/ogretmen/3d-yapi-atolyesi.html', emoji: '🏗️', aktif: true },
+      { id: 'nets', baslik: 'Cisim Açılımları', link: '/ogretmen/geometrik-cisimler-acilimlar.html', emoji: '🔷', iconUrl: '/assets/dock-icons/cisim-acilimlari.svg', aktif: true },
+      { id: 'agenda', baslik: 'Öğretmen Ajandası', link: '/ogretmen-ajandasi/index.html', emoji: '📒', iconUrl: '/assets/dock-icons/ogretmen-ajandasi.svg', aktif: true },
+    ],
   };
 
   function deepClone(value) {
@@ -188,6 +197,14 @@
         id: item && item.id ? item.id : Date.now() + index,
         ad: item && item.ad ? String(item.ad) : '',
         url: item && item.url ? String(item.url) : '#',
+      })),
+      kisayolDock: normalizeArray(source.kisayolDock && source.kisayolDock.length ? source.kisayolDock : defaults.kisayolDock).map((item, index) => ({
+        id: item && item.id ? item.id : Date.now() + index,
+        baslik: item && item.baslik ? String(item.baslik) : `Kısayol ${index + 1}`,
+        link: item && item.link ? String(item.link) : '#',
+        emoji: item && item.emoji ? String(item.emoji) : '📌',
+        iconUrl: item && item.iconUrl ? String(item.iconUrl) : '',
+        aktif: item && typeof item.aktif === 'boolean' ? item.aktif : true,
       })),
     };
   }

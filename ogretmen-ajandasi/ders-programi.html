@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="../css/shortcut-dock.css?v=20260926-agenda-dock">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&family=Crimson+Pro:wght@400;600&display=swap');
 
@@ -802,7 +803,7 @@
   .status-err { background: #fc8181; }
 </style>
 </head>
-<body>
+<body data-kemal-chrome="off" data-kemal-shortcut-dock="only">
 
 <div class="header">
   <h1>📚 Öğretmen <span>Ders Planlama</span> Sistemi</h1>
@@ -3079,5 +3080,7 @@ function renderLegend() {
 // ============================================================
 init();
 </script>
+<script src="../js/site-data.js"></script>
+<script src="../js/site.js?v=20260926-dock-home"></script>
 </body>
 </html>

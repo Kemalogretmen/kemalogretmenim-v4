@@ -1,0 +1,25 @@
+.math-tool-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.math-tool-tabs button { min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dbe1ea; border-radius: 6px; background: #f8fafc; color: #39445b; font: inherit; font-size: 12px; cursor: pointer; }
+.math-tool-tabs button[aria-pressed="true"] { background: #eee8ff; border-color: #8659eb; color: #6033cc; }
+.math-field { display: grid; grid-template-columns: minmax(0, 1fr) 88px; align-items: center; gap: 8px; font-size: 13px; color: #39445b; }
+.math-field input { width: 100%; min-width: 0; height: 40px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; font: inherit; color: #263047; background: white; }
+.math-options { display: flex; gap: 12px; font-size: 13px; }
+.math-options label { display: flex; align-items: center; gap: 5px; min-height: 36px; }
+.math-actions { display: flex; align-items: center; gap: 6px; }
+.math-actions button { min-height: 42px; padding: 8px 12px; border: 1px solid #dbe1ea; border-radius: 6px; cursor: pointer; background: #fff; color: #39445b; font: inherit; font-size: 13px; }
+.math-actions .math-draw { flex: 1; color: #fff; background: #6c3ded; border-color: #6c3ded; }
+.math-actions button:disabled { opacity: .5; cursor: default; }
+#mathSubPanel { min-width: 248px; max-width: 290px; }
+#mathSubPanel [hidden] { display: none !important; }
+.math-instrument { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 45; transform-origin: 0 0; pointer-events: none; color: #25354d; }
+.math-instrument[hidden] { display: none; }
+.math-instrument-svg { position: absolute; overflow: visible; touch-action: none; pointer-events: none; }
+.math-instrument-svg [data-drag] { pointer-events: all; cursor: grab; }
+.math-instrument-svg [data-drag]:active { cursor: grabbing; }
+.math-instrument-svg text { font-family: Arial, sans-serif; font-size: 11px; font-weight: 600; fill: #25354d; user-select: none; pointer-events: none; }
+.math-instrument-svg .instrument-handle { fill: #fff; stroke: #7043d8; stroke-width: 2; }
+.math-instrument-controls { position: absolute; display: flex; gap: 4px; pointer-events: auto; transform: translateX(-50%); }
+.math-instrument-controls button { width: 40px; height: 40px; display: grid; place-items: center; background: #fff; color: #6033cc; border: 1px solid #cdbded; border-radius: 6px; cursor: pointer; touch-action: none; }
+.math-instrument-controls button:focus-visible, #mathSubPanel button:focus-visible { outline: 3px solid #1584ca; outline-offset: 2px; }
+.math-instrument-controls button:disabled { opacity: .5; }
+@media (max-width:760px) { #mathSubPanel { min-width: 0; max-width: 100%; } }

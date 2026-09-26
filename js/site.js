@@ -1943,6 +1943,157 @@
     '</footer>';
   }
 
+  function isShortcutDockAllowed() {
+    const path = String(window.location.pathname || '').toLowerCase();
+    return !(
+      path.indexOf('/hizli-okuma/') === 0 ||
+      path.indexOf('/sinav_sitesi/') === 0 ||
+      path === '/sinav.html' ||
+      path.indexOf('/admin/') === 0
+    );
+  }
+
+  function isShortcutDockOnly() {
+    return !!(document.body && document.body.dataset.kemalShortcutDock === 'only');
+  }
+
+  function buildShortcutDock(data) {
+    if (!isShortcutDockAllowed()) return '';
+    const defaultDockItems = [
+      { baslik: 'Beyaz Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
+      { baslik: 'Kronometre', link: '/ogretmen/kronometre.html', emoji: '⏱️', iconUrl: '/assets/dock-icons/kronometre.svg', aktif: true },
+      { baslik: 'Matematik Araçları', link: '/ogretmen/matematik.html', emoji: '➗', iconUrl: '/assets/dock-icons/matematik.svg', aktif: true },
+      { baslik: 'Birim Küpler', link: '/ogretmen/birim-kup-uygulamasi.html', emoji: '🧊', iconUrl: '/assets/dock-icons/birim-kupler.svg', aktif: true },
+      { baslik: '3D Yapı Atölyesi', link: '/ogretmen/3d-yapi-atolyesi.html', emoji: '🏗️', aktif: true },
+      { baslik: 'Cisim Açılımları', link: '/ogretmen/geometrik-cisimler-acilimlar.html', emoji: '🔷', iconUrl: '/assets/dock-icons/cisim-acilimlari.svg', aktif: true },
+      { baslik: 'Öğretmen Ajandası', link: '/ogretmen-ajandasi/index.html', emoji: '📒', iconUrl: '/assets/dock-icons/ogretmen-ajandasi.svg', aktif: true },
+    ];
+    const configuredItems = Array.isArray(data && data.kisayolDock) && data.kisayolDock.length
+      ? data.kisayolDock
+      : defaultDockItems;
+    const items = configuredItems.filter(function(item) {
+      return item && item.aktif !== false && item.baslik && item.link;
+    });
+    if (!items.length) return '';
+    const path = String(window.location.pathname || '').replace(/\/+$/, '') || '/';
+    const isSubPage = path !== '/' && path !== '/index.html';
+    const visibleItems = isSubPage
+      ? [{ baslik: 'Ana Sayfa', link: '/index.html', emoji: '🏠', iconUrl: '/gorseller/logo.png', aktif: true }].concat(items)
+      : items;
+    return '<aside class="shortcut-dock" id="shortcutDock" aria-label="Hızlı araç kısayolları">' +
+      '<div class="shortcut-dock-bar" role="navigation">' +
+        '<button class="shortcut-dock-handle" id="shortcutDockHandle" type="button" aria-label="Kısayol çubuğunu sürükleyerek konumlandır" title="Sürükleyerek sola, ortaya veya sağa yerleştir"><span></span><span></span><span></span><span></span><span></span><span></span></button>' +
+        '<button class="shortcut-dock-size" id="shortcutDockSmaller" type="button" aria-label="Kısayol çubuğunu küçült" title="Küçült">−</button>' +
+        '<div class="shortcut-dock-scroller">' + visibleItems.map(function(item) {
+          const icon = item.iconUrl
+            ? '<img src="' + escHtml(item.iconUrl) + '" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
+              '<span class="shortcut-dock-emoji" hidden>' + escHtml(item.emoji || '📌') + '</span>'
+            : '<span class="shortcut-dock-emoji">' + escHtml(item.emoji || '📌') + '</span>';
+          return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" title="' + escHtml(item.baslik) + '">' +
+            '<span class="shortcut-dock-icon">' + icon + '</span><span>' + escHtml(item.baslik) + '</span></a>';
+        }).join('') + '</div>' +
+        '<button class="shortcut-dock-size" id="shortcutDockLarger" type="button" aria-label="Kısayol çubuğunu büyüt" title="Büyüt">+</button>' +
+        '<button class="shortcut-dock-reset" id="shortcutDockReset" type="button" aria-label="Kısayol çubuğu konumunu ortaya al" title="Konumu ortaya al">⌖</button>' +
+        '<button class="shortcut-dock-close" id="shortcutDockClose" type="button" aria-label="Kısayol çubuğunu gizle" title="Kısayolları gizle">×</button>' +
+      '</div>' +
+      '<button class="shortcut-dock-reopen" id="shortcutDockReopen" type="button" aria-label="Kısayol çubuğunu göster">⌘ <span>Kısayollar</span></button>' +
+    '</aside>';
+  }
+
+  function initShortcutDock() {
+    const dock = document.getElementById('shortcutDock');
+    if (!dock || dock.dataset.bound === '1') return;
+    dock.dataset.bound = '1';
+    const storageKey = 'kemal_shortcut_dock_state';
+    let preferences = { state: 'normal', size: 'normal', position: 'center' };
+    try {
+      const saved = localStorage.getItem(storageKey);
+      preferences = saved && saved.charAt(0) === '{'
+        ? Object.assign(preferences, JSON.parse(saved))
+        : Object.assign(preferences, { state: saved || 'normal' });
+    } catch (error) {
+      /* Bozuk eski tercih varsa varsayılan konumu kullan. */
+    }
+    function savePreferences() {
+      localStorage.setItem(storageKey, JSON.stringify(preferences));
+    }
+    if (preferences.state === 'large') {
+      preferences.size = 'large';
+      preferences.state = 'normal';
+    }
+    function applyPreferences() {
+      dock.classList.toggle('is-hidden', preferences.state === 'hidden');
+      dock.classList.toggle('is-small', preferences.size === 'small');
+      dock.classList.toggle('is-large', preferences.size === 'large');
+      dock.dataset.position = ['left', 'center', 'right'].includes(preferences.position) ? preferences.position : 'center';
+      dock.querySelector('#shortcutDockSmaller').disabled = preferences.size === 'small';
+      dock.querySelector('#shortcutDockLarger').disabled = preferences.size === 'large';
+    }
+    function setState(value) {
+      preferences.state = value;
+      savePreferences();
+      applyPreferences();
+    }
+    function changeSize(direction) {
+      const sizes = ['small', 'normal', 'large'];
+      const current = Math.max(0, sizes.indexOf(preferences.size));
+      preferences.size = sizes[Math.max(0, Math.min(sizes.length - 1, current + direction))];
+      savePreferences();
+      applyPreferences();
+    }
+    function setPosition(position) {
+      preferences.position = position;
+      savePreferences();
+      applyPreferences();
+    }
+    applyPreferences();
+    dock.querySelector('#shortcutDockClose').addEventListener('click', function() { setState('hidden'); });
+    dock.querySelector('#shortcutDockReopen').addEventListener('click', function() { setState('normal'); });
+    dock.querySelector('#shortcutDockSmaller').addEventListener('click', function() { changeSize(-1); });
+    dock.querySelector('#shortcutDockLarger').addEventListener('click', function() { changeSize(1); });
+    dock.querySelector('#shortcutDockReset').addEventListener('click', function() { setPosition('center'); });
+
+    const handle = dock.querySelector('#shortcutDockHandle');
+    let dragStartX = null;
+    function finishDrag(event) {
+      if (dragStartX === null) return;
+      const moved = Math.abs(event.clientX - dragStartX);
+      if (moved > 8) {
+        const third = window.innerWidth / 3;
+        setPosition(event.clientX < third ? 'left' : (event.clientX > third * 2 ? 'right' : 'center'));
+        handle.dataset.dragged = 'true';
+      }
+      dragStartX = null;
+      dock.classList.remove('is-dragging');
+    }
+    handle.addEventListener('pointerdown', function(event) {
+      dragStartX = event.clientX;
+      dock.classList.add('is-dragging');
+      handle.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    handle.addEventListener('pointerup', finishDrag);
+    handle.addEventListener('pointercancel', finishDrag);
+    handle.addEventListener('click', function() {
+      if (handle.dataset.dragged === 'true') {
+        delete handle.dataset.dragged;
+        return;
+      }
+      setPosition(preferences.position === 'left' ? 'center' : (preferences.position === 'center' ? 'right' : 'left'));
+    });
+    handle.addEventListener('keydown', function(event) {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); setPosition('left'); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); setPosition('right'); }
+      if (event.key === 'Home') { event.preventDefault(); setPosition('center'); }
+    });
+  }
+
+  function renderShortcutDock(data) {
+    const existingDock = document.getElementById('shortcutDock');
+    if (existingDock) existingDock.remove();
+    document.body.insertAdjacentHTML('beforeend', buildShortcutDock(data));
+  }
+
   function buildAnnounce(data) {
     const activeAnnouncements = (data.duyurular || []).filter(function(item) {
       return item && item.aktif && item.metin;
@@ -1989,6 +2140,7 @@
     announceTarget.innerHTML = buildAnnounce(data);
     navTarget.innerHTML = buildAccountBar() + buildNavbar(data) + buildSearchShell();
     footerTarget.innerHTML = buildFooter();
+    renderShortcutDock(data);
   }
 
   function initHamburger() {
@@ -2200,6 +2352,33 @@
     });
   }
 
+  function initTeacherWorkspaceFocus() {
+    const path = String(window.location.pathname || '').toLowerCase();
+    const workspace = path.indexOf('/ogretmen/') === 0
+      ? document.querySelector('.tools-page .workspace.is-visible')
+      : null;
+    if (!workspace) {
+      return;
+    }
+
+    window.addEventListener('load', function() {
+      // Bağlantı hedefi ve geri/ileri gezinmeler, tarayıcının kendi konumunu korur.
+      if (window.location.hash || window.scrollY > 4) {
+        return;
+      }
+      const navigation = window.performance && window.performance.getEntriesByType
+        ? window.performance.getEntriesByType('navigation')[0]
+        : null;
+      if (navigation && navigation.type === 'back_forward') {
+        return;
+      }
+      window.requestAnimationFrame(function() {
+        const workspaceTop = workspace.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: Math.max(0, workspaceTop - 8), behavior: 'auto' });
+      });
+    }, { once: true });
+  }
+
   function isChromeEnabled() {
     return !document.body || document.body.dataset.kemalChrome !== 'off';
   }
@@ -2287,14 +2466,19 @@
       renderChrome(initialData);
       initSiteSearch();
       initSiteAccount();
+      initShortcutDock();
       scanContentControls(document);
+    } else if (isShortcutDockOnly()) {
+      renderShortcutDock(initialData);
+      initShortcutDock();
     }
     repairLegacyLinks(document);
-    initHamburger();
-    bindAdaptiveNavResize();
-    syncAdaptiveNav();
-    highlightActiveLink();
-    initScrollReveal();
+  initHamburger();
+  bindAdaptiveNavResize();
+  syncAdaptiveNav();
+  highlightActiveLink();
+  initScrollReveal();
+  initTeacherWorkspaceFocus();
 
     if (!window.kemalSiteStore) {
       return initialData;
@@ -2307,7 +2491,11 @@
       renderChrome(remoteData);
       initSiteSearch();
       initSiteAccount();
+      initShortcutDock();
       scanContentControls(document);
+    } else if (isShortcutDockOnly()) {
+      renderShortcutDock(remoteData);
+      initShortcutDock();
     }
     injectDynamicClassCards();
     repairLegacyLinks(document);
@@ -2335,7 +2523,11 @@
       renderChrome(saved);
       initSiteSearch();
       initSiteAccount();
+      initShortcutDock();
       scanContentControls(document);
+    } else if (isShortcutDockOnly()) {
+      renderShortcutDock(saved);
+      initShortcutDock();
     }
     repairLegacyLinks(document);
     initHamburger();

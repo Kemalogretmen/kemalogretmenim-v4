@@ -27,6 +27,7 @@
     yeni: '🌟 Yeni İçerikler',
     hakkimda: '👤 Hakkımda',
     menuler: '🔗 Ekstra Menü',
+    dock: '⌘ Kısayol Dock’u',
     sifre: '🔑 Yönetici Hesabı',
     yedek: '💾 Yedek / Sıfırla',
   };
@@ -316,6 +317,7 @@
       'btn-yeni': 'site_admin_dashboard',
       'btn-hakkimda': 'site_admin_dashboard',
       'btn-menuler': 'site_admin_dashboard',
+      'btn-dock': 'site_admin_dashboard',
       'btn-oyunlar': 'oyun_ekleme',
       'btn-okuma-editor': 'okuma_metinleri',
       'btn-dokuman-yonetimi': 'dokuman_ekleme',
@@ -554,7 +556,7 @@
 
     setElementVisible('statsRow', showSiteDashboard, 'grid');
 
-    if (!showSiteDashboard && ['analytics', 'reactions', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler', 'yedek'].includes(state.currentPanel)) {
+    if (!showSiteDashboard && ['analytics', 'reactions', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler', 'dock', 'yedek'].includes(state.currentPanel)) {
       state.currentPanel = 'overview';
     }
     if (!canAccess('teacher_approvals') && state.currentPanel === 'ogretmenler') {
@@ -689,7 +691,7 @@
 
   function showPanel(id) {
     const ownerMode = isOwnerUser();
-    const siteDashboardPanels = ['analytics', 'reactions', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler'];
+    const siteDashboardPanels = ['analytics', 'reactions', 'duyurular', 'badges', 'hizli', 'onecikarlar', 'yeni', 'hakkimda', 'menuler', 'dock'];
     if (siteDashboardPanels.includes(id) && !canAccess('site_admin_dashboard')) {
       toast('Bu içerik alanı için yetkin açık değil.', 'error');
       return;
@@ -895,6 +897,22 @@
             </div>`;
         }).join('')
       : '<p style="color:var(--muted);font-size:14px;">Henüz ekstra bağlantı eklenmedi.</p>';
+  }
+
+  function renderDock() {
+    const list = getData().kisayolDock || [];
+    document.getElementById('dockList').innerHTML = list.length
+      ? list.map(function(item, index) {
+          const icon = item.iconUrl
+            ? '<img src="' + escHtml(item.iconUrl) + '" alt="" style="width:28px;height:28px;object-fit:contain;vertical-align:middle;">'
+            : escHtml(item.emoji || '📌');
+          return '<div class="item-row">' +
+            '<span class="item-em">' + icon + '</span>' +
+            '<div class="item-info"><div class="item-name">' + escHtml(item.baslik) + '</div><div class="item-sub">' + escHtml(item.link) + '</div></div>' +
+            '<div class="item-actions"><button class="btn-toggle ' + (item.aktif ? 'on' : 'off') + '" onclick="toggleDock(' + index + ')">' + (item.aktif ? 'Açık' : 'Kapalı') + '</button><button class="btn-danger" onclick="delDock(' + index + ')">Sil</button></div>' +
+          '</div>';
+        }).join('')
+      : '<p style="color:var(--muted);font-size:14px;">Henüz dock kısayolu eklenmedi.</p>';
   }
 
   function syncAdminActiveLabel() {
@@ -1962,6 +1980,9 @@
       case 'menuler':
         renderMenuler();
         break;
+      case 'dock':
+        renderDock();
+        break;
       default:
         renderAdminActivity();
         renderDuyurular();
@@ -1971,6 +1992,7 @@
         renderYeni();
         renderHakkimda();
         renderMenuler();
+        renderDock();
         break;
     }
   }
@@ -2216,6 +2238,66 @@
     persistData('🗑️ Menü bağlantısı silindi');
   }
 
+  async function addDockItem() {
+    const baslik = document.getElementById('dockBaslik').value.trim();
+    const link = document.getElementById('dockLink').value.trim();
+    const emoji = document.getElementById('dockEmoji').value.trim() || '📌';
+    const fileInput = document.getElementById('dockIconFile');
+    const status = document.getElementById('dockUploadStatus');
+    if (!baslik || !link) {
+      toast('Başlık ve bağlantı zorunludur!', 'error');
+      return;
+    }
+    let iconUrl = '';
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast('İkon dosyası en fazla 2 MB olabilir.', 'error');
+        return;
+      }
+      const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+      if (!allowed.includes(file.type)) {
+        toast('PNG, JPG, WebP veya SVG ikon yükleyin.', 'error');
+        return;
+      }
+      try {
+        status.textContent = 'İkon yükleniyor…';
+        const client = window.kemalAdminAuth.getClient();
+        const extension = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
+        const path = 'dock-icons/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + extension;
+        const upload = await client.storage.from('site-assets').upload(path, file, { cacheControl: '31536000', upsert: false, contentType: file.type });
+        if (upload.error) throw upload.error;
+        const publicUrl = client.storage.from('site-assets').getPublicUrl(path);
+        iconUrl = publicUrl && publicUrl.data ? publicUrl.data.publicUrl : '';
+      } catch (error) {
+        status.textContent = '';
+        toast('İkon yüklenemedi. `supabase-kisayol-dock.sql` dosyasını Supabase SQL Editor içinde çalıştırın.', 'error');
+        return;
+      }
+    }
+    state.data.kisayolDock = state.data.kisayolDock || [];
+    state.data.kisayolDock.push({ id: Date.now(), baslik, link, emoji, iconUrl, aktif: true });
+    document.getElementById('dockBaslik').value = '';
+    document.getElementById('dockLink').value = '';
+    document.getElementById('dockEmoji').value = '';
+    if (fileInput) fileInput.value = '';
+    status.textContent = '';
+    persistData('✅ Dock kısayolu kaydedildi!');
+  }
+
+  function toggleDock(index) {
+    if (!state.data.kisayolDock || !state.data.kisayolDock[index]) return;
+    state.data.kisayolDock[index].aktif = !state.data.kisayolDock[index].aktif;
+    persistData();
+  }
+
+  function delDock(index) {
+    if (!state.data.kisayolDock || !state.data.kisayolDock[index]) return;
+    if (!confirm('Bu dock kısayolunu silmek istediğinizden emin misiniz?')) return;
+    state.data.kisayolDock.splice(index, 1);
+    persistData('🗑️ Dock kısayolu silindi');
+  }
+
   function collectAdminPermissions() {
     const permissions = {};
     document.querySelectorAll('[data-admin-permission]').forEach(function(input) {
@@ -2445,6 +2527,9 @@
   window.saveHakkimda = saveHakkimda;
   window.addMenu = addMenu;
   window.delMenu = delMenu;
+  window.addDockItem = addDockItem;
+  window.toggleDock = toggleDock;
+  window.delDock = delDock;
   window.resetAdminMemberForm = resetAdminMemberForm;
   window.saveAdminMember = saveAdminMember;
   window.editAdminMember = editAdminMember;

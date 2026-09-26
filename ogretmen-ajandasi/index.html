@@ -8,6 +8,7 @@
   <script src="vendor/xlsx.full.min.js"></script>
   <script src="vendor/html2canvas.min.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="../css/shortcut-dock.css?v=20260926-agenda-dock">
   <style>
     :root {
       --ink: #27313f;
@@ -2269,7 +2270,7 @@
     }
   </style>
 </head>
-<body>
+<body data-kemal-chrome="off" data-kemal-shortcut-dock="only">
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -3068,6 +3069,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="../js/site-data.js"></script>
+  <script src="../js/site.js?v=20260926-dock-home"></script>
   <script src="../js/user-auth.js"></script>
   <script src="app.js"></script>
 </body>
