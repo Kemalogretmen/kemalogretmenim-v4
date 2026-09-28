@@ -1549,3 +1549,76 @@ a { color: inherit; }
   .sp-ho-btn { width: 100%; justify-content: center; white-space: normal; text-align: center; padding: 12px 16px; }
   .sp-num { display: none; }
 }
+
+/* ─── ORTAK KALİTE VE ERİŞİLEBİLİRLİK KATMANI ───
+   Sayfa bazlı tasarımları değiştirmeden; klavye, dokunmatik ekran ve
+   okunabilirlik davranışlarını bütün sitede aynı seviyeye getirir. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid #2563EB;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+::selection {
+  color: var(--navy);
+  background: #DCD0FF;
+}
+
+img, svg, video, canvas { max-width: 100%; }
+img, video { height: auto; }
+
+button, input, select, textarea { font: inherit; }
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
+button:disabled,
+[aria-disabled="true"] { cursor: not-allowed; }
+
+main, section, article, .section, .panel, .card { scroll-margin-top: 112px; }
+p, li, .sec-sub, .page-header-sub { overflow-wrap: break-word; }
+
+.skip-link {
+  position: fixed;
+  z-index: 10050;
+  left: 16px;
+  top: 12px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  color: #fff;
+  background: var(--navy);
+  box-shadow: 0 8px 24px rgba(26,16,64,.28);
+  font-weight: 800;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform .18s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+
+body.has-shortcut-dock { padding-bottom: 112px; }
+.shortcut-dock-item[aria-current="page"] {
+  background: rgba(255,255,255,.24);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.42);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-account-link:hover,
+  .footer-links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+@media (max-width: 640px) {
+  body.has-shortcut-dock { padding-bottom: 96px; }
+  .skip-link { left: 10px; top: 8px; }
+  .shortcut-dock-handle,
+  .shortcut-dock-size,
+  .shortcut-dock-reset,
+  .shortcut-dock-close { width: 34px; height: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

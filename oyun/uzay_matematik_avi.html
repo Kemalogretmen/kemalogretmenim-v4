@@ -1078,7 +1078,7 @@
   </div>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     const SCORE_STORAGE_KEY = 'kemal-uzay-matematik-skor-v2';
     const difficultyConfig = {
@@ -1931,6 +1931,7 @@
     function endGame(reason) {
       if (!state.running) return;
       state.running = false;
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'uzay_matematik_avi' } }));
       clearInterval(state.timerId);
       clearInterval(state.questionTimerId);
       cancelAnimationFrame(state.rafId);

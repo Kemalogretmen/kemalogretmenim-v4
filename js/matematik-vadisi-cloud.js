@@ -57,7 +57,9 @@
     if(uid) $('mv-account-panel').href = auth.getPanelHref(state.profile);
     if(uid && state.profile?.active === false) {
       store.dispose(); game.replaceSnapshot(null); game.setLocked(true);
-      showStatus({kind:'auth-error',message:'Bu hesap şu anda pasif. Panelinden hesap durumunu kontrol edebilirsin.'});
+      $('mv-play-guest').hidden = false;
+      $('mv-play-guest').textContent = 'Misafir olarak oyna';
+      showStatus({kind:'auth-error',message:'Bu hesap şu anda pasif. Panelinden hesap durumunu kontrol edebilir veya kayıt olmadan misafir olarak oynayabilirsin.'});
       return;
     }
     initialized = true;
@@ -65,7 +67,8 @@
     showTransfer();
   }
   $('mv-play-guest').addEventListener('click', async () => {
-    if(store.getState().uid) return;
+    const accountIsInactive = auth.getState().user && auth.getState().profile?.active === false;
+    if(store.getState().uid && !accountIsInactive) return;
     guestOverride = true; initialized = true;
     await store.connect(null,true);
     $('mv-play-guest').hidden = true;

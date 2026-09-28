@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pizza Partisi | Kemal Öğretmenim</title>
+  <meta name="description" content="Pizza dilimlerini seçerek kesirleri eğlenceli şekilde öğren." />
+  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons" />
+  <style>
+    :root{--ink:#23154f;--purple:#7045ef;--purple-2:#9c73ff;--cream:#fffaf1;--coral:#ff6f61;--mint:#13b99a;--line:#eadfff}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Nunito,Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 12% 12%,#ffe0b5 0,transparent 25rem),radial-gradient(circle at 90% 80%,#d9fff0 0,transparent 28rem),var(--cream)}
+    .topbar{max-width:1120px;margin:auto;padding:20px 22px 8px;display:flex;justify-content:space-between;align-items:center;gap:12px}.back{color:var(--purple);font-weight:900;text-decoration:none;background:#f1ebff;border-radius:999px;padding:11px 16px}.brand{font-weight:1000;font-size:1.1rem}.brand span{color:var(--coral)}
+    main{max-width:1050px;margin:0 auto;padding:18px 22px 48px}.hero{position:static;min-height:0;display:block;overflow:visible;background:transparent;text-align:center}.eyebrow{display:inline-block;background:#fff2dd;border:2px solid #ffd69b;padding:7px 13px;border-radius:999px;font-weight:900;color:#a45200}.hero h1{font-size:clamp(2rem,5vw,3.35rem);margin:12px 0 7px;letter-spacing:-.04em}.hero p{font-size:1.08rem;max-width:610px;margin:0 auto;color:#62567f;font-weight:700}
+    .game{margin-top:24px;background:rgba(255,255,255,.9);border:2px solid var(--line);border-radius:32px;padding:clamp(18px,4vw,42px);box-shadow:0 20px 50px #563c9c15}.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}.stat{border:2px solid #eee5ff;border-radius:18px;padding:11px;text-align:center;font-weight:900;color:#6b5d8a}.stat strong{display:block;font-size:1.35rem;color:var(--ink)}
+    .mission{display:grid;grid-template-columns:minmax(230px,1fr) minmax(260px,.92fr);gap:36px;align-items:center}.order{background:#fff8eb;border:2px dashed #ffc264;border-radius:25px;padding:22px}.order h2{margin:0 0 8px;font-size:1.55rem}.order p{font-weight:800;color:#6c5f80;line-height:1.45}.fraction{font-size:clamp(3rem,9vw,5.4rem);font-weight:1000;color:var(--coral);line-height:1;margin:18px 0}.flavor{font-size:1.12rem;font-weight:900;background:white;border-radius:14px;padding:12px}
+    .pizza-wrap{text-align:center}.pizza{width:min(330px,80vw);aspect-ratio:1;margin:auto;padding:17px;border-radius:50%;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:5px;background:conic-gradient(#e75337 0 25%,#ed694b 0 50%,#e75337 0 75%,#ed694b 0);border:16px solid #d99845;box-shadow:inset 0 0 0 8px #ffca6c,0 17px 28px #613d4328}.slice{appearance:none;border:2px solid #e74835;background:#ffc54c;border-radius:13px;cursor:pointer;font-size:clamp(1.3rem,4vw,2rem);font-weight:900;transition:transform .16s,filter .16s,box-shadow .16s}.slice:hover,.slice:focus-visible{transform:scale(1.06);outline:3px solid var(--purple);outline-offset:2px}.slice.selected{background:#a6f0d6;box-shadow:inset 0 0 0 4px #15ae8e;filter:saturate(1.1)}.pizza-note{margin:17px 0 0;font-weight:800;color:#6b5d8a}
+    .actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-top:28px}.button{border:0;border-radius:16px;padding:15px 22px;font:900 1rem inherit;cursor:pointer;box-shadow:0 8px 0 #4d28bc;color:#fff;background:linear-gradient(135deg,var(--purple),var(--purple-2));transition:transform .15s}.button:hover{transform:translateY(-2px)}.button:active{transform:translateY(5px);box-shadow:0 3px 0 #4d28bc}.button.secondary{background:white;color:var(--purple);border:2px solid #ddceff;box-shadow:none}.message{min-height:31px;text-align:center;font-size:1.07rem;font-weight:900;margin:20px 0 0}.message.success{color:#07886f}.message.error{color:#d13b33}
+    .result{text-align:center;padding:22px 8px}.result .big{font-size:4.5rem;margin:0}.result h2{font-size:2.2rem;margin:8px}.hidden{display:none}@media(max-width:720px){.topbar .brand{display:none}.mission{grid-template-columns:1fr;gap:22px}.order{order:2}.pizza-wrap{order:1}.hud{gap:6px}.stat{font-size:.78rem;padding:8px}.game{border-radius:24px;padding:18px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="back" href="oyunlar.html">← Oyunlara dön</a><div class="brand">🍕 <span>Pizza</span> Partisi</div></header>
+  <main>
+    <section class="hero"><div class="eyebrow">🍕 MATEMATİK MUTFAĞI</div><h1>Pizza Partisi</h1><p>Siparişteki kesir kadar dilim seç. Her doğru pizza, yıldızını büyütsün!</p></section>
+    <section class="game" aria-live="polite">
+      <div class="hud"><div class="stat">Görev<strong id="level">1 / 5</strong></div><div class="stat">Yıldız<strong id="score">0 ⭐</strong></div><div class="stat">Seri<strong id="streak">0 🔥</strong></div></div>
+      <div id="playArea">
+        <div class="mission">
+          <section class="order"><h2>Şefin siparişi</h2><p id="instruction">Doğru sayıda dilimi seç.</p><div class="fraction" id="fraction">1/2</div><div class="flavor" id="flavor">🧀 Peynirli dilimler</div></section>
+          <section class="pizza-wrap"><div id="pizza" class="pizza" role="group" aria-label="Pizza dilimleri"></div><p class="pizza-note" id="pizzaNote">0 dilim seçtin.</p></section>
+        </div>
+        <div class="actions"><button id="checkButton" class="button" type="button">Siparişi kontrol et</button><button id="clearButton" class="button secondary" type="button">Seçimi temizle</button></div>
+        <p class="message" id="message" role="status"></p>
+      </div>
+      <div id="result" class="result hidden"><p class="big">🎉🍕⭐</p><h2>Pizza ustası oldun!</h2><p id="resultText"></p><button id="againButton" class="button" type="button">Yeni pizza partisi</button></div>
+    </section>
+  </main>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
+  <script>
+    (() => {
+      const missions = [
+        { total: 8, target: 4, icon: '🧀', name: 'Peynirli', tip: 'Pizzanın yarısını seç.' },
+        { total: 8, target: 2, icon: '🫑', name: 'Biberli', tip: 'Pizzanın dörtte birini seç.' },
+        { total: 6, target: 3, icon: '🍅', name: 'Domatesli', tip: 'Pizzanın yarısını seç.' },
+        { total: 8, target: 6, icon: '🌽', name: 'Mısırlı', tip: 'Sekiz dilimin altısını seç.' },
+        { total: 4, target: 3, icon: '🍄', name: 'Mantarlı', tip: 'Pizzanın dörtte üçünü seç.' }
+      ];
+      let current = 0, score = 0, streak = 0, selected = new Set(), locked = false;
+      const $ = (id) => document.getElementById(id);
+      const level = $('level'), scoreEl = $('score'), streakEl = $('streak'), pizza = $('pizza'), note = $('pizzaNote'), fraction = $('fraction'), flavor = $('flavor'), instruction = $('instruction'), message = $('message');
+      function showMission() {
+        const item = missions[current]; selected = new Set(); locked = false;
+        level.textContent = `${current + 1} / ${missions.length}`;
+        fraction.textContent = `${item.target}/${item.total}`;
+        flavor.textContent = `${item.icon} ${item.name} dilimler`;
+        instruction.textContent = item.tip;
+        message.textContent = ''; message.className = 'message';
+        pizza.innerHTML = '';
+        for (let i = 0; i < item.total; i += 1) {
+          const button = document.createElement('button'); button.type = 'button'; button.className = 'slice'; button.textContent = item.icon;
+          button.setAttribute('aria-label', `${i + 1}. pizza dilimi`);
+          button.addEventListener('click', () => toggleSlice(i, button)); pizza.appendChild(button);
+        }
+        updateSelection();
+      }
+      function toggleSlice(index, button) {
+        if (locked) return;
+        selected.has(index) ? selected.delete(index) : selected.add(index);
+        button.classList.toggle('selected', selected.has(index)); updateSelection();
+      }
+      function updateSelection() { note.textContent = `${selected.size} dilim seçtin.`; }
+      function checkAnswer() {
+        if (locked) return;
+        const item = missions[current];
+        if (selected.size !== item.target) { streak = 0; streakEl.textContent = '0 🔥'; message.textContent = `Bir daha bak! Sipariş tam ${item.target} dilim istiyor.`; message.className = 'message error'; return; }
+        locked = true; score += 2 + Math.min(streak, 3); streak += 1; scoreEl.textContent = `${score} ⭐`; streakEl.textContent = `${streak} 🔥`;
+        message.textContent = `Harika! ${item.target}/${item.total} kesrini doğru tamamladın. +${2 + Math.min(streak - 1, 3)} yıldız!`; message.className = 'message success';
+        setTimeout(() => { current += 1; current < missions.length ? showMission() : finish(); }, 1050);
+      }
+      function finish() {
+        $('playArea').classList.add('hidden'); $('result').classList.remove('hidden'); $('resultText').textContent = `${score} yıldızla beş siparişi tamamladın. Kesirler artık mutfakta da seninle!`;
+        window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'pizza_partisi' } }));
+      }
+      $('checkButton').addEventListener('click', checkAnswer);
+      $('clearButton').addEventListener('click', () => { if (!locked) { selected.clear(); pizza.querySelectorAll('.slice').forEach((slice) => slice.classList.remove('selected')); updateSelection(); } });
+      $('againButton').addEventListener('click', () => { current = 0; score = 0; streak = 0; scoreEl.textContent = '0 ⭐'; streakEl.textContent = '0 🔥'; $('result').classList.add('hidden'); $('playArea').classList.remove('hidden'); showMission(); });
+      showMission();
+    })();
+  </script>
+</body>
+</html>

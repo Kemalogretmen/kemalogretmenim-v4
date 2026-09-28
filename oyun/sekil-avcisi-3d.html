@@ -548,7 +548,7 @@
     </section>
   </main>
 
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     const GRADE_1_TARGETS = [
       { id: 'ucgen', name: 'Üçgen', shape: '▲', color: '#16a979', dark: '#0d7557' },
@@ -972,6 +972,7 @@
 
     function finishGame(won, winner) {
       gameState = 'gameover';
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'sekil_avcisi_3d' } }));
       cancelAnimationFrame(animationFrame);
       currentWinner = winner || players[0] || null;
       document.getElementById('result-screen').classList.remove('hidden');

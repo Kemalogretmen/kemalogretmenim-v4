@@ -899,7 +899,7 @@
   </main>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     const SCORE_STORAGE_KEY = "kemal_olcum_atolyesi_scores_v2";
 
@@ -1443,6 +1443,7 @@
     function finishGame(reason) {
       stopTimer();
       state.running = false;
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'olcum_atolyesi' } }));
       saveResult();
       syncStats();
       updateModeUI();

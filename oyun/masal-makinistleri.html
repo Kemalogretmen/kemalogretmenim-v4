@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masal Makinistleri | Kemal Öğretmenim</title>
+  <meta name="description" content="Seçimlerini yap, kendi kısa masalını oluştur." />
+  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons" />
+  <style>
+    :root{--ink:#24164c;--purple:#7045ef;--purple2:#a476ff;--pink:#ff6c9e;--sky:#dff4ff;--line:#e8dcff}*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font-family:Nunito,Arial,sans-serif;background:radial-gradient(circle at 8% 15%,#ffe2ed,transparent 25rem),radial-gradient(circle at 91% 83%,#d9f5ff,transparent 28rem),#fbf9ff}.topbar{max-width:1120px;margin:auto;padding:20px 22px 8px;display:flex;align-items:center;justify-content:space-between}.back{text-decoration:none;color:var(--purple);font-weight:1000;background:#f0eaff;padding:11px 16px;border-radius:999px}.brand{font-weight:1000;font-size:1.1rem}.brand span{color:var(--pink)}main{max-width:1020px;margin:auto;padding:15px 22px 48px}.hero{position:static;min-height:0;display:block;overflow:visible;background:transparent;text-align:center}.eyebrow{display:inline-block;padding:7px 14px;background:#fff0f6;border:2px solid #ffbed2;border-radius:999px;color:#b62463;font-weight:1000}.hero h1{font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.05em;margin:13px 0 7px}.hero p{max-width:590px;margin:0 auto;color:#665c80;font-weight:750;font-size:1.08rem}.maker{background:#fff;border:2px solid var(--line);border-radius:32px;padding:clamp(18px,4vw,42px);margin-top:25px;box-shadow:0 18px 48px #553a9215}.progress{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:27px}.dot{height:13px;width:13px;border-radius:50%;background:#e6dcfa}.dot.active,.dot.done{background:var(--purple)}.dot.done{box-shadow:0 0 0 4px #eee7ff}.stage{text-align:center}.stage h2{font-size:clamp(1.5rem,4vw,2.25rem);margin:0}.stage p{margin:8px auto 22px;color:#6a5f82;font-weight:750}.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.choice{min-height:176px;border:2px solid #e8ddff;background:linear-gradient(145deg,#fff,#fbf8ff);border-radius:24px;cursor:pointer;padding:18px 12px;color:var(--ink);font:900 1rem inherit;transition:transform .16s,border-color .16s,box-shadow .16s}.choice:hover,.choice:focus-visible{outline:none;transform:translateY(-5px);border-color:var(--purple);box-shadow:0 13px 22px #6840c122}.choice .emoji{display:block;font-size:3.4rem;margin-bottom:13px}.choice small{display:block;color:#766994;margin-top:5px;font-weight:800}.story{max-width:710px;margin:auto;padding:26px;background:linear-gradient(135deg,#fffaf0,#fff);border:2px solid #ffdc94;border-radius:25px;text-align:left;box-shadow:inset 0 0 0 8px #fff5dc}.story h2{text-align:center;margin:0 0 12px}.story p{font-size:1.15rem;line-height:1.7;font-weight:750;margin:0}.story .sparkle{text-align:center;font-size:3rem;margin-bottom:7px}.actions{margin-top:24px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}.button{border:0;border-radius:16px;padding:15px 21px;background:linear-gradient(135deg,var(--purple),var(--purple2));color:#fff;font:900 1rem inherit;cursor:pointer;box-shadow:0 8px 0 #4e2abd;transition:transform .15s}.button:hover{transform:translateY(-2px)}.button:active{transform:translateY(5px);box-shadow:0 3px 0 #4e2abd}.button.secondary{background:#fff;color:var(--purple);border:2px solid #d9cbff;box-shadow:none}.hidden{display:none}@media(max-width:660px){.brand{display:none}.choices{grid-template-columns:1fr}.choice{min-height:110px;display:grid;grid-template-columns:75px 1fr;align-items:center;text-align:left}.choice .emoji{margin:0;text-align:center}.maker{border-radius:24px;padding:20px}.story{padding:20px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="back" href="oyunlar.html">← Oyunlara dön</a><div class="brand">📚 <span>Masal</span> Makinistleri</div></header>
+  <main>
+    <section class="hero"><div class="eyebrow">✨ YARATICI YAZMA</div><h1>Masal Makinistleri</h1><p>Dört seçiminle yepyeni bir masalın makinisti ol. Hazır mısın?</p></section>
+    <section class="maker">
+      <div id="progress" class="progress" aria-label="Masal oluşturma adımları"></div>
+      <section id="stage" class="stage"><h2 id="stepTitle">Kahramanını seç</h2><p id="stepPrompt">Her masal, meraklı bir kahramanla başlar.</p><div id="choices" class="choices"></div></section>
+      <section id="storyPanel" class="hidden"><div class="story"><div class="sparkle">📖✨</div><h2>Senin masalın</h2><p id="storyText"></p></div><div class="actions"><button id="listenButton" class="button" type="button">🔊 Masalı dinle</button><button id="againButton" class="button secondary" type="button">↻ Yeni bir masal kur</button></div></section>
+    </section>
+  </main>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
+  <script>
+    (() => {
+      const steps = [
+        { title: 'Kahramanını seç', prompt: 'Her masal, meraklı bir kahramanla başlar.', options: [{ emoji: '🦊', label: 'Meraklı tilki', detail: 'İz sürmeyi sever' }, { emoji: '🧒', label: 'Cesur çocuk', detail: 'Soruların peşinden gider' }, { emoji: '🤖', label: 'Minik robot', detail: 'Yeni şeyler öğrenir' }] },
+        { title: 'Masalın mekânını seç', prompt: 'Kahramanın nereye yolculuk etsin?', options: [{ emoji: '🌲', label: 'Fısıldayan orman', story: 'fısıldayan ormanda', detail: 'Yapraklar şarkı söyler' }, { emoji: '🌊', label: 'Mavi ada', story: 'mavi adada', detail: 'Dalgalar sır saklar' }, { emoji: '🌙', label: 'Yıldız kasabası', story: 'yıldız kasabasında', detail: 'Gece gündüz parlar' }] },
+        { title: 'Gizemli görevi seç', prompt: 'Şimdi çözülmeyi bekleyen bir sorun bulalım.', options: [{ emoji: '🧩', label: 'Kayıp yapboz', detail: 'Parçaları rüzgâr uçurdu' }, { emoji: '💧', label: 'Susayan çiçekler', detail: 'Bahçe yardım bekliyor' }, { emoji: '🎵', label: 'Sessizleşen şarkı', detail: 'Notalar kaybolmuş' }] },
+        { title: 'Parlak çözümü seç', prompt: 'Kahramanın bunu nasıl çözsün?', options: [{ emoji: '🤝', label: 'Arkadaşlarıyla', detail: 'Birlikte düşünürler' }, { emoji: '🔎', label: 'Dikkatle araştırarak', detail: 'İpuçlarını birleştirir' }, { emoji: '🎨', label: 'Yaratıcı bir fikirle', detail: 'Yeni bir yol çizer' }] }
+      ];
+      let position = 0, picks = [];
+      const $ = (id) => document.getElementById(id);
+      function renderProgress() { $('progress').innerHTML = steps.map((_, index) => `<span class="dot ${index < position ? 'done' : index === position ? 'active' : ''}" aria-hidden="true"></span>`).join(''); }
+      function renderStep() {
+        const step = steps[position]; renderProgress(); $('stepTitle').textContent = step.title; $('stepPrompt').textContent = step.prompt;
+        $('choices').innerHTML = '';
+        step.options.forEach((option) => { const button = document.createElement('button'); button.className = 'choice'; button.type = 'button'; button.innerHTML = `<span class="emoji">${option.emoji}</span><span>${option.label}</span><small>${option.detail}</small>`; button.addEventListener('click', () => choose(option)); $('choices').appendChild(button); });
+      }
+      function choose(option) { picks.push(option); position += 1; position < steps.length ? renderStep() : tellStory(); }
+      function tellStory() {
+        renderProgress(); $('stage').classList.add('hidden'); $('storyPanel').classList.remove('hidden');
+        const [hero, place, problem, solution] = picks;
+        $('storyText').textContent = `Bir gün ${hero.label.toLowerCase()}, ${place.story} parlayan bir iz gördü. Orada ${problem.label.toLowerCase()} vardı; ${problem.detail.toLowerCase()}. ${hero.label}, ${solution.label.toLowerCase()} harekete geçti. ${solution.detail} ve herkesin küçük fikrinin işe yaradığını gördü. Gün sonunda ${place.label.toLowerCase()} yeniden neşeyle ışıldadı. Masal bitti, merak hiç bitmedi!`;
+        window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'masal_makinistleri' } }));
+      }
+      $('listenButton').addEventListener('click', () => { if (!('speechSynthesis' in window)) return; window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance($('storyText').textContent); utterance.lang = 'tr-TR'; utterance.rate = .9; window.speechSynthesis.speak(utterance); });
+      $('againButton').addEventListener('click', () => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); position = 0; picks = []; $('storyPanel').classList.add('hidden'); $('stage').classList.remove('hidden'); renderStep(); });
+      renderStep();
+    })();
+  </script>
+</body>
+</html>

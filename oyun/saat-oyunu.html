@@ -1608,7 +1608,7 @@
   </div>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     (function() {
       "use strict";
@@ -2568,6 +2568,7 @@
         }
 
         state.gameRunning = false;
+        window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'saat_oyunu' } }));
         state.timerPaused = true;
         cancelQueuedQuestion();
         cancelAnimation();

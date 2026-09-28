@@ -705,7 +705,7 @@
   </main>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     // MEB Müfredatına uygun kelime ve hece sözlüğü
     const wordDictionary = {
@@ -1077,6 +1077,7 @@
 
     function endGame() {
       state.running = false;
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'hece_koprusu' } }));
       state.animating = false;
       clearInterval(state.timerIntervalId);
       playSound('over');

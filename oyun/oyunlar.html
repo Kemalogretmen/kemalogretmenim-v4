@@ -172,6 +172,95 @@
       margin: 0 auto;
       padding: 24px 24px 64px;
     }
+    .popular-games {
+      width: min(1160px, 100%);
+      margin: 0 auto;
+      padding: 28px 24px 4px;
+    }
+    .popular-games-shell {
+      padding: 22px;
+      border: 2px solid rgba(108,61,237,.16);
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(245,240,255,.92), rgba(236,253,255,.84));
+      box-shadow: 0 18px 36px rgba(49,32,112,.08);
+    }
+    .popular-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .popular-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+      color: var(--purple);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .popular-kicker .icon-svg { width: 16px; height: 16px; }
+    .popular-title { margin: 0; color: var(--navy); font-size: 26px; font-weight: 900; }
+    .popular-copy { margin: 5px 0 0; color: var(--slate); font-size: 13px; font-weight: 700; line-height: 1.45; }
+    .popular-caption {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.74);
+      color: #5d4d90;
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .popular-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .popular-game-card {
+      --popular-accent: var(--purple);
+      position: relative;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      padding: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(108,61,237,.13);
+      border-radius: 16px;
+      background: rgba(255,255,255,.9);
+      color: inherit;
+      text-decoration: none;
+      box-shadow: 0 8px 20px rgba(38,24,96,.06);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .popular-game-card:hover,
+    .popular-game-card:focus-visible {
+      transform: translateY(-3px);
+      border-color: var(--popular-accent);
+      box-shadow: 0 14px 26px rgba(38,24,96,.15);
+      outline: none;
+    }
+    .popular-rank {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border-radius: 11px;
+      background: color-mix(in srgb, var(--popular-accent) 13%, white);
+      color: var(--popular-accent);
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .popular-game-name { overflow: hidden; color: var(--navy); font-size: 14px; font-weight: 900; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+    .popular-game-meta { margin-top: 3px; color: var(--slate); font-size: 11px; font-weight: 800; }
+    .popular-go { color: var(--popular-accent); font-size: 20px; font-weight: 900; }
+    .popular-skeleton { min-height: 68px; border-radius: 16px; background: linear-gradient(90deg, rgba(255,255,255,.64), rgba(255,255,255,.95), rgba(255,255,255,.64)); background-size: 200% 100%; animation: popularShimmer 1.4s infinite; }
+    @keyframes popularShimmer { to { background-position: -200% 0; } }
     .catalog-head {
       display: flex;
       align-items: flex-end;
@@ -554,6 +643,11 @@
       .games-hero h1 { font-size: 38px; }
       .games-hero p { font-size: 15px; }
       .games-catalog { padding: 20px 16px 48px; }
+      .popular-games { padding: 20px 16px 2px; }
+      .popular-games-shell { padding: 18px; }
+      .popular-head { display: block; }
+      .popular-caption { display: inline-block; margin-top: 10px; }
+      .popular-grid { grid-template-columns: 1fr; }
       .catalog-title { font-size: 26px; }
       .catalog-head {
         align-items: flex-start;
@@ -612,6 +706,22 @@
     </div>
   </section>
 
+  <section class="popular-games" aria-labelledby="popularGamesTitle">
+    <div class="popular-games-shell">
+      <div class="popular-head">
+        <div>
+          <div class="popular-kicker"><span data-icon="trophy"></span> Akıllı öneri</div>
+          <h2 class="popular-title" id="popularGamesTitle">Öne Çıkan 3 Oyun</h2>
+          <p class="popular-copy" id="popularGamesCopy">Çocukların en çok döndüğü oyunlar burada görünecek.</p>
+        </div>
+        <span class="popular-caption" id="popularGamesCaption">Veriler hazırlanıyor</span>
+      </div>
+      <div class="popular-grid" id="popularGamesGrid" aria-live="polite" aria-busy="true">
+        <div class="popular-skeleton"></div><div class="popular-skeleton"></div><div class="popular-skeleton"></div>
+      </div>
+    </div>
+  </section>
+
   <main class="games-catalog" aria-label="Oyun kataloğu">
     <div class="catalog-head">
       <h2 class="catalog-title">Oyun Kataloğu</h2>
@@ -631,6 +741,33 @@
     </div>
 
     <div class="games-grid" id="gamesGrid">
+
+    <a href="masal-makinistleri.html" class="game-card" data-color="purple" data-cat="türkçe" data-icon="book" data-date="2026-09-27T12:10:00+03:00">
+      <div class="gc-banner"><span class="gc-category">Türkçe · Yaratıcı yazma</span><span class="gc-banner-em">📖</span></div>
+      <div class="gc-body">
+        <div class="gc-title">MASAL MAKİNİSTLERİ</div>
+        <div class="gc-subtitle">Karakterleri seç, kendi masal rotanı kur ve sesli dinle.</div>
+        <div class="gc-play"><span class="gc-play-lbl">Masalını kur!</span><span class="gc-play-arrow">→</span></div>
+      </div>
+    </a>
+
+    <a href="pizza-partisi.html" class="game-card" data-color="coral" data-cat="matematik" data-icon="calculator" data-date="2026-09-27T12:05:00+03:00">
+      <div class="gc-banner"><span class="gc-category">Matematik · Kesirler</span><span class="gc-banner-em">🍕</span></div>
+      <div class="gc-body">
+        <div class="gc-title">PİZZA PARTİSİ</div>
+        <div class="gc-subtitle">Doğru kesri dilimle, şefin pizza siparişlerini tamamla!</div>
+        <div class="gc-play"><span class="gc-play-lbl">Dilimleri seç!</span><span class="gc-play-arrow">→</span></div>
+      </div>
+    </a>
+
+    <a href="doga-dedektifleri.html" class="game-card" data-color="green" data-cat="hayat" data-icon="leaf" data-date="2026-09-27T12:00:00+03:00">
+      <div class="gc-banner"><span class="gc-category">Hayat Bilgisi · Doğa</span><span class="gc-banner-em">🌿</span></div>
+      <div class="gc-body">
+        <div class="gc-title">DOĞA DEDEKTİFLERİ</div>
+        <div class="gc-subtitle">Doğaya iyi gelen seçimi bul, yıldızları topla ve iz bırak!</div>
+        <div class="gc-play"><span class="gc-play-lbl">İz sür!</span><span class="gc-play-arrow">→</span></div>
+      </div>
+    </a>
 
     <a href="dikkat-dedektifi.html" class="game-card" data-color="purple" data-cat="hafıza" data-icon="memory" data-date="2026-09-14T12:00:00+03:00">
       <div class="gc-banner"><span class="gc-category">Hafıza · Dikkat</span><span class="gc-banner-em">🕵️</span></div>
@@ -770,7 +907,7 @@
       </div>
     </a>
 
-    <a href="oyun1.html" class="game-card" data-color="purple" data-cat="matematik" data-icon="music" data-date="2026-05-08T00:53:00+03:00">
+    <a href="oyun1.html" class="game-card" data-color="purple" data-cat="fen" data-icon="flask" data-date="2026-05-08T00:53:00+03:00">
       <div class="gc-banner">
         <span class="gc-category">🔢 Matematik</span>
         <span class="gc-banner-em">🎵</span>
@@ -1025,7 +1162,7 @@
   </main>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script src="/js/user-auth.js"></script>
   <script>
     const OYUN_KEY = 'kemal_oyunlar';
@@ -1039,6 +1176,9 @@
       loadDynamicOyunlar();
       sortGameCards();
       hydrateGameCards();
+      applyGameDetails();
+      bindGameStartTracking();
+      loadPopularGameRecommendations();
       filterGames(aktifKat, document.querySelector('.filter-btn.active') || document.querySelector('.filter-btn'));
     });
 
@@ -1176,6 +1316,44 @@
       'sosyal': 'Sosyal',
       'genel': 'Genel'
     };
+
+    const GAME_DETAILS = {
+      'doga-dedektifleri.html': { grade: '1–4. sınıf', duration: '3–5 dk', focus: 'Yaşam becerileri' },
+      'pizza-partisi.html': { grade: '2–4. sınıf', duration: '4–6 dk', focus: 'Kesirler' },
+      'masal-makinistleri.html': { grade: '1–4. sınıf', duration: '4–7 dk', focus: 'Yaratıcı anlatım' },
+      'dikkat-dedektifi.html': { grade: '1–7. sınıf', duration: '2–4 dk', focus: 'Dikkat' },
+      'matematik-vadisi.html': { grade: 'Ana sınıfı–4', duration: '8–15 dk', focus: 'Keşif · kurma' },
+      'bilgi-duellosu.html': { grade: '2–7. sınıf', duration: '6–8 dk', focus: 'Takım oyunu' },
+      'sesli-balonlar.html': { grade: '1. sınıf', duration: '2–3 dk', focus: 'Ses farkındalığı' },
+      'hece_koprusu.html': { grade: '1. sınıf', duration: '3–5 dk', focus: 'Hece okuma' },
+      'kelime_avcisi.html': { grade: '1–2. sınıf', duration: '3–5 dk', focus: 'Kelime tanıma' },
+      'olcum-atolyesi.html': { grade: '1–4. sınıf', duration: '4–6 dk', focus: 'Ölçme' },
+      'uzay_matematik_avi.html': { grade: '1–4. sınıf', duration: '3–5 dk', focus: 'Dört işlem' },
+      'sekil-avcisi-3d.html': { grade: '1–4. sınıf', duration: '4–6 dk', focus: 'Uzamsal düşünme' },
+      'kizma_birader.html': { grade: '1–4. sınıf', duration: '6–10 dk', focus: 'Strateji · toplama' },
+      'oyun1.html': { grade: '1–4. sınıf', duration: '3–5 dk', focus: 'Sağlıklı yaşam' },
+      'oyun2.html': { grade: '1–4. sınıf', duration: '3–5 dk', focus: 'Ritmik sayma' },
+      'oyun3.html': { grade: '1–4. sınıf', duration: '3–5 dk', focus: 'Toplama · çıkarma' },
+      'oyun4.html': { grade: '1–4. sınıf', duration: '5–8 dk', focus: 'Sınıf içi yarış' },
+      'oyun5.html': { grade: '1. sınıf', duration: '3–5 dk', focus: 'Toplama alıştırması' },
+      'oyun6.html': { grade: '3–4. sınıf', duration: '5–7 dk', focus: 'Cumhuriyet tarihi' },
+      'saat-oyunu.html': { grade: '1–3. sınıf', duration: '4–6 dk', focus: 'Saat okuma' },
+      'paralarimiz.html': { grade: '2–4. sınıf', duration: '4–6 dk', focus: 'Para kullanımı' },
+      'tarti-oyunu.html': { grade: '2–4. sınıf', duration: '3–5 dk', focus: 'Kütle · denge' },
+      'matematik-masa-tenisi.html': { grade: '1–4. sınıf', duration: '5–8 dk', focus: 'Dört işlem' },
+      'esini-bul-hafiza.html': { grade: '4 yaş+', duration: '3–6 dk', focus: 'Eşleştirme' },
+      'sirali-hafiza.html': { grade: '4 yaş+', duration: '2–5 dk', focus: 'Görsel hafıza' },
+      'oruntu-treni.html': { grade: '4 yaş+', duration: '3–5 dk', focus: 'Örüntü kurma' },
+      'golge-dedektifi.html': { grade: '4 yaş+', duration: '3–5 dk', focus: 'Görsel ayrım' },
+      'minik-kodlamaci.html': { grade: '4 yaş+', duration: '4–7 dk', focus: 'Algoritmik düşünme' },
+      'geometri-kasifi.html': { grade: '2–4. sınıf', duration: '4–6 dk', focus: '3B geometri' }
+    };
+
+    const FEATURED_GAME_PATHS = [
+      'matematik-vadisi.html',
+      'dikkat-dedektifi.html',
+      'minik-kodlamaci.html'
+    ];
 
     function resolveGameTimestamp(oyun) {
       const raw = oyun.createdAt || oyun.updatedAt || '';
@@ -1354,6 +1532,139 @@
           category.appendChild(document.createTextNode(catTitleMap[cat] || 'Genel'));
         }
       });
+    }
+
+    function getGamePath(value) {
+      try {
+        const url = new URL(value, window.location.origin);
+        return url.origin === window.location.origin ? url.pathname.replace(/^\/oyun\//, '') + url.search : '';
+      } catch (error) {
+        return '';
+      }
+    }
+
+    function getCardGameDetails(card) {
+      const key = getGamePath(card.href || card.getAttribute('href') || '');
+      return GAME_DETAILS[key] || null;
+    }
+
+    function applyGameDetails() {
+      document.querySelectorAll('.game-card').forEach(card => {
+        const detail = getCardGameDetails(card);
+        const body = card.querySelector('.gc-body');
+        const title = card.querySelector('.gc-title');
+        if (!detail || !body || !title || body.querySelector('.gc-game-details')) return;
+
+        const details = document.createElement('div');
+        details.className = 'gc-badges gc-game-details';
+        details.appendChild(createMetaBadge(detail.grade, '#EFF7FF', '#185FA5'));
+        details.appendChild(createMetaBadge(detail.duration, '#F4F0FF', '#6C3DED'));
+        details.appendChild(createMetaBadge(detail.focus, '#ECFDF5', '#08765D'));
+        body.insertBefore(details, title);
+      });
+    }
+
+    function getCardTitle(card) {
+      return card.querySelector('.gc-title')?.textContent.trim() || 'Oyun';
+    }
+
+    function trackGameStart(card, source) {
+      const href = card && (card.href || card.getAttribute('href'));
+      if (!href || href === '#') return;
+      if (!window.kemalSite || typeof window.kemalSite.trackGameEvent !== 'function') return;
+      window.kemalSite.trackGameEvent('game_start', {
+        url: href,
+        title: getCardTitle(card),
+        gameId: getGamePath(href),
+        source: source || 'catalog',
+      });
+    }
+
+    function bindGameStartTracking() {
+      document.addEventListener('click', function(event) {
+        const card = event.target.closest('.game-card, .popular-game-card');
+        if (card) trackGameStart(card, card.classList.contains('popular-game-card') ? 'popular_games' : 'catalog');
+      });
+    }
+
+    function getCatalogCardsByPath() {
+      const cards = new Map();
+      document.querySelectorAll('.game-card').forEach(card => {
+        const key = getGamePath(card.href || card.getAttribute('href') || '');
+        if (key) cards.set(key, card);
+      });
+      return cards;
+    }
+
+    function getFallbackPopularCards(cardMap) {
+      const fallback = FEATURED_GAME_PATHS.map(path => cardMap.get(path)).filter(Boolean);
+      if (fallback.length < 3) {
+        Array.from(cardMap.values()).some(card => {
+          if (fallback.includes(card)) return false;
+          fallback.push(card);
+          return fallback.length === 3;
+        });
+      }
+      return fallback.slice(0, 3);
+    }
+
+    function buildPopularCard(card, rank, isMeasured) {
+      const link = document.createElement('a');
+      link.className = 'popular-game-card';
+      link.href = card.getAttribute('href') || card.href;
+      link.style.setProperty('--popular-accent', {
+        purple: '#6C3DED', coral: '#D94B4B', orange: '#DD7100', green: '#00856A', yellow: '#B57700', blue: '#0B64CA', pink: '#C0266E'
+      }[card.dataset.color] || '#6C3DED');
+
+      const rankEl = document.createElement('span');
+      rankEl.className = 'popular-rank';
+      rankEl.textContent = '#' + rank;
+      const text = document.createElement('span');
+      const title = document.createElement('span');
+      title.className = 'popular-game-name';
+      title.textContent = getCardTitle(card);
+      const detail = getCardGameDetails(card);
+      const meta = document.createElement('span');
+      meta.className = 'popular-game-meta';
+      meta.textContent = detail ? detail.focus + ' · ' + detail.duration : (card.dataset.cat || 'Eğitim oyunu');
+      text.append(title, meta);
+      const go = document.createElement('span');
+      go.className = 'popular-go';
+      go.setAttribute('aria-hidden', 'true');
+      go.textContent = '→';
+      link.setAttribute('aria-label', (isMeasured ? 'En çok oynanan ' : 'Öne çıkan ') + rank + '. oyun: ' + getCardTitle(card));
+      link.append(rankEl, text, go);
+      return link;
+    }
+
+    async function loadPopularGameRecommendations() {
+      const grid = document.getElementById('popularGamesGrid');
+      const title = document.getElementById('popularGamesTitle');
+      const copy = document.getElementById('popularGamesCopy');
+      const caption = document.getElementById('popularGamesCaption');
+      if (!grid || !title || !copy || !caption) return;
+
+      const cardMap = getCatalogCardsByPath();
+      let rankedCards = [];
+      try {
+        const rows = window.kemalSite && typeof window.kemalSite.getPopularGames === 'function'
+          ? await window.kemalSite.getPopularGames({ days: 30, limit: 3 })
+          : [];
+        rankedCards = rows.map(row => cardMap.get(String(row.game_path || '').replace(/^\/oyun\//, ''))).filter(Boolean);
+      } catch (error) {
+        rankedCards = [];
+      }
+
+      const hasMeasuredRanking = rankedCards.length === 3;
+      const cards = hasMeasuredRanking ? rankedCards : getFallbackPopularCards(cardMap);
+      title.textContent = hasMeasuredRanking ? 'En Çok Oynanan 3 Oyun' : 'Başlamak İçin 3 Oyun';
+      copy.textContent = hasMeasuredRanking
+        ? 'Son 30 gündeki başlatma, devam etme ve tamamlama sinyallerine göre sıralandı.'
+        : 'Oynanma verisi birikene kadar farklı becerilere hitap eden üç güçlü başlangıç seçeneği.';
+      caption.textContent = hasMeasuredRanking ? 'Son 30 gün · anonim toplamlar' : 'Öneri modu';
+      grid.textContent = '';
+      cards.forEach((card, index) => grid.appendChild(buildPopularCard(card, index + 1, hasMeasuredRanking)));
+      grid.setAttribute('aria-busy', 'false');
     }
 
     function setupPaginationButtons() {

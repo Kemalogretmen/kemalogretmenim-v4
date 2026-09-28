@@ -1651,7 +1651,7 @@
         </div>
     </div>
 
-    <script src="/js/site.js?v=20260926-dock-home"></script>
+<script src="/js/site.js?v=20260927-game-popularity"></script>
     <script>
         const STORAGE_KEY = "halat_yarisi_v5";
         const DEFAULT_NAMES = {
@@ -2385,6 +2385,7 @@
             bilgisayarZamanlayicisiniTemizle();
             oyunDurumu.tamamlandi = true;
             oyunDurumu.aktif = false;
+            window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'halat_cekme' } }));
 
             const kazananIsmi = oyuncuIsmi(kazananTaraf);
             const kaybedenTaraf = kazananTaraf === "sol" ? "sag" : "sol";

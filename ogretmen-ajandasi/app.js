@@ -82,7 +82,10 @@
         "saveManualExamBtn", "manualExamEntry", "examScope", "showRankings", "examWrongPenalty",
         "examSubjectPoints", "manualExamScope", "manualShowRankings", "manualWrongPenalty",
         "manualSubjectPoints", "teacherPhoto", "teacherPhotoPreview", "heroTeacherPhoto", "heroGreeting",
-        "heroSummary", "heroClassBadge", "updateExamSelect", "selectAllStudents", "selectedStudentCount",
+        "heroSummary", "heroClassBadge", "heroTodayLine", "dashboardFocusTitle", "dashboardFocusText",
+        "dashboardTodayLabel", "dashboardTodayAgenda", "dashboardUpcoming", "dashboardAttention",
+        "dashboardReadinessValue", "dashboardReadinessText", "dashboardReadinessBar",
+        "updateExamSelect", "selectAllStudents", "selectedStudentCount",
         "clearStudentSelectionBtn", "deleteSelectedStudentsBtn", "reportType", "classListOptions",
         "classListParents", "rankingReportOptions", "rankingExam", "rankingScope", "rankingClassFilter",
         "rankingSchoolFilter", "rankingProvinceFilter", "meetingReportOptions", "meetingReportStudent", "meetingPicker",
@@ -731,6 +734,7 @@
         statTile("Öğretmen Notu", notes, "tile-peach"),
         statTile("Veli Görüşmesi", meetings, "tile-lavender")
       ].join("");
+      renderDashboardBriefing(students, exams);
 
       const recent = exams.slice(0, 5).map((exam) => {
         const count = Object.keys(exam.results || {}).length;
@@ -746,6 +750,154 @@
           buildReport();
         });
       });
+    }
+
+    function renderDashboardBriefing(students, exams) {
+      const now = new Date();
+      const todayKey = dateKey(now);
+      const todayEvents = [...calendarEventsForDate(todayKey), ...birthdayEventsForDate(todayKey)].sort(sortCalendarEvents);
+      const upcomingEvents = [];
+      for (let offset = 1; offset <= 7; offset += 1) {
+        const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+        const key = dateKey(date);
+        [...calendarEventsForDate(key), ...birthdayEventsForDate(key)].forEach((event) => {
+          upcomingEvents.push({ ...event, dashboardDate: date });
+        });
+      }
+      upcomingEvents.sort((a, b) => {
+        const dateDiff = calendarEventDateTime(a)?.getTime() - calendarEventDateTime(b)?.getTime();
+        return Number.isFinite(dateDiff) ? dateDiff : 0;
+      });
+
+      if (els.heroTodayLine) {
+        els.heroTodayLine.textContent = now.toLocaleDateString("tr-TR", {
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          year: "numeric"
+        });
+      }
+      if (els.dashboardTodayLabel) {
+        els.dashboardTodayLabel.textContent = now.toLocaleDateString("tr-TR", { day: "2-digit", month: "long" });
+      }
+      if (els.dashboardTodayAgenda) {
+        els.dashboardTodayAgenda.innerHTML = todayEvents.length
+          ? todayEvents.slice(0, 4).map((event) => dashboardBriefItemHtml(
+            calendarEventIcon(event.type),
+            event.title,
+            [event.time, calendarEventLabel(event.type), event.note].filter(Boolean).join(" · ")
+          )).join("")
+          : dashboardEmptyHtml("Bugün için kayıt görünmüyor. Takvimden not, görüşme veya hatırlatıcı ekleyebilirsiniz.");
+      }
+      if (els.dashboardUpcoming) {
+        els.dashboardUpcoming.innerHTML = upcomingEvents.length
+          ? upcomingEvents.slice(0, 4).map((event) => dashboardBriefItemHtml(
+            calendarEventIcon(event.type),
+            event.title,
+            `${dashboardDateLabel(event.dashboardDate)}${event.time ? ` · ${event.time}` : ""}`
+          )).join("")
+          : dashboardEmptyHtml("Önümüzdeki yedi gün için kayıt yok. Haftanızı planlamak için takvimi kullanabilirsiniz.");
+      }
+
+      const latestExam = exams[0] || null;
+      const missingResults = latestExam
+        ? students.filter((student) => !latestExam.results?.[student.id]).length
+        : 0;
+      const missingFamilyContact = students.filter((student) => {
+        const family = student.family || {};
+        return !family.motherPhone && !family.fatherPhone && !family.backupContactPhone;
+      }).length;
+      const missingBirthDate = students.filter((student) => !student.birthDate).length;
+      const dueReminders = activeCalendarEvents().filter(isReminderDue).length;
+      const attentionItems = [];
+      if (!students.length) {
+        attentionItems.push(["👥", "Sınıf listesi bekleniyor", "Excel yükleyebilir veya öğrencileri tek tek ekleyebilirsiniz."]);
+      } else {
+        if (latestExam && missingResults) attentionItems.push(["📊", `${missingResults} öğrencinin sınav sonucu eksik`, latestExam.name]);
+        if (!latestExam) attentionItems.push(["📊", "Henüz sınav eklenmedi", "İlk Excel dosyanızı yükleyerek akademik takibi başlatın."]);
+        if (missingFamilyContact) attentionItems.push(["☎️", `${missingFamilyContact} öğrencide veli telefonu yok`, "Öğrenci profillerinden iletişim bilgilerini tamamlayın."]);
+        if (missingBirthDate) attentionItems.push(["🎂", `${missingBirthDate} öğrencide doğum tarihi yok`, "Doğum günü hatırlatıcıları için bilgileri tamamlayın."]);
+        if (dueReminders) attentionItems.unshift(["🔔", `${dueReminders} hatırlatıcı zamanı geldi`, "Takvim kayıtlarınızı kontrol edin."]);
+      }
+      if (els.dashboardAttention) {
+        els.dashboardAttention.innerHTML = attentionItems.length
+          ? attentionItems.slice(0, 4).map((item) => dashboardBriefItemHtml(item[0], item[1], item[2])).join("")
+          : dashboardEmptyHtml("Takip gerektiren eksik görünmüyor. Sınıf kayıtlarınız düzenli.");
+      }
+
+      const focus = dashboardFocus(todayEvents, upcomingEvents, students, latestExam, missingResults, dueReminders);
+      if (els.dashboardFocusTitle) els.dashboardFocusTitle.textContent = focus.title;
+      if (els.dashboardFocusText) els.dashboardFocusText.textContent = focus.text;
+      renderDashboardReadiness(students, exams);
+    }
+
+    function dashboardFocus(todayEvents, upcomingEvents, students, latestExam, missingResults, dueReminders) {
+      if (dueReminders) {
+        return { title: `${dueReminders} hatırlatıcı bekliyor`, text: "Bugünün takvim kayıtlarını kontrol ederek güne başlayabilirsiniz." };
+      }
+      if (todayEvents.length) {
+        return { title: todayEvents[0].title, text: `Bugün ajandanızda ${todayEvents.length} kayıt bulunuyor.` };
+      }
+      if (!students.length) {
+        return { title: "Sınıfınızı oluşturarak başlayın", text: "Öğrenci listenizi Excel'den yükleyebilir veya tek tek ekleyebilirsiniz." };
+      }
+      if (latestExam && missingResults) {
+        return { title: "Sınav verisini tamamlayın", text: `${latestExam.name} sınavında ${missingResults} öğrencinin sonucu henüz yok.` };
+      }
+      if (upcomingEvents.length) {
+        return { title: `Sıradaki: ${upcomingEvents[0].title}`, text: `${dashboardDateLabel(upcomingEvents[0].dashboardDate)} için planlandı.` };
+      }
+      return { title: "Sınıf görünümü güncel", text: "Bugün acil takip gerektiren bir kayıt görünmüyor." };
+    }
+
+    function renderDashboardReadiness(students, exams) {
+      const current = activeClass();
+      const familyReady = students.length && students.some((student) => {
+        const family = student.family || {};
+        return family.motherPhone || family.fatherPhone || family.backupContactPhone;
+      });
+      const checkpoints = [
+        Boolean((current?.teacherName || state.teacher?.name || "").trim()),
+        Boolean((state.teacher?.schoolName || "").trim()),
+        Boolean(current?.name && current.name !== "Sınıfım"),
+        students.length > 0,
+        Boolean(familyReady),
+        exams.length > 0,
+        activeCalendarEvents().length > 0
+      ];
+      const completed = checkpoints.filter(Boolean).length;
+      const percentage = Math.round((completed / checkpoints.length) * 100);
+      const missing = [];
+      if (!state.teacher?.schoolName) missing.push("okul adı");
+      if (!students.length) missing.push("öğrenci listesi");
+      if (students.length && !familyReady) missing.push("veli iletişim bilgileri");
+      if (!exams.length) missing.push("ilk sınav");
+      if (!activeCalendarEvents().length) missing.push("takvim kaydı");
+      if (els.dashboardReadinessValue) els.dashboardReadinessValue.textContent = `%${percentage}`;
+      if (els.dashboardReadinessBar) els.dashboardReadinessBar.style.width = `${percentage}%`;
+      if (els.dashboardReadinessText) {
+        els.dashboardReadinessText.textContent = missing.length
+          ? `Sıradaki öneri: ${missing.slice(0, 2).join(" ve ")} bilgilerini tamamlayın.`
+          : "Temel ajanda bilgileri tamamlandı. Rapor ve takip araçları kullanıma hazır.";
+      }
+    }
+
+    function dashboardBriefItemHtml(icon, title, detail) {
+      return `
+        <div class="dashboard-brief-item">
+          <span class="dashboard-brief-icon">${escapeHtml(icon || "•")}</span>
+          <span><strong>${escapeHtml(title || "Kayıt")}</strong><small>${escapeHtml(detail || "")}</small></span>
+        </div>
+      `;
+    }
+
+    function dashboardEmptyHtml(message) {
+      return `<div class="dashboard-empty">${escapeHtml(message)}</div>`;
+    }
+
+    function dashboardDateLabel(date) {
+      if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "Tarih yok";
+      return date.toLocaleDateString("tr-TR", { weekday: "short", day: "2-digit", month: "short" });
     }
 
     function renderTeacherPhoto() {

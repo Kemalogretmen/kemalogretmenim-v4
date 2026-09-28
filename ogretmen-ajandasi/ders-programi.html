@@ -3081,6 +3081,11 @@ function renderLegend() {
 init();
 </script>
 <script src="../js/site-data.js"></script>
+<script>
+if (window.self !== window.top) {
+  document.body.dataset.kemalShortcutDock = 'off';
+}
+</script>
 <script src="../js/site.js?v=20260926-dock-home"></script>
 </body>
 </html>

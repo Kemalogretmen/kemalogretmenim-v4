@@ -688,6 +688,8 @@
     setMetaContent('name', 'twitter:title', title);
     setMetaContent('name', 'twitter:description', description);
     setMetaContent('name', 'twitter:image', DEFAULT_OG_IMAGE);
+    setMetaContent('name', 'theme-color', '#6C3DED');
+    setMetaContent('name', 'color-scheme', 'light');
 
     const canonical = ensureLink('canonical');
     if (canonical) {
@@ -911,6 +913,55 @@
     });
   }
 
+  function trackGameEvent(eventType, options) {
+    const allowedEvents = ['game_start', 'game_complete'];
+    if (!allowedEvents.includes(eventType) || !options || !options.url) {
+      return Promise.resolve();
+    }
+
+    let gameUrl;
+    try {
+      gameUrl = new URL(options.url, window.location.origin);
+    } catch (error) {
+      return Promise.resolve();
+    }
+    if (gameUrl.origin !== window.location.origin || gameUrl.pathname.indexOf('/oyun/') !== 0) {
+      return Promise.resolve();
+    }
+
+    return sendAnalyticsEvent(eventType, {
+      url: gameUrl.toString(),
+      title: options.title || 'Eğitim Oyunu',
+      payload: {
+        game_id: safeTrim(options.gameId || gameUrl.pathname.replace(/^\/oyun\//, '').replace(/\.html$/, '')),
+        source: safeTrim(options.source || 'game_page'),
+      },
+    }, true);
+  }
+
+  function getPopularGames(options) {
+    const days = Math.max(7, Math.min(Number(options && options.days) || 30, 90));
+    const limit = Math.max(1, Math.min(Number(options && options.limit) || 3, 12));
+    return fetch('https://mwxcvlyrkptxrwgkmqum.supabase.co/rest/v1/rpc/get_popular_games', {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        apikey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
+        Authorization: 'Bearer sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ days: days, limit_count: limit }),
+    }).then(function(response) {
+      if (!response.ok) {
+        throw new Error('Popular games request failed');
+      }
+      return response.json();
+    }).then(function(rows) {
+      return Array.isArray(rows) ? rows : [];
+    });
+  }
+
   function syncVisibilityState() {
     if (document.visibilityState === 'hidden') {
       if (analyticsState.visibleStartedAt) {
@@ -972,6 +1023,44 @@
     analyticsState.heartbeatTimer = window.setInterval(function() {
       touchAnalyticsSession();
     }, 60000);
+  }
+
+  function initGameProgressTracking() {
+    const path = String(window.location.pathname || '').toLowerCase();
+    if (path.indexOf('/oyun/') !== 0 || path === '/oyun/oyunlar.html' || path === '/oyun/iframe-oyun.html') {
+      return;
+    }
+
+    let startTracked = false;
+    let completionTracked = false;
+    const gameOptions = {
+      url: window.location.href,
+      title: document.title,
+      gameId: path.replace(/^\/oyun\//, '').replace(/\.html$/, ''),
+    };
+    function trackStart(source) {
+      if (startTracked) return;
+      startTracked = true;
+      trackGameEvent('game_start', Object.assign({}, gameOptions, { source: source || 'game_interaction' }));
+    }
+
+    document.addEventListener('pointerdown', function(event) {
+      if (event.target && typeof event.target.closest === 'function' && event.target.closest('main, [role="main"], canvas, .game-container, .oyun-alani')) {
+        trackStart('game_interaction');
+      }
+    }, { capture: true, passive: true });
+    document.addEventListener('keydown', function(event) {
+      if (!event.metaKey && !event.ctrlKey && !event.altKey) trackStart('game_keyboard');
+    }, { capture: true });
+    window.addEventListener('kemal-game-complete', function(event) {
+      if (completionTracked) return;
+      completionTracked = true;
+      const detail = event && event.detail ? event.detail : {};
+      trackStart('game_complete');
+      trackGameEvent('game_complete', Object.assign({}, gameOptions, {
+        source: detail.source || 'game_complete',
+      }));
+    });
   }
 
   function fallbackDefaults() {
@@ -1989,7 +2078,9 @@
             ? '<img src="' + escHtml(item.iconUrl) + '" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
               '<span class="shortcut-dock-emoji" hidden>' + escHtml(item.emoji || '📌') + '</span>'
             : '<span class="shortcut-dock-emoji">' + escHtml(item.emoji || '📌') + '</span>';
-          return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" title="' + escHtml(item.baslik) + '">' +
+          const itemPath = String(item.link || '').split('?')[0].replace(/\/+$/, '') || '/';
+          const isCurrent = itemPath === path || (path === '/index.html' && itemPath === '/index.html');
+          return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" title="' + escHtml(item.baslik) + '"' + (isCurrent ? ' aria-current="page"' : '') + '>' +
             '<span class="shortcut-dock-icon">' + icon + '</span><span>' + escHtml(item.baslik) + '</span></a>';
         }).join('') + '</div>' +
         '<button class="shortcut-dock-size" id="shortcutDockLarger" type="button" aria-label="Kısayol çubuğunu büyüt" title="Büyüt">+</button>' +
@@ -2092,6 +2183,8 @@
     const existingDock = document.getElementById('shortcutDock');
     if (existingDock) existingDock.remove();
     document.body.insertAdjacentHTML('beforeend', buildShortcutDock(data));
+    const fullScreenWorkspace = document.querySelector('.builder-shell, .cube-tool-shell, .geo-tool-shell');
+    document.body.classList.toggle('has-shortcut-dock', !!document.getElementById('shortcutDock') && !fullScreenWorkspace);
   }
 
   function buildAnnounce(data) {
@@ -2141,6 +2234,35 @@
     navTarget.innerHTML = buildAccountBar() + buildNavbar(data) + buildSearchShell();
     footerTarget.innerHTML = buildFooter();
     renderShortcutDock(data);
+    initAccessibilityLandmarks();
+  }
+
+  function initAccessibilityLandmarks() {
+    const body = document.body;
+    if (!body) return;
+
+    // Older content pages do not all contain a <main>. Give the first meaningful
+    // content block a stable landmark target without changing their layouts.
+    const mainContent = body.querySelector('main, [role="main"]') ||
+      Array.from(body.children).find(function(element) {
+        return element.matches('header, section, .teacher-tools, .tools-page');
+      });
+    if (!mainContent) return;
+
+    if (!mainContent.id) mainContent.id = 'main-content';
+    if (!mainContent.hasAttribute('tabindex')) mainContent.setAttribute('tabindex', '-1');
+    if (mainContent.tagName !== 'MAIN' && !mainContent.hasAttribute('role')) mainContent.setAttribute('role', 'main');
+
+    let skipLink = document.getElementById('skipToContent');
+    if (!skipLink) {
+      skipLink = document.createElement('a');
+      skipLink.id = 'skipToContent';
+      skipLink.className = 'skip-link';
+      skipLink.textContent = 'Ana içeriğe geç';
+    }
+    skipLink.href = '#' + mainContent.id;
+    // Ortak gezinme dinamik ekleniyor; atlama bağlantısı her zaman ilk sekme durağıdır.
+    body.insertAdjacentElement('afterbegin', skipLink);
   }
 
   function initHamburger() {
@@ -2306,6 +2428,7 @@
     });
 
     navRoot.querySelectorAll('.dd-item, .nav-btn').forEach(function(link) {
+      link.removeAttribute('aria-current');
       if (!link.href) {
         return;
       }
@@ -2322,6 +2445,7 @@
         if (samePath && sameSubject && current.pathname !== '/') {
           link.style.color = 'var(--purple)';
           link.style.fontWeight = '800';
+          link.setAttribute('aria-current', 'page');
         } else {
           link.style.color = '';
           link.style.fontWeight = '';
@@ -2462,6 +2586,8 @@
   async function hydrateChrome() {
     const initialData = getSyncData();
 
+    initAccessibilityLandmarks();
+
     if (isChromeEnabled()) {
       renderChrome(initialData);
       initSiteSearch();
@@ -2538,6 +2664,7 @@
   const seoState = initSeo();
   initContentSafety();
   initAnalytics();
+  initGameProgressTracking();
   const ready = hydrateChrome();
   window.addEventListener('kemal-user-auth-changed', function() {
     siteSearchState.items = null;
@@ -2573,6 +2700,8 @@
       highlightActiveLink();
       return data;
     },
+    trackGameEvent: trackGameEvent,
+    getPopularGames: getPopularGames,
   };
 
   window.kemalSeo = {

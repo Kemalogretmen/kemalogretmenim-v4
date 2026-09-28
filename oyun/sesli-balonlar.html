@@ -611,7 +611,7 @@
   </main>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     const SCORE_STORAGE_KEY = "kemal-balloon-scores-v2";
 
@@ -821,6 +821,7 @@
 
     function endGame() {
       state.running = false;
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'sesli_balonlar' } }));
       clearInterval(state.balloonIntervalId);
       clearInterval(state.timerIntervalId);
       playSound("over");

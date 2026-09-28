@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doğa Dedektifleri — Kemal Öğretmenim</title>
+  <meta name="description" content="Çocuklar için kısa, olumlu geri bildirimli doğa ve yaşam görevleri.">
+  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <style>
+    :root { --leaf:#08765d; --sky:#43b7ea; --sun:#ffc83d; --ink:#18313a; --cream:#fffdf5; --coral:#f26b4e; }
+    * { box-sizing:border-box; }
+    body { min-height:100vh; margin:0; color:var(--ink); font-family:var(--font-body, Nunito, system-ui, sans-serif); background:linear-gradient(180deg,#dff7ff 0,#fffdf5 45%,#e6f8ec 100%); }
+    .game { width:min(900px,calc(100% - 28px)); margin:34px auto 76px; }
+    .hero { position:static; min-height:0; display:flex; align-items:center; justify-content:space-between; gap:20px; overflow:visible; padding:24px; border-radius:28px; color:#fff; background:linear-gradient(135deg,#05735b,#16ae78); box-shadow:0 20px 42px rgba(4,103,74,.22); }
+    .eyebrow { display:inline-flex; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.18); font-size:12px; font-weight:900; letter-spacing:.04em; text-transform:uppercase; }
+    h1 { margin:8px 0 4px; font-size:clamp(30px,5vw,48px); line-height:1; }
+    .hero p { max-width:590px; margin:0; color:rgba(255,255,255,.87); font-weight:700; }
+    .mascot { flex:0 0 auto; font-size:78px; filter:drop-shadow(0 9px 10px rgba(0,0,0,.16)); animation:float 3s ease-in-out infinite; }
+    @keyframes float { 50% { transform:translateY(-9px) rotate(4deg); } }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0; }
+    .stat { padding:13px; border:1px solid rgba(8,118,93,.14); border-radius:18px; background:rgba(255,255,255,.84); text-align:center; box-shadow:0 8px 20px rgba(24,49,58,.06); }
+    .stat span { display:block; color:#5f7580; font-size:12px; font-weight:900; text-transform:uppercase; }
+    .stat strong { font-size:24px; color:var(--leaf); }
+    .mission { min-height:400px; padding:clamp(18px,4vw,34px); border:2px solid rgba(8,118,93,.14); border-radius:28px; background:rgba(255,255,255,.88); box-shadow:0 18px 38px rgba(24,49,58,.09); }
+    .mission-top { display:flex; align-items:center; gap:16px; }
+    .scene { width:86px; height:86px; display:grid; place-items:center; flex:0 0 auto; border-radius:26px; background:linear-gradient(135deg,#fff0a4,#b7f2d2); font-size:52px; }
+    .mission h2 { margin:0; font-size:clamp(22px,4vw,32px); }
+    .mission p { margin:7px 0 0; color:#58707a; font-weight:700; line-height:1.5; }
+    .answers { display:grid; gap:12px; margin-top:26px; }
+    .answer { width:100%; padding:16px 18px; border:2px solid #d8ebe3; border-radius:18px; background:#fff; color:var(--ink); font:inherit; font-size:16px; font-weight:900; text-align:left; cursor:pointer; transition:.18s; }
+    .answer:hover,.answer:focus-visible { transform:translateY(-2px); border-color:#21a97d; box-shadow:0 9px 18px rgba(8,118,93,.13); outline:none; }
+    .answer.good { color:#075f49; border-color:#20b77f; background:#e9fff3; }
+    .answer.nope { color:#a03c2a; border-color:#f5a18d; background:#fff3ee; }
+    .feedback { min-height:27px; margin:18px 0 0; color:var(--leaf); font-weight:900; }
+    .feedback.bad { color:#b64c37; }
+    .actions { display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+    button.primary { padding:13px 18px; border:0; border-radius:15px; background:linear-gradient(135deg,#0a9b73,#08765d); color:#fff; font:inherit; font-weight:900; cursor:pointer; box-shadow:0 8px 16px rgba(8,118,93,.22); }
+    button.primary:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+    .result { text-align:center; padding:26px 10px; }
+    .result .big { font-size:76px; }
+    .result h2 { margin:10px 0 8px; }
+    .result p { max-width:460px; margin:0 auto 20px; }
+    .tip { margin-top:18px; padding:12px 14px; border-radius:16px; background:#f2fbf5; color:#286652; font-size:13px; font-weight:800; }
+    @media (max-width:620px) { .game { margin-top:16px; } .hero { align-items:flex-start; padding:20px; } .mascot { font-size:54px; } .stats { gap:8px; } .stat { padding:10px 6px; } .mission { min-height:430px; } .mission-top { align-items:flex-start; } .scene { width:66px; height:66px; border-radius:20px; font-size:40px; } }
+    @media (prefers-reduced-motion:reduce) { *,*:before,*:after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+  </style>
+</head>
+<body>
+  <main class="game" aria-live="polite">
+    <header class="hero"><div><span class="eyebrow">Doğa · yaşam becerileri</span><h1>Doğa Dedektifleri</h1><p>Her görevde doğaya iyi gelen seçimi bul; küçük adımlar büyük fark yaratır.</p></div><div class="mascot" aria-hidden="true">🦊</div></header>
+    <section class="stats" aria-label="Oyun durumu"><div class="stat"><span>Görev</span><strong id="round">1/6</strong></div><div class="stat"><span>Yıldız</span><strong id="score">0</strong></div><div class="stat"><span>Seri</span><strong id="streak">0</strong></div></section>
+    <section class="mission" id="mission"></section>
+  </main>
+  <script src="/js/site-data.js"></script><script src="/js/site.js?v=20260927-game-popularity"></script>
+  <script>
+    (function () {
+      const tasks = [
+        { icon:'💧', title:'Susayan Çiçekler', text:'Sınıftaki saksının toprağı kuru. En iyi ilk adım hangisi?', options:['Musluğu açık bırakmak','Yeteri kadar su vermek','Çiçeği çöpe atmak'], correct:1, note:'Harika! Canlıların ihtiyacı kadar su kullanmak hem bitkiye hem dünyaya iyi gelir.' },
+        { icon:'🗑️', title:'Piknik Sonrası', text:'Parkta atıştırmalık paketin kaldı. Ne yaparsın?', options:['Çöp kutusuna veya geri dönüşüme atarım','Çalının altına saklarım','Rüzgâr götürsün diye bırakırım'], correct:0, note:'Doğru seçim! Parkı paylaşan hayvanlar ve insanlar için alanı temiz bırakırız.' },
+        { icon:'🐦', title:'Kuşların Sesi', text:'Bahçedeki kuşları yakından görmek istiyorsun. Nasıl yaklaşırsın?', options:['Çok sessiz ve uzaktan gözlemlerim','Peşlerinden koşarım','Yüksek sesle bağırırım'], correct:0, note:'Süper gözlemci! Hayvanları rahatsız etmeden izlemek güvenli ve naziktir.' },
+        { icon:'🔌', title:'Boş Sınıf', text:'Teneffüste sınıfta kimse kalmadı. Işıklar açık. Ne yapabiliriz?', options:['Öğretmene haber verip ışıkları kapatırız','Bütün gün açık bırakırız','Pencereleri kapatıp daha çok ışık yakarız'], correct:0, note:'Enerjiyi ihtiyaç kadar kullanmak doğa için akıllı bir seçimdir.' },
+        { icon:'🌱', title:'Minik Filiz', text:'Yeni filizlenen bitkinin yanında top oynayacaksın. Neresi daha güvenli?', options:['Filizin üstü','Yanındaki boş alan','Köklerini kazabileceğim yer'], correct:1, note:'Evet! Canlılara yer açmak, onların büyümesine yardımcı olur.' },
+        { icon:'♻️', title:'Şişe Görevi', text:'Boş plastik şişeyi gördün. Hangi kutu onu yeniden kullanılabilir hale getirir?', options:['Geri dönüşüm kutusu','Kitaplık','Oyuncak kutusu'], correct:0, note:'Harika! Doğru ayrıştırma, malzemelerin yeniden kullanılmasına yardım eder.' }
+      ];
+      const state = { index:0, score:0, streak:0, answered:false, order:tasks.slice().sort(() => Math.random() - .5) };
+      const mission = document.getElementById('mission');
+      function render() {
+        document.getElementById('round').textContent = Math.min(state.index + 1, state.order.length) + '/' + state.order.length;
+        document.getElementById('score').textContent = state.score;
+        document.getElementById('streak').textContent = state.streak;
+        if (state.index >= state.order.length) return finish();
+        const task = state.order[state.index]; state.answered = false;
+        mission.innerHTML = '<div class="mission-top"><div class="scene">' + task.icon + '</div><div><h2>' + task.title + '</h2><p>' + task.text + '</p></div></div><div class="answers" id="answers"></div><p class="feedback" id="feedback"></p><div class="actions"><button class="primary" id="next" disabled>Sonraki görev →</button></div><p class="tip">İpucu: Doğaya, canlılara ve birlikte yaşadığımız alanlara iyi gelen seçimi ara.</p>';
+        task.options.forEach((option, index) => { const button=document.createElement('button'); button.className='answer'; button.type='button'; button.textContent=(index+1)+'. '+option; button.addEventListener('click',()=>answer(index,button)); document.getElementById('answers').appendChild(button); });
+        document.getElementById('next').addEventListener('click',()=>{ state.index++; render(); });
+      }
+      function answer(index, button) {
+        if (state.answered) return; state.answered=true;
+        const task=state.order[state.index], buttons=[...document.querySelectorAll('.answer')], correct=index===task.correct;
+        buttons.forEach((item,i)=>{ item.disabled=true; if(i===task.correct)item.classList.add('good'); });
+        const feedback=document.getElementById('feedback');
+        if(correct) { state.streak++; state.score+=1+(state.streak>2?1:0); feedback.textContent='⭐ '+task.note; }
+        else { state.streak=0; button.classList.add('nope'); feedback.classList.add('bad'); feedback.textContent='Tekrar düşünelim. '+task.note; }
+        document.getElementById('next').disabled=false; document.getElementById('score').textContent=state.score; document.getElementById('streak').textContent=state.streak;
+      }
+      function finish() { document.getElementById('round').textContent='6/6'; mission.innerHTML='<div class="result"><div class="big">🌍</div><h2>Doğa dostu görev tamamlandı!</h2><p>'+state.score+' yıldız topladın. Doğaya iyi gelen küçük seçimleri günlük hayatta da deneyebilirsin.</p><button class="primary" id="again">Yeni rota oluştur</button></div>'; window.dispatchEvent(new CustomEvent('kemal-game-complete',{detail:{source:'doga_dedektifleri'}})); document.getElementById('again').addEventListener('click',()=>{state.index=0;state.score=0;state.streak=0;state.order=tasks.slice().sort(()=>Math.random()-.5);render();}); }
+      render();
+    })();
+  </script>
+</body>
+</html>

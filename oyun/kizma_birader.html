@@ -2657,7 +2657,7 @@
   </div>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     const COLORS = [
       { id: "mavi", label: "Mavi", hex: "#3B82F6", light: "#E8F2FF" },
@@ -3934,6 +3934,7 @@
 
     function oyunuBitir() {
       gameState.phase = "finished";
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'kizma_birader' } }));
       byId("rollBtn").disabled = true;
       closeQuestionCard();
       setDiceStage("hidden");

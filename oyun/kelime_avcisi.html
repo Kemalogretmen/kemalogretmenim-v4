@@ -289,7 +289,7 @@
   </main>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     // MEB Sözlüğü
     const wordDictionary = {
@@ -605,6 +605,7 @@
 
     function endGame(isTimeUp) {
       state.running = false;
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'kelime_avcisi' } }));
       clearInterval(state.timerIntervalId);
       cancelAnimationFrame(animFrameId);
       playSound('over');

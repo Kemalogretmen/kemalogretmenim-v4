@@ -693,7 +693,7 @@
   </main>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260927-game-popularity"></script>
   <script>
     const state = {
       grade: 1,
@@ -1515,6 +1515,7 @@
     /* ═══════════════════════ BİTİŞ ═══════════════════════ */
     function finishGame(winnerIdx) {
       stopTimer();
+      window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'matematik_masa_tenisi' } }));
       if (_flight) {
         clearTimeout(_flight.bounceTimerId);
         clearTimeout(_flight.arriveTimerId);
