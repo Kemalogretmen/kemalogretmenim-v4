@@ -21,3 +21,4 @@ html{overscroll-behavior:none}body{margin:0;overflow:hidden;font-family:Segoe UI
 .geo-piece.parallelogram{width:140px;height:90px;clip-path:polygon(25% 0,100% 0,75% 100%,0 100%)}
 .geo-piece.parallelogram.dir-door{width:54px;height:76px;clip-path:polygon(15% 0,100% 0,85% 100%,0 100%)}
 .geo-piece.parallelogram.dir-hull{width:220px;height:72px;clip-path:polygon(0 0,100% 0,84% 100%,16% 100%)}
+.rotate-help{display:block;margin-top:-3px;color:#64748b;font-size:11px;font-weight:700;line-height:1.35}
