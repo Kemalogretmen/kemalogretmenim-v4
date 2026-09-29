@@ -17,7 +17,7 @@
   <meta name="twitter:title" content="Kemal Öğretmenim — Eğitim Sevgi ile Başlar">
   <meta name="twitter:description" content="1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik, fen bilimleri, sınav ve oyun içerikleri.">
   <meta name="twitter:image" content="https://kemalogretmenim.com.tr/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="/css/style.css?v=20260928-exam-icons">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <style>
     /* ─── ANA SAYFA ÖZEL STILLER ─── */
@@ -223,10 +223,10 @@
       padding: 0 32px;
     }
     .platform-strip-inner {
-      max-width: 1200px;
+      max-width: 1440px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 18px;
     }
     .platform-card {
@@ -287,9 +287,53 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
       background: var(--icon-bg);
       box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
+      color: var(--badge-color);
+      flex: 0 0 auto;
+    }
+    .platform-icon svg {
+      width: 31px;
+      height: 31px;
+      display: block;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .platform-icon svg .platform-icon-fill {
+      fill: currentColor;
+      stroke: none;
+    }
+    .platform-icon svg .platform-icon-soft-fill {
+      fill: currentColor;
+      fill-opacity: .18;
+      stroke: none;
+    }
+    .content-type-icon {
+      display: block;
+      width: 1em;
+      height: 1em;
+      object-fit: contain;
+    }
+    .home-live-icon .content-type-icon,
+    .latest-icon .content-type-icon {
+      width: 31px;
+      height: 31px;
+    }
+    .platform-live-icon .content-type-icon {
+      width: 22px;
+      height: 22px;
+    }
+    .haber-em .content-type-icon {
+      width: 32px;
+      height: 32px;
+    }
+    .ticker-item .content-type-icon,
+    .home-showcase-kind .content-type-icon {
+      width: 16px;
+      height: 16px;
     }
     .platform-title {
       font-family: var(--font-display);
@@ -483,6 +527,18 @@
       --badge-bg: #E9FFFA;
       --badge-color: #00856A;
       --icon-bg: linear-gradient(135deg, #D9FFF6, #EDFFFB);
+    }
+    .platform-card.documents {
+      --card-grad: linear-gradient(90deg, #0B78E3, #4CC9F0);
+      --badge-bg: #ECF6FF;
+      --badge-color: #0B78E3;
+      --icon-bg: linear-gradient(135deg, #DCEEFF, #F0F9FF);
+    }
+    @media(max-width:1200px) {
+      .platform-strip-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media(max-width:640px) {
+      .platform-strip-inner { grid-template-columns: 1fr; }
     }
     .learning-showcase {
       padding: 56px 32px 12px;
@@ -712,10 +768,13 @@
     }
     @media(max-width:980px) {
       .platform-strip { margin-top: 0; padding: 32px 18px 0; }
-      .platform-strip-inner { grid-template-columns: 1fr; }
+      .platform-strip-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .platform-desc { min-height: 0; }
       .learning-showcase { padding: 42px 18px 8px; }
       .learning-showcase-inner { grid-template-columns: 1fr; }
+    }
+    @media(max-width:640px) {
+      .platform-strip-inner { grid-template-columns: 1fr; }
     }
     .why-grid {
       display: grid;
@@ -1947,18 +2006,24 @@
   </section>
 
   <section class="platform-strip">
-    <div class="platform-strip-inner">
+    <div class="platform-strip-inner" aria-label="Eğitim alanları ve son eklenen çalışmalar">
       <div class="platform-card reading">
         <div class="platform-top">
-          <span class="platform-badge">📖 Öne Çıkan Sistem</span>
-          <span class="platform-icon">🚀</span>
+          <span class="platform-badge">Akıcı öğrenme</span>
+          <span class="platform-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" focusable="false">
+              <path d="M31 17c-8-5-17-4-22 0v31c5-4 14-5 22 0 8-5 17-4 22 0V17c-5-4-14-5-22 0Z"/>
+              <path d="M31 17v31M15 27h10M15 35h10M37 27h11M37 35h11"/>
+              <path d="M9 12h10M7 18h11" opacity=".62"/>
+            </svg>
+          </span>
         </div>
         <div class="platform-title">Hızlı Okuma</div>
         <p class="platform-desc">Sınıfa göre metni seç, süreyi takip et, karneni al. Sitenin en hızlı gelişim alanını tek merkezde toplar.</p>
         <div class="platform-meta">
-          <span class="platform-chip">⏱ Akıcılık</span>
-          <span class="platform-chip">🧠 Anlama</span>
-          <span class="platform-chip">📄 Karne</span>
+          <span class="platform-chip">Akıcılık</span>
+          <span class="platform-chip">Anlama</span>
+          <span class="platform-chip">Karne</span>
         </div>
         <div class="platform-live">
           <div class="platform-live-head"><span>Son eklenen metinler</span><span class="platform-live-dot"></span></div>
@@ -1971,15 +2036,21 @@
 
       <div class="platform-card exams">
         <div class="platform-top">
-          <span class="platform-badge">📝 Güçlü Takip</span>
-          <span class="platform-icon">🎯</span>
+          <span class="platform-badge">Ölç ve izle</span>
+          <span class="platform-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" focusable="false">
+              <rect x="15" y="11" width="34" height="45" rx="6"/>
+              <path d="M25 11h14v7H25z" class="platform-icon-soft-fill"/>
+              <path d="M23 30l4 4 7-8M38 29h5M38 37h5M23 44l4 4 7-8M38 45h5"/>
+            </svg>
+          </span>
         </div>
         <div class="platform-title">Sınavlar</div>
         <p class="platform-desc">Sınıfa uygun sınavı seç, çöz ve gelişim alanlarını daha net gör. Özellikle ortaokul akışında merkezi rol oynar.</p>
         <div class="platform-meta">
-          <span class="platform-chip">📚 Sınıf bazlı</span>
-          <span class="platform-chip">📈 Takip</span>
-          <span class="platform-chip">✅ Ölçme</span>
+          <span class="platform-chip">Sınıf bazlı</span>
+          <span class="platform-chip">Takip</span>
+          <span class="platform-chip">Ölçme</span>
         </div>
         <div class="platform-live">
           <div class="platform-live-head"><span>Son eklenen sınavlar</span><span class="platform-live-dot"></span></div>
@@ -1990,17 +2061,50 @@
         <a href="/sinav_sitesi/index.html" class="platform-cta">Sınavlara Git →</a>
       </div>
 
+      <div class="platform-card documents">
+        <div class="platform-top">
+          <span class="platform-badge">Kaynak kutusu</span>
+          <span class="platform-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" focusable="false">
+              <path d="M21 14h22l9 9v29a5 5 0 0 1-5 5H21a5 5 0 0 1-5-5V19a5 5 0 0 1 5-5Z"/>
+              <path d="M43 14v10h9M25 35h18M25 43h14"/>
+              <path d="M12 23v28a5 5 0 0 0 5 5h22" opacity=".62"/>
+            </svg>
+          </span>
+        </div>
+        <div class="platform-title">Dokümanlar</div>
+        <p class="platform-desc">Çalışma kâğıdı, konu özeti ve ders videosunu tek yerde bul. Her kaynak türü kendi etiketiyle düzenli biçimde ayrılır.</p>
+        <div class="platform-meta">
+          <span class="platform-chip">PDF &amp; etkinlik</span>
+          <span class="platform-chip">Konu özeti</span>
+          <span class="platform-chip">Ders videosu</span>
+        </div>
+        <div class="platform-live">
+          <div class="platform-live-head"><span>Son eklenen dokümanlar</span><span class="platform-live-dot"></span></div>
+          <div class="platform-live-list" id="documentLiveList">
+            <div class="platform-live-empty">Dokümanlar yükleniyor...</div>
+          </div>
+        </div>
+        <a href="/dokuman.html" class="platform-cta">Dokümanları Aç →</a>
+      </div>
+
       <div class="platform-card games">
         <div class="platform-top">
-          <span class="platform-badge">🎮 Oyunla Pekiştir</span>
-          <span class="platform-icon">🕹️</span>
+          <span class="platform-badge">Oyunla pekiştir</span>
+          <span class="platform-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" focusable="false">
+              <path d="M18 27h28c7 0 11 5 13 16 1 6-5 10-10 6l-7-6H22l-7 6c-5 4-11 0-10-6 2-11 6-16 13-16Z"/>
+              <path d="M20 34v10M15 39h10M43 36h.1M50 41h.1"/>
+              <path d="M29 34h6" opacity=".62"/>
+            </svg>
+          </span>
         </div>
         <div class="platform-title">Oyunlar</div>
         <p class="platform-desc">Dersleri sıkmadan tekrar ettiren eğitsel oyunlarla çocukların motivasyonunu yüksek tutar ve öğrenmeyi canlı bırakır.</p>
         <div class="platform-meta">
-          <span class="platform-chip">🎉 Motivasyon</span>
-          <span class="platform-chip">🔁 Tekrar</span>
-          <span class="platform-chip">🏆 Eğlence</span>
+          <span class="platform-chip">Motivasyon</span>
+          <span class="platform-chip">Tekrar</span>
+          <span class="platform-chip">Eğlence</span>
         </div>
         <div class="platform-live">
           <div class="platform-live-head"><span>Son eklenen oyunlar</span><span class="platform-live-dot"></span></div>
@@ -2373,9 +2477,9 @@
   </div>
 
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-dock-home"></script>
+  <script src="/js/site.js?v=20260928-exam-icons"></script>
   <script src="/js/user-auth.js"></script>
-  <script src="/js/content-feed.js"></script>
+  <script src="/js/content-feed.js?v=20260928-exam-icons"></script>
   <script>
     const RENKLER = ['purple','coral','teal','yellow','navy'];
     const EMOJI_FALLBACK = ['📖','🎮','🔢','🔬','🌟','📝','🌱','⭐'];
@@ -2424,7 +2528,7 @@
         }
         const fallback = {
           reading: { label:'Okuma Parçası', icon:'📖', color:'#6C3DED', soft:'#F1ECFF', border:'#D9CBFF', gradient:'linear-gradient(135deg,#6C3DED,#8B5CF6)' },
-          exam: { label:'Sınav', icon:'📋', color:'#D35400', soft:'#FFF0EC', border:'#FFD0C6', gradient:'linear-gradient(135deg,#FF6052,#FF9F43)' },
+          exam: { label:'Sınav', icon:'📝', iconUrl:'/assets/content-icons/exam-check.svg', color:'#D35400', soft:'#FFF0EC', border:'#FFD0C6', gradient:'linear-gradient(135deg,#FF6052,#FF9F43)' },
           document: { label:'Doküman', icon:'📄', color:'#00856A', soft:'#E9FFFA', border:'#B7F0E6', gradient:'linear-gradient(135deg,#00A891,#00C9B1)' },
           video: { label:'Ders Videosu', icon:'🎬', color:'#0B78E3', soft:'#ECF6FF', border:'#C8E4FF', gradient:'linear-gradient(135deg,#0B78E3,#4CC9F0)' },
           game: { label:'Oyun', icon:'🎮', color:'#B7791F', soft:'#FFF8DD', border:'#FFE7A5', gradient:'linear-gradient(135deg,#FFD93D,#FF9F43)' },
@@ -2445,6 +2549,15 @@
           `--type-border:${esc(safe.border || '#D9CBFF')}`,
           `--type-gradient:${esc(safe.gradient || safe.color || '#6C3DED')}`
         ].join(';');
+      }
+
+      function icerikIkonuHtml(item, meta, fallbackIcon) {
+        const safeMeta = meta || icerikTuruMeta(item);
+        const iconUrl = safeMeta && safeMeta.iconUrl ? safeMeta.iconUrl : (item && item.iconUrl);
+        if (iconUrl) {
+          return `<img class="content-type-icon" src="${esc(iconUrl)}" alt="" aria-hidden="true">`;
+        }
+        return esc(fallbackIcon || (safeMeta && safeMeta.icon) || (item && (item.icon || item.emoji)) || '📌');
       }
 
       function renderHeroRoadmap(config) {
@@ -2829,7 +2942,7 @@
             <article class="${slideClasses}" data-effect="${effects[index % effects.length]}" style="${slideStyle(item)}">
               ${mediaHtml(item)}
               <div class="home-showcase-copy">
-                <span class="home-showcase-kind">${esc(typeMeta.icon)} ${esc(typeMeta.label)}</span>
+                <span class="home-showcase-kind">${icerikIkonuHtml(item, typeMeta, typeMeta.icon)} ${esc(typeMeta.label)}</span>
                 <div class="home-showcase-name">${titleHtml}</div>
                 <div class="home-showcase-desc">${desc || 'Kemal Öğretmen’in seçtiği içerik.'}</div>
                 ${statsHtml}
@@ -2912,9 +3025,23 @@
       function renkBelirle(item, index) {
         if (item && item.type === 'reading') return 'purple';
         if (item && item.type === 'exam') return 'coral';
-        if (item && item.type === 'document') return 'teal';
+        if (item && (item.type === 'document' || item.type === 'video')) return 'teal';
         if (item && item.type === 'game') return 'yellow';
         return RENKLER[index % RENKLER.length];
+      }
+
+      function platformTuruBelirle(item) {
+        const directType = String(item && (item.type || item.contentType) || '').trim().toLocaleLowerCase('tr-TR');
+        if (['reading', 'exam', 'document', 'video', 'game'].includes(directType)) return directType;
+
+        // Yedek içeriklerde tür yalnızca hedef bağlantıdan kesin olarak çıkarılır.
+        // Başlık veya açıklamadan tahmin yapılmaz; böylece kartlar birbirine karışmaz.
+        const href = String(item && (item.href || item.link) || '').toLocaleLowerCase('tr-TR');
+        if (href.includes('/hizli-okuma/')) return 'reading';
+        if (href.includes('/sinav_sitesi/')) return 'exam';
+        if (href.includes('/dokuman')) return 'document';
+        if (href.includes('/oyun/')) return 'game';
+        return '';
       }
 
       async function guncelListeOlustur(siteData) {
@@ -2933,7 +3060,7 @@
                 emoji: item.icon || '📌',
                 renk: renkBelirle(item, index),
                 tarih: item.createdAt || '',
-                type: item.type || 'content',
+                type: platformTuruBelirle(item),
                 accessScope: item.accessScope || 'public',
               }));
             }
@@ -2951,6 +3078,7 @@
               emoji: h.emoji || '📌',
               renk: h.renk || 'purple',
               tarih: h.tarih || '',
+              type: platformTuruBelirle(h),
               accessScope: h.accessScope || 'public',
             }))
           : [];
@@ -2964,6 +3092,7 @@
               emoji: i.emoji || '🌟',
               renk: ['yellow','teal','coral','purple'][index % 4],
               tarih: i.tarih || '',
+              type: platformTuruBelirle(i),
               accessScope: i.accessScope || 'public',
             }))
           : [];
@@ -2993,10 +3122,10 @@
       const dots     = document.getElementById('haberDots');
 
       const DEFAULT_HABERLER = [
-        { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', kategori:'Hızlı Okuma', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün' },
-        { baslik:'Sınav Merkezi', aciklama:'Sınıfına uygun sınavları çöz, sonucunu ve gelişimini takip et.', kategori:'Sınav', link:'/sinav_sitesi/index.html', emoji:'📝', renk:'coral', tarih:'Güncel' },
-        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', kategori:'Platform', link:'/oyun/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta' },
-        { baslik:'Yeni İçerikler', aciklama:'Sınıfına göre hazırlanmış tüm içerikleri keşfet.', kategori:'Güncel', link:'/yeni.html', emoji:'🌟', renk:'teal', tarih:'Güncel' }
+        { baslik:'Hızlı Okuma Sistemi', aciklama:'Sınıfına göre metin seç, oku ve karnen çıksın!', kategori:'Hızlı Okuma', link:'/hizli-okuma/index.html', emoji:'📖', renk:'purple', tarih:'Bugün', type:'reading' },
+        { baslik:'Sınav Merkezi', aciklama:'Sınıfına uygun sınavları çöz, sonucunu ve gelişimini takip et.', kategori:'Sınav', link:'/sinav_sitesi/index.html', emoji:'📝', renk:'coral', tarih:'Güncel', type:'exam' },
+        { baslik:'Eğitim Oyunları', aciklama:'Matematik, hayat bilgisi ve daha fazlası için eğlenceli oyunlar!', kategori:'Platform', link:'/oyun/oyunlar.html', emoji:'🎮', renk:'coral', tarih:'Bu hafta', type:'game' },
+        { baslik:'Sınıf Kaynakları', aciklama:'Çalışma kâğıdı, konu özeti ve ders videolarını incele.', kategori:'Doküman', link:'/dokuman.html', emoji:'📄', renk:'teal', tarih:'Güncel', type:'document' }
       ];
 
         const liste = haberler.length ? haberler : DEFAULT_HABERLER;
@@ -3022,7 +3151,7 @@
           ].filter(Boolean).join(' · ');
           return `
             <a href="${esc(href)}" class="home-live-item" style="${icerikTuruStili(typeMeta)}">
-              <span class="home-live-icon">${esc(typeMeta.icon || item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+              <span class="home-live-icon">${icerikIkonuHtml(item, typeMeta, typeMeta.icon || item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
               <span>
                 <span class="home-live-meta">
                   <span class="home-live-type">${esc(typeMeta.label || item.contentTypeLabel || 'İçerik')}</span>
@@ -3036,28 +3165,15 @@
 
       function renderPlatformLive(items) {
         const groups = [
-          { id: 'readingLiveList', type: 'reading', empty: 'Henüz yeni metin yok.' },
-          { id: 'examLiveList', type: 'exam', empty: 'Henüz yeni sınav yok.' },
-          { id: 'gameLiveList', type: 'game', empty: 'Henüz yeni oyun yok.' },
+          { id: 'readingLiveList', types: ['reading'], empty: 'Henüz yeni hızlı okuma metni yok.' },
+          { id: 'examLiveList', types: ['exam'], empty: 'Henüz yeni sınav yok.' },
+          { id: 'documentLiveList', types: ['document', 'video'], empty: 'Henüz yeni doküman yok.' },
+          { id: 'gameLiveList', types: ['game'], empty: 'Henüz yeni oyun yok.' },
         ];
-        const inferPlatformType = (item) => {
-          const direct = String(item && (item.type || item.contentType) || '').toLowerCase();
-          if (direct === 'reading' || direct === 'exam' || direct === 'game') return direct;
-          const text = [
-            item && item.kategori,
-            item && item.contentTypeLabel,
-            item && item.sourceLabel,
-            item && (item.title || item.baslik),
-            item && (item.href || item.link),
-          ].filter(Boolean).join(' ').toLocaleLowerCase('tr-TR');
-          if (/(sınav|sinav|test|quiz)/.test(text)) return 'exam';
-          if (/(oyun|game|duello)/.test(text)) return 'game';
-          if (/(okuma|hızlı|hizli|metin|parça|parca|hikaye)/.test(text)) return 'reading';
-          return '';
-        };
         const seen = new Set();
         const sourceItems = [...(items || []), ...liste].filter(item => {
-          const key = item && (item.id || item.uid || item.href || item.link || item.title || item.baslik);
+          const identity = item && (item.href || item.link || item.uid || item.id || item.title || item.baslik);
+          const key = item ? `${platformTuruBelirle(item)}:${identity || ''}` : '';
           if (!key || seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -3066,7 +3182,9 @@
         groups.forEach(group => {
           const target = document.getElementById(group.id);
           if (!target) return;
-          const list = sourceItems.filter(item => inferPlatformType(item) === group.type).slice(0, PLATFORM_LIVE_LIMIT);
+          const list = sourceItems
+            .filter(item => group.types.includes(platformTuruBelirle(item)))
+            .slice(0, PLATFORM_LIVE_LIMIT);
           if (!list.length) {
             target.innerHTML = `<div class="platform-live-empty">${esc(group.empty)}</div>`;
             return;
@@ -3074,13 +3192,14 @@
           target.innerHTML = list.map((item, index) => {
             const typeMeta = icerikTuruMeta(item);
             const meta = [
+              typeMeta.label || item.contentTypeLabel || '',
               kisaTarih(item.createdAt || item.tarih),
               item.gradeLabel || '',
               item.subjectLabel || item.contentTypeLabel || ''
             ].filter(Boolean).join(' · ');
             return `
               <a href="${esc(item.href || item.link || '#')}" class="platform-live-item" style="${icerikTuruStili(typeMeta)}">
-                <span class="platform-live-icon">${esc(typeMeta.icon || item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+                <span class="platform-live-icon">${icerikIkonuHtml(item, typeMeta, typeMeta.icon || item.icon || item.emoji || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
                 <span class="platform-live-copy">
                   <span class="platform-live-title">${esc(item.title || item.baslik || 'Yeni içerik')}</span>
                   <span class="platform-live-meta">${esc(meta)}</span>
@@ -3173,7 +3292,7 @@
                 data-reaction-source="${esc(item.contentTypeLabel || item.sourceLabel || 'İçerik')}"
                 data-access-scope="${esc(item.accessScope || 'public')}">
                 <div class="latest-card-top">
-                  <span class="latest-icon">${esc(typeMeta.icon || item.icon || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
+                  <span class="latest-icon">${icerikIkonuHtml(item, typeMeta, typeMeta.icon || item.icon || EMOJI_FALLBACK[index % EMOJI_FALLBACK.length])}</span>
                   <span class="latest-date">${esc(kisaTarih(item.createdAt))}</span>
                 </div>
                 <span class="latest-type">${esc(typeMeta.label || item.contentTypeLabel || item.sourceLabel || 'İçerik')}</span>
@@ -3214,10 +3333,11 @@
       cards.innerHTML = liste.map((h, i) => {
         const renk = h.renk || RENKLER[i % RENKLER.length];
         const tarihStr = formatTarih(h.tarih);
+        const typeMeta = icerikTuruMeta(h);
         return `
           <a href="${esc(h.link||'#')}" class="haber-card" data-access-scope="${esc(h.accessScope || 'public')}">
             <div class="haber-card-top">
-              <div class="haber-em ${esc(renk)}">${esc(h.emoji||EMOJI_FALLBACK[i%8])}</div>
+              <div class="haber-em ${esc(renk)}">${icerikIkonuHtml(h, typeMeta, h.emoji || EMOJI_FALLBACK[i % 8])}</div>
               <div>
                 <div class="haber-cat">${esc(h.kategori || 'Güncel İçerik')}</div>
                 <div class="haber-tarih">${esc(tarihStr)}</div>
@@ -3230,9 +3350,10 @@
       }).join('');
 
       // Ticker
-      const tickerItems = [...liste, ...liste].map(h =>
-        `<a href="${esc(h.link||'#')}" class="ticker-item">${esc(h.emoji||'📌')} ${esc(h.baslik)}<span class="ticker-sep">|</span></a>`
-      ).join('');
+      const tickerItems = [...liste, ...liste].map(h => {
+        const typeMeta = icerikTuruMeta(h);
+        return `<a href="${esc(h.link||'#')}" class="ticker-item">${icerikIkonuHtml(h, typeMeta, h.emoji || '📌')} ${esc(h.baslik)}<span class="ticker-sep">|</span></a>`;
+      }).join('');
       ticker.innerHTML = tickerItems;
 
       // Dots

@@ -13,7 +13,7 @@
   <link rel="icon" href="/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
   <link rel="stylesheet" href="/css/whiteboard-icons.css?v=20260926-math1">
-  <link rel="stylesheet" href="/css/whiteboard-math.css?v=20260926-math1">
+  <link rel="stylesheet" href="/css/whiteboard-math.css?v=20260928-math3">
     <title>Akıllı Tahtam — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
@@ -1197,6 +1197,9 @@
                   <label class="math-field" id="mathLengthField" hidden><span id="mathLengthLabel">Uzunluk (birim)</span><input id="mathLength" type="number" min="2" max="20" step="0.5" value="10"></label>
                   <label class="math-field"><span>Döndürme (°)</span><input id="mathRotation" type="number" min="-180" max="180" step="1" value="0"></label>
                   <label class="math-field" id="mathAngleField"><span>Açı (°)</span><input id="mathAngle" type="number" min="0" max="180" step="1" value="60"></label>
+                  <label class="math-field" id="mathProtractorSizeField"><span>İletki boyutu (%)</span><input id="mathProtractorSize" type="number" min="50" max="200" step="5" value="100"></label>
+                  <label class="math-field" id="mathArm1Field"><span>1. kol (birim)</span><input id="mathArm1" type="number" min="1" max="15" step="0.1" value="4.1"></label>
+                  <label class="math-field" id="mathArm2Field"><span>2. kol (birim)</span><input id="mathArm2" type="number" min="1" max="15" step="0.1" value="4.1"></label>
                   <div class="math-options" id="mathCircleOptions" hidden>
                     <label><input type="radio" name="mathCircleType" value="circle" checked>Çember</label>
                     <label><input type="radio" name="mathCircleType" value="disk">Daire</label>
@@ -1398,7 +1401,7 @@
   </main>
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js?v=20260926-workspace-focus"></script>
-  <script src="/js/whiteboard-math.js?v=20260926-math1"></script>
+  <script src="/js/whiteboard-math.js?v=20260928-math3"></script>
   <script>
 (function(){
   'use strict';
@@ -3210,6 +3213,7 @@
     mathTools = window.initWhiteboardMathTools({
       plane: E.boardPlane, stage: E.boardStage, button: E.boardProtractorBtn,
       zoom: function() { return S.board.zoom || 1; },
+      toBoardPoint: getBoardPoint,
       color: function() { return S.board.strokeColor; },
       size: function() { return S.board.size; },
       activate: function() { if(S.sand.active) setSandboxMode(false); commitTextOverlay(true); },

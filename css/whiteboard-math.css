@@ -13,11 +13,15 @@
 #mathSubPanel [hidden] { display: none !important; }
 .math-instrument { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 45; transform-origin: 0 0; pointer-events: none; color: #25354d; }
 .math-instrument[hidden] { display: none; }
-.math-instrument-svg { position: absolute; overflow: visible; touch-action: none; pointer-events: none; }
+.math-rotation-label { position: absolute; min-width: 58px; height: 28px; padding: 3px 8px; box-sizing: border-box; transform: translate(-50%, -50%); border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #25354d; font: 600 14px/20px Arial, sans-serif; text-align: center; white-space: nowrap; pointer-events: none; user-select: none; }
+.math-rotation-label[hidden] { display: none; }
+#mathInstrument > .math-instrument-svg { position: absolute; max-width: none; max-height: none; overflow: visible; touch-action: none; pointer-events: none; }
 .math-instrument-svg [data-drag] { pointer-events: all; cursor: grab; }
 .math-instrument-svg [data-drag]:active { cursor: grabbing; }
 .math-instrument-svg text { font-family: Arial, sans-serif; font-size: 11px; font-weight: 600; fill: #25354d; user-select: none; pointer-events: none; }
 .math-instrument-svg .instrument-handle { fill: #fff; stroke: #7043d8; stroke-width: 2; }
+.math-instrument-svg .instrument-hit { fill: none; stroke: transparent; stroke-width: 32; pointer-events: stroke; }
+.math-instrument-svg .instrument-handle[data-drag="radius"], .math-instrument-svg .instrument-handle[data-drag="needle"] { fill: #ffffff70; stroke: #64748b; stroke-width: 1; }
 .math-instrument-controls { position: absolute; display: flex; gap: 4px; pointer-events: auto; transform: translateX(-50%); }
 .math-instrument-controls button { width: 40px; height: 40px; display: grid; place-items: center; background: #fff; color: #6033cc; border: 1px solid #cdbded; border-radius: 6px; cursor: pointer; touch-action: none; }
 .math-instrument-controls button:focus-visible, #mathSubPanel button:focus-visible { outline: 3px solid #1584ca; outline-offset: 2px; }

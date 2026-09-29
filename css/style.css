@@ -652,6 +652,12 @@ a { color: inherit; }
   font-size: 20px;
   flex-shrink: 0;
 }
+.site-search-result-icon img {
+  width: 26px;
+  height: 26px;
+  display: block;
+  object-fit: contain;
+}
 .site-search-result-copy {
   min-width: 0;
   display: grid;

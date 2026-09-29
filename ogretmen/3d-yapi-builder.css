@@ -22,3 +22,4 @@ html{overscroll-behavior:none}body{margin:0;overflow:hidden;font-family:Segoe UI
 .geo-piece.parallelogram.dir-door{width:54px;height:76px;clip-path:polygon(15% 0,100% 0,85% 100%,0 100%)}
 .geo-piece.parallelogram.dir-hull{width:220px;height:72px;clip-path:polygon(0 0,100% 0,84% 100%,16% 100%)}
 .rotate-help{display:block;margin-top:-3px;color:#64748b;font-size:11px;font-weight:700;line-height:1.35}
+#resizeHandle{position:absolute;z-index:4;width:28px;min-height:28px;height:28px;padding:0;border:2px solid #fff;border-radius:8px;background:#2563eb;color:#fff;font-size:16px;line-height:1;box-shadow:0 3px 10px #1d4ed880;cursor:nwse-resize;touch-action:none;transform:translate(-50%,-50%)}#resizeHandle:hover{background:#1d4ed8;border-color:#dbeafe}#resizeHandle:active{transform:translate(-50%,-50%) scale(.92)}

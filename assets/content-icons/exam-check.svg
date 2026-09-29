@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="paper" x1="17" y1="14" x2="49" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#FFF7F3"/>
+    </linearGradient>
+    <linearGradient id="clip" x1="23" y1="7" x2="41" y2="21" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD59F"/>
+      <stop offset="1" stop-color="#FF8A57"/>
+    </linearGradient>
+  </defs>
+  <rect x="13" y="13" width="38" height="45" rx="9" fill="url(#paper)"/>
+  <rect x="13" y="13" width="38" height="45" rx="9" stroke="#FFF" stroke-width="3"/>
+  <path d="M24 16v-3.3A5.7 5.7 0 0 1 29.7 7h4.6A5.7 5.7 0 0 1 40 12.7V16" stroke="url(#clip)" stroke-width="4" stroke-linecap="round"/>
+  <rect x="22" y="15" width="20" height="8" rx="4" fill="url(#clip)"/>
+  <rect x="21" y="29" width="9" height="9" rx="2.5" fill="#FFF0E9" stroke="#FF684E" stroke-width="2.5"/>
+  <path d="m23.7 33 2.2 2.2 4-4.5" stroke="#FF684E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M35 31h9M35 36h6M22 45h22" stroke="#D26A55" stroke-width="2.7" stroke-linecap="round"/>
+</svg>

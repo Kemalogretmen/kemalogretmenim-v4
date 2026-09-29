@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/ogretmen/3d-yapi-builder.css?v=20260927-tangram-3">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script defer src="/ogretmen/3d-yapi-builder.js?v=20260928-edges"></script>
+  <script defer src="/ogretmen/3d-yapi-builder.js?v=20260928-selection-resize-2"></script>
   <script defer src="/ogretmen/geometrik-sekiller.js?v=20260927-tangram-5"></script>
 </head>
 <body>
@@ -30,7 +30,7 @@
     </aside>
     <aside class="builder-panel right-panel three-only">
       <div class="task"><b id="taskCount">GÖREV 1 / 5</b><span id="taskText">Kırmızı renkte bir küp ekle.</span><button class="primary" id="done">Yaptım ✓</button></div>
-      <div class="selected" id="selected"><b id="selectedName">Cisim seçili</b><span class="rotate-help">↻ Dikey döndür · ↷ Yatay yatır</span><div class="grid"><button id="rotateY" title="Cismi dikey eksende döndür">↻ Dikey döndür</button><button id="rotateX" title="Cismi öne veya arkaya yatır">↷ Öne yatır</button><button id="rotateZ" title="Cismi sağa veya sola yatır">↶ Yana yatır</button><button id="copy">▣ Kopyala</button><button id="remove">🗑 Sil</button><button id="fit">⇲ Alta uydur</button></div></div>
+      <div class="selected" id="selected"><b id="selectedName">Cisim seçili</b><span class="rotate-help">↻ Dikey döndür · ↷ Yatay yatır · ◢ Köşeden boyutlandır</span><div class="grid"><button id="rotateY" title="Cismi dikey eksende döndür">↻ Dikey döndür</button><button id="rotateX" title="Cismi öne veya arkaya yatır">↷ Öne yatır</button><button id="rotateZ" title="Cismi sağa veya sola yatır">↶ Yana yatır</button><button id="shrink" title="Cismi orantılı olarak küçült">− Küçült</button><button id="grow" title="Cismi orantılı olarak büyüt">＋ Büyüt</button><button id="copy">▣ Kopyala</button><button id="remove">🗑 Sil</button><button id="fit">⇲ Alta uydur</button></div></div>
       <section><b>KAMERA</b><div class="grid"><button id="iso">◈ İzometrik</button><button id="top">↓ Üstten</button><button id="near">＋ Yakın</button><button id="far">－ Uzak</button></div></section>
       <div class="grid"><button id="clear">🧹 Temizle</button><button class="primary" id="photo">📷 Fotoğraf</button></div>
       <p>Her cisim destek yüzeyini algılar; boşlukta bırakılan cisim yerçekimiyle zemine veya uygun bir yüzeye iner.</p>

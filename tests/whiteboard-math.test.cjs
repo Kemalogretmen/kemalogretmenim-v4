@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { parseHTML } = require('linkedom');
 
-function setup() {
+function setup(options = {}) {
   const root = path.join(__dirname, '..');
   const { document, window } = parseHTML(fs.readFileSync(path.join(root, 'ogretmen/beyaztahta.html'), 'utf8'));
   const plane = document.getElementById('boardPlane');
@@ -22,11 +22,19 @@ function setup() {
   });
   const items = [];
   const tools = window.initWhiteboardMathTools({ plane, stage, button: document.getElementById('boardProtractorBtn'),
-    zoom: () => 1, color: () => '#ef4444', size: () => 6, activate() {}, togglePanel() {}, commit: item => items.push(item) });
+    zoom: () => 1, color: () => '#ef4444', size: () => 6, activate() {}, togglePanel() {}, commit: item => items.push(item), ...options });
+  const instrument = document.getElementById('mathInstrument');
+  instrument.setPointerCapture = instrument.releasePointerCapture = () => {};
+  instrument.hasPointerCapture = () => true;
+  const pointer = (selector, type, x, y) => {
+    const event = new window.Event(type, { bubbles: true, cancelable: true });
+    Object.assign(event, { pointerId: 1, button: 0, clientX: x, clientY: y });
+    document.querySelector(selector).dispatchEvent(event);
+  };
   const click = selector => document.querySelector(selector).click();
   const set = (selector, value) => { const el = document.querySelector(selector); el.value = String(value); el.dispatchEvent(new window.Event('change')); };
   const finish = () => { const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn(1000)); };
-  return { items, tools, click, set, finish, document };
+  return { items, tools, click, set, finish, document, pointer };
 }
 
 test('compass creates an exact circle and a filled disk with the selected brush', () => {
@@ -77,4 +85,64 @@ test('recentering keeps the requested radius; invalid dimensions remain bounded'
   assert.equal(q.items[0].end.x - q.items[0].start.x, 512);
   q.set('#mathLength', -10); q.click('#mathDraw'); q.finish();
   assert.equal(q.items[1].end.x - q.items[1].start.x, 32);
+});
+
+test('instrument SVG keeps explicit dimensions despite the site-wide max-width rule', () => {
+  const q = setup(); q.click('[data-math-tool="compass"]');
+  const svg = q.document.querySelector('.math-instrument-svg');
+  assert.equal(svg.style.maxWidth, 'none');
+  assert(Number(svg.getAttribute('width')) > 200);
+  assert.equal(svg.getAttribute('preserveAspectRatio'), 'none');
+});
+
+test('dragging either compass leg uses board coordinates and keeps the opposite tip fixed', () => {
+  const q = setup({ toBoardPoint: e => ({ x: (e.clientX - 100) / 2, y: (e.clientY - 40) / 2 }) });
+  q.click('[data-math-tool="compass"]');
+  const drag = (selector, from, to) => {
+    q.pointer(selector, 'pointerdown', from[0] * 2 + 100, from[1] * 2 + 40);
+    q.pointer('#mathInstrument', 'pointermove', to[0] * 2 + 100, to[1] * 2 + 40);
+    q.pointer('#mathInstrument', 'pointerup', to[0] * 2 + 100, to[1] * 2 + 40);
+    q.finish();
+  };
+  // Grab midway up the pencil leg, preserving the offset to its actual tip.
+  drag('.instrument-hit[data-drag="radius"]', [575, 330], [607, 330]);
+  q.click('#mathDraw'); q.finish();
+  let circle = q.items.at(-1);
+  assert.equal((circle.start.x + circle.end.x) / 2, 500);
+  assert.equal(circle.end.x - circle.start.x, 256);
+  drag('.instrument-handle[data-drag="needle"]', [500, 375], [468, 375]);
+  q.click('#mathDraw'); q.finish();
+  circle = q.items.at(-1);
+  assert.equal((circle.start.x + circle.end.x) / 2, 468);
+  assert.equal(circle.end.x, 628, 'Pencil endpoint stays fixed when the needle moves');
+});
+
+test('protractor size is independent of both angle-arm lengths', () => {
+  const q = setup(); q.click('[data-math-tool="protractor"]');
+  q.set('#mathArm1', 3); q.set('#mathArm2', 6); q.set('#mathAngle', 90);
+  q.set('#mathProtractorSize', 175); q.set('#mathRotation', 35); q.click('#mathDraw');
+  const [a, center, b] = q.items[0].points;
+  assert(Math.abs(Math.hypot(a.x - center.x, a.y - center.y) - 96) < 1e-8);
+  assert(Math.abs(Math.hypot(b.x - center.x, b.y - center.y) - 192) < 1e-8);
+  assert(Math.abs((a.x - center.x) * (b.x - center.x) + (a.y - center.y) * (b.y - center.y)) < 1e-8);
+  assert.equal(Number(q.document.querySelector('#mathProtractorSize').value), 175);
+});
+
+test('rotated ruler keeps both interactive handles inside its SVG viewport and shows its angle', () => {
+  const q = setup(); q.click('[data-math-tool="ruler"]');
+  for (const angle of [-180, -135, -90, -45, 0, 45, 90, 135, 180]) {
+    q.set('#mathRotation', angle);
+    const svg = q.document.querySelector('.math-instrument-svg');
+    const [left, top, width, height] = svg.getAttribute('viewBox').split(' ').map(Number);
+    const rad = angle * Math.PI / 180;
+    for (const y of [-30, 32]) {
+      const xRot = 320 * Math.cos(rad) - y * Math.sin(rad);
+      const yRot = 320 * Math.sin(rad) + y * Math.cos(rad);
+      assert(xRot - 21 >= left && xRot + 21 <= left + width, `Handle x bounds at ${angle}`);
+      assert(yRot - 21 >= top && yRot + 21 <= top + height, `Handle y bounds at ${angle}`);
+    }
+    assert.equal(q.document.querySelector('.math-rotation-label').textContent, `${angle}°`);
+  }
+  q.click('[data-math-tool="compass"]');
+  assert.equal(q.document.querySelector('.math-rotation-label').hidden, true);
 });

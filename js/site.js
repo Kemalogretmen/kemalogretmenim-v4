@@ -1678,6 +1678,15 @@
       '</div>';
   }
 
+  function getSearchResultIconHtml(item) {
+    var type = String(item && (item.type || item.contentType) || '').trim().toLocaleLowerCase('tr-TR');
+    var href = String(item && item.href || '').toLocaleLowerCase('tr-TR');
+    if (type === 'exam' || href.indexOf('/sinav_sitesi/') !== -1) {
+      return '<img src="/assets/content-icons/exam-check.svg" alt="" aria-hidden="true">';
+    }
+    return escHtml(item && item.icon || '📄');
+  }
+
   function renderSiteSearch() {
     const status = document.getElementById('siteSearchStatus');
     const results = document.getElementById('siteSearchResults');
@@ -1711,7 +1720,7 @@
       ? items.map(function(item) {
         return '' +
           '<a class="site-search-result" href="' + escAttr(item.href || '#') + '" data-access-scope="' + escAttr(item.accessScope || 'public') + '">' +
-            '<span class="site-search-result-icon">' + escHtml(item.icon || '📄') + '</span>' +
+            '<span class="site-search-result-icon">' + getSearchResultIconHtml(item) + '</span>' +
             '<span class="site-search-result-copy">' +
               '<strong>' + escHtml(item.title || 'İçerik') + '</strong>' +
               '<small>' + escHtml([item.gradeLabel, item.subjectLabel, item.contentTypeLabel || item.sourceLabel].filter(Boolean).join(' · ')) + '</small>' +

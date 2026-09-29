@@ -93,7 +93,8 @@
     },
     exam: {
       label: 'Sınav',
-      icon: '📋',
+      icon: '📝',
+      iconUrl: '/assets/content-icons/exam-check.svg',
       color: '#D35400',
       soft: '#FFF0EC',
       border: '#FFD0C6',
@@ -375,6 +376,7 @@
       contentType: 'exam',
       contentTypeLabel: 'Sınavlar',
       icon: typeMeta.icon,
+      iconUrl: typeMeta.iconUrl || '',
       sourceLabel: 'Sınav',
       contentMeta: typeMeta,
       accessScope: getAccessScope(row),
