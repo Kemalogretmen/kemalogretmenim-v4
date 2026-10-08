@@ -121,6 +121,7 @@
     },
     ekMenuler: [],
     kisayolDock: [
+      { id: 'aquarium', baslik: 'Sınıf Akvaryumu', link: '/ogretmen/akvaryum.html', emoji: '🐠', iconUrl: '/assets/dock-icons/akvaryum.svg', aktif: true },
       { id: 'whiteboard', baslik: 'Beyaz Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
       { id: 'stopwatch', baslik: 'Kronometre', link: '/ogretmen/kronometre.html', emoji: '⏱️', iconUrl: '/assets/dock-icons/kronometre.svg', aktif: true },
       { id: 'math', baslik: 'Matematik Araçları', link: '/ogretmen/matematik.html', emoji: '➗', iconUrl: '/assets/dock-icons/matematik.svg', aktif: true },
@@ -149,6 +150,12 @@
   function normalizeSiteData(rawData) {
     const defaults = deepClone(DEFAULT_SITE_DATA);
     const source = rawData && typeof rawData === 'object' ? rawData : {};
+    const dockItems = normalizeArray(source.kisayolDock && source.kisayolDock.length ? source.kisayolDock : defaults.kisayolDock).slice();
+    // Include the new tool in saved dock layouts without duplicating an existing
+    // entry or overriding an administrator's disabled aquarium shortcut.
+    if (!dockItems.some(item => item && (item.id === 'aquarium' || String(item.link || '').split(/[?#]/)[0].replace(/^\//, '') === 'ogretmen/akvaryum.html'))) {
+      dockItems.unshift(deepClone(defaults.kisayolDock.find(item => item.id === 'aquarium')));
+    }
 
     return {
       menuBadges: source.menuBadges && typeof source.menuBadges === 'object' ? source.menuBadges : defaults.menuBadges,
@@ -198,7 +205,7 @@
         ad: item && item.ad ? String(item.ad) : '',
         url: item && item.url ? String(item.url) : '#',
       })),
-      kisayolDock: normalizeArray(source.kisayolDock && source.kisayolDock.length ? source.kisayolDock : defaults.kisayolDock).map((item, index) => ({
+      kisayolDock: dockItems.map((item, index) => ({
         id: item && item.id ? item.id : Date.now() + index,
         baslik: item && item.baslik ? String(item.baslik) : `Kısayol ${index + 1}`,
         link: item && item.link ? String(item.link) : '#',

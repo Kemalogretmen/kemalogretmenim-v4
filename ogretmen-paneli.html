@@ -142,11 +142,15 @@
     .teacher-panel-card{border-radius:16px}
     @media(max-width:1100px){.teacher-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-hero{grid-template-columns:1fr}.teacher-top-actions{justify-content:flex-start}.teacher-layout,.teacher-account-grid{grid-template-columns:1fr}.teacher-stats,.teacher-action-grid,.teacher-library-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-toolbar{grid-template-columns:1fr}}
     @media(max-width:860px){.teacher-shell{margin:0;padding:18px 14px 34px}.teacher-tabs{position:static;width:auto;height:auto;border-radius:0 0 22px 22px;flex-direction:row;align-items:center;overflow-x:auto;padding:14px;margin:0 0 18px}.teacher-sidebar-brand{min-width:210px;margin:0}.teacher-sidebar-brand img{display:none}.teacher-sidebar-label,.teacher-sidebar-spacer,.teacher-sidebar-link{display:none}.teacher-tabs .teacher-tab{width:auto;white-space:nowrap;min-width:max-content}.teacher-module-grid{grid-template-columns:1fr}.teacher-module-card{min-height:160px}.teacher-profile-head{grid-template-columns:1fr}.teacher-row{grid-template-columns:1fr}.teacher-row-actions{justify-content:flex-start}.teacher-assignment-columns,.teacher-two,.teacher-stats,.teacher-action-grid,.teacher-approval-upload,.teacher-library-grid{grid-template-columns:1fr}.teacher-table{font-size:13px}.teacher-content-actions{padding-right:0}}
+    .teacher-loading .teacher-section,.teacher-loading .teacher-stats,.teacher-access-error .teacher-section,.teacher-access-error .teacher-stats{display:none}
+    .teacher-loading .teacher-tabs,.teacher-access-error .teacher-tabs{pointer-events:none;opacity:.55}
+    .teacher-aquarium-card{background:linear-gradient(100deg,rgba(3,40,60,.94),rgba(3,40,60,.35)),url('/assets/akvaryum/arka-planlar/mercan-resifi.jpg') center/cover!important;color:white!important;text-decoration:none}
+    .teacher-aquarium-card strong,.teacher-aquarium-card small{color:white!important}
   </style>
 </head>
 <body data-kemal-chrome="off">
   <main class="teacher-panel">
-    <section class="teacher-shell">
+    <section class="teacher-shell teacher-loading">
       <div class="teacher-hero">
         <div class="teacher-profile-head">
           <div class="teacher-avatar" id="teacherHeroAvatar">Ö</div>
@@ -197,6 +201,7 @@
         <button class="teacher-tab" type="button" data-tab="reports">Karneler</button>
         <button class="teacher-tab" type="button" data-tab="messages">Mesajlar</button>
         <button class="teacher-tab" type="button" data-tab="library">Kaydettiklerim</button>
+        <a class="teacher-tab" href="/ogretmen/akvaryum.html" style="text-decoration:none">🐠 Sınıf Akvaryumu</a>
         <button class="teacher-tab" type="button" data-tab="content">Araçlar</button>
         <button class="teacher-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
         <div class="teacher-sidebar-spacer"></div>
@@ -205,6 +210,11 @@
 
       <section class="teacher-section active" id="section-home">
         <div class="teacher-module-grid">
+          <a class="teacher-module-card teacher-aquarium-card" href="/ogretmen/akvaryum.html">
+            <span class="teacher-module-icon">🐠</span><strong>Sınıf Akvaryumu</strong>
+            <small>Görevleri tamamla, deniz dostlarını besle. Velilerle güvenle paylaş.</small>
+          </a>
+
           <button class="teacher-module-card teacher-tab tone-pink" type="button" data-tab="classes">
             <span class="teacher-module-icon">🏫</span>
             <strong>Sınıflarım</strong>
@@ -559,12 +569,12 @@
   <div class="teacher-toast" id="teacherToast"></div>
 
   <script src="/js/site-data.js"></script>
+  <script src="/js/user-auth.js?v=20261005-auth-fix"></script>
   <script src="/js/site.js?v=20260926-dock-home"></script>
-  <script src="/js/user-auth.js"></script>
   <script src="/js/content-progress.js"></script>
   <script src="/js/content-feed.js"></script>
   <script src="/js/content-reactions.js"></script>
   <script src="/js/content-saves.js"></script>
-  <script src="/js/ogretmen-paneli.js"></script>
+  <script src="/js/ogretmen-paneli.js?v=20261005-auth-fix2"></script>
 </body>
 </html>

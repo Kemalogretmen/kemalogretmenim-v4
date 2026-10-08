@@ -1,0 +1,20 @@
+{
+  "id": "ocean",
+  "title": "Beach Ocean Waves",
+  "artist": "jasinski (OpenGameArt: qubodup)",
+  "filename": "ocean.wav",
+  "page": "https://opengameart.org/content/beach-ocean-waves",
+  "sources": [
+    "https://opengameart.org/sites/default/files/wave_01_cc0-18363__jasinski__alkaibeach.flac",
+    "https://opengameart.org/sites/default/files/wave_02_cc0-18363__jasinski__alkaibeach.flac",
+    "https://opengameart.org/sites/default/files/wave_03_cc0-18363__jasinski__alkaibeach.flac",
+    "https://opengameart.org/sites/default/files/wave_04_cc0-18363__jasinski__alkaibeach.flac"
+  ],
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "modified": true,
+  "changes": "Four excerpts joined with crossfades, mono PCM, reduced peak level, loop seam crossfade.",
+  "sha256": "d09617c8dbad87af83a39206c5929967064199b267bea7ed264dc127d19d978e",
+  "duration": 9.86,
+  "bytes": 869784
+}

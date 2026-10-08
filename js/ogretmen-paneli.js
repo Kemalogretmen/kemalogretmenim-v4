@@ -35,12 +35,8 @@
   var client = null;
 
   function getClient() {
-    if (client) return client;
-    var config = window.kemalSiteStore.getConfig();
-    client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-      auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true },
-    });
-    return client;
+    if (!window.kemalUserAuth) throw new Error('Oturum sistemi yüklenemedi. Sayfayı yenileyin.');
+    return window.kemalUserAuth.getClient();
   }
 
   function qs(id) {
@@ -75,7 +71,7 @@
   }
 
   function normalizeEmail(value) {
-    return String(value || '').trim().toLocaleLowerCase('tr-TR');
+    return String(value || '').trim().toLowerCase();
   }
 
   function getInitials(profile) {
@@ -1220,7 +1216,19 @@
   }
 
   async function loadProfile() {
+    await window.kemalUserAuth.ready();
+    var sessionResult = await getClient().auth.getSession();
+    if (sessionResult.error) throw new Error('Oturum kontrol edilemedi. Yenile ile tekrar deneyin.');
+    if (!sessionResult.data || !sessionResult.data.session) {
+      window.location.href = '/giris.html';
+      return false;
+    }
     var auth = await getClient().auth.getUser();
+    if (auth.error && auth.error.name === 'AuthSessionMissingError') {
+      window.location.href = '/giris.html';
+      return false;
+    }
+    if (auth.error) throw new Error('Oturum doğrulanamadı. Yenile ile tekrar deneyin.');
     state.user = auth && auth.data ? auth.data.user : null;
     if (!state.user) {
       window.location.href = '/giris.html';
@@ -1229,14 +1237,17 @@
     var result = await getClient()
       .from('user_profiles')
       .select('id,role,approval_status,active,full_name,school_name,email,avatar_url,verification_status,verification_file_path,verification_file_name,verification_review_note')
-      .eq('email', normalizeEmail(state.user.email))
+      .eq('id', state.user.id)
       .maybeSingle();
     if (result.error) throw result.error;
     state.profile = result.data || null;
     if (!state.profile || state.profile.role !== 'teacher' || state.profile.active === false) {
-      window.location.href = '/giris.html';
+      document.querySelector('.teacher-shell').classList.add('teacher-access-error');
+      setText('teacherIntro', 'Bu hesap için aktif bir öğretmen profili bulunamadı. Hesabınızı kontrol edin veya farklı hesabınızla giriş yapın.');
+      setText('teacherStatus', 'Hesap kontrolü gerekli');
       return false;
     }
+    document.querySelector('.teacher-shell').classList.remove('teacher-access-error','teacher-loading');
     var name = state.profile.full_name || state.user.email || 'Öğretmen';
     setText('teacherIntro', name + ' hesabı ile giriş yaptın. Sınıflarını, öğrencilerini, ödevlerini ve ilerlemeyi buradan yönetebilirsin.');
     setText('teacherStatus', state.profile.approval_status === 'active' ? 'Aktif öğretmen' : 'Yönetici onayı bekliyor');
@@ -1438,9 +1449,11 @@
       button.textContent = 'Yenileniyor...';
     }
     try {
-      await refreshData();
+      const ok=await loadProfile();
+      if (!ok) return;
+      if(isTeacherApproved()) await Promise.all([loadTeacherData(),loadLibraryItems()]); else renderAll();
       toast('Panel yenilendi.');
-    } finally {
+    } catch(error) { toast(humanizeError(error),'error'); } finally {
       if (button) {
         button.disabled = false;
         button.textContent = oldText || 'Yenile';
@@ -2318,6 +2331,9 @@
         renderAll();
       }
     } catch (error) {
+      document.querySelector('.teacher-shell').classList.add('teacher-access-error');
+      setText('teacherIntro', 'Hesap bilgileri yüklenemedi. Kayıtlarınız korunuyor; Yenile ile tekrar deneyin.');
+      setText('teacherStatus', 'Bağlantı kontrolü gerekli');
       toast(humanizeError(error), 'error');
     }
   }

@@ -10,6 +10,7 @@
     completeMode: new URLSearchParams(window.location.search).get('profil') === 'tamamla',
     existingUser: null,
     existingProfile: null,
+    accountChecked: false,
   };
   const TEACHER_VERIFICATION_BUCKET = 'teacher-verifications';
   const MAX_IMAGE_EDGE = 1600;
@@ -25,25 +26,12 @@
   }
 
   function getClient() {
-    if (state.client) {
-      return state.client;
-    }
-    if (!window.supabase) {
-      throw new Error('Supabase kütüphanesi yüklenemedi.');
-    }
-    const config = getConfig();
-    state.client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    });
-    return state.client;
+    if (!window.kemalUserAuth) throw new Error('Oturum sistemi yüklenemedi. Sayfayı yenileyin.');
+    return window.kemalUserAuth.getClient();
   }
 
   function normalizeEmail(value) {
-    return String(value || '').trim().toLocaleLowerCase('tr-TR');
+    return String(value || '').trim().toLowerCase();
   }
 
   function normalizePlace(value) {
@@ -469,10 +457,14 @@
   }
 
   async function saveProfile(client, userId, profile) {
-    const payload = Object.assign({}, profile, {
-      id: userId,
-      active: true,
-    });
+    const existing = await client.from('user_profiles').select('id,role,approval_status,active,account_status').eq('id',userId).maybeSingle();
+    if(existing.error) throw existing.error;
+    if(existing.data && existing.data.active === false) throw new Error('Pasif hesap kayıt formuyla yeniden açılamaz.');
+    const payload = Object.assign({}, profile, { id:userId });
+    if(existing.data && existing.data.role === profile.role) {
+      delete payload.approval_status;
+    }
+    if(existing.data && existing.data.role === 'teacher') { payload.role = 'teacher'; delete payload.approval_status; }
     const result = await client
       .from('user_profiles')
       .upsert(payload, { onConflict: 'id' });
@@ -495,6 +487,7 @@
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (!state.accountChecked) { showMessage('err', 'Önce hesap kontrolünün tamamlanmasını bekleyin. Hata varsa sayfayı yenileyin.'); return; }
     const form = event.currentTarget;
     const profile = buildProfile(form);
     const formData = new FormData(form);
@@ -573,9 +566,8 @@
         },
       });
 
-      if (signup.error) {
-        throw signup.error;
-      }
+      if (signup.error) throw signup.error;
+      if (Array.isArray(signup.data?.user?.identities) && signup.data.user.identities.length === 0) throw new Error('Bu e-posta için bir hesap bulunuyor. Lütfen giriş yapın veya şifrenizi yenileyin.');
 
       state.lastSignupEmail = profile.email;
       const user = signup.data && signup.data.user ? signup.data.user : null;
@@ -667,15 +659,16 @@
   }
 
   async function loadCompletionProfile() {
-    if (!state.completeMode) {
-      return;
-    }
     try {
+      await window.kemalUserAuth.ready();
+      if(window.kemalUserAuth.getState().error) throw new Error(window.kemalUserAuth.getState().error);
       const sessionResult = await getClient().auth.getSession();
+      if(sessionResult.error) throw sessionResult.error;
       const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
       state.existingUser = session ? session.user : null;
       if (!state.existingUser) {
-        showMessage('err', 'Profil tamamlamak için önce giriş yapmalısın.');
+        if(state.completeMode) showMessage('err', 'Profil tamamlamak için önce giriş yapmalısın.');
+        else state.accountChecked=true;
         return;
       }
       const profileResult = await getClient()
@@ -683,11 +676,18 @@
         .select('*')
         .eq('id', state.existingUser.id)
         .maybeSingle();
+      if(profileResult.error) throw new Error('Profiliniz yüklenemedi. Kayıtlarınızı değiştirmeden sayfayı yenileyip tekrar deneyin.');
       const profile = profileResult.data || {};
+      if(profile.active === false) throw new Error('Bu hesap pasif durumda. Yeni kayıt yerine destek isteyin.');
+      if(profile.role === 'teacher' || profile.role === 'parent' || (profile.role === 'student' && profile.full_name && profile.city && profile.school_name && profile.grade_level)) {
+        window.location.replace(window.kemalUserAuth.getPanelHref(profile)); return;
+      }
+      state.completeMode=true;
+      state.accountChecked=true;
       state.existingProfile = profile;
       const meta = state.existingUser.user_metadata || {};
       const split = splitName(profile.full_name || meta.full_name || meta.name || '');
-      setRole(profile.role === 'teacher' ? 'teacher' : (profile.role === 'parent' ? 'parent' : 'student'));
+      setRole((profile.role || meta.role) === 'teacher' ? 'teacher' : ((profile.role || meta.role) === 'parent' ? 'parent' : 'student'));
       setInputValue('firstName', profile.first_name || meta.first_name || split.firstName);
       setInputValue('lastName', profile.last_name || meta.last_name || split.lastName);
       setInputValue('email', profile.email || state.existingUser.email || '');
@@ -716,7 +716,7 @@
       if (emailField) emailField.readOnly = true;
       const submit = document.getElementById('registerSubmit');
       if (submit) submit.textContent = 'Profilimi Kaydet';
-      showMessage('ok', 'Google hesabınla giriş yapıldı. Devam etmek için eksik profil bilgilerini tamamla.');
+      showMessage('ok', 'Oturumun açık. Devam etmek için eksik profil bilgilerini tamamla.');
     } catch (error) {
       showMessage('err', String(error && error.message ? error.message : error));
     }
@@ -774,11 +774,7 @@
     }
 
     setRole('student');
-    loadLocations()
-      .then(loadCompletionProfile)
-      .catch(function(error) {
-        showMessage('err', error.message || 'İl/ilçe listesi yüklenemedi.');
-      });
+    loadLocations().catch(function(error) { showMessage('err', error.message || 'İl/ilçe listesi yüklenemedi.'); }).then(loadCompletionProfile);
   }
 
   if (document.readyState === 'loading') {

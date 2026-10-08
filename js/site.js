@@ -1555,7 +1555,7 @@
       return Promise.resolve(window.kemalUserAuth);
     }
     if (!userAuthScriptPromise) {
-      userAuthScriptPromise = ensureScript('/js/user-auth.js', 'kemalUserAuth')
+      userAuthScriptPromise = ensureScript('/js/user-auth.js?v=20261005-auth-fix', 'kemalUserAuth')
         .catch(function() {
           return null;
         });
@@ -2058,6 +2058,7 @@
   function buildShortcutDock(data) {
     if (!isShortcutDockAllowed()) return '';
     const defaultDockItems = [
+      { baslik: 'Sınıf Akvaryumu', link: '/ogretmen/akvaryum.html', emoji: '🐠', iconUrl: '/assets/dock-icons/akvaryum.svg', aktif: true },
       { baslik: 'Beyaz Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
       { baslik: 'Kronometre', link: '/ogretmen/kronometre.html', emoji: '⏱️', iconUrl: '/assets/dock-icons/kronometre.svg', aktif: true },
       { baslik: 'Matematik Araçları', link: '/ogretmen/matematik.html', emoji: '➗', iconUrl: '/assets/dock-icons/matematik.svg', aktif: true },

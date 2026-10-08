@@ -1,0 +1,90 @@
+{
+  "tool": "Built-in image_gen",
+  "date": "2026-10-01",
+  "animals": [
+    {
+      "id": "yellowtang",
+      "file": "canlilar/sari-cerrah.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-c8b1fe25-581e-4e68-a164-e5de9362a005.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a yellow tang fish (Zebrasoma flavescens), natural brilliant lemon yellow body, small pointed snout and rounded sail-like fins."
+    },
+    {
+      "id": "angelfish",
+      "file": "canlilar/imparator-melek.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-a0852e76-c61a-4121-8b8f-68f6076dd136.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: an adult emperor angelfish (Pomacanthus imperator), beautiful natural horizontal yellow and electric blue stripes, dark eye mask, yellow tail, vivid but realistic colors."
+    },
+    {
+      "id": "mandarin",
+      "file": "canlilar/mandarin-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-683e642e-efc0-45fe-b6b0-73ac9c3844a6.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a mandarin dragonet (Synchiropus splendidus), intricate turquoise blue, orange and green natural swirling skin patterns, small realistic mouth and eyes, open patterned fins."
+    },
+    {
+      "id": "lionfish",
+      "file": "canlilar/aslan-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-878b0779-ae9e-4cb0-8c7d-ad3f5f3c5ed9.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a red lionfish (Pterois volitans), maroon and cream vertical stripes, elegant long separate dorsal spines and fanlike pectoral fins fully within frame, anatomically realistic."
+    },
+    {
+      "id": "puffer",
+      "file": "canlilar/balon-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-a63bd69a-c4b4-49d1-b581-5e2a55226e15.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a normal uninflated white-spotted pufferfish (Arothron hispidus), naturally rounded grey olive body with small white spots, tiny fins, natural small beak mouth, realistic eyes; not a cartoon and no exaggerated face."
+    },
+    {
+      "id": "gramma",
+      "file": "canlilar/kraliyet-gramma.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-107ead74-889a-4cf8-80ab-3fda68416e78.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a royal gramma reef fish (Gramma loreto), naturally purple violet front half sharply transitioning to bright yellow rear half, realistic small black eye and fine translucent fin edges."
+    },
+    {
+      "id": "firefish",
+      "file": "canlilar/ates-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-3ae33642-87a8-47f4-94b1-5ce999754ba2.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a firefish goby (Nemateleotris magnifica), slender pearly white front body, orange red posterior half and tail, elegant very tall thin dorsal fin, natural proportions."
+    },
+    {
+      "id": "triggerfish",
+      "file": "canlilar/tetik-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-43357f66-74be-485a-a940-10bb715fe310.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a clown triggerfish (Balistoides conspicillum), dark oval body with bold large white spots on lower half, yellow ring around small natural mouth, golden patterned back and precise small fins."
+    },
+    {
+      "id": "octopus",
+      "file": "canlilar/ahtapot.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-4c459a67-e86c-428a-9ff7-9286d6958b1c.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a common octopus (Octopus vulgaris) in a natural swimming pose, head at right and eight curved arms sweeping gently toward left and below, terracotta orange brown textured skin, realistic suckers, anatomically accurate small eyes. Full complete animal with all arms visible inside the frame."
+    },
+    {
+      "id": "jellyfish",
+      "file": "canlilar/denizanasi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-b999537a-1457-4bce-bbf6-ccdbb3c1e281.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a translucent moon jellyfish (Aurelia aurita), delicate clear milky pale lavender bell, four subtle natural horseshoe shaped internal structures and fine short fringing tentacles, softly glowing underwater rim lighting to remain visible when composited on a blue ocean. Upright natural orientation with bell above and tentacles below; do not add a face or fish anatomy."
+    },
+    {
+      "id": "shark",
+      "file": "canlilar/resif-kopekbaligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-f9798eca-4955-442f-819d-17b54ea3f510.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a blacktip reef shark (Carcharhinus melanopterus), slim natural grey body, white belly, black tips on dorsal and pectoral fins, realistic closed mouth, natural calm swimming side profile, full intact tail and fins inside the canvas, no aggressive pose."
+    },
+    {
+      "id": "dolphin",
+      "file": "canlilar/yunus.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-9cb38777-ac6f-44ba-9348-45dc06939229.png",
+      "transparent_background": true,
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a bottlenose dolphin (Tursiops truncatus), graceful streamlined silver grey body and paler belly, natural closed beak, realistic small eye, swimming horizontally to the right in side three-quarter view, complete tail flukes visible. Natural marine mammal anatomy, no exaggerated smiling expression."
+    }
+  ]
+}

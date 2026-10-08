@@ -1,5 +1,6 @@
 (function() {
   'use strict';
+  if (window.kemalUserAuth) return;
 
   var SUPABASE_SRC = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   var READY_EVENT = 'kemal-user-auth-ready';
@@ -7,6 +8,8 @@
   var ACTIVITY_PREFIX = 'kemal_student_activity_v1_';
   var client = null;
   var readyPromise = null;
+  var refreshRevision = 0;
+  var authRefreshTimer = 0;
   var activityTimer = 0;
   var lastActivityTick = 0;
   var state = {
@@ -60,7 +63,7 @@
   }
 
   function normalizeEmail(value) {
-    return String(value || '').trim().toLocaleLowerCase('tr-TR');
+    return String(value || '').trim().toLowerCase();
   }
 
   function normalizeRole(value) {
@@ -158,13 +161,14 @@
     };
     var response = await getClient()
       .from('user_profiles')
-      .upsert(payload, { onConflict: 'id' })
+      .upsert(payload, { onConflict: 'id', ignoreDuplicates: true })
       .select('*')
       .maybeSingle();
-    if (response.error) {
-      return null;
-    }
-    return response.data || payload;
+    if (response.error) throw response.error;
+    if (response.data) return response.data;
+    var existing = await getClient().from('user_profiles').select('*').eq('id', user.id).maybeSingle();
+    if (existing.error) throw existing.error;
+    return existing.data || null;
   }
 
   async function loadProfile(user) {
@@ -176,7 +180,8 @@
       .select('*')
       .eq('id', user.id)
       .maybeSingle();
-    if (!response.error && response.data) {
+    if (response.error) throw response.error;
+    if (response.data) {
       return normalizeProfile(response.data, user);
     }
     var created = await createProfileFromUser(user);
@@ -190,39 +195,55 @@
   }
 
   async function refresh() {
-    await ensureSupabase();
-    var sessionResult = await getClient().auth.getSession();
-    state.session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
-    state.user = state.session ? state.session.user : null;
-    state.profile = state.user ? await loadProfile(state.user) : null;
-    state.error = '';
-    state.ready = true;
-    startActivityTracking();
-    emit(CHANGE_EVENT);
-    return getState();
+    var revision = ++refreshRevision;
+    var nextUser, nextSession;
+    try {
+      await ensureSupabase();
+      var result = await getClient().auth.getSession();
+      if (result.error) throw result.error;
+      nextSession = result.data ? result.data.session : null;
+      nextUser = nextSession ? nextSession.user : null;
+      var nextProfile = nextUser ? await loadProfile(nextUser) : null;
+      if (revision !== refreshRevision) return getState();
+      state.session = nextSession; state.user = nextUser; state.profile = nextProfile;
+      state.error = ''; state.ready = true;
+      startActivityTracking(); emit(CHANGE_EVENT);
+      return getState();
+    } catch (error) {
+      if (revision !== refreshRevision) return getState();
+      if (nextUser !== undefined && (!state.user || state.user.id !== (nextUser && nextUser.id))) {
+        state.user = nextUser; state.session = nextSession; state.profile = null;
+      }
+      state.error = 'Hesap bilgileri yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.';
+      state.ready = true; emit(CHANGE_EVENT);
+      throw error;
+    }
   }
 
   function ready() {
     if (!readyPromise) {
-      readyPromise = ensureSupabase()
-        .then(function() {
-          getClient().auth.onAuthStateChange(function() {
-            refresh().catch(function() {
-              state.ready = true;
-              emit(CHANGE_EVENT);
-            });
-          });
-          return refresh();
-        })
-        .then(function(result) {
-          emit(READY_EVENT);
-          return result;
-        })
-        .catch(function(error) {
+      readyPromise = ensureSupabase().then(async function() {
+        // Initialize once before subscribing; Supabase API calls must not run inside auth callbacks.
+        await refresh();
+        getClient().auth.onAuthStateChange(function(event, session) {
+          if (event === 'INITIAL_SESSION') return;
+          ++refreshRevision;
+          window.clearTimeout(authRefreshTimer);
+          var nextUser = session && session.user;
+          if (!nextUser || !state.user || state.user.id !== nextUser.id) {
+            state.session = session || null; state.user = nextUser || null; state.profile = null;
+            state.ready = !nextUser; state.error = ''; startActivityTracking(); emit(CHANGE_EVENT);
+          }
+          authRefreshTimer = window.setTimeout(function() { refresh().catch(function() {}); }, 0);
+        });
+        return getState();
+      }).then(function(result) { emit(READY_EVENT); return result; })
+        .catch(function() {
           state.ready = true;
-          state.error = error && error.message ? error.message : String(error || '');
-          emit(READY_EVENT);
-          emit(CHANGE_EVENT);
+          state.error = 'Hesap bilgileri yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.';
+          emit(READY_EVENT); emit(CHANGE_EVENT);
+          // Allow the next attempt to recover without reloading or signing out.
+          readyPromise = null;
           return getState();
         });
     }

@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  let client = null;
+  let loginInProgress = false;
 
   function getConfig() {
     if (!window.kemalSiteStore || typeof window.kemalSiteStore.getConfig !== 'function') {
@@ -11,20 +11,12 @@
   }
 
   function getClient() {
-    if (client) return client;
-    const config = getConfig();
-    client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-      },
-    });
-    return client;
+    if (!window.kemalUserAuth) throw new Error('Oturum sistemi yüklenemedi. Sayfayı yenileyin.');
+    return window.kemalUserAuth.getClient();
   }
 
   function normalizeEmail(value) {
-    return String(value || '').trim().toLocaleLowerCase('tr-TR');
+    return String(value || '').trim().toLowerCase();
   }
 
   function showMessage(type, text) {
@@ -49,9 +41,7 @@
       .select('id,role,approval_status,active,email,full_name,first_name,last_name,city,school_name,grade_level,branch')
       .eq(userId ? 'id' : 'email', userId || normalizeEmail(email))
       .maybeSingle();
-    if (result.error) {
-      return null;
-    }
+    if (result.error) throw new Error('Hesap bilgileri yüklenemedi. Lütfen yeniden deneyin.');
     return result.data || null;
   }
 
@@ -66,6 +56,8 @@
   }
 
   function routeForProfile(profile, isAdmin) {
+    const requested = new URLSearchParams(window.location.search).get('redirect');
+    if (profile?.role === 'teacher' && profile.active !== false && profile.approval_status === 'active' && ['/ogretmen/akvaryum.html','/ogretmen-paneli.html'].includes(requested)) return requested;
     if (profile && profile.active !== false && (profile.role !== 'teacher' || profile.approval_status === 'active')) {
       const gameReturn = window.kemalGameAuthReturn?.take();
       if (gameReturn) return gameReturn;
@@ -74,7 +66,7 @@
     if (profile && profile.role === 'student') return '/ogrenci-paneli.html';
     if (profile && profile.role === 'parent') return '/veli-paneli.html';
     if (isAdmin) return '/admin/index.html';
-    return '/kayit.html';
+    return '/kayit.html?profil=tamamla';
   }
 
   function profileNeedsCompletion(profile) {
@@ -91,7 +83,7 @@
       return;
     }
 
-    setBusy(true);
+    loginInProgress = true; setBusy(true);
     try {
       const result = await getClient().auth.signInWithPassword({ email, password });
       if (result.error) throw result.error;
@@ -118,7 +110,7 @@
         ? 'E-posta adresi henüz doğrulanmamış. Mail kutundaki doğrulama bağlantısına tıklamalısın.'
         : message);
     } finally {
-      setBusy(false);
+      loginInProgress = false; setBusy(false);
     }
   }
 
@@ -155,18 +147,23 @@
 
   async function routeExistingSession() {
     try {
+      await window.kemalUserAuth.ready();
+      if (window.kemalUserAuth.getState().error) throw new Error(window.kemalUserAuth.getState().error);
       const sessionResult = await getClient().auth.getSession();
+      if (sessionResult.error) throw sessionResult.error;
       const session = sessionResult && sessionResult.data ? sessionResult.data.session : null;
       if (!session || !session.user) return;
       const profile = await getUserProfile(session.user);
+      if (loginInProgress) return;
+      if (profile && profile.active === false) throw new Error('Bu hesap pasif durumda. Yeniden kayıt oluşturmak yerine destek isteyin.');
       if (profileNeedsCompletion(profile)) {
         window.location.href = '/kayit.html?profil=tamamla';
         return;
       }
       const isAdmin = await hasAdminAccess(session.user.email);
-      window.location.href = routeForProfile(profile, isAdmin);
+      if (!loginInProgress) window.location.href = routeForProfile(profile, isAdmin);
     } catch (error) {
-      /* Oturum yoksa sessiz kal. */
+      showMessage('err', error.message || 'Oturum kontrol edilemedi. Lütfen yeniden deneyin.');
     }
   }
 

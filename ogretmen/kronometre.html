@@ -987,7 +987,8 @@
       pausedAt: 0, 
       frame: null,
       clockTick: null, 
-      alarmIds: [], 
+      alarmIds: [],
+      alarmNodes: [], alarmGeneration: 0, alarmScheduled: false, timerTick: null,
       actx: null,
       board: {
         tool: 'pen', strokeColor: '#1f2142', strokeColorName: 'Siyah',
@@ -1155,16 +1156,58 @@
     function adjustUnit(unit, delta) { if(S.running) return; var h = parseInt(E.hInput.value||0,10)||0; var m = parseInt(E.mInput.value||0,10)||0; var s = parseInt(E.sInput.value||0,10)||0; if(unit==='h') h = Math.max(0,Math.min(23,h+delta)); if(unit==='m') m = Math.max(0,Math.min(59,m+delta)); if(unit==='s') s = Math.max(0,Math.min(59,s+delta)); S.cdTarget = (h*3600+m*60+s)*1000; if(S.mode==='countdown') S.dispMs = S.cdTarget; syncSteppers(); render(); }
     function getActx() { if(!S.actx) { try { S.actx = new(window.AudioContext||window.webkitAudioContext)(); } catch(e){} } return S.actx; }
     function beep(freq,dur,vol) { var ctx = getActx(); if(!ctx) return; try { var o = ctx.createOscillator(), g = ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value = freq; o.type = 'sine'; g.gain.setValueAtTime(vol||0.4, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+(dur||0.5)); o.start(ctx.currentTime); o.stop(ctx.currentTime+(dur||0.5)); } catch(e) {} }
-    function playAlarm() { if(!S.alarmOn) return; S.alarmIds.push(setTimeout(function(){ beep(880,.4,.5); },0)); S.alarmIds.push(setTimeout(function(){ beep(1100,.4,.5); },450)); S.alarmIds.push(setTimeout(function(){ beep(1320,.6,.6); },900)); if(E.alarmBanner) E.alarmBanner.classList.add('show'); }
-    function clearAlarm() { S.alarmIds.forEach(clearTimeout); S.alarmIds = []; if(E.alarmBanner) E.alarmBanner.classList.remove('show'); }
+    function cancelAlarmAudio() {
+      S.alarmGeneration++;
+      S.alarmNodes.forEach(function(node) { try { node.stop(); node.disconnect(); } catch(e) {} });
+      S.alarmNodes = []; S.alarmScheduled = false;
+    }
+    function alarmTones(delay) {
+      var ctx = getActx(); if(!ctx) return;
+      [[880,0,.4,.5],[1100,.45,.4,.5],[1320,.9,.6,.6]].forEach(function(note) {
+        var at=ctx.currentTime+delay+note[1], o=ctx.createOscillator(), g=ctx.createGain();
+        o.connect(g); g.connect(ctx.destination); o.frequency.value=note[0]; o.type='sine';
+        g.gain.setValueAtTime(note[3],at); g.gain.exponentialRampToValueAtTime(.001,at+note[2]);
+        o.start(at); o.stop(at+note[2]); S.alarmNodes.push(o);
+        o.onended=function(){o.disconnect();g.disconnect();};
+      });
+      S.alarmScheduled = true;
+    }
+    // Schedule against the audio clock at the user's Start click, not a background animation frame.
+    function prepareTimerAlarm() {
+      cancelAlarmAudio();
+      if(!S.alarmOn || !S.running || S.mode !== 'countdown') return;
+      var ctx=getActx(); if(!ctx) return;
+      var generation=S.alarmGeneration, deadline=S.startedAt+S.cdTarget-S.pausedAt;
+      ctx.resume().then(function(){
+        if(generation!==S.alarmGeneration || !S.running || !S.alarmOn) return;
+        alarmTones(Math.max(0,deadline-Date.now())/1000);
+      }).catch(function(){});
+    }
+    function playAlarm() {
+      if(E.alarmBanner) E.alarmBanner.classList.add('show');
+      if(!S.alarmOn || S.alarmScheduled) return;
+      var ctx=getActx(), generation=S.alarmGeneration; if(!ctx) return;
+      ctx.resume().then(function(){if(generation===S.alarmGeneration && S.alarmOn && !S.alarmScheduled) alarmTones(0);}).catch(function(){});
+    }
+    function clearAlarm() { cancelAlarmAudio(); S.alarmIds.forEach(clearTimeout); S.alarmIds = []; if(E.alarmBanner) E.alarmBanner.classList.remove('show'); }
     function stopLoop() { if(S.frame) { cancelAnimationFrame(S.frame); S.frame = null; } }
-    function tick() { var elapsed = S.pausedAt + (Date.now()-S.startedAt); if(S.mode === 'countdown') { S.dispMs = S.cdTarget - elapsed; if(S.dispMs <= 0) { S.dispMs = 0; S.running = false; S.pausedAt = 0; playAlarm(); render(); stopLoop(); return; } } else { S.dispMs = elapsed; } render(); S.frame = requestAnimationFrame(tick); }
-    function startTimer() { clearAlarm(); if(S.mode === 'countdown') { var dur = getInputMs(); if(!S.running && S.dispMs === 0) { S.cdTarget = Math.max(dur,1000); S.dispMs = S.cdTarget; } if(!S.dispMs) { S.cdTarget = Math.max(dur,1000); S.dispMs = S.cdTarget; } } S.running = true; S.startedAt = Date.now(); stopLoop(); tick(); render(); }
-    function pauseTimer() { if(!S.running) return; S.pausedAt += Date.now() - S.startedAt; S.running = false; stopLoop(); render(); }
+    function updateTimerState() {
+      if(!S.running) return;
+      var elapsed = S.pausedAt + Math.max(0,Date.now()-S.startedAt);
+      S.dispMs = S.mode === 'countdown' ? Math.max(0,S.cdTarget-elapsed) : elapsed;
+      if(S.mode === 'countdown' && S.dispMs === 0) {
+        S.running=false; S.pausedAt=0; stopLoop(); playAlarm();
+      }
+      render();
+    }
+    function tick() { S.frame=null; updateTimerState(); if(S.running && !document.hidden) S.frame=requestAnimationFrame(tick); }
+    function syncTimerVisibility() { stopLoop(); updateTimerState(); if(S.running && !document.hidden) tick(); }
+    function startTimer() { if(S.running) return; clearAlarm(); if(S.mode === 'countdown') { var dur = getInputMs(); if(S.dispMs === 0) { S.pausedAt=0; S.cdTarget=Math.max(dur,1000); S.dispMs=S.cdTarget; } } S.running=true; S.startedAt=Date.now(); stopLoop(); prepareTimerAlarm(); tick(); }
+    function pauseTimer() { if(!S.running) return; updateTimerState(); if(!S.running) return; S.pausedAt+=Math.max(0,Date.now()-S.startedAt); S.running=false; stopLoop(); cancelAlarmAudio(); render(); }
     function stopTimer() { pauseTimer(); }
     function resetTimer() { pauseTimer(); clearAlarm(); S.pausedAt = 0; S.dispMs = S.mode === 'countdown' ? S.cdTarget : 0; if(S.mode === 'countdown') syncSteppers(); render(); }
     function setMode(mode) { if(S.mode === mode) return; pauseTimer(); clearAlarm(); S.mode = mode; S.pausedAt = 0; if(mode === 'countdown') { S.cdTarget = Math.max(getInputMs(),1000); S.dispMs = S.cdTarget; } else { S.dispMs = 0; } E.modeTabs.forEach(function(t) { t.classList.toggle('active',t.dataset.mode === mode); }); render(); }
-    function setPreset(sec) { var ms = sec * 1000; S.cdTarget = ms; if(S.mode === 'countdown') S.dispMs = ms; S.pausedAt = 0; syncSteppers(); if(!S.running) render(); }
+    function setPreset(sec) { if(S.running) pauseTimer(); clearAlarm(); var ms = sec * 1000; S.cdTarget = ms; if(S.mode === 'countdown') S.dispMs = ms; S.pausedAt = 0; syncSteppers(); if(!S.running) render(); }
 
     /* ── SEKMELER / TAM EKRAN ── */
     function selectTool(name) {
@@ -1863,7 +1906,7 @@
       E.soundToggleBtn.addEventListener('click', function() {
         S.alarmOn = !S.alarmOn;
         E.soundToggleBtn.innerHTML = S.alarmOn ? '<i class="fas fa-bell"></i> Ses açık' : '<i class="fas fa-bell-slash"></i> Ses kapalı';
-        if(!S.alarmOn) clearAlarm();
+        if(!S.alarmOn) clearAlarm(); else if(S.running) prepareTimerAlarm();
       });
     }
     if(E.millisCb) {
@@ -1887,6 +1930,10 @@
     render();
 
     S.clockTick = setInterval(updateClock, 1000);
+    S.timerTick = setInterval(updateTimerState, 250);
+    document.addEventListener('visibilitychange', syncTimerVisibility);
+    window.addEventListener('pageshow', syncTimerVisibility);
+    window.addEventListener('pagehide', function(){stopLoop();clearAlarm();});
     window.addEventListener('resize', function() {
       buildTimerTicks();
       render();

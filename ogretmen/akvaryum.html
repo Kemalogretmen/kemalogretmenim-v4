@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#082f3d">
+  <meta name="description" content="Sınıfınızın yaşayan akvaryumu. Deniz dostunu seç, sorumluluklarını tamamla, yem kazan ve balığını besle.">
+  <title>Sınıf Akvaryumu — Kemal Öğretmenim</title>
+  <link rel="icon" href="/gorseller/logo.png">
+  <link rel="stylesheet" href="/css/akvaryum.css?v=20261008-background">
+  <link rel="preload" as="image" href="/assets/akvaryum/arka-planlar/mercan-resifi.jpg">
+  <script defer src="/js/site-data.js"></script>
+  <script defer src="/js/user-auth.js?v=20261005-auth-fix"></script>
+  <script defer src="/js/akvaryum-audio.js?v=20261008-background"></script>
+  <script defer src="/js/akvaryum-core.js?v=20261008-background"></script>
+  <script defer src="/js/akvaryum-sharing.js?v=20261008-background"></script>
+  <script defer src="/js/akvaryum-motion.js?v=20261008-background"></script>
+  <script defer src="/js/akvaryum-timer.js?v=20261008-background"></script>
+  <script defer src="/js/akvaryum.js?v=20261008-background"></script>
+</head>
+<body class="access-pending">
+  <section id="accessGate" class="access-gate"><h1>Sınıf Akvaryumu</h1><p id="accessMessage">Erişim kontrol ediliyor…</p><div id="accessLinks" hidden><a class="button primary" href="/giris.html?redirect=%2Fogretmen%2Fakvaryum.html">Öğretmen girişi</a> <a class="button" href="/ogretmen-paneli.html">Öğretmen panelim</a> <a class="button" href="?demo=1">Örnek sınıfı incele</a> <a class="button" href="?veli=1">Veli koduyla izle</a></div></section>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M12 2v3"/></symbol>
+    <symbol id="i-fish" viewBox="0 0 24 24"><path d="M17 12c-3-7-10-7-14 0 4 7 11 7 14 0Zm0 0 5-5v10l-5-5Z"/><path d="M8 10h.01"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11H3V10Zm6 11v-8h6v8"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20 5c-3-3-7-1-8 1C11 4 7 2 4 5c-5 5 1 10 8 15 7-5 13-10 8-15Z"/></symbol>
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19C-1 5 13 3 21 3c0 9-3 19-14 14M3 21 15 9"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16M8 3v6m8 0v6m-6 0v6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></symbol>
+    <symbol id="i-scene" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m3 17 6-6 4 4 3-3 5 5M8 7h.01"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3m1-16a3 3 0 0 1 0 6m3 10v-4a5 5 0 0 0-3-4"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+  </defs></svg>
+  <div id="aquariumApp" class="app">
+    <header class="topbar">
+      <a class="home-link icon-button" href="/index.html" aria-label="Ana sayfaya dön" title="Ana sayfa"><svg><use href="#i-home"/></svg></a>
+      <div class="brand-mark"><svg><use href="#i-fish"/></svg></div>
+      <div class="brand"><span>KEMAL ÖĞRETMENİM</span><h1>Sınıf Akvaryumu</h1></div>
+      <div class="header-divider"></div>
+      <label class="class-label"><span class="sr-only">Aktif sınıf</span><select id="classSelect"></select></label>
+      <span class="live-pill"><i></i> Yaşayan sınıfım</span>
+      <div class="header-actions">
+        <button type="button" class="button subtle" data-action="settings"><svg><use href="#i-settings"/></svg><span>Ayarlar</span></button>
+        <button type="button" class="button primary" data-action="choose"><svg><use href="#i-fish"/></svg><span>Balığımı seç</span></button>
+      </div>
+    </header>
+    <div id="storageWarning" class="storage-warning" role="alert" hidden></div>
+    <div id="demoBanner" class="demo-banner" hidden>Örnek sınıfı keşfediyorsunuz. Buradaki değişiklikler kaydedilmez. <button type="button" data-action="exit-demo">Kendi sınıfıma dön →</button></div>
+    <main class="aquarium panel-hidden" id="aquarium" aria-label="Sınıfın akvaryumu">
+      <div class="water-light" aria-hidden="true"></div>
+      <div id="bubbles" class="bubbles" aria-hidden="true"></div>
+      <div class="scene-heading"><span class="eyebrow">KÜÇÜK SORUMLULUKLAR, BÜYÜK MUTLULUKLAR</span><h2 id="sceneTitle">Bizim su altı dünyamız.</h2><p id="sceneSubtitle">Her güzel adım, deniz dostuna bir mutluluk.</p></div>
+      <div class="scene-controls"><button type="button" class="finder-button" data-action="find-student"><svg><use href="#i-search"/></svg><span>Öğrenci bul</span></button><button type="button" class="round-button activities-button" id="activitiesButton" data-action="activities" aria-label="Sınıf etkinlikleri" title="Sınıf etkinlikleri"><svg><use href="#i-clock"/></svg><span id="activityTimerBadge" aria-hidden="true" hidden></span></button><div class="sound-controls"><button class="icon-button" data-action="sound" aria-label="Ortam sesleri" title="Ses seç">♫</button><button class="sound-toggle" id="soundToggle" data-action="toggle-sound" aria-label="Sesi başlat" title="Sesi başlat" aria-pressed="false">▶</button></div><button type="button" class="round-button" data-action="themes" aria-label="Akvaryum ortamını değiştir" title="Ortamı değiştir"><svg><use href="#i-scene"/></svg></button><button type="button" class="round-button" data-action="fullscreen" aria-label="Tam ekran" title="Tam ekran"><svg><use href="#i-expand"/></svg></button><button type="button" class="round-button" data-action="panel" aria-label="Sınıf yönetimini aç" aria-expanded="false" aria-controls="studentPanel" title="Sınıf yönetimini aç"><svg><use href="#i-users"/></svg></button></div>
+      <div id="eggBed" class="egg-bed" aria-label="Kumdaki yumurtalar"></div>
+      <div id="swimArea" class="swim-area" aria-label="Deniz canlıları"><div id="sceneTimer" class="scene-timer" hidden role="timer" aria-live="off"><span id="sceneTimerTitle"></span><strong id="sceneTimerClock"></strong></div><div class="scene-kelp" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div id="classPearl" class="class-pearl" hidden><img src="/assets/akvaryum/dekor/istiridye-inci.png" alt="" aria-hidden="true"><div class="pearl-score"><span>SINIFIMIZIN İNCİSİ</span><strong id="classPearlScore">0</strong><small>toplam puan</small></div></div>
+      <section class="welcome" id="welcome">
+        <span class="welcome-tag">SINIFINIZ İÇİN YENİ BİR DÜNYA</span>
+        <h2>Birlikte öğrenelim.<br><em>Birlikte büyüyelim.</em></h2>
+        <p>Her öğrenci bir deniz dostu seçsin.<br>Tamamlanan sorumluluklar, mutlu balıklara dönüşsün.</p>
+        <div class="welcome-actions"><button type="button" class="button primary" data-action="setup">Sınıfımı oluştur <svg><use href="#i-arrow"/></svg></button><button type="button" class="button glass" data-action="demo">Örnek sınıfı keşfet</button></div>
+        <span class="welcome-footnote">18 deniz canlısı · 3 akvaryum ortamı · Sınırsız güzel başlangıç</span>
+      </section>
+      <aside id="studentPanel" class="student-panel" aria-label="Öğrenci ve görev paneli">
+        <div class="panel-top"><div><span class="eyebrow">BİRLİKTE BAŞARIYORUZ</span><h2>Sınıf yönetimi <span id="studentCount">0</span></h2></div><button type="button" class="icon-button add-student" data-action="add" aria-label="Öğrenci ekle"><svg><use href="#i-plus"/></svg></button></div>
+        <div id="classProgress" class="class-progress"></div>
+        <div class="panel-tabs" role="tablist" aria-label="Panel görünümü"><button type="button" role="tab" id="tab-students" aria-selected="true" aria-controls="panelContent" data-action="tab" data-tab="students">Öğrenciler</button><button type="button" role="tab" id="tab-tasks" aria-selected="false" aria-controls="panelContent" data-action="tab" data-tab="tasks">Günlük görevler</button></div>
+        <label class="search-box" id="searchBox"><svg><use href="#i-search"/></svg><input id="studentSearch" type="search" placeholder="Öğrenci ara…" aria-label="Öğrenci ara" maxlength="80"></label>
+        <div id="panelContent" class="panel-content" role="tabpanel" aria-labelledby="tab-students"></div>
+        <div class="panel-bottom"><svg><use href="#i-leaf"/></svg><span>Balığa dokun, davranışı seç: <strong>puan ver ve besle.</strong></span></div>
+      </aside>
+      <footer class="scene-footer">
+        <div class="mood-legend"><span><i class="happy-dot"></i> Mutlu</span><span><i class="calm-dot"></i> Sakin</span><span><i class="sad-dot"></i> Biraz üzgün</span></div>
+        <button type="button" class="help-button" data-action="help">Nasıl çalışır? <span>?</span></button>
+      </footer>
+      <div id="feedingEffects" class="feeding-effects" aria-hidden="true"></div>
+    </main>
+    <div class="save-line"><span id="saveStatus">Kayıtlar bu tarayıcıda saklanır.</span><span id="todayLabel"></span></div>
+  </div>
+  <dialog id="modal" aria-labelledby="modalTitle"><div class="modal-heading"><div><span class="eyebrow" id="modalEyebrow">SINIF AKVARYUMU</span><h2 id="modalTitle"></h2></div><button type="button" class="icon-button" data-action="close" aria-label="Pencereyi kapat"><svg><use href="#i-close"/></svg></button></div><div id="modalContent"></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript><p class="storage-warning">Akvaryumu kullanmak için tarayıcınızda JavaScript açık olmalıdır.</p></noscript>
+</body>
+</html>

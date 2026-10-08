@@ -1,0 +1,61 @@
+{
+  "tool": "Built-in image_gen (no CLI/API fallback)",
+  "date": "2026-10-01",
+  "originals": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b",
+  "notes": "Original images generated independently for this project. Web backgrounds use JPEG. Redundant background PNG copies were removed from the site on 2026-10-08 after confirming identical originals in the originals directory. Animal PNGs resized to 640px long edge with alpha preserved using sips. No assets copied from reference website.",
+  "backgrounds": [
+    {
+      "file": "arka-planlar/mercan-resifi.jpg",
+      "source": "exec-21c7152d-7751-4405-bc3c-807aee9aa4a9.png",
+      "prompt": "Create a production website background asset, photorealistic-natural underwater aquarium environment, wide 16:9 landscape. An exquisite sunlit tropical coral reef viewed horizontally from inside the water, turquoise surface light and subtle sunbeams, sandy bottom at lower 15 percent, textured rocks and colorful corals framing left and right lower edges. Keep the central 70 percent open clear blue water for animated student fish overlays. Natural underwater photography realism, tranquil inviting classroom mood, rich teal and cyan, detailed but not oversaturated. Absolutely NO fish, no animals, no people, no lettering, no interface, no watermarks. Full bleed background, not a picture of an aquarium tank."
+    },
+    {
+      "file": "arka-planlar/yosun-ormani.jpg",
+      "source": "exec-fc7c3133-e1d9-4763-99e5-c6c1f40025bd.png",
+      "prompt": "Use case photorealistic-natural. Website aquarium background asset. Wide 16:9 horizontal underwater photograph of a tranquil emerald kelp forest. Clear green teal water, tall graceful kelp only framing far left and right margins, smooth natural rocks and pale sand along bottom 15 percent, delicate sun shafts from surface. Central 70 percent open water with gentle depth gradient, suitable for moving fish overlays and readable UI. Immersive underwater viewpoint, high realism, calming natural palette. No fish, no animals, no humans, no text, no interface, no tank frame, no watermark."
+    },
+    {
+      "file": "arka-planlar/mavi-magara.jpg",
+      "source": "exec-64daa7bc-cb5b-4cea-acb7-8d3e8049364b.png",
+      "prompt": "Use case photorealistic-natural. Website aquarium background asset. Wide 16:9 landscape, serene deep blue underwater moonlit grotto, natural rock arch framing upper corners and sides, subtle violet and blue corals along bottom edges, faint shafts of cool light entering clear cobalt open water, pale seabed lower 15 percent, central 70 percent spacious blue water for animated fish overlays. Beautiful realistic ocean photography, visible detail in shadows, tranquil magical lighting but natural materials. No fish, no animals, no people, no text, no UI, no watermark."
+    }
+  ],
+  "animals": [
+    {
+      "file": "canlilar/palyaco-baligi.png",
+      "source": "exec-db5e95e7-dcde-4a62-9fb8-f26e6ff7f3a7.png",
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a vibrant orange ocellaris clownfish with three natural white bars outlined in black and translucent fins.",
+      "transparent_background": true
+    },
+    {
+      "file": "canlilar/mavi-cerrah.png",
+      "source": "exec-e7e2c9ec-9738-4257-83d6-cedc11672fa7.png",
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a royal blue tang fish (Paracanthurus hepatus), vivid blue body, natural black palette marking and yellow tail.",
+      "transparent_background": true
+    },
+    {
+      "file": "canlilar/kelebek-baligi.png",
+      "source": "exec-a9017767-1e84-46c9-acd8-8a7ee43ff470.png",
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a yellow copperband butterflyfish with narrow orange bands, long pointed snout and elegant dorsal fin.",
+      "transparent_background": true
+    },
+    {
+      "file": "canlilar/deniz-kaplumbagasi.png",
+      "source": "exec-1eca52fe-d54a-48e2-beac-8ea8d5a0a410.png",
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a juvenile green sea turtle swimming horizontally with head pointing right, flippers spread naturally, side three-quarter view, detailed olive brown shell and scaled skin.",
+      "transparent_background": true
+    },
+    {
+      "file": "canlilar/vatoz.png",
+      "source": "exec-f69b7561-6944-4c32-ac83-438fd90e05aa.png",
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a spotted eagle ray swimming horizontally to the right, three-quarter side view with beautiful broad winglike pectoral fins, natural dark blue grey spotted dorsal surface and long intact tail, lifelike ocean animal.",
+      "transparent_background": true
+    },
+    {
+      "file": "canlilar/denizati.png",
+      "source": "exec-f6f237fc-0535-4f9d-b30b-f9ff85790368.png",
+      "prompt": "Use case scientific-educational. Production transparent PNG sprite for an educational aquarium website. ONE anatomically realistic marine animal in full body side profile, head pointing RIGHT, centered, occupies 85 percent of a landscape canvas. Fine natural texture, lifelike proportions and eyes, softly lit photographic cutout, subtle underwater sheen. All fins and tail fully visible, generous clean transparent padding. Isolated on genuine alpha transparency. No text, no labels, no bubbles, no scenery, no shadow plane, no border, no cartoon, no human expressions. Subject: a golden yellow seahorse upright in true side profile looking RIGHT, curled intact tail, fine natural bony ridges, realistic small eye, delicate tiny transparent dorsal fin. Upright full body fits centered inside the landscape canvas, no horizontal rotation.",
+      "transparent_background": true
+    }
+  ]
+}
