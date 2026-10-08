@@ -12,7 +12,7 @@ test('public projection never includes task history, feeds or hidden names/point
   const d=C.ensureDay(s,cls); d.tasks[0].status='done'; C.feed(s);
   let data=window.AquariumSharing.snapshot(cls,{names:false,points:false,motion:true,chat:true});
   assert.equal(data.students[0].name,''); assert.equal(data.students[0].points,null);
-  assert.deepEqual(Object.keys(data.students[0]).sort(),['id','mood','name','points','species']);
+  assert.deepEqual(Object.keys(data.students[0]).sort(),['appearance','id','mood','name','points','species']);
   assert.equal(JSON.stringify(data).includes('Kitabımı'),false);
   data=window.AquariumSharing.snapshot(cls,{names:true,points:true});
   assert.equal(data.students[0].points,1); assert.equal(data.students[0].name,'Deniz');
@@ -127,12 +127,20 @@ test('swimmers turn gradually inside scene bounds and keep scores clear of the u
  assert.ok(turnFrames>20);assert.equal(maxAngle,180);
 });
 
-test('growth thresholds, teacher identity and corrected feeds remain private in view snapshots',()=>{
+test('growth appearance is shared while thresholds, hidden names and corrected feed records remain private',()=>{
  const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
  const cls=C.newClass('Sınıf'),s=C.newStudent('Deniz');cls.students.push(s);C.ensureDay(s,cls);
  cls.teacher={name:'Gizli öğretmen',species:'turtle',enabled:true};cls.growth={enabled:true,thresholds:C.defaultThresholds()};
  C.completeAndFeed(s,C.dayKey(),cls.tasks[0].id);C.correctAward(s,C.dayKey(),cls.tasks[0].id);
  const data=window.AquariumSharing.snapshot(cls,{points:false,names:false});
  assert.equal(data.students.length,1);assert.equal(data.students[0].points,null);
- for(const privateText of ['growth','thresholds','teacher','Gizli','creditReversed','feeds']) assert.equal(JSON.stringify(data).includes(privateText),false);
+ assert.equal(data.teacher.name,'');assert.equal(data.students[0].appearance.egg,true);
+ for(const privateText of ['growth','thresholds','Gizli','creditReversed','feeds']) assert.equal(JSON.stringify(data).includes(privateText),false);
+});
+
+test('visitors see current eggs, growth and teacher fish with every management action disabled',async()=>{
+ const h=await viewerHarness({theme:'reef',teacher:{name:'Öğretmen',species:'tang'},settings:{names:true,points:false},students:[{id:'a',name:'Ada',species:'clown',mood:'calm',appearance:{egg:true,scale:.5,trophy:false}}]});
+ assert.equal(h.document.querySelectorAll('.fish').length,2);assert.equal(h.document.querySelectorAll('.is-egg').length,1);assert.ok([...h.document.querySelectorAll('.fish')].every(el=>el.disabled));
+ h.setResponse({theme:'reef',settings:{names:true,points:true},students:[{id:'a',name:'Ada',species:'clown',mood:'happy',points:20,appearance:{egg:false,scale:.55,trophy:false}}]});await h.intervals[1]();
+ assert.equal(h.document.querySelectorAll('.is-egg').length,0);assert.equal(h.document.querySelector('.fish').style.getPropertyValue('--growth-scale'),.55);assert.equal(h.document.querySelector('.fish-points').textContent,'★ 20');assert.deepEqual(h.io(),{reads:0,writes:0});
 });

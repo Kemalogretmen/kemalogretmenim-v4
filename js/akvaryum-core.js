@@ -1,8 +1,8 @@
 (function (root, factory) {
   'use strict';
-  if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.AquariumCore = factory();
-})(typeof window === 'object' ? window : this, function () {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./akvaryum-sounds.js'));
+  else root.AquariumCore = factory(root.AquariumSounds);
+})(typeof window === 'object' ? window : this, function (Sounds) {
   'use strict';
   const SPECIES = [
     { id: 'clown', name: 'Palyaço balığı', file: 'palyaco-baligi.png', detail: 'Mercan resiflerinin turuncu sakini', size: 112 },
@@ -22,7 +22,23 @@
     { id: 'octopus', name: 'Ahtapot', file: 'ahtapot.png', detail: 'Sekiz kollu, meraklı bir deniz dostu', size: 140 },
     { id: 'jellyfish', name: 'Denizanası', file: 'denizanasi.png', detail: 'İncecik dokunaçlarıyla süzülür', size: 115 },
     { id: 'shark', name: 'Resif köpekbalığı', file: 'resif-kopekbaligi.png', detail: 'Güçlü kuyruğuyla açık suda yol alır', size: 172 },
-    { id: 'dolphin', name: 'Yunus', file: 'yunus.png', detail: 'Okyanusların çevik yüzücüsü', size: 165 }
+    { id: 'dolphin', name: 'Yunus', file: 'yunus.png', detail: 'Okyanusların çevik yüzücüsü', size: 165 },
+    {"id": "royalblue", "name": "Kraliyet melek balığı", "file": "kraliyet-melek.png", "detail": "Altın çizgiler ve lacivert yüzgeçler", "size": 125},
+    {"id": "copperband", "name": "Bakır bantlı kelebek", "file": "bakir-kelebek.png", "detail": "Bakır şeritli, ince burunlu bir kelebek", "size": 125},
+    {"id": "discus", "name": "Diskus", "file": "diskus.png", "detail": "Turkuaz gövdesinde kıvrımlı desenler", "size": 125},
+    {"id": "betta", "name": "Beta balığı", "file": "beta.png", "detail": "Pembe ve mor yelpaze yüzgeçler", "size": 125},
+    {"id": "goldfish", "name": "Japon balığı", "file": "japon.png", "detail": "Altın rengi, dalgalanan çift kuyruk", "size": 125},
+    {"id": "guppy", "name": "Lepistes", "file": "lepistes.png", "detail": "Minik gövdesi ve renkli benekli kuyruğu", "size": 125},
+    {"id": "neon", "name": "Neon tetra", "file": "neon.png", "detail": "Parlak mavi çizgisiyle küçük bir yüzücü", "size": 125},
+    {"id": "cardinal", "name": "Banggai kardinal", "file": "kardinal.png", "detail": "Siyah şeritler, inci gibi beyaz benekler", "size": 125},
+    {"id": "anthias", "name": "Pembe anthias", "file": "anthias.png", "detail": "Şeftali pembesi, zarif yüzgeçler", "size": 125},
+    {"id": "goby", "name": "Sarı gobi", "file": "gobi.png", "detail": "Sapsarı, küçük bir resif sakini", "size": 125},
+    {"id": "blenny", "name": "Kuyruk benekli bleni", "file": "bleni.png", "detail": "Turuncu yüzü ve kuyruk beneğiyle", "size": 125},
+    {"id": "parrot", "name": "Papağan balığı", "file": "papagan.png", "detail": "Turkuaz pulları ve yuvarlak burnuyla", "size": 125},
+    {"id": "wrasse", "name": "Gökkuşağı lapin", "file": "lapin.png", "detail": "Pembe, mavi ve turuncu renklerin buluşması", "size": 125},
+    {"id": "moorish", "name": "Mağribi idol", "file": "magribi.png", "detail": "Uzun sırt yüzgeciyle zarif bir gezgin", "size": 125},
+    {"id": "rabbit", "name": "Tavşan balığı", "file": "tavsan.png", "detail": "Sarı gövdesi ve siyah beyaz maskesiyle", "size": 125},
+    {"id": "flame", "name": "Alev melek balığı", "file": "alev-melek.png", "detail": "Turuncu kırmızı, mavi uçlu yüzgeçler", "size": 125}
   ];
   const THEMES = [
     { id: 'reef', name: 'Mercan resifi', file: 'mercan-resifi.jpg', description: 'Güneşli, turkuaz bir dünya' },
@@ -37,7 +53,7 @@
   const validPoints = value => Number.isInteger(value) && value >= 1 && value <= 1000;
   const taskPoints = task => task.points === undefined ? 1 : task.points;
   function newClass(name = 'Sınıfım') {
-    return { id: uid(), name: clean(name), theme: 'reef', students: [], tasks: ['Kitabımı okudum', 'Ödevimi tamamladım', 'Sorumluluğumu yerine getirdim'].map(title => ({ id: uid(), title, points: 1 })) };
+    return { id: uid(), name: clean(name), theme: 'reef', students: [], tasks: ['Kitabımı okudum', 'Ödevimi tamamladım', 'Sorumluluğumu yerine getirdim'].map(title => ({ id: uid(), title, icon: '', points: 1 })) };
   }
   function newStudent(name, kind = 'clown') {
     return { id: uid(), name: clean(name), species: species(kind).id, createdAt: Date.now(), days: {}, feeds: [] };
@@ -45,7 +61,9 @@
   function settingsOf(raw = {}) {
     return { names: raw?.names !== false, motion: raw?.motion !== false, points: raw?.points === true, classPoints: raw?.classPoints === true,
       hungerText: raw?.hungerText === true, chat: raw?.chat !== false, feedSound: raw?.feedSound !== false,
-      sound: ['off', 'ocean', 'peace', 'focus', 'lively', 'fun'].includes(raw?.sound) ? raw.sound : 'off',
+      sound: Sounds.has(raw?.sound) ? raw.sound : 'off',
+      mix: Sounds.normalizeMix(Array.isArray(raw?.mix) ? raw.mix : (Sounds.has(raw?.sound) ? [{id:raw.sound,volume:1}] : [])),
+      favorites: Sounds.favorites(raw?.favorites),
       volume: Number.isFinite(raw?.volume) ? Math.max(0, Math.min(1, raw.volume)) : .3 };
   }
   function initialState() {
@@ -53,7 +71,7 @@
     return { version: 1, activeClassId: classroom.id, classes: [classroom], settings: settingsOf() };
   }
   function ensureDay(student, classroom, date = dayKey()) {
-    if (!student.days[date]) student.days[date] = { absent: false, tasks: classroom.tasks.map(t => ({ id: t.id, title: t.title, points: taskPoints(t), status: 'pending' })) };
+    if (!student.days[date]) student.days[date] = { absent: false, tasks: classroom.tasks.map(t => ({ id: t.id, title: t.title, icon: taskIcon(t.icon), points: taskPoints(t), status: 'pending' })) };
     return student.days[date];
   }
   function earned(student) {
@@ -61,6 +79,15 @@
   }
   const completedCount = student => Object.values(student.days).reduce((n, d) => n + (d.absent ? 0 : d.tasks.filter(t => t.status === 'done').length), 0);
   const balance = student => Math.max(0, completedCount(student) - student.feeds.filter(f => !f.creditReversed).length);
+  const TASK_ICONS = ['⭐','📖','✏️','💙','🌿','🤝','🎯','🏆','🧠','🎨','🎵','🧹','🧩','💡','🙋','🕊️','🌍','🌟','😊','💪','📝','🔬','⚽','🎒'];
+  const taskIcon = value => typeof value === 'string' && value.trim().length <= 16 && !/[<>\x00-\x1f]/.test(value) ? value.trim() : '';
+  function updateTask(classroom, taskId, values, date = dayKey()) {
+    const task = classroom.tasks.find(t => t.id === taskId), title = clean(values.title,120);
+    if (!task || !title || !validPoints(values.points)) return false;
+    Object.assign(task,{title,points:values.points,icon:taskIcon(values.icon)});
+    classroom.students.forEach(s => s.days[date]?.tasks.filter(t => t.id === taskId && t.status !== 'done').forEach(t => Object.assign(t,{title,points:task.points,icon:task.icon})));
+    return true;
+  }
   function updateTaskPoints(classroom, taskId, points, date = dayKey()) {
     const task = classroom.tasks.find(t => t.id === taskId);
     if (!task || !validPoints(points)) return false;
@@ -99,7 +126,7 @@
       const current = classroom.tasks.find(template => template.id === t.id);
       const points = t.status && t.status !== 'done' ? taskPoints(t) : taskPoints(current || t);
       const count = day.tasks.filter(entry => (entry.sourceId || entry.id) === t.id && entry.status === 'done').length;
-      return {...t, points, count};
+      return {...t, title:current?.title || t.title, icon:current?.icon || t.icon || '', points, count};
     });
   }
   function awardBehavior(student, classroom, date, taskId) {
@@ -109,7 +136,7 @@
     if (!choice || !validPoints(choice.points)) return null;
     const original = day.tasks.find(t => t.id === taskId);
     if (original && original.status !== 'done') return completeAndFeed(student, date, taskId);
-    const entry = {id:uid(), sourceId:taskId, title:choice.title, points:choice.points, status:'done', awardedAt:Date.now()};
+    const entry = {id:uid(), sourceId:taskId, title:choice.title, icon:taskIcon(choice.icon), points:choice.points, status:'done', awardedAt:Date.now()};
     day.tasks.push(entry);
     return {points:entry.points, fed:feed(student, date)};
   }
@@ -196,7 +223,7 @@
       const cls = { id: identifier(c.id), name: clean(c.name), theme: THEMES.some(t => t.id === c.theme) ? c.theme : 'reef', tasks: c.tasks.map(t => {
         if (!t || !clean(t.title, 120)) throw new Error('Görev başlığı eksik.');
         if (!validPoints(taskPoints(t))) throw new Error('Davranış puanı 1–1000 arasında tam sayı olmalıdır.');
-        return { id: identifier(t.id), title: clean(t.title, 120), points: taskPoints(t) };
+        return { id: identifier(t.id), title: clean(t.title, 120), icon: taskIcon(t.icon), points: taskPoints(t) };
       }), students: [] };
       cls.students = c.students.map(s => {
         if (!s || !clean(s.name) || !s.days || typeof s.days !== 'object' || Array.isArray(s.days) || Object.keys(s.days).length > 4000 || !Array.isArray(s.feeds) || s.feeds.length > 80000) throw new Error('Öğrenci kaydı geçersiz.');
@@ -213,7 +240,7 @@
             if (!validPoints(taskPoints(t))) throw new Error('Geçmiş davranış puanı geçersiz.');
             if (t.sourceId !== undefined && (typeof t.sourceId !== 'string' || !/^[\w-]{1,90}$/.test(t.sourceId) || ['__proto__','constructor','prototype'].includes(t.sourceId) || t.sourceId === t.id)) throw new Error('Davranış bağlantısı geçersiz.');
             if (t.awardedAt !== undefined && (!Number.isFinite(t.awardedAt) || t.awardedAt < 0)) throw new Error('Ödül zamanı geçersiz.');
-            seen.add(t.id); return { id: t.id, title: clean(t.title, 120), points: taskPoints(t), status: t.status,
+            seen.add(t.id); return { id: t.id, title: clean(t.title, 120), icon: taskIcon(t.icon), points: taskPoints(t), status: t.status,
               ...(t.sourceId !== undefined ? {sourceId:t.sourceId} : {}), ...(t.awardedAt !== undefined ? {awardedAt:t.awardedAt} : {}) };
           }) };
         }
@@ -236,5 +263,5 @@
     });
     return { version: 1, classes, activeClassId: classes.some(c => c.id === raw.activeClassId) ? raw.activeClassId : classes[0].id, settings: settingsOf(raw.settings) };
   }
-  return { behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
+  return { TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
 });

@@ -1,60 +1,39 @@
-/* Downloaded, unmodified Kevin MacLeod recordings, licensed CC BY 4.0.
-   Sources, checksums and attribution: assets/akvaryum/muzikler/kaynaklar.json */
+/* Independently controlled audio layers; licenses in assets/akvaryum/muzikler/LISANS.md. */
 (function () {
   'use strict';
-  const titles = { ocean: 'Hafif okyanus', peace: 'Meditation Impromptu 01', focus: 'Clean Soul', lively: 'Life of Riley', fun: 'Monkeys Spinning Monkeys' };
-  const tracks = { off: 'Sessiz', ocean: 'Hafif okyanus · Kıyı dalgaları', peace: 'Huzurlu piyano · Meditation Impromptu 01', focus: 'Odaklanma · Clean Soul', lively: 'Hareketli · Life of Riley', fun: 'Eğlenceli · Monkeys Spinning Monkeys' };
-  let player = null, generation = 0, mode = 'off', volume = .3, userPaused = false, loading = false;
-  let context, master;
-  function status(text) { const el = document.getElementById('musicStatus'); if (el) el.textContent = text; window.dispatchEvent(new CustomEvent('aquarium-audio-change')); }
-  function stop() {
-    generation++; userPaused = false; loading = false; mode = 'off';
-    if (player) { player.pause(); player.removeAttribute('src'); player.load(); player = null; }
-    status('Müzik durduruldu.');
+  const S=window.AquariumSounds, titles=Object.fromEntries(S.catalogue.map(t=>[t.id,t.name])), tracks={off:'Sessiz',...titles};
+  let channels=new Map(),generation=0,volume=.3,userPaused=false,mix=[];
+  let context,master;
+  function status(text){const el=document.getElementById('musicStatus');if(el)el.textContent=text;window.dispatchEvent(new CustomEvent('aquarium-audio-change'));}
+  function dispose(channel){channel.audio.pause();channel.audio.removeAttribute('src');channel.audio.load();}
+  function volumes(){const sum=Math.max(1,mix.reduce((n,t)=>n+t.volume,0));channels.forEach((c,id)=>{c.audio.volume=volume*(mix.find(t=>t.id===id)?.volume||0)/sum;});}
+  function isPlaying(){return !userPaused&&Array.from(channels.values()).some(c=>c.loading||!c.audio.paused);}
+  function describe(){return mix.length?mix.map(t=>titles[t.id]).join(' + '):'Bir ses seçin.';}
+  function stop(){generation++;channels.forEach(dispose);channels.clear();mix=[];userPaused=false;status('Sesler durduruldu.');}
+  async function startChannel(channel,request){
+    channel.loading=true;
+    try{await channel.audio.play();if(request!==generation||channels.get(channel.id)!==channel){if(userPaused||channels.get(channel.id)!==channel)channel.audio.pause();return false;}channel.loading=false;if(userPaused)channel.audio.pause();return !userPaused;}
+    catch(e){if(request!==generation||channels.get(channel.id)!==channel)return false;channel.loading=false;channel.audio.pause();throw new Error(titles[channel.id]+' başlatılamadı. Yeniden Başlat’a basın.');}
   }
-  async function play(next) {
-    stop(); if (!titles[next]) return false;
-    const request = generation, audio = new window.Audio('/assets/akvaryum/muzikler/' + next + (next === 'ocean' ? '.wav' : '.mp3'));
-    player = audio; mode = next; audio.loop = true; audio.volume = volume; audio.preload = 'none';
-    loading = true; status('Ses yükleniyor…');
-    audio.addEventListener('error', () => { if (request === generation) { stop(); status('Müzik yüklenemedi. Bağlantınızı kontrol edip Başlat’a basın.'); } });
-    try {
-      await audio.play();
-      if (request !== generation) { audio.pause(); return false; }
-      loading = false;
-      if (userPaused) { audio.pause(); status('Duraklatıldı: ' + titles[next]); return false; }
-      status('Çalıyor: ' + titles[next]); return true;
-    } catch (error) {
-      if (request !== generation) return false;
-      stop(); status('Müzik başlatılamadı. Yeniden Başlat’a basın.');
-      throw new Error('Müzik başlatılamadı. Bağlantınızı kontrol edip yeniden Başlat’a basın.');
-    }
+  async function playMix(value){
+    const next=S.normalizeMix(value),wasPaused=userPaused;generation++;const request=generation;userPaused=false;
+    channels.forEach((c,id)=>{if(!next.some(t=>t.id===id)){dispose(c);channels.delete(id);}});mix=next;
+    if(!mix.length){stop();return false;}
+    const pending=[];
+    mix.forEach(t=>{let c=channels.get(t.id);if(!c){const track=S.catalogue.find(x=>x.id===t.id);const audio=new window.Audio('/assets/akvaryum/muzikler/'+track.file);audio.loop=true;audio.preload='none';c={id:t.id,audio,loading:false};channels.set(t.id,c);const channel=c;audio.addEventListener('error',()=>{if(channels.get(t.id)===channel){channel.loading=false;audio.pause();status(titles[t.id]+' yüklenemedi. Diğer sesler çalmaya devam eder.');}});}if(c.audio.paused||c.loading||wasPaused)pending.push(c);});
+    volumes();status('Sesler yükleniyor…');
+    const results=await Promise.allSettled(pending.map(c=>startChannel(c,request)));
+    if(request!==generation)return false;
+    const error=results.find(r=>r.status==='rejected');
+    status(error?error.reason.message:(userPaused?'Duraklatıldı: ':'Çalıyor: ')+describe());
+    if(error&&!isPlaying())throw error.reason;
+    return isPlaying();
   }
-  function pause() {
-    userPaused = true;
-    if (player) player.pause();
-    status(mode === 'off' ? 'Bir ses seçin.' : 'Duraklatıldı: ' + titles[mode]);
-  }
-  async function resume() {
-    if (!player) return false;
-    const audio = player, request = generation;
-    userPaused = false; loading = true; status('Ses yükleniyor…');
-    try {
-      await audio.play();
-      if (request !== generation) { audio.pause(); return false; }
-      loading = false;
-      if (userPaused) audio.pause();
-      status((userPaused ? 'Duraklatıldı: ' : 'Çalıyor: ') + titles[mode]);
-      return !userPaused;
-    } catch (error) {
-      if (request !== generation) return false;
-      loading = false; pause(); throw new Error('Ses sürdürülemedi. Yeniden başlatın.');
-    }
-  }
-  async function toggle(selected) {
-    if (player && !userPaused && (!player.paused || loading)) { pause(); return false; }
-    return player ? resume() : play(selected);
-  }
+  function pause(){generation++;userPaused=true;channels.forEach(c=>{c.loading=false;c.audio.pause();});status('Duraklatıldı: '+describe());}
+  function resume(){return playMix(mix);}
+  function play(id){return playMix(S.has(id)?[{id,volume:1}]:[]);}
+  function toggle(selected){if(isPlaying()){pause();return Promise.resolve(false);}return channels.size?resume():(Array.isArray(selected)?playMix(selected):play(selected));}
+  function setLayerVolume(id,value){const layer=mix.find(t=>t.id===id);if(layer)layer.volume=S.level(value);volumes();}
   async function feed() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
@@ -67,12 +46,8 @@
       osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     });
   }
-  function setVolume(value) {
-    volume = Math.max(0, Math.min(1, Number(value) || 0));
-    if (player) player.volume = volume;
-    if (master) master.gain.setTargetAtTime(volume, context.currentTime, .1);
-  }
-  // Switching tabs must not override the teacher's playback choice.
-  window.addEventListener('pagehide', stop);
-  window.AquariumAudio = { tracks, titles, play, stop, pause, resume, toggle, feed, setVolume, current: () => mode, isPlaying: () => Boolean(player && !userPaused && (!player.paused || loading)) };
+  function setVolume(value){volume=S.level(value,0);volumes();if(master)master.gain.setTargetAtTime(volume,context.currentTime,.1);}
+  // Background tabs retain playback; explicit pause or leaving this page stops it.
+  window.addEventListener('pagehide',stop);
+  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,setVolume,setLayerVolume,describe,current:()=>mix[0]?.id||'off',isPlaying};
 })();

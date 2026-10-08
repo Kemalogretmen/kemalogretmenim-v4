@@ -12,7 +12,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[]}={})
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
   let saved=JSON.stringify(state),sounds=0;const intervals=[],frames=[];let timerNow=Date.now();
-  window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
+  window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
   window.kemalUserAuth={ready:async()=>{},getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
   window.matchMedia=()=>({matches:reduced,addEventListener(){}});
   for(const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
@@ -62,7 +62,7 @@ test('the sidebar completion uses the same feeding path, and settings require a 
   h.click('.student-row');h.click('[data-action="task-status"][data-status="done"]');
   assert.equal(h.sounds(),1);assert.equal(h.saved().classes[0].students[0].feeds.length,1);
   h.click('[data-action="settings"]');h.click('[data-action="tasks"]');
-  let form=d.querySelector('.task-points-form');form.querySelector('input').value='12';h.submit(form);
+  let form=d.querySelector('.task-points-form');form.querySelector('[name="points"]').value='12';h.submit(form);
   let cls=h.saved().classes[0];assert.equal(cls.tasks[0].points,12);assert.equal(C.earned(cls.students[0]),7);
   form=d.getElementById('taskForm');form.querySelector('[name="title"]').value='Arkadaşıma yardım ettim';form.querySelector('[name="points"]').value='';h.submit(form);
   assert.equal(h.saved().classes[0].tasks.length,3);assert.match(d.getElementById('formError').textContent,/Puan/);

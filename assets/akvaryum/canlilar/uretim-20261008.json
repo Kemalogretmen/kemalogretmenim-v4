@@ -1,0 +1,101 @@
+{
+  "prompt": "Use case: stylized-concept. Single game sprite for a classroom aquarium. Subject: Regal angelfish, gold and ivory narrow vertical stripes, deep blue fins. Beautiful friendly semi-realistic 3D illustrated fish, appealing to young students, slightly rounded proportions, bright kind eye, subtle smile, anatomically recognizable species, fine scales and delicate translucent fins. Full body side profile facing RIGHT, centered, all fins fully inside frame, wide transparent margin. Soft underwater studio lighting. True transparent background, no water, no bubbles, no plants, no floor, no shadow outside fish, no text or labels. One fish only, no panels. Landscape composition.",
+  "fish": [
+    {
+      "id": "royalblue",
+      "name": "Kraliyet melek balığı",
+      "file": "kraliyet-melek.png",
+      "description": "Regal angelfish, gold and ivory narrow vertical stripes, deep blue fins"
+    },
+    {
+      "id": "copperband",
+      "name": "Bakır bantlı kelebek",
+      "file": "bakir-kelebek.png",
+      "description": "Copperband butterflyfish, white silver body with four copper orange vertical bands and long pointed snout"
+    },
+    {
+      "id": "discus",
+      "name": "Diskus",
+      "file": "diskus.png",
+      "description": "Turquoise discus fish, round disk shaped body with wavy red turquoise intricate stripes"
+    },
+    {
+      "id": "betta",
+      "name": "Beta balığı",
+      "file": "beta.png",
+      "description": "Siamese fighting fish, flowing lavender and rose pink veil tail and graceful fins"
+    },
+    {
+      "id": "goldfish",
+      "name": "Japon balığı",
+      "file": "japon.png",
+      "description": "Fantail goldfish, rich gold orange body and translucent split flowing tail"
+    },
+    {
+      "id": "guppy",
+      "name": "Lepistes",
+      "file": "lepistes.png",
+      "description": "Male guppy, tiny blue body and broad colorful orange and teal spotted fan tail"
+    },
+    {
+      "id": "neon",
+      "name": "Neon tetra",
+      "file": "neon.png",
+      "description": "Neon tetra, small streamlined body luminous cyan stripe and red lower tail half"
+    },
+    {
+      "id": "cardinal",
+      "name": "Banggai kardinal",
+      "file": "kardinal.png",
+      "description": "Banggai cardinalfish, silver white body with three strong black vertical bands, long elegant fins with white pearl dots"
+    },
+    {
+      "id": "anthias",
+      "name": "Pembe anthias",
+      "file": "anthias.png",
+      "description": "Peach pink anthias fish, coral pink body fading to golden yellow belly, delicate magenta tail"
+    },
+    {
+      "id": "goby",
+      "name": "Sarı gobi",
+      "file": "gobi.png",
+      "description": "Yellow clown goby, adorable tiny bright golden yellow plump fish with turquoise cheek markings"
+    },
+    {
+      "id": "blenny",
+      "name": "Kuyruk benekli bleni",
+      "file": "bleni.png",
+      "description": "Tailspot blenny, tiny elongated slate teal body with orange face and distinct black spot at tail base"
+    },
+    {
+      "id": "parrot",
+      "name": "Papağan balığı",
+      "file": "papagan.png",
+      "description": "Juvenile parrotfish, turquoise emerald scaled body with pink coral highlights, gentle rounded beak"
+    },
+    {
+      "id": "wrasse",
+      "name": "Gökkuşağı lapin",
+      "file": "lapin.png",
+      "description": "Fairy wrasse fish, magenta head orange back and luminous blue belly and delicate tail"
+    },
+    {
+      "id": "moorish",
+      "name": "Mağribi idol",
+      "file": "magribi.png",
+      "description": "Moorish idol fish, tall disk body black white and yellow bands, long graceful dorsal streamer"
+    },
+    {
+      "id": "rabbit",
+      "name": "Tavşan balığı",
+      "file": "tavsan.png",
+      "description": "Foxface rabbitfish, yellow body and black white face mask, friendly elongated nose"
+    },
+    {
+      "id": "flame",
+      "name": "Alev melek balığı",
+      "file": "alev-melek.png",
+      "description": "Flame angelfish, vivid orange red flattened oval body with thin black bars and blue fin tips"
+    }
+  ]
+}

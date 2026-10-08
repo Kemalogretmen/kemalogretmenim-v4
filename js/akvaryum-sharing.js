@@ -3,8 +3,9 @@
   const C = window.AquariumCore;
   function snapshot(cls, settings) {
     return { name: cls.name, theme: cls.theme, settings: { names: settings.names, points: settings.points === true, classPoints: settings.classPoints === true, motion: settings.motion, chat: settings.chat },
+      teacher: cls.teacher?.enabled ? {name:settings.names ? cls.teacher.name : '',species:cls.teacher.species} : null,
       classPoints: settings.classPoints === true ? cls.students.reduce((sum,s)=>sum+C.earned(s),0) : null,
-      students: cls.students.map(s => ({ id: s.id, name: settings.names ? s.name : '', species: s.species, mood: C.mood(s).id, points: settings.points ? C.earned(s) : null })) };
+      students: cls.students.map(s => ({ id: s.id, appearance: (()=>{const g=C.growth(s,cls);return {egg:g.egg,scale:g.scale,trophy:g.trophy};})(), name: settings.names ? s.name : '', species: s.species, mood: C.mood(s).id, points: settings.points ? C.earned(s) : null })) };
   }
   const client = () => window.kemalUserAuth.getClient();
   const owner = () => window.kemalUserAuth.getUser().id;
