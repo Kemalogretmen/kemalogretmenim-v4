@@ -58,9 +58,24 @@
   function newStudent(name, kind = 'clown') {
     return { id: uid(), name: clean(name), species: species(kind).id, createdAt: Date.now(), days: {}, feeds: [] };
   }
+  function validBirthday(value) {
+    return !!(value && Number.isInteger(value.month) && value.month>=1 && value.month<=12 &&
+      Number.isInteger(value.day) && value.day>=1 && value.day<=[31,29,31,30,31,30,31,31,30,31,30,31][value.month-1]);
+  }
+  function isBirthday(student, date = new Date()) {
+    return !!(validBirthday(student.birthday) && student.birthday.month===date.getMonth()+1 && student.birthday.day===date.getDate());
+  }
+  function removeClass(state,id) {
+    if(!state.classes.some(c=>c.id===id)) return false;
+    state.classes=state.classes.filter(c=>c.id!==id);
+    if(!state.classes.length) state.classes.push(newClass());
+    if(state.activeClassId===id) state.activeClassId=state.classes[0].id;
+    return true;
+  }
   function settingsOf(raw = {}) {
     return { names: raw?.names !== false, motion: raw?.motion !== false, points: raw?.points === true, classPoints: raw?.classPoints === true,
       hungerText: raw?.hungerText === true, chat: raw?.chat !== false, feedSound: raw?.feedSound !== false,
+      timerSound: raw?.timerSound !== false, timerVolume: Number.isFinite(raw?.timerVolume) ? Math.max(0,Math.min(1,raw.timerVolume)) : .65,
       sound: Sounds.has(raw?.sound) ? raw.sound : 'off',
       mix: Sounds.normalizeMix(Array.isArray(raw?.mix) ? raw.mix : (Sounds.has(raw?.sound) ? [{id:raw.sound,volume:1}] : [])),
       favorites: Sounds.favorites(raw?.favorites),
@@ -228,6 +243,10 @@
       cls.students = c.students.map(s => {
         if (!s || !clean(s.name) || !s.days || typeof s.days !== 'object' || Array.isArray(s.days) || Object.keys(s.days).length > 4000 || !Array.isArray(s.feeds) || s.feeds.length > 80000) throw new Error('Öğrenci kaydı geçersiz.');
         const student = { id: identifier(s.id), name: clean(s.name), species: species(s.species).id, days: {}, feeds: [] };
+        if(s.birthday != null) {
+          if(!validBirthday(s.birthday)) throw new Error('Doğum günü için geçerli bir gün ve ay girin.');
+          student.birthday={day:s.birthday.day,month:s.birthday.month};
+        }
         if (s.createdAt !== undefined) {
           if (!Number.isFinite(s.createdAt) || s.createdAt < 0) throw new Error('Öğrenci kayıt tarihi geçersiz.');
           student.createdAt = s.createdAt;
@@ -263,5 +282,5 @@
     });
     return { version: 1, classes, activeClassId: classes.some(c => c.id === raw.activeClassId) ? raw.activeClassId : classes[0].id, settings: settingsOf(raw.settings) };
   }
-  return { TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
+  return { validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
 });

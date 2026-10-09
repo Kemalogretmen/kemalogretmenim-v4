@@ -55,3 +55,22 @@ test('invalid timer input never replaces a running session',()=>{
  for(const minutes of [0,-1,1.5,61,NaN,Infinity]) assert.equal(timer.start(minutes,'Yeni'),false);
  assert.equal(timer.start(1,''),false);assert.deepEqual(timer.read(),before);
 });
+
+test('stopwatch measures wall time across background gaps, pauses, resumes and can return to countdown',()=>{
+ let now=1000;const t=T.create(()=>now);assert.ok(t.startStopwatch('Çalışma'));assert.equal(t.mode(),'stopwatch');
+ now+=65432;assert.equal(t.read().remaining,65432);assert.equal(T.format(t.read().remaining,t.mode()),'01:05');
+ t.pause();now+=100000;assert.equal(t.read().remaining,65432);t.resume();now+=5000;assert.equal(t.read().remaining,70432);
+ t.reset();assert.equal(t.read().status,'idle');assert.ok(t.start(1,'Okuma'));assert.equal(t.mode(),'countdown');now+=60000;assert.equal(t.read().status,'done');
+});
+test('deleting a class preserves other classes and the last removal leaves a usable empty aquarium',()=>{
+ const state=C.initialState(),first=state.classes[0],second=C.newClass('Diğer');second.students.push(C.newStudent('Ada'));state.classes.push(second);
+ const before=JSON.stringify(second);assert.equal(C.removeClass(state,first.id),true);assert.equal(JSON.stringify(state.classes[0]),before);assert.equal(state.activeClassId,second.id);
+ assert.equal(C.removeClass(state,'unknown'),false);C.removeClass(state,second.id);assert.equal(state.classes.length,1);assert.equal(state.classes[0].students.length,0);assert.doesNotThrow(()=>C.validate(state));
+});
+test('birthdays keep only a valid day/month, support leap days, and stay out of public snapshots',()=>{
+ const state=C.initialState(),s=C.newStudent('Ada');s.birthday={day:29,month:2,year:2018};state.classes[0].students.push(s);
+ const saved=C.validate(state);assert.deepEqual(saved.classes[0].students[0].birthday,{day:29,month:2});
+ assert.equal(C.isBirthday(s,new Date(2028,1,29,23,50)),true);assert.equal(C.isBirthday(s,new Date(2027,1,28)),false);assert.equal(C.isBirthday(s,new Date(2028,2,1)),false);
+ for(const birthday of [{day:31,month:4},{day:0,month:1},{day:10,month:13},{day:1.5,month:1}]) {s.birthday=birthday;assert.throws(()=>C.validate(state),/Doğum günü/);}
+ s.birthday={day:9,month:10};const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});assert.equal(JSON.stringify(window.AquariumSharing.snapshot(state.classes[0],state.settings)).includes('birthday'),false);
+});

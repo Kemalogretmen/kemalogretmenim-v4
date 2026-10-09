@@ -4,6 +4,35 @@
   const S=window.AquariumSounds, titles=Object.fromEntries(S.catalogue.map(t=>[t.id,t.name])), tracks={off:'Sessiz',...titles};
   let channels=new Map(),generation=0,volume=.3,userPaused=false,mix=[];
   let context,master;
+  let alarmNodes=[],alarmGeneration=0;
+  function ensureContext() {
+    const Type=window.AudioContext||window.webkitAudioContext;
+    if(!Type) throw Error('Bu tarayıcı uyarı sesini desteklemiyor.');
+    if(!context) {context=new Type();master=context.createGain();master.connect(context.destination);}
+    return context;
+  }
+  function cancelTimer() {
+    alarmGeneration++;
+    alarmNodes.forEach(({osc,gain})=>{try{osc.stop();}catch(e){}osc.disconnect();gain.disconnect();});alarmNodes=[];
+  }
+  async function scheduleTimer(milliseconds,level=.65) {
+    cancelTimer();const request=alarmGeneration,deadline=Date.now()+Math.max(0,milliseconds);
+    const ctx=ensureContext();await ctx.resume();if(request!==alarmGeneration)return;
+    if(ctx.state==='suspended') throw Error('Uyarı sesi başlatılamadı; ses düğmesine yeniden dokunun.');
+    const start=ctx.currentTime+Math.max(0,deadline-Date.now())/1000;
+    // Original bell phrase: gentle attack, clear harmonic notes, about four seconds.
+    [523.25,659.25,783.99,1046.5,783.99,1046.5].forEach((frequency,i)=>{
+      [1,2].forEach((harmonic,j)=>{
+        const at=start+i*.43,osc=ctx.createOscillator(),gain=ctx.createGain();
+        osc.type='sine';osc.frequency.value=frequency*harmonic;
+        gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(S.level(level)*(.27/(j+1)),at+.025);
+        gain.gain.exponentialRampToValueAtTime(.0001,at+1.35);
+        osc.connect(gain);gain.connect(ctx.destination);const node={osc,gain};alarmNodes.push(node);
+        osc.onended=()=>{osc.disconnect();gain.disconnect();alarmNodes=alarmNodes.filter(n=>n!==node);};
+        osc.start(at);osc.stop(at+1.4);
+      });
+    });
+  }
   function status(text){const el=document.getElementById('musicStatus');if(el)el.textContent=text;window.dispatchEvent(new CustomEvent('aquarium-audio-change'));}
   function dispose(channel){channel.audio.pause();channel.audio.removeAttribute('src');channel.audio.load();}
   function volumes(){const sum=Math.max(1,mix.reduce((n,t)=>n+t.volume,0));channels.forEach((c,id)=>{c.audio.volume=volume*(mix.find(t=>t.id===id)?.volume||0)/sum;});}
@@ -35,9 +64,7 @@
   function toggle(selected){if(isPlaying()){pause();return Promise.resolve(false);}return channels.size?resume():(Array.isArray(selected)?playMix(selected):play(selected));}
   function setLayerVolume(id,value){const layer=mix.find(t=>t.id===id);if(layer)layer.volume=S.level(value);volumes();}
   async function feed() {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    if (!context) { context = new AudioContext(); master = context.createGain(); master.connect(context.destination); }
+    ensureContext();
     master.gain.value = volume; await context.resume();
     [523.25, 659.25, 783.99].forEach((frequency, i) => {
       const at = context.currentTime + i * .1, osc = context.createOscillator(), gain = context.createGain();
@@ -49,5 +76,6 @@
   function setVolume(value){volume=S.level(value,0);volumes();if(master)master.gain.setTargetAtTime(volume,context.currentTime,.1);}
   // Background tabs retain playback; explicit pause or leaving this page stops it.
   window.addEventListener('pagehide',stop);
-  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,setVolume,setLayerVolume,describe,current:()=>mix[0]?.id||'off',isPlaying};
+  window.addEventListener('pagehide',cancelTimer);
+  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,setVolume,setLayerVolume,describe,scheduleTimer,cancelTimer,current:()=>mix[0]?.id||'off',isPlaying};
 })();

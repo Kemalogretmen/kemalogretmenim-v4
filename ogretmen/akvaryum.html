@@ -9,18 +9,18 @@
   <meta name="description" content="Sınıfınızın yaşayan akvaryumu. Deniz dostunu seç, sorumluluklarını tamamla, yem kazan ve balığını besle.">
   <title>Sınıf Akvaryumu — Kemal Öğretmenim</title>
   <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/akvaryum.css?v=20261009-depth">
+  <link rel="stylesheet" href="/css/akvaryum.css?v=20261009-celebrations">
   <link rel="preload" as="image" href="/assets/akvaryum/arka-planlar/mercan-resifi.jpg">
   <script defer src="/js/site-data.js"></script>
   <script defer src="/js/user-auth.js?v=20261005-auth-fix"></script>
   <script defer src="/js/akvaryum-sounds.js?v=20261008-mixer"></script>
-  <script defer src="/js/akvaryum-audio.js?v=20261008-mixer"></script>
-  <script defer src="/js/akvaryum-core.js?v=20261008-mixer-cloud"></script>
-  <script defer src="/js/akvaryum-sharing.js?v=20261008-mixer-cloud"></script>
+  <script defer src="/js/akvaryum-audio.js?v=20261009-celebrations"></script>
+  <script defer src="/js/akvaryum-core.js?v=20261009-celebrations"></script>
+  <script defer src="/js/akvaryum-sharing.js?v=20261009-celebrations"></script>
   <script defer src="/js/akvaryum-motion.js?v=20261009-depth"></script>
-  <script defer src="/js/akvaryum-timer.js?v=20261008-mixer-cloud"></script>
+  <script defer src="/js/akvaryum-timer.js?v=20261009-celebrations"></script>
   <script defer src="/js/akvaryum-cloud.js?v=20261008-cloud"></script>
-  <script defer src="/js/akvaryum.js?v=20261009-depth"></script>
+  <script defer src="/js/akvaryum.js?v=20261009-celebrations"></script>
 </head>
 <body class="access-pending">
   <section id="accessGate" class="access-gate"><h1>Sınıf Akvaryumu</h1><p id="accessMessage">Erişim kontrol ediliyor…</p><div id="accessLinks" hidden><a class="button primary" href="/giris.html?redirect=%2Fogretmen%2Fakvaryum.html">Öğretmen girişi</a> <a class="button" href="/ogretmen-paneli.html">Öğretmen panelim</a> <a class="button" href="?demo=1">Örnek sınıfı incele</a> <a class="button" href="?veli=1">Veli koduyla izle</a></div></section>
@@ -58,6 +58,7 @@
     <div id="demoBanner" class="demo-banner" hidden>Örnek sınıfı keşfediyorsunuz. Buradaki değişiklikler kaydedilmez. <button type="button" data-action="exit-demo">Kendi sınıfıma dön →</button></div>
     <main class="aquarium panel-hidden" id="aquarium" aria-label="Sınıfın akvaryumu">
       <div class="water-light" aria-hidden="true"></div>
+      <aside id="localClock" class="local-clock" aria-label="Yerel saat ve tarih"><time id="localTime"></time><span id="localDate"></span></aside>
       <div id="bubbles" class="bubbles" aria-hidden="true"></div>
       <div class="scene-heading"><span class="eyebrow">KÜÇÜK SORUMLULUKLAR, BÜYÜK MUTLULUKLAR</span><h2 id="sceneTitle">Bizim su altı dünyamız.</h2><p id="sceneSubtitle">Her güzel adım, deniz dostuna bir mutluluk.</p></div>
       <div class="scene-controls"><button type="button" class="finder-button" data-action="find-student"><svg><use href="#i-search"/></svg><span>Öğrenci bul</span></button><button type="button" class="round-button activities-button" id="activitiesButton" data-action="activities" aria-label="Sınıf etkinlikleri" title="Sınıf etkinlikleri"><svg><use href="#i-clock"/></svg><span id="activityTimerBadge" aria-hidden="true" hidden></span></button><div class="sound-controls"><button class="icon-button" data-action="sound" aria-label="Ortam sesleri" title="Ses seç">♫</button><button class="sound-toggle" id="soundToggle" data-action="toggle-sound" aria-label="Sesi başlat" title="Sesi başlat" aria-pressed="false">▶</button></div><button type="button" class="round-button" data-action="themes" aria-label="Akvaryum ortamını değiştir" title="Ortamı değiştir"><svg><use href="#i-scene"/></svg></button><button type="button" class="round-button" data-action="fullscreen" aria-label="Tam ekran" title="Tam ekran"><svg><use href="#i-expand"/></svg></button><button type="button" class="round-button" data-action="panel" aria-label="Sınıf yönetimini aç" aria-expanded="false" aria-controls="studentPanel" title="Sınıf yönetimini aç"><svg><use href="#i-users"/></svg></button></div>

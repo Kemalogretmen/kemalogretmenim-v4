@@ -110,7 +110,7 @@ Yumurtalar yüzme alanından bağımsız bir taban katmanında, alt kısımları
 ### Arka planda ses ve sayaç — 8 Ekim 2026
 Akvaryum müziği `visibilitychange` ile artık durdurulmaz. Elle duraklatılmış müzik sekmeye geri dönünce kendiliğinden başlamaz. Öğretmen araçlarındaki sayaçta süre hesabı animasyon karesinden ayrılmıştır; alarm Başlat düğmesinde Web Audio saatine programlanır. Duraklat, sıfırla, mod/süre değiştir ve sesi kapat işlemleri gelecekteki alarmı da iptal eder. Sayaç sekmeye dönüşte tekrar çalmaz.
 
-Tarayıcı sekmesinin açık kalması gerekir. Sekmeyi kapatma, sayfayı yenileme, cihazın uyuması veya işletim sisteminin tarayıcıyı tamamen askıya alması sırasında kesintisiz ses garantisi yoktur. Akvaryum sayacının bitiş bildirimi mevcut sessiz davranışını korur; öğretmen araçlarındaki sayaç kendi ses ayarıyla alarm çalar.
+Tarayıcı sekmesinin açık kalması gerekir. Sekmeyi kapatma, sayfayı yenileme, cihazın uyuması veya işletim sisteminin tarayıcıyı tamamen askıya alması sırasında kesintisiz ses garantisi yoktur. Akvaryum sayacına 9 Ekim güncellemesiyle kendi ses ayarı ve süre sonu melodisi de eklenmiştir; öğretmen araçlarındaki sayaç kendi ses ayarını kullanır.
 
 Teknik dayanak: [MDN Page Visibility](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API) ve [Web Audio zamanlama](https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode/start). Regresyonlar: `tests/akvaryum-audio.test.cjs`, `tests/akvaryum-behavior-ui.test.cjs`, `tests/kronometre-background.test.cjs`.
 
@@ -137,3 +137,12 @@ Teknik dayanak: [MDN Page Visibility](https://developer.mozilla.org/en-US/docs/W
 - Sayacın önünden/arkasından geçiş artık ekranın alt/üst konumu yerine kamera derinliğine bağlıdır. Karşılaşma veya sayaç çarpışma engeli oluşturmaz. Yumurta yuvaları kumda sabit kalır.
 - Hafif ışık huzmeleri, kum yansımaları ve zemine yakın gölgeler CSS katmanlarıdır; ek video, WebGL veya harici servis kullanılmaz. Hareketi kapatma ve cihazın hareketi azaltma tercihleri korunur.
 - Yerelde tüm 34 WebP dosyası çözümlendi, şeffaflıkları doğrulandı ve tarayıcıda 34/34 görsel açıldı. Hareket, sınırlar, sayaç katmanları ve aynı türe PNG geri dönüşü regresyonları otomatik testlere eklendi.
+
+
+## 9 Ekim 2026 — sınıf silme, doğum günü ve saat
+
+- Aktif sınıf seçildikten sonra Ayarlar → Bu sınıfı sil. İşlem onay ister; diğer sınıfları korur. Son sınıf silinirse yeni boş sınıf açılır. Silme öncesindeki tüm kayıt aynı tarayıcıda kurtarma kopyası olarak saklanır; Ayarlar → Son silme öncesi yedeği indir ile alınabilir. Yedek yükle tüm kaydı geri yüklediği için daha sonraki değişikliklerin üstüne yazmadan önce güncel yedek de indirilmelidir. Yeni bir sınıf silme işlemi önceki kurtarma kopyasının yerini alır.
+- Silme öncesinde sınıf ve çocuğa özel izleme bağlantıları kapatılır. Bağlantılar kapatılamazsa sınıf silinmez. Silme hesabın normal otomatik kayıt/eşitleme akışını kullanır; alt durum satırı buluta kaydı doğrular.
+- Balık → Öğrenciyi düzenle ekranında isteğe bağlı gün ve ay seçilir. Doğum yılı tutulmaz. O gün balıkta hafif ışıltı ve pasta belirir; dokununca kişisel kutlama açılır. Tam ekranda yalnızca kutlama penceresi açılır. İki alanı da Belirtilmedi yapmak doğum gününü kaldırır. Geçersiz tarihler reddedilir; 29 Şubat yalnızca o gün kutlanır. Doğum günü hesap kaydı/yedeğe dahildir, veli/ziyaretçi paylaşımına dahil değildir.
+- Tam ekranda sağ üstte cihazın yerel saati ve altında Türkçe tarih bulunur. Sayaç ve kronometre büyütülmüş, katmanlı gölge/perspektif ile hacim görünümü verilmiştir; balıkların geçiş rotalarını etkilemez.
+- Sınıf etkinlikleri → Odaklanma sayacı → Sayaç türü ile geri sayım veya kronometre seçilir. Geri sayımda kısa, özgün bir çan melodisi, ayrı ses seviyesi ve dinleme düğmesi vardır. Alarm fon müziğinden bağımsızdır. Başlat/Devam et ile Web Audio saatine programlanır; duraklat/sıfırla/sınıf değiştir/yedek yükle eski alarmı iptal eder. Açık sekmede arka planda çalışır; kapatılan sekme veya uyuyan cihazda çalışma garantisi yoktur. Sayfa yenilenince sayaç sıfırlanır.

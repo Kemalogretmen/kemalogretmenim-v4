@@ -144,3 +144,24 @@ test('visitors see current eggs, growth and teacher fish with every management a
  h.setResponse({theme:'reef',settings:{names:true,points:true},students:[{id:'a',name:'Ada',species:'clown',mood:'happy',points:20,appearance:{egg:false,scale:.55,trophy:false}}]});await h.intervals[1]();
  assert.equal(h.document.querySelectorAll('.is-egg').length,0);assert.equal(h.document.querySelector('.fish').style.getPropertyValue('--growth-scale'),.55);assert.equal(h.document.querySelector('.fish-points').textContent,'★ 20');assert.deepEqual(h.io(),{reads:0,writes:0});
 });
+
+
+test('deleting a class closes its child codes and class link before clearing the shared snapshot',async()=>{
+ for(const fail of ['', 'aquarium_student_links','aquarium_shares']) {
+  const writes=[];
+  const client={from(table){let op={table,filters:[]};return {
+   select(){return this;},eq(k,v){op.filters.push([k,v]);return this;},
+   maybeSingle:async()=>({data:{id:'share-1',enabled:true}}),
+   update(value){op.value=value;return this;},
+   then(resolve){writes.push(op);resolve({data:[{id:'share-1'}],error:table===fail?{message:'offline'}:null});}
+  };}};
+  const window={AquariumCore:C,kemalUserAuth:{getClient:()=>client,getUser:()=>({id:'owner-1'})}};
+  vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window,crypto:{randomUUID:()=> 'rotated-token'}});
+  if(fail)await assert.rejects(window.AquariumSharing.removeClass('class-1'),/Sınıf silinmedi/);
+  else await window.AquariumSharing.removeClass('class-1');
+  assert.equal(writes[0].table,'aquarium_student_links');assert.equal(writes[0].value.enabled,false);
+  assert.equal(JSON.stringify(writes[0].filters),JSON.stringify([['share_id','share-1']]));
+  if(fail==='aquarium_student_links')assert.equal(writes.length,1);
+  else {assert.equal(writes[1].value.enabled,false);assert.equal(JSON.stringify(writes[1].value.snapshot),'{}');assert.equal(writes[1].value.token,'rotated-token');assert.ok(writes[1].filters.some(([k,v])=>k==='owner_id'&&v==='owner-1'));}
+ }
+});

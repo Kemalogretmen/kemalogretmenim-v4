@@ -69,3 +69,13 @@ test('each selectable recording exists with documented provenance and matching c
  const S=require('../js/akvaryum-sounds.js');const manifest=[...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/kaynaklar.json')),...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/karisim-kaynaklar.json'))];
  assert.equal(S.catalogue.length,11);for(const track of S.catalogue){const m=manifest.find(m=>m.filename===track.file);assert.ok(m,track.file);const data=fs.readFileSync('assets/akvaryum/muzikler/'+track.file);assert.equal(crypto.createHash('sha256').update(data).digest('hex'),m.sha256);}
 });
+
+test('timer melody is scheduled on the audio clock, independent of music volume, and cancellation stops every note',async()=>{
+ const notes=[],events={};let resume=()=>Promise.resolve();
+ class Context {constructor(){this.currentTime=100;this.destination={};this.state='running';}resume(){return resume();}createGain(){return {gain:{value:0,setValueAtTime(){},linearRampToValueAtTime(v){this.peak=v;},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}createOscillator(){const n={frequency:{},connect(g){this.gain=g;},disconnect(){},start(at){this.at=at;},stop(at){if(at===undefined)this.cancelled=true;}};notes.push(n);return n;}}
+ const window={AquariumSounds:require('../js/akvaryum-sounds.js'),AudioContext:Context,addEventListener:(n,f)=>events[n]=f,dispatchEvent(){}};
+ vm.runInNewContext(fs.readFileSync('js/akvaryum-audio.js','utf8'),{window,document:{getElementById:()=>null},CustomEvent:class{}});
+ const a=window.AquariumAudio;a.setVolume(0);await a.scheduleTimer(60000,.7);assert.equal(notes.length,12);assert.ok(notes.every(n=>n.at>=159.9));assert.ok(notes.some(n=>n.gain.gain.peak>0));
+ a.cancelTimer();assert.ok(notes.every(n=>n.cancelled));const count=notes.length;let release;resume=()=>new Promise(r=>release=r);const pending=a.scheduleTimer(30000);a.cancelTimer();release();await pending;assert.equal(notes.length,count);
+ resume=()=>Promise.resolve();await a.scheduleTimer(0);events.pagehide();assert.ok(notes.every(n=>n.cancelled));
+});

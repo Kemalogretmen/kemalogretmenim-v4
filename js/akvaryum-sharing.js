@@ -46,6 +46,13 @@
     const { data, error } = await table().update({ enabled: false, token: crypto.randomUUID(), updated_at: new Date().toISOString() }).eq('id', id).select('id');
     if (error || !data?.length) throw new Error('Paylaşım kapatılamadı. Bağlantıyı kontrol edip tekrar deneyin; önceki bağlantı hâlâ açık olabilir.');
   }
+  async function removeClass(localId) {
+    const share=await get(localId);if(!share)return;
+    const child=await links().update({enabled:false}).eq('share_id',share.id);
+    if(child.error) throw Error('Veli kodları kapatılamadı. Sınıf silinmedi; tekrar deneyin.');
+    const {data,error}=await table().update({enabled:false,snapshot:{},token:crypto.randomUUID(),updated_at:new Date().toISOString()}).eq('id',share.id).eq('owner_id',owner()).select('id');
+    if(error||!data?.length)throw Error('Sınıf paylaşımı kapatılamadı. Sınıf silinmedi; tekrar deneyin.');
+  }
   async function childLinks(shareId) {
     if(!shareId) return [];
     const {data,error}=await links().select('id,student_id,token,enabled').eq('share_id',shareId);
@@ -76,5 +83,5 @@
       else { const result=await table().update({enabled:false,snapshot:{}}).eq('id',row.id); if(result.error) throw new Error('Silinen sınıfın paylaşımı kapatılamadı.'); }
     }
   }
-  window.AquariumSharing = { snapshot, get, enable, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild };
+  window.AquariumSharing = { snapshot, get, enable, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild, removeClass };
 })();

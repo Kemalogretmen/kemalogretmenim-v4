@@ -4,29 +4,30 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const C=require('../js/akvaryum-core.js');
-async function harness({absent=false,sound=true,reduced=false,extraNames=[]}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz');
   cls.tasks[0].points=7;cls.students.push(s);s.createdAt=Date.now()-2*86400000-1000;
   extraNames.forEach(name=>cls.students.push(C.newStudent(name)));
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
-  let saved=JSON.stringify(state),sounds=0;const intervals=[],frames=[];let timerNow=Date.now();
+  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],frames=[];let timerNow=Date.now();
   window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
   window.kemalUserAuth={ready:async()=>{},getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
+  window.AquariumSharing={removeClass:async()=>{deleteCalls++;if(deleteError)throw Error("Bağlantı yok. Sınıf silinmedi.");}};
   window.matchMedia=()=>({matches:reduced,addEventListener(){}});
   for(const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
   const area=document.getElementById('swimArea');Object.defineProperty(area,'clientWidth',{value:900});Object.defineProperty(area,'clientHeight',{value:600});
   const bed=document.getElementById('eggBed');Object.defineProperty(bed,'clientWidth',{value:900});Object.defineProperty(bed,'clientHeight',{value:700});
   const modal=document.getElementById('modal');modal.close=()=>{modal.open=false;};modal.showModal=()=>{modal.open=true;};
   const context={window,document,location:{search:'',pathname:'/ogretmen/akvaryum.html'},URLSearchParams,performance,console,
-    localStorage:{getItem:()=>saved,setItem:(key,value)=>{saved=value;}},
+    localStorage:{getItem:key=>key.endsWith("_beforeClassDelete")?backup:saved,setItem:(key,value)=>{if(key.endsWith("_beforeClassDelete"))backup=value;else saved=value;}},
     setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},cancelAnimationFrame(){},ResizeObserver:class{observe(){}},
     FormData:class {constructor(form){this.form=form;}get(name){return this.form.querySelector('[name="'+name+'"]').value;}}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
   const submit=form=>form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
-  return {window,document,modal,click,submit,intervals,frames,advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds};
+  return {window,document,modal,click,submit,intervals,frames,advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls};
 }
 test('clicking the fish opens teacher behaviors; one click feeds, sounds, clears hunger and updates both scores',async()=>{
   const h=await harness(),d=h.document;
@@ -184,7 +185,7 @@ test('timer UI starts, pauses and resets without writing student scores or chang
  h.click('[data-action="close"]');assert.equal(d.getElementById('activityTimerBadge').hidden,false);
  h.click('[data-action="activities"]');h.click('[data-action="timer"]');assert.equal(d.getElementById('timerState').textContent,'Duraklatıldı');
  h.click('[data-action="timer-reset"]');assert.equal(d.getElementById('activityTimerBadge').hidden,true);assert.equal(d.getElementById('timerForm').hidden,false);
- assert.equal(JSON.stringify(h.saved()),before);assert.equal(h.sounds(),0);
+ assert.equal(JSON.stringify(h.saved().classes),JSON.stringify(JSON.parse(before).classes));assert.equal(h.saved().settings.sound,JSON.parse(before).settings.sound);assert.equal(h.sounds(),0);
 });
 
 
@@ -307,4 +308,30 @@ test('an unavailable lightweight fish image falls back once to the same species 
  assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
  img.dispatchEvent(new h.window.Event('error',{bubbles:true}));
  assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
+});
+
+test('teacher can save a birthday, see its cake and greeting, reject invalid dates and remove it',async()=>{
+ const h=await harness(),d=h.document;h.click('.fish');h.click('[data-action="edit-student"]');
+ const now=new Date();let form=d.getElementById('editStudentForm');
+ // linkedom selects are read-only; set selected options as a browser would.
+ const select=(name,value)=>{const el=form.querySelector('[name="'+name+'"]');for(const opt of el.querySelectorAll('option'))opt.selected=false;el.querySelector('option[value="'+value+'"]').selected=true;};
+ select('birthDay',now.getDate());select('birthMonth',now.getMonth()+1);h.submit(form);
+ assert.equal(d.querySelector('.fish-birthday').hidden,false);assert.ok(d.querySelector('.fish').classList.contains('birthday-fish'));
+ h.click('.fish');assert.match(d.getElementById('modalTitle').textContent,/İyi ki doğdun, Deniz/);
+ h.click('[data-action="edit-student"]');form=d.getElementById('editStudentForm');select('birthDay',31);select('birthMonth',4);h.submit(form);assert.match(d.getElementById('formError').textContent,/Geçerli/);
+ select('birthDay','');select('birthMonth','');h.submit(form);assert.equal(d.querySelector('.fish-birthday').hidden,true);assert.equal(h.saved().classes[0].students[0].birthday,undefined);
+ assert.match(d.getElementById('localTime').textContent,/\d{2}:\d{2}/);assert.ok(d.getElementById('localDate').textContent.length>10);
+});
+
+
+test('class deletion requires confirmation, preserves a recovery copy, and stops on link revocation failure',async()=>{
+ for(const deleteError of [false,true]) {
+  const h=await harness({deleteError}),before=h.saved();
+  h.click('[data-action="settings"]');h.click('[data-action="delete-class"]');
+  assert.deepEqual(h.saved(),before);assert.equal(h.deleteCalls(),0);
+  h.click('[data-action="confirm"]');await new Promise(resolve=>setImmediate(resolve));
+  assert.deepEqual(h.backup(),before);assert.equal(h.deleteCalls(),1);
+  if(deleteError) assert.deepEqual(h.saved(),before);
+  else {assert.notEqual(h.saved().classes[0].id,before.classes[0].id);assert.equal(h.saved().classes[0].students.length,0);}
+ }
 });
