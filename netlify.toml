@@ -17,3 +17,9 @@
   from = "/akilli-tahtam"
   to = "/ogretmen/beyaztahta.html"
   status = 301
+
+# Versioned, tiny fish assets reuse the browser cache between aquarium visits.
+[[headers]]
+  for = "/assets/akvaryum/canlilar/web-v1/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

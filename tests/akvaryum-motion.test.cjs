@@ -72,3 +72,22 @@ test('a fish completes a route across the timer region without a timed mid-route
  assert.ok(f.x>740);assert.ok(headings.every(direction=>direction===1));
  assert.equal(f.targetX,800); // Multiple depth-route intervals must not bounce off the central clock.
 });
+
+test('camera depth changes gently, crosses the clock plane, and never enlarges fish beyond their bounds',()=>{
+ const [f]=animals(1,1000,600);f.waterDepth=.2;f.depthTarget=.85;f.depthTime=1000;
+ let previous=f.waterDepth;const layers=new Set();
+ for(let i=0;i<1200;i++) {
+  M.step([f],.05,1000,600,()=>.5);
+  assert.ok(Math.abs(f.waterDepth-previous)<=.001251);previous=f.waterDepth;
+  const view=M.perspective(f);layers.add(view.layer);
+  assert.ok(view.scale>=.76&&view.scale<=1);assert.ok(view.opacity>=.76&&view.opacity<=1);
+ }
+ assert.deepEqual([...layers],[1,3]);
+ f.held=true;const depth=f.waterDepth;advance([f],100);assert.equal(f.waterDepth,depth);
+});
+test('camera placement is stable and independent of rewards, feeding or other students',()=>{
+ const a={id:'same-student',species:'clown',size:112};
+ const original=M.layout([a],1000,600).get(a.id).waterDepth;
+ const other=M.layout([{id:'other',species:'tang',size:125},{...a,points:1000,hunger:5}],800,450).get(a.id).waterDepth;
+ assert.equal(original,other);
+});

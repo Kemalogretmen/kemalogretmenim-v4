@@ -17,6 +17,17 @@
     puffer: { speed: .62, bob: 4, tilt: 1, depth: .48, pulse: 0 }
   };
   const profile = id => profiles[id] || normal;
+  // Camera distance is independent of score, hunger and vertical swimming lanes.
+  function initialDepth(id) {
+    let hash=2166136261;
+    for(const char of String(id)) hash=Math.imul(hash^char.charCodeAt(0),16777619);
+    return .12+((hash>>>0)%1000)/1000*.76;
+  }
+  function perspective(f) {
+    const depth=clamp(f.waterDepth??.5,0,1);
+    return {scale:.76+.24*depth,opacity:.76+.24*depth,brightness:.86+.14*depth,
+      saturation:.78+.22*depth,layer:depth<.5?1:3};
+  }
   function layout(items, width, height) {
     if (!items.length) return new Map();
     const columns = Math.min(items.length, Math.max(1, Math.min(Math.floor(width / 85), Math.ceil(Math.sqrt(items.length * width / Math.max(1, height) / 1.4)))));
@@ -35,7 +46,8 @@
       if (s.species === 'octopus' && items.filter(item=>item.species==='octopus').length <= columns) target = Math.max(target, minY + (maxY-minY) * .9);
       if (s.species === 'ray' && items.filter(item=>item.species==='ray').length <= columns) target = Math.max(target, minY + (maxY-minY) * .65);
       result.set(s.id,{size,x:clamp((i%columns+.5)*cellW-size/2,0,Math.max(0,width-size)),y:target,minY,maxY,
-        bandTop:minY,bandBottom:maxY,anchorY:target,profile:p,routeTime:0,targetX:null,targetY:null});
+        bandTop:minY,bandBottom:maxY,anchorY:target,profile:p,routeTime:0,targetX:null,targetY:null,
+        waterDepth:initialDepth(s.id),depthTarget:initialDepth(s.id),depthTime:12+(i%7)*3});
     });
     return result;
   }
@@ -71,6 +83,10 @@
       const target=f.hover?0:1;
       f.cruise=(f.cruise??1)+(target-(f.cruise??1))*Math.min(1,dt*14);
       if(f.cruise<.002) { f.cruise=0; return; }
+      f.depthTime=(f.depthTime??0)-dt*f.cruise;
+      if(f.depthTime<=0) {f.depthTarget=.08+random()*.84;f.depthTime=18+random()*18;}
+      const distance=f.waterDepth??.5;
+      f.waterDepth=clamp(distance+clamp((f.depthTarget-distance)*.09,-.025,.025)*dt*f.cruise,0,1);
       const p=f.profile||normal, speed=24*f.mood.speed*p.speed*f.cruise;
       const maxX=Math.max(0,width-f.size),edge=Math.min(25,maxX/4);
       f.routeTime=(f.routeTime||0)-dt*f.cruise;
@@ -106,5 +122,5 @@
       f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);
     });
   }
-  return {profile,layout,eggLayout,step};
+  return {profile,layout,eggLayout,step,perspective};
 });

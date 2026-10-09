@@ -299,3 +299,12 @@ test('aquarium countdown keeps elapsed time while hidden and preserves a manual 
  d.hidden=true;d.dispatchEvent(new h.window.Event('visibilitychange'));h.advanceTimer(90000);
  assert.equal(d.getElementById('sceneTimerClock').textContent,'07:55');
 });
+
+test('an unavailable lightweight fish image falls back once to the same species original',async()=>{
+ const h=await harness(),img=h.document.querySelector('.fish-art');
+ assert.match(img.getAttribute('src'),/\/web-v1\/palyaco-baligi\.webp$/);
+ img.dispatchEvent(new h.window.Event('error',{bubbles:true}));
+ assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
+ img.dispatchEvent(new h.window.Event('error',{bubbles:true}));
+ assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
+});

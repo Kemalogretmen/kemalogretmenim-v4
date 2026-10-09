@@ -10,7 +10,15 @@
   const $ = id => document.getElementById(id);
   const esc = text => String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const icon = name => '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>';
-  const image = id => '/assets/akvaryum/canlilar/' + C.species(id).file;
+  const image = id => '/assets/akvaryum/canlilar/web-v1/' + C.species(id).file.replace(/\.png$/,'.webp');
+  // A transient image error must not leave an invisible creature. Retry once
+  // with its original PNG, without changing the student's selected species.
+  document.addEventListener('error', event => {
+    const img=event.target,src=img?.getAttribute?.('src')||'';
+    if(img?.tagName==='IMG' && src.startsWith('/assets/akvaryum/canlilar/web-v1/')) {
+      img.src=src.replace('/web-v1/','/').replace(/\.webp$/,'.png');
+    }
+  },true);
   const background = id => '/assets/akvaryum/arka-planlar/' + (C.THEMES.find(t => t.id === id) || C.THEMES[0]).file;
   const filterText = value => String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
   function lockAccess(message) {
@@ -186,7 +194,7 @@
     openModal(title, '<p class="modal-intro">' + esc(description) + '</p><div class="form-actions"><button class="button" data-action="close">Vazgeç</button><button class="button danger" data-action="confirm">Onayla</button></div>');
   }
   function speciesPicker(current) {
-    return '<fieldset class="species-group"><legend>Deniz dostunu seç · ' + C.SPECIES.length + ' canlı</legend><label class="species-search">' + icon('search') + '<input type="search" id="speciesSearch" placeholder="Deniz canlısı ara…" aria-label="Deniz canlısı ara" maxlength="60"></label><div class="species-grid">' + C.SPECIES.map(s => '<label class="species-card" data-species-name="' + esc(s.name) + '"><input type="radio" name="species" value="' + s.id + '" ' + (s.id === current ? 'checked' : '') + ' required><img src="' + image(s.id) + '" alt="" loading="lazy"><strong>' + s.name + '</strong><small>' + s.detail + '</small></label>').join('') + '</div><p class="species-result-count" id="speciesResults" role="status">' + C.SPECIES.length + ' canlı · Seçili: ' + C.species(current).name + '</p></fieldset>';
+    return '<fieldset class="species-group"><legend>Deniz dostunu seç · ' + C.SPECIES.length + ' canlı</legend><label class="species-search">' + icon('search') + '<input type="search" id="speciesSearch" placeholder="Deniz canlısı ara…" aria-label="Deniz canlısı ara" maxlength="60"></label><div class="species-grid">' + C.SPECIES.map(s => '<label class="species-card" data-species-name="' + esc(s.name) + '"><input type="radio" name="species" value="' + s.id + '" ' + (s.id === current ? 'checked' : '') + ' required><img src="' + image(s.id) + '" alt="" width="640" height="426" decoding="async"><strong>' + s.name + '</strong><small>' + s.detail + '</small></label>').join('') + '</div><p class="species-result-count" id="speciesResults" role="status">' + C.SPECIES.length + ' canlı · Seçili: ' + C.species(current).name + '</p></fieldset>';
   }
   function filterSpecies() {
     const field = $('speciesSearch'); if (!field) return;
@@ -524,8 +532,13 @@
     const tilt=moving ? Math.sin(fish.phase*1.4)*p.tilt : 0;
     const pulse=moving ? 1+Math.sin(fish.phase*3)*p.pulse : 1;
     fish.el.style.transform='translate3d('+fish.x.toFixed(1)+'px,'+fish.y.toFixed(1)+'px,0)';
-    fish.el.style.zIndex=fish.y+fish.size*.335>height*.7?'3':'1';
-    fish.img.style.transform='scale('+fish.el.style.getPropertyValue('--growth-scale')+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')';
+    const depth=fish.egg ? {scale:1,opacity:1,brightness:1,saturation:1,layer:3} : Motion.perspective(fish);
+    fish.el.style.zIndex=String(depth.layer);
+    fish.img.style.opacity=fish.egg?'0':depth.opacity.toFixed(2);
+    fish.el.style.setProperty('--water-brightness',depth.brightness.toFixed(2));
+    fish.el.style.setProperty('--water-saturation',depth.saturation.toFixed(2));
+    fish.el.style.setProperty('--floor-shadow',fish.egg?'0':(Math.max(0,(fish.y/Math.max(1,height)-.62))*depth.opacity*.5).toFixed(2));
+    fish.img.style.transform='scale('+(Number(fish.el.style.getPropertyValue('--growth-scale'))*depth.scale).toFixed(3)+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')';
   }
   let nextChat = performance.now() + 25000;
   const pairCooldown = new Map();

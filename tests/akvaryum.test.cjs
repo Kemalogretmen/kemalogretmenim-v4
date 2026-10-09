@@ -201,3 +201,17 @@ test('repeated behavior awards have independent weighted history, feeds, correct
   const before=JSON.stringify(student);assert.equal(C.awardBehavior(student,cls,TODAY,'missing'),null);assert.equal(JSON.stringify(student),before);
   day.absent=true;assert.equal(C.awardBehavior(student,cls,TODAY,id),null);
 });
+
+test('every selectable creature ships a lightweight transparent-capable WebP and its original fallback',()=>{
+ let bytes=0;
+ for(const s of C.SPECIES) {
+  const original=path.join(__dirname,'../assets/akvaryum/canlilar',s.file);
+  const web=path.join(__dirname,'../assets/akvaryum/canlilar/web-v1',s.file.replace(/\.png$/,'.webp'));
+  assert.ok(fs.existsSync(original),s.id+' fallback');
+  const data=fs.readFileSync(web);bytes+=data.length;
+  assert.equal(data.toString('ascii',0,4),'RIFF',s.id);
+  assert.equal(data.toString('ascii',8,12),'WEBP',s.id);
+  assert.ok(data.length<120000,s.id+' transfer budget');
+ }
+ assert.ok(bytes<2500000,'complete catalogue transfer budget');
+});
