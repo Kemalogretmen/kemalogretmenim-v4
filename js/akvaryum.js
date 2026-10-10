@@ -353,7 +353,7 @@
     return days ? days + ' gün önce' : 'Son 24 saat içinde';
   }
   function studentFacts(s) {
-    const d = day(s), daily = d.absent ? 0 : d.tasks.reduce((n,t) => n+(t.status==='done'?C.taskPoints(t):0),0);
+    const d = day(s), daily = d.tasks.reduce((n,t) => n+(t.status==='done'?C.taskPoints(t):0),0);
     return '<div class="student-facts"><div><small>Bugünkü puan</small><strong>+' + daily + '</strong></div><div><small>Toplam puan</small><strong>' + C.earned(s).toLocaleString('tr-TR') + '</strong></div><div><small>Son besleme</small><strong>' + lastFeeding(s) + '</strong></div></div>';
   }
   function finderModal() {
@@ -426,7 +426,7 @@
       ['Yemini ver, mutluluğunu izle', 'Balığa tıklayın ve açılan pencereden olumlu davranışı seçin. Puan verilir, balık yem ve kalp efektiyle beslenir; kısa bir melodi çalar. Aynı davranışı gün içinde tekrar seçebilirsiniz; her ödül geçmişe ayrı kaydedilir. Önceden birikmiş yemler paneldeki Besle düğmesiyle kullanılabilir.'],
       ['Öğrencini kolayca bul', 'Öğrenci bul düğmesinde isim arayın. Bul balığı kısa süre belirginleştirir, Aç davranış penceresini açar. Bir gün beslenmeyen balığın küçük yem simgesi öğretmene hatırlatma yapar; gün sayısı pencerede görünür. İsterseniz Ayarlar’dan yazılı uyarıyı açabilirsiniz.'],
       ['Her gün yeni bir başlangıç', '“Eksik” işaretlenen görev canlıyı biraz üzgün ve daha sakin yapar. Tamamlanınca tekrar canlanabilir. Açılmış bir önceki görev gününün eksikleri de ertesi günün ilk görevine kadar etkili olur.'],
-      ['İzin günlerini ayır', '“Bugün gelmedi” seçeneğinde canlı dinlenir, o günün görevleri değerlendirilmez. Uygulamanın açılmadığı günler için görev veya eksik kaydı üretilmez.']
+      ['İzin günlerini ayır', '“Bugün gelmedi” seçeneğinde balık soluk görünerek tabanda dinlenir. Kazanılmış puanları ve büyümesi korunur; yeni ödül verilmez. “Bugün geldi” ile tekrar yüzmeye başlar. Uygulamanın açılmadığı günler için görev veya eksik kaydı üretilmez.']
     ].map(([title, detail], i) => '<div class="help-step"><span class="step-number">' + (i + 1) + '</span><div><h3>' + title + '</h3><p>' + detail + '</p></div></div>').join('') + '</div><p class="settings-note">Canlıların farklı ortamlarda bir arada görünmesi ve mutluluk tepkileri, bu sınıf etkinliğinin oyunlaştırma öğeleridir.</p>');
   }
   function progress() {
@@ -576,11 +576,16 @@
     const resting=[];let changed=false;
     for(const [id,fish] of swimmers) {
       const s=classroom().students.find(s=>s.id===id);
-      const hungry=!!(s && !fish.egg && (viewing?s.publicMood==='hungry':C.hungerDays(s)>=2));
+      const absent=!!(s && (viewing?s.publicMood==='resting':s.days[today]?.absent));
+      const hungry=!!(s && !absent && !fish.egg && (viewing?s.publicMood==='hungry':C.hungerDays(s)>=2));
+      const bottomRest=!fish.egg && (absent || hungry);
+      if(fish.bottomRest && !bottomRest) {fish.targetX=null;fish.routeTime=0;fish.turn=null;fish.cruise=0;}
+      fish.absent=absent;fish.bottomRest=bottomRest;
+      fish.el.classList.toggle('is-absent',absent);
       if(fish.hungry!==undefined && fish.hungry!==hungry) changed=true;
       if(fish.hungry && !hungry) {fish.targetX=null;fish.routeTime=0;fish.turn=null;fish.cruise=0;}
       fish.hungry=hungry;fish.el.classList.toggle('is-hungry',hungry);
-      if(hungry) resting.push(fish);
+      if(bottomRest) resting.push(fish);
     }
     const columns=Math.max(1,Math.floor(width/(Math.max(60,...resting.map(f=>f.size))+18)));
     const rows=Math.ceil(resting.length/columns),rowGap=Math.min(70,height*.25/Math.max(1,rows));
@@ -595,7 +600,7 @@
     return changed;
   }
   function updateHungerLabel(fish, s) {
-    const days = viewing || s.isTeacher || !s.name ? 0 : C.hungerDays(s);
+    const days = viewing || s.isTeacher || !s.name || s.days[today]?.absent ? 0 : C.hungerDays(s);
     const label = fish.el.querySelector('.fish-hunger');
     label.hidden = days < 1;
     label.classList.remove('hunger-icon');
@@ -611,7 +616,7 @@
     for (const fish of swimmers.values()) placeFish(fish, 0);
   }
   function placeFish(fish) {
-    const p=fish.profile, moving=state.settings.motion && !reduced.matches && !fish.hungry;
+    const p=fish.profile, moving=state.settings.motion && !reduced.matches && !fish.bottomRest;
     const tilt=moving ? Math.sin(fish.phase*1.4)*p.tilt : 0;
     const pulse=moving ? 1+Math.sin(fish.phase*3)*p.pulse : 1;
     fish.el.style.transform='translate3d('+fish.x.toFixed(1)+'px,'+fish.y.toFixed(1)+'px,0)';
@@ -635,7 +640,7 @@
     const fish = [...swimmers.values()];
     for (let i=0;i<fish.length;i++) for(let j=i+1;j<fish.length;j++) {
       const a=fish[i], b=fish[j], key=[a.el.dataset.id,b.el.dataset.id].sort().join(':');
-      if (a.held || b.held || a.hungry || b.hungry || now-(a.lastChat??-300000)<300000 || now-(b.lastChat??-300000)<300000 || a.mood.id==='resting' || b.mood.id==='resting' || now-(pairCooldown.get(key)??-600000)<600000) continue;
+      if (a.held || b.held || a.bottomRest || b.bottomRest || now-(a.lastChat??-300000)<300000 || now-(b.lastChat??-300000)<300000 || a.mood.id==='resting' || b.mood.id==='resting' || now-(pairCooldown.get(key)??-600000)<600000) continue;
       if (Math.abs(a.x+a.size/2-b.x-b.size/2)>Math.max(a.size,b.size)*.8 || Math.abs(a.y-b.y)>60) continue;
       pairCooldown.set(key,now); nextChat=now+180000+Math.random()*120000;
       [a,b].forEach((f,index) => {
@@ -711,7 +716,7 @@
     const s=student(); if(!s) return;
     const dates=Object.keys(s.days).sort().reverse();
     historyPage=Math.min(historyPage,Math.max(0,Math.ceil(dates.length/30)-1));
-    openModal(s.name+' · Güzel adımlar','<p class="modal-intro">'+C.earned(s)+' toplam puan · '+C.completedCount(s)+' tamamlanan görev · '+s.feeds.length+' besleme</p>'+dates.slice(historyPage*30,(historyPage+1)*30).map(date=>'<div class="history-day"><h3>'+new Date(date+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})+(s.days[date].absent?' · İzinli':'')+'</h3>'+s.days[date].tasks.map(t=>'<div class="history-entry"><p>'+esc(t.title)+(t.sourceId?' · Ek ödül':'')+(t.awardedAt?' · '+new Date(t.awardedAt).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'')+' · '+C.taskPoints(t)+' puan <small>('+(s.days[date].absent?'değerlendirme dışı':t.status==='done'?'tamamlandı':t.status==='missed'?'eksik':'bekliyor')+')</small></p><div class="settings-actions">'+(t.status==='done'?'<button class="button" data-action="revoke-point" data-date="'+date+'" data-id="'+t.id+'">Puanı geri al</button>':'')+'<button class="button subtle" data-action="delete-point" data-date="'+date+'" data-id="'+t.id+'">Kaydı sil</button></div></div>').join('')+'</div>').join('')+'<div class="settings-actions"><button class="button" data-action="history-newer" '+(!historyPage?'disabled':'')+'>Daha yeni</button><button class="button" data-action="history-older" '+((historyPage+1)*30>=dates.length?'disabled':'')+'>Daha eski</button></div><p class="settings-note">Puanı geri almak görevi bekliyor durumuna getirir. Silmek yalnızca seçili günün kaydını kaldırır; davranış şablonunu silmez. Gerçekleşen beslemeler geçmişte korunur, yeni davranışların yem hakkı engellenmez. Silme geri alınamaz; önce yedek indirebilirsiniz.</p><button class="button subtle" data-action="fish-profile">← Davranışlara dön</button>');
+    openModal(s.name+' · Güzel adımlar','<p class="modal-intro">'+C.earned(s)+' toplam puan · '+C.completedCount(s)+' tamamlanan görev · '+s.feeds.length+' besleme</p>'+dates.slice(historyPage*30,(historyPage+1)*30).map(date=>'<div class="history-day"><h3>'+new Date(date+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})+(s.days[date].absent?' · İzinli':'')+'</h3>'+s.days[date].tasks.map(t=>'<div class="history-entry"><p>'+esc(t.title)+(t.sourceId?' · Ek ödül':'')+(t.awardedAt?' · '+new Date(t.awardedAt).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'')+' · '+C.taskPoints(t)+' puan <small>('+(t.status==='done'?'tamamlandı':s.days[date].absent?'değerlendirme dışı':t.status==='missed'?'eksik':'bekliyor')+')</small></p><div class="settings-actions">'+(t.status==='done'?'<button class="button" data-action="revoke-point" data-date="'+date+'" data-id="'+t.id+'">Puanı geri al</button>':'')+'<button class="button subtle" data-action="delete-point" data-date="'+date+'" data-id="'+t.id+'">Kaydı sil</button></div></div>').join('')+'</div>').join('')+'<div class="settings-actions"><button class="button" data-action="history-newer" '+(!historyPage?'disabled':'')+'>Daha yeni</button><button class="button" data-action="history-older" '+((historyPage+1)*30>=dates.length?'disabled':'')+'>Daha eski</button></div><p class="settings-note">Puanı geri almak görevi bekliyor durumuna getirir. Silmek yalnızca seçili günün kaydını kaldırır; davranış şablonunu silmez. Gerçekleşen beslemeler geçmişte korunur, yeni davranışların yem hakkı engellenmez. Silme geri alınamaz; önce yedek indirebilirsiniz.</p><button class="button subtle" data-action="fish-profile">← Davranışlara dön</button>');
   }
   function birthdayFields(s) {
     return '<p class="settings-note">Doğum günü · İsteğe bağlı, yalnızca gün ve ay. Kutlama öğretmen akvaryumunda görünür. Yıl ve yaş kaydedilmez.</p><div class="birthday-fields"><label class="field">Gün<select name="birthDay"><option value="">Belirtilmedi</option>'+Array.from({length:31},(_,i)=>'<option value="'+(i+1)+'" '+(s.birthday?.day===i+1?'selected':'')+'>'+(i+1)+'</option>').join('')+'</select></label><label class="field">Ay<select name="birthMonth"><option value="">Belirtilmedi</option>'+['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'].map((m,i)=>'<option value="'+(i+1)+'" '+(s.birthday?.month===i+1?'selected':'')+'>'+m+'</option>').join('')+'</select></label></div><p class="settings-note">29 Şubat doğum günleri yalnızca 29 Şubat gününde kutlanır. Kaldırmak için iki alanı da Belirtilmedi yapın.</p>';
@@ -842,7 +847,7 @@
         if(!s) break;
         const date=button.dataset.date,id=button.dataset.id,remove=action==='delete-point';
         const task=s.days[date]?.tasks.find(t=>t.id===id); if(!task) break;
-        confirm(remove?'Bu puan kaydını sil?':'Bu puanı geri al?', s.name+' · '+task.title+' · '+date+'. '+(task.status==='done'&&!s.days[date].absent?C.taskPoints(task)+' puan toplamdan çıkarılacak. ':'')+(remove?'Bu günün kaydı kalıcı olarak silinecek.':'Görev yeniden bekliyor durumuna gelecek.'),()=>{if(C.correctAward(s,date,id,remove)){commit();historyModal();toast(remove?'Seçili kayıt silindi.':'Puan geri alındı.');}});
+        confirm(remove?'Bu puan kaydını sil?':'Bu puanı geri al?', s.name+' · '+task.title+' · '+date+'. '+(task.status==='done'?C.taskPoints(task)+' puan toplamdan çıkarılacak. ':'')+(remove?'Bu günün kaydı kalıcı olarak silinecek.':'Görev yeniden bekliyor durumuna gelecek.'),()=>{if(C.correctAward(s,date,id,remove)){commit();historyModal();toast(remove?'Seçili kayıt silindi.':'Puan geri alındı.');}});
         break;
       }
       case 'remove-student': if (s) confirm('Öğrenciyi akvaryumdan çıkar?', s.name + ' ve bu akvaryumdaki görev geçmişi kaldırılacak. Geri yüklemek için önceden alınmış yedek gerekir.', () => { classroom().students = classroom().students.filter(x => x.id !== s.id); selected = ''; commit(); }); break;
@@ -876,9 +881,15 @@
       }
       case 'export': exportData(demo ? beforeDemo : state, 'sinif-akvaryumu-' + today + '.json'); break;
       case 'export-raw': try { exportData(localStorage.getItem(KEY) || '{}', 'akvaryum-kurtarma-' + today + '.json'); } catch (e) { toast('Tarayıcı kaydına erişilemiyor.'); } break;
+      case 'close-panel': closePanel(); break;
       case 'panel': $('aquarium').classList.toggle('panel-hidden'); updatePanelToggle(); break;
       case 'fullscreen': try { if (document.fullscreenElement) await document.exitFullscreen(); else if ($('aquariumApp').requestFullscreen) await $('aquariumApp').requestFullscreen(); else toast('Bu tarayıcı tam ekranı desteklemiyor.'); } catch (e) { toast('Tam ekran açılamadı. Tarayıcı iznini kontrol edin.'); } break;
     }
+  }
+  function closePanel() {
+    $('aquarium').classList.add('panel-hidden');
+    updatePanelToggle();
+    document.querySelector('[data-action="panel"]').focus();
   }
   function updatePanelToggle() {
     const hidden = $('aquarium').classList.contains('panel-hidden');
@@ -886,6 +897,11 @@
     button.title = hidden ? 'Sınıf yönetimini aç' : 'Sınıf yönetimini gizle';
     button.setAttribute('aria-expanded', String(!hidden)); button.setAttribute('aria-label', hidden ? 'Sınıf yönetimini aç' : 'Sınıf yönetimini gizle');
   }
+  document.addEventListener('keydown', event => {
+    if(event.key==='Escape' && !modal.open && !$('aquarium').classList.contains('panel-hidden')) {
+      event.preventDefault(); closePanel();
+    }
+  });
   document.addEventListener('click', event => { const button = event.target.closest('[data-action]'); if (button && !button.disabled) act(button); });
   modal.addEventListener('click', event => { if (event.target === modal) { const r = modal.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closeModal(); } });
   modal.addEventListener('close', () => { releaseFish(); confirmAction = null; pendingRestore = null; });

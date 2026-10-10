@@ -165,3 +165,12 @@ test('deleting a class closes its child codes and class link before clearing the
   else {assert.equal(writes[1].value.enabled,false);assert.equal(JSON.stringify(writes[1].value.snapshot),'{}');assert.equal(writes[1].value.token,'rotated-token');assert.ok(writes[1].filters.some(([k,v])=>k==='owner_id'&&v==='owner-1'));}
  }
 });
+
+test('read-only viewers see absent fish resting without losing their hatched appearance',async()=>{
+ const h=await viewerHarness({theme:'reef',settings:{names:true,points:true,motion:true},students:[{id:'a',name:'Ada',species:'clown',mood:'resting',points:20,appearance:{egg:false,scale:.55,trophy:false}}]});
+ const f=h.document.querySelector('.fish');assert.equal(f.classList.contains('is-egg'),false);assert.equal(f.classList.contains('is-absent'),true);
+ const position=f.style.transform,art=f.querySelector('.fish-art').style.transform;
+ for(let i=1;i<=200;i++)h.frames.pop()(i*50);
+ assert.equal(f.style.transform,position);assert.equal(f.querySelector('.fish-art').style.transform,art);
+ assert.equal(f.disabled,true);assert.equal(f.querySelector('.fish-points').textContent,'★ 20');assert.deepEqual(h.io(),{reads:0,writes:0});
+});

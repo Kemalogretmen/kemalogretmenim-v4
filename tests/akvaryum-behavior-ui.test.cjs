@@ -4,10 +4,10 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const C=require('../js/akvaryum-core.js');
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz');
-  cls.tasks[0].points=7;cls.students.push(s);s.createdAt=Date.now()-ageDays*86400000-1000;
+  cls.tasks[0].points=7;cls.students.push(s);if(growth)cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*7)};s.createdAt=Date.now()-ageDays*86400000-1000;
   extraNames.forEach(name=>cls.students.push(C.newStudent(name)));
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
@@ -390,4 +390,35 @@ test('tail strokes stop for hungry fish, resume after feeding, and obey the moti
  const quiet=await harness({ageDays:0,reduced:true});
  assert.equal(quiet.document.querySelector('.fish').style.getPropertyValue('--tail-flex'),'0.00deg');
  assert.equal(quiet.frames.length,0);
+});
+
+
+test('management panel can close from its own header or Escape without reloading',async()=>{
+ const h=await harness(),d=h.document,panel=d.getElementById('aquarium');
+ h.click('[data-action="panel"]');assert.equal(panel.classList.contains('panel-hidden'),false);
+ h.click('[data-action="close-panel"]');assert.equal(panel.classList.contains('panel-hidden'),true);
+ assert.equal(d.querySelector('[data-action="panel"]').getAttribute('aria-expanded'),'false');
+ h.click('[data-action="panel"]');
+ const escape=new h.window.Event('keydown',{bubbles:true,cancelable:true});escape.key='Escape';d.dispatchEvent(escape);
+ assert.equal(panel.classList.contains('panel-hidden'),true);
+});
+
+test('absence preserves hatched growth and points, rests the fish, then restores swimming',async()=>{
+ const h=await harness({ageDays:0,growth:true}),d=h.document,fish=d.querySelector('.fish');
+ assert.equal(fish.classList.contains('is-egg'),true);
+ h.click('.fish');h.click('[data-action="reward-behavior"]');
+ const scale=fish.style.getPropertyValue('--growth-scale');assert.equal(fish.classList.contains('is-egg'),false);
+ h.click('.fish');h.click(h.modal.querySelector('[data-action="absence"]'));
+ assert.equal(C.earned(h.saved().classes[0].students[0]),7);
+ assert.equal(fish.style.getPropertyValue('--growth-scale'),scale);
+ assert.equal(fish.classList.contains('is-egg'),false);assert.equal(fish.classList.contains('is-absent'),true);
+ assert.equal(fish.querySelector('.fish-hunger').hidden,true);
+ h.click('[data-action="close"]');
+ let n=0;const advance=count=>{for(let i=0;i<count;i++)h.frames.pop()(++n*50);};
+ advance(1500);const rest=fish.style.transform,art=fish.querySelector('.fish-art').style.transform;
+ advance(100);assert.equal(fish.style.transform,rest);assert.equal(fish.querySelector('.fish-art').style.transform,art);
+ assert.equal(fish.style.getPropertyValue('--tail-flex'),'0.00deg');
+ h.click('.fish');h.click(h.modal.querySelector('[data-action="absence"]'));h.click('[data-action="close"]');
+ advance(200);assert.equal(fish.classList.contains('is-absent'),false);assert.notEqual(fish.style.transform,rest);
+ assert.equal(C.earned(h.saved().classes[0].students[0]),7);
 });

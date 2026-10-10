@@ -36,7 +36,8 @@ test('missed tasks slow the fish, completion recovers it, and feeding makes it h
 test('an absent student rests, cannot earn or spend food, and recovers when attendance is restored', () => {
   const { student, day } = setup();
   C.setTask(student, TODAY, day.tasks[0].id, 'done'); day.absent = true;
-  assert.equal(C.balance(student), 0);
+  assert.equal(C.balance(student), 1);
+  assert.equal(C.earned(student), 1);
   assert.equal(C.mood(student, TODAY).id, 'resting');
   assert.equal(C.setTask(student, TODAY, day.tasks[1].id, 'done'), false);
   assert.equal(C.feed(student, TODAY), false);

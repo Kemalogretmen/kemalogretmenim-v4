@@ -80,7 +80,7 @@ test('camera depth changes gently, crosses the clock plane, and never enlarges f
   M.step([f],.05,1000,600,()=>.5);
   assert.ok(Math.abs(f.waterDepth-previous)<=.001251);previous=f.waterDepth;
   const view=M.perspective(f);layers.add(view.layer);
-  assert.ok(view.scale>=.76&&view.scale<=1);assert.ok(view.opacity>=.76&&view.opacity<=1);
+  assert.ok(view.scale>=.66&&view.scale<=1);assert.ok(view.opacity>=.76&&view.opacity<=1);
  }
  assert.deepEqual([...layers],[1,3]);
  f.held=true;const depth=f.waterDepth;advance([f],100);assert.equal(f.waterDepth,depth);

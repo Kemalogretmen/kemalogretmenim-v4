@@ -206,3 +206,13 @@ dialog .button:hover:not(:disabled),dialog .activity-card:hover,dialog .behavior
 @keyframes sand-reflections{from{transform:perspective(480px) rotateX(57deg) translate3d(-20px,0,0) scale(1);opacity:.45}to{transform:perspective(480px) rotateX(61deg) translate3d(24px,9px,0) scale(1.09);opacity:.75}}
 .no-motion .water-light,.no-motion .water-light::before,.no-motion .water-light::after{animation:none}
 @media(prefers-reduced-motion:reduce){.fish-tail-image{transform:none!important}.water-light,.water-light::before,.water-light::after{animation:none}}
+
+/* Management controls stay reachable while the student list scrolls. */
+.panel-heading-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.panel-top,.panel-tabs,.panel-bottom,.class-progress{flex-shrink:0}
+.panel-content{min-height:0}
+.panel-close{width:36px;height:36px;background:#bce8e914;border-color:#d4f5f45c;color:#efffff}
+.fish.is-absent{opacity:1}
+.fish.is-absent .fish-art{filter:brightness(.84) saturate(.4) opacity(.55) drop-shadow(0 3px 4px #032f4933)}
+.fish.is-absent .fish-egg{opacity:.5}
+.fish.is-absent .fish-tail-image{transform:none}

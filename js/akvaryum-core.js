@@ -89,10 +89,11 @@
     if (!student.days[date]) student.days[date] = { absent: false, tasks: classroom.tasks.map(t => ({ id: t.id, title: t.title, icon: taskIcon(t.icon), points: taskPoints(t), status: 'pending' })) };
     return student.days[date];
   }
+  // Attendance blocks new rewards; it never revokes already awarded points.
   function earned(student) {
-    return Object.values(student.days).reduce((n, d) => n + (d.absent ? 0 : d.tasks.reduce((sum, t) => sum + (t.status === 'done' ? taskPoints(t) : 0), 0)), 0);
+    return Object.values(student.days).reduce((n, d) => n + d.tasks.reduce((sum, t) => sum + (t.status === 'done' ? taskPoints(t) : 0), 0), 0);
   }
-  const completedCount = student => Object.values(student.days).reduce((n, d) => n + (d.absent ? 0 : d.tasks.filter(t => t.status === 'done').length), 0);
+  const completedCount = student => Object.values(student.days).reduce((n, d) => n + d.tasks.filter(t => t.status === 'done').length, 0);
   const balance = student => Math.max(0, completedCount(student) - student.feeds.filter(f => !f.creditReversed).length);
   const TASK_ICONS = ['⭐','📖','✏️','💙','🌿','🤝','🎯','🏆','🧠','🎨','🎵','🧹','🧩','💡','🙋','🕊️','🌍','🌟','😊','💪','📝','🔬','⚽','🎒'];
   const taskIcon = value => typeof value === 'string' && value.trim().length <= 16 && !/[<>\x00-\x1f]/.test(value) ? value.trim() : '';
@@ -159,7 +160,7 @@
   function correctAward(student, date, taskId, remove = false) {
     const day = student.days[date], task = day?.tasks.find(t => t.id === taskId);
     if (!task || (!remove && task.status !== 'done')) return false;
-    if (!day.absent && task.status === 'done' && balance(student) === 0) {
+    if (task.status === 'done' && balance(student) === 0) {
       const consumed = [...student.feeds].reverse().find(f => !f.creditReversed);
       if (consumed) consumed.creditReversed = true;
     }
@@ -216,8 +217,8 @@
   }
   function mood(student, date = dayKey()) {
     const day = student.days[date];
+    if (day?.absent) return { id: 'resting', label: 'Dinleniyor', symbol: '☾', speed: 0, note: 'Bugün izinli. Balığı tabanda dinleniyor; kazanılmış puanları ve büyümesi korunuyor.' };
     if (hungerDays(student)>=2) return {id:'hungry',label:'Yem bekliyor',symbol:'',speed:0,note:'İki gündür beslenmedi. Yeniden beslendiğinde yüzmeye başlayacak.'};
-    if (day?.absent) return { id: 'resting', label: 'Dinleniyor', symbol: '☾', speed: 0.18, note: 'Bugün izinli. Görevleri değerlendirmeye alınmıyor.' };
     if (day?.tasks.some(t => t.status === 'missed')) return { id: 'sad', label: 'Biraz üzgün', symbol: '◡', speed: 0.3, note: 'Eksik görevini tamamlayınca yeniden canlanacak.' };
     if (student.feeds.some(f => f.day === date)) return { id: 'happy', label: 'Çok mutlu', symbol: '♡', speed: 1.1, note: 'Yemini yedi, keyifle yüzüyor!' };
     if (day?.tasks.some(t => t.status === 'done')) return { id: 'ready', label: 'Yemini bekliyor', symbol: '✦', speed: 0.7, note: 'Tamamlanan görevlerden kazandığın yemle besleyebilirsin.' };

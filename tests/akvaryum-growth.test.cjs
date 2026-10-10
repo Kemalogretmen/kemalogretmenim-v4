@@ -44,3 +44,14 @@ test('growth, separate teacher and corrections roundtrip; malformed thresholds a
   cls.growth.thresholds=thresholds;assert.throws(()=>C.validate(state),/10 hedef/);
  }
 });
+
+test('absence does not undo earned growth, and explicit corrections still reverse consumed credit',()=>{
+ const {cls,s}=fixture(),date=C.dayKey();cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*10)};
+ C.awardBehavior(s,cls,date,cls.tasks[0].id);const grown=C.growth(s,cls);
+ s.days[date].absent=true;
+ assert.deepEqual(C.growth(s,cls),grown);assert.equal(C.earned(s),10);assert.equal(C.mood(s).id,'resting');
+ const saved=C.validate(JSON.parse(JSON.stringify({version:1,classes:[cls],activeClassId:cls.id,settings:{}})));
+ assert.equal(C.earned(saved.classes[0].students[0]),10);
+ C.correctAward(s,date,cls.tasks[0].id);assert.equal(C.earned(s),0);assert.equal(s.feeds[0].creditReversed,true);
+ s.days[date].absent=false;assert.equal(C.awardBehavior(s,cls,date,cls.tasks[1].id).fed,true);
+});

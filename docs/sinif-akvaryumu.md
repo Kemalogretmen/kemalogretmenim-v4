@@ -158,3 +158,11 @@ Teknik dayanak: [MDN Page Visibility](https://developer.mozilla.org/en-US/docs/W
 - Kuyruklu balıklarda gövde ve kuyruk aynı önbellekli görselin iki parçasıyla çizilir. Türün kuyruk birleşim noktası sabit tutulur; yüzme evresine bağlı küçük perspektif/esneme hareketi kullanılır. Kaplumbağa, vatoz, denizatı, ahtapot ve denizanasına balık kuyruğu uygulanmaz. Açlık, yumurta, hareketi kapatma ve cihazın hareketi azaltma tercihi kuyruk hareketini durdurur. Ek görsel veya video indirilmez.
 - Su huzmeleri, yüzey ışığı ve kum yansımaları bağımsız 21–31 saniyelik yavaş döngülerle hareket eder. Tümü mevcut hareket ayarına uyar.
 - Kullanıcı 10 Ekim’de canlı yayın istedi; bu paket önceki yerel düzenlemeleri ve kuyruk/ışık eklemelerini birlikte içerir.
+
+## 11 Ekim 2026 — paneli kapatma, devamsızlık ve kamera derinliği
+
+- Sınıf yönetimi panelinin başlığında ayrı × kapatma düğmesi vardır. Liste kayarken başlık yerinde kalır; Esc, açık bir pencere yokken paneli kapatır. Odak yönetimi açma düğmesine döner.
+- Devamsızlık artık geçmişte tamamlanmış görevlerin puanını/yem hakkını toplamdan düşürmez. Bu hata aynı gün büyümüş balığı yumurtaya geri döndürebiliyordu. Yeni puan/besleme devamsızlık boyunca engellenir; öğretmenin açıkça yaptığı puanı geri alma/silme işlemi hâlâ geçerlidir. Eski kayıtlarda görevler korunduğu için toplamlar yeni hesapla kendiliğinden düzelir.
+- Gelmeyen öğrencinin yumurtadan çıkmış balığı, büyüklüğünü koruyarak soluk biçimde tabana iner ve sabit durur. Kuyruk, sallanma ve kamera derinliği durur. “Bugün geldi” seçilince (balık ayrıca iki gündür aç değilse) yeniden yüzer. Henüz çıkmamış yumurtalar yumurta olarak kalır ve soluklaşır. İzleyici görünümünde de aynı dinlenme hali gösterilir; ek özel bilgi paylaşılmaz.
+- Kamera derinliğinde balık görselleri uzakta %66, yakında %100 ölçeğe kadar yumuşakça değişir. 24–40 saniyede bir seçilen derinlik hedefleri, yaklaşma/uzaklaşmayı daha görünür yapar; isim/puan boyutları sabittir. Etki puanla ilişkili değildir, mevcut hareketi azaltma seçeneğine uyar ve balıkları sahne sınırlarından taşırmaz.
+- Yerel doğrulama: 174 otomatik test; panel aç/kapat ve devamsız balık görünümü tarayıcıda kontrol edildi.

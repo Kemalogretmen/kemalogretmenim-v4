@@ -25,7 +25,7 @@
   }
   function perspective(f) {
     const depth=clamp(f.waterDepth??.5,0,1);
-    return {scale:.76+.24*depth,opacity:.76+.24*depth,brightness:.86+.14*depth,
+    return {scale:.66+.34*depth,opacity:.76+.24*depth,brightness:.86+.14*depth,
       saturation:.78+.22*depth,layer:depth<.5?1:3};
   }
   function layout(items, width, height) {
@@ -79,8 +79,8 @@
     // Routes are individual. Nearby fish never trigger a turn or a slowdown.
     fish.forEach(f => {
       if(f.held) { f.cruise=0; return; }
-      if(f.hungry) {
-        // Settle gently on the sand, then remain still until the next feeding.
+      if(f.bottomRest || f.hungry) {
+        // Absent or hungry animals settle on the sand; neither changes camera depth.
         f.turn=null;f.cruise=0;f.routeTime=0;f.targetX=null;
         const approach=(from,to,rate)=>Math.abs(to-from)<.15?to:from+(to-from)*Math.min(1,dt*rate);
         f.x=clamp(approach(f.x,f.restX??f.x,.55),0,Math.max(0,width-f.size));
@@ -93,7 +93,7 @@
       f.cruise=(f.cruise??1)+(target-(f.cruise??1))*Math.min(1,dt*14);
       if(f.cruise<.002) { f.cruise=0; return; }
       f.depthTime=(f.depthTime??0)-dt*f.cruise;
-      if(f.depthTime<=0) {f.depthTarget=.08+random()*.84;f.depthTime=18+random()*18;}
+      if(f.depthTime<=0) {f.depthTarget=(f.waterDepth??.5)<.5 ? .72+random()*.23 : .05+random()*.23;f.depthTime=24+random()*16;}
       const distance=f.waterDepth??.5;
       f.waterDepth=clamp(distance+clamp((f.depthTarget-distance)*.09,-.025,.025)*dt*f.cruise,0,1);
       const p=f.profile||normal, speed=24*f.mood.speed*p.speed*f.cruise;
