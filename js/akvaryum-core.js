@@ -216,6 +216,7 @@
   }
   function mood(student, date = dayKey()) {
     const day = student.days[date];
+    if (hungerDays(student)>=2) return {id:'hungry',label:'Yem bekliyor',symbol:'',speed:0,note:'İki gündür beslenmedi. Yeniden beslendiğinde yüzmeye başlayacak.'};
     if (day?.absent) return { id: 'resting', label: 'Dinleniyor', symbol: '☾', speed: 0.18, note: 'Bugün izinli. Görevleri değerlendirmeye alınmıyor.' };
     if (day?.tasks.some(t => t.status === 'missed')) return { id: 'sad', label: 'Biraz üzgün', symbol: '◡', speed: 0.3, note: 'Eksik görevini tamamlayınca yeniden canlanacak.' };
     if (student.feeds.some(f => f.day === date)) return { id: 'happy', label: 'Çok mutlu', symbol: '♡', speed: 1.1, note: 'Yemini yedi, keyifle yüzüyor!' };

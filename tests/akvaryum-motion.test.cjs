@@ -91,3 +91,15 @@ test('camera placement is stable and independent of rewards, feeding or other st
  const other=M.layout([{id:'other',species:'tang',size:125},{...a,points:1000,hunger:5}],800,450).get(a.id).waterDepth;
  assert.equal(original,other);
 });
+
+
+test('hungry animals settle smoothly, remain completely still, then resume independent routes',()=>{
+ const fish=animals(30,1240,600);
+ for(const f of fish){f.hungry=true;f.restX=f.x;f.restY=f.maxY;}
+ for(let i=0;i<600;i++) {const before=fish.map(f=>f.y);M.step(fish,.05,1240,600);fish.forEach((f,j)=>{assert.ok(f.y>=before[j]);assert.ok(f.y<=f.maxY);});}
+ const resting=fish.map(f=>[f.x,f.y,f.angle,f.phase,f.waterDepth]);
+ for(let i=0;i<200;i++)M.step(fish,.05,1240,600);
+ assert.deepEqual(fish.map(f=>[f.x,f.y,f.angle,f.phase,f.waterDepth]),resting);
+ fish.forEach(f=>f.hungry=false);for(let i=0;i<100;i++)M.step(fish,.05,1240,600);
+ assert.notDeepEqual(fish.map(f=>[f.x,f.y,f.angle,f.phase,f.waterDepth]),resting);
+});

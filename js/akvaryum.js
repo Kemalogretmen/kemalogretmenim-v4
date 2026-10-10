@@ -19,6 +19,13 @@
       img.src=src.replace('/web-v1/','/').replace(/\.webp$/,'.png');
     }
   },true);
+  // Tail joints measured on the right-facing, transparent source sprites.
+  // Non-fish swimmers retain their own motion profile instead of a fish tail.
+  const tailJoints = {clown:29,tang:26,butterfly:20,yellowtang:24,angelfish:27,
+    mandarin:29,lionfish:26,puffer:23,gramma:26,firefish:38,triggerfish:24,
+    shark:23,dolphin:22,royalblue:24,copperband:20,discus:25,betta:49,
+    goldfish:44,guppy:43,neon:25,cardinal:36,anthias:31,goby:28,
+    blenny:24,parrot:24,wrasse:27,moorish:29,rabbit:25,flame:25};
   const background = id => '/assets/akvaryum/arka-planlar/' + (C.THEMES.find(t => t.id === id) || C.THEMES[0]).file;
   const filterText = value => String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
   function lockAccess(message) {
@@ -54,7 +61,7 @@
   }
   function viewState(data) {
     const cls = C.newClass(C.clean(data.name)); cls.theme = C.THEMES.some(t => t.id === data.theme) ? data.theme : 'reef';
-    cls.students = data.students.slice(0,60).map((s,i) => ({ ...C.newStudent(C.clean(s.name), s.species), id: 'view-' + i, appearance:{egg:s.appearance?.egg===true,scale:Number.isFinite(s.appearance?.scale)?Math.max(.35,Math.min(1,s.appearance.scale)):1,trophy:s.appearance?.trophy===true}, publicMood: ['happy','sad','resting','ready','calm'].includes(s.mood) ? s.mood : 'calm', publicPoints: Number.isFinite(s.points) ? Math.max(0,s.points) : null }));
+    cls.students = data.students.slice(0,60).map((s,i) => ({ ...C.newStudent(C.clean(s.name), s.species), id: 'view-' + i, appearance:{egg:s.appearance?.egg===true,scale:Number.isFinite(s.appearance?.scale)?Math.max(.35,Math.min(1,s.appearance.scale)):1,trophy:s.appearance?.trophy===true}, publicMood: ['happy','sad','resting','ready','calm','hungry'].includes(s.mood) ? s.mood : 'calm', publicPoints: Number.isFinite(s.points) ? Math.max(0,s.points) : null }));
     if(!childViewing && data.teacher && typeof data.teacher.species==='string') cls.teacher={enabled:true,name:C.clean(data.teacher.name),species:C.species(data.teacher.species).id};
     return { version:1, classes:[cls], activeClassId:cls.id, settings:C.settingsOf({...data.settings, classPoints: !childViewing && data.settings?.classPoints === true}), publicClassPoints: !childViewing && Number.isFinite(data.classPoints) ? Math.max(0,data.classPoints) : null };
   }
@@ -102,7 +109,7 @@
   const student = () => classroom().students.find(s => s.id === selected);
   const day = s => C.ensureDay(s, classroom(), today);
   const ensureDays = () => { if (!viewing) classroom().students.forEach(day); };
-  const fishMood = s => s.isTeacher ? {id:'calm',speed:.65,label:'Birlikte öğreniyoruz'} : viewing ? { id:s.publicMood, speed:({happy:1.1,sad:.3,resting:.18,ready:.7,calm:.6})[s.publicMood], symbol:'', label:'' } : C.mood(s,today);
+  const fishMood = s => s.isTeacher ? {id:'calm',speed:.65,label:'Birlikte öğreniyoruz'} : viewing ? { id:s.publicMood, speed:({happy:1.1,sad:.3,resting:.18,ready:.7,calm:.6,hungry:0})[s.publicMood], symbol:'', label:'' } : C.mood(s,today);
   const score = s => s.isTeacher ? null : viewing ? s.publicPoints : C.earned(s);
   function queueShare(work) { shareQueue = shareQueue.catch(() => {}).then(work); return shareQueue; }
   function scheduleShare() {
@@ -115,12 +122,13 @@
   }
   async function sharingModal() {
     if (demo || demoOnly) return toast('Paylaşım için öğretmen hesabınızla kendi sınıfınızı açın.');
+    rememberModal('sharingModal',()=>sharingModal());
     openModal('Veli kodları ve sınıf paylaşımı', '<p>Paylaşım durumu kontrol ediliyor…</p>');
     const cls=classroom(), id=cls.id;
     try {
       const results=await Promise.all([window.AquariumSharing.get(id),window.AquariumSharing.listOpen()]); shareRecord=results[0];
       const children=await window.AquariumSharing.childLinks(shareRecord?.id);
-      if (!modal.open || id !== classroom().id) return;
+      if (!modal.open || id !== classroom().id || modalRoute?.key!=='sharingModal') return;
       const link = new URL(location.pathname,location.origin); link.searchParams.set('izle', shareRecord?.token || '');
       const entry=new URL(location.pathname+'?veli=1',location.origin);
       const childRows=cls.students.map(student=> {
@@ -129,7 +137,7 @@
         return '<div class="child-share"><strong>'+esc(student.name)+'</strong>'+(row ? '<label class="field">Çocuğa özel veli kodu<input readonly value="'+esc(row.token)+'"></label><div class="settings-actions"><button class="button" data-action="copy-child" data-link="'+esc(url.href)+'">Bağlantıyı kopyala</button><button class="button" data-action="copy-child" data-link="'+esc(row.token)+'">Kodu kopyala</button><button class="button danger" data-action="disable-child" data-id="'+esc(row.id)+'">Kodu kapat</button></div>' : '<button class="button" data-action="enable-child" data-student="'+esc(student.id)+'">Veli kodu oluştur</button>')+'</div>';
       }).join('');
       openModal('Veli kodları ve sınıf paylaşımı','<p class="modal-intro">Her veliye kendi çocuğunun kodunu verin. Bu kod yalnızca o balığı açar; diğer öğrenciler, görev geçmişi ve sınıf puanı gösterilmez. Kodla izleyenler besleme veya düzenleme yapamaz.</p><p class="settings-note">Veli kod giriş adresi: <a href="'+esc(entry.href)+'">'+esc(entry.href)+'</a>. Kod özel bir erişim anahtarıdır; yalnızca ilgili veliyle paylaşın.</p><div class="child-shares">'+(childRows || '<p>Veli kodu oluşturmak için önce öğrenci ekleyin.</p>')+'</div><div class="settings-section"><h3>Tüm ziyaretçilere sınıfı göster</h3><p class="settings-note">Bu ayrı izin açılırsa sınıf bağlantısını alan herkes tüm balıkları görür. Veli kodları yine yalnızca tek çocuğu gösterir.</p><p class="share-state">'+(shareRecord?.enabled?'● Sınıfın tamamı izlemeye açık':'○ Sınıfın tamamı izlemeye kapalı')+'</p>'+(shareRecord?.enabled?'<label class="field">Tüm sınıf bağlantısı<input id="shareLink" readonly value="'+esc(link.href)+'"></label><div class="settings-actions"><button class="button" data-action="copy-share">Sınıf bağlantısını kopyala</button><button class="button danger" data-action="disable-share">Tüm sınıf paylaşımını kapat</button></div>':'<button class="button primary" data-action="enable-share">Tüm ziyaretçilere sınıfı aç</button>')+'<p class="settings-note">Kapatılan kod ve bağlantılar açık izleyici ekranında en geç yaklaşık 15 saniyede kapanır. Yeniden açıldığında yeni kod oluşur.</p></div>'+results[1].filter(row=>row.local_id!==id).map(row=>'<div class="task-template"><span>'+esc(row.snapshot?.name || 'Sınıf')+'</span><button class="button danger" data-action="disable-other-share" data-id="'+esc(row.id)+'">Sınıf paylaşımını kapat</button></div>').join(''));
-    } catch(e) { if(modal.open) openModal('Paylaşım kullanılamıyor','<p class="modal-intro">'+esc(e.message)+'</p>'); }
+    } catch(e) { if(modal.open && modalRoute?.key==='sharingModal') openModal('Paylaşım kullanılamıyor','<p class="modal-intro">'+esc(e.message)+'</p>'); }
   }
   function renderSoundControl() {
     const button=$('soundToggle'); if(!button) return;
@@ -179,7 +187,25 @@
   }
   function cloudControls(){return '<p class="settings-note">'+esc(cloudMessage||'Sınıflar, öğrenciler, görevler ve ses favorileri öğretmen hesabınıza kaydedilir. Aynı hesapla başka cihazda açabilirsiniz. Çevrimdışı değişiklikler bu cihazda tutulur; çakışan kayıtlar otomatik ezilmez.')+'</p><div class="settings-actions"><button class="button" data-action="retry-cloud">Şimdi eşitle</button>'+(cloud?.isConflict()?'<button class="button" data-action="use-cloud">Hesaptaki kaydı kullan</button><button class="button" data-action="use-local">Bu cihazdaki kaydı kullan</button>':'')+'<button class="button" data-action="export-recovery">Korunan yerel kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button></div>';}
   function commit() { save(); render(); scheduleShare(); }
+  let modalHistory=[],modalRoute=null,pendingModalRoute=null,goingBack=false;
+  function rememberModal(key,render) {pendingModalRoute={key,render};}
+  function modalBack() {
+    const previous=modalHistory.pop();confirmAction=null;pendingRestore=null;
+    if(!previous) {closeModal();return;}
+    selected=previous.selected;goingBack=true;
+    try{previous.render();modal.scrollTop=previous.scroll||0;}finally{goingBack=false;}
+  }
   function openModal(title, html, eyebrow = 'SINIF AKVARYUMU') {
+    const route=pendingModalRoute || (modal.open && $('modalTitle').textContent===title ? modalRoute : null) || {key:title,render:()=>openModal(title,html,eyebrow)};pendingModalRoute=null;
+    if(!modal.open) modalHistory=[];
+    else if(!goingBack && modalRoute?.key!==route.key) {
+      const index=modalHistory.findIndex(r=>r.key===route.key);
+      if(index>=0) modalHistory=modalHistory.slice(0,index);
+      else if(modalRoute) modalHistory.push({...modalRoute,scroll:modal.scrollTop});
+    }
+    modalRoute={...route,selected};
+    $('modalBack').textContent=modalHistory.length?'← Geri':'← Akvaryuma dön';
+
     modal.classList.remove('behavior-modal', 'student-day-modal');
     $('modalTitle').textContent = title; $('modalEyebrow').textContent = eyebrow; $('modalContent').innerHTML = html;
     if (!modal.open) modal.showModal();
@@ -188,7 +214,7 @@
     if (field) field.focus();
   }
   function releaseFish() { inspectedId = ''; swimmers.forEach(f => { f.hover = false; f.keyboard = false; f.pressed = false; f.el.classList.remove('is-selected'); }); }
-  function closeModal() { modal.close(); releaseFish(); confirmAction = null; pendingRestore = null; }
+  function closeModal() { modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); releaseFish(); confirmAction = null; pendingRestore = null; }
   function confirm(title, description, callback) {
     confirmAction = callback;
     openModal(title, '<p class="modal-intro">' + esc(description) + '</p><div class="form-actions"><button class="button" data-action="close">Vazgeç</button><button class="button danger" data-action="confirm">Onayla</button></div>');
@@ -204,21 +230,27 @@
     $('speciesResults').textContent = (count ? count + ' canlı' : 'Bu isimde canlı bulunamadı.') + (checked ? ' · Seçili: ' + C.species(checked.value).name : '');
   }
   function addModal(setup = false) {
+    rememberModal('addModal'+String(setup),()=>addModal(setup));
     if (demo) return toast('Öğrenci eklemek için önce kendi sınıfınıza dönün.');
     openModal(setup ? 'Sınıfımızla tanışalım' : 'Yeni deniz dostları', '<p class="modal-intro">Öğrencilerinizi ekleyin. Her öğrenci daha sonra “Balığımı seç” ekranından kendi canlısını seçebilir.</p><form id="addForm">' + (setup ? '<label class="field">Sınıf adı<input name="className" value="' + esc(classroom().name) + '" maxlength="80" required autofocus></label>' : '') + '<label class="field">Öğrenci adları<textarea name="names" placeholder="Her satıra bir öğrenci adı yazın" maxlength="5000" required ' + (!setup ? 'autofocus' : '') + '></textarea><span class="field-hint">Tek öğrenci veya tüm sınıfı ekleyebilirsiniz. Sınıf başına en fazla 60 öğrenci.</span></label>' + speciesPicker('clown') + '<p class="form-error" id="formError" role="alert"></p><div class="form-actions"><button type="button" class="button subtle" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button primary" type="submit">Akvaryuma ekle ' + icon('plus') + '</button></div></form>');
   }
   function chooseModal(id = selected) {
+    rememberModal('chooseModal'+String(id),()=>chooseModal(id));
     if (!classroom().students.length) return addModal();
     const s = classroom().students.find(x => x.id === id) || classroom().students[0];
     openModal('Benim deniz dostum', '<p class="modal-intro">Önce adını, sonra birlikte yolculuğa çıkacağın canlıyı seç. İstediğin zaman değiştirebilirsin.</p><form id="chooseForm"><label class="field">Ben kimim?<select name="studentId" id="chooseStudent">' + classroom().students.map(x => '<option value="' + x.id + '" ' + (s.id === x.id ? 'selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></label>' + speciesPicker(s.species) + '<div class="form-actions"><button type="submit" class="button primary">Bu benim deniz dostum ' + icon('heart') + '</button></div></form>', 'SENİN SEÇİMİN, SENİN DOSTUN');
   }
   function themesModal() {
+    rememberModal('themesModal'+'',()=>themesModal());
     openModal('Bugün nereye dalalım?', '<p class="modal-intro">Sınıfınızın dünyasını değiştirin. Her ortamda aynı deniz dostları sizinle.</p><div class="theme-grid">' + C.THEMES.map(t => '<button class="theme-card" data-action="theme" data-theme="' + t.id + '" aria-pressed="' + (classroom().theme === t.id) + '"><img src="' + background(t.id) + '" alt="' + t.name + '"><strong>' + t.name + '</strong><small>' + t.description + '</small></button>').join('') + '</div>');
   }
+  function soundModal() {rememberModal('soundModal',()=>soundModal());openModal('Ortam sesleri',soundSettings());}
   function settingsModal() {
-    openModal('Sınıfın kontrolü sende', '<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="' + esc(classroom().name) + '" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">' + icon('plus') + 'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="teacher-fish">Öğretmen balığı</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div><div class="settings-section"><h3>Akvaryum görünümü</h3><button class="button" data-action="themes">Arka planı değiştir</button><label class="toggle-row">Balıkların üzerinde toplam puanlarını göster<input id="pointsToggle" type="checkbox" ' + (state.settings.points ? 'checked' : '') + '></label><label class="toggle-row">Sınıf puanlarını göster · İstiridye ve inci<input id="classPointsToggle" type="checkbox" ' + (state.settings.classPoints ? 'checked' : '') + '></label><label class="toggle-row">Açlık uyarısını simge yerine yazıyla göster<input id="hungerTextToggle" type="checkbox" ' + (state.settings.hungerText ? 'checked' : '') + '></label><label class="toggle-row">Seyrek emoji sohbetleri<input id="chatToggle" type="checkbox" ' + (state.settings.chat ? 'checked' : '') + '></label><label class="toggle-row">Öğrenci adlarını göster · Kapatınca isimsiz yüzerler<input id="namesToggle" type="checkbox" ' + (state.settings.names ? 'checked' : '') + '></label><label class="toggle-row">Canlıların yüzmesi ve su hareketleri<input id="motionToggle" type="checkbox" ' + (state.settings.motion ? 'checked' : '') + '></label>' + (reduced.matches ? '<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık; yüzme animasyonları durduruldu.</p>' : '') + '</div><div class="settings-section"><h3>Paylaşım</h3><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>' + soundSettings() + '<div class="settings-section"><h3>Kayıt ve eşitleme</h3>' + cloudControls() + '<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklamanızı sağlar. Ziyaretçiler yalnızca izin verdiğiniz görünümü izler; görev geçmişine veya yönetim yetkisine erişemez.</p><div class="settings-actions"><button class="button" data-action="export">' + icon('download') + 'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>' + (blockedStorage ? '<button class="button" data-action="export-raw">Mevcut kaydı indir</button>' : '') + '</div></div><div class="settings-section"><button class="button subtle" data-action="help">Nasıl çalışır?</button></div>');
+    rememberModal('settingsModal'+'',()=>settingsModal());
+    openModal('Sınıfın kontrolü sende', '<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="' + esc(classroom().name) + '" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">' + icon('plus') + 'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="teacher-fish">Öğretmen balığı</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div><div class="settings-section"><h3>Akvaryum görünümü</h3><button class="button" data-action="themes">Arka planı değiştir</button><label class="toggle-row">Balıkların üzerinde toplam puanlarını göster<input id="pointsToggle" type="checkbox" ' + (state.settings.points ? 'checked' : '') + '></label><label class="toggle-row">Sınıf puanlarını göster · İstiridye ve inci<input id="classPointsToggle" type="checkbox" ' + (state.settings.classPoints ? 'checked' : '') + '></label><label class="toggle-row">Besleme hatırlatmasında geçen gün sayısını göster<input id="hungerTextToggle" type="checkbox" ' + (state.settings.hungerText ? 'checked' : '') + '></label><label class="toggle-row">Seyrek emoji sohbetleri<input id="chatToggle" type="checkbox" ' + (state.settings.chat ? 'checked' : '') + '></label><label class="toggle-row">Öğrenci adlarını göster · Kapatınca isimsiz yüzerler<input id="namesToggle" type="checkbox" ' + (state.settings.names ? 'checked' : '') + '></label><label class="toggle-row">Canlıların yüzmesi ve su hareketleri<input id="motionToggle" type="checkbox" ' + (state.settings.motion ? 'checked' : '') + '></label>' + (reduced.matches ? '<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık; yüzme animasyonları durduruldu.</p>' : '') + '</div><div class="settings-section"><h3>Paylaşım</h3><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>' + soundSettings() + '<div class="settings-section"><h3>Kayıt ve eşitleme</h3>' + cloudControls() + '<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklamanızı sağlar. Ziyaretçiler yalnızca izin verdiğiniz görünümü izler; görev geçmişine veya yönetim yetkisine erişemez.</p><div class="settings-actions"><button class="button" data-action="export">' + icon('download') + 'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>' + (blockedStorage ? '<button class="button" data-action="export-raw">Mevcut kaydı indir</button>' : '') + '</div></div><div class="settings-section"><button class="button subtle" data-action="help">Nasıl çalışır?</button></div>');
   }
   function growthModal() {
+    rememberModal('growthModal'+'',()=>growthModal());
     const g = classroom().growth;
     openModal('Her balığın kendi yolculuğu', '<form id="growthForm"><label class="field">Başlangıç biçimi<select name="mode"><option value="normal" '+(!g?.enabled?'selected':'')+'>Normal başlat · Balıklar hazır</option><option value="growth" '+(g?.enabled?'selected':'')+'>Hedef belirleyerek başlat · Yumurtadan büyümeye</option></select></label><p class="modal-intro">Öğrenci canlısını seçer. İlk hedefte yumurta açılır; sonraki her hedefte balık yaklaşık %10 büyür. Onuncu hedefte kendi doğal boyuna ulaşır ve adının yanına kişisel yolculuk kupası gelir.</p><div class="growth-thresholds" id="growthThresholds">'+(g?.thresholds || C.defaultThresholds()).map((n,i)=>'<label class="field">'+(i+1)+'. hedef · '+(i===0?'Yumurtadan çıkış':i===9?'Yetişkin ve kupa':'Büyüme')+'<input name="target'+i+'" type="number" min="1" max="1000000" step="1" required value="'+n+'"></label>').join('')+'</div><p id="formError" class="form-error" role="alert"></p><button class="button primary full">Seçili biçimi uygula</button></form><div class="settings-section"><h3>Nasıl kullanılır?</h3><ol class="growth-instructions"><li>Önce davranışları ve puanlarını belirleyin. Hedef puanlarını artan sırada girin.</li><li>Hedefler her öğrencinin kendi toplam puanına uygulanır; sınıf toplamına uygulanmaz. Mevcut puanlar korunur, sıfırlanmaz.</li><li>Küçük, ulaşılabilir adımlarla başlayın; gelişimi öğrencinin kendi önceki çabasıyla konuşun. Bu bir başarı sıralaması değildir.</li><li>Açlık büyümeyi geri almaz; izinli günlere ceza puanı yazılmaz. Puan düzeltmeleri ve hedef değişiklikleri görünür büyüklüğü yeniden hesaplar.</li><li>Normal moda dönmek puanları ve hedefleri silmez. İzleme bağlantısında yumurta ve büyüme görünür; sayısal puanlar öğretmenin görünürlük ayarına bağlıdır.</li></ol><p class="settings-note">Yumurta ve büyüme bir oyun metaforudur; tüm deniz canlılarının gerçek yaşam döngüsünü temsil etmez. Kupa “sınıfın en iyisi” anlamına gelmez.</p></div>');
     updateGrowthFields();
@@ -230,6 +262,7 @@
     form.querySelectorAll('.growth-thresholds input').forEach(input=>input.disabled=!enabled);
   }
   function teacherFishModal() {
+    rememberModal('teacherFishModal'+'',()=>teacherFishModal());
     const t=classroom().teacher;
     openModal('Öğretmen de deniz yolculuğunda', '<p class="modal-intro">Öğretmen balığı sınıfa eşlik eder; öğrenci sayısına, puanlara ve sınıf hedeflerine dahil edilmez. Yalnızca öğretmenin sınıf ekranında görünür.</p><form id="teacherFishForm"><label class="toggle-row">Öğretmen balığını göster<input name="enabled" type="checkbox" '+(t?.enabled?'checked':'')+'></label><label class="field">Görünen ad<input name="name" maxlength="80" required value="'+esc(t?.name || 'Öğretmenim')+'"></label>'+speciesPicker(t?.species || 'turtle')+'<button class="button primary full">Kaydet</button></form>');
   }
@@ -239,10 +272,12 @@
     return '<section class="shared-goal"><span class="eyebrow">BİRLİKTE BAŞARIYORUZ</span><h3>' + esc(g.title) + '</h3><p>' + (p.complete ? 'Hedefe birlikte ulaştık!' : 'Her küçük katkıyla ilerliyoruz.') + '</p><div class="progress-copy"><span>Hedef başladığından beri</span><strong>' + p.points.toLocaleString('tr-TR') + ' / ' + p.target.toLocaleString('tr-TR') + ' puan</strong></div><div class="progress-track" role="progressbar" aria-label="Ortak sınıf hedefi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p.percent + '"><span style="width:' + p.percent + '%"></span></div></section>';
   }
   function activitiesModal() {
+    rememberModal('activitiesModal'+'',()=>activitiesModal());
     releaseFish();
     openModal('Birlikte güzel adımlar', '<p class="modal-intro">' + esc(classroom().name) + ' · Sınıf etkinliklerini tek yerden yönetin.</p>' + goalCard() + '<div class="activity-grid"><button class="activity-card" data-action="group-reward">' + icon('heart') + '<strong>Birlikte ödüllendir</strong><span>Davranışı ve öğrencileri seç, tek işlemle puan ver ve besle.</span></button><button class="activity-card" data-action="goal">' + icon('leaf') + '<strong>Ortak sınıf hedefi</strong><span>Birlikte biriktirilen puanlarla ortak bir hedefe ilerleyin.</span></button><button class="activity-card" data-action="timer">' + icon('clock') + '<strong>Odaklanma sayacı</strong><span>Okuma, çalışma veya sınıf geçişleri için kısa bir süre belirleyin.</span></button></div><p class="settings-note">Puanlar yalnızca öğretmenin seçtiği olumlu davranışlarla verilir. Ortak hedefte bireysel sıralama yapılmaz.</p>');
   }
   function groupRewardModal() {
+    rememberModal('groupRewardModal'+'',()=>groupRewardModal());
     ensureDays();
     openModal('Birlikte ödüllendir', '<button class="detail-back" data-action="activities">← Sınıf etkinlikleri</button><p class="modal-intro">Gözlemlediğiniz olumlu davranışı ve bu davranışı tamamlayan öğrencileri seçin.</p><form id="groupRewardForm" data-class-id="' + classroom().id + '" data-date="' + today + '"><label class="field">Olumlu davranış<select id="groupTask" name="taskId" required>' + classroom().tasks.map(t => '<option value="' + t.id + '">' + esc(t.title) + ' · +' + C.taskPoints(t) + ' puan</option>').join('') + '</select></label><div class="settings-actions"><button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button><button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button></div><div id="groupStudents" class="group-students"></div><p id="groupSummary" class="settings-note" role="status"></p><button id="groupSubmit" class="button primary full" type="submit" disabled>Puan ver ve besle</button></form><p class="settings-note">Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.</p>' + (!classroom().tasks.length ? '<button class="button" data-action="tasks">Önce davranış ekle</button>' : ''));
     renderGroupStudents();
@@ -263,10 +298,12 @@
     $('groupSubmit').textContent = inputs.length ? inputs.length + ' öğrenciye puan ver ve besle' : 'Puan ver ve besle';
   }
   function goalModal(fresh = false) {
+    rememberModal('goalModal'+String(fresh),()=>goalModal(fresh));
     const goal = fresh ? null : classroom().goal;
     openModal('Ortak sınıf hedefi', '<button class="detail-back" data-action="activities">← Sınıf etkinlikleri</button>' + (!fresh ? goalCard() : '') + '<p class="modal-intro">Örneğin birlikte kitap okuma saati veya bir sınıf oyunu için hedef belirleyin. Yeni hedef sıfırdan ilerler; öğrencilerin toplam puanları ve sınıf incisi korunur.</p><form id="goalForm" data-new="' + !goal + '" data-class-id="' + classroom().id + '"><label class="field">Birlikte neye ulaşacağız?<input name="title" required maxlength="120" placeholder="Örn. Birlikte hikâye saati" value="' + esc(goal?.title || '') + '"></label><label class="field">Hedef puan<input type="number" name="target" min="1" max="1000000" step="1" required value="' + (goal?.target || 50) + '"></label><label class="toggle-row">Hedefi etkinlikler ekranında göster<input name="enabled" type="checkbox" ' + (goal?.enabled !== false ? 'checked' : '') + '></label><button class="button primary full" type="submit">' + (goal ? 'Hedefi güncelle' : 'Yeni hedefi başlat') + '</button><p id="formError" class="form-error" role="alert"></p></form>' + (goal ? '<p class="settings-note">Hedefin adını veya puanını değiştirmek biriken ilerlemeyi sıfırlamaz.</p><button class="button subtle" data-action="new-goal">Yeni bir hedef belirle</button>' : classroom().goal ? '<p class="settings-note">Kaydettiğinizde önceki hedefin yerini alır. Öğrenci kayıtları ve toplam puanlar değişmez.</p>' : '') + '<p class="settings-note">İlerleme, hedefin başlangıcından beri mevcut öğrencilerin kazandığı net puandır. Günlük kayıt düzeltmeleri ilerlemeye yansır. Hedef ve başlangıç bilgileri yedeğe dahil edilir.</p>');
   }
   function timerModal() {
+    rememberModal('timerModal'+'',()=>timerModal());
     openModal('Saat ve sayaç', '<button class="detail-back" data-action="activities">← Sınıf etkinlikleri</button><div id="timerActive" class="focus-timer" hidden><p id="timerTitle"></p><strong id="timerClock" role="timer" aria-live="off"></strong><p id="timerState"></p><div class="settings-actions"><button class="button" data-action="timer-pause">Duraklat</button><button class="button primary" data-action="timer-resume">Devam et</button><button class="button subtle" data-action="timer-reset">Sıfırla</button><button class="button subtle" data-action="timer-silence">Uyarı sesini sustur</button></div></div><form id="timerForm"><label class="field">Sayaç türü<select id="timerMode" name="mode"><option value="countdown">Geri sayım</option><option value="stopwatch">Kronometre · İleri sayım</option></select></label><label class="field">Etkinlik adı<input name="title" required maxlength="80" value="Kitap okuma"></label><div id="countdownFields"><label class="field">Süre (dakika)<input id="timerMinutes" name="minutes" type="number" min="1" max="60" step="1" required value="10"></label><div class="timer-presets">' + [3,5,10,15,20].map(n=>'<button class="button subtle" type="button" data-action="timer-preset" data-minutes="'+n+'">'+n+' dk</button>').join('') + '</div><label class="toggle-row">Süre bitince melodi çal<input name="alarm" type="checkbox" '+(state.settings.timerSound?'checked':'')+'></label><label class="field">Uyarı ses düzeyi<input name="alarmVolume" type="range" min="0" max="100" value="'+Math.round(state.settings.timerVolume*100)+'"></label><button class="button subtle" type="button" data-action="timer-preview">Melodiyi dinle</button></div><button class="button primary full" type="submit">Sayacı başlat</button><p id="formError" class="form-error" role="alert"></p></form><p class="settings-note">Geri sayım bitince kısa bir çan melodisi çalar. Uyarı sesi, fon müziğinden bağımsızdır. Kronometre siz durdurana kadar ileri sayar. Sekme açıkken arka planda devam eder; sayfa yenilenince veya sınıf değişince sıfırlanır. Tam ekranda sağ üstte cihazınızın yerel saati ve tarihi görünür.</p>');
     updateTimer();
   }
@@ -306,6 +343,7 @@
     return '<fieldset class="task-icon-picker"><legend>Görev simgesi</legend><div class="task-icon-options">'+C.TASK_ICONS.map(symbol=>'<button type="button" class="task-icon-option" data-action="pick-task-icon" data-icon="'+esc(symbol)+'" aria-label="'+esc(symbol)+' simgesini seç" aria-pressed="'+(value===symbol)+'">'+symbol+'</button>').join('')+'</div><label class="field">Kendi simgen / emoji<input name="icon" maxlength="16" placeholder="Örn. 🐠" value="'+esc(value || '')+'"></label></fieldset>';
   }
   function tasksModal() {
+    rememberModal('tasksModal'+'',()=>tasksModal());
     openModal('Olumlu davranışlar ve puanları','<p class="modal-intro">Görev adını, simgesini ve puanını düzenleyebilirsiniz. Kaydedilen değişiklikler bugünkü bekleyen ve yeni görevlere uygulanır. Kazanılmış puanlar ve geçmiş kayıtlar korunur.</p><div class="task-edit-list">'+classroom().tasks.map(t=>'<details class="task-editor"><summary><span>'+esc(t.icon || behaviorSymbol(t.title))+'</span><strong>'+esc(t.title)+'</strong><b>+'+C.taskPoints(t)+'</b><span>Düzenle</span></summary><form class="task-points-form" data-task-id="'+t.id+'"><label class="field">Görev adı<input name="title" maxlength="120" required value="'+esc(t.title)+'"></label>'+taskIconPicker(t.icon || behaviorSymbol(t.title))+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" required value="'+C.taskPoints(t)+'"></label><div class="settings-actions"><button type="submit" class="button primary">Değişiklikleri kaydet</button><button type="button" class="button subtle" data-action="remove-task" data-id="'+t.id+'">Kaldır</button></div></form></details>').join('')+'</div><form id="taskForm" class="new-task-form"><h3>Yeni davranış ekle</h3><label class="field">Yeni olumlu davranış<input name="title" maxlength="120" placeholder="Örn. Arkadaşıma yardım ettim" required></label>'+taskIconPicker('⭐')+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" placeholder="Örn. 5" required></label><button type="submit" class="button primary">Davranış ekle</button></form><p id="formError" class="form-error" role="alert"></p><p class="settings-note">Kaldırılan davranış bugünkü ve geçmiş kayıtlarda kalır; yarından itibaren verilmez.</p>');
   }
   function lastFeeding(s) {
@@ -319,6 +357,7 @@
     return '<div class="student-facts"><div><small>Bugünkü puan</small><strong>+' + daily + '</strong></div><div><small>Toplam puan</small><strong>' + C.earned(s).toLocaleString('tr-TR') + '</strong></div><div><small>Son besleme</small><strong>' + lastFeeding(s) + '</strong></div></div>';
   }
   function finderModal() {
+    rememberModal('finderModal'+'',()=>finderModal());
     inspectedId = '';
     openModal('Öğrencini bul', '<label class="field">Öğrenci adı<input id="fishFinder" type="search" autocomplete="off" placeholder="İsim yaz…" autofocus></label><p class="settings-note">Balığı akvaryumda belirginleştirin veya davranış penceresini doğrudan açın.</p><div id="finderResults" class="finder-results"></div><p id="finderCount" class="settings-note" role="status"></p>');
     renderFinder();
@@ -345,6 +384,7 @@
     return '⭐';
   }
   function behaviorModal() {
+    rememberModal('behaviorModal'+'',()=>behaviorModal());
     const s = student(); if (!s) return;
     inspectedId = s.id;
     const d = day(s), mood = C.mood(s, today);
@@ -353,6 +393,7 @@
     swimmers.forEach(f=>f.el.classList.toggle('is-selected',f.el.dataset.id===s.id));
   }
   function studentDayModal() {
+    rememberModal('studentDayModal'+'',()=>studentDayModal());
     const s = student(); if (!s) return;
     openModal(s.name + ' · Günlük kayıt', detail(), 'GÖREVLER VE SORUMLULUKLAR');
     modal.classList.add('student-day-modal');
@@ -378,6 +419,7 @@
     else toast(s.name + ': +' + result.points + ' puan. Daha önce kullanılan yem yeniden verilmedi.');
   }
   function helpModal() {
+    rememberModal('helpModal'+'',()=>helpModal());
     openModal('Güzel davranışlar, mutlu balıklar.', '<div class="help-steps">' + [
       ['Deniz dostunu seç', 'Sınıfınızı ekleyin. Öğretmen gözetiminde ortak sınıf ekranındaki “Balığımı seç” bölümünden canlı seçilir. İzleme bağlantısında seçim veya besleme yapılamaz.'],
       ['Sorumluluğunu tamamla', 'Öğretmen, Ayarlar → Görevleri düzenle bölümünde her olumlu davranışın puanını belirlesin. Kazanılmış puanlar sonradan yapılan puan değişikliklerinden etkilenmez.'],
@@ -468,10 +510,10 @@
       const placement = layout.get(s.id), size = placement.size;
       if (!fish) {
         const el = document.createElement('button'); el.type = 'button'; el.className = 'fish';
-        el.innerHTML = '<span class="fish-chat" aria-hidden="true"></span><span class="fish-egg" aria-hidden="true"><i></i></span><img class="fish-art" alt=""><span class="fish-name"></span><span class="fish-birthday" hidden aria-label="Bugün doğum günü">🎂</span><span class="fish-points"></span><span class="fish-hunger" hidden></span>';
+        el.innerHTML = '<span class="fish-chat" aria-hidden="true"></span><span class="fish-egg" aria-hidden="true"><i></i></span><span class="fish-art" aria-hidden="true"><img class="fish-body-image" alt="" draggable="false"><img class="fish-tail-image" alt="" draggable="false"></span><span class="fish-name"></span><span class="fish-birthday" hidden aria-label="Bugün doğum günü">🎂</span><span class="fish-points"></span><span class="fish-hunger" hidden></span>';
         el.dataset.action = s.isTeacher ? 'teacher-fish' : 'fish-behaviors'; el.dataset.id = s.id;
         $('swimArea').append(el);
-        fish = { el, img: el.querySelector('img'), ...placement, direction: index % 2 ? -1 : 1, phase: index * 1.8, mood: fishMood(s), hover: false, keyboard: false, angle: index % 2 ? 180 : 0, turn: null, cruise: 1 };
+        fish = { el, art: el.querySelector('.fish-art'), ...placement, direction: index % 2 ? -1 : 1, phase: index * 1.8, mood: fishMood(s), hover: false, keyboard: false, angle: index % 2 ? 180 : 0, turn: null, cruise: 1 };
         el.addEventListener('pointerenter', event => { if (!viewing && !document.fullscreenElement && event.pointerType !== 'touch') fish.hover = true; });
         el.addEventListener('pointerleave', () => { fish.hover = false; fish.pressed = false; });
         el.addEventListener('pointerdown', () => { if(!viewing && !document.fullscreenElement) fish.pressed = true; });
@@ -506,11 +548,18 @@
       fish.boostUntil = s.feeds.reduce((last,f)=>Math.max(last,f.at),0)+12000;
 
       fish.el.style.setProperty('--fish-size', fish.size + 'px');
-      for(const name of ['happy','sad','resting','ready','calm']) fish.el.classList.toggle('mood-'+name,fish.mood.id===name);
+      for(const name of ['happy','sad','resting','ready','calm','hungry']) fish.el.classList.toggle('mood-'+name,fish.mood.id===name);
       fish.el.dataset.species=s.species;
       const birthday=!viewing && !s.isTeacher && C.isBirthday(s);
       fish.el.classList.toggle('birthday-fish',birthday);fish.el.querySelector('.fish-birthday').hidden=!birthday;
-      const src = image(s.species); if (fish.img.getAttribute('src') !== src) fish.img.src = src;
+      const joint=tailJoints[s.species];
+      fish.el.classList.toggle('has-tail',!!joint);
+      fish.el.style.setProperty('--tail-joint',(joint || 0)+'%');
+      // Both pieces reuse the same cached file; no additional image assets.
+      if(fish.species!==s.species) {
+        fish.art.querySelectorAll('img').forEach(img=>{img.src=image(s.species);});
+        fish.species=s.species;
+      }
       fish.el.setAttribute('aria-label', (state.settings.names && s.name ? s.name + ', ' : '') + C.species(s.species).name + (growth.egg ? ', yumurta' : '') + (state.settings.points && score(s) !== null ? ', toplam ' + score(s) + ' puan' : ''));
       fish.el.querySelector('.fish-name').hidden = !state.settings.names || !s.name;
       fish.el.querySelector('.fish-name').textContent = state.settings.names ? s.name + (growth.trophy ? ' 🏆' : '') : '';
@@ -520,15 +569,37 @@
       fish.el.style.opacity = !s.name ? '.8' : '';
       placeFish(fish, 0);
     });
+    updateRestingFish();
     restartAnimation();
+  }
+  function updateRestingFish() {
+    const resting=[];let changed=false;
+    for(const [id,fish] of swimmers) {
+      const s=classroom().students.find(s=>s.id===id);
+      const hungry=!!(s && !fish.egg && (viewing?s.publicMood==='hungry':C.hungerDays(s)>=2));
+      if(fish.hungry!==undefined && fish.hungry!==hungry) changed=true;
+      if(fish.hungry && !hungry) {fish.targetX=null;fish.routeTime=0;fish.turn=null;fish.cruise=0;}
+      fish.hungry=hungry;fish.el.classList.toggle('is-hungry',hungry);
+      if(hungry) resting.push(fish);
+    }
+    const columns=Math.max(1,Math.floor(width/(Math.max(60,...resting.map(f=>f.size))+18)));
+    const rows=Math.ceil(resting.length/columns),rowGap=Math.min(70,height*.25/Math.max(1,rows));
+    resting.forEach((fish,i)=>{
+      const count=Math.min(columns,resting.length-Math.floor(i/columns)*columns);
+      fish.restX=Math.max(0,Math.min(width-fish.size,(i%columns+.5)*width/count-fish.size/2));
+      fish.restY=Math.max(fish.minY,fish.maxY-Math.floor(i/columns)*rowGap);
+      if(!fish.restInitialized || !state.settings.motion || reduced.matches) {fish.x=fish.restX;fish.y=fish.restY;fish.angle=fish.direction>0?0:180;}
+      placeFish(fish);
+    });
+    swimmers.forEach(f=>{f.restInitialized=true;});
+    return changed;
   }
   function updateHungerLabel(fish, s) {
     const days = viewing || s.isTeacher || !s.name ? 0 : C.hungerDays(s);
     const label = fish.el.querySelector('.fish-hunger');
     label.hidden = days < 1;
-    label.classList.toggle('hunger-icon',!state.settings.hungerText);
-    label.textContent = days >= 1 ? (state.settings.hungerText ? 'Balığın ' + days + ' gündür aç' : '') : '';
-    if(days && !state.settings.hungerText) label.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h16c-1 5-3 7-8 7s-7-2-8-7Z"/><circle cx="8" cy="7" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="13" cy="10" r="1"/></svg>';
+    label.classList.remove('hunger-icon');
+    label.textContent = days >= 1 ? (state.settings.hungerText ? 'Balığın ' + days + ' gündür aç' : 'Yem bekliyor') : '';
     label.setAttribute('aria-label',days ? 'Besleme hatırlatması: '+days+' gündür beslenmedi' : '');
     label.title = days ? days+' gündür beslenmedi · Ayrıntılar için balığa dokunun' : '';
   }
@@ -540,33 +611,37 @@
     for (const fish of swimmers.values()) placeFish(fish, 0);
   }
   function placeFish(fish) {
-    const p=fish.profile, moving=state.settings.motion && !reduced.matches;
+    const p=fish.profile, moving=state.settings.motion && !reduced.matches && !fish.hungry;
     const tilt=moving ? Math.sin(fish.phase*1.4)*p.tilt : 0;
     const pulse=moving ? 1+Math.sin(fish.phase*3)*p.pulse : 1;
     fish.el.style.transform='translate3d('+fish.x.toFixed(1)+'px,'+fish.y.toFixed(1)+'px,0)';
     const depth=fish.egg ? {scale:1,opacity:1,brightness:1,saturation:1,layer:3} : Motion.perspective(fish);
     fish.el.style.zIndex=String(depth.layer);
-    fish.img.style.opacity=fish.egg?'0':depth.opacity.toFixed(2);
+    fish.art.style.opacity=fish.egg?'0':depth.opacity.toFixed(2);
     fish.el.style.setProperty('--water-brightness',depth.brightness.toFixed(2));
     fish.el.style.setProperty('--water-saturation',depth.saturation.toFixed(2));
     fish.el.style.setProperty('--floor-shadow',fish.egg?'0':(Math.max(0,(fish.y/Math.max(1,height)-.62))*depth.opacity*.5).toFixed(2));
-    fish.img.style.transform='scale('+(Number(fish.el.style.getPropertyValue('--growth-scale'))*depth.scale).toFixed(3)+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')';
+    // Vary the tail cadence by swimmer phase; stop it with the scene / hunger.
+    const stroke=moving && !fish.egg ? Math.sin(fish.phase*6.5) : 0;
+    fish.el.style.setProperty('--tail-yaw',(stroke*23).toFixed(2)+'deg');
+    fish.el.style.setProperty('--tail-flex',(stroke*2.6).toFixed(2)+'deg');
+    fish.art.style.transform='scale('+(Number(fish.el.style.getPropertyValue('--growth-scale'))*depth.scale).toFixed(3)+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')';
   }
-  let nextChat = performance.now() + 25000;
+  let nextChat = performance.now() + 120000;
   const pairCooldown = new Map();
   function chat(now) {
     if (now < nextChat || !state.settings.chat || reduced.matches || modal.open) return;
-    nextChat = now + 2000;
+    nextChat = now + 10000;
     const fish = [...swimmers.values()];
     for (let i=0;i<fish.length;i++) for(let j=i+1;j<fish.length;j++) {
       const a=fish[i], b=fish[j], key=[a.el.dataset.id,b.el.dataset.id].sort().join(':');
-      if (a.held || b.held || a.mood.id==='resting' || b.mood.id==='resting' || now-(pairCooldown.get(key)||-120000)<120000) continue;
+      if (a.held || b.held || a.hungry || b.hungry || now-(a.lastChat??-300000)<300000 || now-(b.lastChat??-300000)<300000 || a.mood.id==='resting' || b.mood.id==='resting' || now-(pairCooldown.get(key)??-600000)<600000) continue;
       if (Math.abs(a.x+a.size/2-b.x-b.size/2)>Math.max(a.size,b.size)*.8 || Math.abs(a.y-b.y)>60) continue;
-      pairCooldown.set(key,now); nextChat=now+30000+Math.random()*25000;
+      pairCooldown.set(key,now); nextChat=now+180000+Math.random()*120000;
       [a,b].forEach((f,index) => {
-        const bubble=f.el.querySelector('.fish-chat');
+        f.lastChat=now;const bubble=f.el.querySelector('.fish-chat');
         bubble.textContent=index ? '💙' : '👋'; bubble.classList.add('visible');
-        setTimeout(()=>bubble.classList.remove('visible'),2200+index*300);
+        setTimeout(()=>bubble.classList.remove('visible'),1500+index*250);
       });
       return;
     }
@@ -623,6 +698,7 @@
     document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
   function importClassesModal() {
+    rememberModal('importClassesModal'+'',()=>importClassesModal());
     if (demo) return toast('İçe aktarmak için kendi sınıfınıza dönün.');
     importedClasses = [];
     try { const raw = JSON.parse(localStorage.getItem('kemal_teacher_tools_panel_v2') || 'null'); if (Array.isArray(raw?.classes)) importedClasses = raw.classes.filter(c => c && typeof c.name === 'string' && Array.isArray(c.students)).slice(0, 30); }
@@ -631,6 +707,7 @@
   }
   let historyPage = 0;
   function historyModal() {
+    rememberModal('historyModal'+'',()=>historyModal());
     const s=student(); if(!s) return;
     const dates=Object.keys(s.days).sort().reverse();
     historyPage=Math.min(historyPage,Math.max(0,Math.ceil(dates.length/30)-1));
@@ -640,6 +717,7 @@
     return '<p class="settings-note">Doğum günü · İsteğe bağlı, yalnızca gün ve ay. Kutlama öğretmen akvaryumunda görünür. Yıl ve yaş kaydedilmez.</p><div class="birthday-fields"><label class="field">Gün<select name="birthDay"><option value="">Belirtilmedi</option>'+Array.from({length:31},(_,i)=>'<option value="'+(i+1)+'" '+(s.birthday?.day===i+1?'selected':'')+'>'+(i+1)+'</option>').join('')+'</select></label><label class="field">Ay<select name="birthMonth"><option value="">Belirtilmedi</option>'+['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'].map((m,i)=>'<option value="'+(i+1)+'" '+(s.birthday?.month===i+1?'selected':'')+'>'+m+'</option>').join('')+'</select></label></div><p class="settings-note">29 Şubat doğum günleri yalnızca 29 Şubat gününde kutlanır. Kaldırmak için iki alanı da Belirtilmedi yapın.</p>';
   }
   function editStudentModal() {
+    rememberModal('editStudentModal'+'',()=>editStudentModal());
     const s = student(); if (!s) return;
     openModal('Öğrenciyi düzenle', '<form id="editStudentForm"><label class="field">Öğrenci adı<input name="name" value="' + esc(s.name) + '" maxlength="80" required autofocus></label>' + birthdayFields(s) + '<p id="formError" class="form-error" role="alert"></p><div class="form-actions"><button class="button primary" type="submit">Kaydet</button></div></form><div class="danger-zone"><button class="button danger" data-action="remove-student">Öğrenciyi akvaryumdan çıkar</button><p class="settings-note">Yalnızca bu akvaryumdaki görev ve besleme kayıtları kaldırılır.</p></div>');
   }
@@ -647,12 +725,12 @@
     if (viewing) return;
     const next = C.dayKey();
     if (next !== today) { today = next; closeModal(); ensureDays(); commit(); toast('Yeni günün görevleri hazır.'); }
-    else classroom().students.forEach(s => { const fish = swimmers.get(s.id); if (fish) updateHungerLabel(fish, s); });
+    else {classroom().students.forEach(s => { const fish = swimmers.get(s.id); if (fish) updateHungerLabel(fish, s); });if(updateRestingFish()) commit();}
   }
   async function act(button) {
     const action = button.dataset.action;
     if (viewing && !['fullscreen'].includes(action)) return;
-    if (document.fullscreenElement && !['fullscreen','close'].includes(action)) {
+    if (document.fullscreenElement && !['fullscreen','close','modal-back'].includes(action)) {
       const birthday=classroom().students.find(s=>s.id===button.dataset.id);
       if(action==='fish-behaviors' && birthday && C.isBirthday(birthday)) openModal('İyi ki doğdun'+(state.settings.names?', '+birthday.name:'')+'! 🎂','<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>');
       return;
@@ -720,13 +798,14 @@
       case 'timer-reset': focusTimer.reset(); Audio.cancelTimer?.(); timerNotified=false; timerModal(); break;
       case 'timer-silence': Audio.cancelTimer?.(); break;
       case 'timer-preview': Audio.scheduleTimer?.(0,Number(modal.querySelector('[name="alarmVolume"]').value)/100)?.catch(e=>toast(e.message)); break;
-      case 'sound': openModal('Ortam sesleri',soundSettings()); break;
+      case 'sound': soundModal(); break;
       case 'play-sound': await playCurrentMix(); break;
       case 'pause-mix': Audio.pause(); break;
-      case 'load-mix': { const favorite=state.settings.favorites.find(f=>f.id===button.dataset.id); if(favorite){state.settings.mix=favorite.mix.map(t=>({...t}));state.settings.volume=favorite.volume;state.settings.sound=favorite.mix[0]?.id || 'off';save();openModal('Ortam sesleri',soundSettings());await playCurrentMix();}break; }
+      case 'load-mix': { const favorite=state.settings.favorites.find(f=>f.id===button.dataset.id); if(favorite){state.settings.mix=favorite.mix.map(t=>({...t}));state.settings.volume=favorite.volume;state.settings.sound=favorite.mix[0]?.id || 'off';save();soundModal();await playCurrentMix();}break; }
       case 'rename-mix': { const favorite=state.settings.favorites.find(f=>f.id===button.dataset.id);if(favorite)openModal('Karışımı adlandır','<form id="renameMixForm" data-id="'+favorite.id+'"><label class="field">Karışım adı<input name="name" maxlength="60" required value="'+esc(favorite.name)+'"></label><button class="button primary" type="submit">Kaydet</button></form>');break; }
-      case 'delete-mix': {const id=button.dataset.id;confirm('Favori silinsin mi?','Yalnızca kaydedilen karışım kaldırılır.',()=>{state.settings.favorites=state.settings.favorites.filter(f=>f.id!==id);save();openModal('Ortam sesleri',soundSettings());});break;}
+      case 'delete-mix': {const id=button.dataset.id;confirm('Favori silinsin mi?','Yalnızca kaydedilen karışım kaldırılır.',()=>{state.settings.favorites=state.settings.favorites.filter(f=>f.id!==id);save();soundModal();});break;}
       case 'stop-sound': Audio.stop(); toast('Ortam sesi durduruldu.'); break;
+      case 'modal-back': modalBack(); break;
       case 'close': closeModal(); break;
       case 'confirm': { const fn = confirmAction; closeModal(); if (fn) await fn(); break; }
       case 'setup': addModal(true); break;
@@ -871,9 +950,9 @@
       const name=C.clean(data.get('name'),60);
       if(!name || !state.settings.mix.length){$('mixError').textContent='Bir ad yazın ve en az bir ses seçin.';return;}
       if(state.settings.favorites.length>=24){$('mixError').textContent='En fazla 24 favori saklanabilir. Önce bir favoriyi silin.';return;}
-      state.settings.favorites.push({id:C.uid(),name,volume:state.settings.volume,mix:state.settings.mix.map(t=>({...t}))});save();openModal('Ortam sesleri',soundSettings());toast('Karışım favorilere kaydedildi.');
+      state.settings.favorites.push({id:C.uid(),name,volume:state.settings.volume,mix:state.settings.mix.map(t=>({...t}))});save();soundModal();toast('Karışım favorilere kaydedildi.');
     } else if (form.id === 'renameMixForm') {
-      const favorite=state.settings.favorites.find(f=>f.id===form.dataset.id),name=C.clean(data.get('name'),60);if(favorite&&name){favorite.name=name;save();openModal('Ortam sesleri',soundSettings());}
+      const favorite=state.settings.favorites.find(f=>f.id===form.dataset.id),name=C.clean(data.get('name'),60);if(favorite&&name){favorite.name=name;save();soundModal();}
     } else if (form.classList.contains('task-points-form')) {
       const points = Number(data.get('points'));
       if (!C.updateTask(classroom(), form.dataset.taskId, {points,title:data.get('title'),icon:data.get('icon')}, today)) { $('formError').textContent = 'Puanı 1–1000 arasında tam sayı olarak girin.'; return; }

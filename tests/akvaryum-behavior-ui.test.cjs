@@ -4,25 +4,26 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const C=require('../js/akvaryum-core.js');
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz');
-  cls.tasks[0].points=7;cls.students.push(s);s.createdAt=Date.now()-2*86400000-1000;
+  cls.tasks[0].points=7;cls.students.push(s);s.createdAt=Date.now()-ageDays*86400000-1000;
   extraNames.forEach(name=>cls.students.push(C.newStudent(name)));
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
-  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],frames=[];let timerNow=Date.now();
+  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],frames=[];let timerNow=Date.now(),frameNow=0;
   window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
   window.kemalUserAuth={ready:async()=>{},getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
+  if(chatTest)window.AquariumMotion={...window.AquariumMotion,step:fish=>fish.forEach(f=>{f.x=100;f.y=200;})};
   window.AquariumSharing={removeClass:async()=>{deleteCalls++;if(deleteError)throw Error("Bağlantı yok. Sınıf silinmedi.");}};
   window.matchMedia=()=>({matches:reduced,addEventListener(){}});
   for(const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
   const area=document.getElementById('swimArea');Object.defineProperty(area,'clientWidth',{value:900});Object.defineProperty(area,'clientHeight',{value:600});
   const bed=document.getElementById('eggBed');Object.defineProperty(bed,'clientWidth',{value:900});Object.defineProperty(bed,'clientHeight',{value:700});
   const modal=document.getElementById('modal');modal.close=()=>{modal.open=false;};modal.showModal=()=>{modal.open=true;};
-  const context={window,document,location:{search:'',pathname:'/ogretmen/akvaryum.html'},URLSearchParams,performance,console,
+  const context={window,document,location:{search:'',pathname:'/ogretmen/akvaryum.html'},URLSearchParams,performance:{now:()=>frameNow},console,
     localStorage:{getItem:key=>key.endsWith("_beforeClassDelete")?backup:saved,setItem:(key,value)=>{if(key.endsWith("_beforeClassDelete"))backup=value;else saved=value;}},
-    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},cancelAnimationFrame(){},ResizeObserver:class{observe(){}},
+    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:fn=>{frames.push(now=>{frameNow=now;fn(now);});return frames.length;},cancelAnimationFrame(){},ResizeObserver:class{observe(){}},
     FormData:class {constructor(form){this.form=form;}get(name){return this.form.querySelector('[name="'+name+'"]').value;}}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
@@ -32,12 +33,14 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
 test('clicking the fish opens teacher behaviors; one click feeds, sounds, clears hunger and updates both scores',async()=>{
   const h=await harness(),d=h.document;
   assert.match(d.querySelector('.fish-hunger').getAttribute('aria-label'),/2 gündür beslenmedi/);
-  assert.equal(d.querySelector('.fish-hunger').classList.contains('hunger-icon'),true);
+  assert.equal(d.querySelector('.fish-hunger').classList.contains('hunger-icon'),false);
+  assert.equal(d.querySelector('.fish-hunger').textContent,'Yem bekliyor');
+  assert.equal(d.querySelector('.fish').classList.contains('is-hungry'),true);
   assert.equal(d.querySelector('.fish-hunger').hidden,false);
   h.click('.fish');assert.equal(h.modal.open,true);assert.equal(d.querySelectorAll('.behavior-choice').length,3);
   const button=d.querySelector('[data-action="reward-behavior"]');assert.match(button.textContent,/\+7 puan/);
   h.click(button);
-  assert.equal(h.modal.open,false);assert.equal(h.sounds(),1);assert.equal(d.querySelector('.fish-hunger').hidden,true);
+  assert.equal(h.modal.open,false);assert.equal(h.sounds(),1);assert.equal(d.querySelector('.fish-hunger').hidden,true);assert.equal(d.querySelector('.fish').classList.contains('is-hungry'),false);
   assert.equal(d.querySelector('.fish-points').textContent,'★ 7');assert.equal(d.getElementById('classPearlScore').textContent,'7');
   assert.equal(d.querySelectorAll('.feed-particle').length,7);assert.equal(d.querySelectorAll('.feed-heart').length,1);
   const student=h.saved().classes[0].students[0];assert.equal(student.feeds.length,1);assert.equal(C.balance(student),0);
@@ -139,7 +142,7 @@ test('profile separates today, total and feeding; written hunger remains an opt-
   assert.equal(C.validate(h.saved()).settings.hungerText,true);
 });
 test('selected fish stays still in its popup, resumes after closing, and settings do not reset its location',async()=>{
-  const h=await harness(),d=h.document,fish=d.querySelector('.fish');
+  const h=await harness({ageDays:0}),d=h.document,fish=d.querySelector('.fish');
   let time=0;const advance=n=>{for(let i=0;i<n;i++){time+=50;h.frames.pop()(time);}};
   advance(10);const initial=fish.style.transform;h.click('.fish');advance(20);assert.equal(fish.style.transform,initial);
   h.click('[data-action="close"]');advance(20);assert.notEqual(fish.style.transform,initial);
@@ -302,7 +305,7 @@ test('aquarium countdown keeps elapsed time while hidden and preserves a manual 
 });
 
 test('an unavailable lightweight fish image falls back once to the same species original',async()=>{
- const h=await harness(),img=h.document.querySelector('.fish-art');
+ const h=await harness(),img=h.document.querySelector('.fish-art img');
  assert.match(img.getAttribute('src'),/\/web-v1\/palyaco-baligi\.webp$/);
  img.dispatchEvent(new h.window.Event('error',{bubbles:true}));
  assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
@@ -334,4 +337,57 @@ test('class deletion requires confirmation, preserves a recovery copy, and stops
   if(deleteError) assert.deepEqual(h.saved(),before);
   else {assert.notEqual(h.saved().classes[0].id,before.classes[0].id);assert.equal(h.saved().classes[0].students.length,0);}
  }
+});
+
+
+test('back navigates nested menus and refreshes student data without executing a cancelled confirmation',async()=>{
+ const h=await harness(),d=h.document;
+ h.click('[data-action="settings"]');h.click(h.modal.querySelector('[data-action="activities"]'));h.click('[data-action="timer"]');
+ h.click('#modalBack');assert.equal(d.getElementById('modalTitle').textContent,'Birlikte güzel adımlar');
+ h.click('#modalBack');assert.equal(d.getElementById('modalTitle').textContent,'Sınıfın kontrolü sende');
+ h.click('[data-action="delete-class"]');h.click('#modalBack');assert.equal(h.deleteCalls(),0);assert.ok(d.getElementById('renameClassForm'));
+ h.click('#modalBack');assert.equal(h.modal.open,false);
+ h.click('.fish');h.click('[data-action="tasks"]');let form=d.querySelector('.task-points-form');form.querySelector('[name="points"]').value='19';h.submit(form);
+ h.click('#modalBack');assert.match(d.querySelector('.behavior-choice').textContent,/19 puan/);assert.equal(h.modal.classList.contains('behavior-modal'),true);
+ h.click('[data-action="edit-student"]');h.click('#modalBack');assert.equal(h.modal.classList.contains('behavior-modal'),true);
+ h.click('#modalBack');assert.equal(h.modal.open,false);
+});
+test('hungry fish stay still on the bottom and move again after an actual feeding',async()=>{
+ const h=await harness(),d=h.document,fish=d.querySelector('.fish');
+ const start=fish.style.transform;let time=0;const advance=n=>{for(let i=0;i<n;i++)h.frames.pop()(time+=50);};
+ advance(200);assert.equal(fish.style.transform,start);assert.equal(fish.classList.contains('is-hungry'),true);
+ h.click('.fish');h.click('.behavior-choice');advance(250);
+ assert.equal(fish.classList.contains('is-hungry'),false);assert.notEqual(fish.style.transform,start);
+});
+test('a nearby pair waits two minutes for its first chat and cannot repeat frequently',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada'],chatTest:true}),d=h.document;
+ const frame=now=>h.frames.pop()(now);
+ frame(60000);assert.equal(d.querySelectorAll('.fish-chat.visible').length,0);
+ frame(130000);assert.equal(d.querySelectorAll('.fish-chat.visible').length,2);
+ d.querySelectorAll('.fish-chat').forEach(el=>el.classList.remove('visible'));
+ for(const now of [150000,200000,300000,450000,600000])frame(now);
+ assert.equal(d.querySelectorAll('.fish-chat.visible').length,0);
+ frame(1000000);assert.equal(d.querySelectorAll('.fish-chat.visible').length,2);
+});
+
+test('tail strokes stop for hungry fish, resume after feeding, and obey the motion switch',async()=>{
+ const h=await harness(),fish=h.document.querySelector('.fish');
+ const flex=()=>fish.style.getPropertyValue('--tail-flex');
+ assert.ok(fish.classList.contains('has-tail'));
+ assert.equal(fish.querySelectorAll('.fish-art img').length,2);
+ const sources=[...fish.querySelectorAll('.fish-art img')].map(i=>i.getAttribute('src'));
+ assert.equal(sources[0],sources[1]);
+ for(let n=1;n<=10;n++)h.frames.pop()(n*50);
+ assert.equal(flex(),'0.00deg');
+ h.click('.fish');h.click('[data-action="reward-behavior"]');
+ const strokes=new Set();
+ for(let n=11;n<=160;n++){h.frames.pop()(n*50);strokes.add(flex());}
+ assert.ok(strokes.size>20,'fed fish should flex its tail across the swimming cycle');
+ h.click('[data-action="settings"]');
+ const toggle=h.document.getElementById('motionToggle');toggle.checked=false;
+ toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ assert.equal(flex(),'0.00deg');assert.ok(h.document.getElementById('aquariumApp').classList.contains('no-motion'));
+ const quiet=await harness({ageDays:0,reduced:true});
+ assert.equal(quiet.document.querySelector('.fish').style.getPropertyValue('--tail-flex'),'0.00deg');
+ assert.equal(quiet.frames.length,0);
 });

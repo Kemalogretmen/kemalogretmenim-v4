@@ -81,8 +81,6 @@ dialog::backdrop{background:rgba(2,23,38,.28);backdrop-filter:blur(3px);-webkit-
 .finder-row img{width:62px;height:46px;object-fit:contain}.finder-row strong{flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}.finder-row .button{padding:9px 13px}
 .fish.is-found{border-radius:24px;background:#bcf5e51c;outline:2px solid #d1ffee;outline-offset:3px;z-index:2;box-shadow:0 0 28px #b7f6e336}
 .fish.is-selected .fish-art{filter:drop-shadow(0 0 10px #baf5e685)}
-.fish-hunger.hunger-icon{position:absolute;top:4px;right:0;width:23px;height:23px;margin:0;padding:3px;border-radius:50%;background:#314a49ed;color:#ffe6b4;display:grid;place-items:center}
-.fish-hunger.hunger-icon svg{width:16px;height:16px;stroke-width:1.5}
 .student-facts{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:10px;margin:0 0 22px;padding:13px 15px;border:1px solid #bde5dc24;border-radius:14px;background:#b3e5dc08}
 .student-facts>div{display:grid;align-content:start;gap:6px}.student-facts small{font-size:10px;color:#b1ceca}.student-facts strong{font-size:15px;line-height:1.45;font-weight:550;color:#e3f8ed}.student-facts>div:last-child strong{font-size:12px}
 .behavior-profile{margin-bottom:14px}
@@ -166,11 +164,45 @@ dialog .field input,dialog .field textarea,dialog .field select{background:#062c
 .focus-timer>strong{font-size:clamp(68px,11vw,128px);font-variant-numeric:tabular-nums;text-shadow:1px 2px #70a5ac,3px 5px #39707e,5px 8px 14px #041e3099}
 .birthday-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .fish-birthday{position:absolute;top:-8px;right:2px;font-size:22px;filter:drop-shadow(0 0 6px #fff2c8);pointer-events:none}
-.birthday-fish::before{content:'✧';position:absolute;inset:0 0 25%;border-radius:50%;color:#fff0b4;text-align:center;font-size:25px;background:radial-gradient(ellipse,#ffe9a32e,transparent 68%);box-shadow:0 0 23px #ffef9c38;pointer-events:none;animation:birthday-shimmer 3.8s ease-in-out infinite alternate}
 .birthday-message{padding:24px;border-radius:20px;background:#ead29912;border:1px solid #f8df9445;color:#fff2c6;text-align:center;font-size:18px;line-height:1.8}
-@keyframes birthday-shimmer{from{opacity:.5;transform:scale(.95) rotate(-8deg)}to{opacity:1;transform:scale(1.12) rotate(8deg)}}
 .app:fullscreen .birthday-fish{pointer-events:auto}
 .app:fullscreen #eggBed .birthday-fish{pointer-events:auto}
-.no-motion .birthday-fish::before{animation:none}
-@media(prefers-reduced-motion:reduce){.birthday-fish::before{animation:none}}
 @media(max-width:600px){.local-clock{right:16px;top:14px}.scene-timer{width:240px}.scene-timer strong{font-size:78px;letter-spacing:-3px}.fish-birthday{font-size:18px}}
+
+/* Light follows the animal's transparent silhouette, never a badge or oval. */
+.fish.birthday-fish .fish-art{filter:brightness(1.13) saturate(1.08) drop-shadow(0 0 4px #fff5ddb3) drop-shadow(0 0 13px #fff1b87a) drop-shadow(0 0 24px #a7edf24d)}
+.fish.is-hungry:not(.birthday-fish) .fish-art{filter:brightness(.87) saturate(.72) drop-shadow(0 4px 3px #032f494d)}
+.fish-birthday{right:-5px;top:-12px;font-size:18px}
+.fish-hunger{display:block;width:max-content;max-width:150px;margin:3px auto 0;font-size:8px;background:#153844b3;border-color:#eed9a733;color:#f7e6c3}
+/* Translucent, refractive-looking surfaces keep the aquarium visible. */
+dialog,.behavior-modal{background:linear-gradient(135deg,#c3f4ec26 0%,#32768730 28%,#09334770 75%,#bddfe815 100%);backdrop-filter:blur(10px) saturate(145%);-webkit-backdrop-filter:blur(10px) saturate(145%);border:1px solid #d3fff275;border-radius:30px;box-shadow:inset 0 2px 1px #effffb75,inset 1px 0 0 #ecfff638,inset -1px -2px 1px #d3fffb35,0 24px 70px #001c335c;color:#f1ffff;text-shadow:0 1px 3px #032431b3}
+dialog::backdrop{background:#00172524;backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px)}
+dialog .settings-note,dialog .modal-intro,dialog p,dialog small{color:#d4e9eb}
+dialog .activity-card,dialog .species-card,dialog .behavior-choice,dialog .button,dialog .child-share,dialog .toggle-row,dialog .behavior-nav button{background:linear-gradient(135deg,#e2fffa18,#c6e9f108);border-color:#d2f8ef47;box-shadow:inset 0 1px 0 #f4fffc24}
+dialog .button.primary{background:linear-gradient(125deg,#bdf7ddc9,#7ed8c2a8);color:#123f45;text-shadow:none;border-color:#e2fff9a3}
+dialog .button.danger{background:#953d493d;color:#ffe1e2;border-color:#ffc0c154}
+dialog .field input,dialog .field textarea,dialog .field select,dialog .species-search{background:#062c3c59;border-color:#d4f4f052;box-shadow:inset 0 1px 6px #001a2626;color:#f3ffff}
+dialog select option{background:#123e4d;color:#f3ffff}
+dialog .button:hover:not(:disabled),dialog .activity-card:hover,dialog .behavior-choice:hover:not(:disabled){background-color:#d5fff52b;border-color:#dffffba6}
+.modal-back{display:inline-flex;align-items:center;min-height:36px;padding:6px 13px;margin:0 0 19px;border:1px solid #d3fff25c;border-radius:20px;background:linear-gradient(140deg,#ddfff21f,#d7f1ff09);color:#ecfff9;box-shadow:inset 0 1px 0 #ffffff40;font-size:12px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){dialog,.behavior-modal{background:#164554f2}}
+@media(prefers-reduced-transparency:reduce){dialog,.behavior-modal{background:#103a49;backdrop-filter:none;-webkit-backdrop-filter:none}dialog::backdrop{background:#032431b5}}
+@media(max-width:650px){dialog,.behavior-modal{border-radius:24px}.modal-back{margin-bottom:14px}}
+
+/* Jointed swimming: the tail flexes at its root, while the face stays steady.
+   A subpixel overlap avoids a hairline at the join during perspective turns. */
+.fish-art{position:relative;display:block;flex-shrink:0}
+.fish-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.fish-tail-image{display:none}
+.has-tail .fish-body-image{clip-path:inset(0 0 0 calc(var(--tail-joint) - .3px))}
+.has-tail .fish-tail-image{display:block;clip-path:inset(0 calc(100% - var(--tail-joint)) 0 0);transform-origin:var(--tail-joint) 50%;transform:rotateY(var(--tail-yaw,0deg)) skewY(var(--tail-flex,0deg))}
+.no-motion .fish-tail-image,.is-hungry .fish-tail-image{transform:none}
+/* Slow, independent light passes: broad rays in the water and soft sand ripples. */
+.water-light{animation:water-rays 24s ease-in-out infinite alternate}
+.water-light::before{animation:water-surface 31s ease-in-out infinite alternate}
+.water-light::after{left:-8%;right:-8%;bottom:-3%;height:29%;opacity:.65;background:repeating-radial-gradient(ellipse at 46% 22%,transparent 0 30px,#c1fff01c 33px 35px,transparent 38px 70px);filter:blur(1.5px);animation:sand-reflections 21s ease-in-out infinite alternate}
+@keyframes water-rays{from{transform:translate3d(-1.5%,0,0) rotate(-1.4deg);opacity:.6}to{transform:translate3d(2%,0,0) rotate(1.8deg);opacity:.95}}
+@keyframes water-surface{from{transform:translate3d(-2%,-1%,0) scale(1);opacity:.65}to{transform:translate3d(3%,1%,0) scale(1.06);opacity:1}}
+@keyframes sand-reflections{from{transform:perspective(480px) rotateX(57deg) translate3d(-20px,0,0) scale(1);opacity:.45}to{transform:perspective(480px) rotateX(61deg) translate3d(24px,9px,0) scale(1.09);opacity:.75}}
+.no-motion .water-light,.no-motion .water-light::before,.no-motion .water-light::after{animation:none}
+@media(prefers-reduced-motion:reduce){.fish-tail-image{transform:none!important}.water-light,.water-light::before,.water-light::after{animation:none}}

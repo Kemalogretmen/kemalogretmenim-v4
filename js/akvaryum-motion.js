@@ -79,6 +79,15 @@
     // Routes are individual. Nearby fish never trigger a turn or a slowdown.
     fish.forEach(f => {
       if(f.held) { f.cruise=0; return; }
+      if(f.hungry) {
+        // Settle gently on the sand, then remain still until the next feeding.
+        f.turn=null;f.cruise=0;f.routeTime=0;f.targetX=null;
+        const approach=(from,to,rate)=>Math.abs(to-from)<.15?to:from+(to-from)*Math.min(1,dt*rate);
+        f.x=clamp(approach(f.x,f.restX??f.x,.55),0,Math.max(0,width-f.size));
+        f.y=clamp(approach(f.y,f.restY??f.maxY,.55),f.minY,f.maxY);
+        f.angle=approach(f.angle,f.direction>0?0:180,1.4);
+        return;
+      }
       f.turnCooldown=Math.max(0,(f.turnCooldown||0)-dt);
       const target=f.hover?0:1;
       f.cruise=(f.cruise??1)+(target-(f.cruise??1))*Math.min(1,dt*14);
