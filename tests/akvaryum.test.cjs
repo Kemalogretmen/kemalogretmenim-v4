@@ -142,7 +142,7 @@ test('invalid behavior points are rejected without mutation and legacy points mi
     const {state,cls,day}=setup();
     assert.equal(C.updateTaskPoints(cls,day.tasks[0].id,value,TODAY),false);
     assert.equal(day.tasks[0].points,1);
-    cls.tasks[0].points=value;assert.throws(()=>C.validate(state));
+    cls.tasks[0].points=value;if(value===-1)assert.equal(C.validate(state).classes[0].tasks[0].points,-1);else assert.throws(()=>C.validate(state));
   }
   const {state,cls,student,day}=setup();
   delete student.createdAt;

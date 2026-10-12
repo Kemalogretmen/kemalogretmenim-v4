@@ -143,7 +143,7 @@ test('profile separates today, total and feeding; written hunger remains an opt-
 });
 test('selected fish stays still in its popup, resumes after closing, and settings do not reset its location',async()=>{
   const h=await harness({ageDays:0}),d=h.document,fish=d.querySelector('.fish');
-  let time=0;const advance=n=>{for(let i=0;i<n;i++){time+=50;h.frames.pop()(time);}};
+  let time=0;const advance=n=>{for(let i=0;i<n;i++){time+=50;h.frames.pop()?.(time);}};
   advance(10);const initial=fish.style.transform;h.click('.fish');advance(20);assert.equal(fish.style.transform,initial);
   h.click('[data-action="close"]');advance(20);assert.notEqual(fish.style.transform,initial);
   const moved=fish.style.transform;h.click('[data-action="settings"]');const toggle=d.getElementById('pointsToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));
@@ -421,4 +421,33 @@ test('absence preserves hatched growth and points, rests the fish, then restores
  h.click('.fish');h.click(h.modal.querySelector('[data-action="absence"]'));h.click('[data-action="close"]');
  advance(200);assert.equal(fish.classList.contains('is-absent'),false);assert.notEqual(fish.style.transform,rest);
  assert.equal(C.earned(h.saved().classes[0].students[0]),7);
+});
+test('development tab supports a teacher-defined deduction and history undo without feeding',async()=>{
+ const h=await harness({growth:true}),d=h.document;
+ h.click('.fish');h.click('[data-action="reward-behavior"]');
+ h.click('.fish');h.click('[data-action="tasks"]');
+ const form=d.getElementById('taskForm');form.querySelector('[name="title"]').value='Söz sıramı beklemeliyim';form.querySelector('[name="points"]').value='2';
+ Object.defineProperty(form.querySelector('[name="behaviorType"]'),'value',{value:'development'});
+ h.submit(form);h.click('[data-action="modal-back"]');
+ h.click('[data-kind="development"]');assert.equal(d.querySelectorAll('.behavior-choice').length,1);
+ assert.match(d.querySelector('.behavior-choice').textContent,/-2 puan/);h.click('[data-action="reward-behavior"]');
+ assert.equal(C.earned(h.saved().classes[0].students[0]),5);assert.equal(h.sounds(),1);
+ h.click('.fish');h.click('[data-action="history"]');const buttons=[...d.querySelectorAll('[data-action="revoke-point"]')];
+ h.click(buttons.find(b=>b.textContent==='Kesintiyi geri al'));h.click('[data-action="confirm"]');
+ assert.equal(C.earned(h.saved().classes[0].students[0]),7);assert.equal(h.saved().classes[0].students[0].feeds.length,1);
+});
+test('an open dialog stops all swimmer steps; sand eggs never enter the movement loop; closing resumes',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada','İpek']}),d=h.document;let calls=0,animals=0;
+ const step=h.window.AquariumMotion.step;h.window.AquariumMotion={...h.window.AquariumMotion};
+ // The app keeps the shared module reference, so wrap and restore that method.
+ const motion=require('../js/akvaryum-motion.js');motion.step=(fish,...args)=>{calls++;animals+=fish.length;return step(fish,...args);};
+ try {
+  h.frames.pop()(100);h.frames.pop()(150);assert.ok(calls>0);calls=0;
+  h.click('.fish');h.frames.pop()?.(200);assert.equal(calls,0);assert.equal(d.body.classList.contains('dialog-open'),true);
+  h.click('[data-action="close"]');h.frames.pop()(250);assert.ok(calls>0);assert.equal(d.body.classList.contains('dialog-open'),false);
+ } finally {motion.step=step;}
+ const eggs=await harness({growth:true,extraNames:['Ada','İpek']}),before=[...eggs.document.querySelectorAll('.fish')].map(el=>el.getAttribute('style'));
+ for(let i=1;i<=120;i++)eggs.frames.pop()?.(i*16.67);
+ assert.equal(eggs.frames.length,0);
+ assert.deepEqual([...eggs.document.querySelectorAll('.fish')].map(el=>el.getAttribute('style')),before);
 });

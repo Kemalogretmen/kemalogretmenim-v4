@@ -216,3 +216,31 @@ dialog .button:hover:not(:disabled),dialog .activity-card:hover,dialog .behavior
 .fish.is-absent .fish-art{filter:brightness(.84) saturate(.4) opacity(.55) drop-shadow(0 3px 4px #032f4933)}
 .fish.is-absent .fish-egg{opacity:.5}
 .fish.is-absent .fish-tail-image{transform:none}
+/* Compact, readable scoring. One composited glass surface per dialog. */
+.behavior-modal{width:min(1060px,calc(100% - 32px));text-shadow:none;background:linear-gradient(125deg,#174959ec,#0a3044eb)}
+.behavior-modal .behavior-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.behavior-modal .behavior-choice{min-height:126px;padding:28px 9px 12px;gap:8px;background:#143d4fe8;border-color:#b9eade60}
+.behavior-modal .behavior-check{font-size:24px;width:30px;height:30px}
+.behavior-modal .behavior-choice strong{font-size:15px;font-weight:700;line-height:1.35;color:#fff}
+.behavior-modal .behavior-choice small{font-size:11px;color:#c4dce0}
+.behavior-modal .behavior-choice b{font-size:12px;font-weight:750;color:#bcf4d3}
+.behavior-modal .development-choice b{color:#ffd5b4}
+.behavior-profile{margin:8px 0;padding-bottom:8px}.behavior-profile img{width:64px;height:48px}
+.behavior-modal .student-facts{padding:12px;margin-bottom:12px}.behavior-modal .growth-summary{padding:10px;margin:10px 0}
+.behavior-tabs{display:flex;gap:8px;margin:0 0 14px}.behavior-tabs button{min-height:44px;padding:10px 14px;border:1px solid #b4dedb55;border-radius:10px;background:#0b2e40;color:#d9edef;font-weight:700}
+.behavior-tabs [aria-selected=true]{background:#a5e6ce;color:#133d45;border-color:#a5e6ce}
+.device-quality{margin-bottom:22px}.device-quality small{font-size:12px;line-height:1.5;color:#d3e7e6}
+dialog *,.fish-name,.fish-points,.fish-hunger{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.dialog-open .aquarium *,.dialog-open .aquarium *::before,.dialog-open .aquarium *::after{animation-play-state:paused!important}
+.dialog-open dialog *{animation-play-state:running!important}
+.dialog-open dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none;background:#03243165}
+html.performance-lite dialog{background:linear-gradient(135deg,#1b4a59fa,#092f41fa);text-shadow:none}
+html.performance-lite .water-light,html.performance-lite .scene-kelp{display:none}
+html.performance-lite .bubbles i:nth-child(n+7){display:none}
+html.performance-lite .fish-art,html.performance-lite .fish::after{filter:none!important}
+html.performance-lite .birthday-fish .fish-art{filter:drop-shadow(0 0 7px #c0fff5)!important}
+html.performance-lite .fish-name,html.performance-lite .fish-points{background:#0a3046e6}
+html.performance-lite .student-panel{background:#103846f5}
+@media(max-width:700px){.behavior-modal .behavior-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.behavior-modal .behavior-choice strong{font-size:14px}.behavior-tabs button{padding:9px;font-size:12px}}
+html.performance-lite .fish.is-absent .fish-art{opacity:.45!important}
+html.performance-lite .fish.is-hungry .fish-art{opacity:.7!important}

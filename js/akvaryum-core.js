@@ -51,6 +51,7 @@
   const clean = (v, max = 80) => String(v || '').trim().slice(0, max);
   const species = id => SPECIES.find(s => s.id === id) || SPECIES[0];
   const validPoints = value => Number.isInteger(value) && value >= 1 && value <= 1000;
+  const validScore = value => typeof value==='number' && validPoints(Math.abs(value));
   const taskPoints = task => task.points === undefined ? 1 : task.points;
   function newClass(name = 'Sınıfım') {
     return { id: uid(), name: clean(name), theme: 'reef', students: [], tasks: ['Kitabımı okudum', 'Ödevimi tamamladım', 'Sorumluluğumu yerine getirdim'].map(title => ({ id: uid(), title, icon: '', points: 1 })) };
@@ -86,22 +87,26 @@
     return { version: 1, activeClassId: classroom.id, classes: [classroom], settings: settingsOf() };
   }
   function ensureDay(student, classroom, date = dayKey()) {
-    if (!student.days[date]) student.days[date] = { absent: false, tasks: classroom.tasks.map(t => ({ id: t.id, title: t.title, icon: taskIcon(t.icon), points: taskPoints(t), status: 'pending' })) };
+    if (!student.days[date]) student.days[date] = { absent: false, tasks: classroom.tasks.filter(t => taskPoints(t)>0).map(t => ({ id: t.id, title: t.title, icon: taskIcon(t.icon), points: taskPoints(t), status: 'pending' })) };
     return student.days[date];
   }
   // Attendance blocks new rewards; it never revokes already awarded points.
   function earned(student) {
-    return Object.values(student.days).reduce((n, d) => n + d.tasks.reduce((sum, t) => sum + (t.status === 'done' ? taskPoints(t) : 0), 0), 0);
+    return Math.max(0, Object.values(student.days).reduce((n, d) => n + d.tasks.reduce((sum, t) => sum + (t.status === 'done' ? taskPoints(t) : 0), 0), 0));
   }
-  const completedCount = student => Object.values(student.days).reduce((n, d) => n + d.tasks.filter(t => t.status === 'done').length, 0);
+  const completedCount = student => Object.values(student.days).reduce((n, d) => n + d.tasks.filter(t => t.status === 'done' && taskPoints(t)>0).length, 0);
   const balance = student => Math.max(0, completedCount(student) - student.feeds.filter(f => !f.creditReversed).length);
   const TASK_ICONS = ['⭐','📖','✏️','💙','🌿','🤝','🎯','🏆','🧠','🎨','🎵','🧹','🧩','💡','🙋','🕊️','🌍','🌟','😊','💪','📝','🔬','⚽','🎒'];
   const taskIcon = value => typeof value === 'string' && value.trim().length <= 16 && !/[<>\x00-\x1f]/.test(value) ? value.trim() : '';
   function updateTask(classroom, taskId, values, date = dayKey()) {
     const task = classroom.tasks.find(t => t.id === taskId), title = clean(values.title,120);
-    if (!task || !title || !validPoints(values.points)) return false;
+    if (!task || !title || !validScore(values.points)) return false;
     Object.assign(task,{title,points:values.points,icon:taskIcon(values.icon)});
-    classroom.students.forEach(s => s.days[date]?.tasks.filter(t => t.id === taskId && t.status !== 'done').forEach(t => Object.assign(t,{title,points:task.points,icon:task.icon})));
+    classroom.students.forEach(s => {
+      const day=s.days[date];if(!day)return;
+      if(task.points<0)day.tasks=day.tasks.filter(t=>t.id!==taskId || t.status==='done');
+      else day.tasks.filter(t=>t.id===taskId && t.status!=='done').forEach(t=>Object.assign(t,{title,points:task.points,icon:task.icon}));
+    });
     return true;
   }
   function updateTaskPoints(classroom, taskId, points, date = dayKey()) {
@@ -119,7 +124,7 @@
     const day = student.days[date];
     if (!day || day.absent || !['pending', 'done', 'missed'].includes(status)) return false;
     const task = day.tasks.find(t => t.id === taskId);
-    if (!task) return false;
+    if (!task || taskPoints(task)<0) return false;
     task.status = status;
     return true;
   }
@@ -149,8 +154,14 @@
     const day = student.days[date];
     if (!day || day.absent || day.tasks.length >= 2000 || student.feeds.length >= 80000) return null;
     const choice = behaviorChoices(student, classroom, date).find(t => t.id === taskId);
-    if (!choice || !validPoints(choice.points)) return null;
+    if (!choice || !validScore(choice.points)) return null;
     const original = day.tasks.find(t => t.id === taskId);
+    if (choice.points<0) {
+      const points=-Math.min(earned(student),Math.abs(choice.points));
+      if(!points) return null;
+      day.tasks.push({id:uid(),sourceId:taskId,title:choice.title,icon:taskIcon(choice.icon),points,status:'done',awardedAt:Date.now()});
+      return {points,fed:false};
+    }
     if (original && original.status !== 'done') return completeAndFeed(student, date, taskId);
     const entry = {id:uid(), sourceId:taskId, title:choice.title, icon:taskIcon(choice.icon), points:choice.points, status:'done', awardedAt:Date.now()};
     day.tasks.push(entry);
@@ -160,7 +171,7 @@
   function correctAward(student, date, taskId, remove = false) {
     const day = student.days[date], task = day?.tasks.find(t => t.id === taskId);
     if (!task || (!remove && task.status !== 'done')) return false;
-    if (task.status === 'done' && balance(student) === 0) {
+    if (task.status === 'done' && taskPoints(task)>0 && balance(student) === 0) {
       const consumed = [...student.feeds].reverse().find(f => !f.creditReversed);
       if (consumed) consumed.creditReversed = true;
     }
@@ -178,6 +189,7 @@
   }
   // Bulk rewards use the same per-student rules as a fish click.
   function rewardGroup(classroom, date, taskId, studentIds) {
+    if(!classroom.tasks.some(t=>t.id===taskId && taskPoints(t)>0)) return [];
     const chosen = new Set(studentIds);
     return classroom.students.filter(s => chosen.has(s.id)).flatMap(s => {
       const result = awardBehavior(s, classroom, date, taskId);
@@ -221,9 +233,9 @@
     if (hungerDays(student)>=2) return {id:'hungry',label:'Yem bekliyor',symbol:'',speed:0,note:'İki gündür beslenmedi. Yeniden beslendiğinde yüzmeye başlayacak.'};
     if (day?.tasks.some(t => t.status === 'missed')) return { id: 'sad', label: 'Biraz üzgün', symbol: '◡', speed: 0.3, note: 'Eksik görevini tamamlayınca yeniden canlanacak.' };
     if (student.feeds.some(f => f.day === date)) return { id: 'happy', label: 'Çok mutlu', symbol: '♡', speed: 1.1, note: 'Yemini yedi, keyifle yüzüyor!' };
-    if (day?.tasks.some(t => t.status === 'done')) return { id: 'ready', label: 'Yemini bekliyor', symbol: '✦', speed: 0.7, note: 'Tamamlanan görevlerden kazandığın yemle besleyebilirsin.' };
+    if (day?.tasks.some(t => t.status === 'done' && taskPoints(t)>0)) return { id: 'ready', label: 'Yemini bekliyor', symbol: '✦', speed: 0.7, note: 'Tamamlanan görevlerden kazandığın yemle besleyebilirsin.' };
     const previous = Object.keys(student.days).filter(d => d < date && !student.days[d].absent).sort().pop();
-    if (previous && student.days[previous].tasks.some(t => t.status !== 'done')) return { id: 'sad', label: 'Biraz üzgün', symbol: '◡', speed: 0.3, note: 'Önceki görev günü eksik kalmış. Bugün yeni bir başlangıç!' };
+    if (previous && student.days[previous].tasks.some(t => taskPoints(t)>0 && t.status !== 'done')) return { id: 'sad', label: 'Biraz üzgün', symbol: '◡', speed: 0.3, note: 'Önceki görev günü eksik kalmış. Bugün yeni bir başlangıç!' };
     return { id: 'calm', label: 'Sakin', symbol: '≈', speed: 0.6, note: 'Görevlerini tamamla, yem kazan ve deniz dostunu besle.' };
   }
   // Strictly rebuild imported data; never merge untrusted object keys into application objects.
@@ -239,7 +251,7 @@
       if (!c || !clean(c.name) || !Array.isArray(c.students) || c.students.length > 60 || !Array.isArray(c.tasks) || c.tasks.length > 20) throw new Error('Sınıf kaydı geçersiz (en fazla 60 öğrenci, 20 görev).');
       const cls = { id: identifier(c.id), name: clean(c.name), theme: THEMES.some(t => t.id === c.theme) ? c.theme : 'reef', tasks: c.tasks.map(t => {
         if (!t || !clean(t.title, 120)) throw new Error('Görev başlığı eksik.');
-        if (!validPoints(taskPoints(t))) throw new Error('Davranış puanı 1–1000 arasında tam sayı olmalıdır.');
+        if (!validScore(taskPoints(t))) throw new Error('Davranış puanı büyüklüğü 1–1000 arasında tam sayı olmalıdır.');
         return { id: identifier(t.id), title: clean(t.title, 120), icon: taskIcon(t.icon), points: taskPoints(t) };
       }), students: [] };
       cls.students = c.students.map(s => {
@@ -258,7 +270,7 @@
           const seen = new Set();
           student.days[date] = { absent: Boolean(d.absent), tasks: d.tasks.map(t => {
             if (!t || typeof t.id !== 'string' || !/^[\w-]{1,90}$/.test(t.id) || seen.has(t.id) || !clean(t.title, 120) || !['pending', 'done', 'missed'].includes(t.status)) throw new Error('Görev sonucu geçersiz.');
-            if (!validPoints(taskPoints(t))) throw new Error('Geçmiş davranış puanı geçersiz.');
+            if (!validScore(taskPoints(t))) throw new Error('Geçmiş davranış puanı geçersiz.');
             if (t.sourceId !== undefined && (typeof t.sourceId !== 'string' || !/^[\w-]{1,90}$/.test(t.sourceId) || ['__proto__','constructor','prototype'].includes(t.sourceId) || t.sourceId === t.id)) throw new Error('Davranış bağlantısı geçersiz.');
             if (t.awardedAt !== undefined && (!Number.isFinite(t.awardedAt) || t.awardedAt < 0)) throw new Error('Ödül zamanı geçersiz.');
             seen.add(t.id); return { id: t.id, title: clean(t.title, 120), icon: taskIcon(t.icon), points: taskPoints(t), status: t.status,
@@ -284,5 +296,5 @@
     });
     return { version: 1, classes, activeClassId: classes.some(c => c.id === raw.activeClassId) ? raw.activeClassId : classes[0].id, settings: settingsOf(raw.settings) };
   }
-  return { validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
+  return { validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
 });

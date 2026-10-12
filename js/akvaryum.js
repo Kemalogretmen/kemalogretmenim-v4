@@ -209,12 +209,13 @@
     modal.classList.remove('behavior-modal', 'student-day-modal');
     $('modalTitle').textContent = title; $('modalEyebrow').textContent = eyebrow; $('modalContent').innerHTML = html;
     if (!modal.open) modal.showModal();
+    document.body.classList.add('dialog-open');restartAnimation();
     modal.scrollTop = 0;
     const field = modal.querySelector('[autofocus]');
     if (field) field.focus();
   }
   function releaseFish() { inspectedId = ''; swimmers.forEach(f => { f.hover = false; f.keyboard = false; f.pressed = false; f.el.classList.remove('is-selected'); }); }
-  function closeModal() { modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); releaseFish(); confirmAction = null; pendingRestore = null; }
+  function closeModal() { modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); document.body.classList.remove('dialog-open');restartAnimation(); releaseFish(); confirmAction = null; pendingRestore = null; }
   function confirm(title, description, callback) {
     confirmAction = callback;
     openModal(title, '<p class="modal-intro">' + esc(description) + '</p><div class="form-actions"><button class="button" data-action="close">Vazgeç</button><button class="button danger" data-action="confirm">Onayla</button></div>');
@@ -248,6 +249,10 @@
   function settingsModal() {
     rememberModal('settingsModal'+'',()=>settingsModal());
     openModal('Sınıfın kontrolü sende', '<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="' + esc(classroom().name) + '" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">' + icon('plus') + 'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="teacher-fish">Öğretmen balığı</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div><div class="settings-section"><h3>Akvaryum görünümü</h3><button class="button" data-action="themes">Arka planı değiştir</button><label class="toggle-row">Balıkların üzerinde toplam puanlarını göster<input id="pointsToggle" type="checkbox" ' + (state.settings.points ? 'checked' : '') + '></label><label class="toggle-row">Sınıf puanlarını göster · İstiridye ve inci<input id="classPointsToggle" type="checkbox" ' + (state.settings.classPoints ? 'checked' : '') + '></label><label class="toggle-row">Besleme hatırlatmasında geçen gün sayısını göster<input id="hungerTextToggle" type="checkbox" ' + (state.settings.hungerText ? 'checked' : '') + '></label><label class="toggle-row">Seyrek emoji sohbetleri<input id="chatToggle" type="checkbox" ' + (state.settings.chat ? 'checked' : '') + '></label><label class="toggle-row">Öğrenci adlarını göster · Kapatınca isimsiz yüzerler<input id="namesToggle" type="checkbox" ' + (state.settings.names ? 'checked' : '') + '></label><label class="toggle-row">Canlıların yüzmesi ve su hareketleri<input id="motionToggle" type="checkbox" ' + (state.settings.motion ? 'checked' : '') + '></label>' + (reduced.matches ? '<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık; yüzme animasyonları durduruldu.</p>' : '') + '</div><div class="settings-section"><h3>Paylaşım</h3><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>' + soundSettings() + '<div class="settings-section"><h3>Kayıt ve eşitleme</h3>' + cloudControls() + '<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklamanızı sağlar. Ziyaretçiler yalnızca izin verdiğiniz görünümü izler; görev geçmişine veya yönetim yetkisine erişemez.</p><div class="settings-actions"><button class="button" data-action="export">' + icon('download') + 'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>' + (blockedStorage ? '<button class="button" data-action="export-raw">Mevcut kaydı indir</button>' : '') + '</div></div><div class="settings-section"><button class="button subtle" data-action="help">Nasıl çalışır?</button></div>');
+    const field=document.createElement('label');field.className='field device-quality';
+    field.innerHTML='Bu cihazda görüntü kalitesi<select id="renderQuality"><option value="auto">Otomatik</option><option value="lite">Akıllı tahta · Akıcı görünüm</option><option value="full">Ayrıntılı görünüm</option></select><small>Akıcı görünüm cam bulanıklığını ve dekoratif ışıkları sadeleştirir. Balıklar yüzmeye, ses ve sayaç çalışmaya devam eder. Yalnızca bu cihaza kaydedilir.</small>';
+    $('modalContent').prepend(field);$('renderQuality').querySelector('option[value="'+(window.SitePerformance?.mode() || 'auto')+'"]').selected=true;
+
   }
   function growthModal() {
     rememberModal('growthModal'+'',()=>growthModal());
@@ -279,7 +284,7 @@
   function groupRewardModal() {
     rememberModal('groupRewardModal'+'',()=>groupRewardModal());
     ensureDays();
-    openModal('Birlikte ödüllendir', '<button class="detail-back" data-action="activities">← Sınıf etkinlikleri</button><p class="modal-intro">Gözlemlediğiniz olumlu davranışı ve bu davranışı tamamlayan öğrencileri seçin.</p><form id="groupRewardForm" data-class-id="' + classroom().id + '" data-date="' + today + '"><label class="field">Olumlu davranış<select id="groupTask" name="taskId" required>' + classroom().tasks.map(t => '<option value="' + t.id + '">' + esc(t.title) + ' · +' + C.taskPoints(t) + ' puan</option>').join('') + '</select></label><div class="settings-actions"><button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button><button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button></div><div id="groupStudents" class="group-students"></div><p id="groupSummary" class="settings-note" role="status"></p><button id="groupSubmit" class="button primary full" type="submit" disabled>Puan ver ve besle</button></form><p class="settings-note">Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.</p>' + (!classroom().tasks.length ? '<button class="button" data-action="tasks">Önce davranış ekle</button>' : ''));
+    openModal('Birlikte ödüllendir', '<button class="detail-back" data-action="activities">← Sınıf etkinlikleri</button><p class="modal-intro">Gözlemlediğiniz olumlu davranışı ve bu davranışı tamamlayan öğrencileri seçin.</p><form id="groupRewardForm" data-class-id="' + classroom().id + '" data-date="' + today + '"><label class="field">Olumlu davranış<select id="groupTask" name="taskId" required>' + classroom().tasks.filter(t=>C.taskPoints(t)>0).map(t => '<option value="' + t.id + '">' + esc(t.title) + ' · +' + C.taskPoints(t) + ' puan</option>').join('') + '</select></label><div class="settings-actions"><button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button><button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button></div><div id="groupStudents" class="group-students"></div><p id="groupSummary" class="settings-note" role="status"></p><button id="groupSubmit" class="button primary full" type="submit" disabled>Puan ver ve besle</button></form><p class="settings-note">Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.</p>' + (!classroom().tasks.length ? '<button class="button" data-action="tasks">Önce davranış ekle</button>' : ''));
     renderGroupStudents();
   }
   function renderGroupStudents() {
@@ -342,9 +347,13 @@
   function taskIconPicker(value) {
     return '<fieldset class="task-icon-picker"><legend>Görev simgesi</legend><div class="task-icon-options">'+C.TASK_ICONS.map(symbol=>'<button type="button" class="task-icon-option" data-action="pick-task-icon" data-icon="'+esc(symbol)+'" aria-label="'+esc(symbol)+' simgesini seç" aria-pressed="'+(value===symbol)+'">'+symbol+'</button>').join('')+'</div><label class="field">Kendi simgen / emoji<input name="icon" maxlength="16" placeholder="Örn. 🐠" value="'+esc(value || '')+'"></label></fieldset>';
   }
+  const signed = n => (n>=0?'+':'')+n;
+  function behaviorTypeField(points=1) {
+    return '<label class="field">Davranış türü<select name="behaviorType"><option value="positive" '+(points>0?'selected':'')+'>Olumlu · Puan ekle</option><option value="development" '+(points<0?'selected':'')+'>Geliştirmesi gereken · Puan düşür</option></select></label>';
+  }
   function tasksModal() {
     rememberModal('tasksModal'+'',()=>tasksModal());
-    openModal('Olumlu davranışlar ve puanları','<p class="modal-intro">Görev adını, simgesini ve puanını düzenleyebilirsiniz. Kaydedilen değişiklikler bugünkü bekleyen ve yeni görevlere uygulanır. Kazanılmış puanlar ve geçmiş kayıtlar korunur.</p><div class="task-edit-list">'+classroom().tasks.map(t=>'<details class="task-editor"><summary><span>'+esc(t.icon || behaviorSymbol(t.title))+'</span><strong>'+esc(t.title)+'</strong><b>+'+C.taskPoints(t)+'</b><span>Düzenle</span></summary><form class="task-points-form" data-task-id="'+t.id+'"><label class="field">Görev adı<input name="title" maxlength="120" required value="'+esc(t.title)+'"></label>'+taskIconPicker(t.icon || behaviorSymbol(t.title))+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" required value="'+C.taskPoints(t)+'"></label><div class="settings-actions"><button type="submit" class="button primary">Değişiklikleri kaydet</button><button type="button" class="button subtle" data-action="remove-task" data-id="'+t.id+'">Kaldır</button></div></form></details>').join('')+'</div><form id="taskForm" class="new-task-form"><h3>Yeni davranış ekle</h3><label class="field">Yeni olumlu davranış<input name="title" maxlength="120" placeholder="Örn. Arkadaşıma yardım ettim" required></label>'+taskIconPicker('⭐')+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" placeholder="Örn. 5" required></label><button type="submit" class="button primary">Davranış ekle</button></form><p id="formError" class="form-error" role="alert"></p><p class="settings-note">Kaldırılan davranış bugünkü ve geçmiş kayıtlarda kalır; yarından itibaren verilmez.</p>');
+    openModal('Davranışlar ve puanları','<p class="modal-intro">Davranış adını, türünü, simgesini ve puan miktarını belirleyin. Geliştirmesi gereken davranış puan düşürür, yem vermez; kesinti mevcut toplamı aşmaz. Hedefli modda boy da kalan puanın seviyesine iner. Geçmişten geri alınabilir. Kaydedilen değişiklikler bugünkü bekleyen ve yeni görevlere uygulanır. Kazanılmış puanlar ve geçmiş kayıtlar korunur.</p><div class="task-edit-list">'+classroom().tasks.map(t=>'<details class="task-editor"><summary><span>'+esc(t.icon || behaviorSymbol(t.title))+'</span><strong>'+esc(t.title)+'</strong><b>'+signed(C.taskPoints(t))+'</b><span>Düzenle</span></summary><form class="task-points-form" data-task-id="'+t.id+'"><label class="field">Görev adı<input name="title" maxlength="120" required value="'+esc(t.title)+'"></label>'+behaviorTypeField(C.taskPoints(t))+taskIconPicker(t.icon || behaviorSymbol(t.title))+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" required value="'+Math.abs(C.taskPoints(t))+'"></label><div class="settings-actions"><button type="submit" class="button primary">Değişiklikleri kaydet</button><button type="button" class="button subtle" data-action="remove-task" data-id="'+t.id+'">Kaldır</button></div></form></details>').join('')+'</div><form id="taskForm" class="new-task-form"><h3>Yeni davranış ekle</h3><label class="field">Davranış adı<input name="title" maxlength="120" placeholder="Örn. Arkadaşıma yardım ettim" required></label>'+behaviorTypeField()+taskIconPicker('⭐')+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" placeholder="Örn. 5" required></label><button type="submit" class="button primary">Davranış ekle</button></form><p id="formError" class="form-error" role="alert"></p><p class="settings-note">Kaldırılan davranış bugünkü ve geçmiş kayıtlarda kalır; yarından itibaren verilmez.</p>');
   }
   function lastFeeding(s) {
     const last = s.feeds.reduce((n,f) => Math.max(n,f.at),0);
@@ -354,7 +363,7 @@
   }
   function studentFacts(s) {
     const d = day(s), daily = d.tasks.reduce((n,t) => n+(t.status==='done'?C.taskPoints(t):0),0);
-    return '<div class="student-facts"><div><small>Bugünkü puan</small><strong>+' + daily + '</strong></div><div><small>Toplam puan</small><strong>' + C.earned(s).toLocaleString('tr-TR') + '</strong></div><div><small>Son besleme</small><strong>' + lastFeeding(s) + '</strong></div></div>';
+    return '<div class="student-facts"><div><small>Bugünkü puan</small><strong>' + signed(daily) + '</strong></div><div><small>Toplam puan</small><strong>' + C.earned(s).toLocaleString('tr-TR') + '</strong></div><div><small>Son besleme</small><strong>' + lastFeeding(s) + '</strong></div></div>';
   }
   function finderModal() {
     rememberModal('finderModal'+'',()=>finderModal());
@@ -383,12 +392,13 @@
     if (/temiz|duzen|cevre/.test(text)) return '🌿';
     return '⭐';
   }
+  let behaviorTab='positive';
   function behaviorModal() {
     rememberModal('behaviorModal'+'',()=>behaviorModal());
     const s = student(); if (!s) return;
     inspectedId = s.id;
     const d = day(s), mood = C.mood(s, today);
-    openModal(C.isBirthday(s)?'İyi ki doğdun, '+s.name+'! 🎂':s.name, (C.isBirthday(s)?'<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>':'')+'<div class="behavior-profile"><img src="' + image(s.species) + '" alt="' + C.species(s.species).name + '"><div><span class="profile-species">' + C.species(s.species).name + '</span><span class="profile-mood">' + esc(mood.label) + '</span></div></div>' + studentFacts(s) + (classroom().growth?.enabled ? '<p class="growth-summary">Kendi yolculuğum · '+C.growth(s,classroom()).stage+'/10 hedef'+(C.growth(s,classroom()).next ? ' · Sonraki hedef '+C.growth(s,classroom()).next+' toplam puan' : ' · Yolculuk tamamlandı 🏆')+'</p>' : '') + '<div class="behavior-layout"><nav class="behavior-nav" aria-label="Öğrenci işlemleri"><span class="nav-caption">GÜZEL ADIMLAR</span><button type="button" class="active" data-action="fish-profile" aria-current="page">' + icon('heart') + 'Puan ver ve besle</button><button type="button" data-action="student-day">' + icon('check') + 'Günlük kayıt</button><button type="button" data-action="history">' + icon('leaf') + 'Puan geçmişi</button><span class="nav-caption">DENİZ DOSTUM</span><button type="button" data-action="choose">' + icon('fish') + 'Balığını değiştir</button><button type="button" data-action="edit-student">' + icon('settings') + 'Öğrenciyi düzenle</button><button type="button" data-action="absence" aria-pressed="' + d.absent + '"><span class="nav-symbol">' + (d.absent ? '☀' : '☾') + '</span>' + (d.absent ? 'Bugün geldi' : 'Bugün gelmedi') + '</button></nav><section class="behavior-main" aria-label="Olumlu davranışlar"><div class="behavior-section-heading"><div><h3>Olumlu davranışlar</h3><p>Küçük bir adım, deniz dostuna mutluluk.</p></div><button class="icon-button" data-action="tasks" title="Davranışları ve puanları düzenle" aria-label="Davranışları ve puanları düzenle">' + icon('settings') + '</button></div>' + (d.absent ? '<p class="detail-note">Bugün izinli. Davranış seçmek için “Bugün geldi” düğmesine dokunun.</p>' : '') + '<div class="behavior-grid">' + C.behaviorChoices(s, classroom(), today).map(t => '<button type="button" class="behavior-choice" data-action="reward-behavior" data-id="' + t.id + '" ' + (d.absent ? 'disabled' : '') + '><span class="behavior-check" aria-hidden="true">' + esc(t.icon || behaviorSymbol(t.title)) + '</span><span><strong>' + esc(t.title) + '</strong><small>' + (t.count ? 'Bugün ' + t.count + ' kez · Tekrar ver' : 'Besle ve mutlu et') + '</small></span><b>+' + C.taskPoints(t) + ' puan</b></button>').join('') + '</div>' + (!d.tasks.length ? '<p class="settings-note">İlk davranışı ve puanını belirleyerek başlayın.</p><button class="button" data-action="tasks">Davranış ekle</button>' : '<p class="behavior-footnote">' + icon('leaf') + 'Aynı davranışı gün içinde yeniden verebilirsiniz. Her ödül geçmişe ayrı kaydedilir.</p>') + '</section></div>', 'DENİZ DOSTUNUN GÜZEL ADIMLARI');
+    openModal(C.isBirthday(s)?'İyi ki doğdun, '+s.name+'! 🎂':s.name, (C.isBirthday(s)?'<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>':'')+'<div class="behavior-profile"><img src="' + image(s.species) + '" alt="' + C.species(s.species).name + '"><div><span class="profile-species">' + C.species(s.species).name + '</span><span class="profile-mood">' + esc(mood.label) + '</span></div></div>' + studentFacts(s) + (classroom().growth?.enabled ? '<p class="growth-summary">Kendi yolculuğum · '+C.growth(s,classroom()).stage+'/10 hedef'+(C.growth(s,classroom()).next ? ' · Sonraki hedef '+C.growth(s,classroom()).next+' toplam puan' : ' · Yolculuk tamamlandı 🏆')+'</p>' : '') + '<div class="behavior-layout"><nav class="behavior-nav" aria-label="Öğrenci işlemleri"><span class="nav-caption">GÜZEL ADIMLAR</span><button type="button" class="active" data-action="fish-profile" aria-current="page">' + icon('heart') + 'Puan ver ve besle</button><button type="button" data-action="student-day">' + icon('check') + 'Günlük kayıt</button><button type="button" data-action="history">' + icon('leaf') + 'Puan geçmişi</button><span class="nav-caption">DENİZ DOSTUM</span><button type="button" data-action="choose">' + icon('fish') + 'Balığını değiştir</button><button type="button" data-action="edit-student">' + icon('settings') + 'Öğrenciyi düzenle</button><button type="button" data-action="absence" aria-pressed="' + d.absent + '"><span class="nav-symbol">' + (d.absent ? '☀' : '☾') + '</span>' + (d.absent ? 'Bugün geldi' : 'Bugün gelmedi') + '</button></nav><section class="behavior-main" aria-label="Davranış puanlama"><div class="behavior-section-heading"><div><h3>Davranışlar</h3><p>Davranışı seçin; puanı geçmişten geri alabilirsiniz.</p></div><button class="icon-button" data-action="tasks" title="Davranışları ve puanları düzenle" aria-label="Davranışları ve puanları düzenle">' + icon('settings') + '</button></div>' + (d.absent ? '<p class="detail-note">Bugün izinli. Davranış seçmek için “Bugün geldi” düğmesine dokunun.</p>' : '') + '<div class="behavior-tabs" role="tablist" aria-label="Davranış türü"><button role="tab" data-action="behavior-tab" data-kind="positive" aria-selected="'+(behaviorTab==='positive')+'">Olumlu</button><button role="tab" data-action="behavior-tab" data-kind="development" aria-selected="'+(behaviorTab==='development')+'">Geliştirmesi gereken</button></div><div class="behavior-grid">' + C.behaviorChoices(s, classroom(), today).filter(t=>(C.taskPoints(t)<0)===(behaviorTab==='development')).map(t => '<button type="button" class="behavior-choice '+(C.taskPoints(t)<0?'development-choice':'')+'" data-action="reward-behavior" data-id="' + t.id + '" ' + (d.absent ? 'disabled' : '') + '><span class="behavior-check" aria-hidden="true">' + esc(t.icon || behaviorSymbol(t.title)) + '</span><span><strong>' + esc(t.title) + '</strong><small>' + (t.count ? 'Bugün ' + t.count + ' kez · Tekrar ver' : C.taskPoints(t)<0?'Puanı düşür':'Besle ve mutlu et') + '</small></span><b>' + signed(C.taskPoints(t)) + ' puan</b></button>').join('') + '</div>' + (!C.behaviorChoices(s,classroom(),today).some(t=>(C.taskPoints(t)<0)===(behaviorTab==='development')) ? '<p class="settings-note">İlk davranışı ve puanını belirleyerek başlayın.</p><button class="button" data-action="tasks">Davranış ekle</button>' : '<p class="behavior-footnote">' + icon('leaf') + 'Aynı davranışı gün içinde yeniden verebilirsiniz. Her işlem geçmişe ayrı kaydedilir.</p>') + '</section></div>', 'DENİZ DOSTUNUN GÜZEL ADIMLARI');
     modal.classList.add('behavior-modal');
     swimmers.forEach(f=>f.el.classList.toggle('is-selected',f.el.dataset.id===s.id));
   }
@@ -412,11 +422,11 @@
   function rewardBehavior(s, taskId, popup = false) {
     if (!s) return;
     const result = popup ? C.awardBehavior(s, classroom(), today, taskId) : C.completeAndFeed(s, today, taskId);
-    if (!result) { if (popup) { behaviorModal(); toast('Ödül kaydedilemedi. Günlük kayıt veya besleme sınırına ulaşılmış olabilir.'); } return; }
+    if (!result) { if (popup) { behaviorModal(); toast('İşlem kaydedilemedi. Toplam puan sıfır olabilir veya günlük kayıt sınırına ulaşılmış olabilir.'); } return; }
     if (popup) closeModal();
     commit();
     if (result.fed) feedingFeedback(s, result.points);
-    else toast(s.name + ': +' + result.points + ' puan. Daha önce kullanılan yem yeniden verilmedi.');
+    else toast(s.name + ': ' + signed(result.points) + ' puan. İşlemi puan geçmişinden geri alabilirsiniz.');
   }
   function helpModal() {
     rememberModal('helpModal'+'',()=>helpModal());
@@ -430,7 +440,7 @@
     ].map(([title, detail], i) => '<div class="help-step"><span class="step-number">' + (i + 1) + '</span><div><h3>' + title + '</h3><p>' + detail + '</p></div></div>').join('') + '</div><p class="settings-note">Canlıların farklı ortamlarda bir arada görünmesi ve mutluluk tepkileri, bu sınıf etkinliğinin oyunlaştırma öğeleridir.</p>');
   }
   function progress() {
-    const records = classroom().students.filter(s => !day(s).absent).flatMap(s => C.behaviorChoices(s, classroom(), today));
+    const records = classroom().students.filter(s => !day(s).absent).flatMap(s => C.behaviorChoices(s, classroom(), today).filter(t=>C.taskPoints(t)>0));
     const done = records.filter(t => t.count > 0).length;
     const percent = records.length ? Math.round(done / records.length * 100) : 0;
     $('classProgress').innerHTML = '<div class="progress-copy"><span>Bugünün güzel adımları</span><strong>' + done + ' / ' + records.length + '</strong></div><div class="progress-track" role="progressbar" aria-label="Sınıfın tamamlanan görevleri" aria-valuenow="' + percent + '" aria-valuemin="0" aria-valuemax="100"><span style="width:' + percent + '%"></span></div>';
@@ -445,12 +455,12 @@
   function detail() {
     const s = student(); if (!s) { selected = ''; return studentRows(); }
     const d = day(s), mood = C.mood(s, today);
-    return '<button class="detail-back" data-action="back">← Tüm deniz dostları</button><div class="detail-header"><img src="' + image(s.species) + '" alt="' + C.species(s.species).name + '"><div><h3>' + esc(s.name) + '</h3><small>' + mood.label + ' · ' + C.balance(s) + ' yem</small></div></div><p class="detail-note">' + mood.note + '</p>' + d.tasks.map(t => '<div class="task-row"><p>' + esc(t.title) + ' <span class="task-score">+' + C.taskPoints(t) + ' puan</span></p><div class="task-actions">' + [['done', '✓ Tamam'], ['pending', 'Bekliyor'], ['missed', 'Eksik']].map(([status, label]) => '<button data-action="task-status" data-id="' + t.id + '" data-status="' + status + '" aria-label="' + esc(t.title) + ': ' + label + '" aria-pressed="' + (t.status === status) + '" ' + (d.absent ? 'disabled' : '') + '>' + label + '</button>').join('') + '</div></div>').join('') + (!d.tasks.length ? '<p class="settings-note">Bugün için görev yok. Günlük görevler bölümünden ekleyebilirsiniz.</p>' : '') + '<button class="button primary full feed-button" data-action="feed" ' + (!C.balance(s) || d.absent ? 'disabled' : '') + '>' + icon('leaf') + 'Besle · 1 yem</button>' + (!C.balance(s) ? '<p class="settings-note">Beslemek için tamamlanan bir görevden yem kazan.</p>' : '') + '<div class="detail-extras"><button class="button subtle" data-action="absence" aria-pressed="' + d.absent + '">' + (d.absent ? '☀ Bugün geldi' : '☾ Bugün gelmedi') + '</button><button class="button subtle" data-action="choose">Canlıyı değiştir</button><button class="button subtle" data-action="history">Geçmiş</button><button class="button subtle" data-action="edit-student">Düzenle</button></div>';
+    return '<button class="detail-back" data-action="back">← Tüm deniz dostları</button><div class="detail-header"><img src="' + image(s.species) + '" alt="' + C.species(s.species).name + '"><div><h3>' + esc(s.name) + '</h3><small>' + mood.label + ' · ' + C.balance(s) + ' yem</small></div></div><p class="detail-note">' + mood.note + '</p>' + d.tasks.filter(t=>C.taskPoints(t)>0).map(t => '<div class="task-row"><p>' + esc(t.title) + ' <span class="task-score">+' + C.taskPoints(t) + ' puan</span></p><div class="task-actions">' + [['done', '✓ Tamam'], ['pending', 'Bekliyor'], ['missed', 'Eksik']].map(([status, label]) => '<button data-action="task-status" data-id="' + t.id + '" data-status="' + status + '" aria-label="' + esc(t.title) + ': ' + label + '" aria-pressed="' + (t.status === status) + '" ' + (d.absent ? 'disabled' : '') + '>' + label + '</button>').join('') + '</div></div>').join('') + (!d.tasks.some(t=>C.taskPoints(t)>0) ? '<p class="settings-note">Bugün için görev yok. Günlük görevler bölümünden ekleyebilirsiniz.</p>' : '') + '<button class="button primary full feed-button" data-action="feed" ' + (!C.balance(s) || d.absent ? 'disabled' : '') + '>' + icon('leaf') + 'Besle · 1 yem</button>' + (!C.balance(s) ? '<p class="settings-note">Beslemek için tamamlanan bir görevden yem kazan.</p>' : '') + '<div class="detail-extras"><button class="button subtle" data-action="absence" aria-pressed="' + d.absent + '">' + (d.absent ? '☀ Bugün geldi' : '☾ Bugün gelmedi') + '</button><button class="button subtle" data-action="choose">Canlıyı değiştir</button><button class="button subtle" data-action="history">Geçmiş</button><button class="button subtle" data-action="edit-student">Düzenle</button></div>';
   }
   function taskSummary() {
     const tasks = new Map();
-    classroom().students.forEach(s => { const d = day(s); if (d.absent) return; C.behaviorChoices(s, classroom(), today).forEach(t => { const info = tasks.get(t.id) || { title: t.title, total: 0, done: 0 }; info.total++; if (t.count > 0) info.done++; tasks.set(t.id, info); }); });
-    if (!tasks.size) classroom().tasks.forEach(t => tasks.set(t.id, { title: t.title, total: 0, done: 0 }));
+    classroom().students.forEach(s => { const d = day(s); if (d.absent) return; C.behaviorChoices(s, classroom(), today).filter(t=>C.taskPoints(t)>0).forEach(t => { const info = tasks.get(t.id) || { title: t.title, total: 0, done: 0 }; info.total++; if (t.count > 0) info.done++; tasks.set(t.id, info); }); });
+    if (!tasks.size) classroom().tasks.filter(t=>C.taskPoints(t)>0).forEach(t => tasks.set(t.id, { title: t.title, total: 0, done: 0 }));
     return Array.from(tasks.values()).map(t => '<div class="task-summary"><h3>' + esc(t.title) + '</h3><p>' + t.done + ' / ' + t.total + ' öğrenci tamamladı</p><div class="progress-track"><span style="width:' + (t.total ? t.done / t.total * 100 : 0) + '%"></span></div></div>').join('') + '<div style="padding:16px 5px"><button class="button full subtle" data-action="tasks">' + icon('settings') + 'Görevleri düzenle</button><p class="settings-note">Görevi tamamlamak için Öğrenciler sekmesinden bir öğrenciyi seçin.</p></div>';
   }
   function renderPanel() {
@@ -539,6 +549,7 @@
         if(wasEgg) {Object.assign(fish,placement); fish.cruise=0;}
         if(fish.el.parentNode!==$('swimArea')) $('swimArea').append(fish.el);
       }
+      fish.growthScale=growth.scale;fish.paint={};
       fish.egg=growth.egg; fish.el.classList.toggle('is-egg',growth.egg);
       fish.el.classList.toggle('teacher-fish',!!s.isTeacher);
       fish.el.style.setProperty('--growth-scale',growth.scale);
@@ -615,23 +626,29 @@
     if (changed && swimmers.size) { renderFish(); return; }
     for (const fish of swimmers.values()) placeFish(fish, 0);
   }
+  function styleIfChanged(fish,element,key,value,custom=false) {
+    const cache=fish.paint || (fish.paint={}), id=(element===fish.art?'art:':'el:')+key;
+    if(cache[id]===value)return;
+    cache[id]=value;
+    if(custom)element.style.setProperty(key,value);else element.style[key]=value;
+  }
   function placeFish(fish) {
     const p=fish.profile, moving=state.settings.motion && !reduced.matches && !fish.bottomRest;
     const tilt=moving ? Math.sin(fish.phase*1.4)*p.tilt : 0;
     const pulse=moving ? 1+Math.sin(fish.phase*3)*p.pulse : 1;
-    fish.el.style.transform='translate3d('+fish.x.toFixed(1)+'px,'+fish.y.toFixed(1)+'px,0)';
+    styleIfChanged(fish,fish.el,'transform','translate3d('+fish.x.toFixed(1)+'px,'+fish.y.toFixed(1)+'px,0)');
     const depth=fish.egg ? {scale:1,opacity:1,brightness:1,saturation:1,layer:3} : Motion.perspective(fish);
-    fish.el.style.zIndex=String(depth.layer);
-    fish.art.style.opacity=fish.egg?'0':depth.opacity.toFixed(2);
-    fish.el.style.setProperty('--water-brightness',depth.brightness.toFixed(2));
-    fish.el.style.setProperty('--water-saturation',depth.saturation.toFixed(2));
-    fish.el.style.setProperty('--floor-shadow',fish.egg?'0':(Math.max(0,(fish.y/Math.max(1,height)-.62))*depth.opacity*.5).toFixed(2));
-    // Vary the tail cadence by swimmer phase; stop it with the scene / hunger.
+    styleIfChanged(fish,fish.el,'zIndex',String(depth.layer));
+    styleIfChanged(fish,fish.art,'opacity',fish.egg?'0':depth.opacity.toFixed(2));
+    styleIfChanged(fish,fish.el,'--water-brightness',depth.brightness.toFixed(2),true);
+    styleIfChanged(fish,fish.el,'--water-saturation',depth.saturation.toFixed(2),true);
+    styleIfChanged(fish,fish.el,'--floor-shadow',fish.egg?'0':(Math.max(0,(fish.y/Math.max(1,height)-.62))*depth.opacity*.5).toFixed(2),true);
     const stroke=moving && !fish.egg ? Math.sin(fish.phase*6.5) : 0;
-    fish.el.style.setProperty('--tail-yaw',(stroke*23).toFixed(2)+'deg');
-    fish.el.style.setProperty('--tail-flex',(stroke*2.6).toFixed(2)+'deg');
-    fish.art.style.transform='scale('+(Number(fish.el.style.getPropertyValue('--growth-scale'))*depth.scale).toFixed(3)+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')';
+    styleIfChanged(fish,fish.el,'--tail-yaw',(stroke*23).toFixed(2)+'deg',true);
+    styleIfChanged(fish,fish.el,'--tail-flex',(stroke*2.6).toFixed(2)+'deg',true);
+    styleIfChanged(fish,fish.art,'transform','scale('+((fish.growthScale ?? 1)*depth.scale).toFixed(3)+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')');
   }
+
   let nextChat = performance.now() + 120000;
   const pairCooldown = new Map();
   function chat(now) {
@@ -651,18 +668,31 @@
       return;
     }
   }
+  let frameSamples=0,slowSamples=0,previousFrame=0;
   function tick(now) {
-    const dt = lastTime ? Math.min((now - lastTime) / 1000, .05) : 0; lastTime = now;
-    const fishList=[...swimmers.values()];
-    fishList.forEach(f=>{ f.mood.speed=(f.mood.id === 'resting' ? .4 : .65)*(f.boostUntil>Date.now()?1.1:1); f.held=f.egg || (modal.open && f.el.dataset.id===inspectedId) || f.pressed || f.keyboard || f.feedingUntil>performance.now() || f.foundUntil>performance.now(); });
+    if(modal.open || document.hidden) {frame=0;return;}
+    const elapsed=previousFrame?now-previousFrame:0;previousFrame=now;
+    // Sustained low frame delivery triggers the lighter compositor path. One
+    // long task or a tab switch alone must not downgrade the device.
+    if(elapsed>0 && elapsed<200){frameSamples++;if(elapsed>28)slowSamples++;}
+    if(frameSamples>=120){if(slowSamples>72)window.SitePerformance?.reportSlow();frameSamples=0;slowSamples=0;}
+    frame=requestAnimationFrame(tick);
+    if(window.SitePerformance?.lite() && lastTime && now-lastTime<32) return;
+    const dt=lastTime?Math.min((now-lastTime)/1000,.08):0;lastTime=now;
+    const wallNow=Date.now(),fishList=[];
+    for(const f of swimmers.values()) {
+      if(f.egg)continue; // Sand eggs have no per-frame work.
+      f.mood.speed=(f.mood.id==='resting'?.4:.65)*(f.boostUntil>wallNow?1.1:1);
+      f.held=f.hover || f.pressed || f.keyboard || f.feedingUntil>now || f.foundUntil>now;
+      fishList.push(f);
+    }
     Motion.step(fishList,dt,width,height);
-    for (const fish of fishList) placeFish(fish);
+    for(const fish of fishList) placeFish(fish);
     chat(now);
-    frame = requestAnimationFrame(tick);
   }
   function restartAnimation() {
-    cancelAnimationFrame(frame); frame = 0; lastTime = 0;
-    if (state.settings.motion && !reduced.matches && !document.hidden) frame = requestAnimationFrame(tick);
+    cancelAnimationFrame(frame);frame=0;lastTime=0;previousFrame=0;
+    if(state.settings.motion && !reduced.matches && !document.hidden && !modal.open && [...swimmers.values()].some(f=>!f.egg))frame=requestAnimationFrame(tick);
   }
   function feedEffect(id, points) {
     if (!state.settings.motion || reduced.matches) return;
@@ -716,7 +746,7 @@
     const s=student(); if(!s) return;
     const dates=Object.keys(s.days).sort().reverse();
     historyPage=Math.min(historyPage,Math.max(0,Math.ceil(dates.length/30)-1));
-    openModal(s.name+' · Güzel adımlar','<p class="modal-intro">'+C.earned(s)+' toplam puan · '+C.completedCount(s)+' tamamlanan görev · '+s.feeds.length+' besleme</p>'+dates.slice(historyPage*30,(historyPage+1)*30).map(date=>'<div class="history-day"><h3>'+new Date(date+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})+(s.days[date].absent?' · İzinli':'')+'</h3>'+s.days[date].tasks.map(t=>'<div class="history-entry"><p>'+esc(t.title)+(t.sourceId?' · Ek ödül':'')+(t.awardedAt?' · '+new Date(t.awardedAt).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'')+' · '+C.taskPoints(t)+' puan <small>('+(t.status==='done'?'tamamlandı':s.days[date].absent?'değerlendirme dışı':t.status==='missed'?'eksik':'bekliyor')+')</small></p><div class="settings-actions">'+(t.status==='done'?'<button class="button" data-action="revoke-point" data-date="'+date+'" data-id="'+t.id+'">Puanı geri al</button>':'')+'<button class="button subtle" data-action="delete-point" data-date="'+date+'" data-id="'+t.id+'">Kaydı sil</button></div></div>').join('')+'</div>').join('')+'<div class="settings-actions"><button class="button" data-action="history-newer" '+(!historyPage?'disabled':'')+'>Daha yeni</button><button class="button" data-action="history-older" '+((historyPage+1)*30>=dates.length?'disabled':'')+'>Daha eski</button></div><p class="settings-note">Puanı geri almak görevi bekliyor durumuna getirir. Silmek yalnızca seçili günün kaydını kaldırır; davranış şablonunu silmez. Gerçekleşen beslemeler geçmişte korunur, yeni davranışların yem hakkı engellenmez. Silme geri alınamaz; önce yedek indirebilirsiniz.</p><button class="button subtle" data-action="fish-profile">← Davranışlara dön</button>');
+    openModal(s.name+' · Güzel adımlar','<p class="modal-intro">'+C.earned(s)+' toplam puan · '+C.completedCount(s)+' tamamlanan görev · '+s.feeds.length+' besleme</p>'+dates.slice(historyPage*30,(historyPage+1)*30).map(date=>'<div class="history-day"><h3>'+new Date(date+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'})+(s.days[date].absent?' · İzinli':'')+'</h3>'+s.days[date].tasks.map(t=>'<div class="history-entry"><p>'+esc(t.title)+(C.taskPoints(t)<0?' · Geliştirmesi gereken':t.sourceId?' · Ek ödül':'')+(t.awardedAt?' · '+new Date(t.awardedAt).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'')+' · '+C.taskPoints(t)+' puan <small>('+(t.status==='done'?'tamamlandı':s.days[date].absent?'değerlendirme dışı':t.status==='missed'?'eksik':'bekliyor')+')</small></p><div class="settings-actions">'+(t.status==='done'?'<button class="button" data-action="revoke-point" data-date="'+date+'" data-id="'+t.id+'">'+(C.taskPoints(t)<0?'Kesintiyi geri al':'Puanı geri al')+'</button>':'')+'<button class="button subtle" data-action="delete-point" data-date="'+date+'" data-id="'+t.id+'">Kaydı sil</button></div></div>').join('')+'</div>').join('')+'<div class="settings-actions"><button class="button" data-action="history-newer" '+(!historyPage?'disabled':'')+'>Daha yeni</button><button class="button" data-action="history-older" '+((historyPage+1)*30>=dates.length?'disabled':'')+'>Daha eski</button></div><p class="settings-note">Puanı geri almak görevi bekliyor durumuna getirir. Silmek yalnızca seçili günün kaydını kaldırır; davranış şablonunu silmez. Gerçekleşen beslemeler geçmişte korunur, yeni davranışların yem hakkı engellenmez. Silme geri alınamaz; önce yedek indirebilirsiniz.</p><button class="button subtle" data-action="fish-profile">← Davranışlara dön</button>');
   }
   function birthdayFields(s) {
     return '<p class="settings-note">Doğum günü · İsteğe bağlı, yalnızca gün ve ay. Kutlama öğretmen akvaryumunda görünür. Yıl ve yaş kaydedilmez.</p><div class="birthday-fields"><label class="field">Gün<select name="birthDay"><option value="">Belirtilmedi</option>'+Array.from({length:31},(_,i)=>'<option value="'+(i+1)+'" '+(s.birthday?.day===i+1?'selected':'')+'>'+(i+1)+'</option>').join('')+'</select></label><label class="field">Ay<select name="birthMonth"><option value="">Belirtilmedi</option>'+['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'].map((m,i)=>'<option value="'+(i+1)+'" '+(s.birthday?.month===i+1?'selected':'')+'>'+m+'</option>').join('')+'</select></label></div><p class="settings-note">29 Şubat doğum günleri yalnızca 29 Şubat gününde kutlanır. Kaldırmak için iki alanı da Belirtilmedi yapın.</p>';
@@ -831,6 +861,7 @@
       case 'fish-profile': behaviorModal(); break;
       case 'student-day': studentDayModal(); break;
       case 'manage-panel': closeModal(); $('aquarium').classList.remove('panel-hidden'); updatePanelToggle(); break;
+      case 'behavior-tab': behaviorTab=button.dataset.kind==='development'?'development':'positive';behaviorModal();break;
       case 'reward-behavior': if (!modal.open || !modal.classList.contains('behavior-modal')) break; button.disabled=true; rewardBehavior(s, button.dataset.id, true); break;
       case 'back': if (modal.open) behaviorModal(); else { selected = ''; renderPanel(); } break;
       case 'tab': tab = button.dataset.tab; selected = ''; renderPanel(); break;
@@ -847,7 +878,7 @@
         if(!s) break;
         const date=button.dataset.date,id=button.dataset.id,remove=action==='delete-point';
         const task=s.days[date]?.tasks.find(t=>t.id===id); if(!task) break;
-        confirm(remove?'Bu puan kaydını sil?':'Bu puanı geri al?', s.name+' · '+task.title+' · '+date+'. '+(task.status==='done'?C.taskPoints(task)+' puan toplamdan çıkarılacak. ':'')+(remove?'Bu günün kaydı kalıcı olarak silinecek.':'Görev yeniden bekliyor durumuna gelecek.'),()=>{if(C.correctAward(s,date,id,remove)){commit();historyModal();toast(remove?'Seçili kayıt silindi.':'Puan geri alındı.');}});
+        confirm(remove?'Bu puan kaydını sil?':'Bu puanı geri al?', s.name+' · '+task.title+' · '+date+'. '+(task.status==='done'?(C.taskPoints(task)<0?Math.abs(C.taskPoints(task))+' puan geri eklenecek. ':C.taskPoints(task)+' puan toplamdan çıkarılacak. '):'')+(remove?'Bu günün kaydı kalıcı olarak silinecek.':'Görev yeniden bekliyor durumuna gelecek.'),()=>{if(C.correctAward(s,date,id,remove)){commit();historyModal();toast(remove?'Seçili kayıt silindi.':'Puan geri alındı.');}});
         break;
       }
       case 'remove-student': if (s) confirm('Öğrenciyi akvaryumdan çıkar?', s.name + ' ve bu akvaryumdaki görev geçmişi kaldırılacak. Geri yüklemek için önceden alınmış yedek gerekir.', () => { classroom().students = classroom().students.filter(x => x.id !== s.id); selected = ''; commit(); }); break;
@@ -904,7 +935,7 @@
   });
   document.addEventListener('click', event => { const button = event.target.closest('[data-action]'); if (button && !button.disabled) act(button); });
   modal.addEventListener('click', event => { if (event.target === modal) { const r = modal.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closeModal(); } });
-  modal.addEventListener('close', () => { releaseFish(); confirmAction = null; pendingRestore = null; });
+  modal.addEventListener('close', () => { document.body.classList.remove('dialog-open');restartAnimation();releaseFish(); confirmAction = null; pendingRestore = null; });
   document.addEventListener('submit', event => {
     const form = event.target; if (!modal.contains(form)) return; event.preventDefault(); if (viewing) return;
     const data = new FormData(form);
@@ -970,21 +1001,24 @@
     } else if (form.id === 'renameMixForm') {
       const favorite=state.settings.favorites.find(f=>f.id===form.dataset.id),name=C.clean(data.get('name'),60);if(favorite&&name){favorite.name=name;save();soundModal();}
     } else if (form.classList.contains('task-points-form')) {
-      const points = Number(data.get('points'));
-      if (!C.updateTask(classroom(), form.dataset.taskId, {points,title:data.get('title'),icon:data.get('icon')}, today)) { $('formError').textContent = 'Puanı 1–1000 arasında tam sayı olarak girin.'; return; }
+      const amount=Number(data.get('points'));
+      const points = amount*(data.get('behaviorType')==='development'?-1:1);
+      if (!C.validPoints(amount) || !C.updateTask(classroom(), form.dataset.taskId, {points,title:data.get('title'),icon:data.get('icon')}, today)) { $('formError').textContent = 'Puanı 1–1000 arasında tam sayı olarak girin.'; return; }
       commit(); tasksModal(); toast('Davranış düzenlendi. Geçmiş kayıtlar korundu.');
     } else if (form.id === 'taskForm') {
       const title = C.clean(data.get('title'), 120); if (!title) { $('formError').textContent = 'Görev adını yazın.'; return; }
       if (classroom().tasks.length >= 20 || classroom().students.some(s => day(s).tasks.filter(t => !t.sourceId).length >= 20)) { $('formError').textContent = 'Bir günde en fazla 20 farklı davranış olabilir.'; return; }
-      const points = Number(data.get('points'));
-      if (!C.validPoints(points)) { $('formError').textContent = 'Puanı 1–1000 arasında tam sayı olarak girin.'; return; }
+      const amount=Number(data.get('points'));
+      const points = amount*(data.get('behaviorType')==='development'?-1:1);
+      if (!C.validPoints(amount)) { $('formError').textContent = 'Puanı 1–1000 arasında tam sayı olarak girin.'; return; }
       const task = { id: C.uid(), title, points, icon:C.taskIcon(data.get('icon')) }; classroom().tasks.push(task);
-      classroom().students.forEach(s => { const d = day(s); if (!d.tasks.some(t => t.id === task.id)) d.tasks.push({ ...task, status: 'pending' }); });
+      classroom().students.forEach(s => { const d = day(s); if (points>0 && !d.tasks.some(t => t.id === task.id)) d.tasks.push({ ...task, status: 'pending' }); });
       commit(); tasksModal(); toast('Yeni görev bugüne eklendi.');
     }
   });
   document.addEventListener('change', async event => {
     const input = event.target; if (viewing) return;
+    if(input.id==='renderQuality'){window.SitePerformance?.set(input.value);return;}
     if(input.id==='timerMode'){const watch=input.value==='stopwatch';$('countdownFields').hidden=watch;$('timerMinutes').disabled=watch;return;}
     if (input.dataset.mixEnable) {
       const id=input.dataset.mixEnable,range=modal.querySelector('[data-mix-volume="'+id+'"]'),playing=Audio.isPlaying();

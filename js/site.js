@@ -1,3 +1,5 @@
+// Shared device-local rendering fallback, loaded once on all site-shell pages.
+(function(){if(!document.querySelector('script[data-site-performance]')){const script=document.createElement('script');script.dataset.sitePerformance='';script.src='/js/site-performance.js?v=20261012';document.head.append(script);}})();
 /* ================================================
    KEMAL OGRETMENIM — SITE.JS v5.0
    Ortak navbar/footer, eski menu yapisi ve rota eslemeleri
