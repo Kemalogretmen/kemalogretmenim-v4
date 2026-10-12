@@ -220,19 +220,36 @@
     }
   }
 
+  async function refreshWithRetry() {
+    var lastError;
+    for (var attempt = 0; attempt < 3; attempt += 1) {
+      try { return await refresh(); }
+      catch (error) {
+        lastError = error;
+        if (attempt < 2) await new Promise(function(resolve) { window.setTimeout(resolve, 350 * (attempt + 1)); });
+      }
+    }
+    throw lastError;
+  }
+
   function ready() {
     if (!readyPromise) {
       readyPromise = ensureSupabase().then(async function() {
         // Initialize once before subscribing; Supabase API calls must not run inside auth callbacks.
-        await refresh();
+        await refreshWithRetry();
         getClient().auth.onAuthStateChange(function(event, session) {
           if (event === 'INITIAL_SESSION') return;
           ++refreshRevision;
           window.clearTimeout(authRefreshTimer);
           var nextUser = session && session.user;
-          if (!nextUser || !state.user || state.user.id !== nextUser.id) {
+          if (event === 'SIGNED_OUT' || !nextUser || !state.user || state.user.id !== nextUser.id) {
             state.session = session || null; state.user = nextUser || null; state.profile = null;
             state.ready = !nextUser; state.error = ''; startActivityTracking(); emit(CHANGE_EVENT);
+          } else {
+            // Keep the persisted token current immediately, even while the
+            // profile refresh runs after a tab wakes from sleep.
+            state.session = session; state.user = nextUser; state.ready = true; state.error = '';
+            emit(CHANGE_EVENT);
           }
           authRefreshTimer = window.setTimeout(function() { refresh().catch(function() {}); }, 0);
         });
@@ -248,6 +265,11 @@
         });
     }
     return readyPromise;
+  }
+
+  function retryReady() {
+    readyPromise = null;
+    return ready();
   }
 
   function getState() {
@@ -544,6 +566,7 @@
 
   window.kemalUserAuth = {
     ready: ready,
+    retry: retryReady,
     refresh: refresh,
     getClient: getClient,
     getState: getState,

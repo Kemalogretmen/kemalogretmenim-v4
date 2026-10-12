@@ -54,7 +54,7 @@
   const validScore = value => typeof value==='number' && validPoints(Math.abs(value));
   const taskPoints = task => task.points === undefined ? 1 : task.points;
   function newClass(name = 'Sınıfım') {
-    return { id: uid(), name: clean(name), theme: 'reef', students: [], tasks: ['Kitabımı okudum', 'Ödevimi tamamladım', 'Sorumluluğumu yerine getirdim'].map(title => ({ id: uid(), title, icon: '', points: 1 })) };
+    return { id: uid(), name: clean(name), theme: 'reef', seasonStartedOn: dayKey(), seasons: [], students: [], tasks: ['Kitabımı okudum', 'Ödevimi tamamladım', 'Sorumluluğumu yerine getirdim'].map(title => ({ id: uid(), title, icon: '', points: 1 })) };
   }
   function newStudent(name, kind = 'clown') {
     return { id: uid(), name: clean(name), species: species(kind).id, createdAt: Date.now(), days: {}, feeds: [] };
@@ -209,6 +209,27 @@
     const points = classroom.students.reduce((sum,s) => sum + Math.max(0,earned(s)-(Object.hasOwn(goal.baseline,s.id) ? goal.baseline[s.id] : 0)),0);
     return {points, target:goal.target, percent:Math.min(100,Math.floor(points/goal.target*100)), complete:points>=goal.target};
   }
+  function startNewSeason(classroom, date = dayKey(), now = Date.now()) {
+    if (!classroom || !Array.isArray(classroom.students) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    if ((classroom.seasons || []).length >= 20) return null;
+    const students = classroom.students.map(student => ({
+      id: student.id, name: student.name, species: species(student.species).id,
+      points: earned(student), feeds: student.feeds.filter(feed => !feed.creditReversed).length,
+    }));
+    const awards = [];
+    for (const student of classroom.students) for (const [day, record] of Object.entries(student.days)) {
+      for (const task of record.tasks) {
+        if (awards.length >= 30000) return null;
+        awards.push({ id: uid(), studentId: student.id, name: student.name, date: day, title: clean(task.title, 120), icon: taskIcon(task.icon), points: taskPoints(task), status: task.status, absent: record.absent === true, awardedAt: task.awardedAt || 0 });
+      }
+    }
+    const season = { id: uid(), label: 'Sezon ' + ((classroom.seasons || []).length + 1), startedOn: classroom.seasonStartedOn || date, endedOn: date, students, awards };
+    // Construct the archive first; only clear active score history after it is complete.
+    classroom.seasons = [...(classroom.seasons || []), season];
+    classroom.seasonStartedOn = date;
+    classroom.students.forEach(student => { student.days = {}; student.feeds = []; student.createdAt = now; });
+    return season;
+  }
   function validateGoal(raw) {
     if (!raw || typeof raw.title !== 'string' || !clean(raw.title,120) || !validGoalTarget(raw.target) ||
       typeof raw.enabled !== 'boolean' || !/^\d{4}-\d{2}-\d{2}$/.test(raw.startedOn) ||
@@ -283,6 +304,24 @@
         });
         return student;
       });
+      const inferredStart = cls.students.flatMap(student => Object.keys(student.days)).sort()[0] || dayKey();
+      if (c.seasonStartedOn !== undefined && !datePattern.test(c.seasonStartedOn)) throw new Error('Mevcut sezon başlangıç tarihi geçersiz.');
+      cls.seasonStartedOn = typeof c.seasonStartedOn === 'string' && datePattern.test(c.seasonStartedOn) ? c.seasonStartedOn : inferredStart;
+      if (c.seasons !== undefined && (!Array.isArray(c.seasons) || c.seasons.length > 20)) throw new Error('Sezon geçmişi geçersiz.');
+      cls.seasons = (c.seasons || []).map(season => {
+        if (!season || !clean(season.label, 50) || !datePattern.test(season.startedOn) || !datePattern.test(season.endedOn) || !Array.isArray(season.students) || season.students.length > 60 || !Array.isArray(season.awards) || season.awards.length > 30000) throw new Error('Sezon arşivi geçersiz.');
+        const archivedStudents = season.students.map(student => {
+          if (!student || typeof student.id !== 'string' || !/^[\w-]{1,90}$/.test(student.id) || !clean(student.name) || !Number.isSafeInteger(student.points) || student.points < 0 || student.points > 80000000 || !Number.isSafeInteger(student.feeds) || student.feeds < 0 || student.feeds > 80000000) throw new Error('Sezon öğrenci kaydı geçersiz.');
+          return { id: student.id, name: clean(student.name), species: species(student.species).id, points: student.points, feeds: student.feeds };
+        });
+        const archivedIds = new Set(archivedStudents.map(student => student.id));
+        if (archivedIds.size !== archivedStudents.length) throw new Error('Sezon arşivinde yinelenen öğrenci var.');
+        const awards = season.awards.map(award => {
+          if (!award || !archivedIds.has(award.studentId) || !clean(award.name) || !datePattern.test(award.date) || !clean(award.title, 120) || !validScore(award.points) || (award.status !== undefined && !['pending','done','missed'].includes(award.status)) || (award.awardedAt !== undefined && (!Number.isFinite(award.awardedAt) || award.awardedAt < 0))) throw new Error('Sezon puan geçmişi geçersiz.');
+          return { id: identifier(award.id), studentId: award.studentId, name: clean(award.name), date: award.date, title: clean(award.title, 120), icon: taskIcon(award.icon), points: award.points, status: award.status || 'done', absent: award.absent === true, awardedAt: award.awardedAt || 0 };
+        });
+        return { id: identifier(season.id), label: clean(season.label, 50), startedOn: season.startedOn, endedOn: season.endedOn, students: archivedStudents, awards };
+      });
       if(c.growth !== undefined) {
         if (!c.growth || typeof c.growth.enabled !== 'boolean' || !validThresholds(c.growth.thresholds)) throw new Error('Büyüme için artan sırada 10 hedef puanı girin.');
         cls.growth = {enabled:c.growth.enabled, thresholds:[...c.growth.thresholds]};
@@ -296,5 +335,5 @@
     });
     return { version: 1, classes, activeClassId: classes.some(c => c.id === raw.activeClassId) ? raw.activeClassId : classes[0].id, settings: settingsOf(raw.settings) };
   }
-  return { validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget };
+  return { validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
 });

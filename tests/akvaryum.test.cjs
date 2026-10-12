@@ -76,6 +76,23 @@ test('backup round-trip preserves species, attendance, tasks, food and classroom
   const restored = C.validate(JSON.parse(JSON.stringify(state)));
   assert.deepEqual(restored, state);
 });
+test('starting a new class season archives its points and histories, then starts everyone at zero',()=>{
+  const {state,cls,student,day}=setup();cls.seasonStartedOn=TODAY;cls.tasks[0].points=10;C.updateTaskPoints(cls,cls.tasks[0].id,10,TODAY);day.tasks[1].status='missed';
+  const deduction={id:C.uid(),title:'Sıramı bekliyorum',icon:'🙋',points:-2};cls.tasks.push(deduction);
+  C.ensureDay(student,cls,TODAY);C.awardBehavior(student,cls,TODAY,cls.tasks[0].id);C.awardBehavior(student,cls,TODAY,deduction.id);assert.equal(C.earned(student),8);
+  assert.equal(student.feeds.length,1);
+  const season=C.startNewSeason(cls,'2026-10-02',123456);
+  assert.equal(season.label,'Sezon 1');assert.equal(season.startedOn,TODAY);assert.equal(season.endedOn,'2026-10-02');
+  assert.deepEqual(season.students,[{id:student.id,name:'Deniz',species:'clown',points:8,feeds:1}]);
+  assert.deepEqual(season.awards.map(x=>x.points),[10,1,1,-2]);
+  assert.deepEqual(season.awards.map(x=>x.status),['done','missed','pending','done']);
+  assert.ok(season.awards.every(x=>x.absent===false));
+  assert.deepEqual(student.days,{});assert.deepEqual(student.feeds,[]);assert.equal(student.createdAt,123456);
+  assert.equal(C.earned(student),0);assert.equal(C.balance(student),0);assert.equal(C.hungerDays(student,123456),0);
+  assert.equal(cls.seasonStartedOn,'2026-10-02');
+  assert.deepEqual(C.validate(JSON.parse(JSON.stringify(state))),state);
+  const next=C.startNewSeason(cls,'2026-10-03',123457);assert.equal(next.label,'Sezon 2');assert.equal(next.awards.length,0);
+});
 test('invalid, duplicated, oversized and prototype-shaped backup data are rejected', () => {
   assert.throws(() => C.validate({ version: 2, classes: [] }));
   const { state, student } = setup();

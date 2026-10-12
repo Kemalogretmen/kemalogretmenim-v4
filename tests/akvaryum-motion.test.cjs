@@ -58,7 +58,13 @@ test('eggs stay in a shallow seabed band for 1–60 students and leave space for
   for(const n of nests) {
    assert.ok(Number.isFinite(n.x)&&Number.isFinite(n.y));assert.ok(n.x>=0&&n.x+n.size<=width+.01);
    assert.ok(n.y>height*.45);assert.ok(n.y+n.size*.67+25<=height);
-   if(pearl) {const gap=Math.min(210,width*.38);assert.ok(n.x+n.size<=width/2-gap/2 || n.x>=width/2+gap/2);}
+   assert.ok(n.eggSize*.7+3+n.labelSize*1.2<=82+.01);
+   if(pearl) {const gap=width<700?Math.min(60,width*.16):Math.min(210,width*.38);assert.ok(n.x+n.size<=width/2-gap/2 || n.x>=width/2+gap/2);}
+  }
+  const rows=[...new Set(nests.map(n=>n.y))].sort((a,b)=>b-a);
+  if(rows.length>1)for(let i=1;i<rows.length;i++){
+   const [lower,upper]=[nests.find(n=>n.y===rows[i-1]),nests.find(n=>n.y===rows[i])];
+   assert.ok(lower.eggSize*.7+3+lower.labelSize*1.2<=rows[i-1]-rows[i]+.01);
   }
  }
 });
@@ -84,6 +90,19 @@ test('camera depth changes gently, crosses the clock plane, and never enlarges f
  }
  assert.deepEqual([...layers],[1,3]);
  f.held=true;const depth=f.waterDepth;advance([f],100);assert.equal(f.waterDepth,depth);
+});
+
+test('score label gap scales with rendered fish size and keeps a minimum for small fish',()=>{
+ const small=M.labelGap(120,.45),large=M.labelGap(120,1);
+ assert.ok(small>=8);assert.ok(large>small);
+ assert.equal(M.labelGap(20,.4),8);assert.equal(M.labelGap(400,1),22);
+});
+
+test('fish name offset matches half of scaled art height without overcorrecting onto the fish',()=>{
+ const nameOffset=M.labelAdjustment(120,.45),expected=(120-10)/3*(1-.45);
+ assert.ok(Math.abs(nameOffset-expected)<.001);
+ assert.equal(M.labelAdjustment(120,1),0);
+ assert.ok(nameOffset<120*(1-.45)*.56);
 });
 test('camera placement is stable and independent of rewards, feeding or other students',()=>{
  const a={id:'same-student',species:'clown',size:112};

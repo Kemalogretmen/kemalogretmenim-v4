@@ -37,6 +37,7 @@ async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-1111
   for (const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
   const area=document.getElementById('swimArea');Object.defineProperty(area,'clientWidth',{value:900});Object.defineProperty(area,'clientHeight',{value:600});
   const modal=document.getElementById('modal'); modal.close=()=>{modal.open=false;};
+  document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
   const context={window,document,localStorage,location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URLSearchParams,URL,AbortController,performance,console,
     setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},clearInterval(){},requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},cancelAnimationFrame(){},ResizeObserver:class{observe(){}},
     fetch:async(url)=>{urls.push(url);return {ok:true,json:async()=>response};}};
@@ -53,7 +54,10 @@ test('viewer reads only the published snapshot, cannot open management, and remo
   h.document.querySelector('[data-action="find-student"]').dispatchEvent(new h.window.Event('click',{bubbles:true}));
   h.document.querySelector('.fish').dispatchEvent(new h.window.Event('click',{bubbles:true}));
   assert.equal(h.document.querySelector('.fish-hunger').hidden,true);
-  for(const action of ['activities','group-reward','goal','timer']) {
+  h.document.fullscreenElement=h.document.getElementById('aquariumApp');
+  h.document.dispatchEvent(new h.window.Event('fullscreenchange'));
+  assert.equal(h.document.querySelector('[data-action="fullscreen"]').getAttribute('aria-label'),'Tam ekrandan çık');
+  for(const action of ['activities','group-reward','goal','timer','sound','themes','toggle-sound']) {
     const button=h.document.createElement('button');button.dataset.action=action;h.document.body.append(button);button.dispatchEvent(new h.window.Event('click',{bubbles:true}));
   }
   assert.equal(h.document.querySelector('.student-facts'),null);
@@ -64,6 +68,7 @@ test('viewer reads only the published snapshot, cannot open management, and remo
   assert.deepEqual(h.io(),{reads:0,writes:0});
   h.setResponse(null); await h.intervals[1]();
   assert.equal(h.document.querySelectorAll('.fish').length,0);
+  assert.equal(h.document.fullscreenElement,null);
   assert.equal(h.document.body.classList.contains('access-pending'),true);
   assert.match(h.document.getElementById('accessMessage').textContent,/kapalı/);
 });

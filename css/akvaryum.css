@@ -33,21 +33,29 @@ body:not(.access-pending) .access-gate { display:none; }
 .app:fullscreen { background:#062f40; overflow:hidden!important; }
 .app:fullscreen > :not(#aquarium) { display:none!important; }
 .app:fullscreen #aquarium { height:100vh!important; min-height:0!important; margin:0!important; border-radius:0; }
-.app:fullscreen #aquarium > :not(#swimArea):not(.water-light):not(#bubbles):not(#feedingEffects):not(#classPearl):not(#eggBed):not(#localClock):not(#modal) { display:none!important; }
+.app:fullscreen #aquarium > :not(#swimArea):not(.water-light):not(#bubbles):not(#feedingEffects):not(#classPearl):not(#eggBed):not(#localClock):not(#modal):not(.scene-controls) { display:none!important; }
 .app:fullscreen #swimArea { inset:55px 30px 35px!important; height:auto!important; width:auto!important; }
 .app:fullscreen .mood-symbol { display:none!important; }
 .app:fullscreen .fish { pointer-events:none; }
 .app:fullscreen .fish-name { background:rgba(4,39,54,.55); }
+/* Persistent board controls stay above the water layers and out of the clock corner. */
+.app:fullscreen #aquarium .scene-controls{display:flex;left:calc(16px + env(safe-area-inset-left,0px));right:auto;top:calc(16px + env(safe-area-inset-top,0px));gap:8px;z-index:9;align-items:flex-start}
+.app:fullscreen .scene-controls>:not(.fullscreen-keep){display:none!important}
+.app:fullscreen .scene-controls .round-button,.app:fullscreen .sound-controls>.icon-button{width:44px;height:44px;background:#083f54b3;border:1px solid #abdae35c}
+.app:fullscreen .sound-controls>.icon-button{border-radius:50%;font-size:22px}
+.app:fullscreen .sound-toggle{width:40px;height:28px}
+.app:fullscreen #activityTimerBadge{display:none!important}
+@media(max-width:600px){.app:fullscreen #localClock{top:108px}.app:fullscreen #aquarium .scene-controls{gap:6px}}
 .music-credit{font-size:12px;color:#b5d5df;line-height:1.65;margin-top:15px}.music-credit a{color:#b0eed9;text-decoration:underline;text-underline-offset:3px}
 
 /* Teacher-controlled audio, labels and the shared classroom pearl. */
 .sound-controls{display:flex;flex-direction:column;align-items:center;gap:3px}.sound-toggle{width:34px;height:25px;border:1px solid #bce4de55;background:#103e50cc;border-radius:9px;color:#cff5e2;font-size:13px;line-height:1;cursor:pointer}.sound-toggle[aria-pressed=true]{background:#bee6cd;color:#113e45}.scene-controls{align-items:flex-start}
-.fish-points{position:absolute;top:-23px;left:50%;transform:translateX(-50%);min-width:34px;padding:3px 7px;border:1px solid #f9e4a456;border-radius:9px;background:#163d49db;color:#fff0b2!important;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2;box-shadow:0 3px 10px #06293430}
+.fish-points{position:absolute;top:calc(-23px - var(--points-gap, 10px) + var(--label-adjustment,0px));left:50%;transform:translateX(-50%);min-width:34px;padding:3px 7px;border:1px solid #f9e4a456;border-radius:9px;background:#163d49db;color:#fff0b2!important;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2;box-shadow:0 3px 10px #06293430}
 .fish-points[hidden],.fish-name[hidden]{display:none!important}.fish-chat{top:-70px}
-.class-pearl{position:absolute;z-index:3;left:calc((100% - 350px)/2);bottom:55px;transform:translateX(-50%);width:170px;pointer-events:none;filter:drop-shadow(0 10px 13px #052f4460)}.class-pearl[hidden]{display:none!important}.class-pearl img{width:100%;display:block}.pearl-score{position:absolute;top:42%;left:50%;transform:translate(-50%,-5%);display:grid;justify-items:center;text-align:center;gap:1px;width:138px;color:#24444b;text-shadow:0 1px 4px #fff,0 0 9px #fff}.pearl-score span{font-size:7px;letter-spacing:1px;font-weight:800}.pearl-score strong{font-size:24px;line-height:1.05;font-variant-numeric:tabular-nums;max-width:130px;overflow-wrap:anywhere}.pearl-score small{font-size:8px;font-weight:700}.panel-hidden .class-pearl,.view-only .class-pearl{left:50%;bottom:32px}
+.class-pearl{position:absolute;z-index:3;left:calc((100% - 350px)/2);bottom:55px;transform:translateX(-50%);width:170px;pointer-events:auto;filter:drop-shadow(0 10px 13px #052f4460);border:0;padding:0;background:transparent;color:inherit;appearance:none;cursor:pointer}.class-pearl[hidden]{display:none!important}.class-pearl img{width:100%;display:block;pointer-events:none}.pearl-score{position:absolute;top:42%;left:50%;transform:translate(-50%,-5%);display:grid;justify-items:center;text-align:center;gap:1px;width:138px;color:#24444b;text-shadow:0 1px 4px #fff,0 0 9px #fff;pointer-events:none}.pearl-score span{font-size:7px;letter-spacing:1px;font-weight:800}.pearl-score strong{font-size:24px;line-height:1.05;font-variant-numeric:tabular-nums;max-width:130px;overflow-wrap:anywhere}.pearl-score small{font-size:8px;font-weight:700}.panel-hidden .class-pearl,.view-only .class-pearl{left:50%;bottom:32px}
 .app:fullscreen #aquarium > #classPearl:not([hidden]){display:block!important;left:50%;bottom:18px;width:180px}.app:fullscreen #classPearl[hidden]{display:none!important}.app:fullscreen .pearl-score span,.app:fullscreen .pearl-score small{display:none}.app:fullscreen .pearl-score strong{font-size:28px}
 .child-share{padding:16px;border:1px solid #70a4ac55;border-radius:12px;margin:12px 0;display:grid;gap:12px}.child-share>.field{margin:0}.child-share input{font-size:12px;font-family:ui-monospace,monospace}.child-share .button{font-size:11px}.parent-code-form{width:min(560px,100%);text-align:left}.parent-code-form .button{width:100%}.parent-code-form input{color:#ecfbff}
-@media(max-width:800px){.class-pearl{left:50%;top:calc(495px - 100px);bottom:auto;width:130px}.pearl-score{width:110px}.pearl-score strong{font-size:20px}.pearl-score span{font-size:6px}.panel-hidden .class-pearl,.view-only .class-pearl{top:auto;bottom:12px}.fish-points{font-size:10px;top:-20px}.sound-toggle{height:23px}.app:fullscreen .class-pearl{top:auto}}
+@media(max-width:800px){.class-pearl{left:50%;top:calc(495px - 100px);bottom:auto;width:130px}.pearl-score{width:110px}.pearl-score strong{font-size:20px}.pearl-score span{font-size:6px}.panel-hidden .class-pearl,.view-only .class-pearl{top:auto;bottom:12px}.fish-points{font-size:10px;top:calc(-20px - var(--points-gap, 8px) + var(--label-adjustment,0px))}.sound-toggle{height:23px}.app:fullscreen .class-pearl{top:auto}}
 @media(min-width:801px){.aquarium #swimArea{bottom:30px}}
 @media(max-width:800px){.aquarium:has(.class-pearl:not([hidden])):not(.panel-hidden) .student-panel{margin-top:595px}.class-pearl{top:492px}.panel-hidden .class-pearl{top:auto;bottom:72px}.view-only .class-pearl{top:auto;bottom:15px}}
 .app:fullscreen #aquarium #swimArea,.view-only #aquarium #swimArea{bottom:30px!important}
@@ -231,7 +239,6 @@ dialog .button:hover:not(:disabled),dialog .activity-card:hover,dialog .behavior
 .behavior-tabs [aria-selected=true]{background:#a5e6ce;color:#133d45;border-color:#a5e6ce}
 .device-quality{margin-bottom:22px}.device-quality small{font-size:12px;line-height:1.5;color:#d3e7e6}
 dialog *,.fish-name,.fish-points,.fish-hunger{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-.dialog-open .aquarium *,.dialog-open .aquarium *::before,.dialog-open .aquarium *::after{animation-play-state:paused!important}
 .dialog-open dialog *{animation-play-state:running!important}
 .dialog-open dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none;background:#03243165}
 html.performance-lite dialog{background:linear-gradient(135deg,#1b4a59fa,#092f41fa);text-shadow:none}
@@ -244,3 +251,31 @@ html.performance-lite .student-panel{background:#103846f5}
 @media(max-width:700px){.behavior-modal .behavior-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.behavior-modal .behavior-choice strong{font-size:14px}.behavior-tabs button{padding:9px;font-size:12px}}
 html.performance-lite .fish.is-absent .fish-art{opacity:.45!important}
 html.performance-lite .fish.is-hungry .fish-art{opacity:.7!important}
+
+/* The picker keeps student selection, with compact four-column creature cards. */
+dialog.species-picker-modal{width:min(1240px,calc(100% - 32px));max-height:94svh;padding:20px 26px}
+.species-picker-modal .modal-back{margin-bottom:8px}
+.species-picker-modal .modal-heading{margin-bottom:8px}
+.species-picker-modal .modal-intro{margin:3px 0 10px;font-size:13px;line-height:1.5}
+.species-picker-modal .field{margin:8px 0}
+.species-picker-modal .species-group{margin:8px 0;padding:0;border:0}
+.species-picker-modal .species-group legend{margin:0 0 8px;font-size:13px;font-weight:650;color:#d9f2ed}
+.species-picker-modal .species-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-height:54svh;overflow:auto;padding:2px 4px 8px;scrollbar-width:thin}
+.species-picker-modal .species-card{min-height:112px;padding:7px 10px;gap:3px;border-radius:14px;display:grid;grid-template-rows:58px auto 1fr;justify-items:center;align-content:center;text-align:center}
+.species-picker-modal .species-card img{width:100%;height:56px;object-fit:contain}
+.species-picker-modal .species-card strong{font-size:12px;line-height:1.25;color:#f0fffb}
+.species-picker-modal .species-card small{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:9px;line-height:1.25;color:#b7d6d3}
+.species-picker-modal .species-result-count{margin:7px 0 0;font-size:11px;color:#bfe3dc}
+.fish-name{margin-top:calc(6px - var(--label-adjustment,0px))}
+@media(max-width:800px){.fish-points{top:calc(-20px - var(--points-gap, 8px) + var(--label-adjustment,0px))}}
+/* Egg cards use a compact label plate so names and scores remain legible on the sand. */
+.egg-bed .fish-art{height:0;aspect-ratio:auto;flex:0 0 0;visibility:hidden}
+.egg-bed .fish-egg{top:calc(var(--fish-size)*.26);width:var(--egg-size,48px);height:calc(var(--egg-size,48px)*.72)}
+.egg-bed .fish-name{margin-top:calc(var(--egg-size,48px)*.7);max-width:var(--egg-label-width,82px);font-size:var(--egg-label-size,10px);line-height:1.2}
+.egg-bed .fish-points{top:-17px;font-size:10px;padding:2px 5px}
+.egg-bed .fish-hunger{font-size:8px}
+.leaderboard{list-style:none;padding:0;margin:16px 0;display:grid;gap:7px;max-height:56svh;overflow:auto;scrollbar-width:thin}
+.leaderboard li{display:grid;grid-template-columns:34px 48px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 12px;border:1px solid #bcebdc25;border-radius:14px;background:#a8e9db0b}
+.leaderboard .rank-medal{font-size:19px;text-align:center}.leaderboard img{width:46px;height:38px;object-fit:contain;filter:drop-shadow(0 3px 4px #001c2940)}
+.leaderboard .rank-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:650}.leaderboard .rank-score{font-size:12px;font-weight:750;color:#c8f4d9;white-space:nowrap}
+@media(max-width:700px){dialog.species-picker-modal{padding:16px 14px}.species-picker-modal .species-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:48svh}.species-picker-modal .species-card{min-height:102px;grid-template-rows:50px auto 1fr;padding:6px}.species-picker-modal .species-card img{height:48px}.species-picker-modal .species-card strong{font-size:11px}.leaderboard li{grid-template-columns:28px 40px minmax(0,1fr) auto;gap:7px;padding:8px}.leaderboard img{width:38px;height:34px}.leaderboard .rank-name{font-size:11px}.leaderboard .rank-score{font-size:10px}}

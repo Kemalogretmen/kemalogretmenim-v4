@@ -28,6 +28,13 @@
     return {scale:.66+.34*depth,opacity:.76+.24*depth,brightness:.86+.14*depth,
       saturation:.78+.22*depth,layer:depth<.5?1:3};
   }
+  // Scale the score badge offset with the rendered fish size while keeping a
+  // clear minimum for young, small fish.
+  function labelGap(size, scale=1) { return clamp(size*scale*.12,8,22); }
+  // The fish art is 1.5:1 and has 5px button padding on both sides. A CSS
+  // transform does not change its layout box, so compensate by half the
+  // vertical shrink only; larger corrections push the name over the fish.
+  function labelAdjustment(size, scale=1) { return Math.max(0,(Math.max(0,size-10)/3)*(1-clamp(scale,0,1))); }
   function layout(items, width, height) {
     if (!items.length) return new Map();
     const columns = Math.min(items.length, Math.max(1, Math.min(Math.floor(width / 85), Math.ceil(Math.sqrt(items.length * width / Math.max(1, height) / 1.4)))));
@@ -54,20 +61,37 @@
   // A separate seabed keeps eggs out of the swimming lanes and away from the pearl.
   function eggLayout(items, width, height, pearl = false) {
     if (!items.length) return new Map();
-    const gap = pearl ? Math.min(210, width * .38) : 0;
-    const available = Math.max(1, width - gap);
-    let columns = Math.min(items.length, Math.max(1, Math.floor(available / 78)));
-    if(gap && columns > 1 && columns % 2) columns += available / (columns + 1) >= 78 ? 1 : -1;
+    const gap = pearl ? (width < 700 ? Math.min(60,width*.16) : Math.min(210, width * .38)) : 0;
+    const sideWidth = Math.max(1,(width-gap)/2);
+    const minCell = width < 700 ? 78 : 100;
+    const perSide = gap ? Math.max(1,Math.floor((sideWidth+10)/minCell)) : 0;
+    const columns = Math.min(items.length,Math.max(1,gap ? perSide*2 : Math.floor(width/minCell)));
     const rows = Math.ceil(items.length / columns);
     const rowHeight = Math.min(82, Math.max(1, height * .48 / rows));
-    const size = Math.min(76, Math.max(20, (rowHeight - 28) / .7));
-    const cellWidth = available / columns;
+    const labelRegion = gap ? sideWidth/perSide : width/columns;
+    const denseFit=Math.max(18,(height*.06+rowHeight-34)/.67);
+    const size = Math.min(92,labelRegion-8,denseFit);
+    const labelSize = rowHeight < 25 ? 8 : 10;
+    const labelFit = Math.max(4,(rowHeight-3-labelSize*1.2)/.7);
+    const eggSize = Math.min(56,Math.max(4,size*.58,rowHeight*.34),labelFit);
     return new Map(items.map((item, i) => {
-      // Fill from the front of the sand bed, then use the next shallow row.
-      const slot = gap && columns === 1 ? available / 4 : (i % columns + .5) * cellWidth;
-      const center = slot + (slot >= available / 2 ? gap : 0);
-      return [item.id, {size, x:clamp(center-size/2,0,Math.max(0,width-size)),
-        y:Math.max(24,height-30-size*.67-Math.floor(i/columns)*rowHeight)}];
+      // Alternate the two sand banks around the pearl. Small deterministic
+      // offsets make the nests feel settled without letting their name plates collide.
+      const slot=i%columns, row=Math.floor(i/columns);
+      let center, cellWidth;
+      if(gap) {
+        const right=(slot%2)===1, local=Math.floor(slot/2);
+        cellWidth=sideWidth/perSide;
+        center=(right ? width/2+gap/2 : 0)+(local+.5)*cellWidth;
+      } else {
+        cellWidth=width/columns;
+        center=(slot+.5)*cellWidth;
+      }
+      let hash=2166136261;for(const char of String(item.id))hash=Math.imul(hash^char.charCodeAt(0),16777619);
+      const jitter=(((hash>>>0)%1000)/999-.5)*Math.max(0,cellWidth-size-8)*.55;
+      const x=clamp(center-size/2+jitter,0,Math.max(0,width-size));
+      const y=Math.max(0,height-(size*.67+33)-row*rowHeight);
+      return [item.id,{size,eggSize,labelSize,labelWidth:Math.max(size,cellWidth-6),x,y}];
     }));
   }
   function startTurn(f) {
@@ -131,5 +155,5 @@
       f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);
     });
   }
-  return {profile,layout,eggLayout,step,perspective};
+  return {profile,layout,eggLayout,step,perspective,labelGap,labelAdjustment};
 });

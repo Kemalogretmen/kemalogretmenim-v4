@@ -17,7 +17,7 @@ function authHarness() {
   }};
   window.supabase={createClient(){creates++;return client;}};
   window.kemalSiteStore={getConfig:()=>({supabaseUrl:'https://test.invalid',supabaseAnonKey:'key'})};
-  window.setTimeout=fn=>{timers.push(fn);return timers.length;}; window.clearTimeout=()=>{};
+  window.setTimeout=(fn,delay=0)=>{if(delay){queueMicrotask(fn);return 0;}timers.push(fn);return timers.length;}; window.clearTimeout=()=>{};
   window.setInterval=()=>1;window.clearInterval=()=>{};
   const context={window,document,CustomEvent:window.CustomEvent,console,localStorage:{getItem:()=>null,setItem(){}},setTimeout:window.setTimeout,clearTimeout(){}};
   vm.runInNewContext(fs.readFileSync('js/user-auth.js','utf8'),context);
@@ -37,7 +37,16 @@ test('profile lookup failures never recreate or overwrite a registered teacher',
 test('initial profile error is recoverable without redirect or profile mutation',async()=>{
   const h=authHarness();h.setError({message:'503'});await h.api.ready();
   assert.ok(h.api.getState().error);assert.equal(h.writes.length,0);
-  h.setError(null);await h.api.ready();assert.equal(h.api.getProfile().role,'teacher');
+  assert.equal(h.api.getUser().id,teacher.id,'a temporary profile outage must not discard the stored auth session');
+  h.setError(null);await h.api.retry();assert.equal(h.api.getProfile().role,'teacher');assert.equal(h.api.getState().error,'');
+});
+
+test('a refreshed Supabase token is retained immediately while the profile refresh is deferred',async()=>{
+  const h=authHarness();await h.api.ready();
+  const fresh={access_token:'fresh-token',user:{id:teacher.id,email:teacher.email,user_metadata:{role:'student'}}};
+  h.emit('TOKEN_REFRESHED',fresh);
+  assert.equal(h.api.getState().session.access_token,'fresh-token');
+  h.timers.pop()();await tick();assert.equal(h.api.getState().session.access_token,'fresh-token');
 });
 
 test('auth callbacks defer API calls and discard an old user after sign-out',async()=>{
