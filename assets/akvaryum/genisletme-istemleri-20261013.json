@@ -1,0 +1,83 @@
+{
+  "tool": "Built-in image_gen",
+  "date": "2026-10-13",
+  "animals": [
+    {
+      "id": "boxfish",
+      "file": "benekli-kutu-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-3a22306b-4335-45fb-a070-f359e839a15c.png",
+      "prompt": "Use case: scientific-educational. Asset: ONE photorealistic marine animal transparent PNG cutout sprite for an educational aquarium website. Full body in side profile facing RIGHT, head to right, centered on a landscape 3:2 canvas, animal occupies about 78 percent width, complete fins, tail, legs or arms with clean generous padding. Fine natural textures, lifelike proportions, natural eyes, soft underwater studio sheen. Welcoming beautiful realistic animal, NOT cartoon, NO human face, NO accessories, NO text, NO scenery, NO bubbles, NO shadow plane. Genuine alpha transparency around the entire animal. Subject: a yellow spotted boxfish, a small juvenile Ostracion cubicus with natural rounded cube-like bright yellow body and black polka dots, tiny translucent fins, cute by its real natural appearance.",
+      "site_file": "assets/akvaryum/canlilar/benekli-kutu-baligi.png",
+      "web_file": "assets/akvaryum/canlilar/web-v1/benekli-kutu-baligi.webp",
+      "transparent_background": true
+    },
+    {
+      "id": "bannerfish",
+      "file": "flama-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-6ece80c9-68d6-4e66-a8dd-78271682cd8e.png",
+      "prompt": "Use case: scientific-educational. Asset: ONE photorealistic marine animal transparent PNG cutout sprite for an educational aquarium website. Full body in side profile facing RIGHT, head to right, centered on a landscape 3:2 canvas, animal occupies about 78 percent width, complete fins, tail, legs or arms with clean generous padding. Fine natural textures, lifelike proportions, natural eyes, soft underwater studio sheen. Welcoming beautiful realistic animal, NOT cartoon, NO human face, NO accessories, NO text, NO scenery, NO bubbles, NO shadow plane. Genuine alpha transparency around the entire animal. Subject: a longfin bannerfish Heniochus acuminatus, naturally white fish with two bold black diagonal stripes, lemon yellow tail and yellow rear fins, long delicate white dorsal pennant arching behind. Anatomically accurate.",
+      "site_file": "assets/akvaryum/canlilar/flama-baligi.png",
+      "web_file": "assets/akvaryum/canlilar/web-v1/flama-baligi.webp",
+      "transparent_background": true
+    },
+    {
+      "id": "batfish",
+      "file": "yarasa-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-7c906906-6bd3-4731-8b68-df3c0706fe2e.png",
+      "prompt": "Use case: scientific-educational. Asset: ONE photorealistic marine animal transparent PNG cutout sprite for an educational aquarium website. Full body in side profile facing RIGHT, head to right, centered on a landscape 3:2 canvas, animal occupies about 78 percent width, complete fins, tail, legs or arms with clean generous padding. Fine natural textures, lifelike proportions, natural eyes, soft underwater studio sheen. Welcoming beautiful realistic animal, NOT cartoon, NO human face, NO accessories, NO text, NO scenery, NO bubbles, NO shadow plane. Genuine alpha transparency around the entire animal. Subject: a juvenile orbicular batfish Platax orbicularis, warm silvery brown circular body with natural dark vertical bands, tall sweeping dorsal and anal fins, subtle orange margins, lifelike side profile.",
+      "site_file": "assets/akvaryum/canlilar/yarasa-baligi.png",
+      "web_file": "assets/akvaryum/canlilar/web-v1/yarasa-baligi.webp",
+      "transparent_background": true
+    },
+    {
+      "id": "cleanershrimp",
+      "file": "temizleyici-karides.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-1ffec1a7-b513-405e-93fb-213d83e03c3f.png",
+      "prompt": "Use case: scientific-educational. Asset: ONE photorealistic marine animal transparent PNG cutout sprite for an educational aquarium website. Full body in side profile facing RIGHT, head to right, centered on a landscape 3:2 canvas, animal occupies about 78 percent width, complete fins, tail, legs or arms with clean generous padding. Fine natural textures, lifelike proportions, natural eyes, soft underwater studio sheen. Welcoming beautiful realistic animal, NOT cartoon, NO human face, NO accessories, NO text, NO scenery, NO bubbles, NO shadow plane. Genuine alpha transparency around the entire animal. Subject: a scarlet skunk cleaner shrimp Lysmata amboinensis, bright coral-red back with a clean ivory white stripe, pale yellow translucent legs, long fine white antennae fully included in the frame, side view head on right. Natural clearly visible detail and no exaggerated eyes.",
+      "site_file": "assets/akvaryum/canlilar/temizleyici-karides.png",
+      "web_file": "assets/akvaryum/canlilar/web-v1/temizleyici-karides.webp",
+      "transparent_background": true
+    },
+    {
+      "id": "hermitcrab",
+      "file": "munzevi-yengec.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-dc65c90a-268a-4fc2-bee5-ff852000e027.png",
+      "prompt": "Use case: scientific-educational. Asset: ONE photorealistic marine animal transparent PNG cutout sprite for an educational aquarium website. Full body in side profile facing RIGHT, head to right, centered on a landscape 3:2 canvas, animal occupies about 78 percent width, complete fins, tail, legs or arms with clean generous padding. Fine natural textures, lifelike proportions, natural eyes, soft underwater studio sheen. Welcoming beautiful realistic animal, NOT cartoon, NO human face, NO accessories, NO text, NO scenery, NO bubbles, NO shadow plane. Genuine alpha transparency around the entire animal. Subject: a small marine hermit crab with natural orange-red jointed legs, tiny claws and real stalked eyes, emerging from a handsome cream and warm tan spiral seashell carried on its back. Side view, head and claws on RIGHT, shell at LEFT. Realistic photographic cutout, charming by its natural appearance.",
+      "site_file": "assets/akvaryum/canlilar/munzevi-yengec.png",
+      "web_file": "assets/akvaryum/canlilar/web-v1/munzevi-yengec.webp",
+      "transparent_background": true
+    },
+    {
+      "id": "cuttlefish",
+      "file": "murekkep-baligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-eff3fb32-1995-44e4-b0d7-fc8da5d63898.png",
+      "prompt": "Use case: scientific-educational. Asset: ONE photorealistic marine animal transparent PNG cutout sprite for an educational aquarium website. Full body in side profile facing RIGHT, head to right, centered on a landscape 3:2 canvas, animal occupies about 78 percent width, complete fins, tail, legs or arms with clean generous padding. Fine natural textures, lifelike proportions, natural eyes, soft underwater studio sheen. Welcoming beautiful realistic animal, NOT cartoon, NO human face, NO accessories, NO text, NO scenery, NO bubbles, NO shadow plane. Genuine alpha transparency around the entire animal. Subject: a broadclub cuttlefish Sepia latimanus, natural warm amber body with fine ivory mottled wavy markings, delicate rippling fin skirt along mantle, short relaxed arms facing RIGHT, subtle turquoise eye highlight. Full body side view, natural and accurate, NOT squid with excessively long tentacles.",
+      "site_file": "assets/akvaryum/canlilar/murekkep-baligi.png",
+      "web_file": "assets/akvaryum/canlilar/web-v1/murekkep-baligi.webp",
+      "transparent_background": true
+    }
+  ],
+  "backgrounds": [
+    {
+      "file": "mercan-adasi.jpg",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-3656f0a2-2cbf-4ae6-9058-891ee1180c1e.png",
+      "prompt": "Use case: photorealistic-natural. Asset: wide 16:9 full-screen underwater aquarium background for a classroom website. Create one breathtaking but tranquil underwater CORAL ISLAND scene, looking across clear turquoise water at a small rounded island-like mound of natural pink, peach and lavender corals on the sandy seabed, mainly in the lower-left and lower-right edges, with a clear broad central swimming lane. Realistic photographic textures, soft sunlight from the surface, gently rippled pale sand across the bottom, layered blue depth, inviting and calm. Keep the central 65 percent uncluttered so animated student fish can be added later. A few tiny clear bubbles rise from the lower coral mounds; no fish, no marine animals, no text, no UI, no buildings, no fantastical glowing crystals, no cartoon styling. Landscape wide composition, high detail.",
+      "site_file": "assets/akvaryum/arka-planlar/mercan-adasi.jpg",
+      "transparent_background": false
+    },
+    {
+      "file": "sakin-lagun.jpg",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-6937b2b4-028b-40cb-9e60-0293d05fc5a8.png",
+      "prompt": "Use case: photorealistic-natural. Asset: wide 16:9 full-screen underwater classroom aquarium background. A serene SANDY LAGOON beneath very clear shallow aquamarine ocean water. Soft sunlight and natural caustic ripples illuminate ivory fine sand across the entire seabed. Along far left and far right, low rounded rocks, a few small pastel corals and modest seagrass frame an expansive empty central swimming area. Distant layered ocean blue provides depth, water surface seen at the top. Calm welcoming photographic realism, airy and soothing, distinct from a dense coral reef or underwater cave. No fish, no animals, no people, no writing, no interface, no buildings, no dramatic clutter or neon glow. Wide landscape composition with central 65 percent open.",
+      "site_file": "assets/akvaryum/arka-planlar/sakin-lagun.jpg",
+      "transparent_background": false
+    },
+    {
+      "file": "tas-kemerler.jpg",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-fec0e7cb-860c-4d99-a843-acab21df2598.png",
+      "prompt": "Use case: photorealistic-natural. Asset: wide 16:9 full-screen underwater classroom aquarium background. A peaceful SUNKEN STONE ARCH garden in the ocean, natural weathered pale limestone arches only along the outer left and right edges, modest sea plants and peach corals at their bases, pale sandy seabed below. Broad completely open middle water for animated student fish. Warm diffuse sunbeams through turquoise water, atmospheric blue depth beyond, realistic photography with fine natural stone and sand textures, bright restful welcoming mood. Underwater natural rock arches, not buildings, no human ruins, no treasure, no fish, no marine animals, no letters or interface, no fantasy crystals, no cartoon. Central 65 percent open, wide landscape composition, subtle light and realistic perspective.",
+      "site_file": "assets/akvaryum/arka-planlar/tas-kemerler.jpg",
+      "transparent_background": false
+    }
+  ]
+}

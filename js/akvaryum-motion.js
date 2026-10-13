@@ -14,7 +14,13 @@
     turtle: { speed: .52, bob: 5, tilt: 1, depth: .58, pulse: 0 },
     shark: { speed: 1.08, bob: 3, tilt: 1, depth: .5, pulse: 0 },
     dolphin: { speed: 1.12, bob: 8, tilt: 2.3, depth: .3, pulse: 0 },
-    puffer: { speed: .62, bob: 4, tilt: 1, depth: .48, pulse: 0 }
+    puffer: { speed: .62, bob: 4, tilt: 1, depth: .48, pulse: 0 },
+    boxfish: { speed: .5, bob: 3, tilt: .8, depth: .5, pulse: 0 },
+    bannerfish: { speed: .72, bob: 4, tilt: 1, depth: .4, pulse: 0 },
+    batfish: { speed: .55, bob: 4, tilt: .8, depth: .48, pulse: 0 },
+    cleanershrimp: { speed: .32, bob: 2, tilt: .5, depth: .85, pulse: 0 },
+    hermitcrab: { speed: .16, bob: .4, tilt: .25, depth: .98, pulse: 0, floor: true },
+    cuttlefish: { speed: .45, bob: 3, tilt: .8, depth: .72, pulse: 0 }
   };
   const profile = id => profiles[id] || normal;
   // Camera distance is independent of score, hunger and vertical swimming lanes.
@@ -46,7 +52,9 @@
     const result = new Map();
     sorted.forEach((s,i) => {
       const size = s.size * scale, p = profile(s.species), row = Math.floor(i / columns);
-      const minY = Math.min(26, Math.max(0,height - size * .67 - 30)), maxY = Math.max(minY,height - size * .67 - 30);
+      let minY = Math.min(26, Math.max(0,height - size * .67 - 30));
+      const maxY = Math.max(minY,height - size * .67 - 30);
+      if (p.floor) minY = Math.max(minY, maxY - height * .08);
       const rowStart = clamp(row * cellH + 26, minY, maxY);
       const rowEnd = clamp((row+1) * cellH - size * .67 - 30, rowStart, maxY);
       let target = rowStart + (rowEnd-rowStart) * (.25 + (i % columns) / Math.max(1,columns-1) * .5);

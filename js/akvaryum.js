@@ -30,8 +30,20 @@
     mandarin:29,lionfish:26,puffer:23,gramma:26,firefish:38,triggerfish:24,
     shark:23,dolphin:22,royalblue:24,copperband:20,discus:25,betta:49,
     goldfish:44,guppy:43,neon:25,cardinal:36,anthias:31,goby:28,
-    blenny:24,parrot:24,wrasse:27,moorish:29,rabbit:25,flame:25};
+    blenny:24,parrot:24,wrasse:27,moorish:29,rabbit:25,flame:25,
+    boxfish:30,bannerfish:39,batfish:30};
   const background = id => '/assets/akvaryum/arka-planlar/' + (C.THEMES.find(t => t.id === id) || C.THEMES[0]).file;
+  function renderBubbles(theme) {
+    const layer = $('bubbles');
+    // Keep existing animations alive when a score or classroom setting changes.
+    if (layer.dataset.theme === theme.id) return;
+    layer.dataset.theme = theme.id;
+    layer.innerHTML = Array.from({ length: 14 }, (_, i) => {
+      const sources = theme.bubbleSources;
+      const left = sources ? sources[i % sources.length] + (i % 3 - 1) * 2.2 : i * 7.4;
+      return '<i class="bubble" style="--size:' + (4 + i % 4 * 3) + 'px;--duration:' + (17 + i % 6 * 3) + 's;--delay:-' + (i * 2.3) + 's;--left:' + left + '%"></i>';
+    }).join('');
+  }
   const filterText = value => String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
   function lockAccess(message, recoverable = false) {
     document.body.classList.add('access-pending'); $('accessMessage').textContent = message;
@@ -509,13 +521,15 @@
     $('classSelect').innerHTML = state.classes.map(c => '<option value="' + c.id + '" ' + (c.id === classroom().id ? 'selected' : '') + '>' + esc(c.name) + '</option>').join('');
     const theme = C.THEMES.find(t => t.id === classroom().theme) || C.THEMES[0];
     $('aquarium').style.backgroundImage = 'url("' + background(theme.id) + '")';
+    $('aquarium').dataset.theme = theme.id;
+    renderBubbles(theme);
     const themeButton=document.querySelector('.scene-controls [data-action="themes"]');
     themeButton.title='Ortamı değiştir · '+theme.name;
     $('sceneTitle').textContent = classroom().students.length ? classroom().name + ' · Su altı dünyamız.' : 'Bizim su altı dünyamız.';
     $('sceneSubtitle').textContent = classroom().students.length + ' deniz dostu · Her güzel adım, yeni bir mutluluk.';
     $('welcome').hidden = classroom().students.length > 0 || classroom().teacher?.enabled === true;
     $('aquarium').style.setProperty('--mobile-swim-height',Math.max(360,Math.ceil((classroom().students.length+(classroom().teacher?.enabled?1:0))/3)*120)+'px');
-    document.querySelector('.welcome-footnote').textContent = C.SPECIES.length + ' deniz canlısı · 3 akvaryum ortamı · Sınırsız güzel başlangıç';
+    document.querySelector('.welcome-footnote').textContent = C.SPECIES.length + ' deniz canlısı · ' + C.THEMES.length + ' akvaryum ortamı · Sınırsız güzel başlangıç';
     $('aquarium').classList.toggle('is-empty', !classroom().students.length && !classroom().teacher?.enabled);
     $('aquariumApp').classList.toggle('no-names', !state.settings.names && !state.settings.points);
     $('aquariumApp').classList.toggle('no-motion', !state.settings.motion || reduced.matches);
@@ -1227,7 +1241,6 @@
   updateFullscreenControls();
   new ResizeObserver(measure).observe($('swimArea'));
   new ResizeObserver(()=>{if(swimmers.size) renderFish();}).observe($('eggBed'));
-  $('bubbles').innerHTML = Array.from({ length: 14 }, (_, i) => '<i class="bubble" style="--size:' + (4 + i % 4 * 3) + 'px;--duration:' + (17 + i % 6 * 3) + 's;--delay:-' + (i * 2.3) + 's;--left:' + (i * 7.4) + '%"></i>').join('');
   document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) { if(modal.open) closeModal(); releaseFish(); $('aquarium').append(modal); } else document.body.append(modal); updateFullscreenControls(); updateClock(); measure(); });
   if (demoOnly) enterDemo();
   if (viewing) {

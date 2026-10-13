@@ -39,6 +39,6 @@ test('a write in flight cannot clear the dirty flag of a newer local edit',async
  d.cloud.markDirty();const pending=d.cloud.save(state);await new Promise(r=>setImmediate(r));state.classes[0].name='Latest';d.cloud.markDirty();release();await pending;
  assert.equal(JSON.parse(d.storage.getItem('owner_cloud')).dirty,true);assert.equal(s.row.document.classes[0].name,'Birincilerim');
 });
-test('script dependencies load before audio and core; all 30 fish and 4 other creatures have assets',()=>{
- const fs=require('node:fs'),html=fs.readFileSync('ogretmen/akvaryum.html','utf8');assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-audio.js'));assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-core.js'));assert.equal(C.SPECIES.length,34);assert.equal(new Set(C.SPECIES.map(s=>s.id)).size,34);for(const s of C.SPECIES)assert.ok(fs.existsSync('assets/akvaryum/canlilar/'+s.file));
+test('script dependencies load before audio and core; all 40 creatures have assets',()=>{
+ const fs=require('node:fs'),html=fs.readFileSync('ogretmen/akvaryum.html','utf8');assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-audio.js'));assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-core.js'));assert.equal(C.SPECIES.length,40);assert.equal(new Set(C.SPECIES.map(s=>s.id)).size,40);for(const s of C.SPECIES)assert.ok(fs.existsSync('assets/akvaryum/canlilar/'+s.file));
 });

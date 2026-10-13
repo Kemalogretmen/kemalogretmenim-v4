@@ -45,6 +45,27 @@ async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-1111
   return {window,document,intervals,frames,urls,setResponse(value){response=value;},io:()=>({reads,writes})};
 }
 
+test('new coral theme and animals stay read-only; refreshing points preserves the bubble animation nodes',async()=>{
+  const snapshot={name:'Mercan sınıfı',theme:'coral-island',settings:{names:true,points:true,motion:true},
+    students:C.SPECIES.slice(-6).map(s=>({id:s.id,name:s.name,species:s.id,mood:'happy',points:3}))};
+  const h=await viewerHarness(snapshot);
+  const layer=h.document.getElementById('bubbles'),firstBubble=layer.firstElementChild;
+  assert.equal(h.document.getElementById('aquarium').dataset.theme,'coral-island');
+  assert.match(h.document.getElementById('aquarium').style.backgroundImage,/mercan-adasi\.jpg/);
+  assert.equal(layer.children.length,14);
+  for(const fish of h.document.querySelectorAll('.fish')) {
+    assert.equal(fish.disabled,true);
+    assert.ok(C.SPECIES.slice(-6).some(s=>s.id===fish.dataset.species));
+  }
+  for(const tick of h.intervals) await tick();
+  assert.equal(layer.firstElementChild,firstBubble,'score refresh must not restart the bubbles');
+  h.setResponse({...snapshot,theme:'lagoon'});
+  for(const tick of h.intervals) await tick();
+  assert.equal(h.document.getElementById('aquarium').dataset.theme,'lagoon');
+  assert.notEqual(layer.firstElementChild,firstBubble);
+  assert.deepEqual(h.io(),{reads:0,writes:0});
+});
+
 test('viewer reads only the published snapshot, cannot open management, and removes fish after revocation',async()=>{
   const h=await viewerHarness({name:'Test sınıfı',theme:'reef',settings:{names:true,points:false},students:[{id:'one',name:'Deniz',species:'tang',mood:'happy',points:null}]});
   assert.equal(h.document.querySelectorAll('.fish').length,1);

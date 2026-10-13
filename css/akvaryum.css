@@ -245,6 +245,8 @@ dialog *,.fish-name,.fish-points,.fish-hunger{backdrop-filter:none!important;-we
 .dialog-open dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none;background:#03243165}
 html.performance-lite dialog{background:linear-gradient(135deg,#1b4a59fa,#092f41fa);text-shadow:none}
 html.performance-lite .water-light,html.performance-lite .scene-kelp{display:none}
+/* Coral bubbles rise from the two coral banks without adding more particles. */
+#aquarium[data-theme="coral-island"] .bubble{bottom:12%;}
 html.performance-lite .bubbles i:nth-child(n+7){display:none}
 html.performance-lite .fish-art,html.performance-lite .fish::after{filter:none!important}
 html.performance-lite .birthday-fish .fish-art{filter:drop-shadow(0 0 7px #c0fff5)!important}

@@ -38,12 +38,21 @@
     {"id": "wrasse", "name": "Gökkuşağı lapin", "file": "lapin.png", "detail": "Pembe, mavi ve turuncu renklerin buluşması", "size": 125},
     {"id": "moorish", "name": "Mağribi idol", "file": "magribi.png", "detail": "Uzun sırt yüzgeciyle zarif bir gezgin", "size": 125},
     {"id": "rabbit", "name": "Tavşan balığı", "file": "tavsan.png", "detail": "Sarı gövdesi ve siyah beyaz maskesiyle", "size": 125},
-    {"id": "flame", "name": "Alev melek balığı", "file": "alev-melek.png", "detail": "Turuncu kırmızı, mavi uçlu yüzgeçler", "size": 125}
+    {"id": "flame", "name": "Alev melek balığı", "file": "alev-melek.png", "detail": "Turuncu kırmızı, mavi uçlu yüzgeçler", "size": 125},
+    { id: 'boxfish', name: 'Benekli kutu balığı', file: 'benekli-kutu-baligi.png', detail: 'Sarı gövdesi ve siyah benekleriyle', size: 108 },
+    { id: 'bannerfish', name: 'Uzun yüzgeçli flama balığı', file: 'flama-baligi.png', detail: 'Siyah beyaz çizgiler ve zarif bir flama', size: 132 },
+    { id: 'batfish', name: 'Yarasa balığı', file: 'yarasa-baligi.png', detail: 'Geniş yüzgeçleriyle sakin sakin süzülür', size: 135 },
+    { id: 'cleanershrimp', name: 'Temizleyici karides', file: 'temizleyici-karides.png', detail: 'Mercan kırmızısı ve ince beyaz antenler', size: 118 },
+    { id: 'hermitcrab', name: 'Münzevi yengeç', file: 'munzevi-yengec.png', detail: 'Sarmal kabuğunu yanında taşıyan minik gezgin', size: 112 },
+    { id: 'cuttlefish', name: 'Mürekkep balığı', file: 'murekkep-baligi.png', detail: 'Dalgalı yüzgeçleri ve doğal desenleriyle', size: 140 }
   ];
   const THEMES = [
     { id: 'reef', name: 'Mercan resifi', file: 'mercan-resifi.jpg', description: 'Güneşli, turkuaz bir dünya' },
     { id: 'kelp', name: 'Yosun ormanı', file: 'yosun-ormani.jpg', description: 'Yeşilin içinde sakin bir yolculuk' },
-    { id: 'grotto', name: 'Mavi mağara', file: 'mavi-magara.jpg', description: 'Derin mavinin büyüsü' }
+    { id: 'grotto', name: 'Mavi mağara', file: 'mavi-magara.jpg', description: 'Derin mavinin büyüsü' },
+    { id: 'coral-island', name: 'Mercan Adası', file: 'mercan-adasi.jpg', description: 'Renkli mercanların arasından yükselen baloncuklar', bubbleSources: [16, 84] },
+    { id: 'lagoon', name: 'Sakin Lagün', file: 'sakin-lagun.jpg', description: 'Aydınlık kumlar ve duru turkuaz su' },
+    { id: 'stone-arches', name: 'Taş Kemerler', file: 'tas-kemerler.jpg', description: 'Doğal taş kemerlerin arasında huzurlu bir keşif' }
   ];
   const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'aq-' + Date.now().toString(36) + Math.random().toString(36).slice(2);
   // Local calendar days, deliberately not UTC: a late evening lesson stays on its own day.

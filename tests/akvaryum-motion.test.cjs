@@ -29,6 +29,17 @@ test('seahorses and jellyfish drift slowly; bottom animals stay in the lower reg
  const low=M.layout([{id:'o',species:'octopus',size:130},{id:'r',species:'ray',size:140}],1000,600);
  assert.ok(low.get('o').y>400);assert.ok(low.get('r').y>300);
 });
+test('hermit crabs remain near the sand while their routes continue',()=>{
+ const p=M.layout([{id:'crab',species:'hermitcrab',size:112}],1000,600).get('crab');
+ const f={...p,species:'hermitcrab',direction:1,angle:0,phase:0,cruise:1,mood:{speed:1}};
+ const start=f.x;
+ for(let i=0;i<2400;i++) {
+  M.step([f],.05,1000,600);
+  assert.ok(f.y>=p.maxY-600*.08 && f.y<=p.maxY);
+ }
+ assert.notEqual(f.x,start);
+});
+
 test('encounters do not turn or slow fish; they can pass through the same swimming lane',()=>{
  const fish=animals(2,1000,600);
  Object.assign(fish[0],{x:400,y:250,direction:1,angle:0,targetX:850,targetY:250,routeTime:30});
