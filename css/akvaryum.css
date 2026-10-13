@@ -25,6 +25,8 @@ body:not(.access-pending) .access-gate { display:none; }
 .view-only #aquarium { height:100svh; min-height:0; }
 .view-only #swimArea { inset:75px 20px 30px; height:auto; }
 .view-only .fish { cursor:default; }
+/* Read-only animals keep their normal appearance; disabled is an access guard. */
+.view-only .fish:disabled { opacity:1; }
 .share-state { padding:14px 18px; border-radius:14px; background:#104b51; color:#8de4c5; font-weight:700; }
 .fish-chat { position:absolute; top:-42px; left:30%; background:#f4fcff; color:#123f4f; border-radius:18px 18px 18px 3px; padding:7px 12px; box-shadow:0 5px 22px #001a2940; font-size:21px; opacity:0; transform:translateY(8px) scale(.9); transition:opacity .5s,transform .5s; pointer-events:none; white-space:nowrap; }
 .fish-chat.visible { opacity:1; transform:translateY(0) scale(1); }
@@ -279,3 +281,9 @@ dialog.species-picker-modal{width:min(1240px,calc(100% - 32px));max-height:94svh
 .leaderboard .rank-medal{font-size:19px;text-align:center}.leaderboard img{width:46px;height:38px;object-fit:contain;filter:drop-shadow(0 3px 4px #001c2940)}
 .leaderboard .rank-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:650}.leaderboard .rank-score{font-size:12px;font-weight:750;color:#c8f4d9;white-space:nowrap}
 @media(max-width:700px){dialog.species-picker-modal{padding:16px 14px}.species-picker-modal .species-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:48svh}.species-picker-modal .species-card{min-height:102px;grid-template-rows:50px auto 1fr;padding:6px}.species-picker-modal .species-card img{height:48px}.species-picker-modal .species-card strong{font-size:11px}.leaderboard li{grid-template-columns:28px 40px minmax(0,1fr) auto;gap:7px;padding:8px}.leaderboard img{width:38px;height:34px}.leaderboard .rank-name{font-size:11px}.leaderboard .rank-score{font-size:10px}}
+/* Four-species prototype keeps the existing art box, labels and depth layers. */
+.fish-body-image{mask-image:var(--body-mask,none);-webkit-mask-image:var(--body-mask,none);mask-size:100% 100%;-webkit-mask-size:100% 100%}
+.fish-art .creature-joint{display:block;pointer-events:none}
+.fish-art .creature-model{position:absolute;inset:0;width:100%;height:100%;display:none;pointer-events:none}
+.fish.has-3d .fish-art img{visibility:hidden}
+.fish.has-3d .creature-model{display:block}

@@ -33,7 +33,7 @@
       background:
         linear-gradient(135deg, rgba(20,9,47,.96), rgba(57,28,135,.92) 52%, rgba(30,200,210,.88)),
         linear-gradient(90deg, #1A1040, #6C3DED);
-      padding: 34px 24px 38px;
+      padding: 12px 24px 14px;
       position: relative;
       overflow: hidden;
       isolation: isolate;
@@ -59,12 +59,10 @@
     }
     .games-hero-inner {
       width: min(1160px, 100%);
-      min-height: 224px;
+      min-height: 0;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+      display: block;
       align-items: center;
-      gap: 34px;
       position: relative;
       z-index: 1;
     }
@@ -73,8 +71,8 @@
       align-items: center;
       gap: 8px;
       width: fit-content;
-      margin-bottom: 13px;
-      padding: 7px 11px;
+      margin-bottom: 7px;
+      padding: 4px 9px;
       border: 1px solid rgba(255,255,255,.25);
       border-radius: 999px;
       background: rgba(255,255,255,.12);
@@ -86,15 +84,18 @@
     .games-hero h1 {
       max-width: 720px;
       color: white;
-      font-size: 58px;
+      font-size: clamp(30px, 4vw, 40px);
       font-weight: 900;
       line-height: .98;
-      margin: 0 0 12px;
+      margin: 0 0 6px;
     }
+    .games-kicker,
+    .games-hero p,
+    .games-hero-tags { display: none; }
     .games-hero p {
       max-width: 580px;
       color: rgba(255,255,255,.78);
-      font-size: 18px;
+      font-size: 15px;
       font-weight: 700;
       line-height: 1.55;
     }
@@ -102,14 +103,14 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 18px;
+      margin-top: 10px;
     }
     .games-hero-tags span {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      min-height: 32px;
-      padding: 7px 11px;
+      min-height: 28px;
+      padding: 5px 9px;
       border-radius: 999px;
       background: rgba(255,255,255,.14);
       color: white;
@@ -117,12 +118,7 @@
       font-weight: 900;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
     }
-    .games-hero-stage {
-      position: relative;
-      min-height: 210px;
-      display: grid;
-      place-items: center;
-    }
+    .games-hero-stage { display: none; }
     .hero-controller {
       width: min(220px, 48vw);
       height: auto;
@@ -630,17 +626,11 @@
     }
 
     @media (max-width:640px) {
-      .games-hero { padding: 26px 16px 30px; }
+      .games-hero { padding: 10px 16px 12px; }
       .games-hero-inner {
         min-height: auto;
-        grid-template-columns: 1fr;
-        gap: 18px;
       }
-      .games-hero-stage { min-height: 130px; }
-      .hero-controller { width: 150px; }
-      .hero-tile { --s: 42px; }
-      .hero-tile svg { width: 22px; height: 22px; }
-      .games-hero h1 { font-size: 38px; }
+      .games-hero h1 { font-size: 30px; }
       .games-hero p { font-size: 15px; }
       .games-catalog { padding: 20px 16px 48px; }
       .popular-games { padding: 20px 16px 2px; }
@@ -741,6 +731,23 @@
     </div>
 
     <div class="games-grid" id="gamesGrid">
+
+    <!-- Ses Akışı: geliştirme için askıda; yeniden yayınlandığında oyun kartını buraya geri ekleyin. -->
+
+    <a href="kizma_birader.html" class="game-card" data-color="orange" data-cat="strateji" data-icon="dice" data-date="2026-10-11T12:00:00+03:00">
+      <div class="gc-banner">
+        <span class="gc-category">✨ YENİ · Strateji · Matematik</span>
+        <span class="gc-banner-em">🎲</span>
+      </div>
+      <div class="gc-body">
+        <div class="gc-title">KIZMA BİRADER</div>
+        <div class="gc-subtitle">Renkli parkurda işlemleri çöz, zarını at ve parka ilk ulaş.</div>
+        <div class="gc-play">
+          <span class="gc-play-lbl">Parkura çık!</span>
+          <span class="gc-play-arrow">→</span>
+        </div>
+      </div>
+    </a>
 
     <a href="hece-craft-tunel-macerasi.html" class="game-card" data-color="green" data-cat="okuma-yazma" data-icon="book" data-date="2026-09-29T12:00:00+03:00">
       <div class="gc-banner"><span class="gc-category">Okuma-Yazma · 2. sınıf</span><span class="gc-banner-em">⛏️</span></div>
@@ -897,21 +904,6 @@
         <div class="gc-play">
           <span class="gc-play-lbl">Oyna!</span>
           <span class="gc-play-arrow"></span>
-        </div>
-      </div>
-    </a>
-
-    <a href="kizma_birader.html" class="game-card" data-color="orange" data-cat="strateji" data-icon="dice" data-date="2026-04-05T20:11:00+03:00">
-      <div class="gc-banner">
-        <span class="gc-category">♟️ Strateji</span>
-        <span class="gc-banner-em">😤</span>
-      </div>
-      <div class="gc-body">
-        <div class="gc-title">KIZMA BİRADER</div>
-        <div class="gc-subtitle">"Eğlenceli Toplama Oyunu"</div>
-        <div class="gc-play">
-          <span class="gc-play-lbl">Oyna!</span>
-          <span class="gc-play-arrow">→</span>
         </div>
       </div>
     </a>
@@ -1360,9 +1352,9 @@
     };
 
     const FEATURED_GAME_PATHS = [
+      'kizma_birader.html',
       'matematik-vadisi.html',
-      'dikkat-dedektifi.html',
-      'minik-kodlamaci.html'
+      'dikkat-dedektifi.html'
     ];
 
     function resolveGameTimestamp(oyun) {

@@ -80,7 +80,7 @@
 
     .bridge-hero h1 {
       margin: 6px 0 0;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Fredoka', sans-serif;
       font-size: clamp(1.8rem, 3vw, 2.8rem);
       line-height: 1.05;
       text-shadow: 3px 3px 0px rgba(0,0,0,0.15);
@@ -128,7 +128,7 @@
       margin-top: 2px;
       font-size: 1.6rem;
       font-weight: 900;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Fredoka', sans-serif;
     }
 
     .stat.timer strong { color: #fff3ce; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
@@ -152,7 +152,7 @@
 
     .section-title {
       margin: 0 0 16px;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Fredoka', sans-serif;
       font-size: 1.4rem;
       color: var(--ink);
     }
@@ -245,7 +245,8 @@
     .river-arena {
       position: relative;
       height: 600px;
-      background: var(--water-deep);
+      isolation: isolate;
+      background: linear-gradient(180deg, #8bd9ff 0%, #c5f0ff 42%, #8fe38a 43%, #43bf69 100%);
       border-radius: 32px;
       overflow: hidden;
       border: 6px solid #e0f2fe;
@@ -254,11 +255,46 @@
       flex-direction: column;
     }
 
+    .river-arena::before {
+      content: '';
+      position: absolute;
+      z-index: 0;
+      left: -8%;
+      top: 39%;
+      width: 116%;
+      height: 70%;
+      background:
+        radial-gradient(ellipse at 50% 7%, rgba(191, 239, 255, .8), transparent 40%),
+        linear-gradient(180deg, #49b8f0 0%, #1687d0 58%, #0759a7 100%);
+      clip-path: polygon(0 12%, 100% 0, 100% 100%, 0 100%);
+      transform: perspective(700px) rotateX(5deg);
+      box-shadow: inset 0 20px 35px rgba(8, 67, 125, .25);
+    }
+
+    .bridge-landscape { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; }
+    .land-sun { position: absolute; top: 7%; left: 8%; width: 76px; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #fff8b7 0 35%, #ffd166 36% 64%, rgba(255, 209, 102, .28) 65%); box-shadow: 0 0 40px rgba(255, 226, 130, .5); }
+    .land-cloud { position: absolute; top: var(--cloud-y); left: var(--cloud-x); width: 110px; height: 34px; border-radius: 999px; background: rgba(255,255,255,.88); filter: drop-shadow(0 7px 5px rgba(65, 143, 174, .14)); animation: cloudDrift var(--cloud-speed, 34s) ease-in-out infinite alternate; }
+    .land-cloud::before, .land-cloud::after { content: ''; position: absolute; bottom: 8px; border-radius: 50%; background: inherit; }
+    .land-cloud::before { left: 20px; width: 44px; height: 44px; }
+    .land-cloud::after { left: 52px; width: 34px; height: 34px; }
+    .land-hill { position: absolute; bottom: 52%; width: 44%; height: 19%; border-radius: 50% 50% 0 0; background: linear-gradient(180deg, #75d87c, #3cae68); box-shadow: inset 0 12px 18px rgba(211,255,171,.28); }
+    .land-hill.left { left: -9%; transform: rotate(-4deg); }
+    .land-hill.right { right: -8%; width: 48%; height: 24%; background: linear-gradient(180deg, #8be078, #44b96a); transform: rotate(4deg); }
+    .land-tree { position: absolute; left: var(--tree-x); bottom: var(--tree-base, 54%); width: var(--tree-size); height: calc(var(--tree-size) * 1.5); transform: perspective(420px) rotateY(var(--tree-yaw, -12deg)) rotateZ(var(--tree-tilt, 0deg)); transform-origin: 50% 100%; filter: drop-shadow(8px 10px 5px rgba(14, 77, 47, .27)); }
+    .land-tree::before { content: ''; position: absolute; left: 43%; bottom: 0; width: 15%; height: 24%; background: linear-gradient(90deg, #704321, #a76a35 52%, #68401f); clip-path: polygon(16% 0, 84% 0, 100% 100%, 0 100%); }
+    .land-tree i, .land-tree b, .land-tree em { position: absolute; display: block; left: 50%; transform: translateX(-50%); clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+    .land-tree i { top: 0; width: 54%; height: 46%; background: linear-gradient(100deg, #137447, #36bd72 54%, #0b6842); }
+    .land-tree b { top: 25%; width: 78%; height: 47%; background: linear-gradient(100deg, #0d7548, #2fac67 55%, #0a603d); }
+    .land-tree em { bottom: 15%; width: 100%; height: 48%; background: linear-gradient(100deg, #08643d, #238e56 56%, #075331); }
+    .land-tree.far { filter: blur(.35px) drop-shadow(5px 7px 4px rgba(14, 77, 47, .2)); }
+    .land-tree.near { filter: drop-shadow(11px 13px 6px rgba(14, 77, 47, .3)); }
+    @keyframes cloudDrift { to { translate: 24px 3px; } }
+
     /* Çok Katmanlı Gerçekçi SVG Su Dalgaları */
     .water-waves {
       position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 100%;
+      top: 39%; left: 0; right: 0;
+      height: 61%;
       pointer-events: none;
       overflow: hidden;
     }
@@ -300,13 +336,31 @@
     /* Hedef Kelime Ekranı */
     .target-word-display {
       text-align: center;
-      padding: 25px;
+      padding: 22px 18px 18px;
       z-index: 10;
-      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(9, 68, 111, .38) 0%, rgba(9, 68, 111, 0) 100%);
+    }
+    .target-word-display .word-label {
+      display: inline-flex;
+      padding: 5px 12px;
+      border: 1px solid rgba(255,255,255,.48);
+      border-radius: 999px;
+      background: rgba(14, 75, 125, .38);
+      color: rgba(255,255,255,.94);
+      font-size: .75rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+    .target-word-display p {
+      margin: 5px 0 0;
+      color: rgba(255,255,255,.96);
+      font-size: clamp(.9rem, 2vw, 1.05rem);
+      font-weight: 800;
+      text-shadow: 0 2px 8px rgba(7, 41, 82, .48);
     }
     .target-word-display h2 {
       margin: 0;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Fredoka', sans-serif;
       font-size: 4.5rem;
       color: white;
       text-shadow: 0 6px 15px rgba(0,0,0,0.4), 0 2px 0 #1e3a8a;
@@ -319,7 +373,7 @@
       align-items: flex-start;
       justify-content: space-between;
       height: 160px;
-      padding: 0 40px;
+      padding: 0 clamp(16px, 4vw, 40px);
       position: absolute;
       top: 150px;
       left: 0; right: 0;
@@ -333,7 +387,7 @@
       background: var(--dirt);
       border-radius: 20px;
       position: relative;
-      box-shadow: 0 15px 25px rgba(0,0,0,0.3);
+      box-shadow: inset 0 -12px 0 rgba(67, 31, 12, .4), 0 15px 25px rgba(0,0,0,0.3);
     }
     .bank::before {
       content: '';
@@ -374,6 +428,8 @@
       align-items: center;
       gap: 15px;
       padding-top: 15px;
+      perspective: 700px;
+      transform-style: preserve-3d;
     }
 
     .bridge-slot {
@@ -394,13 +450,14 @@
     .bridge-slot.filled {
       border: none;
       background: repeating-linear-gradient(90deg, var(--wood-light), var(--wood-light) 10px, var(--wood) 10px, var(--wood) 20px);
-      box-shadow: 0 8px 0 #78350f, 0 15px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 9px 0 #78350f, 0 14px 18px rgba(0,0,0,0.28), inset 0 3px 0 rgba(255,255,255,.3);
       border-radius: 8px;
+      transform: perspective(500px) rotateX(10deg) translateY(-3px);
       color: white;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Fredoka', sans-serif;
       font-size: 1.6rem;
       font-weight: 900;
       text-shadow: 1px 1px 0 #451a03;
@@ -439,7 +496,7 @@
       background: var(--leaf);
       border-radius: 50% 50% 50% 10%;
       box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2), 0 10px 15px rgba(0,0,0,0.3);
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Fredoka', sans-serif;
       font-size: 2.2rem;
       font-weight: 900;
       color: white;
@@ -451,6 +508,8 @@
       position: relative;
       animation: floatLeaf 4s ease-in-out infinite;
       transition: transform 0.1s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .stone-btn::after {
@@ -473,6 +532,7 @@
     }
 
     .stone-btn:active { transform: scale(0.9) !important; }
+    .stone-btn:focus-visible, .control-btn:focus-visible, .serve-btn:focus-visible, .sound-group:focus-visible { outline: 4px solid #facc15; outline-offset: 4px; }
 
     /* Yanlış Hecenin Batma Animasyonu */
     .stone-btn.sink {
@@ -597,6 +657,38 @@
       .bank { width: 80px; }
       .goal-badge { top: -42px; min-width: 78px; font-size: 1rem; }
     }
+    @media (max-width: 560px) {
+      .page { padding: 12px 8px 34px; }
+      .game-shell { border-radius: 22px; border-width: 3px; }
+      .bridge-hero { grid-template-columns: 1fr; padding: 15px; }
+      .match-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+      .stat { padding: 8px 5px; border-radius: 14px; }
+      .stat strong { font-size: 1.25rem; }
+      .setup { padding: 14px; gap: 12px; }
+      .setup-panel, .rule-panel { padding: 16px; }
+      .control-row { padding: 12px; }
+      .control-btn, .serve-btn { min-height: 48px; padding: 10px 14px; font-size: .98rem; }
+      .serve-btn { flex: 1 1 100%; }
+      .arena-wrap { padding: 12px; }
+      .river-arena { height: min(560px, 72vh); min-height: 430px; border-radius: 22px; border-width: 4px; }
+      .bridge-area { top: 155px; height: 126px; padding: 0 12px; }
+      .bank { width: 68px; height: 52px; }
+      .bank::before { top: -11px; height: 28px; }
+      .bridge-slots-container { gap: 5px; padding-top: 8px; }
+      .bridge-slot { width: 48px; height: 32px; border-width: 3px; }
+      .bridge-slot.edge-slot { width: 58px; height: 38px; }
+      .bridge-slot.filled, .bridge-slot.edge-slot.filled { font-size: 1.1rem; }
+      .mascot-gokce-wrapper { width: 58px; bottom: 16px; left: 4px; }
+      .floating-stones-area { left: 8px; right: 8px; height: 180px; gap: 12px; }
+      .stone-btn { width: clamp(66px, 19vw, 82px); height: clamp(66px, 19vw, 82px); font-size: 1.55rem; }
+      .target-word-display { padding: 14px 8px 10px; }
+      .target-word-display h2 { font-size: clamp(2.2rem, 12vw, 3rem); letter-spacing: 5px; }
+      .land-sun { width: 52px; }
+      .land-cloud { scale: .72; transform-origin: left top; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .land-cloud, .wave-layer, .stone-btn, .mascot-img { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
   </style>
 </head>
 <body>
@@ -668,8 +760,23 @@
             <div class="wave-layer wave-1"></div>
           </div>
 
+          <div class="bridge-landscape" aria-hidden="true">
+            <span class="land-sun"></span>
+            <span class="land-cloud" style="--cloud-x:38%;--cloud-y:13%;--cloud-speed:38s"></span>
+            <span class="land-cloud" style="--cloud-x:72%;--cloud-y:25%;--cloud-speed:44s"></span>
+            <span class="land-hill left"></span>
+            <span class="land-hill right"></span>
+            <span class="land-tree far" style="--tree-x:8%;--tree-size:clamp(64px,8vw,94px);--tree-base:59%;--tree-yaw:-18deg;--tree-tilt:-3deg"><i></i><b></b><em></em></span>
+            <span class="land-tree" style="--tree-x:22%;--tree-size:clamp(82px,10vw,118px);--tree-base:55%;--tree-yaw:12deg;--tree-tilt:2deg"><i></i><b></b><em></em></span>
+            <span class="land-tree far" style="--tree-x:43%;--tree-size:clamp(72px,9vw,104px);--tree-base:60%;--tree-yaw:-8deg;--tree-tilt:1deg"><i></i><b></b><em></em></span>
+            <span class="land-tree" style="--tree-x:71%;--tree-size:clamp(92px,11vw,132px);--tree-base:56%;--tree-yaw:-13deg;--tree-tilt:-2deg"><i></i><b></b><em></em></span>
+            <span class="land-tree near" style="--tree-x:87%;--tree-size:clamp(110px,13vw,154px);--tree-base:53%;--tree-yaw:16deg;--tree-tilt:3deg"><i></i><b></b><em></em></span>
+          </div>
+
           <div class="target-word-display">
+            <span class="word-label">HEDEF KELİME</span>
             <h2 id="targetWordText">GÖKÇE</h2>
+            <p>Heceleri sırayla seç, köprüyü tamamla!</p>
           </div>
 
           <div class="bridge-area" id="bridgeArea">

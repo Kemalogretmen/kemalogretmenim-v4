@@ -4,14 +4,87 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const C=require('../js/akvaryum-core.js');
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false}={}) {
+test('natural strokes survive automatic lightweight quality and keep one animation loop over a long session',async()=>{
+  const h=await harness({species:'turtle',ageDays:0,autoQuality:true}),d=h.document,fish=d.querySelector('.fish'),joint=d.querySelector('.creature-joint');
+  const record=h.saved(),start=fish.style.transform;let now=100;
+  for(let i=0;i<130;i++){now+=40;h.frames.shift()(now);}
+  assert.equal(h.window.SitePerformance.lite(),true);
+  assert.equal(d.querySelector('.creature-joint'),joint,'quality change must keep the natural anatomy');
+  const poses=new Set();
+  for(let i=0;i<36000;i++) {now+=50;h.frames.shift()(now);if(i%137===0)poses.add(joint.style.transform);assert.equal(h.frames.length,1);}
+  assert.ok(poses.size>20);assert.notEqual(fish.style.transform,start);assert.deepEqual(h.saved(),record);assert.equal(h.modelCreates(),0);
+  for(const species of ['jellyfish','octopus']) {
+    const other=await harness({species,ageDays:0,lite:true}),part=other.document.querySelector('.creature-joint'),strokes=new Set();
+    assert.ok(part);for(let i=0;i<180;i++){other.frames.shift()(100+i*50);strokes.add(part.style.transform);}
+    assert.ok(strokes.size>20);
+  }
+});
+test('stationary hover, retained keyboard focus and a missed pointer release never trap healthy swimmers',async()=>{
+  for(const type of ['pointerenter','focus','pointerdown']) {
+    const h=await harness({ageDays:0}),fish=h.document.querySelector('.fish'),event=new h.window.Event(type);
+    fish.dispatchEvent(event);const start=fish.style.transform;
+    for(let i=0;i<6;i++)h.frames.shift()(100+i*50);
+    assert.equal(fish.style.transform,start,'allow a short hold to select the fish');
+    for(let i=6;i<100;i++)h.frames.shift()(100+i*50);
+    assert.notEqual(fish.style.transform,start,type+' must resume without a pointerleave or blur');
+    h.click(fish);assert.equal(h.modal.open,true);
+  }
+});
+test('lightweight mode continues swimming on a 60Hz display instead of skipping every RAF',async()=>{
+  const h=await harness({lite:true,ageDays:0}),fish=h.document.querySelector('.fish');
+  const start=fish.style.transform;
+  for(let i=0;i<120;i++)h.frames.shift()(100+i*1000/60);
+  assert.notEqual(fish.style.transform,start);assert.equal(h.modelCreates(),0);
+});
+test('natural anatomy reuses the selected image and classic mode restores it without changing class records',async()=>{
+  const h=await harness({species:'turtle',ageDays:0}),d=h.document,before=h.saved();
+  assert.equal(d.querySelectorAll('.creature-joint').length,2);assert.equal(h.modelCreates(),0);
+  assert.ok([...d.querySelectorAll('.fish-art img')].every(img=>img.src.includes('/deniz-kaplumbagasi.webp')));
+  h.click('[data-action="settings"]');const control=d.getElementById('creatureMode');control.querySelector('[value="classic"]').selected=true;control.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+  assert.equal(d.querySelectorAll('.creature-joint').length,0);assert.equal(d.querySelector('.fish-art').style.getPropertyValue('--body-mask'),'none');
+  assert.equal(h.creatureMode(),'classic');assert.deepEqual(h.saved(),before);
+});
+test('3D uses one renderer, limits paint cadence and survives rewards while mode changes remain device-only',async()=>{
+  const h=await harness({creatureMode:'3d',ageDays:0,extraNames:['Ada','Ece']}),d=h.document;
+  assert.equal(h.modelCreates(),1);assert.equal(d.querySelectorAll('.has-3d').length,3);
+  const initial=h.modelCalls.length;for(let i=0;i<60;i++)h.frames.shift()(100+i*16.67);
+  assert.ok(h.modelCalls.length-initial<=3*16,'3D paint count must remain below 18 per second per fish');
+  h.click('.fish');h.click('.behavior-choice');assert.equal(d.querySelector('.fish-points').textContent,'★ 7');
+  h.click('[data-action="settings"]');const control=d.getElementById('creatureMode');control.querySelector('[value="natural"]').selected=true;control.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+  assert.equal(d.querySelectorAll('.has-3d,.creature-model').length,0);assert.ok(h.modelDisposes()>0);assert.equal(C.earned(h.saved().classes[0].students[0]),7);
+});
+test('unsupported, lost and slow 3D falls back to visible images; lite and 30/60-population scenes avoid WebGL',async()=>{
+  for(const options of [{modelAvailable:false},{lite:true},{extraNames:Array.from({length:29},(_,i)=>'Öğrenci '+i)},{extraNames:Array.from({length:59},(_,i)=>'Öğrenci '+i)}]) {
+    const h=await harness({creatureMode:'3d',ageDays:0,...options});
+    assert.equal(h.document.querySelectorAll('.has-3d,.creature-model').length,0);assert.ok(h.document.querySelector('.fish-body-image').src);
+    assert.equal(h.modelCalls.length,0);
+  }
+  const lost=await harness({creatureMode:'3d',ageDays:0});lost.failModels();lost.frames.shift()(100);lost.frames.shift()(170);
+  assert.equal(lost.document.querySelectorAll('.has-3d,.creature-model').length,0);assert.ok(lost.modelDisposes()>0);
+  const slow=await harness({creatureMode:'3d',ageDays:0,drawCost:12});for(let i=0;i<15;i++)slow.frames.shift()(100+i*70);
+  assert.equal(slow.document.querySelectorAll('.has-3d').length,0);
+  slow.click('[data-action="settings"]');assert.match(slow.document.getElementById('creatureStatus').textContent,/akıcılığı/);
+});
+test('resting 3D has one stable pose and resumes its joints on feeding; automatic lite mode restores the selected species',async()=>{
+  const h=await harness({species:'octopus',creatureMode:'3d'}),d=h.document;
+  const count=h.modelCalls.length;for(let i=0;i<12;i++)h.frames.shift()(100+i*70);
+  assert.equal(h.modelCalls.length,count);assert.equal(h.modelCalls.at(-1)[2],false);
+  h.click('.fish');h.click('.behavior-choice');h.frames.shift()(4000);h.frames.shift()(4070);assert.equal(h.modelCalls.at(-1)[2],true);
+  h.window.SitePerformance.set('lite');assert.equal(d.querySelectorAll('.has-3d,.creature-model').length,0);
+  assert.ok(d.querySelector('.fish-body-image').src.includes('/ahtapot.webp'));
+});
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
-  const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz');
+  const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz',species);
   cls.tasks[0].points=7;cls.students.push(s);if(growth)cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*7)};s.createdAt=Date.now()-ageDays*86400000-1000;
   extraNames.forEach(name=>cls.students.push(C.newStudent(name)));
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
-  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],frames=[];let timerNow=Date.now(),frameNow=0;
+  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],frames=[];let timerNow=Date.now(),frameNow=0,rafId=0;
+  const modelCalls=[];let modelCreates=0,modelDisposes=0,modelFail=false;
+  window.AquariumAnatomy=require('../js/akvaryum-anatomy.js');
+  window.AquariumCreature3D={create:()=>{modelCreates++;return {supported:modelAvailable,render:(canvas,...args)=>{modelCalls.push(args);frameNow+=drawCost;return !modelFail;},dispose:()=>modelDisposes++};}};
+  window.SitePerformance={lite:()=>lite,mode:()=>lite?'lite':'auto',reportSlow(){if(autoQuality&&!lite){lite=true;window.dispatchEvent(new window.Event('site-performance-change'));}},set:value=>{lite=value==='lite';window.dispatchEvent(new window.Event('site-performance-change'));}};
   window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
   window.kemalUserAuth={ready:async()=>{},getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
   if(chatTest)window.AquariumMotion={...window.AquariumMotion,step:fish=>fish.forEach(f=>{f.x=100;f.y=200;})};
@@ -25,13 +98,13 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   app.requestFullscreen=async()=>{document.fullscreenElement=app;document.dispatchEvent(new window.Event('fullscreenchange'));};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
   const context={window,document,location:{search:'',pathname:'/ogretmen/akvaryum.html'},URLSearchParams,performance:{now:()=>frameNow},console,
-    localStorage:{getItem:key=>key.endsWith("_beforeClassDelete")?backup:saved,setItem:(key,value)=>{if(key.endsWith("_beforeClassDelete"))backup=value;else saved=value;}},
-    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:fn=>{frames.push(now=>{frameNow=now;fn(now);});return frames.length;},cancelAnimationFrame(){},ResizeObserver:class{observe(){}},
+    localStorage:{getItem:key=>key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith("_beforeClassDelete")?backup:saved,setItem:(key,value)=>{if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith("_beforeClassDelete"))backup=value;else saved=value;}},
+    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{observe(){}},
     FormData:class {constructor(form){this.form=form;}get(name){return this.form.querySelector('[name="'+name+'"]').value;}}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
   const submit=form=>form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
-  return {window,document,modal,click,submit,intervals,frames,advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls};
+  return {window,document,modal,click,submit,intervals,frames,advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode};
 }
 test('clicking the fish opens teacher behaviors; one click feeds, sounds, clears hunger and updates both scores',async()=>{
   const h=await harness(),d=h.document;

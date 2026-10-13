@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📝 Okuma Editörü — Kemal Öğretmenim</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css">
   <link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
   <style>
@@ -290,6 +291,185 @@
       .btn-kaydet,.btn-taslak{justify-content:center;}
       .soru-actions-grid{grid-template-columns:1fr;}
     }
+
+    /* ── ADIMLI YAYIN AKIŞI ── */
+    #panelEdit{--wizard-accent:#5B34DA;}
+    .admin-shell-main{overflow-x:clip!important;overflow-y:visible!important;}
+    .admin-shell-main .editor-toolbar-dock{top:12px;}
+    .edit-header{margin-bottom:18px;justify-content:space-between;gap:16px;}
+    .edit-header-main{display:flex;align-items:center;gap:12px;min-width:0;}
+    .edit-heading{min-width:0;}
+    .edit-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .edit-subtitle{margin-top:2px;color:var(--muted);font-size:12px;font-weight:700;}
+    .back-btn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;border-radius:10px;background:white;}
+    .back-btn svg,.wizard-btn svg,.step-icon svg,.icon-button svg,.btn-soru-ekle svg,.mini-btn svg{width:17px;height:17px;stroke-width:2;}
+
+    .wizard-shell{background:white;border:1px solid #DDD7EE;border-radius:16px;box-shadow:0 12px 36px rgba(35,22,75,.08);overflow:visible;}
+    .wizard-progress{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid #E8E3F2;background:#FBFAFD;border-radius:16px 16px 0 0;overflow:hidden;}
+    .wizard-step-tab{appearance:none;border:0;border-right:1px solid #E8E3F2;background:transparent;color:#7A708F;min-width:0;padding:14px 9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;font-family:inherit;transition:background .16s,color .16s;}
+    .wizard-step-tab:last-child{border-right:0;}
+    .wizard-step-tab:hover:not(:disabled){background:#F3F0FA;color:var(--navy);}
+    .wizard-step-tab:disabled{cursor:default;opacity:.55;}
+    .wizard-step-tab.active{background:white;color:var(--wizard-accent);box-shadow:inset 0 -3px var(--wizard-accent);}
+    .wizard-step-tab.complete{color:#087F6B;}
+    .step-icon{width:30px;height:30px;border:1px solid #DDD7EE;border-radius:8px;background:white;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+    .wizard-step-tab.active .step-icon{border-color:#B8A7F4;background:#F1EDFF;}
+    .wizard-step-tab.complete .step-icon{border-color:#A6E2D7;background:#ECFBF7;}
+    .step-copy{min-width:0;}
+    .step-number{display:block;font-size:10px;line-height:1;color:#A29AB2;font-weight:800;margin-bottom:4px;}
+    .step-label{display:block;font-size:12px;line-height:1.15;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .wizard-body{padding:28px 30px 32px;min-height:590px;}
+    .wizard-panel{display:none;animation:wizard-panel-in .18s ease-out;}
+    .wizard-panel.active{display:block;}
+    @keyframes wizard-panel-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    .step-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid #E8E3F2;}
+    .step-kicker{font-size:11px;font-weight:900;color:var(--wizard-accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+    .step-title{font-family:'Fredoka','Nunito',sans-serif;font-size:24px;line-height:1.2;color:var(--navy);}
+    .step-description{color:var(--slate);font-size:13px;line-height:1.55;margin-top:6px;max-width:720px;}
+    .step-status{display:inline-flex;align-items:center;gap:7px;border:1px solid #DED8EC;border-radius:8px;background:#FAF9FC;color:var(--slate);padding:8px 10px;font-size:12px;font-weight:800;white-space:nowrap;}
+    .step-status svg{width:16px;height:16px;}
+
+    .field-section{padding:0;margin:0;}
+    .field-section + .field-section{border-top:1px solid #E8E3F2;margin-top:26px;padding-top:24px;}
+    .field-section-title{font-size:15px;font-weight:900;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+    .field-section-title svg{width:18px;height:18px;color:var(--wizard-accent);}
+    .compact-help{font-size:12px;color:var(--muted);line-height:1.5;margin-top:-7px;margin-bottom:12px;}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;}
+    .form-grid.three{grid-template-columns:repeat(3,minmax(0,1fr));}
+    .form-field>label{min-height:18px;}
+    .form-field input,.form-field select{margin-bottom:0;}
+    .span-2{grid-column:span 2;}
+    .span-3{grid-column:span 3;}
+
+    .sinif-check-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:4px 0 0;}
+    .sinif-check-item{min-height:98px;justify-content:center;padding:14px 10px;border:1px solid #DDD7EE;border-radius:12px;background:#FCFBFE;position:relative;}
+    .sinif-check-item:hover{border-color:#9E87E9;background:#F7F4FF;}
+    .sinif-check-item.checked{background:#F1EDFF;border-color:var(--wizard-accent);box-shadow:inset 0 0 0 1px var(--wizard-accent);}
+    .sinif-check-item input[type="checkbox"]{position:absolute;top:10px;right:10px;}
+    .grade-number{font-family:'Fredoka','Nunito',sans-serif;font-size:28px;line-height:1;color:var(--navy);}
+    .sinif-check-item.checked .grade-number{color:var(--wizard-accent);}
+    .sinif-check-lbl{font-size:12px;}
+
+    .title-workspace{max-width:900px;margin:0 auto;}
+    .title-editor-shell{border:1px solid #D9D2E8;border-radius:12px;overflow:visible;margin-bottom:18px;}
+    .title-toolbar{border-radius:12px 12px 0 0;border-bottom:1px solid #E2DDEC;background:#F8F7FB;}
+    .title-toolbar.ql-toolbar.ql-snow{position:static;}
+    .title-editor .ql-editor{min-height:112px;padding:24px;font-size:28px;}
+    .title-settings{display:grid;grid-template-columns:150px 180px minmax(220px,1fr);gap:14px;align-items:end;}
+    .color-control{height:42px;display:flex;align-items:center;gap:10px;border:2px solid var(--border);border-radius:10px;padding:5px 9px;background:#FAFAFF;}
+    .color-control input[type="color"]{width:34px;height:28px;border:0;padding:0;margin:0;background:transparent;}
+    .color-control span{font-size:12px;color:var(--slate);font-weight:800;}
+
+    .editor-workspace{border:1px solid #D9D2E8;border-radius:14px;background:white;overflow:visible;}
+    .editor-meta-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;border-bottom:1px solid #E4DFED;background:#FCFBFE;border-radius:14px 14px 0 0;}
+    .editor-meta-copy{font-size:12px;color:var(--slate);font-weight:700;}
+    .kw-bar{margin:0;padding:0;border:0;background:transparent;gap:8px;justify-content:flex-end;}
+    .kw-count{font-size:17px;}
+    .editor-toolbar-dock{position:sticky;top:68px;z-index:120;background:white;border-bottom:1px solid #D9D2E8;box-shadow:0 8px 16px rgba(35,22,75,.07);}
+    .editor-toolbar-dock .ql-toolbar.ql-snow{position:static;border:0;border-bottom:1px solid #E8E3F2;background:#F8F7FB;padding:9px 12px;}
+    .editor-utility-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px;background:white;}
+    .editor-utility-row .tool-group{border-right:1px solid #E4DFED;padding-right:8px;}
+    .editor-utility-row .tool-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid #DDD7EE;border-radius:8px;background:white;min-height:34px;}
+    .editor-utility-row .tool-btn:hover{background:#F4F1FC;}
+    .editor-utility-row .tool-select{border:1px solid #DDD7EE;border-radius:8px;background:white;margin:0;min-width:135px;}
+    .editor-utility-row .tool-swatch{width:24px;height:24px;}
+    .editor-canvas-frame{min-height:520px;background:#F5F3F8;padding:24px;}
+    .editor-canvas-frame .ql-container.ql-snow{max-width:820px;margin:0 auto;background:white;border:1px solid #E1DCE9;box-shadow:0 8px 24px rgba(28,21,50,.06);}
+    .editor-canvas-frame .ql-editor{min-height:680px;padding:54px 62px;font-size:18px;line-height:1.8;}
+
+    .question-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+    .question-toolbar .btn-soru-ekle{width:auto;border-style:solid;border-radius:9px;padding:9px 12px;}
+    .soru-item{border:1px solid #DDD7EE;border-radius:12px;background:#FCFBFE;}
+
+    .measure-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.75fr);gap:28px;align-items:start;}
+    .mode-block{border:1px solid #DDD7EE;border-radius:12px;padding:18px;background:#FCFBFE;}
+    .mod-secimi{gap:12px;}
+    .mod-kart{border:1px solid #D9D2E8;border-radius:10px;background:white;text-align:left;display:flex;gap:12px;align-items:center;padding:15px;}
+    .mod-kart:hover,.mod-kart.active{border-color:var(--wizard-accent);background:#F3EFFF;box-shadow:inset 0 0 0 1px var(--wizard-accent);}
+    .mod-em{font-size:0;width:34px;height:34px;border-radius:8px;background:#EEE9FB;display:flex;align-items:center;justify-content:center;margin:0;}
+    .mod-em svg{width:19px;height:19px;color:var(--wizard-accent);}
+    .mod-options{border:0;border-top:1px solid #E4DFED;border-radius:0;background:transparent;padding:16px 0 0;margin:16px 0 0;}
+    .speed-panel{border:1px solid #DDD7EE;border-radius:12px;padding:22px;background:white;}
+    .speed-value{font-family:'Fredoka','Nunito',sans-serif;font-size:30px;color:var(--wizard-accent);font-weight:700;}
+    .speed-value small{font-family:'Nunito',sans-serif;font-size:13px;color:var(--slate);}
+    .range-scale{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;font-weight:800;margin-top:7px;}
+
+    .advanced-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,.85fr);gap:26px;align-items:start;}
+    .settings-stack{display:flex;flex-direction:column;gap:24px;}
+    .settings-block{border-top:1px solid #E8E3F2;padding-top:20px;}
+    .settings-block:first-child{border-top:0;padding-top:0;}
+    .visual-studio-grid{grid-template-columns:1fr;}
+    .visual-preview{min-height:230px;border-radius:12px;}
+    .inline-check{border:1px solid #DDD7EE;border-radius:10px;background:#FCFBFE;}
+
+    .preview-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start;}
+    .preview-device{border:1px solid #D9D2E8;border-radius:14px;background:#EEF0F5;padding:20px;}
+    .preview-page{max-width:760px;margin:0 auto;background:white;border:1px solid #E0DCE8;border-radius:10px;box-shadow:0 10px 28px rgba(28,21,50,.09);overflow:hidden;}
+    .preview-visual{display:none;width:100%;max-height:300px;object-fit:cover;background:#111827;}
+    .preview-visual.show{display:block;}
+    .preview-reading{padding:38px 44px;}
+    .preview-reading-title{font-family:'Fredoka','Nunito',sans-serif;font-size:28px;font-weight:800;line-height:1.25;margin-bottom:24px;}
+    .preview-reading-body{font-size:18px;line-height:1.8;color:var(--navy);}
+    .preview-reading-body p{margin-bottom:12px;}
+    .preview-reading-body p:has(> br:only-child){min-height:1.8em;margin-bottom:12px;}
+    .preview-sidebar{border-left:1px solid #E8E3F2;padding-left:22px;}
+    .preview-summary{display:flex;flex-direction:column;gap:10px;margin-bottom:22px;}
+    .summary-row{display:flex;justify-content:space-between;gap:14px;padding-bottom:9px;border-bottom:1px solid #EEEAF3;font-size:12px;}
+    .summary-row span{color:var(--muted);font-weight:700;}
+    .summary-row strong{text-align:right;color:var(--navy);}
+    .preview-question-list{display:flex;flex-direction:column;gap:12px;}
+    .preview-question{border:1px solid #DED8EB;border-radius:10px;padding:13px;background:#FCFBFE;}
+    .preview-question-title{font-size:13px;font-weight:900;margin-bottom:9px;line-height:1.45;}
+    .preview-answer{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--slate);padding:5px 0;}
+    .preview-answer input{accent-color:var(--wizard-accent);}
+    .preview-empty{font-size:12px;color:var(--muted);padding:14px;border:1px dashed #D9D2E8;border-radius:10px;text-align:center;}
+    .preview-refresh{display:inline-flex;align-items:center;gap:7px;border:1px solid #D9D2E8;border-radius:8px;padding:8px 11px;background:white;color:var(--slate);font:800 12px 'Nunito',sans-serif;cursor:pointer;}
+
+    .kaydet-bar{--wizard-accent:#5B34DA;position:sticky;bottom:0;margin-top:16px;border:1px solid #D9D2E8;border-radius:12px;padding:11px 14px;box-shadow:0 -8px 24px rgba(35,22,75,.08);z-index:130;}
+    .wizard-nav-left,.wizard-nav-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+    .wizard-btn{height:40px;padding:0 16px;border:1px solid #D8D2E5;border-radius:9px;background:white;color:var(--slate);font:800 13px 'Nunito',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;}
+    .wizard-btn:hover{border-color:#9C87E4;color:var(--wizard-accent);}
+    .wizard-btn.primary{background:var(--wizard-accent);border-color:var(--wizard-accent);color:white;}
+    .wizard-btn.publish{background:#087F6B;border-color:#087F6B;color:white;}
+    .wizard-btn:disabled{opacity:.55;cursor:wait;}
+    .btn-kaydet,.btn-taslak{height:40px;padding:0 16px;border-radius:9px;font-size:13px;background:white;box-shadow:none;transform:none;}
+    .btn-kaydet{background:#087F6B;border:1px solid #087F6B;}
+    .btn-taslak{border:1px solid #D8D2E5;}
+
+    @media(max-width:1100px){
+      .wizard-progress{grid-template-columns:repeat(4,minmax(0,1fr));}
+      .wizard-step-tab:nth-child(4){border-right:0;}
+      .wizard-step-tab:nth-child(n+5){border-top:1px solid #E8E3F2;}
+      .measure-layout,.advanced-layout,.preview-layout{grid-template-columns:1fr;}
+      .preview-sidebar{border-left:0;border-top:1px solid #E8E3F2;padding:20px 0 0;}
+    }
+    @media(max-width:760px){
+      .wizard-progress{display:flex;overflow-x:auto;border-radius:12px 12px 0 0;}
+      .wizard-step-tab{min-width:132px;flex:0 0 132px;}
+      .wizard-body{padding:22px 16px;min-height:520px;}
+      .step-header{flex-direction:column;margin-bottom:20px;}
+      .step-title{font-size:21px;}
+      .sinif-check-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .title-settings,.form-grid,.form-grid.three{grid-template-columns:1fr;}
+      .span-2,.span-3{grid-column:auto;}
+      .editor-toolbar-dock{top:60px;}
+      .editor-canvas-frame{padding:0;background:white;min-height:460px;}
+      .editor-canvas-frame .ql-container.ql-snow{border:0;box-shadow:none;}
+      .editor-canvas-frame .ql-editor{min-height:520px;padding:28px 20px;}
+      .editor-meta-row{align-items:flex-start;flex-direction:column;}
+      .title-editor .ql-editor{font-size:24px;}
+      .measure-layout{gap:18px;}
+      .preview-device{padding:0;background:white;border:0;}
+      .preview-reading{padding:26px 20px;}
+      .edit-header{align-items:flex-start;}
+      .edit-header-main{align-items:flex-start;}
+      .edit-subtitle{display:none;}
+      .kaydet-bar{align-items:stretch;}
+      .wizard-nav-left,.wizard-nav-right{width:100%;}
+      .wizard-nav-right{justify-content:space-between;}
+      .wizard-btn,.btn-kaydet,.btn-taslak{flex:1;}
+    }
   </style>
 </head>
 <body>
@@ -354,384 +534,255 @@
     <!-- ── EDİTÖR PANELİ ── -->
     <div id="panelEdit">
       <div class="edit-header">
-        <button class="back-btn" onclick="listeye()">← Listeye Dön</button>
-        <div class="edit-title" id="editTitle">Yeni Metin</div>
-        <span id="editingIdLabel" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+        <div class="edit-header-main">
+          <button class="back-btn" type="button" onclick="listeye()"><i data-lucide="arrow-left"></i> Listeye dön</button>
+          <div class="edit-heading">
+            <div class="edit-title" id="editTitle">Yeni Metin</div>
+            <div class="edit-subtitle">Okuma metni yayın akışı</div>
+          </div>
+        </div>
+        <span id="editingIdLabel" style="font-size:12px;color:var(--muted);"></span>
       </div>
 
-      <div class="edit-grid">
+      <div class="wizard-shell" id="readingWizard">
+        <nav class="wizard-progress" aria-label="Metin hazırlama adımları">
+          <button class="wizard-step-tab active" type="button" data-wizard-step="0" onclick="wizardGit(0)">
+            <span class="step-icon"><i data-lucide="school"></i></span><span class="step-copy"><span class="step-number">01</span><span class="step-label">Sınıflar</span></span>
+          </button>
+          <button class="wizard-step-tab" type="button" data-wizard-step="1" onclick="wizardGit(1)" disabled>
+            <span class="step-icon"><i data-lucide="heading-1"></i></span><span class="step-copy"><span class="step-number">02</span><span class="step-label">Başlık</span></span>
+          </button>
+          <button class="wizard-step-tab" type="button" data-wizard-step="2" onclick="wizardGit(2)" disabled>
+            <span class="step-icon"><i data-lucide="file-text"></i></span><span class="step-copy"><span class="step-number">03</span><span class="step-label">Metin</span></span>
+          </button>
+          <button class="wizard-step-tab" type="button" data-wizard-step="3" onclick="wizardGit(3)" disabled>
+            <span class="step-icon"><i data-lucide="list-checks"></i></span><span class="step-copy"><span class="step-number">04</span><span class="step-label">Sorular</span></span>
+          </button>
+          <button class="wizard-step-tab" type="button" data-wizard-step="4" onclick="wizardGit(4)" disabled>
+            <span class="step-icon"><i data-lucide="gauge"></i></span><span class="step-copy"><span class="step-number">05</span><span class="step-label">Ölçüm</span></span>
+          </button>
+          <button class="wizard-step-tab" type="button" data-wizard-step="5" onclick="wizardGit(5)" disabled>
+            <span class="step-icon"><i data-lucide="settings-2"></i></span><span class="step-copy"><span class="step-number">06</span><span class="step-label">Ayarlar</span></span>
+          </button>
+          <button class="wizard-step-tab" type="button" data-wizard-step="6" onclick="wizardGit(6)" disabled>
+            <span class="step-icon"><i data-lucide="monitor-check"></i></span><span class="step-copy"><span class="step-number">07</span><span class="step-label">Önizleme</span></span>
+          </button>
+        </nav>
 
-        <!-- SOL: Tüm editör içeriği -->
-        <div>
-          <div class="kart">
-            <div class="kart-title">📄 Temel Bilgiler</div>
-            <label>Başlık *</label>
-            <input type="hidden" id="fBaslik">
-            <div class="title-editor-shell">
-              <div class="title-toolbar" id="titleToolbar">
-                <button class="ql-bold" title="Kalın"></button>
-                <button class="ql-italic" title="İtalik"></button>
-                <button class="ql-underline" title="Altı çizili"></button>
-                <select class="ql-color"></select>
-                <select class="ql-size">
-                  <option value="22px">22</option>
-                  <option value="24px">24</option>
-                  <option value="28px" selected>28</option>
-                  <option value="32px">32</option>
-                  <option value="36px">36</option>
-                  <option value="42px">42</option>
-                </select>
-                <select class="ql-align"></select>
-                <button class="ql-clean" title="Temizle"></button>
-              </div>
-              <div class="title-editor" id="fBaslikRich"></div>
+        <div class="wizard-body">
+          <!-- 1. SINIFLAR -->
+          <section class="wizard-panel active" data-wizard-panel="0">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 1 / 7</div><h2 class="step-title">Sınıf düzeylerini seç</h2><p class="step-description">Metnin yayınlanacağı sınıfları belirle. Bir metni birden fazla sınıf düzeyinde gösterebilirsin.</p></div>
+              <div class="step-status"><i data-lucide="layers-3"></i> Çoklu seçim</div>
             </div>
-            <div class="editor-tools" style="border:0;padding:0 0 14px;">
-              <div class="tool-group">
-                <button class="tool-btn icon" type="button" onclick="baslikArac('bold')" title="Seçili başlığı kalın yap">B</button>
-                <button class="tool-btn icon" type="button" onclick="baslikArac('italic')" title="Seçili başlığı italik yap">I</button>
-                <button class="tool-btn" type="button" onclick="baslikArac('bigger')">Büyüt</button>
-                <button class="tool-btn" type="button" onclick="baslikArac('smaller')">Küçült</button>
-              </div>
-              <div class="tool-group">
-                <button class="tool-swatch" type="button" onclick="baslikArac('color','#6C3DED')" style="background:#6C3DED" title="Mor"></button>
-                <button class="tool-swatch" type="button" onclick="baslikArac('color','#EF4444')" style="background:#EF4444" title="Kırmızı"></button>
-                <button class="tool-swatch" type="button" onclick="baslikArac('color','#047857')" style="background:#047857" title="Yeşil"></button>
-                <button class="tool-swatch" type="button" onclick="baslikArac('color','#0F172A')" style="background:#0F172A" title="Koyu"></button>
-              </div>
-            </div>
-
-            <div class="form-row-2">
-              <div>
-                <label>Başlık Rengi</label>
-                <input type="color" id="fBaslikRenk" value="#1A1040" oninput="baslikStiliUygula()">
-              </div>
-              <div>
-                <label>Başlık Boyutu</label>
-                <select id="fBaslikBoyut" onchange="baslikStiliUygula()">
-                  <option value="22">22 px</option>
-                  <option value="24">24 px</option>
-                  <option value="26">26 px</option>
-                  <option value="28" selected>28 px</option>
-                  <option value="32">32 px</option>
-                  <option value="36">36 px</option>
-                  <option value="40">40 px</option>
-                </select>
-              </div>
-            </div>
-            <label>Başlık Hizası</label>
-            <select id="fBaslikHiza" onchange="baslikStiliUygula()">
-              <option value="left">Sola Hizalı</option>
-              <option value="center" selected>Ortalanmış</option>
-              <option value="right">Sağa Hizalı</option>
-            </select>
-            <p class="yardim-metin">Bu ayarlar öğrencinin okuma ekranındaki başlığa uygulanır.</p>
-
-            <label>Sınıf Düzeyleri * <span style="font-weight:400;color:var(--muted)">(birden fazla seçilebilir)</span></label>
             <div class="sinif-check-grid">
-              <label class="sinif-check-item" id="sc1" onclick="sinifToggle(1)">
-                <input type="checkbox" value="1" id="sc_1"><span class="sinif-check-em">1️⃣</span><span class="sinif-check-lbl">1. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc2" onclick="sinifToggle(2)">
-                <input type="checkbox" value="2" id="sc_2"><span class="sinif-check-em">2️⃣</span><span class="sinif-check-lbl">2. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc3" onclick="sinifToggle(3)">
-                <input type="checkbox" value="3" id="sc_3"><span class="sinif-check-em">3️⃣</span><span class="sinif-check-lbl">3. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc4" onclick="sinifToggle(4)">
-                <input type="checkbox" value="4" id="sc_4"><span class="sinif-check-em">4️⃣</span><span class="sinif-check-lbl">4. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc5" onclick="sinifToggle(5)">
-                <input type="checkbox" value="5" id="sc_5"><span class="sinif-check-em">5️⃣</span><span class="sinif-check-lbl">5. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc6" onclick="sinifToggle(6)">
-                <input type="checkbox" value="6" id="sc_6"><span class="sinif-check-em">6️⃣</span><span class="sinif-check-lbl">6. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc7" onclick="sinifToggle(7)">
-                <input type="checkbox" value="7" id="sc_7"><span class="sinif-check-em">7️⃣</span><span class="sinif-check-lbl">7. Sınıf</span>
-              </label>
-              <label class="sinif-check-item" id="sc8" onclick="sinifToggle(8)">
-                <input type="checkbox" value="8" id="sc_8"><span class="sinif-check-em">8️⃣</span><span class="sinif-check-lbl">8. Sınıf</span>
-              </label>
+              <label class="sinif-check-item" id="sc1" onclick="sinifToggle(1)"><input type="checkbox" value="1" id="sc_1"><span class="grade-number">1</span><span class="sinif-check-lbl">1. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc2" onclick="sinifToggle(2)"><input type="checkbox" value="2" id="sc_2"><span class="grade-number">2</span><span class="sinif-check-lbl">2. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc3" onclick="sinifToggle(3)"><input type="checkbox" value="3" id="sc_3"><span class="grade-number">3</span><span class="sinif-check-lbl">3. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc4" onclick="sinifToggle(4)"><input type="checkbox" value="4" id="sc_4"><span class="grade-number">4</span><span class="sinif-check-lbl">4. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc5" onclick="sinifToggle(5)"><input type="checkbox" value="5" id="sc_5"><span class="grade-number">5</span><span class="sinif-check-lbl">5. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc6" onclick="sinifToggle(6)"><input type="checkbox" value="6" id="sc_6"><span class="grade-number">6</span><span class="sinif-check-lbl">6. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc7" onclick="sinifToggle(7)"><input type="checkbox" value="7" id="sc_7"><span class="grade-number">7</span><span class="sinif-check-lbl">7. Sınıf</span></label>
+              <label class="sinif-check-item" id="sc8" onclick="sinifToggle(8)"><input type="checkbox" value="8" id="sc_8"><span class="grade-number">8</span><span class="sinif-check-lbl">8. Sınıf</span></label>
             </div>
+          </section>
 
-            <div class="form-row-2">
-              <div>
-                <label>Durum</label>
-                <select id="fAktif"><option value="true">✅ Yayında</option><option value="false">⏸️ Taslak</option></select>
+          <!-- 2. BAŞLIK -->
+          <section class="wizard-panel" data-wizard-panel="1">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 2 / 7</div><h2 class="step-title">Başlığı düzenle</h2><p class="step-description">Başlığı yaz, görünümünü ayarla ve öğrenci ekranındaki yerleşimini belirle.</p></div>
+              <div class="step-status"><i data-lucide="type"></i> Zengin başlık</div>
+            </div>
+            <div class="title-workspace">
+              <label for="fBaslikRich">Metin başlığı *</label>
+              <input type="hidden" id="fBaslik">
+              <div class="title-editor-shell">
+                <div class="title-toolbar" id="titleToolbar">
+                  <span class="ql-formats"><button class="ql-bold" title="Kalın"></button><button class="ql-italic" title="İtalik"></button><button class="ql-underline" title="Altı çizili"></button></span>
+                  <span class="ql-formats"><select class="ql-color" title="Metin rengi"></select><select class="ql-size" title="Yazı boyutu"><option value="22px">22</option><option value="24px">24</option><option value="28px" selected>28</option><option value="32px">32</option><option value="36px">36</option><option value="42px">42</option></select></span>
+                  <span class="ql-formats"><select class="ql-align" title="Hizalama"></select><button class="ql-clean" title="Biçimi temizle"></button></span>
+                </div>
+                <div class="title-editor" id="fBaslikRich"></div>
               </div>
-              <div>
-                <label>Erişim</label>
-                <select id="fOturumGerekli">
-                  <option value="false">🌍 Herkese Açık</option>
-                  <option value="true">🔐 Sadece Kayıtlı Kullanıcı</option>
-                </select>
-              </div>
-              <div>
-                <label>Görünürlük</label>
-                <select id="fGizli">
-                  <option value="false">👀 Listede Görünsün</option>
-                  <option value="true">🔗 Gizli, Linkle Açılır</option>
-                </select>
+              <div class="title-settings">
+                <div class="form-field"><label>Başlık rengi</label><div class="color-control"><input type="color" id="fBaslikRenk" value="#1A1040" oninput="baslikStiliUygula()"><span>Renk seç</span></div></div>
+                <div class="form-field"><label>Başlık boyutu</label><select id="fBaslikBoyut" onchange="baslikStiliUygula()"><option value="22">22 px</option><option value="24">24 px</option><option value="26">26 px</option><option value="28" selected>28 px</option><option value="32">32 px</option><option value="36">36 px</option><option value="40">40 px</option></select></div>
+                <div class="form-field"><label>Başlık hizası</label><select id="fBaslikHiza" onchange="baslikStiliUygula()"><option value="left">Sola hizalı</option><option value="center" selected>Ortalanmış</option><option value="right">Sağa hizalı</option></select></div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="kart">
-            <div class="kart-title">🎓 Eğitim Profili</div>
-            <p class="yardim-metin">Bu alanlar öğrenci tarafında metni doğru seviyede sunmak, filtrelemek ve okuma karnesinde daha anlamlı dönüt üretmek için kullanılır.</p>
-            <div class="form-row-3">
-              <div>
-                <label>Seviye / Kur</label>
-                <select id="fSeviye">
-                  <option value="baslangic">Başlangıç</option>
-                  <option value="gelisen" selected>Gelişen</option>
-                  <option value="akici">Akıcı</option>
-                  <option value="ileri">İleri</option>
-                </select>
-              </div>
-              <div>
-                <label>Metin Türü</label>
-                <select id="fMetinTuru">
-                  <option value="hikaye" selected>Hikaye</option>
-                  <option value="bilgilendirici">Bilgilendirici</option>
-                  <option value="masal">Masal</option>
-                  <option value="siir">Şiir</option>
-                  <option value="diyalog">Diyalog</option>
-                  <option value="egzersiz">Egzersiz</option>
-                </select>
-              </div>
-              <div>
-                <label>Tahmini Süre</label>
-                <input type="number" id="fTahminiSure" min="1" max="30" step="1" value="3" placeholder="Dakika">
-              </div>
+          <!-- 3. METİN -->
+          <section class="wizard-panel" data-wizard-panel="2">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 3 / 7</div><h2 class="step-title">Metni hazırla</h2><p class="step-description">Kopyaladığın metnin yazı tipi, renk ve vurgu biçimleri korunur. Araç çubuğu uzun metinlerde ekranın üstünde kalır.</p></div>
+              <div class="step-status"><i data-lucide="clipboard-paste"></i> Biçimli yapıştırma</div>
             </div>
-            <label>Tema / Etiket</label>
-            <input type="text" id="fTema" maxlength="60" placeholder="Örn: doğa, arkadaşlık, bilim, değerler">
-            <label>Kazanım / Odak</label>
-            <input type="text" id="fKazanim" maxlength="120" placeholder="Örn: Ana fikri bulma, ayrıntı yakalama, akıcı okuma">
-          </div>
-
-          <div class="kart">
-            <div class="kart-title">🖼️ Görsel Destekli Metin</div>
-            <p class="yardim-metin">Metne kapak veya okuma öncesi ipucu görseli ekleyebilirsin. “Kapak görseli” seçimi öğrencinin hazırlık ekranında, “Başlığın altında” seçimi ise okuma ekranında görünür.</p>
-            <div class="visual-studio-grid">
-              <div>
-                <label>Görsel URL</label>
-                <input type="url" id="fGorselUrl" placeholder="https://...">
-                <div class="form-row-2">
-                  <div>
-                    <label>Görsel Konumu</label>
-                    <select id="fGorselKonum">
-                      <option value="none">Kullanma</option>
-                      <option value="top">Başlığın altında</option>
-                      <option value="cover">Kapak görseli</option>
-                    </select>
+            <div class="editor-workspace">
+              <div class="editor-meta-row"><span class="editor-meta-copy">Okuma metni</span><div class="kw-bar"><span class="kw-label">Kelime sayısı</span><span class="kw-count"><span id="kwCount">0</span></span></div></div>
+              <div class="editor-toolbar-dock">
+                <div id="editorToolbar">
+                  <span class="ql-formats"><select class="ql-font"><option value="nunito" selected>Nunito</option><option value="ttkb-dik-temel">TTKB Dik Temel</option><option value="georgia">Georgia</option><option value="arial">Arial</option><option value="times-new-roman">Times New Roman</option><option value="courier-new">Courier New</option></select><select class="ql-size"><option value="14px">14</option><option value="16px">16</option><option value="18px" selected>18</option><option value="20px">20</option><option value="22px">22</option><option value="24px">24</option><option value="28px">28</option><option value="32px">32</option><option value="36px">36</option><option value="42px">42</option></select></span>
+                  <span class="ql-formats"><button class="ql-bold" title="Kalın"></button><button class="ql-italic" title="İtalik"></button><button class="ql-underline" title="Altı çizili"></button><button class="ql-strike" title="Üstü çizili"></button></span>
+                  <span class="ql-formats"><select class="ql-color" title="Metin rengi"></select><select class="ql-background" title="Vurgu rengi"></select></span>
+                  <span class="ql-formats"><button class="ql-blockquote" title="Alıntı"></button><button class="ql-list" value="ordered" title="Numaralı liste"></button><button class="ql-list" value="bullet" title="Madde işaretli liste"></button><select class="ql-align" title="Hizalama"></select></span>
+                  <span class="ql-formats"><button class="ql-clean" title="Biçimi temizle"></button></span>
+                </div>
+                <div class="editor-utility-row">
+                  <div class="tool-group">
+                    <button class="tool-btn icon" type="button" onclick="metinArac('indent')" title="Girintiyi artır"><i data-lucide="indent-increase"></i></button>
+                    <button class="tool-btn icon" type="button" onclick="metinArac('outdent')" title="Girintiyi azalt"><i data-lucide="indent-decrease"></i></button>
                   </div>
-                  <div>
-                    <label>Görsel Yerleşimi</label>
-                    <select id="fGorselFit">
-                      <option value="cover">Alanı doldur</option>
-                      <option value="contain">Tamamı görünsün</option>
-                    </select>
+                  <div class="tool-group">
+                    <select class="tool-select" id="fSatirAraligi" onchange="metinArac('lineheight',this.value)" title="Satır aralığı"><option value="1.4">Satır 1,4</option><option value="1.6">Satır 1,6</option><option value="1.8" selected>Satır 1,8</option><option value="2">Satır 2,0</option><option value="2.2">Satır 2,2</option></select>
+                    <select class="tool-select" id="fParagrafAraligi" onchange="metinArac('paragraphspacing',this.value)" title="Paragraf boşluğu"><option value="0px">Paragraf 0</option><option value="8px">Paragraf 8 px</option><option value="12px" selected>Paragraf 12 px</option><option value="16px">Paragraf 16 px</option><option value="24px">Paragraf 24 px</option></select>
+                  </div>
+                  <div class="tool-group">
+                    <button class="tool-btn icon" type="button" onclick="metinArac('bigger')" title="Yazıyı büyüt"><i data-lucide="zoom-in"></i></button>
+                    <button class="tool-btn icon" type="button" onclick="metinArac('smaller')" title="Yazıyı küçült"><i data-lucide="zoom-out"></i></button>
+                    <button class="tool-btn" type="button" onclick="metinArac('clear')" title="Seçili metnin biçimini temizle"><i data-lucide="eraser"></i> Temizle</button>
                   </div>
                 </div>
-                <label>Alternatif Metin</label>
-                <input type="text" id="fGorselAlt" maxlength="120" placeholder="Örn: Ormanda kitap okuyan çocuk">
-                <label>Görsel Açıklaması</label>
-                <input type="text" id="fGorselAciklama" maxlength="160" placeholder="Öğrenciye görsel hakkında kısa ipucu">
-                <div class="visual-actions">
-                  <button class="mini-btn" type="button" onclick="gorselOnizle()">Önizle</button>
-                  <button class="mini-btn" type="button" onclick="gorselTemizle()">Temizle</button>
-                </div>
               </div>
-              <div class="visual-preview" id="gorselPreview">
-                Görsel önizleme
-                <div class="visual-preview-caption" id="gorselPreviewCaption" style="display:none;"></div>
-              </div>
+              <div class="editor-canvas-frame"><div id="fIcerik"></div></div>
             </div>
-          </div>
+          </section>
 
-          <!-- ZENGİN METİN EDİTÖRÜ -->
-          <div class="kart" style="padding:0;overflow:hidden;">
-            <div style="padding:16px 22px 10px;">
-              <div class="kart-title" style="margin-bottom:0;">✍️ Metin İçeriği</div>
+          <!-- 4. SORULAR -->
+          <section class="wizard-panel" data-wizard-panel="3">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 4 / 7</div><h2 class="step-title">Anlama sorularını hazırla</h2><p class="step-description">Test, doğru-yanlış ve boşluk doldurma sorularını aynı metinde birlikte kullanabilirsin.</p></div>
+              <div class="step-status"><i data-lucide="circle-help"></i> İsteğe bağlı</div>
             </div>
-            <div class="kw-bar">
-              <span class="kw-label">Canlı kelime sayacı</span>
-              <span class="kw-count"><span id="kwCount">0</span> kelime</span>
+            <div class="question-toolbar">
+              <button class="btn-soru-ekle" onclick="soruEkle('coktan-secmeli')" type="button"><i data-lucide="list-checks"></i> Test sorusu</button>
+              <button class="btn-soru-ekle secondary" onclick="soruEkle('dogru-yanlis')" type="button"><i data-lucide="toggle-left"></i> Doğru / yanlış</button>
+              <button class="btn-soru-ekle secondary" onclick="soruEkle('bosluk-doldurma')" type="button"><i data-lucide="text-cursor-input"></i> Boşluk doldurma</button>
             </div>
-            <p class="yardim-metin" style="padding:0 22px 10px;">Metni yapıştırabilir veya burada hazırlayabilirsin. Seçili bölümlere renk, kalınlık, boyut ve hizalama uygulayabilirsin.</p>
-            <div class="quill-shell">
-              <div id="editorToolbar">
-                <span class="ql-formats">
-                  <select class="ql-font">
-                    <option value="nunito" selected>Nunito</option>
-                    <option value="ttkb-dik-temel">TTKB Dik Temel</option>
-                    <option value="georgia">Georgia</option>
-                    <option value="arial">Arial</option>
-                    <option value="times-new-roman">Times New Roman</option>
-                    <option value="courier-new">Courier New</option>
-                  </select>
-                  <select class="ql-size">
-                    <option value="14px">14</option>
-                    <option value="16px">16</option>
-                    <option value="18px" selected>18</option>
-                    <option value="20px">20</option>
-                    <option value="24px">24</option>
-                    <option value="28px">28</option>
-                    <option value="32px">32</option>
-                    <option value="36px">36</option>
-                    <option value="42px">42</option>
-                  </select>
-                </span>
-                <span class="ql-formats">
-                  <button class="ql-bold"></button>
-                  <button class="ql-italic"></button>
-                  <button class="ql-underline"></button>
-                  <button class="ql-strike"></button>
-                </span>
-                <span class="ql-formats">
-                  <select class="ql-color"></select>
-                  <select class="ql-background"></select>
-                </span>
-                <span class="ql-formats">
-                  <button class="ql-blockquote"></button>
-                  <button class="ql-list" value="ordered"></button>
-                  <button class="ql-list" value="bullet"></button>
-                  <select class="ql-align"></select>
-                </span>
-                <span class="ql-formats">
-                  <button class="ql-clean"></button>
-                </span>
-              </div>
-              <div class="editor-tools">
-                <div class="tool-group">
-                  <button class="tool-btn" type="button" onclick="metinArac('satirbasi')">Satır Başı</button>
-                  <button class="tool-btn" type="button" onclick="metinArac('paragraf')">Paragraf Boşluğu</button>
-                  <button class="tool-btn" type="button" onclick="metinArac('indent')">Girinti</button>
-                  <button class="tool-btn" type="button" onclick="metinArac('outdent')">Girintiyi Azalt</button>
-                </div>
-                <div class="tool-group">
-                  <button class="tool-btn icon" type="button" onclick="metinArac('bold')" title="Kalın">B</button>
-                  <button class="tool-btn icon" type="button" onclick="metinArac('italic')" title="İtalik">I</button>
-                  <button class="tool-btn" type="button" onclick="metinArac('bigger')">Büyüt</button>
-                  <button class="tool-btn" type="button" onclick="metinArac('smaller')">Küçült</button>
-                </div>
-                <div class="tool-group">
-                  <button class="tool-swatch" type="button" onclick="metinArac('color','#6C3DED')" style="background:#6C3DED" title="Mor"></button>
-                  <button class="tool-swatch" type="button" onclick="metinArac('color','#EF4444')" style="background:#EF4444" title="Kırmızı"></button>
-                  <button class="tool-swatch" type="button" onclick="metinArac('color','#F59E0B')" style="background:#F59E0B" title="Turuncu"></button>
-                  <button class="tool-swatch" type="button" onclick="metinArac('color','#047857')" style="background:#047857" title="Yeşil"></button>
-                  <button class="tool-swatch" type="button" onclick="metinArac('color','#0F172A')" style="background:#0F172A" title="Koyu"></button>
-                </div>
-                <div class="tool-group">
-                  <select class="tool-select" onchange="metinArac('size', this.value); this.selectedIndex=0;">
-                    <option value="">Boyut</option>
-                    <option value="16px">16</option>
-                    <option value="18px">18</option>
-                    <option value="20px">20</option>
-                    <option value="24px">24</option>
-                    <option value="28px">28</option>
-                    <option value="32px">32</option>
-                  </select>
-                  <button class="tool-btn" type="button" onclick="metinArac('clear')">Biçimi Temizle</button>
-                </div>
-              </div>
-              <div id="fIcerik"></div>
-            </div>
-          </div><!-- /kart -->
-
-          <!-- ANLAMA SORULARI -->
-          <div class="kart">
-            <div class="kart-title">❓ Anlama Soruları <span style="font-size:12px;color:var(--muted);font-family:'Nunito',sans-serif;">(İsteğe bağlı · Test / Doğru-Yanlış / Boşluk Doldurma)</span></div>
-            <p class="yardim-metin">Her soru anlama puanına aynı ağırlıkla eklenir. Boşluk doldurmada tek boşluğu <strong>_____</strong> ile gösterebilirsin.</p>
             <div class="soru-list" id="soruList"></div>
-            <div class="soru-actions-grid">
-              <button class="btn-soru-ekle" onclick="soruEkle('coktan-secmeli')" type="button">+ Test Sorusu</button>
-              <button class="btn-soru-ekle secondary" onclick="soruEkle('dogru-yanlis')" type="button">+ Doğru / Yanlış</button>
-              <button class="btn-soru-ekle secondary" onclick="soruEkle('bosluk-doldurma')" type="button">+ Boşluk Doldurma</button>
-            </div>
-          </div>
-        </div>
+            <div class="preview-empty" id="questionEmptyState">Henüz soru eklenmedi. Sorular isteğe bağlıdır.</div>
+          </section>
 
-        <!-- SAĞ: Ayarlar -->
-        <div>
-          <div class="kart">
-            <div class="kart-title">🖥️ Görüntüleme Modu</div>
-            <div class="mod-secimi">
-              <div class="mod-kart active" id="modTamKart" onclick="modSec('tam')">
-                <span class="mod-em">📄</span>
-                <div class="mod-lbl">Tam Metin</div>
-                <div class="mod-sub">Tüm metin ekranda</div>
-              </div>
-              <div class="mod-kart" id="modKwKart" onclick="modSec('kelime')">
-                <span class="mod-em">⚡</span>
-                <div class="mod-lbl">Kelime Kelime</div>
-                <div class="mod-sub">Tek kelime gösterilir</div>
-              </div>
+          <!-- 5. ÖLÇÜM -->
+          <section class="wizard-panel" data-wizard-panel="4">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 5 / 7</div><h2 class="step-title">Okuma ölçümünü ayarla</h2><p class="step-description">Hedef hızı, tahmini süreyi ve öğrencinin metni nasıl göreceğini belirle.</p></div>
+              <div class="step-status"><i data-lucide="timer"></i> Süre ve hız</div>
             </div>
-
-            <div class="mod-options show" id="optTam">
-              <label>🎯 Hedef Okuma Hızı (kelime/dk)</label>
-              <div class="slider-row">
-                <input type="range" id="fHedefHiz" min="10" max="300" step="5" value="80" oninput="document.getElementById('hedefHizVal').textContent=this.value+' k/dk'">
-                <span class="slider-val" id="hedefHizVal">80 k/dk</span>
+            <div class="measure-layout">
+              <div class="speed-panel">
+                <div class="field-section-title"><i data-lucide="gauge"></i> Hedef okuma hızı</div>
+                <div class="speed-value"><span id="hedefHizVal">80 k/dk</span> <small>kelime / dakika</small></div>
+                <div class="slider-row" style="margin-top:18px;"><input type="range" id="fHedefHiz" min="10" max="300" step="5" value="80" oninput="document.getElementById('hedefHizVal').textContent=this.value+' k/dk'"></div>
+                <div class="range-scale"><span>10</span><span>80</span><span>150</span><span>225</span><span>300</span></div>
+                <div class="form-field" style="margin-top:24px;"><label>Tahmini okuma süresi</label><input type="number" id="fTahminiSure" min="1" max="30" step="1" value="3" placeholder="Dakika"><p class="compact-help">Dakika cinsinden, 1 ile 30 arasında.</p></div>
               </div>
-              <div style="font-size:12px;color:var(--muted);">1. Sınıf için 10-40 k/dk önerilir.</div>
-            </div>
-
-            <div class="mod-options" id="optKelime">
-              <label>İlerleme Modu</label>
-              <div style="display:flex;gap:12px;margin-bottom:12px;">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:700;margin-bottom:0;">
-                  <input type="radio" name="ilerMod" id="ilerOto" value="oto" checked onchange="ilerModDegis()" style="width:18px;height:18px;margin:0;"> Otomatik
-                </label>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;font-weight:700;margin-bottom:0;">
-                  <input type="radio" name="ilerMod" id="ilerTikla" value="tikla" onchange="ilerModDegis()" style="width:18px;height:18px;margin:0;"> Tıklayarak
-                </label>
-              </div>
-              <div id="otoOptions">
-                <label>⏱️ Kelime Ekran Süresi</label>
-                <div class="slider-row">
-                  <input type="range" id="fKelimeMs" min="150" max="1500" step="50" value="500" oninput="kelimeMsDegis()">
-                  <span class="slider-val" id="kelimeMsVal">500ms</span>
+              <div class="mode-block">
+                <div class="field-section-title"><i data-lucide="monitor"></i> Görüntüleme modu</div>
+                <div class="mod-secimi">
+                  <div class="mod-kart active" id="modTamKart" onclick="modSec('tam')" role="button" tabindex="0"><span class="mod-em"><i data-lucide="align-justify"></i></span><div><div class="mod-lbl">Tam metin</div><div class="mod-sub">Metnin tamamı görünür</div></div></div>
+                  <div class="mod-kart" id="modKwKart" onclick="modSec('kelime')" role="button" tabindex="0"><span class="mod-em"><i data-lucide="scan-text"></i></span><div><div class="mod-lbl">Kelime kelime</div><div class="mod-sub">Odaklı akış görünümü</div></div></div>
                 </div>
-                <div style="font-size:12px;color:var(--muted);" id="kelimeMsAcik">Her kelime 0.5 sn ekranda kalır.</div>
-                <label style="margin-top:12px;">Kelime Grubu</label>
-                <select id="fKelimeGrup">
-                  <option value="1" selected>1 kelime</option>
-                  <option value="2">2 kelimelik blok</option>
-                  <option value="3">3 kelimelik blok</option>
-                </select>
-                <label class="inline-check" for="fNoktalamaDuraklama">
-                  <input type="checkbox" id="fNoktalamaDuraklama" checked>
-                  <span>Noktalama işaretlerinde kısa duraklama ekle</span>
-                </label>
-                <label class="inline-check" for="fOgrenciHizKontrol">
-                  <input type="checkbox" id="fOgrenciHizKontrol">
-                  <span>Öğrenci okuma sırasında hızı ayarlayabilsin</span>
-                </label>
-                <div class="setting-note">Bu ayarlar otomatik kelime modunda odak, ritim ve göz sıçraması çalışmasını güçlendirir.</div>
+                <div class="mod-options show" id="optTam"><p class="setting-note" style="margin:0;">Öğrenci metnin tamamını görür; süre okuma tamamlandığında durur.</p></div>
+                <div class="mod-options" id="optKelime">
+                  <label>İlerleme modu</label>
+                  <div style="display:flex;gap:16px;margin-bottom:14px;"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:800;margin:0;"><input type="radio" name="ilerMod" id="ilerOto" value="oto" checked onchange="ilerModDegis()"> Otomatik</label><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:800;margin:0;"><input type="radio" name="ilerMod" id="ilerTikla" value="tikla" onchange="ilerModDegis()"> Tıklayarak</label></div>
+                  <div id="otoOptions">
+                    <label>Kelime ekran süresi</label><div class="slider-row"><input type="range" id="fKelimeMs" min="150" max="1500" step="50" value="500" oninput="kelimeMsDegis()"><span class="slider-val" id="kelimeMsVal">500ms</span></div><div class="compact-help" id="kelimeMsAcik">Her kelime 0.5 sn ekranda kalır.</div>
+                    <label>Kelime grubu</label><select id="fKelimeGrup"><option value="1" selected>1 kelime</option><option value="2">2 kelimelik blok</option><option value="3">3 kelimelik blok</option></select>
+                    <label class="inline-check" for="fNoktalamaDuraklama"><input type="checkbox" id="fNoktalamaDuraklama" checked><span>Noktalama işaretlerinde kısa duraklama</span></label>
+                    <label class="inline-check" for="fOgrenciHizKontrol"><input type="checkbox" id="fOgrenciHizKontrol"><span>Öğrenci hızı değiştirebilsin</span></label>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </section>
 
+          <!-- 6. GELİŞMİŞ AYARLAR -->
+          <section class="wizard-panel" data-wizard-panel="5">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 6 / 7</div><h2 class="step-title">Gelişmiş ayarları tamamla</h2><p class="step-description">Metin türü, kazanım, görsel ve erişim kurallarını son kez yapılandır.</p></div>
+              <div class="step-status"><i data-lucide="sliders-horizontal"></i> Yayın ayarları</div>
+            </div>
+            <div class="advanced-layout">
+              <div class="settings-stack">
+                <div class="settings-block">
+                  <div class="field-section-title"><i data-lucide="graduation-cap"></i> Eğitim profili</div>
+                  <div class="form-grid">
+                    <div class="form-field"><label>Seviye / kur</label><select id="fSeviye"><option value="baslangic">Başlangıç</option><option value="gelisen" selected>Gelişen</option><option value="akici">Akıcı</option><option value="ileri">İleri</option></select></div>
+                    <div class="form-field"><label>Metin türü</label><select id="fMetinTuru"><option value="hikaye" selected>Hikaye</option><option value="bilgilendirici">Bilgilendirici</option><option value="masal">Masal</option><option value="siir">Şiir</option><option value="diyalog">Diyalog</option><option value="egzersiz">Egzersiz</option></select></div>
+                    <div class="form-field"><label>Tema / etiket</label><input type="text" id="fTema" maxlength="60" placeholder="Doğa, arkadaşlık, bilim"></div>
+                    <div class="form-field"><label>Kazanım / odak</label><input type="text" id="fKazanim" maxlength="120" placeholder="Ana fikri bulma, akıcı okuma"></div>
+                  </div>
+                </div>
+                <div class="settings-block">
+                  <div class="field-section-title"><i data-lucide="shield-check"></i> Yayın ve erişim</div>
+                  <div class="form-grid three">
+                    <div class="form-field"><label>Durum</label><select id="fAktif"><option value="true">Yayında</option><option value="false">Taslak</option></select></div>
+                    <div class="form-field"><label>Erişim</label><select id="fOturumGerekli"><option value="false">Herkese açık</option><option value="true">Kayıtlı kullanıcı</option></select></div>
+                    <div class="form-field"><label>Görünürlük</label><select id="fGizli"><option value="false">Listede görünsün</option><option value="true">Yalnızca bağlantıyla</option></select></div>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-block" style="padding-top:0;border-top:0;">
+                <div class="field-section-title"><i data-lucide="image"></i> Görsel desteği</div>
+                <div class="visual-studio-grid">
+                  <div class="visual-preview" id="gorselPreview">Görsel önizleme<div class="visual-preview-caption" id="gorselPreviewCaption" style="display:none;"></div></div>
+                  <div>
+                    <div class="form-field"><label>Görsel URL</label><input type="url" id="fGorselUrl" placeholder="https://..."></div>
+                    <div class="form-grid">
+                      <div class="form-field"><label>Konum</label><select id="fGorselKonum"><option value="none">Kullanma</option><option value="top">Başlığın altında</option><option value="cover">Kapak görseli</option></select></div>
+                      <div class="form-field"><label>Yerleşim</label><select id="fGorselFit"><option value="cover">Alanı doldur</option><option value="contain">Tamamı görünsün</option></select></div>
+                    </div>
+                    <div class="form-field" style="margin-top:14px;"><label>Alternatif metin</label><input type="text" id="fGorselAlt" maxlength="120" placeholder="Görseli kısa biçimde tanımla"></div>
+                    <div class="form-field" style="margin-top:14px;"><label>Görsel açıklaması</label><input type="text" id="fGorselAciklama" maxlength="160" placeholder="Öğrenciye gösterilecek kısa açıklama"></div>
+                    <div class="visual-actions"><button class="mini-btn" type="button" onclick="gorselOnizle()"><i data-lucide="refresh-cw"></i> Yenile</button><button class="mini-btn" type="button" onclick="gorselTemizle()"><i data-lucide="trash-2"></i> Temizle</button></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 7. ÖNİZLEME -->
+          <section class="wizard-panel" data-wizard-panel="6">
+            <div class="step-header">
+              <div><div class="step-kicker">Adım 7 / 7</div><h2 class="step-title">Önizle ve yayınla</h2><p class="step-description">Öğrencinin göreceği başlık, görsel, metin ve soruları yayınlamadan önce kontrol et.</p></div>
+              <button class="preview-refresh" type="button" onclick="onizlemeYenile()"><i data-lucide="refresh-cw"></i> Önizlemeyi yenile</button>
+            </div>
+            <div class="preview-layout">
+              <div class="preview-device">
+                <article class="preview-page">
+                  <img class="preview-visual" id="previewVisual" alt="">
+                  <div class="preview-reading"><div class="preview-reading-title" id="previewTitle"></div><div class="preview-reading-body" id="previewBody"></div></div>
+                </article>
+              </div>
+              <aside class="preview-sidebar">
+                <div class="field-section-title"><i data-lucide="clipboard-check"></i> Yayın özeti</div>
+                <div class="preview-summary" id="previewSummary"></div>
+                <div class="field-section-title"><i data-lucide="list-checks"></i> Soru testi</div>
+                <div class="preview-question-list" id="previewQuestions"></div>
+              </aside>
+            </div>
+          </section>
         </div>
-
-      </div><!-- /edit-grid -->
+      </div>
     </div><!-- /panelEdit -->
 
   </div><!-- /main -->
 
   <!-- Kaydet Bar -->
   <div class="kaydet-bar" id="kaydetBar" style="display:none;">
-    <div style="display:flex;gap:10px;align-items:center;">
-      <button class="btn-kaydet" id="publishReadingButton" onclick="kaydet(true)">💾 Yayınla</button>
-      <button class="btn-taslak" id="draftReadingButton" onclick="kaydet(false)">Taslak Kaydet</button>
-      <div class="kaydet-durum" id="kaydetDurum">✅ Kaydedildi!</div>
+    <div class="wizard-nav-left">
+      <button class="wizard-btn" id="wizardBackButton" type="button" onclick="wizardGeri()"><i data-lucide="arrow-left"></i> Geri</button>
+      <div class="kaydet-durum" id="kaydetDurum">Kaydedildi</div>
+      <div style="font-size:12px;color:var(--muted);" id="editingIdLabel2"></div>
     </div>
-    <div style="font-size:12px;color:var(--muted);" id="editingIdLabel2"></div>
+    <div class="wizard-nav-right">
+      <button class="btn-taslak" id="draftReadingButton" onclick="kaydet(false)"><i data-lucide="save"></i> Taslak kaydet</button>
+      <button class="wizard-btn primary" id="wizardNextButton" type="button" onclick="wizardIleri()">İleri <i data-lucide="arrow-right"></i></button>
+      <button class="btn-kaydet" id="publishReadingButton" onclick="kaydet(true)" style="display:none;"><i data-lucide="send"></i> Yayınla</button>
+    </div>
   </div>
 </div>
 

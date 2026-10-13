@@ -120,8 +120,38 @@
       if(f.depthTime<=0) {f.depthTarget=(f.waterDepth??.5)<.5 ? .72+random()*.23 : .05+random()*.23;f.depthTime=24+random()*16;}
       const distance=f.waterDepth??.5;
       f.waterDepth=clamp(distance+clamp((f.depthTarget-distance)*.09,-.025,.025)*dt*f.cruise,0,1);
-      const p=f.profile||normal, speed=24*f.mood.speed*p.speed*f.cruise;
+      const p=f.profile||normal;
+      const pulse=Math.pow((Math.sin(f.phase*3)+1)/2,3);
+      const strokeFactor=f.anatomicalMotion && f.species==='octopus'?.7+pulse*.6:1;
+      const speed=24*f.mood.speed*p.speed*f.cruise*strokeFactor;
       const maxX=Math.max(0,width-f.size),edge=Math.min(25,maxX/4);
+      if(f.anatomicalMotion && f.species==='jellyfish') {
+        // Bell contractions lift the jellyfish. It drifts back down to a new
+        // lane instead of adopting the horizontal fish-tail route.
+        f.turn=null;f.angle=0;f.routeTime=(f.routeTime||0)-dt*f.cruise;
+        if(f.targetY==null || Math.abs(f.targetY-f.y)<8 || f.routeTime<=0) {
+          const span=f.maxY-f.minY,ascending=f.y>f.minY+span*.45;
+          f.targetY=f.minY+span*(ascending?.08+random()*.2:.65+random()*.3);
+          f.routeTime=35+random()*25;
+        }
+        // The current carries the jellyfish throughout the tank. Horizontal
+        // and vertical destinations renew independently, so it never remains
+        // confined to one small up/down column.
+        f.jellyRouteTime=(f.jellyRouteTime||0)-dt*f.cruise;
+        if(f.targetX==null || Math.abs(f.targetX-f.x)<8 || f.jellyRouteTime<=0) {
+          let target=edge+random()*Math.max(0,maxX-2*edge);
+          if(Math.abs(target-f.x)<maxX*.28)target=maxX*(f.x<maxX*.5?.68+random()*.27:.05+random()*.27);
+          f.targetX=clamp(target,0,maxX);f.jellyRouteTime=35+random()*30;
+        }
+        f.phase+=dt*.7*f.mood.speed*f.cruise;
+        const rise=f.targetY<f.y,vertical=(rise?6+14*pulse:3)*f.mood.speed*f.cruise;
+        f.y+=clamp(f.targetY-f.y,-vertical*dt,vertical*dt);
+        const horizontal=(10+8*pulse)*f.mood.speed*f.cruise;
+        const velocity=clamp((f.targetX-f.x)*.12,-horizontal,horizontal);
+        f.jellyVX=(f.jellyVX||0)+(velocity-(f.jellyVX||0))*Math.min(1,dt*1.5);
+        f.x+=f.jellyVX*dt;
+        f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);return;
+      }
       f.routeTime=(f.routeTime||0)-dt*f.cruise;
       if(f.routeTime<=0 && !f.turn) {
         const first=f.targetX==null;

@@ -17,7 +17,7 @@
   <meta name="twitter:title" content="Kemal Öğretmenim — Eğitim Sevgi ile Başlar">
   <meta name="twitter:description" content="1-7. sınıf öğrencileri için interaktif eğitim, okuma anlama, matematik, fen bilimleri, sınav ve oyun içerikleri.">
   <meta name="twitter:image" content="https://kemalogretmenim.com.tr/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=20260928-exam-icons">
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <style>
     /* ─── ANA SAYFA ÖZEL STILLER ─── */
@@ -1209,6 +1209,7 @@
     .home-showcase-media {
       position: absolute;
       inset: 0;
+      z-index: 1;
       min-height: 0;
       border-radius: 0;
       background: rgba(255,255,255,.82);
@@ -1231,6 +1232,7 @@
       display: block;
       text-decoration: none;
       color: inherit;
+      cursor: pointer;
     }
     .home-showcase-media-link:focus-visible {
       outline: 4px solid rgba(108,61,237,.42);
@@ -2484,7 +2486,7 @@
   </div>
 
   <script src="/js/site-data.js?v=20261008-aquarium-dock"></script>
-  <script src="/js/site.js?v=20261008-aquarium-dock"></script>
+  <script src="/js/site.js?v=20261010-dock-home"></script>
   <script src="/js/user-auth.js"></script>
   <script src="/js/content-feed.js?v=20260928-exam-icons"></script>
   <script>
@@ -2843,6 +2845,22 @@
         aktif: true
       };
 
+      const KIZMA_BIRADER_SHOWCASE_SLIDE = {
+        id: 'kizma-birader-matematik-parkuru',
+        baslik: 'Kızma Birader Matematik Parkuru',
+        aciklama_html: 'İşlemi çöz, zarını at ve rengârenk parkurda parka ilk ulaşan ol. Yeni sürümü şimdi keşfet.',
+        icerik_turu: 'image',
+        ikon: '🎲',
+        tema_renk: '#F26B38',
+        media_url: '/assets/vitrin-gecici/kizma-birader-matematik-parkuru.png',
+        media_fit: 'cover',
+        link_url: '/oyun/kizma_birader.html',
+        link_label: 'Parkura Çık',
+        gecis_suresi_ms: 6000,
+        siralama: -1,
+        aktif: true
+      };
+
       function renderHomepageShowcase(slides) {
         const stage = document.getElementById('homeShowcaseStage');
         const dots = document.getElementById('homeShowcaseDots');
@@ -2865,9 +2883,9 @@
         };
         const sourceSlides = Array.isArray(slides) && slides.length ? slides : TEMP_HOMEPAGE_SLIDES;
         const publishedSlides = [MOBILE_APP_DOWNLOAD_SLIDE].concat(
-          sourceSlides.filter(item => item && item.id !== MOBILE_APP_DOWNLOAD_SLIDE.id && item.link_url !== MOBILE_APP_DOWNLOAD_SLIDE.link_url)
+          sourceSlides.filter(item => item && item.id !== MOBILE_APP_DOWNLOAD_SLIDE.id && item.id !== KIZMA_BIRADER_SHOWCASE_SLIDE.id && item.link_url !== MOBILE_APP_DOWNLOAD_SLIDE.link_url)
         );
-        const items = [defaultIntroSlide].concat(publishedSlides).slice(0, 6);
+        const items = [KIZMA_BIRADER_SHOWCASE_SLIDE, defaultIntroSlide].concat(publishedSlides).slice(0, 6);
         if (!items.length) {
           stage.innerHTML = '<div class="home-showcase-empty">Vitrin içerikleri hazırlanıyor.</div>';
           dots.innerHTML = '';
@@ -2946,7 +2964,7 @@
               <span class="home-showcase-stat"><strong>200+</strong><span>İçerik</span></span>
             </div>` : '';
           return `
-            <article class="${slideClasses}" data-effect="${effects[index % effects.length]}" style="${slideStyle(item)}">
+            <article class="${slideClasses}" data-effect="${effects[index % effects.length]}" data-link="${esc(href)}" style="${slideStyle(item)}">
               ${mediaHtml(item)}
               <div class="home-showcase-copy">
                 <span class="home-showcase-kind">${icerikIkonuHtml(item, typeMeta, typeMeta.icon)} ${esc(typeMeta.label)}</span>
@@ -2957,6 +2975,13 @@
               </div>
             </article>`;
         }).join('');
+
+        stage.onclick = event => {
+          const slide = event.target.closest('.home-showcase-slide');
+          if (!slide || event.target.closest('a, button, iframe')) return;
+          const target = slide.dataset.link;
+          if (target && target !== '#') window.location.assign(target);
+        };
 
         dots.innerHTML = items.map((item, index) =>
           `<button class="home-showcase-dot ${index === 0 ? 'active' : ''}" type="button" data-vitrin-index="${index}" aria-label="${index + 1}. slayt"></button>`

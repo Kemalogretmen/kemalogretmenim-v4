@@ -28,6 +28,9 @@
     'courier-new': '"Courier New", monospace',
   };
   const SIZE_VALUES = ['14px', '16px', '18px', '20px', '22px', '24px', '28px', '32px', '36px', '42px'];
+  const LINE_HEIGHT_VALUES = ['1.4', '1.6', '1.8', '2', '2.2'];
+  const PARAGRAPH_SPACING_VALUES = ['0px', '8px', '12px', '16px', '24px'];
+  const WIZARD_LAST_STEP = 6;
   const LEVEL_LABELS = {
     baslangic: 'Başlangıç',
     gelisen: 'Gelişen',
@@ -53,6 +56,8 @@
     quill: null,
     titleQuill: null,
     saving: false,
+    wizardStep: 0,
+    maxWizardStep: 0,
   };
 
   let toastTimer = null;
@@ -91,10 +96,24 @@
       button.disabled = busy;
     });
     if (publishButton) {
-      publishButton.textContent = busy && active ? '⏳ Yayınlanıyor…' : '💾 Yayınla';
+      publishButton.innerHTML = busy && active
+        ? '<span>Yayınlanıyor...</span>'
+        : '<i data-lucide="send"></i> Yayınla';
     }
     if (draftButton) {
-      draftButton.textContent = busy && !active ? '⏳ Kaydediliyor…' : 'Taslak Kaydet';
+      draftButton.innerHTML = busy && !active
+        ? '<span>Kaydediliyor...</span>'
+        : '<i data-lucide="save"></i> Taslak kaydet';
+    }
+    if (!busy) {
+      renderWizardControls();
+    }
+    refreshIcons();
+  }
+
+  function refreshIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
     }
   }
 
@@ -425,15 +444,16 @@
   }
 
   function normalizeEditorHtml(html) {
-    const clean = (html || '')
-      .replace(/<p><br><\/p>/gi, '')
-      .replace(/<p>\s*<\/p>/gi, '')
-      .trim();
-    return clean;
+    const clean = String(html || '').trim();
+    const hasVisibleContent = clean
+      .replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '')
+      .replace(/\s+/g, '');
+    return hasVisibleContent ? clean : '';
   }
 
   function normalizeTitleHtml(html) {
     return normalizeEditorHtml(html)
+      .replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '')
       .replace(/\sdata-[^=]+="[^"]*"/g, '')
       .trim();
   }
@@ -511,12 +531,24 @@
     }
 
     const FontStyle = window.Quill.import('attributors/style/font');
-    FontStyle.whitelist = Object.keys(FONT_STACKS);
+    FontStyle.whitelist = null;
     window.Quill.register(FontStyle, true);
 
     const SizeStyle = window.Quill.import('attributors/style/size');
-    SizeStyle.whitelist = SIZE_VALUES;
+    SizeStyle.whitelist = null;
     window.Quill.register(SizeStyle, true);
+
+    const Parchment = window.Quill.import('parchment');
+    const LineHeightStyle = new Parchment.Attributor.Style('lineheight', 'line-height', {
+      scope: Parchment.Scope.BLOCK,
+      whitelist: LINE_HEIGHT_VALUES,
+    });
+    const ParagraphSpacingStyle = new Parchment.Attributor.Style('paragraphspacing', 'margin-bottom', {
+      scope: Parchment.Scope.BLOCK,
+      whitelist: PARAGRAPH_SPACING_VALUES,
+    });
+    window.Quill.register(LineHeightStyle, true);
+    window.Quill.register(ParagraphSpacingStyle, true);
   }
 
   function initQuill() {
@@ -529,8 +561,11 @@
     state.quill = new window.Quill('#fIcerik', {
       modules: {
         toolbar: '#editorToolbar',
+        clipboard: {
+          matchVisual: true,
+        },
       },
-      placeholder: 'Metni buraya yaz veya yapıştır. İstediğin bölümü seçip renklendirebilir, büyütebilir, kalınlaştırabilirsin.',
+      placeholder: 'Metni buraya yaz veya biçimiyle birlikte yapıştır.',
       theme: 'snow',
     });
 
@@ -543,12 +578,26 @@
     });
 
     state.quill.on('text-change', updateWordCount);
+    state.quill.root.addEventListener('paste', function(event) {
+      const html = event.clipboardData && event.clipboardData.getData('text/html');
+      if (!html) {
+        return;
+      }
+      event.preventDefault();
+      const range = state.quill.getSelection(true) || { index: state.quill.getLength(), length: 0 };
+      const pasted = state.quill.clipboard.convert(html);
+      const Delta = window.Quill.import('delta');
+      const update = new Delta().retain(range.index).delete(range.length).concat(pasted);
+      state.quill.updateContents(update, 'user');
+      state.quill.setSelection(range.index + pasted.length(), 0, 'silent');
+    });
     state.titleQuill.on('text-change', function() {
       syncTitleInput();
       applyTitleStylePreview();
     });
     applyEditorDefaultStyle();
     updateWordCount();
+    refreshIcons();
   }
 
   function setCheckedGrades(grades, legacyGrade) {
@@ -569,6 +618,7 @@
   function resetQuestionList() {
     state.questionCounter = 0;
     document.getElementById('soruList').innerHTML = '';
+    updateQuestionEmptyState();
   }
 
   function fillForm(text) {
@@ -624,6 +674,9 @@
     (text && text.sorular ? text.sorular : []).forEach(function(question) {
       addQuestion(question);
     });
+    state.wizardStep = 0;
+    state.maxWizardStep = text && text.id ? WIZARD_LAST_STEP : 0;
+    renderWizardStep();
   }
 
   function showListPanel() {
@@ -636,6 +689,8 @@
     document.getElementById('panelList').style.display = 'none';
     document.getElementById('panelEdit').style.display = 'block';
     document.getElementById('kaydetBar').style.display = 'flex';
+    renderWizardStep();
+    refreshIcons();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -997,6 +1052,10 @@
       editor.formatLine(range.index, Math.max(range.length, 1), 'indent', action === 'indent' ? '+1' : '-1');
       return;
     }
+    if (action === 'lineheight' || action === 'paragraphspacing') {
+      editor.formatLine(range.index, Math.max(range.length, 1), action, value, 'user');
+      return;
+    }
     applyInlineTool(editor, action, value);
   }
 
@@ -1016,6 +1075,15 @@
         badge.textContent = String(index + 1);
       }
     });
+    updateQuestionEmptyState();
+  }
+
+  function updateQuestionEmptyState() {
+    const emptyState = document.getElementById('questionEmptyState');
+    const questionList = document.getElementById('soruList');
+    if (emptyState && questionList) {
+      emptyState.style.display = questionList.children.length ? 'none' : 'block';
+    }
   }
 
   function buildQuestionTypeOptions(selectedType) {
@@ -1413,6 +1481,194 @@
     return questions;
   }
 
+  function validateWizardStep(stepIndex) {
+    if (stepIndex === 0 && !getSelectedGrades().length) {
+      throw new Error('Devam etmek için en az bir sınıf düzeyi seçmelisin.');
+    }
+    if (stepIndex === 1 && !getTitlePlainText()) {
+      throw new Error('Devam etmek için metnin başlığını yazmalısın.');
+    }
+    if (stepIndex === 2 && !getPlainText()) {
+      throw new Error('Devam etmek için okuma metnini eklemelisin.');
+    }
+    if (stepIndex === 3) {
+      collectQuestions();
+    }
+    if (stepIndex === 4) {
+      const targetSpeed = parseInt(document.getElementById('fHedefHiz').value, 10);
+      const estimatedMinutes = parseInt(document.getElementById('fTahminiSure').value, 10);
+      if (!Number.isFinite(targetSpeed) || targetSpeed < 10 || targetSpeed > 300) {
+        throw new Error('Hedef okuma hızı 10 ile 300 kelime/dakika arasında olmalı.');
+      }
+      if (!Number.isFinite(estimatedMinutes) || estimatedMinutes < 1 || estimatedMinutes > 30) {
+        throw new Error('Tahmini okuma süresi 1 ile 30 dakika arasında olmalı.');
+      }
+    }
+    if (stepIndex === 5) {
+      const visualUrl = String(document.getElementById('fGorselUrl').value || '').trim();
+      if (visualUrl && !/^https?:\/\//i.test(visualUrl)) {
+        throw new Error('Görsel adresi http:// veya https:// ile başlamalı.');
+      }
+    }
+    return true;
+  }
+
+  function renderWizardControls() {
+    const backButton = document.getElementById('wizardBackButton');
+    const nextButton = document.getElementById('wizardNextButton');
+    const publishButton = document.getElementById('publishReadingButton');
+    const draftButton = document.getElementById('draftReadingButton');
+    const isPreview = state.wizardStep === WIZARD_LAST_STEP;
+
+    if (backButton) {
+      backButton.disabled = state.saving || state.wizardStep === 0;
+    }
+    if (nextButton) {
+      nextButton.style.display = isPreview ? 'none' : 'inline-flex';
+      nextButton.disabled = state.saving;
+    }
+    if (publishButton) {
+      publishButton.style.display = isPreview ? 'inline-flex' : 'none';
+      publishButton.disabled = state.saving;
+    }
+    if (draftButton) {
+      const draftReady = !!state.editingId || state.wizardStep >= 2;
+      draftButton.style.display = isPreview ? 'none' : 'inline-flex';
+      draftButton.disabled = state.saving || !draftReady;
+    }
+  }
+
+  function renderWizardStep() {
+    document.querySelectorAll('[data-wizard-panel]').forEach(function(panel) {
+      panel.classList.toggle('active', Number(panel.dataset.wizardPanel) === state.wizardStep);
+    });
+    document.querySelectorAll('[data-wizard-step]').forEach(function(tab) {
+      const stepIndex = Number(tab.dataset.wizardStep);
+      const isActive = stepIndex === state.wizardStep;
+      tab.classList.toggle('active', isActive);
+      tab.classList.toggle('complete', stepIndex < state.wizardStep);
+      tab.disabled = state.saving || stepIndex > state.maxWizardStep;
+      if (isActive) {
+        tab.setAttribute('aria-current', 'step');
+      } else {
+        tab.removeAttribute('aria-current');
+      }
+    });
+    renderWizardControls();
+    if (state.wizardStep === WIZARD_LAST_STEP) {
+      renderReadingPreview();
+    }
+    refreshIcons();
+  }
+
+  function scrollWizardIntoView() {
+    const wizard = document.getElementById('readingWizard');
+    if (!wizard) {
+      return;
+    }
+    const top = Math.max(0, window.scrollY + wizard.getBoundingClientRect().top - 74);
+    window.scrollTo({ top: top, behavior: 'smooth' });
+  }
+
+  function goToWizardStep(targetStep) {
+    const nextStep = Math.max(0, Math.min(WIZARD_LAST_STEP, Number(targetStep) || 0));
+    if (nextStep === state.wizardStep || nextStep > state.maxWizardStep) {
+      return;
+    }
+    if (nextStep > state.wizardStep) {
+      try {
+        for (let index = state.wizardStep; index < nextStep; index += 1) {
+          validateWizardStep(index);
+        }
+      } catch (error) {
+        toast(error.message, 'error');
+        return;
+      }
+    }
+    state.wizardStep = nextStep;
+    renderWizardStep();
+    scrollWizardIntoView();
+  }
+
+  function wizardNext() {
+    if (state.wizardStep >= WIZARD_LAST_STEP) {
+      return;
+    }
+    try {
+      validateWizardStep(state.wizardStep);
+      state.maxWizardStep = Math.max(state.maxWizardStep, state.wizardStep + 1);
+      state.wizardStep += 1;
+      renderWizardStep();
+      scrollWizardIntoView();
+    } catch (error) {
+      toast(error.message, 'error');
+    }
+  }
+
+  function wizardBack() {
+    if (state.wizardStep <= 0) {
+      return;
+    }
+    state.wizardStep -= 1;
+    renderWizardStep();
+    scrollWizardIntoView();
+  }
+
+  function renderReadingPreview() {
+    const titleNode = document.getElementById('previewTitle');
+    const bodyNode = document.getElementById('previewBody');
+    const visualNode = document.getElementById('previewVisual');
+    const summaryNode = document.getElementById('previewSummary');
+    const questionsNode = document.getElementById('previewQuestions');
+    if (!titleNode || !bodyNode || !summaryNode || !questionsNode) {
+      return;
+    }
+
+    const titleStyle = getTitleStyle();
+    const titleHtml = getTitleHtml();
+    titleNode.innerHTML = titleHtml || '<p>' + escHtml(getTitlePlainText()) + '</p>';
+    titleNode.style.color = titleStyle.renk;
+    titleNode.style.fontSize = titleStyle.boyut + 'px';
+    titleNode.style.textAlign = titleStyle.hiza;
+    bodyNode.innerHTML = normalizeEditorHtml(state.quill.root.innerHTML);
+
+    const profile = getTrainingProfileFromForm();
+    if (visualNode) {
+      const showVisual = !!profile.gorsel.url && profile.gorsel.konum !== 'none';
+      visualNode.classList.toggle('show', showVisual);
+      visualNode.src = showVisual ? profile.gorsel.url : '';
+      visualNode.alt = profile.gorsel.alt || profile.gorsel.aciklama || '';
+      visualNode.style.objectFit = profile.gorsel.fit;
+    }
+
+    const grades = getSelectedGrades();
+    const questions = collectQuestions();
+    const modeLabel = state.currentMode === 'kelime' ? 'Kelime kelime' : 'Tam metin';
+    const summaryRows = [
+      ['Sınıflar', grades.map(function(grade) { return grade + '. sınıf'; }).join(', ')],
+      ['Metin türü', TEXT_TYPE_LABELS[profile.tur] || 'Hikaye'],
+      ['Kelime sayısı', getWordCount(getPlainText()) + ' kelime'],
+      ['Hedef hız', document.getElementById('fHedefHiz').value + ' kelime/dk'],
+      ['Tahmini süre', profile.tahmini_dk + ' dakika'],
+      ['Görünüm', modeLabel],
+      ['Soru sayısı', String(questions.length)],
+    ];
+    summaryNode.innerHTML = summaryRows.map(function(row) {
+      return '<div class="summary-row"><span>' + escHtml(row[0]) + '</span><strong>' + escHtml(row[1]) + '</strong></div>';
+    }).join('');
+
+    if (!questions.length) {
+      questionsNode.innerHTML = '<div class="preview-empty">Bu metinde anlama sorusu bulunmuyor.</div>';
+      return;
+    }
+    questionsNode.innerHTML = questions.map(function(question, questionIndex) {
+      const answers = question.secenekler.map(function(choice) {
+        return '<label class="preview-answer"><input type="radio" name="preview-question-' + questionIndex + '"><span>' + escHtml(choice.secenek_metni) + '</span></label>';
+      }).join('');
+      return '<div class="preview-question"><div class="preview-question-title">' + (questionIndex + 1) + '. ' + escHtml(question.soru_metni) + '</div>' + answers + '</div>';
+    }).join('');
+  }
+
   function getMetinPayload(active) {
     const title = getTitlePlainText();
     const plainText = getPlainText();
@@ -1580,6 +1836,11 @@
 
     setSaveBusy(true, active);
     try {
+      if (active) {
+        for (let stepIndex = 0; stepIndex < WIZARD_LAST_STEP; stepIndex += 1) {
+          validateWizardStep(stepIndex);
+        }
+      }
       const payload = getMetinPayload(active);
       const questions = collectQuestions();
       const savedText = await saveMetinRecord(payload);
@@ -1678,6 +1939,14 @@
         node.addEventListener('change', renderVisualPreview);
       }
     });
+    document.querySelectorAll('.mod-kart').forEach(function(card) {
+      card.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          card.click();
+        }
+      });
+    });
   }
 
   document.addEventListener('DOMContentLoaded', async function() {
@@ -1686,6 +1955,7 @@
       bindEvents();
       await initAuth();
       fillForm(null);
+      refreshIcons();
     } catch (error) {
       toast(error.message || 'Editör başlatılamadı.', 'error');
     }
@@ -1733,4 +2003,15 @@
   window.sikSil = deleteChoice;
   window.kaydet = save;
   window.baslikStiliUygula = applyTitleStylePreview;
+  window.wizardGit = goToWizardStep;
+  window.wizardIleri = wizardNext;
+  window.wizardGeri = wizardBack;
+  window.onizlemeYenile = function() {
+    try {
+      renderReadingPreview();
+      toast('Önizleme güncellendi.', 'success');
+    } catch (error) {
+      toast(error.message, 'error');
+    }
+  };
 })();

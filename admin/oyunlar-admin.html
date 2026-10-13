@@ -100,7 +100,29 @@
     .toast.success{background:var(--success);}
     .toast.error{background:var(--danger);}
 
-    @media(max-width:800px){.grid-2{grid-template-columns:1fr;}.form-row-2{grid-template-columns:1fr;}}
+    .analytics-panel{background:linear-gradient(135deg,#fff 0%,#faf8ff 100%);border:2px solid var(--border);border-radius:var(--r-lg);padding:22px;margin-bottom:20px;box-shadow:0 14px 34px rgba(108,61,237,.07);}
+    .analytics-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+    .analytics-head h2{font-family:'Fredoka','Nunito',sans-serif;font-size:20px;color:var(--navy);margin:0 0 4px;}
+    .analytics-head p{margin:0;color:var(--slate);font-size:13px;font-weight:700;line-height:1.45;}
+    .analytics-ranges{display:flex;gap:7px;flex-wrap:wrap;}
+    .analytics-range-btn{padding:8px 12px;border:2px solid var(--border);border-radius:999px;background:#fff;color:var(--slate);font:800 12px 'Nunito',sans-serif;cursor:pointer;}
+    .analytics-range-btn.active,.analytics-range-btn:hover{background:var(--purple);border-color:var(--purple);color:#fff;}
+    .analytics-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+    .analytics-metric{padding:14px;border:1.5px solid #e8e1ff;border-radius:16px;background:#fff;}
+    .analytics-metric span{display:block;color:var(--slate);font-size:11px;font-weight:800;line-height:1.2;}
+    .analytics-metric strong{display:block;margin-top:5px;color:var(--purple);font-family:'Fredoka','Nunito',sans-serif;font-size:25px;line-height:1;}
+    .analytics-note{margin:0 0 15px;color:var(--slate);font-size:12px;font-weight:700;line-height:1.45;}
+    .game-analytics-list{border:1.5px solid #e8e1ff;border-radius:16px;overflow:auto;background:#fff;}
+    .game-analytics-row{display:grid;grid-template-columns:minmax(190px,1.8fr) repeat(5,minmax(82px,.7fr));gap:10px;align-items:center;padding:13px 15px;border-top:1px solid #f0ecff;min-width:760px;}
+    .game-analytics-row:first-child{border-top:none;}
+    .game-analytics-row.heading{background:#f6f3ff;color:#665987;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;}
+    .game-analytics-title{min-width:0;font-size:13px;font-weight:900;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .game-analytics-title small{display:block;margin-top:3px;color:var(--muted);font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .game-analytics-value{color:#3f3562;font-size:13px;font-weight:800;text-align:center;}
+    .analytics-status{padding:16px;border-radius:14px;background:#f8f9fc;color:var(--slate);font-size:13px;font-weight:800;text-align:center;}
+    .analytics-status.error{background:#fff1f2;color:#be123c;}
+
+    @media(max-width:800px){.grid-2{grid-template-columns:1fr;}.form-row-2{grid-template-columns:1fr;}.analytics-summary{grid-template-columns:repeat(2,minmax(0,1fr));}}
   </style>
 </head>
 <body>
@@ -132,6 +154,26 @@
     <div class="page-header">
       <div class="page-title">🎮 Tüm Oyunlar</div>
     </div>
+
+    <section class="analytics-panel" aria-labelledby="gameAnalyticsTitle">
+      <div class="analytics-head">
+        <div>
+          <h2 id="gameAnalyticsTitle">📈 Oyun İstatistikleri</h2>
+          <p>Hangi oyunların açıldığını, katalogdan tıklandığını ve ne kadar aktif kullanıldığını inceleyin.</p>
+        </div>
+        <div class="analytics-ranges" aria-label="İstatistik tarih aralığı">
+          <button class="analytics-range-btn" type="button" data-game-analytics-days="7">Son 7 Gün</button>
+          <button class="analytics-range-btn active" type="button" data-game-analytics-days="30">Son 30 Gün</button>
+          <button class="analytics-range-btn" type="button" data-game-analytics-days="90">Son 90 Gün</button>
+        </div>
+      </div>
+      <div id="gameAnalyticsStatus" class="analytics-status">İstatistikler yükleniyor…</div>
+      <div id="gameAnalyticsContent" hidden>
+        <div id="gameAnalyticsSummary" class="analytics-summary"></div>
+        <p class="analytics-note">Katalog tıklaması, oyun merkezindeki kart tıklamalarını; aktif süre ise sayfa görünür durumdayken geçirilen süreyi gösterir. Harici iframe oyunlarında süre, sitedeki oyun ekranı için ölçülür. Veriler anonim ve toplu tutulur.</p>
+        <div class="game-analytics-list" id="gameAnalyticsList"></div>
+      </div>
+    </section>
 
     <div class="grid-2">
 
@@ -262,6 +304,83 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 <script>
 const OYUN_KEY='kemal_oyunlar';
+let gameAnalyticsDays=30;
+
+function formatAnalyticsNumber(value){ return Number(value||0).toLocaleString('tr-TR'); }
+function formatAnalyticsDuration(value){
+  const seconds=Math.max(0,Math.round(Number(value)||0));
+  if(seconds<60) return seconds+' sn';
+  const minutes=Math.floor(seconds/60), remainder=seconds%60;
+  if(minutes<60) return minutes+' dk'+(remainder?' '+remainder+' sn':'');
+  return Math.floor(minutes/60)+' sa '+(minutes%60)+' dk';
+}
+function setGameAnalyticsStatus(message,isError){
+  const status=document.getElementById('gameAnalyticsStatus');
+  const content=document.getElementById('gameAnalyticsContent');
+  if(status){ status.textContent=message; status.classList.toggle('error',!!isError); status.hidden=false; }
+  if(content) content.hidden=true;
+}
+function renderGameAnalytics(payload){
+  const status=document.getElementById('gameAnalyticsStatus');
+  const content=document.getElementById('gameAnalyticsContent');
+  const summaryEl=document.getElementById('gameAnalyticsSummary');
+  const list=document.getElementById('gameAnalyticsList');
+  const summary=payload&&payload.summary?payload.summary:{};
+  const games=Array.isArray(payload&&payload.games)?payload.games:[];
+  if(status) status.hidden=true;
+  if(content) content.hidden=false;
+  if(summaryEl){
+    const metrics=[
+      ['Oyun açılışı',formatAnalyticsNumber(summary.opens)],
+      ['Tekil oyuncu',formatAnalyticsNumber(summary.unique_players)],
+      ['Katalog tıklaması',formatAnalyticsNumber(summary.catalog_clicks)],
+      ['Ort. aktif süre',formatAnalyticsDuration(summary.avg_active_seconds)],
+      ['Toplam aktif süre',formatAnalyticsDuration(summary.total_active_seconds)]
+    ];
+    summaryEl.innerHTML=metrics.map(function(metric){ return '<div class="analytics-metric"><span>'+metric[0]+'</span><strong>'+metric[1]+'</strong></div>'; }).join('');
+  }
+  if(!list) return;
+  if(!games.length){
+    list.innerHTML='<div class="analytics-status">Bu tarih aralığında henüz oyun kullanım verisi oluşmadı.</div>';
+    return;
+  }
+  const heading='<div class="game-analytics-row heading"><span>Oyun</span><span>Açılış</span><span>Tekil</span><span>Tıklama</span><span>Ort. süre</span><span>Tamamlama</span></div>';
+  const rows=games.map(function(game){
+    const title=esc(game.page_title||game.game_path||'Oyun');
+    const path=esc(game.game_path||'');
+    return '<div class="game-analytics-row">'+
+      '<div class="game-analytics-title" title="'+path+'">'+title+'<small>'+path+'</small></div>'+
+      '<div class="game-analytics-value">'+formatAnalyticsNumber(game.opens)+'</div>'+
+      '<div class="game-analytics-value">'+formatAnalyticsNumber(game.unique_players)+'</div>'+
+      '<div class="game-analytics-value">'+formatAnalyticsNumber(game.catalog_clicks)+'</div>'+
+      '<div class="game-analytics-value">'+formatAnalyticsDuration(game.avg_active_seconds)+'</div>'+
+      '<div class="game-analytics-value">'+formatAnalyticsNumber(game.completed_sessions)+'</div>'+
+    '</div>';
+  }).join('');
+  list.innerHTML=heading+rows;
+}
+async function loadGameAnalytics(days){
+  gameAnalyticsDays=Math.max(1,Math.min(Number(days)||30,90));
+  document.querySelectorAll('[data-game-analytics-days]').forEach(function(button){
+    button.classList.toggle('active',Number(button.dataset.gameAnalyticsDays)===gameAnalyticsDays);
+  });
+  setGameAnalyticsStatus('İstatistikler yükleniyor…',false);
+  try{
+    const client=window.kemalAdminAuth&&window.kemalAdminAuth.getClient?window.kemalAdminAuth.getClient():null;
+    if(!client) throw new Error('admin-client-missing');
+    const result=await client.rpc('get_game_analytics_summary',{days:gameAnalyticsDays});
+    if(result.error) throw result.error;
+    const payload=typeof result.data==='string'?JSON.parse(result.data):result.data;
+    renderGameAnalytics(payload||{});
+  }catch(error){
+    console.warn('Oyun istatistikleri yüklenemedi:',error);
+    const text=String(error&&error.message||'');
+    const setupMissing=/get_game_analytics_summary|could not find the function|does not exist/i.test(text);
+    setGameAnalyticsStatus(setupMissing
+      ? 'İstatistik altyapısı için Supabase SQL Editor içinde supabase-oyun-analitikleri.sql dosyasını bir kez çalıştırın.'
+      : 'Oyun istatistikleri şu anda yüklenemedi. Yönetici yetkinizi ve bağlantıyı kontrol edin.',true);
+  }
+}
 
 function buildIframeGameUrl(id){
   return '/oyun/iframe-oyun.html?id=' + encodeURIComponent(id || '');
@@ -282,6 +401,7 @@ async function doLogin(){
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').style.display='block';
     renderOyunlar();
+    loadGameAnalytics(gameAnalyticsDays);
   }catch(error){
     errorEl.style.display='block';
     errorEl.textContent='❌ ' + window.kemalAdminAuth.humanizeError(error);
@@ -303,6 +423,7 @@ async function initAuth(){
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').style.display='block';
     renderOyunlar();
+    loadGameAnalytics(gameAnalyticsDays);
     return;
   }
   document.getElementById('loginScreen').style.display='flex';
@@ -312,6 +433,7 @@ async function initAuth(){
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.querySelectorAll('[data-game-analytics-days]').forEach(button=>button.addEventListener('click',()=>loadGameAnalytics(button.dataset.gameAnalyticsDays)));
   initAuth();
 });
 
@@ -482,7 +604,7 @@ function toast(msg,type='success'){
   el.textContent=msg; el.className='toast '+type+' show';
   clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2600);
 }
-function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 </script>
 </body>
 </html>

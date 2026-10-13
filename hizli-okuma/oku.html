@@ -96,6 +96,11 @@
       box-shadow: 0 10px 40px rgba(108,61,237,.08);
       border: 1px solid var(--border);
       line-height: 2.0;
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Nunito', sans-serif !important;
+      font-weight: 400;
+    }
+    .kitap-metin, .kitap-metin * {
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Nunito', sans-serif !important;
     }
     /* Metin içeriği — stil JS'den uygulanır */
     .kitap-metin .ql-align-center { text-align: center; }
@@ -104,6 +109,7 @@
     .kitap-metin .ql-indent-1 { padding-left: 3em; }
     .kitap-metin .ql-indent-2 { padding-left: 6em; }
     .kitap-metin .ql-indent-3 { padding-left: 9em; }
+    .kitap-metin p:has(> br:only-child) { min-height: 2em; margin: 0; }
 
     .bitti-alani {
       text-align: center;
@@ -158,7 +164,7 @@
     }
     .kk-kelime {
       display: inline-block;
-      font-family: var(--font-display);
+      font-family: 'TTKB Dik Temel Abece', ttkb-dik-temel, 'Nunito', sans-serif;
       font-size: clamp(42px,8vw,90px);
       font-weight: 800;
       color: white;
@@ -340,6 +346,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/site-data.js?v=20260418-2"></script>
-  <script src="/js/okuma-screen.js?v=20260903-ttkb-font"></script>
+  <script src="/js/okuma-screen.js?v=20261008-dik-temel"></script>
 </body>
 </html>

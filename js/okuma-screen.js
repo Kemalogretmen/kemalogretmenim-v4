@@ -281,7 +281,7 @@
       'courier-new': '"Courier New", monospace',
       'Courier New,monospace': '"Courier New", monospace',
     };
-    node.style.fontFamily = fontMap[metin.yazi_tipi] || 'Nunito, sans-serif';
+    node.style.fontFamily = fontMap[metin.yazi_tipi] || '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif';
     node.style.fontSize = (metin.yazi_boyutu || 18) + 'px';
     node.style.color = metin.yazi_rengi || '#1A1040';
   }

@@ -2077,13 +2077,13 @@
     });
     if (!items.length) return '';
     const path = String(window.location.pathname || '').replace(/\/+$/, '') || '/';
-    const isSubPage = path !== '/' && path !== '/index.html';
-    const visibleItems = isSubPage
-      ? [{ baslik: 'Ana Sayfa', link: '/index.html', emoji: '🏠', iconUrl: '/gorseller/logo.png', aktif: true }].concat(items)
-      : items;
+    const visibleItems = [{ baslik: 'Ana Sayfa', link: '/index.html', emoji: '🏠', iconUrl: '/gorseller/logo.png', aktif: true }].concat(items.filter(function(item) {
+      const itemPath = String(item.link).split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+      return itemPath !== '/' && itemPath !== '/index.html';
+    }));
     return '<aside class="shortcut-dock" id="shortcutDock" aria-label="Hızlı araç kısayolları">' +
       '<div class="shortcut-dock-bar" role="navigation">' +
-        '<button class="shortcut-dock-handle" id="shortcutDockHandle" type="button" aria-label="Kısayol çubuğunu sürükleyerek konumlandır" title="Sürükleyerek sola, ortaya veya sağa yerleştir"><span></span><span></span><span></span><span></span><span></span><span></span></button>' +
+        '<button class="shortcut-dock-handle" id="shortcutDockHandle" type="button" aria-label="Kısayol çubuğunu hizala veya sürükle" title="Hizalamak için dokun; taşımak için sürükle"><span></span><span></span><span></span><span></span><span></span><span></span></button>' +
         '<button class="shortcut-dock-size" id="shortcutDockSmaller" type="button" aria-label="Kısayol çubuğunu küçült" title="Küçült">−</button>' +
         '<div class="shortcut-dock-scroller">' + visibleItems.map(function(item) {
           const icon = item.iconUrl
@@ -2091,7 +2091,7 @@
               '<span class="shortcut-dock-emoji" hidden>' + escHtml(item.emoji || '📌') + '</span>'
             : '<span class="shortcut-dock-emoji">' + escHtml(item.emoji || '📌') + '</span>';
           const itemPath = String(item.link || '').split('?')[0].replace(/\/+$/, '') || '/';
-          const isCurrent = itemPath === path || (path === '/index.html' && itemPath === '/index.html');
+          const isCurrent = itemPath === path || (path === '/' && itemPath === '/index.html');
           return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" title="' + escHtml(item.baslik) + '"' + (isCurrent ? ' aria-current="page"' : '') + '>' +
             '<span class="shortcut-dock-icon">' + icon + '</span><span>' + escHtml(item.baslik) + '</span></a>';
         }).join('') + '</div>' +

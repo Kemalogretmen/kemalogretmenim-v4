@@ -1,25 +1,73 @@
-html{overscroll-behavior:none}body{margin:0;overflow:hidden;font-family:Segoe UI,sans-serif;color:#172033;background:#eef6ff;touch-action:none}#kemalFooterMount{display:none}.builder-shell{height:var(--builder-height,calc(100vh - 74px));min-height:650px;position:relative;overflow:hidden;background:linear-gradient(#f8fbff,#eaf3ff)}#stage{position:absolute;inset:0}#stage canvas{display:block;width:100%;height:100%;touch-action:none}.builder-panel{position:absolute;z-index:3;width:286px;display:grid;gap:12px;background:#fffffff0;border:1px solid #cbd5e1;border-radius:18px;padding:14px;box-shadow:0 18px 42px #0f172a20;backdrop-filter:blur(16px)}.left-panel{top:18px;left:18px}.right-panel{top:18px;right:18px}.panel-head{display:flex;gap:10px;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:12px}.panel-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:white}.panel-title{margin:0;font-weight:900;font-size:15px}.panel-sub,.builder-panel p{margin:3px 0 0;color:#64748b;font-size:12px;font-weight:700}.builder-panel section{display:grid;gap:8px}.builder-panel section>b{font-size:11px;letter-spacing:.08em;color:#64748b}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}button{min-height:42px;border:1px solid #d8e1ee;border-radius:12px;background:white;padding:8px;color:#334155;font:800 13px Segoe UI;cursor:pointer}button:hover{border-color:#93c5fd;background:#f8fafc}button:active{transform:scale(.96)}.primary{background:#1476f2;color:white;border-color:#1476f2}.colors{grid-template-columns:repeat(7,1fr)}.color{aspect-ratio:1;min-height:0;padding:0;border:2px solid white;border-radius:50%;box-shadow:0 0 0 1px #94a3b8}.color.active{box-shadow:0 0 0 3px #2563eb}.task{padding:12px;border:1px solid #ddd6fe;border-radius:14px;background:#f5f3ff;display:grid;gap:8px}.task b{font-size:12px;color:#6d28d9}.task span{font-size:13px;font-weight:800;line-height:1.35}.selected{display:none;padding:11px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff;gap:8px}.selected.show{display:grid}.hint{position:absolute;z-index:2;left:50%;top:15px;transform:translateX(-50%);background:#ffffffdf;border:1px solid #dbeafe;border-radius:999px;padding:8px 14px;max-width:calc(100% - 630px);text-align:center;font-size:12px;font-weight:800;color:#475569;pointer-events:none}.two-only,.shape-stage,.builder-shell:not(.two-d) .two-only{display:none!important}.builder-shell.two-d #stage,.builder-shell.two-d .hint,.builder-shell.two-d .three-only{display:none!important}.builder-shell.two-d .two-only,.builder-shell.two-d .shape-stage{display:block!important}.shape-stage{position:absolute;inset:0;padding:46px 340px 42px;z-index:1;background:radial-gradient(circle at 50% 0,#fdf7ff,#eef6ff 58%)}.shape-board{position:relative;margin:auto;width:min(800px,100%);height:min(560px,calc(100vh - 165px));min-height:420px;border:2px solid #c4b5fd;border-radius:26px;background-color:#fff;background-image:linear-gradient(#ede9fe 1px,transparent 1px),linear-gradient(90deg,#ede9fe 1px,transparent 1px);background-size:24px 24px;box-shadow:0 20px 50px #6d28d91c;overflow:hidden}.shape-board-note{margin:16px;text-align:center;color:#6d28d9;font-size:13px;font-weight:800;pointer-events:none}.geo-piece{position:absolute;width:118px;height:118px;cursor:grab;filter:drop-shadow(0 7px 7px #17203330);touch-action:none;transform-origin:center;transition:filter .15s}.geo-piece:active{cursor:grabbing}.geo-piece.is-selected{filter:drop-shadow(0 0 0 #000) drop-shadow(0 0 10px #2563eb);outline:3px solid #2563eb;outline-offset:4px}.geo-piece.large-triangle{width:180px;height:150px;clip-path:polygon(50% 0,100% 100%,0 100%)}.geo-piece.medium-triangle{width:140px;height:120px;clip-path:polygon(50% 0,100% 100%,0 100%)}.geo-piece.small-triangle{width:95px;height:82px;clip-path:polygon(50% 0,100% 100%,0 100%)}.geo-piece.square{width:92px;height:92px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}.geo-piece.parallelogram{width:132px;height:82px;clip-path:polygon(25% 0,100% 0,75% 100%,0 100%)}.geo-piece.circle{width:92px;height:92px;border-radius:50%}.geo-piece.c1{background:#ef4444}.geo-piece.c2{background:#f97316}.geo-piece.c3{background:#facc15}.geo-piece.c4{background:#22c55e}.geo-piece.c5{background:#3b82f6}.geo-piece.c6{background:#8b5cf6}.geo-piece.c7{background:#ec4899}@media(max-width:980px){body{overflow:auto;touch-action:manipulation}.builder-shell{min-height:900px}.builder-panel{width:calc(50% - 26px)}.hint{max-width:calc(100% - 60px)}.shape-stage{padding:36px 28px 42px}.builder-shell.two-d .left-panel{width:286px}.builder-shell.two-d{min-height:760px}}@media(max-width:680px){.builder-shell{min-height:1050px}.builder-panel{left:12px;right:12px;width:calc(100% - 24px)}.left-panel{top:12px}.right-panel{top:390px}.hint{top:12px;font-size:11px;border-radius:13px}.shapes{grid-template-columns:repeat(3,1fr)}.colors{grid-template-columns:repeat(7,1fr)}.builder-shell.two-d{min-height:940px}.builder-shell.two-d .left-panel{width:calc(100% - 24px);height:auto}.shape-stage{padding:400px 12px 20px}.shape-board{height:460px;min-height:460px}}
+html{overscroll-behavior:none}body{margin:0;overflow:hidden;font-family:Segoe UI,sans-serif;color:#172033;background:#eef6ff;touch-action:none}#kemalFooterMount{display:none}.builder-shell{height:var(--builder-height,calc(100vh - 74px));min-height:650px;position:relative;overflow:hidden;background:linear-gradient(#f8fbff,#eaf3ff)}#stage{position:absolute;inset:0}#stage canvas{display:block;width:100%;height:100%;touch-action:none}.builder-panel{position:absolute;z-index:3;width:286px;display:grid;gap:12px;background:#fffffff0;border:1px solid #cbd5e1;border-radius:18px;padding:14px;box-shadow:0 18px 42px #0f172a20;backdrop-filter:blur(16px)}.left-panel{top:18px;left:18px}.right-panel{top:18px;right:18px}.panel-head{display:flex;gap:10px;align-items:center;border-bottom:1px solid #e2e8f0;padding-bottom:12px}.panel-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:white}.panel-title{margin:0;font-weight:900;font-size:15px}.panel-sub,.builder-panel p{margin:3px 0 0;color:#64748b;font-size:12px;font-weight:700}.builder-panel section{display:grid;gap:8px}.builder-panel section>b{font-size:11px;letter-spacing:.08em;color:#64748b}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}button{min-height:42px;border:1px solid #d8e1ee;border-radius:12px;background:white;padding:8px;color:#334155;font:800 13px Segoe UI;cursor:pointer}button:hover{border-color:#93c5fd;background:#f8fafc}button:active{transform:scale(.96)}.primary{background:#1476f2;color:white;border-color:#1476f2}.colors{grid-template-columns:repeat(7,1fr)}.color{aspect-ratio:1;min-height:0;padding:0;border:2px solid white;border-radius:50%;box-shadow:0 0 0 1px #94a3b8}.color.active{box-shadow:0 0 0 3px #2563eb}.task{padding:12px;border:1px solid #ddd6fe;border-radius:14px;background:#f5f3ff;display:grid;gap:8px}.task b{font-size:12px;color:#6d28d9}.task span{font-size:13px;font-weight:800;line-height:1.35}.selected{display:none;padding:11px;border:1px solid #bfdbfe;border-radius:14px;background:#eff6ff;gap:8px}.selected.show{display:grid}.hint{position:absolute;z-index:2;left:50%;top:15px;transform:translateX(-50%);background:#ffffffdf;border:1px solid #dbeafe;border-radius:999px;padding:8px 14px;max-width:calc(100% - 630px);text-align:center;font-size:12px;font-weight:800;color:#475569;pointer-events:none}.two-only,.shape-stage,.builder-shell:not(.two-d) .two-only{display:none!important}.builder-shell.two-d #stage,.builder-shell.two-d .hint,.builder-shell.two-d .three-only{display:none!important}.builder-shell.two-d .two-only,.builder-shell.two-d .shape-stage{display:block!important}.shape-stage{position:absolute;inset:0;padding:46px 340px 42px;z-index:1;background:radial-gradient(circle at 50% 0,#fdf7ff,#eef6ff 58%)}.shape-board{position:relative;margin:auto;width:min(800px,100%);height:min(560px,calc(100vh - 165px));min-height:420px;border:2px solid #c4b5fd;border-radius:26px;background-color:#fff;background-image:linear-gradient(#ede9fe 1px,transparent 1px),linear-gradient(90deg,#ede9fe 1px,transparent 1px);background-size:24px 24px;box-shadow:0 20px 50px #6d28d91c;overflow:hidden}.shape-board-note{margin:16px;text-align:center;color:#6d28d9;font-size:13px;font-weight:800;pointer-events:none}@media(max-width:980px){body{overflow:auto;touch-action:manipulation}.builder-shell{min-height:900px}.builder-panel{width:calc(50% - 26px)}.hint{max-width:calc(100% - 60px)}.shape-stage{padding:36px 28px 42px}.builder-shell.two-d .left-panel{width:286px}.builder-shell.two-d{min-height:760px}}@media(max-width:680px){.builder-shell{min-height:1050px}.builder-panel{left:12px;right:12px;width:calc(100% - 24px)}.left-panel{top:12px}.right-panel{top:390px}.hint{top:12px;font-size:11px;border-radius:13px}.shapes{grid-template-columns:repeat(3,1fr)}.colors{grid-template-columns:repeat(7,1fr)}.builder-shell.two-d{min-height:940px}.builder-shell.two-d .left-panel{width:calc(100% - 24px);height:auto}.shape-stage{padding:400px 12px 20px}.shape-board{height:460px;min-height:460px}}
 
-/* Tangram parçaları: aynı açı ve oran sistemini kullanan, şablonlarda düzgün
-   birleşen bir set. Yön sınıfları örneklerin siluetini net tutar. */
-.geo-piece.large-triangle{width:200px;height:168px}
-.geo-piece.medium-triangle{width:142px;height:120px}
-.geo-piece.small-triangle{width:96px;height:82px}
-.geo-piece.large-triangle.dir-up,.geo-piece.medium-triangle.dir-up,.geo-piece.small-triangle.dir-up{clip-path:polygon(50% 0,100% 100%,0 100%)}
-.geo-piece.large-triangle.dir-down,.geo-piece.medium-triangle.dir-down,.geo-piece.small-triangle.dir-down{clip-path:polygon(0 0,100% 0,50% 100%)}
-.geo-piece.large-triangle.dir-left,.geo-piece.medium-triangle.dir-left,.geo-piece.small-triangle.dir-left{clip-path:polygon(0 50%,100% 0,100% 100%)}
-.geo-piece.large-triangle.dir-right,.geo-piece.medium-triangle.dir-right,.geo-piece.small-triangle.dir-right{clip-path:polygon(0 0,100% 50%,0 100%)}
-.geo-piece.large-triangle.dir-ne,.geo-piece.medium-triangle.dir-ne,.geo-piece.small-triangle.dir-ne{clip-path:polygon(0 0,100% 0,0 100%)}
-.geo-piece.large-triangle.dir-nw,.geo-piece.medium-triangle.dir-nw,.geo-piece.small-triangle.dir-nw{clip-path:polygon(100% 0,100% 100%,0 100%)}
-.geo-piece.medium-triangle.dir-rect-left{width:120px;height:120px;clip-path:polygon(0 0,100% 0,0 100%)}
-.geo-piece.medium-triangle.dir-rect-right{width:120px;height:120px;clip-path:polygon(100% 0,100% 100%,0 100%)}
-.geo-piece.square{width:120px;height:120px}
-.geo-piece.square.dir-diamond{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-.geo-piece.square.dir-window{width:48px;height:48px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-.geo-piece.square.dir-mast{width:18px;height:224px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-.geo-piece.square:not(.dir-diamond){clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-.geo-piece.parallelogram{width:140px;height:90px;clip-path:polygon(25% 0,100% 0,75% 100%,0 100%)}
-.geo-piece.parallelogram.dir-door{width:54px;height:76px;clip-path:polygon(15% 0,100% 0,85% 100%,0 100%)}
-.geo-piece.parallelogram.dir-hull{width:220px;height:72px;clip-path:polygon(0 0,100% 0,84% 100%,16% 100%)}
 .rotate-help{display:block;margin-top:-3px;color:#64748b;font-size:11px;font-weight:700;line-height:1.35}
 #resizeHandle{position:absolute;z-index:4;width:28px;min-height:28px;height:28px;padding:0;border:2px solid #fff;border-radius:8px;background:#2563eb;color:#fff;font-size:16px;line-height:1;box-shadow:0 3px 10px #1d4ed880;cursor:nwse-resize;touch-action:none;transform:translate(-50%,-50%)}#resizeHandle:hover{background:#1d4ed8;border-color:#dbeafe}#resizeHandle:active{transform:translate(-50%,-50%) scale(.92)}
+
+/* 2B düzenleme alanı: tutamaçlar şekillerin üstünde ayrı bir SVG katmanıdır. */
+.builder-shell.two-d .left-panel{width:286px;max-height:calc(100% - 36px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin}
+.builder-shell.two-d .shape-stage{padding:26px 24px 28px 340px}
+.builder-shell.two-d .shape-board{width:100%;max-width:1100px;height:calc(100% - 4px);min-height:420px}
+.shape-board-note{position:absolute;z-index:1;left:0;right:0;font-size:12px;margin:12px 8px}
+.shape-canvas{display:block;width:100%;height:100%;position:absolute;inset:0;max-width:none;touch-action:none;user-select:none}
+.geo-piece{cursor:grab;touch-action:none;stroke-linejoin:round}
+.geo-piece:active{cursor:grabbing}
+.geo-piece:focus{outline:none}
+.geo-piece:focus-visible{stroke:#2563eb;stroke-width:3}
+.shape-selection{pointer-events:none}
+.shape-selection-frame{fill:none;stroke:#2563eb;stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+.shape-rotate-line{stroke:#2563eb;stroke-width:1.5}
+.shape-handle{pointer-events:all;cursor:move;touch-action:none}
+.shape-handle-hit{fill:transparent;stroke:none}
+.shape-handle-dot{fill:white;stroke:#2563eb;stroke-width:2}
+.shape-handle[data-kind="vertex"] .shape-handle-dot{fill:#facc15;stroke:#a16207}
+.shape-handle[data-kind="rotate"] .shape-handle-dot{fill:#2563eb}
+.shape-handle:hover .shape-handle-dot{stroke-width:3;filter:drop-shadow(0 0 3px #2563eb66)}
+.shape-handle-icon{fill:white;font:700 18px Segoe UI;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.shape-edit{padding:10px;border:1px solid #ddd6fe;border-radius:12px;background:#faf8ff}
+.builder-panel .shape-edit p{min-height:44px;margin:6px 0 9px;font-size:12px;line-height:1.5;color:#475569;font-weight:600}
+.shape-actions{gap:5px}.shape-actions button{min-height:34px;font-size:12px;padding:5px}
+button:disabled{opacity:.45;cursor:default;transform:none}
+.shape-examples{margin-top:7px;max-height:258px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:2px;scrollbar-width:thin}
+.shape-example{display:flex;align-items:center;gap:6px;text-align:left;min-height:54px;padding:5px;font-size:12px}
+.shape-example svg{width:42px;height:42px;flex-shrink:0;max-width:none;background:#faf8ff;border-radius:6px;pointer-events:none}
+.shape-example.is-active{border-color:#8b5cf6;background:#f5f3ff}
+@media(max-width:980px){
+  .builder-shell.two-d{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible;padding:14px;gap:16px}
+  .builder-shell.two-d .left-panel{position:relative;top:auto;left:auto;right:auto;width:100%;max-height:none;grid-template-columns:1fr 1fr;align-items:start;padding:12px}
+  .builder-shell.two-d .panel-head{grid-column:1/-1}
+  .builder-shell.two-d .left-panel>section:first-of-type{grid-column:1/-1}
+  .builder-shell.two-d .left-panel>section:last-of-type{grid-column:1/-1}
+  .builder-shell.two-d .shape-stage{position:relative;inset:auto;padding:0;min-width:0}
+  .builder-shell.two-d .shape-board{height:540px;min-height:0}
+  .shape-examples{grid-template-columns:repeat(4,1fr);max-height:132px}
+}
+@media(max-width:580px){
+  .builder-shell.two-d{padding:10px;gap:12px}
+  .builder-shell.two-d .left-panel{grid-template-columns:1fr;gap:10px}
+  .builder-shell.two-d .left-panel>section{grid-column:1/-1}
+  .builder-shell.two-d .shapes{grid-template-columns:repeat(3,1fr)}
+  .shape-actions{grid-template-columns:repeat(3,1fr)}
+  .builder-panel .shape-edit p{min-height:0}
+  .shape-examples{grid-template-columns:repeat(3,1fr);max-height:122px}
+  .shape-example{flex-direction:column;gap:2px;text-align:center;min-height:68px;font-size:11px}
+  .builder-shell.two-d .shape-board{height:460px;border-radius:18px}
+  .shape-board-note{font-size:11px}
+}
+body.shape-workshop{overflow:auto}
+.builder-shell.two-d .builder-panel button.primary{background:#1476f2;border-color:#1476f2;color:#fff}
+@media(min-width:981px){
+  .builder-shell.two-d{height:max(600px,calc(100dvh - var(--builder-top,106px)));min-height:0}
+  .builder-shell.two-d .shape-stage{padding-bottom:112px}
+  .builder-shell.two-d .left-panel{gap:9px;padding:12px}
+  .builder-shell.two-d .panel-head{padding-bottom:8px}
+  .builder-shell.two-d .panel-icon{width:34px;height:34px}
+  .builder-shell.two-d .builder-panel button{min-height:34px;padding:6px;font-size:12px}
+  .builder-shell.two-d .shapes,.builder-shell.two-d .shape-actions{grid-template-columns:repeat(3,1fr);gap:5px}
+  .builder-shell.two-d .shape-examples{max-height:168px;gap:5px}
+  .builder-shell.two-d .shape-example svg{width:34px;height:34px}
+  .builder-shell.two-d .shape-edit p{min-height:36px;font-size:11px;margin:4px 0 7px}
+}
+@media(max-width:980px){
+  .builder-shell.two-d .left-panel{order:0}
+  .builder-shell.two-d .shape-stage{order:1;margin-bottom:96px}
+}

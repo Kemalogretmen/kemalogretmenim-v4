@@ -1,4 +1,6 @@
 .DS_Store
+/assets.zip
+/js.zip
 .idea/
 node_modules/
 tmp/

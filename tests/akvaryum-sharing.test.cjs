@@ -98,6 +98,8 @@ test('class pearl aggregates lifetime earned points without spending food or exp
 test('nameless viewing keeps optional points above the fish and supports an independent class pearl',async()=>{
  const h=await viewerHarness({theme:'reef',settings:{names:false,points:true,classPoints:true},classPoints:345,students:[{id:'a',name:'',species:'clown',mood:'happy',points:123}]});
  assert.equal(h.document.querySelector('.fish-name').hidden,true);
+ assert.equal(h.document.querySelector('.fish').style.opacity,'');
+ assert.equal(h.document.querySelector('.fish').disabled,true);
  assert.equal(h.document.querySelector('.fish-points').textContent,'★ 123');
  assert.equal(h.document.querySelector('.fish-points').hidden,false);
  assert.equal(h.document.getElementById('classPearl').hidden,false);

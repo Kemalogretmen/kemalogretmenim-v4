@@ -11,7 +11,8 @@
   <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
   <meta property="og:site_name" content="Kemal Öğretmenim">
   <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
+  <link rel="stylesheet" href="/css/whiteboard-fonts.css?v=20261010">
   <link rel="stylesheet" href="/css/whiteboard-icons.css?v=20260926-math1">
   <link rel="stylesheet" href="/css/whiteboard-math.css?v=20260928-math3">
     <title>Akıllı Tahtam — Kemal Öğretmenim</title>
@@ -1012,7 +1013,9 @@
   .float-panel.is-open { animation: none; }
   .toolbar-btn i { font-size: 19px; }
   .sandbox-layer { bottom: auto; padding: 10px 10px 10px 86px; }
-  .sandbox-wrap { border-radius: 8px; padding: 10px; box-shadow: none; }
+  .sandbox-layer { touch-action: auto; }
+  .board-stage.is-sand-mode { touch-action: pan-x pan-y; }
+  .sandbox-wrap { min-width: 0; border-radius: 8px; padding: 10px; box-shadow: none; }
   .sandbox-bed { min-height: 180px; border-radius: 8px; }
   .sandbox-title strong { font-size: 24px; }
   @media (max-width:760px) {
@@ -1027,6 +1030,12 @@
     .pro-toolbar .float-panel { max-height: min(360px, 44vh); }
     .sandbox-layer { padding: 8px 8px 82px; }
     .sandbox-title { display: none; }
+    .sandbox-topbar { min-width: 0; display: grid; gap: 6px; padding: 0; }
+    .sandbox-letter-row { min-width: 0; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding: 2px 0 6px; touch-action: pan-x; }
+    .sand-chip { flex: 0 0 40px; height: 40px; }
+    .sand-mini-actions { justify-content: flex-start; gap: 4px; }
+    .sand-mini-actions .sand-mini-btn { min-height: 40px; padding: 0 8px; font-size: 12px; }
+    .sandbox-guide { font-size: 120px; line-height: 1.2; overflow: hidden; }
   }
 </style>
 </head>
@@ -1165,7 +1174,7 @@
                       <i class="fas fa-umbrella-beach"></i>
                     </button>
 
-                    <button class="toolbar-btn" type="button" data-board-tool="text" title="Yazı Ekle">
+                    <button class="toolbar-btn" type="button" data-board-tool="text" title="Yazı Ekle" aria-controls="textTools">
                       <i class="fas fa-font"></i>
                     </button>
 
@@ -1212,6 +1221,18 @@
                 </div>
 
                 <!-- KUM HAVUZU YÜZEN PANELİ -->
+                <div class="float-panel" id="textTools">
+                  <div class="float-panel-head"><span class="float-panel-title">Yazı Araçları</span><button class="float-close-btn" type="button" data-close-panel="textTools" aria-label="Yazı araçlarını kapat">✕</button></div>
+                  <label class="board-font-field">Yazı tipi
+                    <select id="boardFontSelect"><option value="ttkb">TTKB Dik Temel</option><option value="nunito">Nunito</option></select>
+                  </label>
+                  <div class="board-text-options" role="group" aria-label="Yazı kalınlığı">
+                    <button class="toolbar-btn" type="button" data-text-weight="400" title="Normal yazı" aria-label="Normal yazı">A</button>
+                    <button class="toolbar-btn" type="button" data-text-weight="700" title="Kalın yazı" aria-label="Kalın yazı"><b>B</b></button>
+                  </div>
+                  <label class="board-font-field" for="boardTextSizeSlider">Yazı boyutu <output id="textSizeDisplay">32</output></label>
+                  <input id="boardTextSizeSlider" type="range" min="16" max="120" value="32" aria-label="Yazı boyutu">
+                </div>
                 <div class="float-panel" id="sandSubPanel">
                   <div class="float-panel-head">
                     <span class="float-panel-title">Kum Havuzu</span>
@@ -1226,6 +1247,9 @@
                     <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Hedef Yazı</div>
                     <input class="sand-target-input" id="sandTargetInput" type="text" maxlength="12" value="A" aria-label="Kum havuzu hedef yazısı">
                   </div>
+                  <label class="board-font-field">Kılavuz yazı tipi
+                    <select id="sandFontSelect"><option value="ttkb">TTKB Dik Temel</option><option value="nunito">Nunito</option></select>
+                  </label>
                   <div class="sand-mode-switch" role="group" aria-label="Kum havuzu arka planı">
                     <button type="button" data-sand-mode="guided" aria-pressed="true">Harfli</button>
                     <button type="button" data-sand-mode="plain" aria-pressed="false">Sadece kum</button>
@@ -1400,7 +1424,7 @@
 
   </main>
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-workspace-focus"></script>
+  <script src="/js/site.js?v=20261010-dock-home"></script>
   <script src="/js/whiteboard-math.js?v=20260928-math3"></script>
   <script>
 (function(){
@@ -1435,10 +1459,10 @@
         pages: [{ items: [], undoStack: [[]], undoIndex: 0 }],
         pageIndex: 0,
         selectedItem: null, selectAction: null, dragStartItem: null, dragStartBounds: null,
-        activeText: null, textAlign: 'left', textWeight: '800', textStyle: 'normal', textSize: 32
+        activeText: null, textAlign: 'left', textWeight: '400', textStyle: 'normal', textSize: 32, textFont: 'ttkb'
       },
       sand: {
-        active: false, tool: 'finger', target: 'A', guideVisible: true,
+        active: false, tool: 'finger', target: 'A', guideVisible: true, font: 'ttkb',
         drawing: false, pointerId: null, lastPoint: null, lastStamp: null, pixelRatio: 1, logicalWidth: 0, logicalHeight: 0,
         topPattern: null, bottomPattern: null, cursorVisible: false
       },
@@ -1610,6 +1634,8 @@
           zoom: S.board.zoom,
           strokeColor: S.board.strokeColor,
           size: S.board.size,
+          textFont: S.board.textFont,
+          sandFont: S.sand.font,
           shapeStrokeColor: S.board.shapeStrokeColor,
           shapeFillColor: S.board.shapeFillColor,
           shapeFillEnabled: S.board.shapeFillEnabled,
@@ -1632,6 +1658,8 @@
         S.board.zoom = Math.max(S.board.minZoom, Math.min(S.board.maxZoom, Number(stored.zoom) || S.board.zoom));
         S.board.strokeColor = stored.strokeColor || S.board.strokeColor;
         S.board.size = Number(stored.size) || S.board.size;
+        S.board.textFont = stored.textFont === 'nunito' ? 'nunito' : 'ttkb';
+        S.sand.font = stored.sandFont === 'nunito' ? 'nunito' : 'ttkb';
         S.board.shapeStrokeColor = stored.shapeStrokeColor || S.board.shapeStrokeColor;
         S.board.shapeFillColor = stored.shapeFillColor || S.board.shapeFillColor;
         S.board.shapeFillEnabled = !!stored.shapeFillEnabled;
@@ -1874,7 +1902,8 @@
     function resizeSandbox() {
       if(!E.sandboxBed || !E.sandCanvas) return;
       if(!S.sand.active) return;
-      E.sandboxLayer.style.height = Math.max(540, E.boardStage.clientHeight) + 'px';
+      E.sandboxLayer.style.width = E.boardStage.clientWidth + 'px';
+      E.sandboxLayer.style.height = Math.max(360, E.boardStage.clientHeight) + 'px';
       // The canvas occupies the bed's inner area, excluding its wooden border.
       var width = E.sandCanvas.clientWidth;
       var height = E.sandCanvas.clientHeight;
@@ -1887,6 +1916,12 @@
       var nextW = Math.max(1, Math.floor(width * ratio));
       var nextH = Math.max(1, Math.floor(height * ratio));
       if(E.sandCanvas.width === nextW && E.sandCanvas.height === nextH && S.sand.logicalWidth === width && S.sand.logicalHeight === height && sandCtx) return;
+      var previous = null;
+      if(sandCtx && S.sand.logicalWidth && S.sand.logicalHeight) {
+        previous = document.createElement('canvas');
+        previous.width = E.sandCanvas.width; previous.height = E.sandCanvas.height;
+        previous.getContext('2d').drawImage(E.sandCanvas, 0, 0);
+      }
       S.sand.logicalWidth = width;
       S.sand.logicalHeight = height;
       S.sand.pixelRatio = ratio;
@@ -1899,6 +1934,10 @@
       }
       S.sand.topPattern = null;
       fillSandTop();
+      if(previous && sandCtx) {
+        sandCtx.clearRect(0, 0, width, height);
+        sandCtx.drawImage(previous, 0, 0, width, height);
+      }
     }
     function setSandTarget(value) {
       var next = String(value || '').trim().toLocaleUpperCase('tr-TR');
@@ -1914,6 +1953,8 @@
       if(E.sandGuideText) {
         E.sandGuideText.textContent = S.sand.guideVisible ? S.sand.target : '';
         E.sandGuideText.style.opacity = S.sand.guideVisible ? '1' : '0';
+        E.sandGuideText.style.fontFamily = boardFontFamily(S.sand.font);
+        E.sandGuideText.style.fontWeight = '400';
       }
       if(E.sandTargetInput && E.sandTargetInput.value !== S.sand.target) E.sandTargetInput.value = S.sand.target;
       E.sandToolBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.sandTool === S.sand.tool); });
@@ -1921,9 +1962,12 @@
       E.sandModeBtns.forEach(function(btn) { btn.setAttribute('aria-pressed', String((btn.dataset.sandMode === 'guided') === S.sand.guideVisible)); });
       if(E.sandboxLayer) E.sandboxLayer.classList.toggle('is-plain', !S.sand.guideVisible);
       if(E.sandTargetInput) E.sandTargetInput.disabled = !S.sand.guideVisible;
+      document.getElementById('sandFontSelect').value = S.sand.font;
       updateSandCursorIcon();
     }
     function setSandboxMode(active) {
+      S.sand.drawing = false; S.sand.pointerId = null; S.sand.lastPoint = null;
+      hideSandCursor();
       S.sand.active = !!active;
       if(active && mathTools) mathTools.hide();
       commitTextOverlay(true);
@@ -1931,6 +1975,7 @@
         closeAllSubPanels();
         E.boardStage.scrollTop = 0;
         E.boardStage.scrollLeft = 0;
+        if(window.innerWidth <= 760) E.boardStage.scrollIntoView({ block: 'start', behavior: 'instant' });
       } else if(sandSubPanel) {
         sandSubPanel.classList.remove('is-open');
       }
@@ -2068,6 +2113,7 @@
       if(shapeGroup) shapeGroup.classList.toggle('is-active', !boardCanDraw(S.board.tool) && ['line','ray','dashline','rect','square','circle','triangle','star','segment','infiniteLine'].indexOf(S.board.tool) > -1);
       if(E.sandGroupBtn) E.sandGroupBtn.classList.toggle('is-active', S.sand.active);
       if(E.boardPlane) E.boardPlane.classList.toggle('sand-mode', S.sand.active);
+      if(E.boardStage) E.boardStage.classList.toggle('is-sand-mode', S.sand.active);
       if(E.sandboxLayer) E.sandboxLayer.setAttribute('aria-hidden', S.sand.active ? 'false' : 'true');
       // Renk butonları — her seferinde taze DOM sorgusu (scope sorunu yok)
       document.querySelectorAll('[data-board-color]').forEach(function(btn) {
@@ -2099,7 +2145,7 @@
       });
       if(E.pageSizeSelect) E.pageSizeSelect.value = S.board.pageSize;
       E.textAlignBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textAlign === S.board.textAlign); });
-      E.textWeightBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textWeight === String(S.board.textWeight)); });
+      E.textWeightBtns.forEach(function(btn){ var active = btn.dataset.textWeight === String(S.board.textWeight); btn.classList.toggle('is-active', active); btn.setAttribute('aria-pressed', String(active)); });
       E.textStyleBtns.forEach(function(btn){ btn.classList.toggle('is-active', btn.dataset.textStyle === S.board.textStyle); });
       if(E.boardPlane) { E.boardPlane.classList.remove('board-paper-white', 'board-paper-lined', 'board-paper-grid', 'board-paper-guide'); E.boardPlane.classList.add('board-paper-' + S.board.paper); E.boardPlane.style.setProperty('--board-bg', S.board.backgroundColor || '#ffffff'); }
       if(E.boardPreview) E.boardPreview.style.cursor = S.board.tool === 'pan' ? 'grab' : (S.board.tool === 'select' ? 'default' : (S.board.tool === 'text' ? 'text' : 'crosshair'));
@@ -2111,6 +2157,8 @@
       E.boardSizePresetBtns.forEach(function(btn){ btn.classList.toggle('is-active', Number(btn.dataset.boardSizePreset) === Number(S.board.size)); });
       if(E.shapeSizeSlider) E.shapeSizeSlider.value = String(S.board.shapeSize);
       if(E.boardTextSizeSlider) E.boardTextSizeSlider.value = String(S.board.textSize);
+      if(E.textSizeDisplay) E.textSizeDisplay.textContent = String(S.board.textSize);
+      document.getElementById('boardFontSelect').value = S.board.textFont;
       updateBoardZoomUi();
       syncActiveTextStyles(); syncPageUI();
       positionBoardToolbar();
@@ -2251,7 +2299,7 @@
       if(item.kind === 'shape') drawShape(ctx, item);
       if(item.kind === 'text') {
         ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.fillStyle = item.color;
-        ctx.font = item.textStyle + ' ' + item.textWeight + ' ' + item.fontSize + 'px Nunito'; ctx.textBaseline = 'top'; ctx.textAlign = item.textAlign || 'left';
+        ctx.font = item.textStyle + ' ' + item.textWeight + ' ' + item.fontSize + 'px ' + boardFontFamily(item.textFont); ctx.textBaseline = 'top'; ctx.textAlign = item.textAlign || 'left';
         var lines = item.text.split('\n'); var lineHeight = item.fontSize * 1.28; var baseX = item.x;
         if(item.textAlign === 'center') baseX = item.x + (item.boxWidth || 180) / 2; if(item.textAlign === 'right') baseX = item.x + (item.boxWidth || 180);
         for(var i = 0; i < lines.length; i += 1) { ctx.fillText(lines[i], baseX, item.y + i * lineHeight, item.boxWidth || 300); }
@@ -2325,11 +2373,12 @@
 
     function commitTextOverlay(save) {
       var active = S.board.activeText; if(!active) return; var textarea = active.el; var text = textarea.value.trim();
-      if(save && text) { pushBoardItem({ kind: 'text', text: text, x: active.x, y: active.y, color: S.board.strokeColor, fontSize: S.board.textSize, textAlign: S.board.textAlign, textWeight: S.board.textWeight, textStyle: S.board.textStyle, boxWidth: active.el.offsetWidth / Math.max(0.1, S.board.zoom || 1) }); }
+      if(save && text) { pushBoardItem({ kind: 'text', text: text, x: active.x, y: active.y, color: S.board.strokeColor, fontSize: S.board.textSize, textFont: S.board.textFont, textAlign: S.board.textAlign, textWeight: S.board.textWeight, textStyle: S.board.textStyle, boxWidth: active.el.offsetWidth / Math.max(0.1, S.board.zoom || 1) }); }
       textarea.remove(); S.board.activeText = null;
     }
-    function syncActiveTextStyles() { if(!S.board.activeText) return; var zoom = Math.max(0.1, S.board.zoom || 1); var ta = S.board.activeText.el; ta.style.left = Math.max(10, S.board.activeText.x * zoom) + 'px'; ta.style.top = Math.max(10, S.board.activeText.y * zoom) + 'px'; ta.style.color = S.board.strokeColor; ta.style.textAlign = S.board.textAlign; ta.style.fontWeight = S.board.textWeight; ta.style.fontStyle = S.board.textStyle; ta.style.fontSize = (S.board.textSize * zoom) + 'px'; }
-    function placeTextBox(point) { commitTextOverlay(false); var zoom = Math.max(0.1, S.board.zoom || 1); var ta = document.createElement('textarea'); ta.className = 'board-overlay-text'; ta.style.left = Math.max(10, point.x * zoom) + 'px'; ta.style.top = Math.max(10, point.y * zoom) + 'px'; ta.placeholder = 'Yazınızı girin'; E.boardPlane.appendChild(ta); ta.focus(); S.board.activeText = { el: ta, x: point.x, y: point.y }; syncActiveTextStyles(); ta.addEventListener('keydown', function(evt) { if(evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); commitTextOverlay(true); } else if(evt.key === 'Escape') { evt.preventDefault(); commitTextOverlay(false); } }); ta.addEventListener('blur', function() { commitTextOverlay(true); }); }
+    function boardFontFamily(key) { return key === 'ttkb' ? '"TTKB Dik Temel Abece", sans-serif' : 'Nunito, sans-serif'; }
+    function syncActiveTextStyles() { if(!S.board.activeText) return; var zoom = Math.max(0.1, S.board.zoom || 1); var ta = S.board.activeText.el; ta.style.left = Math.max(10, S.board.activeText.x * zoom) + 'px'; ta.style.top = Math.max(10, S.board.activeText.y * zoom) + 'px'; ta.style.color = S.board.strokeColor; ta.style.textAlign = S.board.textAlign; ta.style.fontWeight = S.board.textWeight; ta.style.fontStyle = S.board.textStyle; ta.style.fontFamily = boardFontFamily(S.board.textFont); ta.style.fontSize = (S.board.textSize * zoom) + 'px'; }
+    function placeTextBox(point) { commitTextOverlay(false); var zoom = Math.max(0.1, S.board.zoom || 1); var ta = document.createElement('textarea'); ta.className = 'board-overlay-text'; ta.style.left = Math.max(10, point.x * zoom) + 'px'; ta.style.top = Math.max(10, point.y * zoom) + 'px'; ta.placeholder = 'Yazınızı girin'; E.boardPlane.appendChild(ta); ta.focus(); S.board.activeText = { el: ta, x: point.x, y: point.y }; syncActiveTextStyles(); ta.addEventListener('keydown', function(evt) { if(evt.key === 'Enter' && !evt.shiftKey) { evt.preventDefault(); commitTextOverlay(true); } else if(evt.key === 'Escape') { evt.preventDefault(); commitTextOverlay(false); } }); ta.addEventListener('blur', function(evt) { if(evt.relatedTarget && evt.relatedTarget.closest('#boardToolbar')) return; commitTextOverlay(true); }); }
 
     function startBoardDraw(point) {
       if(S.board.tool === 'select') {
@@ -2746,7 +2795,7 @@
     var shapeSubPanel = document.getElementById('shapeSubPanel');
     var pageSubPanel = document.getElementById('pageSubPanel');
     var sandSubPanel = document.getElementById('sandSubPanel');
-    var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel, sandSubPanel, document.getElementById('mathSubPanel')].filter(Boolean);
+    var allFloatPanels = [penSubPanel, shapeSubPanel, pageSubPanel, sandSubPanel, E.textTools, document.getElementById('mathSubPanel')].filter(Boolean);
     function closeAllSubPanels() {
       if(!allFloatPanels.some(function(panel) { return panel.classList.contains('is-open'); }) && !S.board.shapesOpen) return;
       allFloatPanels.forEach(function(panel) { panel.classList.remove('is-open'); });
@@ -2958,7 +3007,7 @@
         if(!S.sand.active) return;
         updateSandCursor(evt);
       });
-      E.sandCanvas.addEventListener('pointermove', function(evt) {
+      function moveSandPointer(evt) {
         if(!S.sand.active) return;
         if(S.sand.drawing && S.sand.pointerId !== evt.pointerId) return;
         updateSandCursor(evt);
@@ -2985,8 +3034,8 @@
           drawSandMove(last, point);
           S.sand.lastPoint = point;
         });
-      }, { passive: false });
-      E.sandCanvas.addEventListener('pointerdown', function(evt) {
+      }
+      function startSandPointer(evt) {
         if(!S.sand.active) return;
         if(S.sand.drawing) return;
         if(typeof evt.button === 'number' && evt.button > 0) return;
@@ -3003,10 +3052,10 @@
         if(S.sand.tool === 'star') drawSandStar(point);
         else drawSandMove(point, { x: point.x + 0.1, y: point.y + 0.1 });
         try { E.sandCanvas.setPointerCapture(evt.pointerId); } catch(err) {}
-      }, { passive: false });
+      }
       function finishSandPointer(evt) {
         if(S.sand.pointerId !== evt.pointerId) return;
-        evt.preventDefault();
+        if(evt.cancelable !== false) evt.preventDefault();
         S.sand.drawing = false;
         S.sand.pointerId = null;
         S.sand.lastPoint = null;
@@ -3014,8 +3063,23 @@
         if(evt.pointerType !== 'mouse' || evt.type === 'pointercancel') hideSandCursor();
         try { E.sandCanvas.releasePointerCapture(evt.pointerId); } catch(err) {}
       }
-      E.sandCanvas.addEventListener('pointerup', finishSandPointer);
-      E.sandCanvas.addEventListener('pointercancel', finishSandPointer);
+      if(window.PointerEvent) {
+        E.sandCanvas.addEventListener('pointerdown', startSandPointer, { passive: false });
+        E.sandCanvas.addEventListener('pointermove', moveSandPointer, { passive: false });
+        E.sandCanvas.addEventListener('pointerup', finishSandPointer);
+        E.sandCanvas.addEventListener('pointercancel', finishSandPointer);
+        E.sandCanvas.addEventListener('lostpointercapture', finishSandPointer);
+      } else {
+        // Older phone browsers expose Touch Events but no Pointer Events.
+        [['touchstart', startSandPointer], ['touchmove', moveSandPointer], ['touchend', finishSandPointer], ['touchcancel', finishSandPointer]].forEach(function(binding) {
+          E.sandCanvas.addEventListener(binding[0], function(evt) {
+            Array.from(evt.changedTouches).forEach(function(touch) {
+              binding[1]({ clientX: touch.clientX, clientY: touch.clientY, pointerId: touch.identifier, pointerType: 'touch', button: 0,
+                type: binding[0] === 'touchcancel' ? 'pointercancel' : binding[0], cancelable: evt.cancelable, preventDefault: function() { if(evt.cancelable) evt.preventDefault(); } });
+            });
+          }, { passive: false });
+        });
+      }
       E.sandCanvas.addEventListener('pointerleave', function() {
         if(!S.sand.drawing) hideSandCursor();
       });
@@ -3037,7 +3101,9 @@
       var pageGroupBtn = document.getElementById('pageGroupBtn');
       if(pageGroupBtn) pageGroupBtn.addEventListener('click', function(evt) { evt.stopPropagation(); togglePanel(pageSubPanel); });
 
-      E.boardToolBtns.forEach(function(btn) { btn.addEventListener('click', function() { setBoardTool(btn.dataset.boardTool); }); });
+      E.boardToolBtns.forEach(function(btn) { btn.addEventListener('click', function() { setBoardTool(btn.dataset.boardTool); if(btn.dataset.boardTool === 'text') togglePanel(E.textTools); }); });
+      document.getElementById('boardFontSelect').addEventListener('change', function(evt) { S.board.textFont = evt.target.value; syncBoardUI(); scheduleBoardAutosave(); });
+      document.getElementById('sandFontSelect').addEventListener('change', function(evt) { S.sand.font = evt.target.value; syncSandboxUI(); scheduleBoardAutosave(); });
       E.boardColorBtns.forEach(function(btn) {
         btn.setAttribute('aria-pressed', btn.classList.contains('is-active') ? 'true' : 'false');
         btn.addEventListener('pointerdown', function(evt) {
@@ -3210,6 +3276,12 @@
     });
     mountBoardToolbar();
     bindWhiteboardControls(); bindWhiteboardPointerEvents(); bindSandboxControls(); bindSandboxPointerEvents(); loadBoardFromMemory(); syncBoardUI(); initBoardDrag(); resizeBoard();
+    if(window.ResizeObserver) {
+      new ResizeObserver(function() { if(S.sand.active) resizeSandbox(); }).observe(E.sandboxBed);
+    }
+    if(document.fonts) {
+      Promise.all([document.fonts.load('400 32px "TTKB Dik Temel Abece"'), document.fonts.load('700 32px "TTKB Dik Temel Abece"')]).then(function() { redrawBoard(); }).catch(function() {});
+    }
     mathTools = window.initWhiteboardMathTools({
       plane: E.boardPlane, stage: E.boardStage, button: E.boardProtractorBtn,
       zoom: function() { return S.board.zoom || 1; },

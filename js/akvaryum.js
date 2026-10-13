@@ -1,9 +1,14 @@
 (async function () {
   'use strict';
-  const C = window.AquariumCore, Motion = window.AquariumMotion;
+  const C = window.AquariumCore, Motion = window.AquariumMotion, Anatomy = window.AquariumAnatomy;
   let KEY = 'kemal_class_aquarium_v1';
   const params = new URLSearchParams(location.search), childViewing = params.has('cocuk'), viewToken = params.get(childViewing ? 'cocuk' : 'izle');
   const viewing = params.has('izle') || childViewing, demoOnly = !viewing && params.get('demo') === '1';
+  // This preference belongs to the device, never to a shared class snapshot.
+  const CREATURE_MODE_KEY='kemal_aquarium_creature_mode';
+  let creatureMode='natural';
+  let creatureRenderer=null,creatureFallback='',modelPaintAt=-Infinity,modelSlowBatches=0;
+  const MODEL_INTERVAL=1000/18,MODEL_LIMIT=12;
   let shareRecord = null, shareQueue = Promise.resolve(), syncTimer;
   let cloud=null,cloudTimer,cloudBusy=false,cloudMessage='';
   const Audio = window.AquariumAudio;
@@ -97,6 +102,7 @@
     } catch (e) { lockAccess('Öğretmen oturumu doğrulanamadı. Bağlantınızı kontrol edip yeniden açın.'); return; }
   }
   document.body.classList.remove('access-pending');
+  if(!viewing)try {const saved=localStorage.getItem(CREATURE_MODE_KEY);if(['classic','natural','3d'].includes(saved))creatureMode=saved;}catch(_){}
   let blockedStorage = false;
   let state;
   try { const raw = viewing || demoOnly ? null : localStorage.getItem(KEY); state = raw ? C.validate(JSON.parse(raw)) : C.initialState(); }
@@ -258,6 +264,9 @@
   function settingsModal() {
     rememberModal('settingsModal'+'',()=>settingsModal());
     openModal('Sınıfın kontrolü sende', '<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="' + esc(classroom().name) + '" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">' + icon('plus') + 'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="teacher-fish">Öğretmen balığı</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div><div class="settings-section"><h3>Akvaryum görünümü</h3><button class="button" data-action="themes">Arka planı değiştir</button><label class="toggle-row">Balıkların üzerinde toplam puanlarını göster<input id="pointsToggle" type="checkbox" ' + (state.settings.points ? 'checked' : '') + '></label><label class="toggle-row">Sınıf puanlarını göster · İstiridye ve inci<input id="classPointsToggle" type="checkbox" ' + (state.settings.classPoints ? 'checked' : '') + '></label><label class="toggle-row">Besleme hatırlatmasında geçen gün sayısını göster<input id="hungerTextToggle" type="checkbox" ' + (state.settings.hungerText ? 'checked' : '') + '></label><label class="toggle-row">Seyrek emoji sohbetleri<input id="chatToggle" type="checkbox" ' + (state.settings.chat ? 'checked' : '') + '></label><label class="toggle-row">Öğrenci adlarını göster · Kapatınca isimsiz yüzerler<input id="namesToggle" type="checkbox" ' + (state.settings.names ? 'checked' : '') + '></label><label class="toggle-row">Canlıların yüzmesi ve su hareketleri<input id="motionToggle" type="checkbox" ' + (state.settings.motion ? 'checked' : '') + '></label>' + (reduced.matches ? '<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık; yüzme animasyonları durduruldu.</p>' : '') + '</div><div class="settings-section"><h3>Paylaşım</h3><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>' + soundSettings() + '<div class="settings-section"><h3>Kayıt ve eşitleme</h3>' + cloudControls() + '<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklamanızı sağlar. Ziyaretçiler yalnızca izin verdiğiniz görünümü izler; görev geçmişine veya yönetim yetkisine erişemez.</p><div class="settings-actions"><button class="button" data-action="export">' + icon('download') + 'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>' + (blockedStorage ? '<button class="button" data-action="export-raw">Mevcut kaydı indir</button>' : '') + '</div></div><div class="settings-section"><button class="button subtle" data-action="help">Nasıl çalışır?</button></div>');
+    const motionField=document.createElement('label');motionField.className='field device-quality';
+    motionField.innerHTML='Bu cihazda canlı hareketleri<select id="creatureMode"><option value="classic">Klasik görünüm</option><option value="natural">Doğal hareketler · Hafif</option><option value="3d">3D canlılar · Deneme</option></select><small>İlk dört tür: palyaço balığı, denizanası, kaplumbağa ve ahtapot. 3D modeller sevimli ve sade bir çizimdedir. Aynı anda en fazla 12 model ve toplam 30 canlı için açılır; cihaz zorlanırsa hafif görünüme döner. Diğer canlılar mevcut görsellerini kullanır. Bu seçim yalnızca bu cihaza kaydedilir.</small><small id="creatureStatus" role="status"></small>';
+    $('modalContent').prepend(motionField);$('creatureMode').querySelector('option[value="'+creatureMode+'"]').selected=true;updateCreatureStatus();
     const field=document.createElement('label');field.className='field device-quality';
     field.innerHTML='Bu cihazda görüntü kalitesi<select id="renderQuality"><option value="auto">Otomatik</option><option value="lite">Akıllı tahta · Akıcı görünüm</option><option value="full">Ayrıntılı görünüm</option></select><small>Akıcı görünüm cam bulanıklığını ve dekoratif ışıkları sadeleştirir. Balıklar yüzmeye, ses ve sayaç çalışmaya devam eder. Yalnızca bu cihaza kaydedilir.</small>';
     $('modalContent').prepend(field);$('renderQuality').querySelector('option[value="'+(window.SitePerformance?.mode() || 'auto')+'"]').selected=true;
@@ -518,6 +527,56 @@
     $('classPearlScore').textContent = (total || 0).toLocaleString('tr-TR');
     $('classPearl').setAttribute('aria-label','Sınıfın toplam puanı: '+(total || 0));
   }
+  let modelAllowed=false,modelStatus='';
+  function updateCreatureStatus() {
+    const label=$('creatureStatus');if(!label)return;
+    label.textContent=creatureMode==='classic'?'Klasik görünüm açık.':creatureMode==='natural'?'Doğal hareketler açık.':modelStatus;
+  }
+  function disposeCreatureRenderer() {
+    creatureRenderer?.dispose();creatureRenderer=null;
+  }
+  function prepareCreatureMode(items,eggs) {
+    const eggIds=new Set(eggs.map(s=>s.id));
+    const count=items.filter(s=>Anatomy?.species.includes(s.species) && !eggIds.has(s.id)).length;
+    modelAllowed=creatureMode==='3d' && !creatureFallback && !window.SitePerformance?.lite() && count<=MODEL_LIMIT && items.length<=30;
+    if(modelAllowed && count && !creatureRenderer) {
+      creatureRenderer=window.AquariumCreature3D?.create() || null;
+      if(!creatureRenderer?.supported){creatureFallback='Bu tarayıcıda 3D açılamadı; doğal hareketler kullanılıyor.';modelAllowed=false;}
+    }
+    modelStatus=creatureFallback || (window.SitePerformance?.lite()?'Akıcı görünüm açık; doğal hareketler kullanılıyor.':count>MODEL_LIMIT || items.length>30?'Kalabalık sınıf için doğal hareketler kullanılıyor.':'3D deneme açık · '+count+' model; diğer türler mevcut görselleriyle yüzüyor.');
+    if(!modelAllowed)disposeCreatureRenderer();
+    updateCreatureStatus();
+  }
+  function configureCreature(fish) {
+    const natural=creatureMode!=='classic' && !!Anatomy?.species.includes(fish.species);
+    // Natural strokes are small cached image transforms, and must keep looping
+    // when automatic quality switches to the 30fps lightweight path.
+    const jointed=natural && !fish.egg;
+    const use3D=modelAllowed && natural && !fish.egg && !!creatureRenderer?.supported;
+    const key=[fish.species,jointed,use3D].join(':');
+    fish.anatomicalMotion=natural;
+    if(fish.creatureKey===key)return;
+    fish.creatureKey=key;fish.use3D=use3D;fish.lastModelPose=null;
+    fish.el.classList.remove('has-3d');
+    fish.art.querySelectorAll('.creature-joint,.creature-model').forEach(el=>el.remove());
+    fish.art.style.setProperty('--body-mask',jointed?Anatomy.mask(fish.species):'none');
+    fish.bodyImage=fish.art.querySelector('.fish-body-image');fish.bodyImage.style.transform='';
+    fish.joints=[];
+    if(jointed)for(const part of Anatomy.definitions[fish.species].parts) {
+      const img=document.createElement('img');img.className='creature-joint';img.alt='';img.draggable=false;img.src=image(fish.species);
+      img.style.clipPath=part.clip;img.style.transformOrigin=part.origin;fish.art.append(img);fish.joints.push(img);
+    }
+    fish.modelCanvas=null;
+    if(use3D) {
+      const canvas=document.createElement('canvas');canvas.className='creature-model';canvas.width=Math.max(24,Math.min(192,Math.round(fish.size-10)));canvas.height=Math.round(canvas.width/1.5);
+      fish.art.append(canvas);fish.modelCanvas=canvas;
+    }
+  }
+  function restoreNaturalCreatures(message) {
+    creatureFallback=message;modelAllowed=false;disposeCreatureRenderer();
+    for(const fish of swimmers.values()){configureCreature(fish);placeFish(fish,false);}
+    modelStatus=message;updateCreatureStatus();
+  }
   function renderFish() {
     // Read the new scene dimensions after empty-state / panel layout changes,
     // before placing new animals; a later ResizeObserver callback is too late.
@@ -529,6 +588,7 @@
     const layoutKey=width+':'+height+':'+items.map(s=>s.id+'/'+s.species).join(',');
     const eggBed=$('eggBed');
     const eggs=items.filter(s=>!s.isTeacher && (viewing ? s.appearance?.egg : s.name && C.growth(s,classroom()).egg));
+    prepareCreatureMode(items,eggs);
     eggBed.hidden=!eggs.length;
     const eggPlaces=Motion.eggLayout(eggs,eggBed.clientWidth,eggBed.clientHeight,state.settings.classPoints);
 
@@ -543,12 +603,12 @@
         el.dataset.action = s.isTeacher ? 'teacher-fish' : 'fish-behaviors'; el.dataset.id = s.id;
         $('swimArea').append(el);
         fish = { el, art: el.querySelector('.fish-art'), ...placement, direction: index % 2 ? -1 : 1, phase: index * 1.8, mood: fishMood(s), hover: false, keyboard: false, angle: index % 2 ? 180 : 0, turn: null, cruise: 1 };
-        el.addEventListener('pointerenter', event => { if (!viewing && !document.fullscreenElement && event.pointerType !== 'touch') fish.hover = true; });
+        el.addEventListener('pointerenter', event => { if (!viewing && !document.fullscreenElement && event.pointerType !== 'touch') {fish.hover = true;fish.hoverUntil=performance.now()+650;} });
         el.addEventListener('pointerleave', () => { fish.hover = false; fish.pressed = false; });
-        el.addEventListener('pointerdown', () => { if(!viewing && !document.fullscreenElement) fish.pressed = true; });
+        el.addEventListener('pointerdown', () => { if(!viewing && !document.fullscreenElement) {fish.pressed = true;fish.pressedUntil=performance.now()+2000;} });
         el.addEventListener('pointerup', () => { fish.pressed = false; });
         el.addEventListener('pointercancel', () => { fish.pressed = false; });
-        el.addEventListener('focus', () => { if(!viewing && !document.fullscreenElement) fish.keyboard = true; });
+        el.addEventListener('focus', () => { if(!viewing && !document.fullscreenElement) {fish.keyboard = true;fish.keyboardUntil=performance.now()+900;} });
         el.addEventListener('blur', () => { fish.keyboard = false; });
         swimmers.set(s.id, fish);
       }
@@ -591,14 +651,15 @@
         fish.art.querySelectorAll('img').forEach(img=>{img.src=image(s.species);});
         fish.species=s.species;
       }
+      configureCreature(fish);
       fish.el.setAttribute('aria-label', (state.settings.names && s.name ? s.name + ', ' : '') + C.species(s.species).name + (growth.egg ? ', yumurta' : '') + (state.settings.points && score(s) !== null ? ', toplam ' + score(s) + ' puan' : ''));
       fish.el.querySelector('.fish-name').hidden = !state.settings.names || !s.name;
       fish.el.querySelector('.fish-name').textContent = state.settings.names ? s.name + (growth.trophy ? ' 🏆' : '') : '';
       const pointsEl=fish.el.querySelector('.fish-points'); pointsEl.hidden=!state.settings.points || score(s) === null; pointsEl.textContent='★ '+(score(s) ?? 0).toLocaleString('tr-TR');
       updateHungerLabel(fish, s);
       fish.el.disabled = viewing || !s.name;
-      fish.el.style.opacity = !s.name ? '.8' : '';
-      placeFish(fish, 0);
+      fish.el.style.opacity = !viewing && !s.name ? '.8' : '';
+      placeFish(fish);
     });
     updateRestingFish();
     restartAnimation();
@@ -644,7 +705,7 @@
     const changed = width !== $('swimArea').clientWidth || height !== $('swimArea').clientHeight;
     width = $('swimArea').clientWidth; height = $('swimArea').clientHeight;
     if (changed && swimmers.size) { renderFish(); return; }
-    for (const fish of swimmers.values()) placeFish(fish, 0);
+    for (const fish of swimmers.values()) placeFish(fish);
   }
   function styleIfChanged(fish,element,key,value,custom=false) {
     const cache=fish.paint || (fish.paint={}), id=(element===fish.art?'art:':'el:')+key;
@@ -652,7 +713,7 @@
     cache[id]=value;
     if(custom)element.style.setProperty(key,value);else element.style[key]=value;
   }
-  function placeFish(fish) {
+  function placeFish(fish,drawModels=true) {
     const p=fish.profile, moving=state.settings.motion && !reduced.matches && !fish.bottomRest;
     const tilt=moving ? Math.sin(fish.phase*1.4)*p.tilt : 0;
     const pulse=moving ? 1+Math.sin(fish.phase*3)*p.pulse : 1;
@@ -669,7 +730,22 @@
     const stroke=moving && !fish.egg ? Math.sin(fish.phase*6.5) : 0;
     styleIfChanged(fish,fish.el,'--tail-yaw',(stroke*23).toFixed(2)+'deg',true);
     styleIfChanged(fish,fish.el,'--tail-flex',(stroke*2.6).toFixed(2)+'deg',true);
-    styleIfChanged(fish,fish.art,'transform','scale('+((fish.growthScale ?? 1)*depth.scale).toFixed(3)+') perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg) rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')');
+    if(fish.anatomicalMotion && !fish.use3D && fish.joints?.length) {
+      const pose=Anatomy.pose(fish.species,fish.phase,moving && !fish.held);
+      fish.bodyImage.style.transform='scale('+pose.bodyX.toFixed(3)+','+pose.bodyY.toFixed(3)+')';
+      fish.joints.forEach((img,i)=>{const transform='rotate('+pose.joints[i].toFixed(2)+'deg)';if(img.style.transform!==transform)img.style.transform=transform;});
+    }
+    if(fish.use3D && drawModels) {
+      const active=moving && !fish.held,pose=fish.species+':'+(active?fish.phase.toFixed(3):'rest')+':'+fish.angle.toFixed(1);
+      if(pose!==fish.lastModelPose) {
+        if(!creatureRenderer?.render(fish.modelCanvas,fish.species,fish.phase,active,fish.angle)) {
+          restoreNaturalCreatures('3D çizim durdu; doğal hareketler kullanılıyor.');return;
+        }
+        fish.lastModelPose=pose;fish.el.classList.add('has-3d');
+      }
+    }
+    const yaw=fish.el.classList.contains('has-3d')?'':' perspective(500px) rotateY('+fish.angle.toFixed(1)+'deg)';
+    styleIfChanged(fish,fish.art,'transform','scale('+effectiveScale.toFixed(3)+')'+yaw+' rotate('+tilt.toFixed(1)+'deg) scaleY('+pulse.toFixed(3)+')');
   }
 
   let nextChat = performance.now() + 120000;
@@ -691,27 +767,40 @@
       return;
     }
   }
-  let frameSamples=0,slowSamples=0,previousFrame=0;
+  let frameSamples=0,slowSamples=0,previousFrame=0,reportingPerformance=false,qualityNeedsRender=false;
   function tick(now) {
     if(document.hidden) {frame=0;return;}
     const elapsed=previousFrame?now-previousFrame:0;previousFrame=now;
     // Sustained low frame delivery triggers the lighter compositor path. One
     // long task or a tab switch alone must not downgrade the device.
     if(elapsed>0 && elapsed<200){frameSamples++;if(elapsed>28)slowSamples++;}
-    if(frameSamples>=120){if(slowSamples>72)window.SitePerformance?.reportSlow();frameSamples=0;slowSamples=0;}
-    const dt=lastTime?Math.min((now-lastTime)/1000,.08):0;lastTime=now;
+    if(frameSamples>=120){if(slowSamples>72){reportingPerformance=true;try{window.SitePerformance?.reportSlow();}finally{reportingPerformance=false;}}frameSamples=0;slowSamples=0;}
+    // A synchronous quality event restarts the loop; don't schedule a second
+    // RAF from the old tick as well.
+    if(qualityNeedsRender){qualityNeedsRender=false;renderFish();return;}
     const wallNow=Date.now(),fishList=[];
     for(const f of swimmers.values()) {
       if(f.egg)continue; // Sand eggs have no per-frame work.
       f.mood.speed=(f.mood.id==='resting'?.4:.65)*(f.boostUntil>wallNow?1.1:1);
+      // A stationary pointer or a missed pointerup must not trap a swimmer
+      // indefinitely. Keyboard activation still works on the focused button.
+      if(f.hover && now>=(f.hoverUntil || 0))f.hover=false;
+      if(f.pressed && now>=(f.pressedUntil || 0))f.pressed=false;
+      if(f.keyboard && now>=(f.keyboardUntil || 0))f.keyboard=false;
       f.held=f.hover || f.pressed || f.keyboard || f.feedingUntil>now || f.foundUntil>now;
       fishList.push(f);
     }
     if(!fishList.length){frame=0;lastTime=0;return;}
     frame=requestAnimationFrame(tick);
-    if(window.SitePerformance?.lite() && elapsed>0 && elapsed<32) return;
+    // Compare against the last processed motion frame, not the last RAF.
+    // Otherwise a 60/120Hz display skips every single lightweight frame.
+    if(window.SitePerformance?.lite() && lastTime && now-lastTime<1000/30) return;
+    const dt=lastTime?Math.min((now-lastTime)/1000,.08):0;lastTime=now;
     Motion.step(fishList,dt,width,height);
-    for(const fish of fishList) placeFish(fish);
+    const paintModels=now-modelPaintAt>=MODEL_INTERVAL;
+    const paintStarted=performance.now();
+    for(const fish of fishList) placeFish(fish,paintModels);
+    if(paintModels){modelPaintAt=now;if(modelAllowed){modelSlowBatches=performance.now()-paintStarted>10?modelSlowBatches+1:Math.max(0,modelSlowBatches-1);if(modelSlowBatches>=12)restoreNaturalCreatures('Cihazın akıcılığı için doğal hareketlere dönüldü.');}}
     chat(now);
   }
   function restartAnimation() {
@@ -1084,6 +1173,12 @@
     if(input.id==='historySeasonSelect'){historySeasonId=input.value;historyPage=0;historyModal();return;}
     if(input.id==='leaderboardSeasonSelect'){leaderboardSeasonId=input.value;seasonDashboardModal();return;}
     if(input.id==='renderQuality'){window.SitePerformance?.set(input.value);return;}
+    if(input.id==='creatureMode'){
+      if(!['classic','natural','3d'].includes(input.value))return;
+      creatureMode=input.value;creatureFallback='';modelSlowBatches=0;modelPaintAt=-Infinity;disposeCreatureRenderer();
+      try{localStorage.setItem(CREATURE_MODE_KEY,creatureMode);}catch(_){}
+      renderFish();return;
+    }
     if(input.id==='timerMode'){const watch=input.value==='stopwatch';$('countdownFields').hidden=watch;$('timerMinutes').disabled=watch;return;}
     if (input.dataset.mixEnable) {
       const id=input.dataset.mixEnable,range=modal.querySelector('[data-mix-volume="'+id+'"]'),playing=Audio.isPlaying();
@@ -1123,6 +1218,9 @@
   });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refreshDate(); updateTimer(); } restartAnimation(); });
   reduced.addEventListener('change', render);
+  window.addEventListener('site-performance-change',()=>{if(reportingPerformance)qualityNeedsRender=true;else renderFish();});
+  window.addEventListener('pagehide',disposeCreatureRenderer);
+  window.addEventListener('pageshow',()=>{if(creatureMode==='3d')renderFish();});
   setInterval(refreshDate, 30000);
   if(!viewing) setInterval(updateTimer,1000);
   updateClock();
