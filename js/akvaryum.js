@@ -6,7 +6,9 @@
   const viewing = params.has('izle') || childViewing, demoOnly = !viewing && params.get('demo') === '1';
   // This preference belongs to the device, never to a shared class snapshot.
   const CREATURE_MODE_KEY='kemal_aquarium_creature_mode';
+  const CREATURE_SIZE_KEY='kemal_aquarium_display_size';
   let creatureMode='natural';
+  let creatureDisplaySize=100;
   let creatureRenderer=null,creatureFallback='',modelPaintAt=-Infinity,modelSlowBatches=0;
   const MODEL_INTERVAL=1000/18,MODEL_LIMIT=12;
   let shareRecord = null, shareQueue = Promise.resolve(), syncTimer;
@@ -65,7 +67,7 @@
     lockAccess('Öğretmeninizin çocuğunuza özel verdiği veli kodunu girin.');
     $('accessLinks').hidden = true;
     const form=document.createElement('form'); form.className='parent-code-form';
-    form.innerHTML='<label class="field">Veli izleme kodu<input name="code" required autocomplete="off" spellcheck="false" placeholder="Çocuğunuza özel kod veya bağlantı"></label><button class="button primary">Çocuğumun balığını izle</button><p class="settings-note">Kod yalnızca çocuğunuzun balığını açar. Besleme veya düzenleme yapılamaz.</p>';
+    form.innerHTML='<label class="field">Veli izleme kodu<input name="code" required autocomplete="off" spellcheck="false" placeholder="Çocuğunuza özel kod veya bağlantı"></label><button class="button primary">Çocuğumun balığını izle</button><p class="settings-note">Öğretmenin seçimine göre kendi çocuğunuz veya tüm sınıf görünür. Puan geçmişi yalnızca çocuğunuza açılır; besleme veya düzenleme yapılamaz.</p>';
     $('accessGate').append(form);
     form.addEventListener('submit',event=> { event.preventDefault(); let code=form.elements.code.value.trim();
       try { if(code.includes('://')) code=new URL(code).searchParams.get('cocuk') || ''; } catch(e) { code=''; }
@@ -75,6 +77,7 @@
     return;
   }
   let viewSnapshot = null;
+  let parentPeriod='day',parentPage=0,parentReport=null,parentHistoryEpoch=0,parentHistoryController=null,parentHistoryLoading=false;
   async function readView() {
     if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(viewToken || '')) throw new Error('Geçersiz izleme bağlantısı.');
     const config = window.kemalSiteStore.getConfig(), controller = new AbortController();
@@ -89,13 +92,14 @@
     } finally { clearTimeout(timeout); }
   }
   function viewState(data) {
-    const cls = C.newClass(C.clean(data.name)); cls.theme = C.THEMES.some(t => t.id === data.theme) ? data.theme : 'reef';
-    cls.students = data.students.slice(0,60).map((s,i) => ({ ...C.newStudent(C.clean(s.name), s.species), id: 'view-' + i, appearance:{egg:s.appearance?.egg===true,scale:Number.isFinite(s.appearance?.scale)?Math.max(.35,Math.min(1,s.appearance.scale)):1,trophy:s.appearance?.trophy===true}, publicMood: ['happy','sad','resting','ready','calm','hungry'].includes(s.mood) ? s.mood : 'calm', publicPoints: Number.isFinite(s.points) ? Math.max(0,s.points) : null }));
-    if(!childViewing && data.teacher && typeof data.teacher.species==='string') cls.teacher={enabled:true,name:C.clean(data.teacher.name),species:C.species(data.teacher.species).id};
+    const cls = C.newClass(C.clean(data.name)); cls.id='view-class'; cls.theme = C.THEMES.some(t => t.id === data.theme) ? data.theme : 'reef';
+    cls.students = data.students.slice(0,60).map((s,i) => ({ ...C.newStudent(C.clean(s.name), s.species), id: 'view-' + (/^[\w-]{1,96}$/.test(s.id || '') ? s.id : i), isOwnChild:childViewing && s.id==='my-child', appearance:{egg:s.appearance?.egg===true,scale:Number.isFinite(s.appearance?.scale)?Math.max(.35,Math.min(1,s.appearance.scale)):1,trophy:(!childViewing || s.id==='my-child') && s.appearance?.trophy===true}, publicMood: ['happy','sad','resting','ready','calm','hungry'].includes(s.mood) ? s.mood : 'calm', publicPoints: childViewing && s.id!=='my-child' ? null : Number.isFinite(s.points) ? Math.max(0,s.points) : null }));
+    if((!childViewing || data.viewScope==='class') && data.teacher && typeof data.teacher.species==='string') cls.teacher={enabled:true,name:C.clean(data.teacher.name),species:C.species(data.teacher.species).id};
     return { version:1, classes:[cls], activeClassId:cls.id, settings:C.settingsOf({...data.settings, classPoints: !childViewing && data.settings?.classPoints === true}), publicClassPoints: !childViewing && Number.isFinite(data.classPoints) ? Math.max(0,data.classPoints) : null };
   }
   if (viewing) {
     document.body.classList.add('view-only');
+    document.body.classList.toggle('parent-view',childViewing);
     try { viewSnapshot = await readView(); } catch (e) { lockAccess(e.message); return; }
   } else if (!demoOnly) {
     try {
@@ -115,6 +119,7 @@
   }
   document.body.classList.remove('access-pending');
   if(!viewing)try {const saved=localStorage.getItem(CREATURE_MODE_KEY);if(['classic','natural','3d'].includes(saved))creatureMode=saved;}catch(_){}
+  if(!viewing)try {const saved=Number(localStorage.getItem(CREATURE_SIZE_KEY));if([100,150,200].includes(saved))creatureDisplaySize=saved;}catch(_){}
   let blockedStorage = false;
   let state;
   try { const raw = viewing || demoOnly ? null : localStorage.getItem(KEY); state = raw ? C.validate(JSON.parse(raw)) : C.initialState(); }
@@ -164,9 +169,11 @@
       const childRows=cls.students.map(student=> {
         const row=children.find(r=>r.student_id===student.id && r.enabled);
         const url=new URL(location.pathname,location.origin); if(row) url.searchParams.set('cocuk',row.token);
-        return '<div class="child-share"><strong>'+esc(student.name)+'</strong>'+(row ? '<label class="field">Çocuğa özel veli kodu<input readonly value="'+esc(row.token)+'"></label><div class="settings-actions"><button class="button" data-action="copy-child" data-link="'+esc(url.href)+'">Bağlantıyı kopyala</button><button class="button" data-action="copy-child" data-link="'+esc(row.token)+'">Kodu kopyala</button><button class="button danger" data-action="disable-child" data-id="'+esc(row.id)+'">Kodu kapat</button></div>' : '<button class="button" data-action="enable-child" data-student="'+esc(student.id)+'">Veli kodu oluştur</button>')+'</div>';
+        const scope=row?.view_scope==='class'?'class':'child';
+        const control='<label class="field">Veli akvaryum görünümü<select id="childScope-'+esc(student.id)+'"><option value="child" '+(scope==='child'?'selected':'')+'>Yalnızca kendi çocuğu</option><option value="class" '+(scope==='class'?'selected':'')+'>Tüm balıklar · Diğer öğrencilerin puanları gizli</option></select></label>';
+        return '<div class="child-share"><strong>'+esc(student.name)+'</strong>'+control+(row ? '<label class="field">Çocuğa özel veli kodu<input readonly value="'+esc(row.token)+'"></label><div class="settings-actions"><button class="button" data-action="copy-child" data-link="'+esc(url.href)+'">Bağlantıyı kopyala</button><button class="button" data-action="copy-child" data-link="'+esc(row.token)+'">Kodu kopyala</button><button class="button" data-action="update-child-scope" data-id="'+esc(row.id)+'" data-student="'+esc(student.id)+'">Görünümü kaydet</button><button class="button danger" data-action="disable-child" data-id="'+esc(row.id)+'">Kodu kapat</button></div>' : '<button class="button" data-action="enable-child" data-student="'+esc(student.id)+'">Veli kodu oluştur</button>')+'</div>';
       }).join('');
-      openModal('Veli kodları ve sınıf paylaşımı','<p class="modal-intro">Her veliye kendi çocuğunun kodunu verin. Bu kod yalnızca o balığı açar; diğer öğrenciler, görev geçmişi ve sınıf puanı gösterilmez. Kodla izleyenler besleme veya düzenleme yapamaz.</p><p class="settings-note">Veli kod giriş adresi: <a href="'+esc(entry.href)+'">'+esc(entry.href)+'</a>. Kod özel bir erişim anahtarıdır; yalnızca ilgili veliyle paylaşın.</p><div class="child-shares">'+(childRows || '<p>Veli kodu oluşturmak için önce öğrenci ekleyin.</p>')+'</div><div class="settings-section"><h3>Tüm ziyaretçilere sınıfı göster</h3><p class="settings-note">Bu ayrı izin açılırsa sınıf bağlantısını alan herkes tüm balıkları görür. Veli kodları yine yalnızca tek çocuğu gösterir.</p><p class="share-state">'+(shareRecord?.enabled?'● Sınıfın tamamı izlemeye açık':'○ Sınıfın tamamı izlemeye kapalı')+'</p>'+(shareRecord?.enabled?'<label class="field">Tüm sınıf bağlantısı<input id="shareLink" readonly value="'+esc(link.href)+'"></label><div class="settings-actions"><button class="button" data-action="copy-share">Sınıf bağlantısını kopyala</button><button class="button danger" data-action="disable-share">Tüm sınıf paylaşımını kapat</button></div>':'<button class="button primary" data-action="enable-share">Tüm ziyaretçilere sınıfı aç</button>')+'<p class="settings-note">Kapatılan kod ve bağlantılar açık izleyici ekranında en geç yaklaşık 15 saniyede kapanır. Yeniden açıldığında yeni kod oluşur.</p></div>'+results[1].filter(row=>row.local_id!==id).map(row=>'<div class="task-template"><span>'+esc(row.snapshot?.name || 'Sınıf')+'</span><button class="button danger" data-action="disable-other-share" data-id="'+esc(row.id)+'">Sınıf paylaşımını kapat</button></div>').join(''));
+      openModal('Veli kodları ve sınıf paylaşımı','<p class="modal-intro">Her veliye kendi çocuğunun kodunu verin. Veliye yalnızca kendi çocuğunu veya tüm sınıfın balıklarını gösterin. Diğer öğrencilerin puanları ve geçmişleri gizlidir. Veli yalnızca kendi çocuğunun balığına dokunarak günlük, haftalık, aylık ve tüm zamanlar puan geçmişini görebilir. Besleme veya düzenleme yapamaz.</p><p class="settings-note">Veli kod giriş adresi: <a href="'+esc(entry.href)+'">'+esc(entry.href)+'</a>. Kod özel bir erişim anahtarıdır; yalnızca ilgili veliyle paylaşın.</p><div class="child-shares">'+(childRows || '<p>Veli kodu oluşturmak için önce öğrenci ekleyin.</p>')+'</div><div class="settings-section"><h3>Tüm ziyaretçilere sınıfı göster</h3><p class="settings-note">Bu ayrı izin açılırsa sınıf bağlantısını alan herkes tüm balıkları görür. Veli kodunun görünümü yukarıdaki öğrenciye özel seçimden bağımsız yönetilir; ayrıntılar yalnızca kendi çocuğuna açılır.</p><p class="share-state">'+(shareRecord?.enabled?'● Sınıfın tamamı izlemeye açık':'○ Sınıfın tamamı izlemeye kapalı')+'</p>'+(shareRecord?.enabled?'<label class="field">Tüm sınıf bağlantısı<input id="shareLink" readonly value="'+esc(link.href)+'"></label><div class="settings-actions"><button class="button" data-action="copy-share">Sınıf bağlantısını kopyala</button><button class="button danger" data-action="disable-share">Tüm sınıf paylaşımını kapat</button></div>':'<button class="button primary" data-action="enable-share">Tüm ziyaretçilere sınıfı aç</button>')+'<p class="settings-note">Kapatılan kod ve bağlantılar açık izleyici ekranında en geç yaklaşık 15 saniyede kapanır. Yeniden açıldığında yeni kod oluşur.</p></div>'+results[1].filter(row=>row.local_id!==id).map(row=>'<div class="task-template"><span>'+esc(row.snapshot?.name || 'Sınıf')+'</span><button class="button danger" data-action="disable-other-share" data-id="'+esc(row.id)+'">Sınıf paylaşımını kapat</button></div>').join(''));
     } catch(e) { if(modal.open && modalRoute?.key==='sharingModal') openModal('Paylaşım kullanılamıyor','<p class="modal-intro">'+esc(e.message)+'</p>'); }
   }
   function renderSoundControl() {
@@ -239,17 +246,18 @@
     modalRoute={...route,selected};
     $('modalBack').textContent=modalHistory.length?'← Geri':'← Akvaryuma dön';
 
-    modal.classList.remove('behavior-modal', 'student-day-modal', 'species-picker-modal');
+    modal.classList.remove('behavior-modal', 'student-day-modal', 'species-picker-modal', 'group-reward-modal');
     $('modalTitle').textContent = title; $('modalEyebrow').textContent = eyebrow; $('modalContent').innerHTML = html;
     if (html.includes('class="species-group"')) modal.classList.add('species-picker-modal');
     if (!modal.open) modal.showModal();
+    document.documentElement.classList.add('aquarium-modal-open');
     document.body.classList.add('dialog-open');restartAnimation();
     modal.scrollTop = 0;
     const field = modal.querySelector('[autofocus]');
     if (field) field.focus();
   }
   function releaseFish() { inspectedId = ''; swimmers.forEach(f => { f.hover = false; f.keyboard = false; f.pressed = false; f.el.classList.remove('is-selected'); }); }
-  function closeModal() { modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); document.body.classList.remove('dialog-open');restartAnimation(); releaseFish(); confirmAction = null; pendingRestore = null; }
+  function closeModal() { cancelParentHistory();modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); document.documentElement.classList.remove('aquarium-modal-open');document.body.classList.remove('dialog-open');restartAnimation(); releaseFish(); confirmAction = null; pendingRestore = null; }
   function confirm(title, description, callback) {
     confirmAction = callback;
     openModal(title, '<p class="modal-intro">' + esc(description) + '</p><div class="form-actions"><button class="button" data-action="close">Vazgeç</button><button class="button danger" data-action="confirm">Onayla</button></div>');
@@ -279,6 +287,9 @@
     const motionField=document.createElement('label');motionField.className='field device-quality';
     motionField.innerHTML='Bu cihazda canlı hareketleri<select id="creatureMode"><option value="classic">Klasik görünüm</option><option value="natural">Doğal hareketler · Hafif</option><option value="3d">3D canlılar · Deneme</option></select><small>İlk dört tür: palyaço balığı, denizanası, kaplumbağa ve ahtapot. 3D modeller sevimli ve sade bir çizimdedir. Aynı anda en fazla 12 model ve toplam 30 canlı için açılır; cihaz zorlanırsa hafif görünüme döner. Diğer canlılar mevcut görsellerini kullanır. Bu seçim yalnızca bu cihaza kaydedilir.</small><small id="creatureStatus" role="status"></small>';
     $('modalContent').prepend(motionField);$('creatureMode').querySelector('option[value="'+creatureMode+'"]').selected=true;updateCreatureStatus();
+    const sizeField=document.createElement('label');sizeField.className='field';
+    sizeField.innerHTML='Yüzen canlıların boyutu · Bu cihaz<select id="creatureDisplaySize"><option value="100">%100 · Standart</option><option value="150">%150 · Büyük / Akıllı tahta</option><option value="200">%200 · Çok büyük</option></select><small>Bu tarayıcıda canlıları büyütür; puanları ve büyüme hedeflerini değiştirmez. Dar alanlarda ekran sınırlarına göre ayarlanır. Diğer cihazların görünümü etkilenmez.</small>';
+    motionField.after(sizeField);$('creatureDisplaySize').querySelector('option[value="'+creatureDisplaySize+'"]').selected=true;
     const field=document.createElement('label');field.className='field device-quality';
     field.innerHTML='Bu cihazda görüntü kalitesi<select id="renderQuality"><option value="auto">Otomatik</option><option value="lite">Akıllı tahta · Akıcı görünüm</option><option value="full">Ayrıntılı görünüm</option></select><small>Akıcı görünüm cam bulanıklığını ve dekoratif ışıkları sadeleştirir. Balıklar yüzmeye, ses ve sayaç çalışmaya devam eder. Yalnızca bu cihaza kaydedilir.</small>';
     $('modalContent').prepend(field);$('renderQuality').querySelector('option[value="'+(window.SitePerformance?.mode() || 'auto')+'"]').selected=true;
@@ -314,7 +325,8 @@
   function groupRewardModal() {
     rememberModal('groupRewardModal'+'',()=>groupRewardModal());
     ensureDays();
-    openModal('Birlikte ödüllendir', '<button class="detail-back" data-action="activities">← Sınıf etkinlikleri</button><p class="modal-intro">Gözlemlediğiniz olumlu davranışı ve bu davranışı tamamlayan öğrencileri seçin.</p><form id="groupRewardForm" data-class-id="' + classroom().id + '" data-date="' + today + '"><label class="field">Olumlu davranış<select id="groupTask" name="taskId" required>' + classroom().tasks.filter(t=>C.taskPoints(t)>0).map(t => '<option value="' + t.id + '">' + esc(t.title) + ' · +' + C.taskPoints(t) + ' puan</option>').join('') + '</select></label><div class="settings-actions"><button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button><button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button></div><div id="groupStudents" class="group-students"></div><p id="groupSummary" class="settings-note" role="status"></p><button id="groupSubmit" class="button primary full" type="submit" disabled>Puan ver ve besle</button></form><p class="settings-note">Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.</p>' + (!classroom().tasks.length ? '<button class="button" data-action="tasks">Önce davranış ekle</button>' : ''));
+    openModal('Birlikte ödüllendir', '<p class="modal-intro">Olumlu davranışı ve ödüllendireceğiniz öğrencileri seçin.</p><form id="groupRewardForm" data-class-id="' + classroom().id + '" data-date="' + today + '"><div class="group-controls"><label class="field">Olumlu davranış<select id="groupTask" name="taskId" required>' + classroom().tasks.filter(t=>C.taskPoints(t)>0).map(t => '<option value="' + t.id + '">' + esc(t.title) + ' · +' + C.taskPoints(t) + ' puan</option>').join('') + '</select></label><div class="settings-actions"><button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button><button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button></div></div><div id="groupStudents" class="group-students"></div><p id="groupSummary" class="settings-note" role="status"></p><button id="groupSubmit" class="button primary full" type="submit" disabled>Puan ver ve besle</button></form><p class="settings-note">Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.</p>' + (!classroom().tasks.length ? '<button class="button" data-action="tasks">Önce davranış ekle</button>' : ''));
+    modal.classList.add('group-reward-modal');
     renderGroupStudents();
   }
   function renderGroupStudents() {
@@ -540,6 +552,11 @@
     $('classPearl').hidden = !state.settings.classPoints || total === null;
     $('classPearlScore').textContent = (total || 0).toLocaleString('tr-TR');
     $('classPearl').setAttribute('aria-label','Sınıfın toplam puanı: '+(total || 0));
+    if(childViewing && !$('parentHistoryButton')) {
+      const button=document.createElement('button');button.id='parentHistoryButton';button.className='button fullscreen-keep';
+      button.dataset.action='parent-history';button.textContent='Çocuğumun puanları';
+      document.querySelector('.scene-controls').append(button);
+    }
   }
   let modelAllowed=false,modelStatus='';
   function updateCreatureStatus() {
@@ -551,7 +568,7 @@
   }
   function prepareCreatureMode(items,eggs) {
     const eggIds=new Set(eggs.map(s=>s.id));
-    const count=items.filter(s=>Anatomy?.species.includes(s.species) && !eggIds.has(s.id)).length;
+    const count=items.filter(s=>(Anatomy?.modelSpecies || ['clown','jellyfish','turtle','octopus']).includes(s.species) && !eggIds.has(s.id)).length;
     modelAllowed=creatureMode==='3d' && !creatureFallback && !window.SitePerformance?.lite() && count<=MODEL_LIMIT && items.length<=30;
     if(modelAllowed && count && !creatureRenderer) {
       creatureRenderer=window.AquariumCreature3D?.create() || null;
@@ -566,7 +583,7 @@
     // Natural strokes are small cached image transforms, and must keep looping
     // when automatic quality switches to the 30fps lightweight path.
     const jointed=natural && !fish.egg;
-    const use3D=modelAllowed && natural && !fish.egg && !!creatureRenderer?.supported;
+    const use3D=modelAllowed && (Anatomy?.modelSpecies || ['clown','jellyfish','turtle','octopus']).includes(fish.species) && !fish.egg && !!creatureRenderer?.supported;
     const key=[fish.species,jointed,use3D].join(':');
     fish.anatomicalMotion=natural;
     if(fish.creatureKey===key)return;
@@ -594,12 +611,14 @@
   function renderFish() {
     // Read the new scene dimensions after empty-state / panel layout changes,
     // before placing new animals; a later ResizeObserver callback is too late.
-    width = $('swimArea').clientWidth; height = $('swimArea').clientHeight;
+    const sceneWidth=$('swimArea').clientWidth,sceneHeight=$('swimArea').clientHeight;
+    if(viewing && (!sceneWidth || !sceneHeight))return;
+    width=sceneWidth;height=sceneHeight;
     const actual = classroom().students;
     const items = actual.length || viewing || classroom().teacher?.enabled ? [...actual] : ['clown', 'tang', 'turtle'].map((kind, i) => ({ id: 'preview-' + i, name: '', species: kind, days: {}, feeds: [] }));
     if (classroom().teacher?.enabled) items.push({...C.newStudent(classroom().teacher.name,classroom().teacher.species),id:'teacher-'+classroom().id,isTeacher:true});
-    const layout = Motion.layout(items.map(s=>({id:s.id,species:s.species,size:C.species(s.species).size})),width,height);
-    const layoutKey=width+':'+height+':'+items.map(s=>s.id+'/'+s.species).join(',');
+    const layout = Motion.layout(items.map(s=>({id:s.id,species:s.species,size:C.species(s.species).size})),width,height,creatureDisplaySize/100);
+    const layoutKey=width+':'+height+':'+creatureDisplaySize+':'+items.map(s=>s.id+'/'+s.species).sort().join(',');
     const eggBed=$('eggBed');
     const eggs=items.filter(s=>!s.isTeacher && (viewing ? s.appearance?.egg : s.name && C.growth(s,classroom()).egg));
     prepareCreatureMode(items,eggs);
@@ -671,7 +690,9 @@
       fish.el.querySelector('.fish-name').textContent = state.settings.names ? s.name + (growth.trophy ? ' 🏆' : '') : '';
       const pointsEl=fish.el.querySelector('.fish-points'); pointsEl.hidden=!state.settings.points || score(s) === null; pointsEl.textContent='★ '+(score(s) ?? 0).toLocaleString('tr-TR');
       updateHungerLabel(fish, s);
-      fish.el.disabled = viewing || !s.name;
+      fish.el.classList.toggle('parent-child',!!s.isOwnChild);
+      if(viewing)fish.el.dataset.action=s.isOwnChild?'parent-history':'visitor-fish';
+      fish.el.disabled = (viewing && !s.isOwnChild) || (!viewing && !s.name);
       fish.el.style.opacity = !viewing && !s.name ? '.8' : '';
       placeFish(fish);
     });
@@ -716,6 +737,7 @@
   }
 
   function measure() {
+    if(viewing && (document.hidden || document.body.classList.contains('access-pending')))return;
     const changed = width !== $('swimArea').clientWidth || height !== $('swimArea').clientHeight;
     width = $('swimArea').clientWidth; height = $('swimArea').clientHeight;
     if (changed && swimmers.size) { renderFish(); return; }
@@ -867,6 +889,50 @@
     catch (error) { /* Show the same explicit empty state for unavailable or malformed source data. */ }
     openModal('Sınıfım & Çark’tan aktar', '<p class="modal-intro">Bu tarayıcıda kayıtlı sınıflardan birini akvaryuma kopyalayın. Kaynak sınıf listeniz değişmez. Aktarılan öğrenciler kendi canlılarını daha sonra seçebilir.</p>' + (importedClasses.length ? importedClasses.map((c, i) => '<div class="import-choice"><div><strong>' + esc(c.name) + '</strong><small>' + c.students.length + ' öğrenci</small></div><button class="button primary" data-action="import-selected" data-index="' + i + '">Sınıfı kopyala</button></div>').join('') : '<div class="panel-empty"><p>Bu tarayıcıda kayıtlı bir Sınıfım & Çark listesi bulunamadı.</p><button class="button primary" data-action="add">Öğrencileri yazarak ekle</button></div>'));
   }
+  function cancelParentHistory() {
+    parentHistoryEpoch++;parentHistoryController?.abort();parentHistoryController=null;parentHistoryLoading=false;parentReport=null;
+  }
+  function parentHistoryMarkup(data,message='') {
+    const periods=[['day','Günlük · Bugün'],['week','Haftalık · Bu hafta'],['month','Aylık · Bu ay'],['all','Tüm zamanlar']];
+    const selector='<label class="field">Puan geçmişi dönemi<select id="parentHistoryPeriod">'+periods.map(([id,label])=>'<option value="'+id+'" '+(id===parentPeriod?'selected':'')+'>'+label+'</option>').join('')+'</select></label>';
+    const note='<p class="settings-note">Yalnızca çocuğunuzun puan kayıtlarını görüyorsunuz. Bu ekranda besleme, puan verme veya düzenleme yapılamaz.</p>';
+    if(!data)return selector+note+'<p role="status">'+esc(message || 'Puan geçmişi yükleniyor…')+'</p>';
+    const entries=data.events.map(entry=>'<li class="parent-history-entry"><span><strong>'+esc(C.clean(entry.icon,16))+' '+esc(C.clean(entry.title,120))+'</strong><small>'+esc(entry.date)+' · '+esc(C.clean(entry.season,80))+(entry.awardedAt?' · '+new Date(entry.awardedAt).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}):'')+'</small></span><b class="'+(entry.points<0?'negative':'')+'">'+signed(entry.points)+' puan</b></li>').join('');
+    return selector+note+'<div class="parent-history-facts"><span>Bu sezon<strong>'+data.currentTotal.toLocaleString('tr-TR')+'</strong></span><span>Seçilen dönem<strong>'+signed(data.periodTotal)+'</strong></span><span>Tüm zamanlar<strong>'+data.allTimeTotal.toLocaleString('tr-TR')+'</strong></span></div><p class="settings-note">'+data.earned.toLocaleString('tr-TR')+' puan kazanıldı · '+data.deducted.toLocaleString('tr-TR')+' puan düşüldü</p><ul class="parent-history-list">'+(entries || '<li class="settings-note">Bu dönemde kazanılmış puan kaydı bulunmuyor.</li>')+'</ul><div class="settings-actions"><button class="button" data-action="parent-history-newer" '+(!parentPage?'disabled':'')+'>Daha yeni</button><button class="button" data-action="parent-history-older" '+(!data.hasMore?'disabled':'')+'>Daha eski</button></div><p class="settings-note" role="status">'+esc(message || 'Canlı kayıt · '+new Date(data.asOf).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}))+'</p>';
+  }
+  async function loadParentHistory() {
+    if(!childViewing || !modal.open || modalRoute?.key!=='parent-history')return;
+    const epoch=++parentHistoryEpoch,period=parentPeriod,page=parentPage;
+    parentHistoryController?.abort();const controller=new AbortController();parentHistoryController=controller;parentHistoryLoading=true;
+    const timeout=setTimeout(()=>controller.abort(),8000);
+    try {
+      const config=window.kemalSiteStore.getConfig();
+      const response=await fetch(config.supabaseUrl+'/rest/v1/rpc/view_aquarium_child_history',{
+        method:'POST',cache:'no-store',signal:controller.signal,
+        headers:{apikey:config.supabaseAnonKey,'Content-Type':'application/json'},
+        body:JSON.stringify({p_token:viewToken,p_period:period,p_offset:page*30})});
+      if(!response.ok)throw Error(response.status===404?'Veli puan geçmişi güncellemesi henüz veritabanına kurulmamış.':'Puan geçmişi şu anda alınamıyor. Bağlantıyı kontrol edip tekrar deneyin.');
+      const data=await response.json();
+      if(!data || data.period!==period || !Array.isArray(data.events) || data.events.length>30 ||
+        !['currentTotal','allTimeTotal','periodTotal','earned','deducted'].every(k=>Number.isSafeInteger(data[k])) ||
+        data.events.some(e=>!C.validScore(e.points) || !/^\d{4}-\d{2}-\d{2}$/.test(e.date) || !Number.isFinite(e.awardedAt) || e.awardedAt<0 || e.awardedAt>8640000000000000))throw Error('Çocuğunuzun puan geçmişine erişilemiyor. Kod kapatılmış olabilir.');
+      if(epoch!==parentHistoryEpoch || !modal.open || modalRoute?.key!=='parent-history')return;
+      if(JSON.stringify(parentReport)!==JSON.stringify({...data,asOf:''})) {
+        const scroll=modal.scrollTop,focused=document.activeElement?.id==='parentHistoryPeriod';
+        parentReport={...data,asOf:''};$('modalTitle').textContent=C.clean(data.name)+' · Puan geçmişi';
+        $('modalContent').innerHTML=parentHistoryMarkup(data);modal.scrollTop=scroll;
+        if(focused)$('parentHistoryPeriod').focus({preventScroll:true});
+      }
+    } catch(e) {
+      if(epoch===parentHistoryEpoch && modal.open && modalRoute?.key==='parent-history')$('modalContent').innerHTML=parentHistoryMarkup(null,e.name==='AbortError'?'Bağlantı yavaş. Biraz sonra yeniden denenecek.':e.message);
+      if(epoch===parentHistoryEpoch)parentReport=null;
+    } finally {clearTimeout(timeout);if(epoch===parentHistoryEpoch){parentHistoryLoading=false;parentHistoryController=null;}}
+  }
+  function openParentHistory() {
+    if(!childViewing || !classroom().students.some(s=>s.isOwnChild))return;
+    cancelParentHistory();rememberModal('parent-history',()=>openParentHistory());
+    openModal('Çocuğumun puanları',parentHistoryMarkup(null),'ÇOCUĞUMUN GÜZEL ADIMLARI');loadParentHistory();
+  }
   let historyPage = 0, historySeasonId = '', leaderboardSeasonId = '';
   function historyModal() {
     rememberModal('historyModal'+'',()=>historyModal());
@@ -920,7 +986,17 @@
   }
   async function act(button) {
     const action = button.dataset.action;
-    if (viewing && !['fullscreen'].includes(action)) return;
+    if(viewing && action!=='fullscreen') {
+      if(!childViewing)return;
+      if(action==='parent-history' && (button.id==='parentHistoryButton' || button.classList.contains('parent-child'))) {parentPeriod='day';parentPage=0;openParentHistory();}
+      else if(modal.open && modalRoute?.key==='parent-history' && modal.contains(button)) {
+        if(['close','modal-back'].includes(action))closeModal();
+        if(action==='parent-history-newer' || action==='parent-history-older') {
+          parentPage=Math.max(0,parentPage+(action==='parent-history-older'?1:-1));openParentHistory();
+        }
+      }
+      return;
+    }
     if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes'].includes(action)) {
       const birthday=classroom().students.find(s=>s.id===button.dataset.id);
       if(action==='fish-behaviors' && birthday && C.isBirthday(birthday)) openModal('İyi ki doğdun'+(state.settings.names?', '+birthday.name:'')+'! 🎂','<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>');
@@ -949,10 +1025,11 @@
       case 'export-cloud-recovery': case 'export-recovery': {const raw=localStorage.getItem(KEY+(action==='export-cloud-recovery'?'_cloud_recovery':'_recovery'));if(raw)exportData(raw,'akvaryum-korunan-kopya.json');else toast('Ayrı bir kurtarma kopyası henüz oluşmadı.');break;}
       case 'sharing': await sharingModal(); break;
       case 'copy-child': try { await navigator.clipboard.writeText(button.dataset.link); toast('Çocuğa özel erişim kopyalandı.'); } catch(e) { toast('Kodu yukarıdaki alandan seçip kopyalayabilirsiniz.'); } break;
-      case 'enable-child': case 'disable-child': {
+      case 'enable-child': case 'disable-child': case 'update-child-scope': {
         button.disabled=true; clearTimeout(syncTimer);
         try {
-          if(action==='enable-child') { const cls=JSON.parse(JSON.stringify(classroom())), settings={...state.settings}, id=button.dataset.student; await queueShare(()=>window.AquariumSharing.enableChild(cls,settings,id)); }
+          if(action==='enable-child') { const cls=JSON.parse(JSON.stringify(classroom())), settings={...state.settings}, id=button.dataset.student, scope=$('childScope-'+id).value; await queueShare(()=>window.AquariumSharing.enableChild(cls,settings,id,scope)); }
+          else if(action==='update-child-scope') {const id=button.dataset.id,scope=$('childScope-'+button.dataset.student).value;await queueShare(()=>window.AquariumSharing.updateChildScope(id,scope));}
           else { const id=button.dataset.id; await queueShare(()=>window.AquariumSharing.disableChild(id)); }
           await sharingModal();
         } catch(e) { toast(e.message); button.disabled=false; }
@@ -1101,7 +1178,7 @@
   });
   document.addEventListener('click', event => { const button = event.target.closest('[data-action]'); if (button && !button.disabled) act(button); });
   modal.addEventListener('click', event => { if (event.target === modal) { const r = modal.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closeModal(); } });
-  modal.addEventListener('close', () => { document.body.classList.remove('dialog-open');restartAnimation();releaseFish(); confirmAction = null; pendingRestore = null; });
+  modal.addEventListener('close', () => { if(modal.open)return;cancelParentHistory();document.documentElement.classList.remove('aquarium-modal-open');document.body.classList.remove('dialog-open');restartAnimation();releaseFish(); confirmAction = null; pendingRestore = null; });
   document.addEventListener('submit', event => {
     const form = event.target; if (!modal.contains(form)) return; event.preventDefault(); if (viewing) return;
     const data = new FormData(form);
@@ -1183,7 +1260,14 @@
     }
   });
   document.addEventListener('change', async event => {
-    const input = event.target; if (viewing) return;
+    const input = event.target;
+    if(viewing) {if(childViewing && input.id==='parentHistoryPeriod' && ['day','week','month','all'].includes(input.value)){parentPeriod=input.value;parentPage=0;openParentHistory();$('parentHistoryPeriod')?.focus({preventScroll:true});}return;}
+    if(input.id==='creatureDisplaySize') {
+      const size=Number(input.value);if(![100,150,200].includes(size))return;
+      creatureDisplaySize=size;
+      try{localStorage.setItem(CREATURE_SIZE_KEY,String(size));}catch(_){toast('Görünüm büyütüldü; bu tarayıcı tercihi saklanamadı.');}
+      renderFish();return;
+    }
     if(input.id==='historySeasonSelect'){historySeasonId=input.value;historyPage=0;historyModal();return;}
     if(input.id==='leaderboardSeasonSelect'){leaderboardSeasonId=input.value;seasonDashboardModal();return;}
     if(input.id==='renderQuality'){window.SitePerformance?.set(input.value);return;}
@@ -1247,12 +1331,16 @@
     let loading=false;
     async function refreshView() {
       if(loading || document.hidden) return; loading=true;
-      try { const data=await readView(); state=viewState(data); document.body.classList.remove('access-pending'); render(); }
-      catch(e) { state=viewState({students:[]}); swimmers.forEach(f=>f.el.remove()); swimmers.clear(); lockAccess(e.message); if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
+      try { const data=await readView();
+        document.body.classList.remove('access-pending');
+        if(JSON.stringify(data)!==JSON.stringify(viewSnapshot)) {viewSnapshot=data;state=viewState(data);render();}
+        if(childViewing && !parentHistoryLoading && modal.open && modalRoute?.key==='parent-history')loadParentHistory();
+      }
+      catch(e) { viewSnapshot=null;closeModal();state=viewState({students:[]}); swimmers.forEach(f=>f.el.remove()); swimmers.clear(); lockAccess(e.message); if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
       finally { loading=false; }
     }
-    setInterval(refreshView,7000);
-    document.addEventListener('visibilitychange',()=> { if(document.hidden) { swimmers.forEach(f=>f.el.remove()); swimmers.clear(); document.body.classList.add('access-pending'); } else refreshView(); });
+    setInterval(refreshView,3000);
+    document.addEventListener('visibilitychange',()=> { if(document.hidden) {closeModal();document.body.classList.add('access-pending');} else refreshView(); });
   }
   if(cloud){setInterval(refreshCloud,15000);window.addEventListener('online',refreshCloud);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloud();});window.addEventListener('beforeunload',event=>{try{if(JSON.parse(localStorage.getItem(KEY+'_cloud')||'{}').dirty){event.preventDefault();event.returnValue='';}}catch(e){}});}
   setInterval(updateClock,1000);

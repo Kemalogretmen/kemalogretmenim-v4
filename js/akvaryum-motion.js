@@ -41,13 +41,17 @@
   // transform does not change its layout box, so compensate by half the
   // vertical shrink only; larger corrections push the name over the fish.
   function labelAdjustment(size, scale=1) { return Math.max(0,(Math.max(0,size-10)/3)*(1-clamp(scale,0,1))); }
-  function layout(items, width, height) {
+  function layout(items, width, height, displayScale = 1) {
     if (!items.length) return new Map();
     const columns = Math.min(items.length, Math.max(1, Math.min(Math.floor(width / 85), Math.ceil(Math.sqrt(items.length * width / Math.max(1, height) / 1.4)))));
     const rows = Math.ceil(items.length / columns), cellW = width / columns, cellH = height / rows;
-    const maxSize = Math.max(18, Math.min(172, cellW - 18, (cellH - 59) / .67));
+    // Rows seed starting positions; they are not cages that swimmers must fit.
+    // Subtracting label space from every short row made board fish collapse to
+    // a few pixels before growth and camera scaling were even applied.
+    const magnification = Number.isFinite(displayScale) ? clamp(displayScale,1,2) : 1;
+    const maxSize = Math.max(18, Math.min(172 * magnification, (cellW - 18) * magnification, width - 18, (height - 59) / .67));
     const largest = Math.max(...items.map(s => s.size));
-    const scale = clamp(maxSize / largest, .12, 1);
+    const scale = clamp(maxSize / largest, .12, magnification);
     const sorted = [...items].sort((a,b) => profile(a.species).depth - profile(b.species).depth);
     const result = new Map();
     sorted.forEach((s,i) => {

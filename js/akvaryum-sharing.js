@@ -55,16 +55,22 @@
   }
   async function childLinks(shareId) {
     if(!shareId) return [];
-    const {data,error}=await links().select('id,student_id,token,enabled').eq('share_id',shareId);
+    const {data,error}=await links().select('id,student_id,token,enabled,view_scope').eq('share_id',shareId);
     if(error) throw new Error('Veli kodları yüklenemedi. Veritabanı güncellemesini kontrol edin.');
     return data || [];
   }
-  async function enableChild(cls,settings,studentId) {
+  async function enableChild(cls,settings,studentId,viewScope='child') {
+    if(!['child','class'].includes(viewScope)) throw new Error('Veli görünümü geçersiz.');
     if(!cls.students.some(s=>s.id===studentId)) throw new Error('Öğrenci bulunamadı.');
     const share=await ensure(cls,settings);
-    const {data,error}=await links().upsert({share_id:share.id,student_id:studentId,token:crypto.randomUUID(),enabled:true},{onConflict:'share_id,student_id'}).select('id,student_id,token,enabled').single();
+    const {data,error}=await links().upsert({share_id:share.id,student_id:studentId,token:crypto.randomUUID(),enabled:true,view_scope:viewScope},{onConflict:'share_id,student_id'}).select('id,student_id,token,enabled,view_scope').single();
     if(error) throw new Error('Çocuğa özel veli kodu oluşturulamadı.');
     return data;
+  }
+  async function updateChildScope(id,viewScope) {
+    if(!['child','class'].includes(viewScope)) throw new Error('Veli görünümü geçersiz.');
+    const {data,error}=await links().update({view_scope:viewScope}).eq('id',id).select('id');
+    if(error || !data?.length) throw new Error('Veli görünümü kaydedilemedi. Veritabanı güncellemesini ve bağlantıyı kontrol edin.');
   }
   async function disableChild(id) {
     const {data,error}=await links().update({enabled:false,token:crypto.randomUUID()}).eq('id',id).select('id');
@@ -83,5 +89,5 @@
       else { const result=await table().update({enabled:false,snapshot:{}}).eq('id',row.id); if(result.error) throw new Error('Silinen sınıfın paylaşımı kapatılamadı.'); }
     }
   }
-  window.AquariumSharing = { snapshot, get, enable, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild, removeClass };
+  window.AquariumSharing = { snapshot, get, enable, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild, updateChildScope, removeClass };
 })();

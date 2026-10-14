@@ -191,3 +191,48 @@ Teknik dayanak: [MDN Page Visibility](https://developer.mozilla.org/en-US/docs/W
 - Mercan Adası baloncukları iki mercan bankasından yükseltir; aynı 14 parçacık kullanılır, hafif modda en fazla 6 görünür. Puan değişirken animasyon düğümleri yeniden oluşturulmaz. Hareket kapalıysa ve azaltılmış hareket tercihinde baloncuklar durur.
 - 6 yeni gerçekçi canlı: benekli kutu balığı, uzun yüzgeçli flama balığı, yarasa balığı, temizleyici karides, münzevi yengeç ve mürekkep balığı. Katalog toplam 40 canlıdır. Münzevi yengeç tabanın yakınında yavaş hareket eder.
 - Yerleşik image_gen kullanıldı. Kaynak görseller ve üretim istemleri `assets/akvaryum/genisletme-istemleri-20261013.json` içinde kaydedildi. Siteye yalnızca en fazla 640 × 426 şeffaf canlı PNG/WebP ve 1920 × 1080 JPEG arka plan kopyaları alındı; büyük üretim asılları siteye eklenmedi.
+
+## Hazırlık · Yeni canlı hareketleri ve veli raporları (14 Ekim 2026)
+
+**14 Ekim 2026’da toplu yayın için onaylandı. Supabase güncellemesi canlı projeye kuruldu; site dosyaları aynı yayın paketine dahildir.**
+
+- Altı yeni tür doğal hafif görüntüde eklemli hareket kullanır: karides/yengeç bacakları, mürekkep balığı yüzgeç ve kolları, kutu/flama/yarasa balığı göğüs yüzgeçleri. Aynı WebP yeniden kullanılır, yeni 3D modeller oluşturulmaz. Hafif modda da devam eder; yumurta ve dinlenme durumunda durur.
+- Ziyaretçi ve veli verileri üç saniyede bir alınır. Değişmeyen veri tekrar çizilmez; sabit sınıf/öğrenci/öğretmen kimlikleri ve sıralamadan bağımsız yerleşim anahtarı mevcut rotayı korur. Gerçek değişiklikte puan, görünüm ve durum yenilenir. Görünmeyen sekme erişim kontrolünden sonra aynı balıklarla devam eder; kaldırılan çocuk ve kapatılan kod ekrandan çıkarılır.
+- Öğretmen paylaşım ekranında her öğrenci için **Yalnızca kendi çocuğu** veya **Tüm balıklar** seçer. İkinci seçenek diğer öğrencilerin isim/balıklarını açar; toplam puanlarını, kupalarını, sınıf toplamını ve geçmişlerini göndermez. Tüm ziyaretçilere sınıf açma izni ayrıdır. Mevcut kodlar varsayılan olarak tek çocukta kalır.
+- Veli kendi balığına veya **Çocuğumun puanları** düğmesine dokunur. Günlük bugün, haftalık pazartesiden itibaren, aylık ay başından itibaren, tüm zamanlar arşivlenmiş sezonlar dahil geçerli kazanımları listeler. Dönemler Europe/Istanbul takvimine göre hesaplanır. Geri alınan/silinen kazanım listeden çıkar, negatif kayıt kesinti olarak görünür. Sayfa başına 30 kayıt alınır; koddan farklı öğrenci kimliği gönderilemez.
+- Rapor açıksa periyodik yenileme sürer. Geç kalan filtre yanıtları yeni seçimi değiştiremez. Kapatılan kod, kaldırılan çocuk veya etkin olmayan öğretmen hem izleme hem rapor erişimini kapatır. Bu ekran hiçbir yazma/puan verme/besleme çağrısı içermez.
+- Doğrulama: 221 otomatik test geçti. İzole PostgreSQL/PGlite testinde mevcut RLS kontrolleri, iki veli kapsamı, diğer çocukların puanlarının gizlenmesi, dönemler, arşivler, düzeltmeler, sayfalama ve erişim iptali doğrulandı. Dönem toplamı kesintileri içerir; bir sezonun sıfırın altındaki net puanı başka sezonun kazanımlarını tüketmez. Tarayıcıda örnek verilerle çocuğun balığından rapor açma, filtre değiştirme, kapatma ve pencere arkasında doğal hareket kontrol edildi.
+
+### Toplu yayın sırasında kurulum
+
+Yeni kurulumda önce `supabase-akvaryum-veli-rapor.sql`, sonra site dosyaları uygulanır. Bu SQL güncellemesi 14 Ekim 2026’da canlı kemalogretmenim projesine kuruldu. Yeni `view_scope` kolonu ve rapor işlevi doğrulandı; özel hesap/kod tablolarına ve iç görünüm işlevine anonim erişim kapalıdır. Genel ziyaretçi RPC'si değişmez.
+
+### Canlıdan bağımsız SQL güvenlik testi
+
+Test yalnızca geçici, yerel PostgreSQL/PGlite veritabanı açar; Supabase adresi veya anahtarı kullanmaz:
+
+```sh
+npm install --prefix /tmp/aq-parent-sql-tests --no-save --ignore-scripts @electric-sql/pglite
+node tests/akvaryum-parent-sql.cjs /tmp/aq-parent-sql-tests/node_modules/@electric-sql/pglite
+```
+
+## Hazırlık · Akıllı tahta canlı boyutu (14 Ekim 2026)
+
+Bu düzeltme 14 Ekim 2026’da onaylanan toplu yayın paketine dahildir.
+
+- Kısa ekranlarda yerleşimin her satırından etiket yüksekliği çıkarılması balığı aşırı küçültüyordu. Satırlar yalnızca başlangıç konumunu belirler; boyut artık akvaryumun tüm yüksekliğine göre sınırlandırılır. 25 canlılı 1240 × 242 piksel testinde 125 piksel kaynak boyutu eski hesapta yaklaşık 32, yeni hesapta 106 pikseldir; büyüme ve derinlik bu görünür kutuya uygulanır.
+- Ayarlar → **Yüzen canlıların boyutu · Bu cihaz**: %100 standart, %150 büyük/akıllı tahta, %200 çok büyük. Tercih bu tarayıcıda saklanır, sınıf/bulut verilerine ve paylaşım izinlerine dahil edilmez. Puan, yem, yumurta hedefi ve gelişim aşaması değiştirilmez. Kumdaki yumurtaların yerleşimi korunur. Büyük görünüm dar akvaryum sınırlarına göre kısıtlanır.
+- Hafif görüntüleme ve doğal hareket sürer; yeni WebGL modeli, görüntü dosyası veya animasyon döngüsü eklenmez. 223 otomatik test geçti. Dar/kısa ve geniş alanlarda %100–200 boyutlarda bir dakikalık hareket sınırları, cihaz tercihi ve sınıf verilerinin korunması test edildi. Yerel tarayıcıda 24 örnek öğrenci, %150 boyut ve akıcı mod kontrol edildi; sayfa yenilenince tercihler korundu. Gerçek akıllı tahta donanımı üzerinde doğrulama henüz yapılmadı.
+
+## Hazırlık · Kompakt toplu puanlama ve tek kaydırma (14 Ekim 2026)
+
+Bu düzenleme önceki hazırlıklarla birlikte 14 Ekim 2026’da onaylanan toplu yayın paketine dahildir.
+
+- Toplu puanlamada tekrarlanan geri bağlantısı ve üstteki dekoratif başlık kaldırıldı. Başlık/açıklama aralıkları azaltıldı; geniş ekranda davranış seçimi ile uygun öğrencileri seç/seçimi kaldır düğmeleri aynı satırda, dar ekranda alt alta görünür. Öğrenci kartları dokunma alanı korunarak sıkıştırıldı.
+- Akvaryum pencerelerinde kaydırmanın sahibi yalnızca dialog'dur. Balık seçimi, öğrenci arama, toplu puanlama, sıralama ve veli geçmişinin ayrı yükseklik/kaydırma sınırları kaldırıldı. Menü açıkken arka sayfa kaydırması kapalıdır; kapatma veya Escape ile geri gelir. Sabit kaydırma boşluğu sahnenin genişliğinin değişmesini önler. Geri ve kapatma düğmeleri aynı satırda, uzun pencerede de erişilebilir kalır.
+- 223 otomatik test geçti. Yerel tarayıcıda 24 öğrencilik toplu puanlama, seçim korunarak pencerenin sonuna kaydırma, geri, Escape ile kapatma, uzun ayarlar, 40 canlılık seçim, öğrenci arama ve puan sıralaması kontrol edildi. Listelerde ek bir kaydırma sahibi yoktur; kapatınca arka sayfanın kaydırması yeniden açılır. Standart metin düzenleme alanları ve tarayıcının kendi açılır seçim denetimleri normal davranışlarını korur.
+
+## 14 Ekim 2026 · Toplu yayın doğrulaması
+
+- Kullanıcı canlı yayını onayladı. 223 otomatik test ve izole PostgreSQL/PGlite güvenlik testleri geçti. Canlı Supabase üzerinde kurulum/izinler ve bilinmeyen kodların reddedilmesi doğrulandı. Öğrenci, puan, sınıf ve mevcut veli kodu kayıtları silinmedi veya sıfırlanmadı.
+- Akvaryum CSS/JS adresleri `20261014-single-scroll-v1`, hareket modülü `20261014-board-size-v1` sürümlerini kullanır. Yeni doğal hareket ve paylaşım modülleri aynı paket içindedir. Tek GitHub aktarımıyla tek Netlify üretim yayını hedeflenir.

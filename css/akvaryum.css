@@ -13,7 +13,7 @@ dialog{color-scheme:dark;color:var(--ink);background:#103a49;border:1px solid #8
 
 @media(min-width:801px) and (max-height:850px){.panel-top{padding:17px 20px 12px}.panel-top h2{font-size:18px}.class-progress{margin-bottom:13px;padding:11px 12px}.panel-tabs button{padding-bottom:10px}.search-box{margin-top:9px}.student-row{padding:9px 8px}.panel-bottom{padding:12px 19px}}
 
-.species-search{display:flex;align-items:center;gap:10px;border:1px solid #648893;border-radius:10px;background:#0a2e3c;padding:0 12px;margin-top:7px}.species-search svg{width:17px;color:#aed6d2}.species-search input{width:100%;min-height:42px;border:0;background:transparent;color:#eefcfa;font-size:13px;padding:10px 0}.species-search input::placeholder{color:#9fbcc4}.species-grid{max-height:38svh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#658b8d transparent;padding:3px}.species-card:focus-within{outline:2px solid #b8ebcd;outline-offset:1px}.species-result-count{font-size:11px;color:#bddccd;line-height:1.6;margin:9px 0 0}@media(max-width:800px){.species-grid{max-height:35svh}}
+.species-search{display:flex;align-items:center;gap:10px;border:1px solid #648893;border-radius:10px;background:#0a2e3c;padding:0 12px;margin-top:7px}.species-search svg{width:17px;color:#aed6d2}.species-search input{width:100%;min-height:42px;border:0;background:transparent;color:#eefcfa;font-size:13px;padding:10px 0}.species-search input::placeholder{color:#9fbcc4}.species-grid{scrollbar-width:thin;scrollbar-color:#658b8d transparent;padding:3px}.species-card:focus-within{outline:2px solid #b8ebcd;outline-offset:1px}.species-result-count{font-size:11px;color:#bddccd;line-height:1.6;margin:9px 0 0}@media(max-width:800px){.species-grid{}}
 
 /* Teacher access, audience mode and a distraction-free board. */
 .access-gate { min-height:100svh; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:30px; text-align:center; background:#062f40; color:#ecfbff; }
@@ -86,7 +86,7 @@ dialog::backdrop{background:rgba(2,23,38,.28);backdrop-filter:blur(3px);-webkit-
 .panel-hidden .swim-area{top:145px}
 .finder-button{height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:22px;border:1px solid #abdae347;background:#083f54bd;backdrop-filter:blur(8px);font-size:12px;color:#e7faf8}
 .finder-button svg{width:17px;height:17px}
-.finder-results{max-height:48svh;overflow:auto;scrollbar-width:thin}
+.finder-results{scrollbar-width:thin}
 .finder-row{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}
 .finder-row img{width:62px;height:46px;object-fit:contain}.finder-row strong{flex:1;min-width:0;overflow-wrap:anywhere;font-size:14px}.finder-row .button{padding:9px 13px}
 .fish.is-found{border-radius:24px;background:#bcf5e51c;outline:2px solid #d1ffee;outline-offset:3px;z-index:2;box-shadow:0 0 28px #b7f6e336}
@@ -111,13 +111,13 @@ dialog::backdrop{background:rgba(2,23,38,.28);backdrop-filter:blur(3px);-webkit-
 .activity-card svg{width:27px;height:27px;color:#b0e8d2}.activity-card strong{font-size:15px;font-weight:600}.activity-card span{font-size:12px;line-height:1.7;color:#bed8d7}.activity-card:hover{background:#b8f1d91d}
 .shared-goal{padding:20px;margin:12px 0 22px;border:1px solid #b0e2bf42;border-radius:18px;background:linear-gradient(130deg,#aad9ae19,#65c2b406)}
 .shared-goal h3{font-size:20px;margin:10px 0;overflow-wrap:anywhere}.shared-goal p{font-size:12px;color:#c1ded2;line-height:1.7}.shared-goal .progress-copy{gap:15px;margin-top:20px}.shared-goal .progress-track{height:7px}
-.group-students{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:38svh;overflow:auto;margin:18px 0;scrollbar-width:thin}
+.group-students{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0;scrollbar-width:thin}
 .group-student{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#bae6dc08;cursor:pointer}
 .group-student:has(input:checked){border-color:#b6efce;background:#b6efce18}.group-student.unavailable{opacity:.6;cursor:default}.group-student input{width:18px;height:18px;flex-shrink:0;accent-color:#a0eac8}.group-student img{width:45px;height:34px;object-fit:contain}.group-student span{min-width:0}.group-student strong{display:block;font-size:12px;overflow-wrap:anywhere}.group-student small{display:block;font-size:10px;color:#b4d2ce;margin-top:5px}
 .focus-timer{text-align:center;padding:12px 0 20px}.focus-timer>p{color:#c8e4db;font-size:14px;line-height:1.7}.focus-timer>strong{font-variant-numeric:tabular-nums;font-size:clamp(55px,10vw,90px);font-weight:500;letter-spacing:3px;color:#d5f8e6}.focus-timer .settings-actions{justify-content:center;margin-top:25px}
 .timer-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}.timer-presets .button{flex:1;padding:10px;white-space:nowrap}
 .activities-button{position:relative}#activityTimerBadge{position:absolute;top:44px;left:50%;transform:translateX(-50%);font-size:10px;font-variant-numeric:tabular-nums;color:#d4f5e4;background:#103e50e6;border:1px solid #bce4de55;border-radius:8px;padding:4px 6px;white-space:nowrap}
-@media(max-width:650px){.activity-grid{grid-template-columns:1fr}.activity-card{display:grid;grid-template-columns:30px 1fr;gap:6px 13px;padding:16px}.activity-card svg{grid-row:1/3}.activity-card strong{font-size:14px}.activity-card span{font-size:11px}.group-students{grid-template-columns:1fr;max-height:35svh}.shared-goal .progress-copy{flex-wrap:wrap;gap:8px}.scene-controls{gap:6px}.finder-button{padding:0 10px}}
+@media(max-width:650px){.activity-grid{grid-template-columns:1fr}.activity-card{display:grid;grid-template-columns:30px 1fr;gap:6px 13px;padding:16px}.activity-card svg{grid-row:1/3}.activity-card strong{font-size:14px}.activity-card span{font-size:11px}.group-students{grid-template-columns:1fr;}.shared-goal .progress-copy{flex-wrap:wrap;gap:8px}.scene-controls{gap:6px}.finder-button{padding:0 10px}}
 @media(max-width:360px){.finder-button span{display:none}.finder-button{width:36px;padding:0;justify-content:center}}
 /* Glass dialogs retain contrast over every aquarium background. */
 dialog,.behavior-modal{background:linear-gradient(135deg,rgba(25,75,88,.83),rgba(6,37,54,.86));backdrop-filter:blur(24px) saturate(125%);-webkit-backdrop-filter:blur(24px) saturate(125%);border-color:#c4f9ed55;box-shadow:inset 0 1px 0 #effffb40,0 30px 100px #001c3380}
@@ -264,7 +264,7 @@ dialog.species-picker-modal{width:min(1240px,calc(100% - 32px));max-height:94svh
 .species-picker-modal .field{margin:8px 0}
 .species-picker-modal .species-group{margin:8px 0;padding:0;border:0}
 .species-picker-modal .species-group legend{margin:0 0 8px;font-size:13px;font-weight:650;color:#d9f2ed}
-.species-picker-modal .species-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-height:54svh;overflow:auto;padding:2px 4px 8px;scrollbar-width:thin}
+.species-picker-modal .species-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:2px 4px 8px;scrollbar-width:thin}
 .species-picker-modal .species-card{min-height:112px;padding:7px 10px;gap:3px;border-radius:14px;display:grid;grid-template-rows:58px auto 1fr;justify-items:center;align-content:center;text-align:center}
 .species-picker-modal .species-card img{width:100%;height:56px;object-fit:contain}
 .species-picker-modal .species-card strong{font-size:12px;line-height:1.25;color:#f0fffb}
@@ -278,14 +278,51 @@ dialog.species-picker-modal{width:min(1240px,calc(100% - 32px));max-height:94svh
 .egg-bed .fish-name{margin-top:calc(var(--egg-size,48px)*.7);max-width:var(--egg-label-width,82px);font-size:var(--egg-label-size,10px);line-height:1.2}
 .egg-bed .fish-points{top:-17px;font-size:10px;padding:2px 5px}
 .egg-bed .fish-hunger{font-size:8px}
-.leaderboard{list-style:none;padding:0;margin:16px 0;display:grid;gap:7px;max-height:56svh;overflow:auto;scrollbar-width:thin}
+.leaderboard{list-style:none;padding:0;margin:16px 0;display:grid;gap:7px;scrollbar-width:thin}
 .leaderboard li{display:grid;grid-template-columns:34px 48px minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 12px;border:1px solid #bcebdc25;border-radius:14px;background:#a8e9db0b}
 .leaderboard .rank-medal{font-size:19px;text-align:center}.leaderboard img{width:46px;height:38px;object-fit:contain;filter:drop-shadow(0 3px 4px #001c2940)}
 .leaderboard .rank-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:650}.leaderboard .rank-score{font-size:12px;font-weight:750;color:#c8f4d9;white-space:nowrap}
-@media(max-width:700px){dialog.species-picker-modal{padding:16px 14px}.species-picker-modal .species-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:48svh}.species-picker-modal .species-card{min-height:102px;grid-template-rows:50px auto 1fr;padding:6px}.species-picker-modal .species-card img{height:48px}.species-picker-modal .species-card strong{font-size:11px}.leaderboard li{grid-template-columns:28px 40px minmax(0,1fr) auto;gap:7px;padding:8px}.leaderboard img{width:38px;height:34px}.leaderboard .rank-name{font-size:11px}.leaderboard .rank-score{font-size:10px}}
+@media(max-width:700px){dialog.species-picker-modal{padding:16px 14px}.species-picker-modal .species-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}.species-picker-modal .species-card{min-height:102px;grid-template-rows:50px auto 1fr;padding:6px}.species-picker-modal .species-card img{height:48px}.species-picker-modal .species-card strong{font-size:11px}.leaderboard li{grid-template-columns:28px 40px minmax(0,1fr) auto;gap:7px;padding:8px}.leaderboard img{width:38px;height:34px}.leaderboard .rank-name{font-size:11px}.leaderboard .rank-score{font-size:10px}}
 /* Four-species prototype keeps the existing art box, labels and depth layers. */
 .fish-body-image{mask-image:var(--body-mask,none);-webkit-mask-image:var(--body-mask,none);mask-size:100% 100%;-webkit-mask-size:100% 100%}
 .fish-art .creature-joint{display:block;pointer-events:none}
+/* Read-only parent reports never enable teacher actions or other fish. */
+.view-only.parent-view .scene-controls > [data-action="parent-history"]{display:inline-flex!important;align-items:center;font-size:12px;padding:9px 12px}
+.view-only.parent-view .fish.parent-child{cursor:pointer;pointer-events:auto!important}
+.view-only.parent-view .fish.parent-child .fish-name{border-color:#b5f2d7;box-shadow:0 0 0 1px #b5f2d72b}
+.parent-history-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.parent-history-facts span{padding:12px;border:1px solid #d6fff52e;border-radius:14px;font-size:12px;color:#c9e7e7}
+.parent-history-facts strong{display:block;font-size:22px;color:#f1ffff;margin-top:7px;font-variant-numeric:tabular-nums}
+.parent-history-list{list-style:none;padding:0;margin:16px 0;scrollbar-width:thin}
+.parent-history-entry{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 5px;border-bottom:1px solid #c9fff120}
+.parent-history-entry strong{display:block;font-size:14px}.parent-history-entry small{display:block;font-size:11px;margin-top:6px;color:#b5d4d6}
+.parent-history-entry b{white-space:nowrap;color:#b8f2d9;font-size:14px}.parent-history-entry b.negative{color:#ffd3c3}
+@media(max-width:600px){.parent-history-facts{gap:6px}.parent-history-facts span{padding:9px;font-size:10px}.parent-history-facts strong{font-size:18px}.parent-history-entry b{font-size:12px}}
 .fish-art .creature-model{position:absolute;inset:0;width:100%;height:100%;display:none;pointer-events:none}
 .fish.has-3d .fish-art img{visibility:hidden}
 .fish.has-3d .creature-model{display:block}
+
+/* The dialog owns list scrolling; its toolbar stays reachable on long forms. */
+html{scrollbar-gutter:stable}
+html.aquarium-modal-open,body.dialog-open{overflow:hidden;overscroll-behavior:none}
+#modal{overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#779f9f transparent}
+#modalContent{min-width:0;overflow:visible}
+#modal :is(.species-grid,.finder-results,.group-students,.leaderboard,.parent-history-list){max-height:none;overflow:visible;overscroll-behavior:auto}
+.modal-toolbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:4px 0;background:linear-gradient(135deg,#1d4c59ed,#113c4bed);border-radius:12px}
+.modal-toolbar .modal-back{margin:0;min-height:38px}
+.modal-toolbar .icon-button{min-width:38px;min-height:38px}
+#modal.group-reward-modal{width:min(900px,calc(100% - 30px));max-height:94svh;padding:18px 22px}
+.group-reward-modal .modal-heading{margin-bottom:8px}
+.group-reward-modal .modal-heading .eyebrow{display:none}
+.group-reward-modal .modal-heading h2{font-size:24px;line-height:1.25;margin:0}
+.group-reward-modal .modal-intro{margin:0 0 12px;font-size:12px;line-height:1.5}
+.group-controls{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:12px;align-items:end}
+.group-controls .field{min-width:0;gap:5px;margin:0}
+.group-controls .field select{min-height:44px;padding:10px 12px}
+.group-controls .settings-actions{margin:0;gap:7px;flex-wrap:nowrap}
+.group-controls .button{min-height:44px;padding:10px 12px}
+.group-reward-modal .group-students{margin:12px 0}
+.group-reward-modal .group-student{padding:9px 12px;min-height:54px}
+.group-reward-modal .group-student strong{font-size:13px}
+.group-reward-modal .group-student small{margin-top:3px}
+@media(max-width:650px){#modal.group-reward-modal{padding:14px;width:calc(100% - 20px)}.group-controls{grid-template-columns:1fr;gap:8px}.group-controls .settings-actions{flex-wrap:wrap}.group-controls .button{flex:1}.group-reward-modal .modal-heading h2{font-size:22px}.modal-toolbar{gap:8px}}

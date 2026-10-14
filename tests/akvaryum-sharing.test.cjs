@@ -29,21 +29,71 @@ test('settings remain compatible with old backups and clamp unsafe input', () =>
 
 async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-111111111111') {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
-  const intervals=[],frames=[]; let response=snapshot, reads=0, writes=0; const urls=[];
+  const intervals=[],frames=[]; let response=snapshot,report=null,reads=0,writes=0,rafId=0,clock=0; const urls=[],requests=[];
   const localStorage={getItem(){reads++;throw Error('Viewer must not read teacher storage');},setItem(){writes++;}};
   window.AquariumCore=C;window.AquariumTimer=require('../js/akvaryum-timer.js');window.AquariumMotion=require('../js/akvaryum-motion.js'); window.AquariumAudio={stop(){}};
   window.kemalSiteStore={getConfig:()=>({supabaseUrl:'https://example.invalid',supabaseAnonKey:'public-key'})};
   window.matchMedia=()=>({matches:false,addEventListener(){}});
   for (const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
-  const area=document.getElementById('swimArea');Object.defineProperty(area,'clientWidth',{value:900});Object.defineProperty(area,'clientHeight',{value:600});
-  const modal=document.getElementById('modal'); modal.close=()=>{modal.open=false;};
+  const area=document.getElementById('swimArea');Object.defineProperty(area,'clientWidth',{get:()=>document.body.classList.contains('access-pending')?0:900});Object.defineProperty(area,'clientHeight',{get:()=>document.body.classList.contains('access-pending')?0:600});
+  const modal=document.getElementById('modal');modal.close=()=>{modal.open=false;};modal.showModal=()=>{modal.open=true;};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
-  const context={window,document,localStorage,location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URLSearchParams,URL,AbortController,performance,console,
-    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},clearInterval(){},requestAnimationFrame:fn=>{frames.push(fn);return frames.length;},cancelAnimationFrame(){},ResizeObserver:class{observe(){}},
-    fetch:async(url)=>{urls.push(url);return {ok:true,json:async()=>response};}};
+  const context={window,document,localStorage,location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URLSearchParams,URL,AbortController,performance:{now:()=>clock},console,
+    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},clearInterval(){},requestAnimationFrame:fn=>{const tick=now=>{clock=now;fn(now);};tick.id=++rafId;frames.push(tick);return tick.id;},cancelAnimationFrame:id=>{const at=frames.findIndex(fn=>fn.id===id);if(at>=0)frames.splice(at,1);},ResizeObserver:class{observe(){}},
+    fetch:async(url,options)=>{urls.push(url);const body=JSON.parse(options.body);requests.push({url,body});const value=url.endsWith('view_aquarium_child_history')?(typeof report==='function'?await report(body):report):response;return {ok:true,json:async()=>value};}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
-  return {window,document,intervals,frames,urls,setResponse(value){response=value;},io:()=>({reads,writes})};
+  return {window,document,intervals,frames,urls,requests,setResponse(value){response=value;},setReport(value){report=value;},io:()=>({reads,writes})};
 }
+
+test('visitor refreshes retain fish and teacher identity, positions and one continuing animation loop',async()=>{
+  const snapshot={name:'Class',theme:'reef',teacher:{name:'Teacher',species:'turtle'},settings:{names:true,points:true,motion:true},students:[{id:'a',name:'Ada',species:'tang',mood:'happy',points:8},{id:'b',name:'Deniz',species:'clown',mood:'happy',points:5}]};
+  const h=await viewerHarness(snapshot),originals=[...h.document.querySelectorAll('.fish')];let now=100;
+  for(let poll=0;poll<12;poll++) {
+    for(let i=0;i<80;i++){now+=40;h.frames.shift()(now);}
+    const positions=originals.map(f=>f.style.transform);
+    h.setResponse({...snapshot,students:(poll%2?[...snapshot.students].reverse():snapshot.students).map(s=>({...s,points:s.points+poll}))});
+    await h.intervals[1]();
+    for(let i=0;i<originals.length;i++){assert.equal(h.document.querySelector('[data-id="'+originals[i].dataset.id+'"]'),originals[i]);assert.equal(originals[i].style.transform,positions[i]);}
+    assert.equal(h.frames.length,1);
+  }
+});
+
+test('a visitor tab becoming hidden or a temporary failed refresh does not lose its identity or strand recovery',async()=>{
+ const snapshot={theme:'reef',settings:{names:true,motion:true},students:[{id:'a',name:'Ada',species:'tang',mood:'happy'}]};
+ const h=await viewerHarness(snapshot),fish=h.document.querySelector('.fish');let now=100;
+ for(let i=0;i<80;i++){now+=40;h.frames.shift()(now);}const position=fish.style.transform;
+ Object.defineProperty(h.document,'hidden',{value:true,writable:true});h.document.dispatchEvent(new h.window.Event('visibilitychange'));
+ assert.equal(h.document.querySelector('.fish'),fish);h.document.hidden=false;h.document.dispatchEvent(new h.window.Event('visibilitychange'));await new Promise(r=>setImmediate(r));
+ assert.equal(h.document.querySelector('.fish'),fish);assert.equal(fish.style.transform,position);assert.equal(h.frames.length,1);
+ h.setResponse(null);await h.intervals[1]();assert.equal(h.document.querySelectorAll('.fish').length,0);
+ h.setResponse(snapshot);await h.intervals[1]();assert.equal(h.document.querySelectorAll('.fish').length,1);
+});
+test('parents only open their own read-only filtered history; peers have neither scores nor actions',async()=>{
+  const token='11111111-1111-4111-8111-111111111111',h=await viewerHarness({viewScope:'class',theme:'reef',settings:{names:true,points:true,motion:true},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy',points:7},{id:'peer-b',name:'Deniz',species:'tang',mood:'happy',points:999}]},'?cocuk='+token);
+  const own=h.document.querySelector('.parent-child'),peer=h.document.querySelector('[data-id="view-peer-b"]');
+  assert.equal(own.disabled,false);assert.equal(peer.disabled,true);assert.equal(peer.querySelector('.fish-points').hidden,true);assert.equal(peer.getAttribute('aria-label').includes('999'),false);
+  h.setReport(body=>({period:body.p_period,name:'Ada',asOf:new Date().toISOString(),currentTotal:7,allTimeTotal:12,periodTotal:7,earned:7,deducted:0,count:1,hasMore:false,events:[{date:C.dayKey(),title:'<img src=x onerror=alert(1)> Kitap',icon:'📖',points:7,awardedAt:0,season:'Bu sezon'}]}));
+  own.dispatchEvent(new h.window.Event('click',{bubbles:true}));await new Promise(r=>setImmediate(r));
+  assert.equal(h.document.getElementById('modal').open,true);assert.equal(h.document.querySelectorAll('.parent-history-entry').length,1);
+  assert.equal(h.document.querySelectorAll('#modal img,#modal [data-action="feed"],#modal [data-action="revoke-point"]').length,0);
+  for(const period of ['week','month','all']) {
+    const select=h.document.getElementById('parentHistoryPeriod');select.querySelector('[value="'+period+'"]').selected=true;select.dispatchEvent(new h.window.Event('change',{bubbles:true}));await new Promise(r=>setImmediate(r));
+    const request=h.requests.at(-1);assert.deepEqual(Object.keys(request.body).sort(),['p_offset','p_period','p_token']);assert.equal(request.body.p_token,token);assert.equal(request.body.p_period,period);
+  }
+  const peerClick=h.document.createElement('button');peerClick.dataset.action='fish-behaviors';peerClick.dataset.id=peer.dataset.id;h.document.body.append(peerClick);const requests=h.requests.length;
+  peerClick.dispatchEvent(new h.window.Event('click',{bubbles:true}));assert.equal(h.requests.length,requests);
+  assert.deepEqual(h.io(),{reads:0,writes:0});
+  h.setResponse(null);await h.intervals[1]();assert.equal(h.document.getElementById('modal').open,false);assert.equal(h.document.querySelectorAll('.fish').length,0);
+});
+
+test('slow older filter responses cannot replace a newer parent history period',async()=>{
+  const h=await viewerHarness({theme:'reef',settings:{names:true,motion:true},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy'}]},'?cocuk=11111111-1111-4111-8111-111111111111');let finish;
+  const response=(period,title)=>({period,name:'Ada',asOf:new Date().toISOString(),currentTotal:1,allTimeTotal:1,periodTotal:1,earned:1,deducted:0,count:1,hasMore:false,events:[{date:C.dayKey(),title,icon:'',points:1,awardedAt:0,season:'Bu sezon'}]});
+  h.setReport(body=>body.p_period==='day'?new Promise(r=>finish=()=>r(response('day','Stale day'))):response('all','Latest all'));
+  h.document.querySelector('.parent-child').dispatchEvent(new h.window.Event('click',{bubbles:true}));
+  const select=h.document.getElementById('parentHistoryPeriod');select.querySelector('[value="all"]').selected=true;select.dispatchEvent(new h.window.Event('change',{bubbles:true}));await new Promise(r=>setImmediate(r));
+  finish();await new Promise(r=>setImmediate(r));assert.match(h.document.getElementById('modalContent').textContent,/Latest all/);assert.doesNotMatch(h.document.getElementById('modalContent').textContent,/Stale day/);
+});
 
 test('new coral theme and animals stay read-only; refreshing points preserves the bubble animation nodes',async()=>{
   const snapshot={name:'Mercan sınıfı',theme:'coral-island',settings:{names:true,points:true,motion:true},

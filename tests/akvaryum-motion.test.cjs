@@ -7,6 +7,20 @@ function animals(count,w,h) {
  return [...M.layout(items,w,h).values()].map((p,i)=>({...p,direction:i%2?-1:1,angle:i%2?180:0,phase:i,cruise:1,mood:{speed:1}}));
 }
 function advance(fish,n,w=1000,h=600){for(let i=0;i<n;i++)M.step(fish,.05,w,h);}
+test('short classroom board lanes keep fish visible before growth instead of shrinking each grid row',()=>{
+ const items=Array.from({length:25},(_,i)=>({id:String(i),species:i===24?'goldfish':'betta',size:125}));
+ const board=M.layout(items,1240,242),desktop=M.layout(items,1240,540);
+ assert.ok(board.get('0').size>=100);assert.ok(board.get('0').size>=desktop.get('0').size*.8);
+ assert.ok((board.get('0').size-10)*.35*.66>20,'young distant fish must retain a visible body');
+ for(const size of [1,1.5,2])for(const [w,h] of [[350,320],[1240,242],[1920,900]]){
+  const fish=[...M.layout(items,w,h,size).values()].map((p,i)=>({...p,direction:i%2?-1:1,angle:i%2?180:0,phase:i,cruise:1,mood:{speed:1}}));
+  for(let frame=0;frame<1200;frame++){M.step(fish,.05,w,h);for(const f of fish){assert.ok(f.x>=0&&f.x+f.size<=w+.001);assert.ok(f.y>=0&&f.y+f.size*.67+30<=h+.001);}}
+ }
+ const normal=M.layout(items,1240,242).get('0').size;
+ assert.equal(M.layout(items,1240,242,1.5).get('0').size,normal*1.5);
+ assert.equal(M.layout(items,1240,242,2).get('0').size,normal*2);
+ assert.equal(M.layout(items,1240,242,NaN).get('0').size,normal);
+});
 test('1–60 animals stay finite and inside narrow and wide aquarium bounds over a simulated minute',()=>{
  for(const [w,h] of [[350,320],[350,1350],[1240,400],[1920,900]]) for(const n of [1,12,30,60]) {
   const fish=animals(n,w,h);assert.equal(fish.length,n);
