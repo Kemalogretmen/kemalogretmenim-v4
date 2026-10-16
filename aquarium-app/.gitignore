@@ -1,0 +1,10 @@
+android/.gradle/
+android/local.properties
+android/**/build/
+ios/**/xcuserdata/
+ios/**/DerivedData/
+dist/
+*.keystore
+*.jks
+*.p12
+*signing.properties

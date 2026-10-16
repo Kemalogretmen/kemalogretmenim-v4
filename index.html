@@ -1177,12 +1177,14 @@
       color: inherit;
       text-decoration: none;
       opacity: 0;
+      visibility: hidden;
       transform: translateX(32px) scale(.985);
       pointer-events: none;
       transition: opacity .62s ease, transform .62s ease, filter .62s ease;
     }
     .home-showcase-slide.active {
       opacity: 1;
+      visibility: visible;
       transform: translateX(0) scale(1);
       pointer-events: auto;
     }
@@ -2011,7 +2013,7 @@
   </section>
 
   <section class="aquarium-feature" aria-labelledby="aquariumFeatureTitle">
-    <div class="aquarium-feature-copy"><span>SINIFINIZIN YAŞAYAN DÜNYASI</span><h2 id="aquariumFeatureTitle">Küçük sorumluluklar, mutlu balıklar.</h2><p>40 deniz canlısı, altı su altı dünyası. Sınıf görevlerini takip edin, balıkları besleyin ve akvaryumunuzu velilerle paylaşın.</p><div><a href="/ogretmen/akvaryum.html">Sınıf Akvaryumunu Aç →</a><a class="aquarium-demo" href="/ogretmen/akvaryum.html?demo=1">Örnek sınıfı keşfet</a></div></div>
+    <div class="aquarium-feature-copy"><span>SINIFINIZIN YAŞAYAN DÜNYASI</span><h2 id="aquariumFeatureTitle">Küçük sorumluluklar, mutlu balıklar.</h2><p>40 deniz canlısı, altı su altı dünyası. Sınıf görevlerini takip edin, balıkları besleyin ve akvaryumunuzu velilerle paylaşın.</p><div><a href="/ogretmen/akvaryum.html">Sınıf Akvaryumunu Aç →</a><a class="aquarium-demo" href="/ogretmen/akvaryum.html?demo=1">Örnek sınıfı keşfet</a><a class="aquarium-demo" href="/indir/sinif-akvaryumu/">Android uygulamasını indir ↓</a></div></div>
     <img src="/assets/akvaryum/canlilar/palyaco-baligi.png" alt="Akvaryumun palyaço balığı" width="260" height="174" loading="lazy">
   </section>
   <section class="platform-strip">
@@ -2861,6 +2863,38 @@
         aktif: true
       };
 
+      const AQUARIUM_SHOWCASE_SLIDE = {
+        id: 'sinif-akvaryumu',
+        baslik: 'Sınıfınızın yaşayan akvaryumu',
+        aciklama_html: 'Güzel davranışları puanla, balıkları besle; sınıfına birlikte hayat ver.',
+        icerik_turu: 'image',
+        ikon: '🐠',
+        tema_renk: '#087F8C',
+        media_url: '/assets/vitrin-gecici/sinif-akvaryumu.svg',
+        media_fit: 'cover',
+        link_url: '/ogretmen/akvaryum.html',
+        link_label: 'Akvaryumu Aç',
+        gecis_suresi_ms: 6000,
+        siralama: -2,
+        aktif: true
+      };
+
+      const AQUARIUM_ANDROID_DOWNLOAD_SLIDE = {
+        id: 'sinif-akvaryumu-android',
+        baslik: 'Sınıf Akvaryumu Android’de',
+        aciklama_html: 'Telefonunda ve tabletinde akvaryumuna tek dokunuşla ulaş. Yatay ve dikey kullan; kaldığın yerden devam et.',
+        icerik_turu: 'mobile',
+        ikon: '🐠',
+        tema_renk: '#087F8C',
+        media_url: '/assets/vitrin-gecici/sinif-akvaryumu-android.svg',
+        media_fit: 'cover',
+        link_url: '/indir/sinif-akvaryumu/',
+        link_label: 'Android uygulamasını indir',
+        gecis_suresi_ms: 6500,
+        siralama: -3,
+        aktif: true
+      };
+
       function renderHomepageShowcase(slides) {
         const stage = document.getElementById('homeShowcaseStage');
         const dots = document.getElementById('homeShowcaseDots');
@@ -2883,9 +2917,9 @@
         };
         const sourceSlides = Array.isArray(slides) && slides.length ? slides : TEMP_HOMEPAGE_SLIDES;
         const publishedSlides = [MOBILE_APP_DOWNLOAD_SLIDE].concat(
-          sourceSlides.filter(item => item && item.id !== MOBILE_APP_DOWNLOAD_SLIDE.id && item.id !== KIZMA_BIRADER_SHOWCASE_SLIDE.id && item.link_url !== MOBILE_APP_DOWNLOAD_SLIDE.link_url)
+          sourceSlides.filter(item => item && item.id !== AQUARIUM_ANDROID_DOWNLOAD_SLIDE.id && item.id !== MOBILE_APP_DOWNLOAD_SLIDE.id && item.id !== KIZMA_BIRADER_SHOWCASE_SLIDE.id && item.id !== AQUARIUM_SHOWCASE_SLIDE.id && !['/ogretmen/akvaryum.html', '/ogretmen/akvaryum'].includes(item.link_url) && item.link_url !== MOBILE_APP_DOWNLOAD_SLIDE.link_url)
         );
-        const items = [KIZMA_BIRADER_SHOWCASE_SLIDE, defaultIntroSlide].concat(publishedSlides).slice(0, 6);
+        const items = [AQUARIUM_ANDROID_DOWNLOAD_SLIDE, AQUARIUM_SHOWCASE_SLIDE, KIZMA_BIRADER_SHOWCASE_SLIDE, defaultIntroSlide].concat(publishedSlides).slice(0, 8);
         if (!items.length) {
           stage.innerHTML = '<div class="home-showcase-empty">Vitrin içerikleri hazırlanıyor.</div>';
           dots.innerHTML = '';
@@ -2964,7 +2998,7 @@
               <span class="home-showcase-stat"><strong>200+</strong><span>İçerik</span></span>
             </div>` : '';
           return `
-            <article class="${slideClasses}" data-effect="${effects[index % effects.length]}" data-link="${esc(href)}" style="${slideStyle(item)}">
+            <article class="${slideClasses}" ${index === 0 ? '' : 'inert'} aria-hidden="${index !== 0}" data-effect="${effects[index % effects.length]}" data-link="${esc(href)}" style="${slideStyle(item)}">
               ${mediaHtml(item)}
               <div class="home-showcase-copy">
                 <span class="home-showcase-kind">${icerikIkonuHtml(item, typeMeta, typeMeta.icon)} ${esc(typeMeta.label)}</span>
@@ -2978,7 +3012,9 @@
 
         stage.onclick = event => {
           const slide = event.target.closest('.home-showcase-slide');
-          if (!slide || event.target.closest('a, button, iframe')) return;
+          if (!slide) return;
+          if (!slide.classList.contains('active')) { event.preventDefault(); return; }
+          if (event.target.closest('a, button, iframe')) return;
           const target = slide.dataset.link;
           if (target && target !== '#') window.location.assign(target);
         };
@@ -3005,7 +3041,12 @@
           activeIndex = (index + items.length) % items.length;
           const activeItem = items[activeIndex];
           panel.style.setProperty('--showcase-color', activeItem.tema_renk || vitrinTuruMeta(activeItem.icerik_turu).color);
-          stage.querySelectorAll('.home-showcase-slide').forEach((slide, idx) => slide.classList.toggle('active', idx === activeIndex));
+          stage.querySelectorAll('.home-showcase-slide').forEach((slide, idx) => {
+            const active = idx === activeIndex;
+            slide.classList.toggle('active', active);
+            slide.toggleAttribute('inert', !active);
+            slide.setAttribute('aria-hidden', String(!active));
+          });
           dots.querySelectorAll('.home-showcase-dot').forEach((dot, idx) => dot.classList.toggle('active', idx === activeIndex));
         }
 

@@ -1,0 +1,39 @@
+apply plugin: 'com.android.application'
+def appConfig = new groovy.json.JsonSlurper().parse(file('../../shared/app-config.json'))
+def signingFile = file(System.getenv('AQUARIUM_SIGNING_PROPERTIES') ?: "${System.getProperty('user.home')}/.local/share/kemalogretmenim-signing/aquarium-signing.properties")
+def releaseKeys = new Properties()
+if (signingFile.exists()) signingFile.withInputStream { releaseKeys.load(it) }
+android {
+    namespace appConfig.applicationId
+    compileSdk 35
+    buildFeatures { buildConfig true }
+    defaultConfig {
+        applicationId appConfig.applicationId
+        minSdk 24
+        targetSdk 35
+        testInstrumentationRunner "tr.com.kemalogretmenim.aquarium.SmokeInstrumentation"
+        versionCode appConfig.versionCode
+        versionName appConfig.version
+        resValue 'string', 'app_name', appConfig.name
+    }
+    sourceSets.main.assets.srcDirs = ['../../shared']
+    signingConfigs {
+        if (!releaseKeys.isEmpty()) {
+            aquariumRelease {
+                storeFile file(releaseKeys['storeFile'])
+                storePassword releaseKeys['storePassword']
+                keyAlias releaseKeys['keyAlias']
+                keyPassword releaseKeys['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.preview'; versionNameSuffix '-preview' }
+        release {
+            minifyEnabled false
+            if (!releaseKeys.isEmpty()) signingConfig signingConfigs.aquariumRelease
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    lint { abortOnError true }
+}

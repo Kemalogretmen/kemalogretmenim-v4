@@ -1,0 +1,22 @@
+[
+ ["https://kemalogretmenim.com.tr/ogretmen/akvaryum.html", "INTERNAL"],
+ ["https://kemalogretmenim.com.tr/ogretmen/akvaryum?demo=1", "INTERNAL"],
+ ["https://www.kemalogretmenim.com.tr/ogretmen/akvaryum.html?cocuk=example", "INTERNAL"],
+ ["https://kemalogretmenim.com.tr/giris.html?redirect=%2Fogretmen%2Fakvaryum.html", "INTERNAL"],
+ ["https://kemalogretmenim.com.tr:443/giris", "INTERNAL"],
+ ["https://kemalogretmenim.com.tr/", "EXTERNAL"],
+ ["https://kemalogretmenim.com.tr", "EXTERNAL"],
+ ["https://kemalogretmenim.com.tr/index.html", "EXTERNAL"],
+ ["https://kemalogretmenim.com.tr/kayit.html", "EXTERNAL"],
+ ["https://kemalogretmenim.com.tr/sinav_sitesi/index.html", "EXTERNAL"],
+ ["https://kemalogretmenim.com.tr.evil.example/ogretmen/akvaryum.html", "EXTERNAL"],
+ ["https://evil.example/", "EXTERNAL"],
+ ["http://kemalogretmenim.com.tr/ogretmen/akvaryum.html", "BLOCK"],
+ ["javascript:alert(1)", "BLOCK"],
+ ["file:///etc/passwd", "BLOCK"],
+ ["intent://kemalogretmenim.com.tr/#Intent;scheme=https;end", "BLOCK"],
+ ["https://evil@kemalogretmenim.com.tr/ogretmen/akvaryum.html", "BLOCK"],
+ ["https://kemalogretmenim.com.tr/ogretmen/%61kvaryum.html", "BLOCK"],
+ ["https://kemalogretmenim.com.tr/ogretmen/../giris.html", "BLOCK"],
+ ["https://kemalogretmenim.com.tr//giris.html", "BLOCK"]
+]

@@ -1,0 +1,32 @@
+// !$*UTF8*$!
+{ archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+		000000000000000000000011 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AquariumApp.swift"; sourceTree = "<group>"; };
+		000000000000000000000012 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NavigationPolicy.swift"; sourceTree = "<group>"; };
+		000000000000000000000013 = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Assets.xcassets"; sourceTree = "<group>"; };
+		000000000000000000000014 = { isa = PBXFileReference; lastKnownFileType = text.json; path = "app-config.json"; sourceTree = "<group>"; };
+		000000000000000000000015 = { isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mobile-shell.js"; sourceTree = "<group>"; };
+		000000000000000000000016 = { isa = PBXFileReference; lastKnownFileType = text.xml; path = "PrivacyInfo.xcprivacy"; sourceTree = "<group>"; };
+		00000000000000000000001D = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = "<group>"; };
+		000000000000000000000017 = { isa = PBXBuildFile; fileRef = 000000000000000000000011; };
+		000000000000000000000018 = { isa = PBXBuildFile; fileRef = 000000000000000000000012; };
+		000000000000000000000019 = { isa = PBXBuildFile; fileRef = 000000000000000000000013; };
+		00000000000000000000001A = { isa = PBXBuildFile; fileRef = 000000000000000000000014; };
+		00000000000000000000001B = { isa = PBXBuildFile; fileRef = 000000000000000000000015; };
+		00000000000000000000001C = { isa = PBXBuildFile; fileRef = 000000000000000000000016; };
+		000000000000000000000007 = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SinifAkvaryumu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000002 = { isa = PBXGroup; children = (000000000000000000000003,000000000000000000000004,000000000000000000000005); sourceTree = "<group>"; };
+		000000000000000000000003 = { isa = PBXGroup; path = SinifAkvaryumu; sourceTree = "<group>"; children = (000000000000000000000011,000000000000000000000012,000000000000000000000013,000000000000000000000016,00000000000000000000001D); };
+		000000000000000000000004 = { isa = PBXGroup; name = Shared; path = ../shared; sourceTree = "<group>"; children = (000000000000000000000014,000000000000000000000015); };
+		000000000000000000000005 = { isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (000000000000000000000007); };
+		000000000000000000000008 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000017,000000000000000000000018); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000009 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000019,00000000000000000000001A,00000000000000000000001B,00000000000000000000001C); runOnlyForDeploymentPostprocessing = 0; };
+		00000000000000000000000A = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000006 = { isa = PBXNativeTarget; buildConfigurationList = 00000000000000000000000C; buildPhases = (000000000000000000000008,00000000000000000000000A,000000000000000000000009); buildRules = (); dependencies = (); name = SinifAkvaryumu; productName = SinifAkvaryumu; productReference = 000000000000000000000007; productType = "com.apple.product-type.application"; };
+		000000000000000000000001 = { isa = PBXProject; attributes = { LastUpgradeCheck = 1600; }; buildConfigurationList = 00000000000000000000000B; compatibilityVersion = "Xcode 14.0"; developmentRegion = tr; knownRegions = (tr,en,Base); mainGroup = 000000000000000000000002; productRefGroup = 000000000000000000000005; projectDirPath = ""; projectRoot = ""; targets = (000000000000000000000006); };
+		00000000000000000000000B = { isa = XCConfigurationList; buildConfigurations = (00000000000000000000000D,00000000000000000000000E); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		00000000000000000000000D = { isa = XCBuildConfiguration; name = Debug; buildSettings = { CLANG_ENABLE_MODULES = YES; SWIFT_VERSION = 5.0; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = dwarf; }; };
+		00000000000000000000000E = { isa = XCBuildConfiguration; name = Release; buildSettings = { CLANG_ENABLE_MODULES = YES; SWIFT_VERSION = 5.0; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SDKROOT = iphoneos; SWIFT_COMPILATION_MODE = wholemodule; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; };
+		00000000000000000000000C = { isa = XCConfigurationList; buildConfigurations = (00000000000000000000000F,000000000000000000000010); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		00000000000000000000000F = { isa = XCBuildConfiguration; name = Debug; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 2; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = SinifAkvaryumu/Info.plist; MARKETING_VERSION = 1.0.1; PRODUCT_BUNDLE_IDENTIFIER = tr.com.kemalogretmenim.aquarium; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; DEBUG_INFORMATION_FORMAT = dwarf; }; };
+		000000000000000000000010 = { isa = XCBuildConfiguration; name = Release; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 2; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = SinifAkvaryumu/Info.plist; MARKETING_VERSION = 1.0.1; PRODUCT_BUNDLE_IDENTIFIER = tr.com.kemalogretmenim.aquarium; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = "1,2"; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_COMPILATION_MODE = wholemodule; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; };
+}; rootObject = 000000000000000000000001; }

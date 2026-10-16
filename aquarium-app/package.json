@@ -1,0 +1,13 @@
+{
+  "name": "sinif-akvaryumu-app",
+  "private": true,
+  "version": "1.0.1",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs && node scripts/test-navigation.cjs",
+    "branding": "node scripts/generate-branding.cjs",
+    "android:debug": "node scripts/android.cjs",
+    "android:release": "node scripts/android.cjs --release",
+    "android:signing-setup": "node scripts/create-signing.cjs",
+    "android:lint": "node scripts/android.cjs --lint"
+  }
+}

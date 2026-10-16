@@ -1,0 +1,5 @@
+<resources>
+ <string name="retry">Yeniden dene</string>
+ <string name="loading_title">Akvaryumunuz açılıyor</string>
+ <string name="loading_description">Sınıfınızın güzel adımlarına dönüyoruz.</string>
+</resources>

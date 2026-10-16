@@ -1,0 +1,13 @@
+<resources>
+    <color name="aquarium_background">#082F3D</color>
+    <color name="aquarium_accent">#A0EAC8</color>
+    <style name="AquariumTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/aquarium_background</item>
+        <item name="android:navigationBarColor">@color/aquarium_background</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">@color/aquarium_background</item>
+        <item name="android:colorAccent">@color/aquarium_accent</item>
+    </style>
+</resources>
