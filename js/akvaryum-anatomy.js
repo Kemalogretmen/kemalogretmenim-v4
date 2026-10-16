@@ -6,7 +6,7 @@
 })(typeof window==='object'?window:this,function(){
   'use strict';
   const modelSpecies=['clown','jellyfish','turtle','octopus'];
-  const species=[...modelSpecies,'boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish'];
+  const species=[...modelSpecies,'ray','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish'];
   const part=(clip,origin)=>({clip:'polygon('+clip+')',origin});
   const definitions={
     jellyfish:{parts:[part('0% 59%,100% 59%,100% 100%,0% 100%','50% 60%')],cutouts:['M0 61H100V100H0Z']},
@@ -19,6 +19,11 @@
       part('24% 53%,57% 42%,71% 48%,86% 100%,23% 100%','62% 49%')],
       cutouts:['M0 0H29L45 25L52 34L49 40L27 30L0 24Z','M26 59L55 48L66 53L84 100H23Z']},
     clown:{parts:[],cutouts:[]},
+    ray:{parts:[
+      part('35% 5%,44% 13%,60% 39%,72% 55%,70% 65%,56% 67%,42% 61%','65% 61%'),
+      part('76% 47%,86% 43%,97% 20%,100% 38%,97% 66%,84% 61%','84% 57%'),
+      part('0% 45%,15% 54%,32% 60%,43% 59%,44% 65%,29% 65%,12% 58%,0% 49%','41% 62%')],
+      cutouts:['M36 7L44 14L60 40L70 55L69 64L56 66L43 61Z','M77 48L86 44L97 22L99 38L96 65L84 60Z','M0 46L15 55L32 61L42 60L43 64L29 64L12 57L0 49Z']},
     boxfish:{parts:[part('57% 42%,74% 41%,83% 61%,69% 68%,57% 58%','69% 47%')],cutouts:['M57 42L74 41L83 61L69 68L57 58Z']},
     bannerfish:{parts:[part('73% 45%,83% 47%,91% 63%,85% 72%,73% 62%','79% 48%')],cutouts:['M73 45L83 47L91 63L85 72L73 62Z']},
     batfish:{parts:[part('67% 44%,76% 46%,84% 65%,75% 74%,65% 62%','72% 47%')],cutouts:['M67 44L76 46L84 65L75 74L65 62Z']},
@@ -44,6 +49,7 @@
   function pose(id,phase,moving){
     const t=Number.isFinite(phase)?phase:0,active=moving===true;
     const wave=active?Math.sin(t*3):0;
+    if(id==='ray')return {bodyX:1,bodyY:1,joints:[active?Math.sin(t*2.1)*3.6:0,active?-Math.sin(t*2.1+.25)*2.8:0,active?Math.sin(t*2.5-.6)*2.2:0]};
     if(id==='turtle')return {bodyX:1,bodyY:1,joints:[wave*7,-wave*5]};
     if(['boxfish','bannerfish','batfish'].includes(id))return {bodyX:1,bodyY:1,joints:[wave*(id==='boxfish'?5:3)]};
     if(id==='cleanershrimp')return {bodyX:1,bodyY:1,joints:[wave*4.5,-wave*4.5]};

@@ -31,8 +31,22 @@
   }
   function perspective(f) {
     const depth=clamp(f.waterDepth??.5,0,1);
-    return {scale:.66+.34*depth,opacity:.76+.24*depth,brightness:.86+.14*depth,
+    // Distance changes size and color, never the solid body silhouette.
+    return {scale:.66+.34*depth,opacity:1,brightness:.86+.14*depth,
       saturation:.78+.22*depth,layer:depth<.5?1:3};
+  }
+  // A small textured cross-section fills the edge-on silhouette of a sprite.
+  // The body banks into a turn while labels and scores remain screen-facing.
+  function turnPose(f) {
+    const angle=clamp(Number.isFinite(f.angle)?f.angle:0,0,180);
+    const round=Math.max(0,Math.sin(angle*Math.PI/180));
+    const sign=f.turn ? Math.sign(f.turn.to-f.turn.from)||1 : f.direction>0?1:-1;
+    const flat=['ray','shark','dolphin','cleanershrimp','hermitcrab'].includes(f.species);
+    const tall=['seahorse','angelfish','batfish','discus'].includes(f.species);
+    const fullness=clamp((round-.7)/.3,0,1);
+    return {yaw:angle,round:round<.0001?0:round,fullness,bank:round*sign*3.5,
+      lift:-round*2.5,scale:1+round*.035,
+      width:flat?.20:tall?.24:.30,height:flat?.20:tall?.57:.43};
   }
   // Scale the score badge offset with the rendered fish size while keeping a
   // clear minimum for young, small fish.
@@ -70,6 +84,16 @@
     });
     return result;
   }
+  // Resize bounds without sending existing swimmers back to the seed grid.
+  function reflow(fish, placement, width) {
+    const center=fish.x+fish.size/2;
+    for(const key of ['size','minY','maxY','bandTop','bandBottom','profile'])fish[key]=placement[key];
+    const maxX=Math.max(0,width-fish.size);
+    fish.x=clamp(center-fish.size/2,0,maxX);fish.y=clamp(fish.y,fish.minY,fish.maxY);
+    if(Number.isFinite(fish.targetX))fish.targetX=clamp(fish.targetX,0,maxX);
+    if(Number.isFinite(fish.targetY))fish.targetY=clamp(fish.targetY,fish.minY,fish.maxY);
+    fish.anchorY=clamp(fish.anchorY??fish.y,fish.minY,fish.maxY);
+  }
   // A separate seabed keeps eggs out of the swimming lanes and away from the pearl.
   function eggLayout(items, width, height, pearl = false) {
     if (!items.length) return new Map();
@@ -106,8 +130,40 @@
       return [item.id,{size,eggSize,labelSize,labelWidth:Math.max(size,cellWidth-6),x,y}];
     }));
   }
+  // Only resting destinations avoid the pearl; swimming routes stay unrestricted.
+  function restLayout(items, width, height, pearl = null) {
+    const result=new Map();if(!items.length)return result;
+    const footprint=s=>Math.max(70,s.size),footHeight=s=>s.size*.67+55;
+    const columns=Math.max(1,Math.floor(width/(Math.max(60,...items.map(s=>footprint(s)))+18)));
+    const rows=Math.ceil(items.length/columns),rowGap=Math.min(70,height*.25/Math.max(1,rows));
+    const floor=s=>Math.max(s.minY,Math.min(s.maxY,height-footHeight(s)));
+    items.forEach((s,i)=>{
+      const count=Math.min(columns,items.length-Math.floor(i/columns)*columns);
+      result.set(s.id,{x:clamp((i%columns+.5)*width/count-s.size/2,0,Math.max(0,width-s.size)),
+        y:Math.max(s.minY,floor(s)-Math.floor(i/columns)*rowGap)});
+    });
+    if(!pearl || ![pearl.x,pearl.y,pearl.width,pearl.height].every(Number.isFinite) || pearl.width<=0 || pearl.height<=0)return result;
+    const padding=16,left=clamp(pearl.x-padding,0,width),right=clamp(pearl.x+pearl.width+padding,0,width);
+    const top=pearl.y-padding,bottom=pearl.y+pearl.height+padding;
+    const overlaps=s=>{const p=result.get(s.id),extra=(footprint(s)-s.size)/2;
+      return p.x-extra<right && p.x+s.size+extra>left && p.y+footHeight(s)>top && p.y<bottom;};
+    if(!items.some(overlaps))return result;
+    const widest=Math.max(...items.map(footprint));
+    const banks=[{x:0,width:left},{x:right,width:Math.max(0,width-right)}].map(b=>({...b,columns:Math.floor((b.width+18)/(widest+18))}));
+    const slots=[];
+    for(let column=0;column<Math.max(...banks.map(b=>b.columns));column++)banks.forEach(b=>{if(column<b.columns)slots.push({x:b.x+(column+.5)*b.width/b.columns});});
+    if(slots.length) {
+      const rows=Math.ceil(items.length/slots.length),gap=Math.min(70,height*.25/Math.max(1,rows));
+      items.forEach((s,i)=>result.set(s.id,{x:clamp(slots[i%slots.length].x-s.size/2,0,Math.max(0,width-s.size)),
+        y:Math.max(s.minY,floor(s)-Math.floor(i/slots.length)*gap)}));
+    } else {
+      // On a narrow screen a large fish can rest above the shell instead.
+      items.forEach(s=>{const p=result.get(s.id);if(overlaps(s))p.y=Math.max(s.minY,Math.min(p.y,top-footHeight(s)));});
+    }
+    return result;
+  }
   function startTurn(f) {
-    if (!f.turn && f.turnCooldown <= 0) f.turn = {elapsed:0,duration:1.8,from:f.angle,to:f.direction>0?180:0};
+    if (!f.turn && f.turnCooldown <= 0) f.turn = {elapsed:0,duration:2.6,from:f.angle,to:f.direction>0?180:0};
   }
   function step(fish, dt, width, height, random = Math.random) {
     if (!(dt > 0)) return;
@@ -115,6 +171,16 @@
     // Routes are individual. Nearby fish never trigger a turn or a slowdown.
     fish.forEach(f => {
       if(f.held) { f.cruise=0; return; }
+      if(f.guidance) {
+        if(f.guidance.speaking){f.cruise=0;return;}
+        const t=f.guidance,maxX=Math.max(0,width-f.size),x=clamp(t.x,0,maxX),y=clamp(t.y,f.minY,f.maxY);
+        const dx=x-f.x,dy=y-f.y,distance=Math.hypot(dx,dy),travel=Math.min(distance,300*dt,distance*3.2*dt);
+        if(distance>.2){f.x+=dx/distance*travel;f.y+=dy/distance*travel;}
+        f.guidanceArrived=distance<24;f.cruise=t.speaking?0:1;f.turn=null;
+        const angle=distance<50 && Number.isFinite(t.facing)?t.facing:dx>=0?0:180;f.angle+=(angle-f.angle)*Math.min(1,dt*4);
+        if(!t.speaking)f.phase+=dt*1.3;
+        return;
+      }
       if(f.bottomRest || f.hungry) {
         // Absent or hungry animals settle on the sand; neither changes camera depth.
         f.turn=null;f.cruise=0;f.routeTime=0;f.targetX=null;
@@ -181,9 +247,10 @@
       if(atEdge || destinationBehind) startTurn(f);
       if(f.turn) {
         f.turn.elapsed+=dt*f.cruise;
-        const t=clamp(f.turn.elapsed/f.turn.duration,0,1),ease=t*t*(3-2*t);
+        const t=clamp(f.turn.elapsed/f.turn.duration,0,1),ease=t*t*t*(t*(t*6-15)+10);
         f.angle=f.turn.from+(f.turn.to-f.turn.from)*ease;
-        f.x+=dt*speed*.3*Math.cos(f.angle*Math.PI/180);
+        const heading=Math.cos(f.angle*Math.PI/180);
+        f.x+=dt*speed*(.25+.75*Math.abs(heading))*heading;
         if(t===1) {
           f.direction=f.turn.to===180?-1:1;f.turn=null;f.turnCooldown=3;
           // An edge turn begins a new inward journey, never a repeated edge bounce.
@@ -197,5 +264,5 @@
       f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);
     });
   }
-  return {profile,layout,eggLayout,step,perspective,labelGap,labelAdjustment};
+  return {profile,layout,reflow,eggLayout,restLayout,step,perspective,turnPose,labelGap,labelAdjustment};
 });

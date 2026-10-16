@@ -2,17 +2,17 @@
   'use strict';
   const C = window.AquariumCore;
   function snapshot(cls, settings) {
-    return { name: cls.name, theme: cls.theme, settings: { names: settings.names, points: settings.points === true, classPoints: settings.classPoints === true, motion: settings.motion, chat: settings.chat },
+    return { name: cls.name, theme: cls.theme, shareClassPoints:cls.students.reduce((sum,s)=>sum+C.earned(s),0), settings: { names: settings.names, points: settings.points === true, classPoints: settings.classPoints === true, motion: settings.motion, lightMotion: settings.lightMotion !== false, waterWaves: settings.waterWaves === true, ...C.waterSettings(settings), chat: settings.chat },
       teacher: cls.teacher?.enabled ? {name:settings.names ? cls.teacher.name : '',species:cls.teacher.species} : null,
       classPoints: settings.classPoints === true ? cls.students.reduce((sum,s)=>sum+C.earned(s),0) : null,
-      students: cls.students.map(s => ({ id: s.id, appearance: (()=>{const g=C.growth(s,cls);return {egg:g.egg,scale:g.scale,trophy:g.trophy};})(), name: settings.names ? s.name : '', species: s.species, mood: C.mood(s).id, points: settings.points ? C.earned(s) : null })) };
+      students: cls.students.map(s => ({ id: s.id, appearance: (()=>{const g=C.growth(s,cls);return {egg:g.egg,scale:g.scale,trophy:g.trophy};})(), name: settings.names ? s.name : '', shareName:s.name, sharePoints:C.earned(s), species: s.species, mood: C.mood(s).id, points: settings.points ? C.earned(s) : null })) };
   }
   const client = () => window.kemalUserAuth.getClient();
   const owner = () => window.kemalUserAuth.getUser().id;
   const table = () => client().from('aquarium_shares');
   const links = () => client().from('aquarium_student_links');
   async function get(localId) {
-    const { data, error } = await table().select('id,token,enabled').eq('owner_id', owner()).eq('local_id', localId).maybeSingle();
+    const { data, error } = await table().select('id,token,enabled,show_points').eq('owner_id', owner()).eq('local_id', localId).maybeSingle();
     if (error) throw new Error('Paylaşım altyapısına erişilemiyor. Veritabanı kurulumu ve bağlantı kontrol edilmeli.');
     return data;
   }
@@ -36,10 +36,14 @@
     }
     await sync(cls,settings); return row;
   }
-  async function enable(cls, settings) {
-    const { data, error } = await table().upsert({ owner_id: owner(), local_id: cls.id, token: crypto.randomUUID(), enabled: true, snapshot: snapshot(cls, settings), updated_at: new Date().toISOString() }, { onConflict: 'owner_id,local_id' }).select('id,token,enabled').single();
+  async function enable(cls, settings, showPoints=false) {
+    const { data, error } = await table().upsert({ owner_id: owner(), local_id: cls.id, token: crypto.randomUUID(), enabled: true, show_points:showPoints===true, snapshot: snapshot(cls, settings), updated_at: new Date().toISOString() }, { onConflict: 'owner_id,local_id' }).select('id,token,enabled,show_points').single();
     if (error) throw new Error('Sınıf paylaşımı açılamadı. Öğretmen yetkisi ve veritabanı kurulumu kontrol edilmeli.');
     return data;
+  }
+  async function updatePublicPoints(id,showPoints) {
+    const {data,error}=await table().update({show_points:showPoints===true,updated_at:new Date().toISOString()}).eq('id',id).select('id');
+    if(error || !data?.length)throw new Error('Ziyaretçi puan görünümü kaydedilemedi. Paylaşım veritabanı güncellemesini kontrol edin.');
   }
   async function disable(id) {
     // Public-class permission is independent of child-only access. Keep the private snapshot.
@@ -89,5 +93,5 @@
       else { const result=await table().update({enabled:false,snapshot:{}}).eq('id',row.id); if(result.error) throw new Error('Silinen sınıfın paylaşımı kapatılamadı.'); }
     }
   }
-  window.AquariumSharing = { snapshot, get, enable, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild, updateChildScope, removeClass };
+  window.AquariumSharing = { snapshot, get, enable, updatePublicPoints, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild, updateChildScope, removeClass };
 })();

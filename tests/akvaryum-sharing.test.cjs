@@ -5,15 +5,15 @@ const vm = require('node:vm');
 const { parseHTML } = require('linkedom');
 const C = require('../js/akvaryum-core.js');
 
-test('public projection never includes task history, feeds or hidden names/points', () => {
+test('private share projection retains approved sharing fields without history and keeps legacy visibility flags', () => {
   const window = { AquariumCore:C };
   vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'), {window});
   const cls=C.newClass('2-A'), s=C.newStudent('Deniz'); cls.students.push(s);
   const d=C.ensureDay(s,cls); d.tasks[0].status='done'; C.feed(s);
   let data=window.AquariumSharing.snapshot(cls,{names:false,points:false,motion:true,chat:true});
   assert.equal(data.students[0].name,''); assert.equal(data.students[0].points,null);
-  assert.deepEqual(Object.keys(data.students[0]).sort(),['appearance','id','mood','name','points','species']);
-  assert.equal(JSON.stringify(data).includes('Kitabımı'),false);
+  assert.deepEqual(Object.keys(data.students[0]).sort(),['appearance','id','mood','name','points','shareName','sharePoints','species']);
+  assert.equal(JSON.stringify(data).includes('Kitabımı'),false);assert.equal(data.students[0].shareName,'Deniz');assert.equal(data.students[0].sharePoints,1);
   data=window.AquariumSharing.snapshot(cls,{names:true,points:true});
   assert.equal(data.students[0].points,1); assert.equal(data.students[0].name,'Deniz');
 });
@@ -25,6 +25,16 @@ test('settings remain compatible with old backups and clamp unsafe input', () =>
   assert.equal(updated.volume,1); assert.equal(updated.sound,'fun');
   old.settings=updated; assert.deepEqual(C.validate(old).settings,updated);
   assert.equal(C.settingsOf({sound:'bad',volume:NaN}).sound,'off');
+  assert.equal(C.settingsOf().lightMotion,true);assert.equal(C.settingsOf().waterWaves,false);
+  assert.equal(C.settingsOf({lightMotion:false,waterWaves:true}).lightMotion,false);
+  assert.equal(C.settingsOf({lightMotion:false,waterWaves:true}).waterWaves,true);
+  const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
+  const shared=window.AquariumSharing.snapshot(C.newClass('Test'),{lightMotion:false,waterWaves:true});
+  assert.equal(shared.settings.lightMotion,false);assert.equal(shared.settings.waterWaves,true);
+  assert.deepEqual(C.waterSettings({bubbleAmount:-20,lightStrength:Infinity,waveStrength:999}),{bubbleAmount:50,lightStrength:100,waveStrength:150});
+  assert.equal(C.settingsOf().teacherEncouragement,false);
+  const privateCue=window.AquariumSharing.snapshot(C.newClass('Test'),{teacherEncouragement:true,bubbleAmount:150,lightStrength:125,waveStrength:50});
+  assert.equal(privateCue.settings.bubbleAmount,150);assert.equal(privateCue.settings.lightStrength,125);assert.equal(privateCue.settings.waveStrength,50);assert.equal(privateCue.settings.teacherEncouragement,undefined);
 });
 
 async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-111111111111') {
@@ -191,7 +201,7 @@ test('parent code entry never loads teacher data or starts an anonymous class pr
 
 test('swimmers turn gradually inside scene bounds and keep scores clear of the upper edge',async()=>{
  const h=await viewerHarness({theme:'reef',settings:{names:true,points:true,motion:true},students:[{id:'a',name:'Ada',species:'clown',mood:'happy',points:1}]});
- const fish=h.document.querySelector('.fish'), art=fish.querySelector('.fish-art');
+ const fish=h.document.querySelector('.fish'), art=fish.querySelector('.fish-side');
  let previousAngle=0,turnFrames=0,maxAngle=0;
  for(let i=1;i<=1800;i++) {
   const frame=h.frames.pop();assert.equal(typeof frame,'function');frame(i*50);
@@ -251,4 +261,24 @@ test('read-only viewers see absent fish resting without losing their hatched app
  for(let i=1;i<=200;i++)h.frames.pop()(i*50);
  assert.equal(f.style.transform,position);assert.equal(f.querySelector('.fish-art').style.transform,art);
  assert.equal(f.disabled,true);assert.equal(f.querySelector('.fish-points').textContent,'★ 20');assert.deepEqual(h.io(),{reads:0,writes:0});
+});
+test('parent class view preserves every current growth size while only the own child shows a score',async()=>{
+ const snapshot={viewScope:'class',settings:{names:true,points:true,motion:true,classPoints:false},students:[
+  {id:'my-child',name:'Ada',species:'betta',mood:'happy',points:25,appearance:{egg:false,scale:.5,trophy:false}},
+  {id:'peer-two',name:'Ece',species:'tang',mood:'happy',points:null,appearance:{egg:false,scale:.8,trophy:false}},
+  {id:'peer-three',name:'Deniz',species:'clown',mood:'happy',points:null,appearance:{egg:true,scale:.35,trophy:false}}]};
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111'),d=h.document;
+ assert.equal(d.querySelectorAll('.fish').length,3);
+ assert.equal(d.querySelector('.parent-child .fish-points').hidden,false);assert.equal(d.querySelector('.parent-child .fish-points').textContent,'★ 25');
+ const peer=d.querySelector('[data-id="view-peer-two"]');assert.equal(Number(peer.style.getPropertyValue('--growth-scale')),.8);
+ assert.equal(peer.querySelector('.fish-name').textContent,'Ece');assert.equal(peer.querySelector('.fish-points').hidden,true);
+ assert.ok(d.querySelector('[data-id="view-peer-three"]').classList.contains('is-egg'));
+});
+test('a scoreless visitor view has no score or trophy in labels even if an unexpected response includes one',async()=>{
+ const h=await viewerHarness({settings:{names:true,points:false,classPoints:false,motion:true},classPoints:777,
+ students:[{id:'one',name:'Ada',species:'clown',mood:'happy',points:777,appearance:{egg:false,scale:.6,trophy:true}}]});
+ const d=h.document,fish=d.querySelector('.fish');assert.equal(fish.querySelector('.fish-points').hidden,true);
+ assert.equal(fish.querySelector('.fish-name').textContent,'Ada');assert.doesNotMatch(fish.getAttribute('aria-label'),/777/);
+ assert.equal(fish.querySelector('.fish-points').textContent,'★ 0');assert.equal(d.getElementById('classPearl').hidden,true);
+ assert.equal(d.getElementById('classPearlScore').textContent,'0');
 });

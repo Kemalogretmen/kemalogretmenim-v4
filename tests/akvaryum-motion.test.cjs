@@ -7,6 +7,50 @@ function animals(count,w,h) {
  return [...M.layout(items,w,h).values()].map((p,i)=>({...p,direction:i%2?-1:1,angle:i%2?180:0,phase:i,cruise:1,mood:{speed:1}}));
 }
 function advance(fish,n,w=1000,h=600){for(let i=0;i<n;i++)M.step(fish,.05,w,h);}
+test('a companion approaches smoothly within viewport bounds and resumes its normal route when released',()=>{
+ const f=animals(1,900,600)[0];Object.assign(f,{x:50,y:50,guidance:{x:700,y:400},phase:0});
+ for(let i=0;i<180;i++){const x=f.x,y=f.y;M.step([f],.05,900,600);assert.ok(Math.hypot(f.x-x,f.y-y)<=15.001);assert.ok(f.x>=0&&f.x<=900-f.size&&f.y>=f.minY&&f.y<=f.maxY);}
+ assert.equal(f.guidanceArrived,true);assert.ok(Math.abs(f.x-700)<1);assert.ok(Math.abs(f.y-400)<1);
+ f.guidance.speaking=true;const phase=f.phase;advance([f],100,900,600);assert.equal(f.phase,phase);
+ f.guidance=null;f.targetX=null;f.routeTime=0;const x=f.x;advance([f],100,900,600);assert.notEqual(f.x,x);
+});
+test('reflow retains a swimmer position, route, depth and stroke phase instead of reseeding the layout',()=>{
+ const fish={...animals(1,900,600)[0],x:320,y:250,targetX:700,targetY:300,routeTime:18,waterDepth:.82,depthTarget:.1,depthTime:20,phase:9,turn:{elapsed:.2},cruise:.7};
+ const before={...fish};const placement=M.layout([{id:'a',species:'clown',size:fish.size}],900,600).get('a');
+ M.reflow(fish,placement,900);
+ for(const key of ['x','y','targetX','targetY','routeTime','waterDepth','depthTarget','depthTime','phase','turn','cruise'])assert.equal(fish[key],before[key]);
+ M.reflow(fish,{...placement,size:140,minY:26,maxY:280},600);
+ assert.equal(fish.x+fish.size/2,before.x+before.size/2);assert.equal(fish.y,250);assert.equal(fish.targetX,460);assert.equal(fish.targetY,280);
+ M.reflow(fish,{...placement,size:140,minY:26,maxY:100},350);
+ assert.equal(fish.x,210);assert.equal(fish.y,100);assert.equal(fish.phase,9);assert.equal(fish.waterDepth,.82);
+});
+test('resting destinations leave room for the visible pearl on boards, phones and wide aquariums',()=>{
+ for(const [w,h] of [[350,600],[1240,242],[1600,800]])for(const count of [1,3,12,30,60]) {
+  const pearl={x:w/2-85,y:h-155,width:170,height:145};
+  const items=Array.from({length:count},(_,i)=>({id:String(i),size:80+i%4*15,minY:26,maxY:h-125*.67-30}));
+  const places=M.restLayout(items,w,h,pearl);
+  assert.equal(places.size,count);
+  for(const item of items) {
+   const p=places.get(item.id),extra=(Math.max(70,item.size)-item.size)/2;
+   assert.ok(Number.isFinite(p.x+p.y));assert.ok(p.x>=0&&p.x+item.size<=w);assert.ok(p.y>=item.minY&&p.y<=item.maxY);
+   const overlaps=p.x-extra<pearl.x+pearl.width+16&&p.x+item.size+extra>pearl.x-16&&p.y<pearl.y+pearl.height+16&&p.y+item.size*.67+55>pearl.y-16;
+   assert.equal(overlaps,false,`${w}×${h}, ${count} resting fish, ${item.id}`);
+  }
+ }
+});
+test('resting layout follows an off-center pearl, and releases its space when hidden',()=>{
+ const items=[{id:'a',size:100,minY:26,maxY:500}];
+ const normal=M.restLayout(items,900,600),center=normal.get('a');
+ const shell={x:center.x-15,y:470,width:170,height:130};
+ const reserved=M.restLayout(items,900,600,shell).get('a');
+ assert.notDeepEqual(reserved,center);assert.deepEqual(M.restLayout(items,900,600,null),normal);
+ const distant={x:0,y:0,width:170,height:100};
+ assert.deepEqual(M.restLayout(items,900,600,distant),normal);
+ const fish={...animals(1,900,600)[0],hungry:true,restX:reserved.x,restY:reserved.y};
+ advance([fish],600,900,600);assert.equal(fish.x,reserved.x);assert.equal(fish.y,reserved.y);
+ const settled={x:fish.x,y:fish.y};advance([fish],100,900,600);assert.deepEqual({x:fish.x,y:fish.y},settled);
+ fish.hungry=false;advance([fish],100,900,600);assert.notEqual(fish.x,settled.x);
+});
 test('short classroom board lanes keep fish visible before growth instead of shrinking each grid row',()=>{
  const items=Array.from({length:25},(_,i)=>({id:String(i),species:i===24?'goldfish':'betta',size:125}));
  const board=M.layout(items,1240,242),desktop=M.layout(items,1240,540);
@@ -111,7 +155,7 @@ test('camera depth changes gently, crosses the clock plane, and never enlarges f
   M.step([f],.05,1000,600,()=>.5);
   assert.ok(Math.abs(f.waterDepth-previous)<=.001251);previous=f.waterDepth;
   const view=M.perspective(f);layers.add(view.layer);
-  assert.ok(view.scale>=.66&&view.scale<=1);assert.ok(view.opacity>=.76&&view.opacity<=1);
+  assert.ok(view.scale>=.66&&view.scale<=1);assert.equal(view.opacity,1);
  }
  assert.deepEqual([...layers],[1,3]);
  f.held=true;const depth=f.waterDepth;advance([f],100);assert.equal(f.waterDepth,depth);
@@ -146,4 +190,32 @@ test('hungry animals settle smoothly, remain completely still, then resume indep
  assert.deepEqual(fish.map(f=>[f.x,f.y,f.angle,f.phase,f.waterDepth]),resting);
  fish.forEach(f=>f.hungry=false);for(let i=0;i<100;i++)M.step(fish,.05,1240,600);
  assert.notDeepEqual(fish.map(f=>[f.x,f.y,f.angle,f.phase,f.waterDepth]),resting);
+});
+
+test('soft turns ease through intermediate headings over 2.6 seconds, keep volume and finish without a snap',()=>{
+ for(const initial of [1,-1]){
+  const [f]=animals(1,1000,600);Object.assign(f,{species:'clown',direction:initial,angle:initial>0?0:180,x:initial>0?850:20,targetX:initial>0?100:850,targetY:250,y:250,routeTime:20,turnCooldown:0});
+  const poses=[];let last=f.angle;
+  for(let i=0;i<53;i++){
+   M.step([f],.05,1000,600,()=>.5);const pose=M.turnPose(f);poses.push({...pose,x:f.x});
+   assert.ok(Math.abs(f.angle-last)<7,'heading must interpolate even at a low frame rate');
+   assert.ok(f.x>=0&&f.x<=1000-f.size);last=f.angle;
+  }
+  assert.equal(f.direction,-initial);assert.equal(f.turn,null);assert.equal(f.angle,initial>0?180:0);
+  assert.ok(Math.abs(poses[0].yaw-(initial>0?0:180))<.02,'gentle acceleration at start');
+  assert.ok(poses.some(p=>p.fullness>.97&&p.round>.99),'solid core persists across the edge-on heading');
+  assert.ok(poses.every(p=>Math.abs(p.bank)<=3.5&&p.scale<=1.035&&p.lift>=-2.5));
+  assert.equal(poses.at(-1).fullness,0);assert.ok(Math.abs(poses.at(-1).bank)<.0001);
+  const facing=f.angle;M.step([f],.05,1000,600,()=>.5);assert.equal(f.angle,facing);
+ }
+});
+test('turn volume and banking retain continuity when a fish is held, and fit the animal shape',()=>{
+ const [f]=animals(1,1000,600);Object.assign(f,{species:'clown',angle:90,turn:{elapsed:1.3,duration:2.6,from:0,to:180},held:true});
+ const before=M.turnPose(f);advance([f],100);assert.deepEqual(M.turnPose(f),before);
+ assert.ok(before.fullness>.99);assert.ok(before.width>.2&&before.height>.4);
+ assert.ok(M.turnPose({...f,species:'shark'}).height<before.height);
+ assert.ok(M.turnPose({...f,species:'seahorse'}).height>before.height);
+ for(const angle of [0,180,NaN,-100,300]){
+  const p=M.turnPose({...f,angle});assert.ok(Object.values(p).every(Number.isFinite));assert.equal(p.fullness,0);
+ }
 });

@@ -82,8 +82,13 @@
     if(state.activeClassId===id) state.activeClassId=state.classes[0].id;
     return true;
   }
+  function waterSettings(raw = {}) {
+    const level=(value,max)=>Number.isFinite(value)?Math.round(Math.max(50,Math.min(max,value))/5)*5:100;
+    return {bubbleAmount:level(raw?.bubbleAmount,150),lightStrength:level(raw?.lightStrength,125),waveStrength:level(raw?.waveStrength,150)};
+  }
   function settingsOf(raw = {}) {
-    return { names: raw?.names !== false, motion: raw?.motion !== false, points: raw?.points === true, classPoints: raw?.classPoints === true,
+    return { names: raw?.names !== false, motion: raw?.motion !== false, lightMotion: raw?.lightMotion !== false, waterWaves: raw?.waterWaves === true, points: raw?.points === true, classPoints: raw?.classPoints === true,
+      ...waterSettings(raw),teacherEncouragement:raw?.teacherEncouragement === true,
       hungerText: raw?.hungerText === true, chat: raw?.chat !== false, feedSound: raw?.feedSound !== false,
       timerSound: raw?.timerSound !== false, timerVolume: Number.isFinite(raw?.timerVolume) ? Math.max(0,Math.min(1,raw.timerVolume)) : .65,
       sound: Sounds.has(raw?.sound) ? raw.sound : 'off',
@@ -344,5 +349,17 @@
     });
     return { version: 1, classes, activeClassId: classes.some(c => c.id === raw.activeClassId) ? raw.activeClassId : classes[0].id, settings: settingsOf(raw.settings) };
   }
-  return { validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
+  // Draw only from today's present students, independent of points or species.
+  // The caller records a completed draw; closing the animation consumes no turn.
+  function pickStudent(classroom, date, used = [], random = Math.random) {
+    const eligible = classroom.students.filter(s => !s.isTeacher && !s.days[date]?.absent);
+    if (!eligible.length) return null;
+    const seen = new Set(used), remaining = eligible.filter(s => !seen.has(s.id));
+    const pool = remaining.length ? remaining : eligible;
+    const value = random();
+    if (!Number.isFinite(value) || value < 0 || value >= 1) return null;
+    return {id: pool[Math.floor(value * pool.length)].id, reset: !remaining.length,
+      eligible: eligible.length, remaining: pool.length - 1};
+  }
+  return { waterSettings, pickStudent, validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
 });

@@ -9,22 +9,23 @@
   <meta name="description" content="Sınıfınızın yaşayan akvaryumu. Deniz dostunu seç, sorumluluklarını tamamla, yem kazan ve balığını besle.">
   <title>Sınıf Akvaryumu — Kemal Öğretmenim</title>
   <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/akvaryum.css?v=20261014-single-scroll-v1">
+  <link rel="stylesheet" href="/css/akvaryum.css?v=20261016-alphabetical-release-v1">
   <link rel="preload" as="image" href="/assets/akvaryum/arka-planlar/mercan-resifi.jpg">
   <script defer data-site-performance src="/js/site-performance.js?v=20261012"></script>
   <script defer src="/js/site-data.js"></script>
   <script defer src="/js/user-auth.js?v=20261012-session-refresh-v2"></script>
   <script defer src="/js/akvaryum-sounds.js?v=20261008-mixer"></script>
   <script defer src="/js/akvaryum-audio.js?v=20261012-performance"></script>
-  <script defer src="/js/akvaryum-core.js?v=20261013-coral-expansion-v1"></script>
-  <script defer src="/js/akvaryum-sharing.js?v=20261014-parent-history-v1"></script>
-  <script defer src="/js/akvaryum-anatomy.js?v=20261014-parent-history-v1"></script>
-  <script defer src="/js/akvaryum-motion.js?v=20261014-board-size-v1"></script>
+  <script defer src="/js/akvaryum-core.js?v=20261016-alphabetical-release-v1"></script>
+  <script defer src="/js/akvaryum-sharing.js?v=20261016-alphabetical-release-v1"></script>
+  <script defer src="/js/akvaryum-anatomy.js?v=20261016-alphabetical-release-v1"></script>
+  <script defer src="/js/akvaryum-motion.js?v=20261016-alphabetical-release-v1"></script>
   <script defer src="/js/akvaryum-timer.js?v=20261012-performance"></script>
   <script defer src="/js/akvaryum-cloud.js?v=20261008-cloud"></script>
   <script defer src="/js/akvaryum-creature-models.js?v=20261013-creature-prototype-v1"></script>
   <script defer src="/js/akvaryum-creature-3d.js?v=20261013-creature-prototype-v1"></script>
-  <script defer src="/js/akvaryum.js?v=20261014-single-scroll-v1"></script>
+  <script defer src="/js/akvaryum-water.js?v=20261016-alphabetical-release-v1"></script>
+  <script defer src="/js/akvaryum.js?v=20261016-alphabetical-release-v1"></script>
 </head>
 <body class="access-pending">
   <section id="accessGate" class="access-gate"><h1>Sınıf Akvaryumu</h1><p id="accessMessage">Erişim kontrol ediliyor…</p><button type="button" id="accessRetry" class="button primary" hidden>Oturumu yeniden dene</button><div id="accessLinks" hidden><a class="button primary" href="/giris.html?redirect=%2Fogretmen%2Fakvaryum.html">Öğretmen girişi</a> <a class="button" href="/ogretmen-paneli.html">Öğretmen panelim</a> <a class="button" href="?demo=1">Örnek sınıfı incele</a> <a class="button" href="?veli=1">Veli koduyla izle</a></div></section>
@@ -43,6 +44,7 @@
     <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3m1-16a3 3 0 0 1 0 6m3 10v-4a5 5 0 0 0-3-4"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-2 6-6s4-6 6-6h3m-4-4 4 4-4 4"/></symbol>
     <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></symbol>
     <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
   </defs></svg>
@@ -62,12 +64,14 @@
     <div id="storageWarning" class="storage-warning" role="alert" hidden></div>
     <div id="demoBanner" class="demo-banner" hidden>Örnek sınıfı keşfediyorsunuz. Buradaki değişiklikler kaydedilmez. <button type="button" data-action="exit-demo">Kendi sınıfıma dön →</button></div>
     <main class="aquarium panel-hidden" id="aquarium" aria-label="Sınıfın akvaryumu">
-      <div class="water-light" aria-hidden="true"></div>
+      <canvas id="waterLight" class="water-light" aria-hidden="true"></canvas>
+      <canvas id="waterWaves" class="water-waves" aria-hidden="true" hidden></canvas>
       <aside id="localClock" class="local-clock" aria-label="Yerel saat ve tarih"><time id="localTime"></time><span id="localDate"></span></aside>
       <div id="bubbles" class="bubbles" aria-hidden="true"></div>
       <div class="scene-heading"><span class="eyebrow">KÜÇÜK SORUMLULUKLAR, BÜYÜK MUTLULUKLAR</span><h2 id="sceneTitle">Bizim su altı dünyamız.</h2><p id="sceneSubtitle">Her güzel adım, deniz dostuna bir mutluluk.</p></div>
       <div class="scene-controls">
-        <button type="button" class="finder-button" data-action="find-student"><svg><use href="#i-search"/></svg><span>Öğrenci bul</span></button>
+        <button type="button" class="finder-button" data-action="find-student" aria-label="Öğrenci bul"><svg><use href="#i-search"/></svg><span>Öğrenci bul</span></button>
+        <button type="button" class="round-button random-button" data-action="random-student" aria-label="Rastgele öğrenci seç" title="Rastgele öğrenci seç"><svg><use href="#i-shuffle"/></svg></button>
         <button type="button" class="round-button activities-button fullscreen-keep" id="activitiesButton" data-action="activities" aria-label="Sınıf etkinlikleri" title="Sınıf etkinlikleri"><svg><use href="#i-clock"/></svg><span id="activityTimerBadge" aria-hidden="true" hidden></span></button>
         <div class="sound-controls fullscreen-keep"><button type="button" class="icon-button" data-action="sound" aria-label="Ortam sesleri" title="Ses seç">♫</button><button type="button" class="sound-toggle" id="soundToggle" data-action="toggle-sound" aria-label="Sesi başlat" title="Sesi başlat" aria-pressed="false">▶</button></div>
         <button type="button" class="round-button fullscreen-keep" data-action="themes" aria-label="Akvaryum ortamını değiştir" title="Ortamı değiştir"><svg><use href="#i-scene"/></svg></button>
@@ -90,7 +94,7 @@
         <div class="panel-tabs" role="tablist" aria-label="Panel görünümü"><button type="button" role="tab" id="tab-students" aria-selected="true" aria-controls="panelContent" data-action="tab" data-tab="students">Öğrenciler</button><button type="button" role="tab" id="tab-tasks" aria-selected="false" aria-controls="panelContent" data-action="tab" data-tab="tasks">Günlük görevler</button></div>
         <label class="search-box" id="searchBox"><svg><use href="#i-search"/></svg><input id="studentSearch" type="search" placeholder="Öğrenci ara…" aria-label="Öğrenci ara" maxlength="80"></label>
         <div id="panelContent" class="panel-content" role="tabpanel" aria-labelledby="tab-students"></div>
-        <div class="panel-bottom"><svg><use href="#i-leaf"/></svg><span>Balığa dokun, davranışı seç: <strong>puan ver ve besle.</strong></span></div>
+        <div class="panel-bottom"><svg><use href="#i-leaf"/></svg><span>Balığa veya öğrenci adına dokun: <strong>puan ver ve besle.</strong></span></div>
       </aside>
       <footer class="scene-footer">
         <div class="mood-legend"><span><i class="happy-dot"></i> Mutlu</span><span><i class="calm-dot"></i> Sakin</span><span><i class="sad-dot"></i> Biraz üzgün</span></div>
