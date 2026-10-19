@@ -4,6 +4,37 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const C=require('../js/akvaryum-core.js');
+function syncFixture(){
+ let row=null,offline=false,reads=0,writes=0;
+ const clone=x=>JSON.parse(JSON.stringify(x));
+ const client={from:()=>({select:()=>({eq(){return this;},async maybeSingle(){reads++;return offline?{error:{}}:{data:clone(row)};}})}),rpc:async(name,args)=>{
+  writes++;if(offline)return {error:{}};if(args.p_revision!==(row?.revision||0))return {error:{code:'40001'}};
+  row={document:clone(args.p_document),revision:(row?.revision||0)+1};return {data:row.revision};
+ }};
+ return {factory:options=>require('../js/akvaryum-cloud.js').create({...options,client}),
+  award(index=0,behavior=0){const cl=row.document.classes[0];C.ensureDay(cl.students[index],cl);C.awardBehavior(cl.students[index],cl,C.dayKey(),cl.tasks[behavior].id);row.revision++;},
+  set offline(v){offline=v;},get writes(){return writes;},get reads(){return reads;}};
+}
+test('account polling refreshes an open score/history dialog and keeps typed settings intact',async()=>{
+ const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:remote.factory}),d=h.document;
+ h.click('.fish');h.modal.scrollTop=130;remote.award();await h.pollCloud();
+ assert.equal(h.modal.open,true);assert.equal(h.modal.scrollTop,130);assert.equal(d.querySelector('.fish-points').textContent,'★ 7');
+ assert.match(d.querySelector('.student-facts').textContent,/Toplam puan7/);assert.match(d.querySelector('.behavior-choice').textContent,/Bugün 1 kez/);
+ h.click('[data-action="history"]');remote.award(0,1);await h.pollCloud();assert.equal(d.querySelectorAll('.history-entry').length,2);
+ h.click('[data-action="settings"]');const field=d.querySelector('#renameClassForm [name="name"]');field.value='Henüz kaydetmediğim ad';
+ remote.award();await h.pollCloud();assert.equal(d.querySelector('#renameClassForm [name="name"]'),field);assert.equal(field.value,'Henüz kaydetmediğim ad');
+ assert.equal(C.earned(h.saved().classes[0].students[0]),15);assert.equal(remote.writes,1,'read-only refresh must not overwrite cloud');
+});
+test('manual sync pulls clean remote changes; offline warning stays visible in fullscreen and clears on recovery',async()=>{
+ const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:remote.factory}),d=h.document;
+ h.click('[data-action="settings"]');remote.award();h.click('#modal [data-action="retry-cloud"]');await new Promise(r=>setImmediate(r));
+ assert.equal(C.earned(h.saved().classes[0].students[0]),7);assert.equal(remote.writes,1);assert.equal(d.getElementById('cloudWarning').hidden,true);
+ h.click('[data-action="close"]');h.click('.scene-controls [data-action="fullscreen"]');await new Promise(r=>setImmediate(r));
+ remote.offline=true;await h.pollCloud();const warning=d.getElementById('cloudWarning');
+ assert.equal(warning.hidden,false);assert.equal(warning.parentElement.id,'aquarium');assert.match(warning.textContent,/erişilemiyor/);
+ remote.offline=false;remote.award();h.click('#cloudWarning [data-action="retry-cloud"]');await new Promise(r=>setImmediate(r));
+ assert.equal(warning.hidden,true);assert.equal(C.earned(h.saved().classes[0].students[0]),14);assert.equal(remote.writes,1);
+});
 test('natural strokes survive automatic lightweight quality and keep one animation loop over a long session',async()=>{
   const h=await harness({species:'turtle',ageDays:0,autoQuality:true}),d=h.document,fish=d.querySelector('.fish'),joint=d.querySelector('.creature-joint');
   const record=h.saved(),start=fish.style.transform;let now=100;
@@ -83,7 +114,7 @@ test('resting 3D has one stable pose and resumes its joints on feeding; automati
   h.window.SitePerformance.set('lite');assert.equal(d.querySelectorAll('.has-3d,.creature-model').length,0);
   assert.ok(d.querySelector('.fish-body-image').src.includes('/ahtapot.webp'));
 });
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false,cloudFactory=null}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz',species);
   cls.tasks[0].points=7;cls.students.push(s);if(growth)cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*7)};s.createdAt=Date.now()-ageDays*86400000-1000;
@@ -91,7 +122,8 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
   configure?.(state,cls,s);
-  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],frames=[],resizeObservers=[];let timerNow=Date.now(),frameNow=0,rafId=0;
+  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],intervalPeriods=[],frames=[],resizeObservers=[];let timerNow=Date.now(),frameNow=0,rafId=0;
+  const cloudStorage=new Map([['kemal_class_aquarium_v1_test-teacher',saved]]);
   const modelCalls=[];let modelCreates=0,modelDisposes=0,modelFail=false;
   const waterPaints={};
   window.AquariumWater=require('../js/akvaryum-water.js');
@@ -107,10 +139,13 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   window.AquariumAnatomy=require('../js/akvaryum-anatomy.js');
   window.AquariumCreature3D={create:()=>{modelCreates++;return {supported:modelAvailable,render:(canvas,...args)=>{modelCalls.push(args);frameNow+=drawCost;return !modelFail;},dispose:()=>modelDisposes++};}};
   window.SitePerformance={lite:()=>lite,mode:()=>lite?'lite':'auto',reportSlow(){if(autoQuality&&!lite){lite=true;window.dispatchEvent(new window.Event('site-performance-change'));}},set:value=>{lite=value==='lite';window.dispatchEvent(new window.Event('site-performance-change'));}};
+  window.AquariumSocial=require('../js/akvaryum-social.js');
   window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
   window.kemalUserAuth={ready:async()=>{},getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
+  window.AquariumCloud=cloudFactory?{create:cloudFactory}:null;if(cloudFactory)window.kemalUserAuth.getClient=()=>({});
   if(chatTest)window.AquariumMotion={...window.AquariumMotion,step:fish=>fish.forEach(f=>{f.x=100;f.y=200;})};
   window.AquariumSharing={removeClass:async()=>{deleteCalls++;if(deleteError)throw Error("Bağlantı yok. Sınıf silinmedi.");}};
+  if(cloudFactory)window.AquariumSharing.snapshot=()=>({});
   window.matchMedia=()=>({matches:reduced,addEventListener(){}});
   for(const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
   let shellRect=pearlRect||{left:sceneWidth/2-85,top:sceneHeight-160,width:170,height:145};
@@ -122,13 +157,13 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   app.requestFullscreen=async()=>{document.fullscreenElement=app;document.dispatchEvent(new window.Event('fullscreenchange'));};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
   const context={window,document,navigator:{clipboard:{writeText:async value=>clipboard?.(value)}},location:{search:'',pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,performance:{now:()=>frameNow},console,
-    localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith("_beforeClassDelete")?backup:saved,setItem:(key,value)=>{if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith("_beforeClassDelete"))backup=value;else saved=value;}},
-    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
+    localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
+    setTimeout:()=>1,clearTimeout(){},setInterval:(fn,ms)=>{intervals.push(fn);intervalPeriods.push(ms);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
     FormData:class {constructor(form){this.form=form;}get(name){return this.form.querySelector('[name="'+name+'"]').value;}}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
   const submit=form=>form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
-  return {window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
+  return {pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
 }
 test('board magnification stays device-local and preserves young fish growth, points and lightweight motion',async()=>{
  const options={ageDays:0,growth:true,sceneWidth:1240,sceneHeight:242,extraNames:Array.from({length:23},(_,i)=>'Öğrenci '+i),lite:true};
@@ -196,6 +231,46 @@ test('the sidebar opens the same scoring and feeding path, and settings require 
   cls=h.saved().classes[0];assert.equal(cls.tasks.length,4);assert.equal(cls.tasks[3].points,10);
   h.click('[data-action="close"]');h.click('.fish');
   assert.match(d.querySelectorAll('.behavior-choice')[3].textContent,/Arkadaşıma yardım ettim.*\+10 puan/);
+});
+test('behavior creation reaches 100 templates, survives reload and refuses the 101st without changing points',async()=>{
+ const h=await harness({configure:(state,cls)=>{
+  while(cls.tasks.length<C.MAX_BEHAVIORS-1)cls.tasks.push({id:C.uid(),title:'Davranış '+cls.tasks.length,icon:'⭐',points:cls.tasks.length%2?1:-1});
+ }}),d=h.document;
+ h.click('[data-action="settings"]');h.click('[data-action="tasks"]');
+ let form=d.getElementById('taskForm');form.querySelector('[name="title"]').value='Yüzüncü davranış';form.querySelector('[name="points"]').value='5';h.submit(form);
+ const saved=h.saved(),cls=saved.classes[0],student=cls.students[0];
+ assert.equal(cls.tasks.length,100);assert.match(d.getElementById('behaviorCount').textContent,/100 \/ 100/);
+ assert.equal(C.validate(saved).classes[0].tasks.at(-1).title,'Yüzüncü davranış');
+ assert.equal(C.earned(student),0);assert.equal(student.feeds.length,0);
+ form=d.getElementById('taskForm');form.querySelector('[name="title"]').value='Fazladan davranış';form.querySelector('[name="points"]').value='2';h.submit(form);
+ assert.deepEqual(h.saved(),saved);assert.match(d.getElementById('formError').textContent,/en fazla 100 davranış/);
+ h.click('[data-action="close"]');h.click('.fish');
+ const last=cls.tasks.at(-1);h.click('.behavior-choice[data-id="'+last.id+'"]');
+ assert.equal(C.earned(h.saved().classes[0].students[0]),5);
+});
+test('removed behavior history no longer blocks new positive or development templates',async()=>{
+ const h=await harness({configure:(state,cls,s)=>{
+  for(let i=0;i<25;i++)s.days[C.dayKey()].tasks.push({id:C.uid(),title:'Eski davranış '+i,points:1,status:'done'});
+ }}),d=h.document,before=h.saved().classes[0].students[0];
+ h.click('[data-action="settings"]');h.click('[data-action="tasks"]');
+ for(const [title,type] of [['Yeni olumlu','positive'],['Yeni gelişim','development']]){
+  const form=d.getElementById('taskForm');form.querySelector('[name="title"]').value=title;form.querySelector('[name="points"]').value='3';
+  const select=form.querySelector('[name="behaviorType"]');select.querySelectorAll('option').forEach(o=>o.selected=o.value===type);h.submit(form);
+ }
+ const saved=h.saved(),cls=saved.classes[0];assert.equal(cls.tasks.length,5);
+ assert.equal(cls.tasks.at(-1).points,-3);assert.equal(C.earned(cls.students[0]),25);
+ assert.deepEqual(cls.students[0].days[C.dayKey()].tasks.slice(0,28),before.days[C.dayKey()].tasks);
+ assert.deepEqual(C.validate(saved),saved);
+});
+test('a full daily history rejects adding a positive template atomically',async()=>{
+ const h=await harness({configure:(state,cls,s)=>{
+  const tasks=s.days[C.dayKey()].tasks;
+  while(tasks.length<C.MAX_DAILY_TASKS)tasks.push({id:C.uid(),title:'Geçmiş işlem',points:1,status:'done'});
+ }}),d=h.document;
+ h.click('[data-action="settings"]');h.click('[data-action="tasks"]');const before=h.saved();
+ const form=d.getElementById('taskForm');form.querySelector('[name="title"]').value='Yeni davranış';form.querySelector('[name="points"]').value='1';h.submit(form);
+ assert.match(d.getElementById('formError').textContent,/Bugünkü işlem kaydı dolu/);assert.deepEqual(h.saved(),before);
+ assert.deepEqual(C.validate(h.saved()),before);
 });
 test('the open teacher scene refreshes hunger without requiring a reload',async()=>{
   const h=await harness(),label=h.document.querySelector('.fish-hunger');
@@ -383,6 +458,16 @@ test('growth can hatch on reward, revert on correction, and normal mode keeps po
  form=d.getElementById('growthForm');form.querySelector('[value="normal"]').selected=true;h.submit(form);
  assert.equal(d.querySelector('.fish').classList.contains('is-egg'),false);assert.equal(C.earned(h.saved().classes[0].students[0]),0);
 });
+test('eggs reveal the selected species, retain an image fallback and hatch without changing another pupil',async()=>{
+ const h=await harness({growth:true,ageDays:0,extraNames:['Ada'],configure:(state,cls)=>{cls.students[1].species='betta';}}),d=h.document;
+ const before=h.saved(),ids=before.classes[0].students.map(s=>s.id),eggs=[...d.querySelectorAll('.is-egg .egg-embryo')];
+ assert.equal(eggs.length,2);assert.ok(eggs[0].src.endsWith('/palyaco-baligi.webp'));assert.ok(eggs[1].src.endsWith('/beta.webp'));assert.deepEqual(h.saved(),before);
+ const image=eggs[1],event=new h.window.Event('error',{bubbles:true});image.dispatchEvent(event);assert.ok(image.src.endsWith('/beta.png'));
+ h.click('[data-action="settings"]');h.click('[data-action="close"]');assert.ok(image.src.endsWith('/beta.png'),'a normal re-render must keep the fallback');
+ h.click('.fish[data-id="'+ids[0]+'"]');h.click('.behavior-choice');
+ assert.equal(d.querySelector('.fish[data-id="'+ids[0]+'"]').classList.contains('is-egg'),false);assert.equal(d.querySelectorAll('.is-egg').length,1);
+ assert.deepEqual(h.saved().classes[0].students.map(C.earned),[7,0]);assert.equal(h.frames.length,1);
+});
 test('teacher fish is separate, opens its own settings, and contributes no class points',async()=>{
  const h=await harness(),d=h.document;
  h.click('[data-action="settings"]');h.click('[data-action="teacher-fish"]');
@@ -426,7 +511,7 @@ test('fullscreen retains working timer, audio and scene controls and restores th
  h.click(toggle);await new Promise(resolve=>setImmediate(resolve));
  assert.equal(d.fullscreenElement,app);assert.equal(toggle.getAttribute('aria-label'),'Tam ekrandan çık');
  assert.equal(toggle.querySelector('use').getAttribute('href'),'#i-collapse');assert.equal(h.modal.parentNode,d.getElementById('aquarium'));
- assert.equal(d.querySelectorAll('.scene-controls>.fullscreen-keep').length,4);
+ assert.equal(d.querySelectorAll('.scene-controls>.fullscreen-keep').length,5);
  h.click('#activitiesButton');assert.equal(d.getElementById('modalTitle').textContent,'Saat ve sayaç');
  assert.equal(h.modal.querySelector('[data-action="activities"]'),null);
  h.submit(d.getElementById('timerForm'));assert.equal(h.modal.open,false);assert.equal(d.fullscreenElement,app);
@@ -446,6 +531,23 @@ test('fullscreen retains working timer, audio and scene controls and restores th
  h.click(toggle);await d.exitFullscreen();assert.equal(toggle.getAttribute('aria-pressed'),'false');
 });
 
+test('fullscreen random selection keeps its glass dialog, winner actions and scoring inside fullscreen',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada','Ece'],reduced:true}),d=h.document;
+ h.click('.scene-controls [data-action="fullscreen"]');await new Promise(resolve=>setImmediate(resolve));
+ const app=d.fullscreenElement,before=h.saved(),random=d.querySelector('.scene-controls [data-action="random-student"]');
+ assert.ok(random.classList.contains('fullscreen-keep'));
+ h.click(random);assert.ok(h.modal.classList.contains('random-picker-modal'));
+ assert.equal(h.modal.parentNode,d.getElementById('aquarium'));h.click('[data-action="random-draw"]');
+ const winner=d.getElementById('pickerName').textContent;
+ assert.deepEqual(h.saved(),before);assert.equal(d.fullscreenElement,app);
+ h.click('[data-action="random-show"]');assert.equal(h.modal.open,false);assert.equal(d.fullscreenElement,app);
+ h.click(random);assert.equal(d.getElementById('pickerName').textContent,winner);
+ h.click('[data-action="random-behaviors"]');assert.equal(d.getElementById('modalTitle').textContent,winner);
+ h.click('.behavior-choice');assert.equal(d.fullscreenElement,app);
+ const after=h.saved().classes[0];
+ after.students.forEach(s=>assert.equal(C.earned(s),s.name===winner?7:0));
+ await d.exitFullscreen();assert.equal(h.modal.parentNode,d.body);
+});
 test('normal mode hides inactive targets; invalid growth thresholds never replace saved settings',async()=>{
  const h=await harness(),d=h.document;
  h.click('[data-action="settings"]');h.click('[data-action="growth"]');
@@ -599,7 +701,7 @@ test('teacher encouragement follows an actual deduction, speaks briefly, and ret
  const heldPositions=[teacher.style.transform,pupil.style.transform],heldArt=[teacher.querySelector('.fish-art').style.transform,pupil.querySelector('.fish-art').style.transform];
  for(let i=0;i<30;i++)h.frames.pop()(time+=50);
  assert.deepEqual([teacher.style.transform,pupil.style.transform],heldPositions,'both fish must stay still while the message is visible');
- assert.deepEqual([teacher.querySelector('.fish-art').style.transform,pupil.querySelector('.fish-art').style.transform],heldArt);assert.equal(note.closest('.fish'),teacher);assert.match(note.textContent,/dikkatli|deneyelim|deneyebilirsin/);
+ assert.deepEqual([teacher.querySelector('.fish-art').style.transform,pupil.querySelector('.fish-art').style.transform],heldArt);assert.equal(note.closest('.fish'),teacher);assert.ok(require('../js/akvaryum-social.js').encouragements.includes(note.textContent));
  assert.doesNotMatch(note.textContent,/Deniz|puan|5|2/);assert.notEqual(teacher.style.transform,start);assert.equal(h.sounds(),0);
  for(let i=0;i<400;i++)h.frames.pop()(time+=50);assert.equal(d.querySelector('.teacher-note'),null);
  const after=teacher.style.transform;for(let i=0;i<100;i++)h.frames.pop()(time+=50);assert.notEqual(teacher.style.transform,after);
@@ -622,6 +724,43 @@ test('teacher reminders reject failed deductions, keep an active visit through r
  for(let i=0;i<500;i++)h.frames.pop()(i*50+50);deduct();assert.ok(d.querySelector('.is-mentoring'));
  h.click('[data-action="settings"]');const toggle=d.getElementById('teacherEncouragementToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));
  assert.equal(d.querySelector('.is-mentoring,.teacher-note'),null);assert.equal(h.saved().settings.teacherEncouragement,false);assert.equal(C.earned(h.saved().classes[0].students[0]),1);
+});
+test('teacher resumes an interrupted visit after returning to the tab, without repeating the deduction',async()=>{
+ const h=await harness({ageDays:0,configure:(state,cls,s)=>{
+  state.settings.teacherEncouragement=true;cls.teacher={enabled:true,name:'Öğretmen',species:'goldfish'};
+  cls.tasks.push({id:'care',title:'Yeniden deneyelim',points:-2});C.ensureDay(s,cls).tasks[0].status='done';
+ }}),d=h.document;h.click('.fish');h.click('[data-kind="development"]');h.click('[data-action="reward-behavior"]');const saved=h.saved();
+ d.hidden=true;d.dispatchEvent(new h.window.Event('visibilitychange'));assert.equal(d.querySelector('.is-mentoring,.is-listening'),null);
+ d.hidden=false;d.dispatchEvent(new h.window.Event('visibilitychange'));
+ let note;for(let i=1;i<=350&&!note;i++){h.frames.pop()(i*50);note=d.querySelector('.teacher-note.visible');}
+ assert.ok(note);assert.deepEqual(h.saved(),saved);assert.equal(h.frames.length,1);
+});
+test('a new deduction received from another device starts one teacher conversation and updates the daily champion',async()=>{
+ const remote=syncFixture(),h=await harness({ageDays:0,extraNames:['Ada'],cloudFactory:remote.factory,configure:(state,cls,s)=>{
+  state.settings.teacherEncouragement=true;cls.teacher={enabled:true,name:'Öğretmen',species:'goldfish'};
+  cls.tasks.push({id:'care',title:'Yeniden deneyelim',points:-2});C.ensureDay(s,cls).tasks[0].status='done';
+ }}),d=h.document;remote.award(0,3);await h.pollCloud();const saved=h.saved();
+ let note;for(let i=1;i<=350&&!note;i++){h.frames.pop()(i*50);note=d.querySelector('.teacher-note.visible');}
+ assert.ok(note);assert.equal(C.earned(saved.classes[0].students[0]),5);assert.match(d.querySelector('.daily-champion-medal').getAttribute('aria-label'),/Bugün 5 puan/);await h.pollCloud();
+ for(let i=351;i<=700;i++)h.frames.pop()(i*50);assert.equal(d.querySelector('.teacher-note,.is-listening,.is-mentoring'),null);assert.deepEqual(h.saved(),saved);
+ remote.award(1,0);await h.pollCloud();assert.equal(d.querySelector('.daily-champion-medal').closest('.fish').dataset.id,h.saved().classes[0].students[1].id);assert.equal(d.querySelector('.is-mentoring'),null);
+});
+test('teacher reaches moving, resting and newly hatched-to-egg pupils across compact board and wide scenes',async()=>{
+ for(const options of [
+  {sceneWidth:320,sceneHeight:240,displaySize:200},
+  {sceneWidth:1240,sceneHeight:242,displaySize:200,extraNames:Array.from({length:23},(_,i)=>'Öğrenci '+i),lite:true},
+  {sceneWidth:2500,sceneHeight:950,species:'jellyfish'},
+  {sceneWidth:3840,sceneHeight:1200,displaySize:200,frameStep:200,extraNames:Array.from({length:23},(_,i)=>'Öğrenci '+i)},
+  {sceneWidth:900,sceneHeight:600,ageDays:3},
+  {sceneWidth:1240,sceneHeight:300,growth:true,egg:true}
+ ]){
+  const h=await harness({ageDays:0,...options,configure:(state,cls,s)=>{
+   state.settings.teacherEncouragement=true;cls.teacher={enabled:true,name:'Öğretmen',species:'goldfish'};
+   cls.tasks.push({id:'care',title:'Yeniden deneyelim',points:options.egg?-7:-2,icon:'🌿'});C.ensureDay(s,cls).tasks[0].status='done';
+  }}),d=h.document;h.click('.fish');h.click('[data-kind="development"]');h.click('[data-action="reward-behavior"]');
+  let spoke=false;for(let i=1;i<=700;i++){h.frames.pop()(i*(options.frameStep||50));if(d.querySelector('.teacher-note.visible'))spoke=true;}
+  assert.equal(spoke,true,JSON.stringify(options));assert.equal(d.querySelector('.is-mentoring,.is-listening'),null);
+ }
 });
 test('successive deductions visit each child in order without cancelling the active meeting or pausing the class',async()=>{
  const h=await harness({ageDays:0,extraNames:['Ada','Ece'],configure:(state,cls)=>{
@@ -703,6 +842,28 @@ test('a nearby pair waits two minutes for its first chat and cannot repeat frequ
  for(const now of [150000,200000,300000,450000,600000])frame(now);
  assert.equal(d.querySelectorAll('.fish-chat.visible').length,0);
  frame(1000000);assert.equal(d.querySelectorAll('.fish-chat.visible').length,2);
+});
+test('greeting conversations use varied friendly emoji pairs without altering points or creating another animation loop',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada'],chatTest:true}),d=h.document,saved=h.saved(),seen=new Set();
+ for(let i=0;i<12;i++){
+  h.frames.pop()(130000+i*1000000);const symbols=[...d.querySelectorAll('.fish-chat.visible')].map(n=>n.textContent);
+  assert.equal(symbols.length,2);seen.add(symbols.join(''));assert.ok(require('../js/akvaryum-social.js').greetings.some(p=>p.join('')===symbols.join('')));
+  d.querySelectorAll('.fish-chat').forEach(n=>n.classList.remove('visible'));
+ }
+ assert.equal(seen.size,12);assert.deepEqual(h.saved(),saved);assert.equal(h.frames.length,1);
+});
+test('daily medallion follows today’s leader, keeps ties and names intact, and vanishes when names are hidden',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada'],configure:(state,cls,s)=>{
+  C.ensureDay(s,cls,'2026-01-01').tasks[0]={...cls.tasks[0],points:100,status:'done'};
+ }}),d=h.document,ids=h.saved().classes[0].students.map(s=>s.id);
+ const reward=id=>{h.click('.fish[data-id="'+id+'"]');h.click('[data-kind="positive"]');h.click('.behavior-choice');};
+ assert.equal(d.querySelector('.daily-champion-medal'),null);reward(ids[1]);
+ assert.equal(d.querySelector('.daily-champion-medal').closest('.fish').dataset.id,ids[1]);assert.match(d.querySelector('.daily-champion-medal').getAttribute('aria-label'),/Bugün 7 puan/);
+ reward(ids[0]);assert.equal(d.querySelectorAll('.daily-champion-medal').length,2);
+ reward(ids[1]);assert.equal(d.querySelectorAll('.daily-champion-medal').length,1);assert.equal(d.querySelector('.daily-champion-medal').closest('.fish').dataset.id,ids[1]);
+ assert.equal(d.querySelector('.fish[data-id="'+ids[1]+'"] .fish-label-text').textContent,'Ada');
+ h.click('[data-action="settings"]');const toggle=d.getElementById('namesToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ assert.equal(d.querySelector('.daily-champion-medal'),null);assert.deepEqual(h.saved().classes[0].students.map(C.earned),[107,14]);
 });
 
 test('tail strokes stop for hungry fish, resume after feeding, and obey the motion switch',async()=>{
@@ -830,6 +991,38 @@ test('random picker has no repeat within a round and changes no class scores, fe
  h.click('[data-action="random-behaviors"]');assert.equal(d.getElementById('modalTitle').textContent,picked);
  assert.ok(h.modal.classList.contains('behavior-modal'));
  assert.deepEqual(h.saved(),before);
+});
+test('picker plays wheel and reveal only after a draw, celebrates once and stops sound on close',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada','Ece']}),d=h.document,calls=[];
+ Object.assign(h.window.AquariumAudio,{pickerSound:async result=>calls.push(result?'win':'wheel'),cancelPicker:()=>calls.push('cancel')});
+ const before=h.saved();h.click('[data-action="random-student"]');assert.deepEqual(calls,['cancel']);
+ h.click('[data-action="random-draw"]');h.click('[data-action="random-draw"]');assert.deepEqual(calls,['cancel','wheel']);
+ let now=0;while(now<2700){now+=40;h.frames.splice(0).forEach(fn=>fn(now));}
+ assert.deepEqual(calls,['cancel','wheel','win']);assert.ok(d.getElementById('pickerStage').classList.contains('is-celebrating'));
+ assert.equal(d.querySelectorAll('.picker-sparkles i').length,10);assert.deepEqual(h.saved(),before);
+ const ended=new h.window.Event('animationend',{bubbles:true});ended.animationName='picker-reveal-fish';d.getElementById('pickerImage').dispatchEvent(ended);
+ assert.equal(d.getElementById('pickerStage').classList.contains('is-celebrating'),false);
+ h.click('[data-action="close"]');assert.equal(calls.at(-1),'cancel');
+ h.click('[data-action="random-student"]');assert.equal(d.getElementById('pickerStage').classList.contains('is-celebrating'),false);
+});
+test('picker sound preference persists; silent, reduced-motion and unsupported audio still produce a winner',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada'],reduced:true}),d=h.document,calls=[];
+ h.window.AquariumAudio.pickerSound=async result=>calls.push(result);
+ h.click('[data-action="random-student"]');const toggle=d.getElementById('pickerSoundToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ assert.equal(C.validate(h.saved()).settings.pickerSound,false);h.click('[data-action="random-draw"]');assert.equal(calls.length,0);
+ assert.equal(d.getElementById('pickerStage').classList.contains('is-celebrating'),false);assert.match(d.getElementById('pickerStatus').textContent,/Söz sende/);
+ toggle.checked=true;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));h.click('[data-action="random-draw"]');assert.deepEqual(calls,[true]);
+ h.window.AquariumAudio.pickerSound=async()=>{throw Error('Ses desteklenmiyor');};h.click('[data-action="random-draw"]');await new Promise(r=>setImmediate(r));
+ assert.match(d.getElementById('pickerStatus').textContent,/Söz sende/);assert.equal(d.getElementById('pickerStart').disabled,false);
+ assert.equal(C.settingsOf().pickerSound,true);
+});
+test('hiding the tab cancels a picker without consuming a turn or leaving its button disabled',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada','Ece']}),d=h.document,calls=[];
+ h.window.AquariumAudio.cancelPicker=()=>calls.push('cancel');
+ const before=h.saved();h.click('[data-action="random-student"]');h.click('[data-action="random-draw"]');
+ Object.defineProperty(d,'hidden',{configurable:true,value:true});d.dispatchEvent(new h.window.Event('visibilitychange'));
+ assert.equal(d.getElementById('pickerStart').disabled,false);assert.equal(h.frames.length,0);assert.equal(d.getElementById('pickerRound').textContent,'');
+ assert.equal(calls.at(-1),'cancel');assert.deepEqual(h.saved(),before);
 });
 test('random picker excludes absent pupils, includes sand eggs and cannot choose from an empty pool',async()=>{
  const h=await harness({absent:true,extraNames:['Ada'],growth:true,reduced:true}),d=h.document;

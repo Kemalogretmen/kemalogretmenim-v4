@@ -35,7 +35,7 @@ body:not(.access-pending) .access-gate { display:none; }
 .app:fullscreen { background:#062f40; overflow:hidden!important; }
 .app:fullscreen > :not(#aquarium) { display:none!important; }
 .app:fullscreen #aquarium { height:100vh!important; min-height:0!important; margin:0!important; border-radius:0; }
-.app:fullscreen #aquarium > :not(#swimArea):not(.water-light):not(#waterWaves):not(#bubbles):not(#feedingEffects):not(#classPearl):not(#eggBed):not(#localClock):not(#modal):not(.scene-controls) { display:none!important; }
+.app:fullscreen #aquarium > :not(#swimArea):not(.water-light):not(#waterWaves):not(#bubbles):not(#feedingEffects):not(#classPearl):not(#eggBed):not(#localClock):not(#cloudWarning):not(#modal):not(.scene-controls) { display:none!important; }
 .app:fullscreen #swimArea { inset:55px 30px 35px!important; height:auto!important; width:auto!important; }
 .app:fullscreen .mood-symbol { display:none!important; }
 .app:fullscreen .fish { pointer-events:none; }
@@ -125,7 +125,11 @@ dialog::backdrop{background:#021b2b52;backdrop-filter:blur(3px);-webkit-backdrop
 dialog .field input,dialog .field textarea,dialog .field select{background:#062c3cb3}dialog .species-card{background:#b5e9df0c}dialog .species-card:has(input:checked){background:#a5efcc28}
 .growth-thresholds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px}.growth-instructions{padding-left:20px;font-size:12px;line-height:1.9;color:#c7e2e3}.growth-instructions li{margin-bottom:9px}.growth-summary{font-size:12px;color:#d1f4dc;padding:12px 14px;background:#afe8d416;border:1px solid #c2ffe026;border-radius:12px}
 .history-entry{padding:10px 0;border-bottom:1px solid #b8eadd1a;display:flex;align-items:center;justify-content:space-between;gap:14px}.history-entry .button{font-size:10px;min-height:36px;padding:8px 10px;white-space:nowrap}.history-entry p{flex:1}.history-entry .settings-actions{flex-shrink:0}
-.fish-art{transition:filter .4s;transform-origin:50% 50%}.fish-egg{display:none;position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);width:calc(var(--fish-size)*.49);height:calc(var(--fish-size)*.59);border-radius:49% 49% 46% 46%;background:radial-gradient(ellipse at 30% 25%,#fffef4e6 0%,#d7f3e9a8 25%,#71c8d456 60%,#537bba90 100%);border:1px solid #e1fff6bb;box-shadow:inset -5px -6px 15px #2149776b,inset 3px 3px 10px #fff9,0 5px 18px #00284e55,0 0 12px #cefde833;pointer-events:none}.fish-egg i{position:absolute;inset:28% 22%;border-radius:50%;background:radial-gradient(ellipse,#a2e2beaa,#4b87ae33);filter:blur(3px)}.is-egg .fish-art{opacity:0}.is-egg .fish-egg{display:block}.is-hatching .fish-egg{display:block;animation:egg-open 1.4s ease-out forwards}.is-hatching .fish-art{animation:fish-hatch 1.5s ease-out}.teacher-fish .fish-name{border-color:#e3d79b80;color:#fff1bd}
+.fish-art{transition:filter .4s;transform-origin:50% 50%}.fish-egg{display:none;position:absolute;left:50%;top:36%;transform:translate(-50%,-50%);width:calc(var(--fish-size)*.49);height:calc(var(--fish-size)*.49);border-radius:50%;background:radial-gradient(circle at 35% 25%,#ffd154 0%,#ffb51b 32%,#fb9706 64%,#da6502 100%);border:1px solid #ffe7a6;box-shadow:inset -3px -5px 7px #bd4c0057,inset 2px 2px 4px #fff6cba1,0 3px 5px #102e3c55;pointer-events:none}
+.fish-egg i{position:absolute;left:32%;bottom:17%;width:43%;height:40%;border-radius:50%;background:radial-gradient(circle at 37% 28%,#ffe48c94,#f5822066 70%);border:1px solid #ffdf803d;pointer-events:none}
+.fish-egg .egg-embryo{position:absolute;left:12%;top:20%;width:76%;height:62%;object-fit:contain;opacity:.6;transform:rotate(-14deg);pointer-events:none}
+.fish-egg::before{content:'';position:absolute;z-index:2;top:10%;left:13%;width:36%;height:28%;border-radius:50%;background:radial-gradient(ellipse at 36% 28%,#fffef1e8, #fff9dc6b 33%,#fff5c500 72%);transform:rotate(-35deg);pointer-events:none}
+.is-egg .fish-art{opacity:0}.is-egg .fish-egg{display:block}.is-hatching .fish-egg{display:block;animation:egg-open 1.4s ease-out forwards}.is-hatching .fish-art{animation:fish-hatch 1.5s ease-out}.teacher-fish .fish-name{border-color:#e3d79b80;color:#fff1bd}
 @keyframes egg-open{0%{opacity:1;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}45%{opacity:1;transform:translate(-50%,-50%) scale(1.1);clip-path:polygon(0 0,100% 0,100% 40%,65% 51%,76% 66%,43% 53%,24% 70%,0 52%)}100%{opacity:0;transform:translate(-50%,-95%) scale(1.2)}}@keyframes fish-hatch{0%,25%{opacity:0}100%{opacity:1}}
 /* Shared stacking context lets living creatures pass behind and in front of the timer. */
 .scene-timer{position:absolute;left:50%;top:70%;transform:translate(-50%,-50%) perspective(700px) rotateY(-8deg);z-index:2;pointer-events:none;text-align:center;width:clamp(150px,24vw,290px);color:#dcfafca6;text-shadow:1px 2px 0 #357e9299,2px 4px 0 #184c6466,0 0 22px #b7f5ff5c;filter:drop-shadow(0 15px 7px #032c4166)}
@@ -137,8 +141,8 @@ dialog .field input,dialog .field textarea,dialog .field select{background:#062c
 @media(prefers-reduced-transparency:reduce){dialog,.behavior-modal{background:#103a49;backdrop-filter:none;-webkit-backdrop-filter:none}dialog::backdrop{background:#032431b5}}
 /* Eggs rest at the actual scene floor, independently of the fish swimming bounds. */
 .egg-bed{position:absolute;inset:0 380px 8px 20px;pointer-events:none;z-index:3;overflow:hidden}.egg-bed .fish{pointer-events:auto}.panel-hidden .egg-bed,.view-only .egg-bed{right:20px}
-.egg-bed .fish-egg{top:calc(var(--fish-size)*.32);width:calc(var(--fish-size)*.49);height:calc(var(--fish-size)*.59);box-shadow:inset -5px -6px 15px #2149776b,inset 3px 3px 10px #fff9,0 4px 5px #102e3c70}
-.egg-bed .fish-egg::after{content:'';position:absolute;z-index:2;left:-30%;width:160%;bottom:-8%;height:33%;border-radius:50% 48% 44% 45%;background:radial-gradient(ellipse at 40% 5%,#e6d8ad90,transparent 60%),radial-gradient(circle,#c7c09e90 .6px,transparent .9px) 0 0/4px 3px,radial-gradient(circle,#596f6980 .6px,transparent 1px) 1px 1px/5px 4px,linear-gradient(175deg,#a8b49c,#829b91 65%,#6a8b8790);box-shadow:0 3px 4px #123b3a38,inset 0 1px 1px #e7e6bc65;pointer-events:none}
+
+.egg-bed .fish-egg::after{content:'';position:absolute;left:5%;width:90%;bottom:-10%;height:12%;border-radius:50%;background:radial-gradient(ellipse,#57452554,transparent 72%);pointer-events:none}
 .egg-bed .fish-name{margin-top:3px;font-size:10px;max-width:80px}.egg-bed .fish-points{font-size:10px;padding:2px 5px;top:-18px}.egg-bed .fish-hunger{font-size:8px}.egg-bed .fish-hunger.hunger-icon{position:absolute;right:0;top:0}
 .app:fullscreen #aquarium > #eggBed:not([hidden]){display:block!important;inset:0 30px 25px!important}.app:fullscreen #eggBed .fish{pointer-events:none}
 @media(min-width:1600px){.egg-bed{right:420px}}
@@ -261,8 +265,8 @@ dialog.species-picker-modal{width:min(1240px,calc(100% - 32px));max-height:94svh
 @media(max-width:800px){.fish-points{top:calc(-20px - var(--points-gap, 8px) + var(--label-adjustment,0px))}}
 /* Egg cards use a compact label plate so names and scores remain legible on the sand. */
 .egg-bed .fish-art{height:0;aspect-ratio:auto;flex:0 0 0;visibility:hidden}
-.egg-bed .fish-egg{top:calc(var(--fish-size)*.26);width:var(--egg-size,48px);height:calc(var(--egg-size,48px)*.72)}
-.egg-bed .fish-name{margin-top:calc(var(--egg-size,48px)*.7);max-width:var(--egg-label-width,82px);font-size:var(--egg-label-size,10px);line-height:1.2}
+.egg-bed .fish-egg{top:calc(6px + var(--egg-size,48px)*.35);width:calc(var(--egg-size,48px)*.7);height:calc(var(--egg-size,48px)*.7)}
+.egg-bed .fish-name{margin-top:calc(var(--egg-size,48px)*.7 + 7px);max-width:var(--egg-label-width,82px);font-size:var(--egg-label-size,10px);line-height:1.2}
 .egg-bed .fish-points{top:-17px;font-size:10px;padding:2px 5px}
 .egg-bed .fish-hunger{font-size:8px}
 .leaderboard{list-style:none;padding:0;margin:16px 0;display:grid;gap:7px;scrollbar-width:thin}
@@ -316,6 +320,14 @@ html.aquarium-modal-open,body.dialog-open{overflow:hidden;overscroll-behavior:no
 /* A lightweight turn picker: one image, bounded previews, no extra blur layers. */
 .random-button{color:#c1f5df;background:#104c5fbf}
 #modal.random-picker-modal{width:min(620px,calc(100% - 24px));padding:20px 26px;max-height:94svh}
+/* Reuse the dialog's single glass layer; the picker adds only static highlights. */
+#modal.random-picker-modal{background:radial-gradient(ellipse at 0 0,#d8fff747,transparent 52%),radial-gradient(ellipse at 100% 100%,#a7eee928,transparent 60%),linear-gradient(135deg,#39788954,#093b50b8);border:1px solid #d6fff29c;box-shadow:inset 0 2px 1px #effffb80,inset 1px 0 0 #ecfff640,inset -1px -2px 1px #d3fffb45,0 24px 70px #001c335c}
+.random-picker-modal .modal-toolbar{background:linear-gradient(135deg,#c4fff512,#0b425738);border:1px solid #d5fff12b;padding:5px 7px;border-radius:20px}
+.random-picker-modal .picker-stage{background:radial-gradient(ellipse at 50% 22%,#d1fff529,transparent 65%),linear-gradient(145deg,#bcfff510,#09354a33);border-color:#dcfff66b;box-shadow:inset 0 1px 0 #effffb38}
+.random-picker-modal #pickerName{text-shadow:0 2px 8px #032431b3}
+html.performance-lite #modal.random-picker-modal{background:radial-gradient(ellipse at 0 0,#86d5cf1c,transparent 60%),linear-gradient(135deg,#174e60f5,#092f41fa);text-shadow:none}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){#modal.random-picker-modal{background:linear-gradient(135deg,#245967f5,#103a49fa)}}
+@media(prefers-reduced-transparency:reduce){#modal.random-picker-modal{background:#103a49;backdrop-filter:none;-webkit-backdrop-filter:none}}
 .random-picker-modal .modal-heading{margin-bottom:8px}.random-picker-modal .modal-heading .eyebrow{display:none}
 .random-picker-modal .modal-heading h2{font-size:27px;margin:0}
 .picker-intro{margin:0 0 10px;color:#c1e3df;font-size:12px}
@@ -330,11 +342,25 @@ html.aquarium-modal-open,body.dialog-open{overflow:hidden;overscroll-behavior:no
 #pickerResultActions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}#pickerResultActions .button{font-size:12px;padding:10px 12px}
 .picker-note{line-height:1.7;margin:18px 0 0}.picker-round{margin:8px 0 0;text-align:center;font-size:11px;color:#b6e2cf;min-height:16px}
 .picker-stage.has-result{border-color:#b8f6d880;box-shadow:inset 0 0 32px #abf6dc0b}
-.picker-stage.has-result .picker-preview img{animation:picker-arrive .5s ease-out both}
+.picker-stage.is-celebrating .picker-preview img{animation:picker-reveal-fish .95s cubic-bezier(.2,.75,.3,1) both}
+.picker-stage.is-celebrating #pickerName{animation:picker-reveal-name .65s .12s ease-out both}
+.picker-stage.is-drawing .picker-orbit{border-style:dashed;animation:picker-wheel 2.4s cubic-bezier(.15,.5,.3,1) both}
+.picker-stage.is-celebrating .picker-orbit{animation:picker-ripple .95s ease-out both}
+.picker-sparkles{position:absolute;left:50%;top:92px;pointer-events:none;z-index:2}
+.picker-sparkles i{position:absolute;display:block;width:7px;height:10px;border-radius:3px;background:#adebd5;opacity:0}
+.picker-sparkles i:nth-child(3n){background:#ffeab3}.picker-sparkles i:nth-child(3n+1){background:#bdefff;border-radius:50%;width:7px;height:7px}
+.is-celebrating .picker-sparkles i{animation:picker-sparkle .95s ease-out both;animation-delay:calc(var(--spark)*12ms)}
+.picker-sound{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;margin:14px 0 0;color:#d4eee6;font-size:12px;min-height:32px;cursor:pointer}
+.picker-sound input{width:18px;height:18px;accent-color:#a5e7d0;margin:0}.picker-sound small{color:#ffe3b2}
+@keyframes picker-reveal-fish{0%{transform:translateY(24px) scale(.5) rotate(-9deg);opacity:0}55%{transform:translateY(-7px) scale(1.16) rotate(3deg);opacity:1}78%{transform:translateY(2px) scale(.97) rotate(-1deg)}100%{transform:none;opacity:1}}
+@keyframes picker-reveal-name{from{transform:translateY(10px) scale(.93);opacity:0}to{transform:none;opacity:1}}
+@keyframes picker-wheel{from{transform:translateX(-50%) rotate(-420deg)}to{transform:translateX(-50%) rotate(0)}}
+@keyframes picker-ripple{from{transform:translateX(-50%) scale(.65);opacity:.9}to{transform:translateX(-50%) scale(1.25);opacity:0}}
+@keyframes picker-sparkle{0%{transform:translate(0,10px) scale(.3);opacity:0}15%{opacity:1}100%{transform:translate(var(--spark-x),var(--spark-y)) rotate(var(--spark-turn)) scale(.6);opacity:0}}
+html.performance-lite .picker-sparkles i:nth-child(even){display:none}
 .history-empty{padding:25px 0;color:#c9e8e0;font-size:14px}
-@keyframes picker-arrive{from{transform:translateY(8px) scale(.92);opacity:.6}to{transform:none;opacity:1}}
 @media(max-width:650px){#modal.random-picker-modal{padding:14px}.picker-stage{padding:12px 10px 18px}.picker-preview{height:110px}.picker-preview img{width:170px;height:110px}.picker-orbit{width:180px;height:180px}.picker-note{font-size:11px}.random-picker-modal .modal-heading h2{font-size:23px}}
-@media(prefers-reduced-motion:reduce){.picker-stage.has-result .picker-preview img{animation:none}}
+@media(prefers-reduced-motion:reduce){.picker-stage.is-celebrating *,.picker-stage.is-drawing *{animation:none!important}.picker-sparkles{display:none}}
 
 @media(max-width:400px){.finder-button span{display:none}.finder-button{width:36px;padding:0;justify-content:center}}
 /* Disabled preview/visitor controls retain a solid creature silhouette. */
@@ -377,3 +403,11 @@ html.aquarium-modal-open,body.dialog-open{overflow:hidden;overscroll-behavior:no
 .fish-art .fish-turn-volume img{width:450%;height:225%;max-width:none;inset:-63% auto auto -310%;object-fit:fill}
 .fish-turn-volume::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(ellipse at 32% 28%,#ffffff28,transparent 52%),linear-gradient(90deg,#001c393d,transparent 34%,transparent 62%,#001c395c);pointer-events:none}
 .is-egg .fish-turn-volume,.has-3d .fish-turn-volume{display:none}
+
+/* A failed cloud write must be visible on a classroom board, including fullscreen. */
+.fish-name{display:inline-flex;align-items:center;gap:4px}
+.fish-label-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.daily-champion-medal{flex:none;font-size:12px;line-height:1;filter:none}
+.cloud-warning{position:sticky;top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 18px;background:#60451f;color:#fff1cc;border-bottom:1px solid #bc9859;font-size:12px;z-index:12}
+.cloud-warning span{flex:1;min-width:180px;line-height:1.5}.cloud-warning .button{min-height:36px;padding:7px 12px;background:#fff0cf18;border-color:#e6c99280}
+.app:fullscreen #aquarium>.cloud-warning{position:absolute;top:90px;left:16px;right:16px;border:1px solid #bc9859;border-radius:12px}

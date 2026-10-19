@@ -103,7 +103,7 @@
     const perSide = gap ? Math.max(1,Math.floor((sideWidth+10)/minCell)) : 0;
     const columns = Math.min(items.length,Math.max(1,gap ? perSide*2 : Math.floor(width/minCell)));
     const rows = Math.ceil(items.length / columns);
-    const rowHeight = Math.min(82, Math.max(1, height * .48 / rows));
+    const rowHeight = Math.min(94, Math.max(1, height * .48 / rows));
     const labelRegion = gap ? sideWidth/perSide : width/columns;
     const denseFit=Math.max(18,(height*.06+rowHeight-34)/.67);
     const size = Math.min(92,labelRegion-8,denseFit);

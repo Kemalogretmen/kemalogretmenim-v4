@@ -79,3 +79,44 @@ test('timer melody is scheduled on the audio clock, independent of music volume,
  a.cancelTimer();assert.ok(notes.every(n=>n.cancelled));const count=notes.length;let release;resume=()=>new Promise(r=>release=r);const pending=a.scheduleTimer(30000);a.cancelTimer();release();await pending;assert.equal(notes.length,count);
  resume=()=>Promise.resolve();await a.scheduleTimer(0);events.pagehide();assert.ok(notes.every(n=>n.cancelled));
 });
+
+function pickerHarness(){
+ const notes=[],gains=[],events={};let contexts=0,resume=()=>Promise.resolve();
+ const param=()=>({value:0,setValueAtTime(value,at){this.value=value;this.at=at;},linearRampToValueAtTime(value){this.peak=value;},exponentialRampToValueAtTime(){},setTargetAtTime(value){this.value=value;}});
+ class Context {
+  constructor(){contexts++;this.currentTime=10;this.destination={};this.state='running';}
+  resume(){return resume();}
+  createGain(){const gain={gain:param(),connect(to){this.to=to;},disconnect(){this.disconnected=true;}};gains.push(gain);return gain;}
+  createOscillator(){const osc={frequency:param(),connect(to){this.to=to;},disconnect(){this.disconnected=true;},start(at){this.at=at;},stop(at){if(at===undefined)this.cancelled=true;else this.end=at;}};notes.push(osc);return osc;}
+ }
+ const window={AquariumSounds:require('../js/akvaryum-sounds.js'),AudioContext:Context,addEventListener:(n,f)=>events[n]=f,dispatchEvent(){}};
+ vm.runInNewContext(fs.readFileSync('js/akvaryum-audio.js','utf8'),{window,document:{getElementById:()=>null},CustomEvent:class{}});
+ return {api:window.AquariumAudio,notes,gains,events,contexts:()=>contexts,delayResume:fn=>resume=fn};
+}
+test('picker wheel clicks slow down, stay bounded and share the user volume without downloading audio',async()=>{
+ const h=pickerHarness();h.api.setVolume(.4);await h.api.pickerSound(false);
+ const clicks=h.notes.filter(n=>n.type==='triangle');assert.ok(clicks.length>10&&clicks.length<30);
+ assert.ok(clicks.every(n=>n.end-n.at<.1&&n.at<12.42));
+ assert.ok(clicks.at(-1).at-clicks.at(-2).at>(clicks[1].at-clicks[0].at)*2);
+ assert.equal(h.gains[0].gain.value,.4);assert.ok(h.notes.every(n=>n.to.to===h.gains[0]));
+ h.api.setVolume(0);assert.equal(h.gains[0].gain.value,0);
+ h.api.cancelPicker();assert.ok(h.notes.every(n=>n.cancelled&&n.disconnected));
+ const silent=pickerHarness();silent.api.setVolume(0);await silent.api.pickerSound(false);await silent.api.pickerSound(true);
+ assert.equal(silent.contexts(),0);assert.equal(silent.notes.length,0);
+});
+test('picker reveal replaces the wheel, cleans up notes, and never cancels the independent timer alarm',async()=>{
+ const h=pickerHarness();await h.api.scheduleTimer(60000);const alarm=[...h.notes];
+ await h.api.pickerSound(false);const ticks=h.notes.slice(alarm.length);await h.api.pickerSound(true);
+ assert.ok(ticks.every(n=>n.cancelled));assert.ok(alarm.every(n=>!n.cancelled));
+ const win=h.notes.slice(alarm.length+ticks.length);assert.equal(win.length,8);
+ assert.ok(win.every(n=>n.end<11));assert.equal(win[0].frequency.value,523.25);
+ win.forEach(n=>n.onended());assert.ok(win.every(n=>n.disconnected&&n.to.disconnected));
+ h.events.pagehide();assert.ok(alarm.every(n=>n.cancelled));
+});
+test('cancel or a newer reveal prevents a late audio resume from resurrecting a stale wheel',async()=>{
+ const h=pickerHarness();let release;h.delayResume(()=>new Promise(r=>release=r));
+ const pending=h.api.pickerSound(false);h.api.cancelPicker();release();await pending;assert.equal(h.notes.length,0);
+ let oldRelease;h.delayResume(()=>new Promise(r=>oldRelease=r));const old=h.api.pickerSound(false);
+ h.delayResume(()=>Promise.resolve());await h.api.pickerSound(true);oldRelease();await old;
+ assert.equal(h.notes.length,8);h.events.pagehide();assert.ok(h.notes.every(n=>n.cancelled));
+});

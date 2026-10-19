@@ -12,8 +12,9 @@
   let creatureRenderer=null,creatureFallback='',modelPaintAt=-Infinity,modelSlowBatches=0;
   const MODEL_INTERVAL=1000/18,MODEL_LIMIT=12;
   let shareRecord = null, shareQueue = Promise.resolve(), syncTimer;
-  let cloud=null,cloudTimer,cloudBusy=false,cloudMessage='';
+  let cloud=null,cloudTimer,cloudBusy=false,cloudMessage='',cloudRerun=false,cloudRetryDelay=2000;
   const Audio = window.AquariumAudio;
+  const conversations=window.AquariumSocial.create();
   const $ = id => document.getElementById(id);
   const water=window.AquariumWater?.create($('waterLight'),$('waterWaves'));
   const esc = text => String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -165,9 +166,9 @@
   catch (error) { state = C.initialState(); blockedStorage = true; }
   if (viewing) state = viewState(viewSnapshot);
   if (!viewing && !demoOnly && !blockedStorage && window.AquariumCloud) {
-    cloud=window.AquariumCloud.create({client:window.kemalUserAuth.getClient(),ownerId:window.kemalUserAuth.getUser().id,storage:localStorage,key:KEY,project:window.AquariumSharing.snapshot,onStatus:message=>{cloudMessage=message;$('saveStatus').textContent=message;}});
+    cloud=window.AquariumCloud.create({client:window.kemalUserAuth.getClient(),ownerId:window.kemalUserAuth.getUser().id,storage:localStorage,key:KEY,getState:()=>state,project:window.AquariumSharing.snapshot,onStatus:message=>setCloudStatus(message,cloud?.isConflict()===true)});
     try { state=await cloud.boot(state);localStorage.setItem(KEY,JSON.stringify(state)); }
-    catch(e){cloudMessage=e.message;$('saveStatus').textContent=cloudMessage;}
+    catch(e){setCloudStatus(e.message,true);}
   }
 
   let demo = false, beforeDemo = null, selected = '', tab = 'students', today = C.dayKey(), toastTimer;
@@ -177,7 +178,7 @@
   const swimmers = new Map();
   let frame = 0, lastTime = 0, width = 0, height = 0, inspectedId = '';
   let highlightTimer;
-  let teacherVisit=null,teacherMessageIndex=0;
+  let teacherVisit=null;
   const teacherVisitQueue=[];
   const pickerRounds = new Map();
   let pickerFrame = 0, pickerEpoch = 0, pickerResult = null;
@@ -272,25 +273,49 @@
     if (demo) { $('saveStatus').textContent = 'Örnek sınıf · Değişiklikler kaydedilmez.'; return; }
     if (blockedStorage) { storageWarning('Önceki kayıt okunamadı. Üzerine yazılmadı. Ayarlar → Mevcut kaydı indir ile kurtarma kopyası alın; ardından bir yedek yükleyin.'); return; }
     try { localStorage.setItem(KEY, JSON.stringify(state)); $('storageWarning').hidden = true; $('saveStatus').textContent = cloud ? 'Cihaza kaydedildi · Hesabınızla eşitleniyor…' : 'Bu tarayıcıya kaydedildi · Ayarlardan yedek alabilirsiniz.';
-      if(cloud){cloud.markDirty();clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,600);} }
+      if(cloud){cloud.markDirty(state);clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,250);} }
     catch (error) { storageWarning('Tarayıcı kaydı yapılamadı. Yaptığınız değişiklikleri kaybetmemek için Ayarlar → Yedek indir seçeneğini kullanın.'); }
   }
-  async function flushCloud() {
-    clearTimeout(cloudTimer);
-    if(!cloud||viewing||demo||demoOnly||blockedStorage)return;
-    cloudBusy=true;
-    try {if(!cloud.isReady()){state=await cloud.boot(state);localStorage.setItem(KEY,JSON.stringify(state));selected='';ensureDays();render();}else await cloud.save(state);}
-    catch(e){cloudMessage=e.message;$('saveStatus').textContent=cloudMessage;}
-    finally{cloudBusy=false;}
+  function setCloudStatus(message,problem=false) {
+    cloudMessage=message;$('saveStatus').textContent=message;
+    const warning=$('cloudWarning');warning.hidden=!problem;
+    $('cloudWarningMessage').textContent=problem?message:'';
+    if($('cloudStateDescription'))$('cloudStateDescription').textContent=message;
   }
-  async function refreshCloud() {
-    if(!cloud||cloudBusy||demo||modal.open||document.hidden)return;
-    cloudBusy=true;
-    try {const updated=await cloud.refresh(state);if(updated){state=updated;localStorage.setItem(KEY,JSON.stringify(state));selected='';ensureDays();render();$('saveStatus').textContent='Hesaptaki son kayıt alındı.';}}
-    catch(e){$('saveStatus').textContent=e.message;}
-    finally{cloudBusy=false;}
+  function applyCloudState(updated) {
+    if(JSON.stringify(updated)===JSON.stringify(state))return;
+    const active=state.activeClassId,selectedBefore=selected,scroll=modal.scrollTop,focused=document.activeElement?.id;
+    const previousClass=state.classes.find(c=>c.id===active),knownDeductions=new Set((previousClass?.students||[]).flatMap(s=>(s.days[today]?.tasks||[]).filter(t=>t.status==='done'&&C.taskPoints(t)<0).map(t=>t.id)));
+    state=updated;if(state.classes.some(c=>c.id===active))state.activeClassId=active;
+    if(!classroom().students.some(s=>s.id===selected))selected='';
+    localStorage.setItem(KEY,JSON.stringify(state));ensureDays();render();
+    if(previousClass?.id===classroom().id)for(const s of classroom().students)if((s.days[today]?.tasks||[]).some(t=>t.status==='done'&&C.taskPoints(t)<0&&!knownDeductions.has(t.id)))startTeacherVisit(s);
+    // Refresh score-only views even while open. Leave typed forms untouched.
+    if(modal.open && ['behaviorModal','studentDayModal','historyModal','seasonDashboardModal'].includes(modalRoute?.key)) {
+      if(selectedBefore && !selected){closeModal();toast('Seçili öğrenci diğer cihazda kaldırılmış.');return;}
+      const route=modalRoute;goingBack=true;try{route.render();modal.scrollTop=scroll;if(focused)$(focused)?.focus({preventScroll:true});}finally{goingBack=false;}
+    }
   }
-  function cloudControls(){return '<p class="settings-note">'+esc(cloudMessage||'Sınıflar, öğrenciler, görevler ve ses favorileri öğretmen hesabınıza kaydedilir. Aynı hesapla başka cihazda açabilirsiniz. Çevrimdışı değişiklikler bu cihazda tutulur; çakışan kayıtlar otomatik ezilmez.')+'</p><div class="settings-actions"><button class="button" data-action="retry-cloud">Şimdi eşitle</button>'+(cloud?.isConflict()?'<button class="button" data-action="use-cloud">Hesaptaki kaydı kullan</button><button class="button" data-action="use-local">Bu cihazdaki kaydı kullan</button>':'')+'<button class="button" data-action="export-recovery">Korunan yerel kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button></div>';}
+  async function refreshCloud(force=false) {
+    if(!cloud||demo||demoOnly||blockedStorage)return;
+    if(cloud.isConflict()&&force!==true)return;
+    if(cloudBusy){cloudRerun=cloudRerun||force===true;return;}
+    if(document.hidden && !cloud.isDirty() && force!==true)return;
+    clearTimeout(cloudTimer);cloudBusy=true;
+    try {
+      const previousMessage=cloudMessage,updated=await cloud.refresh(state);if(updated)applyCloudState(updated);
+      if(cloudMessage===previousMessage && !cloud.isDirty()&&!cloud.isConflict())cloudMessage='Hesapla eşit · Son kontrol tamamlandı.';
+      cloudRetryDelay=2000;
+      setCloudStatus(cloudMessage||'Hesap kaydı kontrol edildi.',cloud.isConflict());
+    } catch(e){setCloudStatus(e.message,true);cloudRetryDelay=Math.min(30000,cloudRetryDelay*2);}
+    finally {
+      cloudBusy=false;
+      if(cloudRerun){cloudRerun=false;cloudTimer=setTimeout(()=>refreshCloud(true),0);}
+      else if(cloud.isDirty()&&!cloud.isConflict())cloudTimer=setTimeout(flushCloud,cloudRetryDelay);
+    }
+  }
+  async function flushCloud(){return refreshCloud(true);}
+  function cloudControls(){return '<p class="settings-note" id="cloudStateDescription">'+esc(cloudMessage||'Sınıflar, öğrenciler, görevler ve ses favorileri öğretmen hesabınıza kaydedilir. Aynı hesapla başka cihazda açabilirsiniz. Çevrimdışı değişiklikler bu cihazda tutulur; çakışan kayıtlar otomatik ezilmez.')+'</p><div class="settings-actions"><button class="button" data-action="retry-cloud">Şimdi eşitle</button>'+(cloud?.isConflict()?'<button class="button" data-action="use-cloud">Hesaptaki kaydı kullan</button><button class="button" data-action="use-local">Bu cihazdaki kaydı kullan</button>':'')+'<button class="button" data-action="export-recovery">Korunan yerel kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button></div>';}
   function commit() { save(); render(); scheduleShare(); }
   let modalHistory=[],modalRoute=null,pendingModalRoute=null,goingBack=false;
   function rememberModal(key,render) {pendingModalRoute={key,render};}
@@ -389,6 +414,12 @@
   // Sessions are transient and device-local: no score, sharing or cloud writes.
   function stopPicker() {
     pickerEpoch++;cancelAnimationFrame(pickerFrame);pickerFrame=0;
+    Audio.cancelPicker?.();
+  }
+  function playPickerSound(result,epoch) {
+    if(!state.settings.pickerSound)return;
+    Audio.setVolume(state.settings.volume);
+    Audio.pickerSound?.(result)?.catch(e=>{if(epoch===pickerEpoch && modal.open && modalRoute?.key==='random-student')toast(e.message);});
   }
   function pickerSession() {
     const id=classroom().id;
@@ -407,11 +438,11 @@
       ? eligible.find(s=>s.id===pickerResult.id) : null;
     if(!result)pickerResult=null;
     openModal('Söz kimde?', '<p class="picker-intro">'+esc(cls.name)+' · Bugün gelen '+eligible.length+' öğrenci</p><div id="pickerStage" class="picker-stage '+(result?'has-result':'')+'">'+
-      '<span class="picker-orbit" aria-hidden="true"></span><div class="picker-preview">'+
+      '<span class="picker-orbit" aria-hidden="true"></span><span class="picker-sparkles" aria-hidden="true">'+Array.from({length:10},(_,i)=>'<i style="--spark:'+i+';--spark-x:'+(-130+i*29)+'px;--spark-y:'+(-55-(i%4)*23)+'px;--spark-turn:'+(i%2?1:-1)*55+'deg"></i>').join('')+'</span><div class="picker-preview">'+
       (result?'<img id="pickerImage" src="'+image(result.species)+'" alt="">':'<img id="pickerImage" alt="" hidden><span id="pickerPlaceholder" aria-hidden="true">'+icon('shuffle')+'</span>')+
       '</div><p id="pickerStatus" role="status" aria-live="polite">'+(result?'Söz sende!':eligible.length?'Deniz dostları arasından seçelim.':'Seçilebilecek öğrenci yok.')+'</p><strong id="pickerName">'+(result?esc(result.name):'Kim gelecek?')+'</strong><p id="pickerHint">'+(result?'Tahtaya davet edebilir veya bir görev verebilirsiniz.':'Seçim puanlara ve balığın büyüklüğüne bağlı değildir.')+'</p></div>'+
       '<div class="picker-actions"><button type="button" id="pickerStart" class="button primary" data-action="random-draw" '+(!eligible.length?'disabled':'')+'>'+icon('shuffle')+(result?'Yeniden seç':'Rastgele seç')+'</button><div id="pickerResultActions" '+(!result?'hidden':'')+'><button type="button" class="button" data-action="random-show">'+icon('fish')+'Akvaryumda göster</button><button type="button" class="button" data-action="random-behaviors">'+icon('heart')+'Puan ver ve besle</button><button type="button" class="button" data-action="random-tasks">'+icon('check')+'Görevleri aç</button></div></div>'+
-      '<p class="settings-note picker-note">Her öğrenciye eşit şans. Tur tamamlanana kadar seçilenler yeniden seçilmez. Bugün gelmeyen öğrenciler ve öğretmen balığı dahil edilmez. Seçim puan vermez.</p><p id="pickerRound" class="picker-round">'+(result?session.used.filter(id=>eligible.some(s=>s.id===id)).length+' / '+eligible.length+' öğrenci bu turda seçildi.':'')+'</p>');
+      '<label class="picker-sound"><input id="pickerSoundToggle" type="checkbox" '+(state.settings.pickerSound?'checked':'')+'>Çark ve sonuç sesi'+(state.settings.volume===0?'<small>Genel ses düzeyi kapalı.</small>':'')+'</label><p class="settings-note picker-note">Her öğrenciye eşit şans. Tur tamamlanana kadar seçilenler yeniden seçilmez. Bugün gelmeyen öğrenciler ve öğretmen balığı dahil edilmez. Seçim puan vermez.</p><p id="pickerRound" class="picker-round">'+(result?session.used.filter(id=>eligible.some(s=>s.id===id)).length+' / '+eligible.length+' öğrenci bu turda seçildi.':'')+'</p>');
     modal.classList.add('random-picker-modal');
   }
   function drawRandomStudent() {
@@ -426,7 +457,7 @@
     pickerResult=null;
     $('pickerStart').disabled=true;$('pickerStart').textContent='Seçiliyor…';
     $('pickerResultActions').hidden=true;$('pickerRound').textContent='';
-    $('pickerStage').classList.remove('has-result');$('pickerStage').classList.add('is-drawing');
+    $('pickerStage').classList.remove('has-result','is-celebrating');$('pickerStage').classList.add('is-drawing');
     $('pickerStage').setAttribute('aria-busy','true');
     $('pickerStatus').textContent='Deniz dostları arasından seçiliyor…';
     $('pickerPlaceholder')?.remove();$('pickerImage').hidden=false;
@@ -442,6 +473,8 @@
       pickerResult={id:chosen.id,classId:cls.id,date};
       showPreview(chosen);
       $('pickerStage').classList.remove('is-drawing');$('pickerStage').classList.add('has-result');
+      if(!reduced.matches && state.settings.motion)$('pickerStage').classList.add('is-celebrating');
+      playPickerSound(true,epoch);
       $('pickerStage').removeAttribute('aria-busy');
       $('pickerStatus').textContent='Söz sende, '+chosen.name+'!';
       $('pickerHint').textContent='Tahtaya davet edebilir veya bir görev verebilirsiniz.';
@@ -451,6 +484,7 @@
       highlightFish(chosen.id);
     };
     if(reduced.matches || !state.settings.motion || candidates.length===1){finish();return;}
+    playPickerSound(false,epoch);
     showPreview(candidates[0]);
     const animate=now=>{
       if(epoch!==pickerEpoch || !modal.open || modalRoute?.key!=='random-student'){pickerFrame=0;return;}
@@ -562,7 +596,7 @@
   }
   function tasksModal() {
     rememberModal('tasksModal'+'',()=>tasksModal());
-    openModal('Davranışlar ve puanları','<p class="modal-intro">Davranış adını, türünü, simgesini ve puan miktarını belirleyin. Geliştirmesi gereken davranış puan düşürür, yem vermez; kesinti mevcut toplamı aşmaz. Hedefli modda boy da kalan puanın seviyesine iner. Geçmişten geri alınabilir. Kaydedilen değişiklikler bugünkü bekleyen ve yeni görevlere uygulanır. Kazanılmış puanlar ve geçmiş kayıtlar korunur.</p><div class="task-edit-list">'+classroom().tasks.map(t=>'<details class="task-editor"><summary><span>'+esc(t.icon || behaviorSymbol(t.title))+'</span><strong>'+esc(t.title)+'</strong><b>'+signed(C.taskPoints(t))+'</b><span>Düzenle</span></summary><form class="task-points-form" data-task-id="'+t.id+'"><label class="field">Görev adı<input name="title" maxlength="120" required value="'+esc(t.title)+'"></label>'+behaviorTypeField(C.taskPoints(t))+taskIconPicker(t.icon || behaviorSymbol(t.title))+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" required value="'+Math.abs(C.taskPoints(t))+'"></label><div class="settings-actions"><button type="submit" class="button primary">Değişiklikleri kaydet</button><button type="button" class="button subtle" data-action="remove-task" data-id="'+t.id+'">Kaldır</button></div></form></details>').join('')+'</div><form id="taskForm" class="new-task-form"><h3>Yeni davranış ekle</h3><label class="field">Davranış adı<input name="title" maxlength="120" placeholder="Örn. Arkadaşıma yardım ettim" required></label>'+behaviorTypeField()+taskIconPicker('⭐')+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" placeholder="Örn. 5" required></label><button type="submit" class="button primary">Davranış ekle</button></form><p id="formError" class="form-error" role="alert"></p><p class="settings-note">Kaldırılan davranış bugünkü ve geçmiş kayıtlarda kalır; yarından itibaren verilmez.</p>');
+    openModal('Davranışlar ve puanları','<p class="modal-intro">Davranış adını, türünü, simgesini ve puan miktarını belirleyin. Geliştirmesi gereken davranış puan düşürür, yem vermez; kesinti mevcut toplamı aşmaz. Hedefli modda boy da kalan puanın seviyesine iner. Geçmişten geri alınabilir. Kaydedilen değişiklikler bugünkü bekleyen ve yeni görevlere uygulanır. Kazanılmış puanlar ve geçmiş kayıtlar korunur.</p><p class="settings-note" id="behaviorCount">'+classroom().tasks.length+' / '+C.MAX_BEHAVIORS+' davranış · Olumlu ve geliştirmesi gereken davranışların toplamı.</p><div class="task-edit-list">'+classroom().tasks.map(t=>'<details class="task-editor"><summary><span>'+esc(t.icon || behaviorSymbol(t.title))+'</span><strong>'+esc(t.title)+'</strong><b>'+signed(C.taskPoints(t))+'</b><span>Düzenle</span></summary><form class="task-points-form" data-task-id="'+t.id+'"><label class="field">Görev adı<input name="title" maxlength="120" required value="'+esc(t.title)+'"></label>'+behaviorTypeField(C.taskPoints(t))+taskIconPicker(t.icon || behaviorSymbol(t.title))+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" required value="'+Math.abs(C.taskPoints(t))+'"></label><div class="settings-actions"><button type="submit" class="button primary">Değişiklikleri kaydet</button><button type="button" class="button subtle" data-action="remove-task" data-id="'+t.id+'">Kaldır</button></div></form></details>').join('')+'</div><form id="taskForm" class="new-task-form"><h3>Yeni davranış ekle</h3><label class="field">Davranış adı<input name="title" maxlength="120" placeholder="Örn. Arkadaşıma yardım ettim" required></label>'+behaviorTypeField()+taskIconPicker('⭐')+'<label class="field">Puan<input name="points" type="number" min="1" max="1000" step="1" placeholder="Örn. 5" required></label><button type="submit" class="button primary">Davranış ekle</button></form><p id="formError" class="form-error" role="alert"></p><p class="settings-note">Kaldırılan davranış bugünkü ve geçmiş kayıtlarda kalır; yarından itibaren verilmez.</p>');
   }
   function lastFeeding(s) {
     const last = s.feeds.reduce((n,f) => Math.max(n,f.at),0);
@@ -778,6 +812,7 @@
     if(viewing && (!sceneWidth || !sceneHeight))return;
     width=sceneWidth;height=sceneHeight;
     const actual = classroom().students;
+    const champion=!viewing?C.dailyChampions(classroom(),today):{ids:[],points:0};
     const items = actual.length || viewing || classroom().teacher?.enabled ? [...actual] : ['clown', 'tang', 'turtle'].map((kind, i) => ({ id: 'preview-' + i, name: '', species: kind, days: {}, feeds: [] }));
     if (classroom().teacher?.enabled) items.push({...C.newStudent(classroom().teacher.name,classroom().teacher.species),id:'teacher-'+classroom().id,isTeacher:true});
     const layout = Motion.layout(items.map(s=>({id:s.id,species:s.species,size:C.species(s.species).size})),width,height,creatureDisplaySize/100);
@@ -795,7 +830,7 @@
       const placement = layout.get(s.id), size = placement.size;
       if (!fish) {
         const el = document.createElement('button'); el.type = 'button'; el.className = 'fish';
-        el.innerHTML = '<span class="fish-chat" aria-hidden="true"></span><span class="fish-egg" aria-hidden="true"><i></i></span><span class="fish-art" aria-hidden="true"><span class="fish-turn-volume"><img alt="" draggable="false"></span><span class="fish-side"><img class="fish-body-image" alt="" draggable="false"><img class="fish-tail-image" alt="" draggable="false"></span></span><span class="fish-name"></span><span class="fish-birthday" hidden aria-label="Bugün doğum günü">🎂</span><span class="fish-points"></span><span class="fish-hunger" hidden></span>';
+        el.innerHTML = '<span class="fish-chat" aria-hidden="true"></span><span class="fish-egg" aria-hidden="true"><i></i><img class="egg-embryo" alt="" draggable="false"></span><span class="fish-art" aria-hidden="true"><span class="fish-turn-volume"><img alt="" draggable="false"></span><span class="fish-side"><img class="fish-body-image" alt="" draggable="false"><img class="fish-tail-image" alt="" draggable="false"></span></span><span class="fish-name"></span><span class="fish-birthday" hidden aria-label="Bugün doğum günü">🎂</span><span class="fish-points"></span><span class="fish-hunger" hidden></span>';
         el.dataset.action = s.isTeacher ? 'teacher-fish' : 'fish-behaviors'; el.dataset.id = s.id;
         $('swimArea').append(el);
         fish = { el, art: el.querySelector('.fish-art'), side:el.querySelector('.fish-side'), volume:el.querySelector('.fish-turn-volume'), ...placement, direction: index % 2 ? -1 : 1, phase: index * 1.8, mood: fishMood(s), hover: false, keyboard: false, angle: index % 2 ? 180 : 0, turn: null, cruise: 1 };
@@ -831,6 +866,8 @@
       }
       fish.growthScale=growth.scale;fish.paint={};
       fish.egg=growth.egg; fish.el.classList.toggle('is-egg',growth.egg);
+      const embryo=fish.el.querySelector('.egg-embryo');
+      if(growth.egg && embryo.dataset.species!==s.species){embryo.src=image(s.species);embryo.dataset.species=s.species;}
       fish.el.classList.toggle('teacher-fish',!!s.isTeacher);
       fish.el.style.setProperty('--growth-scale',growth.scale);
       fish.el.dataset.stage=String(growth.stage);
@@ -854,7 +891,9 @@
       configureCreature(fish);
       fish.el.setAttribute('aria-label', (state.settings.names && s.name ? s.name + ', ' : '') + C.species(s.species).name + (growth.egg ? ', yumurta' : '') + (state.settings.points && score(s) !== null ? ', toplam ' + score(s) + ' puan' : ''));
       fish.el.querySelector('.fish-name').hidden = !state.settings.names || !s.name;
-      fish.el.querySelector('.fish-name').textContent = state.settings.names ? s.name + (growth.trophy ? ' 🏆' : '') : '';
+      const isChampion=champion.ids.includes(s.id),nameEl=fish.el.querySelector('.fish-name');
+      nameEl.innerHTML=state.settings.names?'<span class="fish-label-text">'+esc(s.name)+(growth.trophy?' 🏆':'')+'</span>'+(isChampion?'<span class="daily-champion-medal" role="img" aria-label="Günün şampiyonu · Bugün '+champion.points+' puan" title="Günün şampiyonu · Bugün '+champion.points+' puan">🥇</span>':''):'';
+      if(isChampion && state.settings.names)fish.el.setAttribute('aria-label',fish.el.getAttribute('aria-label')+', günün şampiyonu, bugün '+champion.points+' puan');
       const pointsEl=fish.el.querySelector('.fish-points'); pointsEl.hidden=!state.settings.points || score(s) === null; pointsEl.textContent='★ '+(score(s) ?? 0).toLocaleString('tr-TR');
       updateHungerLabel(fish, s);
       fish.el.classList.toggle('parent-child',!!s.isOwnChild);
@@ -972,12 +1011,19 @@
       const bubble=teacher.el.querySelector('.fish-chat');bubble.classList.remove('visible','teacher-note');bubble.textContent='';bubble.style.removeProperty('left');bubble.style.removeProperty('top');bubble.setAttribute('aria-hidden','true');bubble.removeAttribute('role');}
     teacherVisit=null;
   }
+  function suspendTeacherVisit() {
+    if(teacherVisit){
+      const job={classId:teacherVisit.classId,studentId:teacherVisit.studentId,date:teacherVisit.date,awardId:teacherVisit.awardId,message:teacherVisit.message};
+      if(!teacherVisitQueue.some(v=>v.studentId===job.studentId&&v.classId===job.classId))teacherVisitQueue.unshift(job);
+    }
+    clearTeacherVisit(false);
+  }
   function teacherVisitAllowed() {
-    return !viewing && state.settings.teacherEncouragement && state.settings.motion && !reduced.matches && !document.hidden && classroom().teacher?.enabled;
+    return !viewing && state.settings.teacherEncouragement && state.settings.motion && !reduced.matches && classroom().teacher?.enabled;
   }
   function visitStudent(job) {
     const s=classroom().students.find(s=>s.id===job.studentId),record=s?.days[job.date];
-    return job.classId===classroom().id && !record?.absent && record?.tasks.some(t=>t.id===job.awardId && t.status==='done' && C.taskPoints(t)<0)?s:null;
+    return job.date===today && job.classId===classroom().id && !record?.absent && record?.tasks.some(t=>t.id===job.awardId && t.status==='done' && C.taskPoints(t)<0)?s:null;
   }
   function startTeacherVisit(s) {
     if(!teacherVisitAllowed() || s.days[today]?.absent)return;
@@ -991,9 +1037,11 @@
   }
   function updateTeacherVisit(now) {
     if(!teacherVisitAllowed()){clearTeacherVisit();return;}
+    if(document.hidden){suspendTeacherVisit();return;}
+    if(teacherVisit){teacherVisit.travelElapsed+=Math.max(0,Math.min(50,now-teacherVisit.lastAdvance));teacherVisit.lastAdvance=now;}
     if(teacherVisit && (!visitStudent(teacherVisit) || !swimmers.has(teacherVisit.studentId) ||
       teacherVisit.classId!==classroom().id || !swimmers.has(teacherVisit.teacherId) ||
-      now-teacherVisit.started>Math.max(12000,Math.hypot(width,height)/250*1000+4000) ||
+      teacherVisit.travelElapsed>Math.max(12000,Math.hypot(width,height)/250*1000+4000) ||
       (teacherVisit.speakingAt!==null && now-teacherVisit.speakingAt>=2500)))clearTeacherVisit(false);
     while(!teacherVisit && teacherVisitQueue.length) {
       const job=teacherVisitQueue.shift(),teacherId='teacher-'+classroom().id;
@@ -1002,7 +1050,7 @@
       const scene=$('swimArea').getBoundingClientRect(),rect=target.el.getBoundingClientRect();
       teacherVisit={...job,teacherId,started:now,speakingAt:null,
         eggPosition:target.egg?{x:rect.left-scene.left,y:rect.top-scene.top,size:target.size,direction:1}:null,
-        message:['Bir dahakine daha dikkatli olabilirsin.','Birlikte deneyelim, başarabilirsin!','Küçük bir mola, sonra yeniden deneyelim.','Dikkatini toparlayıp yeniden deneyebilirsin.'][teacherMessageIndex++%4]};
+        message:job.message||conversations.encouragement(),lastAdvance:now,travelElapsed:0};
       teacher.el.classList.add('is-mentoring');teacher.guidanceArrived=false;teacher.hover=false;teacher.pressed=false;teacher.keyboard=false;
     }
     if(!teacherVisit)return;
@@ -1040,10 +1088,12 @@
       if (a.guidance || b.guidance || a.mentorPaused || b.mentorPaused || a.held || b.held || a.bottomRest || b.bottomRest || now-(a.lastChat??-300000)<300000 || now-(b.lastChat??-300000)<300000 || a.mood.id==='resting' || b.mood.id==='resting' || now-(pairCooldown.get(key)??-600000)<600000) continue;
       if (Math.abs(a.x+a.size/2-b.x-b.size/2)>Math.max(a.size,b.size)*.8 || Math.abs(a.y-b.y)>60) continue;
       pairCooldown.set(key,now); nextChat=now+180000+Math.random()*120000;
+      const greeting=conversations.greeting();
       [a,b].forEach((f,index) => {
         f.lastChat=now;const bubble=f.el.querySelector('.fish-chat');
-        bubble.textContent=index ? '💙' : '👋'; bubble.classList.add('visible');
-        setTimeout(()=>bubble.classList.remove('visible'),1500+index*250);
+        bubble.textContent=greeting[index]; bubble.classList.add('visible');
+        const version=f.chatVersion=(f.chatVersion||0)+1;
+        setTimeout(()=>{if(f.chatVersion===version&&!bubble.classList.contains('teacher-note'))bubble.classList.remove('visible');},1500+index*250);
       });
       return;
     }
@@ -1247,7 +1297,7 @@
       }
       return;
     }
-    if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes'].includes(action)) {
+    if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes','random-student','retry-cloud'].includes(action)) {
       const birthday=classroom().students.find(s=>s.id===button.dataset.id);
       if(action==='fish-behaviors' && birthday && C.isBirthday(birthday)) openModal('İyi ki doğdun'+(state.settings.names?', '+birthday.name:'')+'! 🎂','<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>');
       return;
@@ -1267,7 +1317,7 @@
         } catch(e) { toast('Eski kayıt okunamadı. Yedek dosyasıyla içe aktarabilirsiniz.'); }
         break;
       }
-      case 'retry-cloud': await flushCloud(); settingsModal(); break;
+      case 'retry-cloud': await refreshCloud(true); break;
       case 'use-cloud': case 'use-local': {
         const choice=action==='use-local'?'local':'remote';
         confirm('Kullanılacak kaydı seç',choice==='local'?'Bu cihazdaki kayıt hesaptaki kaydın yerini alacak. Önce iki kaydın da yedeğini almanız önerilir.':'Hesaptaki son kayıt açılacak. Bu cihazdaki kopya ayrıca korunacak.',async()=>{try{state=await cloud.resolve(choice,state);localStorage.setItem(KEY,JSON.stringify(state));closeModal();selected='';ensureDays();render();toast('Seçtiğiniz kayıt açıldı.');}catch(e){toast(e.message);}});break;
@@ -1503,10 +1553,12 @@
       commit(); tasksModal(); toast('Davranış düzenlendi. Geçmiş kayıtlar korundu.');
     } else if (form.id === 'taskForm') {
       const title = C.clean(data.get('title'), 120); if (!title) { $('formError').textContent = 'Görev adını yazın.'; return; }
-      if (classroom().tasks.length >= 20 || classroom().students.some(s => day(s).tasks.filter(t => !t.sourceId).length >= 20)) { $('formError').textContent = 'Bir günde en fazla 20 farklı davranış olabilir.'; return; }
+      if (classroom().tasks.length >= C.MAX_BEHAVIORS) { $('formError').textContent = 'Bir sınıfa en fazla '+C.MAX_BEHAVIORS+' davranış ekleyebilirsiniz.'; return; }
       const amount=Number(data.get('points'));
       const points = amount*(data.get('behaviorType')==='development'?-1:1);
       if (!C.validPoints(amount)) { $('formError').textContent = 'Puanı 1–1000 arasında tam sayı olarak girin.'; return; }
+      // Removed behaviors remain in history, but do not consume active template slots.
+      if (points>0 && classroom().students.some(s => day(s).tasks.length >= C.MAX_DAILY_TASKS)) { $('formError').textContent = 'Bugünkü işlem kaydı dolu. Yeni davranışı yarın ekleyebilirsiniz; mevcut puanlar korunuyor.'; return; }
       const task = { id: C.uid(), title, points, icon:C.taskIcon(data.get('icon')) }; classroom().tasks.push(task);
       classroom().students.forEach(s => { const d = day(s); if (points>0 && !d.tasks.some(t => t.id === task.id)) d.tasks.push({ ...task, status: 'pending' }); });
       commit(); tasksModal(); toast('Yeni görev bugüne eklendi.');
@@ -1516,6 +1568,7 @@
     const input = event.target;
     if(!viewing && updateEffectRange(input,true))return;
     if(viewing) {if(childViewing && input.id==='parentHistoryPeriod' && ['day','week','month','all'].includes(input.value)){parentPeriod=input.value;parentPage=0;openParentHistory();$('parentHistoryPeriod')?.focus({preventScroll:true});}return;}
+    if(input.id==='pickerSoundToggle'){state.settings.pickerSound=input.checked;if(!input.checked)Audio.cancelPicker?.();save();return;}
     if(input.id==='creatureDisplaySize') {
       const size=Number(input.value);if(![100,150,200].includes(size))return;
       creatureDisplaySize=size;
@@ -1560,6 +1613,7 @@
     }
   });
   $('studentSearch').addEventListener('input', renderPanel);
+  modal.addEventListener('animationend',event=>{if(event.target.id==='pickerImage' && event.animationName==='picker-reveal-fish')$('pickerStage')?.classList.remove('is-celebrating');});
   modal.addEventListener('input', event => { if (viewing) return; if(updateEffectRange(event.target))return; if(event.target.dataset.mixVolume) {const id=event.target.dataset.mixVolume,layer=state.settings.mix.find(t=>t.id===id);if(layer){layer.volume=Number(event.target.value)/100;Audio.setLayerVolume(id,layer.volume);$('mixValue-'+id).textContent='%'+event.target.value;save();}} if(event.target.id==='volumeRange') {state.settings.volume=Number(event.target.value)/100; Audio.setVolume(state.settings.volume); save();} if(event.target.id==='fishFinder') renderFinder(); });
   document.querySelector('.panel-tabs').addEventListener('keydown', event => {
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -1570,7 +1624,11 @@
     if (event.key !== KEY || !event.newValue) return;
     try { const updated = C.validate(JSON.parse(event.newValue)); if (demo) beforeDemo = updated; else { state = updated; selected = ''; closeModal(); ensureDays(); render(); toast('Diğer sekmedeki değişiklikler alındı.'); } } catch (e) { storageWarning('Diğer sekmedeki kayıt okunamadı. Bu sayfanın kayıtları korunuyor.'); }
   });
-  document.addEventListener('visibilitychange', () => { if(document.hidden)clearTeacherVisit(); if (!document.hidden) { refreshDate(); updateTimer(); } restartAnimation(); });
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden){suspendTeacherVisit();Audio.cancelPicker?.();if(pickerFrame){stopPicker();if(modal.open && modalRoute?.key==='random-student')randomStudentModal();}}
+    else {refreshDate();updateTimer();}
+    restartAnimation();
+  });
   reduced.addEventListener('change', render);
   window.addEventListener('site-performance-change',()=>{applyWaterEffects();if(reportingPerformance)qualityNeedsRender=true;else renderFish();});
   window.addEventListener('pagehide',disposeCreatureRenderer);
@@ -1582,7 +1640,7 @@
   new ResizeObserver(measure).observe($('swimArea'));
   new ResizeObserver(()=>{if(swimmers.size) renderFish();}).observe($('eggBed'));
   new ResizeObserver(()=>{if(swimmers.size && width && height)updateRestingFish();}).observe($('classPearl'));
-  document.addEventListener('fullscreenchange', () => { if (document.fullscreenElement) { if(modal.open) closeModal(); releaseFish(); $('aquarium').append(modal); } else document.body.append(modal); updateFullscreenControls(); updateClock(); measure(); });
+  document.addEventListener('fullscreenchange', () => {const warning=$('cloudWarning');if(document.fullscreenElement)$('aquarium').append(warning);else $('storageWarning').before(warning); if (document.fullscreenElement) { if(modal.open) closeModal(); releaseFish(); $('aquarium').append(modal); } else document.body.append(modal); updateFullscreenControls(); updateClock(); measure(); });
   if (demoOnly) enterDemo();
   if (viewing) {
     let loading=false;
@@ -1599,7 +1657,7 @@
     setInterval(refreshView,3000);
     document.addEventListener('visibilitychange',()=> { if(document.hidden) {closeModal();document.body.classList.add('access-pending');} else refreshView(); });
   }
-  if(cloud){setInterval(refreshCloud,15000);window.addEventListener('online',refreshCloud);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloud();});window.addEventListener('beforeunload',event=>{try{if(JSON.parse(localStorage.getItem(KEY+'_cloud')||'{}').dirty){event.preventDefault();event.returnValue='';}}catch(e){}});}
+  if(cloud){setInterval(refreshCloud,3000);window.addEventListener('online',()=>refreshCloud(true));window.addEventListener('focus',()=>refreshCloud(true));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloud(true);});window.addEventListener('beforeunload',event=>{try{if(JSON.parse(localStorage.getItem(KEY+'_cloud')||'{}').dirty){event.preventDefault();event.returnValue='';}}catch(e){}});}
   setInterval(updateClock,1000);
   updatePanelToggle(); measure(); ensureDays(); render();
   if (blockedStorage) save(); else if (cloud) { $('saveStatus').textContent=cloudMessage || 'Hesap kaydı hazır.'; } else if (classroom().students.length) { save(); scheduleShare(); }

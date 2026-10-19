@@ -5,6 +5,7 @@
   let channels=new Map(),generation=0,volume=.3,userPaused=false,mix=[];
   let context,master;
   let alarmNodes=[],alarmGeneration=0;
+  let pickerNodes=[],pickerGeneration=0;
   function ensureContext() {
     const Type=window.AudioContext||window.webkitAudioContext;
     if(!Type) throw Error('Bu tarayıcı uyarı sesini desteklemiyor.');
@@ -63,6 +64,43 @@
   function play(id){return playMix(S.has(id)?[{id,volume:1}]:[]);}
   function toggle(selected){if(isPlaying()){pause();return Promise.resolve(false);}return channels.size?resume():(Array.isArray(selected)?playMix(selected):play(selected));}
   function setLayerVolume(id,value){const layer=mix.find(t=>t.id===id);if(layer)layer.volume=S.level(value);volumes();}
+  function cancelPicker() {
+    pickerGeneration++;
+    pickerNodes.forEach(({osc,gain})=>{try{osc.stop();}catch(e){}osc.disconnect();gain.disconnect();});
+    pickerNodes=[];
+  }
+  function pickerNote(ctx,at,frequency,type,peak,duration) {
+    const osc=ctx.createOscillator(),gain=ctx.createGain(),node={osc,gain};
+    osc.type=type;osc.frequency.setValueAtTime(frequency,at);
+    if(type==='triangle')osc.frequency.exponentialRampToValueAtTime(frequency*.55,at+duration);
+    gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(peak,at+.004);
+    gain.gain.exponentialRampToValueAtTime(.0001,at+duration);
+    osc.connect(gain);gain.connect(master);pickerNodes.push(node);
+    osc.onended=()=>{osc.disconnect();gain.disconnect();pickerNodes=pickerNodes.filter(n=>n!==node);};
+    osc.start(at);osc.stop(at+duration+.02);
+  }
+  async function pickerSound(result=false,milliseconds=2400) {
+    cancelPicker();
+    if(volume===0)return;
+    const request=pickerGeneration,ctx=ensureContext();master.gain.value=volume;
+    // Called directly from the selection gesture to unlock mobile/board audio.
+    await ctx.resume();if(request!==pickerGeneration)return;
+    if(ctx.state==='suspended')throw Error('Seçim sesi başlatılamadı; ses anahtarını açıp yeniden seçin.');
+    const start=ctx.currentTime+.015;
+    if(result) {
+      [523.25,659.25,783.99,1046.5].forEach((frequency,i)=>{
+        pickerNote(ctx,start+i*.09,frequency,'sine',.32,.5);
+        pickerNote(ctx,start+i*.09,frequency*2,'sine',.055,.35);
+      });
+      return;
+    }
+    const duration=Math.max(.2,Math.min(3,Number.isFinite(milliseconds)?milliseconds/1000:2.4));
+    // Short wooden clicks slow down with the same cadence as the fish previews.
+    for(let t=0;t<duration;t+=.09+.24*Math.pow(t/duration,2)) {
+      pickerNote(ctx,start+t,1500-t/duration*400,'triangle',.5,.045);
+      pickerNote(ctx,start+t,260,'sine',.2,.065);
+    }
+  }
   async function feed() {
     ensureContext();
     master.gain.value = volume; await context.resume();
@@ -75,7 +113,6 @@
   }
   function setVolume(value){volume=S.level(value,0);volumes();if(master)master.gain.setTargetAtTime(volume,context.currentTime,.1);}
   // Background tabs retain playback; explicit pause or leaving this page stops it.
-  window.addEventListener('pagehide',stop);
-  window.addEventListener('pagehide',cancelTimer);
-  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,setVolume,setLayerVolume,describe,scheduleTimer,cancelTimer,current:()=>mix[0]?.id||'off',isPlaying};
+  window.addEventListener('pagehide',()=>{stop();cancelTimer();cancelPicker();});
+  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,setVolume,setLayerVolume,describe,scheduleTimer,cancelTimer,pickerSound,cancelPicker,current:()=>mix[0]?.id||'off',isPlaying};
 })();

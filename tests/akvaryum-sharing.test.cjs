@@ -41,6 +41,7 @@ async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-1111
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const intervals=[],frames=[]; let response=snapshot,report=null,reads=0,writes=0,rafId=0,clock=0; const urls=[],requests=[];
   const localStorage={getItem(){reads++;throw Error('Viewer must not read teacher storage');},setItem(){writes++;}};
+  window.AquariumSocial=require('../js/akvaryum-social.js');
   window.AquariumCore=C;window.AquariumTimer=require('../js/akvaryum-timer.js');window.AquariumMotion=require('../js/akvaryum-motion.js'); window.AquariumAudio={stop(){}};
   window.kemalSiteStore={getConfig:()=>({supabaseUrl:'https://example.invalid',supabaseAnonKey:'public-key'})};
   window.matchMedia=()=>({matches:false,addEventListener(){}});
@@ -229,6 +230,7 @@ test('growth appearance is shared while thresholds, hidden names and corrected f
 test('visitors see current eggs, growth and teacher fish with every management action disabled',async()=>{
  const h=await viewerHarness({theme:'reef',teacher:{name:'Öğretmen',species:'tang'},settings:{names:true,points:false},students:[{id:'a',name:'Ada',species:'clown',mood:'calm',appearance:{egg:true,scale:.5,trophy:false}}]});
  assert.equal(h.document.querySelectorAll('.fish').length,2);assert.equal(h.document.querySelectorAll('.is-egg').length,1);assert.ok([...h.document.querySelectorAll('.fish')].every(el=>el.disabled));
+ assert.ok(h.document.querySelector('.is-egg .egg-embryo').src.endsWith('/palyaco-baligi.webp'));
  h.setResponse({theme:'reef',settings:{names:true,points:true},students:[{id:'a',name:'Ada',species:'clown',mood:'happy',points:20,appearance:{egg:false,scale:.55,trophy:false}}]});await h.intervals[1]();
  assert.equal(h.document.querySelectorAll('.is-egg').length,0);assert.equal(h.document.querySelector('.fish').style.getPropertyValue('--growth-scale'),.55);assert.equal(h.document.querySelector('.fish-points').textContent,'★ 20');assert.deepEqual(h.io(),{reads:0,writes:0});
 });
@@ -268,7 +270,7 @@ test('parent class view preserves every current growth size while only the own c
   {id:'peer-two',name:'Ece',species:'tang',mood:'happy',points:null,appearance:{egg:false,scale:.8,trophy:false}},
   {id:'peer-three',name:'Deniz',species:'clown',mood:'happy',points:null,appearance:{egg:true,scale:.35,trophy:false}}]};
  const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111'),d=h.document;
- assert.equal(d.querySelectorAll('.fish').length,3);
+ assert.equal(d.querySelectorAll('.fish').length,3);assert.equal(d.querySelectorAll('.daily-champion-medal').length,0);
  assert.equal(d.querySelector('.parent-child .fish-points').hidden,false);assert.equal(d.querySelector('.parent-child .fish-points').textContent,'★ 25');
  const peer=d.querySelector('[data-id="view-peer-two"]');assert.equal(Number(peer.style.getPropertyValue('--growth-scale')),.8);
  assert.equal(peer.querySelector('.fish-name').textContent,'Ece');assert.equal(peer.querySelector('.fish-points').hidden,true);
