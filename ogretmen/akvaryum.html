@@ -53,15 +53,16 @@
   <script defer src="/js/akvaryum-anatomy.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-motion.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-timer.js?v=20261012-performance"></script>
-  <script defer src="/js/akvaryum-sync-merge.js?v=20261019-sync-v1"></script>
-  <script defer src="/js/akvaryum-cloud.js?v=20261021-conflict-v6"></script>
+  <script defer src="/js/akvaryum-sync-merge.js?v=20261021-auto-sync-v7"></script>
+  <script defer src="/js/akvaryum-storage.js?v=20261021-auto-sync-v7"></script>
+  <script defer src="/js/akvaryum-cloud.js?v=20261021-auto-sync-v7"></script>
   <script defer src="/js/akvaryum-live.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-creature-models.js?v=20261013-creature-prototype-v1"></script>
   <script defer src="/js/akvaryum-creature-3d.js?v=20261013-creature-prototype-v1"></script>
   <script defer src="/js/akvaryum-water.js?v=20261016-alphabetical-release-v1"></script>
   <script defer src="/js/akvaryum-seasonal.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-social.js?v=20261019-social-v1"></script>
-  <script defer src="/js/akvaryum.js?v=20261021-access-v5"></script>
+  <script defer src="/js/akvaryum.js?v=20261021-auto-sync-v7"></script>
 </head>
 <body class="access-pending">
   <section id="accessGate" class="access-gate"><h1>Sınıf Akvaryumu</h1><p id="accessMessage">Erişim kontrol ediliyor…</p><button type="button" id="accessRetry" class="button primary" hidden>Oturumu yeniden dene</button><p><a class="button" href="">Sayfayı yeniden yükle</a></p><p class="preview-access"><a class="button" href="?demo=1">Hesapsız örnek sınıfı aç</a></p><div id="accessLinks" hidden><a class="button primary" href="/giris.html?redirect=%2Fogretmen%2Fakvaryum.html">Öğretmen girişi</a> <a class="button" href="/ogretmen-paneli.html">Öğretmen panelim</a> <a class="button" href="?demo=1">Örnek sınıfı incele</a> <a class="button" href="?veli=1">Veli koduyla izle</a></div></section>
@@ -97,7 +98,7 @@
         <button type="button" class="button primary" data-action="choose"><svg><use href="#i-fish"/></svg><span>Balığımı seç</span></button>
       </div>
     </header>
-    <div id="cloudWarning" class="cloud-warning" role="status" hidden><strong>Eşitleme uyarısı</strong><span id="cloudWarningMessage"></span><button id="cloudRetryButton" type="button" class="button" data-action="retry-cloud">Şimdi eşitle</button></div>
+    <div id="cloudWarning" class="cloud-warning" role="status" hidden><strong>Bağlantı durumu</strong><span id="cloudWarningMessage"></span></div>
     <div id="storageWarning" class="storage-warning" role="alert" hidden></div>
     <div id="demoBanner" class="demo-banner" hidden>Örnek sınıfı keşfediyorsunuz. Buradaki değişiklikler kaydedilmez. <button type="button" data-action="exit-demo">Kendi sınıfıma dön →</button></div>
     <aside id="seasonalSuggestion" class="seasonal-suggestion" hidden aria-label="Mevsimlik akvaryum önerisi"><div><strong id="seasonalSuggestionTitle"></strong><span id="seasonalSuggestionDescription"></span></div><button type="button" class="button primary" data-action="seasonal-preview">Temayı incele</button><button type="button" class="button subtle" data-action="seasonal-dismiss">Bu sezon gösterme</button></aside>

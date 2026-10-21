@@ -177,15 +177,19 @@
   }
   if(!viewing)try {const saved=localStorage.getItem(CREATURE_MODE_KEY);if(['classic','natural','3d'].includes(saved))creatureMode=saved;}catch(_){}
   if(!viewing)try {const saved=Number(localStorage.getItem(CREATURE_SIZE_KEY));if([100,150,200].includes(saved))creatureDisplaySize=saved;}catch(_){}
-  let blockedStorage = false;
+  let blockedStorage = false, cacheUnavailable = false;
+  const persistence = !viewing && !demoOnly ? window.AquariumStorage?.create({key:KEY}) : null;
   let state;
-  try { const raw = viewing || demoOnly ? null : localStorage.getItem(KEY); state = raw ? C.validate(JSON.parse(raw)) : C.initialState(); }
-  catch (error) { state = C.initialState(); blockedStorage = true; }
+  // The account document lives in the database; IndexedDB is its offline cache.
+  // A full localStorage quota must never prevent loading the account or sending
+  // a new award to it.
+  try { const cached = persistence ? await persistence.load() : null; state = cached ? C.validate(cached) : C.initialState();cacheUnavailable=!cached && !!persistence?.lastError(); }
+  catch (error) { state = C.initialState(); blockedStorage = cacheUnavailable = true; }
   if (viewing) state = viewState(viewSnapshot);
-  if (!viewing && !demoOnly && !blockedStorage && window.AquariumCloud) {
-    cloud=window.AquariumCloud.create({client:window.kemalUserAuth.getClient(),ownerId:window.kemalUserAuth.getUser().id,storage:localStorage,key:KEY,getState:()=>state,project:window.AquariumSharing.snapshot,onStatus:message=>setCloudStatus(message,cloud?.isConflict()===true)});
+  if (!viewing && !demoOnly && window.AquariumCloud) {
+    cloud=window.AquariumCloud.create({client:window.kemalUserAuth.getClient(),ownerId:window.kemalUserAuth.getUser().id,persistence,key:KEY,getState:()=>state,project:window.AquariumSharing.snapshot,onStatus:message=>setCloudStatus(message)});
     window.AquariumStartup?.phase('Sınıf kaydı yükleniyor…',60000);
-    try { state=await cloud.boot(state);localStorage.setItem(KEY,JSON.stringify(state)); }
+    try { state=await cloud.boot(state,{cacheUnavailable});blockedStorage=false;void persistence?.save(state); }
     catch(e){setCloudStatus(e.message,true);}
   }
 
@@ -211,7 +215,7 @@
   const score = s => s.isTeacher ? null : viewing ? s.publicPoints : C.earned(s);
   function queueShare(work) { shareQueue = shareQueue.catch(() => {}).then(work); return shareQueue; }
   function scheduleShare() {
-    if (viewing || demo || demoOnly || blockedStorage || cloud?.isReady()) return;
+    if (viewing || demo || demoOnly || cloud?.isReady()) return;
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
       const classes = JSON.parse(JSON.stringify(state.classes)), settings = {...state.settings};
@@ -285,30 +289,44 @@
   }
 
   function toast(message) { clearTimeout(toastTimer); $('toast').textContent = message; $('toast').classList.add('visible'); toastTimer = setTimeout(() => $('toast').classList.remove('visible'), 3500); }
-  function storageWarning(message) { $('storageWarning').hidden = false; $('storageWarning').textContent = message; $('saveStatus').textContent = 'Kaydedilemedi · Yedek almayı unutmayın.'; }
+  function storageWarning(message) { $('storageWarning').hidden = false; $('storageWarning').textContent = message; }
+  let cacheWriteSequence=0;
+  function cacheState(document) {
+    if(!persistence)return;
+    const sequence=++cacheWriteSequence;
+    void persistence.save(document).then(saved=>{
+      if(sequence!==cacheWriteSequence)return;
+      $('storageWarning').hidden=saved;
+      if(!saved)storageWarning('Bu tarayıcıda çevrimdışı kopya saklanamıyor. Hesaba kayıt arka planda sürüyor; bağlantı kesilirse sayfayı kapatmadan önce yedek indirin.');
+    }).catch(()=>{
+      if(sequence===cacheWriteSequence)storageWarning('Çevrimdışı kopya saklanamadı. Hesaba kayıt arka planda sürüyor.');
+    });
+  }
   function save() {
     if (viewing) return;
-    if (demoOnly) { $('saveStatus').textContent = 'Örnek sınıf · Değişiklikler kaydedilmez.'; return; }
-    if (demo) { $('saveStatus').textContent = 'Örnek sınıf · Değişiklikler kaydedilmez.'; return; }
-    if (blockedStorage) { storageWarning('Önceki kayıt okunamadı. Üzerine yazılmadı. Ayarlar → Mevcut kaydı indir ile kurtarma kopyası alın; ardından bir yedek yükleyin.'); return; }
-    try { localStorage.setItem(KEY, JSON.stringify(state)); $('storageWarning').hidden = true; $('saveStatus').textContent = cloud ? 'Cihaza kaydedildi · Hesabınızla eşitleniyor…' : 'Bu tarayıcıya kaydedildi · Ayarlardan yedek alabilirsiniz.';
-      if(cloud){cloud.markDirty(state);clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,0);} }
-    catch (error) { storageWarning('Tarayıcı kaydı yapılamadı. Yaptığınız değişiklikleri kaybetmemek için Ayarlar → Yedek indir seçeneğini kullanın.'); }
+    if (demoOnly || demo) { $('saveStatus').textContent = 'Örnek sınıf · Değişiklikler kaydedilmez.'; return; }
+    if(blockedStorage && !cloud?.isReady()) {storageWarning('Önceki çevrimdışı kopya okunamadı ve korundu. Hesabınızdaki kayıt arka planda kontrol ediliyor.');return;}
+    // Queue the server write independently of the browser cache result.
+    if(cloud){cloud.markDirty(state);clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,0);}
+    if (!blockedStorage) cacheState(state);
+    else storageWarning('Önceki çevrimdışı kopya okunamadı ve korundu. Hesabınızdaki kayıt arka planda kontrol ediliyor.');
+    $('saveStatus').textContent = cloud ? 'Değişiklikler hesabınıza kaydediliyor…' : 'Çevrimdışı kayıt · Hesap bağlantısı bekleniyor.';
   }
   function setCloudStatus(message,problem=false) {
     cloudMessage=message;$('saveStatus').textContent=message;
     const warning=$('cloudWarning');warning.hidden=!problem;
     $('cloudWarningMessage').textContent=problem?message:'';
-    $('cloudRetryButton').textContent=cloud?.isConflict()?'Kayıtları karşılaştır':'Şimdi eşitle';
+    if($('cloudRetryButton'))$('cloudRetryButton').hidden=true;
     if($('cloudStateDescription'))$('cloudStateDescription').textContent=message;
   }
   function applyCloudState(updated) {
-    if(JSON.stringify(updated)===JSON.stringify(state))return;
+    blockedStorage=false;
+    if(JSON.stringify(updated)===JSON.stringify(state)){cacheState(state);return;}
     const active=state.activeClassId,selectedBefore=selected,scroll=modal.scrollTop,focused=document.activeElement?.id;
     const previousClass=state.classes.find(c=>c.id===active),knownDeductions=new Set((previousClass?.students||[]).flatMap(s=>(s.days[today]?.tasks||[]).filter(t=>t.status==='done'&&C.taskPoints(t)<0).map(t=>t.id)));
     state=updated;if(state.classes.some(c=>c.id===active))state.activeClassId=active;
     if(!classroom().students.some(s=>s.id===selected))selected='';
-    localStorage.setItem(KEY,JSON.stringify(state));ensureDays();render();
+    cacheState(state);ensureDays();render();
     if(previousClass?.id===classroom().id)for(const s of classroom().students)if((s.days[today]?.tasks||[]).some(t=>t.status==='done'&&C.taskPoints(t)<0&&!knownDeductions.has(t.id)))startTeacherVisit(s);
     if(previousClass?.id===classroom().id)for(const s of classroom().students){
       const old=previousClass.students.find(p=>p.id===s.id);
@@ -324,22 +342,21 @@
     if(livePickerPending)presentSharedPick(livePickerPending);
   }
   async function refreshCloud(force=false) {
-    if(!cloud||demo||demoOnly||blockedStorage)return;
-    if(cloud.isConflict()&&force!==true)return;
+    if(!cloud||demo||demoOnly)return;
     if(cloudBusy){cloudRerun=cloudRerun||force===true;return cloudSettled;}
     if(document.hidden && !cloud.isDirty() && force!==true)return;
     clearTimeout(cloudTimer);cloudBusy=true;let release;cloudSettled=new Promise(resolve=>release=resolve);
     try {
       const previousMessage=cloudMessage,updated=await cloud.refresh(state);if(updated)applyCloudState(updated);
-      if(cloudMessage===previousMessage && !cloud.isDirty()&&!cloud.isConflict())cloudMessage='Hesapla eşit · Son kontrol tamamlandı.';
+      if(cloudMessage===previousMessage && !cloud.isDirty())cloudMessage='Hesabınızdaki kayıt güncel.';
       cloudRetryDelay=2000;liveLastAccountCheck=Date.now();
-      setCloudStatus(cloudMessage||'Hesap kaydı kontrol edildi.',cloud.isConflict());
+      setCloudStatus(cloudMessage||'Hesabınızdaki kayıt güncel.');
     } catch(e){setCloudStatus(e.message,true);cloudRetryDelay=Math.min(30000,cloudRetryDelay*2);}
     finally {
       cloudBusy=false;
       release();
       if(cloudRerun){cloudRerun=false;cloudTimer=setTimeout(()=>refreshCloud(true),0);}
-      else if(cloud.isDirty()&&!cloud.isConflict())cloudTimer=setTimeout(flushCloud,cloudRetryDelay);
+      else if(cloud.isDirty())cloudTimer=setTimeout(flushCloud,cloudRetryDelay);
     }
   }
   async function flushCloud(){return refreshCloud(true);}
@@ -348,46 +365,7 @@
     if(live?.isConnected()&&!cloud.isDirty()&&cloud.getRevision()>=live.getRevision()&&Date.now()-liveLastAccountCheck<30000)return;
     return refreshCloud();
   }
-  function cloudControls(){return '<p class="settings-note" id="liveStateDescription">'+esc($('liveStatus').textContent||'Anlık bağlantı öğretmen hesabında otomatik kurulur.')+'</p><p class="settings-note" id="cloudStateDescription">'+esc(cloudMessage||'Sınıflar, öğrenciler, görevler ve ses favorileri öğretmen hesabınıza kaydedilir. Aynı hesapla başka cihazda açabilirsiniz. Çevrimdışı değişiklikler bu cihazda tutulur; çakışan kayıtlar otomatik ezilmez.')+'</p><div class="settings-actions"><button class="button" data-action="retry-cloud">'+(cloud?.isConflict()?'Kayıtları karşılaştır':'Şimdi eşitle')+'</button><button class="button" data-action="export-recovery">Korunan yerel kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button>'+syncChoiceBackups()+'</div>';}
-  function syncChoiceBackups(){
-    try {if(!localStorage.getItem(KEY+'_before_sync_choice'))return '';}catch(_){return '';}
-    return '<button class="button" data-action="export-before-sync-local">Son seçim öncesi cihaz yedeği</button><button class="button" data-action="export-before-sync-remote">Son seçim öncesi hesap yedeği</button>';
-  }
-  let syncReview=null;
-  function syncTotals(doc) {
-    const students=doc.classes.flatMap(c=>c.students);
-    return doc.classes.length+' sınıf · '+students.length+' öğrenci · '+students.reduce((n,s)=>n+C.earned(s),0)+' toplam puan';
-  }
-  function syncStudentFacts(s) {
-    if(!s)return 'Bu kayıtta öğrenci yok';
-    const points=(s.days[today]?.tasks||[]).reduce((n,t)=>n+(t.status==='done'?C.taskPoints(t):0),0);
-    return '<strong>'+C.earned(s)+' toplam puan</strong><span>Bugün '+signed(points)+' · '+C.completedCount(s)+' puan kaydı · '+s.feeds.length+' besleme</span>';
-  }
-  function syncReviewModal(classId=state.activeClassId) {
-    if(!syncReview)return;
-    rememberModal('sync-review',()=>syncReviewModal(classId));
-    const {local,remote}=syncReview,classes=new Map();
-    for(const cls of [...local.classes,...remote.classes])if(!classes.has(cls.id))classes.set(cls.id,cls.name);
-    if(!classes.has(classId))classId=classes.keys().next().value;
-    const left=local.classes.find(c=>c.id===classId),right=remote.classes.find(c=>c.id===classId),pupils=new Map();
-    for(const s of [...(left?.students||[]),...(right?.students||[])])pupils.set(s.id,s.name);
-    const rows=[...pupils].sort((a,b)=>a[1].localeCompare(b[1],'tr')).map(([id,name])=>{
-      const a=left?.students.find(s=>s.id===id),b=right?.students.find(s=>s.id===id),different=JSON.stringify(a)!==JSON.stringify(b);
-      return '<tr'+(different?' class="sync-different"':'')+'><th scope="row">'+esc(name)+(a&&b&&a.name!==b.name?'<small>Hesapta: '+esc(b.name)+'</small>':'')+(different?'<small>Kayıt farklı</small>':'')+'</th><td>'+syncStudentFacts(a)+'</td><td>'+syncStudentFacts(b)+'</td></tr>';
-    }).join('');
-    openModal('Kayıtları karşılaştır','<p class="modal-intro">Bu cihazın kaydı hesaptakinden farklı. Puan kaybını önlemek için kayıtlar otomatik birleştirilmedi. Karşılaştırmak kayıtları değiştirmez.</p><div class="sync-copy-summary"><section><h3>Bu cihaz</h3><p>'+esc(syncTotals(local))+'</p></section><section><h3>Hesap</h3><p>'+esc(syncTotals(remote))+'</p></section></div><label class="field">Karşılaştırılacak sınıf<select id="syncReviewClass">'+[...classes].map(([id,name])=>'<option value="'+esc(id)+'" '+(id===classId?'selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+(!left||!right?'<p class="settings-note">Bu sınıf '+(!left?'yalnızca hesapta':'yalnızca bu cihazda')+' bulunuyor.</p>':'')+'<table class="sync-comparison"><caption>Güncel sezon · '+esc(classes.get(classId))+'</caption><thead><tr><th scope="col">Öğrenci</th><th scope="col">Bu cihaz</th><th scope="col">Hesap</th></tr></thead><tbody>'+rows+'</tbody></table><p class="settings-note">Toplamlar eşit olsa bile geçmiş, balık seçimi veya ayarlar farklı olabilir. Bekleyen görevler puan kaydı sayısına dahil değildir. Aşağıdaki seçim yalnızca bu sınıfı değil, hesaptaki tüm sınıfları ve ayarları kapsar.</p><div class="settings-section"><h3>Önce iki kopyayı saklayın</h3><p>İki tarafta da korunacak farklı puanlar varsa bir kayıt seçmeyin. İki yedeği indirerek ayrı ayrı saklayın; bu dosyalar karşılaştırılıp kurtarma yapılabilir.</p><div class="settings-actions"><button class="button" data-action="export-sync-local">Bu cihazın yedeğini indir</button><button class="button" data-action="export-sync-remote">Hesabın yedeğini indir</button></div></div><div class="settings-section"><h3>Eksiksiz olduğunu bildiğiniz kaydı kullanın</h3><p class="settings-note">Bu işlem iki kaydı birleştirmez. Seçilmeyen kopyadaki farklı puanlar etkin kayda aktarılmaz; kurtarma kopyası bu cihazda korunur. Emin değilseniz yedekleri indirin ve karşılaştırmayı kapatın.</p><div class="settings-actions"><button class="button" data-action="use-cloud">Hesaptaki kaydı kullan</button><button class="button" data-action="use-local">Bu cihazdaki kaydı kullan</button><button class="button subtle" data-action="review-cloud">Yeniden karşılaştır</button></div></div>');
-  }
-  async function reviewSyncConflict() {
-    if(!cloud || cloudBusy){toast('Eşitleme kontrolü sürüyor. Biraz sonra yeniden deneyin.');return;}
-    clearTimeout(cloudTimer);cloudBusy=true;syncReview=null;
-    rememberModal('sync-review',()=>reviewSyncConflict());openModal('Kayıtları karşılaştır','<p role="status">İki kayıt kontrol ediliyor. Puanlarınız korunuyor…</p>');
-    try {
-      const review=await cloud.inspect(state);
-      if(review.resolved){applyCloudState(review.document);setCloudStatus('Hesapla eşit · Tüm değişiklikler doğrulandı.');if(modalRoute?.key==='sync-review')closeModal();return;}
-      if(modal.open && modalRoute?.key==='sync-review'){syncReview=review;syncReviewModal();}
-    } catch(e){setCloudStatus(e.message,true);if(modal.open && modalRoute?.key==='sync-review')openModal('Kayıtları karşılaştır','<p role="alert">'+esc(e.message)+'</p><button class="button" data-action="review-cloud">Yeniden dene</button>');}
-    finally{cloudBusy=false;}
-  }
+  function cloudControls(){return '<p class="settings-note" id="liveStateDescription">'+esc($('liveStatus').textContent||'Anlık bağlantı öğretmen hesabında otomatik kurulur.')+'</p><p class="settings-note">Aynı hesapla açılan cihazlar güncel sınıfı veritabanından otomatik alır. Puanlar arka planda aktarılır; çevrimdışı verilen ayrı puanlar bağlantı geldiğinde korunarak birleştirilir. Cihaz seçmeniz veya eşitleme başlatmanız gerekmez.</p><p class="settings-note" id="cloudStateDescription">'+esc(cloudMessage||'Hesap bağlantısı otomatik kontrol ediliyor.')+'</p><div class="settings-actions"><button class="button" data-action="export-recovery">Korunan çevrimdışı kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button><button class="button" data-action="export-before-sync-local">Önceki cihaz yedeğini indir</button><button class="button" data-action="export-before-sync-remote">Önceki hesap yedeğini indir</button></div>';}
   function commit() { save(); render(); scheduleShare(); }
   let modalHistory=[],modalRoute=null,pendingModalRoute=null,goingBack=false;
   function rememberModal(key,render) {pendingModalRoute={key,render};}
@@ -462,7 +440,7 @@
   function soundModal() {rememberModal('soundModal',()=>soundModal());openModal('Ortam sesleri',soundSettings());}
   function settingsModal() {
     rememberModal('settingsModal'+'',()=>settingsModal());
-    openModal('Sınıfın kontrolü sende', '<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="' + esc(classroom().name) + '" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">' + icon('plus') + 'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="teacher-fish">Öğretmen balığı</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div><div class="settings-section"><h3>Akvaryum ayarları</h3><button class="button" data-action="themes">Arka planı değiştir</button><label class="toggle-row">Balıkların üzerinde toplam puanlarını göster<input id="pointsToggle" type="checkbox" ' + (state.settings.points ? 'checked' : '') + '></label><label class="toggle-row">Sınıf puanlarını göster · İstiridye ve inci<input id="classPointsToggle" type="checkbox" ' + (state.settings.classPoints ? 'checked' : '') + '></label><label class="toggle-row">Besleme hatırlatmasında geçen gün sayısını göster<input id="hungerTextToggle" type="checkbox" ' + (state.settings.hungerText ? 'checked' : '') + '></label><label class="toggle-row">Seyrek emoji sohbetleri<input id="chatToggle" type="checkbox" ' + (state.settings.chat ? 'checked' : '') + '></label><label class="toggle-row">Öğrenci adlarını göster · Kapatınca isimsiz yüzerler<input id="namesToggle" type="checkbox" ' + (state.settings.names ? 'checked' : '') + '></label><label class="toggle-row">Canlıların yüzmesi ve su hareketleri<input id="motionToggle" type="checkbox" ' + (state.settings.motion ? 'checked' : '') + '></label><label class="toggle-row">Su yüzeyinde ve kumda hareketli ışık yansımaları<input id="lightMotionToggle" type="checkbox" ' + (state.settings.lightMotion ? 'checked' : '') + '></label><label class="toggle-row">Su yüzeyinde ve zeminde hafif dalga<input id="waterWavesToggle" type="checkbox" ' + (state.settings.waterWaves ? 'checked' : '') + '></label>' + effectRange('bubbleAmountRange','Baloncuk miktarı') + effectRange('lightStrengthRange','Işık yansımalarının belirginliği') + effectRange('waveStrengthRange','Deniz dalgasının belirginliği') + '<label class="toggle-row">Öğretmen balığı destekleyici hatırlatma yapsın<input id="teacherEncouragementToggle" type="checkbox" ' + (state.settings.teacherEncouragement ? 'checked' : '') + '></label><p class="settings-note">Öğretmen balığı açıksa puan kesintisinden sonra kısa bir destek mesajıyla öğrencinin yanına gider. Mesajda isim veya puan yer almaz; veli ve ziyaretçi ekranlarına aktarılmaz. Arka arkaya puan kesintisi verilirse öğrencileri sırayla ziyaret eder; aynı öğrenci için yinelenen ziyaret biriktirmez.</p><p class="settings-note">Miktarlar doğal görünümü koruyan aralıklarla sınırlıdır. %100 doğal düzeydir. Işık deseni su yüzeyinde ve kumda yavaşça biçim değiştirir; dalga, balıkların gerisinde hafif su kıpırtısı oluşturur. Akıcı görünümde de ayarlar çalışır; cihazı yormamak için daha sade çizilir. Genel hareket kapalıysa veya cihazda hareketi azaltma açıksa efektler de durur.</p>' + (reduced.matches ? '<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık; yüzme animasyonları durduruldu.</p>' : '') + '</div><div class="settings-section"><h3>Paylaşım</h3><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>' + soundSettings() + '<div class="settings-section"><h3>Kayıt ve eşitleme</h3>' + cloudControls() + '<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklamanızı sağlar. Ziyaretçiler yalnızca izin verdiğiniz görünümü izler; görev geçmişine veya yönetim yetkisine erişemez.</p><div class="settings-actions"><button class="button" data-action="export">' + icon('download') + 'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>' + (blockedStorage ? '<button class="button" data-action="export-raw">Mevcut kaydı indir</button>' : '') + '</div></div><div class="settings-section"><button class="button subtle" data-action="help">Nasıl çalışır?</button></div>');
+    openModal('Sınıfın kontrolü sende', '<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="' + esc(classroom().name) + '" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">' + icon('plus') + 'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="teacher-fish">Öğretmen balığı</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div><div class="settings-section"><h3>Akvaryum ayarları</h3><button class="button" data-action="themes">Arka planı değiştir</button><label class="toggle-row">Balıkların üzerinde toplam puanlarını göster<input id="pointsToggle" type="checkbox" ' + (state.settings.points ? 'checked' : '') + '></label><label class="toggle-row">Sınıf puanlarını göster · İstiridye ve inci<input id="classPointsToggle" type="checkbox" ' + (state.settings.classPoints ? 'checked' : '') + '></label><label class="toggle-row">Besleme hatırlatmasında geçen gün sayısını göster<input id="hungerTextToggle" type="checkbox" ' + (state.settings.hungerText ? 'checked' : '') + '></label><label class="toggle-row">Seyrek emoji sohbetleri<input id="chatToggle" type="checkbox" ' + (state.settings.chat ? 'checked' : '') + '></label><label class="toggle-row">Öğrenci adlarını göster · Kapatınca isimsiz yüzerler<input id="namesToggle" type="checkbox" ' + (state.settings.names ? 'checked' : '') + '></label><label class="toggle-row">Canlıların yüzmesi ve su hareketleri<input id="motionToggle" type="checkbox" ' + (state.settings.motion ? 'checked' : '') + '></label><label class="toggle-row">Su yüzeyinde ve kumda hareketli ışık yansımaları<input id="lightMotionToggle" type="checkbox" ' + (state.settings.lightMotion ? 'checked' : '') + '></label><label class="toggle-row">Su yüzeyinde ve zeminde hafif dalga<input id="waterWavesToggle" type="checkbox" ' + (state.settings.waterWaves ? 'checked' : '') + '></label>' + effectRange('bubbleAmountRange','Baloncuk miktarı') + effectRange('lightStrengthRange','Işık yansımalarının belirginliği') + effectRange('waveStrengthRange','Deniz dalgasının belirginliği') + '<label class="toggle-row">Öğretmen balığı destekleyici hatırlatma yapsın<input id="teacherEncouragementToggle" type="checkbox" ' + (state.settings.teacherEncouragement ? 'checked' : '') + '></label><p class="settings-note">Öğretmen balığı açıksa puan kesintisinden sonra kısa bir destek mesajıyla öğrencinin yanına gider. Mesajda isim veya puan yer almaz; veli ve ziyaretçi ekranlarına aktarılmaz. Arka arkaya puan kesintisi verilirse öğrencileri sırayla ziyaret eder; aynı öğrenci için yinelenen ziyaret biriktirmez.</p><p class="settings-note">Miktarlar doğal görünümü koruyan aralıklarla sınırlıdır. %100 doğal düzeydir. Işık deseni su yüzeyinde ve kumda yavaşça biçim değiştirir; dalga, balıkların gerisinde hafif su kıpırtısı oluşturur. Akıcı görünümde de ayarlar çalışır; cihazı yormamak için daha sade çizilir. Genel hareket kapalıysa veya cihazda hareketi azaltma açıksa efektler de durur.</p>' + (reduced.matches ? '<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık; yüzme animasyonları durduruldu.</p>' : '') + '</div><div class="settings-section"><h3>Paylaşım</h3><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>' + soundSettings() + '<div class="settings-section"><h3>Hesap kaydı ve yedekler</h3>' + cloudControls() + '<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklamanızı sağlar. Ziyaretçiler yalnızca izin verdiğiniz görünümü izler; görev geçmişine veya yönetim yetkisine erişemez.</p><div class="settings-actions"><button class="button" data-action="export">' + icon('download') + 'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>' + (blockedStorage ? '<button class="button" data-action="export-raw">Mevcut kaydı indir</button>' : '') + '</div></div><div class="settings-section"><button class="button subtle" data-action="help">Nasıl çalışır?</button></div>');
     const motionField=document.createElement('label');motionField.className='field device-quality';
     motionField.innerHTML='Bu cihazda canlı hareketleri<select id="creatureMode"><option value="classic">Klasik görünüm</option><option value="natural">Doğal hareketler · Hafif</option><option value="3d">3D canlılar · Deneme</option></select><small>İlk dört tür: palyaço balığı, denizanası, kaplumbağa ve ahtapot. 3D modeller sevimli ve sade bir çizimdedir. Aynı anda en fazla 12 model ve toplam 30 canlı için açılır; cihaz zorlanırsa hafif görünüme döner. Diğer canlılar mevcut görsellerini kullanır. Bu seçim yalnızca bu cihaza kaydedilir.</small><small id="creatureStatus" role="status"></small>';
     $('modalContent').prepend(motionField);$('creatureMode').querySelector('option[value="'+creatureMode+'"]').selected=true;updateCreatureStatus();
@@ -537,8 +515,8 @@
       liveDrawPending=true;const classId=classroom().id,button=$('pickerStart');button.disabled=true;button.textContent='Sınıfla eşitleniyor…';
       try{
         await refreshCloud(true);
-        if(cloud.isDirty()&&!cloud.isConflict())await refreshCloud(true);
-        if(cloud.isDirty()||cloud.isConflict())throw Error('Ortak seçimden önce bekleyen puanları eşitleyin. Kayıt ve eşitleme bölümünden durumu kontrol edebilirsiniz.');
+        if(cloud.isDirty())await refreshCloud(true);
+        if(cloud.isDirty())throw Error('Son puanların hesaba aktarılması bekleniyor. Bağlantı geldiğinde ortak seçim de otomatik hazır olur.');
         if(classroom().id!==classId||!modal.open||modalRoute?.key!=='random-student')return;
         const result=await live.draw(classId,C.uid());
         if(modal.open&&modalRoute?.key==='random-student'&&$('pickerStart').textContent==='Sınıfla eşitleniyor…'){
@@ -1427,7 +1405,7 @@
       }
       return;
     }
-    if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes','random-student','retry-cloud','seasonal-preview','seasonal-dismiss'].includes(action)) {
+    if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes','random-student','seasonal-preview','seasonal-dismiss'].includes(action)) {
       const birthday=classroom().students.find(s=>s.id===button.dataset.id);
       if(action==='fish-behaviors' && birthday && C.isBirthday(birthday)) openModal('İyi ki doğdun'+(state.settings.names?', '+birthday.name:'')+'! 🎂','<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>');
       return;
@@ -1447,26 +1425,12 @@
         } catch(e) { toast('Eski kayıt okunamadı. Yedek dosyasıyla içe aktarabilirsiniz.'); }
         break;
       }
-      case 'retry-cloud': button.disabled=true;try{await refreshCloud(true);if(cloud?.isConflict())await reviewSyncConflict();}finally{button.disabled=false;}break;
-      case 'review-cloud': await reviewSyncConflict(); break;
       case 'export-before-sync-local': case 'export-before-sync-remote': {
-        try{const copies=JSON.parse(localStorage.getItem(KEY+'_before_sync_choice')||'null'),source=action==='export-before-sync-local'?'local':'remote';if(copies?.[source])exportData(copies[source],'akvaryum-secim-oncesi-'+(source==='local'?'bu-cihaz':'hesap')+'-'+today+'.json');else toast('Bu seçim öncesine ait kayıt yok.');}catch(e){toast('Seçim öncesi yedeği okunamadı.');}break;
+        try{const copies=await persistence?.read('before_sync_choice'),source=action==='export-before-sync-local'?'local':'remote';if(copies?.[source])exportData(copies[source],'akvaryum-secim-oncesi-'+(source==='local'?'bu-cihaz':'hesap')+'-'+today+'.json');else toast('Bu seçim öncesine ait kayıt yok.');}catch(e){toast('Seçim öncesi yedeği okunamadı.');}break;
       }
-      case 'export-sync-local': case 'export-sync-remote': if(syncReview)exportData(action==='export-sync-local'?syncReview.local:syncReview.remote,'akvaryum-'+(action==='export-sync-local'?'bu-cihaz':'hesap')+'-'+today+'.json');break;
-      case 'use-cloud': case 'use-local': {
-        if(!syncReview){await reviewSyncConflict();break;}
-        const choice=action==='use-local'?'local':'remote',review=syncReview;
-        confirm('Tüm sınıflar için bu kayıt kullanılsın mı?',(choice==='local'?'Bu cihazın kaydı: '+syncTotals(review.local)+'. Hesaptaki kayıt bununla değiştirilecek.':'Hesaptaki kayıt: '+syncTotals(review.remote)+'. Bu cihazda bu kayıt açılacak.')+' İki kopyadaki puanlar birleştirilmeyecek. Seçilmeyen kopyadaki farklı puanlar aktarılmayacak. Kurtarma kopyaları bu cihazda saklanır.',async()=>{
-          if(JSON.stringify(C.validate(state))!==JSON.stringify(review.local)){toast('Bu cihazın kaydı değişti. Yeniden karşılaştırın.');await reviewSyncConflict();return;}
-          if(cloudBusy){toast('Eşitleme sürüyor. Yeniden karşılaştırın.');return;}
-          clearTimeout(cloudTimer);cloudBusy=true;let retryReview=false;
-          try{const updated=await cloud.resolve(choice,state,review.revision);applyCloudState(updated);syncReview=null;setCloudStatus(cloudMessage,cloud.isConflict());scheduleShare();toast('Seçtiğiniz kayıt eşitlendi.');}
-          catch(e){setCloudStatus(e.message,true);toast(e.message);retryReview=e.code==='SYNC_REVIEW_STALE';}
-          finally{cloudBusy=false;if(cloud.isDirty()&&!cloud.isConflict())cloudTimer=setTimeout(flushCloud,250);}
-          if(retryReview)await reviewSyncConflict();
-        });break;
+      case 'export-cloud-recovery': case 'export-recovery': {
+        try{const copy=action==='export-cloud-recovery'?await persistence?.read('cloud_recovery'):(await persistence?.read('unsent_recovery'))?.document||await persistence?.read('recovery');if(copy)exportData(copy,'akvaryum-korunan-'+(action==='export-cloud-recovery'?'hesap':'bu-cihaz')+'-'+today+'.json');else toast('Ayrı bir kurtarma kopyası henüz oluşmadı.');}catch(e){toast('Kurtarma kopyası okunamadı.');}break;
       }
-      case 'export-cloud-recovery': case 'export-recovery': {const raw=localStorage.getItem(KEY+(action==='export-cloud-recovery'?'_cloud_recovery':'_recovery'));if(raw)exportData(raw,'akvaryum-korunan-'+(action==='export-cloud-recovery'?'hesap':'bu-cihaz')+'-'+today+'.json');else toast('Ayrı bir kurtarma kopyası henüz oluşmadı.');break;}
       case 'sharing': await sharingModal(); break;
       case 'copy-child': try { const control=$('childScope-'+button.dataset.student);if(control && !(await saveShareControl(control)))break;await navigator.clipboard.writeText(button.dataset.link); toast('Çocuğa özel erişim kopyalandı.'); } catch(e) { toast('Kodu yukarıdaki alandan seçip kopyalayabilirsiniz.'); } break;
       case 'enable-child': case 'disable-child': case 'update-child-scope': {
@@ -1584,16 +1548,16 @@
       case 'remove-student': if (s) confirm('Öğrenciyi akvaryumdan çıkar?', s.name + ' ve bu akvaryumdaki görev geçmişi kaldırılacak. Geri yüklemek için önceden alınmış yedek gerekir.', () => { classroom().students = classroom().students.filter(x => x.id !== s.id); selected = ''; commit(); }); break;
       case 'remove-task': classroom().tasks = classroom().tasks.filter(t => t.id !== button.dataset.id); commit(); tasksModal(); break;
       case 'deleted-class-backup': {
-        const raw=localStorage.getItem(KEY+'_beforeClassDelete');
+        const raw=await persistence?.read('before_class_delete');
         if(!raw) {toast('Bu tarayıcıda sınıf silme yedeği yok.');break;}
-        try{exportData(C.validate(JSON.parse(raw)),'akvaryum-silme-oncesi.json');}catch(e){toast('Kurtarma kopyası okunamadı.');}break;
+        try{exportData(C.validate(raw),'akvaryum-silme-oncesi.json');}catch(e){toast('Kurtarma kopyası okunamadı.');}break;
       }
       case 'delete-class': {
         const cls=classroom();
         confirm('“'+cls.name+'” sınıfını sil?',cls.students.length+' öğrencinin bu akvaryumdaki balıkları, görevleri ve puan geçmişi kaldırılacak. Sınıf ve veli izleme bağlantıları kapatılacak. Öncesindeki kayıt bu tarayıcıda kurtarma kopyası olarak saklanır; Ayarlar’dan indirebilirsiniz. Diğer sınıflar etkilenmez.',async()=>{
           try{
             if(!demo && !demoOnly){
-              localStorage.setItem(KEY+'_beforeClassDelete',JSON.stringify(state));
+              if(!(await persistence?.write('before_class_delete',state)))throw new Error('Sınıf silme öncesi yedeği saklanamadı. Önce Yedek indir ile kaydınızı koruyun.');
               clearTimeout(syncTimer);await queueShare(()=>window.AquariumSharing.removeClass(cls.id));
             }
             if(C.removeClass(state,cls.id)){selected='';focusTimer.reset();Audio.cancelTimer?.();ensureDays();commit();toast('Sınıf silindi.');}
@@ -1611,7 +1575,7 @@
         state.classes.push(cls); state.activeClassId = cls.id; selected = ''; ensureDays(); closeModal(); commit(); toast(cls.students.length + ' öğrenci yeni akvaryuma eklendi.'); break;
       }
       case 'export': exportData(demo ? beforeDemo : state, 'sinif-akvaryumu-' + today + '.json'); break;
-      case 'export-raw': try { exportData(localStorage.getItem(KEY) || '{}', 'akvaryum-kurtarma-' + today + '.json'); } catch (e) { toast('Tarayıcı kaydına erişilemiyor.'); } break;
+      case 'export-raw': try { exportData(await persistence?.readRaw?.() || await persistence?.load() || state, 'akvaryum-kurtarma-' + today + '.json'); } catch (e) { toast('Tarayıcı kaydına erişilemiyor.'); } break;
       case 'close-panel': closePanel(); break;
       case 'panel': $('aquarium').classList.toggle('panel-hidden'); updatePanelToggle(); break;
       case 'fullscreen': try { if (document.fullscreenElement) await document.exitFullscreen(); else if ($('aquariumApp').requestFullscreen) await $('aquariumApp').requestFullscreen(); else toast('Bu tarayıcı tam ekranı desteklemiyor.'); } catch (e) { toast('Tam ekran açılamadı. Tarayıcı iznini kontrol edin.'); } break;
@@ -1720,7 +1684,6 @@
   });
   document.addEventListener('change', async event => {
     const input = event.target;
-    if(!viewing && input.id==='syncReviewClass'){syncReviewModal(input.value);return;}
     if(!viewing && updateEffectRange(input,true))return;
     if(viewing) {if(childViewing && input.id==='parentHistoryPeriod' && ['day','week','month','all'].includes(input.value)){parentPeriod=input.value;parentPage=0;openParentHistory();$('parentHistoryPeriod')?.focus({preventScroll:true});}return;}
     if(input.id==='pickerSoundToggle'){state.settings.pickerSound=input.checked;if(!input.checked)Audio.cancelPicker?.();save();return;}
@@ -1774,10 +1737,11 @@
     if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault(); tab = event.key === 'Home' ? 'students' : event.key === 'End' ? 'tasks' : tab === 'students' ? 'tasks' : 'students'; selected = ''; renderPanel(); $('tab-' + tab).focus();
   });
+  // Cross-tab changes are fetched from the same account source as other
+  // devices. A tab must never replace unsent awards from a storage event.
   window.addEventListener('storage', event => {
-    if (viewing || demoOnly) return;
-    if (event.key !== KEY || !event.newValue) return;
-    try { const updated = C.validate(JSON.parse(event.newValue)); if (demo) beforeDemo = updated; else { state = updated; selected = ''; closeModal(); ensureDays(); render(); toast('Diğer sekmedeki değişiklikler alındı.'); } } catch (e) { storageWarning('Diğer sekmedeki kayıt okunamadı. Bu sayfanın kayıtları korunuyor.'); }
+    if (viewing || demoOnly || !cloud || !event.key?.startsWith(KEY)) return;
+    void refreshCloud(true);
   });
   document.addEventListener('visibilitychange', () => {
     $('aquariumApp').classList.toggle('page-hidden',document.hidden);
@@ -1823,11 +1787,11 @@
     const resume=()=>{live?.start();live?.check(true);refreshCloud(true);};
     window.addEventListener('online',resume);window.addEventListener('focus',resume);window.addEventListener('pageshow',resume);window.addEventListener('pagehide',()=>live?.stop());
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)resume();});
-    window.addEventListener('beforeunload',event=>{try{if(JSON.parse(localStorage.getItem(KEY+'_cloud')||'{}').dirty){event.preventDefault();event.returnValue='';}}catch(e){}});
+    window.addEventListener('beforeunload',event=>{if(cloud.isDirty()){event.preventDefault();event.returnValue='';}});
   }
   setInterval(updateClock,1000);
   updatePanelToggle(); measure(); ensureDays(); render();
-  if (blockedStorage) save(); else if (cloud) { $('saveStatus').textContent=cloudMessage || 'Hesap kaydı hazır.'; } else if (classroom().students.length) { save(); scheduleShare(); }
+  if (blockedStorage) storageWarning('Çevrimdışı kopya okunamadı. Hesaptaki kayıt arka planda kontrol ediliyor; mevcut kopya korundu.'); else if (cloud) { $('saveStatus').textContent=cloudMessage || 'Hesap kaydı hazır.'; } else if (classroom().students.length) { save(); scheduleShare(); }
   live?.start();
   window.AquariumStartup?.ready();
 })();

@@ -33,19 +33,21 @@ test('account polling refreshes an open score/history dialog and keeps typed set
  remote.award();await h.pollCloud();assert.equal(d.querySelector('#renameClassForm [name="name"]'),field);assert.equal(field.value,'Henüz kaydetmediğim ad');
  assert.equal(C.earned(h.saved().classes[0].students[0]),15);assert.equal(remote.writes,1,'read-only refresh must not overwrite cloud');
 });
-test('manual sync pulls clean remote changes; offline warning stays visible in fullscreen and clears on recovery',async()=>{
+test('automatic polling pulls remote changes; a passive offline warning stays visible in fullscreen and clears on recovery',async()=>{
  const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:remote.factory}),d=h.document;
- h.click('[data-action="settings"]');remote.award();h.click('#modal [data-action="retry-cloud"]');await new Promise(r=>setImmediate(r));
+ h.click('[data-action="settings"]');remote.award();await h.pollCloud();
  assert.equal(C.earned(h.saved().classes[0].students[0]),7);assert.equal(remote.writes,1);assert.equal(d.getElementById('cloudWarning').hidden,true);
  h.click('[data-action="close"]');h.click('.scene-controls [data-action="fullscreen"]');await new Promise(r=>setImmediate(r));
  remote.offline=true;await h.pollCloud();const warning=d.getElementById('cloudWarning');
  assert.equal(warning.hidden,false);assert.equal(warning.parentElement.id,'aquarium');assert.match(warning.textContent,/erişilemiyor/);
- remote.offline=false;remote.award();h.click('#cloudWarning [data-action="retry-cloud"]');await new Promise(r=>setImmediate(r));
+ remote.offline=false;remote.award();await h.pollCloud();assert.equal(warning.querySelector('button:not([hidden])'),null);
  assert.equal(warning.hidden,true);assert.equal(C.earned(h.saved().classes[0].students[0]),14);assert.equal(remote.writes,1);
 });
 function legacyConflictFactory(remote){return options=>{
- const local=JSON.parse(options.storage.getItem(options.key));remote.seed(local);remote.edit(doc=>{const c=doc.classes[0];C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[1].id);});
- options.storage.setItem(options.key+'_cloud',JSON.stringify({revision:1,dirty:true,conflict:true}));return remote.factory(options);
+ const cloud=remote.factory(options);return {...cloud,boot:async(local,bootOptions)=>{
+  remote.seed(local);remote.edit(doc=>{const c=doc.classes[0];C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[1].id);});
+  await options.persistence.write('meta',{revision:1,dirty:true,conflict:true});return cloud.boot(local,bootOptions);
+ }};
 };}
 test('two open teacher devices update points and a shared random winner without a polling tick or page reload',async()=>{
  const remote=syncFixture({realtime:true}),a=await harness({ageDays:0,extraNames:['Ada'],cloudFactory:remote.factory,liveClient:remote.client}),factory=options=>{const cloud=remote.factory(options);return {...cloud,boot:()=>cloud.boot(C.initialState())};};
@@ -87,28 +89,37 @@ test('a shared random activity appears automatically on an idle classroom screen
  assert.equal(h.modal.open,true);assert.equal(h.modal.parentNode,d.getElementById('aquarium'));assert.match(d.getElementById('pickerStatus').textContent,/seçiliyor/);
  for(let i=0;i<180;i++){const frame=h.frames.shift();if(frame)frame(100+i*20);}assert.equal(d.getElementById('pickerName').textContent,'Ada');assert.equal(d.getElementById('pickerResultActions').hidden,false);assert.equal(remote.writes,1);
 });
-test('legacy conflict opens a read-only comparison from banner or settings and requires a separate whole-account confirmation',async()=>{
+test('legacy conflicts recover automatically without a device comparison or replacement menu',async()=>{
  const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:legacyConflictFactory(remote),configure:(doc,cls,s)=>C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id)}),d=h.document;
- assert.equal(d.getElementById('cloudWarning').hidden,false);assert.equal(d.getElementById('cloudRetryButton').textContent,'Kayıtları karşılaştır');
- h.click('#cloudRetryButton');await new Promise(r=>setImmediate(r));assert.match(d.getElementById('modalTitle').textContent,/Kayıtları karşılaştır/);
- const row=d.querySelector('.sync-comparison tbody tr');assert.match(row.children[1].textContent,/7 toplam puan/);assert.match(row.children[2].textContent,/8 toplam puan/);assert.equal(remote.writes,0);assert.equal(C.earned(h.saved().classes[0].students[0]),7);
- assert.ok(d.querySelector('[data-action="export-sync-local"]'));assert.ok(d.querySelector('[data-action="export-sync-remote"]'));
- h.click('[data-action="use-cloud"]');assert.match(d.getElementById('modalTitle').textContent,/Tüm|tüm/);assert.match(d.getElementById('modalContent').textContent,/birleştirilmeyecek/);assert.equal(C.earned(h.saved().classes[0].students[0]),7);
- h.click('[data-action="close"]');h.click('[data-action="settings"]');assert.equal(d.querySelector('#modal [data-action="use-cloud"]'),null,'settings must not expose a blind replacement');
- h.click('#modal [data-action="retry-cloud"]');await new Promise(r=>setImmediate(r));h.click('[data-action="use-cloud"]');h.click('[data-action="confirm"]');await new Promise(r=>setImmediate(r));
- assert.equal(C.earned(h.saved().classes[0].students[0]),8);assert.equal(d.getElementById('cloudWarning').hidden,true);assert.equal(d.getElementById('cloudRetryButton').textContent,'Şimdi eşitle');assert.equal(remote.writes,0);
+ assert.equal(C.earned(h.saved().classes[0].students[0]),8);
+ assert.equal(d.getElementById('cloudWarning').hidden,true);assert.equal(h.modal.open,undefined);
+ h.click('[data-action="settings"]');
+ for(const action of ['retry-cloud','review-cloud','use-cloud','use-local'])assert.equal(d.querySelector('#modal [data-action="'+action+'"]'),null);
+ assert.match(d.getElementById('modalContent').textContent,/otomatik/);
+ remote.award(0,2);await h.pollCloud();assert.equal(C.earned(h.saved().classes[0].students[0]),9);
 });
-test('comparison refuses a stale account replacement, then allows an explicitly confirmed current local copy',async()=>{
- const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:legacyConflictFactory(remote)}),d=h.document;
- h.click('#cloudRetryButton');await new Promise(r=>setImmediate(r));h.click('[data-action="use-local"]');remote.award(0,2);
- h.click('[data-action="confirm"]');await new Promise(r=>setImmediate(r));assert.equal(remote.writes,0);assert.match(d.querySelector('.sync-comparison tbody tr').children[2].textContent,/2 toplam puan/);
- assert.equal(d.getElementById('cloudWarning').hidden,false);h.click('[data-action="use-local"]');h.click('[data-action="confirm"]');await new Promise(r=>setImmediate(r));
- assert.equal(remote.writes,1);assert.equal(C.earned(remote.document.classes[0].students[0]),0);assert.equal(d.getElementById('cloudWarning').hidden,true);
+test('a failed browser cache never blocks a cloud award or requires a manual sync button',async()=>{
+ const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:remote.factory,cacheWriteFailure:true,localQuota:true}),d=h.document;
+ h.click('.fish');h.click('.behavior-choice');await h.flushWrites();await new Promise(r=>setImmediate(r));
+ assert.equal(C.earned(remote.document.classes[0].students[0]),7);assert.equal(remote.writes,2);
+ assert.equal(d.querySelector('.fish-points').textContent,'★ 7');assert.equal(d.getElementById('cloudWarning').hidden,true);
+ assert.ok(!d.getElementById('cloudRetryButton')||d.getElementById('cloudRetryButton').hidden);assert.match(d.getElementById('storageWarning').textContent,/çevrimdışı kopya/);
+ assert.equal(h.directDocumentWrites(),0,'the UI must not write full account documents to localStorage');
 });
-test('a conflict retry clears the warning without writing when the current full account is already identical',async()=>{
- const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:legacyConflictFactory(remote)}),d=h.document;
- assert.equal(d.getElementById('cloudWarning').hidden,false);remote.seed(h.saved());h.click('#cloudRetryButton');await new Promise(r=>setImmediate(r));
- assert.equal(d.getElementById('cloudWarning').hidden,true);assert.equal(h.modal.open,undefined);assert.equal(remote.writes,0);assert.match(d.getElementById('saveStatus').textContent,/eşit/);
+test('leaving warns only while an award is unsent, even when localStorage cannot record metadata',async()=>{
+ const remote=syncFixture(),h=await harness({ageDays:0,cloudFactory:remote.factory,localQuota:true,cacheWriteFailure:true});
+ h.click('.fish');h.click('.behavior-choice');
+ const pending=new h.window.Event('beforeunload',{cancelable:true});h.window.dispatchEvent(pending);assert.equal(pending.defaultPrevented,true);
+ await h.flushWrites();const saved=new h.window.Event('beforeunload',{cancelable:true});h.window.dispatchEvent(saved);assert.equal(saved.defaultPrevented,false);
+ assert.equal(C.earned(remote.document.classes[0].students[0]),7);
+});
+test('an unreadable browser cache still loads an existing account from the server',async()=>{
+ const remote=syncFixture(),factory=options=>{const cloud=remote.factory(options);return {...cloud,boot:async(local,settings)=>{
+  const account=C.initialState(),cls=account.classes[0],s=C.newStudent('Sunucudaki öğrenci');cls.students.push(s);C.ensureDay(s,cls);C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id);remote.seed(account);return cloud.boot(local,settings);
+ }};};
+ const h=await harness({cloudFactory:factory,cacheReadFailure:true,localQuota:true}),d=h.document;
+ assert.equal(d.body.classList.contains('access-pending'),false);assert.match(d.querySelector('.fish-name').textContent,/Sunucudaki öğrenci/);
+ assert.equal(h.directDocumentWrites(),0);assert.equal(remote.writes,0);
 });
 test('natural strokes survive automatic lightweight quality and keep one animation loop over a long session',async()=>{
   const h=await harness({species:'turtle',ageDays:0,autoQuality:true}),d=h.document,fish=d.querySelector('.fish'),joint=d.querySelector('.creature-joint');
@@ -189,7 +200,7 @@ test('resting 3D has one stable pose and resumes its joints on feeding; automati
   h.window.SitePerformance.set('lite');assert.equal(d.querySelectorAll('.has-3d,.creature-model').length,0);
   assert.ok(d.querySelector('.fish-body-image').src.includes('/ahtapot.webp'));
 });
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz',species);
   cls.tasks[0].points=7;cls.students.push(s);if(growth)cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*7)};s.createdAt=Date.now()-ageDays*86400000-1000;
@@ -197,8 +208,16 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
   configure?.(state,cls,s);
-  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0;const intervals=[],intervalPeriods=[],frames=[],resizeObservers=[],zeroTimers=[];let timerNow=Date.now(),frameNow=0,rafId=0;
+  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0,directDocumentWrites=0;const intervals=[],intervalPeriods=[],frames=[],resizeObservers=[],zeroTimers=[];let timerNow=Date.now(),frameNow=0,rafId=0;
   const cloudStorage=new Map([['kemal_class_aquarium_v1_test-teacher',saved]]);
+  const durableRows=new Map(),clone=value=>value==null?null:JSON.parse(JSON.stringify(value));
+  window.AquariumStorage={create:()=>({
+    async load(){if(cacheReadFailure)throw Error('Cache unavailable');return JSON.parse(saved);},
+    save(doc){return this.write('document',doc);},
+    async read(name){if(name==='document')return this.load();if(name==='before_class_delete')return backup?JSON.parse(backup):null;return clone(durableRows.get(name));},
+    async write(name,value){if(cacheWriteFailure)return false;if(name==='document'){saved=JSON.stringify(value);cloudStorage.set('kemal_class_aquarium_v1_test-teacher',saved);}else if(name==='before_class_delete')backup=JSON.stringify(value);else durableRows.set(name,clone(value));return true;},
+    async remove(name){durableRows.delete(name);return true;},isDurable:()=>!cacheWriteFailure,lastError:()=>cacheReadFailure?Error('Cache unavailable'):null
+  })};
   const modelCalls=[];let modelCreates=0,modelDisposes=0,modelFail=false;
   const waterPaints={};
   window.AquariumSeasonal={...require('../js/akvaryum-seasonal.js'),suggestion:()=>require('../js/akvaryum-seasonal.js').suggestion(seasonalDate?new Date(seasonalDate):new Date())};
@@ -234,13 +253,13 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   app.requestFullscreen=async()=>{document.fullscreenElement=app;document.dispatchEvent(new window.Event('fullscreenchange'));};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
   const context={window,document,navigator:{clipboard:{writeText:async value=>clipboard?.(value)}},location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,performance:{now:()=>frameNow},console,
-    localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith('_seasonal_dismissals')?(cloudStorage.get(key)||null):key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith('_seasonal_dismissals'))cloudStorage.set(key,value);else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
+    localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith('_seasonal_dismissals')?(cloudStorage.get(key)||null):key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key.startsWith('kemal_class_aquarium_v1')&&!key.endsWith('_seasonal_dismissals')){directDocumentWrites++;if(localQuota)throw Error('QuotaExceededError');}if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith('_seasonal_dismissals'))cloudStorage.set(key,value);else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
     setTimeout:(fn,ms)=>{if(ms===0)zeroTimers.push(fn);if(ms===12000&&timeoutAuth)Promise.resolve().then(fn);return 1;},clearTimeout(){},setInterval:(fn,ms)=>{intervals.push(fn);intervalPeriods.push(ms);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
     FormData:class {constructor(form){this.form=form;}get(name){return this.form.querySelector('[name="'+name+'"]').value;}}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
   const submit=form=>form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
-  return {flushWrites:async()=>{let count=0;while(zeroTimers.length){assert.ok(count++<10,'writes must settle');await zeroTimers.shift()();}},pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
+  return {directDocumentWrites:()=>directDocumentWrites,flushWrites:async()=>{let count=0;while(zeroTimers.length){assert.ok(count++<10,'writes must settle');await zeroTimers.shift()();}},pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
 }
 test('board magnification stays device-local and preserves young fish growth, points and lightweight motion',async()=>{
  const options={ageDays:0,growth:true,sceneWidth:1240,sceneHeight:242,extraNames:Array.from({length:23},(_,i)=>'Öğrenci '+i),lite:true};

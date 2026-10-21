@@ -10,12 +10,13 @@ test('first device migrates local class; second device receives tasks, points, g
  local.classes[0].tasks[0].title='Birlikte okuduk';a.cloud.markDirty();await a.cloud.save(local);
  assert.equal((await b.cloud.refresh(remote)).classes[0].tasks[0].title,'Birlikte okuduk');
 });
-test('stale device cannot overwrite a newer revision and both copies can be recovered',async()=>{
+test('a stale same-field edit converges to the database automatically and preserves its unsent archive',async()=>{
  const s=server(),a=device(s),b=device(s),local=classState();await a.cloud.boot(local);const other=await b.cloud.boot(C.initialState());
  local.classes[0].name='Yeni ad';a.cloud.markDirty();await a.cloud.save(local);
- other.classes[0].name='Çevrimdışı ad';b.cloud.markDirty();await assert.rejects(b.cloud.save(other),/Diğer cihaz/);
- assert.equal(s.row.document.classes[0].name,'Yeni ad');assert.equal(b.cloud.isConflict(),true);assert.equal(JSON.parse(b.storage.getItem('owner_recovery')).classes[0].name,'Çevrimdışı ad');
- const resolved=await b.cloud.resolve('remote',other);assert.equal(resolved.classes[0].name,'Yeni ad');
+ other.classes[0].name='Çevrimdışı ad';b.cloud.markDirty();const before=s.row.revision,result=await b.cloud.save(other);
+ assert.equal(result.classes[0].name,'Yeni ad');assert.equal(s.row.document.classes[0].name,'Yeni ad');assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);
+ assert.equal(JSON.parse(b.storage.getItem('owner_unsent_recovery')).document.classes[0].name,'Çevrimdışı ad');assert.equal(s.row.revision,before,'acknowledging the database does not write another revision');
+ const resolved=await b.cloud.resolve('local',other);assert.equal(resolved.classes[0].name,'Yeni ad');
 });
 test('100 mixed behavior templates survive cloud hydration and backup validation without truncation',async()=>{
  const s=server(),a=device(s),b=device(s),local=classState(),cls=local.classes[0];
@@ -32,9 +33,11 @@ test('offline edits retry, dirty markers survive reload, and a fresh empty devic
  s.offline=false;await a.cloud.refresh(state);assert.equal(s.row.document.classes[0].name,'Yeni sınıf');
  const b=device(s);assert.equal((await b.cloud.boot(C.initialState())).classes.length,1);assert.equal(s.row.document.classes[0].name,'Yeni sınıf');
 });
-test('distinct older local classes merge without discarding either device; conflicting class ids require selection',async()=>{
- const s=server(),a=device(s),b=device(s),one=classState(),two=classState();await a.cloud.boot(one);const combined=await b.cloud.boot(two);assert.equal(combined.classes.length,2);
- const c=device(s),stale=clone(one);stale.classes[0].name='Eski ad';await c.cloud.boot(stale);assert.equal(c.cloud.isConflict(),true);assert.equal(s.row.document.classes[0].name,'Birincilerim');
+test('unproven older local classes are archived while first login takes the database account automatically',async()=>{
+ const s=server(),a=device(s),b=device(s),one=classState(),two=classState();await a.cloud.boot(one);const before=s.row.revision,combined=await b.cloud.boot(two);
+ assert.deepEqual(combined,C.validate(one));assert.equal(combined.classes.length,1);assert.deepEqual(JSON.parse(b.storage.getItem('owner_unsent_recovery')).document,C.validate(two));
+ const c=device(s),stale=clone(one);stale.classes[0].name='Eski ad';const current=await c.cloud.boot(stale);
+ assert.equal(current.classes[0].name,'Birincilerim');assert.equal(c.cloud.isConflict(),false);assert.equal(s.row.revision,before);
 });
 test('task title/icon/points edits leave completed history intact and future repeated rewards use new values',()=>{
  const s=classState(),c=s.classes[0],student=c.students[0],today=C.dayKey();C.ensureDay(student,c,today);C.awardBehavior(student,c,today,c.tasks[0].id);
@@ -79,10 +82,11 @@ test('different behaviors and independently identified first awards merge withou
  assert.equal(new Set(result.classes[0].students[0].days[C.dayKey()].tasks.map(t=>t.id)).size,result.classes[0].students[0].days[C.dayKey()].tasks.length);
  assert.equal(JSON.parse(d.storage.getItem('owner_cloud')).dirty,false);
 });
-test('legacy first rewards that reuse a template id remain protected from ambiguous merging',async()=>{
+test('independent legacy first rewards merge when distinct feed identifiers prove that both awards happened',async()=>{
  const s=server(),a=device(s),b=device(s),one=classState(),c=one.classes[0];C.ensureDay(c.students[0],c);await a.cloud.boot(one);const two=await b.cloud.boot(C.initialState());
  for(const doc of [one,two]){const cl=doc.classes[0];C.completeAndFeed(cl.students[0],C.dayKey(),cl.tasks[0].id);}
- a.cloud.markDirty(one);await a.cloud.save(one);b.cloud.markDirty(two);await assert.rejects(b.cloud.save(two),/çakışan/);assert.equal(s.row.document.classes[0].students[0].feeds.length,1);
+ a.cloud.markDirty(one);await a.cloud.save(one);b.cloud.markDirty(two);const merged=await b.cloud.save(two);
+ const pupil=merged.classes[0].students[0];assert.equal(C.earned(pupil),2);assert.equal(pupil.feeds.length,2);assert.equal(s.row.document.classes[0].students[0].feeds.length,2);assert.equal(b.cloud.isConflict(),false);
 });
 test('offline edits merge against the persisted baseline after a reload and preserve independent remote awards',async()=>{
  const s=server(),a=device(s),b=device(s),one=classState(),cl=one.classes[0];cl.students.push(C.newStudent('Ada'));cl.students.forEach(p=>C.ensureDay(p,cl));
@@ -109,12 +113,14 @@ test('a point added during an in-flight merged write survives in the returned lo
  assert.deepEqual(two.classes[0].students.map(C.earned),[1,2]);assert.equal(c.isDirty(),true);
  two=await c.refresh(two);assert.deepEqual(s.row.document.classes[0].students.map(C.earned),[1,2]);assert.equal(c.isDirty(),false);
 });
-test('legacy dirty conflicts keep both documents and never guess a missing common revision',async()=>{
+test('a legacy dirty record with no acknowledged baseline uses the database and keeps its unsent copy',async()=>{
  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=await b.cloud.boot(C.initialState());
- b.storage.setItem('owner_cloud_base','');one.classes[0].name='Remote change';a.cloud.markDirty(one);await a.cloud.save(one);
+ one.classes[0].name='Remote change';a.cloud.markDirty(one);await a.cloud.save(one);
  two.classes[0].name='Offline change';b.cloud.markDirty(two);
- const old=Cloud.create({client:s.client,storage:b.storage,key:'owner',project:()=>({})});assert.deepEqual(await old.boot(two),two);assert.equal(old.isConflict(),true);
- assert.equal(JSON.parse(b.storage.getItem('owner_cloud_recovery')).classes[0].name,'Remote change');assert.equal(s.row.document.classes[0].name,'Remote change');
+ await b.cloud.flushCache();b.storage.setItem('owner_cloud_base','');b.storage.setItem('owner_sync','');
+ const old=Cloud.create({client:s.client,storage:b.storage,key:'owner',project:()=>({})});const resolved=await old.boot(two);
+ assert.equal(resolved.classes[0].name,'Remote change');assert.equal(old.isConflict(),false);assert.equal(old.isDirty(),false);
+ assert.equal(JSON.parse(b.storage.getItem('owner_unsent_recovery')).document.classes[0].name,'Offline change');assert.equal(s.row.document.classes[0].name,'Remote change');
 });
 test('an identical legacy dirty copy clears a false conflict without writing, even with different class navigation',async()=>{
  const s=server(),a=device(s),one=classState();one.classes.push(C.newClass('İkinci sınıf'));await a.cloud.boot(one);
@@ -122,56 +128,59 @@ test('an identical legacy dirty copy clears a false conflict without writing, ev
  b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true,conflict:true}));
  const result=await b.cloud.boot(two);assert.equal(result.activeClassId,two.activeClassId);assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);assert.equal(s.row.revision,1);
 });
-test('retry re-reads a legacy conflict and clears it only after the entire account matches',async()=>{
+test('a legacy conflict marker clears automatically and subsequent remote changes arrive without a source choice',async()=>{
  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);
- const b=device(s),two=clone(one);two.classes[0].name='Mobil sınıf';b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true}));await b.cloud.boot(two);
- const before=s.row.revision,review=await b.cloud.inspect(two);assert.equal(review.resolved,false);assert.deepEqual(review.local,C.validate(two));assert.deepEqual(review.remote,C.validate(one));assert.equal(s.row.revision,before);
- await assert.rejects(b.cloud.refresh(two),/Diğer cihaz/);assert.equal(b.cloud.isDirty(),true);
- a.cloud.markDirty(two);await a.cloud.save(two);const revision=s.row.revision;
- const resolved=await b.cloud.refresh(two);assert.deepEqual(resolved,C.validate(two));assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);assert.equal(s.row.revision,revision,'retry acknowledges equality without another write');
+ const b=device(s),two=clone(one);two.classes[0].name='Mobil sınıf';b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true,conflict:true}));const loaded=await b.cloud.boot(two);
+ const before=s.row.revision,review=await b.cloud.inspect(loaded);assert.equal(review.resolved,true);assert.deepEqual(review.document,C.validate(one));assert.equal(s.row.revision,before);
+ assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);assert.equal(await b.cloud.refresh(loaded),null);
+ one.classes[0].name='Yeni sunucu sınıfı';a.cloud.markDirty(one);await a.cloud.save(one);const revision=s.row.revision;
+ const resolved=await b.cloud.refresh(loaded);assert.deepEqual(resolved,C.validate(one));assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);assert.equal(s.row.revision,revision,'polling never creates another write');
 });
-test('equal totals with different awarded histories remain a real conflict and keep both backups',async()=>{
+test('equal totals with different unproven histories use exact database history and preserve the other history',async()=>{
  const s=server(),one=classState(),cl=one.classes[0];cl.tasks[1].points=1;C.ensureDay(cl.students[0],cl);const two=clone(one);
  C.awardBehavior(cl.students[0],cl,C.dayKey(),cl.tasks[0].id);const c2=two.classes[0];C.awardBehavior(c2.students[0],c2,C.dayKey(),c2.tasks[1].id);
- const a=device(s),b=device(s);await a.cloud.boot(one);b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true}));await b.cloud.boot(two);
- const review=await b.cloud.inspect(two);assert.equal(review.resolved,false);assert.equal(C.earned(review.local.classes[0].students[0]),C.earned(review.remote.classes[0].students[0]));
+ const a=device(s),b=device(s);await a.cloud.boot(one);b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true}));const loaded=await b.cloud.boot(two);
+ const review=await b.cloud.inspect(loaded);assert.equal(review.resolved,true);assert.deepEqual(review.document,C.validate(one));assert.equal(C.earned(review.document.classes[0].students[0]),1);
  assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),C.validate(two));assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),C.validate(one));assert.equal(s.row.revision,1);
 });
-test('a whole-account choice rejects a changed cloud revision rather than replacing newer points',async()=>{
+test('legacy source-choice controls always take current database state and cannot replace a newer account',async()=>{
  for(const choice of ['local','remote']){
-  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';await b.cloud.boot(two);const review=await b.cloud.inspect(two);
+  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';const loaded=await b.cloud.boot(two);const review=await b.cloud.inspect(loaded),originalCloudRecovery=JSON.parse(b.storage.getItem('owner_cloud_recovery'));
   one.classes[0].name='Tahtadan yeni kayıt';a.cloud.markDirty(one);await a.cloud.save(one);
-  await assert.rejects(b.cloud.resolve(choice,two,review.revision),e=>e.code==='SYNC_REVIEW_STALE');assert.equal(s.row.document.classes[0].name,'Tahtadan yeni kayıt');assert.equal(b.cloud.isConflict(),true);
-  assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),two);assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),C.validate(one));
+  const before=s.row.revision,result=await b.cloud.resolve(choice,loaded,review.revision);assert.equal(result.classes[0].name,'Tahtadan yeni kayıt');assert.equal(s.row.document.classes[0].name,'Tahtadan yeni kayıt');assert.equal(b.cloud.isConflict(),false);assert.equal(s.row.revision,before);
+  assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),two);assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),originalCloudRecovery);
  }
 });
-test('an intervening write between comparison check and replacement cannot be silently merged or overwritten',async()=>{
- const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';await b.cloud.boot(two);const review=await b.cloud.inspect(two);
- const rpc=s.client.rpc;let collide=true;s.client.rpc=async(name,args)=>{if(collide){collide=false;const incoming=clone(one);incoming.classes[0].name='Yeni uzak kayıt';await rpc(name,{...args,p_document:incoming});}return rpc(name,args);};
- await assert.rejects(b.cloud.resolve('local',two,review.revision),e=>e.code==='SYNC_REVIEW_STALE');assert.equal(s.row.document.classes[0].name,'Yeni uzak kayıt');assert.equal(b.cloud.isConflict(),true);assert.equal(b.cloud.isDirty(),true);
+test('a remote award arriving immediately before a write is merged with the local award instead of being overwritten',async()=>{
+ const s=server(),a=device(s),one=classState(),cls=one.classes[0];cls.students.push(C.newStudent('Ada'));cls.students.forEach(p=>C.ensureDay(p,cls));await a.cloud.boot(one);
+ const b=device(s),two=await b.cloud.boot(C.initialState()),local=two.classes[0];C.awardBehavior(local.students[0],local,C.dayKey(),local.tasks[0].id);b.cloud.markDirty(two);
+ const rpc=s.client.rpc;let collide=true;s.client.rpc=async(name,args)=>{if(collide){collide=false;const incoming=clone(one),remote=incoming.classes[0];C.awardBehavior(remote.students[1],remote,C.dayKey(),remote.tasks[1].id);await rpc(name,{...args,p_document:incoming});}return rpc(name,args);};
+ const merged=await b.cloud.save(two);assert.deepEqual(merged.classes[0].students.map(C.earned),[1,1]);assert.deepEqual(s.row.document.classes[0].students.map(C.earned),[1,1]);
+ assert.deepEqual(merged.classes[0].students.map(p=>p.feeds.length),[1,1]);assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);
 });
-test('choosing the cloud copy refuses to erase a local point made during its read',async()=>{
+test('a legacy source choice made during a read preserves a newly entered point for automatic retry',async()=>{
  const s=server(),a=device(s),one=classState(),cl=one.classes[0];C.ensureDay(cl.students[0],cl);await a.cloud.boot(one);
- let local=clone(one);local.classes[0].name='Mobil';const d=device(s),cloud=Cloud.create({client:s.client,storage:d.storage,key:'owner',getState:()=>local,project:()=>({})});await cloud.boot(local);const review=await cloud.inspect(local);
+ let local=clone(one);local.classes[0].name='Mobil';const d=device(s),cloud=Cloud.create({client:s.client,storage:d.storage,key:'owner',getState:()=>local,project:()=>({})});local=await cloud.boot(local);const review=await cloud.inspect(local);
  const from=s.client.from;let release;s.client.from=()=>({select:()=>({maybeSingle:async()=>{await new Promise(r=>release=r);return {data:s.row};}})});
  const pending=cloud.resolve('remote',local,review.revision);await new Promise(r=>setImmediate(r));const c=local.classes[0];C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[0].id);cloud.markDirty(local);release();
- await assert.rejects(pending,e=>e.code==='SYNC_REVIEW_STALE');assert.equal(C.earned(JSON.parse(d.storage.getItem('owner_recovery')).classes[0].students[0]),1);assert.equal(cloud.isDirty(),true);s.client.from=from;
+ const preserved=await pending;assert.equal(C.earned(preserved.classes[0].students[0]),1);assert.equal(cloud.isDirty(),true);s.client.from=from;
+ local=await cloud.refresh(local);assert.equal(C.earned(local.classes[0].students[0]),1);assert.equal(C.earned(s.row.document.classes[0].students[0]),1);assert.equal(cloud.isDirty(),false);
 });
-test('a confirmed unchanged source clears conflict and dirty flags only after success, retaining both recovery copies',async()=>{
+test('automatic retry keeps the pending record while offline and clears dirty state only after server acknowledgement',async()=>{
  for(const choice of ['local','remote']){
-  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';await b.cloud.boot(two);const review=await b.cloud.inspect(two);
-  s.offline=true;await assert.rejects(b.cloud.resolve(choice,two,review.revision));assert.equal(b.cloud.isConflict(),true);assert.equal(b.cloud.isDirty(),true);s.offline=false;
-  const result=await b.cloud.resolve(choice,two,review.revision);assert.equal(result.classes[0].name,choice==='local'?'Mobil':'Birincilerim');assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);
-  assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),two);assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),C.validate(one));
-  const next=s.row.document,c=next.classes[0];C.ensureDay(c.students[0],c);C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[0].id);a.cloud.markDirty(next);await a.cloud.save(next);await b.cloud.refresh(result);
-  const preserved=JSON.parse(b.storage.getItem('owner_before_sync_choice'));assert.deepEqual(preserved.local,two);assert.deepEqual(preserved.remote,C.validate(one));
+  const s=server(),a=device(s),one=classState(),cl=one.classes[0];C.ensureDay(cl.students[0],cl);await a.cloud.boot(one);const b=device(s),two=await b.cloud.boot(C.initialState());
+  const local=two.classes[0];C.awardBehavior(local.students[0],local,C.dayKey(),local.tasks[0].id);b.cloud.markDirty(two);
+  s.offline=true;await assert.rejects(b.cloud.resolve(choice,two));assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),true);await b.cloud.flushCache();
+  assert.equal(C.earned(JSON.parse(b.storage.getItem('owner_sync')).document.classes[0].students[0]),1);assert.equal(C.earned(s.row.document.classes[0].students[0]),0);s.offline=false;
+  const result=await b.cloud.resolve(choice,two);assert.equal(C.earned(result.classes[0].students[0]),1);assert.equal(b.cloud.isDirty(),false);assert.equal(C.earned(s.row.document.classes[0].students[0]),1);
+  assert.equal(b.storage.getItem('owner_before_sync_choice'),null,'legacy choice calls no longer create full replacement snapshots');
  }
 });
 test('a stalled request times out and releases the sync operation so a later retry can succeed',async()=>{
  let stalled=true;const s=server(),real=s.client.from;s.client.from=(...args)=>stalled?{select:()=>({maybeSingle:()=>new Promise(()=>{})})}:real(...args);
  const m=new Map(),storage={getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v)};
  const cloud=Cloud.create({client:s.client,storage,key:'timed',project:()=>({}),timeoutMs:20});
- await assert.rejects(cloud.boot(classState()),/zaman aşımı/);stalled=false;const one=classState();await cloud.boot(one);assert.equal(cloud.isReady(),true);
+ await assert.rejects(cloud.boot(classState()),/yeniden denenecek/);stalled=false;const one=classState();await cloud.boot(one);assert.equal(cloud.isReady(),true);
 });
 test('unchanged accounts poll only the revision, scope reads to the signed-in owner and avoid writes',async()=>{
  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);
@@ -200,6 +209,52 @@ test('legacy 40001 is reconciled during rollout; PT409 retries are bounded and k
  }
  const s=server(),d=device(s),local=classState();await d.cloud.boot(local);local.classes[0].name='Yerel';d.cloud.markDirty();
  let calls=0;s.client.rpc=async()=>{calls++;return {error:{code:'PT409'}};};
- await assert.rejects(d.cloud.save(local),/Yerel puanlar korunuyor/);assert.equal(calls,3);assert.equal(d.cloud.isDirty(),true);
+ await assert.rejects(d.cloud.save(local),/Yeni puanlar korunuyor/);assert.equal(calls,3);assert.equal(d.cloud.isDirty(),true);
  assert.equal(s.row.document.classes[0].name,'Birincilerim');
+});
+
+test('independent class additions with a known baseline merge without resurrecting unproven legacy classes',async()=>{
+ const s=server(),a=device(s),b=device(s),one=classState();await a.cloud.boot(one);const two=await b.cloud.boot(C.initialState());
+ one.classes.push(C.newClass('Tahtadan eklenen'));a.cloud.markDirty(one);await a.cloud.save(one);
+ two.classes.push(C.newClass('Telefondan eklenen'));b.cloud.markDirty(two);const merged=await b.cloud.save(two);
+ assert.deepEqual(new Set(merged.classes.map(c=>c.name)),new Set(['Birincilerim','Tahtadan eklenen','Telefondan eklenen']));
+ assert.equal(s.row.document.classes.length,3);assert.equal(b.cloud.isDirty(),false);assert.equal(b.cloud.isConflict(),false);
+});
+
+test('an unreadable device cache loads an existing database account but cannot create an empty replacement',async()=>{
+ const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),before=s.row.revision;
+ assert.deepEqual(await b.cloud.boot(C.initialState(),{cacheUnavailable:true}),C.validate(one));assert.equal(s.row.revision,before);
+ const empty=server(),c=device(empty);await assert.rejects(c.cloud.boot(C.initialState(),{cacheUnavailable:true}),/cihaz kopyası okunamadı/);
+ assert.equal(empty.row,null);assert.equal(c.cloud.isReady(),false);
+});
+
+test('full browser storage does not block database hydration or acknowledged point writes',async()=>{
+ const s=server(),a=device(s),one=classState(),cl=one.classes[0];C.ensureDay(cl.students[0],cl);await a.cloud.boot(one);
+ const storage={getItem(){return null;},setItem(){const error=Error('Quota exceeded');error.name='QuotaExceededError';throw error;}};
+ const cloud=Cloud.create({client:s.client,storage,key:'full',project:()=>({})});const local=await cloud.boot(C.initialState()),cls=local.classes[0];
+ C.awardBehavior(cls.students[0],cls,C.dayKey(),cls.tasks[0].id);cloud.markDirty(local);const result=await cloud.save(local);
+ assert.equal(C.earned(result.classes[0].students[0]),1);assert.equal(C.earned(s.row.document.classes[0].students[0]),1);assert.equal(cloud.isReady(),true);assert.equal(cloud.isDirty(),false);
+});
+
+test('reload recovers an unsent award from the atomic sync envelope when the primary cache write was interrupted',async()=>{
+ const s=server(),a=device(s),one=classState(),cls=one.classes[0];C.ensureDay(cls.students[0],cls);await a.cloud.boot(one);
+ const oldPrimary=clone(one),pending=clone(one),pupil=pending.classes[0];C.awardBehavior(pupil.students[0],pupil,C.dayKey(),pupil.tasks[0].id);
+ const store=a.storage.setItem.bind(a.storage);a.storage.setItem=(key,value)=>{if(key==='owner')throw Error('Primary cache interrupted');store(key,value);};
+ a.cloud.markDirty(pending);await a.cloud.flushCache();
+ const reopened=Cloud.create({client:s.client,storage:a.storage,key:'owner',project:()=>({})});const restored=await reopened.boot(oldPrimary);
+ assert.equal(C.earned(restored.classes[0].students[0]),1);assert.equal(C.earned(s.row.document.classes[0].students[0]),1);assert.equal(reopened.isDirty(),false);
+});
+
+test('a newer fallback pending document survives when the atomic envelope could not be updated',async()=>{
+ const s=server(),a=device(s),one=classState(),cls=one.classes[0];C.ensureDay(cls.students[0],cls);await a.cloud.boot(one);
+ const store=a.storage.setItem.bind(a.storage);a.storage.setItem=(key,value)=>{if(key==='owner_sync')throw Error('Atomic store unavailable');store(key,value);};
+ const pending=clone(one),c=pending.classes[0];C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[0].id);a.cloud.markDirty(pending);await a.cloud.flushCache();
+ const reopened=Cloud.create({client:s.client,storage:a.storage,key:'owner',project:()=>({})});const restored=await reopened.boot(JSON.parse(a.storage.getItem('owner')));
+ assert.equal(C.earned(restored.classes[0].students[0]),1);assert.equal(C.earned(s.row.document.classes[0].students[0]),1);assert.equal(reopened.isDirty(),false);
+});
+
+test('automatic retries never create an empty account after an unreadable cache and missing server record',async()=>{
+ const s=server(),d=device(s),empty=C.initialState();await assert.rejects(d.cloud.boot(empty,{cacheUnavailable:true}),/cihaz kopyası okunamadı/);
+ await assert.rejects(d.cloud.refresh(empty),/cihaz kopyası okunamadı/);await assert.rejects(d.cloud.refresh(empty),/cihaz kopyası okunamadı/);
+ assert.equal(s.row,null);assert.equal(d.cloud.isReady(),false);
 });
