@@ -14,7 +14,7 @@ do $$ declare rev bigint; doc jsonb; next_rev bigint; begin
  next_rev:=public.save_aquarium_account(doc,coalesce(rev,0),'[]');
  if next_rev<>coalesce(rev,0)+1 then raise exception 'Revision not advanced'; end if;
  if not exists(select 1 from public.aquarium_accounts where document=doc) then raise exception 'Owner cannot read saved document'; end if;
- begin perform public.save_aquarium_account(doc,coalesce(rev,0),'[]');raise exception 'Stale write succeeded';exception when serialization_failure then null;end;
+ begin perform public.save_aquarium_account(doc,coalesce(rev,0),'[]');raise exception 'Stale write succeeded';exception when sqlstate 'PT409' then null;end;
  begin perform public.save_aquarium_account(doc,next_rev,'[]',gen_random_uuid());raise exception 'Cross-account write succeeded';exception when insufficient_privilege then null;end;
  begin update public.aquarium_accounts set document='{}';raise exception 'Direct write succeeded';exception when insufficient_privilege then null;end;
 end $$;

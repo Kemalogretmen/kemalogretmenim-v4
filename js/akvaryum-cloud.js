@@ -45,7 +45,9 @@
       const captured=C.validate(copy(state));let doc=copy(captured),rev=workRevision,anchor=workBase;
       for(let attempt=0;attempt<3;attempt++){
         const {data,error}=await request(client.rpc('save_aquarium_account',{p_document:doc,p_revision:rev,...(ownerId?{p_owner:ownerId}:{}),p_snapshots:doc.classes.map(c=>({local_id:c.id,snapshot:project(c,doc.settings)}))}));
-        if(error?.code==='40001'){
+        // PT409 is an application conflict; 40001 can make PostgREST retry forever.
+        // Accept the old code during the server/client rollout only.
+        if(error?.code==='PT409'||error?.code==='40001'){
           const row=await read();if(!row)throw failConflict(captured,null);
           const remote=C.validate(row.document);
           if(strictRevision){failConflict(getState?.()||latest||captured,remote);throw staleReview();}

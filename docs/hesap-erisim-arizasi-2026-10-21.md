@@ -54,3 +54,7 @@ Yaklaşık 12:39–12:40 Türkiye saatinde proje paneli **Healthy** oldu. Anlık
 - Kanıt: `tmp/seasonal-preview/supabase-healthy-20261021.png`.
 
 Tek yeniden başlatma sonrası servis erişimi geri geldi. Destek mesajı gönderilmedi. Kalıcı arıza nedeni belirlenmedi; veri/şema/plan değişikliği ve site yayını yapılmadı.
+
+## Aynı gün ayrıntılı inceleme sonucu
+
+Sonraki denetimde `save_aquarium_account` fonksiyonunun uygulama sürüm çakışmasını `40001` ile bildirdiği ve son 24 saatte 4.812.654 adet `Aquarium revision conflict` günlüğü ürettiği bulundu. Bu, PostgREST'in belgelenmiş yeniden deneme döngüsüyle örtüşüyor. Canlı fonksiyon PT409'a geçirildi; erişim ve sürüm koruması korundu. Kaynak baskısı ve diğer iyileştirmeler için [ayrıntılı denetim raporuna](supabase-denetimi-2026-10-21.md) bakın. Bu bulgu ilk inceleme sırasında bilinmiyordu.

@@ -23,7 +23,7 @@ begin
  if jsonb_array_length(p_document->'classes') not between 1 and 30 or jsonb_array_length(p_snapshots)>30 then raise exception 'Invalid class count'; end if;
  perform pg_advisory_xact_lock(hashtextextended(uid::text,0));
  select revision into actual from public.aquarium_accounts where owner_id=uid;
- if coalesce(actual,0) is distinct from p_revision then raise exception 'Aquarium revision conflict' using errcode='40001'; end if;
+ if coalesce(actual,0) is distinct from p_revision then raise exception 'Aquarium revision conflict' using errcode='PT409'; end if;
  next_revision:=coalesce(actual,0)+1;
  insert into public.aquarium_accounts(owner_id,document,revision) values(uid,p_document,next_revision)
  on conflict(owner_id) do update set document=excluded.document,revision=excluded.revision,updated_at=now();

@@ -1,5 +1,6 @@
 -- Kemal Ogretmenim - kayit sagligi kontrol raporu
--- Bu dosya veri yazmaz ve silmez. SQL Editor icinde calistirip okuma/dokuman
+-- Bu dosya rapor fonksiyonunu kurar; uygulama verisi yazmaz veya silmez.
+-- SQL Editor icinde calistirip okuma/dokuman
 -- tarafinda kritik fonksiyon, policy ve grant durumunu tek ekranda kontrol edin.
 
 create or replace function public.get_system_health_report()
@@ -18,8 +19,12 @@ declare
   v_missing_docs integer := null;
   v_bucket record;
 begin
-  if auth.uid() is null and current_user not in ('postgres', 'service_role', 'supabase_admin') then
-    raise exception 'Oturum gerekli.';
+  if not coalesce(
+    current_setting('role', true) in ('postgres', 'service_role', 'supabase_admin')
+    or (coalesce(current_setting('role', true), 'none') = 'none'
+        and session_user in ('postgres', 'service_role', 'supabase_admin'))
+    or public.current_admin_has_permission('system_health'), false) then
+    raise exception 'Sistem sagligi yonetici yetkisi gerekli.' using errcode='42501';
   end if;
 
   return query
@@ -91,10 +96,14 @@ begin
     'benzersiz upsert index'::text,
     case when exists (
       select 1
-      from pg_indexes
-      where schemaname = 'public'
-        and tablename = 'user_content_progress'
-        and indexname = 'idx_user_content_progress_unique'
+      from pg_index i
+      where i.indrelid = 'public.user_content_progress'::regclass
+        and i.indisunique and i.indisvalid and i.indisready
+        and i.indpred is null and i.indexprs is null and i.indnkeyatts = 3
+        and (select array_agg(a.attname::text order by k.ord)
+             from unnest(i.indkey) with ordinality k(attnum, ord)
+             join pg_attribute a on a.attrelid=i.indrelid and a.attnum=k.attnum
+             where k.ord <= i.indnkeyatts) = array['user_id','content_type','content_id']::text[]
     ) then 'OK' else 'EKSIK' end,
     'Aynı içerik ilerlemesinin tekrar tekrar çoğalmaması için gereken index kontrol edilir.'::text,
     60;
@@ -175,7 +184,8 @@ begin
 end;
 $$;
 
-grant execute on function public.get_system_health_report() to authenticated;
+revoke all on function public.get_system_health_report() from public, anon;
+grant execute on function public.get_system_health_report() to authenticated, service_role;
 
 with checks as (
   select
@@ -227,10 +237,14 @@ with checks as (
     'user_content_progress benzersiz upsert index var',
     exists (
       select 1
-      from pg_indexes
-      where schemaname = 'public'
-        and tablename = 'user_content_progress'
-        and indexname = 'idx_user_content_progress_unique'
+      from pg_index i
+      where i.indrelid = 'public.user_content_progress'::regclass
+        and i.indisunique and i.indisvalid and i.indisready
+        and i.indpred is null and i.indexprs is null and i.indnkeyatts = 3
+        and (select array_agg(a.attname::text order by k.ord)
+             from unnest(i.indkey) with ordinality k(attnum, ord)
+             join pg_attribute a on a.attrelid=i.indrelid and a.attnum=k.attnum
+             where k.ord <= i.indnkeyatts) = array['user_id','content_type','content_id']::text[]
     )
   union all
   select

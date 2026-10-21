@@ -1,7 +1,7 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');
 const C=require('../js/akvaryum-core.js'),Cloud=require('../js/akvaryum-cloud.js');
 const clone=x=>JSON.parse(JSON.stringify(x));
-function server(){let row=null,offline=false;return {get row(){return clone(row);},set offline(v){offline=v;},client:{from:()=>({select:()=>({maybeSingle:async()=>offline?{error:{}}:{data:clone(row)}})}),rpc:async(name,args)=>{if(offline)return {error:{}};if(args.p_revision!==(row?.revision||0))return {error:{code:'40001'}};row={document:clone(args.p_document),revision:(row?.revision||0)+1};return {data:row.revision};}}};}
+function server(conflictCode='PT409'){let row=null,offline=false;return {get row(){return clone(row);},set offline(v){offline=v;},client:{from:()=>({select:()=>({maybeSingle:async()=>offline?{error:{}}:{data:clone(row)}})}),rpc:async(name,args)=>{if(offline)return {error:{}};if(args.p_revision!==(row?.revision||0))return {error:{code:conflictCode}};row={document:clone(args.p_document),revision:(row?.revision||0)+1};return {data:row.revision};}}};}
 function device(s){const m=new Map(),storage={getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v)};return {storage,cloud:Cloud.create({client:s.client,storage,key:'owner',project:c=>({name:c.name})})};}
 function classState(){const s=C.initialState();s.classes[0].name='Birincilerim';s.classes[0].students.push(C.newStudent('Örnek öğrenci'));return s;}
 test('first device migrates local class; second device receives tasks, points, growth and sound favorites',async()=>{
@@ -189,4 +189,17 @@ test('a delayed clean read cannot erase a local point entered while the request 
  const real=s.client.from;let release,first=true;s.client.from=(...args)=>first?(first=false,{select:()=>({maybeSingle:async()=>{await new Promise(r=>release=r);return {data:s.row};}})}):real(...args);
  const pending=b.cloud.refresh(two);await new Promise(r=>setImmediate(r));const c=two.classes[0];C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[0].id);b.cloud.markDirty(two);release();assert.equal(await pending,null);
  const merged=await b.cloud.refresh(two);assert.equal(merged.classes[0].name,'Yeni ad');assert.equal(C.earned(merged.classes[0].students[0]),1);
+});
+
+test('legacy 40001 is reconciled during rollout; PT409 retries are bounded and keep the local copy',async()=>{
+ for(const code of ['40001','PT409']){
+  const s=server(code),a=device(s),b=device(s),one=classState();await a.cloud.boot(one);const two=await b.cloud.boot(C.initialState());
+  one.classes[0].name='Sunucu';a.cloud.markDirty();await a.cloud.save(one);
+  two.settings.volume=.27;b.cloud.markDirty();const merged=await b.cloud.save(two);
+  assert.equal(merged.classes[0].name,'Sunucu');assert.equal(merged.settings.volume,.27);
+ }
+ const s=server(),d=device(s),local=classState();await d.cloud.boot(local);local.classes[0].name='Yerel';d.cloud.markDirty();
+ let calls=0;s.client.rpc=async()=>{calls++;return {error:{code:'PT409'}};};
+ await assert.rejects(d.cloud.save(local),/Yerel puanlar korunuyor/);assert.equal(calls,3);assert.equal(d.cloud.isDirty(),true);
+ assert.equal(s.row.document.classes[0].name,'Birincilerim');
 });

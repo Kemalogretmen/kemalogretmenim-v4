@@ -1,0 +1,216 @@
+[
+  {
+    "cmd": "SELECT",
+    "qual": "((owner_id = auth.uid()) AND current_user_is_teacher())",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "aquarium_accounts",
+    "permissive": "PERMISSIVE",
+    "policyname": "aquarium_account_owner",
+    "with_check": null
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "((owner_id = auth.uid()) AND current_user_is_teacher())",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "aquarium_live_state",
+    "permissive": "PERMISSIVE",
+    "policyname": "aquarium_live_owner",
+    "with_check": null
+  },
+  {
+    "cmd": "ALL",
+    "qual": "((owner_id = auth.uid()) AND current_user_is_teacher())",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "aquarium_shares",
+    "permissive": "PERMISSIVE",
+    "policyname": "aquarium_owner",
+    "with_check": "((owner_id = auth.uid()) AND current_user_is_teacher())"
+  },
+  {
+    "cmd": "ALL",
+    "qual": "(current_user_is_teacher() AND (EXISTS ( SELECT 1\n FROM aquarium_shares a\n WHERE ((a.id = aquarium_student_links.share_id) AND (a.owner_id = auth.uid())))))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "aquarium_student_links",
+    "permissive": "PERMISSIVE",
+    "policyname": "aquarium_child_owner",
+    "with_check": "(current_user_is_teacher() AND (EXISTS ( SELECT 1\n FROM aquarium_shares a\n WHERE ((a.id = aquarium_student_links.share_id) AND (a.owner_id = auth.uid())))))"
+  },
+  {
+    "cmd": "DELETE",
+    "qual": "(auth.uid() = user_id)",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_content_progress",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_content_progress delete own",
+    "with_check": null
+  },
+  {
+    "cmd": "INSERT",
+    "qual": null,
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_content_progress",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_content_progress insert own",
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n FROM parent_student_links l\n WHERE ((l.parent_id = auth.uid()) AND (l.status = 'active'::text) AND (l.student_profile_id = user_content_progress.user_id))))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_content_progress",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_content_progress parent read linked students",
+    "with_check": null
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = user_id)",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_content_progress",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_content_progress read own",
+    "with_check": null
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n FROM teacher_class_students s\n WHERE ((s.teacher_id = auth.uid()) AND (s.status <> 'removed'::text) AND (s.student_profile_id = user_content_progress.user_id))))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_content_progress",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_content_progress teacher read assigned students",
+    "with_check": null
+  },
+  {
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = user_id)",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_content_progress",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_content_progress update own",
+    "with_check": "(auth.uid() = user_id)"
+  },
+  {
+    "cmd": "INSERT",
+    "qual": null,
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_profiles",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_profiles insert own profile",
+    "with_check": "(auth.uid() = id)"
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "((id = auth.uid()) OR (EXISTS ( SELECT 1\n FROM parent_student_links l\n WHERE ((l.status = ANY (ARRAY['pending'::text, 'active'::text])) AND (((l.parent_id = auth.uid()) AND ((user_profiles.id = l.student_profile_id) OR (user_profiles.id = l.teacher_id))) OR ((l.student_profile_id = auth.uid()) AND (user_profiles.id = l.parent_id)) OR ((l.teacher_id = auth.uid()) AND ((user_profiles.id = l.parent_id) OR (user_profiles.id = l.student_profile_id))))))))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_profiles",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_profiles parent teacher student read related",
+    "with_check": null
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "(auth.uid() = id)",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_profiles",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_profiles read own profile",
+    "with_check": null
+  },
+  {
+    "cmd": "UPDATE",
+    "qual": "(auth.uid() = id)",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "user_profiles",
+    "permissive": "PERMISSIVE",
+    "policyname": "user_profiles update own profile",
+    "with_check": "(auth.uid() = id)"
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "((parent_id = auth.uid()) OR (student_profile_id = auth.uid()) OR (teacher_id = auth.uid()))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "parent_student_links",
+    "permissive": "PERMISSIVE",
+    "policyname": "parent_student_links read related",
+    "schemaname": "public",
+    "with_check": null
+  },
+  {
+    "cmd": "UPDATE",
+    "qual": "((teacher_id = auth.uid()) OR (student_profile_id = auth.uid()))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "teacher_class_students",
+    "permissive": "PERMISSIVE",
+    "policyname": "teacher_class_students teacher update own",
+    "schemaname": "public",
+    "with_check": "((teacher_id = auth.uid()) OR (student_profile_id = auth.uid()))"
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "(EXISTS ( SELECT 1\n FROM parent_student_links l\n WHERE ((l.parent_id = auth.uid()) AND (l.status = 'active'::text) AND (l.student_membership_id = teacher_class_students.id))))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "teacher_class_students",
+    "permissive": "PERMISSIVE",
+    "policyname": "teacher_class_students parent read linked",
+    "schemaname": "public",
+    "with_check": null
+  },
+  {
+    "cmd": "SELECT",
+    "qual": "((teacher_id = auth.uid()) OR (student_profile_id = auth.uid()))",
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "teacher_class_students",
+    "permissive": "PERMISSIVE",
+    "policyname": "teacher_class_students teacher read own",
+    "schemaname": "public",
+    "with_check": null
+  },
+  {
+    "cmd": "INSERT",
+    "qual": null,
+    "roles": [
+      "authenticated"
+    ],
+    "tablename": "teacher_class_students",
+    "permissive": "PERMISSIVE",
+    "policyname": "teacher_class_students teacher insert own",
+    "schemaname": "public",
+    "with_check": "((teacher_id = auth.uid()) AND current_user_is_teacher() AND (EXISTS ( SELECT 1\n FROM teacher_classes c\n WHERE ((c.id = teacher_class_students.class_id) AND (c.teacher_id = auth.uid()) AND (c.status = 'active'::text)))))"
+  }
+]
