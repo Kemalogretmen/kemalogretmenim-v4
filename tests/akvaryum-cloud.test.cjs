@@ -49,8 +49,8 @@ test('a write in flight cannot clear the dirty flag of a newer local edit',async
  d.cloud.markDirty();const pending=d.cloud.save(state);await new Promise(r=>setImmediate(r));state.classes[0].name='Latest';d.cloud.markDirty();release();await pending;
  assert.equal(JSON.parse(d.storage.getItem('owner_cloud')).dirty,true);assert.equal(s.row.document.classes[0].name,'Birincilerim');
 });
-test('script dependencies load before audio and core; all 40 creatures have assets',()=>{
- const fs=require('node:fs'),html=fs.readFileSync('ogretmen/akvaryum.html','utf8');assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-audio.js'));assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-core.js'));assert.equal(C.SPECIES.length,40);assert.equal(new Set(C.SPECIES.map(s=>s.id)).size,40);for(const s of C.SPECIES)assert.ok(fs.existsSync('assets/akvaryum/canlilar/'+s.file));
+test('script dependencies load before audio and core; all 42 creatures have assets',()=>{
+ const fs=require('node:fs'),html=fs.readFileSync('ogretmen/akvaryum.html','utf8');assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-audio.js'));assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-core.js'));assert.equal(C.SPECIES.length,42);assert.equal(new Set(C.SPECIES.map(s=>s.id)).size,42);for(const s of C.SPECIES)assert.ok(fs.existsSync('assets/akvaryum/canlilar/'+s.file));
 });
 
 test('three stale devices converge on independent pupil awards without losing or duplicating feeds',async()=>{
@@ -66,7 +66,7 @@ test('three stale devices converge on independent pupil awards without losing or
  two=await b.cloud.refresh(two);assert.deepEqual(two.classes[0].students.map(C.earned),[1,1,1]);
  const reload=device(s);assert.deepEqual((await reload.cloud.boot(C.initialState())).classes[0].students.map(C.earned),[1,1,1]);
 });
-test('different behaviors for the same pupil merge, but two independent first awards of one behavior do not silently collapse',async()=>{
+test('different behaviors and independently identified first awards merge without collapsing points or feeds',async()=>{
  const s=server(),a=device(s),b=device(s),one=classState(),cl=one.classes[0];C.ensureDay(cl.students[0],cl);
  await a.cloud.boot(one);const two=await b.cloud.boot(C.initialState());
  C.awardBehavior(cl.students[0],cl,C.dayKey(),cl.tasks[0].id);a.cloud.markDirty(one);await a.cloud.save(one);
@@ -74,10 +74,15 @@ test('different behaviors for the same pupil merge, but two independent first aw
  assert.equal(C.earned(merged.classes[0].students[0]),2);assert.equal(merged.classes[0].students[0].feeds.length,2);
  const c=device(s),d=device(s),left=await c.cloud.boot(C.initialState()),right=await d.cloud.boot(C.initialState());
  for(const doc of [left,right]){const cls=doc.classes[0];C.awardBehavior(cls.students[0],cls,C.dayKey(),cls.tasks[2].id);}
- c.cloud.markDirty(left);await c.cloud.save(left);d.cloud.markDirty(right);await assert.rejects(d.cloud.save(right),/çakışan/);
- assert.equal(C.earned(s.row.document.classes[0].students[0]),3);
- assert.equal(C.earned(JSON.parse(d.storage.getItem('owner_recovery')).classes[0].students[0]),3);
- assert.equal(JSON.parse(d.storage.getItem('owner_cloud')).dirty,true);
+ c.cloud.markDirty(left);await c.cloud.save(left);d.cloud.markDirty(right);const result=await d.cloud.save(right);
+ assert.equal(C.earned(s.row.document.classes[0].students[0]),4);assert.equal(result.classes[0].students[0].feeds.length,4);
+ assert.equal(new Set(result.classes[0].students[0].days[C.dayKey()].tasks.map(t=>t.id)).size,result.classes[0].students[0].days[C.dayKey()].tasks.length);
+ assert.equal(JSON.parse(d.storage.getItem('owner_cloud')).dirty,false);
+});
+test('legacy first rewards that reuse a template id remain protected from ambiguous merging',async()=>{
+ const s=server(),a=device(s),b=device(s),one=classState(),c=one.classes[0];C.ensureDay(c.students[0],c);await a.cloud.boot(one);const two=await b.cloud.boot(C.initialState());
+ for(const doc of [one,two]){const cl=doc.classes[0];C.completeAndFeed(cl.students[0],C.dayKey(),cl.tasks[0].id);}
+ a.cloud.markDirty(one);await a.cloud.save(one);b.cloud.markDirty(two);await assert.rejects(b.cloud.save(two),/çakışan/);assert.equal(s.row.document.classes[0].students[0].feeds.length,1);
 });
 test('offline edits merge against the persisted baseline after a reload and preserve independent remote awards',async()=>{
  const s=server(),a=device(s),b=device(s),one=classState(),cl=one.classes[0];cl.students.push(C.newStudent('Ada'));cl.students.forEach(p=>C.ensureDay(p,cl));
@@ -110,6 +115,57 @@ test('legacy dirty conflicts keep both documents and never guess a missing commo
  two.classes[0].name='Offline change';b.cloud.markDirty(two);
  const old=Cloud.create({client:s.client,storage:b.storage,key:'owner',project:()=>({})});assert.deepEqual(await old.boot(two),two);assert.equal(old.isConflict(),true);
  assert.equal(JSON.parse(b.storage.getItem('owner_cloud_recovery')).classes[0].name,'Remote change');assert.equal(s.row.document.classes[0].name,'Remote change');
+});
+test('an identical legacy dirty copy clears a false conflict without writing, even with different class navigation',async()=>{
+ const s=server(),a=device(s),one=classState();one.classes.push(C.newClass('İkinci sınıf'));await a.cloud.boot(one);
+ const b=device(s),two=clone(one);two.activeClassId=two.classes[1].id;
+ b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true,conflict:true}));
+ const result=await b.cloud.boot(two);assert.equal(result.activeClassId,two.activeClassId);assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);assert.equal(s.row.revision,1);
+});
+test('retry re-reads a legacy conflict and clears it only after the entire account matches',async()=>{
+ const s=server(),a=device(s),one=classState();await a.cloud.boot(one);
+ const b=device(s),two=clone(one);two.classes[0].name='Mobil sınıf';b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true}));await b.cloud.boot(two);
+ const before=s.row.revision,review=await b.cloud.inspect(two);assert.equal(review.resolved,false);assert.deepEqual(review.local,C.validate(two));assert.deepEqual(review.remote,C.validate(one));assert.equal(s.row.revision,before);
+ await assert.rejects(b.cloud.refresh(two),/Diğer cihaz/);assert.equal(b.cloud.isDirty(),true);
+ a.cloud.markDirty(two);await a.cloud.save(two);const revision=s.row.revision;
+ const resolved=await b.cloud.refresh(two);assert.deepEqual(resolved,C.validate(two));assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);assert.equal(s.row.revision,revision,'retry acknowledges equality without another write');
+});
+test('equal totals with different awarded histories remain a real conflict and keep both backups',async()=>{
+ const s=server(),one=classState(),cl=one.classes[0];cl.tasks[1].points=1;C.ensureDay(cl.students[0],cl);const two=clone(one);
+ C.awardBehavior(cl.students[0],cl,C.dayKey(),cl.tasks[0].id);const c2=two.classes[0];C.awardBehavior(c2.students[0],c2,C.dayKey(),c2.tasks[1].id);
+ const a=device(s),b=device(s);await a.cloud.boot(one);b.storage.setItem('owner_cloud',JSON.stringify({revision:0,dirty:true}));await b.cloud.boot(two);
+ const review=await b.cloud.inspect(two);assert.equal(review.resolved,false);assert.equal(C.earned(review.local.classes[0].students[0]),C.earned(review.remote.classes[0].students[0]));
+ assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),C.validate(two));assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),C.validate(one));assert.equal(s.row.revision,1);
+});
+test('a whole-account choice rejects a changed cloud revision rather than replacing newer points',async()=>{
+ for(const choice of ['local','remote']){
+  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';await b.cloud.boot(two);const review=await b.cloud.inspect(two);
+  one.classes[0].name='Tahtadan yeni kayıt';a.cloud.markDirty(one);await a.cloud.save(one);
+  await assert.rejects(b.cloud.resolve(choice,two,review.revision),e=>e.code==='SYNC_REVIEW_STALE');assert.equal(s.row.document.classes[0].name,'Tahtadan yeni kayıt');assert.equal(b.cloud.isConflict(),true);
+  assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),two);assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),C.validate(one));
+ }
+});
+test('an intervening write between comparison check and replacement cannot be silently merged or overwritten',async()=>{
+ const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';await b.cloud.boot(two);const review=await b.cloud.inspect(two);
+ const rpc=s.client.rpc;let collide=true;s.client.rpc=async(name,args)=>{if(collide){collide=false;const incoming=clone(one);incoming.classes[0].name='Yeni uzak kayıt';await rpc(name,{...args,p_document:incoming});}return rpc(name,args);};
+ await assert.rejects(b.cloud.resolve('local',two,review.revision),e=>e.code==='SYNC_REVIEW_STALE');assert.equal(s.row.document.classes[0].name,'Yeni uzak kayıt');assert.equal(b.cloud.isConflict(),true);assert.equal(b.cloud.isDirty(),true);
+});
+test('choosing the cloud copy refuses to erase a local point made during its read',async()=>{
+ const s=server(),a=device(s),one=classState(),cl=one.classes[0];C.ensureDay(cl.students[0],cl);await a.cloud.boot(one);
+ let local=clone(one);local.classes[0].name='Mobil';const d=device(s),cloud=Cloud.create({client:s.client,storage:d.storage,key:'owner',getState:()=>local,project:()=>({})});await cloud.boot(local);const review=await cloud.inspect(local);
+ const from=s.client.from;let release;s.client.from=()=>({select:()=>({maybeSingle:async()=>{await new Promise(r=>release=r);return {data:s.row};}})});
+ const pending=cloud.resolve('remote',local,review.revision);await new Promise(r=>setImmediate(r));const c=local.classes[0];C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[0].id);cloud.markDirty(local);release();
+ await assert.rejects(pending,e=>e.code==='SYNC_REVIEW_STALE');assert.equal(C.earned(JSON.parse(d.storage.getItem('owner_recovery')).classes[0].students[0]),1);assert.equal(cloud.isDirty(),true);s.client.from=from;
+});
+test('a confirmed unchanged source clears conflict and dirty flags only after success, retaining both recovery copies',async()=>{
+ for(const choice of ['local','remote']){
+  const s=server(),a=device(s),one=classState();await a.cloud.boot(one);const b=device(s),two=clone(one);two.classes[0].name='Mobil';await b.cloud.boot(two);const review=await b.cloud.inspect(two);
+  s.offline=true;await assert.rejects(b.cloud.resolve(choice,two,review.revision));assert.equal(b.cloud.isConflict(),true);assert.equal(b.cloud.isDirty(),true);s.offline=false;
+  const result=await b.cloud.resolve(choice,two,review.revision);assert.equal(result.classes[0].name,choice==='local'?'Mobil':'Birincilerim');assert.equal(b.cloud.isConflict(),false);assert.equal(b.cloud.isDirty(),false);
+  assert.deepEqual(JSON.parse(b.storage.getItem('owner_recovery')),two);assert.deepEqual(JSON.parse(b.storage.getItem('owner_cloud_recovery')),C.validate(one));
+  const next=s.row.document,c=next.classes[0];C.ensureDay(c.students[0],c);C.awardBehavior(c.students[0],c,C.dayKey(),c.tasks[0].id);a.cloud.markDirty(next);await a.cloud.save(next);await b.cloud.refresh(result);
+  const preserved=JSON.parse(b.storage.getItem('owner_before_sync_choice'));assert.deepEqual(preserved.local,two);assert.deepEqual(preserved.remote,C.validate(one));
+ }
 });
 test('a stalled request times out and releases the sync operation so a later retry can succeed',async()=>{
  let stalled=true;const s=server(),real=s.client.from;s.client.from=(...args)=>stalled?{select:()=>({maybeSingle:()=>new Promise(()=>{})})}:real(...args);

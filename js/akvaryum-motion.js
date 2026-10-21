@@ -20,7 +20,9 @@
     batfish: { speed: .55, bob: 4, tilt: .8, depth: .48, pulse: 0 },
     cleanershrimp: { speed: .32, bob: 2, tilt: .5, depth: .85, pulse: 0 },
     hermitcrab: { speed: .16, bob: .4, tilt: .25, depth: .98, pulse: 0, floor: true },
-    cuttlefish: { speed: .45, bob: 3, tilt: .8, depth: .72, pulse: 0 }
+    cuttlefish: { speed: .45, bob: 3, tilt: .8, depth: .72, pulse: 0 },
+    swordfish: { speed: 1.05, bob: 2, tilt: .6, depth: .4, pulse: 0 },
+    safiye: { speed: .62, bob: 3, tilt: .8, depth: .55, pulse: 0 }
   };
   const profile = id => profiles[id] || normal;
   // Camera distance is independent of score, hunger and vertical swimming lanes.
@@ -165,6 +167,8 @@
   function startTurn(f) {
     if (!f.turn && f.turnCooldown <= 0) f.turn = {elapsed:0,duration:2.6,from:f.angle,to:f.direction>0?180:0};
   }
+  // Seasonal decoration uses front/back render layers, never a vertical
+  // collision wall. The fish keeps its own route when crossing either decor.
   function step(fish, dt, width, height, random = Math.random) {
     if (!(dt > 0)) return;
     dt = Math.min(dt,.05);
@@ -234,7 +238,7 @@
       if(f.routeTime<=0 && !f.turn) {
         const first=f.targetX==null;
         // Keep the horizontal destination until reached; depth can vary during the journey.
-        // Decorative objects never affect heading or speed.
+        // Decorative objects do not change this destination or vertical speed.
         if(first || Math.abs(f.targetX-f.x)<18) f.targetX=first ? f.x+(f.direction>0?maxX-f.x:-f.x)*(.35+random()*.6) : edge+random()*Math.max(0,maxX-2*edge);
         const depth=p.depth>.75 ? .65+random()*.35 : .05+random()*.9;
         f.targetY=f.minY+(f.maxY-f.minY)*depth;
@@ -264,5 +268,12 @@
       f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);
     });
   }
-  return {profile,layout,reflow,eggLayout,restLayout,step,perspective,turnPose,labelGap,labelAdjustment};
+  // A transient reward pose, independent of points, growth and saved data.
+  // Fast inflation, a short hold, then a soft return; total duration 5 seconds.
+  function puffPose(elapsed) {
+    const smooth=t=>t*t*(3-2*t);
+    const amount=!Number.isFinite(elapsed)||elapsed<0||elapsed>=5?0:elapsed<.28?smooth(elapsed/.28):elapsed<4.25?1:1-smooth((elapsed-4.25)/.75);
+    return {amount,x:1+.28*amount,y:1+.8*amount};
+  }
+  return {profile,layout,reflow,eggLayout,restLayout,step,perspective,turnPose,labelGap,labelAdjustment,puffPose};
 });

@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-20",
+  "background": {
+    "mode": "built-in image_gen edit",
+    "prompt": "Edit this underwater aquarium background. Remove only the Turkish flag hanging in the far center background and reconstruct the natural underwater rock, distant aquatic vegetation and soft blue water behind it. This area must become an empty natural distant background because a separate animated flag will be layered here in code. Preserve all other scenery, camera framing, wide aspect ratio, red and white edge corals, sandy foreground, water color, rays and realistic lighting as closely as possible. No fish, no text, no new flag, no banner, no decorations or characters. Clean seamless photorealistic result.",
+    "file": "assets/akvaryum/arka-planlar/cumhuriyet-29-ekim-v2.jpg"
+  },
+  "snowman": {
+    "mode": "repo-native smooth procedural WebGL",
+    "source": "js/akvaryum-seasonal-model.js",
+    "preview_tool": "tools/akvaryum-dekor-onizleme.html",
+    "fallback": "Same mesh rendered to a transparent 600×880 PNG in the local browser, compressed to WebP while preserving alpha. Used in lite mode or when WebGL is unavailable.",
+    "files": [
+      "assets/akvaryum/dekor/kardan-adam-sevimli-v2.png",
+      "assets/akvaryum/dekor/kardan-adam-sevimli-v2.webp"
+    ],
+    "imagegen_attempt": {
+      "status": "output moderation_blocked; no image asset produced or used",
+      "prompt": "Use case: stylized-concept. Asset type: high-quality transparent fallback for a real 3D aquarium snowman. Create a lovable Olaf-like snowman in polished cinematic 3D rendering with realistic softly sparkling snow material and smooth rounded surfaces, no low-poly facets. Full-body three-quarter front view, very gentle turn toward viewer, large expressive friendly eyes, raised twig eyebrows, long orange carrot nose, broad joyful smile with two small front teeth, three thin little twig hairs, rounded tall head, two soft snowball body sections, little oval snow feet, three coal buttons, thin twig arms opened in a welcoming pose, tiny fingers. A short tasteful muted red scarf. Bare head, no hat. Cute, warm and child-friendly; balanced natural proportions and tactile snow rather than plastic. Soft cool underwater fill light and warm soft key light, gentle ambient contact shading. Entire body, fingertips and feet inside frame with small margins. Single isolated character, true transparent alpha background, opaque snow body. No text, scene, fish, ground rectangle, watermark or other objects. Portrait framing, high detail suitable for a crisp small display."
+    }
+  },
+  "republic": {
+    "mode": "repo-native vector flag and layered CSS 3D lettering",
+    "flag": "assets/akvaryum/dekor/turkiye-bayragi.svg",
+    "text": "CUMHURİYET 103 YAŞINDA",
+    "layering": "Decor z-index 2 within swimArea, fish depth layers 1 and 3; flag is behind the entire swimArea."
+  },
+  "checksums": [
+    {
+      "path": "assets/akvaryum/arka-planlar/cumhuriyet-29-ekim-v2.jpg",
+      "bytes": 436638,
+      "sha256": "4817b52c275800a7f627611b42cecf114e216d4d6153d7e9f2b061b383f87148"
+    },
+    {
+      "path": "assets/akvaryum/dekor/kardan-adam-sevimli-v2.png",
+      "bytes": 274182,
+      "sha256": "9d3094a185e59e16fcaad98d07e10710a0d8297677ce1a408e091d275c6dda75"
+    },
+    {
+      "path": "assets/akvaryum/dekor/kardan-adam-sevimli-v2.webp",
+      "bytes": 23574,
+      "sha256": "9bc27af3de9eae7c00cba02971f79ac6d410e4970762c8d31917391b7a716f78"
+    },
+    {
+      "path": "assets/akvaryum/dekor/turkiye-bayragi.svg",
+      "bytes": 825,
+      "sha256": "952ddb004cddca1cc262c1cbe4bf5f441c8aedbb3243bd87207c895c6e75913c"
+    }
+  ]
+}

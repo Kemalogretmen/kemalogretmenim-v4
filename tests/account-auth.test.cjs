@@ -5,23 +5,23 @@ const vm=require('node:vm');
 const {parseHTML}=require('linkedom');
 const tick=()=>new Promise(r=>setImmediate(r));
 const teacher={id:'teacher-1',role:'teacher',approval_status:'active',active:true,email:'teacher@example.com',full_name:'Test Teacher'};
-function authHarness() {
+function authHarness({sdkMissing=false}={}) {
   const {window:dom,document}=parseHTML('<html><head></head><body></body></html>');
   const window={CustomEvent:dom.CustomEvent,addEventListener:dom.addEventListener.bind(dom),dispatchEvent:dom.dispatchEvent.bind(dom)};
   let session={user:{id:teacher.id,email:teacher.email,user_metadata:{role:'student'}}}, profile={...teacher}, error=null, callback, creates=0;
-  const writes=[], timers=[];
-  const client={auth:{getSession:async()=>({data:{session},error:null}),onAuthStateChange(fn){callback=fn;return{data:{subscription:{}}};}},from(table){
+  const writes=[], timers=[], deadlines=new Map();let timerId=0,subscriptions=0;
+  const client={auth:{getSession:async()=>({data:{session},error:null}),onAuthStateChange(fn){subscriptions++;callback=fn;return{data:{subscription:{}}};}},from(table){
     const query={select(){return this;},eq(){return this;},ilike(){return this;},upsert(value,options){writes.push({value,options});return this;},async maybeSingle(){
       return table==='admin_users'?{data:null,error:null}:{data:profile,error};
     }};return query;
   }};
-  window.supabase={createClient(){creates++;return client;}};
+  const sdk={createClient(){creates++;return client;}};if(!sdkMissing)window.supabase=sdk;
   window.kemalSiteStore={getConfig:()=>({supabaseUrl:'https://test.invalid',supabaseAnonKey:'key'})};
-  window.setTimeout=(fn,delay=0)=>{if(delay){queueMicrotask(fn);return 0;}timers.push(fn);return timers.length;}; window.clearTimeout=()=>{};
+  window.setTimeout=(fn,delay=0)=>{if(delay>=5000){const id=++timerId;deadlines.set(id,fn);return id;}if(delay){queueMicrotask(fn);return 0;}timers.push(fn);return timers.length;}; window.clearTimeout=id=>deadlines.delete(id);
   window.setInterval=()=>1;window.clearInterval=()=>{};
   const context={window,document,CustomEvent:window.CustomEvent,console,localStorage:{getItem:()=>null,setItem(){}},setTimeout:window.setTimeout,clearTimeout(){}};
   vm.runInNewContext(fs.readFileSync('js/user-auth.js','utf8'),context);
-  return {api:window.kemalUserAuth,writes,timers,setProfile:v=>profile=v,setError:v=>error=v,emit:(event,next)=>{session=next;callback(event,next);},client,getCreates:()=>creates};
+  return {api:window.kemalUserAuth,writes,timers,setProfile:v=>profile=v,setError:v=>error=v,emit:(event,next)=>{session=next;callback(event,next);},client,getCreates:()=>creates,getSubscriptions:()=>subscriptions,installSdk:()=>{window.supabase=sdk;},document,expire:()=>{const entry=[...deadlines].at(-1);assert.ok(entry,'expected a live deadline');deadlines.delete(entry[0]);entry[1]();}};
 }
 
 test('profile lookup failures never recreate or overwrite a registered teacher',async()=>{
@@ -124,4 +124,23 @@ test('teacher panel distinguishes a missing session from a temporary auth outage
   const outage=await panelHarness(null,null,{name:'AuthRetryableFetchError'});
   assert.equal(outage.window.location.href,'/ogretmen-paneli.html');
   assert.match(outage.document.getElementById('teacherIntro').textContent,/Yenile/);
+});
+
+test('a stalled getSession times out without clearing the saved user or profile and retry stays recoverable',async()=>{
+ const h=authHarness();await h.api.ready();const original=h.client.auth.getSession;h.client.auth.getSession=()=>new Promise(()=>{});
+ const refresh=h.api.refresh();await tick();h.expire();await assert.rejects(refresh,/zaman aşımı/);
+ assert.equal(h.api.getUser().id,teacher.id);assert.equal(h.api.getProfile().role,'teacher');assert.ok(h.api.getState().error);assert.equal(h.writes.length,0);
+ h.client.auth.getSession=original;await h.api.retry();assert.equal(h.api.getState().error,'');assert.equal(h.getSubscriptions(),1,'retry must reuse the existing auth subscription');
+});
+test('a late profile response after timeout cannot create a replacement profile or erase teacher approval',async()=>{
+ const h=authHarness();await h.api.ready();const from=h.client.from;let finish;
+ h.client.from=()=>({select(){return this;},eq(){return this;},maybeSingle:()=>new Promise(resolve=>finish=resolve)});
+ const refresh=h.api.refresh();await tick();h.expire();await assert.rejects(refresh,/zaman aşımı/);
+ finish({data:null,error:null});await tick();assert.equal(h.writes.length,0);assert.equal(h.api.getProfile().approval_status,'active');
+ h.client.from=from;await h.api.retry();assert.equal(h.api.getState().error,'');
+});
+test('blocked SDK loading has a deadline and can be retried after the library becomes available',async()=>{
+ const h=authHarness({sdkMissing:true}),ready=h.api.ready();assert.ok(h.document.querySelector('script'));h.expire();await ready;
+ assert.ok(h.api.getState().error);assert.equal(h.document.querySelector('script'),null);assert.equal(h.writes.length,0);
+ h.installSdk();await h.api.retry();assert.equal(h.api.getState().error,'');assert.equal(h.api.getUser().id,teacher.id);
 });

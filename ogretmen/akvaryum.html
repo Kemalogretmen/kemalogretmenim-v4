@@ -9,28 +9,62 @@
   <meta name="description" content="Sınıfınızın yaşayan akvaryumu. Deniz dostunu seç, sorumluluklarını tamamla, yem kazan ve balığını besle.">
   <title>Sınıf Akvaryumu — Kemal Öğretmenim</title>
   <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/akvaryum.css?v=20261019-eggs-v2">
+  <link rel="stylesheet" href="/css/akvaryum.css?v=20261021-access-v5">
   <link rel="preload" as="image" href="/assets/akvaryum/arka-planlar/mercan-resifi.jpg">
+  <script id="aquariumStartupGuard">
+  (function () {
+    'use strict';
+    var timer, settled = false;
+    function clear() { window.clearTimeout(timer); }
+    function fail() {
+      if (settled) return;
+      clear();
+      var message = document.getElementById('accessMessage');
+      if (!message || !document.body) { timer = window.setTimeout(fail, 1000); return; }
+      document.body.classList.add('access-pending');
+      message.textContent = 'Akvaryum başlatılamadı veya bağlantı yanıt vermedi. Sayfayı yeniden yükleyebilirsiniz. Kayıtları silmeyin; yeniden yükleme sınıf ve puan kayıtlarını silmez.';
+    }
+    function phase(message, duration) {
+      if (settled) return;
+      clear();
+      var text = document.getElementById('accessMessage');
+      if (text) text.textContent = message;
+      timer = window.setTimeout(fail, duration || 15000);
+    }
+    window.AquariumStartup = {
+      phase: phase,
+      fail: fail,
+      blocked: function () { settled = true; clear(); },
+      ready: function () { settled = true; clear(); }
+    };
+    window.addEventListener('error', function (event) { if (event.target === window || event.target && event.target.tagName === 'SCRIPT') fail(); }, true);
+    window.addEventListener('unhandledrejection', function () { fail(); });
+    phase('Akvaryum dosyaları yükleniyor…');
+  })();
+  </script>
   <script defer data-site-performance src="/js/site-performance.js?v=20261012"></script>
   <script defer src="/js/site-data.js"></script>
-  <script defer src="/js/user-auth.js?v=20261012-session-refresh-v2"></script>
-  <script defer src="/js/akvaryum-sounds.js?v=20261008-mixer"></script>
+  <script defer src="/js/vendor/supabase-2.118.0.min.js"></script>
+  <script defer src="/js/user-auth.js?v=20261021-access-v5"></script>
+  <script defer src="/js/akvaryum-sounds.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-audio.js?v=20261018-picker-effects-v1"></script>
-  <script defer src="/js/akvaryum-core.js?v=20261019-social-v1"></script>
+  <script defer src="/js/akvaryum-core.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-sharing.js?v=20261016-alphabetical-release-v1"></script>
-  <script defer src="/js/akvaryum-anatomy.js?v=20261016-alphabetical-release-v1"></script>
-  <script defer src="/js/akvaryum-motion.js?v=20261019-eggs-v2"></script>
+  <script defer src="/js/akvaryum-anatomy.js?v=20261021-access-v5"></script>
+  <script defer src="/js/akvaryum-motion.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-timer.js?v=20261012-performance"></script>
   <script defer src="/js/akvaryum-sync-merge.js?v=20261019-sync-v1"></script>
-  <script defer src="/js/akvaryum-cloud.js?v=20261019-sync-v1"></script>
+  <script defer src="/js/akvaryum-cloud.js?v=20261021-access-v5"></script>
+  <script defer src="/js/akvaryum-live.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-creature-models.js?v=20261013-creature-prototype-v1"></script>
   <script defer src="/js/akvaryum-creature-3d.js?v=20261013-creature-prototype-v1"></script>
   <script defer src="/js/akvaryum-water.js?v=20261016-alphabetical-release-v1"></script>
+  <script defer src="/js/akvaryum-seasonal.js?v=20261021-access-v5"></script>
   <script defer src="/js/akvaryum-social.js?v=20261019-social-v1"></script>
-  <script defer src="/js/akvaryum.js?v=20261019-eggs-v2"></script>
+  <script defer src="/js/akvaryum.js?v=20261021-access-v5"></script>
 </head>
 <body class="access-pending">
-  <section id="accessGate" class="access-gate"><h1>Sınıf Akvaryumu</h1><p id="accessMessage">Erişim kontrol ediliyor…</p><button type="button" id="accessRetry" class="button primary" hidden>Oturumu yeniden dene</button><div id="accessLinks" hidden><a class="button primary" href="/giris.html?redirect=%2Fogretmen%2Fakvaryum.html">Öğretmen girişi</a> <a class="button" href="/ogretmen-paneli.html">Öğretmen panelim</a> <a class="button" href="?demo=1">Örnek sınıfı incele</a> <a class="button" href="?veli=1">Veli koduyla izle</a></div></section>
+  <section id="accessGate" class="access-gate"><h1>Sınıf Akvaryumu</h1><p id="accessMessage">Erişim kontrol ediliyor…</p><button type="button" id="accessRetry" class="button primary" hidden>Oturumu yeniden dene</button><p><a class="button" href="">Sayfayı yeniden yükle</a></p><p class="preview-access"><a class="button" href="?demo=1">Hesapsız örnek sınıfı aç</a></p><div id="accessLinks" hidden><a class="button primary" href="/giris.html?redirect=%2Fogretmen%2Fakvaryum.html">Öğretmen girişi</a> <a class="button" href="/ogretmen-paneli.html">Öğretmen panelim</a> <a class="button" href="?demo=1">Örnek sınıfı incele</a> <a class="button" href="?veli=1">Veli koduyla izle</a></div></section>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6M12 2v3"/></symbol>
     <symbol id="i-fish" viewBox="0 0 24 24"><path d="M17 12c-3-7-10-7-14 0 4 7 11 7 14 0Zm0 0 5-5v10l-5-5Z"/><path d="M8 10h.01"/></symbol>
@@ -63,10 +97,12 @@
         <button type="button" class="button primary" data-action="choose"><svg><use href="#i-fish"/></svg><span>Balığımı seç</span></button>
       </div>
     </header>
-    <div id="cloudWarning" class="cloud-warning" role="status" hidden><strong>Eşitleme uyarısı</strong><span id="cloudWarningMessage"></span><button type="button" class="button" data-action="retry-cloud">Şimdi eşitle</button></div>
+    <div id="cloudWarning" class="cloud-warning" role="status" hidden><strong>Eşitleme uyarısı</strong><span id="cloudWarningMessage"></span><button id="cloudRetryButton" type="button" class="button" data-action="retry-cloud">Şimdi eşitle</button></div>
     <div id="storageWarning" class="storage-warning" role="alert" hidden></div>
     <div id="demoBanner" class="demo-banner" hidden>Örnek sınıfı keşfediyorsunuz. Buradaki değişiklikler kaydedilmez. <button type="button" data-action="exit-demo">Kendi sınıfıma dön →</button></div>
+    <aside id="seasonalSuggestion" class="seasonal-suggestion" hidden aria-label="Mevsimlik akvaryum önerisi"><div><strong id="seasonalSuggestionTitle"></strong><span id="seasonalSuggestionDescription"></span></div><button type="button" class="button primary" data-action="seasonal-preview">Temayı incele</button><button type="button" class="button subtle" data-action="seasonal-dismiss">Bu sezon gösterme</button></aside>
     <main class="aquarium panel-hidden" id="aquarium" aria-label="Sınıfın akvaryumu">
+      <div id="republicFlag" class="republic-flag" hidden aria-hidden="true"><img data-src="/assets/akvaryum/arka-planlar/cumhuriyet-29-ekim.jpg" alt="" hidden><canvas hidden></canvas></div>
       <canvas id="waterLight" class="water-light" aria-hidden="true"></canvas>
       <canvas id="waterWaves" class="water-waves" aria-hidden="true" hidden></canvas>
       <aside id="localClock" class="local-clock" aria-label="Yerel saat ve tarih"><time id="localTime"></time><span id="localDate"></span></aside>
@@ -82,14 +118,14 @@
         <button type="button" class="round-button" data-action="panel" aria-label="Sınıf yönetimini aç" aria-expanded="false" aria-controls="studentPanel" title="Sınıf yönetimini aç"><svg><use href="#i-users"/></svg></button>
       </div>
       <div id="eggBed" class="egg-bed" aria-label="Kumdaki yumurtalar"></div>
-      <div id="swimArea" class="swim-area" aria-label="Deniz canlıları"><div id="sceneTimer" class="scene-timer" hidden role="timer" aria-live="off"><span id="sceneTimerTitle"></span><strong id="sceneTimerClock"></strong></div><div class="scene-kelp" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div id="swimArea" class="swim-area" aria-label="Deniz canlıları"><div id="seasonalSnow" class="seasonal-snow" hidden aria-hidden="true"></div><img id="seasonalSnowman" class="seasonal-snowman" data-src="/assets/akvaryum/dekor/kardan-adam-kirmizi-sapka.webp" data-png="/assets/akvaryum/dekor/kardan-adam-kirmizi-sapka.png" alt="Kırmızı şapkalı ve atkılı kardan adam dekoru" hidden><div id="republicDecor" class="republic-decor" role="img" aria-label="CUMHURİYET 103 YAŞINDA" hidden><div class="republic-lettering" aria-hidden="true"><span class="republic-type" style="--depth:8"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:7"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:6"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:5"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:4"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:3"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:2"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type" style="--depth:1"><b>CUMHURİYET 103 YAŞINDA</b></span><span class="republic-type front"><b>CUMHURİYET 103 YAŞINDA</b></span></div></div><div id="sceneTimer" class="scene-timer" hidden role="timer" aria-live="off"><span id="sceneTimerTitle"></span><strong id="sceneTimerClock"></strong></div><div class="scene-kelp" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
       <button type="button" id="classPearl" class="class-pearl" data-action="season-dashboard" hidden aria-label="Sınıf puanları ve sezon seçenekleri"><img src="/assets/akvaryum/dekor/istiridye-inci.png" alt="" aria-hidden="true"><span class="pearl-score"><span>SINIFIMIZIN İNCİSİ</span><strong id="classPearlScore">0</strong><small>toplam puan</small></span></button>
       <section class="welcome" id="welcome">
         <span class="welcome-tag">SINIFINIZ İÇİN YENİ BİR DÜNYA</span>
         <h2>Birlikte öğrenelim.<br><em>Birlikte büyüyelim.</em></h2>
         <p>Her öğrenci bir deniz dostu seçsin.<br>Tamamlanan sorumluluklar, mutlu balıklara dönüşsün.</p>
         <div class="welcome-actions"><button type="button" class="button primary" data-action="setup">Sınıfımı oluştur <svg><use href="#i-arrow"/></svg></button><button type="button" class="button glass" data-action="demo">Örnek sınıfı keşfet</button></div>
-        <span class="welcome-footnote">40 deniz canlısı · 6 akvaryum ortamı · Sınırsız güzel başlangıç</span>
+        <span class="welcome-footnote">42 deniz canlısı · 8 akvaryum ortamı · Sınırsız güzel başlangıç</span>
       </section>
       <aside id="studentPanel" class="student-panel" aria-label="Öğrenci ve görev paneli">
         <div class="panel-top"><div><span class="eyebrow">BİRLİKTE BAŞARIYORUZ</span><h2>Sınıf yönetimi <span id="studentCount">0</span></h2></div><div class="panel-heading-actions"><button type="button" class="icon-button add-student" data-action="add" aria-label="Öğrenci ekle"><svg><use href="#i-plus"/></svg></button><button type="button" class="icon-button panel-close" data-action="close-panel" aria-label="Sınıf yönetimini kapat" title="Paneli kapat"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div></div>
@@ -105,7 +141,7 @@
       </footer>
       <div id="feedingEffects" class="feeding-effects" aria-hidden="true"></div>
     </main>
-    <div class="save-line"><span id="saveStatus">Kayıtlar bu tarayıcıda saklanır.</span><span id="todayLabel"></span></div>
+    <div class="save-line"><span id="saveStatus">Kayıtlar bu tarayıcıda saklanır.</span><span id="liveStatus" role="status"></span><span id="todayLabel"></span></div>
   </div>
   <dialog id="modal" aria-labelledby="modalTitle"><div class="modal-toolbar"><button type="button" id="modalBack" class="modal-back" data-action="modal-back">← Geri</button><button type="button" class="icon-button" data-action="close" aria-label="Pencereyi kapat"><svg><use href="#i-close"/></svg></button></div><div class="modal-heading"><div><span class="eyebrow" id="modalEyebrow">SINIF AKVARYUMU</span><h2 id="modalTitle"></h2></div></div><div id="modalContent"></div></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

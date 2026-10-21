@@ -49,7 +49,10 @@
   function pose(id,phase,moving){
     const t=Number.isFinite(phase)?phase:0,active=moving===true;
     const wave=active?Math.sin(t*3):0;
-    if(id==='ray')return {bodyX:1,bodyY:1,joints:[active?Math.sin(t*2.1)*3.6:0,active?-Math.sin(t*2.1+.25)*2.8:0,active?Math.sin(t*2.5-.6)*2.2:0]};
+    if(id==='ray'){
+      const near=active?Math.sin(t*2.4):0,far=active?Math.sin(t*2.4+.35):0;
+      return {bodyX:1,bodyY:1,joints:[near*16,-far*14,active?Math.sin(t*2.6-.6)*7:0],jointScaleY:[1+near*.17,1-far*.14,1]};
+    }
     if(id==='turtle')return {bodyX:1,bodyY:1,joints:[wave*7,-wave*5]};
     if(['boxfish','bannerfish','batfish'].includes(id))return {bodyX:1,bodyY:1,joints:[wave*(id==='boxfish'?5:3)]};
     if(id==='cleanershrimp')return {bodyX:1,bodyY:1,joints:[wave*4.5,-wave*4.5]};

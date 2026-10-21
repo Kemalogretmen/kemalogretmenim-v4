@@ -1,0 +1,28 @@
+[
+  {
+    "filename": "izmir-enstrumantal.mp3",
+    "sha256": "fb567bd13512ade4211f2f04d31a9b63d5ab8fe79e8ec0f161f6c7c3a609717f",
+    "duration_seconds": 34.103,
+    "bytes": 478844,
+    "sample_rate": 32000,
+    "source": "tools/akvaryum-seasonal-audio.py",
+    "recording": "New procedural instrumental recording; no third-party samples",
+    "bpm": 116,
+    "peak": 0.3876,
+    "rms": 0.1285,
+    "melody": "İzmir Marşı — traditional / anonymous attribution; see LISANS.md"
+  },
+  {
+    "filename": "jingle-bells.mp3",
+    "sha256": "0c923dbf7bab8bc67231e4a59adb93e2b0ad0de6f90de9d3018728e91eda9442",
+    "duration_seconds": 69.571,
+    "bytes": 975284,
+    "sample_rate": 32000,
+    "source": "tools/akvaryum-seasonal-audio.py",
+    "recording": "New procedural instrumental recording; no third-party samples",
+    "bpm": 112,
+    "peak": 0.4041,
+    "rms": 0.107,
+    "melody": "Jingle Bells — James Lord Pierpont (1857); public domain composition"
+  }
+]

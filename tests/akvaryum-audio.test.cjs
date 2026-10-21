@@ -66,8 +66,8 @@ test('malformed layers and favorites are sanitized and legacy sound settings mig
  const state=C.initialState();state.settings.favorites=[{id:'test',name:'Yağmur',volume:.4,mix:[{id:'rain',volume:.2}]}];assert.deepEqual(C.validate(state).settings.favorites,state.settings.favorites);
 });
 test('each selectable recording exists with documented provenance and matching checksum',()=>{
- const S=require('../js/akvaryum-sounds.js');const manifest=[...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/kaynaklar.json')),...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/karisim-kaynaklar.json'))];
- assert.equal(S.catalogue.length,11);for(const track of S.catalogue){const m=manifest.find(m=>m.filename===track.file);assert.ok(m,track.file);const data=fs.readFileSync('assets/akvaryum/muzikler/'+track.file);assert.equal(crypto.createHash('sha256').update(data).digest('hex'),m.sha256);}
+ const S=require('../js/akvaryum-sounds.js');const manifest=[...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/kaynaklar.json')),...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/karisim-kaynaklar.json')),...JSON.parse(fs.readFileSync('assets/akvaryum/muzikler/mevsimlik-kaynaklar.json'))];
+ assert.equal(S.catalogue.length,13);for(const track of S.catalogue){const m=manifest.find(m=>m.filename===track.file);assert.ok(m,track.file);const data=fs.readFileSync('assets/akvaryum/muzikler/'+track.file);assert.equal(crypto.createHash('sha256').update(data).digest('hex'),m.sha256);}
 });
 
 test('timer melody is scheduled on the audio clock, independent of music volume, and cancellation stops every note',async()=>{

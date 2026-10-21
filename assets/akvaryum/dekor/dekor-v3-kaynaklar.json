@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-21",
+  "snowman": {
+    "source": "User-supplied codex-clipboard-04aafd1d-ecb1-4a3e-932e-37ab67be517f.png",
+    "method": "Exact original PNG copied; lossless WebP compression. No generative change, repaint or upscaling. Original alpha retained.",
+    "dimensions": "360×360",
+    "rendering": "Transparent image of a 3D-rendered character, not a rotatable mesh. Decor plane 2, fish planes 1 and 3. Fish keep their natural routes with no forced vertical detour."
+  },
+  "snow": {
+    "normal": 40,
+    "lite": 18,
+    "motion": "Pooled CSS particles; paused by master motion/reduced-motion/page visibility."
+  },
+  "republic": {
+    "background": "Original cumhuriyet-29-ekim.jpg restored. No separate vector flag.",
+    "flag": "Feathered sample from the original photo at x686 y125, width452 height246. Crop follows the backdrop cover/position. Ripple is bounded below 0.9% of flag height, 12/8 fps on the existing scene clock.",
+    "lettering": "CUMHURİYET 103 YAŞINDA, red face, white outline, one line over foreground sand, subtle extruded depth."
+  },
+  "checksums": [
+    {
+      "path": "assets/akvaryum/dekor/kardan-adam-kirmizi-sapka.png",
+      "bytes": 65501,
+      "sha256": "69ac30f08b56b0845fa4ad44f3109b4de641d72599aaef35a9fa44f195b5d968"
+    },
+    {
+      "path": "assets/akvaryum/dekor/kardan-adam-kirmizi-sapka.webp",
+      "bytes": 19408,
+      "sha256": "e894b948faf0a492a42e812c7247f3419f3fd3d3a363b8606183b54f75f09a49"
+    },
+    {
+      "path": "assets/akvaryum/arka-planlar/cumhuriyet-29-ekim.jpg",
+      "bytes": 453760,
+      "sha256": "6c76f7c4da2902fd8d9c22aa10493e23cccd4f39adcaf8b27ab305ad02f629df"
+    }
+  ]
+}

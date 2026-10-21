@@ -6,7 +6,7 @@ test('portable poses remain bounded and completely still at rest for every suppo
     assert.deepEqual(A.pose(id,0,false),A.pose(id,500,false));
     for(let t=0;t<100;t+=.37) {
       const p=A.pose(id,t,true);assert.ok(p.bodyX>.9&&p.bodyX<1.1&&p.bodyY>.9&&p.bodyY<1.1);
-      assert.ok(p.joints.every(n=>Number.isFinite(n)&&Math.abs(n)<=10));
+      assert.ok(p.joints.every(n=>Number.isFinite(n)&&Math.abs(n)<=(id==='ray'?16:10)));
     }
   }
 });
@@ -35,4 +35,14 @@ test('natural jellyfish explore broad horizontal routes, reverse smoothly and ke
     }
     assert.ok(left&&right);assert.ok(max-min>(width-f.size)*.45,'must travel beyond a small stationary column');
   }
+});
+
+test('ray wings have a clear alternating stroke and fold, while the tail and rest pose remain bounded',()=>{
+ const poses=Array.from({length:120},(_,i)=>A.pose('ray',i/20,true));
+ for(const wing of [0,1]){
+  const values=poses.map(p=>p.joints[wing]);assert.ok(Math.max(...values)-Math.min(...values)>27);
+  assert.ok(Math.max(...poses.map(p=>p.jointScaleY[wing]))-Math.min(...poses.map(p=>p.jointScaleY[wing]))>.27);
+ }
+ assert.ok(Math.max(...poses.map(p=>p.joints[2]))-Math.min(...poses.map(p=>p.joints[2]))>13);
+ assert.deepEqual(A.pose('ray',5,false).jointScaleY,[1,1,1]);
 });

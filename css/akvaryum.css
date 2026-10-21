@@ -411,3 +411,39 @@ html.performance-lite .picker-sparkles i:nth-child(even){display:none}
 .cloud-warning{position:sticky;top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 18px;background:#60451f;color:#fff1cc;border-bottom:1px solid #bc9859;font-size:12px;z-index:12}
 .cloud-warning span{flex:1;min-width:180px;line-height:1.5}.cloud-warning .button{min-height:36px;padding:7px 12px;background:#fff0cf18;border-color:#e6c99280}
 .app:fullscreen #aquarium>.cloud-warning{position:absolute;top:90px;left:16px;right:16px;border:1px solid #bc9859;border-radius:12px}
+.sync-copy-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.sync-copy-summary section{padding:14px;border:1px solid #a8e6d14d;border-radius:14px;background:#052d40a6}
+.sync-copy-summary h3,.sync-copy-summary p{margin:0 0 6px}
+.sync-comparison{width:100%;table-layout:fixed;border-collapse:collapse;margin:18px 0;font-size:14px}
+.sync-comparison caption{text-align:left;padding:10px 0;font-weight:700}
+.sync-comparison th,.sync-comparison td{text-align:left;vertical-align:top;padding:12px 8px;border-bottom:1px solid #b5e7e340;overflow-wrap:anywhere}
+.sync-comparison th:first-child{width:25%}.sync-comparison strong,.sync-comparison span,.sync-comparison small{display:block}
+.sync-comparison span,.sync-comparison small{font-size:12px;line-height:1.5;margin-top:5px}
+.sync-comparison .sync-different{background:#fff0cb0d}.sync-different th small{color:#ffe4a4}
+@media(max-width:480px){.sync-comparison th,.sync-comparison td{padding:10px 5px}}
+@media(max-width:360px){.sync-copy-summary{grid-template-columns:1fr}}
+
+/* Seasonal decoration shares the swimmers' depth layers; it never intercepts touch. */
+.seasonal-suggestion{display:flex;align-items:center;gap:10px;padding:10px 20px;background:#123f4c;color:#e7faf2;border-bottom:1px solid #94d8c84d;flex-wrap:wrap}
+.seasonal-suggestion>div{flex:1 1 240px;display:grid;gap:3px}.seasonal-suggestion strong{font-size:14px}.seasonal-suggestion span{font-size:12px;color:#b9dbdc}.seasonal-suggestion .button{font-size:12px;padding:10px 14px;min-height:40px}
+.seasonal-preview{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:16px;margin-bottom:16px}
+.seasonal-snowman{position:absolute;right:5%;bottom:0;width:min(34%,360px);height:auto;aspect-ratio:1;z-index:2;pointer-events:none;object-fit:contain;filter:drop-shadow(0 10px 7px #072d3d55)}
+.seasonal-snow{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none;--snow-fall:1200px}
+.seasonal-flake{position:absolute;top:-16px;left:var(--left);width:var(--size);height:var(--size);background:#f3ffff;border-radius:50%;opacity:.55;animation:seasonal-snowfall var(--duration) var(--delay) linear infinite}
+@keyframes seasonal-snowfall{0%{transform:translate3d(0,-20px,0)}50%{transform:translate3d(14px,calc(var(--snow-fall)/2),0)}100%{transform:translate3d(-8px,var(--snow-fall),0)}}
+.seasonal-snow.is-paused .seasonal-flake,.no-motion .seasonal-flake,.page-hidden .seasonal-flake{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.seasonal-flake{animation:none}}
+@media(max-width:800px){.seasonal-suggestion{padding:8px 12px}.seasonal-snowman{right:2%;width:min(46%,260px)}}
+
+/* The flag sits beyond every swimmer. Lettering shares snowman's depth layer:
+   fish at depth 1 pass behind it, fish at depth 3 pass in front. */
+/* A feathered patch of the original photograph; background-cover alignment is
+   computed by the seasonal controller for every viewport and orientation. */
+.republic-flag{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.republic-flag canvas{position:absolute;mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);mask-composite:intersect;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent),linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);-webkit-mask-composite:source-in}
+.republic-decor{position:absolute;left:6%;bottom:4%;width:88%;z-index:2;pointer-events:none;container-type:inline-size;perspective:1000px}
+.republic-lettering{position:relative;transform-style:preserve-3d;transform:rotateX(5deg) scaleX(var(--letter-scale,1));filter:drop-shadow(3px 7px 3px #341a1a66);font-family:Impact,'Arial Narrow','Roboto Condensed',sans-serif;font-weight:1000;letter-spacing:-.02em;font-size:clamp(16px,5.5vw,76px);font-size:8.4cqw;line-height:1.16;text-align:center}
+.republic-type{position:absolute;inset:0;display:block;color:#721a16;transform:translate3d(calc(var(--depth)*.45px),calc(var(--depth)*.5px),calc(var(--depth)*-1px));-webkit-text-stroke:1px #70150f}
+.republic-type b{display:inline-block;white-space:nowrap;font-weight:inherit}.republic-type.front{position:relative;transform:translateZ(0);color:#b80000;-webkit-text-stroke:.085em #fffaf0;paint-order:stroke fill;text-shadow:0 2px #680a0a}
+@media(max-width:800px){.republic-decor{left:3%;width:94%;bottom:3%}.republic-lettering{font-size:5.6vw;font-size:8.4cqw}}
+.preview-access .button{font-size:14px}

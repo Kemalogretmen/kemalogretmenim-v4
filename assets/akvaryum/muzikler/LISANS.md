@@ -1,7 +1,8 @@
 # Sınıf Akvaryumu — müzik atıfları
 
-Bu eserler telif hakkı korumalıdır; CC BY 4.0 kapsamında atıfla ücretsiz kullanılır.
-Orijinal MP3 dosyaları değiştirilmeden kaynak sahibinden indirilmiştir.
+Bu klasördeki kayıtlar aynı kullanım koşullarına tabi değildir. Her eserin kaynak,
+lisans ve düzenleme bilgisi kendi başlığı altında belirtilmiştir. Kevin MacLeod
+eserleri CC BY 4.0 kapsamında atıfla kullanılır; yeni mevsimlik kayıtlar ayrıca açıklanmıştır.
 
 ## Huzurlu piyano
 
@@ -65,3 +66,31 @@ Dört kayıt mono WAV biçimine dönüştürüldü; yumuşak geçişlerle birle�
 Sound effects by Eric Matyas — https://soundimage.org/
 
 Music by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0, https://creativecommons.org/licenses/by/4.0/. Yeni eserler: Wisps of Whorls, Dream Culture, Fluidscape.
+
+## 20 Ekim 2026 — mevsimlik enstrümantal kayıtlar
+
+`izmir-enstrumantal.mp3` ve `jingle-bells.mp3` bu proje için sıfırdan,
+örnek ses/soundfont veya başka bir icracının kaydı kullanılmadan sentezlendi.
+Yeni eşlik, ses sentezi ve kayıt üretim kodu: `tools/akvaryum-seasonal-audio.py`.
+Kaynak kodu bu deponun lisansına tabidir; bu iki yeni kayıtta üçüncü taraf
+fonogram lisansı veya icracı atfı yoktur. Dosya özetleri ve süreler:
+`mevsimlik-kaynaklar.json`. Bu açıklama yukarıdaki eski kayıtların lisansını değiştirmez.
+
+- **İzmir Marşı:** Yaygın söylenen geleneksel ezgi kullanıldı; sözler veya
+  çağdaş bir sanatçının düzenlemesi alınmadı. Eser, Müzik Eğitimi Yayınları'nın
+  *Piyano Eşlikli Türk Marşları* kataloğunda “Anonim” olarak sınıflandırılıyor:
+  https://www.muzikegitimi.net/piyano-eslikli-turk-marslari/ . Ezgi kontrolü:
+  Musa Çetiner'in eğitim amaçlı nota yayını,
+  https://www.kolaynota.com/wp-content/uploads/2018/10/izmir_marsi_nota_isimli.pdf .
+  Bu yayının PDF'i, piyano eşliği, giriş düzenlemesi veya görsel notasyonu
+  projeye dahil edilmedi; yeni kayıtta kendi bas, akor, ritim ve ses sentezimiz var.
+  Geleneksel ezginin anonim atfı, herhangi bir modern kaydın serbest olduğu
+  anlamına gelmez. Bu kayıt için başka bir modern kayıt kullanılmadı.
+- **Jingle Bells:** James Lord Pierpont'un 1857 tarihli kamu malı bestesi.
+  Birincil bibliyografik kaynak: Library of Congress, *The One Horse Open Sleigh*,
+  https://www.loc.gov/item/2023812429/ ; kamu malı nota yayını:
+  https://www.gutenberg.org/ebooks/10535 . Yeni düzenlemede seyrek, yumuşak çan
+  vuruşları da aynı sentezleyicide üretilmiştir.
+
+İki dosya da mono 32 kHz / 112 kbps MP3'tür. Ses düzeyi düşük tutulur;
+başlangıç ve bitişler yumuşatılmıştır. Müzik yalnız kullanıcı başlattığında çalar.

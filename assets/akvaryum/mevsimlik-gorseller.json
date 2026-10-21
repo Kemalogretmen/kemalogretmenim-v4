@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-20",
+  "method": "Four built-in imagegen calls; no CLI or separate API key. Prompt specs below summarize the generation requirements. Original generated alpha preserved during proportional downscaling and PNG/WebP encoding; backgrounds compressed as JPEG.",
+  "reference": "User-provided watermarked flowerhorn image inspected for species anatomy only; stock image itself was not cleaned, distributed or placed in the site.",
+  "assets": [
+    {
+      "id": "swordfish",
+      "mode": "built-in image_gen",
+      "intent": "generate",
+      "prompt_spec_summary": "Realistic right-facing swordfish, long natural bill, silver-blue opaque body, entire tail and fins inside frame, horizontal swimming sprite, clean true transparent background, no text or scenery.",
+      "outputs": [
+        {
+          "path": "assets/akvaryum/canlilar/kilic-baligi.png",
+          "bytes": 307125,
+          "sha256": "0b44124431c76fae5466b7e6f4ff3087d394ff71e2aa3b5adf9dcdc8ac1af38c"
+        },
+        {
+          "path": "assets/akvaryum/canlilar/web-v1/kilic-baligi.webp",
+          "bytes": 22394,
+          "sha256": "4619bccb413c9d6d0a284c8b0a83562021b878b0dbbdc6c02f465204af593af1"
+        }
+      ]
+    },
+    {
+      "id": "safiye",
+      "mode": "built-in image_gen",
+      "intent": "generate",
+      "prompt_spec_summary": "Original realistic flowerhorn fish with rounded forehead, pearlescent rainbow scales and a small natural-looking dark plum felt witch-like hat, right-facing side profile, entire fish visible, opaque body on true transparent background, no text, watermark or copied stock-photo composition.",
+      "outputs": [
+        {
+          "path": "assets/akvaryum/canlilar/safiye.png",
+          "bytes": 1034251,
+          "sha256": "c103c1b920c78702c854fd09617c94ddf58c3281b79e42b156be97d618b71335"
+        },
+        {
+          "path": "assets/akvaryum/canlilar/web-v1/safiye.webp",
+          "bytes": 79638,
+          "sha256": "50f506b2f278954278343999cd83eac47be88598f5953d2e915a10feb24d35d0"
+        }
+      ]
+    },
+    {
+      "id": "republic-day",
+      "mode": "built-in image_gen",
+      "intent": "generate",
+      "prompt_spec_summary": "Spacious photorealistic underwater aquarium, Turkish red flag with accurate white crescent and five-pointed star far in the back, balanced red and white corals near the sides, open water and pale sandy floor for swimmers, natural underwater sunlight, no fish, UI or text.",
+      "outputs": [
+        {
+          "path": "assets/akvaryum/arka-planlar/cumhuriyet-29-ekim.jpg",
+          "bytes": 453760,
+          "sha256": "6c76f7c4da2902fd8d9c22aa10493e23cccd4f39adcaf8b27ab305ad02f629df"
+        }
+      ]
+    },
+    {
+      "id": "new-year",
+      "mode": "built-in image_gen",
+      "intent": "generate",
+      "prompt_spec_summary": "Spacious photorealistic underwater New Year aquarium, tasteful sparse natural edge decorations, small warm garland far behind, balanced ornaments among corals and pale snow-like sand, clear central swimming space and clear lower-right space for a separate 3D snowman, no fish, UI or text; no baked-in snowman.",
+      "outputs": [
+        {
+          "path": "assets/akvaryum/arka-planlar/yeni-yil-akvaryumu.jpg",
+          "bytes": 437776,
+          "sha256": "e2146bf2445e5476e8b34b35336efe6c8c94931ed1fcd43cba590f65592c5c5a"
+        }
+      ]
+    }
+  ]
+}

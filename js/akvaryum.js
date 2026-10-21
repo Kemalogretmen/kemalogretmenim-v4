@@ -13,10 +13,14 @@
   const MODEL_INTERVAL=1000/18,MODEL_LIMIT=12;
   let shareRecord = null, shareQueue = Promise.resolve(), syncTimer;
   let cloud=null,cloudTimer,cloudBusy=false,cloudMessage='',cloudRerun=false,cloudRetryDelay=2000;
+  let live=null,liveLastAccountCheck=0,livePickerPending=null,liveDrawPending=false;
+  let cloudSettled=Promise.resolve();
   const Audio = window.AquariumAudio;
   const conversations=window.AquariumSocial.create();
   const $ = id => document.getElementById(id);
   const water=window.AquariumWater?.create($('waterLight'),$('waterWaves'));
+  const Seasonal=window.AquariumSeasonal;
+  const seasonal=Seasonal?.create($('seasonalSnowman'),$('seasonalSnow'),{republic:$('republicDecor'),flag:$('republicFlag')});
   const esc = text => String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const icon = name => '<svg aria-hidden="true"><use href="#i-' + name + '"/></svg>';
   const image = id => '/assets/akvaryum/canlilar/web-v1/' + C.species(id).file.replace(/\.png$/,'.webp');
@@ -35,7 +39,7 @@
     shark:23,dolphin:22,royalblue:24,copperband:20,discus:25,betta:49,
     goldfish:44,guppy:43,neon:25,cardinal:36,anthias:31,goby:28,
     blenny:24,parrot:24,wrasse:27,moorish:29,rabbit:25,flame:25,
-    boxfish:30,bannerfish:39,batfish:30};
+    boxfish:30,bannerfish:39,batfish:30,swordfish:22,safiye:29};
   const background = id => '/assets/akvaryum/arka-planlar/' + (C.THEMES.find(t => t.id === id) || C.THEMES[0]).file;
   function renderBubbles(theme) {
     const layer=$('bubbles'),amount=C.waterSettings(state.settings).bubbleAmount;
@@ -73,6 +77,7 @@
     resizeWater();water?.draw(performance.now());
     if($('waveStrengthRange'))$('waveStrengthRange').disabled=!state.settings.waterWaves;
     renderBubbles(C.THEMES.find(t=>t.id===classroom().theme)||C.THEMES[0]);
+    seasonal?.update(classroom().theme,{motion:state.settings.motion,reduced:reduced.matches,lite:!!window.SitePerformance?.lite()});
   }
   function resizeWater(){
     if(!water)return;
@@ -88,15 +93,27 @@
   }
   const filterText = value => String(value).toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i');
   function lockAccess(message, recoverable = false) {
+    window.AquariumStartup?.blocked();
     document.body.classList.add('access-pending'); $('accessMessage').textContent = message;
     $('accessLinks').hidden = viewing || recoverable;
     $('accessRetry').hidden = !recoverable;
+  }
+  // A stalled CDN/session request must never leave the access gate spinning
+  // forever. This only bounds waiting; it never grants teacher access.
+  async function waitForAuth(retry=false) {
+    let timeout;
+    try {
+      return await Promise.race([
+        retry ? window.kemalUserAuth.retry() : window.kemalUserAuth.ready(),
+        new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('Oturum kontrolü zaman aşımına uğradı.')),12000);})
+      ]);
+    } finally {clearTimeout(timeout);}
   }
   $('accessRetry').addEventListener('click',async()=>{
     const button=$('accessRetry');button.disabled=true;button.textContent='Oturum kontrol ediliyor…';
     $('accessMessage').textContent='Kayıtlı oturumunuz yeniden doğrulanıyor; tekrar giriş yapmanız gerekmiyor.';
     try {
-      const auth=await window.kemalUserAuth.retry();
+      const auth=await waitForAuth(true);
       if(!auth.error && auth.user && auth.profile) { location.reload(); return; }
       if(!auth.error && !auth.user) { lockAccess('Bu tarayıcıda açık bir öğretmen oturumu bulunamadı.'); return; }
       $('accessMessage').textContent='Oturum korunuyor ancak hesap bilgileri alınamadı. İnternet bağlantınızı kontrol edip yeniden deneyin.';
@@ -143,7 +160,8 @@
     try { viewSnapshot = await readView(); } catch (e) { lockAccess(e.message); return; }
   } else if (!demoOnly) {
     try {
-      await window.kemalUserAuth.ready();
+      window.AquariumStartup?.phase('Öğretmen oturumu doğrulanıyor…');
+      await waitForAuth();
       if(window.kemalUserAuth.getState().error) { lockAccess('Kayıtlı oturumunuz duruyor ancak hesap bilgileri geçici olarak alınamadı. Yeniden giriş yapmak yerine oturumu yeniden deneyin.',true); return; }
       const profile = window.kemalUserAuth.getProfile(), user = window.kemalUserAuth.getUser();
       if(user && profile?.role === 'teacher' && profile?.approval_status !== 'active') { lockAccess('Öğretmen hesabınız kayıtlı, ancak yönetici onayı bekliyor. Öğretmen panelinizden belge ve onay durumunu kontrol edebilirsiniz.'); return; }
@@ -155,9 +173,8 @@
         const authState=window.kemalUserAuth.getState(); if(!authState.ready || authState.error) return;
         if (window.kemalUserAuth.getUser()?.id !== user.id || window.kemalUserAuth.getProfile()?.active === false || window.kemalUserAuth.getProfile()?.role !== 'teacher' || window.kemalUserAuth.getProfile()?.approval_status !== 'active') location.reload();
       });
-    } catch (e) { lockAccess('Öğretmen oturumu doğrulanamadı. Bağlantınızı kontrol edip yeniden açın.'); return; }
+    } catch (e) { lockAccess('Oturum kontrolü tamamlanamadı. Oturumu yeniden deneyebilir veya hesapsız örnek sınıfı açabilirsiniz. Yerel önizleme, canlı sitedeki oturumu kullanmaz.',true); return; }
   }
-  document.body.classList.remove('access-pending');
   if(!viewing)try {const saved=localStorage.getItem(CREATURE_MODE_KEY);if(['classic','natural','3d'].includes(saved))creatureMode=saved;}catch(_){}
   if(!viewing)try {const saved=Number(localStorage.getItem(CREATURE_SIZE_KEY));if([100,150,200].includes(saved))creatureDisplaySize=saved;}catch(_){}
   let blockedStorage = false;
@@ -167,10 +184,12 @@
   if (viewing) state = viewState(viewSnapshot);
   if (!viewing && !demoOnly && !blockedStorage && window.AquariumCloud) {
     cloud=window.AquariumCloud.create({client:window.kemalUserAuth.getClient(),ownerId:window.kemalUserAuth.getUser().id,storage:localStorage,key:KEY,getState:()=>state,project:window.AquariumSharing.snapshot,onStatus:message=>setCloudStatus(message,cloud?.isConflict()===true)});
+    window.AquariumStartup?.phase('Sınıf kaydı yükleniyor…',60000);
     try { state=await cloud.boot(state);localStorage.setItem(KEY,JSON.stringify(state)); }
     catch(e){setCloudStatus(e.message,true);}
   }
 
+  document.body.classList.remove('access-pending');
   let demo = false, beforeDemo = null, selected = '', tab = 'students', today = C.dayKey(), toastTimer;
   let importedClasses = [], pendingRestore = null, confirmAction = null;
   const modal = $('modal');
@@ -257,7 +276,7 @@
       const layer=state.settings.mix.find(x=>x.id===t.id),level=Math.round((layer?.volume ?? (kind==='music'?.7:.25))*100);
       return '<div class="mixer-channel '+(layer?'is-active':'')+'"><label class="mixer-title"><span aria-hidden="true">'+t.emoji+'</span><strong>'+esc(t.name)+'</strong><input type="checkbox" data-mix-enable="'+t.id+'" aria-label="'+esc(t.name)+' aç" '+(layer?'checked':'')+'></label><label class="mixer-level">Ses düzeyi <output id="mixValue-'+t.id+'">%'+level+'</output><input type="range" min="0" max="100" value="'+level+'" data-mix-volume="'+t.id+'" aria-label="'+esc(t.name)+' ses düzeyi" '+(!layer?'disabled':'')+'></label></div>';
     }).join('')+'</div></section>').join('');
-    return '<div class="sound-studio"><p class="modal-intro">Bir müzik seçin, üzerine hafif yağmur ya da kuş sesi ekleyin. Her sesi ayrı ayarlayabilirsiniz.</p><div class="mixer-master"><p id="musicStatus" role="status">'+(Audio.isPlaying()?'Çalıyor: '+esc(Audio.describe()):'Sesleri seçin ve karışımı başlatın.')+'</p><div class="settings-actions"><button class="button primary" data-action="play-sound">▶ Karışımı başlat</button><button class="button" data-action="pause-mix">Ⅱ Duraklat</button><button class="button" data-action="stop-sound">Durdur</button></div><label class="field">Genel ses düzeyi<input id="volumeRange" type="range" min="0" max="100" value="'+Math.round(state.settings.volume*100)+'"></label></div>'+mixer+'<section class="mixer-favorites"><h3>★ Favori karışımlarım</h3><form id="mixFavoriteForm" class="inline-form"><label class="field">Karışım adı<input name="name" maxlength="60" required placeholder="Örn. Yağmurlu kitap saati"></label><button class="button primary" type="submit">Favorilere kaydet</button></form><p id="mixError" class="form-error" role="alert"></p>'+state.settings.favorites.map(f=>'<div class="mix-favorite"><div><strong>'+esc(f.name)+'</strong><small>'+f.mix.map(t=>esc(Audio.titles[t.id])).join(' + ')+'</small></div><div class="settings-actions"><button class="button" data-action="load-mix" data-id="'+f.id+'">▶ Çal</button><button class="button subtle" data-action="rename-mix" data-id="'+f.id+'">Adlandır</button><button class="button subtle" data-action="delete-mix" data-id="'+f.id+'">Sil</button></div></div>').join('')+'<p class="settings-note">Favoriler öğretmen hesabınıza kaydedilir ve akvaryum yedeğine dahil edilir. En fazla 24 karışım saklanabilir.</p></section><label class="toggle-row">Beslerken küçük bir melodi çal<input id="feedSoundToggle" type="checkbox" '+(state.settings.feedSound?'checked':'')+'></label><p class="settings-note">Sesler otomatik başlamaz. Nota altındaki düğme bütün karışımı duraklatır veya sürdürür. Sekme değiştirirken çalmaya devam eder.</p><p class="music-credit">Müzikler: Kevin MacLeod · CC BY 4.0. Doğa kayıtları: Eric Matyas / soundimage.org, isaiah658, Ylmir ve RandomMind. <a href="/assets/akvaryum/muzikler/LISANS.md" target="_blank" rel="noopener">Eserler, düzenlemeler ve lisanslar</a></p></div>';
+    return '<div class="sound-studio"><p class="modal-intro">Bir müzik seçin, üzerine hafif yağmur ya da kuş sesi ekleyin. Her sesi ayrı ayarlayabilirsiniz.</p><div class="mixer-master"><p id="musicStatus" role="status">'+(Audio.isPlaying()?'Çalıyor: '+esc(Audio.describe()):'Sesleri seçin ve karışımı başlatın.')+'</p><div class="settings-actions"><button class="button primary" data-action="play-sound">▶ Karışımı başlat</button><button class="button" data-action="pause-mix">Ⅱ Duraklat</button><button class="button" data-action="stop-sound">Durdur</button></div><label class="field">Genel ses düzeyi<input id="volumeRange" type="range" min="0" max="100" value="'+Math.round(state.settings.volume*100)+'"></label></div>'+mixer+'<section class="mixer-favorites"><h3>★ Favori karışımlarım</h3><form id="mixFavoriteForm" class="inline-form"><label class="field">Karışım adı<input name="name" maxlength="60" required placeholder="Örn. Yağmurlu kitap saati"></label><button class="button primary" type="submit">Favorilere kaydet</button></form><p id="mixError" class="form-error" role="alert"></p>'+state.settings.favorites.map(f=>'<div class="mix-favorite"><div><strong>'+esc(f.name)+'</strong><small>'+f.mix.map(t=>esc(Audio.titles[t.id])).join(' + ')+'</small></div><div class="settings-actions"><button class="button" data-action="load-mix" data-id="'+f.id+'">▶ Çal</button><button class="button subtle" data-action="rename-mix" data-id="'+f.id+'">Adlandır</button><button class="button subtle" data-action="delete-mix" data-id="'+f.id+'">Sil</button></div></div>').join('')+'<p class="settings-note">Favoriler öğretmen hesabınıza kaydedilir ve akvaryum yedeğine dahil edilir. En fazla 24 karışım saklanabilir.</p></section><label class="toggle-row">Beslerken küçük bir melodi çal<input id="feedSoundToggle" type="checkbox" '+(state.settings.feedSound?'checked':'')+'></label><p class="settings-note">Sesler otomatik başlamaz. Nota altındaki düğme bütün karışımı duraklatır veya sürdürür. Sekme değiştirirken çalmaya devam eder.</p><p class="music-credit">Müzikler: Kevin MacLeod · CC BY 4.0. Mevsimlik müzikler: bu site için hazırlanmış enstrümantal kayıtlar. Doğa kayıtları: Eric Matyas / soundimage.org, isaiah658, Ylmir ve RandomMind. <a href="/assets/akvaryum/muzikler/LISANS.md" target="_blank" rel="noopener">Eserler, düzenlemeler ve lisanslar</a></p></div>';
   }
   async function playCurrentMix() {
     Audio.setVolume(state.settings.volume);
@@ -273,13 +292,14 @@
     if (demo) { $('saveStatus').textContent = 'Örnek sınıf · Değişiklikler kaydedilmez.'; return; }
     if (blockedStorage) { storageWarning('Önceki kayıt okunamadı. Üzerine yazılmadı. Ayarlar → Mevcut kaydı indir ile kurtarma kopyası alın; ardından bir yedek yükleyin.'); return; }
     try { localStorage.setItem(KEY, JSON.stringify(state)); $('storageWarning').hidden = true; $('saveStatus').textContent = cloud ? 'Cihaza kaydedildi · Hesabınızla eşitleniyor…' : 'Bu tarayıcıya kaydedildi · Ayarlardan yedek alabilirsiniz.';
-      if(cloud){cloud.markDirty(state);clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,250);} }
+      if(cloud){cloud.markDirty(state);clearTimeout(cloudTimer);cloudTimer=setTimeout(flushCloud,0);} }
     catch (error) { storageWarning('Tarayıcı kaydı yapılamadı. Yaptığınız değişiklikleri kaybetmemek için Ayarlar → Yedek indir seçeneğini kullanın.'); }
   }
   function setCloudStatus(message,problem=false) {
     cloudMessage=message;$('saveStatus').textContent=message;
     const warning=$('cloudWarning');warning.hidden=!problem;
     $('cloudWarningMessage').textContent=problem?message:'';
+    $('cloudRetryButton').textContent=cloud?.isConflict()?'Kayıtları karşılaştır':'Şimdi eşitle';
     if($('cloudStateDescription'))$('cloudStateDescription').textContent=message;
   }
   function applyCloudState(updated) {
@@ -290,32 +310,84 @@
     if(!classroom().students.some(s=>s.id===selected))selected='';
     localStorage.setItem(KEY,JSON.stringify(state));ensureDays();render();
     if(previousClass?.id===classroom().id)for(const s of classroom().students)if((s.days[today]?.tasks||[]).some(t=>t.status==='done'&&C.taskPoints(t)<0&&!knownDeductions.has(t.id)))startTeacherVisit(s);
+    if(previousClass?.id===classroom().id)for(const s of classroom().students){
+      const old=previousClass.students.find(p=>p.id===s.id);
+      if(s.species!=='puffer'||!old)continue;
+      const known=new Set((old.days[today]?.tasks||[]).filter(t=>t.status==='done').map(t=>t.id));
+      if((s.days[today]?.tasks||[]).some(t=>t.status==='done'&&C.taskPoints(t)>0&&!known.has(t.id)))feedEffect(s.id,1,{particles:false});
+    }
     // Refresh score-only views even while open. Leave typed forms untouched.
     if(modal.open && ['behaviorModal','studentDayModal','historyModal','seasonDashboardModal'].includes(modalRoute?.key)) {
       if(selectedBefore && !selected){closeModal();toast('Seçili öğrenci diğer cihazda kaldırılmış.');return;}
       const route=modalRoute;goingBack=true;try{route.render();modal.scrollTop=scroll;if(focused)$(focused)?.focus({preventScroll:true});}finally{goingBack=false;}
     }
+    if(livePickerPending)presentSharedPick(livePickerPending);
   }
   async function refreshCloud(force=false) {
     if(!cloud||demo||demoOnly||blockedStorage)return;
     if(cloud.isConflict()&&force!==true)return;
-    if(cloudBusy){cloudRerun=cloudRerun||force===true;return;}
+    if(cloudBusy){cloudRerun=cloudRerun||force===true;return cloudSettled;}
     if(document.hidden && !cloud.isDirty() && force!==true)return;
-    clearTimeout(cloudTimer);cloudBusy=true;
+    clearTimeout(cloudTimer);cloudBusy=true;let release;cloudSettled=new Promise(resolve=>release=resolve);
     try {
       const previousMessage=cloudMessage,updated=await cloud.refresh(state);if(updated)applyCloudState(updated);
       if(cloudMessage===previousMessage && !cloud.isDirty()&&!cloud.isConflict())cloudMessage='Hesapla eşit · Son kontrol tamamlandı.';
-      cloudRetryDelay=2000;
+      cloudRetryDelay=2000;liveLastAccountCheck=Date.now();
       setCloudStatus(cloudMessage||'Hesap kaydı kontrol edildi.',cloud.isConflict());
     } catch(e){setCloudStatus(e.message,true);cloudRetryDelay=Math.min(30000,cloudRetryDelay*2);}
     finally {
       cloudBusy=false;
+      release();
       if(cloudRerun){cloudRerun=false;cloudTimer=setTimeout(()=>refreshCloud(true),0);}
       else if(cloud.isDirty()&&!cloud.isConflict())cloudTimer=setTimeout(flushCloud,cloudRetryDelay);
     }
   }
   async function flushCloud(){return refreshCloud(true);}
-  function cloudControls(){return '<p class="settings-note" id="cloudStateDescription">'+esc(cloudMessage||'Sınıflar, öğrenciler, görevler ve ses favorileri öğretmen hesabınıza kaydedilir. Aynı hesapla başka cihazda açabilirsiniz. Çevrimdışı değişiklikler bu cihazda tutulur; çakışan kayıtlar otomatik ezilmez.')+'</p><div class="settings-actions"><button class="button" data-action="retry-cloud">Şimdi eşitle</button>'+(cloud?.isConflict()?'<button class="button" data-action="use-cloud">Hesaptaki kaydı kullan</button><button class="button" data-action="use-local">Bu cihazdaki kaydı kullan</button>':'')+'<button class="button" data-action="export-recovery">Korunan yerel kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button></div>';}
+  async function pollCloud(){
+    if(!document.hidden)live?.check();
+    if(live?.isConnected()&&!cloud.isDirty()&&cloud.getRevision()>=live.getRevision()&&Date.now()-liveLastAccountCheck<30000)return;
+    return refreshCloud();
+  }
+  function cloudControls(){return '<p class="settings-note" id="liveStateDescription">'+esc($('liveStatus').textContent||'Anlık bağlantı öğretmen hesabında otomatik kurulur.')+'</p><p class="settings-note" id="cloudStateDescription">'+esc(cloudMessage||'Sınıflar, öğrenciler, görevler ve ses favorileri öğretmen hesabınıza kaydedilir. Aynı hesapla başka cihazda açabilirsiniz. Çevrimdışı değişiklikler bu cihazda tutulur; çakışan kayıtlar otomatik ezilmez.')+'</p><div class="settings-actions"><button class="button" data-action="retry-cloud">'+(cloud?.isConflict()?'Kayıtları karşılaştır':'Şimdi eşitle')+'</button><button class="button" data-action="export-recovery">Korunan yerel kopyayı indir</button><button class="button" data-action="export-cloud-recovery">Korunan hesap kopyasını indir</button>'+syncChoiceBackups()+'</div>';}
+  function syncChoiceBackups(){
+    try {if(!localStorage.getItem(KEY+'_before_sync_choice'))return '';}catch(_){return '';}
+    return '<button class="button" data-action="export-before-sync-local">Son seçim öncesi cihaz yedeği</button><button class="button" data-action="export-before-sync-remote">Son seçim öncesi hesap yedeği</button>';
+  }
+  let syncReview=null;
+  function syncTotals(doc) {
+    const students=doc.classes.flatMap(c=>c.students);
+    return doc.classes.length+' sınıf · '+students.length+' öğrenci · '+students.reduce((n,s)=>n+C.earned(s),0)+' toplam puan';
+  }
+  function syncStudentFacts(s) {
+    if(!s)return 'Bu kayıtta öğrenci yok';
+    const points=(s.days[today]?.tasks||[]).reduce((n,t)=>n+(t.status==='done'?C.taskPoints(t):0),0);
+    return '<strong>'+C.earned(s)+' toplam puan</strong><span>Bugün '+signed(points)+' · '+C.completedCount(s)+' puan kaydı · '+s.feeds.length+' besleme</span>';
+  }
+  function syncReviewModal(classId=state.activeClassId) {
+    if(!syncReview)return;
+    rememberModal('sync-review',()=>syncReviewModal(classId));
+    const {local,remote}=syncReview,classes=new Map();
+    for(const cls of [...local.classes,...remote.classes])if(!classes.has(cls.id))classes.set(cls.id,cls.name);
+    if(!classes.has(classId))classId=classes.keys().next().value;
+    const left=local.classes.find(c=>c.id===classId),right=remote.classes.find(c=>c.id===classId),pupils=new Map();
+    for(const s of [...(left?.students||[]),...(right?.students||[])])pupils.set(s.id,s.name);
+    const rows=[...pupils].sort((a,b)=>a[1].localeCompare(b[1],'tr')).map(([id,name])=>{
+      const a=left?.students.find(s=>s.id===id),b=right?.students.find(s=>s.id===id),different=JSON.stringify(a)!==JSON.stringify(b);
+      return '<tr'+(different?' class="sync-different"':'')+'><th scope="row">'+esc(name)+(a&&b&&a.name!==b.name?'<small>Hesapta: '+esc(b.name)+'</small>':'')+(different?'<small>Kayıt farklı</small>':'')+'</th><td>'+syncStudentFacts(a)+'</td><td>'+syncStudentFacts(b)+'</td></tr>';
+    }).join('');
+    openModal('Kayıtları karşılaştır','<p class="modal-intro">Bu cihazın kaydı hesaptakinden farklı. Puan kaybını önlemek için kayıtlar otomatik birleştirilmedi. Karşılaştırmak kayıtları değiştirmez.</p><div class="sync-copy-summary"><section><h3>Bu cihaz</h3><p>'+esc(syncTotals(local))+'</p></section><section><h3>Hesap</h3><p>'+esc(syncTotals(remote))+'</p></section></div><label class="field">Karşılaştırılacak sınıf<select id="syncReviewClass">'+[...classes].map(([id,name])=>'<option value="'+esc(id)+'" '+(id===classId?'selected':'')+'>'+esc(name)+'</option>').join('')+'</select></label>'+(!left||!right?'<p class="settings-note">Bu sınıf '+(!left?'yalnızca hesapta':'yalnızca bu cihazda')+' bulunuyor.</p>':'')+'<table class="sync-comparison"><caption>Güncel sezon · '+esc(classes.get(classId))+'</caption><thead><tr><th scope="col">Öğrenci</th><th scope="col">Bu cihaz</th><th scope="col">Hesap</th></tr></thead><tbody>'+rows+'</tbody></table><p class="settings-note">Toplamlar eşit olsa bile geçmiş, balık seçimi veya ayarlar farklı olabilir. Bekleyen görevler puan kaydı sayısına dahil değildir. Aşağıdaki seçim yalnızca bu sınıfı değil, hesaptaki tüm sınıfları ve ayarları kapsar.</p><div class="settings-section"><h3>Önce iki kopyayı saklayın</h3><p>İki tarafta da korunacak farklı puanlar varsa bir kayıt seçmeyin. İki yedeği indirerek ayrı ayrı saklayın; bu dosyalar karşılaştırılıp kurtarma yapılabilir.</p><div class="settings-actions"><button class="button" data-action="export-sync-local">Bu cihazın yedeğini indir</button><button class="button" data-action="export-sync-remote">Hesabın yedeğini indir</button></div></div><div class="settings-section"><h3>Eksiksiz olduğunu bildiğiniz kaydı kullanın</h3><p class="settings-note">Bu işlem iki kaydı birleştirmez. Seçilmeyen kopyadaki farklı puanlar etkin kayda aktarılmaz; kurtarma kopyası bu cihazda korunur. Emin değilseniz yedekleri indirin ve karşılaştırmayı kapatın.</p><div class="settings-actions"><button class="button" data-action="use-cloud">Hesaptaki kaydı kullan</button><button class="button" data-action="use-local">Bu cihazdaki kaydı kullan</button><button class="button subtle" data-action="review-cloud">Yeniden karşılaştır</button></div></div>');
+  }
+  async function reviewSyncConflict() {
+    if(!cloud || cloudBusy){toast('Eşitleme kontrolü sürüyor. Biraz sonra yeniden deneyin.');return;}
+    clearTimeout(cloudTimer);cloudBusy=true;syncReview=null;
+    rememberModal('sync-review',()=>reviewSyncConflict());openModal('Kayıtları karşılaştır','<p role="status">İki kayıt kontrol ediliyor. Puanlarınız korunuyor…</p>');
+    try {
+      const review=await cloud.inspect(state);
+      if(review.resolved){applyCloudState(review.document);setCloudStatus('Hesapla eşit · Tüm değişiklikler doğrulandı.');if(modalRoute?.key==='sync-review')closeModal();return;}
+      if(modal.open && modalRoute?.key==='sync-review'){syncReview=review;syncReviewModal();}
+    } catch(e){setCloudStatus(e.message,true);if(modal.open && modalRoute?.key==='sync-review')openModal('Kayıtları karşılaştır','<p role="alert">'+esc(e.message)+'</p><button class="button" data-action="review-cloud">Yeniden dene</button>');}
+    finally{cloudBusy=false;}
+  }
   function commit() { save(); render(); scheduleShare(); }
   let modalHistory=[],modalRoute=null,pendingModalRoute=null,goingBack=false;
   function rememberModal(key,render) {pendingModalRoute={key,render};}
@@ -374,6 +446,19 @@
     rememberModal('themesModal'+'',()=>themesModal());
     openModal('Bugün nereye dalalım?', '<p class="modal-intro">Sınıfınızın dünyasını değiştirin. Her ortamda aynı deniz dostları sizinle.</p><div class="theme-grid">' + C.THEMES.map(t => '<button class="theme-card" data-action="theme" data-theme="' + t.id + '" aria-pressed="' + (classroom().theme === t.id) + '"><img src="' + background(t.id) + '" alt="' + t.name + '"><strong>' + t.name + '</strong><small>' + t.description + '</small></button>').join('') + '</div>');
   }
+  function updateSeasonalSuggestion() {
+    const banner=$('seasonalSuggestion'),offer=Seasonal?.suggestion();
+    if(!banner)return;
+    if(viewing||demo||demoOnly){banner.hidden=true;return;}
+    let dismissed=[];try{dismissed=JSON.parse(localStorage.getItem(KEY+'_seasonal_dismissals')||'[]');}catch(_){}
+    banner.hidden=viewing||demo||demoOnly||!offer||classroom().theme===offer.theme||!Array.isArray(dismissed)||dismissed.includes(offer.key);
+    if(!banner.hidden){$('seasonalSuggestionTitle').textContent=offer.title;$('seasonalSuggestionDescription').textContent=offer.description;banner.dataset.key=offer.key;banner.dataset.theme=offer.theme;}
+  }
+  function seasonalPreview(themeId) {
+    const theme=C.THEMES.find(t=>t.id===themeId&&t.seasonal);if(!theme)return;
+    rememberModal('seasonalPreview:'+theme.id,()=>seasonalPreview(theme.id));
+    openModal(theme.name,'<img class="seasonal-preview" src="'+background(theme.id)+'" alt="'+esc(theme.description)+'"><p class="modal-intro">'+esc(theme.description)+'. Bu tema yalnızca siz seçerseniz kullanılır; mevcut puanlar ve balıklar korunur.</p><div class="settings-actions"><button class="button primary" data-action="theme" data-theme="'+theme.id+'">Bu temayı kullan</button><button class="button" data-action="seasonal-music" data-theme="'+theme.id+'">♫ '+(theme.music==='izmir'?'Enstrümantal İzmir Marşı':'Jingle Bells ve çanlar')+' dinle</button></div><p class="settings-note">Tema seçimi müziği başlatmaz. Müzikleri ayrıca ses menüsünde bulabilirsiniz.</p>');
+  }
   function soundModal() {rememberModal('soundModal',()=>soundModal());openModal('Ortam sesleri',soundSettings());}
   function settingsModal() {
     rememberModal('settingsModal'+'',()=>settingsModal());
@@ -411,7 +496,7 @@
     if (!g || !g.enabled) return '';
     return '<section class="shared-goal"><span class="eyebrow">BİRLİKTE BAŞARIYORUZ</span><h3>' + esc(g.title) + '</h3><p>' + (p.complete ? 'Hedefe birlikte ulaştık!' : 'Her küçük katkıyla ilerliyoruz.') + '</p><div class="progress-copy"><span>Hedef başladığından beri</span><strong>' + p.points.toLocaleString('tr-TR') + ' / ' + p.target.toLocaleString('tr-TR') + ' puan</strong></div><div class="progress-track" role="progressbar" aria-label="Ortak sınıf hedefi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p.percent + '"><span style="width:' + p.percent + '%"></span></div></section>';
   }
-  // Sessions are transient and device-local: no score, sharing or cloud writes.
+  // Local/demo draws stay local; account draws use one server-selected result.
   function stopPicker() {
     pickerEpoch++;cancelAnimationFrame(pickerFrame);pickerFrame=0;
     Audio.cancelPicker?.();
@@ -445,14 +530,45 @@
       '<label class="picker-sound"><input id="pickerSoundToggle" type="checkbox" '+(state.settings.pickerSound?'checked':'')+'>Çark ve sonuç sesi'+(state.settings.volume===0?'<small>Genel ses düzeyi kapalı.</small>':'')+'</label><p class="settings-note picker-note">Her öğrenciye eşit şans. Tur tamamlanana kadar seçilenler yeniden seçilmez. Bugün gelmeyen öğrenciler ve öğretmen balığı dahil edilmez. Seçim puan vermez.</p><p id="pickerRound" class="picker-round">'+(result?session.used.filter(id=>eligible.some(s=>s.id===id)).length+' / '+eligible.length+' öğrenci bu turda seçildi.':'')+'</p>');
     modal.classList.add('random-picker-modal');
   }
-  function drawRandomStudent() {
-    if(viewing || !modal.open || modalRoute?.key!=='random-student' || pickerFrame)return;
+  async function drawRandomStudent() {
+    if(viewing || !modal.open || modalRoute?.key!=='random-student' || pickerFrame || liveDrawPending)return;
     refreshDate();if(!modal.open)return;
+    if(live&&!demo&&!demoOnly){
+      liveDrawPending=true;const classId=classroom().id,button=$('pickerStart');button.disabled=true;button.textContent='Sınıfla eşitleniyor…';
+      try{
+        await refreshCloud(true);
+        if(cloud.isDirty()&&!cloud.isConflict())await refreshCloud(true);
+        if(cloud.isDirty()||cloud.isConflict())throw Error('Ortak seçimden önce bekleyen puanları eşitleyin. Kayıt ve eşitleme bölümünden durumu kontrol edebilirsiniz.');
+        if(classroom().id!==classId||!modal.open||modalRoute?.key!=='random-student')return;
+        const result=await live.draw(classId,C.uid());
+        if(modal.open&&modalRoute?.key==='random-student'&&$('pickerStart').textContent==='Sınıfla eşitleniyor…'){
+          if(result.stale)randomStudentModal();else presentSharedPick(result);
+        }
+      }catch(e){toast(e.message);if(modal.open&&modalRoute?.key==='random-student'){$('pickerHint').textContent=e.message;$('pickerStart').disabled=false;$('pickerStart').textContent='Yeniden dene';}}
+      finally{liveDrawPending=false;}return;
+    }
     const cls=classroom(),date=today,session=pickerSession();
     const draw=C.pickStudent(cls,date,session.used,pickerRandom);
     if(!draw) {randomStudentModal();return;}
+    animatePicker(draw);
+  }
+  function presentSharedPick(event){
+    if(event.expiresAt && Date.now()>event.expiresAt){if(livePickerPending===event)livePickerPending=null;return;}
+    if(viewing||demo||demoOnly||blockedStorage||event.class_id!==classroom().id||event.pick_date!==C.dayKey())return;
+    const chosen=classroom().students.find(s=>s.id===event.student_id&&!s.days[today]?.absent);
+    if(!chosen){livePickerPending=event;return;}
+    livePickerPending=null;const session=pickerSession();session.used=event.round_ids.slice();
+    pickerResult={id:chosen.id,classId:classroom().id,date:today};
+    // Never replace an unsaved settings form with a remote activity.
+    if(document.hidden || (liveDrawPending&&!modal.open) || (modal.open&&modalRoute?.key!=='random-student')){highlightFish(chosen.id);toast('Söz '+chosen.name+' adlı öğrencide.');return;}
+    if(!modal.open)randomStudentModal();
+    stopPicker();
+    animatePicker({id:chosen.id,used:event.round_ids,remaining:event.remaining});
+  }
+  function animatePicker(draw) {
+    const cls=classroom(),date=today,session=pickerSession();
     const candidates=cls.students.filter(s=>!s.days[date]?.absent);
-    const epoch=++pickerEpoch,started=performance.now();
+    const epoch=++pickerEpoch,started=performance.now(),duration=draw.remaining===undefined?2400:draw.remaining;
     let nextPreview=0,preview=0;
     pickerResult=null;
     $('pickerStart').disabled=true;$('pickerStart').textContent='Seçiliyor…';
@@ -468,8 +584,7 @@
       if(epoch!==pickerEpoch || !modal.open || modalRoute?.key!=='random-student')return;
       const chosen=classroom().id===cls.id && C.dayKey()===date && cls.students.find(s=>s.id===draw.id && !s.days[date]?.absent);
       if(!chosen){randomStudentModal();return;}
-      if(draw.reset)session.used=[];
-      session.used.push(chosen.id);
+      if(draw.used)session.used=draw.used.slice();else {if(draw.reset)session.used=[];session.used.push(chosen.id);}
       pickerResult={id:chosen.id,classId:cls.id,date};
       showPreview(chosen);
       $('pickerStage').classList.remove('is-drawing');$('pickerStage').classList.add('has-result');
@@ -483,14 +598,14 @@
       $('pickerRound').textContent=session.used.filter(id=>candidates.some(s=>s.id===id)).length+' / '+candidates.length+' öğrenci bu turda seçildi.';
       highlightFish(chosen.id);
     };
-    if(reduced.matches || !state.settings.motion || candidates.length===1){finish();return;}
+    if(reduced.matches || !state.settings.motion || candidates.length===1 || duration<=0){finish();return;}
     playPickerSound(false,epoch);
     showPreview(candidates[0]);
     const animate=now=>{
       if(epoch!==pickerEpoch || !modal.open || modalRoute?.key!=='random-student'){pickerFrame=0;return;}
       const elapsed=now-started;
-      if(elapsed>=2400){finish();return;}
-      if(elapsed>=nextPreview){showPreview(candidates[(++preview)%candidates.length]);nextPreview=elapsed+90+240*Math.pow(elapsed/2400,2);}
+      if(elapsed>=duration){finish();return;}
+      if(elapsed>=nextPreview){showPreview(candidates[(++preview)%candidates.length]);nextPreview=elapsed+90+240*Math.pow(elapsed/duration,2);}
       pickerFrame=requestAnimationFrame(animate);
     };
     pickerFrame=requestAnimationFrame(animate);
@@ -729,6 +844,7 @@
     $('aquarium').style.backgroundImage = 'url("' + background(theme.id) + '")';
     $('aquarium').dataset.theme = theme.id;
     applyWaterEffects();
+    updateSeasonalSuggestion();
     const themeButton=document.querySelector('.scene-controls [data-action="themes"]');
     themeButton.title='Ortamı değiştir · '+theme.name;
     $('sceneTitle').textContent = classroom().students.length ? classroom().name + ' · Su altı dünyamız.' : 'Bizim su altı dünyamız.';
@@ -848,7 +964,7 @@
         else Motion.reflow(fish,placement,width);
         fish.layoutKey=layoutKey;
       }
-      fish.size = size; fish.mood = fishMood(s);
+      fish.size = size; fish.restSlotSize=size; fish.mood = fishMood(s);
       const growth = viewing && !s.isTeacher ? {...s.appearance,stage:s.appearance?.egg?0:10} : s.isTeacher || !s.name ? {stage:10,scale:1,egg:false,trophy:false} : C.growth(s,classroom());
       const wasEgg=fish.egg===true;
       if(wasEgg && !growth.egg && state.settings.motion && !reduced.matches) {
@@ -925,7 +1041,11 @@
       const scene=$('swimArea').getBoundingClientRect(),shell=$('classPearl').getBoundingClientRect();
       pearl={x:shell.left-scene.left,y:shell.top-scene.top,width:shell.width,height:shell.height};
     }
-    const restingPlaces=Motion.restLayout(resting.map(f=>({id:f.el.dataset.id,size:f.size,minY:f.minY,maxY:f.maxY})),width,height,pearl);
+    // Reserve a sand slot for every pupil, including active fish and eggs.
+    // Feeding one pupil releases only that fish; the remaining resting fish
+    // keep their destinations even when an egg hatches or scores refresh.
+    const residents=[...swimmers.values()].filter(f=>!f.el.classList.contains('teacher-fish'));
+    const restingPlaces=Motion.restLayout(residents.map(f=>({id:f.el.dataset.id,size:f.restSlotSize??f.size,minY:f.minY,maxY:f.maxY})),width,height,pearl);
     resting.forEach(fish=>{
       const place=restingPlaces.get(fish.el.dataset.id);
       fish.restX=place.x;fish.restY=place.y;
@@ -947,6 +1067,7 @@
 
   function measure() {
     updateBubbleTravel();
+    seasonal?.resize();
     resizeWater();water?.draw(performance.now());
     if(viewing && (document.hidden || document.body.classList.contains('access-pending')))return;
     const changed = width !== $('swimArea').clientWidth || height !== $('swimArea').clientHeight;
@@ -973,7 +1094,10 @@
     styleIfChanged(fish,fish.el,'--water-saturation',depth.saturation.toFixed(2),true);
     styleIfChanged(fish,fish.el,'--floor-shadow',fish.egg?'0':(Math.max(0,(fish.y/Math.max(1,height)-.62))*depth.opacity*.5).toFixed(2),true);
     const effectiveScale=(fish.growthScale ?? 1)*depth.scale;
-    styleIfChanged(fish,fish.el,'--label-adjustment',fish.egg?'0px':Motion.labelAdjustment(fish.size,effectiveScale).toFixed(1)+'px',true);
+    const puff=Motion.puffPose(fish.species==='puffer'&&moving&&!fish.egg&&Number.isFinite(fish.puffStarted)?(performance.now()-fish.puffStarted)/1000:NaN);
+    fish.el.classList.toggle('is-puffed',puff.amount>0);
+    const puffGap=Math.max(0,fish.size-10)/3*effectiveScale*(puff.y-1);
+    styleIfChanged(fish,fish.el,'--label-adjustment',fish.egg?'0px':(Motion.labelAdjustment(fish.size,effectiveScale)-puffGap).toFixed(1)+'px',true);
     styleIfChanged(fish,fish.el,'--points-gap',fish.egg?'0px':Motion.labelGap(fish.size,effectiveScale).toFixed(1)+'px',true);
     const stroke=moving && !fish.egg ? Math.sin(fish.phase*6.5) : 0;
     styleIfChanged(fish,fish.el,'--tail-yaw',(stroke*23).toFixed(2)+'deg',true);
@@ -981,7 +1105,7 @@
     if(fish.anatomicalMotion && !fish.use3D && fish.joints?.length) {
       const pose=Anatomy.pose(fish.species,fish.phase,moving && !fish.held);
       fish.bodyImage.style.transform='scale('+pose.bodyX.toFixed(3)+','+pose.bodyY.toFixed(3)+')';
-      fish.joints.forEach((img,i)=>{const transform='rotate('+pose.joints[i].toFixed(2)+'deg)';if(img.style.transform!==transform)img.style.transform=transform;});
+      fish.joints.forEach((img,i)=>{const transform='rotate('+pose.joints[i].toFixed(2)+'deg)'+(pose.jointScaleY?' scaleY('+pose.jointScaleY[i].toFixed(3)+')':'');if(img.style.transform!==transform)img.style.transform=transform;});
     }
     if(fish.use3D && drawModels) {
       const active=moving && !fish.held,pose=fish.species+':'+(active?fish.phase.toFixed(3):'rest')+':'+fish.angle.toFixed(1);
@@ -999,7 +1123,7 @@
     styleIfChanged(fish,fish.volume,'--turn-height',(turn.height*100).toFixed(1)+'%',true);
     styleIfChanged(fish,fish.volume,'transform','translate(-50%,-50%) scaleX('+(model?0:turn.fullness).toFixed(3)+')');
     styleIfChanged(fish,fish.side,'transform',model?'none':'perspective(600px) rotateY('+turn.yaw.toFixed(2)+'deg)');
-    styleIfChanged(fish,fish.art,'transform','translateY('+turn.lift.toFixed(2)+'px) scale('+(effectiveScale*turn.scale).toFixed(3)+') rotate('+(tilt+turn.bank).toFixed(2)+'deg) scaleY('+pulse.toFixed(3)+')');
+    styleIfChanged(fish,fish.art,'transform','translateY('+turn.lift.toFixed(2)+'px) scale('+(effectiveScale*turn.scale).toFixed(3)+') rotate('+(tilt+turn.bank).toFixed(2)+'deg) scaleY('+(pulse*puff.y).toFixed(3)+') scaleX('+puff.x.toFixed(3)+')');
   }
 
   function clearTeacherVisit(clearQueue=true) {
@@ -1101,7 +1225,7 @@
   let frameSamples=0,slowSamples=0,previousFrame=0,reportingPerformance=false,qualityNeedsRender=false;
   function tick(now) {
     if(document.hidden) {frame=0;return;}
-    water?.draw(now);
+    water?.draw(now);seasonal?.draw(now);
     const elapsed=previousFrame?now-previousFrame:0;previousFrame=now;
     // Sustained low frame delivery triggers the lighter compositor path. One
     // long task or a tab switch alone must not downgrade the device.
@@ -1123,7 +1247,7 @@
       f.held=f.mentorPaused || f.hover || f.pressed || f.keyboard || f.feedingUntil>now || f.foundUntil>now;
       fishList.push(f);
     }
-    if(!fishList.length&&!water?.active()){frame=0;lastTime=0;return;}
+    if(!fishList.length&&!water?.active()&&!seasonal?.active()){frame=0;lastTime=0;return;}
     frame=requestAnimationFrame(tick);
     // Compare against the last processed motion frame, not the last RAF.
     // Otherwise a 60/120Hz display skips every single lightweight frame.
@@ -1140,12 +1264,14 @@
   }
   function restartAnimation() {
     cancelAnimationFrame(frame);frame=0;lastTime=0;previousFrame=0;
-    water?.resume();
-    if(state.settings.motion && !reduced.matches && !document.hidden && (water?.active()||[...swimmers.values()].some(f=>!f.egg)))frame=requestAnimationFrame(tick);
+    water?.resume();seasonal?.resume();
+    if(state.settings.motion && !reduced.matches && !document.hidden && (water?.active()||seasonal?.active()||[...swimmers.values()].some(f=>!f.egg)))frame=requestAnimationFrame(tick);
   }
-  function feedEffect(id, points) {
+  function feedEffect(id, points, {particles=true}={}) {
     if (!state.settings.motion || reduced.matches) return;
     const fish = swimmers.get(id); if (!fish) return;
+    if(fish.species==='puffer' && points>0 && !fish.egg)fish.puffStarted=performance.now();
+    if(!particles)return;
     fish.feedingUntil = performance.now() + 1600;
     const rect = fish.el.getBoundingClientRect(), area = $('aquarium').getBoundingClientRect();
     for (let i = 0; i < 7; i++) {
@@ -1163,6 +1289,9 @@
     if (demo) return;
     beforeDemo = state; state = C.initialState(); demo = true;
     const cls = classroom(); cls.name = 'Örnek sınıf';
+    // Explicit demo URL only: never apply a preview theme to a teacher account
+    // or a parent/visitor snapshot, and never save it to the cloud.
+    if(demoOnly && C.THEMES.some(t=>t.id===params.get('tema')))cls.theme=params.get('tema');
     const demoSpecies = ['clown', 'tang', 'butterfly', 'turtle', 'ray', 'seahorse', 'yellowtang', 'mandarin', 'puffer', 'octopus', 'jellyfish', 'dolphin'];
     ['Deniz', 'Ada', 'Ege', 'Duru', 'Mert', 'Elif', 'Arda', 'İpek', 'Can', 'Ece', 'Defne', 'Ali'].forEach((name, i) => {
       const s = C.newStudent(name, demoSpecies[i]); cls.students.push(s); const d = C.ensureDay(s, cls, today);
@@ -1280,6 +1409,7 @@
   }
   function refreshDate() {
     if (viewing) return;
+    updateSeasonalSuggestion();
     const next = C.dayKey();
     if (next !== today) { today = next; closeModal(); ensureDays(); commit(); toast('Yeni günün görevleri hazır.'); }
     else {classroom().students.forEach(s => { const fish = swimmers.get(s.id); if (fish) updateHungerLabel(fish, s); });if(updateRestingFish()) commit();}
@@ -1297,7 +1427,7 @@
       }
       return;
     }
-    if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes','random-student','retry-cloud'].includes(action)) {
+    if (document.fullscreenElement && !modal.contains(button) && !['fullscreen','close','modal-back','activities','sound','toggle-sound','themes','random-student','retry-cloud','seasonal-preview','seasonal-dismiss'].includes(action)) {
       const birthday=classroom().students.find(s=>s.id===button.dataset.id);
       if(action==='fish-behaviors' && birthday && C.isBirthday(birthday)) openModal('İyi ki doğdun'+(state.settings.names?', '+birthday.name:'')+'! 🎂','<p class="birthday-message">Bugün senin günün. Birlikte nice güzel keşiflere! ✨</p>');
       return;
@@ -1317,12 +1447,26 @@
         } catch(e) { toast('Eski kayıt okunamadı. Yedek dosyasıyla içe aktarabilirsiniz.'); }
         break;
       }
-      case 'retry-cloud': await refreshCloud(true); break;
-      case 'use-cloud': case 'use-local': {
-        const choice=action==='use-local'?'local':'remote';
-        confirm('Kullanılacak kaydı seç',choice==='local'?'Bu cihazdaki kayıt hesaptaki kaydın yerini alacak. Önce iki kaydın da yedeğini almanız önerilir.':'Hesaptaki son kayıt açılacak. Bu cihazdaki kopya ayrıca korunacak.',async()=>{try{state=await cloud.resolve(choice,state);localStorage.setItem(KEY,JSON.stringify(state));closeModal();selected='';ensureDays();render();toast('Seçtiğiniz kayıt açıldı.');}catch(e){toast(e.message);}});break;
+      case 'retry-cloud': button.disabled=true;try{await refreshCloud(true);if(cloud?.isConflict())await reviewSyncConflict();}finally{button.disabled=false;}break;
+      case 'review-cloud': await reviewSyncConflict(); break;
+      case 'export-before-sync-local': case 'export-before-sync-remote': {
+        try{const copies=JSON.parse(localStorage.getItem(KEY+'_before_sync_choice')||'null'),source=action==='export-before-sync-local'?'local':'remote';if(copies?.[source])exportData(copies[source],'akvaryum-secim-oncesi-'+(source==='local'?'bu-cihaz':'hesap')+'-'+today+'.json');else toast('Bu seçim öncesine ait kayıt yok.');}catch(e){toast('Seçim öncesi yedeği okunamadı.');}break;
       }
-      case 'export-cloud-recovery': case 'export-recovery': {const raw=localStorage.getItem(KEY+(action==='export-cloud-recovery'?'_cloud_recovery':'_recovery'));if(raw)exportData(raw,'akvaryum-korunan-kopya.json');else toast('Ayrı bir kurtarma kopyası henüz oluşmadı.');break;}
+      case 'export-sync-local': case 'export-sync-remote': if(syncReview)exportData(action==='export-sync-local'?syncReview.local:syncReview.remote,'akvaryum-'+(action==='export-sync-local'?'bu-cihaz':'hesap')+'-'+today+'.json');break;
+      case 'use-cloud': case 'use-local': {
+        if(!syncReview){await reviewSyncConflict();break;}
+        const choice=action==='use-local'?'local':'remote',review=syncReview;
+        confirm('Tüm sınıflar için bu kayıt kullanılsın mı?',(choice==='local'?'Bu cihazın kaydı: '+syncTotals(review.local)+'. Hesaptaki kayıt bununla değiştirilecek.':'Hesaptaki kayıt: '+syncTotals(review.remote)+'. Bu cihazda bu kayıt açılacak.')+' İki kopyadaki puanlar birleştirilmeyecek. Seçilmeyen kopyadaki farklı puanlar aktarılmayacak. Kurtarma kopyaları bu cihazda saklanır.',async()=>{
+          if(JSON.stringify(C.validate(state))!==JSON.stringify(review.local)){toast('Bu cihazın kaydı değişti. Yeniden karşılaştırın.');await reviewSyncConflict();return;}
+          if(cloudBusy){toast('Eşitleme sürüyor. Yeniden karşılaştırın.');return;}
+          clearTimeout(cloudTimer);cloudBusy=true;let retryReview=false;
+          try{const updated=await cloud.resolve(choice,state,review.revision);applyCloudState(updated);syncReview=null;setCloudStatus(cloudMessage,cloud.isConflict());scheduleShare();toast('Seçtiğiniz kayıt eşitlendi.');}
+          catch(e){setCloudStatus(e.message,true);toast(e.message);retryReview=e.code==='SYNC_REVIEW_STALE';}
+          finally{cloudBusy=false;if(cloud.isDirty()&&!cloud.isConflict())cloudTimer=setTimeout(flushCloud,250);}
+          if(retryReview)await reviewSyncConflict();
+        });break;
+      }
+      case 'export-cloud-recovery': case 'export-recovery': {const raw=localStorage.getItem(KEY+(action==='export-cloud-recovery'?'_cloud_recovery':'_recovery'));if(raw)exportData(raw,'akvaryum-korunan-'+(action==='export-cloud-recovery'?'hesap':'bu-cihaz')+'-'+today+'.json');else toast('Ayrı bir kurtarma kopyası henüz oluşmadı.');break;}
       case 'sharing': await sharingModal(); break;
       case 'copy-child': try { const control=$('childScope-'+button.dataset.student);if(control && !(await saveShareControl(control)))break;await navigator.clipboard.writeText(button.dataset.link); toast('Çocuğa özel erişim kopyalandı.'); } catch(e) { toast('Kodu yukarıdaki alandan seçip kopyalayabilirsiniz.'); } break;
       case 'enable-child': case 'disable-child': case 'update-child-scope': {
@@ -1383,6 +1527,16 @@
       case 'add': addModal(); break;
       case 'choose': chooseModal(); break;
       case 'themes': themesModal(); break;
+      case 'seasonal-preview': seasonalPreview($('seasonalSuggestion').dataset.theme); break;
+      case 'seasonal-dismiss': {
+        const offer=Seasonal?.suggestion();if(!offer)break;
+        try{const old=JSON.parse(localStorage.getItem(KEY+'_seasonal_dismissals')||'[]');localStorage.setItem(KEY+'_seasonal_dismissals',JSON.stringify([...new Set([...(Array.isArray(old)?old:[]),offer.key])].slice(-12)));}catch(_){}
+        $('seasonalSuggestion').hidden=true;break;
+      }
+      case 'seasonal-music': {
+        const theme=C.THEMES.find(t=>t.id===button.dataset.theme&&t.seasonal);if(!theme||!Audio.catalogue.some(t=>t.id===theme.music))break;
+        state.settings.mix=[{id:theme.music,volume:.7}];state.settings.sound=theme.music;save();await playCurrentMix();break;
+      }
       case 'settings': settingsModal(); break;
       case 'season-dashboard': seasonDashboardModal(); break;
       case 'help': helpModal(); break;
@@ -1502,7 +1656,7 @@
       form.dataset.submitted = 'true';
       closeModal(); commit();
       // One sound and a bounded number of effects keep large classes quiet and responsive.
-      const fed=results.filter(r=>r.fed); fed.slice(0,6).forEach(r=>feedEffect(r.id,r.points));
+      const fed=results.filter(r=>r.fed); fed.forEach((r,i)=>feedEffect(r.id,r.points,{particles:i<6}));
       if(fed.length && state.settings.feedSound) {Audio.setVolume(state.settings.volume);Audio.feed().catch(e=>toast(e.message));}
       toast(results.length+' öğrenciye toplam +'+results.reduce((n,r)=>n+r.points,0)+' puan verildi · '+fed.length+' balık beslendi.');
     } else if (form.id === 'goalForm') {
@@ -1566,6 +1720,7 @@
   });
   document.addEventListener('change', async event => {
     const input = event.target;
+    if(!viewing && input.id==='syncReviewClass'){syncReviewModal(input.value);return;}
     if(!viewing && updateEffectRange(input,true))return;
     if(viewing) {if(childViewing && input.id==='parentHistoryPeriod' && ['day','week','month','all'].includes(input.value)){parentPeriod=input.value;parentPage=0;openParentHistory();$('parentHistoryPeriod')?.focus({preventScroll:true});}return;}
     if(input.id==='pickerSoundToggle'){state.settings.pickerSound=input.checked;if(!input.checked)Audio.cancelPicker?.();save();return;}
@@ -1625,19 +1780,21 @@
     try { const updated = C.validate(JSON.parse(event.newValue)); if (demo) beforeDemo = updated; else { state = updated; selected = ''; closeModal(); ensureDays(); render(); toast('Diğer sekmedeki değişiklikler alındı.'); } } catch (e) { storageWarning('Diğer sekmedeki kayıt okunamadı. Bu sayfanın kayıtları korunuyor.'); }
   });
   document.addEventListener('visibilitychange', () => {
+    $('aquariumApp').classList.toggle('page-hidden',document.hidden);
     if(document.hidden){suspendTeacherVisit();Audio.cancelPicker?.();if(pickerFrame){stopPicker();if(modal.open && modalRoute?.key==='random-student')randomStudentModal();}}
     else {refreshDate();updateTimer();}
     restartAnimation();
   });
   reduced.addEventListener('change', render);
   window.addEventListener('site-performance-change',()=>{applyWaterEffects();if(reportingPerformance)qualityNeedsRender=true;else renderFish();});
-  window.addEventListener('pagehide',disposeCreatureRenderer);
-  window.addEventListener('pageshow',()=>{if(creatureMode==='3d')renderFish();});
+  window.addEventListener('pagehide',()=>{disposeCreatureRenderer();seasonal?.dispose();});
+  window.addEventListener('pageshow',()=>{seasonal?.resize(true);if(creatureMode==='3d')renderFish();});
   setInterval(refreshDate, 30000);
   if(!viewing) setInterval(updateTimer,1000);
   updateClock();
   updateFullscreenControls();
   new ResizeObserver(measure).observe($('swimArea'));
+  new ResizeObserver(()=>seasonal?.resize()).observe($('aquarium'));
   new ResizeObserver(()=>{if(swimmers.size) renderFish();}).observe($('eggBed'));
   new ResizeObserver(()=>{if(swimmers.size && width && height)updateRestingFish();}).observe($('classPearl'));
   document.addEventListener('fullscreenchange', () => {const warning=$('cloudWarning');if(document.fullscreenElement)$('aquarium').append(warning);else $('storageWarning').before(warning); if (document.fullscreenElement) { if(modal.open) closeModal(); releaseFish(); $('aquarium').append(modal); } else document.body.append(modal); updateFullscreenControls(); updateClock(); measure(); });
@@ -1657,8 +1814,20 @@
     setInterval(refreshView,3000);
     document.addEventListener('visibilitychange',()=> { if(document.hidden) {closeModal();document.body.classList.add('access-pending');} else refreshView(); });
   }
-  if(cloud){setInterval(refreshCloud,3000);window.addEventListener('online',()=>refreshCloud(true));window.addEventListener('focus',()=>refreshCloud(true));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCloud(true);});window.addEventListener('beforeunload',event=>{try{if(JSON.parse(localStorage.getItem(KEY+'_cloud')||'{}').dirty){event.preventDefault();event.returnValue='';}}catch(e){}});}
+  if(cloud){
+    const client=window.kemalUserAuth.getClient();
+    if(window.AquariumLive&&client.channel)live=window.AquariumLive.create({client,ownerId:window.kemalUserAuth.getUser().id,
+      onRevision:rev=>{if(rev>cloud.getRevision())refreshCloud(true);},onPicker:presentSharedPick,
+      onStatus:message=>{$('liveStatus').textContent=message;if($('liveStateDescription'))$('liveStateDescription').textContent=message;}});
+    setInterval(pollCloud,3000);
+    const resume=()=>{live?.start();live?.check(true);refreshCloud(true);};
+    window.addEventListener('online',resume);window.addEventListener('focus',resume);window.addEventListener('pageshow',resume);window.addEventListener('pagehide',()=>live?.stop());
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)resume();});
+    window.addEventListener('beforeunload',event=>{try{if(JSON.parse(localStorage.getItem(KEY+'_cloud')||'{}').dirty){event.preventDefault();event.returnValue='';}}catch(e){}});
+  }
   setInterval(updateClock,1000);
   updatePanelToggle(); measure(); ensureDays(); render();
   if (blockedStorage) save(); else if (cloud) { $('saveStatus').textContent=cloudMessage || 'Hesap kaydı hazır.'; } else if (classroom().students.length) { save(); scheduleShare(); }
+  live?.start();
+  window.AquariumStartup?.ready();
 })();

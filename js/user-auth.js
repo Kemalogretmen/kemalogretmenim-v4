@@ -8,6 +8,8 @@
   var ACTIVITY_PREFIX = 'kemal_student_activity_v1_';
   var client = null;
   var readyPromise = null;
+  var sdkPromise = null;
+  var authSubscriptionInstalled = false;
   var refreshRevision = 0;
   var authRefreshTimer = 0;
   var activityTimer = 0;
@@ -26,25 +28,37 @@
     return window.kemalSiteStore.getConfig();
   }
 
+  function withDeadline(work, onTimeout) {
+    var timer;
+    var timeout = new Promise(function(_, reject) {
+      timer = window.setTimeout(function() {
+        if (onTimeout) onTimeout();
+        var error = new Error('Oturum bağlantısı zaman aşımına uğradı.');
+        error.code = 'AUTH_TIMEOUT'; reject(error);
+      }, 8000);
+    });
+    return Promise.race([work, timeout]).finally(function() { window.clearTimeout(timer); });
+  }
+
   function ensureSupabase() {
     if (window.supabase) {
       return Promise.resolve(window.supabase);
     }
-    var existing = document.querySelector('script[src="' + SUPABASE_SRC + '"]');
-    if (existing) {
-      return new Promise(function(resolve, reject) {
-        existing.addEventListener('load', function() { resolve(window.supabase); }, { once: true });
-        existing.addEventListener('error', reject, { once: true });
-      });
-    }
-    return new Promise(function(resolve, reject) {
-      var script = document.createElement('script');
-      script.src = SUPABASE_SRC;
-      script.async = true;
-      script.onload = function() { resolve(window.supabase); };
-      script.onerror = reject;
-      document.head.appendChild(script);
+    if (sdkPromise) return sdkPromise;
+    var script = document.querySelector('script[src="' + SUPABASE_SRC + '"]');
+    var created = !script;
+    if (!script) { script = document.createElement('script'); script.src = SUPABASE_SRC; script.async = true; }
+    var loaded, failed;
+    var loading = new Promise(function(resolve, reject) {
+      loaded = function() { if (window.supabase) resolve(window.supabase); else reject(new Error('Oturum kitaplığı yüklenemedi.')); };
+      failed = function() { reject(new Error('Oturum kitaplığı yüklenemedi.')); };
+      script.addEventListener('load', loaded, { once: true }); script.addEventListener('error', failed, { once: true });
+      if (created) document.head.appendChild(script);
     });
+    sdkPromise = withDeadline(loading).catch(function(error) {
+      if (created) script.remove(); sdkPromise = null; throw error;
+    }).finally(function() { script.removeEventListener('load', loaded); script.removeEventListener('error', failed); });
+    return sdkPromise;
   }
 
   function getClient() {
@@ -127,7 +141,7 @@
     });
   }
 
-  async function createProfileFromUser(user) {
+  async function createProfileFromUser(user, requestRevision) {
     if (!user || !user.id) {
       return null;
     }
@@ -136,6 +150,9 @@
     if (await isAdminAccount(user)) {
       return null;
     }
+    // A timed-out/superseded lookup must not create a late profile in the
+    // background after the screen has already reported a connection error.
+    if (requestRevision !== undefined && requestRevision !== refreshRevision) throw new Error('Oturum kontrolü yenilendi.');
     var name = clean(meta.full_name || meta.name || '');
     var split = splitName(name);
     var payload = {
@@ -171,7 +188,7 @@
     return existing.data || null;
   }
 
-  async function loadProfile(user) {
+  async function loadProfile(user, requestRevision) {
     if (!user || !user.id) {
       return null;
     }
@@ -181,10 +198,11 @@
       .eq('id', user.id)
       .maybeSingle();
     if (response.error) throw response.error;
+    if (requestRevision !== undefined && requestRevision !== refreshRevision) throw new Error('Oturum kontrolü yenilendi.');
     if (response.data) {
       return normalizeProfile(response.data, user);
     }
-    var created = await createProfileFromUser(user);
+    var created = await createProfileFromUser(user, requestRevision);
     return created ? normalizeProfile(created, user) : null;
   }
 
@@ -199,11 +217,11 @@
     var nextUser, nextSession;
     try {
       await ensureSupabase();
-      var result = await getClient().auth.getSession();
+      var result = await withDeadline(getClient().auth.getSession());
       if (result.error) throw result.error;
       nextSession = result.data ? result.data.session : null;
       nextUser = nextSession ? nextSession.user : null;
-      var nextProfile = nextUser ? await loadProfile(nextUser) : null;
+      var nextProfile = nextUser ? await withDeadline(loadProfile(nextUser, revision)) : null;
       if (revision !== refreshRevision) return getState();
       state.session = nextSession; state.user = nextUser; state.profile = nextProfile;
       state.error = ''; state.ready = true;
@@ -211,6 +229,7 @@
       return getState();
     } catch (error) {
       if (revision !== refreshRevision) return getState();
+      ++refreshRevision;
       if (nextUser !== undefined && (!state.user || state.user.id !== (nextUser && nextUser.id))) {
         state.user = nextUser; state.session = nextSession; state.profile = null;
       }
@@ -226,6 +245,7 @@
       try { return await refresh(); }
       catch (error) {
         lastError = error;
+        if (error && error.code === 'AUTH_TIMEOUT') break;
         if (attempt < 2) await new Promise(function(resolve) { window.setTimeout(resolve, 350 * (attempt + 1)); });
       }
     }
@@ -237,7 +257,7 @@
       readyPromise = ensureSupabase().then(async function() {
         // Initialize once before subscribing; Supabase API calls must not run inside auth callbacks.
         await refreshWithRetry();
-        getClient().auth.onAuthStateChange(function(event, session) {
+        if (!authSubscriptionInstalled) { getClient().auth.onAuthStateChange(function(event, session) {
           if (event === 'INITIAL_SESSION') return;
           ++refreshRevision;
           window.clearTimeout(authRefreshTimer);
@@ -252,7 +272,7 @@
             emit(CHANGE_EVENT);
           }
           authRefreshTimer = window.setTimeout(function() { refresh().catch(function() {}); }, 0);
-        });
+        }); authSubscriptionInstalled = true; }
         return getState();
       }).then(function(result) { emit(READY_EVENT); return result; })
         .catch(function() {

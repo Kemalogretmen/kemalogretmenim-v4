@@ -44,7 +44,9 @@
     { id: 'batfish', name: 'Yarasa balığı', file: 'yarasa-baligi.png', detail: 'Geniş yüzgeçleriyle sakin sakin süzülür', size: 135 },
     { id: 'cleanershrimp', name: 'Temizleyici karides', file: 'temizleyici-karides.png', detail: 'Mercan kırmızısı ve ince beyaz antenler', size: 118 },
     { id: 'hermitcrab', name: 'Münzevi yengeç', file: 'munzevi-yengec.png', detail: 'Sarmal kabuğunu yanında taşıyan minik gezgin', size: 112 },
-    { id: 'cuttlefish', name: 'Mürekkep balığı', file: 'murekkep-baligi.png', detail: 'Dalgalı yüzgeçleri ve doğal desenleriyle', size: 140 }
+    { id: 'cuttlefish', name: 'Mürekkep balığı', file: 'murekkep-baligi.png', detail: 'Dalgalı yüzgeçleri ve doğal desenleriyle', size: 140 },
+    { id: 'swordfish', name: 'Kılıç balığı', file: 'kilic-baligi.png', detail: 'Gümüş gövdesi ve uzun kılıcıyla zarif yüzücü', size: 174 },
+    { id: 'safiye', name: 'Safiye', file: 'safiye.png', detail: 'Gökkuşağı pulları ve doğal görünümlü şapkasıyla özgün dostumuz', size: 138 }
   ];
   const THEMES = [
     { id: 'reef', name: 'Mercan resifi', file: 'mercan-resifi.jpg', description: 'Güneşli, turkuaz bir dünya' },
@@ -52,7 +54,9 @@
     { id: 'grotto', name: 'Mavi mağara', file: 'mavi-magara.jpg', description: 'Derin mavinin büyüsü' },
     { id: 'coral-island', name: 'Mercan Adası', file: 'mercan-adasi.jpg', description: 'Renkli mercanların arasından yükselen baloncuklar', bubbleSources: [16, 84] },
     { id: 'lagoon', name: 'Sakin Lagün', file: 'sakin-lagun.jpg', description: 'Aydınlık kumlar ve duru turkuaz su' },
-    { id: 'stone-arches', name: 'Taş Kemerler', file: 'tas-kemerler.jpg', description: 'Doğal taş kemerlerin arasında huzurlu bir keşif' }
+    { id: 'stone-arches', name: 'Taş Kemerler', file: 'tas-kemerler.jpg', description: 'Doğal taş kemerlerin arasında huzurlu bir keşif' },
+    { id: 'republic-day', name: '29 Ekim · Cumhuriyet Akvaryumu', file: 'cumhuriyet-29-ekim.jpg', description: 'En arkada ay yıldız, mercanlarda kırmızı ve beyaz', seasonal: true, music: 'izmir' },
+    { id: 'new-year', name: 'Yeni Yıl Akvaryumu', file: 'yeni-yil-akvaryumu.jpg', description: 'Dengeli süsler, hafif kar ve üç boyutlu kardan adam', seasonal: true, music: 'jingle' }
   ];
   const uid = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'aq-' + Date.now().toString(36) + Math.random().toString(36).slice(2);
   // Local calendar days, deliberately not UTC: a late evening lesson stays on its own day.
@@ -147,7 +151,7 @@
   function setTask(student, date, taskId, status) {
     const day = student.days[date];
     if (!day || day.absent || !['pending', 'done', 'missed'].includes(status)) return false;
-    const task = day.tasks.find(t => t.id === taskId);
+    const task = day.tasks.find(t => t.id === taskId) || day.tasks.find(t=>t.sourceId===taskId);
     if (!task || taskPoints(task)<0) return false;
     task.status = status;
     return true;
@@ -166,7 +170,9 @@
   function behaviorChoices(student, classroom, date) {
     const day = student.days[date];
     if (!day) return [];
-    const originals = day.tasks.filter(t => !t.sourceId);
+    const choices=new Map();
+    for(const t of day.tasks){const id=t.sourceId||t.id;if(!choices.has(id)||!t.sourceId)choices.set(id,{...t,id,status:t.sourceId?'done':t.status});}
+    const originals=[...choices.values()];
     return [...originals, ...classroom.tasks.filter(t => !originals.some(o => o.id === t.id))].map(t => {
       const current = classroom.tasks.find(template => template.id === t.id);
       const points = t.status && t.status !== 'done' ? taskPoints(t) : taskPoints(current || t);
@@ -179,21 +185,28 @@
     if (!day || day.absent || day.tasks.length >= MAX_DAILY_TASKS || student.feeds.length >= 80000) return null;
     const choice = behaviorChoices(student, classroom, date).find(t => t.id === taskId);
     if (!choice || !validScore(choice.points)) return null;
-    const original = day.tasks.find(t => t.id === taskId);
+    const original = day.tasks.find(t => t.id === taskId) || day.tasks.find(t=>t.sourceId===taskId&&t.status!=='done');
     if (choice.points<0) {
       const points=-Math.min(earned(student),Math.abs(choice.points));
       if(!points) return null;
       day.tasks.push({id:uid(),sourceId:taskId,title:choice.title,icon:taskIcon(choice.icon),points,status:'done',awardedAt:Date.now()});
       return {points,fed:false};
     }
-    if (original && original.status !== 'done') return completeAndFeed(student, date, taskId);
+    if (original && original.status !== 'done' && (!original.sourceId || taskPoints(original)===choice.points)) {
+      if(original.sourceId)Object.assign(original,{title:choice.title,icon:taskIcon(choice.icon),points:choice.points});
+      const result=completeAndFeed(student,date,original.id);
+      // The template is a choice; an actual reward needs its own identity even
+      // on the first use, so concurrent devices never edit the same award.
+      if(result){original.id=uid();original.sourceId=taskId;original.awardedAt=Date.now();}
+      return result;
+    }
     const entry = {id:uid(), sourceId:taskId, title:choice.title, icon:taskIcon(choice.icon), points:choice.points, status:'done', awardedAt:Date.now()};
     day.tasks.push(entry);
     return {points:entry.points, fed:feed(student, date)};
   }
   // A correction reverses credit, not the historical fact that a fish was fed.
   function correctAward(student, date, taskId, remove = false) {
-    const day = student.days[date], task = day?.tasks.find(t => t.id === taskId);
+    const day = student.days[date], task = day?.tasks.find(t => t.id === taskId) || day?.tasks.find(t=>t.sourceId===taskId);
     if (!task || (!remove && task.status !== 'done')) return false;
     if (task.status === 'done' && taskPoints(task)>0 && balance(student) === 0) {
       const consumed = [...student.feeds].reverse().find(f => !f.creditReversed);

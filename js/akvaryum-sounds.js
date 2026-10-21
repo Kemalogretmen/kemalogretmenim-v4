@@ -9,6 +9,8 @@
     {id:'fluid',name:'Sakin akış',title:'Fluidscape',kind:'music',emoji:'🫧',file:'fluid.mp3'},
     {id:'lively',name:'Hareketli etkinlik',title:'Life of Riley',kind:'music',emoji:'🌤️',file:'lively.mp3'},
     {id:'fun',name:'Oyun zamanı',title:'Monkeys Spinning Monkeys',kind:'music',emoji:'🎈',file:'fun.mp3'},
+    {id:'izmir',name:'İzmir Marşı · Enstrümantal',title:'İzmir Marşı — yeni enstrümantal düzenleme',kind:'music',emoji:'🇹🇷',file:'izmir-enstrumantal.mp3'},
+    {id:'jingle',name:'Jingle Bells · Hafif çanlar',title:'Jingle Bells — yeni enstrümantal düzenleme',kind:'music',emoji:'🔔',file:'jingle-bells.mp3'},
     {id:'ocean',name:'Dingin kıyı',title:'Yumuşak dalgalar',kind:'nature',emoji:'🌊',file:'ocean-calm.mp3'},
     {id:'rain',name:'Hafif yağmur',title:'Yağmur',kind:'nature',emoji:'🌧️',file:'rain.mp3'},
     {id:'birds',name:'Bahçedeki kuşlar',title:'Kuş sesleri',kind:'nature',emoji:'🐦',file:'birds.mp3'},

@@ -219,3 +219,23 @@ test('turn volume and banking retain continuity when a fish is held, and fit the
   const p=M.turnPose({...f,angle});assert.ok(Object.values(p).every(Number.isFinite));assert.equal(p.fullness,0);
  }
 });
+
+test('decor layers never push swimmers up, slow them or change their route at a crossing',()=>{
+ for(const depth of [.15,.5,.85]){
+  const make=()=>({...animals(1,1000,600)[0],size:80,x:200,y:400,direction:1,angle:0,phase:0,cruise:1,mood:{speed:1},targetX:900,targetY:400,routeTime:100,waterDepth:depth,depthTarget:depth,depthTime:100});
+  const fish=make(),control=make(),decor={x:500,y:280,width:180,height:250,depth:.5};let passed=false;
+  for(let i=0;i<600;i++){
+   M.step([fish],.05,1000,600,()=>.5,[decor]);M.step([control],.05,1000,600,()=>.5);
+   for(const key of ['x','y','phase','targetX','targetY','waterDepth'])assert.equal(fish[key],control[key],key);
+   if(fish.x>740)passed=true;
+  }
+  assert.equal(passed,true);assert.ok(fish.y>380,'no forced climb over a decor');
+ }
+});
+test('puffer reward pose inflates quickly, holds, and returns smoothly at five seconds',()=>{
+ for(const t of [-1,NaN,5,100])assert.deepEqual(M.puffPose(t),{amount:0,x:1,y:1});
+ assert.equal(M.puffPose(0).amount,0);assert.ok(M.puffPose(.14).amount>.49);assert.deepEqual(M.puffPose(.28),M.puffPose(4.25));
+ assert.equal(M.puffPose(1).x,1.28);assert.equal(M.puffPose(1).y,1.8);assert.ok(M.puffPose(4.6).amount<1&&M.puffPose(4.6).amount>0);
+ let previous=M.puffPose(0).amount;
+ for(let i=1;i<=500;i++){const p=M.puffPose(i/100);assert.ok(p.amount>=0&&p.amount<=1);assert.ok(Math.abs(p.amount-previous)<.06);previous=p.amount;}
+});
