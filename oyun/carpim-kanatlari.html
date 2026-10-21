@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="1’den 10’a çarpma adalarını keşfet. Kuşunu seç, doğru kuleyi yık; patlama jokerini kullan. Tek başına veya aynı ekranda iki kişi oyna.">
+  <meta name="theme-color" content="#284e48">
+  <title>Çarpım Kanatları — Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
+  <link rel="stylesheet" href="/css/carpim-kanatlari.css?v=20261020-mixed-mode">
+</head>
+<body class="ck-page">
+  <main class="ck-home" id="main-content">
+    <div class="ck-stage" id="ck-stage" data-screen="cover">
+    <section id="ck-atlas" class="ck-atlas" inert aria-labelledby="ck-atlas-title">
+      <div class="ck-atlas-head"><div><p>01 · ADANI SEÇ</p><h2 id="ck-atlas-title">Çarpım Takımadaları</h2></div><span id="ck-route-mode">Kademeli rota</span></div>
+      <div class="ck-sea">
+        <div class="ck-sea-compass" aria-hidden="true">N<br><span>✧</span></div><span class="ck-sea-boat" aria-hidden="true">⛵</span>
+        <svg class="ck-map-trail ck-map-trail--wide" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="9,62 25,40 28,79 44,60 49,23 64,41 64,80 80,78 85,43 92,15"/></svg>
+        <svg class="ck-map-trail ck-map-trail--narrow" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="25,10 75,10 75,29 25,29 25,48 75,48 75,67 25,67 25,86 75,86"/></svg>
+        <svg class="ck-map-trail ck-map-trail--compact" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="10,25 30,25 50,25 70,25 90,25 90,75 70,75 50,75 30,75 10,75"/></svg>
+        <div class="ck-route" id="ck-route" role="group" aria-label="Çarpma adaları"></div>
+      </div>
+    </section>
+    <div id="ck-cover-layer" class="ck-cover-layer">
+    <div class="ck-eyebrow"><span>✦</span> MATEMATİKLE KANATLAN</div>
+    <section class="ck-welcome" aria-labelledby="ck-title">
+      <div class="ck-intro">
+        <h1 id="ck-title">Çarpım<br> <span>Kanatları.</span></h1>
+        <p>Bir çarpım. Bir uçuş.<br>Kocaman bir macera!</p>
+        <div class="ck-pills"><span>1–2 oyuncu</span><span>10 keşif adası</span><span>Dokun & uçur</span></div>
+      </div>
+      <div class="ck-postcard">
+        <canvas id="ck-intro-canvas" width="800" height="420" aria-label="Yeşil tepeler, ahşap sapan ve renkli kuşlarla uçuş adası"></canvas>
+        <span class="ck-postmark">UÇUŞA HAZIR MISIN? ↗</span>
+      </div>
+    </section>
+    <div class="ck-cover-action"><button id="ck-open-lobby" class="ck-main-btn" aria-expanded="false" aria-controls="ck-lobby">Oyunu Başlat <span>↗</span></button><p>Önce adanı ve kanat arkadaşını seç.</p></div>
+    </div>
+    <section id="ck-lobby" class="ck-lobby" aria-labelledby="ck-lobby-title" hidden>
+      <header class="ck-lobby-head"><h2 id="ck-lobby-title" tabindex="-1">Ekibini hazırla</h2><div><button id="ck-toggle-settings" class="ck-quiet-btn" aria-expanded="true" aria-controls="ck-settings-scroll">Adaları gör</button><button id="ck-cover" class="ck-quiet-btn">‹ Kapak</button></div></header>
+    <div class="ck-settings-scroll" id="ck-settings-scroll">
+    <section class="ck-launchpad" aria-label="Oyun ayarları">
+      <div class="ck-setting">
+        <div class="ck-section-label"><span>02</span><h2>Ekibini seç</h2></div>
+        <div class="ck-modes" role="group" aria-label="Oyuncu sayısı">
+          <button class="ck-mode selected" data-mode="2" aria-pressed="true"><b>İkili kapışma</b><span>Aynı ekran, iki ayrı sapan</span></button>
+          <button class="ck-mode" data-mode="1" aria-pressed="false"><b>Tek kişilik keşif</b><span>Kendi hızında kanatlan</span></button>
+        </div>
+        <div class="ck-names">
+          <label><span class="ck-name-dot coral"></span> 1. oyuncu<input id="ck-name-0" maxlength="18" autocomplete="off" value="Oyuncu 1" aria-label="Birinci oyuncunun adı"></label>
+          <label id="ck-second-name"><span class="ck-name-dot teal"></span> 2. oyuncu<input id="ck-name-1" maxlength="18" autocomplete="off" value="Oyuncu 2" aria-label="İkinci oyuncunun adı"></label>
+        </div>
+        <div class="ck-bird-pickers" id="ck-bird-pickers"></div>
+      </div>
+      <div class="ck-setting ck-route-setting">
+        <div class="ck-section-label"><span>03</span><h2>Yolculuğunu seç</h2></div>
+        <div class="ck-journey-modes" role="group" aria-label="Ada ilerleme şekli">
+          <button class="ck-journey-mode selected" data-journey="campaign" aria-pressed="true"><b>⚑ Kademeli ilerleme</b><span>1’den 10’a, kuşunla adadan adaya uç.</span></button>
+          <button class="ck-journey-mode" data-journey="all" aria-pressed="false"><b>☷ Tüm adalar</b><span>İstediğin çarpma adasını seç ve çalış.</span></button>
+          <button class="ck-journey-mode" data-journey="mixed" aria-pressed="false" aria-controls="ck-mixed-settings"><b>⤨ Karışık sor</b><span>Çarpım tablolarını seç; 10 soruluk karışık tur oyna.</span></button>
+        </div>
+        <fieldset id="ck-mixed-settings" class="ck-mixed-settings" hidden><legend>Hangi çarpımları soralım?</legend><p>Birden fazla tablo seçebilirsin. Seçilen sayı ilk çarpan, diğer çarpan 1–10 olur.</p><div id="ck-mixed-factors" class="ck-mixed-factors" role="group" aria-label="Karışık sorulacak çarpım tabloları"></div><p id="ck-mixed-summary" class="ck-mixed-summary" aria-live="polite"></p></fieldset>
+        <div class="ck-expedition-note"><span>✹</span><div><b>Her kuşun bir patlama gücü var!</b><p id="ck-power-info">Ada başına bir kez doğru kuleye otomatik uçup bir soruyu puansız geçebilirsin. Her yeni adada 5 canın ve jokerin yenilenir.</p></div></div>
+        <div class="ck-route-facts"><span>10 farklı ada</span><span>1–10 ile çarpma</span><span id="ck-question-fact">Her adada 6 soru</span></div>
+        <button id="ck-map-pick" class="ck-map-return">Haritadan ada seç ↗</button>
+      </div>
+    </section>
+    <div class="ck-how"><span>✦</span><p><b>Nasıl oynanır?</b> Sonuçlar kulelerde! Kuşunu geriye çekip doğru sonuca fırlat. Kuleye dokunup Uçur ile de nişan alabilirsin. Doğru kule 100 puan, ilk denemede ayrıca 20 puan; yanlış kule 1 can götürür. Kademeli rotada kuşun her adayı tamamlayınca sonrakine uçar; iki oyuncu da bitirince toplam puanı yüksek olan kazanır.</p><div class="ck-audio-settings"><button id="ck-sound-home" aria-pressed="true">◖ Efekt açık</button><button id="ck-music-home" aria-pressed="true">♫ Müzik açık</button></div></div>
+    <p class="ck-save-note" id="ck-save-note">Açılan adalar bu tarayıcıda hatırlanır.</p>
+    </div>
+    <div class="ck-departure"><div><span>SEÇİLEN ROTA</span><p id="ck-island-info" class="ck-island-info" aria-live="polite"></p></div><button id="ck-start" class="ck-main-btn">Adaya Uç ve Başlat <span>↗</span></button></div>
+    </section>
+
+  <section id="ck-zoom" class="ck-zoom" role="dialog" aria-modal="true" aria-labelledby="ck-zoom-title" hidden>
+    <div class="ck-landing-flash" id="ck-landing-flash" aria-hidden="true"></div>
+    <div class="ck-zoom-caption"><p>ROTAMIZ HAZIR · KANATLAR AÇILSIN</p><h2 id="ck-zoom-title"></h2><span>Adana yaklaşıyoruz…</span><i aria-hidden="true"><b id="ck-zoom-progress"></b></i></div>
+    <button id="ck-cancel-flight" class="ck-quiet-btn">‹ Hazırlığa dön</button>
+  </section>
+    </div>
+  </main>
+
+  <section class="ck-arena" id="ck-arena" aria-label="Çarpım Kanatları oyun alanı" hidden>
+    <header class="ck-toolbar">
+      <button id="ck-menu">‹ Menü</button><strong>Çarpım <span>Kanatları</span></strong>
+      <span id="ck-level-title"></span>
+      <div><button id="ck-sound" aria-label="Ses efektlerini kapat" aria-pressed="true">◖</button><button id="ck-music" aria-label="Arka plan müziğini kapat" aria-pressed="true">♫</button><button id="ck-pause" aria-label="Oyunu duraklat">Ⅱ</button><button id="ck-fullscreen" aria-label="Tam ekran">⛶</button></div>
+    </header>
+    <div class="ck-lanes" id="ck-lanes"></div>
+    <div class="ck-overlay" id="ck-pause-screen" hidden><div class="ck-dialog"><span class="ck-medal">☁</span><h2>Küçük bir mola</h2><p>Sapanların ve soruların seni bekliyor.</p><button id="ck-resume" class="ck-main-btn">Devam et ↗</button><button id="ck-leave" class="ck-quiet-btn">Ada haritasına dön</button></div></div>
+    <div class="ck-overlay" id="ck-result" hidden role="dialog" aria-modal="true" aria-labelledby="ck-result-title">
+      <div class="ck-dialog ck-result-dialog"><div class="ck-celebrate" aria-hidden="true">✦ ✧ ★ ✧ ✦</div><span class="ck-medal">🏆</span><p class="ck-eyebrow">BİRLİKTE KANATLANDIK</p><h2 id="ck-result-title"></h2><p id="ck-result-subtitle"></p><div id="ck-result-cards"></div><div class="ck-result-actions"><button id="ck-next" class="ck-main-btn">Sonraki ada ↗</button><button id="ck-retry" class="ck-quiet-btn">Aynı adada tekrar</button><button id="ck-map" class="ck-quiet-btn">Ada haritası</button></div></div>
+    </div>
+  </section>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20261010-dock-home"></script>
+  <script src="/js/carpim-kanatlari-rules.js?v=20261020-mixed-mode"></script>
+  <script src="/js/carpim-kanatlari.js?v=20261020-mixed-mode"></script>
+</body>
+</html>

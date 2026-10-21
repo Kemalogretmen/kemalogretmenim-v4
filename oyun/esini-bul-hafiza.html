@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Eşini Bul Hafıza Oyunu - Kemal Öğretmenim</title>
   <meta name="description" content="4, 5, 6 ve 7+ yaş için tek veya iki kişilik eşini bul hafıza oyunu.">
-  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
   <style>
     :root {
       --ink: #15213d;
@@ -13,36 +13,59 @@
       --line: #dbe6f5;
       --paper: #ffffff;
       --shadow: 0 18px 42px rgba(21, 33, 61, 0.14);
+      --scene-top: #d9f4ff;
+      --scene-bottom: #f4f0ff;
+      --accent: #6c3ded;
+      --accent-deep: #3b237f;
+      --board-bg: linear-gradient(145deg, #9178ee 0%, #654bd1 55%, #4933a5 100%);
+      --board-border: #d9ceff;
+      --card-back-bg: linear-gradient(145deg, #7d63ed 0%, #523cc1 60%, #382484 100%);
       
       /* Dinamik Tema Değişkenleri (Varsayılan 4 Yaş - Sıcak/Eğlenceli) */
-      --hero-bg: linear-gradient(135deg, #ff8a00, #e52e71);
-      --board-bg: linear-gradient(135deg, #ffcc00, #ff9500);
-      --board-border: #ffe885;
-      --card-back-bg: linear-gradient(135deg, #ff416c, #ff4b2b);
+      --hero-bg: linear-gradient(120deg, #5234b5 0%, #7b53e8 52%, #ed7a57 100%);
+      --scene-top: #fff0cf;
+      --scene-bottom: #f7dced;
+      --accent: #ed6c64;
+      --accent-deep: #8f3154;
+      --board-bg: linear-gradient(145deg, #ffbd61 0%, #f58d54 55%, #d96662 100%);
+      --board-border: #ffe6a6;
+      --card-back-bg: linear-gradient(145deg, #ff7d82 0%, #dd536e 60%, #a83966 100%);
     }
 
     /* 5 Yaş Teması (Oyun/Doğa) */
     body[data-theme="5"] {
-      --hero-bg: linear-gradient(135deg, #5ea51c, #1f8f72);
-      --board-bg: linear-gradient(135deg, #9ad845, #77bd2c);
-      --board-border: #dff3c6;
-      --card-back-bg: linear-gradient(135deg, #35a7ff, #007bb5);
+      --hero-bg: linear-gradient(120deg, #24795a 0%, #37ac78 55%, #83be49 100%);
+      --scene-top: #dff9e8;
+      --scene-bottom: #e4f4ff;
+      --accent: #31a978;
+      --accent-deep: #155d52;
+      --board-bg: linear-gradient(145deg, #9bdb72 0%, #52b985 55%, #238c80 100%);
+      --board-border: #c9f0bc;
+      --card-back-bg: linear-gradient(145deg, #55c9a2 0%, #2599a4 60%, #267389 100%);
     }
 
     /* 6 Yaş Teması (Odak/Mavi) */
     body[data-theme="6"] {
-      --hero-bg: linear-gradient(135deg, #1fa2ff, #12d8fa, #a6ffcb);
-      --board-bg: linear-gradient(135deg, #35a7ff, #1a73e8);
-      --board-border: #bce0ff;
-      --card-back-bg: linear-gradient(135deg, #7555e8, #4b2aa5);
+      --hero-bg: linear-gradient(120deg, #1766ad 0%, #258dd4 55%, #38c2c0 100%);
+      --scene-top: #d9f5ff;
+      --scene-bottom: #dce9ff;
+      --accent: #328dd8;
+      --accent-deep: #174979;
+      --board-bg: linear-gradient(145deg, #5cb9ed 0%, #438add 55%, #3c62bf 100%);
+      --board-border: #bcecff;
+      --card-back-bg: linear-gradient(145deg, #7a74ed 0%, #5158c8 60%, #353c91 100%);
     }
 
     /* 7+ Yaş Teması (Olgun/Ciddi) */
     body[data-theme="7"] {
-      --hero-bg: linear-gradient(135deg, #302b63, #24243e);
-      --board-bg: linear-gradient(135deg, #654ea3, #eaafc8);
-      --board-border: #eed2ee;
-      --card-back-bg: linear-gradient(135deg, #15213d, #0d1425);
+      --hero-bg: linear-gradient(120deg, #302b63 0%, #554493 55%, #9e659d 100%);
+      --scene-top: #ece7ff;
+      --scene-bottom: #d9d9ee;
+      --accent: #8468c9;
+      --accent-deep: #352d69;
+      --board-bg: linear-gradient(145deg, #7764bb 0%, #6753a7 55%, #463976 100%);
+      --board-border: #d4c8f0;
+      --card-back-bg: linear-gradient(145deg, #393d75 0%, #25294f 60%, #141832 100%);
     }
 
     * { box-sizing: border-box; }
@@ -52,9 +75,9 @@
       font-family: var(--font-body, "Nunito", system-ui, sans-serif);
       color: var(--ink);
       background:
-        radial-gradient(circle at 12% 10%, rgba(255, 209, 102, 0.24), transparent 24%),
-        radial-gradient(circle at 88% 12%, rgba(53, 167, 255, 0.18), transparent 26%),
-        linear-gradient(180deg, #fffdf6 0%, #eff8ff 55%, #f8fbff 100%);
+        radial-gradient(ellipse at 12% 12%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 28%),
+        radial-gradient(ellipse at 88% 14%, rgba(89, 205, 211, 0.17), transparent 28%),
+        linear-gradient(160deg, var(--scene-top) 0%, #f9fcff 48%, var(--scene-bottom) 100%);
       min-height: 100vh;
       transition: background 0.5s ease;
     }
@@ -69,8 +92,12 @@
       overflow: hidden;
       border-radius: 30px;
       background: rgba(255, 255, 255, 0.95);
-      border: 1px solid rgba(53, 167, 255, 0.14);
-      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 28px 70px rgba(47, 56, 108, .2), 0 7px 18px rgba(40, 62, 113, .08);
+    }
+
+    @supports (overflow: clip) {
+      .game-shell { overflow: clip; }
     }
 
     .hero {
@@ -79,7 +106,7 @@
   gap: 16px;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 22px;
+  padding: 20px 26px;
   color: white;
   background: var(--hero-bg);
   transition: background 0.5s ease;
@@ -268,15 +295,62 @@
       grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
       gap: clamp(6px, 1.5vw, 14px);
       width: 100%;
-      max-width: 900px;
+      max-width: 780px;
       margin: 0 auto;
       padding: clamp(10px, 2vw, 20px);
+      position: relative;
+      isolation: isolate;
       border-radius: 24px;
       background: var(--board-bg);
       border: 6px solid var(--board-border);
-      box-shadow: inset 0 0 0 3px rgba(255,255,255,.2), 0 12px 24px rgba(0, 0, 0, 0.1);
+      box-shadow: inset 0 0 0 3px rgba(255,255,255,.24), inset 0 -10px 0 rgba(25, 31, 92, .13), 0 18px 0 color-mix(in srgb, var(--accent-deep) 64%, #18213c), 0 30px 44px rgba(30, 42, 92, .24);
+      transform: perspective(1500px) rotateX(2deg);
       transition: background 0.5s ease, border-color 0.5s ease;
     }
+
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      z-index: -1;
+      border-radius: 17px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.22), transparent 65%);
+      pointer-events: none;
+    }
+
+    .memory-stage { position: relative; width: 100%; max-width: 980px; margin: 4px auto 0; perspective: 1500px; }
+    .stage-orbit { position: absolute; inset: 4% 9%; border: 1px solid rgba(255,255,255,.54); border-radius: 50%; transform: rotateX(68deg) rotateZ(-9deg) translateY(12%); pointer-events: none; opacity: .65; }
+    .stage-orbit::before, .stage-orbit::after { content: "✦"; position: absolute; color: #fff1a6; text-shadow: 0 0 16px rgba(255,255,255,.9); font-size: 22px; }
+    .stage-orbit::before { top: 10%; left: 18%; }
+    .stage-orbit::after { right: 16%; bottom: 6%; font-size: 16px; }
+    .board-hint { margin: 8px 0 0; color: var(--muted); text-align: center; font-size: .9rem; font-weight: 800; }
+
+    .turn-indicator {
+      position: sticky;
+      top: 8px;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: min(100%, 780px);
+      min-height: 58px;
+      margin: 0 auto 2px;
+      padding: 9px 14px;
+      border: 2px solid color-mix(in srgb, var(--accent) 30%, white);
+      border-radius: 18px;
+      color: var(--accent-deep);
+      background: rgba(255,255,255,.96);
+      box-shadow: 0 8px 24px rgba(31,44,87,.14), inset 0 1px 0 #fff;
+      backdrop-filter: blur(12px);
+    }
+    .turn-icon { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 12px; color: #fff; background: linear-gradient(145deg, var(--accent), var(--accent-deep)); box-shadow: inset 0 1px 0 #ffffff88, 0 4px 9px #26305030; font-size: 1.1rem; }
+    .turn-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
+    .turn-copy span { color: var(--muted); font-size: .68rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .turn-copy strong { overflow: hidden; font-size: 1rem; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+    .turn-scores { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+    .turn-score { padding: 6px 9px; border: 1px solid #dce4f4; border-radius: 999px; color: #465473; background: #f5f7ff; font-size: .72rem; font-weight: 900; white-space: nowrap; }
+    .turn-score.is-active { border-color: color-mix(in srgb, var(--accent) 40%, white); color: var(--accent-deep); background: color-mix(in srgb, var(--accent) 11%, white); }
+    .card-btn.is-found { cursor: default; }
 
     .card-btn {
       position: relative;
@@ -285,17 +359,25 @@
       min-width: 0;
       border-radius: clamp(8px, 2vw, 16px);
       padding: 0;
-      perspective: 800px;
+      perspective: 1000px;
       background: transparent;
       border: none;
       cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      filter: drop-shadow(0 5px 0 rgba(32, 36, 91, .16));
+      transition: filter .2s ease, transform .2s ease;
     }
+
+    .card-btn:hover:not(.is-open):not(.is-found) { transform: translateY(-4px); filter: drop-shadow(0 9px 0 rgba(32, 36, 91, .16)); }
+    .card-btn:focus-visible { outline: 4px solid #ffe27a; outline-offset: 3px; border-radius: 18px; }
 
     .card-inner {
       position: absolute;
       inset: 0;
       transform-style: preserve-3d;
-      transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+      transition: transform 0.62s cubic-bezier(.2,.82,.22,1), filter .35s ease;
+      border-radius: inherit;
     }
 
     .card-btn.is-open .card-inner,
@@ -309,34 +391,88 @@
       display: grid;
       place-items: center;
       border-radius: inherit;
+      overflow: hidden;
       backface-visibility: hidden;
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.58), inset 0 -4px 0 rgba(25,35,82,.1), 0 8px 14px rgba(20,30,70,.16);
+      transform-style: preserve-3d;
     }
 
     .card-back {
       color: white;
       background: var(--card-back-bg);
-      border: 3px solid rgba(255,255,255,.6);
+      border: 3px solid rgba(255,255,255,.72);
       font-family: var(--font-display, "Fredoka", system-ui, sans-serif);
       font-size: clamp(1.2rem, 3.5vw, 2.2rem);
-      transition: background 0.5s ease;
+      transition: background 0.5s ease, box-shadow .5s ease;
+      box-shadow: inset 0 0 0 5px rgba(255,255,255,.08), inset 0 0 0 9px rgba(20,18,79,.1), inset 0 12px 18px rgba(255,255,255,.15), inset 0 -10px 18px rgba(19,18,79,.2), 0 9px 16px rgba(17,27,79,.23);
     }
+
+    .card-back::before, .card-back::after { content: ""; position: absolute; pointer-events: none; }
+    .card-back::before { inset: 8px; border: 1px solid rgba(255,255,255,.3); border-radius: inherit; background: repeating-linear-gradient(45deg, transparent 0 13px, rgba(255,255,255,.055) 13px 15px); }
+    .card-back::after { width: 44%; aspect-ratio: 1; border: 1px solid rgba(255,255,255,.45); border-radius: 14px; transform: rotate(45deg); box-shadow: 0 0 0 6px rgba(255,255,255,.06), 0 0 0 12px rgba(255,255,255,.04); }
+    .back-gem { position: relative; z-index: 1; font-size: clamp(1rem, 2.7vw, 1.7rem); color: white; text-shadow: 0 2px 7px rgba(26,19,93,.46); transform: translateZ(18px); }
 
     .card-front {
       transform: rotateY(180deg);
-      background: white;
-      border: 3px solid #eef4fb;
+      background: linear-gradient(145deg, #fff 0%, #f8faff 62%, #eef2ff 100%);
+      border: 3px solid rgba(255,255,255,.9);
+      box-shadow: inset 0 0 0 1px rgba(100,116,180,.12), inset 0 -6px 12px rgba(64,74,128,.08), 0 8px 14px rgba(20,30,70,.16);
     }
 
     .card-btn.is-found .card-front {
-      border-color: #a7f36b;
-      background: #f8fff0;
+      border-color: #9de5a8;
+      background: linear-gradient(145deg, #f3fff2, #dff8e2);
+      box-shadow: inset 0 0 0 2px rgba(64,174,91,.18), 0 0 22px rgba(89,220,124,.35), 0 8px 14px rgba(20,30,70,.12);
     }
 
-    .shape-svg {
-      width: 65%;
-      height: 65%;
-      overflow: visible;
+    /* Eşleşen kartı dönme animasyonuna bağlı bırakma: ön yüz kalıcı olarak görünür kalsın. */
+    .card-btn.is-found .card-inner { transform: none !important; }
+    .card-btn.is-found .card-front { z-index: 2; transform: none !important; visibility: visible; }
+    .card-btn.is-found .card-back { visibility: hidden; }
+
+    .card-btn.is-found .card-front::after {
+      content: "✓";
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      display: grid;
+      place-items: center;
+      width: 19px;
+      height: 19px;
+      border-radius: 50%;
+      color: #fff;
+      background: #37a857;
+      box-shadow: 0 2px 5px #1e683d55;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .symbol-art { position: relative; display: grid; justify-items: center; gap: 2px; width: 100%; padding: 4px; transform: translateZ(24px); }
+    .symbol-glow { position: absolute; z-index: -1; top: 2%; width: 74%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, var(--symbol-color, #b8c8ff) 0%, color-mix(in srgb, var(--symbol-color, #b8c8ff) 36%, transparent) 48%, transparent 74%); filter: blur(5px); opacity: .56; }
+    .symbol-emoji { font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif; font-size: clamp(1.75rem, 5.2vw, 4.2rem); line-height: 1.06; filter: drop-shadow(0 6px 2px rgba(38,46,89,.15)); transform: translateZ(19px); }
+    .symbol-label { max-width: 100%; overflow: hidden; color: var(--accent-deep); font-size: clamp(.52rem, 1vw, .72rem); font-weight: 900; letter-spacing: .025em; text-overflow: ellipsis; white-space: nowrap; transform: translateZ(10px); }
+    .card-btn.is-found .symbol-emoji { animation: symbolFound .48s cubic-bezier(.18,.9,.2,1.2); }
+    @keyframes symbolFound { 45% { transform: translateZ(26px) scale(1.2) rotate(-5deg); } }
+
+    .card-btn.is-found .card-inner { filter: drop-shadow(0 0 8px rgba(104, 221, 134, .35)); }
+
+    .game-shell[data-finished="true"] .board { animation: boardCelebrate .6s ease-out; }
+    @keyframes boardCelebrate { 35% { transform: perspective(1500px) rotateX(0) translateY(-5px) scale(1.012); } }
+
+    @media (max-width: 600px) {
+      .memory-stage { margin-top: 0; }
+      .stage-orbit { inset: 2% 4%; opacity: .35; }
+      .board { transform: none; box-shadow: inset 0 0 0 3px rgba(255,255,255,.2), inset 0 -7px 0 rgba(25,31,92,.12), 0 12px 0 color-mix(in srgb, var(--accent-deep) 64%, #18213c), 0 20px 28px rgba(30,42,92,.2); }
+      .symbol-emoji { font-size: clamp(1.55rem, 10vw, 3rem); }
+      .symbol-label { font-size: clamp(.49rem, 2.2vw, .64rem); }
+      .card-btn:hover:not(.is-open):not(.is-found) { transform: none; }
+      .turn-indicator { top: 6px; gap: 8px; min-height: 54px; padding: 7px 9px; border-radius: 15px; }
+      .turn-icon { flex-basis: 34px; height: 34px; }
+      .turn-copy strong { font-size: .92rem; }
+      .turn-scores { gap: 4px; }
+      .turn-score { padding: 5px 7px; font-size: .64rem; }
+      .board[data-density="dense"] { gap: 4px; padding: 8px; }
+      .board[data-density="dense"] .card-btn { border-radius: 8px; }
     }
 
     .score-list {
@@ -396,6 +532,10 @@
       .board { gap: 6px; padding: 10px; border-width: 4px; border-radius: 16px; }
       .choice-row { grid-template-columns: 1fr 1fr; }
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body data-theme="2">
@@ -404,8 +544,8 @@
       <header class="hero">
         <div class="hero-text">
           <span class="kicker">Hafıza • Eşini Bul</span>
-          <h1>Şekil Hafızası</h1>
-          <p>Kartları aç, aynı şekilleri eşleştir. Tek başına ya da iki kişiyle oynanabilir.</p>
+          <h1>Sembol Hafızası</h1>
+          <p>Sembol kartlarını çevir, eşleri bul ve parlayan koleksiyonunu tamamla. Tek başına ya da arkadaşınla oynayabilirsin.</p>
         </div>
         <div class="stats">
           <div class="stat"><span>Hamle</span><strong id="moveText">0</strong></div>
@@ -419,11 +559,11 @@
           <div class="setup-grid">
             <div>
               <h2 class="section-title">Yaş Seviyesi</h2>
-              <div class="choice-row" id="ageChoices">
-                <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>4x3 (12 Kart)</span></button>
-                <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>4x4 (16 Kart)</span></button>
-                <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>5x4 (20 Kart)</span></button>
-                <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>6x6 (36 Kart)</span></button>
+            <div class="choice-row" id="ageChoices">
+                <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>4×3 · 6 eş</span></button>
+                <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>4×4 · 8 eş</span></button>
+                <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>5×4 · 10 eş</span></button>
+                <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>6×6 · 18 eş</span></button>
               </div>
             </div>
 
@@ -446,13 +586,22 @@
       <nav class="control-row">
         <div class="control-group">
           <button class="control-btn is-active" type="button" id="soundToggle" aria-pressed="true">Ses Açık</button>
-          <button class="control-btn" type="button" id="setupToggle">Ayarlar</button>
+          <button class="control-btn" type="button" id="setupToggle" aria-expanded="true">Ayarlar</button>
         </div>
         <button class="control-btn is-primary" type="button" id="newGameBtn">Yeni Oyun</button>
       </nav>
 
       <section class="board-wrap">
-        <div class="board" id="board" aria-label="Hafıza kartları"></div>
+        <div class="turn-indicator" id="turnIndicator" role="status" aria-live="polite">
+          <span class="turn-icon" id="turnIcon" aria-hidden="true">✦</span>
+          <div class="turn-copy"><span id="turnCaption">Sıra kimde?</span><strong id="turnName">Tek oyuncu</strong></div>
+          <div class="turn-scores" id="turnScores" aria-label="Oyuncu skorları"></div>
+        </div>
+        <div class="memory-stage">
+          <div class="stage-orbit" aria-hidden="true"></div>
+          <div class="board" id="board" aria-label="Hafıza kartları"></div>
+        </div>
+        <p class="board-hint" aria-live="polite">İki kartı sırayla aç. Eşleşen semboller koleksiyonuna katılır.</p>
         <div class="feedback" id="feedback">Yaş seviyesini seç, kartları açarak eşleri bul.</div>
       </section>
     </section>
@@ -461,30 +610,26 @@
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js?v=20260926-dock-home"></script>
   <script>
-    // Şekiller yaş gruplarına göre basitten karmaşığa sıralandı.
-    const SHAPES = [
-      // Seviye 1 (4 Yaş İçin Temel Şekiller - Sıcak Renkler)
-      { shape: "circle", color: "#ff4136" },
-      { shape: "square", color: "#ff851b" },
-      { shape: "triangle", color: "#ffdc00" },
-      { shape: "heart", color: "#ff4136" },
-      { shape: "star", color: "#ff851b" },
-      { shape: "oval", color: "#b10dc9" },
-      // Seviye 2 (5 Yaş İçin İlave Şekiller - Doğal Renkler)
-      { shape: "rect", color: "#2ecc40" },
-      { shape: "diamond", color: "#0074d9" },
-      { shape: "pentagon", color: "#3d9970" },
-      // Seviye 3 (6 Yaş İçin Geometrik Şekiller - Mavi/Mor)
-      { shape: "hexagon", color: "#001f3f" },
-      { shape: "octagon", color: "#85144b" },
-      { shape: "trapezoid", color: "#0074d9" },
-      // Seviye 4 (7+ Yaş İçin Karmaşık/3 Boyutlu Şekiller - Koyu/Ciddi Renkler)
-      { shape: "parallelogram", color: "#111111" },
-      { shape: "cube", color: "#ff4136" },
-      { shape: "cylinder", color: "#2ecc40" },
-      { shape: "cone", color: "#0074d9" },
-      { shape: "sphere", color: "#b10dc9" },
-      { shape: "pyramid", color: "#ff851b" }
+    // Büyük, kolay ayırt edilen ve farklı kategorilerden seçilmiş hafıza sembolleri.
+    const SYMBOLS = [
+      { emoji: "🍓", name: "Çilek", color: "#ff9ca1" },
+      { emoji: "🐝", name: "Arı", color: "#ffe17c" },
+      { emoji: "🌈", name: "Gökkuşağı", color: "#b9a4ff" },
+      { emoji: "🐢", name: "Kaplumbağa", color: "#8ee1a5" },
+      { emoji: "🌙", name: "Ay", color: "#a8ceff" },
+      { emoji: "🍄", name: "Mantar", color: "#ffaaa0" },
+      { emoji: "🦋", name: "Kelebek", color: "#a8c8ff" },
+      { emoji: "🐠", name: "Balık", color: "#8de2e5" },
+      { emoji: "🌻", name: "Ayçiçeği", color: "#ffe28a" },
+      { emoji: "🦊", name: "Tilki", color: "#ffc18e" },
+      { emoji: "🚀", name: "Roket", color: "#c6b8ff" },
+      { emoji: "🐙", name: "Ahtapot", color: "#f0a5e1" },
+      { emoji: "🍉", name: "Karpuz", color: "#a6e7ad" },
+      { emoji: "🦉", name: "Baykuş", color: "#c9b3a0" },
+      { emoji: "⭐", name: "Yıldız", color: "#ffe59b" },
+      { emoji: "🐬", name: "Yunus", color: "#96ddf4" },
+      { emoji: "🎈", name: "Balon", color: "#ffa9d2" },
+      { emoji: "🐞", name: "Uğur böceği", color: "#ffa5a5" }
     ];
 
     // Yeni Grid İhtiyaçları
@@ -524,13 +669,22 @@
       pair: document.getElementById("pairText"),
       time: document.getElementById("timeText"),
       feedback: document.getElementById("feedback"),
-      sound: document.getElementById("soundToggle")
+      sound: document.getElementById("soundToggle"),
+      turnCaption: document.getElementById("turnCaption"),
+      turnName: document.getElementById("turnName"),
+      turnScores: document.getElementById("turnScores"),
+      setupToggle: document.getElementById("setupToggle")
     };
 
     let audioContext = null;
 
     function shuffle(items) {
-      return items.slice().sort(() => Math.random() - 0.5);
+      const shuffled = items.slice();
+      for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+      }
+      return shuffled;
     }
 
     function getAudioContext() {
@@ -606,8 +760,7 @@
 
     function buildCards() {
       const cfg = ageConfigs[state.age];
-      // Şekilleri baştan alıyoruz ki küçük yaşlar hep temel/sıcak şekillerle oynasın.
-      const selected = SHAPES.slice(0, cfg.pairs);
+      const selected = SYMBOLS.slice(0, cfg.pairs);
       const cards = [];
       selected.forEach((item, index) => {
         cards.push({ id: "a-" + index, pair: "p-" + index, item, found: false });
@@ -616,45 +769,28 @@
       return shuffle(cards);
     }
 
-    function shapeSvg(item) {
-      const c = item.color;
-      if (item.shape === "square") return `<svg class="shape-svg" viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "triangle") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L85 80 H15 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "circle") return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="${c}" stroke-width="10"/></svg>`;
-      if (item.shape === "rect") return `<svg class="shape-svg" viewBox="0 0 100 100"><rect x="15" y="25" width="70" height="50" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "oval") return `<svg class="shape-svg" viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="40" ry="25" fill="none" stroke="${c}" stroke-width="10"/></svg>`;
-      if (item.shape === "pentagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L85 40 L70 85 H30 L15 40 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "diamond") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 10 L85 50 L50 90 L15 50 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "heart") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 85 C20 60 10 40 20 25 C30 10 45 15 50 28 C55 15 70 10 80 25 C90 40 80 60 50 85 Z" fill="none" stroke="${c}" stroke-width="9" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "star") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 10 L62 38 L92 40 L68 58 L76 88 L50 70 L24 88 L32 58 L8 40 L38 38 Z" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "hexagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 15 H75 L95 50 L75 85 H25 L5 50 Z" fill="none" stroke="${c}" stroke-width="9" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "trapezoid") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M30 25 H70 L85 75 H15 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "octagon") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M30 15 H70 L85 30 V70 L70 85 H30 L15 70 V30 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "cube") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 30 H65 L80 45 V85 H40 L25 70 Z M25 30 L40 45 H80 M40 45 V85 M65 30 L80 45" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "cone") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L80 75 C70 90 30 90 20 75 Z M20 75 C30 60 70 60 80 75" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "cylinder") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M25 25 C25 10 75 10 75 25 V75 C75 90 25 90 25 75 Z M25 25 C25 40 75 40 75 25 M25 75 C25 60 75 60 75 75" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "sphere") return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="${c}" stroke-width="8"/><path d="M15 50 C30 35 70 35 85 50 C70 65 30 65 15 50 Z" fill="none" stroke="${c}" stroke-width="6"/></svg>`;
-      if (item.shape === "parallelogram") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M30 25 H85 L70 75 H15 Z" fill="none" stroke="${c}" stroke-width="10" stroke-linejoin="round"/></svg>`;
-      if (item.shape === "pyramid") return `<svg class="shape-svg" viewBox="0 0 100 100"><path d="M50 15 L85 75 H15 Z M50 15 V75" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/></svg>`;
-      return `<svg class="shape-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30" fill="${c}"/></svg>`;
+    function symbolMarkup(item) {
+      return `<span class="symbol-art" style="--symbol-color:${item.color}"><span class="symbol-glow"></span><span class="symbol-emoji" aria-hidden="true">${item.emoji}</span><span class="symbol-label">${item.name}</span></span>`;
     }
 
     function renderBoard() {
       const cfg = ageConfigs[state.age];
       els.board.style.setProperty("--cols", cfg.cols);
+      els.board.dataset.density = cfg.pairs >= 18 ? "dense" : "regular";
       els.board.innerHTML = "";
       state.cards.forEach((card, index) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "card-btn" + (card.found ? " is-found" : "");
         button.dataset.index = index;
-        button.setAttribute("aria-label", "Hafıza kartı");
+        button.setAttribute("aria-label", "Kapalı hafıza kartı " + (index + 1));
         button.innerHTML = `
           <span class="card-inner">
-            <span class="card-face card-back">?</span>
-            <span class="card-face card-front">${shapeSvg(card.item)}</span>
+            <span class="card-face card-back"><span class="back-gem" aria-hidden="true">✦</span></span>
+            <span class="card-face card-front">${symbolMarkup(card.item)}</span>
           </span>
         `;
+        if (card.found) button.setAttribute("aria-label", "Bulundu: " + card.item.name);
         button.addEventListener("click", () => flipCard(index, button));
         els.board.appendChild(button);
       });
@@ -664,12 +800,21 @@
       els.move.textContent = state.moves;
       els.pair.textContent = state.foundPairs + "/" + state.totalPairs;
       els.scoreList.innerHTML = "";
+      els.turnScores.innerHTML = "";
       state.players.forEach((player, index) => {
         const li = document.createElement("li");
         li.className = index === state.current ? "is-active" : "";
         li.innerHTML = `<span>${player.name}</span><strong>${player.score}</strong>`;
         els.scoreList.appendChild(li);
+        const score = document.createElement("span");
+        score.className = "turn-score" + (index === state.current ? " is-active" : "");
+        score.textContent = player.name + " · " + player.score;
+        els.turnScores.appendChild(score);
       });
+      const currentPlayer = state.players[state.current];
+      els.turnCaption.textContent = state.mode === "duo" ? "SIRA KİMDE?" : "OYUN DURUMU";
+      els.turnName.textContent = state.mode === "duo" ? "Sıra " + currentPlayer.name + "'de" : "Eş " + state.foundPairs + " / " + state.totalPairs;
+      document.getElementById("turnIcon").textContent = state.mode === "duo" ? (state.current === 0 ? "🟣" : "🔵") : "✦";
     }
 
     function setFeedback(text, tone) {
@@ -684,7 +829,13 @@
       startTimer();
       playSound("flip");
       button.classList.add("is-open");
+      button.setAttribute("aria-label", "Açıldı: " + card.item.name);
       state.open.push(index);
+      if (state.moves === 0 && state.open.length === 1 && !els.setup.classList.contains("hidden")) {
+        els.setup.classList.add("hidden");
+        els.setupToggle.textContent = "Ayarları Göster";
+        els.setupToggle.setAttribute("aria-expanded", "false");
+      }
       
       if (state.open.length === 2) {
         state.moves += 1;
@@ -704,13 +855,16 @@
         state.foundPairs += 1;
         state.players[state.current].score += 1;
         buttons.forEach(button => {
-          button.classList.remove("is-open");
-          button.classList.add("is-found");
+          button.classList.add("is-open", "is-found");
+          button.setAttribute("aria-label", "Bulundu: " + state.cards[Number(button.dataset.index)].item.name);
         });
         playSound("match");
         setFeedback(state.mode === "duo" ? state.players[state.current].name + " eş buldu, sıra onda." : "Harika! Bir eş buldun.", "good");
       } else {
-        buttons.forEach(button => button.classList.remove("is-open"));
+        buttons.forEach(button => {
+          button.classList.remove("is-open");
+          button.setAttribute("aria-label", "Kapalı hafıza kartı " + (Number(button.dataset.index) + 1));
+        });
         playSound("miss");
         if (state.mode === "duo") {
           state.current = (state.current + 1) % state.players.length;
@@ -729,6 +883,7 @@
       if (state.foundPairs < state.totalPairs) return;
       stopTimer();
       state.locked = true;
+      document.querySelector(".game-shell").dataset.finished = "true";
       playSound("win");
       let message = "Oyun bitti! ";
       if (state.mode === "duo") {
@@ -751,6 +906,7 @@
       state.moves = 0;
       state.foundPairs = 0;
       state.startedAt = 0;
+      delete document.querySelector(".game-shell").dataset.finished;
       els.time.textContent = "0:00";
       makePlayers();
       renderBoard();
@@ -783,7 +939,10 @@
     document.getElementById("newGameBtn").addEventListener("click", newGame);
 
     document.getElementById("setupToggle").addEventListener("click", () => {
-      els.setup.classList.toggle("hidden");
+      const isOpening = els.setup.classList.contains("hidden");
+      els.setup.classList.toggle("hidden", !isOpening);
+      els.setupToggle.textContent = isOpening ? "Ayarları Gizle" : "Ayarları Göster";
+      els.setupToggle.setAttribute("aria-expanded", String(isOpening));
     });
 
     els.sound.addEventListener("click", () => {
