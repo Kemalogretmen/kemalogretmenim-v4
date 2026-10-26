@@ -37,12 +37,16 @@ test('natural jellyfish explore broad horizontal routes, reverse smoothly and ke
   }
 });
 
-test('ray wings have a clear alternating stroke and fold, while the tail and rest pose remain bounded',()=>{
- const poses=Array.from({length:120},(_,i)=>A.pose('ray',i/20,true));
- for(const wing of [0,1]){
-  const values=poses.map(p=>p.joints[wing]);assert.ok(Math.max(...values)-Math.min(...values)>27);
-  assert.ok(Math.max(...poses.map(p=>p.jointScaleY[wing]))-Math.min(...poses.map(p=>p.jointScaleY[wing]))>.27);
+test('ray anatomy never cuts pieces out of the head, body or tail',()=>{
+ assert.deepEqual(A.definitions.ray,{parts:[],cutouts:[]});assert.equal(A.mask('ray'),'none');
+ assert.deepEqual(A.pose('ray',1,true),A.pose('ray',50,false));
+});
+test('seahorse tail and shrimp antenna joints match the cutouts and rest without leaving duplicate appendages',()=>{
+ for(const id of ['seahorse','cleanershrimp']){
+  assert.equal(A.definitions[id].parts.length,A.definitions[id].cutouts.length);
+  assert.equal(A.pose(id,1,true).joints.length,A.definitions[id].parts.length);
+  assert.ok(A.definitions[id].parts.every(p=>p.origin&&p.clip.startsWith('polygon(')));
+  assert.ok(A.pose(id,1,true).joints.some((n,i)=>n!==A.pose(id,2,true).joints[i]));
+  assert.ok(A.pose(id,1,false).joints.every(n=>n===0));
  }
- assert.ok(Math.max(...poses.map(p=>p.joints[2]))-Math.min(...poses.map(p=>p.joints[2]))>13);
- assert.deepEqual(A.pose('ray',5,false).jointScaleY,[1,1,1]);
 });

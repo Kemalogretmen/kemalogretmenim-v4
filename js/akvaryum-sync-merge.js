@@ -188,6 +188,12 @@
         for(const [,f] of candidates){if(excess--<=0)break;f.creditReversed=true;}
       }
     }
+    // Separate offline awards can reach a shared goal only after reconciliation.
+    // A target edit alone never unlocks a collection; the goal identity must match.
+    for(const cls of result.classes){
+      const bc=b.classes.find(c=>c.id===cls.id);
+      if(bc&&equal(bc.goal,cls.goal))C.unlockCustomization(cls,C.goalProgress(bc)?.complete===true);
+    }
     // Navigation belongs to this device and cannot introduce a deleted class.
     result.activeClassId=result.classes.some(c=>c.id===l.activeClassId)?l.activeClassId:(result.classes.find(c=>c.id===r.activeClassId)||result.classes[0])?.id;
     return C.validate(result);

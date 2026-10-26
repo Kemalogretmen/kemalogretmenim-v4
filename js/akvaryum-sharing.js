@@ -2,10 +2,10 @@
   'use strict';
   const C = window.AquariumCore;
   function snapshot(cls, settings) {
-    return { name: cls.name, theme: cls.theme, shareClassPoints:cls.students.reduce((sum,s)=>sum+C.earned(s),0), settings: { names: settings.names, points: settings.points === true, classPoints: settings.classPoints === true, motion: settings.motion, lightMotion: settings.lightMotion !== false, waterWaves: settings.waterWaves === true, ...C.waterSettings(settings), chat: settings.chat },
+    return { name: cls.name, theme: cls.theme, shareClassPoints:cls.students.reduce((sum,s)=>sum+C.earned(s),0), settings: { customization: C.customization(cls.customization).enabled, names: settings.names, points: settings.points === true, classPoints: settings.classPoints === true, motion: settings.motion, lightMotion: settings.lightMotion !== false, waterWaves: settings.waterWaves === true, ...C.waterSettings(settings), chat: settings.chat },
       teacher: cls.teacher?.enabled ? {name:settings.names ? cls.teacher.name : '',species:cls.teacher.species} : null,
       classPoints: settings.classPoints === true ? cls.students.reduce((sum,s)=>sum+C.earned(s),0) : null,
-      students: cls.students.map(s => ({ id: s.id, appearance: (()=>{const g=C.growth(s,cls);return {egg:g.egg,scale:g.scale,trophy:g.trophy};})(), name: settings.names ? s.name : '', shareName:s.name, sharePoints:C.earned(s), species: s.species, mood: C.mood(s).id, points: settings.points ? C.earned(s) : null })) };
+      students: cls.students.map(s => ({ id: s.id, appearance: (()=>{const g=C.growth(s,cls);return {egg:g.egg,scale:g.scale,trophy:g.trophy,cosmetics:C.visibleCosmetics(s.cosmetics,s.species,cls.customization)};})(), name: settings.names ? s.name : '', shareName:s.name, sharePoints:C.earned(s), species: s.species, mood: C.mood(s).id, points: settings.points ? C.earned(s) : null })) };
   }
   const client = () => window.kemalUserAuth.getClient();
   const owner = () => window.kemalUserAuth.getUser().id;

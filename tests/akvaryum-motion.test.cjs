@@ -239,3 +239,26 @@ test('puffer reward pose inflates quickly, holds, and returns smoothly at five s
  let previous=M.puffPose(0).amount;
  for(let i=1;i<=500;i++){const p=M.puffPose(i/100);assert.ok(p.amount>=0&&p.amount<=1);assert.ok(Math.abs(p.amount-previous)<.06);previous=p.amount;}
 });
+test('crabs walk and drift sideways without mirroring or turning their whole body',()=>{
+ for(const y of [200,500]){
+  const f={...animals(1,1000,600)[0],species:'crab',profile:M.profile('crab'),x:850,y,angle:180,direction:1,targetX:900,targetY:y,routeTime:20,minY:100,maxY:520,phase:0};
+  let left=false,right=false,last=f.x;
+  for(let i=0;i<600;i++){M.step([f],.05,1000,600,()=>.5);const diff=f.x-last;left ||= diff<0;right ||= diff>0;assert.ok(Math.abs(diff)<.3);assert.equal(f.angle,0);assert.equal(f.turn,null);assert.equal(M.turnPose(f).yaw,0);last=f.x;}
+  assert.ok(left&&right,'smooth direction reversal without flipping');
+  f.bottomRest=true;f.angle=180;M.step([f],.05,1000,600);assert.equal(f.angle,0);
+ }
+});
+test('all three characters alternate smooth swimming and sand walking independently, and hunger pauses the cycle',()=>{
+ for(const species of ['spongebob','patrick','mrkrabs']){
+  const f={...animals(1,1000,600)[0],species,profile:M.profile(species),x:400,y:180,minY:30,maxY:480,characterClock:33,phase:0};
+  let walked=false,swamAfter=false,walkFrames=0;
+  for(let i=0;i<2100;i++){
+   const oldY=f.y,clock=f.characterClock;M.step([f],.05,1000,600,()=>.5);assert.ok(Math.abs(f.y-oldY)<=1.101,'no teleport to/from floor');
+   if(f.characterWalking){walked=true;walkFrames++;assert.ok(Math.abs(f.y-f.maxY)<4);}
+   if(walked&&!f.characterFloor&&f.y<430)swamAfter=true;
+   assert.ok(f.characterClock>=clock||f.characterClock<.1);
+  }
+  assert.ok(walked&&swamAfter&&walkFrames>100,species+' walks then swims again');
+  f.hungry=true;const clock=f.characterClock;M.step([f],.05,1000,600);assert.equal(f.characterWalking,false);assert.equal(f.characterClock,clock);
+ }
+});

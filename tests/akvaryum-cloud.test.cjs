@@ -53,7 +53,7 @@ test('a write in flight cannot clear the dirty flag of a newer local edit',async
  assert.equal(JSON.parse(d.storage.getItem('owner_cloud')).dirty,true);assert.equal(s.row.document.classes[0].name,'Birincilerim');
 });
 test('script dependencies load before audio and core; all 42 creatures have assets',()=>{
- const fs=require('node:fs'),html=fs.readFileSync('ogretmen/akvaryum.html','utf8');assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-audio.js'));assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-core.js'));assert.equal(C.SPECIES.length,42);assert.equal(new Set(C.SPECIES.map(s=>s.id)).size,42);for(const s of C.SPECIES)assert.ok(fs.existsSync('assets/akvaryum/canlilar/'+s.file));
+ const fs=require('node:fs'),html=fs.readFileSync('ogretmen/akvaryum.html','utf8');assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-audio.js'));assert.ok(html.indexOf('/js/akvaryum-sounds.js')<html.indexOf('/js/akvaryum-core.js'));assert.equal(C.SPECIES.length,50);assert.equal(C.SPECIES.filter(s=>!s.unlockAt).length,47);assert.equal(new Set(C.SPECIES.map(s=>s.id)).size,50);for(const s of C.SPECIES)assert.ok(fs.existsSync('assets/akvaryum/canlilar/'+s.file));
 });
 
 test('three stale devices converge on independent pupil awards without losing or duplicating feeds',async()=>{

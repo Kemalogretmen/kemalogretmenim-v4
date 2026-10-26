@@ -231,5 +231,5 @@ test('every selectable creature ships a lightweight transparent-capable WebP and
   assert.equal(data.toString('ascii',8,12),'WEBP',s.id);
   assert.ok(data.length<120000,s.id+' transfer budget');
  }
- assert.ok(bytes<2500000,'complete catalogue transfer budget');
+ assert.ok(bytes<3000000,'50-choice complete catalogue transfer budget');
 });

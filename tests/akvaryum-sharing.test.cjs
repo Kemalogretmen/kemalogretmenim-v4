@@ -6,7 +6,7 @@ const { parseHTML } = require('linkedom');
 const C = require('../js/akvaryum-core.js');
 
 test('private share projection retains approved sharing fields without history and keeps legacy visibility flags', () => {
-  const window = { AquariumCore:C };
+  const window = { AquariumCosmetics:require('../js/akvaryum-cosmetics.js'), AquariumCore:C };
   vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'), {window});
   const cls=C.newClass('2-A'), s=C.newStudent('Deniz'); cls.students.push(s);
   const d=C.ensureDay(s,cls); d.tasks[0].status='done'; C.feed(s);
@@ -18,6 +18,33 @@ test('private share projection retains approved sharing fields without history a
   assert.equal(data.students[0].points,1); assert.equal(data.students[0].name,'Deniz');
 });
 
+test('shared appearance contains only approved cosmetic IDs and never carries private customization data',()=>{
+ const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
+ const cls=C.newClass('Sınıf'),s=C.newStudent('Ada');cls.students=[s];cls.customization={enabled:true,collectionUnlocked:false};
+ s.cosmetics={accessory:'shell',palette:'pearl',url:'PRIVATE-UPLOAD',points:999};
+ let doc=window.AquariumSharing.snapshot(cls,{names:true,points:false});assert.equal(doc.settings.customization,true);
+ assert.deepEqual(JSON.parse(JSON.stringify(doc.students[0].appearance.cosmetics)),{accessory:'shell',palette:'pearl'});assert.ok(!JSON.stringify(doc).includes('PRIVATE-UPLOAD'));
+ s.cosmetics.accessory='star';doc=window.AquariumSharing.snapshot(cls,{names:true});assert.equal(doc.students[0].appearance.cosmetics.accessory,'none');
+ cls.customization.enabled=false;doc=window.AquariumSharing.snapshot(cls,{names:true});assert.equal(doc.students[0].appearance.cosmetics.palette,'original');assert.equal(s.cosmetics.palette,'pearl');
+});
+test('parents see all approved outfits but only the own child score and cannot open the customization editor',async()=>{
+ const snapshot={theme:'reef',settings:{names:true,points:true,customization:true,motion:true},students:[
+ {id:'my-child',name:'Ada',species:'clown',mood:'happy',points:12,appearance:{egg:false,scale:.6,cosmetics:{accessory:'sailor',palette:'original'}}},
+ {id:'peer-two',name:'Ece',species:'betta',mood:'happy',points:999,appearance:{egg:false,scale:.8,cosmetics:{accessory:'shell',palette:'original'}}}]};
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111'),d=h.document;
+ assert.equal(d.querySelectorAll('.fish .fish-accessory').length,2);assert.equal(d.querySelector('.parent-child .fish-points').textContent,'★ 12');assert.equal(d.querySelector('[data-id="view-peer-two"] .fish-points').hidden,true);
+ assert.equal(d.querySelector('#cosmeticsForm'),null);assert.deepEqual(h.io(),{reads:0,writes:0});
+});
+test('shared characters render their actual identity without revealing the milestone flag or changing visitor permissions',async()=>{
+ const h=await viewerHarness({theme:'reef',settings:{names:true,points:false,motion:true},students:[
+ {id:'a',name:'Ada',species:'spongebob',mood:'happy',appearance:{egg:false,scale:1}},
+ {id:'b',name:'Ece',species:'lina',mood:'calm',appearance:{egg:false,scale:.7}},
+ {id:'c',name:'Deniz',species:'mrkrabs',mood:'happy',appearance:{egg:false,scale:1}}]});
+ assert.ok(h.document.querySelector('[data-species="spongebob"]'));assert.ok(h.document.querySelector('[data-species="lina"]'));assert.ok(h.document.querySelector('[data-species="mrkrabs"]'));
+ assert.equal(h.document.querySelectorAll('.fish-points:not([hidden])').length,0);assert.equal(h.document.querySelector('#chooseForm'),null);assert.deepEqual(h.io(),{reads:0,writes:0});
+ const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});const cls=C.newClass('Sınıf'),s=C.newStudent('Ada');s.species='patrick';s.characterUnlocked=true;cls.students=[s];
+ assert.equal(JSON.stringify(window.AquariumSharing.snapshot(cls,{})).includes('characterUnlocked'),false);
+});
 test('settings remain compatible with old backups and clamp unsafe input', () => {
   const old=C.initialState(); old.settings={names:true,motion:true};
   assert.equal(C.validate(old).settings.points,false);
@@ -28,7 +55,7 @@ test('settings remain compatible with old backups and clamp unsafe input', () =>
   assert.equal(C.settingsOf().lightMotion,true);assert.equal(C.settingsOf().waterWaves,false);
   assert.equal(C.settingsOf({lightMotion:false,waterWaves:true}).lightMotion,false);
   assert.equal(C.settingsOf({lightMotion:false,waterWaves:true}).waterWaves,true);
-  const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
+  const window={AquariumCosmetics:require('../js/akvaryum-cosmetics.js'), AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
   const shared=window.AquariumSharing.snapshot(C.newClass('Test'),{lightMotion:false,waterWaves:true});
   assert.equal(shared.settings.lightMotion,false);assert.equal(shared.settings.waterWaves,true);
   assert.deepEqual(C.waterSettings({bubbleAmount:-20,lightStrength:Infinity,waveStrength:999}),{bubbleAmount:50,lightStrength:100,waveStrength:150});
@@ -42,6 +69,8 @@ async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-1111
   const intervals=[],frames=[]; let response=snapshot,report=null,reads=0,writes=0,rafId=0,clock=0; const urls=[],requests=[];
   const localStorage={getItem(){reads++;throw Error('Viewer must not read teacher storage');},setItem(){writes++;}};
   window.AquariumSocial=require('../js/akvaryum-social.js');
+  window.AquariumExpressive=require('../js/akvaryum-expressive.js');
+  window.AquariumCosmetics=require('../js/akvaryum-cosmetics.js');
   window.AquariumCore=C;window.AquariumTimer=require('../js/akvaryum-timer.js');window.AquariumMotion=require('../js/akvaryum-motion.js'); window.AquariumAudio={stop(){}};
   window.kemalSiteStore={getConfig:()=>({supabaseUrl:'https://example.invalid',supabaseAnonKey:'public-key'})};
   window.matchMedia=()=>({matches:false,addEventListener(){}});
@@ -169,7 +198,7 @@ test('empty shared classrooms do not invent demonstration fish',async()=>{
 });
 
 test('class pearl aggregates lifetime earned points without spending food or exposing hidden individual scores',()=>{
- const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
+ const window={AquariumCosmetics:require('../js/akvaryum-cosmetics.js'), AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
  const cls=C.newClass('2-A');cls.students=[C.newStudent('Ada'),C.newStudent('Ege')];
  cls.students.forEach(s=>{C.ensureDay(s,cls).tasks[0].status='done';C.feed(s);});
  const data=window.AquariumSharing.snapshot(cls,{names:false,points:false,classPoints:true});
@@ -217,7 +246,7 @@ test('swimmers turn gradually inside scene bounds and keep scores clear of the u
 });
 
 test('growth appearance is shared while thresholds, hidden names and corrected feed records remain private',()=>{
- const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
+ const window={AquariumCosmetics:require('../js/akvaryum-cosmetics.js'), AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
  const cls=C.newClass('Sınıf'),s=C.newStudent('Deniz');cls.students.push(s);C.ensureDay(s,cls);
  cls.teacher={name:'Gizli öğretmen',species:'turtle',enabled:true};cls.growth={enabled:true,thresholds:C.defaultThresholds()};
  C.completeAndFeed(s,C.dayKey(),cls.tasks[0].id);C.correctAward(s,C.dayKey(),cls.tasks[0].id);
@@ -245,7 +274,7 @@ test('deleting a class closes its child codes and class link before clearing the
    update(value){op.value=value;return this;},
    then(resolve){writes.push(op);resolve({data:[{id:'share-1'}],error:table===fail?{message:'offline'}:null});}
   };}};
-  const window={AquariumCore:C,kemalUserAuth:{getClient:()=>client,getUser:()=>({id:'owner-1'})}};
+  const window={AquariumCosmetics:require('../js/akvaryum-cosmetics.js'), AquariumCore:C,kemalUserAuth:{getClient:()=>client,getUser:()=>({id:'owner-1'})}};
   vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window,crypto:{randomUUID:()=> 'rotated-token'}});
   if(fail)await assert.rejects(window.AquariumSharing.removeClass('class-1'),/Sınıf silinmedi/);
   else await window.AquariumSharing.removeClass('class-1');

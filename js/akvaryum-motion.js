@@ -22,9 +22,26 @@
     hermitcrab: { speed: .16, bob: .4, tilt: .25, depth: .98, pulse: 0, floor: true },
     cuttlefish: { speed: .45, bob: 3, tilt: .8, depth: .72, pulse: 0 },
     swordfish: { speed: 1.05, bob: 2, tilt: .6, depth: .4, pulse: 0 },
-    safiye: { speed: .62, bob: 3, tilt: .8, depth: .55, pulse: 0 }
+    safiye: { speed: .62, bob: 3, tilt: .8, depth: .55, pulse: 0 },
+    eel: { speed:.56,bob:3,tilt:1.1,depth:.67,pulse:0 },
+    angler: { speed:.32,bob:4,tilt:.7,depth:.7,pulse:0 },
+    mantis: { speed:.4,bob:2,tilt:.7,depth:.8,pulse:0 },
+    crab: { speed:.2,bob:.5,tilt:.3,depth:.96,pulse:0,floor:true },
+    lina: { speed:.55,bob:4,tilt:1,depth:.5,pulse:0 },
+    spongebob: { speed:.3,bob:3,tilt:.65,depth:.62,pulse:0 },
+    patrick: { speed:.27,bob:4,tilt:.8,depth:.64,pulse:0 },
+    mrkrabs: { speed:.24,bob:.6,tilt:.4,depth:.64,pulse:0 }
   };
   const profile = id => profiles[id] || normal;
+  const characters=new Set(['spongebob','patrick','mrkrabs']);
+  function characterTravel(f,dt){
+    if(!characters.has(f.species))return;
+    // Each character has its own clock; modal/reflow and awards never reset it.
+    f.characterClock=((f.characterClock??initialDepth(f.id)*28)+dt*f.cruise)%104;
+    const floor=f.characterClock>=34&&f.characterClock<74;
+    if(!floor&&f.characterFloor)f.targetY=f.minY+(f.maxY-f.minY)*.32;
+    f.characterFloor=floor;f.characterWalking=floor&&Math.abs(f.y-f.maxY)<4;
+  }
   // Camera distance is independent of score, hunger and vertical swimming lanes.
   function initialDepth(id) {
     let hash=2166136261;
@@ -40,10 +57,12 @@
   // A small textured cross-section fills the edge-on silhouette of a sprite.
   // The body banks into a turn while labels and scores remain screen-facing.
   function turnPose(f) {
+    // A crab side-steps in both directions; its whole front view stays intact.
+    if(f.species==='crab')return {yaw:0,round:0,fullness:0,bank:0,lift:0,scale:1,width:.2,height:.2};
     const angle=clamp(Number.isFinite(f.angle)?f.angle:0,0,180);
     const round=Math.max(0,Math.sin(angle*Math.PI/180));
     const sign=f.turn ? Math.sign(f.turn.to-f.turn.from)||1 : f.direction>0?1:-1;
-    const flat=['ray','shark','dolphin','cleanershrimp','hermitcrab'].includes(f.species);
+    const flat=['ray','shark','dolphin','cleanershrimp','hermitcrab','eel','mantis','crab'].includes(f.species);
     const tall=['seahorse','angelfish','batfish','discus'].includes(f.species);
     const fullness=clamp((round-.7)/.3,0,1);
     return {yaw:angle,round:round<.0001?0:round,fullness,bank:round*sign*3.5,
@@ -186,12 +205,13 @@
         return;
       }
       if(f.bottomRest || f.hungry) {
+        f.characterWalking=false;
         // Absent or hungry animals settle on the sand; neither changes camera depth.
         f.turn=null;f.cruise=0;f.routeTime=0;f.targetX=null;
         const approach=(from,to,rate)=>Math.abs(to-from)<.15?to:from+(to-from)*Math.min(1,dt*rate);
         f.x=clamp(approach(f.x,f.restX??f.x,.55),0,Math.max(0,width-f.size));
         f.y=clamp(approach(f.y,f.restY??f.maxY,.55),f.minY,f.maxY);
-        f.angle=approach(f.angle,f.direction>0?0:180,1.4);
+        f.angle=f.species==='crab'?0:approach(f.angle,f.direction>0?0:180,1.4);
         return;
       }
       f.turnCooldown=Math.max(0,(f.turnCooldown||0)-dt);
@@ -203,9 +223,10 @@
       const distance=f.waterDepth??.5;
       f.waterDepth=clamp(distance+clamp((f.depthTarget-distance)*.09,-.025,.025)*dt*f.cruise,0,1);
       const p=f.profile||normal;
+      characterTravel(f,dt);
       const pulse=Math.pow((Math.sin(f.phase*3)+1)/2,3);
       const strokeFactor=f.anatomicalMotion && f.species==='octopus'?.7+pulse*.6:1;
-      const speed=24*f.mood.speed*p.speed*f.cruise*strokeFactor;
+      const speed=24*f.mood.speed*p.speed*f.cruise*strokeFactor*(f.characterWalking?1.35:1);
       const maxX=Math.max(0,width-f.size),edge=Math.min(25,maxX/4);
       if(f.anatomicalMotion && f.species==='jellyfish') {
         // Bell contractions lift the jellyfish. It drifts back down to a new
@@ -248,8 +269,13 @@
       if(!f.turn && Math.abs(f.targetX-f.x)<18) f.routeTime=0;
       const atEdge=(f.direction>0 && f.x>=maxX-edge)||(f.direction<0 && f.x<=edge);
       const destinationBehind=(f.targetX-f.x)*f.direction < -Math.max(18,f.size*.25);
-      if(atEdge || destinationBehind) startTurn(f);
-      if(f.turn) {
+      if(f.species!=='crab'&&(atEdge || destinationBehind)) startTurn(f);
+      if(f.species==='crab'){
+        f.turn=null;f.angle=0;
+        if((atEdge||destinationBehind)&&f.turnCooldown<=0){f.direction*=-1;f.turnCooldown=1;f.targetX=f.direction>0?maxX*.8:maxX*.2;f.routeTime=10;}
+        f.lateralVelocity=(f.lateralVelocity??speed*f.direction)+(speed*f.direction-(f.lateralVelocity??speed*f.direction))*Math.min(1,dt*4);
+        f.x+=dt*f.lateralVelocity;
+      }else if(f.turn) {
         f.turn.elapsed+=dt*f.cruise;
         const t=clamp(f.turn.elapsed/f.turn.duration,0,1),ease=t*t*t*(t*(t*6-15)+10);
         f.angle=f.turn.from+(f.turn.to-f.turn.from)*ease;
@@ -262,9 +288,9 @@
         }
       } else f.x+=dt*speed*f.direction;
       f.phase+=dt*.7*f.mood.speed*f.cruise;
-      const wanted=clamp((f.targetY??f.anchorY)+Math.sin(f.phase)*p.bob,f.minY,f.maxY);
-      const verticalSpeed=Math.max(2,speed*.45);
-      f.y+=clamp((wanted-f.y)*.22,-verticalSpeed,verticalSpeed)*dt;
+      const wanted=clamp(f.characterFloor?f.maxY:(f.targetY??f.anchorY)+Math.sin(f.phase)*p.bob,f.minY,f.maxY);
+      const character=characters.has(f.species),verticalSpeed=character?22:Math.max(2,speed*.45);
+      f.y+=clamp((wanted-f.y)*(character?.55:.22),-verticalSpeed,verticalSpeed)*dt;
       f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);
     });
   }

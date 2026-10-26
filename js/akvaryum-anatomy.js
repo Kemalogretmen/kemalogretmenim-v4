@@ -6,9 +6,13 @@
 })(typeof window==='object'?window:this,function(){
   'use strict';
   const modelSpecies=['clown','jellyfish','turtle','octopus'];
-  const species=[...modelSpecies,'ray','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish'];
+  const species=[...modelSpecies,'ray','seahorse','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish','eel','angler','mantis','crab','spongebob','patrick','mrkrabs'];
   const part=(clip,origin)=>({clip:'polygon('+clip+')',origin});
   const definitions={
+    // Keep the new silhouettes whole. Rigid cutouts would detach legs, the lure
+    // or the eel's continuous body; their small poses transform one full image.
+    eel:{parts:[],cutouts:[]},angler:{parts:[],cutouts:[]},mantis:{parts:[],cutouts:[]},crab:{parts:[],cutouts:[]},
+    spongebob:{parts:[],cutouts:[]},patrick:{parts:[],cutouts:[]},mrkrabs:{parts:[],cutouts:[]},
     jellyfish:{parts:[part('0% 59%,100% 59%,100% 100%,0% 100%','50% 60%')],cutouts:['M0 61H100V100H0Z']},
     turtle:{parts:[
       part('64% 42%,75% 48%,69% 71%,52% 91%,38% 96%,35% 89%,46% 64%','66% 45%'),
@@ -19,18 +23,20 @@
       part('24% 53%,57% 42%,71% 48%,86% 100%,23% 100%','62% 49%')],
       cutouts:['M0 0H29L45 25L52 34L49 40L27 30L0 24Z','M26 59L55 48L66 53L84 100H23Z']},
     clown:{parts:[],cutouts:[]},
-    ray:{parts:[
-      part('35% 5%,44% 13%,60% 39%,72% 55%,70% 65%,56% 67%,42% 61%','65% 61%'),
-      part('76% 47%,86% 43%,97% 20%,100% 38%,97% 66%,84% 61%','84% 57%'),
-      part('0% 45%,15% 54%,32% 60%,43% 59%,44% 65%,29% 65%,12% 58%,0% 49%','41% 62%')],
-      cutouts:['M36 7L44 14L60 40L70 55L69 64L56 66L43 61Z','M77 48L86 44L97 22L99 38L96 65L84 60Z','M0 46L15 55L32 61L42 60L43 64L29 64L12 57L0 49Z']},
+    seahorse:{parts:[
+      part('41% 63%,53% 67%,60% 78%,60% 100%,39% 100%,37% 80%','47% 66%'),
+      part('35% 37%,45% 42%,44% 63%,35% 63%','44% 49%')],
+      cutouts:['M42 65L52 68L59 79V100H40L38 80Z','M36 39L44 43V62H36Z']},
+    // The ray uses a continuous surface, never rigid pieces cut out of its body.
+    ray:{parts:[],cutouts:[]},
     boxfish:{parts:[part('57% 42%,74% 41%,83% 61%,69% 68%,57% 58%','69% 47%')],cutouts:['M57 42L74 41L83 61L69 68L57 58Z']},
     bannerfish:{parts:[part('73% 45%,83% 47%,91% 63%,85% 72%,73% 62%','79% 48%')],cutouts:['M73 45L83 47L91 63L85 72L73 62Z']},
     batfish:{parts:[part('67% 44%,76% 46%,84% 65%,75% 74%,65% 62%','72% 47%')],cutouts:['M67 44L76 46L84 65L75 74L65 62Z']},
     cleanershrimp:{parts:[
       part('35% 63%,58% 61%,67% 73%,62% 98%,36% 98%','54% 65%'),
-      part('61% 60%,77% 55%,88% 77%,88% 96%,65% 83%','68% 61%')],
-      cutouts:['M35 63L58 61L67 73L62 98H36Z','M61 60L77 55L88 77V96L65 83Z']},
+      part('61% 60%,77% 55%,88% 77%,88% 96%,65% 83%','68% 61%'),
+      part('80% 0%,100% 0%,100% 48%,84% 44%,80% 39%','81% 39%')],
+      cutouts:['M35 63L58 61L67 73L62 98H36Z','M61 60L77 55L88 77V96L65 83Z','M81 1H100V47L85 43L81 38Z']},
     hermitcrab:{parts:[
       part('39% 67%,60% 58%,71% 69%,66% 94%,39% 94%','59% 65%'),
       part('68% 60%,84% 59%,95% 80%,90% 92%,67% 79%','77% 64%')],
@@ -49,13 +55,12 @@
   function pose(id,phase,moving){
     const t=Number.isFinite(phase)?phase:0,active=moving===true;
     const wave=active?Math.sin(t*3):0;
-    if(id==='ray'){
-      const near=active?Math.sin(t*2.4):0,far=active?Math.sin(t*2.4+.35):0;
-      return {bodyX:1,bodyY:1,joints:[near*16,-far*14,active?Math.sin(t*2.6-.6)*7:0],jointScaleY:[1+near*.17,1-far*.14,1]};
-    }
+    if(id==='eel')return {bodyX:1,bodyY:1+wave*.012,joints:[]};
+    if(['mantis','crab','spongebob','patrick','mrkrabs'].includes(id))return {bodyX:1,bodyY:1+wave*.004,joints:[]};
     if(id==='turtle')return {bodyX:1,bodyY:1,joints:[wave*7,-wave*5]};
+    if(id==='seahorse')return {bodyX:1,bodyY:1,joints:[wave*4,active?Math.sin(t*5)*3:0]};
     if(['boxfish','bannerfish','batfish'].includes(id))return {bodyX:1,bodyY:1,joints:[wave*(id==='boxfish'?5:3)]};
-    if(id==='cleanershrimp')return {bodyX:1,bodyY:1,joints:[wave*4.5,-wave*4.5]};
+    if(id==='cleanershrimp')return {bodyX:1,bodyY:1,joints:[wave*4.5,-wave*4.5,active?Math.sin(t*2.5)*2:0]};
     if(id==='hermitcrab')return {bodyX:1,bodyY:1,joints:[wave*3,-wave*3]};
     if(id==='cuttlefish')return {bodyX:1,bodyY:1,joints:[wave*1.8,active?Math.sin(t*2.4+.6)*2.5:0]};
     if(id==='octopus')return {bodyX:1,bodyY:1+(active?Math.sin(t*2.4)*.018:0),joints:[wave*3.5,Math.sin(active?t*3-.8:0)*4]};

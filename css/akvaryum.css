@@ -447,3 +447,86 @@ html.performance-lite .picker-sparkles i:nth-child(even){display:none}
 .republic-type b{display:inline-block;white-space:nowrap;font-weight:inherit}.republic-type.front{position:relative;transform:translateZ(0);color:#b80000;-webkit-text-stroke:.085em #fffaf0;paint-order:stroke fill;text-shadow:0 2px #680a0a}
 @media(max-width:800px){.republic-decor{left:3%;width:94%;bottom:3%}.republic-lettering{font-size:5.6vw;font-size:8.4cqw}}
 .preview-access .button{font-size:14px}
+
+/* Short reward gestures compose with swimming; names and routes stay still. */
+.fish.is-rewarding::before{content:'';position:absolute;inset:4% 8% 32%;border:1px solid #d7f9d999;border-radius:50%;background:radial-gradient(ellipse,#d6f9c923,transparent 70%);box-shadow:0 0 10px #caffd94d;opacity:var(--reward-glow,0);pointer-events:none}
+.fish.is-rewarding.is-egg::before{display:none}
+.fish.is-rewarding .fish-egg{box-shadow:inset -3px -5px 7px #bd4c0057,inset 2px 2px 4px #fff6cba1,0 0 12px #fff0a680}
+.goal-celebration{position:absolute;inset:0;overflow:hidden;pointer-events:none;isolation:isolate}
+.goal-water-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,#c8ffe025,transparent 65%);animation:goal-water-light 5.4s ease-in-out both}
+.goal-celebration-banner{position:absolute;left:50%;top:clamp(100px,26%,230px);transform:translateX(-50%);display:grid;justify-items:center;gap:5px;width:max-content;max-width:calc(100% - 30px);padding:16px 30px;border:1px solid #d0f4c38a;border-radius:22px;background:linear-gradient(125deg,#0b4d59ee,#1f6259ed);color:#edfff0;box-shadow:0 5px 20px #00334540;text-align:center;animation:goal-banner 5.4s ease both}
+.goal-celebration-banner>span{font-size:9px;letter-spacing:2px;color:#d2efad;font-weight:800}
+.goal-celebration-banner>strong{font-size:clamp(19px,3vw,30px);line-height:1.3}
+.goal-celebration-banner>small{font-size:12px;max-width:440px;overflow-wrap:anywhere;line-height:1.5;color:#d3eee7}
+.goal-bubble{position:absolute;bottom:5%;left:var(--goal-left);width:var(--goal-size);height:var(--goal-size);border:1px solid #e5ffcfaa;border-radius:50%;background:radial-gradient(circle at 30% 25%,#edffdd6b,transparent 68%);animation:goal-bubble 4.5s var(--goal-delay) ease-out both}
+.class-pearl.is-goal-celebrating{animation:goal-pearl 5.4s ease-in-out both}
+@keyframes goal-water-light{0%,100%{opacity:0}30%,70%{opacity:1}}
+@keyframes goal-banner{0%,100%{opacity:0;transform:translate(-50%,8px) scale(.98)}15%,80%{opacity:1;transform:translate(-50%,0) scale(1)}}
+@keyframes goal-bubble{0%{opacity:0;transform:translate(0,0)}15%{opacity:.7}100%{opacity:0;transform:translate(15px,var(--goal-rise))}}
+@keyframes goal-pearl{0%,100%{filter:drop-shadow(0 10px 13px #052f4460)}40%,65%{filter:drop-shadow(0 0 15px #eaffbc95)}}
+.app:fullscreen #aquarium>#rewardAnnouncement{display:block!important}
+html.performance-lite .goal-celebration-banner{box-shadow:none}
+html.performance-lite .fish.is-rewarding::before{box-shadow:none}
+html.performance-lite .class-pearl.is-goal-celebrating{animation:none}
+.no-motion .goal-celebration,.no-motion .fish.is-rewarding::before{display:none}
+@media(prefers-reduced-motion:reduce){.goal-celebration,.fish.is-rewarding::before{display:none}.class-pearl.is-goal-celebrating{animation:none}}
+
+/* Ray wings bend on one continuous surface; its uncut sprite is the fallback. */
+.fish-art .ray-surface{position:absolute;inset:0;width:100%;height:100%;display:none;pointer-events:none}
+
+/* Accessories share the fish's growth, heading, depth and reward transform.
+   They never introduce new movement routes or sliced body parts. */
+.fish-art img.fish-accessory,.cosmetic-preview-art img.fish-accessory{position:absolute;inset:auto;max-width:none;height:auto;object-fit:contain;pointer-events:none;z-index:4;filter:drop-shadow(0 1px 1px #173f4660);transform-origin:50% 77%}
+.is-egg .fish-accessory{display:none}
+.cosmetics-modal{width:min(1040px,calc(100vw - 28px))}
+.cosmetic-layout{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.15fr);gap:26px;align-items:start}
+.cosmetic-preview-stage{position:sticky;top:76px;min-height:300px;padding:24px 18px 16px;border:1px solid #9ad5d33b;border-radius:24px;background:radial-gradient(ellipse at 45% 16%,#b7e6d32e,transparent 60%),linear-gradient(155deg,#125e70c9,#123c51ed);box-shadow:inset 0 -25px 55px #a5c9ba17;text-align:center;overflow:hidden;isolation:isolate}
+.cosmetic-preview-stage:before{content:'';position:absolute;inset:0;z-index:-1;opacity:.17;background:url('/assets/akvaryum/arka-planlar/sakin-lagun.jpg') center/cover}
+.cosmetic-preview-float{display:grid;place-items:center;min-height:215px;animation:cosmetic-swim 7s ease-in-out infinite}
+.cosmetic-preview-art{position:relative;display:block;width:min(100%,300px);aspect-ratio:640/426;filter:drop-shadow(0 7px 9px #032b4440)}
+.cosmetic-preview-body{display:block;width:100%;height:100%;object-fit:contain}
+.cosmetic-preview-label{display:inline-block;padding:6px 14px;border:1px solid #abd4cb55;border-radius:10px;background:#123e50d9;font-size:15px;font-weight:650}
+#cosmeticPreviewDescription{font-size:12px;color:#c0dfdc;min-height:18px;margin:12px 0 0}
+.cosmetic-options{min-width:0;margin:0 0 20px;padding:0;border:0}
+.cosmetic-options legend{font-size:14px;font-weight:650;margin-bottom:12px;color:#e0f4ec}
+.cosmetic-accessories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.cosmetic-option{position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;min-width:0;min-height:94px;padding:10px 6px;border:1px solid #a0d3d340;border-radius:15px;background:#06384a58;cursor:pointer;text-align:center;font-size:11px;color:#d6e7e5;transition:background .15s,border-color .15s}
+.cosmetic-option input{position:absolute;left:8px;top:8px;width:14px;height:14px;margin:0;accent-color:#a7e8cd}
+.cosmetic-option:has(input:checked){background:#9be4c521;border-color:#b0eed5;box-shadow:inset 0 0 0 1px #a9e7ca66;color:#fff}
+.cosmetic-option:has(input:focus-visible){outline:3px solid #c6f7e0;outline-offset:3px}
+.cosmetic-option img{display:block;width:62px;height:49px;object-fit:contain}
+.cosmetic-none{height:49px;display:grid;place-items:center;font-size:38px;line-height:1;color:#aacac7}
+.cosmetic-option small{font-size:9px;color:#c7d7d4}
+.cosmetic-option.is-locked{border-style:dashed;background:#0a32434d}
+.cosmetic-options:disabled .cosmetic-option,.cosmetic-option.is-locked img{opacity:.5;cursor:default}
+.cosmetic-palettes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cosmetic-palettes .cosmetic-option{min-height:78px;padding-top:16px}
+.cosmetic-palettes i{width:27px;height:27px;display:block;border-radius:50%;border:2px solid #dce7de70;box-shadow:inset -4px -4px 6px #10384c28,inset 3px 3px 4px #ffffff4d}
+.cosmetic-layout form .form-actions{flex-wrap:wrap}
+@keyframes cosmetic-swim{0%,100%{transform:translate(-7px,3px) rotate(-1deg)}50%{transform:translate(7px,-5px) rotate(1deg)}}
+.cosmetic-preview-stage.is-still .cosmetic-preview-float,.no-motion .cosmetic-preview-float,html.performance-lite .cosmetic-preview-float{animation:none}
+@media(max-width:700px){.cosmetic-layout{grid-template-columns:1fr;gap:20px}.cosmetic-preview-stage{position:relative;top:auto;min-height:210px;padding:12px}.cosmetic-preview-float{min-height:150px}.cosmetic-preview-art{width:225px}.cosmetic-accessories{grid-template-columns:repeat(3,minmax(0,1fr))}.cosmetic-palettes{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.cosmetic-preview-float{animation:none}.cosmetic-option{transition:none}}
+
+.character-collection-heading{margin:28px 0 14px;padding:18px 20px;border:1px solid #c5d99c45;border-radius:15px;background:linear-gradient(120deg,#b7dfac16,#a4dfe908)}
+.character-collection-heading h3{font-size:17px;margin:0 0 7px;color:#d7efc5}
+.character-collection-heading p{font-size:12px;line-height:1.7;margin:0;color:#bfd6d4}
+.species-card.is-locked{border-style:dashed;cursor:default;background:#163a4959}
+.species-card.is-locked img{opacity:.48;filter:saturate(.65)}
+.species-card.is-locked strong{color:#b9ced0}
+.species-card.character-card small{color:#e1dcb4}
+.species-card:has(input:disabled){cursor:default}
+.fish.is-character .fish-turn-volume{display:none}
+/* A tiny glow is attached to the lure, behind the animal's heading transform. */
+.fish[data-species="angler"] .fish-side::after{content:'';position:absolute;left:89%;top:25%;width:8%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#fffbc057,#e8ce5233 30%,transparent 72%);pointer-events:none;animation:angler-lure 4.6s ease-in-out infinite}
+@keyframes angler-lure{0%,100%{opacity:.45;transform:scale(.85)}50%{opacity:.9;transform:scale(1.12)}}
+.no-motion .fish[data-species="angler"] .fish-side::after,.fish.is-hungry[data-species="angler"] .fish-side::after{animation:none;opacity:.5}
+@media(prefers-reduced-motion:reduce){.fish[data-species="angler"] .fish-side::after{animation:none}}
+.fish-art .expressive-effects{position:absolute;left:-30%;top:-30%;width:160%;height:160%;display:none;pointer-events:none;z-index:4}
+.fish-art .expressive-effects.visible{display:block}
+.fish-art .expressive-surface{position:absolute;inset:0;display:none;width:100%;height:100%;pointer-events:none}
+.has-expressive-surface .fish-art .expressive-surface{display:block}
+.has-expressive-surface .fish-body-image,.has-expressive-surface .fish-tail-image{visibility:hidden!important}
+.fish.has-expressive-surface[data-species="angler"] .fish-side::after{display:none}
+.fish.has-ray-surface .fish-body-image,.fish.has-ray-surface .fish-tail-image{visibility:hidden}
+.fish.has-ray-surface .ray-surface{display:block}
