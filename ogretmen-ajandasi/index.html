@@ -2564,6 +2564,19 @@
       }
     }
 
+    .manual-results-wrap { max-height: 620px; overflow: auto; margin-top: 12px; }
+    .manual-results-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+    .manual-results-table th, .manual-results-table td { padding: 8px; white-space: nowrap; text-align: center; }
+    .manual-results-table thead th { background: #edf3fa; }
+    .manual-results-table tbody th { position: sticky; left: 0; z-index: 1; background: #fff; text-align: left; min-width: 150px; max-width: 200px; white-space: normal; overflow-wrap: anywhere; }
+    .manual-results-table input { width: 68px; min-height: 40px; padding: 7px; border-radius: 6px; }
+    .manual-results-table [data-total] { background: #eef8f4; font-variant-numeric: tabular-nums; }
+    .manual-results-summary { margin-top: 12px; min-height: 24px; color: var(--muted); }
+    .report-exam-picker { max-height: 220px; overflow: auto; margin-top: 12px; }
+    .report-exam-picker[hidden] { display: none; }
+    .student-report-page { overflow-wrap: anywhere; }
+    .student-report-page + .student-report-page { margin-top: 32px; padding-top: 24px; border-top: 2px solid var(--line); }
+
     @media print {
       body { background: white; }
       .sidebar,
@@ -2571,6 +2584,7 @@
       .panel:not(.printable),
       .report-tools,
       .report-options,
+      .report-exam-picker,
       .actions,
       .toast { display: none !important; }
       .app { display: block; }
@@ -2585,6 +2599,7 @@
         outline: 0;
         border: 0;
       }
+      .student-report-page + .student-report-page { break-before: page; margin-top: 0; border-top: 0; padding-top: 0; }
     }
   </style>
 </head>
@@ -2864,10 +2879,24 @@
 
         <div class="panel" style="margin-top:16px">
           <h3>Elle Deneme / Test / Sınav Ekle</h3>
+          <div id="manualExamStatus" class="badge blue" role="status">Yeni sınav</div>
           <div class="form-grid">
+            <div class="field">
+              <label for="manualClass">Sınıf</label>
+              <select id="manualClass"></select>
+            </div>
+            <div class="field">
+              <label for="manualStudent">Öğrenci</label>
+              <select id="manualStudent"></select>
+            </div>
             <div class="field">
               <label for="manualExamName">Sınav adı</label>
               <input id="manualExamName" placeholder="Örn. Haftalık Değerlendirme">
+            </div>
+            <div class="field">
+              <label for="manualExamType">Sınav türü</label>
+              <input id="manualExamType" list="manualExamTypes" value="Deneme">
+              <datalist id="manualExamTypes"><option value="Deneme"><option value="Test"><option value="Yazılı"><option value="Kazanım değerlendirme"></datalist>
             </div>
             <div class="field">
               <label for="manualExamDate">Tarih</label>
@@ -2884,7 +2913,7 @@
             </div>
             <div class="field">
               <label>Karne görünürlüğü</label>
-              <label class="check-chip"><input id="manualShowRankings" type="checkbox"> Sıralama ve puanı göster</label>
+              <label class="check-chip"><input id="manualShowRankings" type="checkbox" checked> Sıralama ve puanı göster</label>
             </div>
             <div class="field">
               <label>Net hesabı</label>
@@ -2896,13 +2925,17 @@
             </div>
             <div class="field full">
               <label for="manualSubjectPoints">Ders puanları (opsiyonel)</label>
-              <input id="manualSubjectPoints" placeholder="Örn. Türkçe=40, Matematik=40, Hayat Bilgisi=20">
-              <span class="badge gold">Boş bırakılırsa elle girilen sınav da 100 puan üzerinden hesaplanır.</span>
+              <input id="manualSubjectPoints" placeholder="Türkçe=200; Matematik=200; Hayat Bilgisi=100">
+            </div>
+            <div class="field">
+              <label for="manualMaxScore">Toplam puan (ders puanları boşsa)</label>
+              <input id="manualMaxScore" type="number" min="0.01" step="any" value="500">
             </div>
           </div>
           <div class="actions" style="margin-top:12px">
             <button class="ghost-btn" id="prepareManualExamBtn">Giriş Tablosunu Hazırla</button>
-            <button class="primary-btn" id="saveManualExamBtn">Elle Sınavı Kaydet</button>
+            <button class="primary-btn" id="saveManualExamBtn">Sınavı Kaydet</button>
+            <button class="ghost-btn" id="cancelManualExamBtn">Yeni Sınav / Vazgeç</button>
           </div>
           <div id="manualExamEntry" style="margin-top:12px"></div>
         </div>
@@ -3091,6 +3124,7 @@
               <div id="subjectPicker" class="subject-picker"></div>
             </div>
           </div>
+          <div id="reportExamPicker" class="subject-picker report-exam-picker" hidden></div>
           <div class="actions" style="margin-top:12px">
             <button class="primary-btn" id="refreshReportBtn">Karneyi Oluştur</button>
             <button class="ghost-btn" id="downloadPdfBtn">PDF</button>

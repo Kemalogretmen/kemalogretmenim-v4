@@ -5,7 +5,7 @@
     const CLOUD_SYNC_DEBOUNCE_MS = 2200;
     const SYSTEM_LOGO_SRC = "assets/kemal-kocar-logo-2025.png";
     const SYSTEM_LOGO_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAKMGlDQ1BJQ0MgUHJvZmlsZQAAeJydlndUVNcWh8+9d3qhzTAUKUPvvQ0gvTep0kRhmBlgKAMOMzSxIaICEUVEBBVBgiIGjIYisSKKhYBgwR6QIKDEYBRRUXkzslZ05eW9l5ffH2d9a5+99z1n733WugCQvP25vHRYCoA0noAf4uVKj4yKpmP7AQzwAAPMAGCyMjMCQj3DgEg+Hm70TJET+CIIgDd3xCsAN428g+h08P9JmpXBF4jSBInYgs3JZIm4UMSp2YIMsX1GxNT4FDHDKDHzRQcUsbyYExfZ8LPPIjuLmZ3GY4tYfOYMdhpbzD0i3pol5IgY8RdxURaXky3iWyLWTBWmcUX8VhybxmFmAoAiie0CDitJxKYiJvHDQtxEvBQAHCnxK47/igWcHIH4Um7pGbl8bmKSgK7L0qOb2doy6N6c7FSOQGAUxGSlMPlsult6WgaTlwvA4p0/S0ZcW7qoyNZmttbWRubGZl8V6r9u/k2Je7tIr4I/9wyi9X2x/ZVfej0AjFlRbXZ8scXvBaBjMwDy97/YNA8CICnqW/vAV/ehieclSSDIsDMxyc7ONuZyWMbigv6h/+nwN/TV94zF6f4oD92dk8AUpgro4rqx0lPThXx6ZgaTxaEb/XmI/3HgX5/DMISTwOFzeKKIcNGUcXmJonbz2FwBN51H5/L+UxP/YdiftDjXIlEaPgFqrDGQGqAC5Nc+gKIQARJzQLQD/dE3f3w4EL+8CNWJxbn/LOjfs8Jl4iWTm/g5zi0kjM4S8rMW98TPEqABAUgCKlAAKkAD6AIjYA5sgD1wBh7AFwSCMBAFVgEWSAJpgA+yQT7YCIpACdgBdoNqUAsaQBNoASdABzgNLoDL4Dq4AW6DB2AEjIPnYAa8AfMQBGEhMkSBFCBVSAsygMwhBuQIeUD+UAgUBcVBiRAPEkL50CaoBCqHqqE6qAn6HjoFXYCuQoPQPWgUmoJ+h97DCEyCqbAyrA2bwAzYBfaDw+CVcCK8Gs6DC+HtcBVcDx+D2+EL8HX4NjwCP4dnEYAQERqihhghDMQNCUSikQSEj6xDipFKpB5pQbqQXuQmMoJMI+9QGBQFRUcZoexR3qjlKBZqNWodqhRVjTqCakf1oG6iRlEzqE9oMloJbYC2Q/ugI9GJ6Gx0EboS3YhuQ19C30aPo99gMBgaRgdjg/HGRGGSMWswpZj9mFbMecwgZgwzi8ViFbAGWAdsIJaJFWCLsHuxx7DnsEPYcexbHBGnijPHeeKicTxcAa4SdxR3FjeEm8DN46XwWng7fCCejc/Fl+Eb8F34Afw4fp4gTdAhOBDCCMmEjYQqQgvhEuEh4RWRSFQn2hKDiVziBmIV8TjxCnGU+I4kQ9InuZFiSELSdtJh0nnSPdIrMpmsTXYmR5MF5O3kJvJF8mPyWwmKhLGEjwRbYr1EjUS7xJDEC0m8pJaki+QqyTzJSsmTkgOS01J4KW0pNymm1DqpGqlTUsNSs9IUaTPpQOk06VLpo9JXpSdlsDLaMh4ybJlCmUMyF2XGKAhFg+JGYVE2URoolyjjVAxVh+pDTaaWUL+j9lNnZGVkLWXDZXNka2TPyI7QEJo2zYeWSiujnaDdob2XU5ZzkePIbZNrkRuSm5NfIu8sz5Evlm+Vvy3/XoGu4KGQorBToUPhkSJKUV8xWDFb8YDiJcXpJdQl9ktYS4qXnFhyXwlW0lcKUVqjdEipT2lWWUXZSzlDea/yReVpFZqKs0qySoXKWZUpVYqqoypXtUL1nOozuizdhZ5Kr6L30GfUlNS81YRqdWr9avPqOurL1QvUW9UfaRA0GBoJGhUa3RozmqqaAZr5ms2a97XwWgytJK09Wr1ac9o62hHaW7Q7tCd15HV8dPJ0mnUe6pJ1nXRX69br3tLD6DH0UvT2693Qh/Wt9JP0a/QHDGADawOuwX6DQUO0oa0hz7DecNiIZORilGXUbDRqTDP2Ny4w7jB+YaJpEm2y06TX5JOplWmqaYPpAzMZM1+zArMus9/N9c1Z5jXmtyzIFp4W6y06LV5aGlhyLA9Y3rWiWAVYbbHqtvpobWPNt26xnrLRtImz2WczzKAyghiljCu2aFtX2/W2p23f2VnbCexO2P1mb2SfYn/UfnKpzlLO0oalYw7qDkyHOocRR7pjnONBxxEnNSemU73TE2cNZ7Zzo/OEi55Lsssxlxeupq581zbXOTc7t7Vu590Rdy/3Yvd+DxmP5R7VHo891T0TPZs9Z7ysvNZ4nfdGe/t57/Qe9lH2Yfk0+cz42viu9e3xI/mF+lX7PfHX9+f7dwXAAb4BuwIeLtNaxlvWEQgCfQJ3BT4K0glaHfRjMCY4KLgm+GmIWUh+SG8oJTQ29GjomzDXsLKwB8t1lwuXd4dLhseEN4XPRbhHlEeMRJpEro28HqUYxY3qjMZGh0c3Rs+u8Fixe8V4jFVMUcydlTorc1ZeXaW4KnXVmVjJWGbsyTh0XETc0bgPzEBmPXM23id+X/wMy421h/Wc7cyuYE9xHDjlnIkEh4TyhMlEh8RdiVNJTkmVSdNcN24192Wyd3Jt8lxKYMrhlIXUiNTWNFxaXNopngwvhdeTrpKekz6YYZBRlDGy2m717tUzfD9+YyaUuTKzU0AV/Uz1CXWFm4WjWY5ZNVlvs8OzT+ZI5/By+nL1c7flTuR55n27BrWGtaY7Xy1/Y/7oWpe1deugdfHrutdrrC9cP77Ba8ORjYSNKRt/KjAtKC94vSliU1ehcuGGwrHNXpubiySK+EXDW+y31G5FbeVu7d9msW3vtk/F7OJrJaYllSUfSlml174x+6bqm4XtCdv7y6zLDuzA7ODtuLPTaeeRcunyvPKxXQG72ivoFcUVr3fH7r5aaVlZu4ewR7hnpMq/qnOv5t4dez9UJ1XfrnGtad2ntG/bvrn97P1DB5wPtNQq15bUvj/IPXi3zquuvV67vvIQ5lDWoacN4Q293zK+bWpUbCxp/HiYd3jkSMiRniabpqajSkfLmuFmYfPUsZhjN75z/66zxailrpXWWnIcHBcef/Z93Pd3Tvid6D7JONnyg9YP+9oobcXtUHtu+0xHUsdIZ1Tn4CnfU91d9l1tPxr/ePi02umaM7Jnys4SzhaeXTiXd272fMb56QuJF8a6Y7sfXIy8eKsnuKf/kt+lK5c9L1/sdek9d8XhyumrdldPXWNc67hufb29z6qv7Sern9r6rfvbB2wGOm/Y3ugaXDp4dshp6MJN95uXb/ncun572e3BO8vv3B2OGR65y747eS/13sv7WffnH2x4iH5Y/EjqUeVjpcf1P+v93DpiPXJm1H2070nokwdjrLHnv2T+8mG88Cn5aeWE6kTTpPnk6SnPqRvPVjwbf57xfH666FfpX/e90H3xw2/Ov/XNRM6Mv+S/XPi99JXCq8OvLV93zwbNPn6T9mZ+rvitwtsj7xjvet9HvJ+Yz/6A/VD1Ue9j1ye/Tw8X0hYW/gUDmPP8uaxzGQAAGKtJREFUeNrVe3mUVdWV9++cc99Y9WouoIACFJAWjAJi2w6drhKHRo1GO1U4xCFxIAZFBWSlg1pF+7nSRpdGje0QOw5pMRa90mKMs1QhxjRh0hJBpECQYqjxDfe9O55z9vfHew+qoJikNN9317rrPYq7zn37t/f+7X323gf4Zi/W1NQkmpubDSIyiIgJIcAY6/8QY+Ccg4gYEYnm5majqalJAGD4//BiTU1NgojE/oLmriCAMgAjSktLR0UikZEAKgCEB3qYiHhDQ4PxTYExaIs2NDTwmpoaPn36dKm1zv+5+Kabbpo8efLk04ZVVU0pKy0bG4lGh4VD4WJhGGHOmdCatFLSdV3XtC27I5lKbN3T0dG6vrV11eOPP74WQGcfMERjYyMtWrRI/z+lcSISff5dfPfdd1+xdOlrTevWfbxrT0cnaep/aSKSisiXmqQiUvs/QEQ9vQlq/XR975tvvvXGAw88cDOAqr5ANDQ08L+55E1NTXvNvLq6euxvf/vbB1avWbvDTFt7BbFsV6cztp8yM34ylZbJVFolU2k9wK0SSVMlU2lppi3fsl2VB8Z1fWr99LOel19+5TcXXHDB1L5A/K14ghNRXgNV//ncc7/asGGjmRc6YzkymUrLRNLUKTNDZto66jtlZigHjExnbJkHo23LVtnUtOSlKVOmnAgAQgh8q9bQV+s/v6fhJ6vWrOsgInJ9TYlUxu9NmDqRylAilaFk6uiFT6XSZCZNSqfSlE6lyUyZZCZNSsaTOpVI+a7tEhHRxs82ZB576OFFAEI5DjK+ceGbm5vzLxn53rtv/4lIEhGR8mxfOpbWvkPad0h5NhFJ8jxJyaOxgFSabF9RmoiSOncTUSp3m7nPJJGUOS5ZsWbt6ssuvnhqziWMbywKNDc3G7W1tfJfZs6c3Jhw4YtJzxj++H8tk0nHFYZh9FuHNGFYSRi3XVWDSRPGwbJdcH7oV5FSMAoKsPuz9Ui+ugQs3gsIDggDEKLfzYQBxRgFlFT6xJOM5Oix9gd/+uMt9zQ2vpALvxoAHYlcR4QYERmMMXnrrbdff+fcO55N2Uqc/eNHJFBgQLADX8UZ4PhY9skOfPjMbJSWVUBKHwfJC0BKIVgQxc7NmxCfdQ0quvaAhUL7VET5V2S/EBGIiHGCEbdt1Tbzusi1dy18vqi4+DjGWOPRgGAcieYZY/JnP/v5nNvmzHl0eNVQmv/LFzUQNUJlUUipBmbJWBhf7kxh1fqtuPT8KiRND2IAAIgIgYCBeMZCzz0LUGUmoIcPB4jAOM/ZKNtnqlnhAa0hNWGM74nX/rqSMq6rZt96W4MiVsoYuz2nNHU4EIwjMfv58xfcNHfunY8Wl5QprSUXwuCMEZTSUHrg9QkajAMy//900HACNxzGV43zMGT9WuiKSjDSYEKAcQaw3J3XvgaYJkgAJaTwJgui8vqb2PFDKoUnlX/rrbPnKCKPMXZX3nK/FgBNTU2itrZWXnPNjy6efevsZ8rLK1RvIsUrymIsp4gjcJ3DkIxSYEWF2PKbp1G69BUYFRUgACxggAuRdSXG8l6QXVBpKACFRNjgEjbNuBQLrv4hlJTMlzIgIhH/llk3z08m47sYY4/klXjQeH6wtPbKK69UkydPHn/n3NtfGjN6FJnpNDMMMWhJBymFQFEhvmxuRujxXyJaWgrNGLghwA0BZnAwQ4AJAQiecwcGYgxBAHHPx59OOg033Ho7DNKQSkEIAdu2jXAkKm+84caHr7766vPPOeccmdtYHTEArLGxkSmlAv/2f+5/ecrkU4qSqbQWQvDBE14jGI1g15at8BoWoCRgQBkGeF+heXbXmPUAts+kiCB8Hy9XVuOSuXdhZHkZbNcD59mfJ4Rg6XSajx5VTbNnz3kxGo0Orauro4MlS3yg3RdjTD3w4IP3XHzRhaemM7YUQohBEz5PepaN7p/PRWWiByp6CNLrl+ll/X4pQqi6cTbOOe1UJM00joaThRDcdjx96tRTx82eM+cixhg1NDSIfgA0NjZyAKi/4orrjj9utPB8Xw2W9gUAn3F8dd89GPLpGlBJjvQMcRDSy/q91BoxpbDSVei4pB5XX3YZzHQGXycgSSmpKFZA59ZOvyEnL/UFgAFQAAITT5x4edZi9eDEfKWBWDG2L34Bpa81QZRXACxPegP4fc5dlNIIKY1220XLtH/ETTfPgvK8r138ISIhlWbjxo+vra6uHs45V3nl87q6Os4Yo0suuWTq2LHjxjquT4yxYwaAtAaiUexu/RjiqV8hWlwCzbDX7A8kvazfa63BtIZ0XDSNGIcr75yP0oIoPCm/Nidxzpnr+WrcuHHRa6+99jwi2ltF4j/96U8ZAJx77vnTh1cNg5RyUMyfEQGhEJy3X0dR2oQKhcA5zwo/EOnl/F5rQtRz8VK4GKfPmYfvHD8G6Ww4PjYeVorCoQBOnjz5vL5uwGtqaggARo8ZcxZjgNZ6UJyfkPXloYkekBBZRfN8Ts/3y/Tyfk8o9D28gyjKb5qNi/7xbKRSaQxGIpqvYQ4fPmIaAGEYhgLAeO5LoHJI5cTB7hUgC2hOTpZdmQ2wZSQNpTVCvosdIop7x9SjsPw4MGjIAoG7duvXgx93D//SJ1wHoIy1nNTU18HwUqb6+/rvvvve+EyrKzvc2SBX1RWtVLjc3N9u7+S1ScMYYw/fy//fhhx9mSCrZt8l0rRZrk+1KZTDjm9hclUyldQ9FTkoqcp1JHl2r0rNSomlaSMrMeg7fIaKQnl27KF7IuDJ+5Eokbdq48XG5HkSPwU0ZfujQIfz73/9GZ2cnJk2aBLfbjR07duDjjz/GzTffjJCQEGzdupXhw4dj9erVCAgIQFVVFfbv349ly5YhJSUFa9asweHDhwFg5MiR8PLywh//+EeMGjUKZ86cgUqlQps2bTBhwgSMHz8e0dHR2Lp1K1auXIkjR45g+fLlWL58OY4dO4axY8fi9OnTePbZZ3HkyBE8/PDDmDBhAm655RYMGDAA1dXVWLJkCfbs2YMyMjIwZMgQHD16FLt27cL06dMxY8YM3L59G9u3b8eECRPw9fUFgAEDBqCwsBCbN2/Gpk2b8N133+Hq1at49NFH8frrr+O5557D3Llz8eSTT2L06NGYPHkyVq9ejZUrV2L58uVYs2YNBg0ahAULFqB///74+OOP8dlnn2HAgAFYt24dpk2bhhdeeAHHjx/HokWL8PTpUzz55JOYMGECJk+ejC1btqB58+Y4fvw4unTpgu7du6O0tBQzZsxAZmYmBg8ejMTERKxcuRKrVq3CjBkz8Nlnn+HLL7/Eo48+ij179mD+/PkYMWIEunTpguHDh+PJJ5/EokWL8Pnnn+PSpUv4+OOP8fzzz+P555/HhAkTcOedd+Lw4cPYtm0bNmzYgK5du+L999/H+vXr8eyzz+L777/HqFGj8Nprr2Hq1KlYuHAhpk+fjgULFuD8+fPYtWsXHn/8cQwZMgTbtm3Drl278Oabb2LRokUYP348nnjiCZw9exYHDx7EsmXL8Pjjj2P8+PGYOXMmFixYgOXLl+PQoUM4fvw4Jk2ahIULF+LDDz/EqFGj8NBDD2H69Ol48skn8cILL+CKK67A4sWL8frrr+Pll1/GkSNH8Oijj+Lw4cPYvXs3Nm7ciKFDh+L555/HsGHD8OCDD+LQoUMYMWIEBg8ejODgYHz77bfYuHEjHn/8cWzatAkjR47EkiVL8Nprr2Hw4MF4+OGH8eyzz2L27NmYOHEiVq1ahf379+P111/Hrl27MHnyZLz88stYu3YtBg8ejK5du+L999/H4cOH8e677+LXX3/FmDFj8OCDD+LQoUMYMWIEtm/fjv379+P555/Hxo0b8fjjj+PQoUP4+uuv8eSTT+Lw4cPYu3cvrrjiCixatAjPPvss3n33XQwYMAA///wzbr31VowZMwYbN27E4sWL8eSTT+LkyZPYuHEjHn/8cSxatAiLFy/Gs88+i8TERHzzzTfYuHEjRo0ahU2bNuH48eOYOHEiBg8ejB49emD+/PkoKChAly5d8NRTT+H555/HsGHD8OCDD2LlypUYP348hg0bht69e+P999/H3Llz8cgjj+D111/HmTNn8OCDD+Lll1/G8uXL8fzzz+PQoUP44osv8OCDD2L27NmYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYODf5f8BUkRqbtB0q6MAAAAASUVORK5CYII=";
-    const today = () => new Date().toISOString().slice(0, 10);
+    const today = () => dateKey(new Date());
     const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
     const pageMeta = {
@@ -21,6 +21,10 @@
     let state = loadState();
     let editingStudentId = null;
     let pendingImport = null;
+    let editingManualExamId = null;
+    let manualDraft = {};
+    let manualDraftClassId = null;
+    let manualDraftDirty = false;
     let studentPhotoProcessing = false;
     let teacherPhotoProcessing = false;
     let cropState = null;
@@ -81,7 +85,8 @@
         "allowNewStudents", "manualExamName", "manualExamDate", "manualSubjects", "prepareManualExamBtn",
         "saveManualExamBtn", "manualExamEntry", "examScope", "showRankings", "examWrongPenalty",
         "examSubjectPoints", "manualExamScope", "manualShowRankings", "manualWrongPenalty",
-        "manualSubjectPoints", "teacherPhoto", "teacherPhotoPreview", "heroTeacherPhoto", "heroGreeting",
+        "manualSubjectPoints", "manualMaxScore", "manualExamType", "manualClass", "manualStudent",
+        "cancelManualExamBtn", "manualExamStatus", "reportExamPicker", "teacherPhoto", "teacherPhotoPreview", "heroTeacherPhoto", "heroGreeting",
         "heroSummary", "heroClassBadge", "heroTodayLine", "dashboardFocusTitle", "dashboardFocusText",
         "dashboardTodayLabel", "dashboardTodayAgenda", "dashboardUpcoming", "dashboardAttention",
         "dashboardReadinessValue", "dashboardReadinessText", "dashboardReadinessBar",
@@ -116,6 +121,8 @@
       });
 
       els.activeClassSelect.addEventListener("change", () => {
+        if (!canDiscardManualExam()) { els.activeClassSelect.value = state.activeClassId; return; }
+        resetManualExam();
         state.activeClassId = els.activeClassSelect.value;
         selectedStudentIds.clear();
         saveState();
@@ -166,11 +173,36 @@
       els.confirmImportReviewBtn.addEventListener("click", commitPendingImport);
       els.prepareManualExamBtn.addEventListener("click", renderManualExamEntry);
       els.saveManualExamBtn.addEventListener("click", saveManualExam);
+      els.cancelManualExamBtn.addEventListener("click", () => {
+        if (!canDiscardManualExam()) return;
+        resetManualExam(); renderManualExamSelectors();
+      });
+      els.manualClass.addEventListener("change", () => {
+        if (!canDiscardManualExam()) { els.manualClass.value = state.activeClassId; return; }
+        resetManualExam();
+        state.activeClassId = els.manualClass.value;
+        selectedStudentIds.clear();
+        saveState();
+        renderAll();
+        renderManualExamEntry();
+      });
+      els.manualStudent.addEventListener("change", renderManualExamEntry);
+      [els.manualSubjects, els.manualSubjectPoints, els.manualMaxScore, els.manualWrongPenalty].forEach(input => {
+        input.addEventListener("change", renderManualExamEntry);
+      });
+      [els.manualSubjects, els.manualSubjectPoints, els.manualMaxScore, els.manualWrongPenalty,
+        els.manualExamName, els.manualExamType, els.manualExamDate, els.manualExamScope, els.manualShowRankings].forEach(input => {
+        input.addEventListener('input', () => { manualDraftDirty = true; });
+      });
+      window.addEventListener('beforeunload', event => {
+        if (!manualDraftDirty) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
       els.reportStudent.addEventListener("change", () => { updateSubjectPicker(); buildReport(); });
-      els.reportExam.addEventListener("change", () => { updateSubjectPicker(); buildReport(); });
+      els.reportExam.addEventListener("change", () => { renderReportOptions(); updateSubjectPicker(); buildReport(); });
       els.refreshReportBtn.addEventListener("click", buildReport);
       els.reportType.addEventListener("change", () => {
-        if (els.reportType.value === "comparison") els.reportExam.value = "__all__";
         renderReportOptions();
         updateSubjectPicker();
         buildReport();
@@ -250,7 +282,8 @@
       input.calendarEvents = Array.isArray(input.calendarEvents) ? input.calendarEvents : [];
       input.birthdayReminderLog = input.birthdayReminderLog && typeof input.birthdayReminderLog === "object" ? input.birthdayReminderLog : {};
       input.birthdaySnoozeLog = input.birthdaySnoozeLog && typeof input.birthdaySnoozeLog === "object" ? input.birthdaySnoozeLog : {};
-      input.lessonPlannerFocusDate = isDateKey(input.lessonPlannerFocusDate) ? input.lessonPlannerFocusDate : today();
+      input.lessonPlannerFocusDate = today();
+      input.lessonPlannerAutomaticWeek = calendarMondayKey(new Date());
       return input;
     }
 
@@ -633,6 +666,7 @@
       renderDashboard();
       renderStudents();
       renderExams();
+      renderManualExamSelectors();
       renderSchedule();
       renderTopClock();
       startClock();
@@ -1659,8 +1693,8 @@
         const parsed = await parseExcelFile(file);
         if (!parsed.students.length) throw new Error("Öğrenci satırı bulunamadı.");
 
-        const scoring = scoringOptionsFromInputs(parsed.subjects, els.examSubjectPoints.value, els.examWrongPenalty.checked);
         const existing = selectedExam || state.exams.find((exam) => exam.classId === state.activeClassId && exam.name === examName);
+        const scoring = scoringOptionsFromInputs(parsed.subjects, els.examSubjectPoints.value, els.examWrongPenalty.checked, normalizeScoringOptions(existing?.scoring).maxScore);
         if (existing && !confirm("Bu isimde bir sınav zaten var. Tamam derseniz mevcut sınav güncellenir ve yeni Excel verileri aynı sınava işlenir.")) return;
 
         pendingImport = buildImportPlan(parsed, {
@@ -2127,11 +2161,12 @@
       return { student, wasCreated };
     }
 
-    function scoringOptionsFromInputs(subjects, pointText, wrongPenalty) {
+    function scoringOptionsFromInputs(subjects, pointText, wrongPenalty, maxScore = 100) {
       const subjectPoints = parseSubjectPointMap(pointText, subjects);
       return normalizeScoringOptions({
         wrongPenalty: !!wrongPenalty,
-        subjectPoints
+        subjectPoints,
+        maxScore
       });
     }
 
@@ -2150,6 +2185,7 @@
         wrongPenalty: !!scoring.wrongPenalty,
         subjectPoints,
         pointTotal,
+        maxScore: Number.isFinite(Number(scoring.maxScore)) && Number(scoring.maxScore) > 0 ? Number(scoring.maxScore) : 100,
         mode: pointTotal > 0 ? "weighted" : "standard"
       };
     }
@@ -2195,7 +2231,7 @@
       const options = normalizeScoringOptions(scoring);
       const result = {
         subjects: {},
-        total: { d: 0, y: 0, b: 0, net: 0, questionCount: 0, percent: null, score: null, maxScore: options.pointTotal || 100 }
+        total: { d: 0, y: 0, b: 0, net: 0, questionCount: 0, percent: null, score: null, maxScore: options.pointTotal || options.maxScore }
       };
       let weightedScore = 0;
       Object.entries(subjects || {}).forEach(([name, item]) => {
@@ -2235,8 +2271,8 @@
         result.total.percent = options.pointTotal ? (weightedScore * 100) / options.pointTotal : null;
       } else {
         result.total.percent = result.total.questionCount ? (result.total.net * 100) / result.total.questionCount : null;
-        result.total.score = result.total.percent;
-        result.total.maxScore = 100;
+        result.total.score = isFiniteNumber(result.total.percent) ? result.total.percent * options.maxScore / 100 : null;
+        result.total.maxScore = options.maxScore;
       }
       return result;
     }
@@ -2307,44 +2343,178 @@
       const scoring = normalizeScoringOptions(exam.scoring);
       const parts = [];
       if (scoring.wrongPenalty) parts.push("3Y=1D");
-      parts.push(scoring.pointTotal ? `${formatNumber(scoring.pointTotal)} puanlık` : "100 puanlık");
+      parts.push(`${formatNumber(scoring.pointTotal || scoring.maxScore)} puanlık`);
       return parts.length ? ` · ${parts.join(" · ")}` : "";
     }
 
+    function resetManualExam() {
+      manualDraftDirty = false;
+      editingManualExamId = null;
+      manualDraft = {};
+      manualDraftClassId = null;
+      els.manualExamEntry.innerHTML = "";
+      els.manualExamName.value = "";
+      els.manualExamType.value = "Deneme";
+      els.manualExamDate.value = today();
+      els.manualSubjects.value = "Türkçe, Matematik, Hayat Bilgisi";
+      els.manualSubjectPoints.value = "";
+      els.manualMaxScore.value = "500";
+      els.manualWrongPenalty.checked = false;
+      els.manualShowRankings.checked = true;
+      els.manualExamScope.value = "class";
+      els.saveManualExamBtn.textContent = "Sınavı Kaydet";
+      els.saveManualExamBtn.disabled = false;
+      els.manualExamStatus.textContent = "Yeni sınav";
+    }
+
+    function canDiscardManualExam() {
+      return !manualDraftDirty || confirm('Kaydedilmemiş sınav değişiklikleri var. Kaydetmeden devam edilsin mi?');
+    }
+
+    function renderManualExamSelectors() {
+      if (manualDraftClassId && manualDraftClassId !== state.activeClassId) resetManualExam();
+      const current = els.manualStudent.value;
+      els.manualClass.innerHTML = state.classes.map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(classLabel(item))}</option>`).join("");
+      els.manualClass.value = state.activeClassId;
+      els.manualStudent.innerHTML = `<option value="__all__">Tüm sınıf</option>` + activeStudents().map(student =>
+        `<option value="${escapeHtml(student.id)}">${escapeHtml(fullName(student))}</option>`).join("");
+      if (activeStudents().some(student => student.id === current)) els.manualStudent.value = current;
+    }
+
+    function collectManualExamDraft() {
+      if (manualDraftClassId !== state.activeClassId) return;
+      els.manualExamEntry.querySelectorAll('[data-manual-student] input[data-kind]').forEach(input => {
+        const id = input.closest('[data-manual-student]').dataset.manualStudent;
+        manualDraft[id] = manualDraft[id] || {};
+        const subject = input.dataset.subject;
+        manualDraft[id][subject] = manualDraft[id][subject] || {};
+        manualDraft[id][subject][input.dataset.kind] = input.value;
+      });
+    }
+
+    function manualExamScoring(subjects) {
+      const points = parseSubjectPointMap(els.manualSubjectPoints.value, subjects);
+      const hasPoints = Object.keys(points).length > 0;
+      if (els.manualSubjectPoints.value.trim() && (!hasPoints || subjects.some(subject => !points[subject]))) {
+        throw new Error("Ders puanlarını her ders için pozitif sayı olarak girin ya da tümünü boş bırakın.");
+      }
+      const maxScore = Number(els.manualMaxScore.value || 500);
+      if (!hasPoints && (!Number.isFinite(maxScore) || maxScore <= 0)) throw new Error("Toplam puan sıfırdan büyük olmalı.");
+      return scoringOptionsFromInputs(subjects, els.manualSubjectPoints.value, els.manualWrongPenalty.checked, maxScore);
+    }
+
+    function manualExamResults(subjects, scoring) {
+      const results = {};
+      activeStudents().forEach(student => {
+        const subjectResults = {};
+        subjects.forEach(subject => {
+          const values = manualDraft[student.id]?.[subject] || {};
+          const counts = {};
+          for (const kind of ['d', 'y', 'b']) {
+            const raw = String(values[kind] ?? '').trim();
+            const count = raw === '' ? 0 : Number(raw);
+            if (!Number.isSafeInteger(count) || count < 0) throw new Error(`${fullName(student)} / ${subject}: doğru, yanlış ve boş sayıları negatif olmayan tam sayı olmalı.`);
+            counts[kind] = count;
+          }
+          if (counts.d + counts.y + counts.b > 0) subjectResults[subject] = counts;
+        });
+        if (Object.keys(subjectResults).length) results[student.id] = makeResult(subjectResults, scoring);
+      });
+      return results;
+    }
+
     function renderManualExamEntry() {
-      const students = activeStudents();
+      collectManualExamDraft();
+      manualDraftClassId = state.activeClassId;
+      const students = activeStudents().filter(student => els.manualStudent.value === '__all__' || student.id === els.manualStudent.value);
       const subjects = parseSubjectList(els.manualSubjects.value);
-      if (!students.length) {
-        els.manualExamEntry.innerHTML = `<div class="empty">Elle sınav girişi için önce sınıfa öğrenci ekleyin.</div>`;
+      if (!students.length || !subjects.length) {
+        els.manualExamEntry.innerHTML = `<div class="empty">Önce sınıf, öğrenci ve en az bir ders seçin.</div>`;
         return;
       }
-      if (!subjects.length) {
-        toast("En az bir ders adı yazın.");
-        return;
-      }
-      const subjectHeaders = subjects.map((subject) => `<th colspan="3">${escapeHtml(subject)}</th>`).join("");
-      const metricHeaders = subjects.map(() => `<th>D</th><th>Y</th><th>B</th>`).join("");
-      const rows = students.map((student) => `
+      const subjectHeaders = subjects.map(subject => `<th colspan="5">${escapeHtml(subject)}</th>`).join('');
+      const metricHeaders = subjects.map(() => `<th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>%</th>`).join('');
+      const rows = students.map(student => `
         <tr data-manual-student="${escapeHtml(student.id)}">
-          <td><strong>${escapeHtml(fullName(student))}</strong><br><span class="badge">${escapeHtml(student.schoolNo || "-")}</span></td>
-          ${subjects.map((subject) => `
-            <td><input inputmode="numeric" min="0" type="number" data-subject="${escapeHtml(subject)}" data-kind="d" aria-label="${escapeHtml(fullName(student))} ${escapeHtml(subject)} doğru"></td>
-            <td><input inputmode="numeric" min="0" type="number" data-subject="${escapeHtml(subject)}" data-kind="y" aria-label="${escapeHtml(fullName(student))} ${escapeHtml(subject)} yanlış"></td>
-            <td><input inputmode="numeric" min="0" type="number" data-subject="${escapeHtml(subject)}" data-kind="b" aria-label="${escapeHtml(fullName(student))} ${escapeHtml(subject)} boş"></td>
-          `).join("")}
-        </tr>
-      `).join("");
-      els.manualExamEntry.innerHTML = `
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th rowspan="2">Öğrenci</th>${subjectHeaders}</tr>
-              <tr>${metricHeaders}</tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      `;
+          <th scope="row"><strong>${escapeHtml(fullName(student))}</strong><br><small>${escapeHtml(student.schoolNo || '-')}</small></th>
+          ${subjects.map(subject => `
+            ${['d', 'y', 'b'].map((kind, index) => `<td><input inputmode="numeric" min="0" step="1" type="number" data-subject="${escapeHtml(subject)}" data-kind="${kind}" value="${escapeHtml(String(manualDraft[student.id]?.[subject]?.[kind] ?? ''))}" aria-label="${escapeHtml(fullName(student))} ${escapeHtml(subject)} ${['doğru', 'yanlış', 'boş'][index]}"></td>`).join('')}
+            <td data-net="${escapeHtml(subject)}">-</td><td data-percent="${escapeHtml(subject)}">-</td>`).join('')}
+          <td data-total="d">-</td><td data-total="y">-</td><td data-total="b">-</td><td data-total="net">-</td><td data-total="percent">-</td><td data-total="score">-</td><td data-total="rank">-</td>
+          <td><button type="button" class="danger-btn" data-clear-result="${escapeHtml(student.id)}">Sonucu kaldır</button></td>
+        </tr>`).join('');
+      els.manualExamEntry.innerHTML = `<div class="table-wrap manual-results-wrap" tabindex="0" aria-label="Sınav sonuç giriş tablosu"><table class="manual-results-table"><thead>
+        <tr><th rowspan="2">Öğrenci</th>${subjectHeaders}<th colspan="7">Toplam</th><th rowspan="2">İşlem</th></tr>
+        <tr>${metricHeaders}<th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>%</th><th>Puan</th><th>Sınıf sırası</th></tr>
+        </thead><tbody>${rows}</tbody></table></div><div class="manual-results-summary" role="status"></div>`;
+      els.manualExamEntry.querySelectorAll('input').forEach(input => input.addEventListener('input', () => {
+        manualDraftDirty = true;
+        updateManualExamTotals();
+      }));
+      els.manualExamEntry.querySelectorAll('[data-clear-result]').forEach(button => button.addEventListener('click', () => {
+        if (!confirm('Bu öğrencinin sınav sonucu kaldırılsın mı? Değişiklik kaydedildiğinde uygulanır.')) return;
+        button.closest('tr').querySelectorAll('input').forEach(input => { input.value = ''; });
+        manualDraftDirty = true;
+        updateManualExamTotals();
+      }));
+      updateManualExamTotals();
+    }
+
+    function updateManualExamTotals() {
+      collectManualExamDraft();
+      const summary = els.manualExamEntry.querySelector('.manual-results-summary');
+      try {
+        const subjects = parseSubjectList(els.manualSubjects.value);
+        const scoring = manualExamScoring(subjects);
+        const results = manualExamResults(subjects, scoring);
+        const scores = Object.values(results).map(result => result.total.score);
+        els.manualExamEntry.querySelectorAll('[data-manual-student]').forEach(row => {
+          const result = results[row.dataset.manualStudent];
+          subjects.forEach(subject => {
+            row.querySelector(`[data-net="${cssEscape(subject)}"]`).textContent = formatNet(result?.subjects[subject]?.net);
+            row.querySelector(`[data-percent="${cssEscape(subject)}"]`).textContent = formatPercent(result?.subjects[subject]?.percent);
+          });
+          ['d', 'y', 'b', 'net', 'percent', 'score', 'rank'].forEach(kind => {
+            const value = result?.total[kind];
+            row.querySelector(`[data-total="${kind}"]`).textContent = kind === 'rank'
+              ? (result ? `${rankInScores(scores.map(score => ({score})), result.total.score)} / ${scores.length}` : '-')
+              : kind === 'score' ? (result ? formatScore(value, result.total.maxScore) : '-')
+                : kind === 'percent' ? formatPercent(value) : kind === 'net' ? formatNet(value) : formatNumber(value);
+          });
+        });
+        if (summary) summary.textContent = `${Object.keys(results).length} öğrenci · ${formatNumber(scoring.pointTotal || scoring.maxScore)} puan üzerinden · ${scoring.wrongPenalty ? '3 yanlış 1 doğruyu götürür' : 'Kesinti yok'}`;
+        els.saveManualExamBtn.disabled = false;
+      } catch (error) {
+        if (summary) summary.textContent = error.message;
+        els.manualExamEntry.querySelectorAll('[data-net], [data-percent], [data-total]').forEach(cell => { cell.textContent = '-'; });
+        els.saveManualExamBtn.disabled = true;
+      }
+    }
+
+    function editManualExam(examId) {
+      const exam = activeExams().find(item => item.id === examId && item.sourceFile === 'Elle giriş');
+      if (!exam) return;
+      if (!canDiscardManualExam()) return;
+      resetManualExam();
+      editingManualExamId = exam.id;
+      manualDraftClassId = state.activeClassId;
+      Object.entries(exam.results || {}).forEach(([studentId, result]) => {
+        manualDraft[studentId] = Object.fromEntries(Object.entries(result.subjects || {}).map(([subject, values]) => [subject, {d: values.d, y: values.y, b: values.b}]));
+      });
+      els.manualExamName.value = exam.name;
+      els.manualExamType.value = exam.type || 'Deneme';
+      els.manualExamDate.value = exam.date || today();
+      els.manualSubjects.value = exam.subjects.join(', ');
+      els.manualSubjectPoints.value = subjectPointText(exam.scoring);
+      els.manualMaxScore.value = normalizeScoringOptions(exam.scoring).maxScore;
+      els.manualWrongPenalty.checked = !!exam.scoring?.wrongPenalty;
+      els.manualShowRankings.checked = !!exam.showRankings;
+      els.manualExamScope.value = exam.scope || 'class';
+      els.manualStudent.value = '__all__';
+      els.saveManualExamBtn.textContent = 'Değişiklikleri Kaydet';
+      els.manualExamStatus.textContent = `${exam.name} düzenleniyor`;
+      renderManualExamEntry();
+      els.manualExamName.scrollIntoView({behavior: 'smooth', block: 'center'});
     }
 
     function saveManualExam() {
@@ -2360,30 +2530,25 @@
       }
       if (!els.manualExamEntry.querySelector("[data-manual-student]")) renderManualExamEntry();
 
-      const scoring = scoringOptionsFromInputs(subjects, els.manualSubjectPoints.value, els.manualWrongPenalty.checked);
-      const results = {};
-      els.manualExamEntry.querySelectorAll("[data-manual-student]").forEach((row) => {
-        const studentId = row.dataset.manualStudent;
-        const subjectResults = {};
-        subjects.forEach((subject) => {
-          const d = toNumberOrNull(row.querySelector(`[data-subject="${cssEscape(subject)}"][data-kind="d"]`)?.value) || 0;
-          const y = toNumberOrNull(row.querySelector(`[data-subject="${cssEscape(subject)}"][data-kind="y"]`)?.value) || 0;
-          const b = toNumberOrNull(row.querySelector(`[data-subject="${cssEscape(subject)}"][data-kind="b"]`)?.value) || 0;
-          if (d || y || b) {
-            const total = d + y + b;
-            subjectResults[subject] = { d, y, b, percent: total ? d * 100 / total : null };
-          }
-        });
-        if (Object.keys(subjectResults).length) results[studentId] = makeResult(subjectResults, scoring);
-      });
+      collectManualExamDraft();
+      let scoring, results;
+      try {
+        scoring = manualExamScoring(subjects);
+        results = manualExamResults(subjects, scoring);
+      } catch (error) { toast(error.message); return; }
+      if (!Object.keys(results).length) { toast('En az bir öğrenci için sonuç girin.'); return; }
 
       const missingStudents = activeStudents().filter((student) => !results[student.id]);
       if (missingStudents.length && !confirm(`${missingStudents.length} öğrencinin bu sınavda sonucu boş görünüyor. Yine de kaydedilsin mi?`)) return;
 
-      state.exams.push({
-        id: uid("exam"),
+      const existing = activeExams().find(exam => exam.id === editingManualExamId);
+      const exam = {
+        ...existing,
+        id: existing?.id || uid("exam"),
         classId: state.activeClassId,
         name,
+        type: els.manualExamType.value.trim() || 'Deneme',
+        entryMode: 'manual',
         date: els.manualExamDate.value || today(),
         sourceFile: "Elle giriş",
         scope: els.manualExamScope.value,
@@ -2397,13 +2562,16 @@
           noScoreNames: missingStudents.map(fullName),
           skippedNew: 0
         },
-        importedAt: new Date().toISOString()
-      });
-      saveState();
-      els.manualExamName.value = "";
-      els.manualExamEntry.innerHTML = `<div class="note-item"><strong>Elle sınav kaydedildi.</strong><p>${Object.keys(results).length} öğrencinin sonucu eklendi. Sonucu boş öğrenci: ${missingStudents.length}.</p></div>`;
+        importedAt: existing?.importedAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      const previousExams = state.exams.slice();
+      if (existing) state.exams[state.exams.indexOf(existing)] = exam;
+      else state.exams.push(exam);
+      if (!saveState()) { state.exams = previousExams; return; }
+      resetManualExam();
       renderAll();
-      toast("Elle sınav sisteme eklendi.");
+      toast(existing ? 'Sınav güncellendi.' : 'Elle sınav sisteme eklendi.');
     }
 
     function parseSubjectList(value) {
@@ -2498,10 +2666,12 @@
           <div class="exam-row">
             <div>
               <h4>${escapeHtml(exam.name)}</h4>
-              <p>${formatDate(exam.date)} · ${scopeLabel(exam.scope)} · ${resultCount} öğrenci · kıyas havuzu ${getExamParticipants(exam).length} · ${exam.subjects.map(escapeHtml).join(", ")} · sınıf ort. ${formatPercent(totalClassAverage(exam))}${scoringText}${warningText}</p>
+              <p>${formatDate(exam.date)}${exam.type ? ` · ${escapeHtml(exam.type)}` : ''} · ${scopeLabel(exam.scope)} · ${resultCount} öğrenci · kıyas havuzu ${getExamParticipants(exam).length} · ${exam.subjects.map(escapeHtml).join(", ")} · sınıf ort. ${formatPercent(totalClassAverage(exam))}${scoringText}${warningText}</p>
             </div>
             <div class="actions">
               <button class="ghost-btn" data-exam-report="${escapeHtml(exam.id)}">Karne</button>
+              ${exam.sourceFile === 'Elle giriş' ? `<button class="ghost-btn" data-exam-edit="${escapeHtml(exam.id)}">Düzenle</button>` : ''}
+              <button class="ghost-btn" data-exam-ranking="${escapeHtml(exam.id)}">Sınıf Sıralaması</button>
               <button class="danger-btn" data-exam-delete="${escapeHtml(exam.id)}">Sil</button>
             </div>
           </div>
@@ -2511,10 +2681,26 @@
       els.examList.querySelectorAll("[data-exam-delete]").forEach((button) => {
         button.addEventListener("click", () => deleteExam(button.dataset.examDelete));
       });
+      els.examList.querySelectorAll('[data-exam-edit]').forEach(button => {
+        button.addEventListener('click', () => editManualExam(button.dataset.examEdit));
+      });
+      els.examList.querySelectorAll('[data-exam-ranking]').forEach(button => {
+        button.addEventListener('click', () => {
+          showView('reportsView');
+          els.reportType.value = 'rankingList';
+          els.rankingExam.value = button.dataset.examRanking;
+          els.rankingScope.value = 'class';
+          renderReportOptions();
+          renderRankingFilters();
+          buildReport();
+        });
+      });
       els.examList.querySelectorAll("[data-exam-report]").forEach((button) => {
         button.addEventListener("click", () => {
           showView("reportsView");
+          els.reportType.value = 'academic';
           els.reportExam.value = button.dataset.examReport;
+          renderReportOptions();
           updateSubjectPicker();
           buildReport();
         });
@@ -2549,6 +2735,7 @@
       const exam = state.exams.find((item) => item.id === examId);
       if (!exam || !confirm(`${exam.name} sınavı silinsin mi?`)) return;
       state.exams = state.exams.filter((item) => item.id !== examId);
+      if (editingManualExamId === examId) resetManualExam();
       saveState();
       renderAll();
       toast("Sınav silindi.");
@@ -2642,7 +2829,22 @@
 
     function startClock() {
       if (clockTimer) return;
-      clockTimer = setInterval(renderTopClock, 30000);
+      clockTimer = setInterval(() => { renderTopClock(); checkAutomaticLessonWeek(); }, 30000);
+      window.addEventListener('focus', checkAutomaticLessonWeek);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) checkAutomaticLessonWeek(); });
+    }
+
+    function calendarMondayKey(date) {
+      const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+      return dateKey(monday);
+    }
+
+    function checkAutomaticLessonWeek() {
+      const monday = calendarMondayKey(new Date());
+      if (state.lessonPlannerAutomaticWeek === monday) return;
+      state.lessonPlannerAutomaticWeek = monday;
+      setLessonPlannerFocusDate(today());
     }
 
     function renderLessonPlannerFocus(info = "") {
@@ -2650,7 +2852,7 @@
       state.lessonPlannerFocusDate = focusDate;
       if (els.lessonPlannerFocusDate) els.lessonPlannerFocusDate.value = focusDate;
       if (els.lessonPlannerFocusInfo) {
-        els.lessonPlannerFocusInfo.textContent = info || `${formatDate(focusDate)} tarihinin haftası açılacak. En son seçilen hafta tarayıcıda hatırlanır.`;
+        els.lessonPlannerFocusInfo.textContent = info || `${formatDate(focusDate)} tarihinin haftası. Her pazartesi güncel haftaya geçilir.`;
       }
     }
 
@@ -2678,10 +2880,11 @@
       els.lessonPlannerFrame.contentWindow.postMessage({
         type: "kemal-ajanda-focus-week",
         date: focusDate
-      }, "*");
+      }, window.location.origin === 'null' ? '*' : window.location.origin);
     }
 
     function handleLessonPlannerMessage(event) {
+      if (event.source !== els.lessonPlannerFrame?.contentWindow || event.origin !== window.location.origin) return;
       const data = event.data || {};
       if (data.type === "kemal-lesson-planner-data-changed") {
         saveState();
@@ -3141,18 +3344,25 @@
 
     function renderReportSelectors() {
       const students = activeStudents();
+      const currentStudent = els.reportStudent.value;
+      const currentExam = els.reportExam.value;
+      const chosenExams = new Set(Array.from(els.reportExamPicker.querySelectorAll('input:checked')).map(input => input.value));
       const studentOptions = students.map((student) => (
         `<option value="${escapeHtml(student.id)}">${escapeHtml(fullName(student))}${student.schoolNo ? ` · ${escapeHtml(String(student.schoolNo))}` : ""}</option>`
       )).join("");
-      els.reportStudent.innerHTML = studentOptions;
+      els.reportStudent.innerHTML = studentOptions + `<option value="__all__">Tüm sınıfın karneleri</option>`;
+      if (currentStudent === '__all__' || students.some(student => student.id === currentStudent)) els.reportStudent.value = currentStudent;
       els.summaryStudent.innerHTML = studentOptions;
       els.meetingReportStudent.innerHTML = `<option value="__all__">Tüm öğrenciler</option>${studentOptions}`;
 
       const exams = activeExams();
       const currentRankingExam = els.rankingExam?.value || "";
-      els.reportExam.innerHTML = `<option value="__all__">Tüm sınavların toplam akademik özeti</option>` + exams.map((exam) => (
+      els.reportExam.innerHTML = `<option value="__all__">Tüm sınavlar</option><option value="__selected__">Seçtiğim sınavlar</option>` + exams.map((exam) => (
         `<option value="${escapeHtml(exam.id)}">${escapeHtml(exam.name)} · ${formatDate(exam.date)}</option>`
       )).join("");
+      if (['__all__', '__selected__'].includes(currentExam) || exams.some(exam => exam.id === currentExam)) els.reportExam.value = currentExam;
+      els.reportExamPicker.innerHTML = exams.map(exam => `<label class="check-chip"><input type="checkbox" value="${escapeHtml(exam.id)}" ${chosenExams.has(exam.id) ? 'checked' : ''}>${escapeHtml(exam.name)} · ${formatDate(exam.date)}</label>`).join('') || '<span>Sınav yok</span>';
+      els.reportExamPicker.querySelectorAll('input').forEach(input => input.addEventListener('change', () => { updateSubjectPicker(); buildReport(); }));
       els.rankingExam.innerHTML = exams.map((exam) => (
         `<option value="${escapeHtml(exam.id)}">${escapeHtml(exam.name)} · ${formatDate(exam.date)}</option>`
       )).join("") || `<option value="">Sınav yok</option>`;
@@ -3165,7 +3375,11 @@
     function selectedExamSet() {
       const value = els.reportExam.value;
       if (value === "__all__") return activeExams();
-      const exam = state.exams.find((item) => item.id === value);
+      if (value === '__selected__') {
+        const chosen = new Set(Array.from(els.reportExamPicker.querySelectorAll('input:checked')).map(input => input.value));
+        return activeExams().filter(exam => chosen.has(exam.id));
+      }
+      const exam = activeExams().find((item) => item.id === value);
       return exam ? [exam] : [];
     }
 
@@ -3184,6 +3398,7 @@
     function renderReportOptions() {
       const type = els.reportType?.value || "academic";
       const usesAcademicSelectors = type === "academic" || type === "comparison";
+      els.reportExamPicker.hidden = !usesAcademicSelectors || els.reportExam.value !== '__selected__';
       document.querySelectorAll(".report-option-panel").forEach((panel) => panel.classList.remove("active"));
       [els.reportStudent, els.reportExam, els.subjectPicker].forEach((element) => {
         const field = element?.closest(".field");
@@ -3334,7 +3549,7 @@
         <div class="table-wrap">
           <table class="report-table">
             <thead>
-              <tr><th>Sıra</th><th>Öğrenci</th><th>Okul No</th><th>Sınıf</th><th>Okul</th><th>İl</th><th>D</th><th>Y</th><th>B</th>${scoreHeader}</tr>
+              <tr><th>Sıra</th><th>Öğrenci</th><th>Okul No</th><th>Sınıf</th><th>Okul</th><th>İl</th><th>D</th><th>Y</th><th>B</th><th>Net</th>${scoreHeader}</tr>
             </thead>
             <tbody>
               ${rankedRows.map((row) => `
@@ -3348,9 +3563,10 @@
                   <td>${row.d}</td>
                   <td>${row.y}</td>
                   <td>${row.b}</td>
+                  <td>${formatNet(row.net)}</td>
                   ${scoreCells(row)}
                 </tr>
-              `).join("") || `<tr><td colspan="${weighted ? 11 : 10}">Seçili filtrelerde öğrenci yok.</td></tr>`}
+              `).join("") || `<tr><td colspan="${weighted ? 12 : 11}">Seçili filtrelerde öğrenci yok.</td></tr>`}
             </tbody>
           </table>
         </div>
@@ -3387,7 +3603,8 @@
           maxScore: result?.total?.maxScore || normalizeScoringOptions(exam.scoring).pointTotal || 100,
           d: result?.total?.d || 0,
           y: result?.total?.y || 0,
-          b: result?.total?.b || 0
+          b: result?.total?.b || 0,
+          net: result?.total?.net
         };
       }).filter((row) => row.result);
     }
@@ -3421,7 +3638,8 @@
       const ownProvince = cleanName(ownClassRows.find((row) => row.provinceName)?.provinceName || "");
       const schoolRows = ownSchool ? rows.filter((row) => normalize(row.schoolName) === normalize(ownSchool)) : rows;
       const provinceRows = ownProvince ? rows.filter((row) => normalize(row.provinceName) === normalize(ownProvince)) : rows;
-      const maxScore = normalizeScoringOptions(exam.scoring).pointTotal || 100;
+      const scoring = normalizeScoringOptions(exam.scoring);
+      const maxScore = scoring.pointTotal || scoring.maxScore;
       return {
         questionCount: Math.max(...rows.map((row) => row.result?.total?.questionCount || 0), 0),
         totalCount: rows.length,
@@ -3494,7 +3712,8 @@
     }
 
     function isWeightedExam(exam) {
-      return normalizeScoringOptions(exam.scoring).pointTotal > 0;
+      const scoring = normalizeScoringOptions(exam.scoring);
+      return scoring.pointTotal > 0 || scoring.maxScore !== 100;
     }
 
     function rankingListNote(filteredRows, allRows) {
@@ -3600,18 +3819,10 @@
       `;
     }
 
-    function buildComparisonReport() {
-      const student = state.students.find((item) => item.id === els.reportStudent.value) || activeStudents()[0];
-      if (!student) {
-        els.reportCard.className = "report-card";
-        els.reportCard.innerHTML = `<div class="empty">Karşılaştırmalı karne için önce öğrenci ekleyin.</div>`;
-        return;
-      }
+    function comparisonReportHtml(student) {
       const exams = comparisonExamSet(student.id);
       if (exams.length < 2) {
-        els.reportCard.className = "report-card";
-        els.reportCard.innerHTML = `<div class="empty">Karşılaştırmalı karne için bu öğrencinin en az iki sınav sonucu olmalı. Sınav filtresini "Tüm sınavlar" yaparak tekrar deneyebilirsiniz.</div>`;
-        return;
+        return `<div class="empty">${escapeHtml(fullName(student))}: karşılaştırmalı karne için seçili sınavlarda en az iki sonuç olmalı.</div>`;
       }
       const snapshots = exams.map((exam) => comparisonSnapshot(exam, student.id));
       const first = snapshots[0];
@@ -3625,8 +3836,7 @@
       const teacherName = currentClass?.teacherName || state.teacher?.name || "Kemal Öğretmen";
       const feedback = buildComparisonFeedback(snapshots, subjects);
 
-      els.reportCard.className = "report-card";
-      els.reportCard.innerHTML = `
+      return `
         <div class="report-header">
           <div>
             <h2>${escapeHtml(fullName(student))}</h2>
@@ -3916,20 +4126,24 @@
       if (type === "rankingList") return buildRankingListReport();
       if (type === "meetings") return buildMeetingReport();
       if (type === "studentSummary") return buildStudentSummaryReport();
-      if (type === "comparison") return buildComparisonReport();
-      const student = state.students.find((item) => item.id === els.reportStudent.value) || activeStudents()[0];
-      const exams = selectedExamSet();
-      const subjects = selectedSubjects();
-      if (!student || !exams.length) {
-        els.reportCard.className = "report-card";
-        els.reportCard.innerHTML = `<div class="empty">Karne için önce öğrenci ve sınav verisi ekleyin.</div>`;
+      const students = els.reportStudent.value === '__all__' ? activeStudents() : activeStudents().filter(student => student.id === els.reportStudent.value);
+      els.reportCard.className = 'report-card';
+      if (!students.length || !selectedExamSet().length) {
+        els.reportCard.innerHTML = `<div class="empty">Karne için öğrenci ve en az bir sınav seçin.</div>`;
         return;
       }
+      els.reportCard.innerHTML = students.map(student => `<article class="student-report-page" data-report-student="${escapeHtml(student.id)}">${type === 'comparison' ? comparisonReportHtml(student) : academicReportHtml(student)}</article>`).join('');
+    }
+
+    function academicReportHtml(student) {
+      const exams = selectedExamSet().filter(exam => exam.results?.[student.id]);
+      const subjects = selectedSubjects();
+      if (!exams.length) return `<div class="empty">${escapeHtml(fullName(student))}: seçili sınavlarda kayıtlı sonuç yok.</div>`;
 
       const report = aggregateStudentReport(student.id, exams, subjects);
       const currentClass = activeClass();
       const teacherName = currentClass?.teacherName || state.teacher?.name || "Kemal Öğretmen";
-      const title = els.reportExam.value === "__all__" ? "Akademik İzleme Karnesi" : exams[0].name;
+      const title = exams.length > 1 ? "Akademik İzleme Karnesi" : exams[0].name;
       const scope = exams.length === 1 ? (exams[0].scope || "class") : "mixed";
       const scopeText = scope === "mixed" ? "Genel" : scopeLabel(scope);
       const averageLabel = averageScopeLabel(scope);
@@ -3948,6 +4162,7 @@
             <td>${item.d}</td>
             <td>${item.y}</td>
             <td>${item.b}</td>
+            <td>${formatNet(item.net)}</td>
             <td class="${status.className}">${formatPercent(item.percent)}</td>
             <td>${formatPercent(item.classAverage)}</td>
             <td>${formatPercent(item.generalAverage)}</td>
@@ -3959,12 +4174,12 @@
       const totalStatus = compareStatus(report.total.percent, report.total.classAverage);
       const totalGeneralStatus = compareStatus(report.total.percent, report.total.generalAverage);
 
-      els.reportCard.className = "report-card";
-      els.reportCard.innerHTML = `
+      return `
         <div class="report-header">
           <div>
             <h2>${escapeHtml(fullName(student))}</h2>
             <p>${escapeHtml(title)} · ${escapeHtml(currentClass?.name || "")} · ${formatDate(exams[0].date)}${exams.length > 1 ? ` / ${exams.length} sınav` : ""}</p>
+            ${exams.length > 1 ? `<p>Denemeler: ${exams.map(exam => escapeHtml(exam.name)).join(' · ')}</p>` : ''}
             <p>${escapeHtml(state.teacher?.schoolName || "")} ${state.teacher?.schoolName ? "·" : ""} ${escapeHtml(teacherName)}</p>
           </div>
           <div class="report-photo">${avatarHtml(student)}</div>
@@ -4018,15 +4233,16 @@
         <div class="table-wrap">
           <table class="report-table">
             <thead>
-              <tr><th>Ders</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Başarı</th><th>Sınıf Ort.</th><th>${escapeHtml(averageLabel)}</th><th>Sınıf Kıyas</th><th>Genel Kıyas</th></tr>
+              <tr><th>Ders</th><th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>Başarı</th><th>Sınıf Ort.</th><th>${escapeHtml(averageLabel)}</th><th>Sınıf Kıyas</th><th>Genel Kıyas</th></tr>
             </thead>
             <tbody>
-              ${rows || `<tr><td colspan="9">Seçili derslerde veri yok.</td></tr>`}
+              ${rows || `<tr><td colspan="10">Seçili derslerde veri yok.</td></tr>`}
               <tr>
                 <td><strong>TOPLAM</strong></td>
                 <td><strong>${report.total.d}</strong></td>
                 <td><strong>${report.total.y}</strong></td>
                 <td><strong>${report.total.b}</strong></td>
+                <td><strong>${formatNet(report.total.net)}</strong></td>
                 <td class="${totalStatus.className}"><strong>${formatPercent(report.total.percent)}</strong></td>
                 <td><strong>${formatPercent(report.total.classAverage)}</strong></td>
                 <td><strong>${formatPercent(report.total.generalAverage)}</strong></td>
@@ -4256,15 +4472,19 @@
       return Math.max(0, Math.min(100, value));
     }
 
-    async function renderReportCanvas() {
-      const clone = els.reportCard.cloneNode(true);
+    async function renderReportCanvas(source = els.reportCard) {
+      const clone = source.cloneNode(true);
+      if (source !== els.reportCard) {
+        clone.id = 'reportCard';
+        clone.className = 'report-card';
+      }
       const width = els.reportCard.offsetWidth || 900;
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.left = "-10000px";
       iframe.style.top = "0";
       iframe.style.width = `${width}px`;
-      iframe.style.height = `${Math.max(els.reportCard.scrollHeight + 80, 1000)}px`;
+      iframe.style.height = `${Math.max(source.scrollHeight + 80, 1000)}px`;
       iframe.style.border = "0";
       iframe.style.pointerEvents = "none";
       clone.style.width = `${width}px`;
@@ -4334,12 +4554,15 @@
         return;
       }
       try {
-        const canvas = await renderReportCanvas();
         const mime = type === "jpeg" ? "image/jpeg" : "image/png";
-        const link = document.createElement("a");
-        link.href = canvas.toDataURL(mime, .94);
-        link.download = `karne-${safeFileName(selectedReportName())}.${type === "jpeg" ? "jpg" : "png"}`;
-        link.click();
+        for (const target of reportExportTargets()) {
+          const canvas = await renderReportCanvas(target);
+          const student = state.students.find(item => item.id === target.dataset.reportStudent);
+          const link = document.createElement('a');
+          link.href = canvas.toDataURL(mime, .94);
+          link.download = `karne-${safeFileName(student ? `${fullName(student)}-${selectedReportName()}` : selectedReportName())}.${type === 'jpeg' ? 'jpg' : 'png'}`;
+          link.click();
+        }
       } catch (error) {
         console.error(error);
         toast("Karne görseli kaydedilemedi. Sayfayı yenileyip tekrar deneyin.");
@@ -4347,6 +4570,10 @@
     }
 
     async function shareReportWhatsapp() {
+      if (els.reportStudent.value === '__all__' && ['academic', 'comparison'].includes(els.reportType.value)) {
+        toast('Veliye göndermek için tek bir öğrenci seçin.');
+        return;
+      }
       if (!window.html2canvas) {
         toast("Paylaşım için görsel dışa aktarma kütüphanesi yüklenemedi.");
         return;
@@ -4414,7 +4641,7 @@
         : type === "meetings" && els.meetingReportStudent.value !== "__all__"
           ? els.meetingReportStudent.value
           : els.reportStudent.value;
-      return state.students.find((item) => item.id === id) || activeStudents()[0] || null;
+      return activeStudents().find((item) => item.id === id) || null;
     }
 
     function preferredParentPhone(student) {
@@ -4450,21 +4677,29 @@
         return;
       }
       try {
-        const canvas = await renderReportCanvas();
-        const image = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF("p", "mm", "a4");
+        const pdf = new jsPDF({orientation: 'p', unit: 'mm', format: 'a4', compress: true});
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const ratio = Math.min(pageWidth / canvas.width, pageHeight / canvas.height);
-        const width = canvas.width * ratio;
-        const height = canvas.height * ratio;
-        pdf.addImage(image, "PNG", (pageWidth - width) / 2, 8, width, height);
+        let firstPage = true;
+        for (const target of reportExportTargets()) {
+          const canvas = await renderReportCanvas(target);
+          const scale = Math.min((pageWidth - 16) / canvas.width, (pageHeight - 16) / canvas.height);
+          const width = canvas.width * scale;
+          if (!firstPage) pdf.addPage();
+          firstPage = false;
+          pdf.addImage(canvas.toDataURL('image/jpeg', .94), 'JPEG', (pageWidth - width) / 2, 8, width, canvas.height * scale);
+        }
         pdf.save(`karne-${safeFileName(selectedReportName())}.pdf`);
       } catch (error) {
         console.error(error);
         toast("PDF kaydedilemedi. Sayfayı yenileyip tekrar deneyin.");
       }
+    }
+
+    function reportExportTargets() {
+      const pages = Array.from(els.reportCard.querySelectorAll('.student-report-page'));
+      return pages.length ? pages : [els.reportCard];
     }
 
     function selectedReportName() {
@@ -4476,10 +4711,11 @@
         const selected = state.students.find((item) => item.id === els.summaryStudent.value) || activeStudents()[0];
         return `${fullName(selected || {})}-ogrenci-bilgi-ozeti`;
       }
-      const student = state.students.find((item) => item.id === els.reportStudent.value);
-      if (type === "comparison") return `${fullName(student || {})}-karsilastirmali-karne`;
+      const student = activeStudents().find((item) => item.id === els.reportStudent.value);
+      const reportOwner = els.reportStudent.value === '__all__' ? activeClass()?.name || 'sinif' : fullName(student || {});
+      if (type === "comparison") return `${reportOwner}-karsilastirmali-karne`;
       const exam = state.exams.find((item) => item.id === els.reportExam.value);
-      return `${fullName(student || {})}-${exam?.name || "tum-sinavlar"}`;
+      return `${reportOwner}-${exam?.name || (els.reportExam.value === '__selected__' ? 'secili-sinavlar' : 'tum-sinavlar')}`;
     }
 
     function exportBackup() {
@@ -4647,6 +4883,10 @@
       const rounded = Math.round(value * 10) / 10;
       const digits = Number.isInteger(rounded) ? 0 : 1;
       return rounded.toFixed(digits).replace(".", ",");
+    }
+
+    function formatNet(value) {
+      return isFiniteNumber(value) ? value.toLocaleString('tr-TR', {maximumFractionDigits: 2}) : '-';
     }
 
     function formatPointInputNumber(value) {

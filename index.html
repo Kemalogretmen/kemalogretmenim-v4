@@ -2490,7 +2490,7 @@
   <script src="/js/site-data.js?v=20261008-aquarium-dock"></script>
   <script src="/js/site.js?v=20261010-dock-home"></script>
   <script src="/js/user-auth.js"></script>
-  <script src="/js/content-feed.js?v=20260928-exam-icons"></script>
+  <script src="/js/content-feed.js?v=20261027-home-feed-choice"></script>
   <script>
     const RENKLER = ['purple','coral','teal','yellow','navy'];
     const EMOJI_FALLBACK = ['📖','🎮','🔢','🔬','🌟','📝','🌱','⭐'];
@@ -3121,7 +3121,7 @@
         if (window.kemalContentFeed) {
           try {
             const dynamicItems = await Promise.race([
-              window.kemalContentFeed.getTickerItems({ maxItems: 5 }),
+              window.kemalContentFeed.getTickerItems({ maxItems: 5, homeFeedOnly: true }),
               new Promise(resolve => window.setTimeout(() => resolve([]), 2500))
             ]);
             if (dynamicItems.length) {
@@ -3306,7 +3306,7 @@
 
         let filterOptions = { grades: [], subjects: [] };
         try {
-          filterOptions = await window.kemalContentFeed.getFilterOptions();
+          filterOptions = await window.kemalContentFeed.getFilterOptions({ homeFeedOnly: true });
         } catch (error) {
           filterOptions = { grades: [], subjects: [] };
         }
@@ -3335,6 +3335,7 @@
           let items = [];
           try {
             items = await window.kemalContentFeed.getLatestContent({
+              homeFeedOnly: true,
               maxItems: 9,
               grade,
               subject,
@@ -3394,7 +3395,7 @@
       let latestItemsForCards = latestItemsForHero;
       if (window.kemalContentFeed) {
         try {
-          latestItemsForCards = await window.kemalContentFeed.getAllItems();
+          latestItemsForCards = await window.kemalContentFeed.getAllItems({ homeFeedOnly: true });
         } catch (error) {
           latestItemsForCards = latestItemsForHero;
         }

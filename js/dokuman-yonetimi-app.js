@@ -534,84 +534,8 @@
     }
   }
 
-  function getUrlExtension(rawUrl) {
-    try {
-      const url = new URL(String(rawUrl || '').trim(), window.location.origin);
-      return getFileExtension(url.pathname);
-    } catch (error) {
-      return getFileExtension(rawUrl);
-    }
-  }
-
-  function getExternalProvider(url) {
-    const host = String(url.hostname || '').replace(/^www\./, '').toLowerCase();
-    if (host === 'drive.google.com' || host === 'docs.google.com') {
-      return 'google-drive';
-    }
-    if (host.includes('.r2.dev') || host.includes('r2.cloudflarestorage.com')) {
-      return 'cloudflare-r2';
-    }
-    return 'direct-url';
-  }
-
-  function parseGoogleDriveFileId(url) {
-    const parts = url.pathname.split('/').filter(Boolean);
-    const fileIndex = parts.indexOf('d');
-    if (fileIndex >= 0 && parts[fileIndex + 1]) {
-      return parts[fileIndex + 1];
-    }
-    return url.searchParams.get('id') || '';
-  }
-
   function normalizeExternalDocumentInput(value) {
-    const raw = String(value || '').trim();
-    if (!raw) {
-      return null;
-    }
-
-    let url;
-    try {
-      url = new URL(raw);
-    } catch (error) {
-      throw new Error('Harici doküman için geçerli bir bağlantı girmelisin.');
-    }
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
-      throw new Error('Harici doküman bağlantısı http veya https ile başlamalı.');
-    }
-
-    const provider = getExternalProvider(url);
-    if (provider === 'google-drive') {
-      if (url.pathname.indexOf('/folders/') !== -1) {
-        throw new Error('Google Drive klasör linki değil, PDF/görsel dosyasının kendi paylaşım linkini eklemelisin.');
-      }
-      const fileId = parseGoogleDriveFileId(url);
-      if (!fileId) {
-        throw new Error('Google Drive dosya kimliği okunamadı. Dosyanın paylaşım linkini kopyalayıp tekrar dene.');
-      }
-      return {
-        provider: provider,
-        originalUrl: raw,
-        directUrl: 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId),
-        embedUrl: 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview',
-        fileName: 'Google Drive dosyası.pdf',
-        pageCount: 0,
-        fileSize: 0,
-      };
-    }
-
-    const extension = getUrlExtension(raw);
-    if (!['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
-      throw new Error('Harici link PDF, JPG, PNG veya WebP dosyasına doğrudan gitmeli. R2 kullanıyorsan public object URL kopyalanmalı.');
-    }
-    return {
-      provider: provider,
-      originalUrl: raw,
-      directUrl: url.href,
-      embedUrl: url.href,
-      fileName: decodeURIComponent((url.pathname.split('/').pop() || 'harici-dokuman.' + extension).split('?')[0]) || 'harici-dokuman.' + extension,
-      pageCount: extension === 'pdf' ? 0 : 1,
-      fileSize: 0,
-    };
+    return window.kemalDocumentStore.normalizeExternalDocumentInput(value);
   }
 
   function syncContentKindUi() {
@@ -647,7 +571,7 @@
       contentHint.textContent = video
         ? 'Video kayıtları dosya yüklemez; YouTube linki veya iframe adresi kaydedilir. Video, ders sayfasında ayrı “Ders Videoları” bölümünde görünür.'
         : (isExternalSource()
-          ? 'Harici kaynakta dosya Supabase kotasını kullanmaz. R2 ve CORS açık doğrudan linkler mevcut doküman araçlarıyla çalışır; Drive için dosya linki gerekir.'
+          ? 'Harici kaynakta dosya Supabase kotasını kullanmaz. Drive dosyası veya FlipHTML5 kitabını bağlantı / iframe koduyla ekleyebilirsin. Önizlemede seçim aracıyla sayfa gezilir, kalemle ekran üstüne not alınır.'
           : 'PDF ve görseller yüklemeden önce otomatik optimize edilir; sonuç gerçekten küçülmezse orijinal dosya korunur. Üst sınır 50 MB.');
     }
     if (saveHint) {
@@ -789,6 +713,7 @@
   function getInteractionSettings(doc) {
     const source = doc && doc.etkilesim_json && typeof doc.etkilesim_json === 'object' ? doc.etkilesim_json : {};
     return {
+      homeFeedVisible: source.homeFeedVisible !== false,
       magnifierEnabled: source.magnifierEnabled !== false,
       answersEnabled: source.answersEnabled !== false,
     };
@@ -796,11 +721,15 @@
 
   function buildInteractionPayload(existing, data) {
     const source = existing && existing.etkilesim_json && typeof existing.etkilesim_json === 'object' ? existing.etkilesim_json : {};
+    if (data.contentKind === 'video') {
+      return Object.assign({}, source, { homeFeedVisible: data.homeFeedVisible });
+    }
     return Object.assign({
       version: 1,
       answersHidden: true,
       hotspots: [],
     }, source, {
+      homeFeedVisible: data.homeFeedVisible,
       magnifierEnabled: data.magnifierEnabled !== false,
       answersEnabled: data.answersEnabled !== false,
     });
@@ -823,6 +752,9 @@
     });
 
     document.getElementById('summaryTitle').textContent = title || 'Henüz başlık girilmedi.';
+    document.getElementById('summaryFeed').textContent = document.getElementById('fHomeFeedVisible').checked
+      ? 'İçerik aktif ve gizli değilse ana sayfa canlı akışında gösterilecek.'
+      : 'Ana sayfa canlı akışında gösterilmeyecek.';
     document.getElementById('summaryRoute').textContent =
       targets.length
         ? targets.map(getTargetLabel).join(' | ') + ' altında listelenecek. (' + activeLabel + ')'
@@ -850,9 +782,9 @@
           const external = normalizeExternalDocumentInput(externalInput);
           const providerLabel = external.provider === 'google-drive'
             ? 'Google Drive'
-            : (external.provider === 'cloudflare-r2' ? 'Cloudflare R2' : 'Harici link');
+            : (external.provider === 'fliphtml5' ? 'FlipHTML5' : (external.provider === 'cloudflare-r2' ? 'Cloudflare R2' : 'Harici link'));
           document.getElementById('summaryMeta').textContent =
-            providerLabel + ' · ' + external.fileName + (external.pageCount ? ' · ' + external.pageCount + ' sayfa' : ' · Sayfa sayısı görüntüleyicide okunacak');
+            providerLabel + ' · ' + external.fileName + (external.pageCount ? ' · ' + external.pageCount + ' sayfa' : (['google-drive', 'fliphtml5'].includes(external.provider) ? ' · Kaynak sitede görüntülenir' : ' · Sayfa sayısı görüntüleyicide okunacak'));
         } catch (error) {
           document.getElementById('summaryMeta').textContent = error.message;
         }
@@ -860,7 +792,7 @@
         document.getElementById('summaryMeta').textContent =
           (existing.harici_provider || 'Harici link') + ' · ' + (existing.dosya_adi || 'Mevcut bağlantı');
       } else {
-        document.getElementById('summaryMeta').textContent = 'Harici PDF/görsel bağlantısı girildiğinde burada görünecek.';
+        document.getElementById('summaryMeta').textContent = 'Drive, FlipHTML5 veya doğrudan PDF/görsel bağlantısı girildiğinde burada görünecek.';
       }
       return;
     }
@@ -932,6 +864,7 @@
     document.getElementById('fKapakRenk').value = '#6C3DED';
     document.getElementById('fAktif').checked = true;
     document.getElementById('fGizli').checked = false;
+    document.getElementById('fHomeFeedVisible').checked = true;
     document.getElementById('fMagnifierEnabled').checked = true;
     document.getElementById('fAnswersEnabled').checked = true;
     document.getElementById('fOturumGerekli').checked = false;
@@ -1035,7 +968,7 @@
       const source = getDocumentSource(item);
       const sourceLabel = source === 'supabase'
         ? 'Supabase'
-        : (item.harici_provider === 'cloudflare-r2' ? 'Cloudflare R2' : (item.harici_provider === 'google-drive' ? 'Google Drive' : 'Harici link'));
+        : (item.harici_provider === 'cloudflare-r2' ? 'Cloudflare R2' : (item.harici_provider === 'google-drive' ? 'Google Drive' : (item.harici_provider === 'fliphtml5' ? 'FlipHTML5' : 'Harici link')));
       const badges = targets.length
         ? targets.slice(0, 4).map(function(target) {
           return '<div class="doc-badge">' + escHtml(getTargetLabel(target)) + '</div>';
@@ -1050,8 +983,8 @@
         : (
           '<span>📄 ' + escHtml(item.dosya_adi || 'Dosya') + '</span>' +
           '<span>🔗 ' + escHtml(sourceLabel) + '</span>' +
-          '<span>📚 ' + Number(item.sayfa_sayisi || 0) + ' sayfa</span>' +
-          '<span>📦 ' + formatBytes(item.dosya_boyutu || 0) + '</span>'
+          (item.sayfa_sayisi ? '<span>📚 ' + Number(item.sayfa_sayisi) + ' sayfa</span>' : '') +
+          (source === 'supabase' ? '<span>📦 ' + formatBytes(item.dosya_boyutu || 0) + '</span>' : '<span>🌐 Kaynak sitede</span>')
         );
       return (
         '<article class="doc-card">' +
@@ -1062,7 +995,7 @@
           '<div class="doc-meta"><span>' + (item.oturum_gerekli ? '🔐 Kayıtlı Kullanıcı' : '🌍 Herkese Açık') + '</span>' + (item.gizli ? '<span>👁️‍🗨️ Linkle erişim</span>' : '') + '</div>' +
           '<div class="doc-title">' + escHtml(item.baslik) + '</div>' +
           '<div class="doc-desc">' + escHtml(item.aciklama || 'Açıklama eklenmedi.') + '</div>' +
-          '<div class="doc-meta">' + metaHtml + '</div>' +
+          '<div class="doc-meta">' + metaHtml + (getInteractionSettings(item).homeFeedVisible ? '' : '<span>🏠 Ana sayfa akışında yok</span>') + '</div>' +
           '<div class="doc-actions">' +
             (can('dokuman_duzenleme') ? '<button class="btn-edit" type="button" onclick="dokumanDuzenle(\'' + item.id + '\')">Düzenle</button>' : '') +
             '<a class="btn-open" href="' + escHtml(window.kemalDocumentStore.buildViewerUrl(item.id)) + '" target="_blank" rel="noreferrer">Aç</a>' +
@@ -2059,6 +1992,7 @@
     const coverColor = document.getElementById('fKapakRenk').value || '#6C3DED';
     const active = document.getElementById('fAktif').checked;
     const hidden = document.getElementById('fGizli').checked;
+    const homeFeedVisible = document.getElementById('fHomeFeedVisible').checked;
     const sessionRequired = document.getElementById('fOturumGerekli').checked;
     const magnifierEnabled = document.getElementById('fMagnifierEnabled').checked;
     const answersEnabled = document.getElementById('fAnswersEnabled').checked;
@@ -2103,7 +2037,7 @@
       }
     }
     if (contentKind === 'document' && documentSource === 'external' && !externalDocument) {
-      throw new Error('Harici doküman için PDF/görsel bağlantısı girmelisin.');
+      throw new Error('Harici doküman için Drive, FlipHTML5 veya doğrudan PDF/görsel bağlantısı girmelisin.');
     }
     if (contentKind === 'document' && documentSource === 'supabase' && existing && getDocumentSource(existing) !== 'supabase' && !file) {
       throw new Error('Harici kayıt Supabase yüklemesine çevrilecekse yeni PDF veya görsel dosyası seçmelisin.');
@@ -2127,6 +2061,7 @@
       coverColor: coverColor,
       active: active,
       hidden: hidden,
+      homeFeedVisible: homeFeedVisible,
       sessionRequired: sessionRequired,
       magnifierEnabled: magnifierEnabled,
       answersEnabled: answersEnabled,
@@ -2215,9 +2150,7 @@
         aktif: data.active,
         gizli: data.hidden,
         oturum_gerekli: data.sessionRequired,
-        etkilesim_json: data.contentKind === 'video'
-          ? (data.existing && data.existing.etkilesim_json && typeof data.existing.etkilesim_json === 'object' ? data.existing.etkilesim_json : {})
-          : buildInteractionPayload(data.existing, data),
+        etkilesim_json: buildInteractionPayload(data.existing, data),
         guncelleme_tarihi: new Date().toISOString(),
       };
 
@@ -2406,6 +2339,7 @@
     document.getElementById('fAktif').checked = Boolean(doc.aktif);
     document.getElementById('fGizli').checked = doc.gizli === true;
     const interactionSettings = getInteractionSettings(doc);
+    document.getElementById('fHomeFeedVisible').checked = interactionSettings.homeFeedVisible;
     document.getElementById('fMagnifierEnabled').checked = interactionSettings.magnifierEnabled;
     document.getElementById('fAnswersEnabled').checked = interactionSettings.answersEnabled;
     document.getElementById('fOturumGerekli').checked = Boolean(doc.oturum_gerekli);
@@ -2553,7 +2487,7 @@
   }
 
   function bindEvents() {
-    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fGizli', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput', 'fExternalUrl'].forEach(function(id) {
+    ['fBaslik', 'fAciklama', 'fSinif', 'fDers', 'fSiralama', 'fKapakRenk', 'fAktif', 'fGizli', 'fHomeFeedVisible', 'fMagnifierEnabled', 'fAnswersEnabled', 'fVideoInput', 'fExternalUrl'].forEach(function(id) {
       const element = document.getElementById(id);
       if (!element) {
         return;

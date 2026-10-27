@@ -343,6 +343,7 @@
       subject: normalizeSubjectKey(primaryTarget.ders),
       subjectLabel: subjectMeta.label,
       contentType: isVideo ? 'video' : 'document',
+      homeFeedVisible: row.home_feed_visible !== false,
       contentTypeLabel: isVideo ? 'Ders Videoları' : 'Dokümanlar',
       icon: typeMeta.icon,
       sourceLabel: isVideo ? 'Ders Videosu' : 'Doküman',
@@ -562,14 +563,14 @@
       rows = await fetchSupabaseRows(
         config,
         'dokumanlar',
-        'id,baslik,sinif,ders,hedefler,icerik_turu,aktif,gizli,oturum_gerekli,olusturma_tarihi',
+        'id,baslik,sinif,ders,hedefler,icerik_turu,aktif,gizli,oturum_gerekli,olusturma_tarihi,home_feed_visible:etkilesim_json->homeFeedVisible',
         ['aktif=eq.true', 'order=olusturma_tarihi.desc']
       );
     } catch (error) {
       rows = await fetchSupabaseRows(
         config,
         'dokumanlar',
-        'id,baslik,sinif,ders,aktif,oturum_gerekli,olusturma_tarihi',
+        'id,baslik,sinif,ders,aktif,oturum_gerekli,olusturma_tarihi,home_feed_visible:etkilesim_json->homeFeedVisible',
         ['aktif=eq.true', 'order=olusturma_tarihi.desc']
       );
     }
@@ -694,18 +695,22 @@
   }
 
   async function getAllItems(options) {
-    var forceRefresh = Boolean(options && options.forceRefresh);
-    if (!forceRefresh && cachePromise && Date.now() < cacheExpiresAt) {
-      return cachePromise;
+    var settings = options || {};
+    if (settings.forceRefresh || !cachePromise || Date.now() >= cacheExpiresAt) {
+      cachePromise = loadAllItems().then(function(items) {
+        cacheExpiresAt = Date.now() + CACHE_TTL_MS;
+        return items;
+      }).catch(function(error) {
+        cacheExpiresAt = Date.now() + 15 * 1000;
+        throw error;
+      });
     }
-    cachePromise = loadAllItems().then(function(items) {
-      cacheExpiresAt = Date.now() + CACHE_TTL_MS;
-      return items;
-    }).catch(function(error) {
-      cacheExpiresAt = Date.now() + 15 * 1000;
-      throw error;
-    });
-    return cachePromise;
+    var items = await cachePromise;
+    // The shared catalog also powers site search and the teacher library.
+    // Apply homepage preferences only to callers requesting that surface.
+    return settings.homeFeedOnly ? items.filter(function(item) {
+      return item.homeFeedVisible !== false;
+    }) : items;
   }
 
   function matchesGrade(item, grade) {
@@ -753,6 +758,7 @@
     var settings = options || {};
     return getLatestContent({
       forceRefresh: settings.forceRefresh,
+      homeFeedOnly: settings.homeFeedOnly,
       maxItems: Math.max(1, parseInt(settings.maxItems, 10) || 5),
       grade: settings.grade,
       subject: settings.subject,

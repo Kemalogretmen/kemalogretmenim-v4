@@ -2,7 +2,8 @@
   'use strict';
 
   const STORAGE_PREFIX = 'kemal_dokuman_annotations_v1_';
-  const SHAPE_TOOLS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star', 'checkmark', 'cross'];
+  const SHAPE_TOOLS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'dashed-arrow', 'rect', 'square', 'circle', 'star', 'compass'];
+  const STAMP_TOOLS = ['checkmark', 'cross', 'correct-stamp', 'wrong-stamp'];
   const TOOL_OPTIONS_KEYS = ['pen', 'highlighter', 'eraser', 'text'];
   const TOOL_DEFS = [
     {
@@ -12,6 +13,10 @@
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M5 4v15l4.2-3.4 3.3 4.6 2.4-1.7-3.3-4.6H17z"/>' +
         '</svg>',
+    },
+    {
+      key: 'edit-objects', label: 'Düzenle',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7v12l3-3 3 4 2-1-3-4h5z"/><path d="M3 8V3h5m8 0h5v5M3 16v5h5m13-5v5h-4"/></svg>',
     },
     {
       key: 'pan',
@@ -67,6 +72,7 @@
     {
       key: 'highlighter',
       label: 'Vurgulayıcı',
+      shortLabel: 'Vurgu',
       icon:
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="m14 4 6 6"/>' +
@@ -148,7 +154,7 @@
     },
     {
       key: 'circle',
-      label: 'Daire',
+      label: 'Elips',
       icon:
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' +
           '<circle cx="12" cy="12" r="7"/>' +
@@ -164,7 +170,8 @@
     },
     {
       key: 'checkmark',
-      label: 'Tik',
+      label: 'Onay İşareti',
+      shortLabel: 'Onay',
       icon:
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">' +
           '<path d="M4 13l5 5L20 7"/>' +
@@ -178,12 +185,33 @@
           '<path d="M6 6l12 12M18 6 6 18"/>' +
         '</svg>',
     },
+    {
+      key: 'dashed-arrow', label: 'Kesik Ok',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h3m4 0h3m4 0h2"/><path d="m15 6 6 6-6 6"/></svg>',
+    },
+    {
+      key: 'compass', label: 'Pergel',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M12 3V1M11 7 5 21M13 7l6 14M7 16h10M4 21h2m12 0h2"/></svg>',
+    },
+    {
+      key: 'correct-stamp', label: 'Doğru Damgası', shortLabel: 'Doğru',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m6 12 3 3 8-7"/></svg>',
+    },
+    {
+      key: 'wrong-stamp', label: 'Yanlış Damgası', shortLabel: 'Yanlış',
+      icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="m8 9 8 6m0-6-8 6"/></svg>',
+    },
   ];
-  const PRIMARY_TOOL_KEYS = ['select', 'pen', 'highlighter', 'eraser', 'text', 'pan', 'clear-area'];
+  const PRIMARY_TOOL_KEYS = ['select', 'edit-objects', 'pen', 'highlighter', 'eraser', 'text', 'pan', 'clear-area'];
   const INTERACTION_TOOL_KEYS = ['magnifier-area', 'answer-area'];
-  const SHAPE_TOOL_KEYS = ['line', 'dashed-line', 'single-arrow', 'double-arrow', 'rect', 'square', 'circle', 'star', 'checkmark', 'cross'];
+  const TOOL_GROUPS = {
+    arrows: ['single-arrow', 'double-arrow', 'dashed-arrow', 'line', 'dashed-line'],
+    stamps: STAMP_TOOLS,
+    shapes: ['rect', 'square', 'circle', 'star', 'compass'],
+  };
   const TOOL_SHORTCUTS = {
     V: 'select',
+    S: 'edit-objects',
     H: 'pan',
     P: 'pen',
     B: 'highlighter',
@@ -195,6 +223,7 @@
     R: 'rect',
     Q: 'square',
     O: 'circle',
+    C: 'compass',
     Y: 'star',
     K: 'checkmark',
     X: 'cross',
@@ -203,7 +232,8 @@
     {
       title: 'Araçlar',
       items: [
-        { key: 'V', label: 'Seçim aracı' },
+        { key: 'V', label: 'Seçim / belge kontrolü' },
+        { key: 'S', label: 'Düzenle: notları taşı ve boyutlandır' },
         { key: 'H', label: 'El aracı' },
         { key: 'P', label: 'Kalem' },
         { key: 'B / M', label: 'Vurgulayıcı' },
@@ -214,7 +244,8 @@
         { key: 'A', label: 'Tek yönlü ok' },
         { key: 'Shift + A', label: 'Çift yönlü ok' },
         { key: 'R', label: 'Dikdörtgen' },
-        { key: 'O', label: 'Daire' },
+        { key: 'O', label: 'Elips' },
+        { key: 'C', label: 'Pergel: merkezden yarıçapa sürükle' },
         { key: 'Y', label: 'Yıldız' },
         { key: 'K', label: 'Tik (✓)' },
         { key: 'X', label: 'Çarpı (✗)' },
@@ -247,12 +278,13 @@
         { key: 'V / H', label: 'Video kontrolüne geç' },
         { key: 'Space / K', label: 'Videoyu oynat / duraklat' },
         { key: 'M', label: 'Video sessiz / sesli' },
-        { key: 'F', label: 'Video alanını tam ekran yap' },
+        { key: 'F', label: 'Araçlarla birlikte tam ekran' },
       ],
     },
     {
       title: 'Genel',
       items: [
+        { key: 'F', label: 'Araçlarla birlikte tam ekran / çıkış' },
         { key: 'Cmd/Ctrl + S', label: 'Notlu PDF indir' },
         { key: 'Cmd/Ctrl + P', label: 'Yazdır' },
         { key: '?', label: 'Kısayol panelini aç / kapat' },
@@ -318,6 +350,8 @@
     toolbarCollapsed: false,
     toolOptionsOpen: false,
     shapesOpen: false,
+    toolGroup: 'shapes',
+    stampSize: 72,
     protractor: {
       visible: false,
       x: 0,
@@ -693,7 +727,7 @@
     if (row && (row.icerik_turu === 'video' || row.icerikTuru === 'video')) {
       return 'video';
     }
-    if (row && (row.harici_provider === 'google-drive' || row.hariciProvider === 'google-drive')) {
+    if (row && ['google-drive', 'fliphtml5'].includes(row.harici_provider || row.hariciProvider)) {
       return 'external-preview';
     }
     const extension = getFileExtension(row && (row.dosya_adi || row.dosya_yolu || row.dosyaUrl));
@@ -773,20 +807,51 @@
     return true;
   }
 
-  function requestVideoFullscreen() {
-    if (!isVideoDocumentActive()) {
-      return false;
+  let viewerFullscreenFallback = false;
+
+  function syncViewerFullscreen() {
+    const stage = qs('viewerStage');
+    const active = document.fullscreenElement === stage || document.webkitFullscreenElement === stage || viewerFullscreenFallback;
+    stage.classList.toggle('is-viewer-fullscreen', active);
+    document.body.classList.toggle('has-viewer-fullscreen', active);
+    const button = qs('viewerFullscreenBtn');
+    button.textContent = active ? '⛶ Tam Ekrandan Çık' : '⛶ Tam Ekran';
+    button.setAttribute('aria-pressed', String(active));
+    // Keep dialogs and tooltips inside the fullscreen subtree as well.
+    ['shortcutModal', 'magnifyModal', 'toolTooltip'].forEach(function(id) {
+      const element = qs(id);
+      if (element) (active ? stage : document.body).appendChild(element);
+    });
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  async function toggleViewerFullscreen() {
+    const stage = qs('viewerStage');
+    if (viewerFullscreenFallback) {
+      viewerFullscreenFallback = false;
+      syncViewerFullscreen();
+      return;
     }
-    const frame = document.querySelector('.lesson-video-frame');
-    if (!frame) {
-      return false;
+    if (document.fullscreenElement === stage || document.webkitFullscreenElement === stage) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) {
+        try { await exit.call(document); } catch (error) { refreshStatus('Tam ekrandan çıkılamadı; Esc tuşunu kullanabilirsin.'); }
+      }
+      return;
     }
-    const request = frame.requestFullscreen || frame.webkitRequestFullscreen || frame.msRequestFullscreen;
+    // Request the whole workspace so cross-origin content cannot hide our tools.
+    const request = stage.requestFullscreen || stage.webkitRequestFullscreen;
     if (request) {
-      request.call(frame);
-      return true;
+      try {
+        await request.call(stage);
+        syncViewerFullscreen();
+        return;
+      } catch (error) {
+        // iOS and embedded browsers can refuse native fullscreen; expand in-page.
+      }
     }
-    return false;
+    viewerFullscreenFallback = true;
+    syncViewerFullscreen();
   }
 
   function loadImageFromUrl(url) {
@@ -1039,10 +1104,11 @@
   function refreshStatus(prefixText) {
     const surfaceLabel = state.documentKind === 'video'
       ? 'video üzerinde çalışıyorsun.'
-      : (state.documentKind === 'external-preview' ? 'Drive önizlemesi üzerinde çalışıyorsun.' : ('Sayfa ' + state.focusPage + ' üzerinde çalışıyorsun.'));
+      : (state.documentKind === 'external-preview' ? 'harici belge üzerinde çalışıyorsun.' : ('Sayfa ' + state.focusPage + ' üzerinde çalışıyorsun.'));
     const text = (prefixText ? prefixText + ' ' : '') +
       'Araç: ' + getToolDef(state.tool).label + ' · ' + surfaceLabel;
-    setStatus(text.trim());
+    const hint = state.tool === 'compass' ? ' Merkezi basılı tut, yarıçapı belirlemek için sürükle.' : (STAMP_TOOLS.includes(state.tool) ? ' Damgayı eklemek için bir kez tıkla.' : '');
+    setStatus(text.trim() + hint);
   }
 
   function getToolDef(tool) {
@@ -1523,8 +1589,9 @@
     if (Number.isFinite(Number(object.top))) {
       object.top = Number(object.top) * scaleY;
     }
-    object.scaleX = Number(object.scaleX || 1) * scaleX;
-    object.scaleY = Number(object.scaleY || 1) * scaleY;
+    const circleScale = Math.min(scaleX, scaleY);
+    object.scaleX = Number(object.scaleX || 1) * (object.type === 'circle' ? circleScale : scaleX);
+    object.scaleY = Number(object.scaleY || 1) * (object.type === 'circle' ? circleScale : scaleY);
   }
 
   function getSnapshotObjectPoint(object, scaleX, scaleY) {
@@ -1732,12 +1799,11 @@
   function syncToolbarUi() {
     const toolbar = qs('docToolbar');
     const shapePanel = qs('docShapePanel');
-    const shapeToggle = qs('docShapeToggleBtn');
     const toggleBtn = qs('docToolbarToggleBtn');
     const protractorBtn = qs('docProtractorBtn');
     const protractor = getDocProtractor();
     const activeTool = state.tool;
-    const shapesVisible = state.shapesOpen || SHAPE_TOOL_KEYS.includes(activeTool) || INTERACTION_TOOL_KEYS.includes(activeTool);
+    const shapesVisible = state.shapesOpen;
     const penPanelVisible = state.toolOptionsOpen && isToolOptionsTool(activeTool);
 
     if (toolbar) {
@@ -1752,11 +1818,19 @@
     if (shapePanel) {
       shapePanel.classList.toggle('is-hidden', !shapesVisible);
     }
-    if (shapeToggle) {
-      shapeToggle.classList.toggle('is-active', shapesVisible);
-      shapeToggle.classList.toggle('active', shapesVisible);
-      shapeToggle.setAttribute('aria-expanded', shapesVisible ? 'true' : 'false');
-    }
+    [['docShapeToggleBtn', 'shapes'], ['docArrowToggleBtn', 'arrows'], ['docStampToggleBtn', 'stamps']].forEach(function(entry) {
+      const button = qs(entry[0]);
+      if (!button) return;
+      const open = shapesVisible && state.toolGroup === entry[1];
+      const active = open || TOOL_GROUPS[entry[1]].includes(activeTool);
+      button.classList.toggle('is-active', active);
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-expanded', String(open));
+    });
+    Array.from(document.querySelectorAll('[data-tool-group]')).forEach(function(button) {
+      button.setAttribute('aria-pressed', String(button.getAttribute('data-tool-group') === state.toolGroup));
+    });
+    if (qs('activeToolLabel')) qs('activeToolLabel').textContent = getToolDef(activeTool).label;
     if (qs('docPagePanelBtn')) {
       const pageOpen = toolbar && toolbar.classList.contains('is-page-panel-open');
       qs('docPagePanelBtn').classList.toggle('is-active', !!pageOpen);
@@ -1776,6 +1850,7 @@
       const isActive = button.getAttribute('data-tool') === activeTool;
       button.classList.toggle('active', isActive);
       button.classList.toggle('is-active', isActive);
+      button.setAttribute('aria-pressed', String(isActive));
     });
     Array.from(document.querySelectorAll('[data-prep-tool]')).forEach(function(button) {
       const isActive = button.getAttribute('data-prep-tool') === activeTool;
@@ -2170,21 +2245,52 @@
     pushHistory(pageState);
   }
 
-  function clearCurrentPage() {
-    const pageState = getActivePageState();
+  function confirmViewerAction(message, options) {
+    const dialog = qs('viewerConfirmDialog');
+    if (!dialog || dialog.open) return Promise.resolve(false);
+    qs('viewerConfirmTitle').textContent = options && options.title || 'Çizimler temizlensin mi?';
+    qs('viewerConfirmMessage').textContent = message;
+    qs('viewerConfirmAcceptBtn').textContent = options && options.acceptLabel || 'Temizle';
+    // Native confirm() can close fullscreen or crash Safari's fullscreen content.
+    // This dialog stays inside viewerStage and keeps the browser fullscreen intact.
+    return new Promise(function(resolve) {
+      function finish() {
+        dialog.removeEventListener('close', finish);
+        resolve(dialog.returnValue === 'confirm');
+      }
+      dialog.returnValue = 'cancel';
+      dialog.addEventListener('close', finish);
+      try {
+        dialog.showModal();
+      } catch (error) {
+        dialog.removeEventListener('close', finish);
+        resolve(false);
+      }
+    });
+  }
+
+  async function clearCurrentPage() {
+    let pageState = getActivePageState();
     if (!pageState) {
       return;
     }
-    const removableObjects = pageState.canvas.getObjects().filter(function(object) {
+    const pageNumber = pageState.index;
+    let removableObjects = pageState.canvas.getObjects().filter(function(object) {
       return !object.isAnswerObject && !object._temp;
     });
     if (!removableObjects.length) {
       setStatus('Bu sayfada temizlenecek öğrenci çizimi yok.');
       return;
     }
-    if (!window.confirm('Bu sayfadaki çizimleri temizlemek istiyor musun? Cevap alanları korunacak.')) {
+    if (!await confirmViewerAction('Bu sayfadaki çizimler temizlenecek. Cevap alanları korunacak.')) {
       return;
     }
+    // A viewport resize may have rebuilt the page while the confirmation was open.
+    pageState = state.pages.get(pageNumber);
+    if (!pageState) return;
+    removableObjects = pageState.canvas.getObjects().filter(function(object) {
+      return !object.isAnswerObject && !object._temp;
+    });
     removableObjects.forEach(function(object) {
       pageState.canvas.remove(object);
     });
@@ -2194,7 +2300,7 @@
     setStatus('Sayfadaki çizimler temizlendi. Cevap alanları korundu.');
   }
 
-  function clearActiveCropAnnotations() {
+  async function clearActiveCropAnnotations() {
     const canvas = state.crop.canvas;
     if (!canvas) {
       return;
@@ -2212,9 +2318,12 @@
       setStatus('Bu kırpılmış soru alanında temizlenecek çizim yok.');
       return;
     }
-    if (!window.confirm('Sadece bu kırpılmış soru alanındaki çizimleri temizlemek istiyor musun?')) {
+    const hotspotId = state.crop.hotspotId;
+    if (!await confirmViewerAction('Sadece bu kırpılmış soru alanındaki çizimler temizlenecek.')) {
       return;
     }
+    if (!isCropViewActive() || state.crop.canvas !== canvas || state.crop.page !== pageState || state.crop.hotspotId !== hotspotId ||
+        (pageState && state.pages.get(pageState.index) !== pageState)) return;
     cropObjects.forEach(function(object) {
       canvas.remove(object);
     });
@@ -2254,6 +2363,7 @@
       evented: false,
       strokeLineCap: 'round',
       strokeUniform: true,
+      strokeDashArray: options.dashed ? [12, 8] : null,
     });
     const objects = [
       line,
@@ -2309,12 +2419,12 @@
     return points;
   }
 
-  function buildShape(tool, start, end) {
+  function buildShape(tool, start, end, strokeOverride) {
     const dx = end.x - start.x;
     const dy = end.y - start.y;
     const minX = Math.min(start.x, end.x);
     const minY = Math.min(start.y, end.y);
-    const stroke = state.color;
+    const stroke = strokeOverride || state.color;
     const baseOptions = {
       fill: 'rgba(0,0,0,0)',
       stroke: stroke,
@@ -2330,11 +2440,12 @@
       }));
     }
 
-    if (tool === 'single-arrow' || tool === 'double-arrow') {
+    if (['single-arrow', 'double-arrow', 'dashed-arrow'].includes(tool)) {
       return createArrowGroup(start, end, {
         stroke: stroke,
         strokeWidth: state.size,
         doubleHead: tool === 'double-arrow',
+        dashed: tool === 'dashed-arrow',
       });
     }
 
@@ -2349,6 +2460,13 @@
         top: top,
         width: Math.max(4, width),
         height: Math.max(4, height),
+      }));
+    }
+
+    if (tool === 'compass') {
+      return new window.fabric.Circle(Object.assign({}, baseOptions, {
+        left: start.x, top: start.y, originX: 'center', originY: 'center',
+        radius: Math.max(2, Math.hypot(dx, dy)),
       }));
     }
 
@@ -2411,6 +2529,60 @@
     }
 
     return null;
+  }
+
+  function createStamp(tool, pointer) {
+    const size = state.stampSize;
+    const positive = tool === 'checkmark' || tool === 'correct-stamp';
+    const color = positive ? '#16a34a' : '#dc2626';
+    let stamp;
+    if (tool === 'checkmark' || tool === 'cross') {
+      stamp = buildShape(tool, { x: pointer.x - size / 2, y: pointer.y - size / 2 }, { x: pointer.x + size / 2, y: pointer.y + size / 2 }, color);
+    } else {
+      const text = new window.fabric.Text(positive ? '✓ DOĞRU' : '✗ YANLIŞ', {
+        left: 0, top: 0, fontSize: Math.max(18, size * 0.4), fontWeight: '800',
+        fontFamily: 'Arial, sans-serif', fill: color,
+      });
+      const pad = size * 0.18;
+      const box = new window.fabric.Rect({
+        left: -pad, top: -pad, width: text.width + pad * 2, height: text.height + pad * 2,
+        rx: 10, ry: 10, fill: positive ? '#f0fdf4' : '#fff1f2', stroke: color,
+        strokeWidth: 2, strokeUniform: true,
+      });
+      stamp = new window.fabric.Group([box, text], { objectCaching: false });
+    }
+    stamp.set({ left: pointer.x, top: pointer.y, originX: 'center', originY: 'center' });
+    makeObjectEditable(stamp);
+    return stamp;
+  }
+
+  function clearCompassGuide(canvas) {
+    if (canvas && canvas._compassGuide) {
+      canvas.remove(canvas._compassGuide);
+      canvas._compassGuide = null;
+    }
+  }
+
+  function updateCompassGuide(canvas, start, end) {
+    clearCompassGuide(canvas);
+    if (state.tool !== 'compass') return;
+    const dx = end.x - start.x, dy = end.y - start.y;
+    const radius = Math.hypot(dx, dy);
+    if (radius < 4) return;
+    const hinge = { x: (start.x + end.x) / 2 + dy * 0.65, y: (start.y + end.y) / 2 - dx * 0.65 };
+    const lineOptions = { stroke: '#475569', strokeWidth: 5, strokeLineCap: 'round', selectable: false, evented: false };
+    const parts = [
+      new window.fabric.Line([start.x, start.y, hinge.x, hinge.y], lineOptions),
+      new window.fabric.Line([hinge.x, hinge.y, end.x, end.y], Object.assign({}, lineOptions, { stroke: '#7c3aed' })),
+      new window.fabric.Circle({ left: hinge.x, top: hinge.y, originX: 'center', originY: 'center', radius: 7, fill: '#fff', stroke: '#7c3aed', strokeWidth: 3 }),
+      new window.fabric.Circle({ left: start.x, top: start.y, originX: 'center', originY: 'center', radius: 4, fill: '#475569' }),
+      new window.fabric.Circle({ left: end.x, top: end.y, originX: 'center', originY: 'center', radius: 4, fill: state.color }),
+      new window.fabric.Text('r = ' + Math.round(radius) + ' px', { left: hinge.x + 12, top: hinge.y - 10, fontSize: 14, fontFamily: 'Arial', fill: '#6d28d9', backgroundColor: '#fff' }),
+    ];
+    const guide = new window.fabric.Group(parts, { selectable: false, evented: false, excludeFromExport: true, objectCaching: false });
+    guide._temp = true;
+    canvas._compassGuide = guide;
+    canvas.add(guide);
   }
 
   function maybeFinalizeShape(pageState) {
@@ -2483,6 +2655,10 @@
       : 'Büyüteç alanı eklendi. Yayınlayınca öğrenci ekranda büyüteç ikonunu görecek.');
   }
 
+  function isObjectSelectionTool() {
+    return state.tool === 'select' || state.tool === 'edit-objects';
+  }
+
   function applyToolToPage(pageState) {
     const canvas = pageState.canvas;
     const visiblePages = getVisiblePages();
@@ -2492,10 +2668,10 @@
     const isInteractionTool = INTERACTION_TOOL_KEYS.includes(state.tool);
 
     canvas.isDrawingMode = false;
-    canvas.selection = canInteract && state.tool === 'select';
-    canvas.skipTargetFind = !(canInteract && state.tool === 'select');
+    canvas.selection = canInteract && isObjectSelectionTool();
+    canvas.skipTargetFind = !(canInteract && isObjectSelectionTool());
     canvas.defaultCursor = isVisible
-      ? (state.tool === 'select' ? 'default' : (state.tool === 'pan' ? 'grab' : 'crosshair'))
+      ? (isObjectSelectionTool() ? 'default' : (state.tool === 'pan' ? 'grab' : 'crosshair'))
       : 'default';
 
     if (canvas.upperCanvasEl) {
@@ -2557,6 +2733,14 @@
       clearCurrentScope();
       return;
     }
+    if (state.tool !== tool) {
+      state.pages.forEach(function(page) {
+        clearCompassGuide(page.canvas);
+        if (page.draft) { page.canvas.remove(page.draft); page.draft = null; page.pointerStart = page.pointerEnd = null; }
+      });
+      clearCompassGuide(state.crop.canvas);
+      if (state.crop.draft && state.crop.canvas) { state.crop.canvas.remove(state.crop.draft); state.crop.draft = null; state.crop.pointerStart = state.crop.pointerEnd = null; }
+    }
     state.tool = tool;
     if (isToolOptionsTool(tool)) {
       state.toolOptionsOpen = options && Object.prototype.hasOwnProperty.call(options, 'openOptions')
@@ -2565,11 +2749,7 @@
     } else {
       state.toolOptionsOpen = false;
     }
-    if (SHAPE_TOOL_KEYS.includes(tool) || INTERACTION_TOOL_KEYS.includes(tool)) {
-      state.shapesOpen = true;
-    } else {
-      state.shapesOpen = false;
-    }
+    state.shapesOpen = false;
     syncToolbarUi();
     applyToolToAllPages();
     syncZoomButtons();
@@ -2652,7 +2832,17 @@
         });
         pageState.draft._temp = true;
         canvas.add(pageState.draft);
+        updateCompassGuide(canvas, pageState.pointerStart, pageState.pointerEnd);
         canvas.renderAll();
+        return;
+      }
+
+      if (STAMP_TOOLS.includes(state.tool)) {
+        const stamp = createStamp(state.tool, pointer);
+        tagObjectForAnswerHotspot(pageState, stamp);
+        canvas.add(stamp);
+        canvas.renderAll();
+        pushHistory(pageState);
         return;
       }
 
@@ -2685,6 +2875,7 @@
       if (pageState.draft) {
         pageState.draft._temp = true;
         canvas.add(pageState.draft);
+        updateCompassGuide(canvas, pageState.pointerStart, pageState.pointerEnd);
         canvas.renderAll();
       }
     });
@@ -2717,11 +2908,13 @@
       if (pageState.draft) {
         pageState.draft._temp = true;
         canvas.add(pageState.draft);
+        updateCompassGuide(canvas, pageState.pointerStart, pageState.pointerEnd);
         canvas.renderAll();
       }
     });
 
     canvas.on('mouse:up', function() {
+      clearCompassGuide(canvas);
       if (state.editMode && INTERACTION_TOOL_KEYS.includes(state.tool)) {
         maybeFinalizeInteractionArea(pageState);
         return;
@@ -3056,7 +3249,8 @@
     const iframe = document.createElement('iframe');
     iframe.src = previewUrl;
     iframe.title = state.documentRow && state.documentRow.baslik ? state.documentRow.baslik : 'Doküman önizlemesi';
-    iframe.allow = 'autoplay';
+    iframe.allow = "autoplay; fullscreen 'none'";
+    iframe.allowFullscreen = false;
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     frame.appendChild(iframe);
     nodes.surface.insertBefore(frame, nodes.annotationCanvas);
@@ -3103,6 +3297,45 @@
     setAnswerObjectsVisibility(pageState);
     state.pages.set(pageNumber, pageState);
     return nodes.shell;
+  }
+
+  function getExternalPreviewPageSize() {
+    const viewport = getBookViewport();
+    return {
+      width: Math.max(1, viewport.clientWidth),
+      height: Math.max(1, viewport.clientHeight),
+    };
+  }
+
+  function resizeExternalPreview() {
+    const page = state.pages.get(1);
+    if (!page || !page.isExternalPreviewPage) return;
+    const size = getExternalPreviewPageSize();
+    const scaleX = size.width / page.canvas.getWidth();
+    const scaleY = size.height / page.canvas.getHeight();
+    page.canvas.discardActiveObject();
+    page.canvas.getObjects().forEach(function(object) {
+      object.set({
+        left: Number(object.left || 0) * scaleX,
+        top: Number(object.top || 0) * scaleY,
+        scaleX: Number(object.scaleX || 1) * (object.type === 'circle' ? Math.min(scaleX, scaleY) : scaleX),
+        scaleY: Number(object.scaleY || 1) * (object.type === 'circle' ? Math.min(scaleX, scaleY) : scaleY),
+      });
+      object.setCoords();
+    });
+    page.canvas.setDimensions(size);
+    page.canvas.renderAll();
+    state.pageWidth = state.bookWidth = size.width;
+    state.pageHeight = state.bookHeight = size.height;
+    [page.wrapper, qs('bookRoot'), getBookPanLayer(), getBookScaleLayer()].forEach(function(element) {
+      element.style.width = size.width + 'px';
+      element.style.height = size.height + 'px';
+    });
+    // Preserve the iframe node, its current page, and undo history on fullscreen/resize.
+    flushAnnotationState();
+    updateBookTransform();
+    positionDocToolbar();
+    rememberViewportMetrics();
   }
 
   function getResponsivePageWidthForMode(baseWidth, baseHeight, mode) {
@@ -3305,7 +3538,11 @@
       baseHeight = baseViewport.height;
     }
 
-    if (state.documentKind === 'video' || state.documentKind === 'external-preview') {
+    if (state.documentKind === 'external-preview') {
+      const previewSize = getExternalPreviewPageSize();
+      state.pageWidth = previewSize.width;
+      state.pageHeight = previewSize.height;
+    } else if (state.documentKind === 'video') {
       const singleSize = getResponsiveImagePageSize(baseWidth, baseHeight);
       state.pageWidth = singleSize.width;
       state.pageHeight = singleSize.height;
@@ -3347,7 +3584,7 @@
     } else if (state.documentKind === 'external-preview') {
       const pageElement = await initExternalPreviewPage(1);
       root.appendChild(pageElement);
-      setStatus('Google Drive önizlemesi hazırlanıyor…');
+      setStatus('Harici doküman önizlemesi hazırlanıyor…');
     } else if (state.documentKind === 'image') {
       const pageElement = await initImagePage(1, image);
       root.appendChild(pageElement);
@@ -3381,7 +3618,7 @@
       throw new Error('Ders videosu için PDF indirme kullanılamaz.');
     }
     if (state.documentKind === 'external-preview') {
-      throw new Error('Google Drive önizlemesi için PDF indirme kullanılamaz. Dosyayı Drive üzerinden indirebilirsin.');
+      throw new Error('Harici önizleme için notlu PDF indirme kullanılamaz. Kaynağı Aç bağlantısından sağlayıcının indirme seçeneklerini kullanabilirsin.');
     }
     if (state.documentKind === 'image') {
       const pdfDoc = await window.PDFLib.PDFDocument.create();
@@ -3621,7 +3858,7 @@
     state.crop.hotspotId = hotspot.id;
     state.crop.canvas = new window.fabric.Canvas(annotationCanvas, {
       preserveObjectStacking: true,
-      selection: state.tool === 'select',
+      selection: isObjectSelectionTool(),
       enableRetinaScaling: true,
     });
     state.crop.canvas.setWidth(surfaceWidth);
@@ -3741,9 +3978,9 @@
       return;
     }
     canvas.isDrawingMode = false;
-    canvas.selection = state.tool === 'select';
-    canvas.skipTargetFind = state.tool !== 'select';
-    canvas.defaultCursor = state.tool === 'select'
+    canvas.selection = isObjectSelectionTool();
+    canvas.skipTargetFind = !isObjectSelectionTool();
+    canvas.defaultCursor = isObjectSelectionTool()
       ? 'default'
       : (state.tool === 'pan' ? (state.crop.zoom > 1 ? 'grab' : 'default') : 'crosshair');
     if (['pen', 'highlighter', 'eraser'].includes(state.tool)) {
@@ -3801,6 +4038,12 @@
       }
       applyStylusPressureToBrush(canvas, opt && opt.e);
       const pointer = canvas.getPointer(opt.e);
+      if (STAMP_TOOLS.includes(state.tool)) {
+        canvas.add(createStamp(state.tool, pointer));
+        canvas.renderAll();
+        saveCropSnapshot();
+        return;
+      }
       if (state.tool === 'text') {
         const margin = 18;
         const left = clamp(pointer.x, margin, Math.max(margin, canvas.getWidth() - margin));
@@ -3834,6 +4077,7 @@
       if (state.crop.draft) {
         state.crop.draft._temp = true;
         canvas.add(state.crop.draft);
+        updateCompassGuide(canvas, state.crop.pointerStart, state.crop.pointerEnd);
         canvas.renderAll();
       }
     });
@@ -3847,10 +4091,12 @@
       if (state.crop.draft) {
         state.crop.draft._temp = true;
         canvas.add(state.crop.draft);
+        updateCompassGuide(canvas, state.crop.pointerStart, state.crop.pointerEnd);
         canvas.renderAll();
       }
     });
     canvas.on('mouse:up', function() {
+      clearCompassGuide(canvas);
       if (!state.crop.draft || !state.crop.pointerStart || !state.crop.pointerEnd) {
         return;
       }
@@ -3995,11 +4241,11 @@
     return true;
   }
 
-  function removeHotspot(hotspot) {
+  async function removeHotspot(hotspot) {
     if (!hotspot || !state.editMode) {
       return;
     }
-    if (!window.confirm('Bu etkileşimli alan kaldırılsın mı?')) {
+    if (!await confirmViewerAction('Bu etkileşimli alan kaldırılacak.', { title: 'Alan kaldırılsın mı?', acceptLabel: 'Kaldır' })) {
       return;
     }
     state.interactions.hotspots = state.interactions.hotspots.filter(function(item) {
@@ -4030,7 +4276,7 @@
       state.pages.forEach(function(pageState) {
         pages[String(pageState.index)] = getSnapshot(pageState);
       });
-      const payload = {
+      const payload = Object.assign({}, state.documentRow.etkilesim_json || {}, {
         version: 1,
         answersHidden: true,
         magnifierEnabled: state.interactions.magnifierEnabled !== false,
@@ -4038,7 +4284,7 @@
         hotspots: state.interactions.hotspots,
         pages: pages,
         updatedAt: new Date().toISOString(),
-      };
+      });
       const client = window.kemalAdminAuth && typeof window.kemalAdminAuth.getClient === 'function'
         ? window.kemalAdminAuth.getClient()
         : null;
@@ -4078,7 +4324,7 @@
       ' data-tool="' + tool.key + '"' +
       ' data-label="' + tool.label + '"' +
       ' aria-label="' + tool.label + '">' +
-        tool.icon +
+        tool.icon + '<span class="doc-tool-label">' + (tool.shortLabel || tool.label) + '</span>' +
       '</button>'
     );
   }
@@ -4094,11 +4340,18 @@
       return getToolDef(key);
     }).filter(Boolean).map(renderToolButtonMarkup).join('');
 
+    renderShapeTools();
+  }
+
+  function renderShapeTools() {
     const isVideoDocument = state.documentRow && getDocumentKind(state.documentRow) === 'video';
-    const shapeKeys = state.editMode && !isVideoDocument ? SHAPE_TOOL_KEYS.concat(INTERACTION_TOOL_KEYS) : SHAPE_TOOL_KEYS;
-    shapeTarget.innerHTML = shapeKeys.map(function(key) {
-      return getToolDef(key);
-    }).filter(Boolean).map(renderToolButtonMarkup).join('');
+    const keys = TOOL_GROUPS[state.toolGroup].slice();
+    if (state.toolGroup === 'shapes' && state.editMode && !isVideoDocument) keys.push.apply(keys, INTERACTION_TOOL_KEYS);
+    qs('docShapeTools').innerHTML = keys.map(getToolDef).filter(Boolean).map(renderToolButtonMarkup).join('');
+    qs('docStampSettings').hidden = state.toolGroup !== 'stamps';
+    qs('docToolGroupHint').textContent = state.toolGroup === 'stamps'
+      ? 'Bir kez tıkla. Düzenle aracıyla taşıyıp boyutlandırabilirsin.'
+      : (state.toolGroup === 'arrows' ? 'Başlangıçtan bitişe sürükleyerek çiz.' : 'Pergelde merkezden dışarı sürükleyerek yarıçapı belirle.');
   }
 
   function bindToolContainer(container) {
@@ -4202,9 +4455,11 @@
     syncToolbarUi();
   }
 
-  function toggleShapePanel() {
+  function toggleShapePanel(group) {
     state.toolOptionsOpen = false;
-    state.shapesOpen = !state.shapesOpen;
+    state.shapesOpen = state.toolGroup === group ? !state.shapesOpen : true;
+    state.toolGroup = group;
+    renderShapeTools();
     syncToolbarUi();
   }
 
@@ -4354,6 +4609,9 @@
   }
 
   function bindUi() {
+    qs('viewerFullscreenBtn').addEventListener('click', toggleViewerFullscreen);
+    document.addEventListener('fullscreenchange', syncViewerFullscreen);
+    document.addEventListener('webkitfullscreenchange', syncViewerFullscreen);
     installNativeSelectionLocks();
     dockToolbarIntoBookFrame();
     renderToolButtons();
@@ -4378,7 +4636,23 @@
 
     bindToolContainer(qs('docMainTools'));
     bindToolContainer(qs('docShapeTools'));
-    qs('docShapeToggleBtn').addEventListener('click', toggleShapePanel);
+    qs('docShapeToggleBtn').addEventListener('click', function() { toggleShapePanel('shapes'); });
+    qs('docArrowToggleBtn').addEventListener('click', function() { toggleShapePanel('arrows'); });
+    qs('docStampToggleBtn').addEventListener('click', function() { toggleShapePanel('stamps'); });
+    qs('docCompassBtn').addEventListener('click', function() { setTool('compass'); });
+    qs('docShapeCloseBtn').addEventListener('click', function() { state.shapesOpen = false; syncToolbarUi(); });
+    Array.from(document.querySelectorAll('[data-tool-group]')).forEach(function(button) {
+      button.addEventListener('click', function() {
+        state.toolGroup = button.getAttribute('data-tool-group');
+        state.shapesOpen = true;
+        renderShapeTools();
+        syncToolbarUi();
+      });
+    });
+    qs('stampSizeInput').addEventListener('input', function(event) {
+      state.stampSize = clamp(parseInt(event.target.value, 10) || 72, 32, 140);
+      qs('stampSizeValue').textContent = state.stampSize + ' px';
+    });
     if (qs('docPagePanelBtn')) {
       qs('docPagePanelBtn').addEventListener('click', function() {
         const toolbar = qs('docToolbar');
@@ -4672,6 +4946,8 @@
     bookViewport.addEventListener('lostpointercapture', finishPanning);
 
     window.addEventListener('keydown', function(event) {
+      // Let the modal handle Enter/Escape; viewer shortcuts must not edit the canvas behind it.
+      if (qs('viewerConfirmDialog').open) return;
       const activeElement = document.activeElement;
       const isTextEntry = isTextEntryTarget(activeElement);
       const key = event.key;
@@ -4685,6 +4961,17 @@
       if (key === 'Escape' && qs('magnifyModal') && qs('magnifyModal').classList.contains('open')) {
         closeMagnifyModal();
         event.preventDefault();
+        return;
+      }
+
+      if (key === 'Escape' && viewerFullscreenFallback) {
+        event.preventDefault();
+        toggleViewerFullscreen();
+        return;
+      }
+      if (!isTextEntry && !isFabricTextEditing() && !isShortcutModalOpen() && !event.metaKey && !event.ctrlKey && !event.altKey && upper === 'F') {
+        event.preventDefault();
+        toggleViewerFullscreen();
         return;
       }
 
@@ -4737,11 +5024,6 @@
         if (lower === 'm') {
           event.preventDefault();
           toggleVideoMuted();
-          return;
-        }
-        if (lower === 'f') {
-          event.preventDefault();
-          requestVideoFullscreen();
           return;
         }
       }
@@ -4826,6 +5108,10 @@
       }
       state.resizeTimer = window.setTimeout(function() {
         state.resizeTimer = null;
+        if (state.documentKind === 'external-preview' && state.pages.size) {
+          resizeExternalPreview();
+          return;
+        }
         if (isMobileToolbarResizeOnly()) {
           rememberViewportMetrics();
           updateBookTransform();
@@ -4916,7 +5202,16 @@
     const initialDocumentKind = getDocumentKind(documentRow);
     const isVideoDocument = initialDocumentKind === 'video';
     document.body.classList.toggle('is-video-document', isVideoDocument);
-    document.body.classList.toggle('is-preview-document', initialDocumentKind === 'external-preview');
+    const externalPreview = initialDocumentKind === 'external-preview';
+    document.body.classList.toggle('is-preview-document', externalPreview);
+    qs('externalPreviewHint').hidden = !externalPreview;
+    const sourceLink = qs('externalSourceLink');
+    sourceLink.hidden = !externalPreview;
+    if (externalPreview) {
+      const source = window.kemalDocumentStore.normalizeExternalDocumentInput(documentRow.harici_url || getExternalPreviewUrl(documentRow));
+      sourceLink.href = source.originalUrl;
+      documentRow.harici_embed_url = source.embedUrl;
+    }
     renderToolButtons();
     renderShortcutUi();
     const viewParams = new URLSearchParams(window.location.search);

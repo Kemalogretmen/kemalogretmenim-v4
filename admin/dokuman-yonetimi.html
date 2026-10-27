@@ -488,14 +488,15 @@
               <p id="fileInfo">Henüz bir dosya seçilmedi. Yeni kayıt için PDF veya görsel zorunludur, düzenlemede istersen mevcut dosyayı koruyabilirsin.</p>
               <div class="source-tabs" role="group" aria-label="Doküman kaynağı">
                 <button class="source-btn active" type="button" data-document-source="supabase">Supabase'e yükle<span>Mevcut sistem: dosya Supabase Storage içinde saklanır.</span></button>
-                <button class="source-btn" type="button" data-document-source="external">Harici link / R2 / Drive<span>Dosya dışarıda kalır, burada sadece bağlantı saklanır.</span></button>
+                <button class="source-btn" type="button" data-document-source="external">Harici link / Drive / FlipHTML5<span>Dosya dışarıda kalır, burada sadece bağlantı saklanır.</span></button>
               </div>
               <div id="localUploadBox">
                 <input type="file" id="fPdf" accept="application/pdf,image/jpeg,image/png,image/webp,.pdf,.jpg,.jpeg,.png,.webp">
               </div>
               <div class="external-url-box is-hidden" id="externalUrlBox">
-                <textarea id="fExternalUrl" placeholder="Cloudflare R2 public URL, doğrudan PDF/görsel linki veya Google Drive dosya linki"></textarea>
-                <div class="hint">R2 ve doğrudan PDF/görsel linkleri tam doküman araçlarıyla çalışır. Google Drive için klasör linki değil, tek dosyanın paylaşım linki gerekir; Drive bazı dosyalarda CORS nedeniyle önizleme kısıtı çıkarabilir.</div>
+                <textarea id="fExternalUrl" placeholder="Google Drive dosya linki, FlipHTML5 kitap linki / iframe kodu veya doğrudan PDF/görsel URL"></textarea>
+                <div class="hint">Google Drive için tek dosyanın paylaşım linkini, FlipHTML5 için tek kitabın bağlantısını veya Share → Embed on Website iframe kodunu yapıştır. Dosya kaynağında kalır; burada sınıf ve derslere eklenir. Harici önizlemede kalem ekran üstüne çizer; PDF indirme ve yazdırma kaynak sitenin sunduğu seçeneklere bağlıdır.</div>
+                <div class="hint">FlipHTML5'ten uygun kitabı seç → bağlantısını buraya yapıştır → sınıf ve ders hedeflerini ekle → Kaydet. Paylaşım/gömme izni olan yayınları seç; ücretsiz okunması dosyayı yeniden yükleme izni anlamına gelmez.</div>
               </div>
             </div>
             <div class="file-box is-hidden" id="videoBox">
@@ -536,6 +537,17 @@
               </div>
               <label class="toggle">
                 <input type="checkbox" id="fAktif" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div class="switch-copy">
+                <strong id="homeFeedLabel">Ana sayfa canlı akışta göster</strong>
+                <span id="homeFeedHint">Kapalıysa ana sayfa akışında görünmez. Ders sayfalarındaki yayını değiştirmez.</span>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="fHomeFeedVisible" aria-labelledby="homeFeedLabel" aria-describedby="homeFeedHint" checked>
                 <span class="slider"></span>
               </label>
             </div>
@@ -595,6 +607,7 @@
             <h2 style="font-family:'Fredoka','Nunito',sans-serif;font-size:18px;color:var(--purple);margin-bottom:12px;">Kayıt Özeti</h2>
             <div class="status-line" id="summaryTitle">Henüz başlık girilmedi.</div>
             <div class="hint" id="summaryRoute">Yayın hedefleri eklendiğinde burada görünür.</div>
+            <div class="hint" id="summaryFeed">Ana sayfa canlı akışında gösterilecek.</div>
             <div class="hint" id="summaryMeta">Dosya seçildiğinde tür, sayfa sayısı ve boyut bilgisi hesaplanır.</div>
           </div>
           <div class="panel">
@@ -623,7 +636,7 @@
 
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js?v=20260531-1"></script>
-<script src="/js/dokuman-store.js"></script>
+<script src="/js/dokuman-store.js?v=20261027-external-viewer"></script>
 <script src="/js/admin-shell.js?v=20260526-2"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -640,6 +653,6 @@
     });
   });
 </script>
-<script src="/js/dokuman-yonetimi-app.js?v=20260721-storage-optimizer"></script>
+<script src="/js/dokuman-yonetimi-app.js?v=20261027-home-feed-choice"></script>
 </body>
 </html>

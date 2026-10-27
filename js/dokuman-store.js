@@ -217,6 +217,119 @@
     return response && response.data && response.data.publicUrl ? response.data.publicUrl : '';
   }
 
+  function getUrlExtension(rawUrl) {
+    try {
+      const url = new URL(String(rawUrl || '').trim(), window.location.origin);
+      return (url.pathname.toLowerCase().match(/\.([a-z0-9]+)$/) || [])[1] || '';
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function getExternalProvider(url) {
+    const host = String(url.hostname || '').replace(/^www\./, '').toLowerCase();
+    if (host === 'drive.google.com' || host === 'docs.google.com') {
+      return 'google-drive';
+    }
+    if (host === 'fliphtml5.com' || host === 'online.fliphtml5.com') {
+      return 'fliphtml5';
+    }
+    if (host.includes('.r2.dev') || host.includes('r2.cloudflarestorage.com')) {
+      return 'cloudflare-r2';
+    }
+    return 'direct-url';
+  }
+
+  function parseGoogleDriveFileId(url) {
+    const parts = url.pathname.split('/').filter(Boolean);
+    const fileIndex = parts.indexOf('d');
+    if (fileIndex >= 0 && parts[fileIndex + 1]) {
+      return parts[fileIndex + 1];
+    }
+    return url.searchParams.get('id') || '';
+  }
+
+  function normalizeExternalDocumentInput(value) {
+    const input = String(value || '').trim();
+    const iframeMatch = input.match(/<iframe[^>]+src=["']([^"']+)["'][^>]*>/i);
+    const raw = (iframeMatch ? iframeMatch[1] : input).replace(/&amp;/gi, '&');
+    if (!raw) {
+      return null;
+    }
+
+    let url;
+    try {
+      url = new URL(raw);
+    } catch (error) {
+      throw new Error('Harici doküman için geçerli bir bağlantı girmelisin.');
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+      throw new Error('Harici doküman bağlantısı http veya https ile başlamalı.');
+    }
+
+    if (url.username || url.password) {
+      throw new Error('Bağlantı kullanıcı adı veya parola içermemeli.');
+    }
+    const provider = getExternalProvider(url);
+    if (iframeMatch && !['google-drive', 'fliphtml5'].includes(provider)) {
+      throw new Error('Iframe kodu için Google Drive veya FlipHTML5 kullanmalısın. Diğer kaynaklarda doğrudan PDF/görsel linki ekle.');
+    }
+    if (provider === 'fliphtml5') {
+      const parts = url.pathname.split('/').filter(Boolean);
+      const reserved = ['bookcase', 'home', 'homepage', 'learning-center', 'login', 'register', 'pricing', 'features', 'exploring', 'search'];
+      if (parts.length < 2 || reserved.includes(parts[0].toLowerCase()) ||
+          !/^[a-z0-9_-]+$/i.test(parts[0]) || !/^[a-z0-9_-]+$/i.test(parts[1])) {
+        throw new Error('FlipHTML5 kitaplığını değil, tek kitabın paylaşım bağlantısını veya Embed iframe kodunu eklemelisin.');
+      }
+      const embedUrl = new URL('https://online.fliphtml5.com/' + parts[0] + '/' + parts[1] + '/');
+      embedUrl.search = url.search;
+      embedUrl.hash = url.hash;
+      return {
+        provider: provider,
+        originalUrl: url.href,
+        directUrl: embedUrl.href,
+        embedUrl: embedUrl.href,
+        fileName: 'FlipHTML5 kitabı',
+        pageCount: 0,
+        fileSize: 0,
+      };
+    }
+    if (provider === 'google-drive') {
+      if (url.pathname.indexOf('/folders/') !== -1) {
+        throw new Error('Google Drive klasör linki değil, PDF/görsel dosyasının kendi paylaşım linkini eklemelisin.');
+      }
+      const fileId = parseGoogleDriveFileId(url);
+      if (!fileId) {
+        throw new Error('Google Drive dosya kimliği okunamadı. Dosyanın paylaşım linkini kopyalayıp tekrar dene.');
+      }
+      const resourceKey = url.searchParams.get('resourcekey');
+      const resourceQuery = resourceKey ? '&resourcekey=' + encodeURIComponent(resourceKey) : '';
+      return {
+        provider: provider,
+        originalUrl: url.href,
+        directUrl: 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId) + resourceQuery,
+        embedUrl: 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview' + (resourceKey ? '?resourcekey=' + encodeURIComponent(resourceKey) : ''),
+        fileName: 'Google Drive dosyası.pdf',
+        pageCount: 0,
+        fileSize: 0,
+      };
+    }
+
+    const extension = getUrlExtension(raw);
+    if (!['pdf', 'jpg', 'jpeg', 'png', 'webp'].includes(extension)) {
+      throw new Error('Harici link Google Drive dosyası, FlipHTML5 kitabı veya doğrudan PDF, JPG, PNG, WebP dosyası olmalı. R2 kullanıyorsan public object URL kopyalanmalı.');
+    }
+    return {
+      provider: provider,
+      originalUrl: raw,
+      directUrl: url.href,
+      embedUrl: url.href,
+      fileName: decodeURIComponent((url.pathname.split('/').pop() || 'harici-dokuman.' + extension).split('?')[0]) || 'harici-dokuman.' + extension,
+      pageCount: extension === 'pdf' ? 0 : 1,
+      fileSize: 0,
+    };
+  }
+
   function getDocumentKind(item) {
     return item && item.icerik_turu === 'video' ? 'video' : 'document';
   }
@@ -352,6 +465,7 @@
     getDocumentKind: getDocumentKind,
     getVideoEmbedUrl: getVideoEmbedUrl,
     getDocumentSource: getDocumentSource,
+    normalizeExternalDocumentInput: normalizeExternalDocumentInput,
     buildViewerUrl: buildViewerUrl,
     getDocumentTargets: getDocumentTargets,
     listDocumentsBySubject: listDocumentsBySubject,

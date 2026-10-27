@@ -548,6 +548,9 @@
     font-size: 0.64rem;
     font-weight: 800;
     line-height: 1.2;
+    border: 1px solid rgba(44,62,105,.2);
+    cursor: pointer;
+    font-family: inherit;
   }
   .learning-output-more::before {
     content: 'i';
@@ -560,6 +563,7 @@
     font-size: 0.58rem;
     line-height: 1;
   }
+  .learning-output-more[hidden] { display: none; }
 
   .tatil-plan-cell {
     min-height: 80px;
@@ -679,9 +683,11 @@
   .exporting-a4 .plan-cell-inner {
     min-height: calc(170mm / var(--lesson-count, 9));
   }
+  .exporting-a4 .learning-output-more { display: none; }
 
   /* ===== PRINT ===== */
   @media print {
+    .learning-output-more, .learning-output-popover { display: none !important; }
     .header, .tabs, .week-nav, .no-print, #kemalNavMount, #kemalFooterMount, #kemalAnnounceMount { display: none !important; }
     .page { padding: 0 !important; max-width: 297mm !important; }
     body { background: white; }
@@ -1172,6 +1178,11 @@ function init() {
   renderLegend();
   renderProgramSettings();
   applyInitialWeekFocus();
+  setInterval(checkAutomaticWeekFocus, 30000);
+  window.addEventListener('focus', checkAutomaticWeekFocus);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkAutomaticWeekFocus();
+  });
   document.getElementById('yukle-ders').addEventListener('change', function() {
     document.getElementById('diger-ders-group').style.display = this.value === 'DİĞER' ? 'flex' : 'none';
   });
@@ -1298,7 +1309,7 @@ function renderSinifList() {
 
   // Update plan sinif select
   const planSelect = document.getElementById('plan-sinif-select');
-  const currentVal = planSelect.value;
+  const currentVal = state.siniflar.some(s => s.id === planSelect.value) ? planSelect.value : (state.activeSinif || state.siniflar[0]?.id || '');
   planSelect.innerHTML = '<option value="">-- Sınıf seçin --</option>' +
     state.siniflar.map(s => `<option value="${s.id}" ${s.id === currentVal ? 'selected' : ''}>${s.name}</option>`).join('');
 }
@@ -1738,8 +1749,23 @@ function changeWeek(dir) {
 
 function applyInitialWeekFocus() {
   const queryDate = new URLSearchParams(window.location.search).get('focusDate');
-  const focusDate = isDateKey(queryDate) ? queryDate : (isDateKey(state.lastFocusDate) ? state.lastFocusDate : toDateKey(new Date()));
+  const focusDate = isDateKey(queryDate) ? queryDate : toDateKey(new Date());
+  state.lastAutomaticWeek = calendarMondayKey(new Date());
   focusWeekByDate(focusDate, { silent: true });
+}
+
+function calendarMondayKey(date) {
+  const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+  return toDateKey(monday);
+}
+
+function checkAutomaticWeekFocus() {
+  const now = new Date();
+  const monday = calendarMondayKey(now);
+  if (state.lastAutomaticWeek === monday) return;
+  state.lastAutomaticWeek = monday;
+  focusWeekByDate(toDateKey(now), { silent: true });
 }
 
 function focusWeekFromDateInput() {
@@ -1980,7 +2006,7 @@ function renderWeeklyPlan() {
         }
       }
 
-      const hasMore = Boolean(surec || additionalOutcomes.length);
+      const hasMore = Boolean(kazanim || surec || additionalOutcomes.length);
       const additionalOutcomesHtml = additionalOutcomes.length
         ? `<h4>Aynı hafta için diğer öğrenme çıktıları</h4><ol>${additionalOutcomes.map(outcome =>
           `<li><strong>${escapeHtml(outcome.kazanim).replace(/\n/g, '<br>')}</strong>${outcome.surec ? `<br><span>${escapeHtml(outcome.surec).replace(/\n/g, '<br>')}</span>` : ''}</li>`
@@ -1989,15 +2015,15 @@ function renderWeeklyPlan() {
 
       html += `
         <td style="background:${renk.bg}">
-          <div class="plan-cell" ${hasMore ? 'data-has-more="true" tabindex="0" role="button" aria-expanded="false" aria-label="Süreç bileşenlerini görüntülemek için üç saniye bekleyin"' : ''}>
+          <div class="plan-cell" ${hasMore ? `data-has-more="true" data-has-details="${Boolean(surec || additionalOutcomes.length)}"` : ''}>
             <div class="plan-cell-inner">
               <div class="cell-ders-name" style="color:${renk.dark}">${ders}</div>
               ${teacher ? `<div class="cell-teacher">Öğretmen: ${escapeHtml(teacher)}</div>` : ''}
               <div class="cell-kazanim">${escapeHtml(kazanim).replace(/\n/g,'<br>')}</div>
               ${!planningOpen ? `<div class="plan-closed-note">Yıllık plan dağıtımı yapılmaz.</div>` : ''}
-              ${hasMore ? `<span class="learning-output-more" title="Süreç bileşenleri için 3 saniye bekletin">Süreç ayrıntısı</span>` : ''}
+              ${hasMore ? `<button type="button" class="learning-output-more" aria-expanded="false">Devamını göster</button>` : ''}
             </div>
-            ${hasMore ? `<template class="learning-output-detail">${surec ? `<h4>Süreç bileşenleri</h4><div>${escapeHtml(surec).replace(/\n/g, '<br>')}</div>` : ''}${additionalOutcomesHtml}</template>` : ''}
+            ${hasMore ? `<template class="learning-output-detail">${kazanim ? `<h4>Öğrenme çıktısı</h4><div>${escapeHtml(kazanim).replace(/\n/g, '<br>')}</div>` : ''}${surec ? `<h4>Süreç bileşenleri</h4><div>${escapeHtml(surec).replace(/\n/g, '<br>')}</div>` : ''}${additionalOutcomesHtml}</template>` : ''}
           </div>
         </td>
       `;
@@ -2059,6 +2085,7 @@ function setupDelayedSurecPopups(root) {
     popover.id = popoverId;
     popover.className = 'learning-output-popover';
     popover.setAttribute('role', 'dialog');
+    popover.setAttribute('aria-label', 'Öğrenme çıktısı ve süreç ayrıntıları');
     popover.setAttribute('aria-live', 'polite');
     document.body.appendChild(popover);
   }
@@ -2074,7 +2101,8 @@ function setupDelayedSurecPopups(root) {
 
   const close = () => {
     clearTimer();
-    if (activeCell) activeCell.setAttribute('aria-expanded', 'false');
+    if (activeCell && popover.contains(document.activeElement)) activeCell.querySelector('.learning-output-more')?.focus({preventScroll: true});
+    if (activeCell) activeCell.querySelector('.learning-output-more')?.setAttribute('aria-expanded', 'false');
     activeCell = null;
     popover.classList.remove('is-visible');
     popover.innerHTML = '';
@@ -2093,22 +2121,44 @@ function setupDelayedSurecPopups(root) {
   const open = (cell, point) => {
     const detail = cell.querySelector('.learning-output-detail');
     if (!detail) return;
-    if (activeCell && activeCell !== cell) activeCell.setAttribute('aria-expanded', 'false');
+    if (activeCell && activeCell !== cell) activeCell.querySelector('.learning-output-more')?.setAttribute('aria-expanded', 'false');
     activeCell = cell;
     popover.innerHTML = `<button type="button" class="learning-output-popover-close" aria-label="Ayrıntıları kapat">×</button>${detail.innerHTML}`;
     popover.querySelector('button').addEventListener('click', close);
     popover.classList.add('is-visible');
-    cell.setAttribute('aria-expanded', 'true');
+    cell.querySelector('.learning-output-more')?.setAttribute('aria-expanded', 'true');
     position(point);
   };
 
   const start = (cell, point) => {
+    if (cell.querySelector('.learning-output-more')?.hidden) return;
     clearTimer();
     timer = window.setTimeout(() => open(cell, point), 3000);
   };
 
+  const refreshButtons = () => {
+    root.querySelectorAll('.plan-cell[data-has-more="true"]').forEach(cell => {
+      const text = cell.querySelector('.cell-kazanim');
+      if (text.clientHeight) cell.querySelector('.learning-output-more').hidden = cell.dataset.hasDetails !== 'true' && text.scrollHeight <= text.clientHeight + 1;
+    });
+  };
+  requestAnimationFrame(refreshButtons);
+  if (document.fonts?.ready) document.fonts.ready.then(refreshButtons);
+  if (typeof ResizeObserver !== 'undefined') {
+    root._outcomeObserver?.disconnect();
+    root._outcomeObserver = new ResizeObserver(refreshButtons);
+    root._outcomeObserver.observe(root);
+  }
+
   root.querySelectorAll('.plan-cell[data-has-more="true"]').forEach(cell => {
     let point = {x: 12, y: 12};
+    cell.querySelector('.learning-output-more').addEventListener('click', event => {
+      clearTimer();
+      event.stopPropagation();
+      if (activeCell === cell) return close();
+      const rect = event.currentTarget.getBoundingClientRect();
+      open(cell, {x: rect.left, y: rect.bottom});
+    });
     cell.addEventListener('pointerenter', event => {
       if (event.pointerType === 'mouse') {
         point = {x: event.clientX, y: event.clientY};
@@ -2120,7 +2170,7 @@ function setupDelayedSurecPopups(root) {
       if (event.pointerType !== 'mouse' && touchStart && Math.hypot(event.clientX - touchStart.x, event.clientY - touchStart.y) > 12) clearTimer();
     });
     cell.addEventListener('pointerleave', event => {
-      if (event.pointerType === 'mouse' && !popover.contains(event.relatedTarget)) close();
+      if (event.pointerType === 'mouse') clearTimer();
     });
     cell.addEventListener('pointerdown', event => {
       if (event.pointerType === 'mouse') return;
@@ -2136,15 +2186,7 @@ function setupDelayedSurecPopups(root) {
     });
     cell.addEventListener('pointercancel', close);
     cell.addEventListener('contextmenu', event => event.preventDefault());
-    cell.addEventListener('focus', () => start(cell, point));
-    cell.addEventListener('blur', () => {
-      if (!popover.contains(document.activeElement)) close();
-    });
     cell.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        open(cell, point);
-      }
       if (event.key === 'Escape') close();
     });
   });
@@ -3058,6 +3100,7 @@ function showTab(tabId, trigger) {
 }
 
 window.addEventListener('message', (event) => {
+  if (event.source !== window.parent || event.origin !== window.location.origin) return;
   const data = event.data || {};
   if (data.type !== 'kemal-ajanda-focus-week' || !isDateKey(data.date)) return;
   showTab('tab-plan');
