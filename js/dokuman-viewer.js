@@ -293,7 +293,7 @@
     },
   ];
   const VIEW_MODE_STORAGE_KEY = 'kemal_dokuman_view_mode';
-  const PAGE_TURN_DURATION = 1050;
+  const PAGE_TURN_DURATION = 780;
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 8;
   const ZOOM_STEP = 0.2;
@@ -368,6 +368,7 @@
     flipTimer: null,
     flipStartedAt: 0,
     isFlipping: false,
+    pageTurn: null,
     isRebuilding: false,
     flipAudioContext: null,
     flipNoiseBuffer: null,
@@ -1187,22 +1188,6 @@
     return qs('pageTurnLayer');
   }
 
-  function getPageTurnSheet() {
-    return qs('pageTurnSheet');
-  }
-
-  function getPageTurnShadow() {
-    return qs('pageTurnShadow');
-  }
-
-  function getPageTurnFront() {
-    return qs('pageTurnFront');
-  }
-
-  function getPageTurnBack() {
-    return qs('pageTurnBack');
-  }
-
   function updateViewModeButtons() {
     const singleButton = qs('viewSingleBtn');
     const spreadButton = qs('viewSpreadBtn');
@@ -1356,70 +1341,163 @@
     context.fillRect(0, 0, snapshotWidth, snapshotHeight);
     context.drawImage(pageState.pdfCanvasEl, 0, 0, snapshotWidth, snapshotHeight);
     context.drawImage(pageState.annotationCanvasEl, 0, 0, snapshotWidth, snapshotHeight);
-    return snapshot.toDataURL('image/jpeg', 0.88);
+    return snapshot;
   }
 
   function updatePageTurnLayerSize() {
     const layer = getPageTurnLayer();
-    const sheet = getPageTurnSheet();
-    const shadow = getPageTurnShadow();
-    if (!layer || !sheet) {
-      return;
-    }
-
-    const width = state.pageWidth + 'px';
-    const height = state.pageHeight + 'px';
-    layer.style.width = width;
-    layer.style.height = height;
-    sheet.style.width = width;
-    sheet.style.height = height;
-    if (shadow) {
-      shadow.style.width = width;
-      shadow.style.height = height;
-    }
-  }
-
-  function setPageTurnPosition(slot) {
-    const layer = getPageTurnLayer();
-    if (!layer) {
-      return;
-    }
-
-    let leftValue = '50%';
-    if (slot === 'left') {
-      leftValue = 'calc(50% - ' + ((state.pageWidth / 2) + 2) + 'px)';
-    } else if (slot === 'right') {
-      leftValue = 'calc(50% + ' + ((state.pageWidth / 2) + 2) + 'px)';
-    }
-
-    layer.style.left = leftValue;
-    layer.style.top = '50%';
-    layer.style.transform = 'translate(-50%,-50%)';
+    if (!layer) return;
+    layer.style.width = state.bookWidth + 'px';
+    layer.style.height = state.bookHeight + 'px';
   }
 
   function clearPageTurnLayer() {
+    const scene = state.pageTurn;
+    state.pageTurn = null;
+    if (scene && scene.renderer) scene.renderer.stop();
+    if (state.flipTimer) window.clearTimeout(state.flipTimer);
+    state.flipTimer = null;
+    const frame = getBookFrame();
+    if (scene && scene.pointerId !== undefined && frame && frame.hasPointerCapture && frame.hasPointerCapture(scene.pointerId)) {
+      try { frame.releasePointerCapture(scene.pointerId); } catch (error) {}
+    }
     const layer = getPageTurnLayer();
-    const sheet = getPageTurnSheet();
-    const front = getPageTurnFront();
-    const back = getPageTurnBack();
-
-    if (!layer || !sheet || !front || !back) {
-      state.isFlipping = false;
-      state.flipStartedAt = 0;
-      return;
-    }
-
-    if (state.flipTimer) {
-      window.clearTimeout(state.flipTimer);
-      state.flipTimer = null;
-    }
-    layer.className = 'page-turn-layer';
-    sheet.className = 'page-turn-sheet';
-    front.style.backgroundImage = '';
-    back.style.backgroundImage = '';
-    setPageTurnPosition('center');
+    if (layer) layer.className = 'page-turn-layer';
+    const root = qs('bookRoot');
+    if (root) root.classList.remove('is-paper-turning');
     state.isFlipping = false;
     state.flipStartedAt = 0;
+  }
+
+  function finishPaperTurn(scene, complete) {
+    if (!scene || state.pageTurn !== scene) return;
+    const target = scene.target;
+    clearPageTurnLayer();
+    if (complete) showPage(target, true);
+    else {
+      syncPageControls();
+      applyToolToAllPages();
+      updateBookTransform();
+      refreshStatus();
+    }
+  }
+
+  function beginPaperTurn(target, direction, corner, dragging) {
+    if (!window.KemalPaperTurn || state.documentKind !== 'pdf') return null;
+    const layer = getPageTurnLayer(), canvas = qs('pageTurnCanvas');
+    if (!layer || !canvas) return null;
+    const before = getVisiblePagesFor(state.currentPage), after = getVisiblePagesFor(target);
+    const spread = state.viewMode === 'spread';
+    const next = direction === 'next';
+    const image = number => number ? createPageTurnImage(state.pages.get(number)) : null;
+    try {
+      const front = image(spread ? (next ? before[1] : before[0]) : before[0]);
+      if (!front) return null;
+      const scene = {target, direction, dragging:!!dragging, corner:corner || 'bottom', sounded:false};
+      scene.renderer = new window.KemalPaperTurn.PaperTurn(canvas, {
+        width:state.bookWidth, height:state.bookHeight, spread, direction, corner:scene.corner,
+        automatic:!dragging, front,
+        back:image(spread ? (next ? after[0] : after[1]) : target),
+        under:image(spread ? (next ? after[1] : after[0]) : target),
+        stationary:spread ? image(next ? before[0] : before[1]) : null,
+      });
+      state.pageTurn = scene;
+      state.isFlipping = true;
+      state.flipStartedAt = Date.now();
+      updatePageTurnLayerSize();
+      layer.className = 'page-turn-layer is-active' + (dragging ? ' is-dragging' : '');
+      qs('bookRoot').classList.add('is-paper-turning');
+      scene.renderer.render({x:scene.renderer.pageWidth,y:scene.renderer.cornerY});
+      state.flipTimer = window.setTimeout(function() { finishPaperTurn(scene, !scene.dragging); }, dragging ? 30000 : PAGE_TURN_DURATION + 1500);
+      syncPageControls();
+      applyToolToAllPages();
+      if (!dragging) {
+        playPageTurnSound();
+        scene.renderer.animate(true, PAGE_TURN_DURATION, function() { finishPaperTurn(scene, true); });
+      }
+      return scene;
+    } catch (error) {
+      clearPageTurnLayer();
+      return null;
+    }
+  }
+
+  function bindPaperTurnGestures() {
+    const frame = getBookFrame();
+    if (!frame) return;
+    // Let the frame's pinch tracker see these events while keeping Fabric from drawing.
+    function swallow(event) { event.preventDefault(); event.stopPropagation(); }
+    frame.addEventListener('pointerdown', function(event) {
+      const active = state.pageTurn;
+      if (active && active.dragging && event.pointerType === 'touch' && event.pointerId !== active.pointerId) {
+        // Retain the first finger's capture until it lifts; both fingers now control zoom.
+        active.pointerId = undefined;
+        finishPaperTurn(active, false);
+        return;
+      }
+      if (event.button !== 0 || event.isPrimary === false || state.documentKind !== 'pdf' || state.isFlipping || state.isRebuilding ||
+          state.zoom > 1 || isCropViewActive() || !['select', 'pan'].includes(state.tool) ||
+          event.target.closest('button,a,input,textarea,select,#docToolbar,.doc-protractor,[data-hotspot-id]')) return;
+      const page = event.target.closest('.flip-page.is-active');
+      if (!page) return;
+      const rect = page.getBoundingClientRect();
+      const x = event.clientX - rect.left, y = event.clientY - rect.top;
+      const zone = Math.min(76, rect.width * .18);
+      const spread = state.viewMode === 'spread';
+      const prev = x <= zone && (!spread || page.classList.contains('is-spread-left'));
+      const next = x >= rect.width - zone && (!spread || page.classList.contains('is-spread-right'));
+      if (!prev && !next) return;
+      const target = normalizePageForViewMode(clamp(state.currentPage + (prev ? -getPageStep() : getPageStep()), 1, state.pageCount));
+      if (target === state.currentPage) return;
+      const corner = y < rect.height / 2 ? 'top' : 'bottom';
+      const scene = beginPaperTurn(target, prev ? 'prev' : 'next', corner, true);
+      if (!scene) return;
+      scene.pointerId = event.pointerId;
+      scene.startX = event.clientX;
+      scene.startY = event.clientY;
+      scene.startedAt = performance.now();
+      try { frame.setPointerCapture(event.pointerId); } catch (error) {}
+      swallow(event);
+    }, true);
+    frame.addEventListener('pointermove', function(event) {
+      const scene = state.pageTurn;
+      if (!scene || !scene.dragging || scene.pointerId !== event.pointerId) return;
+      const bounds = qs('bookRoot').getBoundingClientRect();
+      const x = (event.clientX - bounds.left) * state.bookWidth / bounds.width;
+      const y = (event.clientY - bounds.top) * state.bookHeight / bounds.height;
+      const renderer = scene.renderer;
+      renderer.render({x:(x - renderer.origin) * renderer.sign,y});
+      if (!scene.sounded && renderer.progress > .025) { playPageTurnSound(); scene.sounded = true; }
+      swallow(event);
+    }, true);
+    frame.addEventListener('pointerup', function(event) {
+      const scene = state.pageTurn;
+      if (!scene || !scene.dragging || scene.pointerId !== event.pointerId) return;
+      const tapped = Math.hypot(event.clientX - scene.startX, event.clientY - scene.startY) < 7;
+      const progress = scene.renderer.progress || 0;
+      const moved = scene.direction === 'next' ? scene.startX - event.clientX : event.clientX - scene.startX;
+      const velocity = moved / Math.max(1, performance.now() - scene.startedAt);
+      const complete = tapped || progress > .34 || (progress > .1 && velocity > .6);
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        finishPaperTurn(scene, complete);
+        swallow(event);
+        return;
+      }
+      scene.dragging = false;
+      if (state.flipTimer) window.clearTimeout(state.flipTimer);
+      state.flipTimer = window.setTimeout(function() { finishPaperTurn(scene, complete); }, 1800);
+      getPageTurnLayer().classList.remove('is-dragging');
+      if (tapped) scene.renderer.options.automatic = true;
+      if (!scene.sounded && complete) playPageTurnSound();
+      scene.renderer.animate(complete, tapped ? PAGE_TURN_DURATION : Math.max(180, 650 * (complete ? 1 - progress : progress)), function() { finishPaperTurn(scene, complete); });
+      swallow(event);
+    }, true);
+    ['pointercancel','lostpointercapture'].forEach(function(name) {
+      frame.addEventListener(name, function(event) {
+        const scene = state.pageTurn;
+        if (scene && scene.dragging && scene.pointerId === event.pointerId) { finishPaperTurn(scene, false); swallow(event); }
+      }, true);
+    });
   }
 
   function createFlipNoiseBuffer(context) {
@@ -1487,49 +1565,8 @@
     }
   }
 
-  function animatePageTurn(fromState, toState, direction, slot) {
-    const layer = getPageTurnLayer();
-    const sheet = getPageTurnSheet();
-    const front = getPageTurnFront();
-    const back = getPageTurnBack();
-
-    if (!layer || !sheet || !front || !back || !fromState || !toState) {
-      state.isFlipping = false;
-      state.flipStartedAt = 0;
-      return;
-    }
-
-    try {
-      clearPageTurnLayer();
-      state.isFlipping = true;
-      state.flipStartedAt = Date.now();
-      updatePageTurnLayerSize();
-      setPageTurnPosition(slot || 'center');
-      const frontImage = createPageTurnImage(fromState);
-      const backImage = createPageTurnImage(toState);
-      if (!frontImage || !backImage) {
-        throw new Error('Sayfa görüntüsü hazırlanamadı.');
-      }
-      front.style.backgroundImage = 'url("' + frontImage + '")';
-      back.style.backgroundImage = 'url("' + backImage + '")';
-      layer.className = 'page-turn-layer is-active ' + (direction === 'prev' ? 'is-prev' : 'is-next');
-      playPageTurnSound();
-
-      state.flipTimer = window.setTimeout(function() {
-        clearPageTurnLayer();
-        applyToolToAllPages();
-        updateBookTransform();
-      }, PAGE_TURN_DURATION);
-    } catch (error) {
-      clearPageTurnLayer();
-      applyToolToAllPages();
-      updateBookTransform();
-      console.warn('Sayfa çevirme animasyonu atlandı:', error);
-    }
-  }
-
   function shouldAnimatePageTurn(fromState, toState) {
-    if (!fromState || !toState || fromState === toState) {
+    if (state.documentKind !== 'pdf' || !fromState || !toState || fromState === toState) {
       return false;
     }
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -2015,7 +2052,7 @@
 
   function syncPageControls() {
     const turnLayer = getPageTurnLayer();
-    if (state.isFlipping && state.flipStartedAt && Date.now() - state.flipStartedAt > PAGE_TURN_DURATION + 700) {
+    if (state.isFlipping && state.pageTurn && !state.pageTurn.dragging && state.flipStartedAt && Date.now() - state.flipStartedAt > 2500) {
       clearPageTurnLayer();
     }
     if (state.isFlipping && !state.flipTimer && (!turnLayer || !turnLayer.classList.contains('is-active'))) {
@@ -2031,6 +2068,8 @@
     qs('pageJumpInput').max = String(Math.max(1, state.pageCount));
     qs('pageJumpInput').value = String(clamp(state.focusPage, 1, Math.max(1, state.pageCount)));
     const busy = state.isFlipping || state.isRebuilding;
+    qs('pageSlider').disabled = busy;
+    qs('pageJumpInput').disabled = busy;
     const canGoPrev = Math.min.apply(null, visiblePages.concat([state.currentPage, state.focusPage])) > 1;
     const canGoNext = visiblePages[visiblePages.length - 1] < state.pageCount;
     qs('prevPageBtn').disabled = !canGoPrev || busy;
@@ -2729,6 +2768,7 @@
   }
 
   function setTool(tool, options) {
+    if (state.pageTurn) finishPaperTurn(state.pageTurn, false);
     if (tool === 'clear-area') {
       clearCurrentScope();
       return;
@@ -3345,16 +3385,21 @@
       (frame && frame.clientWidth ? frame.clientWidth : (window.innerWidth || 1280)) - 28
     );
     const isLandscape = baseWidth >= baseHeight;
+    const fitFullscreen = function(width) {
+      if (!document.body.classList.contains('has-viewer-fullscreen') || !frame || !frame.clientHeight) return width;
+      // Keep the whole sheet, including its draggable corners, inside fullscreen.
+      return Math.max(80, Math.min(width, Math.max(80, frame.clientHeight - 56) * baseWidth / baseHeight));
+    };
     if (mode === 'spread') {
-      return Math.max(168, Math.min(isLandscape ? 620 : 560, (viewportWidth - 12) / 2));
+      return fitFullscreen(Math.max(168, Math.min(isLandscape ? 620 : 560, (viewportWidth - 12) / 2)));
     }
     if (viewportWidth < 760) {
-      return Math.max(280, viewportWidth - 24);
+      return fitFullscreen(Math.max(280, viewportWidth - 24));
     }
     if (viewportWidth < 1180) {
-      return Math.min(isLandscape ? 920 : 780, viewportWidth - 28);
+      return fitFullscreen(Math.min(isLandscape ? 920 : 780, viewportWidth - 28));
     }
-    return Math.min(isLandscape ? 1100 : 860, viewportWidth - 44);
+    return fitFullscreen(Math.min(isLandscape ? 1100 : 860, viewportWidth - 44));
   }
 
   function getResponsivePageWidth(baseWidth, baseHeight) {
@@ -3382,68 +3427,29 @@
   function showPage(pageNumber, initial) {
     const previousPage = state.currentPage;
     const targetPage = normalizePageForViewMode(pageNumber);
-    const direction = targetPage >= previousPage ? 'next' : 'prev';
-    const previousState = state.pages.get(previousPage) || null;
-    const targetState = state.pages.get(targetPage) || null;
-    const previousVisiblePages = getVisiblePagesFor(previousPage);
-    const visiblePages = getVisiblePagesFor(targetPage);
-    let flipFromState = null;
-    let flipToState = null;
-    let flipSlot = 'center';
-
+    const previousState = state.pages.get(previousPage), targetState = state.pages.get(targetPage);
+    if (!initial && targetPage !== previousPage && shouldAnimatePageTurn(previousState, targetState)) {
+      if (beginPaperTurn(targetPage, targetPage > previousPage ? 'next' : 'prev', 'bottom', false)) return;
+    }
     state.currentPage = targetPage;
     state.lastPage = previousPage;
-    if (!visiblePages.includes(state.focusPage)) {
-      state.focusPage = visiblePages[0];
-    }
-
+    const visiblePages = getVisiblePagesFor(targetPage);
+    if (!visiblePages.includes(state.focusPage)) state.focusPage = visiblePages[0];
     state.pages.forEach(function(pageState) {
       const slot = visiblePages.indexOf(pageState.index);
-      const keepActive = slot !== -1;
-      pageState.wrapper.classList.toggle('is-active', keepActive);
+      pageState.wrapper.classList.toggle('is-active', slot !== -1);
       pageState.wrapper.classList.toggle('is-spread-left', !isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread' && slot === 0);
       pageState.wrapper.classList.toggle('is-spread-right', !isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread' && slot === 1);
-      if (!keepActive) {
-        pageState.canvas.discardActiveObject();
-      }
+      if (slot === -1) pageState.canvas.discardActiveObject();
       pageState.canvas.renderAll();
     });
-
-    if (!initial) {
-      if (!isSingleSurfaceDocumentKind(state.documentKind) && state.viewMode === 'spread') {
-        if (direction === 'next') {
-          flipFromState = state.pages.get(previousVisiblePages[previousVisiblePages.length - 1]) || null;
-          flipToState = state.pages.get(visiblePages[0]) || null;
-          flipSlot = 'right';
-        } else {
-          flipFromState = state.pages.get(previousVisiblePages[0]) || null;
-          flipToState = state.pages.get(visiblePages[visiblePages.length - 1]) || state.pages.get(visiblePages[0]) || null;
-          flipSlot = 'left';
-        }
-      } else {
-        flipFromState = previousState;
-        flipToState = targetState;
-      }
-    }
-
-    const canAnimateTurn = !initial && shouldAnimatePageTurn(flipFromState, flipToState);
-
-    if (canAnimateTurn) {
-      state.isFlipping = true;
-    } else {
-      state.isFlipping = false;
-      clearPageTurnLayer();
-    }
-
+    state.isFlipping = false;
+    clearPageTurnLayer();
     syncPageControls();
     applyToolToAllPages();
     renderAllHotspots();
     updateBookTransform();
     refreshStatus(initial ? 'Doküman hazır.' : '');
-
-    if (canAnimateTurn) {
-      animatePageTurn(flipFromState, flipToState, direction, flipSlot);
-    }
   }
 
   function goToPage(pageNumber) {
@@ -4207,40 +4213,6 @@
     setStatus(state.revealedAnswers[hotspot.id] ? 'Cevap görünür.' : 'Cevap tekrar gizlendi.');
   }
 
-  function maybeTurnPageFromCornerClick(event) {
-    if (state.isFlipping || state.isRebuilding || state.zoom > 1 || !['select', 'pan'].includes(state.tool)) {
-      return false;
-    }
-    if (event.target.closest('[data-hotspot-id]') || event.target.closest('button,a,input,textarea,select')) {
-      return false;
-    }
-
-    const activePage = event.target.closest('.flip-page.is-active');
-    if (!activePage) {
-      return false;
-    }
-
-    const rect = activePage.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const nearTopOrBottom = y <= 84 || y >= rect.height - 84;
-    const nearLeft = x <= 84;
-    const nearRight = x >= rect.width - 84;
-
-    if (!nearTopOrBottom || (!nearLeft && !nearRight)) {
-      return false;
-    }
-
-    if (nearLeft) {
-      goToPage(state.currentPage - getPageStep());
-    } else {
-      goToPage(state.currentPage + getPageStep());
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    return true;
-  }
-
   async function removeHotspot(hotspot) {
     if (!hotspot || !state.editMode) {
       return;
@@ -4613,6 +4585,7 @@
     document.addEventListener('fullscreenchange', syncViewerFullscreen);
     document.addEventListener('webkitfullscreenchange', syncViewerFullscreen);
     installNativeSelectionLocks();
+    bindPaperTurnGestures();
     dockToolbarIntoBookFrame();
     renderToolButtons();
     renderShortcutUi();
@@ -4773,7 +4746,6 @@
     qs('bookRoot').addEventListener('click', function(event) {
       const button = event.target.closest('[data-hotspot-id]');
       if (!button) {
-        maybeTurnPageFromCornerClick(event);
         return;
       }
       const hotspot = findHotspot(button.getAttribute('data-hotspot-id'));
@@ -4948,6 +4920,11 @@
     window.addEventListener('keydown', function(event) {
       // Let the modal handle Enter/Escape; viewer shortcuts must not edit the canvas behind it.
       if (qs('viewerConfirmDialog').open) return;
+      if (event.key === 'Escape' && state.pageTurn) {
+        finishPaperTurn(state.pageTurn, false);
+        event.preventDefault();
+        return;
+      }
       const activeElement = document.activeElement;
       const isTextEntry = isTextEntryTarget(activeElement);
       const key = event.key;
@@ -5103,6 +5080,7 @@
     });
 
     window.addEventListener('resize', function() {
+      if (state.pageTurn) finishPaperTurn(state.pageTurn, false);
       if (state.resizeTimer) {
         window.clearTimeout(state.resizeTimer);
       }
@@ -5143,46 +5121,6 @@
     });
     window.addEventListener('scroll', hideToolTooltip, true);
 
-    let swipeStartX = 0;
-    let swipeStartY = 0;
-    let swipeActive = false;
-    const bookFrame = getBookFrame();
-
-    if (bookFrame) {
-      bookFrame.addEventListener('touchstart', function(event) {
-        if (state.tool === 'pan' || state.zoom > 1 || !['select', 'pan'].includes(state.tool)) {
-          return;
-        }
-        const touch = event.changedTouches[0];
-        const rect = bookFrame.getBoundingClientRect();
-        const localY = touch.clientY - rect.top;
-        const localX = touch.clientX - rect.left;
-        const inTurnZone = localY <= 96 || localY >= rect.height - 96 || localX <= 80 || localX >= rect.width - 80;
-        if (!inTurnZone) {
-          return;
-        }
-        swipeStartX = touch.clientX;
-        swipeStartY = touch.clientY;
-        swipeActive = true;
-      }, { passive: true });
-
-      bookFrame.addEventListener('touchend', function(event) {
-        if (!swipeActive) {
-          return;
-        }
-        swipeActive = false;
-        const touch = event.changedTouches[0];
-        const dx = touch.clientX - swipeStartX;
-        const dy = touch.clientY - swipeStartY;
-        if (Math.abs(dx) > 52 && Math.abs(dx) > Math.abs(dy) * 1.6) {
-          if (dx < 0) {
-            goToPage(state.currentPage + getPageStep());
-          } else {
-            goToPage(state.currentPage - getPageStep());
-          }
-        }
-      }, { passive: true });
-    }
   }
 
   async function loadDocument() {

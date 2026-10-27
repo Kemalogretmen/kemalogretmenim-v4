@@ -583,7 +583,7 @@
       backface-visibility:hidden;
       opacity:0;
       pointer-events:none;
-      transition:opacity .26s ease, transform .26s ease, box-shadow .26s ease;
+      transition:box-shadow .26s ease;
     }
     .flip-page.is-active{
       opacity:1;
@@ -795,173 +795,13 @@
       height:42px;
     }
     .page-turn-layer{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform:translate(-50%,-50%);
-      display:none;
-      pointer-events:none;
-      z-index:28;
-      perspective:1400px;
-      transform-style:preserve-3d;
-      filter:drop-shadow(0 24px 42px rgba(24,14,72,.18));
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      display:none;pointer-events:none;z-index:28;overflow:visible;
     }
     .page-turn-layer.is-active{display:block;}
-    .page-turn-shadow{
-      position:absolute;
-      inset:0;
-      border-radius:16px;
-      opacity:0;
-      pointer-events:none;
-    }
-    .page-turn-sheet{
-      position:absolute;
-      inset:0;
-      transform-style:preserve-3d;
-      border-radius:16px;
-      will-change:transform;
-    }
-    .page-turn-face{
-      position:absolute;
-      inset:0;
-      border-radius:16px;
-      background-size:100% 100%;
-      background-position:center;
-      background-repeat:no-repeat;
-      backface-visibility:hidden;
-      overflow:hidden;
-      border:1px solid rgba(226,217,255,.7);
-      box-shadow:
-        0 28px 56px rgba(12,8,40,.22),
-        0 4px 8px rgba(12,8,40,.10);
-    }
-    .page-turn-front{
-      transform:translateZ(.6px);
-    }
-    .page-turn-front::after{
-      content:'';
-      position:absolute;
-      inset:0;
-      border-radius:inherit;
-      pointer-events:none;
-      background:linear-gradient(
-        90deg,
-        rgba(255,255,255,.22) 0%,
-        rgba(255,255,255,.06) 30%,
-        rgba(255,255,255,.01) 54%,
-        rgba(12,8,40,.08) 78%,
-        rgba(12,8,40,.28) 100%
-      );
-      animation:pageTurnFrontSheen 1.05s ease both;
-    }
-    .page-turn-back{
-      transform:rotateY(180deg);
-    }
-    .page-turn-back::after{
-      content:'';
-      position:absolute;
-      inset:0;
-      border-radius:inherit;
-      pointer-events:none;
-      background:linear-gradient(
-        90deg,
-        rgba(12,8,40,.34) 0%,
-        rgba(12,8,40,.10) 28%,
-        rgba(255,255,255,.08) 54%,
-        rgba(255,255,255,.22) 100%
-      );
-    }
-    .page-turn-fold{
-      position:absolute;
-      top:0;
-      bottom:0;
-      width:18px;
-      right:-6px;
-      border-radius:999px;
-      background:linear-gradient(
-        90deg,
-        rgba(255,255,255,.0) 0%,
-        rgba(255,255,255,.88) 38%,
-        rgba(255,255,255,.92) 54%,
-        rgba(12,8,40,.22) 100%
-      );
-      filter:blur(1.5px);
-      transform:translateZ(3px);
-      animation:pageTurnFoldNext 1.05s ease both;
-    }
-    .page-turn-layer.is-prev .page-turn-fold{
-      left:-6px;
-      right:auto;
-      background:linear-gradient(
-        90deg,
-        rgba(12,8,40,.22) 0%,
-        rgba(255,255,255,.92) 46%,
-        rgba(255,255,255,.88) 62%,
-        rgba(255,255,255,.0) 100%
-      );
-      animation:pageTurnFoldPrev 1.05s ease both;
-    }
-    .page-turn-layer.is-next .page-turn-sheet{
-      transform-origin:left center;
-      animation:pageTurnNext 1.05s cubic-bezier(.18,.74,.16,1) both;
-    }
-    .page-turn-layer.is-prev .page-turn-sheet{
-      transform-origin:right center;
-      animation:pageTurnPrev 1.05s cubic-bezier(.18,.74,.16,1) both;
-    }
-    .page-turn-layer.is-next .page-turn-shadow{animation:pageTurnShadowNext 1.05s ease both;}
-    .page-turn-layer.is-prev .page-turn-shadow{animation:pageTurnShadowPrev 1.05s ease both;}
-    @keyframes pageTurnNext{
-      0%  { transform:rotateY(   0deg) translate3d(0,0,0) scale(1.000); }
-      10% { transform:rotateY( -10deg) translate3d(0,-1px,18px) scale(1.004); }
-      28% { transform:rotateY( -44deg) translate3d(-4px,-4px,34px) scale(1.010); }
-      52% { transform:rotateY(-104deg) translate3d(-10px,-6px,42px) scale(1.014); }
-      76% { transform:rotateY(-156deg) translate3d(-7px,-3px,28px) scale(1.007); }
-      92% { transform:rotateY(-176deg) translate3d(-2px,-1px,8px) scale(1.002); }
-      100%{ transform:rotateY(-180deg) translate3d(0,0,0) scale(1.000); }
-    }
-    @keyframes pageTurnPrev{
-      0%  { transform:rotateY(  0deg) translate3d(0,0,0) scale(1.000); }
-      10% { transform:rotateY( 10deg) translate3d(0,-1px,18px) scale(1.004); }
-      28% { transform:rotateY( 44deg) translate3d(4px,-4px,34px) scale(1.010); }
-      52% { transform:rotateY(104deg) translate3d(10px,-6px,42px) scale(1.014); }
-      76% { transform:rotateY(156deg) translate3d(7px,-3px,28px) scale(1.007); }
-      92% { transform:rotateY(176deg) translate3d(2px,-1px,8px) scale(1.002); }
-      100%{ transform:rotateY(180deg) translate3d(0,0,0) scale(1.000); }
-    }
-    @keyframes pageTurnShadowNext{
-      0%  { opacity:0;   background:radial-gradient(ellipse 80% 60% at 88% 50%, rgba(12,8,40,.28), transparent 72%); }
-      15% { opacity:.85; background:radial-gradient(ellipse 70% 70% at 80% 50%, rgba(12,8,40,.22), transparent 70%); }
-      48% { opacity:.70; background:radial-gradient(ellipse 30% 90% at 50% 50%, rgba(12,8,40,.18), transparent 80%); }
-      75% { opacity:.60; background:radial-gradient(ellipse 70% 70% at 22% 50%, rgba(12,8,40,.14), transparent 70%); }
-      100%{ opacity:0;   background:radial-gradient(ellipse 80% 60% at 14% 50%, rgba(12,8,40,.08), transparent 72%); }
-    }
-    @keyframes pageTurnShadowPrev{
-      0%  { opacity:0;   background:radial-gradient(ellipse 80% 60% at 14% 50%, rgba(12,8,40,.28), transparent 72%); }
-      15% { opacity:.85; background:radial-gradient(ellipse 70% 70% at 22% 50%, rgba(12,8,40,.22), transparent 70%); }
-      48% { opacity:.70; background:radial-gradient(ellipse 30% 90% at 50% 50%, rgba(12,8,40,.18), transparent 80%); }
-      75% { opacity:.60; background:radial-gradient(ellipse 70% 70% at 80% 50%, rgba(12,8,40,.14), transparent 70%); }
-      100%{ opacity:0;   background:radial-gradient(ellipse 80% 60% at 88% 50%, rgba(12,8,40,.08), transparent 72%); }
-    }
-    @keyframes pageTurnFoldNext{
-      0%  { opacity:0;   width:8px;  right:-4px;  }
-      20% { opacity:1;   width:32px; right:-16px; }
-      48% { opacity:1;   width:22px; right:-11px; }
-      75% { opacity:.8;  width:14px; right:-7px;  }
-      100%{ opacity:0;   width:8px;  right:-4px;  }
-    }
-    @keyframes pageTurnFoldPrev{
-      0%  { opacity:0;   width:8px;  left:-4px;  }
-      20% { opacity:1;   width:32px; left:-16px; }
-      48% { opacity:1;   width:22px; left:-11px; }
-      75% { opacity:.8;  width:14px; left:-7px;  }
-      100%{ opacity:0;   width:8px;  left:-4px;  }
-    }
-    @keyframes pageTurnFrontSheen{
-      0%  { background-position:0% 0%;   opacity:1; }
-      50% { background-position:100% 0%; opacity:.7; }
-      100%{ background-position:200% 0%; opacity:1; }
-    }
+    .page-turn-layer canvas{position:absolute;max-width:none;max-height:none;pointer-events:none;}
+    #bookRoot.is-paper-turning .flip-page{visibility:hidden;pointer-events:none;}
+    #bookRoot.is-paper-turning{cursor:grabbing;}
     .viewer-pager{
       display:grid;
       grid-template-columns:auto minmax(0,1fr) auto;
@@ -1006,7 +846,7 @@
     .page-edge-btn:hover:not(:disabled){background:rgba(108,61,237,.58);transform:scale(1.05);}
     .page-edge-btn:disabled{opacity:.22;cursor:not-allowed;}
     .page-edge-btn svg{width:28px;height:28px;display:block;}
-    .page-edge-btn.prev.top{left:16px;top:16px;}
+    .page-edge-btn.prev.top{left:142px;top:16px;}
     .page-edge-btn.prev.bottom{left:16px;bottom:16px;}
     .page-edge-btn.next.top{right:16px;top:16px;}
     .page-edge-btn.next.bottom{right:16px;bottom:16px;}
@@ -1659,6 +1499,8 @@
       body.is-preview-document.has-viewer-fullscreen .book-viewport{left:138px;}
     }
     @media(max-width:860px){
+      .page-edge-btn.prev.top{left:16px;}
+      .page-edge-btn.prev.bottom,.page-edge-btn.next.bottom{bottom:126px;}
       .book-frame .viewer-toolbar,.viewer-toolbar,
       .viewer-stage.is-viewer-fullscreen .viewer-toolbar{width:min(480px,calc(100% - 20px));max-height:none;overflow:visible;padding:8px;}
       .viewer-toolbar .toolbar-header,.doc-active-tool{display:none;}
@@ -1912,12 +1754,7 @@
                 </div>
               </div>
               <div class="page-turn-layer" id="pageTurnLayer" aria-hidden="true">
-                <div class="page-turn-shadow" id="pageTurnShadow"></div>
-                <div class="page-turn-sheet" id="pageTurnSheet">
-                  <div class="page-turn-face page-turn-front" id="pageTurnFront"></div>
-                  <div class="page-turn-face page-turn-back" id="pageTurnBack"></div>
-                  <div class="page-turn-fold"></div>
-                </div>
+                <canvas id="pageTurnCanvas"></canvas>
               </div>
             </div>
           </div>
@@ -1969,6 +1806,7 @@
   <script src="/js/admin-auth.js?v=20260531-1"></script>
   <script src="/js/dokuman-store.js?v=20261027-external-viewer"></script>
   <script src="/js/calisma-kagidi-store.js"></script>
-  <script src="/js/dokuman-viewer.js?v=20261027-drawing-workshop"></script>
+  <script src="/js/dokuman-paper-turn.js?v=20261027-paper-curl"></script>
+  <script src="/js/dokuman-viewer.js?v=20261027-paper-curl"></script>
 </body>
 </html>
