@@ -38,6 +38,7 @@ const os = require('node:os');
           await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
           const tipAlpha = await canvas.evaluate((c, p) => { const r = c.getBoundingClientRect(); return c.getContext('2d').getImageData(Math.floor((p.x - r.left) * c.width / r.width), Math.floor((p.y - r.top) * c.height / r.height), 1, 1).data[3]; }, { x: p.x + 60, y: p.y + 36 });
           assert(tipAlpha < 80, 'Native swipe draws at the actual finger tip');
+          assert(await alpha() < 80, 'Side ridges cannot refill the center of an existing groove');
         }
         await page.locator('#sandboxLayer [data-sand-mode="plain"]').tap();
         assert.equal(await page.locator('#sandGuideText').textContent(), '');
@@ -82,6 +83,7 @@ const os = require('node:os');
         await page.goto(origin + url, { waitUntil: 'load' });
         assert.equal(await page.locator('#shortcutDock a[href="/index.html"]').count(), 1);
         assert.equal(await page.locator('#shortcutDock a[href="/ogretmen/akvaryum.html"]').count(), 1);
+        if(await page.locator('#shortcutDockReopen').isVisible()) await page.locator('#shortcutDockReopen').click();
         const centered = await page.locator('#shortcutDockHandle').evaluate(el => {
           const outer = el.getBoundingClientRect(), children = [...el.children].map(c => c.getBoundingClientRect());
           return Math.abs((Math.min(...children.map(r => r.left)) + Math.max(...children.map(r => r.right))) / 2 - (outer.left + outer.width / 2)) < 1;

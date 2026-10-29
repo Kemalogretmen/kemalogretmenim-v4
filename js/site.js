@@ -7,6 +7,15 @@
 (function() {
   'use strict';
 
+  // Shared chrome has its own styles so course and tool layouts keep their theme.
+  if (!document.querySelector('link[data-platform-shell]')) {
+    const shellStyles = document.createElement('link');
+    shellStyles.rel = 'stylesheet';
+    shellStyles.href = '/css/platform-shell.css?v=20261029';
+    shellStyles.dataset.platformShell = '';
+    document.head.appendChild(shellStyles);
+  }
+
   // Supabase'den yüklenen dinamik menü öğeleri
   var dynamicNavItems = [];
 
@@ -489,7 +498,7 @@
     '/iletisim.html': 'Kemal Öğretmen ile iletişime geçin, soru ve önerilerinizi paylaşın.',
     '/yeni.html': 'Kemal Öğretmenim sitesine eklenen en yeni ders içerikleri, dokümanlar ve güncellemeler.',
     '/ogretmen-ajandasi/index.html': 'Öğretmenler için öğrenci takibi, sınav analizi, karne, ders programı ve akademik takvim içeren öğretmen ajandası.',
-    '/ogretmen/beyaztahta.html': 'Akıllı Tahtam ile çizim, yazı, şekil ve tam ekran anlatım alanını açın.',
+    '/ogretmen/beyaztahta.html': 'Akıllı Tahta ile çizim, yazı, kum havuzu ve ders araçlarını açın.',
     '/sinif-kaynaklari.html': 'Sınıf düzeyine göre yayınlanmış dokümanlar, videolar ve etkileşimli çalışma kağıtları.',
     '/ogretmen-araclari.html': 'Akıllı tahta ve tablet uyumlu öğretmen araçları merkezi: tahta, kronometre, çark, matematik, okuma, belge ve kaynak araçları.',
     '/hizli-okuma/index.html': 'Sınıfa özel metinlerle hızlı okuma, anlama ve sonuç takibi için hazırlanan merkez.',
@@ -521,6 +530,8 @@
     items: null,
     query: '',
   };
+  let siteSearchReturnFocus = null;
+  let homeDockState = 'hidden';
   let contentFeedScriptPromise = null;
   let contentReactionsScriptPromise = null;
   let contentSavesScriptPromise = null;
@@ -690,8 +701,9 @@
     setMetaContent('name', 'twitter:title', title);
     setMetaContent('name', 'twitter:description', description);
     setMetaContent('name', 'twitter:image', DEFAULT_OG_IMAGE);
-    setMetaContent('name', 'theme-color', '#6C3DED');
-    setMetaContent('name', 'color-scheme', 'light');
+    const appearance = window.kemalTheme ? window.kemalTheme.getResolvedTheme() : 'light';
+    setMetaContent('name', 'theme-color', appearance === 'dark' ? '#151a27' : '#fafaf7');
+    setMetaContent('name', 'color-scheme', appearance);
 
     const canonical = ensureLink('canonical');
     if (canonical) {
@@ -1573,7 +1585,7 @@
       { uid: 'static:games', title: 'Eğitim Oyunları', href: '/oyun/oyunlar.html', icon: '🎮', gradeLabel: 'Genel', subjectLabel: 'Oyunlar', contentTypeLabel: 'Merkez' },
       { uid: 'static:exams', title: 'Sınav Merkezi', href: '/sinav_sitesi/index.html', icon: '📝', gradeLabel: '1-8. Sınıf', subjectLabel: 'Deneme ve Test', contentTypeLabel: 'Merkez' },
       { uid: 'static:class-resources', title: 'Sınıf Kaynakları', href: '/sinif-kaynaklari.html', icon: '📚', gradeLabel: '1-8. Sınıf', subjectLabel: 'Doküman ve Çalışma', contentTypeLabel: 'Merkez' },
-      { uid: 'static:smart-board', title: 'Akıllı Tahtam', href: '/ogretmen/beyaztahta.html', icon: '🖊️', gradeLabel: 'Öğretmen', subjectLabel: 'Akıllı Tahta', contentTypeLabel: 'Araç' },
+      { uid: 'static:smart-board', title: 'Akıllı Tahta', href: '/ogretmen/beyaztahta.html', icon: '🖊️', gradeLabel: 'Öğretmen', subjectLabel: 'Akıllı Tahta', contentTypeLabel: 'Araç' },
       { uid: 'static:tools', title: 'Öğretmen Araçları', href: '/ogretmen-araclari.html', icon: '⏱️', gradeLabel: 'Öğretmen', subjectLabel: 'Araçlar', contentTypeLabel: 'Sayfa' },
       { uid: 'static:focus-strip', title: 'Odak Şeridi', href: '/ogretmen/odak-seridi.html', icon: '🎯', gradeLabel: 'Öğretmen', subjectLabel: 'Okuma Takibi', contentTypeLabel: 'Araç' },
       { uid: 'static:word-search', title: 'Kelime Avı Tasarla', href: '/ogretmen/kelime-avi.html', icon: '🔎', gradeLabel: 'Öğretmen', subjectLabel: 'Bulmaca', contentTypeLabel: 'Araç' },
@@ -1732,20 +1744,41 @@
       : '<div class="site-search-empty">Bu kelimeyle eşleşen içerik bulunamadı.</div>';
   }
 
-  function openSiteSearch() {
+  function openSiteSearch(query, options) {
     const overlay = document.getElementById('siteSearchOverlay');
     const input = document.getElementById('siteSearchInput');
     if (!overlay || !input) {
-      return;
+      return Promise.resolve([]);
+    }
+    if (!overlay.classList.contains('open') && !(options && options.preserveFocus)) siteSearchReturnFocus = document.activeElement;
+    if (typeof query === 'string') input.value = query.slice(0, 200);
+    const menu = document.getElementById('navLinks');
+    const hamburger = document.getElementById('hamBtn');
+    if (menu) {
+      menu.classList.remove('open');
+      menu.querySelectorAll('.nav-item.open').forEach(function(item) {
+        item.classList.remove('open');
+        const button = item.querySelector('.nav-btn:not(a)');
+        if (button) button.setAttribute('aria-expanded', 'false');
+      });
+    }
+    if (hamburger) {
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
     }
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    window.setTimeout(function() {
+    if (!(options && options.preserveFocus)) window.setTimeout(function() {
+      if (!input.isConnected || !overlay.classList.contains('open')) return;
       input.focus();
       input.select();
     }, 40);
-    loadSiteSearchItems();
+    renderSiteSearch();
+    return loadSiteSearchItems().then(function(items) {
+      renderSiteSearch();
+      return items;
+    });
   }
 
   function closeSiteSearch() {
@@ -1753,9 +1786,13 @@
     if (!overlay) {
       return;
     }
+    const wasOpen = overlay.classList.contains('open');
     overlay.classList.remove('open');
     overlay.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    const trigger = siteSearchReturnFocus && siteSearchReturnFocus.isConnected
+      ? siteSearchReturnFocus : document.getElementById('siteSearchOpen');
+    if (wasOpen && trigger) trigger.focus();
   }
 
   function initSiteSearch() {
@@ -1776,6 +1813,21 @@
     overlay.addEventListener('click', function(event) {
       if (event.target === overlay) {
         closeSiteSearch();
+      }
+    });
+    overlay.addEventListener('keydown', function(event) {
+      if (event.key !== 'Tab') return;
+      const focusable = Array.from(overlay.querySelectorAll('button, input, a[href]')).filter(function(element) {
+        return !element.disabled && !element.hidden;
+      });
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        if (last) last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        if (first) first.focus();
       }
     });
     input.addEventListener('input', function() {
@@ -1817,7 +1869,7 @@
       : [];
 
     return extraMenus.map(function(item) {
-      return '<li class="nav-item nav-item-extra"><a href="' + item.url + '" class="nav-btn">' + item.ad + '</a></li>';
+      return '<a href="' + escAttr(item.url) + '" class="dd-item">' + escHtml(item.ad) + '</a>';
     }).join('');
   }
 
@@ -1926,120 +1978,101 @@
   }
 
   function buildNavbar(data) {
-    const badges = data.menuBadges || {};
     const menuSections = getGradeMenuSections();
     const extraMenuItems = buildExtraMenuItems(data);
+    const chevron = '<svg class="nav-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 4l4 4 4-4"/></svg>';
+    const courses = menuSections.map(function(section) {
+      return '<div class="platform-nav-group"><h3>' + escHtml(section.label) + '</h3>' +
+        section.items.map(function(item) {
+          return '<a href="' + escAttr(item.href) + '" class="dd-item' + (item.panel ? ' dd-panel-link' : '') + '">' + escHtml(item.label) + '</a>';
+        }).join('') + '</div>';
+    }).join('');
+    const tools = [
+      ['/ogretmen-araclari.html', 'Tüm öğretmen araçları'],
+      ['/ogretmen/akvaryum.html', 'Sınıf Akvaryumu'],
+      ['/ogretmen/beyaztahta.html', 'Akıllı Tahta'],
+      ['/ogretmen/matematik.html', 'Matematik Araçları'],
+      ['/ogretmen/kronometre.html', 'Kronometre'],
+      ['/ogretmen/birim-kup-uygulamasi.html', 'Birim Küpler'],
+      ['/ogretmen/3d-yapi-atolyesi.html', '3D Yapı Atölyesi'],
+      ['/ogretmen/geometrik-cisimler-acilimlar.html', 'Cisim Açılımları'],
+      ['/ogretmen-ajandasi/index.html', 'Öğretmen Ajandası'],
+      ['/ogretmen/belge-studyo.html', 'Belge ve Sertifika Stüdyosu'],
+    ].map(function(item) {
+      return '<a href="' + item[0] + '" class="dd-item">' + item[1] + '</a>';
+    }).join('');
 
-    function badge(key, defaultActive) {
-      if (badges[key] === false) {
-        return '';
-      }
-      if (badges[key] || defaultActive) {
-        return '<span class="new-badge">YENİ</span>';
-      }
-      return '';
-    }
-
-    function renderDropdown(section) {
-      const dropdownItems = section.items.map(function(item, index) {
-        const classNames = ['dd-item'];
-        if (item.panel) {
-          classNames.push('dd-panel-link');
-        }
-        const separator = index === 1 ? '<div class="dd-sep"></div>' : '';
-        return separator + '<a href="' + item.href + '" class="' + classNames.join(' ') + '"><span class="dd-icon">' + item.icon + '</span> ' + item.label + '</a>';
-      }).join('');
-
-      return '<li class="nav-item" data-grade="' + section.gradeKey + '" data-nav-key="' + section.navKey + '">' +
-        '<button class="nav-btn">' + section.label + ' ' + badge(section.badgeKey) +
-          '<svg class="nav-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>' +
-        '</button>' +
-        '<div class="dropdown-panel">' + dropdownItems + '</div>' +
-      '</li>';
-    }
-
-    return '<nav class="navbar" id="mainNav">' +
+    return '<nav class="navbar platform-navbar" id="mainNav" aria-label="Ana menü">' +
       '<a href="/index.html" class="nav-logo" aria-label="Kemal Öğretmenim ana sayfa" title="Kemal Öğretmenim">' +
-        '<img src="/gorseller/logo.png" alt="Kemal Öğretmenim" onerror="this.style.display=\'none\'">' +
+        '<img src="/gorseller/logo.png" alt="" width="44" height="44" onerror="this.style.display=\'none\'">' +
+        '<span class="platform-brand-copy"><strong>Kemal Öğretmenim</strong><small>Eğitim Platformu</small></span>' +
       '</a>' +
       '<button class="site-search-trigger" id="siteSearchOpen" type="button" aria-label="Site içinde ara">' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.2-4.2"></path></svg>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4.2-4.2"></path></svg>' +
         '<span>Ara</span>' +
       '</button>' +
-      '<button class="hamburger" id="hamBtn" aria-label="Menüyü Aç/Kapat">' +
+      '<div class="platform-theme-slot" data-theme-control-slot></div>' +
+      '<button class="hamburger" id="hamBtn" type="button" aria-label="Menüyü aç veya kapat" aria-expanded="false" aria-controls="navLinks">' +
         '<span></span><span></span><span></span>' +
       '</button>' +
       '<ul class="nav-links" id="navLinks">' +
-        menuSections.map(renderDropdown).join('') +
-        '<li class="nav-item" data-grade="hizli" data-nav-key="hizliokuma">' +
-          '<a href="/hizli-okuma/index.html" class="nav-btn nav-btn-okuma">📖 Hızlı Okuma ' + badge('hizliokuma', true) + '</a>' +
-        '</li>' +
-        '<li class="nav-item" data-grade="sinav" data-nav-key="sinavlar">' +
-          '<a href="/sinav_sitesi/index.html" class="nav-btn nav-btn-sinav">📝 Sınavlar ' + badge('sinavlar', true) + '</a>' +
-        '</li>' +
-        '<li class="nav-item" data-grade="oyunlar" data-nav-key="oyunlar">' +
-          '<a href="/oyun/oyunlar.html" class="nav-btn nav-btn-oyun">🎮 Oyunlar ' + badge('oyunlar', true) + '</a>' +
-        '</li>' +
-        extraMenuItems +
-        '<li class="nav-item" data-grade="ogretmen" data-nav-key="ogretmen">' +
-          '<button class="nav-btn">Öğretmen' +
-            '<svg class="nav-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l4 4 4-4"/></svg>' +
-          '</button>' +
-          '<div class="dropdown-panel">' +
-            '<a href="/hakkimda.html" class="dd-item"><span class="dd-icon">👨‍🏫</span> Hakkımda</a>' +
-            '<a href="/iletisim.html" class="dd-item"><span class="dd-icon">✉️</span> İletişim</a>' +
-            '<a href="/ogretmen-ajandasi/index.html" class="dd-item"><span class="dd-icon">📒</span> Öğretmen Ajandası</a>' +
-            '<a href="/ogretmen/beyaztahta.html" class="dd-item"><span class="dd-icon">🖊️</span> Akıllı Tahtam</a>' +
-            '<a href="/ogretmen-araclari.html" class="dd-item"><span class="dd-icon">⏱️</span> Öğretmen Araçları</a>' +
-            '<a href="/ogretmen/belge-studyo.html" class="dd-item"><span class="dd-icon">🏅</span> Belge ve Sertifika Stüdyosu</a>' +
-            '<a href="/admin/index.html" class="dd-item"><span class="dd-icon">⚙️</span> Yönetim Merkezi</a>' +
+        '<li class="nav-item platform-courses" data-nav-key="dersler">' +
+          '<button class="nav-btn" type="button" aria-expanded="false" aria-controls="platformCourseMenu">Dersler' + chevron + '</button>' +
+          '<div class="dropdown-panel platform-course-menu" id="platformCourseMenu">' + courses +
+            '<div class="platform-nav-group platform-nav-resources"><h3>Kaynaklar</h3>' +
+              '<a class="dd-item" href="/index.html#grade-title">Sınıflar ve dersler</a>' +
+              '<a class="dd-item" href="/sinif-kaynaklari.html">Dokümanlar</a>' +
+              '<a class="dd-item" href="/sinif-kaynaklari.html">Sınıf Kaynakları</a>' +
+              '<a class="dd-item" href="/yeni.html">Son Eklenenler</a>' + extraMenuItems +
+            '</div>' +
           '</div>' +
+        '</li>' +
+        '<li class="nav-item" data-grade="hizli" data-nav-key="hizliokuma"><a href="/hizli-okuma/index.html" class="nav-btn">Okuma</a></li>' +
+        '<li class="nav-item" data-grade="sinav" data-nav-key="sinavlar"><a href="/sinav_sitesi/index.html" class="nav-btn">Sınavlar</a></li>' +
+        '<li class="nav-item" data-grade="oyunlar" data-nav-key="oyunlar"><a href="/oyun/oyunlar.html" class="nav-btn">Oyunlar</a></li>' +
+        '<li class="nav-item" data-grade="ogretmen" data-nav-key="ogretmen">' +
+          '<button class="nav-btn" type="button" aria-expanded="false" aria-controls="platformToolMenu">Öğretmen Araçları' + chevron + '</button>' +
+          '<div class="dropdown-panel platform-tool-menu" id="platformToolMenu">' + tools + '</div>' +
         '</li>' +
       '</ul>' +
     '</nav>';
   }
 
   function buildFooter() {
-    return '<footer class="site-footer" id="kemalFooter">' +
+    return '<footer class="site-footer platform-footer" id="kemalFooter">' +
       '<div class="footer-grid">' +
         '<div class="footer-brand">' +
-          '<h3>🌟 Kemal Öğretmenim</h3>' +
-          '<p>Eğitim sevgi ile başlar. Çocuklarımızın merakla öğrenmesi için buradayım.</p>' +
-          '<div class="social-row">' +
-            '<a href="https://instagram.com/kemalkogretmenim" target="_blank" rel="noopener" class="soc-btn">📸</a>' +
-            '<a href="https://youtube.com/@kemalkogretmenim" target="_blank" rel="noopener" class="soc-btn">▶️</a>' +
-            '<a href="https://twitter.com/kemalkogretmen" target="_blank" rel="noopener" class="soc-btn">🐦</a>' +
+          '<a href="/index.html" class="platform-footer-brand"><img src="/gorseller/logo.png" alt="" width="42" height="42"><span>Kemal Öğretmenim<small>Eğitim Platformu</small></span></a>' +
+          '<p>Öğrenciler, öğretmenler ve veliler için ders kaynakları, okuma çalışmaları ve etkileşimli öğrenme araçları.</p>' +
+          '<div class="platform-social-links" aria-label="Sosyal medya">' +
+            '<a href="https://instagram.com/kemalkogretmenim" target="_blank" rel="noopener">Instagram</a>' +
+            '<a href="https://youtube.com/@kemalkogretmenim" target="_blank" rel="noopener">YouTube</a>' +
+            '<a href="https://twitter.com/kemalkogretmen" target="_blank" rel="noopener">X</a>' +
           '</div>' +
         '</div>' +
-        '<div class="footer-col">' +
-          '<h4>Sınıflar</h4>' +
-          '<ul class="footer-links">' +
-            '<li><a href="/siniflar/1-sinif.html">1. Sınıf</a></li>' +
-            '<li><a href="/siniflar/2-sinif.html">2. Sınıf</a></li>' +
-            '<li><a href="/siniflar/3-sinif.html">3. Sınıf</a></li>' +
-            '<li><a href="/siniflar/4-sinif.html">4. Sınıf</a></li>' +
-            '<li><a href="/siniflar/ortaokul.html">Ortaokul</a></li>' +
-          '</ul>' +
-        '</div>' +
-        '<div class="footer-col">' +
-          '<h4>Keşfet</h4>' +
-          '<ul class="footer-links">' +
-            '<li><a href="/hizli-okuma/index.html">📖 Hızlı Okuma</a></li>' +
-            '<li><a href="/oyun/oyunlar.html">🎮 Oyunlar</a></li>' +
-            '<li><a href="/sinav_sitesi/index.html">📝 Sınav Merkezi</a></li>' +
-            '<li><a href="/ogretmen-ajandasi/index.html">📒 Öğretmen Ajandası</a></li>' +
-            '<li><a href="/ogretmen/beyaztahta.html">🖊️ Akıllı Tahtam</a></li>' +
-            '<li><a href="/sinif-kaynaklari.html">📚 Sınıf Kaynakları</a></li>' +
-            '<li><a href="/ogretmen-araclari.html">⏱️ Öğretmen Araçları</a></li>' +
-            '<li><a href="/hakkimda.html">Hakkımda</a></li>' +
-            '<li><a href="/iletisim.html">İletişim</a></li>' +
-          '</ul>' +
-        '</div>' +
+        '<div class="footer-col"><h3>Öğrenmeye başla</h3><ul class="footer-links">' +
+          '<li><a href="/index.html#grade-title">Sınıflar ve Dersler</a></li>' +
+          '<li><a href="/hizli-okuma/index.html">Okuma Merkezi</a></li>' +
+          '<li><a href="/sinav_sitesi/index.html">Sınavlar</a></li>' +
+          '<li><a href="/sinif-kaynaklari.html">Dokümanlar</a></li>' +
+          '<li><a href="/oyun/oyunlar.html">Eğitsel Oyunlar</a></li>' +
+        '</ul></div>' +
+        '<div class="footer-col"><h3>Sınıfında kullan</h3><ul class="footer-links">' +
+          '<li><a href="/ogretmen-araclari.html">Öğretmen Araçları</a></li>' +
+          '<li><a href="/ogretmen/akvaryum.html">Sınıf Akvaryumu</a></li>' +
+          '<li><a href="/ogretmen/beyaztahta.html">Akıllı Tahta</a></li>' +
+          '<li><a href="/ogretmen-ajandasi/index.html">Öğretmen Ajandası</a></li>' +
+          '<li><a href="/sinif-kaynaklari.html">Sınıf Kaynakları</a></li>' +
+        '</ul></div>' +
+        '<div class="footer-col"><h3>Platform</h3><ul class="footer-links">' +
+          '<li><a href="/hakkimda.html">Hakkında</a></li>' +
+          '<li><a href="/iletisim.html">İletişim</a></li>' +
+          '<li><a href="/yeni.html">Son Eklenenler</a></li>' +
+          '<li><a href="/giris.html">Giriş Yap</a></li>' +
+          '<li><a href="/kayit.html">Hesap Oluştur</a></li>' +
+        '</ul></div>' +
       '</div>' +
-      '<div class="footer-bottom">' +
-        '<span>© 2026 Kemal Öğretmen | <a href="https://kemalogretmenim.com.tr" style="color:inherit;">kemalogretmenim.com.tr</a></span>' +
-        '<span style="font-size:12px;">🌟 Eğitim Sevgi ile Başlar 🌟</span>' +
-      '</div>' +
+      '<div class="footer-bottom"><span>© ' + new Date().getFullYear() + ' Kemal Öğretmenim</span><span>Eğitim sevgi ile başlar.</span></div>' +
     '</footer>';
   }
 
@@ -2059,9 +2092,15 @@
 
   function buildShortcutDock(data) {
     if (!isShortcutDockAllowed()) return '';
+    function dockGlyph(content) {
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + content + '</svg>';
+    }
+    const gripGlyph = dockGlyph('<circle cx="9" cy="6" r=".9" fill="currentColor"/><circle cx="15" cy="6" r=".9" fill="currentColor"/><circle cx="9" cy="12" r=".9" fill="currentColor"/><circle cx="15" cy="12" r=".9" fill="currentColor"/><circle cx="9" cy="18" r=".9" fill="currentColor"/><circle cx="15" cy="18" r=".9" fill="currentColor"/>');
+    const cubeGlyph = dockGlyph('<path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5"/>');
+    const launcherGlyph = dockGlyph('<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>');
     const defaultDockItems = [
       { baslik: 'Sınıf Akvaryumu', link: '/ogretmen/akvaryum.html', emoji: '🐠', iconUrl: '/assets/dock-icons/akvaryum.svg', aktif: true },
-      { baslik: 'Beyaz Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
+      { baslik: 'Akıllı Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
       { baslik: 'Kronometre', link: '/ogretmen/kronometre.html', emoji: '⏱️', iconUrl: '/assets/dock-icons/kronometre.svg', aktif: true },
       { baslik: 'Matematik Araçları', link: '/ogretmen/matematik.html', emoji: '➗', iconUrl: '/assets/dock-icons/matematik.svg', aktif: true },
       { baslik: 'Birim Küpler', link: '/ogretmen/birim-kup-uygulamasi.html', emoji: '🧊', iconUrl: '/assets/dock-icons/birim-kupler.svg', aktif: true },
@@ -2082,30 +2121,38 @@
       return itemPath !== '/' && itemPath !== '/index.html';
     }));
     return '<aside class="shortcut-dock" id="shortcutDock" aria-label="Hızlı araç kısayolları">' +
-      '<div class="shortcut-dock-bar" role="navigation">' +
-        '<button class="shortcut-dock-handle" id="shortcutDockHandle" type="button" aria-label="Kısayol çubuğunu hizala veya sürükle" title="Hizalamak için dokun; taşımak için sürükle"><span></span><span></span><span></span><span></span><span></span><span></span></button>' +
-        '<button class="shortcut-dock-size" id="shortcutDockSmaller" type="button" aria-label="Kısayol çubuğunu küçült" title="Küçült">−</button>' +
+      '<div class="shortcut-dock-bar" id="shortcutDockBar" role="navigation" aria-label="Öğretmen araçları">' +
+        '<button class="shortcut-dock-control shortcut-dock-handle" id="shortcutDockHandle" type="button" aria-label="Kısayol çubuğunu hizala veya sürükle" title="Hizalamak için dokun; taşımak için sürükle">' + gripGlyph + '</button>' +
+        '<button class="shortcut-dock-control shortcut-dock-size" id="shortcutDockSmaller" type="button" aria-label="Kısayol çubuğunu küçült" title="Küçült">' + dockGlyph('<path d="M6 12h12"/>') + '</button>' +
         '<div class="shortcut-dock-scroller">' + visibleItems.map(function(item) {
           const icon = item.iconUrl
             ? '<img src="' + escHtml(item.iconUrl) + '" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
               '<span class="shortcut-dock-emoji" hidden>' + escHtml(item.emoji || '📌') + '</span>'
-            : '<span class="shortcut-dock-emoji">' + escHtml(item.emoji || '📌') + '</span>';
+            : (String(item.link).split('?')[0] === '/ogretmen/3d-yapi-atolyesi.html' ? cubeGlyph : '<span class="shortcut-dock-emoji">' + escHtml(item.emoji || '📌') + '</span>');
           const itemPath = String(item.link || '').split('?')[0].replace(/\/+$/, '') || '/';
           const isCurrent = itemPath === path || (path === '/' && itemPath === '/index.html');
           return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" title="' + escHtml(item.baslik) + '"' + (isCurrent ? ' aria-current="page"' : '') + '>' +
             '<span class="shortcut-dock-icon">' + icon + '</span><span>' + escHtml(item.baslik) + '</span></a>';
         }).join('') + '</div>' +
-        '<button class="shortcut-dock-size" id="shortcutDockLarger" type="button" aria-label="Kısayol çubuğunu büyüt" title="Büyüt">+</button>' +
-        '<button class="shortcut-dock-reset" id="shortcutDockReset" type="button" aria-label="Kısayol çubuğu konumunu ortaya al" title="Konumu ortaya al">⌖</button>' +
-        '<button class="shortcut-dock-close" id="shortcutDockClose" type="button" aria-label="Kısayol çubuğunu gizle" title="Kısayolları gizle">×</button>' +
+        '<button class="shortcut-dock-control shortcut-dock-size" id="shortcutDockLarger" type="button" aria-label="Kısayol çubuğunu büyüt" title="Büyüt">' + dockGlyph('<path d="M6 12h12M12 6v12"/>') + '</button>' +
+        '<button class="shortcut-dock-control shortcut-dock-reset" id="shortcutDockReset" type="button" aria-label="Kısayol çubuğu konumunu ortaya al" title="Konumu ortaya al">' + dockGlyph('<path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4"/><circle cx="12" cy="12" r="3"/>') + '</button>' +
+        '<button class="shortcut-dock-control shortcut-dock-close" id="shortcutDockClose" type="button" aria-label="Kısayol çubuğunu gizle" title="Kısayolları gizle">' + dockGlyph('<path d="m7 7 10 10M17 7 7 17"/>') + '</button>' +
       '</div>' +
-      '<button class="shortcut-dock-reopen" id="shortcutDockReopen" type="button" aria-label="Kısayol çubuğunu göster">⌘ <span>Kısayollar</span></button>' +
+      '<button class="shortcut-dock-reopen" id="shortcutDockReopen" type="button" aria-label="Araç kısayollarını göster" aria-controls="shortcutDockBar" aria-expanded="false">' + launcherGlyph + '<span>Araçlar</span>' + dockGlyph('<path d="m8 14 4-4 4 4"/>') + '</button>' +
     '</aside>';
   }
 
   function initShortcutDock() {
     const dock = document.getElementById('shortcutDock');
     if (!dock || dock.dataset.bound === '1') return;
+    let dockStyles = document.querySelector('link[data-shortcut-dock-theme], link[href*="shortcut-dock.css"]');
+    if (!dockStyles) {
+      dockStyles = document.createElement('link');
+      dockStyles.rel = 'stylesheet';
+      document.head.appendChild(dockStyles);
+    }
+    dockStyles.href = '/css/shortcut-dock.css?v=20261029-glass';
+    dockStyles.dataset.shortcutDockTheme = '';
     dock.dataset.bound = '1';
     const storageKey = 'kemal_shortcut_dock_state';
     let preferences = { state: 'normal', size: 'normal', position: 'center' };
@@ -2117,15 +2164,26 @@
     } catch (error) {
       /* Bozuk eski tercih varsa varsayılan konumu kullan. */
     }
+    const isPlatformHome = document.body.classList.contains('home-platform');
+    if (isPlatformHome && initShortcutDock.homePreferences) {
+      preferences = Object.assign(preferences, initShortcutDock.homePreferences);
+    }
     function savePreferences() {
-      localStorage.setItem(storageKey, JSON.stringify(preferences));
+      if (isPlatformHome) {
+        initShortcutDock.homePreferences = Object.assign({}, preferences);
+        return;
+      }
+      try { localStorage.setItem(storageKey, JSON.stringify(preferences)); } catch (error) { /* Device storage may be unavailable. */ }
     }
     if (preferences.state === 'large') {
       preferences.size = 'large';
       preferences.state = 'normal';
     }
     function applyPreferences() {
-      dock.classList.toggle('is-hidden', preferences.state === 'hidden');
+      const visibleState = isPlatformHome ? homeDockState : preferences.state;
+      dock.classList.toggle('is-hidden', visibleState === 'hidden');
+      dock.querySelector('#shortcutDockBar').setAttribute('aria-hidden', String(visibleState === 'hidden'));
+      dock.querySelector('#shortcutDockReopen').setAttribute('aria-expanded', String(visibleState !== 'hidden'));
       dock.classList.toggle('is-small', preferences.size === 'small');
       dock.classList.toggle('is-large', preferences.size === 'large');
       dock.dataset.position = ['left', 'center', 'right'].includes(preferences.position) ? preferences.position : 'center';
@@ -2133,8 +2191,14 @@
       dock.querySelector('#shortcutDockLarger').disabled = preferences.size === 'large';
     }
     function setState(value) {
-      preferences.state = value;
-      savePreferences();
+      if (isPlatformHome) {
+        homeDockState = value;
+        preferences.state = value;
+        savePreferences();
+      } else {
+        preferences.state = value;
+        savePreferences();
+      }
       applyPreferences();
     }
     function changeSize(direction) {
@@ -2150,8 +2214,8 @@
       applyPreferences();
     }
     applyPreferences();
-    dock.querySelector('#shortcutDockClose').addEventListener('click', function() { setState('hidden'); });
-    dock.querySelector('#shortcutDockReopen').addEventListener('click', function() { setState('normal'); });
+    dock.querySelector('#shortcutDockClose').addEventListener('click', function() { setState('hidden'); dock.querySelector('#shortcutDockReopen').focus(); });
+    dock.querySelector('#shortcutDockReopen').addEventListener('click', function() { setState('normal'); dock.querySelector('#shortcutDockHandle').focus(); });
     dock.querySelector('#shortcutDockSmaller').addEventListener('click', function() { changeSize(-1); });
     dock.querySelector('#shortcutDockLarger').addEventListener('click', function() { changeSize(1); });
     dock.querySelector('#shortcutDockReset').addEventListener('click', function() { setPosition('center'); });
@@ -2217,6 +2281,19 @@
   }
 
   function renderChrome(data) {
+    const previousSearch = document.getElementById('siteSearchOverlay');
+    const searchWasOpen = previousSearch && previousSearch.classList.contains('open');
+    const previousMenu = document.getElementById('navLinks');
+    const menuWasOpen = previousMenu && previousMenu.classList.contains('open');
+    const previousInput = document.getElementById('siteSearchInput');
+    const previousQuery = previousInput ? previousInput.value : '';
+    const themeFocus = document.activeElement && document.activeElement.hasAttribute('data-theme-switch')
+      ? '[data-theme-switch]' : (document.activeElement && document.activeElement.hasAttribute('data-theme-system') ? '[data-theme-system]' : null);
+    const focused = searchWasOpen && previousSearch.contains(document.activeElement) ? document.activeElement : null;
+    const focusId = focused && focused.id;
+    const focusHref = focused && focused.classList.contains('site-search-result') ? focused.getAttribute('href') : null;
+    const selectionStart = previousInput && previousInput.selectionStart;
+    const selectionEnd = previousInput && previousInput.selectionEnd;
     const announceTargetId = 'kemalAnnounceMount';
     const navTargetId = 'kemalNavMount';
     const footerTargetId = 'kemalFooterMount';
@@ -2243,10 +2320,39 @@
     }
 
     announceTarget.innerHTML = buildAnnounce(data);
+    navTarget.classList.add('platform-chrome');
+    footerTarget.classList.add('platform-chrome');
     navTarget.innerHTML = buildAccountBar() + buildNavbar(data) + buildSearchShell();
     footerTarget.innerHTML = buildFooter();
+    if (window.kemalTheme) window.kemalTheme.mountControls();
+    if (themeFocus) {
+      const restoredThemeControl = navTarget.querySelector(themeFocus);
+      if (restoredThemeControl) restoredThemeControl.focus({ preventScroll: true });
+    }
     renderShortcutDock(data);
     initAccessibilityLandmarks();
+    if (searchWasOpen) {
+      // Remote site data can arrive while a visitor is already searching.
+      // Keep the query and dialog instead of leaving a closed overlay with a locked body.
+      const input = document.getElementById('siteSearchInput');
+      const restoredFocus = focusId ? document.getElementById(focusId) : input;
+      const loadingSearch = openSiteSearch(previousQuery, { preserveFocus: true });
+      if (restoredFocus) restoredFocus.focus();
+      if (focusId === 'siteSearchInput' && typeof selectionStart === 'number' && typeof input.setSelectionRange === 'function') {
+        input.setSelectionRange(selectionStart, selectionEnd);
+      }
+      if (focusHref) loadingSearch.then(function() {
+        const overlay = document.getElementById('siteSearchOverlay');
+        if (!overlay || !overlay.classList.contains('open') || document.activeElement !== input) return;
+        const match = Array.from(overlay.querySelectorAll('.site-search-result')).find(function(link) {
+          return link.getAttribute('href') === focusHref;
+        });
+        if (match) match.focus();
+      });
+    } else if (menuWasOpen) {
+      // A rebuilt closed menu must not leave the previous menu's scroll lock behind.
+      document.body.style.overflow = '';
+    }
   }
 
   function initAccessibilityLandmarks() {
@@ -2277,6 +2383,32 @@
     body.insertAdjacentElement('afterbegin', skipLink);
   }
 
+  function closeNavigation(restoreFocus) {
+    const links = document.getElementById('navLinks');
+    const hamburger = document.getElementById('hamBtn');
+    const wasMobileOpen = links && links.classList.contains('open');
+    const expandedItem = links && links.querySelector('.nav-item.open');
+    const returnFocus = wasMobileOpen ? hamburger : (expandedItem && expandedItem.querySelector('.nav-btn:not(a)'));
+    if (links) {
+      links.classList.remove('open');
+      links.querySelectorAll('.nav-item.open').forEach(function(item) {
+        item.classList.remove('open');
+        const button = item.querySelector('.nav-btn:not(a)');
+        if (button) button.setAttribute('aria-expanded', 'false');
+      });
+    }
+    if (hamburger) {
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    }
+    const searchOverlay = document.getElementById('siteSearchOverlay');
+    const searchIsOpen = searchOverlay && searchOverlay.classList.contains('open');
+    if (!searchIsOpen) {
+      document.body.style.overflow = '';
+      if (restoreFocus && returnFocus) returnFocus.focus();
+    }
+  }
+
   function initHamburger() {
     const btn = document.getElementById('hamBtn');
     const links = document.getElementById('navLinks');
@@ -2287,9 +2419,17 @@
 
     btn.dataset.bound = '1';
     btn.addEventListener('click', function() {
-      btn.classList.toggle('open');
-      links.classList.toggle('open');
-      document.body.style.overflow = links.classList.contains('open') ? 'hidden' : '';
+      if (links.classList.contains('open')) {
+        closeNavigation(false);
+      } else {
+        btn.classList.add('open');
+        links.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+      }
+    });
+    links.addEventListener('click', function(event) {
+      if (event.target.closest('a[href]')) closeNavigation(false);
     });
 
     links.querySelectorAll('.nav-item').forEach(function(item) {
@@ -2298,14 +2438,18 @@
         return;
       }
       navBtn.addEventListener('click', function() {
-        const localNavRoot = document.getElementById('mainNav');
-        if (window.innerWidth <= 1180 || (localNavRoot && localNavRoot.classList.contains('is-compact'))) {
-          item.classList.toggle('open');
-          if (item.classList.contains('open')) {
+        const shouldOpen = !item.classList.contains('open');
+        links.querySelectorAll('.nav-item.open').forEach(function(other) {
+          other.classList.remove('open');
+          const otherButton = other.querySelector('.nav-btn:not(a)');
+          if (otherButton) otherButton.setAttribute('aria-expanded', 'false');
+        });
+        item.classList.toggle('open', shouldOpen);
+        navBtn.setAttribute('aria-expanded', String(shouldOpen));
+        if (shouldOpen && navRoot && navRoot.classList.contains('is-compact')) {
             window.setTimeout(function() {
               item.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
             }, 80);
-          }
         }
       });
     });
@@ -2314,15 +2458,15 @@
       document.body.dataset.kemalOutsideNavBound = '1';
       document.addEventListener('click', function(event) {
         if (!event.target.closest('.navbar')) {
-          const localBtn = document.getElementById('hamBtn');
-          const localLinks = document.getElementById('navLinks');
-          if (localBtn) {
-            localBtn.classList.remove('open');
-          }
-          if (localLinks) {
-            localLinks.classList.remove('open');
-          }
-          document.body.style.overflow = '';
+          closeNavigation(false);
+        }
+      });
+      document.addEventListener('keydown', function(event) {
+        if (event.key !== 'Escape') return;
+        const menu = document.getElementById('navLinks');
+        if (menu && (menu.classList.contains('open') || menu.querySelector('.nav-item.open'))) {
+          event.preventDefault();
+          closeNavigation(true);
         }
       });
     }
@@ -2340,6 +2484,8 @@
     if (!navRoot || !logo || !links || !btn) {
       return;
     }
+    const searchOverlay = document.getElementById('siteSearchOverlay');
+    const searchIsOpen = searchOverlay && searchOverlay.classList.contains('open');
 
     if (window.innerWidth <= 1180) {
       navRoot.classList.add('is-compact');
@@ -2350,7 +2496,8 @@
       navRoot.classList.remove('is-compact');
       links.classList.remove('open');
       btn.classList.remove('open');
-      document.body.style.overflow = '';
+      btn.setAttribute('aria-expanded', 'false');
+      if (!searchIsOpen) document.body.style.overflow = '';
       return;
     }
 
@@ -2367,8 +2514,9 @@
       links.classList.add('open');
       btn.classList.add('open');
     } else if (!needsCompact) {
-      document.body.style.overflow = '';
+      if (!searchIsOpen) document.body.style.overflow = '';
     }
+    btn.setAttribute('aria-expanded', String(needsCompact && wasOpen));
   }
 
   function bindAdaptiveNavResize() {
@@ -2396,9 +2544,10 @@
     if (path.startsWith('/oyun/')) {
       return 'oyunlar';
     }
-    if (path === '/hakkimda.html' || path === '/iletisim.html' || path === '/yeni.html' || path === '/ogretmen-ajandasi/index.html' || path.startsWith('/ogretmen-ajandasi/')) {
+    if (path === '/ogretmen-araclari.html' || path.startsWith('/ogretmen/') || path.startsWith('/ogretmen-ajandasi/')) {
       return 'ogretmen';
     }
+    if (path === '/yeni.html' || path === '/dokuman.html' || path === '/sinif-kaynaklari.html' || path === '/ders.html' || path.startsWith('/siniflar/')) return 'dersler';
     if (path === '/ders.html') {
       const grade = normalizeGradeKey(current.searchParams.get('sinif'));
       if (grade === '1' || grade === '2' || grade === '3' || grade === '4') {
@@ -2436,7 +2585,8 @@
     }
 
     navRoot.querySelectorAll('.nav-item').forEach(function(item) {
-      item.classList.toggle('is-active', item.dataset.navKey === activeNavKey);
+      const legacyCourseKey = ['1', '2', '3', '4', 'ortaokul'].includes(activeNavKey);
+      item.classList.toggle('is-active', item.dataset.navKey === (legacyCourseKey ? 'dersler' : activeNavKey));
     });
 
     navRoot.querySelectorAll('.dd-item, .nav-btn').forEach(function(link) {
@@ -2689,6 +2839,11 @@
     repairLegacyLinks: repairLegacyLinks,
     getGradeMenuSections: getGradeMenuSections,
     loadDynamicMenuItems: fetchDynamicMenuItems,
+  };
+
+  window.kemalSiteSearch = {
+    open: openSiteSearch,
+    close: closeSiteSearch,
   };
 
   window.kemalSite = {

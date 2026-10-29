@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../js/akvaryum-expressive.js'),R=require('../js/akvaryum-rewards.js');
-const faces={eel:[.86,.52],angler:[.83,.55],mantis:[.7,.27],crab:[.65,.37],lina:[.85,.44],spongebob:[.5,.36],patrick:[.51,.34],mrkrabs:[.49,.4]};
+const faces={eel:[.86,.52],angler:[.83,.55],mantis:[.7,.27],crab:[.65,.37],lina:[.85,.44],spongebob:[.5,.36],patrick:[.51,.34],mrkrabs:[.49,.4],hammerhead:[.82,.47],axolotl:[.80,.52]};
 test('every new creature keeps a pinned face, bounded whole silhouette and non-folding shared mesh edges',()=>{
  for(const id of E.species)for(const lite of [false,true])for(let t=0;t<6.3;t+=.18)for(const boost of [0,.5,1]){
   const [x,y]=faces[id];assert.deepEqual(E.point(id,x,y,t,{boost}),{x,y},id+' face');
@@ -10,7 +10,7 @@ test('every new creature keeps a pinned face, bounded whole silhouette and non-f
  }
 });
 test('the raised hand, claws, feelers and veil have visible local motion without detached parts',()=>{
- const tips={eel:[.16,.55],angler:[.885,.24],mantis:[.88,.29],crab:[.4,.63],lina:[.21,.68],spongebob:[.755,.32],patrick:[.71,.38],mrkrabs:[.3,.34]};
+ const tips={eel:[.16,.55],angler:[.885,.24],mantis:[.88,.29],crab:[.4,.63],lina:[.21,.68],spongebob:[.755,.32],patrick:[.71,.38],mrkrabs:[.3,.34],hammerhead:[.16,.55],axolotl:[.62,.79]};
  for(const id of E.species){const [x,y]=tips[id],frames=Array.from({length:40},(_,i)=>E.point(id,x,y,i/40*Math.PI*2,{boost:1}));
   const span=Math.hypot(Math.max(...frames.map(p=>p.x))-Math.min(...frames.map(p=>p.x)),Math.max(...frames.map(p=>p.y))-Math.min(...frames.map(p=>p.y)));
   assert.ok(span>.018,id+' appendage should visibly move');
@@ -33,13 +33,13 @@ test('lightweight rendering stays bounded and fener light follows the moving lur
  const h=renderer();assert.equal(E.render(h.canvas,h.image,'angler',1,{moving:true,boost:1,lite:true,width:500,dpr:3}),true);
  assert.equal(h.canvas.width,112);assert.ok(h.stats.transforms<=60);assert.equal(h.stats.glows,1);
 });
-test('all eight new celebrations are distinct, smoothly return to normal and stay within the existing route offset budget',()=>{
+test('all expressive celebrations are distinct, smoothly return to normal and stay within the existing route offset budget',()=>{
  const signatures=new Set();for(const id of E.species){const profile=R.profile(id);assert.ok(profile.duration<=4.3);assert.notEqual(profile.kind,'greet');
   const frames=Array.from({length:50},(_,i)=>R.pose(id,i*profile.duration/50));signatures.add(JSON.stringify(frames));
   assert.deepEqual(R.pose(id,profile.duration),R.pose(id,NaN));
   for(const pose of frames){assert.ok(Math.abs(pose.x)<=5&&Math.abs(pose.y)<=11&&Math.abs(pose.bank)<=8);assert.ok(pose.scaleX>=.94&&pose.scaleY>=.94);}
  }
- assert.equal(signatures.size,8);assert.equal(R.profile('spongebob').kind,'sponge-dance');
+ assert.equal(signatures.size,E.species.length);assert.equal(R.profile('spongebob').kind,'sponge-dance');
  const before=R.pose('spongebob',0),peak=R.pose('spongebob',1);assert.ok(peak.scaleX!==before.scaleX&&peak.y<0,'sponge dances and hops');
 });
 test('electric and rainbow accents are bounded, transient and lighter in lite mode',()=>{
@@ -71,4 +71,22 @@ test('character kisses send different small hearts and walking feet retain a con
   }
  }
  assert.equal(signatures.size,3);
+});
+test('rainbow rays emerge from the tail and electrical bolts emerge along the body instead of surrounding rings',()=>{
+ for(let t=0;t<12;t+=.2)for(const lite of [false,true]){
+  for(const ray of E.effects('lina',t,1,{lite})){
+   assert.equal(ray.points.length,8);assert.ok(ray.points[0].x>=.30&&ray.points[0].x<=.33);assert.ok(ray.points[0].y>.50&&ray.points[0].y<.57);
+   assert.ok(ray.points.at(-1).x<.15);assert.ok(ray.points.every((p,i)=>!i||p.x<ray.points[i-1].x),'each ray travels outward from the tail');
+  }
+  const bolts=E.effects('eel',t,1,{lite});assert.ok(new Set(bolts.map(b=>b.points[0].x)).size>=5);
+  for(const bolt of bolts){assert.equal(bolt.points.length,6);assert.ok(bolt.points[0].x>=.34&&bolt.points[0].x<=.69);assert.ok(Math.abs(bolt.points[0].y-.51)<.06);assert.ok(Math.abs(bolt.points.at(-1).y-bolt.points[0].y)>.08);assert.ok(bolt.glow>0);}
+ }
+});
+test('axolotl gills, tail and waving hand move visibly while the face stays pinned; new reward bubbles stop completely',()=>{
+ const points=[[.64,.32],[.92,.35],[.62,.79],[.16,.55]];
+ for(const [x,y] of points){const frames=Array.from({length:60},(_,i)=>E.point('axolotl',x,y,i/10,{boost:1}));assert.ok(Math.hypot(Math.max(...frames.map(p=>p.x))-Math.min(...frames.map(p=>p.x)),Math.max(...frames.map(p=>p.y))-Math.min(...frames.map(p=>p.y)))>.015);}
+ for(let t=0;t<8;t+=.1){assert.deepEqual(E.point('hammerhead',.82,.47,t,{boost:1}),{x:.82,y:.47});assert.deepEqual(E.point('axolotl',.80,.52,t,{boost:1}),{x:.80,y:.52});}
+ assert.equal(E.effects('axolotl',1,1).length,5);assert.equal(E.effects('axolotl',1,1,{lite:true}).length,3);assert.deepEqual(E.effects('axolotl',1,0),[]);
+ for(const line of E.effects('axolotl',1,1)){assert.equal(line.points.length,21);assert.ok(line.alpha>0&&line.alpha<.6);assert.ok(line.points.every(p=>p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1));}
+ assert.equal(R.profile('hammerhead').kind,'hammer-glide');assert.equal(R.profile('axolotl').kind,'gill-wave');
 });

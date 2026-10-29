@@ -63,3 +63,17 @@ test('restoring an existing-class backup seeds its history silently while subseq
  tracker.reset(restored,date);assert.deepEqual(tracker.observe(restored,date),{awards:[],goals:[]});
  C.awardBehavior(rs,rc,date,rc.tasks[0].id);assert.equal(tracker.observe(restored,date).awards.length,1);
 });
+test('mentor goal milestones are fresh, once-only crossings; edits, corrections and restored history stay quiet',()=>{
+ const {state,cls,s,date}=fixture();C.startGoal(cls,'Birlikte',20);
+ const awards=R.createTracker(),milestones=R.createMilestoneTracker();
+ const observe=()=>milestones.observe(state,date,awards.observe(state,date).awards);
+ assert.deepEqual(observe(),[]);
+ C.updateTaskPoints(cls,cls.tasks[0].id,5);
+ for(const level of [25,50,75]){C.awardBehavior(s,cls,date,cls.tasks[0].id);assert.equal(observe()[0].level,level);assert.deepEqual(observe(),[]);}
+ C.awardBehavior(s,cls,date,cls.tasks[0].id);assert.deepEqual(observe(),[]);
+ const award=s.days[date].tasks.find(t=>t.status==='done');award.status='pending';observe();C.awardBehavior(s,cls,date,cls.tasks[0].id);assert.deepEqual(observe(),[]);
+ assert.deepEqual(R.createMilestoneTracker().observe(copy(state),date,[{classId:cls.id}]),[]);
+ C.startGoal(cls,'Yeni hedef',100);observe();cls.goal.target=10;assert.deepEqual(observe(),[]);
+ cls.goal.enabled=false;observe();cls.goal.enabled=true;assert.deepEqual(observe(),[]);
+ assert.deepEqual(observe(),[]);
+});

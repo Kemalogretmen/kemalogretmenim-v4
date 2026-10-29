@@ -40,8 +40,7 @@
     const a = p.answers.children[index].getBoundingClientRect(), c=p.court.getBoundingClientRect();
     // Üç dar dikey sahada top ayrı sol şeritte kalır; sayı kartını kapatmaz.
     p.ball.style.left = settings.count===3 && matchMedia('(orientation: portrait) and (max-width:800px)').matches ? '' : (a.left+a.width/2-c.left)+'px';
-    p.feedback.textContent = p.choices[index]+' seçildi. Topu geri çek veya Basket at.';
-    p.shoot.disabled = false;
+    p.feedback.textContent = p.choices[index]+' seçildi. Topu geri çekip bırakabilirsin.';
   }
   function blocks(q) {
     const b = el('div','ob-blocks'), rods=el('div','ob-rods'), units=el('div','ob-units');
@@ -73,11 +72,14 @@
     p.answers.replaceChildren();
     p.choices.forEach((n,i)=>{
       const b=el('button','ob-answer',n); b.type='button'; b.setAttribute('aria-pressed','false');
-      b.setAttribute('aria-label',n+' sayısını seç'); b.addEventListener('click',()=>select(p,i));
+      b.setAttribute('aria-label',n+' ile atış yap');
+      // Her seçenek aynı davranır: doğru/yanlış fark etmeksizin tek dokunuşla atış.
+      // Sürükleme ve ok tuşları yalnızca nişan alır; onların bırakma akışı ayrı kalır.
+      b.addEventListener('click',()=>{select(p,i);shootBall(p);});
       p.answers.append(b);
     });
-    p.shoot.disabled=true; p.ball.disabled=false; p.ball.style.left=''; p.ball.style.translate='';
-    p.feedback.textContent='Sayıyı seç, topu geri çek ve bırak!';
+    p.ball.disabled=false; p.ball.style.left=''; p.ball.style.translate='';
+    p.feedback.textContent='Sayıya dokun, top otomatik atılsın!';
     p.progress.textContent=settings.seconds ? p.solved+' basket' : p.solved+' / 10';
   }
   function makePlayer(name,i) {
@@ -91,12 +93,11 @@
     const answers=el('div','ob-answers'); answers.setAttribute('role','group'); answers.setAttribute('aria-label','Sayı seçenekleri');
     const ball=el('button','ob-ball'); ball.type='button'; ball.setAttribute('aria-label','Top: sayı seçmek için ok tuşları, atmak için boşluk. Dokunmatik: sağa sola taşı, aşağı çek ve bırak.');
     court.append(crowd,prompt,hoop,answers,ball);
-    const controls=el('footer','ob-controls'), feedback=el('p','ob-feedback'), shoot=el('button','ob-shoot','Basket at ↗');
+    const controls=el('footer','ob-controls'), feedback=el('p','ob-feedback');
     feedback.setAttribute('role','status'); feedback.setAttribute('aria-live','polite');
-    controls.append(feedback,shoot); lane.append(head,court,controls); $('ob-courts').append(lane);
-    const p={name,lane,court,prompt,hoop,answers,ball,feedback,shoot,scoreEl:score,progress,
+    controls.append(feedback); lane.append(head,court,controls); $('ob-courts').append(lane);
+    const p={name,lane,court,prompt,hoop,answers,ball,feedback,scoreEl:score,progress,
       score:0,solved:0,mistakes:0,attempts:0,streak:0,index:0,done:false,busy:false,pointer:null,selected:null,wrongOnQuestion:0,animation:null};
-    shoot.addEventListener('click',()=>shootBall(p));
     ball.addEventListener('keydown',e=>{
       if(['ArrowLeft','ArrowRight'].includes(e.key)) {
         e.preventDefault(); select(p,((p.selected ?? (e.key==='ArrowRight'?-1:0))+(e.key==='ArrowRight'?1:3))%4);
@@ -130,7 +131,7 @@
     cancelDrag(p);
     Object.assign(p,R.answer(p,p.choices[p.selected]));
     p.phase='flight'; p.wait=reduced.matches?120:850;
-    p.shoot.disabled=true; p.ball.disabled=true;
+    p.ball.disabled=true;
     [...p.answers.children].forEach(b=>b.disabled=true);
     p.feedback.textContent='Top havada…';
     const b=p.ball.getBoundingClientRect(), h=p.hoop.getBoundingClientRect();
@@ -185,7 +186,7 @@
       for(const p of players) if(p.busy) {p.wait-=dt;if(p.wait<=0){if(p.phase==='flight')landed(p);else afterFeedback(p);}}
       // Süre dolmadan bırakılan atış tamamlanır; yeni atış kabul edilmez.
       if(active && settings.seconds && remaining<=0 && !players.some(p=>p.busy)) finish();
-      else if(active && settings.seconds && remaining<=0) players.forEach(p=>{p.shoot.disabled=true;p.ball.disabled=true;});
+      else if(active && settings.seconds && remaining<=0) players.forEach(p=>{p.ball.disabled=true;[...p.answers.children].forEach(b=>b.disabled=true);});
     }
     requestAnimationFrame(tick);
   }
@@ -212,7 +213,8 @@
     clearRound();$('ob-arena').hidden=true;document.body.classList.remove('ob-playing');$('main-content').inert=false;
     backgroundInert.forEach((value,node)=>{node.inert=value;});backgroundInert.clear();
     if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
-    $('ob-settings').querySelector('[type=submit]').focus();
+    showLobby('settings');
+    $('ob-settings').querySelector('[type=submit]').focus({preventScroll:true});
   }
   function pause() {
     if(!active || paused) return;
@@ -247,11 +249,36 @@
     $('ob-result').querySelector('.ob-confetti')?.remove();$('ob-result').append(confetti);
     tone(true);$('ob-result-title').focus();
   }
+  function matchSummary(){
+    const count=Number($('ob-players').value),seconds=Number($('ob-duration').value);
+    $('ob-match-summary').textContent=count+' oyuncu · '+(seconds?seconds+' saniye':'10 soru')+' · 10–'+$('ob-range').value;
+  }
+  function showLobby(screen){
+    $('ob-stage').dataset.screen=screen;
+    $('ob-cover').hidden=screen!=='cover';
+    $('ob-prep').hidden=screen!=='settings';
+    $('ob-open-settings').setAttribute('aria-expanded',String(screen==='settings'));
+    (screen==='cover'?$('ob-open-settings'):$('ob-prep-title')).focus({preventScroll:true});
+  }
+  function fitLobby(){
+    if(!window.innerHeight)return;
+    const stage=$('ob-stage'),top=stage.getBoundingClientRect().top+(window.scrollY||0);
+    const dock=$('shortcutDock'),reserve=dock?Math.min(115,dock.getBoundingClientRect().height+22):24;
+    const height=Math.max(window.innerWidth<600?300:340,Math.min(800,window.innerHeight-top-reserve-18));
+    const value=Math.round(height)+'px';
+    if(stage.style.getPropertyValue('--ob-stage-height')!==value)stage.style.setProperty('--ob-stage-height',value);
+  }
+  $('ob-open-settings').addEventListener('click',()=>showLobby('settings'));
+  $('ob-back-cover').addEventListener('click',()=>showLobby('cover'));
   $('ob-players').addEventListener('change',()=>{
     [...$('ob-names').children].forEach((label,i)=>{label.hidden=i>=Number($('ob-players').value);label.querySelector('input').disabled=label.hidden;});
+    matchSummary();
   });
+  ['ob-range','ob-duration'].forEach(id=>$(id).addEventListener('change',matchSummary));
   $('ob-settings').addEventListener('submit',e=>{
-    e.preventDefault();const count=Number($('ob-players').value);
+    e.preventDefault();
+    if(active||$('ob-stage').dataset.screen!=='settings')return;
+    const count=Number($('ob-players').value);
     settings={count,max:Number($('ob-range').value),mode:$('ob-mode').value,seconds:Number($('ob-duration').value),
       names:[...$('ob-names').querySelectorAll('input')].slice(0,count).map((n,i)=>n.value.trim()||'Oyuncu '+(i+1))};
     sound=$('ob-audio').checked;$('ob-sound').setAttribute('aria-pressed',String(sound));$('ob-courts').inert=false;start();
@@ -263,6 +290,7 @@
   $('ob-retry').addEventListener('click',()=>{$('ob-courts').inert=false;start();});
   $('ob-fullscreen').addEventListener('click',()=>{if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});else $('ob-arena').requestFullscreen?.().catch(()=>{});});
   document.addEventListener('keydown',e=>{
+    if(e.key==='Escape' && $('ob-arena').hidden && $('ob-stage').dataset.screen==='settings'){e.preventDefault();showLobby('cover');return;}
     if(e.key==='Escape' && active){e.preventDefault();paused?resume():pause();}
     if(e.key==='Tab' && (!$('ob-pause-screen').hidden || !$('ob-result').hidden)) {
       const overlay=$('ob-pause-screen').hidden?$('ob-result'):$('ob-pause-screen');
@@ -272,6 +300,9 @@
     }
   });
   document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
-  window.addEventListener('resize',()=>{players.forEach(p=>{cancelDrag(p);if(!p.busy)p.ball.style.left='';});});
+  window.addEventListener('resize',()=>{fitLobby();players.forEach(p=>{cancelDrag(p);if(!p.busy)p.ball.style.left='';});});
+  window.addEventListener('load',fitLobby);
+  if(window.ResizeObserver){const observer=new window.ResizeObserver(fitLobby);observer.observe(document.body);}
+  fitLobby();
   requestAnimationFrame(tick);
 })();

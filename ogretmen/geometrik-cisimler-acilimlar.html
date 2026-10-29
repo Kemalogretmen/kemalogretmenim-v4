@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Geometrik Cisimler ve Katlanabilir Açılımlar - Kemal Öğretmenim</title>
     
@@ -95,6 +96,11 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link rel="stylesheet" href="/css/geometry-toolbox.css?v=20261028-unified-5">
+  <script defer src="/js/geometry-toolbox.js?v=20261028-unified-5"></script>
+  <link rel="stylesheet" href="/css/geometry-backgrounds.css?v=20261028-paper-5">
+<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 </head>
 <body>
     <main class="geo-tool-shell" id="geoToolShell">
@@ -195,11 +201,14 @@
         </div>
     </main>
 
+    <script src="/ogretmen/curved-net-geometry.js?v=20261028-curved-nets-1"></script>
+    <script src="/js/geometry-backgrounds.js?v=20261028-paper-5"></script>
     <script src="/js/site-data.js"></script>
-    <script src="/js/site.js?v=20260926-dock-home"></script>
+    <script src="/js/site.js?v=20261029-theme"></script>
     <script>
         let scene, camera, renderer, controls, raycaster, mouse;
         let floorObjects = [];
+        let geometryGround = null;
         
         let pivotGroup = null;  // Yüksekliği ayarlayarak yere batmayı engeller
         let tumbleGroup = null; // Kendi merkezi etrafında takla atmasını sağlar
@@ -215,6 +224,7 @@
         let currentColor = 0x2196F3;
         let currentPenColor = '#D32F2F';
         
+        let lastFoldFrame = null;
         let isAutoFolding = false;
         let foldProgress = 0;
         let foldDirection = 1;
@@ -283,16 +293,20 @@
             dirLight.shadow.mapSize.width = 2048; dirLight.shadow.mapSize.height = 2048;
             dirLight.shadow.camera.left = -500; dirLight.shadow.camera.right = 500;
             dirLight.shadow.camera.top = 500; dirLight.shadow.camera.bottom = -500;
+            dirLight.shadow.bias = -0.0005;
+            dirLight.shadow.normalBias = 0.7;
             scene.add(dirLight);
             const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
             fillLight.position.set(-300, 200, -300);
             scene.add(fillLight);
 
-            // Zemin
-            const gridHelper = new THREE.GridHelper(2000, 40, 0xaaaaaa, 0xdddddd);
-            gridHelper.position.y = -0.5; scene.add(gridHelper); floorObjects.push(gridHelper);
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: 0xf8fbff, depthWrite: false }));
-            ground.position.y = -0.6; ground.receiveShadow = true; scene.add(ground); floorObjects.push(ground);
+            // The same user-selected mathematical ground is available for
+            // every solid, including the curved cylinder and cone models.
+            geometryGround = window.GeometryBackgrounds.createGround(THREE, scene, {
+                size: 2000, step: 50, y: -0.6, color: 0xf8fbff
+            });
+            floorObjects = geometryGround.objects;
+            window.GeometryBackgrounds.register('nets', type => geometryGround.set(type), 'plain');
 
             raycaster = new THREE.Raycaster();
             mouse = new THREE.Vector2();
@@ -331,7 +345,7 @@
             const count = segments || 96;
             for (let i = 0; i < count; i += 1) {
                 const angle = (i / count) * Math.PI * 2;
-                points.push(new THREE.Vector3(Math.cos(angle) * radius, 0.65, Math.sin(angle) * radius));
+                points.push(new THREE.Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius));
             }
             return new THREE.LineLoop(
                 new THREE.BufferGeometry().setFromPoints(points),
@@ -532,7 +546,7 @@
                     const pos = geo.attributes.position;
                     for (let i = 0; i < pointCount; i += 1) {
                         const p = mapper(i / (pointCount - 1), localT);
-                        pos.setXYZ(i, p.x, p.y + 0.7, p.z);
+                        pos.setXYZ(i, p.x, p.y, p.z);
                     }
                     pos.needsUpdate = true;
                     geo.computeBoundingSphere();
@@ -544,35 +558,32 @@
         }
 
         function buildCylinderNet() {
-            const radius = 52;
-            const height = 132;
-            const circumference = 2 * Math.PI * radius;
-            const capCenterZ = 0;
-            function cylinderPoint(u, v, t) {
-                const flatX = (u - 0.5) * circumference;
-                const flatZ = radius + v * height;
-                if (t <= 0.001) return new THREE.Vector3(flatX, 0, flatZ);
-                const liftT = stagedProgress(t, 0, 0.42);
-                const angle = (u - 0.5) * Math.PI * 2 * t;
-                const bendRadius = radius / t;
-                return new THREE.Vector3(
-                    Math.sin(angle) * bendRadius,
-                    v * height * liftT,
-                    capCenterZ + radius + (Math.cos(angle) - 1) * bendRadius + v * height * (1 - liftT)
-                );
-            }
-            createMorphSurface(64, 10, cylinderPoint, 0x7c83e6, 0, 1, function() { return 0.92; });
-            addMorphLine(80, function(u, t) { return cylinderPoint(u, 0, t); }, 0xd6de00, 0, 1);
-            addMorphLine(80, function(u, t) { return cylinderPoint(u, 1, t); }, 0xd6de00, 0, 1);
-            addMorphLine(16, function(v, t) { return cylinderPoint(0, v, t); }, 0xd6de00, 0, 1);
-            addMorphLine(16, function(v, t) { return cylinderPoint(1, v, t); }, 0xd6de00, 0, 1);
-            addMorphCircle(radius, 0, capCenterZ, 0, 0x8f91df, 0, 1, 0, capCenterZ, function() { return 0.96; }, 0xd6de00);
-            addMorphCirclePath(radius, function(t) {
-                const liftT = stagedProgress(t, 0, 0.42);
-                const settleT = stagedProgress(t, 0.55, 1);
-                const tangentZ = capCenterZ + height * (1 - liftT) + radius * 2;
-                return new THREE.Vector3(0, height * liftT, lerp(tangentZ, capCenterZ, settleT));
-            }, 0x8f91df, 0, 1, function() { return 0.96; }, 0xd6de00);
+            const geometry = window.CurvedNetGeometry;
+            const radius = geometry.cylinder.radius;
+            const side = (u, v, t) => geometry.cylinderSide(u, v, t);
+            createMorphSurface(96, 12, side, 0x7c83e6, null, null, () => 1);
+            // Draw the actual boundaries; the side keeps the same width and
+            // height during lifting and rolling, rather than shrinking to fit.
+            addMorphLine(128, (u, t) => side(u, 0, t), 0x334155);
+            addMorphLine(128, (u, t) => side(u, 1, t), 0x334155);
+            addMorphLine(20, (v, t) => side(0, v, t), 0x334155);
+            addMorphLine(20, (v, t) => side(1, v, t), 0x334155);
+            [false, true].forEach(top => {
+                const mesh = createCircleFace(radius, 96, 0x8f91df, 0x334155);
+                mesh.material.opacity = 1;
+                mesh.material.transparent = false;
+                netGroup.add(mesh);
+                const part = {
+                    mesh,
+                    update(t) {
+                        const pose = geometry.cylinderCap(top, t);
+                        mesh.position.set(pose.x, pose.y, pose.z);
+                        mesh.rotation.x = pose.rotationX;
+                    }
+                };
+                part.update(0);
+                morphParts.push(part);
+            });
         }
 
         function buildConeNet() {
@@ -613,26 +624,14 @@
         }
 
         function buildSphereNet() {
-            const strips = 8;
-            const radius = 82;
-            const goreHalf = Math.PI / strips;
-            const maxStripWidth = 2 * Math.PI * radius / strips;
-            const spacing = maxStripWidth + 18;
-            for (let strip = 0; strip < strips; strip += 1) {
-                createMorphSurface(6, 28, function(u, v, t) {
-                    const lat = (v - 0.5) * Math.PI;
-                    const local = (u - 0.5) * 2 * goreHalf;
-                    const foldedTheta = strip * 2 * goreHalf + local;
-                    const leafWidth = Math.max(1, maxStripWidth * Math.cos(lat));
-                    const flatX = (strip - (strips - 1) / 2) * spacing + (u - 0.5) * leafWidth;
-                    const flatZ = (v - 0.5) * Math.PI * radius;
-                    const folded = new THREE.Vector3(
-                        Math.cos(lat) * Math.sin(foldedTheta) * radius,
-                        Math.sin(lat) * radius,
-                        Math.cos(lat) * Math.cos(foldedTheta) * radius
-                    );
-                    return mixVec(new THREE.Vector3(flatX, 0, flatZ), folded, t);
-                }, strip % 2 ? 0x4dd0e1 : 0x64b5f6);
+            const geometry = window.CurvedNetGeometry;
+            for (let strip = 0; strip < geometry.sphere.strips; strip += 1) {
+                const point = (u, v, t) => geometry.spherePoint(strip, u, v, t);
+                createMorphSurface(8, 40, point, strip % 2 ? 0x4dd0e1 : 0x64b5f6, null, null, () => 1);
+                // Meridional seams explain how the pointed globe gores meet;
+                // there are no minimum-width pole patches or hidden overlaps.
+                addMorphLine(64, (v, t) => point(0, v, t), 0x334155);
+                addMorphLine(64, (v, t) => point(1, v, t), 0x334155);
             }
         }
 
@@ -790,6 +789,7 @@
             
             tumbleGroup.quaternion.copy(targetModelQuaternion);
             updateFold(slider.value / 100);
+            fitCameraToNet();
         }
 
         function updateFold(t) {
@@ -813,7 +813,7 @@
 
         function updateFloorVisibility() {
             floorObjects.forEach(function(object) {
-                object.visible = currentShape !== 'cylinder' && currentShape !== 'cone';
+                object.visible = true;
             });
         }
 
@@ -938,10 +938,13 @@
             const note = document.getElementById('shapeNote');
             if (!note) return;
             if (currentShape === 'sphere') {
-                note.textContent = 'Küre düzleme tek parça kusursuz açılamaz; burada derslerde kullanılan dilimli küre modeli gösterilir.';
+                note.textContent = 'Kürenin gerilmeden veya yırtılmadan düz açılımı yoktur. Burada 12 dilimli yaklaşık yapım modeli gösterilir; dilimler eğrilerek birleşir.';
                 note.classList.add('show');
-            } else if (currentShape === 'cylinder' || currentShape === 'cone') {
-                note.textContent = 'Tabanlar yan yüzeye temas eden gerçek açılım düzeninden kapanır.';
+            } else if (currentShape === 'cylinder') {
+                note.textContent = 'Bir dikdörtgen ve iki eş daire. Yan yüzey uzunluğu korunarak sarılır; üst daire teğet bağlantısından dönerek kapanır.';
+                note.classList.add('show');
+            } else if (currentShape === 'cone') {
+                note.textContent = 'Bir daire dilimi yan yüzeyi, bir daire tabanı oluşturur.';
                 note.classList.add('show');
             } else {
                 note.textContent = '';
@@ -968,10 +971,39 @@
             foldProgress = e.target.value / 100; percentLabel.innerText = e.target.value + '%'; updateFold(foldProgress);
         }
 
+        function fitCameraToNet() {
+            if (!pivotGroup || !controls || !camera) return;
+            // Frame the complete motion once, so an open net and its closed
+            // solid remain visible without the camera chasing moving faces.
+            const progress = slider.value / 100;
+            const bounds = new THREE.Box3();
+            [0, 0.24, 0.5, 0.78, 1].forEach(t => {
+                updateFold(t);
+                scene.updateMatrixWorld(true);
+                bounds.union(new THREE.Box3().setFromObject(pivotGroup));
+            });
+            updateFold(progress);
+            const center = bounds.getCenter(new THREE.Vector3());
+            const radius = Math.max(100, bounds.getSize(new THREE.Vector3()).length() / 2);
+            const vertical = camera.fov * Math.PI / 360;
+            const horizontal = Math.atan(Math.tan(vertical) * camera.aspect);
+            const distance = radius / Math.sin(Math.min(vertical, horizontal)) * 1.13;
+            const direction = camera.position.clone().sub(controls.target).normalize();
+            if (!direction.lengthSq()) direction.set(340, 288, 470).normalize();
+            controls.target.copy(center);
+            camera.position.copy(center).addScaledVector(direction, distance);
+            const size = getStageSize();
+            const shiftX = size.width > 800 ? -90 : 0;
+            camera.setViewOffset(size.width, size.height, shiftX, Math.min(46, size.height * 0.065), size.width, size.height);
+            camera.updateProjectionMatrix();
+            controls.update();
+        }
+
         function resetCamera() {
             camera.position.set(340, 330, 470);
             if(controls) { controls.target.set(0, 42, 0); controls.update(); }
             resetTumble();
+            fitCameraToNet();
         }
 
         function onWindowResize() {
@@ -981,10 +1013,13 @@
             camera.updateProjectionMatrix();
             renderer.setSize(stageSize.width, stageSize.height);
             resizeCanvas2D();
+            fitCameraToNet();
         }
 
-        function animate() {
+        function animate(now) {
             requestAnimationFrame(animate);
+            const seconds = lastFoldFrame == null || !Number.isFinite(now) ? 0 : Math.min(0.05, (now - lastFoldFrame) / 1000);
+            if (Number.isFinite(now)) lastFoldFrame = now;
             if(controls && controls.enabled) controls.update();
 
             // Takla Animasyonunu Uygula
@@ -993,7 +1028,7 @@
             }
 
             if (isAutoFolding) {
-                foldProgress += 0.008 * foldDirection;
+                foldProgress += 0.48 * seconds * foldDirection;
                 if (foldProgress > 1) { foldProgress = 1; foldDirection = -1; }
                 if (foldProgress < 0) { foldProgress = 0; foldDirection = 1; }
                 

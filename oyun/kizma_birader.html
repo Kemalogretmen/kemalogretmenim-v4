@@ -2,9 +2,11 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
+<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kızma Birader Matematik Parkuru | Kemal Öğretmenim</title>
   <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
+  <link rel="stylesheet" href="/css/kizma-birader-dice.css?v=20261028">
   <style>
     :root {
       --board-max: 690px;
@@ -2588,6 +2590,8 @@
     @media (prefers-reduced-motion: reduce) { .kb-cloud { animation: none; opacity: 0.4; left: 20%; } }
     @media (prefers-reduced-motion: reduce) { .kb-sun, .kb-sun::before, .kb-win-name, .kb-win-crown, #winModal .modal-header .emoji { animation: none !important; } }
   </style>
+<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 </head>
 <body>
   <div class="game-page">
@@ -2609,8 +2613,9 @@
             <span class="dice-well-ring"></span>
           </div>
           <span class="roll-state" id="rollState">Hazneye dokun ve zarı tahtaya bırak.</span>
-          <span class="dice-result-badge" id="diceResultBadge">Hazır</span>
+          <span class="dice-result-badge" id="diceResultBadge" role="status" aria-live="polite">Hazır</span>
         </button>
+        <button id="kbDiceSound" class="dice-sound-toggle" type="button" aria-pressed="true" onclick="toggleDiceSound()">♫ Zar sesi açık</button>
 
         <section class="glass-card question-card" id="questionCard">
           <div class="question-placeholder" id="questionPlaceholder">
@@ -2718,7 +2723,7 @@
         </section>
       </section>
 
-      <div id="diceArena" class="dice-arena">
+      <div id="diceArena" class="dice-arena" aria-hidden="true">
         <div class="dice-shadow state-hidden" id="diceShadow"></div>
         <div class="dice-wrap state-hidden" id="diceWrap">
           <div class="dice-3d" id="dice3D"></div>
@@ -2811,7 +2816,10 @@
   </div>
 
   <script src="/js/site-data.js?v=20261008-aquarium-dock"></script>
-  <script src="/js/site.js?v=20261010-dock-home"></script>
+  <script src="/js/site.js?v=20261029-theme"></script>
+  <script src="/js/chance-audio.js?v=20261028"></script>
+  <script src="/js/chance-studio.js?v=20261028"></script>
+  <script src="/js/kizma-birader-dice.js?v=20261028"></script>
   <script>
     const COLORS = [
       { id: "mavi", label: "Mavi", hex: "#3B82F6", light: "#E8F2FF" },
@@ -3224,29 +3232,24 @@
     }
 
     function setDiceFace(number) {
-      const opposite = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
-      const sideMap = {
-        1: [2, 5, 3, 4],
-        2: [1, 6, 3, 4],
-        3: [1, 6, 2, 5],
-        4: [1, 6, 2, 5],
-        5: [1, 6, 3, 4],
-        6: [2, 5, 3, 4]
-      };
-      const [right, left, top, bottom] = sideMap[number];
+      // Yüzler artık değişmez; yalnızca gerçek küpün yönü değişir.
       byId("dice3D").innerHTML = `
-        <div class="dice-face front">${buildDiceFace(number, true)}</div>
-        <div class="dice-face back">${buildDiceFace(opposite[number])}</div>
-        <div class="dice-face right">${buildDiceFace(right)}</div>
-        <div class="dice-face left">${buildDiceFace(left)}</div>
-        <div class="dice-face top">${buildDiceFace(top)}</div>
-        <div class="dice-face bottom">${buildDiceFace(bottom)}</div>
+        <div class="dice-face front">${buildDiceFace(2)}</div>
+        <div class="dice-face back">${buildDiceFace(5)}</div>
+        <div class="dice-face right">${buildDiceFace(3)}</div>
+        <div class="dice-face left">${buildDiceFace(4)}</div>
+        <div class="dice-face top">${buildDiceFace(1)}</div>
+        <div class="dice-face bottom">${buildDiceFace(6)}</div>
       `;
+      byId("dice3D").style.setProperty("--dice-final-transform", window.KBBoardDice.cssTransform(number));
+      byId("dice3D").dataset.value = String(number);
     }
 
     function setDiceStage(stage) {
       byId("diceWrap").className = `dice-wrap state-${stage}`;
       byId("diceShadow").className = `dice-shadow state-${stage}`;
+      byId("rollBtn").setAttribute("aria-busy", String(stage === "rolling"));
+      if (stage === "ready" || stage === "hidden") window.kbDice3D?.hide();
     }
 
     function updateDiceArenaLayout() {
@@ -3520,10 +3523,20 @@
         getAudio();
       } catch (error) {
       }
+      window.ChanceAudio?.unlock();
       const rollButton = byId("rollBtn");
       if (rollButton && !rollButton.disabled) {
         zarAt();
       }
+    }
+
+    function toggleDiceSound() {
+      const button = byId("kbDiceSound");
+      const enabled = button.getAttribute("aria-pressed") !== "true";
+      button.setAttribute("aria-pressed", String(enabled));
+      button.textContent = enabled ? "♫ Zar sesi açık" : "♫ Zar sesi kapalı";
+      window.ChanceAudio?.setEnabled(enabled);
+      if (enabled) window.ChanceAudio?.unlock();
     }
 
     function chooseOperation() {
@@ -3737,6 +3750,19 @@
     }
 
     async function animateRoll(finalRoll, token) {
+      const boardRect = byId("boardGridWrap").getBoundingClientRect();
+      if (boardRect.bottom < 80 || boardRect.top > window.innerHeight - 100) {
+        byId("boardGridWrap").scrollIntoView({ behavior: "instant", block: "center" });
+        updateDiceArenaLayout();
+      }
+      if (window.kbDice3D?.available) {
+        setDiceStage("rolling");
+        const ok = await window.kbDice3D.roll(finalRoll, () => token === gameState.turnToken && gameState.gameStarted && gameState.phase === "rolling");
+        if (!ok || token !== gameState.turnToken) return false;
+        setDiceFace(finalRoll);
+        setDiceStage("landed");
+        return true;
+      }
       const wrap = byId("diceWrap");
       const dice = byId("dice3D");
       setDiceStage("rolling");
@@ -3745,22 +3771,9 @@
       void dice.offsetWidth;
       dice.classList.add("spin");
 
-      let tickCount = 0;
-      const interval = window.setInterval(() => {
-        if (token !== gameState.turnToken) {
-          window.clearInterval(interval);
-          return;
-        }
-        tickCount += 1;
-        sesCal("zar");
-        setDiceFace(rand(1, 6));
-        if (tickCount >= 8) {
-          window.clearInterval(interval);
-        }
-      }, 120);
-
-      const stillActive = await wait(1450, token);
-      window.clearInterval(interval);
+      setDiceFace(finalRoll);
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const stillActive = await wait(reduced ? 180 : 1500, token);
       if (!stillActive) {
         return false;
       }
@@ -3768,6 +3781,7 @@
       dice.classList.remove("spin");
       setDiceFace(finalRoll);
       setDiceStage("landed");
+      window.ChanceAudio?.diceImpact(.45);
       return true;
     }
 
@@ -3776,6 +3790,7 @@
         return false;
       }
       setDiceStage("exit");
+      if (window.kbDice3D?.available) return window.kbDice3D.exit(() => token === gameState.turnToken && gameState.gameStarted);
       return wait(760, token);
     }
 
@@ -4038,7 +4053,7 @@
       gameState.phase = "question";
       openQuestionCard(question);
       setRollState("İşlem açıldı. Cevap verilene kadar zar tahtada bekliyor.", "İşlem açık • Zar tahtada");
-      byId("diceResultBadge").textContent = "Tahtada bekliyor";
+      byId("diceResultBadge").textContent = `🎲 ${gameState.lastRoll} • Tahtada bekliyor`;
 
       if (currentPlayerSetup().isComp) {
         computerAnswer(token);
@@ -4078,7 +4093,7 @@
       }
 
       gameState.targetPos = getTargetPosition(finalRoll);
-      byId("diceResultBadge").textContent = "Tahtada";
+      byId("diceResultBadge").textContent = `🎲 ${finalRoll} • Tahtada`;
       await wait(250, token);
       if (token !== gameState.turnToken) {
         return;
@@ -4527,6 +4542,8 @@
     tag.onload = function () {
       try { init(); } catch (e) {
         console.warn("3D tahta açılamadı, klasik tahta kullanılıyor.", e);
+        window.kbDice3D?.loseContext();
+        document.getElementById("diceArena").classList.remove("has-physical-die");
         wrap.classList.remove("has-3d");
         [canvas, sunEl, skyEl].forEach(function (n) { if (n && n.parentNode) n.parentNode.removeChild(n); });
       }
@@ -4729,6 +4746,8 @@
         var seed = 11, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
         var samples = []; for (var s = 0; s <= L; s += 0.3) samples.push(at(s));
         var clear = function (u, v, m) {
+          // Zarın açık çim şeridine süs/ağaç yerleştirmeyin.
+          if (u > -8.2 && u < -2.55 && v > -2.5 && v < -0.85) return false;
           if (Math.pow((u - u0) / 3.0, 2) + Math.pow((Math.abs(v) - RR) / 1.0, 2) < 1 || (Math.abs(u - u0) < 1.5 && Math.abs(v) < RR + 0.3)) return false;
           for (var k = 0; k < samples.length; k++) if (Math.hypot(u - samples[k][0], v - samples[k][1]) < m) return false;
           return true;
@@ -4770,6 +4789,7 @@
         var w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return;
         if (mq.matches !== portrait) { portrait = mq.matches; build(); }
         R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); fit();
+        window.kbDice3D?.refresh();
       }
 
       function makePawn(i) {
@@ -4828,6 +4848,20 @@
         }
       };
 
+      // Aynı sahne, kamera, ışık ve zemin: zar tahta üzerine gerçekten gölge düşürür.
+      try {
+        var physicalDie = window.KBBoardDice.mesh(T, document);
+        scene.add(physicalDie);
+        window.kbDice3D = window.KBBoardDice.create({
+          win: window, die: physicalDie,
+          toWorld: function (u, v) { return portrait ? [-v, u] : [u, v]; },
+          render: function () { R.render(scene, cam); }
+        });
+        document.getElementById("diceArena").classList.add("has-physical-die");
+      } catch (error) {
+        console.warn("Zar hafif 3B görünümde devam ediyor.", error);
+      }
+
       function update(dt, time) {
         waterTex.offset.x = (waterTex.offset.x + dt * 0.04) % 1;
         tiles.forEach(function (t) {
@@ -4884,6 +4918,8 @@
       if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { onScreen = en[0].isIntersecting; }).observe(wrap);
       if ("ResizeObserver" in window) new ResizeObserver(size).observe(wrap); else addEventListener("resize", size);
       canvas.addEventListener("webglcontextlost", function (ev) {
+        window.kbDice3D?.loseContext();
+        document.getElementById("diceArena").classList.remove("has-physical-die");
         ev.preventDefault(); wrap.classList.remove("has-3d"); canvas.style.display = "none"; sunEl.style.display = "none"; skyEl.style.display = "none"; onScreen = false;
       });
 

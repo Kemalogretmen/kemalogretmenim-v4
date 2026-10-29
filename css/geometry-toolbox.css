@@ -1,0 +1,95 @@
+/* A single movable toolbox across the geometry workspaces. */
+body.geometry-workspace{overflow:hidden;touch-action:manipulation}
+.geometry-workspace .has-geometry-toolbox{height:var(--geometry-workspace-height,calc(100dvh - 106px))!important;min-height:430px!important;overflow:hidden!important;display:block!important;padding:0!important}
+.geometry-toolbox{--toolbox-width:282px;position:fixed;left:16px;top:120px;z-index:32;width:min(var(--toolbox-width),calc(100vw - 16px));max-height:var(--toolbox-available-height,calc(100dvh - 140px));box-sizing:border-box;border:1px solid #ccd8e7;border-radius:16px;background:#ffffffed;box-shadow:0 12px 42px #20335a26,0 2px 6px #20335a0d;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);font-family:'Segoe UI',sans-serif;color:#21334e;isolation:isolate}
+.geometry-toolbox.is-wide{--toolbox-width:380px}
+.geometry-toolbox.is-collapsed{--toolbox-width:260px}
+.geometry-toolbox.is-dragging{box-shadow:0 18px 50px #20335a40;user-select:none}
+.geometry-toolbox-header{display:flex;align-items:center;gap:2px;min-height:44px;padding:5px 7px;box-sizing:border-box;border-bottom:1px solid #e6edf6}
+.geometry-toolbox.is-collapsed .geometry-toolbox-header{border:0}
+.geometry-toolbox .geometry-toolbox-header button{min-height:28px;height:28px;border:0;box-shadow:none;background:transparent;border-radius:8px;padding:0;color:#62758d;flex-shrink:0;display:flex;align-items:center;justify-content:center;font:600 18px 'Segoe UI',sans-serif;transition:background .15s}
+.geometry-toolbox .geometry-toolbox-header button:hover{background:#edf3fc;color:#245fc6}
+.geometry-toolbox .geometry-toolbox-header .geometry-toolbox-drag{flex:1;justify-content:flex-start;gap:6px;min-width:0;cursor:grab;touch-action:none;text-align:left;font-size:12px;font-weight:800;color:#243d60}
+.geometry-toolbox .geometry-toolbox-drag:active{cursor:grabbing;transform:none}
+.geometry-toolbox-drag span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.geometry-toolbox .geometry-toolbox-header .geometry-shape-icon{height:27px;width:27px;flex-shrink:0}
+.geometry-toolbox .geometry-toolbox-reset,.geometry-toolbox .geometry-toolbox-size,.geometry-toolbox .geometry-toolbox-toggle{width:25px}
+.geometry-toolbox-body{max-height:calc(var(--toolbox-available-height,calc(100dvh - 140px)) - 46px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;touch-action:pan-y;border-radius:0 0 16px 16px}
+.geometry-toolbox [hidden],.geometry-toolbox-tooltip[hidden]{display:none!important}
+.geometry-toolbox-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:7px 8px;background:#f4f7fc;border-top:1px solid #edf1f7;border-bottom:1px solid #e4ebf5;position:sticky;top:0;z-index:2}
+.geometry-toolbox .geometry-toolbox-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;min-height:40px;padding:3px 2px;font:600 10px 'Segoe UI',sans-serif;border:1px solid transparent;border-radius:9px;background:transparent;color:#71839d;box-shadow:none}
+.geometry-tab-symbol{font-size:19px;line-height:19px}
+.geometry-toolbox .geometry-toolbox-tab.is-active{background:white;color:#225fc5;border-color:#dce6f6;box-shadow:0 2px 5px #28487c0a}
+.geometry-toolbox-tab.has-selection:not(.is-active)::after{content:'';position:absolute;margin-left:35px;margin-top:-22px;width:5px;height:5px;background:#327ce5;border-radius:50%}
+.geometry-toolbox-content{padding:12px;max-height:440px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;touch-action:pan-y}
+.geometry-toolbox-section{display:grid;gap:12px;min-width:0;align-content:start}
+.geometry-toolbox-section>.group,.geometry-toolbox-section>section{display:grid;gap:7px}
+.geometry-toolbox .group-title,.geometry-toolbox section>b{font:800 10px 'Segoe UI',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#7a8ba2}
+.geometry-toolbox button{min-height:34px;padding:6px;font:650 11px 'Segoe UI',sans-serif;border:1px solid #dfe7f1;background:#fff;color:#445b76;border-radius:9px;box-sizing:border-box;gap:5px;box-shadow:none}
+.geometry-toolbox button:hover{border-color:#a5c4ee;background:#f0f6ff}
+.geometry-toolbox button.primary,.geometry-toolbox button.active{background:#edf4ff;color:#1e65ca;border-color:#91b9ed;box-shadow:none}
+.geometry-toolbox button:disabled{opacity:.4;cursor:default}
+.geometry-toolbox .grid,.geometry-toolbox .tool-grid,.geometry-toolbox .mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.geometry-toolbox .geometry-toolbox-modes{padding:7px 10px;display:block!important}
+.geometry-toolbox .geometry-toolbox-modes>b{display:none}
+.geometry-toolbox .geometry-toolbox-modes .grid{grid-template-columns:1fr 1fr}
+.geometry-toolbox .geometry-toolbox-modes button{min-height:30px;font-size:11px;padding:4px}
+.geometry-toolbox .shapes,.geometry-toolbox .geometry-solid-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.geometry-toolbox.is-wide .shapes,.geometry-toolbox.is-wide .geometry-solid-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.geometry-toolbox .geometry-shape-button{display:grid;place-items:center;min-height:62px;padding:6px;background:linear-gradient(160deg,#fbfdff,#f0f5fc);border:1px solid #dce6f3;border-radius:11px;touch-action:manipulation}
+.geometry-toolbox .geometry-shape-button:hover{background:#e9f3ff;border-color:#77a7e5;box-shadow:0 3px 8px #2976cc15}
+.geometry-toolbox .geometry-shape-button.active{background:#e2eeff;border-color:#3c81df;box-shadow:inset 0 0 0 1px #3c81df}
+.geometry-shape-icon{display:block;width:46px;height:46px;max-width:none!important;pointer-events:none}
+.geometry-native-select{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;opacity:0!important;padding:0!important;pointer-events:none!important}
+.geometry-toolbox select{width:100%;min-height:34px;padding:5px 8px;font:600 11px 'Segoe UI',sans-serif;border-radius:8px;border:1px solid #dce5f2;background:white}
+.geometry-toolbox .colors,.geometry-toolbox .color-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;align-items:center}
+.geometry-toolbox[data-workspace="cubes"] .color-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.geometry-toolbox[data-workspace="cubes"] .pen-color-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.geometry-toolbox .color,.geometry-toolbox .color-btn{display:block;width:100%;max-width:26px;aspect-ratio:1;min-height:0;height:auto;padding:0;border:2px solid white;border-radius:50%;box-shadow:0 0 0 1px #becadd;justify-self:center}
+.geometry-toolbox .color.active,.geometry-toolbox .color-btn.active{box-shadow:0 0 0 2px #347ee1;transform:none}
+.geometry-toolbox .shape-edit{padding:9px;background:#f7faff;border:1px solid #dce7f6;border-radius:10px}
+.geometry-toolbox .shape-edit p,.geometry-toolbox .geometry-toolbox-context{font-size:11px;font-weight:500;line-height:1.5;color:#6e819b;min-height:0;margin:4px 0 8px}
+.geometry-toolbox .shape-actions{grid-template-columns:repeat(2,1fr)}
+.geometry-toolbox .shape-examples{grid-template-columns:repeat(2,minmax(0,1fr));max-height:300px;margin:0;padding:1px}
+.geometry-toolbox .shape-example{min-height:58px;display:flex;flex-direction:row;gap:6px;text-align:left;font-size:11px;padding:5px}
+.geometry-toolbox .shape-example svg{height:42px;width:42px}
+.geometry-toolbox .selected{padding:9px;gap:9px;display:none;border-radius:10px}
+.geometry-toolbox .selected.show{display:grid}
+.geometry-toolbox .selected>b{font-size:12px;color:#2b4e7c}
+.geometry-toolbox .rotate-help{font-size:10px}
+.geometry-toolbox .task{padding:10px;gap:7px;border-radius:10px}
+.geometry-toolbox .task span{font-size:11px}
+.geometry-toolbox .task b{font-size:10px}
+.geometry-toolbox-section>p{font:500 11px/1.5 'Segoe UI',sans-serif;color:#6e819b;margin:0}
+.geometry-toolbox #fold-panel{position:static;transform:none;width:auto;padding:0;display:grid;gap:12px;border:0;box-shadow:none;background:none;backdrop-filter:none}
+.geometry-toolbox .slider-row{display:grid;grid-template-columns:1fr 42px;gap:9px;width:100%}
+.geometry-toolbox .slider-label{grid-column:1/-1;font-size:11px}
+.geometry-toolbox #percent-label{font-size:14px}
+.geometry-toolbox #auto-btn{min-width:0;justify-self:stretch;min-height:34px;font-size:11px;border-radius:9px}
+.geometry-toolbox .shape-note{font-size:11px;font-weight:500;line-height:1.5;padding:8px}
+.geometry-toolbox .tumble-pad{gap:5px}
+.geometry-toolbox .tumble-row{gap:5px}
+.geometry-toolbox .tumble-btn{width:34px;min-height:34px;height:34px}
+.geometry-toolbox .tumble-btn.wide{width:112px;font-size:11px}
+.geometry-toolbox .geometry-toolbox-counter{display:flex;justify-content:center;gap:6px;align-items:center;min-height:28px;margin:6px 10px;background:#f3f7fd;border:0;border-radius:7px;font-size:11px}
+.geometry-toolbox #projections-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.geometry-toolbox .proj-title{font-size:10px}
+.geometry-toolbox .proj-canvas{border-radius:7px}
+.geometry-toolbox-tooltip{position:fixed;z-index:10000;padding:7px 11px;border-radius:8px;background:#203653;color:white;font:600 12px 'Segoe UI',sans-serif;box-shadow:0 5px 18px #17203325;pointer-events:none;max-width:240px;text-align:center}
+.builder-shell.has-geometry-toolbox .hint{left:50%;top:auto;bottom:94px;max-width:calc(100% - 40px);font-size:11px}
+.builder-shell.has-geometry-toolbox.two-d .shape-stage{position:absolute!important;inset:0;padding:16px 18px 104px!important;margin:0!important;min-width:0}
+.builder-shell.has-geometry-toolbox.two-d .shape-board{height:100%;width:100%;max-width:none;min-height:0;box-sizing:border-box;border-radius:20px}
+.builder-shell.has-geometry-toolbox.two-d .shape-board-note{font-size:11px;max-width:70%;margin:12px auto}
+@media(max-width:680px){
+  .geometry-toolbox{--toolbox-width:262px;border-radius:13px}
+  .geometry-toolbox.is-wide{--toolbox-width:340px}
+  .geometry-toolbox.is-collapsed{--toolbox-width:246px}
+  .geometry-toolbox .geometry-shape-button{min-height:57px}
+  .geometry-toolbox-content{padding:10px;max-height:300px}
+  .geometry-toolbox .geometry-shape-icon{height:40px;width:40px}
+  .geometry-toolbox .geometry-toolbox-header .geometry-shape-icon{height:25px;width:25px}
+  .builder-shell.has-geometry-toolbox.two-d .shape-stage{padding:10px 10px 100px!important}
+  .builder-shell.has-geometry-toolbox.two-d .shape-board-note{max-width:95%;font-size:10px}
+}
+.geometry-toolbox #counter-badge.geometry-toolbox-counter{min-height:28px;margin:6px 10px;font-size:11px;background:#f3f7fd;border:0;border-radius:7px}
+.geometry-toolbox[data-workspace="cubes"] #geometryTools-view .tool-grid{grid-template-columns:repeat(3,minmax(0,1fr))}

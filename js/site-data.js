@@ -122,7 +122,7 @@
     ekMenuler: [],
     kisayolDock: [
       { id: 'aquarium', baslik: 'Sınıf Akvaryumu', link: '/ogretmen/akvaryum.html', emoji: '🐠', iconUrl: '/assets/dock-icons/akvaryum.svg', aktif: true },
-      { id: 'whiteboard', baslik: 'Beyaz Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
+      { id: 'whiteboard', baslik: 'Akıllı Tahta', link: '/ogretmen/beyaztahta.html', emoji: '🖊️', iconUrl: '/assets/dock-icons/beyaz-tahta.svg', aktif: true },
       { id: 'stopwatch', baslik: 'Kronometre', link: '/ogretmen/kronometre.html', emoji: '⏱️', iconUrl: '/assets/dock-icons/kronometre.svg', aktif: true },
       { id: 'math', baslik: 'Matematik Araçları', link: '/ogretmen/matematik.html', emoji: '➗', iconUrl: '/assets/dock-icons/matematik.svg', aktif: true },
       { id: 'unit-cubes', baslik: 'Birim Küpler', link: '/ogretmen/birim-kup-uygulamasi.html', emoji: '🧊', iconUrl: '/assets/dock-icons/birim-kupler.svg', aktif: true },
@@ -207,7 +207,7 @@
       })),
       kisayolDock: dockItems.map((item, index) => ({
         id: item && item.id ? item.id : Date.now() + index,
-        baslik: item && item.baslik ? String(item.baslik) : `Kısayol ${index + 1}`,
+        baslik: item && /(?:^|\/)beyaztahta\.html(?:[?#]|$)/.test(String(item.link || '')) ? 'Akıllı Tahta' : item && item.baslik ? String(item.baslik) : `Kısayol ${index + 1}`,
         link: item && item.link ? String(item.link) : '#',
         emoji: item && item.emoji ? String(item.emoji) : '📌',
         iconUrl: item && item.iconUrl ? String(item.iconUrl) : '',

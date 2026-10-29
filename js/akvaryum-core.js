@@ -52,6 +52,8 @@
     { id: 'mantis', name: 'Mantis karidesi', file: 'mantis-karidesi.png', detail: 'Renkli zırhı ve meraklı gözleriyle', size: 140 },
     { id: 'crab', name: 'Yengeç', file: 'yengec.png', detail: 'Kumda yan yan yürüyen kabuklu dost', size: 130 },
     { id: 'lina', name: 'Lina Balığı', file: 'lina-baligi.png', detail: 'Turuncu pulları ve ipek gibi peçeli kuyruğuyla', size: 145 },
+    { id: 'hammerhead', name: 'Çekiç başlı köpekbalığı', file: 'cekic-basli-kopekbaligi.png', detail: 'Güçlü kuyruğuyla yüzer, ödülde zarifçe süzülür', size: 174 },
+    { id: 'axolotl', name: 'Aksolotl', file: 'aksolotl.png', detail: 'Pembe solungaçları kıpırdar, ödülde el sallar', size: 145 },
     { id: 'spongebob', name: 'SüngerBob', file: 'sungerbob.png', detail: 'Akvaryumun neşeli sünger dostu', size: 152, unlockAt: 100, category: 'character' },
     { id: 'patrick', name: 'Patrick', file: 'patrick.png', detail: 'Gülümseyen pembe denizyıldızı', size: 148, unlockAt: 100, category: 'character' },
     { id: 'mrkrabs', name: 'Bay Yengeç', file: 'bay-yengec.png', detail: 'Kıskaçlarıyla neşeyle selam verir', size: 150, unlockAt: 100, category: 'character' }
@@ -81,14 +83,14 @@
   }
   function newStudent(name, kind = 'clown') {
     const chosen=species(kind).unlockAt ? 'clown' : species(kind).id;
-    return { id: uid(), name: clean(name), species: chosen, characterUnlocked:false, cosmetics:Cosmetics.normalize(null,chosen), createdAt: Date.now(), days: {}, feeds: [] };
+    return { id: uid(), name: clean(name), species: chosen, speciesCatalogVersion:2, characterUnlocked:false, cosmetics:Cosmetics.normalize(null,chosen), createdAt: Date.now(), days: {}, feeds: [] };
   }
   function charactersUnlocked(student){return !!student && (student.characterUnlocked===true || earned(student)>=100);}
   function unlockCharacters(student){if(charactersUnlocked(student))student.characterUnlocked=true;}
   function canSelectSpecies(student,id){const kind=SPECIES.find(s=>s.id===id);return !!kind&&(!kind.unlockAt||charactersUnlocked(student));}
   function selectSpecies(student,id){
     if(!student||!canSelectSpecies(student,id))return false;
-    unlockCharacters(student);student.species=id;student.cosmetics=Cosmetics.normalize(student.cosmetics,id);return true;
+    unlockCharacters(student);student.species=id;student.speciesCatalogVersion=2;student.cosmetics=Cosmetics.normalize(student.cosmetics,id);return true;
   }
   function validBirthday(value) {
     return !!(value && Number.isInteger(value.month) && value.month>=1 && value.month<=12 &&
@@ -111,6 +113,7 @@
   function settingsOf(raw = {}) {
     return { names: raw?.names !== false, motion: raw?.motion !== false, lightMotion: raw?.lightMotion !== false, waterWaves: raw?.waterWaves === true, points: raw?.points === true, classPoints: raw?.classPoints === true,
       ...waterSettings(raw),teacherEncouragement:raw?.teacherEncouragement === true,rewardMotion:raw?.rewardMotion !== false,
+      teacherPraise:raw?.teacherPraise !== false,teacherPicker:raw?.teacherPicker !== false,teacherGoal:raw?.teacherGoal !== false,teacherGlow:raw?.teacherGlow !== false,
       hungerText: raw?.hungerText === true, chat: raw?.chat !== false, feedSound: raw?.feedSound !== false, pickerSound: raw?.pickerSound !== false,
       timerSound: raw?.timerSound !== false, timerVolume: Number.isFinite(raw?.timerVolume) ? Math.max(0,Math.min(1,raw.timerVolume)) : .65,
       sound: Sounds.has(raw?.sound) ? raw.sound : 'off',
@@ -140,7 +143,16 @@
   }
   const completedCount = student => Object.values(student.days).reduce((n, d) => n + d.tasks.filter(t => t.status === 'done' && taskPoints(t)>0).length, 0);
   const balance = student => Math.max(0, completedCount(student) - student.feeds.filter(f => !f.creditReversed).length);
-  const TASK_ICONS = ['⭐','📖','✏️','💙','🌿','🤝','🎯','🏆','🧠','🎨','🎵','🧹','🧩','💡','🙋','🕊️','🌍','🌟','😊','💪','📝','🔬','⚽','🎒'];
+  const TASK_ICON_GROUPS=Object.freeze([
+    {id:'featured',label:'Öne çıkanlar',icons:['⭐','📖','✏️','💙','🌿','🤝','🎯','🏆','🧠','🎨','🎵','🧹','🧩','💡','🙋','🕊️','🌍','🌟','😊','💪','📝','🔬','⚽','🎒']},
+    {id:'learning',label:'Dersler ve öğrenme',icons:['📚','📕','📗','📘','📙','📓','📒','🔤','🔢','➕','➖','✖️','➗','📐','📏','🧮','🔎','💻','🗣️','👂','✍️','🎓']},
+    {id:'kindness',label:'Arkadaşlık ve duygular',icons:['💛','💚','💜','🧡','❤️','🤗','👋','🙌','👏','🙏','🌸','🌻','🫶','🙂','😄','🥰','🧘','🫧']},
+    {id:'responsibility',label:'Sorumluluk ve düzen',icons:['✅','☑️','📅','⏰','🕒','🗂️','📌','📎','🗑️','♻️','🧽','🧼','🪥','🛏️','👕','👟','🚪','🔑']},
+    {id:'health',label:'Sağlık, beslenme ve spor',icons:['🍎','🍐','🍌','🍊','🍓','🥕','🥦','🥗','🍽️','🥛','💧','🚰','🏃','🚶','🚴','🏀','🏐','🏊','🤸','🛝']},
+    {id:'nature',label:'Doğa, canlılar ve keşif',icons:['🌱','🌳','🌲','🍀','🌷','🌼','☀️','🌤️','🌧️','🌈','🐠','🐟','🐬','🐢','🦋','🐝','🐞','🐚','🌊','🚀','🪐','🔭']},
+    {id:'creativity',label:'Sanat, müzik ve kutlama',icons:['🖌️','🖍️','✂️','🧵','🪁','🧸','🎭','🎤','🎹','🎸','🥁','🎺','🎻','🎶','💃','🕺','🎈','🎉','🎊','🏅','🥇','💎']}
+  ].map(group=>Object.freeze({...group,icons:Object.freeze(group.icons)})));
+  const TASK_ICONS=Object.freeze([...new Set(TASK_ICON_GROUPS.flatMap(group=>group.icons))]);
   const taskIcon = value => typeof value === 'string' && value.trim().length <= 16 && !/[<>\x00-\x1f]/.test(value) ? value.trim() : '';
   function updateTask(classroom, taskId, values, date = dayKey()) {
     const task = classroom.tasks.find(t => t.id === taskId), title = clean(values.title,120);
@@ -339,6 +351,7 @@
       cls.students = c.students.map(s => {
         if (!s || !clean(s.name) || !s.days || typeof s.days !== 'object' || Array.isArray(s.days) || Object.keys(s.days).length > 4000 || !Array.isArray(s.feeds) || s.feeds.length > 80000) throw new Error('Öğrenci kaydı geçersiz.');
         const student = { id: identifier(s.id), name: clean(s.name), species: species(s.species).id, cosmetics:Cosmetics.normalize(s.cosmetics,s.species), days: {}, feeds: [] };
+        if(s.speciesCatalogVersion===2)student.speciesCatalogVersion=2;
         if(s.birthday != null) {
           if(!validBirthday(s.birthday)) throw new Error('Doğum günü için geçerli bir gün ve ay girin.');
           student.birthday={day:s.birthday.day,month:s.birthday.month};
@@ -396,6 +409,7 @@
       if(c.teacher !== undefined) {
         if (!c.teacher || !clean(c.teacher.name) || typeof c.teacher.enabled !== 'boolean') throw new Error('Öğretmen balığı kaydı geçersiz.');
         cls.teacher = {name:clean(c.teacher.name), species:species(c.teacher.species).id, enabled:c.teacher.enabled};
+        if(c.teacher.speciesCatalogVersion===2)cls.teacher.speciesCatalogVersion=2;
       }
       if(c.goal !== undefined) cls.goal = validateGoal(c.goal);
       cls.customization=Cosmetics.config(c.customization);
@@ -415,5 +429,5 @@
     return {id: pool[Math.floor(value * pool.length)].id, reset: !remaining.length,
       eligible: eligible.length, remaining: pool.length - 1};
   }
-  return { charactersUnlocked, unlockCharacters, canSelectSpecies, selectSpecies, visibleCosmetics:Cosmetics.effective, cosmetics:Cosmetics.normalize, customization:Cosmetics.config, unlockCustomization, dailyChampions, MAX_BEHAVIORS, MAX_DAILY_TASKS, waterSettings, pickStudent, validBirthday, isBirthday, removeClass, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
+  return { charactersUnlocked, unlockCharacters, canSelectSpecies, selectSpecies, visibleCosmetics:Cosmetics.effective, cosmetics:Cosmetics.normalize, customization:Cosmetics.config, unlockCustomization, dailyChampions, MAX_BEHAVIORS, MAX_DAILY_TASKS, waterSettings, pickStudent, validBirthday, isBirthday, removeClass, TASK_ICON_GROUPS, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
 });

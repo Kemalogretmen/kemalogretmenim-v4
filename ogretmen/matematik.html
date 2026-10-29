@@ -3,9 +3,10 @@
 <head>
 
   <meta charset="UTF-8">
+<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Akıllı tahta ve tablet uyumlu öğretmen araçları: kronometre, geri sayım ve yerel saat görünümü.">
-  <meta property="og:title" content="Öğretmen Araçları — Kemal Öğretmenim">
+  <meta name="description" content="Sayılar, kesirler, ölçüler ve geometri için etkileşimli matematik araçları. Akıllı tahta, tablet ve bilgisayarda kullanın.">
+  <meta property="og:title" content="Matematik Araçları — Kemal Öğretmenim">
   <meta property="og:site_name" content="Kemal Öğretmenim">
   <link rel="icon" href="/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
@@ -877,22 +878,30 @@
   .sub-back-title{font-size:17px;font-weight:900;color:#1e2a4a;}
   .tools-page{padding-top:24px!important;}
 </style>
+  <link rel="stylesheet" href="/css/math-tools.css?v=20261028-studio-3">
+  <link rel="stylesheet" href="/css/chance-studio.css?v=20261028-flight-3">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="/js/chance-audio.js?v=20261028-flight-3"></script>
+  <script defer src="/js/chance-studio.js?v=20261028-flight-3"></script>
+  <script defer src="/js/math-tools-ui.js?v=20261028-studio-3"></script>
+<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 </head>
-<body>
+<body class="math-studio-page">
   <div class="sub-back">
-    <a href="../ogretmen-araclari.html">← Araçlar</a>
-    <span style="font-size:20px">🔢</span>
-    <span class="sub-back-title">Matematik Araçları</span>
+    <a href="../ogretmen-araclari.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12"/></svg>Öğretmen araçları</a>
+    <span class="sub-back-divider">/</span><span class="sub-back-title">Matematik</span>
   </div>
   <main class="tools-page">
-    <h1 class="sr-only">Matematik Araçları</h1>
-
-    <div class="time-bar glass">
-      <div class="time-bar-label">⏱️ Öğretmen Araçları</div>
-      <div class="time-bar-clock" id="timeBarClock">--:--:--</div>
-      <div class="time-bar-date" id="timeBarDate">yükleniyor…</div>
-      <div class="time-bar-tz" id="timeBarTz">🌍 Yerel Saat</div>
-    </div>
+    <header class="math-page-heading">
+      <div class="math-page-intro"><p class="math-eyebrow">MATEMATİK ATÖLYESİ</p><h1>Matematik Araçları</h1><p>Sayıları, şekilleri ve ölçüleri görünür kılan araçlar.</p></div>
+      <div class="time-bar" aria-label="Sınıf saati">
+        <span class="time-bar-label">Sınıf saati</span>
+        <time class="time-bar-clock" id="timeBarClock">--:--:--</time>
+        <span class="time-bar-date" id="timeBarDate">yükleniyor…</span>
+        <span class="time-bar-tz" id="timeBarTz">Yerel saat</span>
+      </div>
+    </header>
 
     <section class="workspace is-visible" id="mathWorkspace" data-tool-panel="math">
       <article class="panel glass" style="max-width: 1080px; margin: 0 auto; width: 100%;">
@@ -935,21 +944,6 @@
               <a class="mode-tab" href="simetri.html" style="text-decoration:none;">🪞 Simetri Aynası</a>
             </div>
 
-            <div class="math-tool-launch-grid" aria-label="3B matematik araçları">
-              <a class="math-tool-launch" href="birim-kup-uygulamasi.html">
-                <span class="math-tool-launch-icon"><i class="fas fa-cube"></i></span>
-                <span class="math-tool-launch-copy"><strong>Birim Küp</strong><small>Yapı kur, görünüm çıkar, PNG al.</small></span>
-              </a>
-              <a class="math-tool-launch" href="3d-yapi-atolyesi.html">
-                <span class="math-tool-launch-icon"><i class="fas fa-cubes"></i></span>
-                <span class="math-tool-launch-copy"><strong>3D Yapı Atölyesi</strong><small>Geometrik cisimleri birleştir, döndür ve keşfet.</small></span>
-              </a>
-              <a class="math-tool-launch" href="geometrik-cisimler-acilimlar.html">
-                <span class="math-tool-launch-icon"><i class="fas fa-shapes"></i></span>
-                <span class="math-tool-launch-copy"><strong>Cisim Açılımları</strong><small>Prizma, piramit, koni, silindir ve küre.</small></span>
-              </a>
-            </div>
-
             <div id="mathCalcView" style="display: block;">
               <div class="calc-wrapper">
                 <div class="calc-screen" id="calcScreen">0</div>
@@ -978,55 +972,29 @@
             </div>
 
             <div id="mathRngView" style="display: none;">
-              <div class="rng-wrapper">
-                <div class="rng-card">
-                  <h3>Zar At</h3>
-                  <div class="dice-stage">
-                    <div class="dice-3d-wrap" id="dice1Wrap">
-                      <div class="dice-3d" id="dice1">
-                        <div class="dice-face front face-1"><span class="dot"></span></div>
-                        <div class="dice-face back face-6"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face right face-3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face left face-4"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face top face-2"><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face bottom face-5"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                      </div>
-                    </div>
-                    <div class="dice-3d-wrap" id="dice2Wrap" style="display:none;">
-                      <div class="dice-3d" id="dice2">
-                        <div class="dice-face front face-1"><span class="dot"></span></div>
-                        <div class="dice-face back face-6"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face right face-3"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face left face-4"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face top face-2"><span class="dot"></span><span class="dot"></span></div>
-                        <div class="dice-face bottom face-5"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-                      </div>
-                    </div>
+              <div class="chance-toolbar"><span id="chanceSceneHint">Cisimlere dokunarak yeniden atabilirsin.</span><label class="chance-sound"><input type="checkbox" id="motionSoundToggle" checked> Ses efektleri</label></div>
+              <div class="rng-wrapper chance-studio">
+                <section class="rng-card chance-card" aria-labelledby="chanceDiceTitle">
+                  <div class="chance-card-heading"><div><span class="chance-eyebrow">SAYILAR VE OLASILIK</span><h3 id="chanceDiceTitle">Zar atışı</h3></div><span class="chance-card-badge">1–3 zar</span></div>
+                  <div class="chance-scene" id="chanceDiceStage" tabindex="0" role="button" aria-label="Zarları at: atış alanına veya zarlara dokun" aria-busy="false">
+                    <div class="chance-dice-fallback" aria-hidden="true"><span id="dice1Wrap"><span id="dice1">⚀</span></span><span id="dice2Wrap" hidden><span id="dice2">⚁</span></span><span id="dice3Wrap" hidden><span id="dice3">⚂</span></span></div>
+                    <span class="chance-scene-prompt">Atmak için dokun</span>
                   </div>
-                  <label class="chk-label" style="margin-top:12px;"><input type="checkbox" id="diceCountToggle"> İki Zar Kullan</label>
-                  <label class="chk-label" style="margin-top:10px;"><input type="checkbox" id="motionSoundToggle" checked> Dönüş sesi</label>
-                  <button class="btn btn-primary" type="button" onclick="roll3DDice()" style="width:100%; height:54px; font-size:18px; margin-top:10px;">Zarları At</button>
-                </div>
-
-                <div class="rng-card">
-                  <h3>Yazı Tura</h3>
-                  <div class="coin-stage">
-                    <div class="coin-wrap">
-                      <div class="coin-inner" id="coinInner">
-                        <div class="coin-face coin-front">
-                          <img src="/gorseller/yazi.png" alt="Yazı" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'font-size:32px;font-weight:900;color:#7a5a00;position:relative;z-index:2;\'>YAZI</span>')">
-                        </div>
-                        <div class="coin-face coin-back">
-                          <img src="/gorseller/tura.png" alt="Tura" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'font-size:32px;font-weight:900;color:#505050;position:relative;z-index:2;\'>TURA</span>')">
-                        </div>
-                      </div>
-                      <div class="coin-shadow" id="coinShadow"></div>
-                    </div>
+                  <div class="chance-count-row"><span>Zar sayısı</span><div class="chance-count-options" role="group" aria-label="Zar sayısı"><button type="button" data-dice-count="1" aria-pressed="true">1</button><button type="button" data-dice-count="2" aria-pressed="false">2</button><button type="button" data-dice-count="3" aria-pressed="false">3</button></div></div>
+                  <select id="diceCountSelect" hidden aria-hidden="true"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select><input type="checkbox" id="diceCountToggle" hidden aria-hidden="true">
+                  <button class="btn btn-primary chance-action" id="rollDiceBtn" type="button" onclick="roll3DDice()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg>Zarları at</button>
+                  <p class="chance-result" id="diceResultLabel" role="status" aria-live="polite">Zarı veya atış alanını tıkla.</p>
+                </section>
+                <section class="rng-card chance-card" aria-labelledby="chanceCoinTitle">
+                  <div class="chance-card-heading"><div><span class="chance-eyebrow">İKİ OLASI SONUÇ</span><h3 id="chanceCoinTitle">Yazı tura</h3></div><span class="chance-card-badge">1 TL</span></div>
+                  <div class="chance-scene" id="chanceCoinStage" tabindex="0" role="button" aria-label="Yazı tura at: paraya veya atış alanına dokun" aria-busy="false" data-face="yazi">
+                    <div class="chance-coin-fallback" id="coinInner" aria-hidden="true"><img src="/gorseller/yazi.png" alt="Yazı yüzü"><span id="coinShadow"></span></div>
+                    <span class="chance-scene-prompt">Havaya atmak için dokun</span>
                   </div>
-                  <div style="height:36px;"></div>
-                  <button class="btn btn-teal" type="button" onclick="flipCoin()" style="width:100%; height:50px; font-size:17px; margin-top:6px;">🪙 Parayı Çevir</button>
-                  <div id="coinResultLabel" style="text-align:center;font-size:22px;font-weight:900;color:var(--purple);letter-spacing:.04em;margin-top:8px;opacity:0;transition:opacity .4s ease;min-height:32px;"></div>
-                </div>
+                  <div class="chance-coin-caption"><span class="chance-coin-mark">₺</span><span>Para yükselir, döner ve masaya düşer.</span></div>
+                  <button class="btn btn-teal chance-action" id="flipCoinBtn" type="button" onclick="flipCoin()"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="15" rx="7" ry="4"/><path d="M5 15v3c0 5 14 5 14 0v-3M12 10V2m-3 3 3-3 3 3"/></svg>Parayı havaya at</button>
+                  <p class="chance-result" id="coinResultLabel" role="status" aria-live="polite">Yazı mı, tura mı?</p>
+                </section>
               </div>
             </div>
 
@@ -1429,13 +1397,13 @@
 
   </main>
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20260926-workspace-focus"></script>
+  <script src="/js/site.js?v=20261029-theme"></script>
   <script>
 (function(){
   'use strict';
     var S = {
       mode: 'countdown', 
-      tool: 'class', // İlk açılışta Sınıf Aracı
+      tool: 'math', // Bu sayfanın klavye kısayolları matematik araçlarını yönetir
       running: false, 
       alarmOn: true, 
       showMs: false,
@@ -2250,6 +2218,7 @@
           if (w > 20 || _t++ > 30) { initSym(); } else { requestAnimationFrame(_wait); }
         })();
       }
+      document.dispatchEvent(new window.CustomEvent('mathmodechange', { detail: { mode: mode } }));
     } /* end setMathMode */
 
 
@@ -3054,7 +3023,7 @@
     }
 
     var tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Yerel saat';
-    if(E.tzLabel) E.tzLabel.textContent = tz; if(E.timeBarTz) E.timeBarTz.textContent = '🌍 '+tz;
+    if(E.tzLabel) E.tzLabel.textContent = tz; if(E.timeBarTz) E.timeBarTz.textContent = tz;
 
     updateClock();
     
@@ -3068,23 +3037,8 @@
     function reqFs(el){return (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);}
     function exitFs(){return (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);}
     function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement;}
-    document.querySelectorAll('.shortcut-help-btn').forEach(function(btn){
-      btn.addEventListener('click',function(){ toggleShortcutPopover(btn.dataset.shortcutTarget); });
-    });
-    document.querySelectorAll('[data-shortcut-close]').forEach(function(b){
-      b.addEventListener('click', closeShortcutPopovers);
-    });
     updateClock(); setInterval(updateClock,1000);
 
-    document.querySelectorAll('[data-math-mode]').forEach(function(btn){
-      btn.addEventListener('click',function(){setMathMode(btn.dataset.mathMode);});
-    });
-    document.addEventListener('click', function(evt) {
-      var btn = evt.target.closest && evt.target.closest('[data-math-mode]');
-      if(!btn) return;
-      evt.preventDefault();
-      setMathMode(btn.dataset.mathMode);
-    });
     var diceToggle = document.getElementById('diceCountToggle');
     if(diceToggle) {
       diceToggle.addEventListener('change', function() {

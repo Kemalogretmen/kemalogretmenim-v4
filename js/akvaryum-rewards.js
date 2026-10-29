@@ -15,7 +15,8 @@
     butterfly:['curtsy',3.1,.9],copperband:['curtsy',3.1,.8],discus:['curtsy',3.3,.7],
     boxfish:['wiggle',3.2,.8],safiye:['curtsy',3.6,1.1],puffer:['inflate',5,1],
     eel:['serpentine',3.6,1],angler:['beacon',3.7,1],mantis:['mantis-greet',3.5,1],crab:['side-step',3.6,1],
-    lina:['veil-fan',3.8,1],spongebob:['sponge-dance',4.2,1],patrick:['star-dance',4,1],mrkrabs:['claw-clap',3.8,1]
+    lina:['veil-fan',3.8,1],spongebob:['sponge-dance',4.2,1],patrick:['star-dance',4,1],mrkrabs:['claw-clap',3.8,1],
+    hammerhead:['hammer-glide',3.8,1],axolotl:['gill-wave',4.2,1]
   };
   function makeProfile(id){
     const n=C.SPECIES.findIndex(s=>s.id===id),p=profiles[id]||['wiggle',2.9+(Math.max(0,n)%4)*.15,.8+(Math.max(0,n)%3)*.12];
@@ -51,6 +52,10 @@
       result.x=wave*2.3*a;result.y=-2*a;result.bank=wave*2.2*a;result.joints=1.6*envelope;
     }else if(p.kind==='side-step'){
       result.lateral=Math.sin(u*Math.PI*6)*.23*a;result.x=Math.sin(u*Math.PI*6)*4.2*a;result.bank=wave*.8*a;result.joints=1.5*envelope;
+    }else if(p.kind==='hammer-glide'){
+      result.x=Math.sin(u*Math.PI*2)*4*a;result.y=-8*a;result.bank=Math.sin(u*Math.PI*2)*4*a;result.tail=1.7*envelope;result.joints=1.25*envelope;
+    }else if(p.kind==='gill-wave'){
+      result.x=wave*1.7*a;result.y=-4*a;result.bank=wave*2.2*a;result.tail=envelope;result.joints=1.35*envelope;
     }else if(p.kind==='veil-fan'){
       result.y=-5*a;result.bank=wave*3.2*a;result.tail=1.65*envelope;result.joints=1.4*envelope;
     }else if(p.kind==='glide'){result.y=-7*a;result.bank=wave*3*a;result.joints=1.4*envelope;}
@@ -107,5 +112,25 @@
     function reset(state,date){day=null;classes=new Map();observe(state,date);}
     return {observe,reset};
   }
-  return {profile,pose,createTracker};
+  // Seed existing progress silently. Only a fresh positive event can cross an
+  // intermediate milestone; edits, corrections and reconnects cannot replay it.
+  function createMilestoneTracker(){
+    const classes=new Map();let day=null;
+    return {observe(state,date,awards=[]){
+      if(day!==date){day=date;classes.clear();}
+      const events=[];
+      for(const cls of state.classes){
+        const g=cls.goal;if(!g){classes.delete(cls.id);continue;}
+        const p=C.goalProgress(cls),key=JSON.stringify([g.startedOn,Object.entries(g.baseline).sort(),cls.seasons?.length||0]),prior=classes.get(cls.id);
+        const same=prior?.key===key&&prior.target===g.target,seen=new Set(same?prior.seen:[]);
+        const crossed=[25,50,75].filter(n=>p.percent>=n&&!seen.has(n));
+        if(same&&prior.enabled&&g.enabled&&p.points>prior.points&&crossed.length&&awards.some(a=>a.classId===cls.id))events.push({classId:cls.id,level:crossed.at(-1),title:g.title});
+        for(const n of crossed)seen.add(n);
+        classes.set(cls.id,{key,target:g.target,enabled:g.enabled,points:p.points,seen});
+      }
+      for(const id of classes.keys())if(!state.classes.some(c=>c.id===id))classes.delete(id);
+      return events;
+    }};
+  }
+  return {profile,pose,createTracker,createMilestoneTracker};
 });

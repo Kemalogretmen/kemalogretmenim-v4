@@ -28,6 +28,8 @@
     mantis: { speed:.4,bob:2,tilt:.7,depth:.8,pulse:0 },
     crab: { speed:.2,bob:.5,tilt:.3,depth:.96,pulse:0,floor:true },
     lina: { speed:.55,bob:4,tilt:1,depth:.5,pulse:0 },
+    hammerhead: { speed:.92,bob:2.5,tilt:.8,depth:.43,pulse:0 },
+    axolotl: { speed:.33,bob:2.5,tilt:.7,depth:.76,pulse:0 },
     spongebob: { speed:.3,bob:3,tilt:.65,depth:.62,pulse:0 },
     patrick: { speed:.27,bob:4,tilt:.8,depth:.64,pulse:0 },
     mrkrabs: { speed:.24,bob:.6,tilt:.4,depth:.64,pulse:0 }
@@ -62,7 +64,7 @@
     const angle=clamp(Number.isFinite(f.angle)?f.angle:0,0,180);
     const round=Math.max(0,Math.sin(angle*Math.PI/180));
     const sign=f.turn ? Math.sign(f.turn.to-f.turn.from)||1 : f.direction>0?1:-1;
-    const flat=['ray','shark','dolphin','cleanershrimp','hermitcrab','eel','mantis','crab'].includes(f.species);
+    const flat=['ray','shark','hammerhead','axolotl','dolphin','cleanershrimp','hermitcrab','eel','mantis','crab'].includes(f.species);
     const tall=['seahorse','angelfish','batfish','discus'].includes(f.species);
     const fullness=clamp((round-.7)/.3,0,1);
     return {yaw:angle,round:round<.0001?0:round,fullness,bank:round*sign*3.5,

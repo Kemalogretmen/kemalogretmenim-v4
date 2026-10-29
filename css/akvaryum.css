@@ -530,3 +530,66 @@ html.performance-lite .class-pearl.is-goal-celebrating{animation:none}
 .fish.has-expressive-surface[data-species="angler"] .fish-side::after{display:none}
 .fish.has-ray-surface .fish-body-image,.fish.has-ray-surface .fish-tail-image{visibility:hidden}
 .fish.has-ray-surface .ray-surface{display:block}
+
+.task-icon-category{max-width:330px;margin:6px 0 12px}.fish-chat.hunger-note{font-family:inherit;font-size:12px;line-height:1.4;white-space:normal;width:max-content;max-width:170px;text-align:center;padding:8px 11px}
+
+/* One dialog scrollbar, with the current settings group kept in view. */
+#modal.settings-modal{width:min(1060px,calc(100% - 28px));padding:20px 24px;max-height:93svh}
+.settings-modal .modal-heading{margin-bottom:18px}
+.settings-modal .modal-heading .eyebrow{display:none}
+.settings-layout{display:grid;grid-template-columns:172px minmax(0,1fr);gap:25px;align-items:start}
+.settings-tabs{position:sticky;top:58px;display:grid;gap:6px;padding:8px;border:1px solid #d2f8ef29;border-radius:18px;background:#062f425c}
+.settings-tabs button{border:1px solid transparent;border-radius:11px;padding:12px 10px;text-align:left;font-size:12px;color:#cce5e6;background:transparent;min-height:44px}
+.settings-tabs button[aria-selected=true]{color:#effff7;background:#a8ead323;border-color:#bcebd066;box-shadow:inset 3px 0 #abe8cd}
+.settings-tabs button:focus-visible{outline:2px solid #b7f0d4;outline-offset:2px}
+.settings-panels{min-width:0}
+.settings-panels>[hidden]{display:none!important}
+.settings-panels>[role=tabpanel]{min-width:0;outline-offset:5px}
+.settings-panels .settings-section:first-child{border-top:0;padding-top:0;margin-top:0}
+.settings-panels .inline-form{margin-top:0}
+.settings-panels .settings-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.settings-menu .button{justify-content:flex-start;text-align:left;min-height:52px}
+.settings-panels .toggle-row{line-height:1.6;gap:15px;border-bottom:1px solid #d0ece518;background:transparent;box-shadow:none}
+.settings-panels .toggle-row input{flex:none}
+.settings-panels .device-quality{margin-top:0}
+/* Wide classroom boards fit three alphabetical columns; smaller screens wrap. */
+#modal.group-reward-modal{width:min(1120px,calc(100% - 28px))}
+.group-reward-modal .group-students{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.group-reward-modal .group-student{min-width:0;gap:9px;padding:10px}
+.group-student>span{min-width:0;overflow-wrap:anywhere}
+.group-reward-modal .group-student img{width:48px;flex:none}
+/* Editable behavior cards expand in the same scrolling dialog. */
+#modal.tasks-modal{width:min(1120px,calc(100% - 28px));padding:22px 26px}
+.tasks-modal .modal-heading .eyebrow{display:none}
+.tasks-modal .modal-intro{font-size:12px;line-height:1.7;margin-bottom:13px}
+.task-edit-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.task-edit-list .task-editor{margin:0;min-width:0}
+.task-edit-list .task-editor summary{display:grid;grid-template-columns:1fr auto;gap:10px;padding:16px;min-height:138px;list-style:none}
+.task-edit-list .task-editor summary::-webkit-details-marker{display:none}
+.task-edit-list .task-editor summary>span:first-child{font-size:29px;grid-column:1}
+.task-edit-list .task-editor summary strong{grid-column:1/-1;grid-row:2;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.task-edit-list .task-editor summary b{grid-row:1;grid-column:2;font-size:17px}
+.task-edit-list .task-editor summary>span:last-child{grid-row:3;grid-column:1/-1;font-size:11px}
+.task-edit-list .task-editor[open]{grid-column:1/-1;border-color:#b3efd582}
+.task-edit-list .task-editor[open] summary{min-height:0;grid-template-columns:auto 1fr auto auto;align-items:center}
+.task-edit-list .task-editor[open] summary>*{grid-area:auto}
+.task-edit-list .task-editor[open] form{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;padding-top:14px}
+.task-edit-list .task-editor[open] .task-icon-picker,.task-edit-list .task-editor[open] .settings-actions{grid-column:1/-1}
+.tasks-modal .new-task-form{margin-top:24px;padding:20px;border:1px solid #b2e9e12e;border-radius:18px;background:#ffffff06}
+.tasks-modal .new-task-form h3{margin:0 0 3px;font-size:16px}
+/* A soft halo follows the teacher's intact body, without flashing or a ring. */
+.teacher-glow .fish-art::before{content:'';position:absolute;inset:-22% -12%;border-radius:50%;background:radial-gradient(ellipse,#fff4bc8c 4%,#b5f2d45c 30%,#b9ecfa28 47%,transparent 68%);opacity:var(--teacher-shimmer,.16);pointer-events:none}
+.fish.is-rewarding:is([data-species=eel],[data-species=lina])::before{display:none}
+@media(max-width:900px){.group-reward-modal .group-students{grid-template-columns:repeat(2,minmax(0,1fr))}.task-edit-list{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-layout{grid-template-columns:146px minmax(0,1fr);gap:17px}}
+@media(max-width:650px){
+ #modal.settings-modal,#modal.tasks-modal{padding:14px;width:calc(100% - 20px)}
+ .settings-layout{grid-template-columns:1fr;gap:18px}
+ .settings-tabs{position:static;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:6px}
+ .settings-tabs button{font-size:11px;padding:9px 10px}
+ .settings-panels .settings-menu{grid-template-columns:1fr}
+ .task-edit-list{gap:9px}.task-edit-list .task-editor summary{padding:12px;min-height:138px}
+ .task-edit-list .task-editor[open] summary{grid-template-columns:auto 1fr auto}.task-edit-list .task-editor[open] summary>span:last-child{grid-column:1/-1}
+ .task-edit-list .task-editor[open] form{grid-template-columns:1fr;padding:12px}
+ .task-edit-list .task-editor[open] form>*{grid-column:1}
+}
+@media(max-width:480px){.group-reward-modal .group-students{grid-template-columns:1fr}.task-edit-list .task-editor summary strong{font-size:12px}}

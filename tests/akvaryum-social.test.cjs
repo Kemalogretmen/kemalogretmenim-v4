@@ -29,3 +29,12 @@ test('a new day, pending tasks and nonpositive daily totals have no daily champi
  assert.deepEqual(C.dailyChampions(cl,date),{points:0,ids:[]});s.days[date].tasks.push({id:C.uid(),title:'Kesinti',points:-1,status:'done'});
  assert.deepEqual(C.dailyChampions(cl,date),{points:0,ids:[]});assert.deepEqual(C.dailyChampions(cl,'2030-01-01'),{points:0,ids:[]});
 });
+test('teacher praise, invitations and shared motivation use varied non-ranking messages and round-trip preferences',()=>{
+ const deck=Social.create(()=>.3);
+ for(const [key,items] of [['praise',Social.praises],['invitation',Social.invitations],['milestone',Social.milestones]]){
+  const messages=Array.from({length:items.length},()=>deck[key]());assert.equal(new Set(messages).size,items.length);
+  assert.notEqual(deck[key](),messages.at(-1));assert.ok(messages.every(s=>!s.match(/en iyi|birinci|puan|daha iyi|diğerlerinden/i)));
+ }
+ const state=C.initialState();for(const key of ['teacherPraise','teacherPicker','teacherGoal','teacherGlow']){assert.equal(state.settings[key],true);state.settings[key]=false;}
+ const saved=C.validate(JSON.parse(JSON.stringify(state)));for(const key of ['teacherPraise','teacherPicker','teacherGoal','teacherGlow'])assert.equal(saved.settings[key],false);
+});

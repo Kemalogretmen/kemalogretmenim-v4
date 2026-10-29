@@ -12,7 +12,7 @@ const C=require('../js/akvaryum-core.js'),{PGlite}=require(process.argv[2]||'@el
  select exists(select 1 from public.user_profiles where id=auth.uid() and role='teacher' and approval_status='active' and active)$$;
  insert into auth.users values('${owner}'),('${other}');insert into user_profiles values('${owner}','teacher','active',true),('${other}','teacher','active',true);
  create publication supabase_realtime;`);
- for(const file of ['supabase-akvaryum.sql','supabase-akvaryum-veli.sql','supabase-akvaryum-cloud.sql','supabase-akvaryum-veli-rapor.sql','supabase-akvaryum-paylasim-gorunumu.sql','supabase-akvaryum-anlik.sql','supabase-akvaryum-cakisma-duzeltme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-ozellestirme.sql'])await db.exec(fs.readFileSync(file,'utf8'));
+ for(const file of ['supabase-akvaryum.sql','supabase-akvaryum-veli.sql','supabase-akvaryum-cloud.sql','supabase-akvaryum-veli-rapor.sql','supabase-akvaryum-paylasim-gorunumu.sql','supabase-akvaryum-anlik.sql','supabase-akvaryum-cakisma-duzeltme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-canlilar-20261028.sql','supabase-akvaryum-canlilar-20261028.sql'])await db.exec(fs.readFileSync(file,'utf8'));
  for(const file of ['tests/akvaryum-rls.sql','tests/akvaryum-child-rls.sql','tests/akvaryum-cloud-rls.sql'])await db.exec(fs.readFileSync(file,'utf8'));
  const authenticate=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
@@ -60,6 +60,20 @@ const C=require('../js/akvaryum-core.js'),{PGlite}=require(process.argv[2]||'@el
   revision=await save(stale,revision);assert.equal((await read()).classes[0].students[0].species,kind);assert.equal((await read()).classes[0].students[0].characterUnlocked,true);
   await db.exec('reset role;set role anon');view=(await db.query('select public.view_aquarium($1) as data',[token])).rows[0].data;
   assert.equal(view.students[0].species,kind);assert.ok(!JSON.stringify(view).includes('characterUnlocked'));await authenticate(owner);
+ }
+ for(const kind of ['hammerhead','axolotl']){
+  const latest=await read(),pupil=latest.classes[0].students[0];C.selectSpecies(pupil,kind);
+  latest.classes[0].teacher={enabled:true,name:'Öğretmen',species:kind,speciesCatalogVersion:2};revision=await save(latest,revision);
+  const stale=JSON.parse(JSON.stringify(latest));delete stale.classes[0].students[0].speciesCatalogVersion;stale.classes[0].students[0].species='clown';
+  delete stale.classes[0].teacher.speciesCatalogVersion;stale.classes[0].teacher.species='clown';
+  C.awardBehavior(stale.classes[0].students[1],stale.classes[0],C.dayKey(),stale.classes[0].tasks[0].id);
+  const points=C.earned(stale.classes[0].students[1]);revision=await save(stale,revision);const retained=await read();
+  assert.equal(retained.classes[0].students[0].species,kind);assert.equal(retained.classes[0].students[0].speciesCatalogVersion,2);
+  assert.equal(retained.classes[0].teacher.species,kind);assert.equal(retained.classes[0].teacher.speciesCatalogVersion,2);assert.equal(C.earned(retained.classes[0].students[1]),points);
+  await db.exec('reset role;set role anon');view=(await db.query('select public.view_aquarium($1) as data',[token])).rows[0].data;
+  assert.equal(view.students[0].species,kind);assert.ok(!JSON.stringify(view).includes('speciesCatalogVersion'));await authenticate(owner);
+  const changed=await read();C.selectSpecies(changed.classes[0].students[0],'clown');changed.classes[0].teacher.species='clown';revision=await save(changed,revision);
+  assert.equal((await read()).classes[0].students[0].species,'clown');assert.equal((await read()).classes[0].teacher.species,'clown');
  }
  const explicit=await read();explicit.classes[0].students[0].species='clown';revision=await save(explicit,revision);assert.equal((await read()).classes[0].students[0].species,'clown');
  await db.exec('reset role');const bad=(await db.query("select public.aquarium_cosmetic_style($1,'clown') as data",[JSON.stringify({accessory:'javascript:alert(1)',palette:'<script>',history:'PRIVATE'})])).rows[0].data;

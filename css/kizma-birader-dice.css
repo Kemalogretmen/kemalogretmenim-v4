@@ -1,0 +1,11 @@
+/* One physical die belongs to the existing board scene; no second canvas. */
+.dice-arena.has-physical-die .dice-wrap:is(.state-rolling,.state-landed,.state-exit),
+.dice-arena.has-physical-die .dice-shadow:is(.state-rolling,.state-landed,.state-exit){visibility:hidden}
+#dice3D{transform:var(--dice-final-transform);transform-style:preserve-3d}
+#dice3D .dice-face{border-radius:15%;backface-visibility:hidden;background:linear-gradient(140deg,#fffdf6,#f3ecdd);border-color:#d1c6af;box-shadow:inset 0 3px 8px #fff,inset 0 -5px 9px #a5916c33}
+#dice3D .pip{background:radial-gradient(circle at 35% 30%,#111827,#202735 70%,#737171 90%);box-shadow:inset 0 1px 3px #0006}
+#dice3D .pip.highlight{background:radial-gradient(circle at 35% 30%,#111827,#202735 70%,#737171 90%)}
+.dice-sound-toggle{min-height:44px;padding:8px 13px;border:1px solid #d6cbea;border-radius:12px;background:#fffaf0;color:#584270;font:800 12px var(--font-body,sans-serif);cursor:pointer;touch-action:manipulation}
+.dice-sound-toggle:focus-visible{outline:3px solid #6c3ded;outline-offset:3px}
+#diceArena{perspective:1000px}
+@media(prefers-reduced-motion:reduce){#diceWrap,#dice3D,#diceShadow{animation-duration:.18s!important}}

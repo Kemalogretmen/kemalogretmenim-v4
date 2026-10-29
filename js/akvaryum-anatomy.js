@@ -6,12 +6,13 @@
 })(typeof window==='object'?window:this,function(){
   'use strict';
   const modelSpecies=['clown','jellyfish','turtle','octopus'];
-  const species=[...modelSpecies,'ray','seahorse','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish','eel','angler','mantis','crab','spongebob','patrick','mrkrabs'];
+  const species=[...modelSpecies,'ray','seahorse','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish','eel','angler','mantis','crab','hammerhead','axolotl','spongebob','patrick','mrkrabs'];
   const part=(clip,origin)=>({clip:'polygon('+clip+')',origin});
   const definitions={
     // Keep the new silhouettes whole. Rigid cutouts would detach legs, the lure
     // or the eel's continuous body; their small poses transform one full image.
     eel:{parts:[],cutouts:[]},angler:{parts:[],cutouts:[]},mantis:{parts:[],cutouts:[]},crab:{parts:[],cutouts:[]},
+    hammerhead:{parts:[],cutouts:[]},axolotl:{parts:[],cutouts:[]},
     spongebob:{parts:[],cutouts:[]},patrick:{parts:[],cutouts:[]},mrkrabs:{parts:[],cutouts:[]},
     jellyfish:{parts:[part('0% 59%,100% 59%,100% 100%,0% 100%','50% 60%')],cutouts:['M0 61H100V100H0Z']},
     turtle:{parts:[

@@ -1,0 +1,147 @@
+/* Mathematics studio: quiet surfaces, a consistent icon system and a focused
+   workspace. Tool-specific model colours retain their educational meaning. */
+body.math-studio-page{--purple:#3268ce;--purple-2:#3d83e4;--purple-light:#d8e5fa;--navy:#1e2c43;--teal:#109a86;--slate:#6e7f94;background:#f5f7fb;color:#24344d;font-family:Inter,'Segoe UI',Arial,sans-serif;letter-spacing:0}
+body.math-studio-page::before,body.math-studio-page::after{display:none}
+.math-studio-page .sub-back{height:44px;padding:0 max(24px,calc((100% - 1456px)/2));gap:12px;background:#fff;border-bottom:1px solid #e4eaf3;box-shadow:none;backdrop-filter:none;font-family:inherit}
+.math-studio-page .sub-back a{font-size:12px;font-weight:600;padding:5px 0;border-radius:0;background:none;color:#72829a;gap:7px}
+.math-studio-page .sub-back a:hover{color:#2866c9;background:none}
+.sub-back a svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6}
+.math-studio-page .sub-back-title{font-size:12px;color:#334a6b;font-weight:650}
+.sub-back-divider{font-size:13px;color:#c5cfdd}
+.math-studio-page .tools-page{width:min(1456px,calc(100% - 48px));margin:0 auto;padding:24px 0 108px!important}
+.math-page-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 24px}
+.math-page-intro .math-eyebrow{font-size:10px;font-weight:750;letter-spacing:.12em;color:#6a85a8;margin:0 0 7px}
+.math-page-intro h1{font:750 clamp(24px,3vw,32px)/1.18 Inter,'Segoe UI',Arial,sans-serif;letter-spacing:-.045em;color:#1d304c;margin:0 0 8px}
+.math-page-intro>p:last-child{font-size:12px;font-weight:450;color:#64748b;line-height:1.5;margin:0}
+.math-studio-page .time-bar{display:grid;grid-template-columns:auto auto;column-gap:12px;row-gap:3px;padding:0;margin:0;border:0;background:none;box-shadow:none;border-radius:0;min-width:205px;font-variant-numeric:tabular-nums;align-items:center}
+.math-studio-page .time-bar-label{grid-column:1;grid-row:1;font-size:10px;letter-spacing:.05em;text-transform:uppercase;padding:0;background:none;color:#64748b;border-radius:0;font-weight:650}
+.math-studio-page .time-bar-clock{grid-column:2;grid-row:1/3;font:600 22px/1.1 'Segoe UI',sans-serif;color:#425a7e;letter-spacing:-.04em;border-left:1px solid #dde5f0;padding-left:12px}
+.math-studio-page .time-bar-date{grid-column:1;grid-row:2;display:block;font-size:10px;color:#64748b;font-weight:450;max-width:150px}
+.math-studio-page .time-bar-tz{display:none}
+.math-studio-page #mathWorkspace>.panel{max-width:none;width:100%;padding:0!important;background:none;border:0;border-radius:0;box-shadow:none;backdrop-filter:none}
+.math-studio-page #mathWorkspace>.panel>.display-stage{padding:0!important;border:0;border-radius:0;background:none;box-shadow:none}
+.math-studio-page .measure-shell{display:block}
+.math-studio-layout{display:grid;grid-template-columns:238px minmax(0,1fr);align-items:start;gap:22px}
+.math-ui-icon{display:block;width:28px;height:28px;max-width:none!important;flex-shrink:0;pointer-events:none}
+.math-library{position:sticky;top:14px;border:1px solid #e0e7f1;background:#fff;border-radius:15px;max-height:calc(100dvh - 130px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:16px 10px 12px;box-shadow:0 3px 10px #15356003}
+.math-library-heading{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:700;color:#385171;padding:0 5px;margin:0 0 14px}
+.math-library-heading>.math-ui-icon{width:18px;height:18px;color:#7691b5}
+.math-library-heading small{font-size:9px;padding:3px 5px;background:#f0f4fa;border-radius:5px;margin-left:auto;color:#8a9ab0;font-weight:650}
+.math-library-search{display:flex;align-items:center;gap:7px;border:1px solid #e6ebf3;background:#f8fafc;border-radius:8px;padding:0 9px;height:34px;margin:0 5px 17px;color:#64748b}
+.math-library-search>.math-ui-icon{width:15px;height:15px}
+.math-library-search input{background:transparent;border:0;padding:0;min-width:0;width:100%;font:450 11px 'Segoe UI',sans-serif;color:#445f83;outline:none;box-shadow:none}
+.math-library-search:focus-within{border-color:#92b5e6;box-shadow:0 0 0 3px #edf4ff}
+.math-library-search input::placeholder{color:#64748b}
+.math-library-group{display:grid;gap:3px}
+.math-library-group+ .math-library-group{border-top:1px solid #edf1f6;margin-top:12px;padding-top:13px}
+.math-library-group-label{font-size:10px;font-weight:700;letter-spacing:.1em;color:#64748b;margin:0 0 6px;padding:0 9px}
+.math-mode-list{display:grid;gap:3px}
+.math-studio-page .math-nav-item{display:flex;align-items:center;gap:10px;width:100%;min-height:47px;padding:7px 9px;border:1px solid transparent;border-radius:9px;background:none;color:#7b8aa1;text-align:left;font:inherit;cursor:pointer;box-shadow:none;text-decoration:none;transition:background .15s,border-color .15s}
+.math-studio-page .math-nav-item:hover{background:#f6f8fc;border-color:#edf1f7}
+.math-studio-page .math-nav-item.active{background:#edf4ff;border-color:#d9e7fb;color:#2e6dcb;box-shadow:none}
+.math-nav-icon{display:grid;place-items:center;width:31px;height:31px;flex-shrink:0;border-radius:8px;color:#7c92ae;background:#f5f7fb}
+.math-nav-icon .math-ui-icon{width:23px;height:23px}
+.math-nav-item.active .math-nav-icon{background:#dfebfc;color:#3878d8}
+.math-nav-copy{display:grid;gap:3px;min-width:0}
+.math-nav-copy strong{font-size:12px;font-weight:650;line-height:1.2;color:#405777;white-space:normal}
+.math-nav-item.active .math-nav-copy strong{color:#2f65b6}
+.math-nav-copy small{font-size:10px;line-height:1.3;font-weight:400;color:#64748b}
+.math-nav-item kbd{margin-left:auto;color:#a8b5c9;background:#fff8;border:1px solid #e1e8f3;border-radius:4px;font:500 9px 'Segoe UI',sans-serif;padding:2px 4px}
+.math-link-arrow{margin-left:auto;color:#b3bfd0}
+.math-link-arrow>.math-ui-icon{width:13px;height:13px}
+.math-library-empty{font-size:11px;line-height:1.5;color:#8798b0;margin:10px;padding:10px;background:#f6f9fd;border-radius:8px}
+.math-studio-page [hidden]{display:none!important}
+.math-workbench{min-width:0;background:#fff;border:1px solid #e0e7f1;border-radius:16px;box-shadow:0 4px 16px #17375b03;overflow:visible}
+.math-studio-page .math-workbench>.panel-head{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px;margin:0;border-bottom:1px solid #edf1f6;min-height:94px}
+.math-workbench-title{display:flex;align-items:center;gap:14px;min-width:0}
+.math-active-icon{width:43px;height:43px;background:#f0f5fc;border:1px solid #e7eef8;border-radius:11px;display:grid;place-items:center;color:#4c7dbb;flex-shrink:0}
+.math-active-icon>.math-ui-icon{width:26px;height:26px}
+.math-workbench-copy{display:grid;gap:6px;min-width:0}
+.math-studio-page .math-workbench h2{font:700 19px/1.2 Inter,'Segoe UI',sans-serif;letter-spacing:-.025em;color:#304662;margin:0}
+.math-workbench-copy>p{font-size:12px;font-weight:400;color:#64748b;line-height:1.5;margin:0}
+.math-studio-page .math-workbench .shortcut-help-btn{width:32px;height:32px;padding:6px;border-radius:8px;box-shadow:none;border:1px solid #e2e9f3;background:#fbfcfe;color:#8097b5}
+.shortcut-help-btn>.math-ui-icon{width:20px;height:20px}
+.math-studio-page .shortcut-popover{border:1px solid #dce6f3;border-radius:12px;box-shadow:0 15px 42px #16365820;font-family:inherit;background:#fff;z-index:25}
+.math-studio-page .shortcut-popover-title{font-family:inherit;font-size:13px;color:#385375}
+.math-studio-page .shortcut-key{font-size:11px;border-radius:5px;background:#edf3fc;color:#4c76aa}
+.math-view-body{padding:28px;min-height:510px}
+.math-studio-page .math-view-body h3{font-family:Inter,'Segoe UI',sans-serif!important;font-size:21px!important;font-weight:650!important;letter-spacing:-.025em;color:#38516f!important}
+.math-library-trigger{display:none}
+.math-studio-page .btn{font-family:inherit!important;font-size:12px!important;font-weight:600!important;min-height:38px;padding:9px 14px;border-radius:9px!important;box-shadow:none!important}
+.math-studio-page .btn-primary{background:#3778d6;color:#fff}
+.math-studio-page .btn-primary:hover{background:#2a66c1}
+.math-studio-page .btn-teal{background:#159a88;color:#fff}
+.math-studio-page .btn-secondary{background:#fff;border:1px solid #dfe7f1;color:#5e7594}
+.math-studio-page .step-btn{border-radius:9px;background:#edf4ff;color:#4576b4;font-family:inherit;font-size:21px;font-weight:500}
+.math-calc-layout{display:grid;grid-template-columns:minmax(270px,350px) minmax(180px,1fr);gap:clamp(24px,4vw,56px);max-width:820px;align-items:center;margin:4px auto 12px}
+.math-studio-page .calc-wrapper{width:100%;max-width:none;margin:0;background:#f5f8fc;border:1px solid #e1e9f3;border-radius:17px;padding:18px;box-shadow:0 5px 16px #223d6710}
+.math-studio-page .calc-screen{min-height:91px;background:#253c5a;color:#f7fbff;border:0;box-shadow:inset 0 2px 6px #061a3b22;border-radius:10px;padding:21px 17px 16px;font:450 38px/1.4 'Segoe UI',sans-serif;letter-spacing:-.04em;margin:0 0 15px;font-variant-numeric:tabular-nums}
+.math-studio-page .calc-keys{gap:9px}
+.math-studio-page .calc-btn{height:48px;border-radius:9px;font:600 19px/1 'Segoe UI',sans-serif;background:#fff;color:#425a7b;border:1px solid #dce5f1;box-shadow:0 2px 1px #dce5f14d;transition:background .12s}
+.math-studio-page .calc-btn:hover{background:#edf3fb}
+.math-studio-page .calc-btn:active{transform:translateY(1px);box-shadow:none}
+.math-studio-page .calc-btn.op{color:#5680b8;background:#eaf1fa;border-color:#dbe5f2;box-shadow:0 2px 1px #dce5f14d}
+.math-studio-page .calc-btn.clear{background:#fff2ee;color:#c47c61;border-color:#f4e0d6;box-shadow:0 2px 1px #f0dfd64d}
+.math-studio-page .calc-btn.eq{background:#3c7bd6;color:#fff;border-color:#3971c2;box-shadow:0 2px 1px #265a9b22}
+.math-calculator-notes{padding:14px 0;color:#64748b}
+.math-note-eyebrow{font-size:9px;letter-spacing:.12em;font-weight:750;color:#64748b;margin:0 0 12px}
+.math-view-body .math-calculator-notes h3{font-size:25px!important;line-height:1.3!important;max-width:240px;letter-spacing:-.04em;color:#496280!important;font-weight:600!important;margin:0 0 14px}
+.math-calculator-notes>p:not(.math-note-eyebrow){font-size:13px;font-weight:400;line-height:1.8;max-width:260px;margin:0}
+.math-calculator-notes ul{list-style:none;margin:20px 0 25px;padding:0;display:grid;gap:11px}
+.math-calculator-notes li{display:flex;align-items:center;gap:7px;font-size:11px;color:#64748b;line-height:1.5}
+.math-calculator-notes li::before{content:'✓';display:grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#ecf7f4;color:#75a799;font-size:9px;flex-shrink:0}
+.math-example-label{font-size:8px;font-weight:700;letter-spacing:.1em;color:#64748b}
+.math-example-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.math-example-chips button{font:500 11px 'Segoe UI',sans-serif;color:#64748b;background:#f8fafc;border:1px solid #e4ebf5;border-radius:6px;padding:7px 9px;cursor:pointer}
+.math-example-chips button:hover{background:#edf4ff;border-color:#b6cdea;color:#4876ae}
+.math-studio-page .rng-wrapper{gap:18px}
+.math-studio-page .rng-card,.math-studio-page .wheel-wrapper,.math-studio-page .fraction-wrapper,.math-studio-page .nl-wrapper,.math-studio-page .converter-card{padding:22px;border-radius:13px;border:1px solid #e2e9f2;box-shadow:none;background:#fff}
+.math-studio-page .rng-card{gap:20px}
+.math-studio-page .rng-card h3{font-size:18px!important}
+.math-studio-page .wheel-wrapper,.math-studio-page .fraction-wrapper,.math-studio-page .nl-wrapper{border:0;padding:8px 0}
+.math-studio-page .wheel-settings{border-radius:9px;background:#f5f8fc;border:1px solid #e4eaf3;font-family:inherit;padding:9px 14px}
+.math-studio-page .wheel-header h3{font-size:20px!important}
+.math-studio-page .fraction-grid{grid-template-columns:200px minmax(0,1fr);gap:24px;margin-top:20px}
+.math-studio-page .frac-box{border-radius:10px;box-shadow:none;border:1px solid #e1e9f3;background:#f8fafc;padding:12px;width:170px}
+.math-studio-page .frac-box>span{font-size:11px;color:#64748b}
+.math-studio-page .frac-val{font-family:'Segoe UI',sans-serif;font-size:32px;color:#3d6088}
+.math-studio-page .frac-shape-toggle{padding:4px;background:#f4f7fb;border-radius:9px;border:1px solid #e3eaf3;gap:4px}
+.math-studio-page .frac-shape-btn{font:600 11px 'Segoe UI',sans-serif;border-radius:6px;padding:8px}
+.math-studio-page .frac-shape-btn.is-active{background:#fff;color:#3a72b8;box-shadow:0 1px 4px #2448760a}
+.math-studio-page .fraction-status{font-size:11px;color:#64748b;font-weight:500}
+.math-studio-page .fraction-canvas{border:0;box-shadow:none;background:none;min-height:250px}
+.math-studio-page .nl-container{padding:14px 0;border-radius:10px;box-shadow:none;border:1px solid #e7edf5;background:#fbfcfe;overflow:hidden}
+.math-studio-page .nl-controls{gap:7px;margin-top:20px}
+.math-studio-page .geo-wrapper{height:590px;border:1px solid #e0e8f3;box-shadow:none;border-radius:11px}
+.math-studio-page .measure-intro{grid-template-columns:1fr;gap:12px}
+.math-studio-page .measure-intro-card{padding:0;border:0;border-radius:0;background:none}
+.math-studio-page .measure-intro-card h3{font-size:22px!important;margin-bottom:8px}
+.math-studio-page .measure-intro-card p{font-size:12px;font-weight:400;color:#64748b}
+.math-studio-page .measure-rule-card{border-radius:10px;border:1px solid #dfeaf7;background:#f5f9ff;box-shadow:none;padding:12px 15px}
+.math-studio-page .measure-rule-card strong{font-family:inherit;font-size:12px;color:#5d7fa9}
+.math-studio-page .measure-rule-card span{font-size:11px;font-weight:400;color:#64748b}
+.math-studio-page .converter-grid{gap:15px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.math-studio-page .converter-card{gap:12px;padding:17px}
+.math-studio-page .converter-icon{width:37px;height:37px;border-radius:9px;font-size:15px;background:var(--conv-soft);border:0;box-shadow:none}
+.math-studio-page .converter-title h3{font-size:15px!important}
+.math-studio-page .converter-title span{font-size:10px;font-weight:400;color:#64748b}
+.math-studio-page .converter-field label{font-size:10px;color:#64748b}
+.math-studio-page .converter-input,.math-studio-page .converter-select{min-height:36px;border-radius:7px;font:500 12px 'Segoe UI',sans-serif;border:1px solid #dfe7f2;background:#fbfcfe;color:#536e90;padding:7px 9px}
+.math-studio-page .converter-result{font-size:15px;line-height:1.4;border-radius:8px;background:#f7faff;border:1px solid #e1eaf7;box-shadow:none;padding:12px;color:#5379ab}
+.math-studio-page .converter-hint{font-size:10px;font-weight:400;color:#64748b}
+.math-studio-page .ladder-wrap{grid-template-columns:1fr;gap:18px}
+.math-studio-page .unit-ladder{padding:15px 5px;gap:4px;min-height:0;border:0;background:none;box-shadow:none}
+.math-studio-page .unit-step{border-radius:7px;box-shadow:none;min-height:55px;padding:10px 5px}
+.math-studio-page .unit-step span{font-size:14px}
+.math-studio-page .unit-step small{font-size:8px}
+.math-studio-page .ladder-note{font-size:10px;font-weight:400;line-height:1.6;border:1px solid #e7edf6;border-radius:8px;background:#f9fbfe;padding:11px;color:#64748b}
+.math-studio-page .ladder-note strong{font-family:inherit;font-size:11px;color:#6984a9}
+.math-studio-page :is(button,a,input,select):focus-visible{outline:2px solid #6c9cdc;outline-offset:3px}
+@media(min-width:1500px){.math-studio-layout{grid-template-columns:252px minmax(0,1fr);gap:26px}.math-studio-page .math-nav-item{min-height:51px}.math-nav-copy strong{font-size:12px}.math-nav-copy small{font-size:10px}.math-calc-layout{margin-top:18px;margin-bottom:18px;max-width:880px;grid-template-columns:370px 1fr;gap:75px}.math-view-body{padding:32px 38px;min-height:565px}.math-studio-page .calc-btn{height:52px}}
+@media(max-width:1100px){.math-studio-layout{grid-template-columns:212px minmax(0,1fr);gap:16px}.math-library{padding:14px 7px}.math-nav-copy strong{font-size:12px}.math-nav-copy small{font-size:10px}.math-studio-page .math-nav-item{padding:7px;gap:7px}.math-nav-item kbd{display:none}.math-view-body{padding:22px}.math-calc-layout{grid-template-columns:minmax(255px,340px) minmax(150px,1fr);gap:24px}.math-view-body .math-calculator-notes h3{font-size:20px!important}.math-calculator-notes li{font-size:11px}.math-calculator-notes>p:not(.math-note-eyebrow){font-size:13px}.math-studio-page .converter-grid{grid-template-columns:1fr}.math-studio-page .converter-card.wide{grid-column:auto}.math-studio-page .rng-wrapper{grid-template-columns:1fr 1fr}.math-studio-page .rng-card{padding:18px 10px}}
+@media(max-width:940px) and (min-width:861px){.math-calculator-notes{display:none}.math-calc-layout{grid-template-columns:minmax(0,340px);justify-content:center}.math-studio-page .math-workbench>.panel-head{padding:18px}.math-studio-page .rng-wrapper{grid-template-columns:1fr}.math-studio-page .fraction-grid{grid-template-columns:1fr}.math-studio-page .frac-controls{flex-direction:row;flex-wrap:wrap;justify-content:center}.math-studio-page .frac-controls>div[style]{display:none}}
+@media(max-width:860px){
+ .math-studio-page .tools-page{width:calc(100% - 28px);padding:20px 0 105px!important}.math-page-heading{margin-bottom:19px}.math-page-intro h1{font-size:26px}.math-studio-page .time-bar{min-width:0;display:block;text-align:right}.math-studio-page .time-bar-clock{display:block;border:0;padding:0;font-size:19px;margin-top:5px}.math-studio-page .time-bar-date{display:none}.math-studio-page .time-bar-label{font-size:8px}.math-studio-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}.math-library{display:none;position:static;max-height:470px;border-radius:12px;padding:14px;overflow:auto}.math-library.is-open{display:block}.math-library-trigger{display:flex;align-items:center;gap:10px;min-height:44px;width:100%;font:600 12px 'Segoe UI',sans-serif;text-align:left;padding:8px 13px;background:#fff;border:1px solid #dce6f2;border-radius:10px;color:#55749c;cursor:pointer}.math-library-trigger>.math-ui-icon{width:22px;height:22px}.math-library-trigger>.math-ui-icon:last-child{margin-left:auto;width:17px;height:17px}.math-library-trigger[aria-expanded="true"]>.math-ui-icon:last-child{transform:rotate(180deg)}.math-mode-list{grid-template-columns:repeat(2,minmax(0,1fr))}.math-library-group[aria-label="Geometri atölyeleri"]{grid-template-columns:repeat(2,minmax(0,1fr))}.math-library-group-label{grid-column:1/-1}.math-nav-copy strong{font-size:12px}.math-nav-copy small{font-size:10px}.math-library-search{margin-bottom:14px}.math-library-heading{margin-bottom:10px}.math-studio-page .math-nav-item{min-height:46px}.math-workbench{border-radius:12px}.math-studio-page .math-workbench>.panel-head{padding:18px;min-height:84px}.math-studio-page .math-workbench h2{font-size:17px}.math-workbench-copy>p{font-size:12px}.math-active-icon{height:38px;width:38px;border-radius:9px}.math-view-body{min-height:0;padding:24px}.math-calc-layout{grid-template-columns:minmax(255px,340px) minmax(150px,1fr);max-width:700px;gap:36px}.math-studio-page .sub-back{padding:0 15px}
+}
+@media(max-width:600px){.math-studio-page .tools-page{width:calc(100% - 20px);padding-top:17px!important}.math-page-intro .math-eyebrow{font-size:8px;margin-bottom:6px}.math-page-intro h1{font-size:23px}.math-page-intro>p:last-child{font-size:10px;max-width:225px}.math-studio-page .time-bar{display:none}.math-page-heading{gap:10px;margin-bottom:17px}.math-view-body{padding:18px 14px}.math-studio-page .math-workbench>.panel-head{padding:17px 14px;gap:8px}.math-workbench-title{gap:10px}.math-workbench-copy>p{font-size:12px;max-width:240px}.math-active-icon{height:35px;width:35px}.math-active-icon>.math-ui-icon{width:23px;height:23px}.math-studio-page .math-workbench h2{font-size:16px}.math-calc-layout{display:block;max-width:340px;margin:2px auto 6px}.math-calculator-notes{display:none}.math-studio-page .calc-wrapper{padding:15px;border-radius:13px}.math-studio-page .calc-btn{height:48px;font-size:18px}.math-studio-page .calc-screen{min-height:88px;font-size:36px}.math-studio-page .rng-wrapper{grid-template-columns:1fr}.math-studio-page .rng-card{padding:20px}.math-studio-page .fraction-grid{grid-template-columns:1fr}.math-studio-page .frac-controls{flex-direction:row;flex-wrap:wrap;justify-content:center}.math-studio-page .frac-controls>div[style]{display:none}.math-studio-page .frac-box{width:140px;padding:10px}.math-studio-page .frac-controls .fraction-status{width:100%}.math-studio-page .fraction-canvas{min-height:220px}.math-studio-page .fraction-canvas svg{max-width:100%}.math-studio-page .geo-wrapper{height:540px}.math-studio-page .unit-ladder{overflow-x:auto;min-width:0}.math-studio-page .unit-step{min-width:45px}.math-studio-page .converter-card{padding:14px}.math-studio-page .converter-form{grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr)}.math-studio-page .converter-select{min-width:0;width:100%;font-size:11px}.math-studio-page .converter-input{min-width:0;width:100%}.math-studio-page .measure-intro-card h3{font-size:20px!important}.math-studio-page .wheel-settings{max-width:100%;gap:10px}.math-studio-page .wheel-settings input[type="range"]{min-width:0;max-width:150px}.math-studio-page .wheel-container{max-width:100%;padding:20px 4px}.math-studio-page .nl-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.math-studio-page .nl-controls .btn{font-size:10px!important;padding:8px 5px}.math-library{padding:13px 7px;max-height:440px}.math-nav-copy small{display:none}.math-studio-page .math-nav-item{gap:7px}.math-nav-copy strong{font-size:12px}.math-library-heading{padding:0 8px}.math-nav-icon{width:27px;height:27px}.math-nav-icon>.math-ui-icon{width:21px;height:21px}}
+@media(prefers-reduced-motion:reduce){.math-studio-page .workspace.is-visible{animation:none}.math-studio-page .math-nav-item{transition:none}}

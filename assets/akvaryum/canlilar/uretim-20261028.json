@@ -1,0 +1,20 @@
+{
+  "tool": "Built-in image_gen",
+  "date": "2026-10-28",
+  "transparent_background": true,
+  "assets": [
+    {
+      "id": "hammerhead",
+      "file": "cekic-basli-kopekbaligi.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-e65bc047-158e-45bd-8719-d788861267e9.png",
+      "prompt": "Use case: scientific-educational / stylized-concept. Asset type: an ORIGINAL transparent-background 3D realistic aquarium animal sprite for an educational classroom game. Subject: ONE hammerhead shark, complete full body, smooth gray-brown back and pale silvery cream underside, unmistakable wide flattened hammer-shaped head with eye at the far lateral tip, long slender body, tall dorsal fin, two natural pectoral fins and intact asymmetric tail. Calm non-aggressive swimming pose, mouth closed, realistic anatomy and fine skin texture, lifelike small eye. Style: polished lifelike natural cutout matching a photographic aquarium creature collection, not vector or cartoon. Composition: horizontal landscape, head faces RIGHT, slight three-quarter side view enough to read the wide hammer head; tail at LEFT, centered with full tail and every fin inside the image, 8 percent transparent margins, creature occupies about 85 percent width. Soft neutral underwater-style studio lighting, opaque solid body, subtly thin fin edges. Genuine alpha transparent background. No water, no floor, no props, no shadows on a plane, no bubbles, no labels, no text, no logo, no watermark. Create a fresh original animal, do not reproduce a stock photograph."
+    },
+    {
+      "id": "axolotl",
+      "file": "aksolotl.png",
+      "source": "/Users/kemalkocar/.codex/generated_images/01a0f6d0-06e4-7f41-b908-f1e9fdc5ce0b/exec-8f8bcf68-a2c4-4087-b7cb-6f4f368bef62.png",
+      "prompt": "Use case: scientific-educational / stylized-concept. Asset type: ORIGINAL transparent-background 3D realistic animal sprite for a classroom aquarium game. Subject: ONE adorable but anatomically recognizable pale pink axolotl, broad round head with two tiny glossy dark eyes and a gentle natural closed mouth, six branching feathery coral-pink external gill stalks (three each side), pale cream-pink soft skin with tiny subtle freckles, elongated body and four delicate short legs with fingers, long translucent-edged finned tail. Style: lifelike high-quality 3D natural cutout, soft friendly proportions and realistic textures, matching a photographic aquarium animal collection; not flat cartoon, not plastic toy. Composition: landscape horizontal full body, head faces RIGHT and slightly toward the viewer so the friendly face and gills read clearly, tail extends LEFT and gently curves, four limbs visible and every gill and tail fully inside frame; animal centered, about 82 percent of canvas width with transparent clean margins. Swimming pose, no ground. Soft neutral underwater-style studio lighting, solid opaque body with delicate fin/gill edges. Genuine alpha transparency. No water or bubbles, no floor, no props, no background/checkerboard pattern, no text, no labels, no logo, no watermark. Fresh original artwork, do not reproduce a stock photograph."
+    }
+  ],
+  "packaging": "Original transparent PNG preserved. WebP contained within 600×398 on a centered 640×426 transparent canvas; quality 88. No watermark removal or source-reference editing."
+}

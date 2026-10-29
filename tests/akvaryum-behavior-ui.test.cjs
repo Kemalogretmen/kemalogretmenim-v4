@@ -201,7 +201,7 @@ test('resting 3D has one stable pose and resumes its joints on feeding; automati
   assert.ok(d.querySelector('.fish-body-image').src.includes('/ahtapot.webp'));
 });
 function chooseSpeciesRadio(h,value){for(const input of h.modal.querySelectorAll('[name="species"]')){input.checked=input.value===value;if(input.checked)input.setAttribute('checked','');else input.removeAttribute('checked');}const input=h.modal.querySelector('[name="species"][value="'+value+'"]');input.dispatchEvent(new h.window.Event('change',{bubbles:true}));}
-test('all eight expressive species animate one intact surface in natural and lightweight modes without new frame loops',async()=>{
+test('all expressive species animate one intact surface in natural and lightweight modes without new frame loops',async()=>{
  for(const lite of [false,true])for(const species of require('../js/akvaryum-expressive.js').species){
   const h=await harness({ageDays:0,lite,expressiveSurface:true,configure:(doc,cls,s)=>{s.species=species;if(['spongebob','patrick','mrkrabs'].includes(species))s.characterUnlocked=true;}}),fish=h.document.querySelector('.fish');
   h.frames.pop()(100);assert.ok(fish.classList.contains('has-expressive-surface'),species);assert.equal(fish.querySelectorAll('.expressive-surface').length,1);assert.equal(fish.querySelectorAll('.creature-joint').length,0);assert.equal(h.frames.length,1);
@@ -282,7 +282,7 @@ test('two open devices synchronize appearance edits alongside an independent sco
  a.submit(a.document.getElementById('cosmeticsForm'));await a.flushWrites();await new Promise(r=>setImmediate(r));
  for(const h of [a,b]){const s=h.saved().classes[0].students[0];assert.equal(C.earned(s),7);assert.equal(s.cosmetics.accessory,'leaf');assert.equal(h.document.querySelector('.fish .fish-accessory').hidden,false);}
 });
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false,raySurface=false,expressiveSurface=false,expressiveUnavailable=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false,raySurface=false,expressiveSurface=false,expressiveUnavailable=false,captureEnergy=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz',species);
   cls.tasks[0].points=7;cls.students.push(s);if(growth)cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*7)};s.createdAt=Date.now()-ageDays*86400000-1000;
@@ -301,6 +301,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
     async remove(name){durableRows.delete(name);return true;},isDurable:()=>!cacheWriteFailure,lastError:()=>cacheReadFailure?Error('Cache unavailable'):null
   })};
   const modelCalls=[];let modelCreates=0,modelDisposes=0,modelFail=false;
+  let motionSpeeds=[];
   const rayPaints=[],expressionPaints={draws:0,transforms:0,strokes:0};if(raySurface||expressiveSurface){const create=document.createElement.bind(document);document.createElement=(tag,...args)=>{const el=create(tag,...args);if(tag==='canvas')el.getContext=()=>expressiveUnavailable?null:({clearRect(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(){expressionPaints.transforms++;},fillRect(){},stroke(){expressionPaints.strokes++;},createRadialGradient(){return {addColorStop(){}};},drawImage(...args){if(raySurface)rayPaints.push(args.slice(1));expressionPaints.draws++;}});return el;};}
   const waterPaints={};
   window.AquariumSeasonal={...require('../js/akvaryum-seasonal.js'),suggestion:()=>require('../js/akvaryum-seasonal.js').suggestion(seasonalDate?new Date(seasonalDate):new Date())};
@@ -322,7 +323,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   window.AquariumCreature3D={create:()=>{modelCreates++;return {supported:modelAvailable,render:(canvas,...args)=>{modelCalls.push(args);frameNow+=drawCost;return !modelFail;},dispose:()=>modelDisposes++};}};
   window.SitePerformance={lite:()=>lite,mode:()=>lite?'lite':'auto',reportSlow(){if(autoQuality&&!lite){lite=true;window.dispatchEvent(new window.Event('site-performance-change'));}},set:value=>{lite=value==='lite';window.dispatchEvent(new window.Event('site-performance-change'));}};
   window.AquariumSocial=require('../js/akvaryum-social.js');
-  window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
+  window.AquariumEnergy=require('../js/akvaryum-energy.js');window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');if(captureEnergy){const original=window.AquariumMotion;window.AquariumMotion={...original,step(fish,...args){motionSpeeds=fish.map(f=>({id:f.el.dataset.id,speed:f.mood.speed,hungry:f.hungry,absent:f.absent}));return original.step(fish,...args);}};}window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
   window.kemalUserAuth={ready:()=>authPending?new Promise(()=>{}):Promise.resolve(),getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
   window.AquariumCloud=cloudFactory?{create:cloudFactory}:null;if(cloudFactory)window.kemalUserAuth.getClient=()=>({});
   window.AquariumLive=liveClient?require('../js/akvaryum-live.js'):null;if(liveClient)window.kemalUserAuth.getClient=()=>liveClient;
@@ -348,7 +349,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   if(expressiveSurface)for(const img of document.querySelectorAll('.fish .fish-body-image'))if(window.AquariumExpressive.supports(img.closest('.fish').dataset.species))Object.defineProperties(img,{complete:{value:true},naturalWidth:{value:640},naturalHeight:{value:426}});
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
   const submit=form=>form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
-  return {rayPaints,expressionPaints,directDocumentWrites:()=>directDocumentWrites,flushWrites:async()=>{let count=0;while(zeroTimers.length){assert.ok(count++<10,'writes must settle');await zeroTimers.shift()();}},pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
+  return {motionSpeeds:()=>motionSpeeds,rayPaints,expressionPaints,directDocumentWrites:()=>directDocumentWrites,flushWrites:async()=>{let count=0;while(zeroTimers.length){assert.ok(count++<10,'writes must settle');await zeroTimers.shift()();}},pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
 }
 test('board magnification stays device-local and preserves young fish growth, points and lightweight motion',async()=>{
  const options={ageDays:0,growth:true,sceneWidth:1240,sceneHeight:242,extraNames:Array.from({length:23},(_,i)=>'Öğrenci '+i),lite:true};
@@ -820,7 +821,7 @@ test('back navigates nested menus and refreshes student data without executing a
  const h=await harness(),d=h.document;
  h.click('[data-action="settings"]');h.click(h.modal.querySelector('[data-action="activities"]'));h.click('[data-action="timer"]');
  h.click('#modalBack');assert.equal(d.getElementById('modalTitle').textContent,'Birlikte güzel adımlar');
- h.click('#modalBack');assert.equal(d.getElementById('modalTitle').textContent,'Sınıfın kontrolü sende');
+ h.click('#modalBack');assert.equal(d.getElementById('modalTitle').textContent,'Akvaryum ayarları');
  h.click('[data-action="delete-class"]');h.click('#modalBack');assert.equal(h.deleteCalls(),0);assert.ok(d.getElementById('renameClassForm'));
  h.click('#modalBack');assert.equal(h.modal.open,false);
  h.click('.fish');h.click('[data-action="tasks"]');let form=d.querySelector('.task-points-form');form.querySelector('[name="points"]').value='19';h.submit(form);
@@ -928,7 +929,7 @@ test('a new deduction received from another device starts one teacher conversati
  let note;for(let i=1;i<=350&&!note;i++){h.frames.pop()(i*50);note=d.querySelector('.teacher-note.visible');}
  assert.ok(note);assert.equal(C.earned(saved.classes[0].students[0]),5);assert.match(d.querySelector('.daily-champion-medal').getAttribute('aria-label'),/Bugün 5 puan/);await h.pollCloud();
  for(let i=351;i<=700;i++)h.frames.pop()(i*50);assert.equal(d.querySelector('.teacher-note,.is-listening,.is-mentoring'),null);assert.deepEqual(h.saved(),saved);
- remote.award(1,0);await h.pollCloud();assert.equal(d.querySelector('.daily-champion-medal').closest('.fish').dataset.id,h.saved().classes[0].students[1].id);assert.equal(d.querySelector('.is-mentoring'),null);
+ remote.award(1,0);await h.pollCloud();assert.equal(d.querySelector('.daily-champion-medal').closest('.fish').dataset.id,h.saved().classes[0].students[1].id);assert.equal(!!d.querySelector('.is-mentoring'),false,'the new praise waits for the reward gesture');for(let i=701;i<=810;i++)h.frames.pop()(i*50);assert.ok(d.querySelector('.is-mentoring'),'a fresh positive event now starts optional praise');
 });
 test('teacher reaches moving, resting and newly hatched-to-egg pupils across compact board and wide scenes',async()=>{
  for(const options of [
@@ -1517,4 +1518,119 @@ test('character hearts, eel sparks and Lina rainbow appear only during a new rew
   h.click('.fish');h.click('.behavior-choice');h.frames.pop()(1100);assert.equal(effect.classList.contains('visible'),true);assert.ok(h.expressionPaints.strokes>0);
   h.frames.pop()(6000);assert.equal(effect.classList.contains('visible'),false);assert.ok(!JSON.stringify(h.saved()).match(/characterClock|characterWalking|expressiveEffects|lateralVelocity/));
  }
+});
+
+test('the scene consumes daily energy, slows one-day hunger and preserves two-day rest without saving speed data',async()=>{
+ const E=require('../js/akvaryum-energy.js'),h=await harness({ageDays:0,extraNames:['Ada','Ece'],captureEnergy:true,configure:(doc,cls,s)=>{
+  for(let i=0;i<4;i++)C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id);
+  cls.students[1].createdAt=Date.now()-86400000-1000;cls.students[2].createdAt=Date.now()-2*86400000-1000;
+ }}),ids=h.saved().classes[0].students.map(s=>s.id);
+ h.frames.pop()(100);const speeds=new Map(h.motionSpeeds().map(f=>[f.id,f]));
+ assert.ok(Math.abs(speeds.get(ids[0]).speed-.65*1.4)<.001);assert.equal(speeds.get(ids[1]).speed,.65*.72);assert.equal(speeds.get(ids[2]).speed,0);assert.equal(speeds.get(ids[2]).hungry,true);
+ h.click('.fish[data-id="'+ids[1]+'"]');h.click('.behavior-choice');h.frames.pop()(200);h.frames.pop()(300);
+ const first=h.motionSpeeds().find(f=>f.id===ids[1]).speed;assert.ok(first>.65*.72&&first<.8,'new feeding accelerates smoothly');
+ for(let i=0;i<80;i++)h.frames.pop()(400+i*100);
+ assert.ok(h.motionSpeeds().find(f=>f.id===ids[1]).speed>.77);
+ assert.ok(!JSON.stringify(h.saved()).match(/energyStats|energySpeed|hungerSpeaker|lastFedAt|peak/));
+});
+test('hungry reminders are rare, respect pause/preferences and disappear immediately on feeding',async()=>{
+ const h=await harness({ageDays:1}),d=h.document,before=h.saved();h.frames.pop()(59999);assert.equal(d.querySelector('.hunger-note'),null);
+ h.frames.pop()(61000);const bubble=d.querySelector('.hunger-note.visible');assert.ok(bubble);assert.ok(require('../js/akvaryum-social.js').hungerReminders.includes(bubble.textContent));assert.deepEqual(h.saved(),before);
+ h.click('.fish');assert.equal(d.querySelector('.hunger-note'),null,'opening the score window clears the reminder');h.click('.behavior-choice');h.frames.pop()(250000);assert.equal(d.querySelector('.hunger-note'),null,'fed fish never asks for food');
+ for(const options of [{absent:true},{reduced:true},{configure:doc=>doc.settings.chat=false},{configure:doc=>doc.settings.motion=false},{growth:true}]){
+  const quiet=await harness({ageDays:1,...options});if(quiet.frames.length)quiet.frames.pop()(61000);assert.equal(quiet.document.querySelector('.hunger-note.visible'),null);
+ }
+});
+test('grouped skill icons retain the selected value and mount at most one small category per form',async()=>{
+ const h=await harness(),d=h.document;h.click('[data-action="settings"]');h.click('#modal [data-action="tasks"]');const form=d.getElementById('taskForm'),picker=form.querySelector('.task-icon-picker'),category=picker.querySelector('[data-icon-category]');
+ assert.equal(category.querySelectorAll('option').length,7);assert.ok(picker.querySelectorAll('.task-icon-option').length<=24);
+ for(const option of category.querySelectorAll('option'))option.removeAttribute('selected');category.querySelector('[value="health"]').setAttribute('selected','');category.dispatchEvent(new h.window.Event('change',{bubbles:true}));assert.ok(picker.querySelector('[data-icon="🍎"]'));h.click(picker.querySelector('[data-icon="🍎"]'));assert.equal(form.querySelector('[name="icon"]').value,'🍎');
+ for(const option of category.querySelectorAll('option'))option.removeAttribute('selected');category.querySelector('[value="nature"]').setAttribute('selected','');category.dispatchEvent(new h.window.Event('change',{bubbles:true}));assert.equal(form.querySelector('[name="icon"]').value,'🍎');assert.ok(picker.querySelectorAll('.task-icon-option').length<=24);
+ form.querySelector('[name="title"]').value='Meyvemi yedim';form.querySelector('[name="points"]').value='2';h.submit(form);assert.equal(h.saved().classes[0].tasks.at(-1).icon,'🍎');
+});
+
+test('the explicit feeding demo contains fast, slow and resting examples without changing the teacher document',async()=>{
+ const h=await harness({ageDays:0,search:'?demo=1&beslenme=1',captureEnergy:true}),before=h.saved();h.frames.pop()(100);
+ assert.equal(h.document.querySelectorAll('#swimArea .fish').length,12);const speeds=h.motionSpeeds();assert.equal(speeds.filter(s=>s.speed>.9).length,5);assert.equal(speeds.filter(s=>s.speed===.65*.72).length,2);assert.equal(speeds.filter(s=>s.hungry).length,2);
+ h.frames.pop()(61000);assert.ok(h.document.querySelector('.hunger-note.visible'));assert.deepEqual(h.saved(),before);assert.equal(before.classes[0].students.length,1);
+});
+test('settings tabs show one group, retain typed values and keyboard navigation without saving or restarting the scene',async()=>{
+ const h=await harness({ageDays:0}),d=h.document,before=h.saved();h.click('[data-action="settings"]');
+ assert.equal(h.modal.classList.contains('settings-modal'),true);assert.equal(d.querySelectorAll('.settings-tabs [role="tab"]').length,7);
+ const visible=()=>[...d.querySelectorAll('.settings-panels>[role="tabpanel"]')].filter(p=>!p.hidden);
+ assert.equal(visible().length,1);assert.equal(visible()[0].id,'settings-panel-class');
+ d.querySelector('#renameClassForm [name="name"]').value='Yazılmakta olan ad';
+ for(const id of ['aquarium','motion','teacher','sound','sharing','backup','class']){h.click('#settings-tab-'+id);assert.equal(visible().length,1);assert.equal(visible()[0].id,'settings-panel-'+id);assert.equal(d.getElementById('settings-tab-'+id).getAttribute('aria-selected'),'true');}
+ assert.equal(d.querySelector('#renameClassForm [name="name"]').value,'Yazılmakta olan ad');assert.deepEqual(h.saved(),before);assert.equal(h.frames.length,1);
+ const key=new h.window.Event('keydown',{bubbles:true,cancelable:true});key.key='ArrowRight';d.getElementById('settings-tab-class').dispatchEvent(key);assert.equal(visible()[0].id,'settings-panel-aquarium');
+ h.click('[data-action="themes"]');h.click('#modalBack');assert.equal(visible()[0].id,'settings-panel-aquarium');
+ h.click('#settings-tab-teacher');h.click('[data-action="teacher-fish"]');h.click('#modalBack');assert.equal(visible()[0].id,'settings-panel-teacher');
+});
+function teacherFixture(state,cls){cls.teacher={enabled:true,name:'Öğretmenim',species:'goldfish'};}
+function runUntilTeacherNote(h,start=0){let now=start;for(let i=0;i<500&&!h.document.querySelector('.teacher-note.visible');i++)h.frames.pop()?.(now+=50);return now;}
+test('positive progress earns a brief teacher visit, pauses just that pupil and does not repeat from old records or rapid awards',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada'],configure:teacherFixture}),d=h.document;
+ assert.equal(!!d.querySelector('.is-mentoring'),false);assert.ok(d.querySelector('.teacher-fish').classList.contains('teacher-glow'));
+ const id=h.saved().classes[0].students[0].id;h.click('.fish[data-id="'+id+'"]');h.click('.behavior-choice');
+ for(let i=1;i<=80;i++)h.frames.pop()(i*50);assert.equal(!!d.querySelector('.is-mentoring'),false,'the reward gesture finishes before praise');
+ let now=runUntilTeacherNote(h,4000);const note=d.querySelector('.teacher-note.visible');assert.ok(note);assert.ok(require('../js/akvaryum-social.js').praises.includes(note.textContent));
+ assert.equal(d.querySelector('.is-listening').dataset.id,id);
+ const pupil=d.querySelector('.is-listening'),teacher=d.querySelector('.teacher-fish'),other=d.querySelector('.fish[data-id="'+h.saved().classes[0].students[1].id+'"]');
+ const held=[pupil.style.transform,pupil.querySelector('.fish-art').style.transform,teacher.style.transform],otherPosition=other.style.transform,saved=h.saved();
+ for(let i=0;i<25;i++)h.frames.pop()(now+=50);
+ assert.deepEqual([pupil.style.transform,pupil.querySelector('.fish-art').style.transform,teacher.style.transform],held);assert.notEqual(other.style.transform,otherPosition);assert.deepEqual(h.saved(),saved);
+ for(let i=0;i<100;i++)h.frames.pop()(now+=50);assert.equal(!!d.querySelector('.is-listening,.is-mentoring'),false);
+ h.click('.fish[data-id="'+id+'"]');h.click('.behavior-choice');for(let i=0;i<250;i++)h.frames.pop()(now+=50);
+ assert.equal(!!d.querySelector('.teacher-note,.is-listening'),false,'praise has a per-pupil cooldown');assert.equal(C.earned(h.saved().classes[0].students[0]),14);assert.equal(h.frames.length,1);
+ assert.doesNotMatch(JSON.stringify(h.saved()),/praiseCooldown|mentorPauseAt|teacherVisitQueue|speakingAt/);
+ for(const configure of [(doc,cl,s)=>{teacherFixture(doc,cl);doc.settings.teacherPraise=false;},(doc,cl,s)=>{teacherFixture(doc,cl);C.awardBehavior(s,cl,C.dayKey(),cl.tasks[0].id);}]){
+  const quiet=await harness({ageDays:0,configure});for(let i=0;i<300;i++)quiet.frames.pop()(50+i*50);assert.equal(!!quiet.document.querySelector('.teacher-note,.is-listening'),false);
+ }
+});
+test('random selection queues one teacher invitation after the result closes and never gives points',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada'],configure:teacherFixture}),d=h.document,before=h.saved();
+ h.click('[data-action="random-student"]');h.click('[data-action="random-draw"]');let now=0;
+ while(now<2700){now+=50;h.frames.splice(0).forEach(fn=>fn(now));}
+ const name=d.getElementById('pickerName').textContent;assert.equal(!!d.querySelector('.teacher-note.visible'),false,'the result dialog must not hide the message');
+ h.click('[data-action="random-show"]');now=runUntilTeacherNote(h,now);
+ assert.ok(require('../js/akvaryum-social.js').invitations.includes(d.querySelector('.teacher-note.visible')?.textContent));
+ const listening=d.querySelector('.is-listening');assert.equal(listening.querySelector('.fish-label-text').textContent,name);assert.deepEqual(h.saved(),before);
+ for(let i=0;i<100;i++)h.frames.pop()(now+=50);assert.equal(!!d.querySelector('.is-listening,.is-mentoring'),false);assert.equal(h.frames.length,1);
+});
+test('shared-goal intermediate messages are optional, once per crossing, and independent of reward motion',async()=>{
+ const h=await harness({ageDays:0,configure:(state,cls)=>{teacherFixture(state,cls);state.settings.teacherPraise=false;state.settings.rewardMotion=false;C.startGoal(cls,'Birlikte keşfedelim',28);}}),d=h.document;
+ h.click('.fish:not(.teacher-fish)');h.click('.behavior-choice');let now=runUntilTeacherNote(h);
+ assert.ok(require('../js/akvaryum-social.js').milestones.includes(d.querySelector('.teacher-note.visible')?.textContent));assert.equal(!!d.querySelector('.is-listening'),false,'a shared message never singles out a pupil');
+ const saved=h.saved();for(let i=0;i<150;i++)h.frames.pop()(now+=50);assert.equal(!!d.querySelector('.teacher-note'),false);assert.deepEqual(h.saved(),saved);
+ h.click('[data-action="settings"]');h.click('#settings-tab-teacher');const toggle=d.getElementById('teacherGoalToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));h.click('[data-action="close"]');
+ h.click('.fish:not(.teacher-fish)');h.click('.behavior-choice');for(let i=0;i<200;i++)h.frames.pop()(now+=50);assert.equal(!!d.querySelector('.teacher-note'),false);assert.equal(C.earned(h.saved().classes[0].students[0]),14);
+});
+test('teacher shine can be disabled independently and tail accents follow the animal heading with no surrounding ring',async()=>{
+ const h=await harness({ageDays:0,expressiveSurface:true,configure:(state,cls,s)=>{teacherFixture(state,cls);s.species='lina';state.settings.teacherPraise=false;}}),d=h.document;
+ const pupil=d.querySelector('.fish:not(.teacher-fish)');assert.equal(pupil.querySelector('.expressive-effects').parentElement,pupil.querySelector('.fish-side'));
+ h.click(pupil);h.click('.behavior-choice');h.frames.pop()(1100);assert.ok(pupil.querySelector('.expressive-effects').classList.contains('visible'));assert.ok(h.expressionPaints.strokes>0);
+ h.click('[data-action="settings"]');h.click('#settings-tab-teacher');const toggle=d.getElementById('teacherGlowToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));assert.equal(d.querySelector('.teacher-fish').classList.contains('teacher-glow'),false);
+ assert.equal(h.saved().settings.teacherGlow,false);assert.equal(C.earned(h.saved().classes[0].students[0]),7);
+});
+test('hammerhead and axolotl animate intact, celebrate fresh points, obey motion preferences and keep transient poses out of storage',async()=>{
+ for(const species of ['hammerhead','axolotl'])for(const lite of [false,true]){
+  const h=await harness({species,ageDays:0,expressiveSurface:true,lite}),d=h.document,fish=d.querySelector('.fish');
+  h.frames.pop()(100);assert.ok(fish.classList.contains('has-expressive-surface'));assert.equal(fish.querySelectorAll('.creature-joint').length,0);assert.equal(fish.querySelector('.fish-art').style.getPropertyValue('--body-mask'),'none');
+  const paints=h.expressionPaints.transforms;for(let i=0;i<20;i++)h.frames.pop()(150+i*50);assert.ok(h.expressionPaints.transforms>paints);
+  h.click(fish);h.click('.behavior-choice');h.frames.pop()(2400);assert.ok(fish.classList.contains('is-rewarding'));assert.equal(C.earned(h.saved().classes[0].students[0]),7);
+  if(species==='axolotl'){assert.ok(fish.querySelector('.expressive-effects').classList.contains('visible'));assert.ok(h.expressionPaints.strokes>0);}
+  const saved=h.saved();h.frames.pop()(7000);assert.equal(fish.classList.contains('is-rewarding'),false);assert.deepEqual(h.saved(),saved);assert.equal(h.frames.length,1);
+  h.click('[data-action="settings"]');const motion=d.getElementById('motionToggle');motion.checked=false;motion.dispatchEvent(new h.window.Event('change',{bubbles:true}));assert.equal(h.frames.length,0);assert.equal(fish.classList.contains('is-rewarding'),false);
+  assert.doesNotMatch(JSON.stringify(h.saved()),/lastExpressivePose|rewardStarted|expressiveCanvas|gillPhase|tailPhase/);
+ }
+});
+test('the new animals hatch as the selected species and their explicit demo remains separate from a teacher document',async()=>{
+ for(const species of ['hammerhead','axolotl']){
+  const h=await harness({species,ageDays:0,growth:true,expressiveSurface:true}),d=h.document;assert.ok(d.querySelector('.fish').classList.contains('is-egg'));
+  h.click('.fish');h.click('.behavior-choice');assert.equal(d.querySelector('.fish').classList.contains('is-egg'),false);assert.equal(h.saved().classes[0].students[0].species,species);
+  assert.ok(d.querySelector('.fish .fish-body-image').getAttribute('src').includes(C.species(species).file.replace('.png','.webp')));
+ }
+ const h=await harness({search:'?demo=1&yeniler=1',ageDays:0}),d=h.document,before=h.saved();
+ assert.deepEqual([...d.querySelectorAll('.fish')].map(f=>f.dataset.species),['hammerhead','axolotl']);
+ h.click('.fish');h.click('.behavior-choice');assert.deepEqual(h.saved(),before);assert.equal(h.frames.length,1);
 });

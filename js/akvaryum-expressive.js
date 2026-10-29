@@ -5,7 +5,7 @@
   else root.AquariumExpressive=factory();
 })(typeof window==='object'?window:this,function(){
   'use strict';
-  const species=Object.freeze(['eel','angler','mantis','crab','lina','spongebob','patrick','mrkrabs']);
+  const species=Object.freeze(['eel','angler','mantis','crab','lina','spongebob','patrick','mrkrabs','hammerhead','axolotl']);
   const supports=id=>species.includes(id),clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
   const region=(x,y,cx,cy,rx,ry)=>Math.max(0,1-((x-cx)/rx)**2-((y-cy)/ry)**2)**2;
@@ -42,6 +42,20 @@
       dy+=Math.sin(t-x*4.5)*(.024+b*.045)*tail;
       dx+=Math.cos(t)*(.004+b*.009)*tail;
       rotate(.67,.38,w*(3+b*5),region(x,y,.61,.21,.14,.22));
+    }else if(id==='hammerhead'){
+      // The wide head stays pinned. A traveling bend reaches only the rear
+      // body and tail; fins flex without cutting the original silhouette.
+      dy+=Math.sin(t-x*5.2)*(.03+b*.035)*(1-smooth(.25,.61,x));
+      rotate(.56,.49,w*(1.5+b*2),region(x,y,.56,.29,.12,.23));
+      rotate(.64,.59,-w*(2+b*4),region(x,y,.67,.70,.14,.19));
+    }else if(id==='axolotl'){
+      dy+=Math.sin(t-x*4.8)*(.025+b*.025)*(1-smooth(.27,.53,x));
+      const aboveFace=1-smooth(.39,.49,y);
+      rotate(.70,.46,-w*(3+b*7),region(x,y,.64,.32,.115,.20)*aboveFace);
+      rotate(.88,.46,w*(3+b*7),region(x,y,.92,.35,.08,.20)*aboveFace);
+      rotate(.64,.64,w*(3+b*14),region(x,y,.62,.77,.12,.17));
+      rotate(.85,.64,-w*(2+b*7),region(x,y,.88,.76,.10,.15));
+      rotate(.45,.59,w*(3+b*3),region(x,y,.43,.69,.11,.13));
     }else if(id==='spongebob'){
       // The face and torso are pinned; only the raised hand and feet flex.
       rotate(.62,.56,w*(7+b*19),region(x,y,.755,.32,.14,.29));
@@ -131,17 +145,30 @@
     if(a===0)return lines;
     const count=lite?6:12;
     if(id==='eel')for(let i=0;i<count;i++){
-      const angle=i/count*Math.PI*2+t*.3,r=.39+.025*Math.sin(t+i),points=[];
-      for(let j=0;j<5;j++){const radius=r+j*.019,theta=angle+(j%2?1:-1)*.035;points.push({x:.5+Math.cos(theta)*radius,y:.5+Math.sin(theta)*radius*.75});}
-      lines.push({points,color:i%2?'#a8f5ff':'#d7c7ff',alpha:a*(.45+.15*Math.sin(t+i)),width:1.4});
+      // Short branching discharges originate along the body, never on a ring.
+      const x=.34+(i%6)/5*.34,side=i%2?1:-1,y=.51+side*.035+Math.sin(t-x*5.8)*.018,points=[];
+      const reach=.09+.055*(1+Math.sin(t*.9+i*1.7))/2;
+      for(let j=0;j<6;j++){
+        const u=j/5,jag=j===0||j===5?0:Math.sin(j*4.7+i+t*1.8)*.018;
+        points.push({x:x+u*(i%3-1)*.07+jag,y:y+side*reach*u});
+      }
+      lines.push({points,color:i%2?'#b9efff':'#dfddff',alpha:a*(.42+.18*(1+Math.sin(t*1.4+i))/2),width:1.25,glow:6});
     }
     if(id==='lina'){
       const colors=['#ff9fbe','#ffbd8a','#fff2a6','#a8efc5','#a4dcff','#c5b5ff'];
       for(let i=0;i<(lite?6:12);i++){
-        const angle=i/12*Math.PI*2+t*.3,r=.33+(i%3)*.027,points=[];
-        for(let j=0;j<6;j++){const theta=angle+j*.045;points.push({x:.5+Math.cos(theta)*r,y:.5+Math.sin(theta)*r*.8});}
-        lines.push({points,color:colors[i%6],alpha:a*.65,width:2.2});
+        const fan=(i/(lite?5:11)-.5),points=[],sway=Math.sin(t-1.2)*.018;
+        for(let j=0;j<8;j++){
+          const u=j/7;
+          points.push({x:.315-u*(.21+.035*Math.sin(t*.8+i)),y:.535+sway+fan*u*.42+Math.sin(t*1.2-u*4+i*.2)*.012*u});
+        }
+        lines.push({points,color:colors[i%6],alpha:a*(.48+.16*(1+Math.sin(t*.7+i))/2),width:1.7,glow:7});
       }
+    }
+    if(id==='axolotl')for(let i=0;i<(lite?3:5);i++){
+      const age=((t*.13+i/(lite?3:5))%1+1)%1,cx=.64+(i%3)*.07+Math.sin(t*.7+i)*.012,cy=.57-age*.23,r=.010+age*.009,points=[];
+      for(let j=0;j<=20;j++){const theta=j/20*Math.PI*2;points.push({x:cx+Math.cos(theta)*r,y:cy+Math.sin(theta)*r*1.5});}
+      lines.push({points,color:i%2?'#e1f8ff':'#fbddeb',alpha:a*Math.sin(Math.PI*age)*.56,width:1,glow:2});
     }
     if(['spongebob','patrick','mrkrabs'].includes(id)){
       const colors=id==='patrick'?['#ffc4de','#eea6ff']:id==='mrkrabs'?['#ffd6a8','#ffafbd']:['#ffb6d3','#ffdfec'];
@@ -167,9 +194,10 @@
       ctx.clearRect(0,0,width,height);
       for(const line of effects(id,phase,amount,{lite})){
         ctx.beginPath();line.points.forEach((p,i)=>i?ctx.lineTo(p.x*width,p.y*height):ctx.moveTo(p.x*width,p.y*height));
-        ctx.strokeStyle=line.color;ctx.globalAlpha=line.alpha;ctx.lineWidth=line.width;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+        ctx.strokeStyle=line.color;ctx.globalAlpha=line.alpha;ctx.lineWidth=line.width;ctx.lineCap='round';ctx.lineJoin='round';
+        ctx.shadowColor=line.color;ctx.shadowBlur=line.glow?(lite?3:line.glow):0;ctx.stroke();
       }
-      ctx.globalAlpha=1;return true;
+      ctx.globalAlpha=1;ctx.shadowBlur=0;return true;
     }catch(_){return false;}
   }
   return {species,supports,point,plan,render,effects,renderEffects};

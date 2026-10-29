@@ -2,6 +2,7 @@
   const $ = selector => document.querySelector(selector);
   const shell = $('.builder-shell'), board = $('#shapeBoard');
   if (!shell || !board) return;
+  window.GeometryBackgrounds?.register('builder2d', type => { board.dataset.background = type; }, 'square');
   const NS = 'http://www.w3.org/2000/svg';
   const colors = ['#ef4444', '#f97316', '#facc15', '#65bd65', '#09addb', '#8200ac', '#f72585'];
   const names = { triangle: 'Üçgen', square: 'Kare', rectangle: 'Dikdörtgen', ring: 'Çember', circle: 'Daire' };

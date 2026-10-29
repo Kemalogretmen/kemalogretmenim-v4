@@ -1,0 +1,42 @@
+/* Tactile probability scenes, sharing the mathematics studio's quiet palette. */
+.math-studio-page .chance-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 15px;color:#6a7c94;font:500 11px/1.5 'Segoe UI',sans-serif}
+.chance-sound{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:11px;color:#4d6585;cursor:pointer}
+.chance-sound input{width:15px;height:15px;accent-color:#3778d6}
+.math-studio-page .chance-studio{gap:18px;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.math-studio-page .chance-card{padding:17px;min-width:0;background:#fff;border:1px solid #e1e9f2;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:0}
+.chance-card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 13px}
+.chance-eyebrow{font:700 8px 'Segoe UI',sans-serif;letter-spacing:.1em;color:#8192aa}
+.math-studio-page .chance-card-heading h3{margin:5px 0 0!important;font:650 19px/1.15 'Segoe UI',sans-serif!important;color:#334d6f!important}
+.chance-card-badge{font:600 10px 'Segoe UI',sans-serif;color:#6682a4;border:1px solid #e1e9f4;background:#f8fafd;border-radius:6px;padding:5px 7px;white-space:nowrap}
+.chance-scene{position:relative;display:grid;place-items:center;min-width:0;width:100%;height:276px;overflow:hidden;border:1px solid #dce5ef;border-radius:11px;background:radial-gradient(ellipse at 50% 46%,#fff,#eaf0f6);cursor:pointer;outline:none;touch-action:manipulation;user-select:none;isolation:isolate}
+.chance-scene canvas{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none!important;pointer-events:none}
+.chance-scene:focus-visible{box-shadow:0 0 0 3px #a6c7f8;border-color:#5288d7}
+.chance-scene[aria-busy="true"]{cursor:progress}
+.chance-scene-prompt{position:absolute;z-index:1;bottom:10px;left:50%;transform:translateX(-50%);font:500 9px 'Segoe UI',sans-serif;white-space:nowrap;color:#5b7390;background:#ffffffd9;backdrop-filter:blur(4px);border:1px solid #dfe7f0;border-radius:5px;padding:5px 8px;pointer-events:none;transition:opacity .2s}
+.chance-scene[aria-busy="true"] .chance-scene-prompt{opacity:0}
+.chance-dice-fallback{display:flex;align-items:center;justify-content:center;gap:13px;width:100%;padding:10px;color:#273b56;perspective:700px}
+.chance-dice-fallback>span{display:block;min-width:0}
+.chance-dice-fallback>span>span{display:block;font:normal 73px/1 'Segoe UI Symbol','Arial',sans-serif;filter:drop-shadow(0 9px 5px #14304724);color:#25394e;background:#fffbf0;line-height:65px;border-radius:12px;border:2px solid #fff;padding:4px;box-shadow:inset -4px -5px 5px #d9d2bf55}
+.chance-coin-fallback{width:130px;height:130px;position:relative;filter:drop-shadow(0 12px 7px #1f304731);transform:rotateX(20deg) rotateZ(-10deg)}
+.chance-coin-fallback img{width:100%;height:100%;max-width:none!important;object-fit:contain;display:block;border-radius:50%;box-shadow:0 4px 0 #9e763a}
+.chance-scene.has-webgl>.chance-dice-fallback,.chance-scene.has-webgl>.chance-coin-fallback{display:none}
+.chance-count-row{min-height:52px;display:flex;align-items:center;justify-content:space-between;gap:10px;font:600 11px 'Segoe UI',sans-serif;color:#68809f}
+.chance-count-options{display:flex;gap:4px;background:#f3f6fa;padding:3px;border:1px solid #e2e9f2;border-radius:8px}
+.math-studio-page .chance-count-options button{border:1px solid transparent;box-shadow:none;min-width:33px;height:29px;border-radius:5px;background:transparent;font:600 12px 'Segoe UI',sans-serif;color:#6c829e;cursor:pointer}
+.math-studio-page .chance-count-options button[aria-pressed="true"]{background:white;color:#286acb;border-color:#dce6f5;box-shadow:0 1px 3px #223d6b0b}
+.math-studio-page .chance-count-options button:disabled{opacity:.45;cursor:default}
+.chance-coin-caption{min-height:52px;display:flex;align-items:center;justify-content:center;gap:7px;font:500 10px/1.4 'Segoe UI',sans-serif;color:#7e90a7}
+.chance-coin-mark{font-size:15px;color:#aa925d}
+.math-studio-page .chance-action{display:flex;align-items:center;justify-content:center;gap:7px;min-height:39px;width:100%;font-size:12px!important;cursor:pointer}
+.chance-action svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.math-studio-page .chance-action:disabled{opacity:.5;cursor:progress}
+.chance-result{margin:11px 0 0;min-height:24px;text-align:center;font:600 12px/1.5 'Segoe UI',sans-serif;color:#4f6a8e;letter-spacing:0;opacity:1!important}
+.chance-result[data-values],.chance-result[data-result]{font-size:17px;color:#2f5f9a;font-variant-numeric:tabular-nums}
+@media(max-width:1100px){.math-studio-page .chance-studio{grid-template-columns:1fr}.chance-scene{height:270px}.math-studio-page .chance-card{padding:16px}.chance-toolbar{gap:6px}}
+@media(max-width:860px){.math-studio-page .chance-studio{grid-template-columns:repeat(2,minmax(0,1fr))}.chance-scene{height:250px}}
+@media(max-width:660px){.math-studio-page .chance-studio{grid-template-columns:1fr}.chance-scene{height:266px}.math-studio-page .chance-card{padding:15px}.chance-toolbar{font-size:10px}.chance-card-heading{margin-bottom:12px}.chance-count-row,.chance-coin-caption{min-height:50px}}
+@keyframes chanceDiceDrop{0%{transform:translateY(-85px) rotateX(140deg) rotateZ(-45deg)}50%{transform:translateY(5px) rotateX(720deg) rotateZ(20deg)}72%{transform:translateY(-25px) rotateX(810deg) rotateZ(-10deg)}100%{transform:translateY(0) rotateX(1080deg) rotateZ(0)}}
+@keyframes chanceCoinToss{0%{transform:translateY(20px) rotateX(0)}38%{transform:translateY(-80px) rotateX(1080deg)}75%{transform:translateY(22px) rotateX(1800deg)}88%{transform:translateY(-8px) rotateX(1980deg)}100%{transform:translateY(0) rotateX(2160deg)}}
+.chance-scene[aria-busy="true"]:not(.has-webgl) .chance-dice-fallback{animation:chanceDiceDrop 1.72s ease-out both}
+.chance-scene[aria-busy="true"]:not(.has-webgl) .chance-coin-fallback{animation:chanceCoinToss 1.72s ease-out both}
+@media(prefers-reduced-motion:reduce){.chance-scene-prompt{transition:none}.chance-scene[aria-busy="true"] .chance-dice-fallback,.chance-scene[aria-busy="true"] .chance-coin-fallback{animation:none!important}}

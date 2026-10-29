@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Birim Küp ve Soru Hazırlama Aracı - Kemal Öğretmenim</title>
     
@@ -89,6 +90,11 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <link rel="stylesheet" href="/css/geometry-toolbox.css?v=20261028-unified-5">
+  <script defer src="/js/geometry-toolbox.js?v=20261028-unified-5"></script>
+  <link rel="stylesheet" href="/css/geometry-backgrounds.css?v=20261028-paper-5">
+<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 </head>
 <body>
     <main class="cube-tool-shell" id="cubeToolShell">
@@ -195,16 +201,18 @@
         </div>
     </main>
 
+    <script src="/js/geometry-backgrounds.js?v=20261028-paper-5"></script>
     <script src="/js/site-data.js"></script>
-    <script src="/js/site.js?v=20260926-dock-home"></script>
+    <script src="/js/site.js?v=20261029-theme"></script>
     <script>
         let scene, camera, renderer, raycaster, mouse, controls;
         let cubes = [];
         let rollOverMesh;
         let currentCubeColor = 0x8BC34A;
         let currentMode = 'add';
-        let dotsHelper, gridHelper, basePlane;
-        let bgState = 'dots'; // 'dots', 'grid', 'none'
+        let basePlane, geometryGround;
+        let backgroundObjects = [];
+        let bgState = 'dots';
         const cubeSize = 50;
 
         let topCamera, frontCamera, rightCamera;
@@ -298,49 +306,32 @@
         }
 
         function createBackgrounds() {
-            // Dots Background
-            const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
-            const context = canvas.getContext('2d');
-            context.fillStyle = '#ffffff'; context.fillRect(0, 0, 128, 128);
-            context.fillStyle = '#999999'; context.beginPath(); context.arc(64, 64, 4, 0, Math.PI * 2); context.fill();
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping; texture.repeat.set(30, 30);
-            
-            const dotsGeo = new THREE.PlaneGeometry(2000, 2000);
-            const dotsMat = new THREE.MeshLambertMaterial({ map: texture, side: THREE.DoubleSide });
-            dotsHelper = new THREE.Mesh(dotsGeo, dotsMat); dotsHelper.rotation.x = -Math.PI / 2; dotsHelper.receiveShadow = true;
-            scene.add(dotsHelper);
+            geometryGround = window.GeometryBackgrounds.createGround(THREE, scene, {
+                size: 2000, step: 50, y: -0.1, color: 0xffffff
+            });
+            backgroundObjects = geometryGround.objects;
+            window.GeometryBackgrounds.register('cubes', function(type) {
+                bgState = type;
+                geometryGround.set(type);
+                const labels = { square: 'Kareli', isometric: 'İzometrik', dots: 'Noktalı', ruled: 'Çizgili', plain: 'Boş' };
+                const button = document.getElementById('bg-toggle-btn');
+                if (button) {
+                    button.innerHTML = '<i class="fas fa-border-none"></i> ' + labels[type];
+                    button.title = 'Zemin: ' + labels[type] + ' · Değiştirmek için dokun';
+                    button.setAttribute('aria-label', button.title);
+                }
+            }, 'dots');
 
-            // Grid Background
-            gridHelper = new THREE.GridHelper(2000, 40, 0x000000, 0xcccccc);
-            gridHelper.position.y = 0.1; // Prevent Z-fighting
-            gridHelper.visible = false;
-            scene.add(gridHelper);
-
-            // Base Invisible Plane for Raycasting
+            // Placement raycasts use their own invisible mathematical plane;
+            // switching or hiding the decorative ground never changes snapping.
             const geometry = new THREE.PlaneGeometry(2000, 2000); geometry.rotateX(-Math.PI / 2);
             basePlane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ visible: false })); basePlane.receiveShadow = true;
             scene.add(basePlane); cubes.push(basePlane);
         }
 
         function cycleBackground() {
-            const btn = document.getElementById('bg-toggle-btn');
-            if (bgState === 'dots') {
-                bgState = 'grid';
-                dotsHelper.visible = false;
-                gridHelper.visible = true;
-                btn.innerHTML = '<i class="fas fa-border-none"></i> Zemin: Kareli';
-            } else if (bgState === 'grid') {
-                bgState = 'none';
-                dotsHelper.visible = false;
-                gridHelper.visible = false;
-                btn.innerHTML = '<i class="fas fa-border-none"></i> Zemin: Boş';
-            } else {
-                bgState = 'dots';
-                dotsHelper.visible = true;
-                gridHelper.visible = false;
-                btn.innerHTML = '<i class="fas fa-border-none"></i> Zemin: Noktalı';
-            }
+            const types = ['dots', 'square', 'isometric', 'ruled', 'plain'];
+            window.GeometryBackgrounds.set('cubes', types[(types.indexOf(bgState) + 1) % types.length]);
         }
 
         function initProjections() {
@@ -410,40 +401,28 @@
 
         function withProjectionSceneState(callback) {
             const rollOverWasVisible = rollOverMesh.visible;
-            const dotsWasVisible = dotsHelper.visible;
-            const gridWasVisible = gridHelper.visible;
+            const groundVisibility = backgroundObjects.map(object => ({ object, visible: object.visible }));
             const originalColors = [];
-
             rollOverMesh.visible = false;
-            dotsHelper.visible = false;
-            gridHelper.visible = false;
-
-            if (projectionStyle === 'empty') {
-                cubes.forEach(c => {
-                    if (c !== basePlane) {
-                        originalColors.push(c.material.color.getHex());
-                        c.material.color.setHex(0xffffff);
-                        c.material.emissive.setHex(0xffffff);
-                    }
+            groundVisibility.forEach(({ object }) => { object.visible = false; });
+            try {
+                if (projectionStyle === 'empty') {
+                    cubes.forEach(cube => {
+                        if (cube !== basePlane) {
+                            originalColors.push({ material: cube.material, color: cube.material.color.getHex(), emissive: cube.material.emissive.getHex() });
+                            cube.material.color.setHex(0xffffff);
+                            cube.material.emissive.setHex(0xffffff);
+                        }
+                    });
+                }
+                return callback();
+            } finally {
+                originalColors.forEach(({ material, color, emissive }) => {
+                    material.color.setHex(color); material.emissive.setHex(emissive);
                 });
+                rollOverMesh.visible = rollOverWasVisible;
+                groundVisibility.forEach(({ object, visible }) => { object.visible = visible; });
             }
-
-            const result = callback();
-
-            if (projectionStyle === 'empty') {
-                let idx = 0;
-                cubes.forEach(c => {
-                    if (c !== basePlane) {
-                        c.material.color.setHex(originalColors[idx++]);
-                        c.material.emissive.setHex(0x000000);
-                    }
-                });
-            }
-
-            rollOverMesh.visible = rollOverWasVisible;
-            if(bgState === 'dots') dotsHelper.visible = dotsWasVisible;
-            if(bgState === 'grid') gridHelper.visible = gridWasVisible;
-            return result;
         }
 
         function getProjectionBlob(view) {
@@ -742,41 +721,65 @@
         }
 
         function downloadCompositeImage(format) {
-            rollOverMesh.visible = false; renderer.render(scene, camera); 
-            
-            const tempCanvas = document.createElement('canvas'); const dpr = window.devicePixelRatio || 1;
+            const previousRollOver = rollOverMesh.visible;
+            rollOverMesh.visible = false;
+            renderer.render(scene, camera);
+
+            const tempCanvas = document.createElement('canvas');
+            const dpr = window.devicePixelRatio || 1;
             const stageBounds = renderer.domElement.getBoundingClientRect();
             tempCanvas.width = Math.max(1, Math.round(stageBounds.width * dpr));
             tempCanvas.height = Math.max(1, Math.round(stageBounds.height * dpr));
             const tempCtx = tempCanvas.getContext('2d');
-            
-            tempCtx.fillStyle = '#ffffff'; tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
             tempCtx.drawImage(renderer.domElement, 0, 0, tempCanvas.width, tempCanvas.height);
             tempCtx.drawImage(drawCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
-            
-            if(isProjectionsVisible && document.getElementById('projections-panel').style.opacity !== '0') {
-                const panelBounds = document.getElementById('projections-panel').getBoundingClientRect();
-                const topBounds = document.getElementById('view-top').getBoundingClientRect();
-                const frontBounds = document.getElementById('view-front').getBoundingClientRect();
-                const rightBounds = document.getElementById('view-right').getBoundingClientRect();
-                
-                tempCtx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-                tempCtx.beginPath(); tempCtx.roundRect((panelBounds.left - stageBounds.left) * dpr, (panelBounds.top - stageBounds.top) * dpr, panelBounds.width * dpr, panelBounds.height * dpr, 16 * dpr); tempCtx.fill();
-                
-                const boxSize = topBounds.width * dpr;
-                tempCtx.drawImage(topRenderer.domElement, (topBounds.left - stageBounds.left) * dpr, (topBounds.top - stageBounds.top) * dpr, boxSize, boxSize);
-                tempCtx.drawImage(frontRenderer.domElement, (frontBounds.left - stageBounds.left) * dpr, (frontBounds.top - stageBounds.top) * dpr, boxSize, boxSize);
-                tempCtx.drawImage(rightRenderer.domElement, (rightBounds.left - stageBounds.left) * dpr, (rightBounds.top - stageBounds.top) * dpr, boxSize, boxSize);
-                
-                tempCtx.fillStyle = '#333'; tempCtx.font = `bold ${15 * dpr}px sans-serif`; tempCtx.textAlign = 'center';
-                tempCtx.fillText('Üstten', ((topBounds.left - stageBounds.left) * dpr) + (boxSize/2), ((topBounds.top - stageBounds.top) * dpr) - (6 * dpr));
-                tempCtx.fillText('Önden', ((frontBounds.left - stageBounds.left) * dpr) + (boxSize/2), ((frontBounds.top - stageBounds.top) * dpr) - (6 * dpr));
-                tempCtx.fillText('Sağdan', ((rightBounds.left - stageBounds.left) * dpr) + (boxSize/2), ((rightBounds.top - stageBounds.top) * dpr) - (6 * dpr));
+
+            if (isProjectionsVisible) {
+                // Export the three views at their own fixed aspect ratio. Their
+                // screen rectangles can be zero while the toolbox is collapsed
+                // or another tab is active, so UI position is deliberately unused.
+                renderProjectionPreviews();
+                const margin = Math.min(14 * dpr, tempCanvas.width / 30);
+                const gap = 8 * dpr;
+                const panelWidth = Math.min(430 * dpr, tempCanvas.width - margin * 2);
+                const boxSize = Math.max(1, (panelWidth - margin * 2 - gap * 2) / 3);
+                const labelHeight = 23 * dpr;
+                const panelHeight = boxSize + labelHeight + margin * 2;
+                const panelLeft = tempCanvas.width - panelWidth - margin;
+                const panelTop = Math.max(margin, tempCanvas.height - panelHeight - margin);
+
+                tempCtx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+                tempCtx.beginPath();
+                tempCtx.roundRect(panelLeft, panelTop, panelWidth, panelHeight, 12 * dpr);
+                tempCtx.fill();
+                tempCtx.strokeStyle = '#cbd5e1';
+                tempCtx.lineWidth = dpr;
+                tempCtx.stroke();
+                tempCtx.font = `bold ${12 * dpr}px sans-serif`;
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                [
+                    { label: 'Üstten', canvas: topRenderer.domElement },
+                    { label: 'Önden', canvas: frontRenderer.domElement },
+                    { label: 'Sağdan', canvas: rightRenderer.domElement }
+                ].forEach((view, index) => {
+                    const left = panelLeft + margin + index * (boxSize + gap);
+                    const top = panelTop + margin + labelHeight;
+                    tempCtx.fillStyle = '#334155';
+                    tempCtx.fillText(view.label, left + boxSize / 2, panelTop + margin + labelHeight / 2);
+                    tempCtx.drawImage(view.canvas, left, top, boxSize, boxSize);
+                });
             }
-            
+
             const dataURL = tempCanvas.toDataURL(`image/${format}`, 1.0);
-            const link = document.createElement('a'); link.download = `matematik-soru-gorseli.${format}`; link.href = dataURL; link.click();
-            if(currentMode === 'add' || currentMode === 'remove') rollOverMesh.visible = true;
+            const link = document.createElement('a');
+            link.download = `matematik-soru-gorseli.${format}`;
+            link.href = dataURL;
+            link.click();
+            rollOverMesh.visible = previousRollOver;
         }
 
         function onWindowResize() {

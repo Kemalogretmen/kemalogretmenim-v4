@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Sınav — Kemal Öğretmenim</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -560,6 +561,8 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
 }
 @page{size:A4 landscape;margin:0}
 </style>
+<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 </head>
 <body>
 
@@ -616,7 +619,7 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
       <div class="etb-timer" id="examTimer">00:00</div>
     </div>
     <div class="etb-right">
-      <button class="theme-toggle" type="button" id="themeToggle" onclick="toggleTheme()"><span>🌙</span><span>Karanlık</span></button>
+      <span data-theme-control-slot></span>
       <div class="etb-qprog" id="qProg">0 / 0</div>
     </div>
   </div>
@@ -2376,6 +2379,7 @@ function showScreen(id){
   if(id==='screenWarn'||id==='screenTimeout') el.style.display='flex';
   else if(id==='screenExam') el.style.display='flex';
   else el.style.display='block';
+  if(window.kemalTheme) window.kemalTheme.mountControls();
 }
 
 // ===== LOAD =====
@@ -2729,22 +2733,38 @@ window.goToNextBlankQuestion=function(){
 };
 
 function applyTheme(theme){
-  const nextTheme=theme==='dark'?'dark':'light';
-  document.body.classList.toggle('theme-dark',nextTheme==='dark');
-  try{
-    localStorage.setItem(EXAM_THEME_STORAGE_KEY,nextTheme);
-  }catch(error){}
-  const toggle=document.getElementById('themeToggle');
-  if(toggle){
-    toggle.innerHTML=nextTheme==='dark'
-      ? '<span>☀️</span><span>Aydınlık</span>'
-      : '<span>🌙</span><span>Karanlık</span>';
+  document.body.classList.toggle('theme-dark',theme==='dark');
+}
+
+function syncExamTheme(){
+  const theme=window.kemalTheme;
+  if(theme&&typeof theme.getResolvedTheme==='function'){
+    applyTheme(theme.getResolvedTheme());
+    if(typeof theme.mountControls==='function')theme.mountControls();
+    return;
   }
+  let fallback=document.documentElement.getAttribute('data-theme')||'light';
+  try{fallback=localStorage.getItem(EXAM_THEME_STORAGE_KEY)||fallback;}catch(error){}
+  applyTheme(fallback);
 }
 
 window.toggleTheme=function(){
-  applyTheme(document.body.classList.contains('theme-dark')?'light':'dark');
+  const theme=window.kemalTheme;
+  if(theme&&typeof theme.toggle==='function'){
+    theme.toggle();
+    applyTheme(theme.getResolvedTheme());
+    return;
+  }
+  const fallback=document.body.classList.contains('theme-dark')?'light':'dark';
+  applyTheme(fallback);
+  try{localStorage.setItem(EXAM_THEME_STORAGE_KEY,fallback);}catch(error){}
 };
+
+window.addEventListener('kemal:themechange',function(event){
+  const resolved=event.detail&&event.detail.theme;
+  if(resolved==='light'||resolved==='dark')applyTheme(resolved);
+  else syncExamTheme();
+});
 
 window.clearCurrentDrawing=function(){
   const drawing=getQuestionDrawing();
@@ -3527,11 +3547,7 @@ function generateFeedback(name,grade,subject,score,correct,wrong,blank,total){
   return{text,quote};
 }
 
-try{
-  applyTheme(localStorage.getItem(EXAM_THEME_STORAGE_KEY)||'light');
-}catch(error){
-  applyTheme('light');
-}
+syncExamTheme();
 init();
 </script>
 </body>

@@ -85,7 +85,7 @@ const secondaryTools: ToolItem[] = [
   },
   {
     title: 'Öğretmen Araçları',
-    subtitle: 'Beyaz tahta ve sınıf araçları',
+    subtitle: 'Akıllı Tahta ve sınıf araçları',
     label: 'Araç',
     path: '/ogretmen-araclari.html',
     icon: 'easel-outline',

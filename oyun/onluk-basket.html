@@ -2,27 +2,73 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
+<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Onluk Basket — Kemal Öğretmenim</title>
   <meta name="description" content="Onluk ve birlikleri tanı, doğru sayıyı seç ve basket at! 2. sınıflar için tek veya aynı ekranda 2–3 kişilik dokunmatik sayı oyunu.">
   <meta name="theme-color" content="#482b87">
   <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
-  <link rel="stylesheet" href="/css/onluk-basket.css?v=20261022">
+  <link rel="stylesheet" href="/css/onluk-basket.css?v=20261029-layered">
+<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 </head>
 <body class="ob-page">
   <main class="ob-home" id="main-content">
     <a class="ob-back" href="/oyun/oyunlar.html">← Oyun merkezine dön</a>
-    <section class="ob-lobby" aria-labelledby="ob-title">
-      <header class="ob-intro"><div><p class="ob-eyebrow">2. SINIF · SAYILARIN SAHASI</p><h1 id="ob-title">Onluk <span>Basket</span></h1><p>Onlukları say. Birlikleri bul. Basketini at!</p><div class="ob-tags"><span>1–3 oyuncu</span><span>Dokun & oyna</span><span>10–99 arası sayılar</span></div></div><div class="ob-cover-art" aria-hidden="true"><div class="ob-cover-board">3 onluk <em>+</em> 7 birlik<strong>37</strong></div><div class="ob-cover-hoop"></div><span class="ob-cover-ball">🏀</span><span class="ob-spark">✦</span><span class="ob-mini-score">SAYILAR TAKIMI<br><b>10 : 10</b></span></div></header>
-      <form id="ob-settings">
-        <div class="ob-settings-grid">
-          <fieldset><legend>01 · Takımını hazırla</legend><label>Oyuncu sayısı<select id="ob-players"><option value="1">Tek kişilik keşif</option><option value="2" selected>2 kişilik maç</option><option value="3">3 kişilik maç</option></select></label><div id="ob-names"><label>1. oyuncu<input maxlength="18" value="Oyuncu 1" autocomplete="off"></label><label>2. oyuncu<input maxlength="18" value="Oyuncu 2" autocomplete="off"></label><label hidden>3. oyuncu<input maxlength="18" value="Oyuncu 3" autocomplete="off" disabled></label></div></fieldset>
-          <fieldset><legend>02 · Kazanımını seç</legend><label>Soru türü<select id="ob-mode"><option value="place">Onluk ve birlik</option><option value="blocks">Onluk çubukları ve küpler</option><option value="reading">Sayıların okunuşu</option><option value="mixed">Hepsi karışık</option></select></label><label>Sayı aralığı<select id="ob-range"><option value="30">Isınma · 10–30</option><option value="60">Antrenman · 10–60</option><option value="99" selected>Yıldızlar · 10–99</option></select></label><label>Oyun uzunluğu<select id="ob-duration"><option value="0" selected>Süresiz · 10 soru</option><option value="60">1 dakikalık maç</option><option value="120">2 dakikalık maç</option></select></label></fieldset>
-        </div>
-        <div class="ob-how"><b>Nasıl oynanır?</b><p>Doğru sayı kartına dokun, ardından <strong>Basket at</strong> düğmesine bas. İstersen topu sağa sola kaydırıp doğru sayının altında geriye çek ve bırak. Her basket <strong>10 puan</strong>. Yanlış atışta aynı soruyu tekrar dene; puanın azalmaz.</p><p class="ob-note">Mavi çubuk = 10 birlik · Sarı küp = 1 birlik. Yarışmada herkes aynı soru sırasını kendi hızında çözer.</p></div>
-        <footer class="ob-lobby-foot"><label class="ob-audio"><input type="checkbox" id="ob-audio" checked> Ses efektleri</label><button class="ob-primary" type="submit">Sahaya çık <span>↗</span></button></footer>
-      </form>
-    </section>
+    <div class="ob-stage" id="ob-stage" data-screen="cover">
+      <div class="ob-stadium" aria-hidden="true">
+        <div class="ob-stadium-grid"></div><span class="ob-spotlight ob-spotlight-one"></span><span class="ob-spotlight ob-spotlight-two"></span>
+        <svg viewBox="0 0 800 660" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ob-floor" x1="400" y1="380" x2="400" y2="660" gradientUnits="userSpaceOnUse"><stop stop-color="#8c608c"/><stop offset="1" stop-color="#e7ac77"/></linearGradient>
+            <linearGradient id="ob-glass" x1="286" y1="86" x2="586" y2="340" gradientUnits="userSpaceOnUse"><stop stop-color="#e8e4ff" stop-opacity=".9"/><stop offset="1" stop-color="#8195d9" stop-opacity=".55"/></linearGradient>
+            <linearGradient id="ob-rim" x1="326" y1="0" x2="515" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#ffcf7b"/><stop offset=".5" stop-color="#ef7547"/><stop offset="1" stop-color="#ffba62"/></linearGradient>
+            <radialGradient id="ob-ball-fill" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(260 395) rotate(50) scale(138)"><stop stop-color="#ffd58a"/><stop offset=".5" stop-color="#f39a45"/><stop offset="1" stop-color="#b94c25"/></radialGradient>
+            <filter id="ob-art-shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="18" stdDeviation="15" flood-color="#100e35" flood-opacity=".45"/></filter>
+            <pattern id="ob-planks" width="55" height="38" patternUnits="userSpaceOnUse"><path d="M0 38H55M55 0V38" stroke="#fff" stroke-opacity=".11" stroke-width="2"/></pattern>
+            <clipPath id="ob-net-clip"><path d="M337 310L365 409Q418 438 476 410L507 310Z"/></clipPath>
+            <clipPath id="ob-ball-clip"><circle cx="290" cy="434" r="83"/></clipPath>
+          </defs>
+          <ellipse cx="438" cy="571" rx="312" ry="52" fill="#0d1029" opacity=".25"/>
+          <path d="M213 425L641 425L800 660H26Z" fill="url(#ob-floor)"/>
+          <path d="M213 425L641 425L800 660H26Z" fill="url(#ob-planks)"/>
+          <g stroke="#fff5df" stroke-opacity=".55" stroke-width="3"><path d="M324 425L284 575H595L544 425M92 620H741"/><ellipse cx="438" cy="548" rx="127" ry="28"/><path d="M204 649Q438 469 674 649"/></g>
+          <path d="M427 282V474" stroke="#2c2a57" stroke-width="29"/><path d="M420 291V472" stroke="#7b7eaf" stroke-width="8"/>
+          <path d="M352 474L330 502H519L493 474Z" fill="#383260"/><path d="M352 474H493" stroke="#9094bd" stroke-width="7"/>
+          <g filter="url(#ob-art-shadow)">
+            <path d="M281 101Q281 86 298 86H564Q580 86 580 104V298H281Z" fill="#37365f" transform="translate(7 9)"/>
+            <rect x="281" y="86" width="299" height="210" rx="14" fill="url(#ob-glass)" stroke="#e8e2ff" stroke-width="7"/>
+            <rect x="365" y="214" width="133" height="77" rx="2" stroke="#fff4d7" stroke-width="5"/>
+            <path d="M300 106H556" stroke="#fff" stroke-opacity=".5" stroke-width="3"/>
+          </g>
+          <g clip-path="url(#ob-net-clip)" stroke="#fff8e6" stroke-width="3" opacity=".8"><path d="M300 289L455 444M324 284L479 439M348 279L503 434M372 274L527 429M396 269L551 424M550 284L389 445M526 279L365 440M502 274L341 435M478 269L317 430M454 264L293 425"/></g>
+          <path d="M337 310L365 409Q418 438 476 410L507 310" stroke="#e3dcf7" stroke-width="3"/>
+          <ellipse cx="422" cy="311" rx="94" ry="23" stroke="#793630" stroke-width="13"/><ellipse cx="422" cy="305" rx="94" ry="23" stroke="url(#ob-rim)" stroke-width="11"/>
+          <ellipse cx="289" cy="542" rx="93" ry="16" fill="#402444" opacity=".4"/>
+          <g filter="url(#ob-art-shadow)"><circle cx="290" cy="434" r="83" fill="url(#ob-ball-fill)" stroke="#8e482b" stroke-width="3"/><g clip-path="url(#ob-ball-clip)" stroke="#783d2b" stroke-width="3.5"><path d="M208 410Q289 416 365 466M324 350Q267 425 265 516M242 358Q310 435 226 498M349 366Q277 431 357 485"/></g><path d="M236 388Q249 372 268 370" stroke="#ffe8bd" stroke-opacity=".65" stroke-width="7" stroke-linecap="round"/></g>
+          <g fill="#fff6c8"><path d="M627 288L632 303L647 308L632 313L627 328L622 313L607 308L622 303Z"/><path d="M190 221L194 232L205 236L194 240L190 251L186 240L175 236L186 232Z"/></g>
+        </svg>
+        <div class="ob-art-equation"><span>3 ONLUK + 7 BİRLİK</span><b>37</b><small>SAYIYI BUL · BASKET OLSUN</small></div>
+        <span class="ob-stadium-word">SAYILAR LİGİ</span>
+      </div>
+      <section class="ob-cover" id="ob-cover" aria-labelledby="ob-title">
+        <div class="ob-cover-copy"><p class="ob-eyebrow"><i></i> 2. SINIF · SAYILARIN SAHASI</p><h1 id="ob-title">Onluk<br><span>Basket.</span></h1><p class="ob-cover-lead">Sayıları bul.<br>Sahanın yıldızı ol.</p><div class="ob-tags"><span>1–3 oyuncu</span><span>Tek dokunuşla atış</span></div></div>
+        <div class="ob-cover-bottom"><button id="ob-open-settings" class="ob-primary" aria-expanded="false" aria-controls="ob-prep">Oyunu Başlat <span>↗</span></button><p>Önce takımını ve çalışma türünü seç.</p><div class="ob-cover-steps"><span><b>01</b> Sayıyı oku</span><span><b>02</b> Cevaba dokun</span><span><b>03</b> Basket olsun!</span></div></div>
+      </section>
+      <section class="ob-prep" id="ob-prep" hidden aria-labelledby="ob-prep-title">
+        <header class="ob-prep-head"><div><p class="ob-eyebrow">MAÇ ÖNCESİ · SENİN SAHAN, SENİN KURALLARIN</p><h2 id="ob-prep-title" tabindex="-1">Takımını sahaya hazırla.</h2></div><button id="ob-back-cover" type="button" class="ob-quiet">← Kapak</button></header>
+        <form id="ob-settings">
+          <div class="ob-settings-scroll">
+            <div class="ob-settings-grid">
+              <fieldset class="ob-setting-card"><legend><span>01</span> Takımını kur</legend><p class="ob-setting-note">Tek başına keşfet veya arkadaşlarınla aynı anda oyna.</p><label>Oyuncu sayısı<select id="ob-players"><option value="1">Tek kişilik keşif</option><option value="2" selected>2 kişilik maç</option><option value="3">3 kişilik maç</option></select></label><div id="ob-names"><label>🟠 1. oyuncu<input maxlength="18" value="Oyuncu 1" autocomplete="off"></label><label>🔵 2. oyuncu<input maxlength="18" value="Oyuncu 2" autocomplete="off"></label><label hidden>🟣 3. oyuncu<input maxlength="18" value="Oyuncu 3" autocomplete="off" disabled></label></div></fieldset>
+              <fieldset class="ob-setting-card"><legend><span>02</span> Antrenmanını seç</legend><p class="ob-setting-note">Düzeyi ve maç uzunluğunu öğretmeninle belirle.</p><label>Soru türü<select id="ob-mode"><option value="place">Onluk ve birlik</option><option value="blocks">Onluk çubukları ve küpler</option><option value="reading">Sayıların okunuşu</option><option value="mixed">Hepsi karışık</option></select></label><label>Sayı aralığı<select id="ob-range"><option value="30">Isınma · 10–30</option><option value="60">Antrenman · 10–60</option><option value="99" selected>Yıldızlar · 10–99</option></select></label><label>Oyun uzunluğu<select id="ob-duration"><option value="0" selected>Süresiz · 10 soru</option><option value="60">1 dakikalık maç</option><option value="120">2 dakikalık maç</option></select></label></fieldset>
+            </div>
+            <div class="ob-how"><span class="ob-how-icon" aria-hidden="true">↗</span><div><b>Bir dokunuş, bir atış.</b><p>Sayı kartına dokunduğunda top otomatik atılır. Her doğru basket <strong>10 puan</strong>. Yanlış seçimde ipucuyla aynı soruyu tekrar dene; puanın azalmaz. Topu geriye çekip bırakmak da mümkün.</p><p class="ob-note">Mavi çubuk = 10 birlik · Sarı küp = 1 birlik. Her oyuncuya aynı soru sırası gelir.</p></div></div>
+          </div>
+          <footer class="ob-lobby-foot"><div><p id="ob-match-summary" aria-live="polite">2 oyuncu · 10 soru · 10–99</p><label class="ob-audio"><input type="checkbox" id="ob-audio" checked> Ses efektleri</label></div><button class="ob-primary" type="submit">Maçı Başlat <span>↗</span></button></footer>
+        </form>
+      </section>
+    </div>
   </main>
   <section id="ob-arena" class="ob-arena" aria-label="Onluk Basket oyun alanı" hidden>
     <header class="ob-toolbar"><button id="ob-menu">← Ayarlar</button><strong>Onluk <span>Basket</span></strong><span id="ob-clock">10 soru</span><div><button id="ob-sound" aria-label="Ses efektleri" aria-pressed="true">♫</button><button id="ob-pause" aria-label="Duraklat">Ⅱ</button><button id="ob-fullscreen" aria-label="Tam ekran">⛶</button></div></header>
@@ -31,8 +77,8 @@
     <div class="ob-overlay" id="ob-result" hidden role="dialog" aria-modal="true" aria-labelledby="ob-result-title"><div class="ob-dialog"><span class="ob-trophy" aria-hidden="true">🏆</span><p class="ob-eyebrow">SAYILARIN YILDIZLARI</p><h2 id="ob-result-title" tabindex="-1"></h2><div id="ob-result-cards"></div><p id="ob-record"></p><button id="ob-retry" class="ob-primary">Bir maç daha ↗</button><button id="ob-settings-back">Ayarları değiştir</button></div></div>
   </section>
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20261010-dock-home"></script>
+  <script src="/js/site.js?v=20261029-theme"></script>
   <script src="/js/onluk-basket-rules.js?v=20261022"></script>
-  <script src="/js/onluk-basket.js?v=20261022"></script>
+  <script src="/js/onluk-basket.js?v=20261029-layered"></script>
 </body>
 </html>

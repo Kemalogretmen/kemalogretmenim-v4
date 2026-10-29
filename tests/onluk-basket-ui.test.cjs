@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const {parseHTML} = require('linkedom');
 const R = require('../js/onluk-basket-rules.js');
-function setup({count=2,seconds=0,mode='place',portrait=false}={}) {
+function setup({count=2,seconds=0,mode='place',portrait=false,start=true}={}) {
   const {window,document}=parseHTML(fs.readFileSync('oyun/onluk-basket.html','utf8'));
   let clock=100,frame; const captured=new WeakMap();
   for(const [id,value] of Object.entries({'ob-players':count,'ob-duration':seconds,'ob-mode':mode,'ob-range':99}))
@@ -28,10 +28,11 @@ function setup({count=2,seconds=0,mode='place',portrait=false}={}) {
     return digits[0]*10+digits[1];
   };
   function answer(lane,n=correct(lane)) {
-    [...lane.querySelectorAll('.ob-answer')].find(b=>Number(b.textContent)===n).click();lane.querySelector('.ob-shoot').click();
+    [...lane.querySelectorAll('.ob-answer')].find(b=>Number(b.textContent)===n).click();
   }
-  event(document.getElementById('ob-settings'),'submit');
-  return {document,$,lanes,event,advance,answer,correct,captured};
+  function launch(){document.getElementById('ob-open-settings').click();event(document.getElementById('ob-settings'),'submit');}
+  if(start)launch();
+  return {document,$,lanes,event,advance,answer,correct,captured,launch};
 }
 test('Gerçek denetleyici: eşzamanlı atışlar, çift atış kilidi ve bağımsız soru ilerlemesi',()=>{
   const h=setup();const [a,b]=h.lanes();h.answer(a);h.answer(a);h.answer(b);
@@ -74,9 +75,47 @@ test('İki dokunma farklı topları yakalar; iptal puan kazandırmaz, bırakma b
   h.event(ballA,'pointercancel');assert.equal(h.captured.get(ballA),undefined);assert.equal(h.captured.get(ballB),12);
   h.event(ballB,'pointermove',{pointerId:12,clientY:35,clientX:50});
   h.event(ballB,'pointerup',{pointerId:12,clientY:35,clientX:50});h.advance(900);
-  assert.equal(a.querySelector('.ob-score').textContent,'0 puan');assert.notEqual(b.querySelector('.ob-feedback').textContent,'Sayıyı seç, topu geri çek ve bırak!');
+  assert.equal(a.querySelector('.ob-score').textContent,'0 puan');assert.notEqual(b.querySelector('.ob-feedback').textContent,'Sayıya dokun, top otomatik atılsın!');
 });
 test('Blok kipinde her onluk tam 10 küptür ve üç oyuncuda aynı model gösterilir',()=>{
   const h=setup({count:3,mode:'blocks',portrait:true});const labels=h.lanes().map(l=>l.querySelector('.ob-blocks').getAttribute('aria-label'));
   assert.equal(new Set(labels).size,1);h.lanes().forEach(l=>{l.querySelectorAll('.ob-rod').forEach(r=>assert.equal(r.children.length,10));});
+});
+test('Tek bir sayı tıklaması atışı başlatır; ek atış düğmesi yoktur',()=>{
+  const h=setup(),a=h.lanes()[0];assert.equal(h.$('.ob-shoot'),null);
+  h.answer(a);assert.equal(a.querySelector('.ob-feedback').textContent,'Top havada…');
+  assert.ok([...a.querySelectorAll('.ob-answer')].every(b=>b.disabled));
+  h.advance(900);assert.equal(a.querySelector('.ob-score').textContent,'10 puan');
+});
+test('Yanlış cevaba tek dokunuş da aynı atış akışındadır; doğru seçenek davranışla ele verilmez',()=>{
+  const h=setup(),a=h.lanes()[0];const bad=[...a.querySelectorAll('.ob-answer')].find(b=>Number(b.textContent)!==h.correct(a));
+  bad.click();assert.equal(a.querySelector('.ob-feedback').textContent,'Top havada…');
+  h.advance(2800);assert.equal(a.querySelector('.ob-score').textContent,'0 puan');h.answer(a);h.advance(1800);
+  assert.equal(a.querySelector('.ob-score').textContent,'10 puan');
+});
+test('Ok tuşuyla nişan alma kendiliğinden atış yapmaz; boşluk tuşu atar',()=>{
+  const h=setup(),a=h.lanes()[0],ball=a.querySelector('.ob-ball');
+  h.event(ball,'keydown',{key:'ArrowRight'});assert.match(a.querySelector('.ob-feedback').textContent,/seçildi/);
+  assert.ok([...a.querySelectorAll('.ob-answer')].every(b=>!b.disabled));
+  h.event(ball,'keydown',{key:' '});assert.equal(a.querySelector('.ob-feedback').textContent,'Top havada…');
+});
+test('Katmanlı kapak ve ayarlar birbirinin yerine açılır, geri dönüş tercihleri korur',()=>{
+  const h=setup({start:false});
+  assert.equal(h.$('#ob-stage').dataset.screen,'cover');assert.equal(h.$('#ob-prep').hidden,true);
+  h.$('#ob-open-settings').click();assert.equal(h.$('#ob-cover').hidden,true);assert.equal(h.$('#ob-prep').hidden,false);
+  assert.equal(h.$('#ob-open-settings').getAttribute('aria-expanded'),'true');
+  h.$('#ob-names input').value='Deniz';h.$('#ob-back-cover').click();assert.equal(h.$('#ob-cover').hidden,false);assert.equal(h.$('#ob-prep').hidden,true);
+  h.$('#ob-open-settings').click();assert.equal(h.$('#ob-names input').value,'Deniz');
+  h.event(h.document,'keydown',{key:'Escape'});assert.equal(h.$('#ob-stage').dataset.screen,'cover');
+  assert.ok(h.$('#ob-stage').contains(h.$('#ob-cover'))&&h.$('#ob-stage').contains(h.$('#ob-prep')));
+});
+test('Gizli kapaktan form gönderilmez; ayarlardan maça ve ayarlara dönüş çalışır',()=>{
+  const h=setup({start:false});h.event(h.$('#ob-settings'),'submit');assert.equal(h.$('#ob-arena').hidden,true);
+  h.launch();assert.equal(h.lanes().length,2);h.event(h.$('#ob-settings'),'submit');assert.equal(h.lanes().length,2);
+  h.$('#ob-pause').click();h.$('#ob-leave').click();assert.equal(h.$('#ob-stage').dataset.screen,'settings');assert.equal(h.$('#ob-cover').hidden,true);
+  assert.equal(h.$('#ob-prep').hidden,false);assert.equal(h.$('#ob-arena').hidden,true);
+});
+test('Maç özeti seçilen oyuncu sayısı ve süreye göre güncellenir',()=>{
+  const h=setup({count:3,seconds:120,start:false});h.event(h.$('#ob-players'),'change');
+  assert.equal(h.$('#ob-names').children[2].hidden,false);assert.equal(h.$('#ob-match-summary').textContent,'3 oyuncu · 120 saniye · 10–99');
 });
