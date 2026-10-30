@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
             column.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;
         });
         toolbar = new LinearLayout(this);toolbar.setGravity(Gravity.CENTER_VERTICAL);toolbar.setPadding(dp(12),dp(4),dp(4),dp(4));toolbar.setBackgroundColor(BACKGROUND);
-        ImageView fish = new ImageView(this);fish.setImageResource(R.drawable.ic_fish);fish.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        ImageView fish = new ImageView(this);fish.setImageResource(R.mipmap.ic_launcher);fish.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         toolbar.addView(fish,new LinearLayout.LayoutParams(dp(34),dp(34)));
         LinearLayout titles = new LinearLayout(this);titles.setOrientation(LinearLayout.VERTICAL);titles.setPadding(dp(10),0,0,0);
         TextView title = text("Sınıf Akvaryumu",17,INK);title.setTypeface(null,Typeface.BOLD);title.setSingleLine(true);titles.addView(title);
@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
         WebSettings settings = web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false);settings.setAllowContentAccess(true);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);settings.setSupportMultipleWindows(true);settings.setJavaScriptCanOpenWindowsAutomatically(false);
-        settings.setUserAgentString(settings.getUserAgentString()+" SinifAkvaryumu/1.0 Android");
+        settings.setUserAgentString(settings.getUserAgentString()+" SinifAkvaryumu/"+BuildConfig.VERSION_NAME+" Android");
         settings.setBuiltInZoomControls(false);settings.setUseWideViewPort(true);settings.setLoadWithOverviewMode(true);
         CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(web,false);
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
@@ -179,8 +179,10 @@ public class MainActivity extends Activity {
         exportPort.setWebMessageCallback(new WebMessagePort.WebMessageCallback(){@Override public void onMessage(WebMessagePort port,WebMessage message){
             if(policy.destination(web.getUrl())!=NavigationPolicy.Destination.INTERNAL)return;
             try {
-                if(pendingExport!=null)return;
-                JSONObject payload=new JSONObject(message.getData());if(!"exportBackup".equals(payload.optString("type")))return;
+                JSONObject payload=new JSONObject(message.getData());
+                String type=payload.optString("type");
+                if("shareParent".equals(type)||"copyParent".equals(type)){handleParentAccess(payload);return;}
+                if(pendingExport!=null||!"exportBackup".equals(type))return;
                 String contents=payload.getString("contents");if(contents.length()>5*1024*1024)throw new Exception();
                 JSONObject document=new JSONObject(contents);if(!document.has("classes"))throw new Exception();
                 String name=payload.optString("name","sinif-akvaryumu-yedek.json").replaceAll("[^a-zA-Z0-9._-]","_");
@@ -190,6 +192,27 @@ public class MainActivity extends Activity {
             }catch(Exception e){pendingExport=null;toast("Yedek kaydedilemedi. Tarayıcıda açarak tekrar deneyebilirsiniz.");}
         }});
         Uri page=Uri.parse(url);web.postWebMessage(new WebMessage("aquarium-shell-port",new WebMessagePort[]{ports[1]}),new Uri.Builder().scheme(page.getScheme()).authority(page.getAuthority()).build());
+    }
+    private void handleParentAccess(JSONObject payload) {
+        String path=Uri.parse(web.getUrl()).getPath();
+        if(path==null||!path.matches("/ogretmen/akvaryum(?:\\.html)?/?"))return;
+        try {
+            ParentAccess access=new ParentAccess(payload.getString("studentName"),payload.getString("className"),payload.getString("code"),payload.getString("url"));
+            if("copyParent".equals(payload.getString("type"))) {
+                android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                clipboard.setPrimaryClip(ClipData.newPlainText("Sınıf Akvaryumu veli erişimi",access.copyText(payload.optString("format","message"))));
+                if(Build.VERSION.SDK_INT<33)toast("Veli erişimi kopyalandı.");return;
+            }
+            String target=payload.optString("target","system");
+            if(!target.equals("system")&&!target.equals("whatsapp"))return;
+            Intent share=new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,access.message()).putExtra(Intent.EXTRA_SUBJECT,"Sınıf Akvaryumu · "+access.studentName);
+            if(target.equals("whatsapp")) {
+                try{startActivity(new Intent(share).setPackage("com.whatsapp"));return;}catch(ActivityNotFoundException ignored){}
+                try{startActivity(new Intent(share).setPackage("com.whatsapp.w4b"));return;}catch(ActivityNotFoundException ignored){}
+                toast("WhatsApp bulunamadı. Paylaşım menüsünden bir uygulama seçebilirsiniz.");
+            }
+            startActivity(Intent.createChooser(share,"Veli erişimini paylaş"));
+        }catch(Exception e){toast("Veli erişimi paylaşılamadı. Kodu ve bağlantıyı kopyalayarak tekrar deneyebilirsiniz.");}
     }
     private void closeExportPort(){if(exportPort!=null){exportPort.close();exportPort=null;}}
     @Override protected void onActivityResult(int request,int result,Intent data) {

@@ -6,17 +6,18 @@ Yalnızca Sınıf Akvaryumu için ayrı, hafif bir mobil uygulama. Android Java/
 
 - Açılış adresi: `https://kemalogretmenim.com.tr/ogretmen/akvaryum.html`.
 - Üstteki **Ana sayfa** simgesi, sitenin ana sayfasını cihazın varsayılan tarayıcısında açar. Diğer site sayfaları da tarayıcıya gider; akvaryum ve giriş ekranı uygulamada kalır.
+- Veli erişimi: web ekranından tüm sınıfa tek seferde ayrı kod oluşturma, öğrenci bazında görünüm değiştirme, kod ve bağlantıyı tek mesajda kopyalama, Android paylaşım menüsü ve WhatsApp. Android yerel pano kullanır; ek izin istemez. Paylaşım öğretmenin dokunuşuyla açılır, alıcıyı ve gönderimi öğretmen seçer.
 - Üç nokta menüsü: yenile, tarayıcıda aç, örnek sınıf, hakkında.
 - Telefon ve tabletlerde dikey/yatay görünüm desteklenir. Android geri düğmesi önce açık akvaryum penceresini kapatır; tam ekranda çıkış düğmesi vardır.
 - Uygulama ve tarayıcı oturumları ayrıdır. İlk kullanımda **e-posta ve şifreyle** giriş yapılır; sonraki açılışlarda mevcut site oturum saklama/yenileme mekanizması kullanılır. Google hesabıyla kayıt olanlar “Şifremi unuttum” üzerinden parola oluşturabilir. Bu sürüm uygulama içinden Google OAuth sağlamaz.
 - İlk açılış, güncel akvaryum ve hesap eşitlemesi internet gerektirir. Uygulama canlı siteyi açar; yerel, henüz yayımlanmamış site değişikliklerini içermez. Ağ hatasında kayıtları silmeden yeniden deneme ekranı gösterir.
-- JSON yedek içe/dışa aktarımı sistem dosya seçicisini kullanır. Android yalnızca internet izni ister. HTTPS sertifika kontrolleri devrededir; kimlik bilgileri yerel köprüye aktarılmaz.
+- JSON yedek içe/dışa aktarımı sistem dosya seçicisini kullanır. Veli paylaşım köprüsü yalnızca bir öğrenciye ait doğrulanmış kod ve bağlantıyı taşır; hesap kimlik bilgilerini taşımaz. Android yalnızca internet izni ister. HTTPS sertifika kontrolleri devrededir; kimlik bilgileri yerel köprüye aktarılmaz.
 
-## Android APK’sı · 1.0.1
+## Android APK’sı · 1.1.0
 
 Android 7.0 / API 24 ve üzeri hedeflenir. Cihazda güncel **Android System WebView / Chrome** gerekir. Eski veya yönetici tarafından kısıtlanan akıllı tahta yazılımlarında ayrıca cihaz denemesi yapılmalıdır.
 
-`dist/Sinif-Akvaryumu-1.0.1.apk` uygulamaya özel kalıcı anahtarla imzalanmış, hata ayıklaması kapalı sürümdür. Paket adı `tr.com.kemalogretmenim.aquarium`. Site dosyası `indir/sinif-akvaryumu/sinif-akvaryumu-1.0.1.apk`; kurulum açıklaması `/indir/sinif-akvaryumu/` adresindedir. Önceki deneme paketi `.preview` kimliğiyle ayrı kalır. Android cihazda APK’yı açın ve gerekiyorsa seçtiğiniz kurulum kaynağına izin verin.
+`dist/Sinif-Akvaryumu-1.1.0.apk` uygulamaya özel kalıcı anahtarla imzalanmış, hata ayıklaması kapalı sürümdür. Paket adı `tr.com.kemalogretmenim.aquarium`. Site dosyası `indir/sinif-akvaryumu/sinif-akvaryumu-1.1.0.apk`; kurulum açıklaması `/indir/sinif-akvaryumu/` adresindedir. Önceki deneme paketi `.preview` kimliğiyle ayrı kalır. Android cihazda APK’yı açın ve gerekiyorsa seçtiğiniz kurulum kaynağına izin verin.
 
 Uygulama Play Store’a yüklenmiş değildir; doğrudan APK olarak dağıtılır. Mağaza dağıtımı için güncel hedef SDK gereksinimi ve mağaza formları ayrıca ele alınır. İmza anahtarı ve parolalar bu deponun dışında `~/.local/share/kemalogretmenim-signing/` dizininde tutulur. **Bu özel dizini güvenli şekilde yedekleyin; ileride aynı uygulamayı güncellemek için aynı anahtar gerekir.** Bu dosyaları siteye yüklemeyin.
 

@@ -89,6 +89,7 @@
   }
   function mountControls() {
     if (!document.body) return;
+    if (root.dataset.themeControls === 'off') { syncMetadata(); return; }
     function visible(element) { return !element.getClientRects || element.getClientRects().length > 0; }
     var slots = Array.prototype.filter.call(document.querySelectorAll('[data-theme-control-slot]'), visible);
     if (slots.length) {

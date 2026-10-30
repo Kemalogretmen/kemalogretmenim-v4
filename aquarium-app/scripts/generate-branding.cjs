@@ -9,10 +9,15 @@ const paths=[...xml.matchAll(/<path\b([\s\S]*?)\/>/g)].map(match=>{
 });
 const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108"><rect width="108" height="108" fill="#082F3D"/>'+paths.join('')+'</svg>';
 fs.writeFileSync(path.join(root,'branding/app-icon.svg'),svg+'\n');
+fs.writeFileSync(path.join(root,'android/app/src/main/res/drawable/ic_launcher_foreground.xml'),xml);
+fs.writeFileSync(path.join(root,'android/app/src/main/res/mipmap-anydpi/ic_launcher.xml'),xml);
+fs.writeFileSync(path.join(root,'../indir/sinif-akvaryumu/uygulama-simgesi.svg'),svg+'\n');
 (async()=>{
  let sharp;try{sharp=require('sharp');}catch(e){if(!process.env.AQUARIUM_SHARP_MODULE)throw Error('SVG hazır. PNG dışa aktarımı için sharp kurun veya AQUARIUM_SHARP_MODULE yolunu belirtin.');sharp=require(process.env.AQUARIUM_SHARP_MODULE);}
  const output=path.join(root,'ios/SinifAkvaryumu/Assets.xcassets/AppIcon.appiconset');fs.mkdirSync(output,{recursive:true});
  await sharp(Buffer.from(svg)).resize(1024,1024).removeAlpha().png().toFile(path.join(output,'AppIcon-1024.png'));
+ const preview=path.join(root,'dist');fs.mkdirSync(preview,{recursive:true});
+ await sharp(Buffer.from(svg)).resize(512,512).png().toFile(path.join(preview,'uygulama-simgesi-1.1.0.png'));
  fs.writeFileSync(path.join(output,'Contents.json'),JSON.stringify({images:[{filename:'AppIcon-1024.png',idiom:'universal',platform:'ios',size:'1024x1024'}],info:{author:'xcode',version:1}},null,2)+'\n');
  fs.writeFileSync(path.join(root,'ios/SinifAkvaryumu/Assets.xcassets/Contents.json'),JSON.stringify({info:{author:'xcode',version:1}},null,2)+'\n');
  console.log('SVG ve 1024×1024 iOS simgesi hazır.');

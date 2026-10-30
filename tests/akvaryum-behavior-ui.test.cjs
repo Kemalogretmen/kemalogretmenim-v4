@@ -282,8 +282,9 @@ test('two open devices synchronize appearance edits alongside an independent sco
  a.submit(a.document.getElementById('cosmeticsForm'));await a.flushWrites();await new Promise(r=>setImmediate(r));
  for(const h of [a,b]){const s=h.saved().classes[0].students[0];assert.equal(C.earned(s),7);assert.equal(s.cosmetics.accessory,'leaf');assert.equal(h.document.querySelector('.fish .fish-accessory').hidden,false);}
 });
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false,raySurface=false,expressiveSurface=false,expressiveUnavailable=false,captureEnergy=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,webShare=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false,raySurface=false,expressiveSurface=false,expressiveUnavailable=false,captureEnergy=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
+  delete window.AquariumNativeShare;
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz',species);
   cls.tasks[0].points=7;cls.students.push(s);if(growth)cls.growth={enabled:true,thresholds:Array.from({length:10},(_,i)=>(i+1)*7)};s.createdAt=Date.now()-ageDays*86400000-1000;
   extraNames.forEach(name=>cls.students.push(C.newStudent(name)));
@@ -316,6 +317,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
     });
   }
   window.AquariumCosmetics=require('../js/akvaryum-cosmetics.js');
+  window.AquariumParentAccess=require('../js/akvaryum-parent-access.js');
   window.AquariumExpressive=require('../js/akvaryum-expressive.js');
   window.AquariumRay=require('../js/akvaryum-ray.js');
   window.AquariumAnatomy=require('../js/akvaryum-anatomy.js');
@@ -340,7 +342,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   const app=document.getElementById('aquariumApp');
   app.requestFullscreen=async()=>{document.fullscreenElement=app;document.dispatchEvent(new window.Event('fullscreenchange'));};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
-  const context={window,document,navigator:{clipboard:{writeText:async value=>clipboard?.(value)}},location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,performance:{now:()=>frameNow},console,
+  const context={window,document,navigator:{share:webShare,clipboard:{writeText:async value=>clipboard?.(value)}},location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,performance:{now:()=>frameNow},console,
     localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith('_seasonal_dismissals')?(cloudStorage.get(key)||null):key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key.startsWith('kemal_class_aquarium_v1')&&!key.endsWith('_seasonal_dismissals')){directDocumentWrites++;if(localQuota)throw Error('QuotaExceededError');}if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith('_seasonal_dismissals'))cloudStorage.set(key,value);else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
     setTimeout:(fn,ms)=>{if(ms===0)zeroTimers.push(fn);if(ms===12000&&timeoutAuth)Promise.resolve().then(fn);return 1;},clearTimeout(){},setInterval:(fn,ms)=>{intervals.push(fn);intervalPeriods.push(ms);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
     FormData:class {constructor(form){this.form=form;}get(name){const fields=[...this.form.querySelectorAll('[name="'+name+'"]')];return (fields.find(f=>f.type==='radio'&&f.checked)||fields[0])?.value;}}};
@@ -697,7 +699,7 @@ test('fullscreen retains working timer, audio and scene controls and restores th
  h.click(toggle);await new Promise(resolve=>setImmediate(resolve));
  assert.equal(d.fullscreenElement,app);assert.equal(toggle.getAttribute('aria-label'),'Tam ekrandan çık');
  assert.equal(toggle.querySelector('use').getAttribute('href'),'#i-collapse');assert.equal(h.modal.parentNode,d.getElementById('aquarium'));
- assert.equal(d.querySelectorAll('.scene-controls>.fullscreen-keep').length,5);
+ assert.equal(d.querySelectorAll('.scene-controls>.fullscreen-keep').length,4);
  h.click('#activitiesButton');assert.equal(d.getElementById('modalTitle').textContent,'Saat ve sayaç');
  assert.equal(h.modal.querySelector('[data-action="activities"]'),null);
  h.submit(d.getElementById('timerForm'));assert.equal(h.modal.open,false);assert.equal(d.fullscreenElement,app);
@@ -708,8 +710,7 @@ test('fullscreen retains working timer, audio and scene controls and restores th
  h.click('[data-action="sound"]');assert.equal(d.getElementById('modalTitle').textContent,'Ortam sesleri');h.click('#modalBack');
  h.click('#soundToggle');await new Promise(resolve=>setImmediate(resolve));assert.equal(playing,true);assert.equal(d.getElementById('soundToggle').getAttribute('aria-label'),'Sesi duraklat');
  h.click('#soundToggle');await new Promise(resolve=>setImmediate(resolve));assert.equal(playing,false);
- h.click('.scene-controls [data-action="themes"]');h.click('[data-action="theme"][data-theme="grotto"]');
- assert.equal(h.saved().classes[0].theme,'grotto');assert.equal(h.modal.open,false);assert.equal(d.fullscreenElement,app);
+ assert.equal(d.querySelector('.scene-controls [data-action="themes"]'),null);assert.equal(d.fullscreenElement,app);
  h.click('.fish');assert.equal(h.modal.open,false);assert.equal(C.earned(h.saved().classes[0].students[0]),0);
  h.click(toggle);await new Promise(resolve=>setImmediate(resolve));
  assert.equal(d.fullscreenElement,null);assert.equal(toggle.getAttribute('aria-label'),'Tam ekran');assert.equal(toggle.querySelector('use').getAttribute('href'),'#i-expand');
@@ -748,13 +749,15 @@ test('normal mode hides inactive targets; invalid growth thresholds never replac
  assert.equal(h.saved().classes[0].growth.enabled,false);assert.equal(h.saved().classes[0].growth.thresholds[1],20);
 });
 
-test('only the upper aquarium background button remains and can change the environment',async()=>{
+test('aquarium scene has no theme shortcut while background selection remains in settings',async()=>{
  const h=await harness(),d=h.document;
+ assert.equal(d.querySelectorAll('[data-action="themes"]').length,0);
+ h.click('[data-action="settings"]');h.click('#settings-tab-aquarium');
  assert.equal(d.querySelectorAll('[data-action="themes"]').length,1);
- assert.equal(d.querySelector('.scene-footer [data-action="themes"]'),null);
+ assert.ok(d.querySelector('#settings-panel-aquarium [data-action="themes"]'));
  h.click('[data-action="themes"]');h.click('[data-action="theme"][data-theme="grotto"]');
- assert.equal(h.saved().classes[0].theme,'grotto');
- assert.match(d.querySelector('.scene-controls [data-action="themes"]').title,/Mavi mağara/);
+ assert.equal(h.saved().classes[0].theme,'grotto');assert.match(d.getElementById('aquarium').style.backgroundImage,/mavi-magara/);
+ assert.equal(d.querySelector('.scene-controls [data-action="themes"]'),null);
 });
 
 
@@ -1633,4 +1636,51 @@ test('the new animals hatch as the selected species and their explicit demo rema
  const h=await harness({search:'?demo=1&yeniler=1',ageDays:0}),d=h.document,before=h.saved();
  assert.deepEqual([...d.querySelectorAll('.fish')].map(f=>f.dataset.species),['hammerhead','axolotl']);
  h.click('.fish');h.click('.behavior-choice');assert.deepEqual(h.saved(),before);assert.equal(h.frames.length,1);
+});
+
+async function parentSharingHarness(options={}) {
+ const h=await harness(options),cls=h.saved().classes[0],calls=[];let links=[],failure=false,release;
+ h.window.AquariumSharing={get:async()=>({id:'share',token:'public',enabled:false}),listOpen:async()=>[],sync:async()=>{},childLinks:async()=>links,
+  enableChildren:async(c,s,scope)=>{calls.push(scope);await new Promise(resolve=>release=resolve);if(failure)throw Error('Bağlantı kesildi. Tekrar deneyin.');links=c.students.map(p=>({id:'link-'+p.id,student_id:p.id,token:'code-'+p.name,enabled:true,view_scope:scope}));return links;},
+  updateChildScope:async(id,scope)=>{links.find(l=>l.id===id).view_scope=scope;}};
+ h.click('[data-action="settings"]');h.click('[data-action="settings-tab"][data-tab="sharing"]');h.click('[data-action="sharing"]');await new Promise(r=>setImmediate(r));
+ return {...h,cls,calls,links:()=>links,fail:()=>failure=true,release:()=>release()};
+}
+test('bulk parent codes apply either private scope once, sort names, permit individual overrides and share each child separately',async()=>{
+ const copies=[],h=await parentSharingHarness({extraNames:['Öykü','Ali','İpek'],clipboard:value=>copies.push(value)}),d=h.document,before=h.saved();
+ d.querySelector('#bulkChildScope [value="class"]').selected=true;
+ h.click('[data-action="enable-all-children"]');h.click('[data-action="enable-all-children"]');await new Promise(r=>setImmediate(r));
+ assert.deepEqual(h.calls,['class']);assert.equal(d.querySelector('[data-action="enable-all-children"]').disabled,true);assert.match(d.getElementById('parentBulkStatus').textContent,/hazırlanıyor/);
+ h.release();await new Promise(r=>setImmediate(r));
+ assert.equal(d.querySelectorAll('[data-action="share-child"]').length,4);assert.equal(d.querySelectorAll('[data-action="whatsapp-child"]').length,4);
+ assert.deepEqual([...d.querySelectorAll('.child-share-header strong')].map(el=>el.textContent),['Ali','Deniz','İpek','Öykü']);
+ assert.match(d.getElementById('parentBulkStatus').textContent,/4 öğrencinin veli kodu hazır/);assert.match(d.querySelector('.share-state').textContent,/kapalı/);
+ const ali=h.cls.students.find(s=>s.name==='Ali'),control=d.getElementById('childScope-'+ali.id);
+ control.querySelector('[value="child"]').selected=true;control.dispatchEvent(new h.window.Event('change',{bubbles:true}));await new Promise(r=>setImmediate(r));
+ assert.equal(h.links().find(l=>l.student_id===ali.id).view_scope,'child');assert.equal(h.links().filter(l=>l.view_scope==='class').length,3);
+ h.click('[data-action="copy-child-message"][data-student="'+ali.id+'"]');await new Promise(r=>setImmediate(r));
+ assert.equal(copies.length,1);assert.match(copies[0],/Ali için/);assert.match(copies[0],/Veli kodu: code-Ali/);assert.match(copies[0],/cocuk=code-Ali/);assert.ok(!copies[0].includes('code-Deniz'));
+ const search=d.getElementById('parentStudentSearch');search.value='İPEK';search.dispatchEvent(new h.window.Event('input',{bubbles:true}));assert.equal([...d.querySelectorAll('.child-share')].filter(el=>!el.hidden).length,1);
+ search.value='oyku';search.dispatchEvent(new h.window.Event('input',{bubbles:true}));assert.deepEqual([...d.querySelectorAll('.child-share')].filter(el=>!el.hidden).map(el=>el.querySelector('strong').textContent),['Öykü']);
+ assert.deepEqual(h.saved(),before);
+});
+test('bulk parent failure restores controls and keeps an actionable inline error instead of claiming success',async()=>{
+ const h=await parentSharingHarness(),d=h.document;h.fail();h.click('[data-action="enable-all-children"]');await new Promise(r=>setImmediate(r));h.release();await new Promise(r=>setImmediate(r));
+ assert.match(d.getElementById('parentBulkStatus').textContent,/Bağlantı kesildi/);assert.equal(d.querySelector('[data-action="enable-all-children"]').disabled,false);assert.equal(d.getElementById('bulkChildScope').disabled,false);assert.equal(h.links().length,0);
+});
+test('share and copy invoke the Android bridge during the original click; browser sharing receives one complete private message',async()=>{
+ for(const native of [true,false]){
+  const shares=[],copies=[],webShares=[],h=await parentSharingHarness({webShare:payload=>{webShares.push(payload);return Promise.resolve();}}),d=h.document;
+  h.click('[data-action="enable-all-children"]');await new Promise(r=>setImmediate(r));h.release();await new Promise(r=>setImmediate(r));
+  if(native)h.window.AquariumNativeShare={share:(access,target)=>{shares.push({access,target});return true;},copy:(access,format)=>{copies.push({access,format});return true;}};
+  h.click('[data-action="share-child"]');
+  if(native){assert.equal(shares.length,1);assert.equal(shares[0].target,'system');h.click('[data-action="whatsapp-child"]');assert.equal(shares[1].target,'whatsapp');h.click('[data-action="copy-child-message"]');assert.equal(copies.length,1);assert.equal(copies[0].format,'message');assert.equal(webShares.length,0);}
+  else {assert.equal(webShares.length,1);assert.match(webShares[0].text,/Veli kodu:/);assert.match(webShares[0].text,/Bağlantı:.*cocuk=/);}
+ }
+});
+test('the compact portrait settings selector exposes Sharing and every group without losing the current tab',async()=>{
+ const h=await harness();h.click('[data-action="settings"]');const d=h.document,select=d.getElementById('settingsSection');
+ assert.equal(select.querySelectorAll('option').length,7);select.querySelector('[value="sharing"]').selected=true;select.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ assert.equal(d.getElementById('settings-panel-sharing').hidden,false);assert.equal(d.getElementById('settings-tab-sharing').getAttribute('aria-selected'),'true');
+ h.click('[data-action="settings-tab"][data-tab="backup"]');assert.equal(select.value,'backup');
 });

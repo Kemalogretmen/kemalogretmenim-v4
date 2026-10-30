@@ -11,87 +11,106 @@
   const owner = () => window.kemalUserAuth.getUser().id;
   const table = () => client().from('aquarium_shares');
   const links = () => client().from('aquarium_student_links');
+  async function request(query) {
+    const controller=new AbortController();let timer;
+    const timeout=new Promise((resolve,reject)=>{timer=setTimeout(()=>{controller.abort();reject(new Error('Bağlantı yanıt vermedi. İnternetinizi kontrol edip yeniden deneyin; mevcut veli kodlarınız korunur.'));},20000);});
+    try{return await Promise.race([query.abortSignal?query.abortSignal(controller.signal):query,timeout]);}
+    finally{clearTimeout(timer);}
+  }
   async function get(localId) {
-    const { data, error } = await table().select('id,token,enabled,show_points').eq('owner_id', owner()).eq('local_id', localId).maybeSingle();
+    const { data, error } = await request(table().select('id,token,enabled,show_points').eq('owner_id', owner()).eq('local_id', localId).maybeSingle());
     if (error) throw new Error('Paylaşım altyapısına erişilemiyor. Veritabanı kurulumu ve bağlantı kontrol edilmeli.');
     return data;
   }
   async function listOpen() {
-    const { data, error } = await table().select('id,local_id,snapshot').eq('owner_id',owner()).eq('enabled',true);
+    const { data, error } = await request(table().select('id,local_id,snapshot').eq('owner_id',owner()).eq('enabled',true));
     if(error) throw new Error('Açık bağlantılar kontrol edilemedi.');
     return data || [];
   }
   async function disableAll() {
-    const childResult = await links().update({enabled:false}).eq('enabled',true);
+    // Replacing a backup revokes every previous parent credential. Removing
+    // these access rows also prevents a later bulk upsert from reviving them.
+    // RLS restricts deletion to this teacher; pupil/history data is separate.
+    const childResult = await request(links().delete().not('id','is',null));
     if(childResult.error) throw new Error('Veli kodları kapatılamadığı için yedek yüklenmedi.');
-    const { error } = await table().update({enabled:false,snapshot:{},updated_at:new Date().toISOString()}).eq('owner_id',owner());
+    const { error } = await request(table().update({enabled:false,snapshot:{},updated_at:new Date().toISOString()}).eq('owner_id',owner()));
     if(error) throw new Error('Önceki bağlantılar kapatılamadığı için yedek yüklenmedi. Bağlantıyı kontrol edin.');
   }
   async function ensure(cls, settings) {
     let row = await get(cls.id);
     if (!row) {
-      const {error} = await table().upsert({owner_id:owner(),local_id:cls.id,enabled:false,snapshot:snapshot(cls,settings)}, {onConflict:'owner_id,local_id',ignoreDuplicates:true});
+      const {error} = await request(table().upsert({owner_id:owner(),local_id:cls.id,enabled:false,snapshot:snapshot(cls,settings)}, {onConflict:'owner_id,local_id',ignoreDuplicates:true}));
       if(error) throw new Error('Veli paylaşımı hazırlanamadı.');
       row = await get(cls.id);
     }
     await sync(cls,settings); return row;
   }
   async function enable(cls, settings, showPoints=false) {
-    const { data, error } = await table().upsert({ owner_id: owner(), local_id: cls.id, token: crypto.randomUUID(), enabled: true, show_points:showPoints===true, snapshot: snapshot(cls, settings), updated_at: new Date().toISOString() }, { onConflict: 'owner_id,local_id' }).select('id,token,enabled,show_points').single();
+    const { data, error } = await request(table().upsert({ owner_id: owner(), local_id: cls.id, token: crypto.randomUUID(), enabled: true, show_points:showPoints===true, snapshot: snapshot(cls, settings), updated_at: new Date().toISOString() }, { onConflict: 'owner_id,local_id' }).select('id,token,enabled,show_points').single());
     if (error) throw new Error('Sınıf paylaşımı açılamadı. Öğretmen yetkisi ve veritabanı kurulumu kontrol edilmeli.');
     return data;
   }
   async function updatePublicPoints(id,showPoints) {
-    const {data,error}=await table().update({show_points:showPoints===true,updated_at:new Date().toISOString()}).eq('id',id).select('id');
+    const {data,error}=await request(table().update({show_points:showPoints===true,updated_at:new Date().toISOString()}).eq('id',id).select('id'));
     if(error || !data?.length)throw new Error('Ziyaretçi puan görünümü kaydedilemedi. Paylaşım veritabanı güncellemesini kontrol edin.');
   }
   async function disable(id) {
     // Public-class permission is independent of child-only access. Keep the private snapshot.
-    const { data, error } = await table().update({ enabled: false, token: crypto.randomUUID(), updated_at: new Date().toISOString() }).eq('id', id).select('id');
+    const { data, error } = await request(table().update({ enabled: false, token: crypto.randomUUID(), updated_at: new Date().toISOString() }).eq('id', id).select('id'));
     if (error || !data?.length) throw new Error('Paylaşım kapatılamadı. Bağlantıyı kontrol edip tekrar deneyin; önceki bağlantı hâlâ açık olabilir.');
   }
   async function removeClass(localId) {
     const share=await get(localId);if(!share)return;
-    const child=await links().update({enabled:false}).eq('share_id',share.id);
+    const child=await request(links().delete().eq('share_id',share.id));
     if(child.error) throw Error('Veli kodları kapatılamadı. Sınıf silinmedi; tekrar deneyin.');
-    const {data,error}=await table().update({enabled:false,snapshot:{},token:crypto.randomUUID(),updated_at:new Date().toISOString()}).eq('id',share.id).eq('owner_id',owner()).select('id');
+    const {data,error}=await request(table().update({enabled:false,snapshot:{},token:crypto.randomUUID(),updated_at:new Date().toISOString()}).eq('id',share.id).eq('owner_id',owner()).select('id'));
     if(error||!data?.length)throw Error('Sınıf paylaşımı kapatılamadı. Sınıf silinmedi; tekrar deneyin.');
   }
   async function childLinks(shareId) {
     if(!shareId) return [];
-    const {data,error}=await links().select('id,student_id,token,enabled,view_scope').eq('share_id',shareId);
+    const {data,error}=await request(links().select('id,student_id,token,enabled,view_scope').eq('share_id',shareId));
     if(error) throw new Error('Veli kodları yüklenemedi. Veritabanı güncellemesini kontrol edin.');
     return data || [];
   }
   async function enableChild(cls,settings,studentId,viewScope='child') {
+    const rows=await enableChildren(cls,settings,viewScope,[studentId]);
+    return rows[0];
+  }
+  async function enableChildren(cls,settings,viewScope='child',studentIds=cls.students.map(s=>s.id)) {
     if(!['child','class'].includes(viewScope)) throw new Error('Veli görünümü geçersiz.');
-    if(!cls.students.some(s=>s.id===studentId)) throw new Error('Öğrenci bulunamadı.');
+    const ids=[...new Set(studentIds)];
+    if(!ids.length) throw new Error('Önce sınıfınıza öğrenci ekleyin.');
+    if(ids.some(id=>!cls.students.some(s=>s.id===id))) throw new Error('Öğrenci bulunamadı.');
     const share=await ensure(cls,settings);
-    const {data,error}=await links().upsert({share_id:share.id,student_id:studentId,token:crypto.randomUUID(),enabled:true,view_scope:viewScope},{onConflict:'share_id,student_id'}).select('id,student_id,token,enabled,view_scope').single();
-    if(error) throw new Error('Çocuğa özel veli kodu oluşturulamadı.');
+    // The database supplies a token only on INSERT. Omitting it from the UPDATE
+    // columns preserves links already sent to parents, including retries and
+    // concurrent devices. disableChild rotates the token before any reopening.
+    const rows=ids.map(studentId=>({share_id:share.id,student_id:studentId,enabled:true,view_scope:viewScope}));
+    const {data,error}=await request(links().upsert(rows,{onConflict:'share_id,student_id'}).select('id,student_id,token,enabled,view_scope'));
+    if(error || data?.length!==ids.length) throw new Error('Veli kodları kaydedilemedi. Bağlantınızı kontrol edip yeniden deneyin; mevcut kodlar korunur.');
     return data;
   }
   async function updateChildScope(id,viewScope) {
     if(!['child','class'].includes(viewScope)) throw new Error('Veli görünümü geçersiz.');
-    const {data,error}=await links().update({view_scope:viewScope}).eq('id',id).select('id');
+    const {data,error}=await request(links().update({view_scope:viewScope}).eq('id',id).select('id'));
     if(error || !data?.length) throw new Error('Veli görünümü kaydedilemedi. Veritabanı güncellemesini ve bağlantıyı kontrol edin.');
   }
   async function disableChild(id) {
-    const {data,error}=await links().update({enabled:false,token:crypto.randomUUID()}).eq('id',id).select('id');
+    const {data,error}=await request(links().update({enabled:false,token:crypto.randomUUID()}).eq('id',id).select('id'));
     if(error || !data?.length) throw new Error('Veli kodu kapatılamadı. Yeniden deneyin.');
   }
   async function sync(cls, settings) {
-    const { error } = await table().update({ snapshot: snapshot(cls, settings), updated_at: new Date().toISOString() }).eq('owner_id', owner()).eq('local_id', cls.id);
+    const { error } = await request(table().update({ snapshot: snapshot(cls, settings), updated_at: new Date().toISOString() }).eq('owner_id', owner()).eq('local_id', cls.id));
     if (error) throw new Error('İzleme ekranı güncellenemedi. Bağlantınızı kontrol edin.');
   }
   async function syncMany(classes, settings) {
-    const {data,error}=await table().select('id,local_id').eq('owner_id',owner());
+    const {data,error}=await request(table().select('id,local_id').eq('owner_id',owner()));
     if(error) throw new Error('İzleme bağlantıları kontrol edilemedi.');
     const local = new Map(classes.map(cls=>[cls.id,cls]));
     for (const row of data || []) {
       if(local.has(row.local_id)) await sync(local.get(row.local_id),settings);
-      else { const result=await table().update({enabled:false,snapshot:{}}).eq('id',row.id); if(result.error) throw new Error('Silinen sınıfın paylaşımı kapatılamadı.'); }
+      else { const result=await request(table().update({enabled:false,snapshot:{}}).eq('id',row.id)); if(result.error) throw new Error('Silinen sınıfın paylaşımı kapatılamadı.'); }
     }
   }
-  window.AquariumSharing = { snapshot, get, enable, updatePublicPoints, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, disableChild, updateChildScope, removeClass };
+  window.AquariumSharing = { snapshot, get, enable, updatePublicPoints, disable, sync, syncMany, listOpen, disableAll, childLinks, enableChild, enableChildren, disableChild, updateChildScope, removeClass };
 })();

@@ -31,3 +31,15 @@ test('only a native-origin port receives JSON backup following an explicit downl
  a.dispatchEvent(new h.window.Event('click',{bubbles:true,cancelable:true}));await new Promise(r=>setImmediate(r));assert.equal(h.exports.length,1);assert.deepEqual(h.exports[0],{type:'exportBackup',name:'yedek.json',contents:'{"classes":[]}'});
  a.href='blob:https://evil.example/backup';a.dispatchEvent(new h.window.Event('click',{bubbles:true,cancelable:true}));await new Promise(r=>setImmediate(r));assert.equal(h.exports.length,1);
 });
+
+test('native parent sharing and clipboard use only the origin-bound port and do not navigate or touch account storage',()=>{
+ const h=harness(),access={studentName:'Ada',className:'Birinciler',code:'11111111-1111-4111-8111-111111111111',url:'https://kemalogretmenim.com.tr/ogretmen/akvaryum.html?cocuk=11111111-1111-4111-8111-111111111111'};
+ assert.equal(h.window.AquariumNativeShare.share(access,'system'),false);
+ const event=new h.window.Event('message');event.data='aquarium-shell-port';event.ports=[{postMessage:v=>h.exports.push(JSON.parse(v))}];event.source=null;event.isTrusted=true;h.window.dispatchEvent(event);
+ assert.equal(h.window.AquariumNativeShare.share(access,'whatsapp'),true);assert.equal(h.window.AquariumNativeShare.copy(access,'message'),true);
+ assert.deepEqual(h.exports,[{type:'shareParent',...access,target:'whatsapp'},{type:'copyParent',...access,format:'message'}]);assert.equal(h.fetches(),0);
+});
+test('login pages cannot initiate parent-code exports even with an installed native port',()=>{
+ const h=harness('kemalogretmenim.com.tr','/giris.html'),event=new h.window.Event('message');event.data='aquarium-shell-port';event.ports=[{postMessage:v=>h.exports.push(v)}];event.source=null;event.isTrusted=true;h.window.dispatchEvent(event);
+ assert.equal(h.window.AquariumNativeShare.share({code:'fake'},'system'),false);assert.equal(h.exports.length,0);
+});

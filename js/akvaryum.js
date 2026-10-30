@@ -237,6 +237,35 @@
     }, 500);
   }
   const shareSaves=new WeakMap();
+  const parentAccess=new Map();
+  function readyParentAccess(button) {
+    const control=$('childScope-'+button.dataset.student);
+    if(control && (control.disabled || control.value!==control.dataset.saved)) {
+      if(!control.disabled)saveShareControl(control);
+      toast('Görünüm kaydedildikten sonra paylaş düğmesine tekrar dokunun.');return null;
+    }
+    return parentAccess.get(button.dataset.student);
+  }
+  async function copyParentAccess(access,format='message') {
+    if(window.AquariumNativeShare?.copy(access,format)) {toast('Veli erişimi kopyalandı.');return;}
+    const text=window.AquariumParentAccess.copyText(access,format);
+    try {await navigator.clipboard.writeText(text);toast('Veli erişimi kopyalandı.');}
+    catch(_) {
+      const field=document.createElement('textarea');field.value=text;field.setAttribute('readonly','');field.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.append(field);field.select();
+      let copied=false;try{copied=document.execCommand('copy');}catch(_){}field.remove();
+      if(copied)toast('Veli erişimi kopyalandı.');
+      else {const preview=$('parentMessage-'+access.studentId);preview?.closest('details')?.setAttribute('open','');preview?.focus();preview?.select();toast('Mesajı aşağıdaki alandan seçip kopyalayabilirsiniz.');}
+    }
+  }
+  async function shareParentAccess(access,target='system') {
+    if(window.AquariumNativeShare?.share(access,target))return;
+    const text=window.AquariumParentAccess.message(access);
+    if(target==='whatsapp') {window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');return;}
+    if(typeof navigator.share==='function') {
+      try{await navigator.share({title:'Sınıf Akvaryumu · '+access.studentName,text});}
+      catch(e){if(e.name!=='AbortError'){toast('Paylaşım açılamadı; WhatsApp veya kopyalama seçeneğini kullanabilirsiniz.');}}
+    }else await copyParentAccess(access);
+  }
   async function saveShareControl(control) {
     if(!control)return false;
     const pending=shareSaves.get(control);if(pending)return pending;
@@ -259,7 +288,7 @@
     })();
     shareSaves.set(control,job);return job;
   }
-  async function sharingModal() {
+  async function sharingModal(notice='',bulkScope='child') {
     if (demo || demoOnly) return toast('Paylaşım için öğretmen hesabınızla kendi sınıfınızı açın.');
     rememberModal('sharingModal',()=>sharingModal());
     openModal('Veli kodları ve sınıf paylaşımı', '<p>Paylaşım durumu kontrol ediliyor…</p>');
@@ -272,15 +301,25 @@
       const link = new URL(location.pathname,location.origin); link.searchParams.set('izle', shareRecord?.token || '');
       const entry=new URL(location.pathname+'?veli=1',location.origin);
       const publicPoints=shareRecord?.show_points ?? (shareRecord?.enabled===true && state.settings.points===true);
-      const childRows=cls.students.map(student=> {
+      parentAccess.clear();
+      const scopeOptions=scope=>'<option value="child" '+(scope==='child'?'selected':'')+'>Yalnızca kendi çocuğu</option><option value="class" '+(scope==='class'?'selected':'')+'>Tüm sınıf · Diğer puanlar gizli</option>';
+      const childRows=[...cls.students].sort((a,b)=>a.name.localeCompare(b.name,'tr-TR',{sensitivity:'base',numeric:true})).map(student=> {
         const row=children.find(r=>r.student_id===student.id && r.enabled);
         const url=new URL(location.pathname,location.origin); if(row) url.searchParams.set('cocuk',row.token);
         const scope=row?.view_scope==='class'?'class':'child';
-        const control='<label class="field">Veli akvaryum görünümü<select id="childScope-'+esc(student.id)+'" data-saved="'+scope+'" data-link-id="'+esc(row?.id || '')+'"><option value="child" '+(scope==='child'?'selected':'')+'>Yalnızca kendi çocuğu</option><option value="class" '+(scope==='class'?'selected':'')+'>Tüm balıklar · Diğer öğrencilerin puanları gizli</option></select></label>';
-        return '<div class="child-share"><strong>'+esc(student.name)+'</strong>'+control+(row ? '<p class="settings-note share-save-status" role="status">Görünüm seçimi otomatik kaydedilir.</p><label class="field">Çocuğa özel veli kodu<input readonly value="'+esc(row.token)+'"></label><div class="settings-actions"><button class="button" data-action="copy-child" data-student="'+esc(student.id)+'" data-link="'+esc(url.href)+'">Bağlantıyı kopyala</button><button class="button" data-action="copy-child" data-student="'+esc(student.id)+'" data-link="'+esc(row.token)+'">Kodu kopyala</button><button class="button" data-action="update-child-scope" data-id="'+esc(row.id)+'" data-student="'+esc(student.id)+'">Görünümü kaydet</button><button class="button danger" data-action="disable-child" data-id="'+esc(row.id)+'">Kodu kapat</button></div>' : '<button class="button" data-action="enable-child" data-student="'+esc(student.id)+'">Veli kodu oluştur</button>')+'</div>';
+        const control='<label class="field">Veli akvaryum görünümü<select id="childScope-'+esc(student.id)+'" data-saved="'+scope+'" data-link-id="'+esc(row?.id || '')+'">'+scopeOptions(scope)+'</select></label>';
+        const access=row?{studentId:student.id,studentName:student.name,className:cls.name,code:row.token,url:url.href}:null;
+        if(access)parentAccess.set(student.id,access);
+        const studentData=' data-student="'+esc(student.id)+'"';
+        return '<article class="child-share" data-search="'+esc(filterText(student.name))+'"><div class="child-share-header"><strong>'+esc(student.name)+'</strong><span class="parent-code-state">'+(row?'Kod hazır':'Kod oluşturulmadı')+'</span></div>'+(row?
+          '<div class="parent-share-actions"><button type="button" class="button primary" data-action="share-child"'+studentData+'>Paylaş</button><button type="button" class="button parent-whatsapp" data-action="whatsapp-child"'+studentData+'>WhatsApp</button><button type="button" class="button" data-action="copy-child-message"'+studentData+'>Kod ve bağlantıyı kopyala</button></div><details class="child-share-details"><summary>Kod ve görünüm ayarları</summary>'+control+'<p class="settings-note share-save-status" role="status">Görünüm seçimi otomatik kaydedilir.</p><label class="field">Veliye gönderilecek mesaj<textarea id="parentMessage-'+esc(student.id)+'" readonly rows="6">'+esc(window.AquariumParentAccess.message(access))+'</textarea></label><label class="field">Çocuğa özel veli kodu<input readonly value="'+esc(row.token)+'"></label><div class="settings-actions"><button class="button" data-action="copy-child"'+studentData+' data-format="url" data-link="'+esc(url.href)+'">Bağlantıyı kopyala</button><button class="button" data-action="copy-child"'+studentData+' data-format="code" data-link="'+esc(row.token)+'">Kodu kopyala</button><button class="button" data-action="update-child-scope" data-id="'+esc(row.id)+'"'+studentData+'>Görünümü kaydet</button><button class="button danger" data-action="disable-child" data-id="'+esc(row.id)+'">Kodu kapat</button></div></details>':
+          control+'<button class="button" data-action="enable-child"'+studentData+'>Veli kodu oluştur</button>')+'</article>';
       }).join('');
-      openModal('Veli kodları ve sınıf paylaşımı','<p class="modal-intro">Her veliye kendi çocuğunun kodunu verin. Veliye yalnızca kendi çocuğunu veya tüm sınıfın balıklarını gösterin. Diğer öğrencilerin puanları ve geçmişleri gizlidir. Veli yalnızca kendi çocuğunun balığına dokunarak günlük, haftalık, aylık ve tüm zamanlar puan geçmişini görebilir. Besleme veya düzenleme yapamaz.</p><p class="settings-note">Veli kod giriş adresi: <a href="'+esc(entry.href)+'">'+esc(entry.href)+'</a>. Kod özel bir erişim anahtarıdır; yalnızca ilgili veliyle paylaşın.</p><div class="child-shares">'+(childRows || '<p>Veli kodu oluşturmak için önce öğrenci ekleyin.</p>')+'</div><div class="settings-section"><h3>Tüm ziyaretçilere sınıfı göster</h3><p class="settings-note">Bu ayrı izin açılırsa sınıf bağlantısını alan herkes tüm balıkları görür. Veli kodunun görünümü yukarıdaki öğrenciye özel seçimden bağımsız yönetilir; ayrıntılar yalnızca kendi çocuğuna açılır.</p><p class="share-state">'+(shareRecord?.enabled?'● Sınıfın tamamı izlemeye açık':'○ Sınıfın tamamı izlemeye kapalı')+'</p><label class="field">Ziyaretçi puan görünümü<select id="publicSharePoints" data-share-id="'+esc(shareRecord?.id || '')+'" data-saved="'+(publicPoints?'points':'hidden')+'"><option value="hidden" '+(!publicPoints?'selected':'')+'>Puansız paylaş · Balıklar ve isimleri</option><option value="points" '+(publicPoints?'selected':'')+'>Puanlı paylaş · Balıklar, isimleri ve puanları</option></select></label><p class="settings-note share-save-status" role="status">Boyut ve büyüme her iki görünümde de korunur. Paylaşım açıkken seçiminiz otomatik kaydedilir.</p>'+(shareRecord?.enabled?'<label class="field">Tüm sınıf bağlantısı<input id="shareLink" readonly value="'+esc(link.href)+'"></label><div class="settings-actions"><button class="button" data-action="copy-share">Sınıf bağlantısını kopyala</button><button class="button danger" data-action="disable-share">Tüm sınıf paylaşımını kapat</button></div>':'<button class="button primary" data-action="enable-share">Tüm ziyaretçilere sınıfı aç</button>')+'<p class="settings-note">Kapatılan kod ve bağlantılar açık izleyici ekranında en geç yaklaşık 15 saniyede kapanır. Yeniden açıldığında yeni kod oluşur.</p></div>'+results[1].filter(row=>row.local_id!==id).map(row=>'<div class="task-template"><span>'+esc(row.snapshot?.name || 'Sınıf')+'</span><button class="button danger" data-action="disable-other-share" data-id="'+esc(row.id)+'">Sınıf paylaşımını kapat</button></div>').join(''));
-    } catch(e) { if(modal.open && modalRoute?.key==='sharingModal') openModal('Paylaşım kullanılamıyor','<p class="modal-intro">'+esc(e.message)+'</p>'); }
+      const activeCount=cls.students.filter(s=>children.some(r=>r.student_id===s.id&&r.enabled)).length;
+      const bulk='<section class="parent-bulk"><h3>Tüm veliler için oluştur</h3><p class="settings-note">Her öğrenciye ayrı kod hazırlanır. Mevcut kodlar korunur; görünümü daha sonra öğrenci bazında değiştirebilirsiniz.</p><div class="parent-bulk-controls"><label class="field">Tüm velilerin akvaryum görünümü<select id="bulkChildScope">'+scopeOptions(bulkScope)+'</select></label><button type="button" class="button primary" data-action="enable-all-children" '+(!cls.students.length?'disabled':'')+'>Tüm öğrenciler için oluştur</button></div><p id="parentBulkStatus" class="settings-note" role="status">'+esc(notice || activeCount+' / '+cls.students.length+' öğrencinin veli kodu hazır.')+'</p></section>';
+      openModal('Veli kodları ve sınıf paylaşımı','<p class="modal-intro">Her veli yalnız kendi çocuğunun puanını ve geçmişini görür. İsterseniz diğer balıkları da puanları gizli gösterin.</p>'+bulk+'<label class="field parent-search">Öğrenci bul<input id="parentStudentSearch" type="search" placeholder="Öğrenci adı" autocomplete="off"></label><p id="parentSearchEmpty" class="settings-note" hidden>Bu adla öğrenci bulunamadı.</p><div class="child-shares">'+(childRows || '<p>Veli kodu oluşturmak için önce öğrenci ekleyin.</p>')+'</div><p class="settings-note parent-entry-note">Kodla giriş: <a href="'+esc(entry.href)+'">'+esc(entry.href)+'</a>. Her kod yalnızca ilgili veliyle paylaşılmalıdır.</p><div class="settings-section"><h3>Tüm ziyaretçilere sınıfı göster</h3><p class="settings-note">Bu ayrı izin açılırsa sınıf bağlantısını alan herkes tüm balıkları görür. Veli kodunun görünümü yukarıdaki öğrenciye özel seçimden bağımsız yönetilir; ayrıntılar yalnızca kendi çocuğuna açılır.</p><p class="share-state">'+(shareRecord?.enabled?'● Sınıfın tamamı izlemeye açık':'○ Sınıfın tamamı izlemeye kapalı')+'</p><label class="field">Ziyaretçi puan görünümü<select id="publicSharePoints" data-share-id="'+esc(shareRecord?.id || '')+'" data-saved="'+(publicPoints?'points':'hidden')+'"><option value="hidden" '+(!publicPoints?'selected':'')+'>Puansız paylaş · Balıklar ve isimleri</option><option value="points" '+(publicPoints?'selected':'')+'>Puanlı paylaş · Balıklar, isimleri ve puanları</option></select></label><p class="settings-note share-save-status" role="status">Boyut ve büyüme her iki görünümde de korunur. Paylaşım açıkken seçiminiz otomatik kaydedilir.</p>'+(shareRecord?.enabled?'<label class="field">Tüm sınıf bağlantısı<input id="shareLink" readonly value="'+esc(link.href)+'"></label><div class="settings-actions"><button class="button" data-action="copy-share">Sınıf bağlantısını kopyala</button><button class="button danger" data-action="disable-share">Tüm sınıf paylaşımını kapat</button></div>':'<button class="button primary" data-action="enable-share">Tüm ziyaretçilere sınıfı aç</button>')+'<p class="settings-note">Kapatılan kod ve bağlantılar açık izleyici ekranında en geç yaklaşık 15 saniyede kapanır. Yeniden açıldığında yeni kod oluşur.</p></div>'+results[1].filter(row=>row.local_id!==id).map(row=>'<div class="task-template"><span>'+esc(row.snapshot?.name || 'Sınıf')+'</span><button class="button danger" data-action="disable-other-share" data-id="'+esc(row.id)+'">Sınıf paylaşımını kapat</button></div>').join(''));
+      modal.classList.add('sharing-modal');
+    } catch(e) { if(modal.open && modalRoute?.key==='sharingModal') openModal('Paylaşım kullanılamıyor','<p class="modal-intro">'+esc(e.message)+'</p><button class="button primary" data-action="sharing">Yeniden dene</button>'); }
   }
   function renderSoundControl() {
     const button=$('soundToggle'); if(!button) return;
@@ -398,7 +437,7 @@
     modalRoute={...route,selected};
     $('modalBack').textContent=modalHistory.length?'← Geri':'← Akvaryuma dön';
 
-    modal.classList.remove('behavior-modal', 'student-day-modal', 'species-picker-modal', 'group-reward-modal', 'random-picker-modal', 'cosmetics-modal', 'settings-modal', 'tasks-modal');
+    modal.classList.remove('behavior-modal', 'student-day-modal', 'species-picker-modal', 'group-reward-modal', 'random-picker-modal', 'cosmetics-modal', 'settings-modal', 'tasks-modal', 'sharing-modal');
     $('modalTitle').textContent = title; $('modalEyebrow').textContent = eyebrow; $('modalContent').innerHTML = html;
     if (html.includes('class="species-group"')) modal.classList.add('species-picker-modal');
     if (!modal.open) modal.showModal();
@@ -516,6 +555,7 @@
       if(!button||!panel)continue;
       button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;panel.hidden=!active;
     }
+    const picker=$('settingsSection');if(picker)picker.querySelectorAll('option').forEach(option=>option.selected=option.value===id);
     if(focus)$('settings-tab-'+id)?.focus({preventScroll:true});
   }
   function settingToggle(id,key,label){return '<label class="toggle-row">'+label+'<input id="'+id+'" type="checkbox" '+(state.settings[key]?'checked':'')+'></label>';}
@@ -530,7 +570,7 @@
       sharing:'<div class="settings-section"><h3>Veli ve ziyaretçi görünümü</h3><p class="modal-intro">Kimin hangi balıkları ve puanları görebileceğini belirleyin.</p><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>',
       backup:'<div class="settings-section"><h3>Hesap kaydı ve yedekler</h3>'+cloudControls()+'<button class="button" data-action="legacy-import">Eski sürümdeki sınıflarımı aktar</button><p class="settings-note">Kayıt durumunu ekranın altından takip edin. “Hesabınıza kaydedildi” yazısı bulut kaydını doğrular. Yedek indir seçeneği ayrıca bir kopya saklar.</p><div class="settings-actions"><button class="button" data-action="export">'+icon('download')+'Yedek indir</button><label class="button">Yedek yükle<input type="file" id="backupFile" accept=".json,application/json" class="sr-only"></label>'+(blockedStorage?'<button class="button" data-action="export-raw">Mevcut kaydı indir</button>':'')+'</div></div>'
     };
-    openModal('Akvaryum ayarları','<div class="settings-layout"><nav class="settings-tabs" role="tablist" aria-label="Ayar grupları">'+settingsTabs.map(([id,label])=>'<button type="button" role="tab" id="settings-tab-'+id+'" data-action="settings-tab" data-tab="'+id+'" aria-controls="settings-panel-'+id+'">'+label+'</button>').join('')+'</nav><div class="settings-panels">'+settingsTabs.map(([id,label])=>'<section id="settings-panel-'+id+'" role="tabpanel" aria-labelledby="settings-tab-'+id+'" tabindex="0" hidden>'+panels[id]+'</section>').join('')+'</div></div>');
+    openModal('Akvaryum ayarları','<label class="field settings-mobile-nav">Ayar bölümü<select id="settingsSection">'+settingsTabs.map(([id,label])=>'<option value="'+id+'">'+label+'</option>').join('')+'</select></label><div class="settings-layout"><nav class="settings-tabs" role="tablist" aria-label="Ayar grupları">'+settingsTabs.map(([id,label])=>'<button type="button" role="tab" id="settings-tab-'+id+'" data-action="settings-tab" data-tab="'+id+'" aria-controls="settings-panel-'+id+'">'+label+'</button>').join('')+'</nav><div class="settings-panels">'+settingsTabs.map(([id,label])=>'<section id="settings-panel-'+id+'" role="tabpanel" aria-labelledby="settings-tab-'+id+'" tabindex="0" hidden>'+panels[id]+'</section>').join('')+'</div></div>');
     modal.classList.add('settings-modal');
     const motionField=document.createElement('label');motionField.className='field device-quality';
     motionField.innerHTML='Bu cihazda canlı hareketleri<select id="creatureMode"><option value="classic">Klasik görünüm</option><option value="natural">Doğal hareketler · Hafif</option><option value="3d">3D canlılar · Deneme</option></select><small>İlk dört tür: palyaço balığı, denizanası, kaplumbağa ve ahtapot. 3D modeller sevimli ve sade bir çizimdedir. Aynı anda en fazla 12 model ve toplam 30 canlı için açılır; cihaz zorlanırsa hafif görünüme döner. Diğer canlılar mevcut görsellerini kullanır. Bu seçim yalnızca bu cihaza kaydedilir.</small><small id="creatureStatus" role="status"></small>';
@@ -918,8 +958,6 @@
     $('aquarium').dataset.theme = theme.id;
     applyWaterEffects();
     updateSeasonalSuggestion();
-    const themeButton=document.querySelector('.scene-controls [data-action="themes"]');
-    themeButton.title='Ortamı değiştir · '+theme.name;
     $('sceneTitle').textContent = classroom().students.length ? classroom().name + ' · Su altı dünyamız.' : 'Bizim su altı dünyamız.';
     $('sceneSubtitle').textContent = classroom().students.length + ' deniz dostu · Her güzel adım, yeni bir mutluluk.';
     $('welcome').hidden = classroom().students.length > 0 || classroom().teacher?.enabled === true;
@@ -1248,7 +1286,7 @@
     fish.el.classList.toggle('is-rewarding',reward.active);
     styleIfChanged(fish,fish.el,'--reward-glow',reward.amount.toFixed(3),true);
     fish.el.classList.toggle('teacher-glow',fish.el.classList.contains('teacher-fish')&&state.settings.teacherGlow&&!viewing);
-    styleIfChanged(fish,fish.el,'--teacher-shimmer',(moving ? .16+Math.sin(fish.phase*.8)*.035 : .16).toFixed(3),true);
+    styleIfChanged(fish,fish.el,'--teacher-shimmer',(moving ? .64+Math.sin(fish.phase*.8)*.045 : .64).toFixed(3),true);
     const eggTransform=fish.egg&&reward.active?'translate(-50%,-50%) rotate('+reward.bank.toFixed(2)+'deg) scale('+reward.scaleX.toFixed(3)+','+reward.scaleY.toFixed(3)+')':'';
     if(fish.eggArt.style.transform!==eggTransform)fish.eggArt.style.transform=eggTransform;
     const tilt=moving ? Math.sin(fish.phase*1.4)*p.tilt : 0;
@@ -1729,7 +1767,29 @@
         try{const copy=action==='export-cloud-recovery'?await persistence?.read('cloud_recovery'):(await persistence?.read('unsent_recovery'))?.document||await persistence?.read('recovery');if(copy)exportData(copy,'akvaryum-korunan-'+(action==='export-cloud-recovery'?'hesap':'bu-cihaz')+'-'+today+'.json');else toast('Ayrı bir kurtarma kopyası henüz oluşmadı.');}catch(e){toast('Kurtarma kopyası okunamadı.');}break;
       }
       case 'sharing': await sharingModal(); break;
-      case 'copy-child': try { const control=$('childScope-'+button.dataset.student);if(control && !(await saveShareControl(control)))break;await navigator.clipboard.writeText(button.dataset.link); toast('Çocuğa özel erişim kopyalandı.'); } catch(e) { toast('Kodu yukarıdaki alandan seçip kopyalayabilirsiniz.'); } break;
+      case 'copy-child': {
+        const control=$('childScope-'+button.dataset.student);
+        if(control && control.value!==control.dataset.saved && !(await saveShareControl(control)))break;
+        const access=readyParentAccess(button);if(access)await copyParentAccess(access,button.dataset.format||'url');break;
+      }
+      case 'copy-child-message': case 'share-child': case 'whatsapp-child': {
+        const access=readyParentAccess(button);if(!access)break;
+        if(action==='copy-child-message')await copyParentAccess(access);
+        else await shareParentAccess(access,action==='whatsapp-child'?'whatsapp':'system');break;
+      }
+      case 'enable-all-children': {
+        const cls=JSON.parse(JSON.stringify(classroom())),settings={...state.settings},scope=$('bulkChildScope').value;
+        const controls=[...$('modalContent').querySelectorAll('button,select,input')].map(el=>[el,el.disabled]);
+        controls.forEach(([el])=>el.disabled=true);$('modalContent').setAttribute('aria-busy','true');
+        const status=$('parentBulkStatus');status.textContent='Tüm öğrencilerin veli kodları hazırlanıyor…';clearTimeout(syncTimer);
+        try {
+          const rows=await queueShare(()=>window.AquariumSharing.enableChildren(cls,settings,scope));
+          if(modal.open && modalRoute?.key==='sharingModal' && classroom().id===cls.id)await sharingModal(rows.length+' öğrencinin veli kodu hazır. Kod ve bağlantıyı her veliyle ayrı paylaşabilirsiniz.',scope);
+          toast(rows.length+' veli kodu hazır.');
+        }catch(e){if(status.isConnected)status.textContent=e.message;toast(e.message);}
+        finally{controls.forEach(([el,disabled])=>el.disabled=disabled);$('modalContent').removeAttribute('aria-busy');}
+        break;
+      }
       case 'enable-child': case 'disable-child': case 'update-child-scope': {
         button.disabled=true; clearTimeout(syncTimer);
         try {
@@ -1998,6 +2058,12 @@
       commit(); tasksModal(); toast('Yeni görev bugüne eklendi.');
     }
   });
+  document.addEventListener('input',event=>{
+    if(event.target.id!=='parentStudentSearch')return;
+    const query=filterText(event.target.value.trim());let count=0;
+    modal.querySelectorAll('.child-share').forEach(row=>{row.hidden=!row.dataset.search.includes(query);if(!row.hidden)count++;});
+    $('parentSearchEmpty').hidden=count>0;
+  });
   document.addEventListener('change', async event => {
     const input = event.target;
     if(!viewing && updateEffectRange(input,true))return;
@@ -2018,6 +2084,7 @@
       try{localStorage.setItem(CREATURE_SIZE_KEY,String(size));}catch(_){toast('Görünüm büyütüldü; bu tarayıcı tercihi saklanamadı.');}
       renderFish();return;
     }
+    if(input.id==='settingsSection'){selectSettingsTab(input.value);return;}
     if(input.id?.startsWith('childScope-') && input.dataset.linkId) {await saveShareControl(input);return;}
     if(input.id==='publicSharePoints' && shareRecord?.enabled) {await saveShareControl(input);return;}
     if(input.id==='historySeasonSelect'){historySeasonId=input.value;historyPage=0;historyModal();return;}

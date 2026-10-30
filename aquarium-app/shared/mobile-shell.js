@@ -1,5 +1,5 @@
-/* Native shell adaptation only. Account credentials and tokens stay in the
-   site's existing HTTPS WebView storage and never cross the native bridge. */
+/* Native shell adaptation. Account credentials stay in HTTPS WebView storage.
+   Only an explicit parent-code share/copy or backup uses the origin-bound port. */
 (function () {
   'use strict';
   if (window.__aquariumShellInstalled) return;
@@ -69,6 +69,17 @@
     if (exportPort) { exportPort.postMessage(JSON.stringify(message));return true; }
     return false;
   }
+  function parentAction(access,type,option) {
+    if (!/^\/ogretmen\/akvaryum(?:\.html)?\/?$/.test(location.pathname)) return false;
+    if (window.navigator?.userActivation && !window.navigator.userActivation.isActive) return false;
+    var payload={type:type,studentName:access.studentName,className:access.className,code:access.code,url:access.url};
+    payload[type==='shareParent'?'target':'format']=option;
+    return send(payload);
+  }
+  window.AquariumNativeShare = Object.freeze({
+    share:function(access,target){return parentAction(access,'shareParent',target||'system');},
+    copy:function(access,format){return parentAction(access,'copyParent',format||'message');}
+  });
   document.addEventListener('click', async function (event) {
     var link = event.target.closest('a[download]');
     if (!link || !link.href.startsWith('blob:' + location.origin + '/') || (!exportPort && !window.webkit?.messageHandlers?.aquariumShell)) return;

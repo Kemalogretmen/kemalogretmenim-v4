@@ -577,9 +577,34 @@ html.performance-lite .class-pearl.is-goal-celebrating{animation:none}
 .task-edit-list .task-editor[open] .task-icon-picker,.task-edit-list .task-editor[open] .settings-actions{grid-column:1/-1}
 .tasks-modal .new-task-form{margin-top:24px;padding:20px;border:1px solid #b2e9e12e;border-radius:18px;background:#ffffff06}
 .tasks-modal .new-task-form h3{margin:0 0 3px;font-size:16px}
-/* A soft halo follows the teacher's intact body, without flashing or a ring. */
-.teacher-glow .fish-art::before{content:'';position:absolute;inset:-22% -12%;border-radius:50%;background:radial-gradient(ellipse,#fff4bc8c 4%,#b5f2d45c 30%,#b9ecfa28 47%,transparent 68%);opacity:var(--teacher-shimmer,.16);pointer-events:none}
+/* One soft blue/lavender light identifies the teacher, following its silhouette. */
+.teacher-glow .fish-art::before{content:'';position:absolute;inset:-18% -10%;border-radius:50%;background:radial-gradient(ellipse at 52% 48%,#dbccff80 8%,#b7a5f466 28%,#88b8eb42 47%,#86d7ed14 63%,transparent 74%);opacity:var(--teacher-shimmer,.64);pointer-events:none}
+.teacher-glow .fish-side{filter:drop-shadow(0 0 4px #cec2ffa6) drop-shadow(0 0 10px #94b9ee70)}
+html.performance-lite .teacher-glow .fish-side{filter:drop-shadow(0 0 5px #bdb7f28c)}
 .fish.is-rewarding:is([data-species=eel],[data-species=lina])::before{display:none}
+/* Parent access uses a single scrolling sheet on phones and boards. */
+#modal.sharing-modal{width:min(980px,calc(100% - 28px));padding:20px 24px;max-height:93svh}
+.sharing-modal .modal-heading{margin-bottom:14px}.sharing-modal .modal-heading .eyebrow{display:none}
+.parent-bulk{padding:18px;border:1px solid #a6edce60;border-radius:18px;background:#8ce9ce0c;margin-bottom:20px}
+.parent-bulk h3{font-size:16px;margin:0 0 6px}.parent-bulk .settings-note{margin:6px 0 12px}
+.parent-bulk-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}.parent-bulk-controls .field{margin:0}
+.parent-bulk-controls .button{min-height:45px}.parent-search{margin-bottom:10px}
+.child-shares{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.child-shares .child-share{min-width:0;margin:0;padding:16px;gap:14px;border-radius:16px}
+.child-share[hidden]{display:none!important}.child-share-header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.child-share-header strong{font-size:16px;overflow-wrap:anywhere}.parent-code-state{font-size:10px;color:#b6e3d4;white-space:nowrap}
+.parent-share-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.parent-share-actions .button{min-height:44px;padding:10px}
+.parent-share-actions .button:last-child{grid-column:1/-1}.parent-share-actions .parent-whatsapp{color:#c5f7d6;border-color:#9be7bc70}
+.child-share-details{font-size:12px;min-width:0}.child-share-details summary{cursor:pointer;color:#c5e2e2;padding:3px 0;min-height:28px}
+.child-share-details[open] summary{margin-bottom:12px}.child-share-details .field textarea{min-height:130px;font:12px/1.6 inherit;resize:vertical}
+.child-share-details .settings-actions .button{flex:1 1 40%;min-height:42px}
+.parent-entry-note{overflow-wrap:anywhere}.settings-mobile-nav{display:none}
+@media(max-width:650px){
+ #modal.sharing-modal{padding:14px;width:calc(100% - 20px)}
+ .sharing-modal .modal-heading h2{font-size:22px}.parent-bulk{padding:14px}.parent-bulk-controls{grid-template-columns:1fr;gap:10px}
+ .child-shares{grid-template-columns:1fr}.parent-bulk-controls .button{width:100%}
+ .settings-mobile-nav{display:grid;margin-bottom:16px}.settings-modal .settings-tabs{display:none}
+}
 @media(max-width:900px){.group-reward-modal .group-students{grid-template-columns:repeat(2,minmax(0,1fr))}.task-edit-list{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-layout{grid-template-columns:146px minmax(0,1fr);gap:17px}}
 @media(max-width:650px){
  #modal.settings-modal,#modal.tasks-modal{padding:14px;width:calc(100% - 20px)}

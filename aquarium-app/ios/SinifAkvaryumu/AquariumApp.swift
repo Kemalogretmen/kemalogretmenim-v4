@@ -105,7 +105,7 @@ final class AquariumWebModel: NSObject, ObservableObject, WKNavigationDelegate, 
         setup.allowsInlineMediaPlayback = true
         setup.mediaTypesRequiringUserActionForPlayback = .all
         setup.defaultWebpagePreferences.preferredContentMode = .mobile
-        setup.applicationNameForUserAgent = "SinifAkvaryumu/1.0 iOS"
+        setup.applicationNameForUserAgent = "SinifAkvaryumu/\(config.version) iOS"
         let scriptURL = Bundle.main.url(forResource: "mobile-shell", withExtension: "js")!
         let script = try! String(contentsOf: scriptURL, encoding: .utf8)
         setup.userContentController.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
@@ -177,7 +177,37 @@ final class AquariumWebModel: NSObject, ObservableObject, WKNavigationDelegate, 
         guard message.frameInfo.isMainFrame, origin.protocol == "https", (origin.port == 0 || origin.port == 443),
               ["kemalogretmenim.com.tr", "www.kemalogretmenim.com.tr"].contains(origin.host),
               let url = web.url, policy.destination(url) == .internalPage,
-              let object = message.body as? [String: Any], object["type"] as? String == "exportBackup",
+              let object = message.body as? [String: Any], let type = object["type"] as? String else { return }
+        if type == "shareParent" || type == "copyParent" {
+            guard url.path == "/ogretmen/akvaryum.html" || url.path == "/ogretmen/akvaryum",
+                  let student = object["studentName"] as? String, !student.isEmpty, student.count <= 80,
+                  let classroom = object["className"] as? String, !classroom.isEmpty, classroom.count <= 80,
+                  let code = object["code"] as? String, UUID(uuidString: code) != nil,
+                  let address = object["url"] as? String, let link = URLComponents(string: address), link.scheme == "https",
+                  ["kemalogretmenim.com.tr", "www.kemalogretmenim.com.tr"].contains(link.host ?? ""),
+                  link.port == nil || link.port == 443, link.user == nil, link.password == nil, link.fragment == nil,
+                  ["/ogretmen/akvaryum.html", "/ogretmen/akvaryum"].contains(link.path), link.percentEncodedQuery == "cocuk=" + code else { return }
+            let text = "Merhaba,\n\(student) için \(classroom) Sınıf Akvaryumu veli erişimi:\n\nVeli kodu: \(code)\nBağlantı: \(address)\n\nBu kod yalnızca ilgili veliye özeldir. Lütfen başkalarıyla paylaşmayın."
+            if type == "copyParent" {
+                switch object["format"] as? String ?? "message" {
+                case "code": UIPasteboard.general.string = code
+                case "url": UIPasteboard.general.string = address
+                case "message": UIPasteboard.general.string = text
+                default: break
+                }
+                return
+            }
+            if object["target"] as? String == "whatsapp" {
+                var target = URLComponents(string: "https://wa.me/")!
+                target.queryItems = [URLQueryItem(name: "text", value: text)]
+                if let targetURL = target.url { UIApplication.shared.open(targetURL) }; return
+            }
+            let sheet = UIActivityViewController(activityItems: [text], applicationActivities: nil)
+            sheet.popoverPresentationController?.sourceView = web
+            sheet.popoverPresentationController?.sourceRect = CGRect(x: web.bounds.midX, y: web.bounds.midY, width: 1, height: 1)
+            _ = present(sheet); return
+        }
+        guard type == "exportBackup",
               let text = object["contents"] as? String, let data = text.data(using: .utf8), data.count <= 5 * 1024 * 1024,
               let document = try? JSONSerialization.jsonObject(with: data) as? [String: Any], document["classes"] != nil, !exportRequested else { return }
         backupName = (object["name"] as? String ?? "sinif-akvaryumu-yedek.json").replacingOccurrences(of: "[^a-zA-Z0-9._-]", with: "_", options: .regularExpression)

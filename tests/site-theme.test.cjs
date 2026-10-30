@@ -471,3 +471,13 @@ test('every runtime web page loads the synchronous theme bootstrap before styles
   assert.deepEqual(failures, []);
   t.diagnostic(`Verified theme bootstrap and shared styles in ${pages.length} runtime HTML pages.`);
 });
+
+
+test('aquarium can omit shared theme controls while retaining the saved site preference', t => {
+  const html=fs.readFileSync(path.join(rootPath,'ogretmen/akvaryum.html'),'utf8');
+  const h=setup(t,{html,saved:'dark'});
+  assertTheme(h,'dark','dark');assert.equal(h.document.querySelectorAll('.theme-control').length,0);
+  assert.equal(h.document.querySelector('meta[name="color-scheme"]').content,'dark');
+  h.api.mountControls();assert.equal(h.document.querySelectorAll('[data-theme-switch],[data-theme-system]').length,0);
+  assert.deepEqual(h.writes,[]);
+});

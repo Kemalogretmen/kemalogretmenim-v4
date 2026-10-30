@@ -570,3 +570,26 @@ Bu bölüm önceki **elle cihaz/kopya seçme** akışının yerine geçer.
 - İzole PostgreSQL/PGlite testi tekrar kurulumu, eski istemcide öğrenci/öğretmen türünün korunmasını, eşzamanlı yeni puanların tutulmasını, güncel istemcide açık tür değişimini, sahiplik/RLS ve puan gizliliğini doğruladı. Gerçek Supabase hesabında SQL uygulanmadı.
 - `npm test` **612/612 geçti**. Sözdizimi ve diff kontrolleri temiz. Gerçek tarayıcıda iki görsel, kesintisiz hareket yüzeyleri ve yeni puanda aksolotl baloncukları doğrulandı; JavaScript hatası yoktu. Örnek: `http://127.0.0.1:8770/ogretmen/akvaryum.html?demo=1&yeniler=1`. Örnek sınıf gerçek öğretmen belgesini değiştirmez. Görsel: `tmp/new-creatures-20261028.png`.
 - Çalışma yereldedir; canlı yayın, Git push ve APK değişikliği yapılmadı.
+
+### 30 Ekim 2026 — Sade akvaryum çubuğu ve öğretmen parıltısı
+
+- Akvaryumun sahne çubuğundaki arka plan simgesi kaldırıldı; arka plan seçimi Ayarlar → Akvaryum altında kaldı. Kaldırılan düğmeye bağlı başlık güncellemesi de temizlendi, böylece ilk açılışta boş düğme erişim hatası oluşmaz. Tam ekranda diğer kontroller korunur.
+- Genel açık/koyu tema düğmesi yalnız bu sayfada `data-theme-controls="off"` ile oluşturulmaz. Kaydedilmiş site teması ve meta bilgileri uygulanmaya devam eder; diğer sayfalardaki tema denetimleri etkilenmez.
+- Öğretmen balığının çok soluk ışığı, gövdenin şeklini izleyen yumuşak mavi/lavanta parıltısına dönüştü. Gövdeye ve çevresine uygulanan ışık isim/puan etiketlerini etkilemez, keskin yanıp sönme veya halka oluşturmaz. Hafif görünümde tek küçük gölge kullanılır; mevcut öğretmen ışıltısı seçeneğiyle kapatılabilir.
+- İlgili akvaryum arayüzü ve ortak tema testleri **152/152 geçti**. Sözdizimi ve diff kontrolleri temiz. Gerçek yerel tarayıcıda iki tema denetiminin bulunmadığı, ışığın yalnızca öğretmen balığında olduğu ve JavaScript hatası oluşmadığı doğrulandı. Önizleme: `tmp/teacher-glow-20261030.png`.
+- Değişiklikler yereldedir; canlı yayın, push, SQL veya APK değişikliği yapılmadı.
+
+### 30 Ekim 2026 · Toplu veli erişimi ve mobil paylaşım
+
+- Paylaşım ekranında tüm sınıfa tek işlemle ayrı veli kodları oluşturulur. Öğretmen “Yalnızca kendi çocuğu” veya “Tüm sınıf · Diğer puanlar gizli” görünümünü seçer. İkinci görünümde her veli yalnız kendi çocuğunun puanını ve geçmişini görür; diğer balıkların adları ve boyutları görünür. Sonrasında her öğrenci için görünüm ayrı değiştirilebilir.
+- Kodlar veritabanının mevcut varsayılan UUID üretimiyle oluşturulur. Tek bir toplu upsert yalnız `share_id`, `student_id`, `enabled`, `view_scope` sütunlarını yazar; mevcut token sütunu güncellenmez. Bağlantı kesilip tekrar denendiğinde ve farklı cihazlar aynı anda oluşturduğunda paylaşılmış kodlar korunur. Öğrenciye özel kapatma kodu yeniler. Sınıf silme veya yedek değiştirme, yalnız ilgili veli erişim satırlarını kaldırarak eski kodların daha sonra canlanmasını önler; öğrenci ve puan geçmişi ayrı tutulur. Tüm sınıfın ziyaretçilere açılması bu işlemden bağımsızdır.
+- Öğrenciler Türkçe alfabetik sıralanır; adla arama yapılabilir. Her kartta Paylaş, WhatsApp, Kod ve bağlantıyı kopyala seçenekleri vardır. Mesaj yalnız ilgili öğrencinin adını, sınıf adını, veli kodunu ve bağlantısını içerir. Uygulama otomatik mesaj göndermez; öğretmen alıcıyı ve gönderimi kendi seçer.
+- Android 1.1.0 (versionCode 3), sistem paylaşım menüsünü ve yerel panoyu kullanır. WhatsApp bulunmazsa sistem paylaşım menüsü açılır. İlk taraf HTTPS kaynağına bağlanmış WebMessagePort kullanılır; hesap oturumu native paylaşım köprüsüne aktarılmaz. Sadece tam eşleşen çocuğa özel akvaryum bağlantıları kabul edilir. Yeni bir uygulama izni eklenmedi.
+- Dikey telefonda tüm ayar grupları “Ayar bölümü” seçiminden erişilir. Masaüstündeki sekmeler korunur; tek dialog kaydırması kullanılır. İstekler 20 saniyede yanıt alamazsa bekleme sona erer ve tekrar deneme imkânı verilir.
+- Yeni uygulama simgesi Android normal/uyarlanabilir/tek renk ve iOS kaynaklarında birlikte güncellendi. İmzalı APK `indir/sinif-akvaryumu/sinif-akvaryumu-1.1.0.apk` altında hazırlandı; eski APK ile imzası aynıdır. İndirme sayfası ve ana sayfadaki Android bağlantısı güncellendi. Yeni SQL kurulumu gerektirmez. Bu değişiklikler bu çalışma sırasında canlıya yayımlanmadı.
+
+### 30 Ekim 2026 · Veli paylaşımı ve APK 1.1.0 yayın hazırlığı
+
+Kullanıcının yayın onayıyla toplu veli erişimi, mobil paylaşım, dikey ayar seçimi, öğretmen balığı ışığı ve akvaryum tema düğmesinin kaldırılması tek sürüme alındı. İmzalı APK 1.1.0 (versionCode 3) ve indirme bağlantıları aynı web paketi içinde hazırlanır; yeni SQL kurulumu gerekmez. Son yayın öncesi 714 test ve `.publish` paketi doğrulandı; uygulama kaynakları, testler, yerel önizlemeler ve imza dosyaları web paketine dahil değildir. GitHub `main` başlangıcı `4407a21` olarak doğrulandı.
+
+Netlify panelinde yayın öncesi **137,2 dönem kredisi + 22 süresiz kredi = 159,2 kredi** görüldü. Dönem 21 Ekim–20 Kasım 2026; dönem kredilerinin sonu 21 Kasım. Tek üretim yayınının maliyeti paneldeki 9 yayın / 135 kredi kaydına göre 15 kredidir. Tek commit/push ile yayın hedeflenir; ek kredi veya ücretli plan alınmaz. Yayın sonucu ilgili commit, Netlify Published durumu, canlı dosyalar ve indirilen APK özetiyle ayrıca doğrulanır.

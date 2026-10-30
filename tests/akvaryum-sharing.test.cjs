@@ -272,13 +272,14 @@ test('deleting a class closes its child codes and class link before clearing the
    select(){return this;},eq(k,v){op.filters.push([k,v]);return this;},
    maybeSingle:async()=>({data:{id:'share-1',enabled:true}}),
    update(value){op.value=value;return this;},
+   delete(){op.deleted=true;return this;},
    then(resolve){writes.push(op);resolve({data:[{id:'share-1'}],error:table===fail?{message:'offline'}:null});}
   };}};
   const window={AquariumCosmetics:require('../js/akvaryum-cosmetics.js'), AquariumCore:C,kemalUserAuth:{getClient:()=>client,getUser:()=>({id:'owner-1'})}};
-  vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window,crypto:{randomUUID:()=> 'rotated-token'}});
+  vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window,crypto:{randomUUID:()=> 'rotated-token'},AbortController,setTimeout,clearTimeout});
   if(fail)await assert.rejects(window.AquariumSharing.removeClass('class-1'),/Sınıf silinmedi/);
   else await window.AquariumSharing.removeClass('class-1');
-  assert.equal(writes[0].table,'aquarium_student_links');assert.equal(writes[0].value.enabled,false);
+  assert.equal(writes[0].table,'aquarium_student_links');assert.equal(writes[0].deleted,true);
   assert.equal(JSON.stringify(writes[0].filters),JSON.stringify([['share_id','share-1']]));
   if(fail==='aquarium_student_links')assert.equal(writes.length,1);
   else {assert.equal(writes[1].value.enabled,false);assert.equal(JSON.stringify(writes[1].value.snapshot),'{}');assert.equal(writes[1].value.token,'rotated-token');assert.ok(writes[1].filters.some(([k,v])=>k==='owner_id'&&v==='owner-1'));}
