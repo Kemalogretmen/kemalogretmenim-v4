@@ -46,7 +46,7 @@ test('five navigation groups preserve grade, subject, public extra and classroom
   assert.ok(h.document.querySelector('#kemalFooter a[href="/hakkimda.html"]'));
 });
 
-test('homepage shortcut expansion is local and leaves saved global dock preference untouched', () => {
+test('homepage visibility stays local while a chosen dock size is saved for other pages', () => {
   const saved = JSON.stringify({ state: 'normal', size: 'large', position: 'left' });
   const h = setup({ saved });
   h.api.renderShortcutDock({});
@@ -58,7 +58,7 @@ test('homepage shortcut expansion is local and leaves saved global dock preferen
   assert.equal(dock.classList.contains('is-hidden'), false);
   h.document.getElementById('shortcutDockSmaller').click();
   h.document.getElementById('shortcutDockClose').click();
-  assert.deepEqual(h.writes, []);
+  assert.deepEqual(JSON.parse(h.writes[0][1]), { state: 'normal', size: 'normal', position: 'left' });
   const other = setup({ home: false, saved });
   other.api.renderShortcutDock({});
   other.api.initShortcutDock();
@@ -74,7 +74,7 @@ test('glass dock keeps tool links and controls with one shared versioned stylesh
     h.api.initShortcutDock();
   }
   assert.equal(h.document.querySelectorAll('link[data-shortcut-dock-theme]').length, 1);
-  assert.equal(h.document.querySelector('link[data-shortcut-dock-theme]').getAttribute('href'), '/css/shortcut-dock.css?v=20261029-glass');
+  assert.equal(h.document.querySelector('link[data-shortcut-dock-theme]').getAttribute('href'), '/css/shortcut-dock.css?v=20261030-glass');
   for (const id of ['shortcutDockHandle', 'shortcutDockSmaller', 'shortcutDockLarger', 'shortcutDockReset', 'shortcutDockClose']) {
     const control = h.document.getElementById(id);
     assert.ok(control.querySelector('svg'), id);
@@ -95,9 +95,13 @@ test('dock size, alignment and visibility controls preserve stored preferences o
   const larger = h.document.getElementById('shortcutDockLarger');
   smaller.click();
   assert.equal(dock.classList.contains('is-small'), true);
+  assert.equal(smaller.disabled, false);
+  smaller.click();
+  assert.equal(dock.classList.contains('is-compact'), true);
+  smaller.click();
+  assert.equal(dock.classList.contains('is-mini'), true);
   assert.equal(smaller.disabled, true);
-  larger.click();
-  larger.click();
+  for (let step=0; step<4; step++) larger.click();
   assert.equal(dock.classList.contains('is-large'), true);
   assert.equal(larger.disabled, true);
   const handle = h.document.getElementById('shortcutDockHandle');
@@ -117,7 +121,7 @@ test('dock size, alignment and visibility controls preserve stored preferences o
   assert.deepEqual(last, { state: 'normal', size: 'large', position: 'center' });
 });
 
-test('homepage dock size and alignment survive chrome refresh without touching global storage', () => {
+test('homepage dock size and alignment survive chrome refresh without hiding the tool-page dock', () => {
   const h = setup();
   h.api.renderShortcutDock({});
   h.api.initShortcutDock();
@@ -131,7 +135,10 @@ test('homepage dock size and alignment survive chrome refresh without touching g
   assert.equal(dock.classList.contains('is-small'), true);
   assert.equal(dock.classList.contains('is-hidden'), true);
   assert.equal(dock.dataset.position, 'right');
-  assert.deepEqual(h.writes, []);
+  assert.deepEqual(JSON.parse(h.writes[h.writes.length-1][1]), { state: 'normal', size: 'small', position: 'right' });
+  h.document.getElementById('shortcutDockReopen').click();
+  h.document.getElementById('shortcutDockSmaller').click();
+  assert.equal(JSON.parse(h.writes[h.writes.length-1][1]).state, 'normal');
 });
 
 test('homepage search reuses shared results, closes mobile menu and retains dialog scroll lock', async () => {

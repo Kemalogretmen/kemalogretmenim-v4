@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+<script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- ✏️ 1. Sayfa başlığını ve emoji'yi değiştir -->
@@ -21,8 +22,9 @@
 
 
   </style>
-<link rel="stylesheet" href="/css/site-theme.css?v=20261029" data-site-theme-styles>
+<link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+<link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
 </head>
 <body>
 
@@ -30,7 +32,7 @@
     ┌─────────────────────────────────────────────────────┐
     │  NAVBAR + FOOTER                                    │
     │  Bunları yazmana gerek yok!                         │
-    │  /js/site.js?v=20261029-theme otomatik enjekte ediyor.               │
+    │  /js/site.js?v=20261030-icons otomatik enjekte ediyor.               │
     └─────────────────────────────────────────────────────┘
   -->
 
@@ -42,7 +44,7 @@
   <!-- SEÇENEK A: Sade Sayfa Başlığı (hakkimda, iletisim gibi) -->
   <header class="page-header">
     <!-- ✏️ Emoji, başlık ve açıklamayı değiştir -->
-    <div style="font-size:60px; margin-bottom:14px; animation:floatB 3s ease-in-out infinite;">📄</div>
+    <div class="platform-page-mark" data-ui-icon="file" aria-hidden="true"></div>
     <h1 class="page-header-title">Sayfa <span>Başlığı</span></h1>
     <p class="page-header-sub">Bu sayfanın kısa açıklaması buraya gelir.</p>
   </header>
@@ -58,7 +60,7 @@
     position: relative;
     overflow: hidden;
   ">
-    <span style="font-size:68px; display:block; margin-bottom:14px; animation:floatB 3s ease-in-out infinite;">📄</span>
+    <span class="platform-page-mark" data-ui-icon="file" aria-hidden="true"></span>
     <h1 style="font-size:clamp(26px,5vw,46px); font-weight:800; color:white; margin-bottom:8px;">Sayfa Başlığı</h1>
     <p style="color:rgba(255,255,255,.6); font-size:15px; font-weight:600;">Kısa açıklama.</p>
   </div>
@@ -189,7 +191,7 @@
 
   <!-- ─── PAYLAŞILAN JS (NAVBAR + FOOTER) ─── -->
   <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20261029-theme"></script>
+  <script src="/js/site.js?v=20261030-icons"></script>
 
   <script>
     // ================================================

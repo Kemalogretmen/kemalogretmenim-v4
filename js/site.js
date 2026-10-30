@@ -2096,7 +2096,14 @@
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + content + '</svg>';
     }
     const gripGlyph = dockGlyph('<circle cx="9" cy="6" r=".9" fill="currentColor"/><circle cx="15" cy="6" r=".9" fill="currentColor"/><circle cx="9" cy="12" r=".9" fill="currentColor"/><circle cx="15" cy="12" r=".9" fill="currentColor"/><circle cx="9" cy="18" r=".9" fill="currentColor"/><circle cx="15" cy="18" r=".9" fill="currentColor"/>');
-    const cubeGlyph = dockGlyph('<path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z"/><path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5"/>');
+    const dockIconPaths = {"home": "<path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z\"/>", "fish": "<path d=\"M19 12c-3-7-10-8-16 0 6 8 13 7 16 0Zm0 0 3-5v10ZM8 12h.01M11 6l1-3 4 4\"/>", "board": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"m7 13 4-4 3 2 3-5M12 17v4m-5 0h10\"/>", "timer": "<circle cx=\"12\" cy=\"14\" r=\"8\"/><path d=\"M9 2h6m-3 0v4m0 3v5l3 2m3-11 2-2\"/>", "math": "<path d=\"M4 5h6M7 2v6m5 7 6 6m0-6-6 6M4 17h5m8-14 4 4m0-4-4 4\"/>", "cube": "<path d=\"m12 3 9 5v8l-9 5-9-5V8Zm0 10 9-5m-9 5L3 8m9 5v8M7.5 5.5l9 5\"/>", "layers": "<path d=\"m12 2 10 6-10 6L2 8Zm-9 11 9 5 9-5M3 18l9 5 9-5\"/>", "net": "<path d=\"M8 2h8v7h7v7h-7v7H8v-7H1V9h7Zm0 7h8v7H8Zm0 7v7m8-7v7\"/>", "calendar": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 2v6m10-6v6M3 11h18M7 15h3m4 0h3m-10 3h3\"/>", "grid": "<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/>"};
+    function dockIconFor(item) {
+      const route = String(item.link || '').split(/[?#]/)[0].replace(/\.html$/, '').replace(/\/$/, '');
+      const names = { '': 'home', '/index': 'home', '/ogretmen/akvaryum': 'fish', '/ogretmen/beyaztahta': 'board', '/ogretmen/kronometre': 'timer', '/ogretmen/matematik': 'math', '/ogretmen/birim-kup-uygulamasi': 'cube', '/ogretmen/3d-yapi-atolyesi': 'layers', '/ogretmen/geometrik-cisimler-acilimlar': 'net', '/ogretmen-ajandasi/index': 'calendar', '/ogretmen-ajandasi': 'calendar' };
+      const name = names[route];
+      if (name) return dockGlyph(dockIconPaths[name]);
+      return item.iconUrl ? '<img src="' + escAttr(item.iconUrl) + '" alt="" onerror="this.hidden=true">' : dockGlyph(dockIconPaths.grid);
+    }
     const launcherGlyph = dockGlyph('<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>');
     const defaultDockItems = [
       { baslik: 'Sınıf Akvaryumu', link: '/ogretmen/akvaryum.html', emoji: '🐠', iconUrl: '/assets/dock-icons/akvaryum.svg', aktif: true },
@@ -2115,9 +2122,10 @@
       return item && item.aktif !== false && item.baslik && item.link;
     });
     if (!items.length) return '';
-    const path = String(window.location.pathname || '').replace(/\/+$/, '') || '/';
+    const normalizeDockPath = value => String(value || '').split(/[?#]/)[0].replace(/\/index(?:\.html)?$/, '/').replace(/\.html$/, '').replace(/\/+$/, '') || '/';
+    const path = normalizeDockPath(window.location.pathname);
     const visibleItems = [{ baslik: 'Ana Sayfa', link: '/index.html', emoji: '🏠', iconUrl: '/gorseller/logo.png', aktif: true }].concat(items.filter(function(item) {
-      const itemPath = String(item.link).split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+      const itemPath = normalizeDockPath(item.link);
       return itemPath !== '/' && itemPath !== '/index.html';
     }));
     return '<aside class="shortcut-dock" id="shortcutDock" aria-label="Hızlı araç kısayolları">' +
@@ -2125,21 +2133,18 @@
         '<button class="shortcut-dock-control shortcut-dock-handle" id="shortcutDockHandle" type="button" aria-label="Kısayol çubuğunu hizala veya sürükle" title="Hizalamak için dokun; taşımak için sürükle">' + gripGlyph + '</button>' +
         '<button class="shortcut-dock-control shortcut-dock-size" id="shortcutDockSmaller" type="button" aria-label="Kısayol çubuğunu küçült" title="Küçült">' + dockGlyph('<path d="M6 12h12"/>') + '</button>' +
         '<div class="shortcut-dock-scroller">' + visibleItems.map(function(item) {
-          const icon = item.iconUrl
-            ? '<img src="' + escHtml(item.iconUrl) + '" alt="" onerror="this.hidden=true;this.nextElementSibling.hidden=false">' +
-              '<span class="shortcut-dock-emoji" hidden>' + escHtml(item.emoji || '📌') + '</span>'
-            : (String(item.link).split('?')[0] === '/ogretmen/3d-yapi-atolyesi.html' ? cubeGlyph : '<span class="shortcut-dock-emoji">' + escHtml(item.emoji || '📌') + '</span>');
-          const itemPath = String(item.link || '').split('?')[0].replace(/\/+$/, '') || '/';
+          const icon = dockIconFor(item);
+          const itemPath = normalizeDockPath(item.link);
           const isCurrent = itemPath === path || (path === '/' && itemPath === '/index.html');
-          return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" title="' + escHtml(item.baslik) + '"' + (isCurrent ? ' aria-current="page"' : '') + '>' +
-            '<span class="shortcut-dock-icon">' + icon + '</span><span>' + escHtml(item.baslik) + '</span></a>';
+          return '<a class="shortcut-dock-item" href="' + escHtml(item.link) + '" aria-label="' + escAttr(item.baslik) + '" title="' + escHtml(item.baslik) + '"' + (isCurrent ? ' aria-current="page"' : '') + '>' +
+            '<span class="shortcut-dock-icon">' + icon + '</span><span class="shortcut-dock-label">' + escHtml(item.baslik) + '</span></a>';
         }).join('') + '</div>' +
         '<button class="shortcut-dock-control shortcut-dock-size" id="shortcutDockLarger" type="button" aria-label="Kısayol çubuğunu büyüt" title="Büyüt">' + dockGlyph('<path d="M6 12h12M12 6v12"/>') + '</button>' +
         '<button class="shortcut-dock-control shortcut-dock-reset" id="shortcutDockReset" type="button" aria-label="Kısayol çubuğu konumunu ortaya al" title="Konumu ortaya al">' + dockGlyph('<path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4"/><circle cx="12" cy="12" r="3"/>') + '</button>' +
         '<button class="shortcut-dock-control shortcut-dock-close" id="shortcutDockClose" type="button" aria-label="Kısayol çubuğunu gizle" title="Kısayolları gizle">' + dockGlyph('<path d="m7 7 10 10M17 7 7 17"/>') + '</button>' +
       '</div>' +
       '<button class="shortcut-dock-reopen" id="shortcutDockReopen" type="button" aria-label="Araç kısayollarını göster" aria-controls="shortcutDockBar" aria-expanded="false">' + launcherGlyph + '<span>Araçlar</span>' + dockGlyph('<path d="m8 14 4-4 4 4"/>') + '</button>' +
-    '</aside>';
+    '<span class="sr-only" id="shortcutDockSizeStatus" role="status" aria-live="polite"></span></aside>';
   }
 
   function initShortcutDock() {
@@ -2151,7 +2156,7 @@
       dockStyles.rel = 'stylesheet';
       document.head.appendChild(dockStyles);
     }
-    dockStyles.href = '/css/shortcut-dock.css?v=20261029-glass';
+    dockStyles.href = '/css/shortcut-dock.css?v=20261030-glass';
     dockStyles.dataset.shortcutDockTheme = '';
     dock.dataset.bound = '1';
     const storageKey = 'kemal_shortcut_dock_state';
@@ -2164,16 +2169,20 @@
     } catch (error) {
       /* Bozuk eski tercih varsa varsayılan konumu kullan. */
     }
+    const globalDockState = preferences.state === 'large' ? 'normal' : preferences.state;
     const isPlatformHome = document.body.classList.contains('home-platform');
     if (isPlatformHome && initShortcutDock.homePreferences) {
       preferences = Object.assign(preferences, initShortcutDock.homePreferences);
     }
-    function savePreferences() {
+    const dockSizes = ['mini', 'compact', 'small', 'normal', 'large'];
+    if (!dockSizes.includes(preferences.size)) preferences.size = 'normal';
+    function savePreferences(appearanceChanged) {
       if (isPlatformHome) {
         initShortcutDock.homePreferences = Object.assign({}, preferences);
-        return;
+        if (!appearanceChanged) return;
       }
-      try { localStorage.setItem(storageKey, JSON.stringify(preferences)); } catch (error) { /* Device storage may be unavailable. */ }
+      const savedPreferences = Object.assign({}, preferences, { state: isPlatformHome ? globalDockState : preferences.state });
+      try { localStorage.setItem(storageKey, JSON.stringify(savedPreferences)); } catch (error) { /* Device storage may be unavailable. */ }
     }
     if (preferences.state === 'large') {
       preferences.size = 'large';
@@ -2184,10 +2193,13 @@
       dock.classList.toggle('is-hidden', visibleState === 'hidden');
       dock.querySelector('#shortcutDockBar').setAttribute('aria-hidden', String(visibleState === 'hidden'));
       dock.querySelector('#shortcutDockReopen').setAttribute('aria-expanded', String(visibleState !== 'hidden'));
+      dock.classList.toggle('is-mini', preferences.size === 'mini');
+      dock.classList.toggle('is-compact', preferences.size === 'compact');
+      dock.dataset.size = preferences.size;
       dock.classList.toggle('is-small', preferences.size === 'small');
       dock.classList.toggle('is-large', preferences.size === 'large');
       dock.dataset.position = ['left', 'center', 'right'].includes(preferences.position) ? preferences.position : 'center';
-      dock.querySelector('#shortcutDockSmaller').disabled = preferences.size === 'small';
+      dock.querySelector('#shortcutDockSmaller').disabled = preferences.size === 'mini';
       dock.querySelector('#shortcutDockLarger').disabled = preferences.size === 'large';
     }
     function setState(value) {
@@ -2202,15 +2214,16 @@
       applyPreferences();
     }
     function changeSize(direction) {
-      const sizes = ['small', 'normal', 'large'];
-      const current = Math.max(0, sizes.indexOf(preferences.size));
-      preferences.size = sizes[Math.max(0, Math.min(sizes.length - 1, current + direction))];
-      savePreferences();
+      const current = dockSizes.indexOf(preferences.size);
+      preferences.size = dockSizes[Math.max(0, Math.min(dockSizes.length - 1, current + direction))];
+      savePreferences(true);
       applyPreferences();
+      const status = document.getElementById('shortcutDockSizeStatus');
+      if (status) status.textContent = 'Araç çubuğu: ' + ({ mini: 'En küçük', compact: 'Kompakt', small: 'Küçük', normal: 'Normal', large: 'Büyük' })[preferences.size];
     }
     function setPosition(position) {
       preferences.position = position;
-      savePreferences();
+      savePreferences(true);
       applyPreferences();
     }
     applyPreferences();
@@ -2277,7 +2290,7 @@
       return '<span class="announce-item">' + item.metin + '</span>' + separator;
     }).join('');
 
-    return '<div class="announce-bar" id="announceBar"><div class="announce-track">' + lane + lane + '</div></div>';
+    return '<div class="announce-bar" id="announceBar"><div class="announce-track">' + lane + '</div></div>';
   }
 
   function renderChrome(data) {

@@ -1,196 +1,82 @@
-/* Shared tool dock. All geometry and effects stay scoped to the generated dock. */
-#shortcutDock,
-#shortcutDock * { box-sizing: border-box; }
+/* Small, still tool icons on a translucent glass rail. */
+#shortcutDock, #shortcutDock * { box-sizing:border-box; }
 #shortcutDock.shortcut-dock {
-  --dock-surface: #f6f5fa;
-  --dock-ink: #383348;
-  --dock-purple: #7151b9;
-  --dock-border: rgba(255, 255, 255, .88);
-  position: fixed;
-  z-index: 1050;
-  left: 50%;
-  right: auto;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  width: max-content;
-  max-width: calc(100vw - 28px);
-  transform: translateX(-50%);
-  color: var(--dock-ink);
-  font-family: 'Nunito', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  transition: left .22s ease, transform .22s ease;
+  --dock-surface:rgba(247,247,253,.42); --dock-solid:#f3f2f8;
+  --dock-ink:#4b465b; --dock-purple:#7151b9; --dock-border:rgba(255,255,255,.78);
+  --dock-tile:rgba(255,255,255,.55); --dock-highlight:rgba(255,255,255,.64);
+  --dock-shadow:rgba(34,25,53,.18); --dock-item:70px; --dock-icon:36px; --dock-glyph:23px; --dock-font:9.5px;
+  position:fixed; z-index:1050; left:50%; right:auto;
+  bottom:calc(12px + env(safe-area-inset-bottom,0px)); width:max-content; max-width:calc(100vw - 24px);
+  transform:translateX(-50%); color:var(--dock-ink); font-family:'Nunito',system-ui,sans-serif;
 }
-#shortcutDock[data-position="left"] { left: 14px; right: auto; transform: none; }
-#shortcutDock[data-position="right"] { left: auto; right: 14px; transform: none; }
-#shortcutDock .shortcut-dock-bar,
-#shortcutDock .shortcut-dock-reopen {
-  position: relative;
-  border: 1px solid var(--dock-border);
-  background: linear-gradient(135deg, rgba(255, 255, 255, .64), rgba(255, 255, 255, .06)), var(--dock-surface);
-  box-shadow: 0 12px 34px rgba(42, 31, 65, .12), 0 2px 6px rgba(42, 31, 65, .04), inset 0 1px 0 #fff, 0 0 0 1px rgba(101, 85, 130, .1);
-  color: var(--dock-ink);
-  isolation: isolate;
+#shortcutDock[data-position="left"] { left:12px;right:auto;transform:none; }
+#shortcutDock[data-position="right"] { left:auto;right:12px;transform:none; }
+#shortcutDock .shortcut-dock-bar, #shortcutDock .shortcut-dock-reopen {
+  position:relative; isolation:isolate; color:var(--dock-ink);
+  background:linear-gradient(145deg,rgba(255,255,255,.28),rgba(255,255,255,.03) 55%,rgba(255,255,255,.12)),var(--dock-surface);
+  border:1px solid var(--dock-border);
+  box-shadow:0 8px 28px var(--dock-shadow),0 1px 4px #2219350a,inset 0 1px 0 var(--dock-highlight),inset 0 -1px 0 #ffffff18;
+  backdrop-filter:blur(28px) saturate(1.65);-webkit-backdrop-filter:blur(28px) saturate(1.65);
 }
 #shortcutDock .shortcut-dock-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: max-content;
-  max-width: min(1020px, calc(100vw - 28px));
-  padding: 8px;
-  border-radius: 24px;
+  display:flex; align-items:center; gap:5px; width:max-content;max-width:min(1020px,calc(100vw - 24px));
+  padding:6px; border-radius:22px;
 }
-#shortcutDock .shortcut-dock-bar::before,
-#shortcutDock .shortcut-dock-reopen::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(170deg, rgba(255, 255, 255, .62), transparent 43%, rgba(255, 255, 255, .12));
-  pointer-events: none;
+#shortcutDock .shortcut-dock-bar::before, #shortcutDock .shortcut-dock-reopen::before {
+  content:'';position:absolute;inset:1px;z-index:-1;border-radius:inherit;
+  border:1px solid #ffffff24;background:linear-gradient(170deg,#ffffff20,transparent 45%);pointer-events:none;
 }
-#shortcutDock .shortcut-dock-scroller {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: stretch;
-  gap: 3px;
-  min-width: 0;
-  max-width: none;
-  padding: 1px 2px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-#shortcutDock .shortcut-dock-scroller::-webkit-scrollbar { display: none; }
+#shortcutDock .shortcut-dock-scroller { display:flex;flex:1 1 auto;align-items:stretch;gap:2px;min-width:0;max-width:none;padding:1px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch; }
+#shortcutDock .shortcut-dock-scroller::-webkit-scrollbar {display:none;}
 #shortcutDock .shortcut-dock-item {
-  display: grid;
-  flex: 0 0 auto;
-  justify-items: center;
-  align-content: start;
-  gap: 6px;
-  min-width: 76px;
-  max-width: 102px;
-  padding: 6px 7px 5px;
-  border-radius: 17px;
-  color: #565065;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.25;
-  text-align: center;
-  text-decoration: none;
-  transition: background .16s ease, color .16s ease, transform .16s ease;
+  position:relative;display:grid;flex:0 0 auto;justify-items:center;align-content:start;gap:5px;
+  min-width:var(--dock-item);max-width:98px;padding:5px 5px 7px;border-radius:14px;
+  color:var(--dock-ink);font-size:var(--dock-font);font-weight:700;line-height:1.25;text-align:center;text-decoration:none;
+  transform:none;transition:background-color .15s ease,color .15s ease;
 }
-#shortcutDock .shortcut-dock-item:hover {
-  background: rgba(255, 255, 255, .7);
-  color: var(--dock-purple);
-  transform: translateY(-2px);
+#shortcutDock .shortcut-dock-item:hover {background:var(--dock-tile);color:var(--dock-purple);transform:none;}
+#shortcutDock .shortcut-dock-item[aria-current="page"] {color:var(--dock-purple);background:var(--dock-tile);}
+#shortcutDock .shortcut-dock-item[aria-current="page"]::after {content:'';position:absolute;bottom:2px;width:3px;height:3px;border-radius:50%;background:currentColor;}
+#shortcutDock .shortcut-dock-icon {display:grid;place-items:center;width:var(--dock-icon);height:var(--dock-icon);overflow:hidden;border:1px solid var(--dock-border);border-radius:11px;background:var(--dock-tile);box-shadow:inset 0 1px 0 var(--dock-highlight),0 1px 4px #3023460a;color:var(--dock-purple);}
+#shortcutDock .shortcut-dock-icon > :is(svg,img) {width:var(--dock-glyph);height:var(--dock-glyph);object-fit:contain;}
+#shortcutDock .shortcut-dock-icon svg {animation:none;}
+#shortcutDock .shortcut-dock-label {max-width:90px;}
+#shortcutDock .shortcut-dock-control {display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;padding:0;border:1px solid #ffffff48;border-radius:50%;background:#ffffff16;box-shadow:inset 0 1px 0 #ffffff30;color:var(--dock-ink);font:inherit;cursor:pointer;}
+#shortcutDock .shortcut-dock-control svg {width:16px;height:16px;pointer-events:none;}
+#shortcutDock .shortcut-dock-control:hover {background:var(--dock-tile);color:var(--dock-purple);}
+#shortcutDock .shortcut-dock-control:disabled {opacity:.3;cursor:default;}
+#shortcutDock .shortcut-dock-handle {display:grid;grid-template-columns:none;grid-template-rows:none;gap:0;touch-action:none;cursor:grab;}
+#shortcutDock.is-dragging .shortcut-dock-handle {cursor:grabbing;color:var(--dock-purple);}
+#shortcutDock .shortcut-dock-reopen {display:none;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border-radius:999px;font:700 11px/1.2 'Nunito',system-ui,sans-serif;cursor:pointer;}
+#shortcutDock .shortcut-dock-reopen > svg {width:16px;height:16px;color:var(--dock-purple);}
+#shortcutDock .shortcut-dock-reopen > svg:last-child {width:12px;height:12px;}
+#shortcutDock.is-hidden .shortcut-dock-bar {display:none;}
+#shortcutDock.is-hidden .shortcut-dock-reopen {display:inline-flex;}
+#shortcutDock a:focus-visible,#shortcutDock button:focus-visible {outline:2px solid var(--dock-purple);outline-offset:2px;}
+#shortcutDock.is-large {--dock-item:84px;--dock-icon:44px;--dock-glyph:28px;--dock-font:10.5px;}
+#shortcutDock.is-small {--dock-item:58px;--dock-icon:30px;--dock-glyph:20px;--dock-font:9px;}
+#shortcutDock.is-compact {--dock-item:40px;--dock-icon:30px;--dock-glyph:21px;}
+#shortcutDock.is-mini {--dock-item:32px;--dock-icon:25px;--dock-glyph:18px;}
+#shortcutDock:is(.is-mini,.is-compact) .shortcut-dock-label {display:none;}
+#shortcutDock:is(.is-mini,.is-compact) .shortcut-dock-item {max-width:none;gap:0;padding:4px 4px 6px;align-content:center;}
+#shortcutDock.is-mini .shortcut-dock-bar {padding:3px 5px;gap:3px;border-radius:17px;}
+#shortcutDock.is-mini .shortcut-dock-icon {border-radius:8px;}
+#shortcutDock.is-mini .shortcut-dock-control {flex-basis:26px;width:26px;height:26px;}
+#shortcutDock.is-mini .shortcut-dock-control svg {width:14px;height:14px;}
+@media(max-width:640px) {
+  #shortcutDock.shortcut-dock {max-width:calc(100vw - 12px);bottom:calc(8px + env(safe-area-inset-bottom,0px));}
+  #shortcutDock[data-position="left"] {left:6px;}#shortcutDock[data-position="right"] {right:6px;}
+  #shortcutDock .shortcut-dock-bar {max-width:calc(100vw - 12px);padding:5px;gap:3px;}
+  #shortcutDock .shortcut-dock-item {max-width:84px;}
+  #shortcutDock .shortcut-dock-control,#shortcutDock.is-mini .shortcut-dock-control {flex-basis:28px;width:28px;height:32px;}
+  #shortcutDock.is-mini .shortcut-dock-item {min-width:36px;min-height:34px;}
 }
-#shortcutDock .shortcut-dock-item[aria-current="page"] { color: #5c3e9c; background: rgba(113, 81, 185, .09); }
-#shortcutDock .shortcut-dock-icon {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .95);
-  border-radius: 13px;
-  background: linear-gradient(155deg, #fff, #f1edf7);
-  box-shadow: 0 3px 9px rgba(55, 38, 87, .07), inset 0 1px 0 #fff;
-  color: var(--dock-purple);
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  #shortcutDock .shortcut-dock-bar,#shortcutDock .shortcut-dock-reopen {background:var(--dock-solid);}
 }
-#shortcutDock .shortcut-dock-icon img { width: 28px; height: 28px; object-fit: contain; }
-#shortcutDock .shortcut-dock-icon > svg { width: 27px; height: 27px; }
-#shortcutDock .shortcut-dock-emoji { font-size: 23px; line-height: 1; }
-#shortcutDock .shortcut-dock-emoji[hidden] { display: none; }
-#shortcutDock .shortcut-dock-control {
-  display: grid;
-  place-items: center;
-  flex: 0 0 30px;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, .82);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .48);
-  box-shadow: 0 1px 3px rgba(43, 30, 66, .03), inset 0 1px 0 rgba(255, 255, 255, .9);
-  color: #746986;
-  font: inherit;
-  cursor: pointer;
-  transition: background .16s ease, color .16s ease;
+@media(prefers-reduced-transparency:reduce) {
+  #shortcutDock .shortcut-dock-bar,#shortcutDock .shortcut-dock-reopen {background:var(--dock-solid);backdrop-filter:none;-webkit-backdrop-filter:none;}
 }
-#shortcutDock .shortcut-dock-control svg { width: 17px; height: 17px; pointer-events: none; }
-#shortcutDock .shortcut-dock-control:hover { color: #5b3d9a; background: #fff; }
-#shortcutDock .shortcut-dock-control:disabled { opacity: .32; cursor: default; }
-#shortcutDock .shortcut-dock-handle { display: grid; grid-template-columns: none; grid-template-rows: none; gap: 0; touch-action: none; cursor: grab; }
-#shortcutDock .shortcut-dock-handle svg { width: 18px; height: 18px; }
-#shortcutDock.is-dragging { transition: none; }
-#shortcutDock.is-dragging .shortcut-dock-handle { cursor: grabbing; color: var(--dock-purple); background: #eee6fa; }
-#shortcutDock .shortcut-dock-reopen {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  min-height: 45px;
-  padding: 10px 15px;
-  border-radius: 999px;
-  font: 800 12px/1.2 'Nunito', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  letter-spacing: .1px;
-  cursor: pointer;
-  transition: box-shadow .16s ease, color .16s ease;
-}
-#shortcutDock .shortcut-dock-reopen > svg { width: 18px; height: 18px; color: var(--dock-purple); }
-#shortcutDock .shortcut-dock-reopen > svg:last-child { width: 14px; height: 14px; color: #9285a8; }
-#shortcutDock .shortcut-dock-reopen:hover { color: #5b3d9a; box-shadow: 0 12px 34px rgba(72, 48, 108, .16), inset 0 1px 0 #fff, 0 0 0 1px rgba(113, 81, 185, .18); }
-#shortcutDock.is-hidden .shortcut-dock-bar { display: none; }
-#shortcutDock.is-hidden .shortcut-dock-reopen { display: inline-flex; }
-#shortcutDock a:focus-visible,
-#shortcutDock button:focus-visible { outline: 2px solid #8e6aca; outline-offset: 2px; }
-#shortcutDock.is-large .shortcut-dock-item { min-width: 90px; max-width: 112px; gap: 7px; padding: 8px 9px 6px; font-size: 11px; }
-#shortcutDock.is-large .shortcut-dock-icon { width: 49px; height: 49px; border-radius: 15px; }
-#shortcutDock.is-large .shortcut-dock-icon img { width: 34px; height: 34px; }
-#shortcutDock.is-large .shortcut-dock-icon > svg { width: 33px; height: 33px; }
-#shortcutDock.is-large .shortcut-dock-emoji { font-size: 29px; }
-#shortcutDock.is-small .shortcut-dock-item { min-width: 64px; max-width: 85px; gap: 4px; padding: 4px 5px; font-size: 9px; }
-#shortcutDock.is-small .shortcut-dock-icon { width: 33px; height: 33px; border-radius: 10px; }
-#shortcutDock.is-small .shortcut-dock-icon img { width: 23px; height: 23px; }
-#shortcutDock.is-small .shortcut-dock-icon > svg { width: 23px; height: 23px; }
-#shortcutDock.is-small .shortcut-dock-emoji { font-size: 20px; }
-
-@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  #shortcutDock.shortcut-dock { --dock-surface: rgba(247, 245, 252, .76); }
-  #shortcutDock .shortcut-dock-bar,
-  #shortcutDock .shortcut-dock-reopen { backdrop-filter: blur(20px) saturate(1.35); -webkit-backdrop-filter: blur(20px) saturate(1.35); }
-}
-@media (max-width: 640px) {
-  #shortcutDock.shortcut-dock { bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 16px); }
-  #shortcutDock[data-position="left"] { left: 8px; }
-  #shortcutDock[data-position="right"] { right: 8px; }
-  #shortcutDock .shortcut-dock-bar { max-width: calc(100vw - 16px); gap: 4px; padding: 6px; border-radius: 21px; }
-  #shortcutDock .shortcut-dock-scroller { gap: 2px; padding: 1px; }
-  #shortcutDock .shortcut-dock-control { flex-basis: 28px; width: 28px; height: 28px; }
-  #shortcutDock .shortcut-dock-item { min-width: 70px; max-width: 88px; font-size: 9px; padding: 5px; }
-  #shortcutDock .shortcut-dock-item:hover { transform: none; }
-  #shortcutDock.is-large .shortcut-dock-item { min-width: 80px; max-width: 94px; font-size: 10px; }
-  #shortcutDock.is-large .shortcut-dock-icon { width: 44px; height: 44px; }
-  #shortcutDock .shortcut-dock-reopen { min-height: 43px; padding: 10px 14px; }
-}
-@media (prefers-reduced-transparency: reduce) {
-  #shortcutDock.shortcut-dock { --dock-surface: #f6f5fa; }
-  #shortcutDock .shortcut-dock-bar,
-  #shortcutDock .shortcut-dock-reopen { background: #f6f5fa; backdrop-filter: none; -webkit-backdrop-filter: none; }
-  #shortcutDock .shortcut-dock-bar::before,
-  #shortcutDock .shortcut-dock-reopen::before { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  #shortcutDock.shortcut-dock,
-  #shortcutDock a,
-  #shortcutDock button { transition: none; }
-  #shortcutDock .shortcut-dock-item:hover { transform: none; }
-}
-html.performance-lite #shortcutDock .shortcut-dock-bar,
-html.performance-lite #shortcutDock .shortcut-dock-reopen { background: #f6f5fa; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: 0 5px 16px rgba(42, 31, 65, .08), 0 0 0 1px #e4dfec; }
-html.performance-lite #shortcutDock .shortcut-dock-bar::before,
-html.performance-lite #shortcutDock .shortcut-dock-reopen::before { display: none; }
-html.performance-lite #shortcutDock,
-html.performance-lite #shortcutDock a,
-html.performance-lite #shortcutDock button { transition: none; }
+html.performance-lite #shortcutDock .shortcut-dock-bar,html.performance-lite #shortcutDock .shortcut-dock-reopen {background:var(--dock-solid);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 5px 16px var(--dock-shadow);}
+@media(prefers-reduced-motion:reduce) {#shortcutDock a,#shortcutDock button {transition:none;}}
+@media print {#shortcutDock {display:none!important;}}

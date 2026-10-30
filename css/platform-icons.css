@@ -1,0 +1,34 @@
+/* Quiet, shared line-icon language. No continuous decorative icon motion. */
+.platform-ui-icon { display:inline-block; width:1.15em; height:1.15em; vertical-align:-.18em; flex:0 0 auto; pointer-events:none; }
+.platform-icon-host { animation:none !important; }
+.platform-icon-host > .platform-ui-icon { margin-inline-end:.25em; }
+[data-platform-icon-mark] > .platform-ui-icon { width:1em; height:1em; margin:0; vertical-align:middle; }
+.platform-page-mark { display:grid;place-items:center;width:58px;height:58px;margin:0 auto 18px;border:1px solid #e2dceb;border-radius:17px;background:#f0edf6;color:#7151b9; }
+.platform-page-mark .platform-ui-icon { width:30px;height:30px;margin:0; }
+html[data-theme="dark"] .platform-page-mark { background:#302a42;border-color:#4b425d;color:#c4adfa; }
+:is(.page-header,.sp-hero,.subject-hero,.hero) :is(.fl,.star-el,.floating-emoji,.float-emoji) { display:none !important; }
+:is(.sp-card-em,.qcard-em,.val-em,.cinfo-icon,.err-emoji,.ho-hero-em,.hazir-em,.gmi-em,.subj-em,.teacher-module-icon,.student-module-icon,.parent-module-icon,.admin-module-icon,.dashboard-command-icon,.stat-em,.login-icon,.dd-icon,.gc-banner-em) { animation:none !important; }
+.sp-card-em { color:#7151b9; background:#f1edf7; box-shadow:none; border-color:#e3deec; }
+html[data-theme="dark"] .sp-card-em { color:#c4adfa; background:#302a42; border-color:#4b425d; }
+.page-header .platform-icon-host:not(.platform-page-mark) { animation:none !important; }
+.sp-card:hover .sp-card-em,.qcard:hover .qcard-em { transform:none !important; }
+.cinfo-icon .platform-ui-icon { width:24px;height:24px; }
+:is(.teacher-module-icon,.student-module-icon,.parent-module-icon,.admin-module-icon) .platform-ui-icon { width:25px;height:25px; }
+/* Existing loading spinners, lesson visualizations and game stages remain functional. */
+i[data-platform-fa] {font-style:normal;display:inline-flex;align-items:center;justify-content:center;animation:none!important;}
+i[data-platform-fa]::before {content:none!important;}
+i[data-platform-fa] > .platform-ui-icon {width:1em;height:1em;vertical-align:middle;}
+.announce-bar {background:var(--theme-surface-alt,#f3f1f7);color:var(--theme-muted,#6a6477);border-bottom:1px solid var(--theme-border,#e4dfec);padding:6px 20px;height:auto;}
+.announce-track {animation:none!important;transform:none!important;width:auto;display:flex;justify-content:center;flex-wrap:wrap;gap:6px 24px;white-space:normal;}
+.announce-item {display:inline-flex;align-items:center;gap:5px;font-size:11px;line-height:1.5;white-space:normal;}
+.announce-sep {display:none;}
+@media(max-width:640px) {.announce-track {gap:4px 12px;}.announce-item {font-size:10px;}}
+.teacher-tools :is(.tool-icon,.tool-visual),.gc-banner-em {animation:none!important;transform:none!important;}
+.sp-card-em {width:58px;height:58px;border-radius:16px;font-size:32px;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.sp-card::after {display:none;}
+.sp-card:hover {transform:none;}
+.sp-card-sub {background:transparent;border:0;padding:0;}
+html[data-theme="dark"] .sp-card:hover {background:var(--theme-surface);}
+.contact-layout > * {min-width:0;}
+.cinfo-val {overflow-wrap:anywhere;}
+@media(max-width:860px) {.contact-layout {grid-template-columns:minmax(0,1fr);}}
