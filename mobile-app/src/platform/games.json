@@ -1,0 +1,322 @@
+[
+  {
+    "id": "game-onluk-basket",
+    "title": "Onluk Basket",
+    "description": "Onlukları ve birlikleri tanı, doğru sayıyı seç, basketini at! Tek başına veya aynı ekranda 2–3 kişi oyna.",
+    "path": "/oyun/onluk-basket.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-carpim-kanatlari",
+    "title": "Çarpım Kanatları",
+    "description": "10 farklı adada çarpımları keşfet! Kuşunu seç, doğru kuleyi yık; patlama jokerinle tek başına veya iki kişi yarış.",
+    "path": "/oyun/carpim-kanatlari.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-esini-bul-hafiza",
+    "title": "Eşini Bul · Sembol Hafızası",
+    "description": "3B kartları çevir, renkli sembollerin eşlerini bul. Tek başına ya da arkadaşınla oyna!",
+    "path": "/oyun/esini-bul-hafiza.html",
+    "category": "games",
+    "subject": "hafıza",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-kizma_birader",
+    "title": "Kızma Birader",
+    "description": "Renkli parkurda işlemleri çöz, zarını at ve parka ilk ulaş.",
+    "path": "/oyun/kizma_birader.html",
+    "category": "games",
+    "subject": "strateji",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-hece-craft-tunel-macerasi",
+    "title": "Hece Craft",
+    "description": "Doğru hecelemeyi seç, tüneldeki engelleri aş ve kristalleri topla.",
+    "path": "/oyun/hece-craft-tunel-macerasi.html",
+    "category": "games",
+    "subject": "okuma-yazma",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-masal-makinistleri",
+    "title": "Masal Makinistleri",
+    "description": "Karakterleri seç, kendi masal rotanı kur ve sesli dinle.",
+    "path": "/oyun/masal-makinistleri.html",
+    "category": "games",
+    "subject": "türkçe",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-pizza-partisi",
+    "title": "Pizza Partisi",
+    "description": "Doğru kesri dilimle, şefin pizza siparişlerini tamamla!",
+    "path": "/oyun/pizza-partisi.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-doga-dedektifleri",
+    "title": "Doğa Dedektifleri",
+    "description": "Doğaya iyi gelen seçimi bul, yıldızları topla ve iz bırak!",
+    "path": "/oyun/doga-dedektifleri.html",
+    "category": "games",
+    "subject": "hayat",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-dikkat-dedektifi",
+    "title": "Dikkat Dedektifi",
+    "description": "Sahneyi hatırla, değişen izleri bul ve görev kuralını takip et.",
+    "path": "/oyun/dikkat-dedektifi.html",
+    "category": "games",
+    "subject": "hafıza",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-matematik-vadisi",
+    "title": "Matematik Vadisi",
+    "description": "Kahramanını geliştir, görevleri çöz, kendi dünyanı kur. Üyeler için ilerleme kaydı.",
+    "path": "/oyun/matematik-vadisi.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-bilgi-duellosu",
+    "title": "Bilgi Düellosu",
+    "description": "\"İki Takım, Süreli Sorular ve Jokerler\"",
+    "path": "/oyun/bilgi-duellosu.html",
+    "category": "games",
+    "subject": "türkçe",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-sesli-balonlar",
+    "title": "Sesli Balonlar",
+    "description": "\"Doğru Sesi Bul, Balonu Patlat\"",
+    "path": "/oyun/sesli-balonlar.html",
+    "category": "games",
+    "subject": "okuma-yazma",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-hece_koprusu",
+    "title": "Hece Köprüsü",
+    "description": "\"Doğru Heceyi Seç, Gökçe'yi Karşıya Geçir\"",
+    "path": "/oyun/hece_koprusu.html",
+    "category": "games",
+    "subject": "okuma-yazma",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-kelime_avcisi",
+    "title": "Kelime Avcısı",
+    "description": "\"Uzayda Doğru Kelimeyi Bul, Hedefi Vur\"",
+    "path": "/oyun/kelime_avcisi.html",
+    "category": "games",
+    "subject": "okuma-yazma",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-olcum-atolyesi",
+    "title": "Ölçüm Atölyesi",
+    "description": "\"Sınıfına Göre Ölç, Bonusla Rekor Kır\"",
+    "path": "/oyun/olcum-atolyesi.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-uzay_matematik_avi",
+    "title": "Uzayda Matematik Avı",
+    "description": "\"Doğru Sonucu Vur, Asteroitleri Patlat\"",
+    "path": "/oyun/uzay_matematik_avi.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-sekil-avcisi-3d",
+    "title": "Şekil Avcısı 3d",
+    "description": "\"Şekilleri Tanı, Topla, Büyü\"",
+    "path": "/oyun/sekil-avcisi-3d.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-oyun1",
+    "title": "Besin Avcısı",
+    "description": "\"Sağlıklı Yaşam\"",
+    "path": "/oyun/oyun1.html",
+    "category": "games",
+    "subject": "fen",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-oyun2",
+    "title": "Ritmik Sayma Oyunu",
+    "description": "\"Saymaya Hazır Ol!\"",
+    "path": "/oyun/oyun2.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-oyun3",
+    "title": "Toplama İşlemleri",
+    "description": "\"Rekor Kırma Zamanı!\"",
+    "path": "/oyun/oyun3.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-oyun4",
+    "title": "Halat Çekme",
+    "description": "\"Rakibinle Yarış!\"",
+    "path": "/oyun/oyun4.html",
+    "category": "games",
+    "subject": "strateji",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-oyun5",
+    "title": "Toplama Testi",
+    "description": "\"Toplama İşlemleri\"",
+    "path": "/oyun/oyun5.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-oyun6",
+    "title": "Cumhuriyet Yolculuğu",
+    "description": "\"Sosyal Bilgisi Testi\"",
+    "path": "/oyun/oyun6.html",
+    "category": "games",
+    "subject": "hayat",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-saat-oyunu",
+    "title": "Saat Sahnesı",
+    "description": "\"Saat Okuma ve Bulma Oyunu\"",
+    "path": "/oyun/saat-oyunu.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-paralarimiz",
+    "title": "Para Marketi",
+    "description": "\"Paraları Tanı ve Kasaya Öde\"",
+    "path": "/oyun/paralarimiz.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-tarti-oyunu",
+    "title": "Kütle Tartma Oyunu",
+    "description": "\"Teraziyi Dengele\"",
+    "path": "/oyun/tarti-oyunu.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-matematik-masa-tenisi",
+    "title": "Matematik Masa Tenisi",
+    "description": "\"Dört İşlemle Raket Maçı\"",
+    "path": "/oyun/matematik-masa-tenisi.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-sirali-hafiza",
+    "title": "Işıklı Notalar",
+    "description": "\"Görsel ve İşitsel Hafıza\"",
+    "path": "/oyun/sirali-hafiza.html",
+    "category": "games",
+    "subject": "hafıza",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  },
+  {
+    "id": "game-oruntu-treni",
+    "title": "Örüntü Treni",
+    "description": "\"Eksik Vagonu Bul!\"",
+    "path": "/oyun/oruntu-treni.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#7654B7"
+  },
+  {
+    "id": "game-golge-dedektifi",
+    "title": "Gölge Dedektifi",
+    "description": "\"Doğru Gölgeyi Eşleştir\"",
+    "path": "/oyun/golge-dedektifi.html",
+    "category": "games",
+    "subject": "bulmaca",
+    "icon": "game-controller-outline",
+    "accent": "#348273"
+  },
+  {
+    "id": "game-minik-kodlamaci",
+    "title": "Minik Kodlamacı",
+    "description": "\"Robotu Hedefe Ulaştır\"",
+    "path": "/oyun/minik-kodlamaci.html",
+    "category": "games",
+    "subject": "strateji",
+    "icon": "game-controller-outline",
+    "accent": "#A56B36"
+  },
+  {
+    "id": "game-geometri-kasifi",
+    "title": "Geometri Kaşifi",
+    "description": "\"3D Cisimler ve Açınımları\"",
+    "path": "/oyun/geometri-kasifi.html",
+    "category": "games",
+    "subject": "matematik",
+    "icon": "game-controller-outline",
+    "accent": "#537CB4"
+  }
+]

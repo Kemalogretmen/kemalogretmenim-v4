@@ -1,0 +1,48 @@
+/* Owned mobile shell. Shared agenda records and export paper remain unchanged. */
+@media screen {
+html.kemal-native { --ink:var(--theme-text);--text:var(--theme-text);--muted:var(--theme-muted);--line:var(--theme-border);--paper:var(--theme-surface);--white:var(--theme-surface);--cloud:var(--theme-bg);--radius:16px;--shadow:none; }
+html.kemal-native body { background:var(--theme-bg)!important;color:var(--theme-text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:0; }
+html.kemal-native :is(#kemalNavMount,#kemalFooterMount,#kemalAnnounceMount,#shortcutDock,.shortcut-dock,.theme-control,.brand,.top-clock,.side-card a) { display:none!important; }
+html.kemal-native .app { display:block;min-height:100vh;max-width:1280px;margin:auto; }
+html.kemal-native .sidebar { position:relative!important;top:auto!important;width:100%;height:auto!important;min-height:0;padding:12px 16px 0;border:0;background:transparent;gap:0;backdrop-filter:none; }
+html.kemal-native .sidebar .nav { display:none!important; }
+html.kemal-native .nav button { flex:none;min-height:44px;white-space:nowrap;font-size:13px;font-weight:600;border-radius:14px;padding:10px 14px;color:var(--theme-muted);scroll-snap-align:start; }
+html.kemal-native .nav button.active { color:var(--theme-accent);background:var(--theme-accent-soft);border-color:transparent; }
+html.kemal-native .sidebar .side-card { padding:0;margin:0;border:0;background:transparent;display:block!important; }
+html.kemal-native .side-card>strong,html.kemal-native .cloud-sync-card { display:none; }
+html.kemal-native #cloudSyncBadge.cloud-error + .cloud-sync-card { display:block; }
+html.kemal-native #cloudSyncBadge { position:relative;margin:0 0 8px;display:inline-flex;font-size:11px;border:0; }
+html.kemal-native .main { padding:0 16px 32px;min-width:0; }
+html.kemal-native .topbar { position:relative;top:auto;display:block;background:transparent;border:0;box-shadow:none;padding:0;margin:0 0 16px; }
+html.kemal-native .topbar>div:first-child { display:none; }
+html.kemal-native .class-switcher { display:flex;gap:8px;align-items:center; }
+html.kemal-native .class-switcher select { flex:1;min-width:0; }
+html.kemal-native :is(input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) { color:var(--theme-text);background:var(--theme-surface);border-color:var(--theme-border);border-radius:12px;min-height:44px;font-size:16px!important;max-width:100%; }
+html.kemal-native :is(.ghost-btn,.primary-btn,.danger-btn,.icon-btn) { min-height:44px;font-size:13px;font-weight:600;border-radius:12px;box-shadow:none; }
+html.kemal-native .ghost-btn { background:var(--theme-surface);border-color:var(--theme-border);color:var(--theme-text); }
+html.kemal-native .primary-btn { background:#7553b7;color:#fff; }
+html.kemal-native button:hover { transform:none; }
+html.kemal-native .panel { border:1px solid var(--theme-border);border-radius:18px;box-shadow:none;background:var(--theme-surface);padding:16px; }
+html.kemal-native .panel h3 { font-size:17px; }
+html.kemal-native :is(.grid.two,.grid.three,.report-tools,.calendar-shell) { grid-template-columns:1fr; }
+html.kemal-native .embedded-tool-frame { display:block;border:0;border-radius:0;box-shadow:none;background:var(--theme-bg);min-height:720px;height:calc(100dvh - 180px); }
+html.kemal-native .schedule-focus-panel { display:none; }
+html.kemal-native .table-wrap { -webkit-overflow-scrolling:touch; }
+html.kemal-native :is(.modal-head,.modal-body,.modal-foot) { padding:16px; }
+html.kemal-native dialog { max-width:min(640px,calc(100vw - 24px));border-radius:20px;max-height:92dvh;background:var(--theme-surface);color:var(--theme-text); }
+@media (max-width:700px) {
+html.kemal-native .form-grid { grid-template-columns:minmax(0,1fr); }
+html.kemal-native .toolbar { display:flex;flex-wrap:wrap;gap:8px; }
+html.kemal-native .report-stage { overflow:auto;border-radius:16px; }
+html.kemal-native .report-card { min-width:0;max-width:100%; }
+html.kemal-native .student-grid { grid-template-columns:1fr; }
+html.kemal-native .dashboard-command-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+}
+@media screen {
+html.kemal-native .dashboard-hero { min-height:0;background:var(--theme-accent-soft);border:0;display:block; }
+html.kemal-native .dashboard-hero::before { display:none; }
+html.kemal-native .hero-content { padding:20px;color:var(--theme-text); }
+html.kemal-native .hero-content :is(p,.hero-today-line) { color:var(--theme-muted); }
+html.kemal-native .hero-focus { display:none; }
+}

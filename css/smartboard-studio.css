@@ -53,14 +53,26 @@
 .sb-focus-controls { position: absolute; right: 10px; top: 10px; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 20px); padding: 6px; background: #fff; color: #25354d; border: 1px solid #b6c9d4; border-radius: 6px; pointer-events: auto; }
 .sb-focus-controls input { width: 130px; max-width: 32vw; accent-color: #19778c; }
 .sb-status { margin: 0; min-height: 20px; font-size: 12px; color: #714a35; }
-.sandbox-bed { background-color: #b2986d; box-shadow: inset 0 4px 12px #50351c59, 0 3px 8px #50351c26; }
-.sandbox-bed::after { content: ''; pointer-events: none; position: absolute; inset: 0; z-index: 7; box-shadow: inset 0 6px 14px #61471e40, inset 0 -2px 9px #fff3cc40; }
 .sand-material-controls { display: grid; gap: 8px; }
+#sandSubPanel { touch-action: pan-y; }
+#sandSubPanel > * { flex-shrink: 0; }
+#sandSubPanel .float-panel-head { position: sticky; top: -12px; z-index: 2; background: #fff; padding: 8px 0; }
 .sand-material-controls label { display: grid; gap: 4px; font-size: 12px; }
 .sand-material-controls input[type=range] { width: 100%; accent-color: #a57139; }
 .sand-material-controls .sand-check { display: flex; align-items: center; gap: 8px; }
+.sand-material-controls output { float: right; font-variant-numeric: tabular-nums; color: #526477; }
+.sand-material-controls select { width: 100%; min-height: 40px; border: 1px solid #cad5df; border-radius: 6px; padding: 6px; font: inherit; background: #fff; color: #243b53; }
+.sand-colors { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.sand-color, .sand-custom-color { width: 36px; height: 36px; border: 2px solid #c8d3df; border-radius: 50%; cursor: pointer; }
+.sand-color { background: var(--sand-swatch); }
+.sand-color[aria-pressed="true"] { outline: 2px solid #6c3ded; outline-offset: 2px; }
+.sand-custom-color { overflow: hidden; padding: 3px; background: #fff; }
+.sand-colors button:focus-visible, .sand-custom-color:focus-visible { outline: 3px solid #157eaf; outline-offset: 2px; }
+.sand-case-switch { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); }
+.sand-case-switch button { padding: 6px 4px; min-width: 0; }
+.sand-mini-actions { min-width: 0; max-width: 100%; }
 .sand-tools-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.sandbox-layer .sand-chip { font-family: 'TTKB Dik Temel Abece', sans-serif; font-weight: 700; }
+.sand-chip { font-family: 'TTKB Dik Temel Abece', sans-serif; font-weight: 700; }
 @media (max-width: 760px) {
   .sb-catalog { right: 8px; top: 12px; max-height: calc(100dvh - 90px); }
   .sb-widget { max-height: calc(100% - 96px); }
@@ -68,4 +80,3 @@
   .sb-icon-button { width: 40px; height: 40px; flex-basis: 40px; }
   .sb-focus-controls { top: 6px; right: 6px; gap: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .sandbox-bed.is-shaking { animation: none; } }

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Card, Field, Header, Screen, SelectField } from '@/components/ui';
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing } from '@/constants/theme';
+import { useMobileColors } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import {
   branchOptions,
@@ -21,6 +22,8 @@ import {
 import type { UserRole } from '@/types/domain';
 
 export default function RegisterScreen() {
+  const colors = useMobileColors();
+  const localStyles = createLocalStyles(colors);
   const { signUp } = useAuth();
   const [role, setRole] = useState<UserRole>('student');
   const [email, setEmail] = useState('');
@@ -174,7 +177,7 @@ export default function RegisterScreen() {
   );
 }
 
-const localStyles = StyleSheet.create({
+const createLocalStyles = (colors: ReturnType<typeof useMobileColors>) => StyleSheet.create({
   roleRow: {
     flexDirection: 'row',
     gap: spacing.sm,

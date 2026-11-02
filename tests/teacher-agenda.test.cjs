@@ -20,7 +20,7 @@ function agenda() {
   });
   window.HTMLElement.prototype.scrollIntoView = function () {};
   const saved = new Map();
-  const context = vm.createContext({ window, document, console, setTimeout: () => 0, clearTimeout() {},
+  const context = vm.createContext({ window, document, console, TextEncoder, URL, URLSearchParams, setTimeout: () => 0, clearTimeout() {},
     setInterval: () => 0, confirm: () => true, CSS: { escape: value => value },
     localStorage: { getItem: key => saved.get(key) || null, setItem: (key, value) => saved.set(key, value) }
   });
@@ -185,4 +185,101 @@ test('week number follows imported calendar and Sunday belongs to previous Monda
   h.run(`state.yillikPlanlar.T.push({hafta:9,tarihStart:'2026-11-16'})`);
   assert.equal(h.run(`findWeekByDate(new Date(2026,10,16))`), 9);
   assert.equal(h.run(`calendarMondayKey(new Date(2026,10,1))`), '2026-10-26');
+});
+
+test('new-device default class never overwrites an older real cloud agenda', async () => {
+  const h=agenda();
+  h.run(`state=normalizeState({classes:[],students:[],exams:[],updatedAt:null});ensureInitialClass();`);
+  assert.equal(h.run('state.updatedAt'),null,'initial UI scaffolding is not a user edit');
+  const row={agenda_state:{classes:[{id:'real',name:'2-B'}],students:[{id:'cloud-student',classId:'real'}],exams:[],updatedAt:'2026-01-01T00:00:00Z'},lesson_planner_state:{programs:{real:{Mon:[{ders:'MATEMATİK'}]}}},updated_at:'2026-01-01T00:00:01Z'};
+  h.run(`fetchCloudRow=async()=>(${JSON.stringify(row)});state.updatedAt='2026-11-01T00:00:00Z';`);
+  await h.run('reconcileCloudState({silent:true})');
+  assert.equal(h.run('state.students[0].id'),'cloud-student');
+  assert.equal(h.run('state.updatedAt'),'2026-01-01T00:00:00Z','cloud hydration preserves client edit timestamp');
+});
+
+test('a stale cloud save is rejected and preserves the local agenda', async () => {
+  const h=agenda();
+  h.run(`let filters=[];cloudSync.enabled=true;cloudSync.userId='teacher';cloudSync.ready=true;cloudSync.rowChecked=true;cloudSync.rowVersion='server-version-one';
+    cloudSync.client={from:()=>({update:payload=>({eq:(key,value)=>{filters.push([key,value]);return {eq:(key,value)=>{filters.push([key,value]);return {select:()=>({maybeSingle:async()=>({data:null,error:null})})};}};}})})};`);
+  assert.equal(await h.run('saveCloudNow({silent:true})'),false);
+  assert.deepEqual(h.json('filters'),[['user_id','teacher'],['updated_at','server-version-one']]);
+  assert.equal(h.run('state.students.length'),3);
+  assert.ok(h.saved.has('kemalOgretmenAjandasi.v1.bulut-oncesi-yedek'));
+  assert.match(h.run('cloudSync.lastError'),/başka bir cihazda değişti/);
+});
+
+test('reading a newer cloud row does not authorize overwriting it', async () => {
+  const h = agenda();
+  h.run(`const cloudReadRow={agenda_state:JSON.parse(JSON.stringify(state)),lesson_planner_state:null,updated_at:'new-server-version'};
+    cloudSync.userId='teacher';cloudSync.rowVersion='known-old-version';cloudSync.rowChecked=true;
+    cloudSync.client={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:cloudReadRow,error:null})})})})};`);
+  assert.equal((await h.run('fetchCloudRow()')).updated_at,'new-server-version');
+  assert.equal(h.run('cloudSync.rowVersion'),'known-old-version');
+  assert.equal(h.run('cloudSync.rowChecked'),true);
+});
+
+test('declining newer cloud hydration keeps the old compare-and-swap baseline', async () => {
+  const h = agenda();
+  h.run(`let writtenRevision=null;state.updatedAt='2026-01-01T00:00:00Z';
+    const newer={agenda_state:{...JSON.parse(JSON.stringify(state)),students:[{id:'remote-student',classId:'c1'}],updatedAt:'2026-11-02T00:00:00Z'},lesson_planner_state:null,updated_at:'server-new'};
+    cloudSync.enabled=true;cloudSync.userId='teacher';cloudSync.ready=true;cloudSync.rowChecked=true;cloudSync.rowVersion='server-old';confirm=()=>false;
+    cloudSync.client={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:newer,error:null})})}),update:()=>({eq:()=>({eq:(_key,revision)=>{writtenRevision=revision;return {select:()=>({maybeSingle:async()=>({data:null,error:null})})};}})})})};`);
+  await h.run('reconcileCloudState({silent:true})');
+  assert.equal(h.run('cloudSync.rowVersion'),'server-old');
+  assert.equal(await h.run('saveCloudNow({silent:true})'),false);
+  assert.equal(h.run('writtenRevision'),'server-old');
+  assert.equal(h.run('state.students[0].id'),'s1');
+});
+
+test('newer local clock without a verified baseline preserves local work and never autosaves', async () => {
+  const h = agenda();
+  h.run(`let writes=0;state.updatedAt='2026-11-02T00:00:00Z';
+    const remote={agenda_state:{...JSON.parse(JSON.stringify(state)),students:[{id:'remote-student',classId:'c1'}],updatedAt:'2026-01-01T00:00:00Z'},lesson_planner_state:null,updated_at:'server-version'};
+    cloudSync.enabled=true;cloudSync.userId='teacher';cloudSync.client={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:remote,error:null})})}),update:()=>{writes++;throw new Error('Unsafe overwrite');}})};`);
+  await h.run('reconcileCloudState({silent:true})');
+  assert.equal(h.run('writes'),0);
+  assert.equal(h.run('cloudSync.rowChecked'),false);
+  assert.match(h.run('cloudSync.lastError'),/sürümü doğrulanamadı/);
+  assert.equal(h.run('state.students[0].id'),'s1');
+});
+
+test('identical saved documents establish a baseline independently of navigation state', async () => {
+  const h = agenda();
+  h.run(`state.updatedAt='2026-11-02T00:00:00Z';
+    const matching={agenda_state:{...JSON.parse(JSON.stringify(state)),lessonPlannerFocusDate:'2025-01-01'},lesson_planner_state:null,updated_at:'verified-version',client_updated_at:state.updatedAt};
+    cloudSync.userId='teacher';cloudSync.client={from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:matching,error:null})})})})};`);
+  await h.run('reconcileCloudState({silent:true})');
+  assert.equal(h.run('cloudSync.rowVersion'),'verified-version');
+  assert.equal(h.run('cloudSync.rowChecked'),true);
+  assert.equal(h.run('cloudSync.ready'),true);
+});
+
+test('loading a cloud row explicitly binds the write baseline only after hydration', () => {
+  const h = agenda();
+  h.run(`applyCloudRow({agenda_state:{classes:[{id:'cloud',name:'4-C'}],students:[],exams:[],updatedAt:'2026-11-02T00:00:00Z'},lesson_planner_state:null,updated_at:'loaded-version'});`);
+  assert.equal(h.run('cloudSync.rowVersion'),'loaded-version');
+  assert.equal(h.run('cloudSync.rowChecked'),true);
+  assert.equal(h.run('state.classes[0].id'),'cloud');
+});
+
+test('imported teacher and student image fields cannot create markup, handlers or CSS attributes', () => {
+  const h = agenda(), attack = '\" onerror=\"window.attacked=true\"><script>attack()</script>';
+  h.run(`state.teacher.photo=${JSON.stringify(attack)}; state.teacher.schoolLogo=${JSON.stringify('javascript:attack()')}; renderTeacherPhoto(); renderSchoolLogo();`);
+  h.$('#studentGrid').innerHTML = h.run(`avatarHtml({photo:${JSON.stringify(attack)},photoFit:${JSON.stringify(attack)},photoX:50,photoY:50})`);
+  for (const selector of ['#teacherPhotoPreview','#heroTeacherPhoto','#schoolLogoPreview','#studentGrid']) {
+    assert.equal(h.$(selector).querySelectorAll('script,[onerror],[onload]').length,0);
+    for (const image of h.$(selector).querySelectorAll('img')) assert.equal(image.getAttribute('src'),'');
+  }
+  assert.equal(h.run(`safeImageSource('data:image/png;base64,aGVsbG8=')`),'data:image/png;base64,aGVsbG8=');
+  assert.equal(h.run(`safeImageSource('https://example.invalid/photo.png')`),'https://example.invalid/photo.png');
+  assert.equal(h.run(`safeImageSource('https://user:pass@example.invalid/photo.png')`),'');
+});
+
+test('imported result count strings render as inert text in the student academic table', () => {
+  const h = agenda(), attack = '<img src=x onerror=attack()>';
+  h.run(`state.exams=[{id:'exam',name:'Test',classId:'c1',date:'2026-11-02',results:{s1:{total:{d:${JSON.stringify(attack)},y:1,b:0,percent:80}}}}];renderStudentAcademic(state.students[0]);`);
+  assert.equal(h.$('#studentAcademic').querySelectorAll('img,[onerror]').length,0);
+  assert.ok(h.$('#studentAcademic').textContent.includes(attack));
+  assert.ok(h.$('#studentAcademic').textContent.includes('80'));
 });

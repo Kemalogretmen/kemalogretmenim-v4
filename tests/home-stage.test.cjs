@@ -158,7 +158,7 @@ const event = (h, type, target = h.document.getElementById('homeShowcasePanel'),
 
 test('showcase fallback navigation wraps and removes inactive slides from the accessibility tree', async t => {
   const h = await setup(t);
-  assert.equal(slides(h).length, 3);
+  assert.equal(slides(h).length, 4);
   const first = activeSlide(h);
   click(h, '#homeShowcasePrev');
   assert.equal(activeSlide(h), slides(h).at(-1));
@@ -172,7 +172,7 @@ test('showcase fallback navigation wraps and removes inactive slides from the ac
     assert.equal(slide.hasAttribute('inert'), !selected);
     assert.equal(slide.hasAttribute('hidden'), !selected);
   }
-  assert.match(h.document.getElementById('homeShowcaseCount').textContent, /2\s*\/\s*3/);
+  assert.match(h.document.getElementById('homeShowcaseCount').textContent, /2\s*\/\s*4/);
 });
 
 test('showcase initialises after DOMContentLoaded when its deferred script runs before the document is ready', async t => {
@@ -180,7 +180,7 @@ test('showcase initialises after DOMContentLoaded when its deferred script runs 
   assert.equal(slides(h).length, 0);
   h.document.dispatchEvent(new h.window.Event('DOMContentLoaded'));
   for (let i = 0; i < 3; i++) await tick();
-  assert.equal(slides(h).length, 3);
+  assert.equal(slides(h).length, 4);
   assert.ok(activeSlide(h));
 });
 
@@ -192,8 +192,9 @@ test('showcase autoplay advances and wraps without changing the number of slides
   assert.notEqual(activeSlide(h), first);
   h.fireAutoplay();
   h.fireAutoplay();
+  h.fireAutoplay();
   assert.equal(activeSlide(h), first);
-  assert.equal(slides(h).length, 3);
+  assert.equal(slides(h).length, 4);
 });
 
 test('manual pause survives mouse and keyboard interaction pauses', async t => {
@@ -337,7 +338,7 @@ const auditedCovers = [
   ['377ec1fd-dc21-441d-8e0b-128c768998dd', 'homepage-vitrin/377ec1fd-dc21-441d-8e0b-128c768998dd/1786323553958-6-sinif-sayisal-1-tema-tekrar-denemesi-1.webp', 'math-practice-b.svg'],
 ];
 
-test('all three editorial fallback covers use existing lightweight local SVG illustrations', async t => {
+test('all editorial fallback covers use existing lightweight local SVG illustrations', async t => {
   const h = await setup(t);
   const paths = slides(h).map(slide => {
     const media = slide.querySelector('.home-showcase-media');
@@ -350,7 +351,7 @@ test('all three editorial fallback covers use existing lightweight local SVG ill
     return src.pathname;
   });
   assert.deepEqual(paths.sort(), [
-    '/assets/vitrin-sade/aquarium.svg', '/assets/vitrin-sade/reading.svg', '/assets/vitrin-sade/resources.svg',
+    '/assets/vitrin-sade/aquarium.svg', '/assets/vitrin-sade/learning.svg', '/assets/vitrin-sade/reading.svg', '/assets/vitrin-sade/resources.svg',
   ]);
 });
 

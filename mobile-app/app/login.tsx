@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { Alert, Image, Text, View } from 'react-native';
 
 import { Button, Card, Field, Header, Screen } from '@/components/ui';
-import { colors } from '@/constants/theme';
+import { useMobileColors } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
+  const colors = useMobileColors();
   const { signIn, signInWithGoogle } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +23,7 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       await signIn(email, password);
-      router.replace('/(app)/home');
+      router.replace('/(app)/today');
     } catch (caught) {
       Alert.alert('Giriş yapılamadı', caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -34,7 +35,7 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       await signInWithGoogle();
-      router.replace('/(app)/home');
+      router.replace('/(app)/today');
     } catch (caught) {
       Alert.alert('Google girişi', caught instanceof Error ? caught.message : String(caught));
     } finally {
@@ -53,7 +54,7 @@ export default function LoginScreen() {
         <Field label="Şifre" value={password} onChangeText={setPassword} secureTextEntry textContentType="password" />
         <Button title="Giriş Yap" icon="log-in-outline" onPress={submit} disabled={busy} />
         {isExpoGo ? (
-          <View style={{ backgroundColor: '#F1E9FF', borderRadius: 14, padding: 12 }}>
+          <View style={{ backgroundColor: colors.cream, borderRadius: 14, padding: 12 }}>
             <Text style={{ color: colors.navy, fontSize: 13, fontWeight: '900', lineHeight: 18 }}>
               Google girişi APK/TestFlight sürümünde açılacak. Expo Go önizlemesinde e-posta ve şifreyle giriş yap.
             </Text>

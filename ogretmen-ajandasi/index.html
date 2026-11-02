@@ -265,6 +265,7 @@
       gap: 14px;
       align-items: center;
       margin-bottom: 18px;
+      margin-top: 64px;
       padding: 14px;
       border: 1px solid rgba(219, 227, 234, .85);
       border-radius: var(--radius);
@@ -2133,6 +2134,11 @@
       font-size: 22px;
     }
 
+    .calendar-shell > .panel { min-width: 0; }
+    @media (max-width: 1100px) {
+      .calendar-shell { grid-template-columns: minmax(0, 1fr); }
+    }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -2203,6 +2209,8 @@
 
     .calendar-pill.event-exam { background: var(--sky); color: #245f93; }
     .calendar-pill.event-meb { background: var(--rose); color: #92314d; }
+    .calendar-pill.event-holiday { background: #fce4e8; color: #8a243a; }
+    .calendar-event.event-holiday { background: #fff2f4; color: #782c3c; }
     .calendar-pill.event-reminder { background: var(--sun); color: #805f18; }
     .calendar-pill.event-meeting { background: var(--lavender); color: #573ca3; }
     .calendar-pill.event-birthday { background: #ffe8f1; color: #9a3156; }
@@ -2405,6 +2413,7 @@
       .topbar {
         grid-template-columns: 1fr;
         top: 78px;
+        margin-top: 66px;
       }
 
       .top-clock {
@@ -2566,6 +2575,12 @@
       }
     }
 
+    .nav .agenda-panel-link { display: block; padding: 12px 14px; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; font-weight: 700; text-decoration: none; background: white; }
+    .student-import-tools { margin-bottom: 16px; }
+    .student-import-tools summary { cursor: pointer; font-weight: 700; }
+    .student-import-tools .form-grid { margin-top: 16px; }
+    .student-import-preview { max-height: 360px; overflow: auto; margin: 12px 0; }
+    .student-import-preview input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; accent-color: var(--sky-strong); }
     .manual-results-wrap { max-height: 620px; overflow: auto; margin-top: 12px; }
     .manual-results-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
     .manual-results-table th, .manual-results-table td { padding: 8px; white-space: nowrap; text-align: center; }
@@ -2627,6 +2642,7 @@
         <button data-view="calendarView">📅 Akademik Takvim</button>
         <button data-view="reportsView">🎒 Karneler</button>
         <button data-view="backupView">💾 Yedek</button>
+        <a class="agenda-panel-link" href="/ogretmen-paneli.html">Öğretmen Paneline Dön</a>
       </nav>
 
       <div class="side-card">
@@ -2813,10 +2829,26 @@
       </section>
 
       <section id="studentsView" class="content-view">
+        <details class="panel student-import-tools" id="studentImportPanel">
+          <summary>Excel'den Öğrenci Ekle</summary>
+          <div class="form-grid">
+            <div class="field"><label for="studentImportClass">Öğrencilerin ekleneceği sınıf</label><select id="studentImportClass"></select></div>
+            <div class="field"><label for="studentRosterFile">Öğrenci listesi (.xlsx, .xls, .csv)</label><input id="studentRosterFile" type="file" accept=".xlsx,.xls,.csv"></div>
+            <div class="field"><label for="studentImportSheet">Çalışma sayfası</label><select id="studentImportSheet" disabled><option value="">Önce dosya seçin</option></select></div>
+          </div>
+          <div class="actions" style="margin-top:12px">
+            <button class="ghost-btn" id="previewStudentImportBtn" type="button">Dosyayı İncele</button>
+            <button class="ghost-btn" id="downloadStudentTemplateBtn" type="button">Boş Excel Şablonu İndir</button>
+          </div>
+          <div id="studentImportSummary" role="status" aria-live="polite"></div>
+          <div id="studentImportPreview" class="student-import-preview"></div>
+          <div class="actions"><button class="primary-btn" id="confirmStudentImportBtn" type="button" disabled>Seçilen Öğrencileri Ekle</button></div>
+        </details>
         <div class="toolbar">
           <input id="studentSearch" placeholder="Öğrenci adı, soyadı veya okul numarası ara">
           <div class="actions">
             <button class="primary-btn" id="addStudentBtn">＋ Öğrenci</button>
+            <button class="ghost-btn" id="exportStudentRosterBtn" type="button">Excel İndir</button>
           </div>
         </div>
         <div class="bulk-toolbar">
@@ -2979,7 +3011,10 @@
                 <button class="ghost-btn" id="nextCalendarMonthBtn">›</button>
               </div>
               <h3 id="calendarTitle">Takvim</h3>
-              <button class="ghost-btn" id="requestNotificationBtn">Bildirim İzni</button>
+              <div class="actions">
+                <button class="ghost-btn" id="manageHolidaysBtn">Tatil Günleri</button>
+                <button class="ghost-btn" id="requestNotificationBtn">Bildirim İzni</button>
+              </div>
             </div>
             <div id="calendarGrid" class="calendar-grid"></div>
           </div>
@@ -3488,6 +3523,8 @@
   <script src="../js/site-data.js"></script>
   <script src="../js/site.js?v=20261030-icons"></script>
   <script src="../js/user-auth.js"></script>
+  <script src="resmi-tatiller-veri.js"></script>
+  <script src="resmi-tatiller.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

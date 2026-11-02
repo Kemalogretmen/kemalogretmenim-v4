@@ -660,6 +660,24 @@
   }
 
   @media (max-width: 600px) {
+    html, body { max-width: 100%; overflow-x: hidden; }
+    .header { padding: 12px; align-items: flex-start; gap: 8px; }
+    .header h1 { font-size: 1.05rem; }
+    .header-right { display: none; }
+    .tabs {
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 0 10px;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tab-btn { flex: 0 0 auto; padding: 12px 14px; font-size: 0.82rem; }
+    .page { padding: 12px; }
+    .card { padding: 16px; }
+    .form-row, .holiday-controls { gap: 10px; }
+    .form-row .form-group, .holiday-controls .form-group { width: 100%; min-width: 0; }
+    .form-group select, .form-group input, #tatil-name { width: 100%; min-width: 0 !important; }
+    .holiday-controls a { overflow-wrap: anywhere; }
     .plan-cell { min-height: 68px; }
     .plan-cell-inner { min-height: 68px; padding: 5px 6px; }
     .cell-kazanim { -webkit-line-clamp: 3; }
@@ -748,6 +766,11 @@
     border-radius: 8px;
     border: 1px solid var(--border);
   }
+  .tatil-row.is-disabled { opacity: .65; }
+  .tatil-row .holiday-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .holiday-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 14px; }
+  .holiday-controls select { padding: 8px; border: 1px solid var(--border); border-radius: 6px; max-width: 100%; }
+  @media(max-width:600px) { .tatil-row { flex-wrap: wrap; } .tatil-row .holiday-actions { width: 100%; } }
   .tatil-row input[type=date], .tatil-row input[type=text] {
     border: 1.5px solid var(--border);
     border-radius: 6px;
@@ -797,6 +820,11 @@
     white-space: nowrap;
     border: 1px solid var(--border);
   }
+  .lesson-catalog { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  #lesson-catalog-panel > summary { cursor: pointer; display: list-item; }
+  .lesson-catalog-item { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; max-width: 100%; }
+  .lesson-catalog-item span { overflow-wrap: anywhere; min-width: 0; }
+  .cell-clear-lesson { margin-top: 6px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 6px; background: white; color: #9b2c2c; font: inherit; font-size: 0.7rem; cursor: pointer; }
 
   select option { font-size: 0.85rem; }
 
@@ -842,6 +870,16 @@
       <button class="btn btn-primary" onclick="addSinif()">+ Sınıf Ekle</button>
     </div>
   </div>
+
+  <details class="card" id="lesson-catalog-panel">
+    <summary class="card-title">Ders Listesi</summary>
+    <form id="lesson-catalog-form" class="form-row">
+      <div class="form-group"><label for="new-lesson-name">Ders adı</label><input id="new-lesson-name" type="text" maxlength="100" placeholder="Örn. İngilizce" required></div>
+      <button class="btn btn-primary" type="submit">Ders Ekle</button>
+    </form>
+    <div id="lesson-catalog" class="lesson-catalog"></div>
+    <details id="removed-lessons" style="margin-top:12px" hidden><summary>Kaldırılan dersler</summary><div id="removed-lesson-catalog" class="lesson-catalog"></div></details>
+  </details>
 
   <div class="card" id="program-card" style="display:none">
     <div class="card-title" id="program-card-title">Ders Programı Düzenle</div>
@@ -999,26 +1037,32 @@
 <!-- ============ TAB 4: RESMİ TATİLLER ============ -->
 <div id="tab-tatil" class="page">
   <div class="card">
-    <div class="card-title">Resmi Tatil Günleri</div>
-    <div class="info-box">
-      Tatil günlerini ekleyin. Haftalık planda o günlere denk gelen dersler "RESMİ TATİL" olarak gösterilecek ve program otomatik kaydırılacak.
+    <div class="card-title">Resmî Tatil Günleri</div>
+    <div class="holiday-controls">
+      <div class="form-group"><label for="holiday-year">Takvim yılı</label><select id="holiday-year" onchange="ensureOfficialHolidays(Number(this.value)); resetHolidayForm(); renderTatilList()"></select></div>
+      <div class="form-group"><label for="half-day-start-period">Yarım günlerde ilk tatil dersi (13.00 sonrası)</label><select id="half-day-start-period" onchange="updateHalfDayPeriod(this.value)"></select></div>
+      <a id="holiday-source" href="https://vakithesaplama.diyanet.gov.tr/icerik.php?icerik=159" target="_blank" rel="noopener noreferrer">Diyanet resmî takvimi</a>
     </div>
+    <div id="holiday-data-status" role="status" style="margin-bottom:14px"></div>
     <div class="tatil-list" id="tatil-list"></div>
-    <div class="form-row" style="margin-top:14px">
+    <form id="holiday-form" class="form-row" style="margin-top:14px" onsubmit="event.preventDefault(); addTatil()">
       <div class="form-group">
         <label>Başlangıç Tarihi</label>
-        <input type="date" id="tatil-start">
+        <input type="date" id="tatil-start" required onchange="updateHolidayEnd()">
       </div>
       <div class="form-group">
         <label>Bitiş Tarihi (tek gün ise aynı tarih)</label>
-        <input type="date" id="tatil-end">
+        <input type="date" id="tatil-end" onchange="updateHolidayDays()">
       </div>
       <div class="form-group">
         <label>Tatil Adı</label>
-        <input type="text" id="tatil-name" placeholder="örn: Cumhuriyet Bayramı" style="min-width:200px">
+        <input type="text" id="tatil-name" maxlength="150" required placeholder="Tatil adı" style="min-width:200px">
       </div>
-      <button class="btn btn-primary" onclick="addTatil()">+ Tatil Ekle</button>
-    </div>
+      <div class="form-group"><label for="tatil-days">Takvim günü sayısı</label><input id="tatil-days" type="number" min="1" max="366" value="1" onchange="updateHolidayEnd()" style="width:120px"></div>
+      <div class="form-group"><label for="tatil-period">Kapsam</label><select id="tatil-period"><option value="full">Tam gün</option><option value="afternoon">Yarım gün · 13.00 sonrası</option></select></div>
+      <button id="tatil-save" class="btn btn-primary" type="submit">Tatil Ekle</button>
+      <button class="btn btn-secondary" type="button" onclick="resetHolidayForm()">Vazgeç</button>
+    </form>
   </div>
 </div>
 
@@ -1035,30 +1079,38 @@
   By <a href="https://kemalogretmenim.com.tr" target="_blank">Kemal Öğretmen</a> — kemalogretmenim.com.tr
 </div>
 
+<script src="resmi-tatiller-veri.js"></script>
+<script src="resmi-tatiller.js"></script>
 <script>
 // ============================================================
 // STATE
 // ============================================================
-let state = {
-  version: 7,
-  siniflar: [],          // [{id, name}]
-  activeSinif: null,
-  programs: {},          // {sinifId: {Mon:[{ders, isHoliday}], ...}}
-  yillikPlanlar: {},     // {dersAdi: [{hafta, kazanim, surec, ay}]}
-  tatiller: [],          // [{start, end, name}]
-  settings: {
-    lessonCount: 9,
-    weekend: {
-      Sat: {enabled: false, planOpen: false},
-      Sun: {enabled: false, planOpen: false}
-    }
-  },
-  dersOgretmenleri: {},
-  etutler: [],
-  currentWeek: 1,
-  lastFocusDate: '',
-  totalWeeks: 36
-};
+function createInitialState() {
+  return {
+    version: 7,
+    siniflar: [],          // [{id, name}]
+    activeSinif: null,
+    programs: {},          // {sinifId: {Mon:[{ders, isHoliday}], ...}}
+    yillikPlanlar: {},     // {dersAdi: [{hafta, kazanim, surec, ay}]}
+    tatiller: [],          // [{start, end, name}]
+    settings: {
+      lessonCount: 9,
+      weekend: {
+        Sat: {enabled: false, planOpen: false},
+        Sun: {enabled: false, planOpen: false}
+      }
+    },
+    dersOgretmenleri: {},
+    etutler: [],
+    currentWeek: 1,
+    lastFocusDate: '',
+    totalWeeks: 36
+  };
+}
+let state = createInitialState();
+let restoringPlannerState = false;
+let lastPlannerStorageValue = null;
+let editingHolidayIndex = null;
 
 const DAY_DEFS = [
   {key:'Mon', label:'Pazartesi', offset:0, weekend:false},
@@ -1119,6 +1171,8 @@ function getFallbackSchoolStartDate() {
 function ensureStateDefaults() {
   state.settings = state.settings || {};
   state.settings.lessonCount = Math.min(10, Math.max(5, parseInt(state.settings.lessonCount, 10) || 9));
+  state.settings.customLessons = Array.isArray(state.settings.customLessons) ? state.settings.customLessons.filter(name => typeof name === 'string' && name.trim()) : [];
+  state.settings.hiddenLessons = Array.isArray(state.settings.hiddenLessons) ? state.settings.hiddenLessons.filter(name => typeof name === 'string') : [];
   state.settings.weekend = state.settings.weekend || {};
   ['Sat', 'Sun'].forEach(key => {
     state.settings.weekend[key] = {
@@ -1171,17 +1225,22 @@ function buildWeekDatesFromMonday(monday) {
 function init() {
   loadFromStorage();
   ensureStateDefaults();
+  ensureOfficialHolidays();
   updateEducationYearLabel();
   updateTotalWeeksFromPlans();
   renderSinifList();
   renderUploadedFiles();
   renderTatilList();
   buildWeekJumpOptions();
-  if (state.siniflar.length > 0 && !state.activeSinif) {
-    setActiveSinif(state.siniflar[0].id);
+  if (state.siniflar.length > 0) {
+    setActiveSinif(state.siniflar.some(sinif => sinif.id === state.activeSinif) ? state.activeSinif : state.siniflar[0].id);
   }
   renderLegend();
   renderProgramSettings();
+  document.getElementById('lesson-catalog-form').addEventListener('submit', event => {
+    event.preventDefault();
+    addCatalogLesson();
+  });
   applyInitialWeekFocus();
   setInterval(checkAutomaticWeekFocus, 30000);
   window.addEventListener('focus', checkAutomaticWeekFocus);
@@ -1210,6 +1269,7 @@ function updateEducationYearLabel() {
 function loadFromStorage() {
   try {
     const saved = localStorage.getItem('ogretmen_plan_v2');
+    lastPlannerStorageValue = saved;
     if (saved) {
       const parsed = JSON.parse(saved);
       if (parsed.version === DATA_VERSION) {
@@ -1238,9 +1298,12 @@ function loadFromStorage() {
 }
 
 function saveToStorage() {
+  if (restoringPlannerState) return;
   try {
     state.version = DATA_VERSION;
-    localStorage.setItem('ogretmen_plan_v2', JSON.stringify(state));
+    const serialized = JSON.stringify(state);
+    localStorage.setItem('ogretmen_plan_v2', serialized);
+    lastPlannerStorageValue = serialized;
     notifyParentDataChanged();
   } catch(e) {
     alert('Tarayıcı hafızası dolu olabilir. Bazı veriler kaydedilemedi.');
@@ -1248,6 +1311,7 @@ function saveToStorage() {
 }
 
 function notifyParentDataChanged() {
+  if (restoringPlannerState) return;
   if (!window.parent || window.parent === window) return;
   window.parent.postMessage({
     type: 'kemal-lesson-planner-data-changed',
@@ -1301,22 +1365,53 @@ function setActiveSinif(id) {
 
 function renderSinifList() {
   const el = document.getElementById('sinif-list');
+  el.replaceChildren();
   if (state.siniflar.length === 0) {
-    el.innerHTML = '<div style="color:var(--muted); font-size:0.85rem">Henüz sınıf eklenmedi. Yukarıdan ekleyin.</div>';
-    return;
-  }
-  el.innerHTML = state.siniflar.map(s => `
-    <div class="sinif-chip ${s.id === state.activeSinif ? 'active' : ''}" onclick="setActiveSinif('${s.id}')">
-      🏫 ${s.name}
-      <button class="del-btn" onclick="event.stopPropagation(); deleteSinif('${s.id}')">✕</button>
-    </div>
-  `).join('');
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--muted);font-size:0.85rem';
+    empty.textContent = 'Henüz sınıf eklenmedi. Yukarıdan ekleyin.';
+    el.appendChild(empty);
+  } else state.siniflar.forEach(sinif => {
+    const chip = document.createElement('div');
+    chip.className = 'sinif-chip' + (sinif.id === state.activeSinif ? ' active' : '');
+    chip.setAttribute('role', 'button');
+    chip.tabIndex = 0;
+    chip.appendChild(document.createTextNode('🏫 ' + sinif.name));
+    chip.addEventListener('click', () => setActiveSinif(sinif.id));
+    chip.addEventListener('keydown', event => {
+      if (event.target !== chip || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault();
+      setActiveSinif(sinif.id);
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'del-btn';
+    remove.textContent = '✕';
+    remove.setAttribute('aria-label', sinif.name + ' sınıfını sil');
+    remove.addEventListener('click', event => {
+      event.stopPropagation();
+      deleteSinif(sinif.id);
+    });
+    chip.appendChild(remove);
+    el.appendChild(chip);
+  });
 
-  // Update plan sinif select
+  // IDs and imported class names stay data, including quotes and markup-like
+  // text. Closures carry the exact original ID without executable attributes.
   const planSelect = document.getElementById('plan-sinif-select');
   const currentVal = state.siniflar.some(s => s.id === planSelect.value) ? planSelect.value : (state.activeSinif || state.siniflar[0]?.id || '');
-  planSelect.innerHTML = '<option value="">-- Sınıf seçin --</option>' +
-    state.siniflar.map(s => `<option value="${s.id}" ${s.id === currentVal ? 'selected' : ''}>${s.name}</option>`).join('');
+  planSelect.replaceChildren();
+  const emptyOption = document.createElement('option');
+  emptyOption.value = '';
+  emptyOption.textContent = '-- Sınıf seçin --';
+  planSelect.appendChild(emptyOption);
+  state.siniflar.forEach(sinif => {
+    const option = document.createElement('option');
+    option.value = sinif.id;
+    option.textContent = sinif.name;
+    if (sinif.id === currentVal) option.setAttribute('selected', '');
+    planSelect.appendChild(option);
+  });
 }
 
 function createEmptyProgram() {
@@ -1328,7 +1423,11 @@ function createEmptyProgram() {
 }
 
 function createDefaultDayRows() {
-  return Array(10).fill(null).map(() => ({ders: 'Etüt', isHoliday: false}));
+  return Array(10).fill(null).map(() => ({ders: defaultProgramLesson(), isHoliday: false}));
+}
+
+function defaultProgramLesson() {
+  return (state.settings.hiddenLessons || []).some(name => normalizeDersKey(name) === 'ETUT') ? '' : 'Etüt';
 }
 
 function ensureProgramShape(prog) {
@@ -1336,7 +1435,7 @@ function ensureProgramShape(prog) {
   ALL_GUN_KEYS.forEach(g => {
     if (!Array.isArray(prog[g])) prog[g] = [];
     while (prog[g].length < 10) {
-      prog[g].push({ders: 'Etüt', isHoliday: false});
+      prog[g].push({ders: defaultProgramLesson(), isHoliday: false});
     }
     prog[g].forEach(cell => {
       if (cell && cell.isHoliday) {
@@ -1349,6 +1448,7 @@ function ensureProgramShape(prog) {
 
 function renderProgramSettings() {
   ensureStateDefaults();
+  renderLessonCatalog();
   const lessonSelect = document.getElementById('lesson-count-select');
   if (lessonSelect) lessonSelect.value = String(getLessonCount());
 
@@ -1395,9 +1495,85 @@ function getEtutLessonNames() {
 }
 
 function getDersSecenekleri() {
+  ensureStateDefaults();
   const other = 'DİĞER (Elle Gir)';
-  const base = DERSLER_LISTESI.filter(d => d !== other);
+  const hidden = new Set(state.settings.hiddenLessons.map(normalizeDersKey));
+  const base = getCatalogLessonNames().filter(name => !hidden.has(normalizeDersKey(name)));
   return [...base, ...getEtutLessonNames(), other];
+}
+
+function getCatalogLessonNames() {
+  const names = new Map();
+  [...DERSLER_LISTESI.filter(name => name !== 'DİĞER (Elle Gir)'), ...(state.settings.customLessons || [])].forEach(name => names.set(normalizeDersKey(name), name));
+  return Array.from(names.values());
+}
+
+function registerCatalogLesson(value) {
+  const name = cleanCellText(value).toLocaleUpperCase('tr-TR');
+  if (!name || name.length > 100 || normalizeDersKey(name) === normalizeDersKey('DİĞER (Elle Gir)')) return false;
+  ensureStateDefaults();
+  const key = normalizeDersKey(name);
+  if (!getCatalogLessonNames().some(item => normalizeDersKey(item) === key)) state.settings.customLessons.push(name);
+  state.settings.hiddenLessons = state.settings.hiddenLessons.filter(item => normalizeDersKey(item) !== key);
+  return true;
+}
+
+function addCatalogLesson() {
+  const input = document.getElementById('new-lesson-name');
+  if (!registerCatalogLesson(input.value)) { alert('1-100 karakter arasında bir ders adı girin.'); return; }
+  input.value = '';
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+}
+
+function removeCatalogLesson(name) {
+  const key = normalizeDersKey(name);
+  let count = 0;
+  Object.values(state.programs || {}).forEach(program => Object.values(program).forEach(cells => {
+    if (Array.isArray(cells)) count += cells.filter(cell => normalizeDersKey(cell?.ders) === key).length;
+  }));
+  if (!confirm(`${name} ders listesinden kaldırılsın mı?${count ? ` Tüm sınıfların programlarında bu derse ait ${count} hücre boşaltılacak.` : ''} Yıllık plan ve öğretmen bilgileri korunur.`)) return;
+  ensureStateDefaults();
+  if (!state.settings.hiddenLessons.some(item => normalizeDersKey(item) === key)) state.settings.hiddenLessons.push(name);
+  Object.values(state.programs || {}).forEach(program => Object.values(program).forEach(cells => {
+    if (Array.isArray(cells)) cells.forEach(cell => { if (cell && normalizeDersKey(cell.ders) === key) cell.ders = ''; });
+  }));
+  saveToStorage();
+  renderProgramSettings();
+  renderScheduleTable();
+  renderWeeklyPlan();
+}
+
+function renderLessonCatalog() {
+  const hidden = new Set(state.settings.hiddenLessons.map(normalizeDersKey));
+  const list = document.getElementById('lesson-catalog');
+  const removed = document.getElementById('removed-lesson-catalog');
+  list.replaceChildren(); removed.replaceChildren();
+  getCatalogLessonNames().forEach(name => {
+    const isHidden = hidden.has(normalizeDersKey(name));
+    const row = document.createElement('div'); row.className = 'lesson-catalog-item';
+    const text = document.createElement('span'); text.textContent = name;
+    const button = document.createElement('button'); button.type = 'button';
+    button.className = `btn btn-sm ${isHidden ? 'btn-secondary' : 'btn-danger'}`;
+    button.textContent = isHidden ? 'Geri Ekle' : 'Sil';
+    button.setAttribute('aria-label', `${name} ${isHidden ? 'dersini geri ekle' : 'dersini sil'}`);
+    button.addEventListener('click', () => {
+      if (!isHidden) { removeCatalogLesson(name); return; }
+      registerCatalogLesson(name); saveToStorage(); renderProgramSettings(); renderScheduleTable();
+    });
+    row.append(text, button); (isHidden ? removed : list).appendChild(row);
+  });
+  document.getElementById('removed-lessons').hidden = removed.children.length === 0;
+  const upload = document.getElementById('yukle-ders');
+  const previous = upload.value;
+  upload.replaceChildren();
+  const option = (value, text) => { const node = document.createElement('option'); node.value = value; node.textContent = text; upload.appendChild(node); };
+  option('', '-- Ders seçin --');
+  getDersSecenekleri().filter(name => name !== 'DİĞER (Elle Gir)' && !normalizeDersKey(name).startsWith('ETUT')).forEach(name => option(name, name));
+  option('DİĞER', 'DİĞER (Özel Ad Gir)');
+  if (Array.from(upload.options).some(item => item.value === previous)) upload.value = previous;
+  document.getElementById('diger-ders-group').style.display = upload.value === 'DİĞER' ? 'flex' : 'none';
 }
 
 function addEtutTeacher() {
@@ -1504,7 +1680,7 @@ function renderEtutList() {
 
 function getProgramLessonNames() {
   const names = new Map();
-  DERSLER_LISTESI
+  getDersSecenekleri()
     .filter(d => d !== 'DİĞER (Elle Gir)' && !normalizeDersKey(d).startsWith('ETUT'))
     .forEach(d => names.set(normalizeDersKey(d), d));
 
@@ -1587,7 +1763,7 @@ function renderScheduleTable() {
         <th>Ders<br>Sırası</th>
         ${activeDays.map(day => {
           const planNote = day.weekend && !isPlanningDay(day.key) ? '<br><span style="font-weight:500;font-size:0.68rem">(plan dışı)</span>' : '';
-          return `<th>${day.label}${planNote}</th>`;
+          return `<th>${escapeHtml(day.label)}${planNote}</th>`;
         }).join('')}
       </tr>
     `;
@@ -1618,6 +1794,9 @@ function renderScheduleTable() {
       sel.style.color = renk.dark;
       sel.dataset.gun = gun;
       sel.dataset.row = row;
+      const empty = document.createElement('option');
+      empty.value = ''; empty.textContent = 'Ders yok'; empty.selected = !ders;
+      sel.appendChild(empty);
 
       getDersSecenekleri().forEach(d => {
         const opt = document.createElement('option');
@@ -1642,7 +1821,9 @@ function renderScheduleTable() {
         if (this.value === 'DİĞER (Elle Gir)') {
           const custom = prompt('Ders adını girin:');
           if (custom && custom.trim()) {
-            setCellDers(gun, row, custom.trim().toUpperCase());
+            if (!registerCatalogLesson(custom)) { alert('Ders adı 1-100 karakter arasında olmalı.'); this.value = ders; return; }
+            setCellDers(gun, row, custom.trim().toLocaleUpperCase('tr-TR'));
+            renderLessonCatalog();
             renderScheduleTable();
           } else {
             this.value = ders;
@@ -1654,6 +1835,13 @@ function renderScheduleTable() {
       });
 
       td.appendChild(sel);
+      if (ders) {
+        const clear = document.createElement('button');
+        clear.type = 'button'; clear.className = 'cell-clear-lesson'; clear.textContent = 'Dersi kaldır';
+        clear.setAttribute('aria-label', `${day.label} ${row + 1}. ders: ${ders} dersini kaldır`);
+        clear.addEventListener('click', () => { setCellDers(gun, row, ''); renderScheduleTable(); });
+        td.appendChild(clear);
+      }
       const teacher = getLessonTeacher(ders);
       if (teacher) {
         const teacherDiv = document.createElement('div');
@@ -1722,7 +1910,7 @@ function buildWeekJumpOptions() {
     // Plandaki tarih etiketini tercih et
     const tarihLabel = getWeekTarihLabel(w);
     const label = tarihLabel ? `${w}. Hafta (${tarihLabel})` : `${w}. Hafta`;
-    sel.innerHTML += `<option value="${w}">${label}</option>`;
+    sel.innerHTML += `<option value="${w}">${escapeHtml(label)}</option>`;
   }
 }
 
@@ -1785,6 +1973,7 @@ function focusCurrentDateWeek() {
 function focusWeekByDate(value, options = {}) {
   if (!isDateKey(value)) return;
   const date = parseLocalDateInput(value);
+  ensureOfficialHolidays(date.getFullYear());
   const week = findWeekByDate(date);
   state.currentWeek = Math.max(1, Math.min(state.totalWeeks, week || state.currentWeek || 1));
   state.lastFocusDate = toDateKey(date);
@@ -1887,9 +2076,18 @@ function isDateKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) && !Number.isNaN(parseLocalDateInput(value).getTime());
 }
 
-function isHolidayDate(date) {
+function ensureOfficialHolidays(year = new Date().getFullYear()) {
+  const holidays = window.KemalAgendaHolidays;
+  if (!holidays) return;
+  const changed = holidays.ensure(state, [year - 1, year, year + 1]);
+  if (changed && !restoringPlannerState) saveToStorage();
+}
+
+function isHolidayDate(date, period) {
   const dayKey = toDateKey(date);
+  if (window.KemalAgendaHolidays) return window.KemalAgendaHolidays.matching(state, dayKey, period).map(item => item.name).filter((name,index,all)=>all.indexOf(name)===index).join(' / ') || null;
   for (const t of state.tatiller) {
+    if (t.disabled || (t.period === 'afternoon' && period !== undefined && period < (state.settings.halfDayStartPeriod || 5))) continue;
     const startKey = toDateKey(parseLocalDateInput(t.start));
     const endKey = toDateKey(parseLocalDateInput(t.end || t.start));
     if (dayKey >= startKey && dayKey <= endKey) return t.name;
@@ -1900,6 +2098,7 @@ function isHolidayDate(date) {
 function renderWeeklyPlan() {
   const w = state.currentWeek;
   const dates = getWeekDates(w);
+  if (dates[0]) ensureOfficialHolidays(dates[0].getFullYear());
   updateWeekFocusControls(dates, w);
   const sinifId = document.getElementById('plan-sinif-select').value;
   if (!sinifId) {
@@ -1944,7 +2143,7 @@ function renderWeeklyPlan() {
 
   let html = `
     <div style="margin-bottom:8px; font-weight:800; color:var(--primary); font-size:0.9rem; text-align:center">
-      ${sinif.name} — ${tarihBaslik}
+      ${escapeHtml(sinif.name)} — ${escapeHtml(tarihBaslik)}
     </div>
     <div style="overflow-x:auto">
     <table class="plan-table">
@@ -1958,9 +2157,10 @@ function renderWeeklyPlan() {
         ${activeDays.map((day, i) => {
           const d = dates[i];
           const holiday = isHolidayDate(d);
+          const morningHoliday = isHolidayDate(d, 1);
           const style = holiday ? 'background:#c53030;' : '';
           const planNote = day.weekend && !isPlanningDay(day.key) ? '<br><span style="font-size:0.68rem;font-weight:600">(plan dışı)</span>' : '';
-          return `<th style="${style}">${day.label}<br><span style="font-weight:400;font-size:0.75rem">${formatDate(d)}</span>${holiday ? `<br><span style="font-size:0.7rem">(${holiday})</span>` : planNote}</th>`;
+          return `<th style="${style}">${escapeHtml(day.label)}<br><span style="font-weight:400;font-size:0.75rem">${escapeHtml(formatDate(d))}</span>${holiday ? `<br><span style="font-size:0.7rem">(${escapeHtml(holiday)}${morningHoliday ? '' : ' · 13.00 sonrası'})</span>` : planNote}</th>`;
         }).join('')}
       </tr>
     </thead>
@@ -1973,7 +2173,7 @@ function renderWeeklyPlan() {
     activeDays.forEach((day, gi) => {
       const gun = day.key;
       const date = dates[gi];
-      const holidayName = isHolidayDate(date);
+      const holidayName = isHolidayDate(date, row + 1);
       const cell = prog[gun] && prog[gun][row];
 
       if (holidayName) {
@@ -1983,6 +2183,10 @@ function renderWeeklyPlan() {
 
       const ders = cell ? cell.ders : 'Etüt';
       const dersNorm = normalizeDersKey(ders);
+      if (!ders) {
+        html += '<td><div class="plan-cell"><div class="plan-cell-inner">Ders yok</div></div></td>';
+        return;
+      }
       const renk = getDersRenk(ders);
       const teacher = getLessonTeacher(ders);
       const planningOpen = isPlanningDay(gun);
@@ -2019,10 +2223,10 @@ function renderWeeklyPlan() {
         : '';
 
       html += `
-        <td style="background:${renk.bg}">
+        <td style="background:${escapeHtml(renk.bg)}">
           <div class="plan-cell" ${hasMore ? `data-has-more="true" data-has-details="${Boolean(surec || additionalOutcomes.length)}"` : ''}>
             <div class="plan-cell-inner">
-              <div class="cell-ders-name" style="color:${renk.dark}">${ders}</div>
+              <div class="cell-ders-name" style="color:${escapeHtml(renk.dark)}">${escapeHtml(ders)}</div>
               ${teacher ? `<div class="cell-teacher">Öğretmen: ${escapeHtml(teacher)}</div>` : ''}
               <div class="cell-kazanim">${escapeHtml(kazanim).replace(/\n/g,'<br>')}</div>
               ${!planningOpen ? `<div class="plan-closed-note">Yıllık plan dağıtımı yapılmaz.</div>` : ''}
@@ -2044,6 +2248,7 @@ function renderWeeklyPlan() {
 }
 
 function notifyParentWeekFocus(dates, week) {
+  if (restoringPlannerState) return;
   if (!window.parent || window.parent === window) return;
   const first = dates && dates.length ? dates[0] : null;
   const last = dates && dates.length ? dates[dates.length - 1] : null;
@@ -2128,8 +2333,15 @@ function setupDelayedSurecPopups(root) {
     if (!detail) return;
     if (activeCell && activeCell !== cell) activeCell.querySelector('.learning-output-more')?.setAttribute('aria-expanded', 'false');
     activeCell = cell;
-    popover.innerHTML = `<button type="button" class="learning-output-popover-close" aria-label="Ayrıntıları kapat">×</button>${detail.innerHTML}`;
-    popover.querySelector('button').addEventListener('click', close);
+    const dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.className = 'learning-output-popover-close';
+    dismiss.setAttribute('aria-label', 'Ayrıntıları kapat');
+    dismiss.textContent = '×';
+    dismiss.addEventListener('click', close);
+    // Detail templates contain only escaped text and our fixed formatting tags.
+    // Clone their DOM rather than sending imported text through another parser.
+    popover.replaceChildren(dismiss, detail.content.cloneNode(true));
     popover.classList.add('is-visible');
     cell.querySelector('.learning-output-more')?.setAttribute('aria-expanded', 'true');
     position(point);
@@ -2245,11 +2457,10 @@ function getLessonOccurrenceInWeek(sinifId, gun, row, week, ders) {
   for (let gi = 0; gi < activeDays.length; gi++) {
     const g = activeDays[gi].key;
     if (!isPlanningDay(g)) continue;
-    const holidayName = dates[gi] ? isHolidayDate(dates[gi]) : null;
     for (let r = 0; r < getLessonCount(); r++) {
       if (g === gun && r === row) return count;
       const cell = prog[g][r];
-      if (holidayName) continue;
+      if (dates[gi] && isHolidayDate(dates[gi], r + 1)) continue;
       if (cell && normalizeDersKey(cell.ders) === normalizeDersKey(ders)) {
         count++;
       }
@@ -2292,7 +2503,7 @@ function getDersRenk(ders) {
 }
 
 function escapeHtml(str) {
-  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function showSurecPopup(event, ders, surec) {
@@ -3008,30 +3219,53 @@ async function parseXlsx(file) {
 function renderUploadedFiles() {
   const el = document.getElementById('uploaded-files');
   const keys = Object.keys(state.yillikPlanlar);
+  el.replaceChildren();
   if (keys.length === 0) {
-    el.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; padding:10px">Henüz plan yüklenmedi.</div>';
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--muted);font-size:0.85rem;padding:10px';
+    empty.textContent = 'Henüz plan yüklenmedi.';
+    el.appendChild(empty);
     return;
   }
-  el.innerHTML = keys.map(k => {
-    const meta = state.filesMeta && state.filesMeta[k];
-    const count = state.yillikPlanlar[k].length;
-    return `
-      <div class="file-item">
-        <div class="file-info">
-          <div class="file-name">${meta ? meta.name : k}</div>
-          <div class="file-status">
-            <span class="status-dot status-ok"></span>
-            ${count} haftalık kayıt • ${meta ? meta.date : ''}
-            <div class="progress-bar" style="width:200px;display:inline-block;vertical-align:middle;margin-left:8px">
-              <div class="progress-fill" style="width:${Math.min(100, Math.round(count/36*100))}%"></div>
-            </div>
-          </div>
-        </div>
-        <span class="ders-badge">${k}</span>
-        <button class="btn btn-danger btn-sm" onclick="deletePlan('${k}')">Sil</button>
-      </div>
-    `;
-  }).join('');
+  keys.forEach(subject => {
+    const meta = state.filesMeta && state.filesMeta[subject];
+    const count = Array.isArray(state.yillikPlanlar[subject]) ? state.yillikPlanlar[subject].length : 0;
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    const info = document.createElement('div');
+    info.className = 'file-info';
+    const name = document.createElement('div');
+    name.className = 'file-name';
+    name.textContent = meta ? String(meta.name ?? '') : subject;
+    const status = document.createElement('div');
+    status.className = 'file-status';
+    const dot = document.createElement('span');
+    dot.className = 'status-dot status-ok';
+    status.appendChild(dot);
+    status.appendChild(document.createTextNode(' ' + count + ' haftalık kayıt • ' + (meta ? String(meta.date ?? '') : '')));
+    const progress = document.createElement('div');
+    progress.className = 'progress-bar';
+    progress.style.cssText = 'width:200px;display:inline-block;vertical-align:middle;margin-left:8px';
+    const fill = document.createElement('div');
+    fill.className = 'progress-fill';
+    fill.style.width = Math.min(100, Math.round(count / 36 * 100)) + '%';
+    progress.appendChild(fill);
+    status.appendChild(progress);
+    info.appendChild(name);
+    info.appendChild(status);
+    const badge = document.createElement('span');
+    badge.className = 'ders-badge';
+    badge.textContent = subject;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-danger btn-sm';
+    remove.textContent = 'Sil';
+    remove.addEventListener('click', () => deletePlan(subject));
+    item.appendChild(info);
+    item.appendChild(badge);
+    item.appendChild(remove);
+    el.appendChild(item);
+  });
 }
 
 function deletePlan(ders) {
@@ -3060,34 +3294,139 @@ function addTatil() {
   const end = document.getElementById('tatil-end').value || start;
   const name = document.getElementById('tatil-name').value.trim();
   if (!start || !name) { alert('Lütfen tarih ve tatil adını girin.'); return; }
+  if (window.KemalAgendaHolidays && (!window.KemalAgendaHolidays.validDate(start) || !window.KemalAgendaHolidays.validDate(end))) { alert('Geçerli bir tarih seçin.'); return; }
   if (end < start) { alert('Bitiş tarihi başlangıç tarihinden önce olamaz.'); return; }
-  state.tatiller.push({start, end, name});
+  if (window.KemalAgendaHolidays?.dayCount(start,end) > 366) { alert('Tatil aralığı en fazla 366 gün olabilir.'); return; }
+  const period = document.getElementById('tatil-period').value;
+  const previous = editingHolidayIndex === null ? null : state.tatiller[editingHolidayIndex];
+  const entry = {...previous, start, end, name, period: period === 'afternoon' ? 'afternoon' : 'full'};
+  if (window.KemalAgendaHolidays?.isOfficial(entry)) entry.customized = true;
+  if (previous) state.tatiller[editingHolidayIndex] = entry;
+  else state.tatiller.push(entry);
+  resetHolidayForm();
+  saveToStorage();
+  renderTatilList();
+  renderWeeklyPlan();
+}
+
+function resetHolidayForm() {
+  editingHolidayIndex = null;
   document.getElementById('tatil-start').value = '';
   document.getElementById('tatil-end').value = '';
   document.getElementById('tatil-name').value = '';
+  document.getElementById('tatil-days').value = '1';
+  document.getElementById('tatil-period').value = 'full';
+  document.getElementById('tatil-save').textContent = 'Tatil Ekle';
+}
+
+function editTatil(index) {
+  const item = state.tatiller[index];
+  if (!item) return;
+  editingHolidayIndex = index;
+  document.getElementById('tatil-start').value = item.start || '';
+  document.getElementById('tatil-end').value = item.end || item.start || '';
+  document.getElementById('tatil-name').value = item.name || '';
+  document.getElementById('tatil-period').value = item.period === 'afternoon' ? 'afternoon' : 'full';
+  updateHolidayDays();
+  document.getElementById('tatil-save').textContent = 'Değişiklikleri Kaydet';
+  document.getElementById('holiday-form').scrollIntoView?.({behavior:'smooth',block:'center'});
+}
+
+function updateHolidayDays() {
+  const tools = window.KemalAgendaHolidays;
+  if (!tools) return;
+  const start = document.getElementById('tatil-start').value;
+  document.getElementById('tatil-days').value = tools.dayCount(start,document.getElementById('tatil-end').value || start) || 1;
+}
+
+function updateHolidayEnd() {
+  const days = Number(document.getElementById('tatil-days').value);
+  if (!Number.isInteger(days) || days < 1 || days > 366) return;
+  const end = window.KemalAgendaHolidays?.addDays(document.getElementById('tatil-start').value,days - 1);
+  if (end) document.getElementById('tatil-end').value = end;
+}
+
+function updateHalfDayPeriod(value) {
+  const period = Number(value);
+  if (!Number.isInteger(period) || period < 1 || period > 10) return;
+  state.settings.halfDayStartPeriod = period;
   saveToStorage();
-  renderTatilList();
+  renderWeeklyPlan();
 }
 
 function deleteTatil(idx) {
-  state.tatiller.splice(idx, 1);
+  const item = state.tatiller[idx];
+  if (!item) return;
+  if (window.KemalAgendaHolidays?.isOfficial(item)) {
+    item.disabled = !item.disabled;
+    item.customized = true;
+  } else state.tatiller.splice(idx, 1);
+  resetHolidayForm();
   saveToStorage();
   renderTatilList();
+  renderWeeklyPlan();
 }
 
 function renderTatilList() {
+  const tools = window.KemalAgendaHolidays;
+  const yearSelect = document.getElementById('holiday-year');
+  if (tools && !yearSelect.options.length) {
+    const years = new Set([...Object.keys(tools.data.years).map(Number),new Date().getFullYear()]);
+    state.tatiller.forEach(item=>{if(tools.validDate(item.start)) years.add(Number(item.start.slice(0,4)));});
+    [...years].sort((a,b)=>a-b).forEach(year=>{const option=document.createElement('option'); option.value=year; option.textContent=year; yearSelect.appendChild(option);});
+    yearSelect.value = String(new Date().getFullYear());
+  }
+  const year = Number(yearSelect.value) || new Date().getFullYear();
+  const periodSelect = document.getElementById('half-day-start-period');
+  if (tools && !periodSelect.options.length) for(let period=1;period<=10;period++) { const option=document.createElement('option'); option.value=period; option.textContent=`${period}. ders`; periodSelect.appendChild(option); }
+  if (tools) {
+    periodSelect.value = String(tools.halfDayStart(state));
+    document.getElementById('holiday-source').href = tools.data.years[year]?.source || tools.data.law;
+    document.getElementById('holiday-data-status').textContent = tools.data.years[year]
+      ? `${year} · Diyanet resmî takvimi · Doğrulama: ${tools.data.verifiedAt} · Okula özel/idari izin günleri: öğretmen kararı`
+      : `${year} için dinî bayram tarihleri doğrulanmış veri setinde yok. Sabit resmî günler mevcut; eksik günleri elle ekleyebilirsiniz.`;
+  }
   const el = document.getElementById('tatil-list');
+  el.replaceChildren();
   if (state.tatiller.length === 0) {
-    el.innerHTML = '<div style="color:var(--muted); font-size:0.85rem; padding:10px">Henüz tatil eklenmedi.</div>';
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:var(--muted);font-size:0.85rem;padding:10px';
+    empty.textContent = 'Henüz tatil eklenmedi.';
+    el.appendChild(empty);
     return;
   }
-  el.innerHTML = state.tatiller.map((t, i) => `
-    <div class="tatil-row">
-      <div style="font-weight:700; flex:1">${t.name}</div>
-      <div style="font-size:0.82rem; color:var(--muted)">${t.start === t.end ? t.start : t.start + ' → ' + t.end}</div>
-      <button class="btn btn-danger btn-sm" onclick="deleteTatil(${i})">Sil</button>
-    </div>
-  `).join('');
+  state.tatiller.forEach((holiday, index) => {
+    if (tools && tools.validDate(holiday.start) && holiday.start > `${year}-12-31`) return;
+    if (tools && tools.validDate(holiday.end || holiday.start) && (holiday.end || holiday.start) < `${year}-01-01`) return;
+    const row = document.createElement('div');
+    row.className = 'tatil-row' + (holiday.disabled ? ' is-disabled' : '');
+    if (holiday.officialId) row.dataset.holidayId = holiday.officialId;
+    const name = document.createElement('div');
+    name.style.cssText = 'font-weight:700;flex:1';
+    name.textContent = String(holiday.name ?? '');
+    const dates = document.createElement('div');
+    dates.style.cssText = 'font-size:0.82rem;color:var(--muted)';
+    dates.textContent = (holiday.start === holiday.end ? String(holiday.start ?? '') : String(holiday.start ?? '') + ' → ' + String(holiday.end ?? ''))
+      + (holiday.period === 'afternoon' ? ' · Yarım gün (13.00 sonrası)' : '')
+      + (holiday.disabled ? ' · Devre dışı' : '') + (holiday.customized ? ' · Öğretmen düzenlemesi' : '');
+    const actions = document.createElement('div'); actions.className='holiday-actions';
+    const edit = document.createElement('button'); edit.type='button'; edit.className='btn btn-secondary btn-sm'; edit.textContent='Düzenle'; edit.addEventListener('click',()=>editTatil(index));
+    actions.appendChild(edit);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'btn btn-danger btn-sm';
+    remove.textContent = tools?.isOfficial(holiday) ? (holiday.disabled ? 'Etkinleştir' : 'Devre Dışı Bırak') : 'Sil';
+    remove.addEventListener('click', () => deleteTatil(index));
+    row.appendChild(name);
+    row.appendChild(dates);
+    actions.appendChild(remove);
+    if (tools?.isOfficial(holiday) && holiday.customized) {
+      const reset=document.createElement('button'); reset.type='button'; reset.className='btn btn-secondary btn-sm'; reset.textContent='Resmî Tarihe Dön';
+      reset.addEventListener('click',()=>{tools.reset(state,holiday.officialId);resetHolidayForm();saveToStorage();renderTatilList();renderWeeklyPlan();}); actions.appendChild(reset);
+    }
+    row.appendChild(actions);
+    el.appendChild(row);
+  });
 }
 
 // ============================================================
@@ -3104,12 +3443,72 @@ function showTab(tabId, trigger) {
   if (tabId === 'tab-plan') renderWeeklyPlan();
 }
 
+function restorePlannerState(data, focusDate) {
+  if (!data || typeof data !== 'object' || Array.isArray(data) ||
+      !Array.isArray(data.siniflar) || !data.programs || typeof data.programs !== 'object' || Array.isArray(data.programs)) return false;
+  const incoming = JSON.parse(JSON.stringify(data));
+  if (incoming.siniflar.some(item => !item || typeof item.id !== 'string' || typeof item.name !== 'string') ||
+      (incoming.yillikPlanlar != null && (typeof incoming.yillikPlanlar !== 'object' || Array.isArray(incoming.yillikPlanlar) ||
+        Object.values(incoming.yillikPlanlar).some(items => !Array.isArray(items) || items.some(item => !item || typeof item !== 'object')))) ||
+      (incoming.tatiller != null && !Array.isArray(incoming.tatiller))) return false;
+  restoringPlannerState = true;
+  try {
+    // A previously queued focus message can run after the parent writes its
+    // cloud snapshot. Restore storage as well, without sending an edit echo.
+    const serialized = JSON.stringify(incoming);
+    localStorage.setItem('ogretmen_plan_v2', serialized);
+    lastPlannerStorageValue = serialized;
+    state = { ...createInitialState(), ...incoming };
+    state.yillikPlanlar = state.yillikPlanlar || {};
+    state.tatiller = state.tatiller || [];
+    ensureStateDefaults();
+    ensureOfficialHolidays();
+    resetHolidayForm();
+    state.activeSinif = state.siniflar.some(item => item.id === state.activeSinif)
+      ? state.activeSinif : (state.siniflar[0]?.id || null);
+    updateEducationYearLabel();
+    updateTotalWeeksFromPlans();
+    renderSinifList();
+    renderUploadedFiles();
+    renderTatilList();
+    buildWeekJumpOptions();
+    renderProgramSettings();
+    if (state.activeSinif) setActiveSinif(state.activeSinif);
+    else document.getElementById('program-card').style.display = 'none';
+    focusWeekByDate(isDateKey(focusDate) ? focusDate : toDateKey(new Date()), { silent: true });
+  } finally {
+    restoringPlannerState = false;
+  }
+  return true;
+}
+
 window.addEventListener('message', (event) => {
   if (event.source !== window.parent || event.origin !== window.location.origin) return;
   const data = event.data || {};
+  if (data.type === 'kemal-ajanda-restore-planner') {
+    restorePlannerState(data.plannerState, data.date);
+    return;
+  }
   if (data.type !== 'kemal-ajanda-focus-week' || !isDateKey(data.date)) return;
-  showTab('tab-plan');
+  // A focus message can already be queued when the parent receives its cloud
+  // result. Read an externally replaced snapshot before any focus save runs.
+  try {
+    const saved = localStorage.getItem('ogretmen_plan_v2');
+    if (saved && saved !== lastPlannerStorageValue && !restorePlannerState(JSON.parse(saved), data.date)) return;
+  } catch (error) {
+    return;
+  }
+  showTab(['tab-program', 'tab-plan', 'tab-yukle', 'tab-tatil'].includes(data.plannerTab) ? data.plannerTab : 'tab-plan');
   focusWeekByDate(data.date, { silent: true });
+  if (data.plannerTab === 'tab-tatil') {
+    const select = document.getElementById('holiday-year');
+    const year = data.date.slice(0,4);
+    if (![...select.options].some(option=>option.value===year)) {
+      const option = document.createElement('option'); option.value=year; option.textContent=year; select.appendChild(option);
+    }
+    select.value = year;
+    renderTatilList();
+  }
 });
 
 // ============================================================
@@ -3118,7 +3517,7 @@ window.addEventListener('message', (event) => {
 function renderLegend() {
   const el = document.getElementById('legend');
   const items = Object.entries(DERS_RENK).map(([k, v]) =>
-    `<div class="legend-item"><div class="legend-dot" style="background:${v.bg};border:1px solid ${v.dark}20"></div>${k}</div>`
+    `<div class="legend-item"><div class="legend-dot" style="background:${escapeHtml(v.bg)};border:1px solid ${escapeHtml(v.dark)}20"></div>${escapeHtml(k)}</div>`
   ).join('');
   el.innerHTML = items;
 }

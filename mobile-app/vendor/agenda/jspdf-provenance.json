@@ -1,0 +1,8 @@
+{
+  "name": "jspdf",
+  "version": "4.2.1",
+  "source": "https://registry.npmjs.org/jspdf/-/jspdf-4.2.1.tgz",
+  "integrity": "sha512-YyAXyvnmjTbR4bHQRLzex3CuINCDlQnBqoSYyjJwTP2x9jDLuKDzy7aKUl0hgx3uhcl7xzg32agn5vlie6HIlQ==",
+  "archiveSha256": "e97bd16e3211928442c631b20dcefa78a8e10dad8ccbe97160b89b214745603a",
+  "assetSha256": "e6551fcdc32f09d6853b2c5126d18d01d9447e0da618a41a11ebeee0f6c20d54"
+}

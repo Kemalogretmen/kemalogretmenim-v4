@@ -1,7 +1,61 @@
 (function(root) {
   'use strict';
+  function material(value) {
+    value = value || {};
+    var grain = Number(value.grain), spacing = Number(value.spacing);
+    return {
+      color: /^#[0-9a-f]{6}$/i.test(value.color) ? value.color.toLowerCase() : '#ddc394',
+      grain: Math.max(.75, Math.min(3, Number.isFinite(grain) ? grain : 1)),
+      mixed: value.mixed === true,
+      lines: ['none', 'ruled', 'grid', 'handwriting'].indexOf(value.lines) > -1 ? value.lines : 'handwriting',
+      spacing: Math.max(24, Math.min(96, Number.isFinite(spacing) ? spacing : 48))
+    };
+  }
+  function rgb(hex) { return [1, 3, 5].map(function(i) { return parseInt(hex.slice(i, i + 2), 16); }); }
+  function hash(x, y) {
+    var n = Math.imul(x + 73, 374761393) ^ Math.imul(y + 131, 668265263);
+    n = Math.imul(n ^ (n >>> 13), 1274126177);
+    return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
+  }
+  function texture(value, depth) {
+    var m = material(value), tile = document.createElement('canvas');
+    tile.width = tile.height = 256;
+    var ctx = tile.getContext('2d'), pixels = ctx.createImageData(256, 256), base = rgb(m.color);
+    var palette = ['#e9c36a', '#d78f9b', '#77b9b5', '#719ecb', '#ae91c3', '#e2d8b5'].map(rgb);
+    var cells = Math.round(256 / (.6 + m.grain * .45)), pitch = 256 / cells;
+    for(var y = 0; y < 256; y++) for(var x = 0; x < 256; x++) {
+      var cellX = Math.floor(x / pitch), cellY = Math.floor(y / pitch), best = Infinity, noise = 0, shadeSeed = 0, offsetY = 0;
+      // Periodic, jittered grain centers avoid square pixels and visible tile seams.
+      for(var gy = cellY - 1; gy <= cellY + 1; gy++) for(var gx = cellX - 1; gx <= cellX + 1; gx++) {
+        var hx = (gx + cells) % cells, hy = (gy + cells) % cells;
+        var dx = x - (gx + .15 + hash(hx, hy) * .7) * pitch;
+        var dy = y - (gy + .15 + hash(hx + 37, hy + 17) * .7) * pitch;
+        var distance = dx * dx + dy * dy;
+        if(distance < best) { best = distance; noise = hash(hx + 53, hy); shadeSeed = hash(hx + 19, hy + 47); offsetY = dy; }
+      }
+      var tint = m.mixed ? palette[Math.floor(noise * palette.length)] : base;
+      var shade = .81 + shadeSeed * .35;
+      var light = (hash(x, y) - .5) * 13 - offsetY / pitch * 19 + (noise > .94 ? 15 : 0);
+      var i = (y * 256 + x) * 4;
+      for(var c = 0; c < 3; c++) {
+        var channel = m.mixed ? tint[c] * .78 + base[c] * .22 : base[c];
+        pixels.data[i + c] = Math.max(0, Math.min(255, (channel * shade + light) * (depth ? .68 : 1)));
+      }
+      pixels.data[i + 3] = 255;
+    }
+    ctx.putImageData(pixels, 0, 0);
+    return tile;
+  }
+  function paintMaterial(ctx, width, height, pattern) {
+    ctx.save(); ctx.globalCompositeOperation = 'source-in'; ctx.fillStyle = pattern;
+    ctx.fillRect(0, 0, width, height); ctx.restore();
+  }
   function create(canvas) {
-    var brushes = new Map(), history = [], sound = null, noise = null, soundFilter = null, enabled = false;
+    var brushes = new Map(), history = [], audio = root.SmartSandSound.create(), leveling = null;
+    var surface = material(), tones = rgb(surface.color);
+    function tone(light, alpha) {
+      return 'rgba(' + tones.map(function(c) { return Math.round(light ? c + (255 - c) * .65 : c * .42); }).join(',') + ',' + alpha + ')';
+    }
     function brush(width, angle) {
       var key = Math.round(width / 2) * 2, direction = Math.round(angle / (Math.PI * 2) * 24);
       var cacheKey = key + ':' + direction;
@@ -19,13 +73,14 @@
         if(Math.abs(Math.cos(a - angle)) > .48) continue;
         var distance = radius * (1.03 + wave * .28);
         var x = center + Math.cos(a) * distance, y = center + Math.sin(a) * distance;
-        r.fillStyle = Math.sin(a) < 0 ? 'rgba(255,244,207,.65)' : 'rgba(94,59,27,.3)';
-        r.beginPath(); r.ellipse(x, y, .65 + wave * 1.1, .5 + wave * .65, a, 0, Math.PI * 2); r.fill();
+        r.fillStyle = Math.sin(a) < 0 ? tone(true, .22) : tone(false, .12);
+        var grain = Math.sqrt(surface.grain);
+        r.beginPath(); r.ellipse(x, y, (.65 + wave * 1.1) * grain, (.5 + wave * .65) * grain, a, 0, Math.PI * 2); r.fill();
       }
       [-1, 1].forEach(function(side) {
         var middle = angle + side * Math.PI / 2;
         r.beginPath(); r.arc(center, center, radius * 1.04, middle - .38, middle + .38);
-        r.strokeStyle = Math.sin(middle) < 0 ? 'rgba(255,243,199,.5)' : 'rgba(103,65,29,.22)'; r.lineWidth = 1.5; r.stroke();
+        r.strokeStyle = Math.sin(middle) < 0 ? tone(true, .09) : tone(false, .08); r.lineWidth = 1; r.stroke();
       });
       var result = { cut: cut, relief: relief, size: size, width: key };
       brushes.set(cacheKey, result);
@@ -69,26 +124,39 @@
       var copy = history.pop(); if(!copy) return false;
       ctx.save(); ctx.clearRect(0, 0, width, height); ctx.drawImage(copy, 0, 0, width, height); ctx.restore(); return true;
     }
-    function stopSound() {
-      if(noise) { try { noise.stop(); } catch(error) {} noise.disconnect(); noise = null; }
-      if(soundFilter) { soundFilter.disconnect(); soundFilter = null; }
+    function cancelLeveling() {
+      if(!leveling)return;
+      var pending=leveling;leveling=null;root.cancelAnimationFrame(pending.frame);pending.done();
     }
-    function startSound() {
-      if(!enabled) return;
-      try {
-        var Audio = root.AudioContext || root.webkitAudioContext; if(!Audio) return;
-        sound = sound || new Audio(); sound.resume().catch(function() {}); stopSound();
-        var buffer = sound.createBuffer(1, Math.floor(sound.sampleRate * .5), sound.sampleRate), data = buffer.getChannelData(0);
-        for(var i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * .09;
-        noise = sound.createBufferSource(); noise.buffer = buffer; noise.loop = true;
-        soundFilter = sound.createBiquadFilter(); soundFilter.type = 'lowpass'; soundFilter.frequency.value = 1500;
-        noise.connect(soundFilter); soundFilter.connect(sound.destination); noise.start();
-      } catch(error) { stopSound(); }
+    function level(ctx,width,height,pattern,step,done,reduced) {
+      cancelLeveling();audio.end();
+      var state={frame:null,done:done,start:null,previous:0};leveling=state;
+      function tick(time) {
+        if(leveling!==state)return;
+        if(state.start===null)state.start=time;
+        var progress=reduced?1:Math.min(1,(time-state.start)/850),y=height*progress;
+        ctx.save();ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle=pattern;
+        ctx.fillRect(0,Math.max(0,state.previous-1),width,y-state.previous+2);ctx.restore();state.previous=y;step(y);
+        if(progress===1){leveling=null;done();}else state.frame=root.requestAnimationFrame(tick);
+      }
+      state.frame=root.requestAnimationFrame(tick);
     }
-    document.addEventListener('visibilitychange', function() { if(document.hidden) stopSound(); });
-    root.addEventListener('pagehide', function() { stopSound(); if(sound) sound.close().catch(function() {}); sound = null; });
-    return { stroke: stroke, checkpoint: checkpoint, undo: undo, startSound: startSound, stopSound: stopSound,
-      setSound: function(value) { enabled = !!value; if(!enabled) stopSound(); }, canUndo: function() { return history.length > 0; } };
+    document.addEventListener('visibilitychange',function(){if(document.hidden)cancelLeveling();});
+    root.addEventListener('pagehide',cancelLeveling);
+    return { stroke: stroke, checkpoint: checkpoint, undo: undo, startSound: audio.begin, moveSound: audio.move, stopSound: audio.end,
+      level:level,cancelLeveling:cancelLeveling,
+      setMaterial: function(value) { surface = material(value); tones = rgb(surface.color); brushes.clear(); },
+      retexture: function(ctx, width, height, pattern) {
+        paintMaterial(ctx, width, height, pattern);
+        history.forEach(function(copy) {
+          var hctx = copy.getContext('2d'); hctx.save(); hctx.scale(copy.width / width, copy.height / height);
+          paintMaterial(hctx, width, height, pattern); hctx.restore();
+        });
+      },
+      setSound: audio.setEnabled, canUndo: function() { return history.length > 0; } };
   }
+  create.material = material;
+  create.texture = texture;
   root.createSmartSand = create;
-})(window);
+  if(typeof module !== 'undefined' && module.exports) module.exports = create;
+})(typeof window !== 'undefined' ? window : globalThis);

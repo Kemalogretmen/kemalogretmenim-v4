@@ -7,7 +7,8 @@ import { createContext, PropsWithChildren, useCallback, useContext, useEffect, u
 import { APP_CONFIG } from '@/constants/config';
 import { fetchProfile, findProfileByEmail, uploadTeacherVerification, upsertProfile } from '@/services/api';
 import { deactivatePushToken, registerPushToken } from '@/services/notifications';
-import { supabase } from '@/lib/supabase';
+import { bindNativeAuthRefresh, supabase } from '@/lib/supabase';
+import { authCallbackPayload, createAuthIdentityGuard } from '@/lib/auth-guards';
 import { assertContentFields } from '@/lib/contentSafety';
 import type { Profile, UserRole } from '@/types/domain';
 
@@ -46,11 +47,6 @@ type SignUpInput = {
   } | null;
 };
 
-type AuthCallbackPayload =
-  | { kind: 'error'; error: string; errorDescription: string }
-  | { kind: 'code'; code: string }
-  | { kind: 'tokens'; access_token: string; refresh_token: string };
-
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 WebBrowser.maybeCompleteAuthSession();
@@ -63,49 +59,6 @@ function getAuthRedirectUrl() {
   return `${APP_CONFIG.scheme}://auth/callback`;
 }
 
-function appendSearchParams(target: URLSearchParams, raw: string) {
-  const queryStart = raw.indexOf('?');
-  const normalized = (queryStart >= 0 ? raw.slice(queryStart + 1) : raw).replace(/^[#?]/, '');
-  if (!normalized) return;
-  new URLSearchParams(normalized).forEach((value, key) => target.set(key, value));
-}
-
-function getAuthCallbackParams(url: string) {
-  const params = new URLSearchParams();
-  const [withoutHash, hash = ''] = url.split('#');
-  const queryStart = withoutHash.indexOf('?');
-  if (queryStart >= 0) appendSearchParams(params, withoutHash.slice(queryStart + 1));
-  appendSearchParams(params, hash);
-
-  const parsed = Linking.parse(url);
-  Object.entries(parsed.queryParams ?? {}).forEach(([key, value]) => {
-    params.set(key, Array.isArray(value) ? String(value[0] ?? '') : String(value ?? ''));
-  });
-
-  return params;
-}
-
-function parseAuthCallback(url: string): AuthCallbackPayload | null {
-  const params = getAuthCallbackParams(url);
-  const error = params.get('error');
-  const errorDescription = params.get('error_description') ?? params.get('error_code') ?? '';
-  if (error) {
-    return { kind: 'error', error, errorDescription };
-  }
-
-  const code = params.get('code');
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  if (code) return { kind: 'code', code };
-  if (accessToken && refreshToken) return { kind: 'tokens', access_token: accessToken, refresh_token: refreshToken };
-
-  return null;
-}
-
-function isAuthCallbackUrl(url: string) {
-  return url.startsWith(`${APP_CONFIG.scheme}://auth/callback`) || url.includes('/auth/callback');
-}
-
 export function AuthProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
@@ -114,83 +67,106 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState('');
   const handledAuthUrls = useRef<Set<string>>(new Set());
+  const identity = useRef(createAuthIdentityGuard());
+  const mounted = useRef(false);
+  const profileRequest = useRef(0);
+  const profileOwner = useRef<string | null>(null);
+  const hydrationRequest = useRef(0);
+  const authEvents = useRef(0);
+  const signingOut = useRef(false);
 
   const loadProfile = useCallback(async (id: string) => {
+    const ticket = identity.current.ticket(id);
+    if (!ticket || signingOut.current) return;
+    const request = ++profileRequest.current;
     const nextProfile = await fetchProfile(id);
+    if (!mounted.current || !identity.current.current(ticket) || request !== profileRequest.current || signingOut.current) return;
     setProfile(nextProfile);
-    if (nextProfile?.active !== false) {
+    profileOwner.current = id;
+    if (nextProfile && nextProfile.active !== false) {
       registerPushToken(id).catch(() => undefined);
     }
   }, []);
 
+  const acceptSession = useCallback((current: Session | null) => {
+    const id = current?.user?.id || null;
+    if (identity.current.accept(id)) {
+      profileRequest.current++; profileOwner.current = null; setProfile(null);
+    }
+    setSession(current); setUserId(id); setEmail(current?.user?.email || '');
+    setLoading(!!id && profileOwner.current !== id);
+    return id;
+  }, []);
+
   const hydrate = useCallback(async () => {
+    const request = ++hydrationRequest.current;
+    const event = authEvents.current;
+    const current = () => mounted.current && !signingOut.current && request === hydrationRequest.current && event === authEvents.current;
     setLoading(true);
     setError('');
+    let accepted = false;
     try {
       const { data, error: sessionError } = await supabase.auth.getSession();
+      if (!current()) return;
       if (sessionError) throw sessionError;
-      const currentSession = data.session ?? null;
-      const sessionUser = currentSession?.user ?? null;
-      setSession(currentSession);
-      setUserId(sessionUser?.id ?? null);
-      setEmail(sessionUser?.email ?? '');
-      if (sessionUser?.id) {
-        await loadProfile(sessionUser.id);
-      } else {
-        setProfile(null);
-      }
+      const id = acceptSession(data.session ?? null); accepted = true;
+      if (id) await loadProfile(id);
     } catch (caught) {
+      if (!current()) return;
       setError(caught instanceof Error ? caught.message : String(caught));
-      setSession(null);
-      setProfile(null);
+      if (!accepted) acceptSession(null);
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
-  }, [loadProfile]);
+  }, [acceptSession, loadProfile]);
 
   useEffect(() => {
-    hydrate();
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      const sessionUser = session?.user ?? null;
-      setSession(session ?? null);
-      setUserId(sessionUser?.id ?? null);
-      setEmail(sessionUser?.email ?? '');
-      if (sessionUser?.id) {
-        loadProfile(sessionUser.id).catch((caught) => setError(caught instanceof Error ? caught.message : String(caught)));
-      } else {
-        setProfile(null);
+    mounted.current = true;
+    const stopRefresh = bindNativeAuthRefresh();
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      authEvents.current++;
+      if (!mounted.current || (signingOut.current && event !== 'SIGNED_OUT')) return;
+      const id = acceptSession(nextSession ?? null);
+      if (id && (profileOwner.current !== id || event === 'USER_UPDATED' || event === 'SIGNED_IN')) {
+        const ticket = identity.current.ticket(id);
+        // Defer Supabase queries until the auth callback releases its lock.
+        setTimeout(() => {
+          if (!mounted.current || !identity.current.current(ticket) || signingOut.current) return;
+          const work = loadProfile(id); const request = profileRequest.current;
+          void work.catch(caught => {
+            if (mounted.current && identity.current.current(ticket) && request === profileRequest.current) setError(caught instanceof Error ? caught.message : String(caught));
+          }).finally(() => {
+            if (mounted.current && identity.current.current(ticket) && request === profileRequest.current) setLoading(false);
+          });
+        }, 0);
       }
     });
-    return () => data.subscription.unsubscribe();
-  }, [hydrate, loadProfile]);
+    void hydrate();
+    return () => { mounted.current = false; identity.current.invalidate(); profileRequest.current++; hydrationRequest.current++; data.subscription.unsubscribe(); stopRefresh(); };
+  }, [acceptSession, hydrate, loadProfile]);
 
   const handleAuthCallbackUrl = useCallback(async (url: string) => {
-    if (!isAuthCallbackUrl(url)) return false;
-
-    const authPayload = parseAuthCallback(url);
+    const authPayload = authCallbackPayload(url, APP_CONFIG.scheme);
     if (!authPayload) return false;
 
     if (handledAuthUrls.current.has(url)) return true;
+    if (handledAuthUrls.current.size >= 20) handledAuthUrls.current.delete(handledAuthUrls.current.values().next().value!);
     handledAuthUrls.current.add(url);
 
     setLoading(true);
     setError('');
     try {
       if (authPayload.kind === 'error') {
-        throw new Error(authPayload.errorDescription || authPayload.error);
+        throw new Error(authPayload.message);
       }
 
-      const { error: sessionError } = authPayload.kind === 'code'
-        ? await supabase.auth.exchangeCodeForSession(authPayload.code)
-        : await supabase.auth.setSession({
-          access_token: authPayload.access_token,
-          refresh_token: authPayload.refresh_token,
-        });
+      const { error: sessionError } = await supabase.auth.exchangeCodeForSession(authPayload.code);
 
       if (sessionError) throw sessionError;
       await hydrate();
       return true;
     } catch (caught) {
+      handledAuthUrls.current.delete(url);
       setError(caught instanceof Error ? caught.message : String(caught));
       throw caught;
     } finally {
@@ -318,17 +294,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
     },
     signOut: async () => {
       const currentUserId = userId;
-      if (currentUserId) {
-        await deactivatePushToken(currentUserId);
+      signingOut.current = true; hydrationRequest.current++; identity.current.invalidate(); profileRequest.current++; profileOwner.current = null;
+      setSession(null); setUserId(null); setEmail(''); setProfile(null); setLoading(false);
+      try {
+        // A failed push-token cleanup must never prevent device sign-out.
+        if (currentUserId) await deactivatePushToken(currentUserId).catch(() => undefined);
+        const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+        if (signOutError) setError('Cihaz oturumu kapatıldı; sunucu çıkışı doğrulanamadı.');
+      } finally {
+        signingOut.current = false;
       }
-      await supabase.auth.signOut();
-      setSession(null);
-      setUserId(null);
-      setEmail('');
-      setProfile(null);
     },
     updateProfile: async (patch) => {
       if (!userId || !profile) throw new Error('Profil güncellemek için giriş yapmalısın.');
+      const ticket = identity.current.ticket(userId);
+      const request = ++profileRequest.current;
       const next = await upsertProfile({
         ...profile,
         ...patch,
@@ -336,7 +316,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         email: profile.email || email,
         role: profile.role,
       });
-      setProfile(next);
+      if (mounted.current && identity.current.current(ticket) && request === profileRequest.current) { setProfile(next); profileOwner.current = userId; }
     },
   }), [email, error, handleAuthCallbackUrl, hydrate, loadProfile, loading, profile, session, userId]);
 

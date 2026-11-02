@@ -2,15 +2,15 @@
   "expo": {
     "name": "Kemal Öğretmenim",
     "slug": "kemal-ogretmenim",
-    "version": "0.4.0",
+    "version": "0.6.2",
     "scheme": "kemalogretmenim",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/logo.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FFFBF5"
+      "backgroundColor": "#F7F8FC"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -18,28 +18,42 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kemalogretmenim.app",
-      "buildNumber": "4",
+      "buildNumber": "8",
       "infoPlist": {
         "NSCameraUsageDescription": "Profil ve öğretmen doğrulama dosyaları için kamera kullanılabilir.",
-        "NSPhotoLibraryUsageDescription": "Profil ve öğretmen doğrulama dosyaları için fotoğraf seçilebilir."
+        "NSPhotoLibraryUsageDescription": "Profil ve öğretmen doğrulama dosyaları için fotoğraf seçilebilir.",
+        "UISupportsDocumentBrowser": true
       }
     },
     "android": {
       "package": "com.kemalogretmenim.app",
-      "versionCode": 4,
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
-        "backgroundColor": "#FFFBF5"
+        "backgroundColor": "#F7F8FC"
       },
       "permissions": [
         "POST_NOTIFICATIONS"
+      ],
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.REQUEST_INSTALL_PACKAGES"
       ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
       "expo-notifications",
-      "expo-font"
+      "expo-font",
+      "expo-screen-orientation",
+      "expo-sharing",
+      "expo-system-ui"
     ],
     "experiments": {
       "typedRoutes": true
@@ -55,6 +69,12 @@
         "projectId": "e563b139-5c2e-4a94-af2b-418e8f03207d"
       }
     },
-    "owner": "kemalogretmen"
+    "owner": "kemalogretmen",
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Kemal Öğretmenim Uygulaması",
+      "shortName": "Kemal Öğretmenim"
+    }
   }
 }

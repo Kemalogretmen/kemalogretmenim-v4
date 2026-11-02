@@ -27,9 +27,11 @@ const os = require('node:os');
         const box = await canvas.boundingBox();
         assert(box.width > 200 && box.height > 200, `${name}: usable mobile sand area`);
         assert(box.x >= 0 && box.x + box.width <= width, 'Sand fits the phone');
-        const p = { x: box.x + box.width * .35, y: box.y + box.height * .45 };
+        const stageBox = await page.locator('#whiteboardStage').boundingBox();
+        const fractionY = (stageBox.y + stageBox.height * .45 - box.y) / box.height;
+        const p = { x: box.x + box.width * .35, y: box.y + box.height * fractionY };
         await page.touchscreen.tap(p.x, p.y);
-        const alpha = () => canvas.evaluate(c => c.getContext('2d').getImageData(Math.floor(c.width * .35), Math.floor(c.height * .45), 1, 1).data[3]);
+        const alpha = () => canvas.evaluate((c, y) => c.getContext('2d').getImageData(Math.floor(c.width * .35), Math.floor(c.height * y), 1, 1).data[3], fractionY);
         assert(await alpha() < 80, `${name}: native touch leaves a sand mark`);
         if (name === 'chromium') {
           const cdp = await page.context().newCDPSession(page);

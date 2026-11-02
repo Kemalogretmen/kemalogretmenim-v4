@@ -21,6 +21,9 @@
     let state = loadState();
     let editingStudentId = null;
     let pendingImport = null;
+    let pendingStudentImport = null;
+    let studentRosterWorkbook = null;
+    let studentImportVersion = 0;
     let editingManualExamId = null;
     let manualDraft = {};
     let manualDraftClassId = null;
@@ -30,6 +33,7 @@
     let cropState = null;
     let calendarCursor = new Date();
     let selectedCalendarDate = today();
+    let holidayPlannerCache = { raw: undefined, planner: { tatiller: [] }, years: new Set() };
     let activeBirthdayPopups = [];
     let clockTimer = null;
     const selectedStudentIds = new Set();
@@ -46,7 +50,9 @@
       applyingRemote: false,
       lastSavedAt: "",
       lastLoadedAt: "",
-      lastError: ""
+      lastError: "",
+      rowVersion: null,
+      rowChecked: false
     };
 
     const els = {};
@@ -78,6 +84,8 @@
         "specialPrograms", "healthStatus", "noteDate", "noteText", "addNoteBtn",
         "noteList", "meetingDate", "meetingType", "meetingText", "addMeetingBtn", "meetingList",
         "studentAcademic", "examName", "examDate", "excelFile", "importExamBtn", "importSummary",
+        "studentImportPanel", "studentImportClass", "studentRosterFile", "studentImportSheet",
+        "previewStudentImportBtn", "downloadStudentTemplateBtn", "exportStudentRosterBtn", "studentImportSummary", "studentImportPreview", "confirmStudentImportBtn",
         "examList", "reportStudent", "reportExam", "subjectPicker", "refreshReportBtn", "reportCard",
         "downloadPdfBtn", "downloadPngBtn", "downloadJpegBtn", "shareWhatsappBtn", "exportBackupBtn", "backupFile",
         "importBackupBtn", "clearAllBtn", "recentAcademic", "quickAddClassBtn", "importReviewDialog",
@@ -103,7 +111,7 @@
         "clearScheduleFormBtn", "scheduleBoard", "scheduleSummary", "lessonPlannerFrame",
         "lessonPlannerFocusDate", "lessonPlannerFocusInfo", "lessonPlannerPrevWeekBtn",
         "lessonPlannerTodayBtn", "lessonPlannerNextWeekBtn", "prevCalendarMonthBtn",
-        "nextCalendarMonthBtn", "todayCalendarBtn", "requestNotificationBtn", "calendarTitle",
+        "nextCalendarMonthBtn", "todayCalendarBtn", "requestNotificationBtn", "manageHolidaysBtn", "calendarTitle",
         "calendarGrid", "calendarEventDate", "calendarEventType", "calendarEventTime",
         "calendarEventTitle", "calendarReminder", "calendarEventNote", "saveCalendarEventBtn",
         "clearCalendarFormBtn", "selectedDayEvents", "birthdayDialog", "birthdayPopupBody",
@@ -140,6 +148,13 @@
       els.deleteClassBtn.addEventListener("click", deleteActiveClass);
       els.studentSearch.addEventListener("input", renderStudents);
       els.addStudentBtn.addEventListener("click", () => openStudentDialog());
+      els.studentRosterFile.addEventListener("change", () => clearStudentRosterImport(true));
+      els.studentImportClass.addEventListener("change", () => clearStudentRosterImport());
+      els.studentImportSheet.addEventListener("change", previewStudentRosterImport);
+      els.previewStudentImportBtn.addEventListener("click", previewStudentRosterImport);
+      els.confirmStudentImportBtn.addEventListener("click", commitStudentRosterImport);
+      els.downloadStudentTemplateBtn.addEventListener("click", downloadStudentRosterTemplate);
+      els.exportStudentRosterBtn.addEventListener("click", exportStudentRoster);
       els.selectAllStudents.addEventListener("change", toggleSelectAllStudents);
       els.clearStudentSelectionBtn.addEventListener("click", clearStudentSelection);
       els.deleteSelectedStudentsBtn.addEventListener("click", deleteSelectedStudents);
@@ -239,6 +254,7 @@
       els.prevCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(-1));
       els.nextCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(1));
       els.todayCalendarBtn.addEventListener("click", goTodayCalendar);
+      els.manageHolidaysBtn?.addEventListener("click", openHolidayManager);
       els.requestNotificationBtn.addEventListener("click", requestNotificationPermission);
       els.calendarEventDate.addEventListener("change", () => selectCalendarDate(els.calendarEventDate.value || today()));
       els.saveCalendarEventBtn.addEventListener("click", saveCalendarEvent);
@@ -288,7 +304,7 @@
     }
 
     function saveState(options = {}) {
-      state.updatedAt = new Date().toISOString();
+      if (!options.preserveTimestamp) state.updatedAt = new Date().toISOString();
       try {
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
         if (!options.skipCloud) queueCloudSave();
@@ -329,6 +345,15 @@
           disableCloudSync("Yerel mod", "Bulut senkron yalnızca aktif öğretmen hesaplarında çalışır.");
           return;
         }
+        if (cloudSync.userId !== user.id) {
+          cloudSync.rowVersion = null; cloudSync.rowChecked = false; cloudSync.ready = false;
+          // The owned mobile bootstrap records which server revision produced
+          // this local snapshot. A server read alone cannot establish lineage.
+          const base = window.__KEMAL_AGENDA_LOCAL_BASE__;
+          if (base?.checked && (typeof base.revision === "string" || base.revision === null)) {
+            cloudSync.rowVersion = base.revision; cloudSync.rowChecked = true;
+          }
+        }
         cloudSync.client = window.kemalUserAuth.getClient();
         cloudSync.userId = user.id;
         cloudSync.enabled = true;
@@ -346,6 +371,8 @@
       cloudSync.enabled = false;
       cloudSync.client = null;
       cloudSync.userId = "";
+      cloudSync.rowVersion = null;
+      cloudSync.rowChecked = false;
       setCloudSyncStatus("local", status, detail);
     }
 
@@ -353,6 +380,7 @@
       try {
         const row = await fetchCloudRow();
         if (!row) {
+          acceptCloudVersion(null);
           cloudSync.ready = true;
           setCloudSyncStatus("ready", "Bulut hazır", localHasMeaningfulAgenda()
             ? "Bu cihazdaki kayıt ilk değişiklikte buluta aktarılacak. İsterseniz Şimdi Buluta Kaydet düğmesini kullanın."
@@ -362,7 +390,9 @@
 
         const remoteTime = remoteUpdatedTime(row);
         const localTime = Date.parse(state.updatedAt || "") || 0;
-        if (remoteTime && remoteTime > localTime + 2000) {
+        // Opening the page creates a default class. That initialization must
+        // never win against a real cloud record just because its clock is newer.
+        if (!localHasMeaningfulAgenda() || (remoteTime && remoteTime > localTime + 2000)) {
           const shouldAsk = localHasMeaningfulAgenda() && localTime;
           const shouldLoad = !shouldAsk || confirm("Bulutta bu cihazdakinden daha yeni bir Öğretmen Ajandası kaydı var. Buluttaki veriyi bu cihaza yükleyelim mi? Mevcut yerel kayıt güvenlik yedeği olarak saklanacak.");
           if (shouldLoad) {
@@ -378,14 +408,22 @@
           return;
         }
 
-        if (localTime && localTime > remoteTime + 2000) {
-          await saveCloudNow({ silent: true });
+        if (cloudSnapshotMatches(row)) {
+          acceptCloudVersion(row);
+          cloudSync.ready = true;
+          cloudSync.lastSavedAt = row.updated_at || row.client_updated_at || "";
+          setCloudSyncStatus("ready", "Bulut güncel", `Son kayıt: ${formatCloudDate(row.updated_at || row.client_updated_at)} · ${formatBytes(row.storage_bytes || 0)}.`);
           return;
         }
 
-        cloudSync.ready = true;
-        cloudSync.lastSavedAt = row.updated_at || row.client_updated_at || "";
-        setCloudSyncStatus("ready", "Bulut güncel", `Son kayıt: ${formatCloudDate(row.updated_at || row.client_updated_at)} · ${formatBytes(row.storage_bytes || 0)}.`);
+        // Only the revision that actually produced our local document can
+        // authorize an autosave. A newer device clock is not proof of that.
+        if (cloudSync.rowChecked && cloudSync.rowVersion === row.updated_at) {
+          await saveCloudNow({ silent: true });
+          return;
+        }
+        cloudSync.ready = false;
+        setCloudSyncError("Bu cihazdaki ajandanın bulut sürümü doğrulanamadı. Yerel kayıt korundu; Yedek bölümünden yedek alıp son bulut kaydını yükleyin. Cihaz saati tek başına buluttaki kaydın üzerine yazılmasına izin vermez.");
       } catch (error) {
         console.warn(error);
         setCloudSyncError(cloudErrorMessage(error));
@@ -393,7 +431,7 @@
     }
 
     function queueCloudSave() {
-      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId || cloudSync.applyingRemote) return;
+      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId || !cloudSync.ready || cloudSync.applyingRemote) return;
       clearTimeout(cloudSync.timer);
       cloudSync.timer = setTimeout(() => {
         saveCloudNow({ queued: true });
@@ -412,6 +450,7 @@
       cloudSync.saving = true;
       setCloudSyncStatus("syncing", "Buluta kaydediliyor", "Yerel ajanda verisi öğretmen hesabınıza aktarılıyor.");
       try {
+        if (!cloudSync.rowChecked) throw new Error("Bulut kaydı henüz doğrulanmadı. Önce bulut kontrolünün tamamlanmasını bekleyin.");
         const snapshot = buildCloudSnapshot();
         const bytes = payloadBytes(snapshot);
         if (bytes > CLOUD_SYNC_MAX_BYTES) {
@@ -425,12 +464,19 @@
           storage_bytes: bytes,
           client_updated_at: snapshot.agendaState.updatedAt || new Date().toISOString()
         };
-        const result = await cloudSync.client
-          .from(CLOUD_SYNC_TABLE)
-          .upsert(payload, { onConflict: "user_id" })
-          .select("updated_at,storage_bytes")
-          .maybeSingle();
+        // Compare the server revision we loaded, not just the client's clock.
+        // A second device's work must survive a stale autosave on this device.
+        let query = cloudSync.client.from(CLOUD_SYNC_TABLE);
+        query = cloudSync.rowVersion
+          ? query.update(payload).eq("user_id", cloudSync.userId).eq("updated_at", cloudSync.rowVersion)
+          : query.insert(payload);
+        const result = await query.select("updated_at,storage_bytes").maybeSingle();
         if (result.error) throw result.error;
+        if (!result.data) {
+          writeLocalBackupBeforeCloud();
+          throw new Error("Ajanda başka bir cihazda değişti. Yerel çalışmanız korundu; Yedek bölümünden son bulut kaydını yükleyip yeniden deneyin.");
+        }
+        cloudSync.rowVersion = result.data.updated_at;
         cloudSync.ready = true;
         cloudSync.lastSavedAt = result.data?.updated_at || new Date().toISOString();
         setCloudSyncStatus("ready", "Buluta kaydedildi", `Son kayıt: ${formatCloudDate(cloudSync.lastSavedAt)} · ${formatBytes(bytes)}.`);
@@ -487,7 +533,42 @@
         .eq("user_id", cloudSync.userId)
         .maybeSingle();
       if (result.error) throw result.error;
+      if (result.data && (!result.data.agenda_state ||
+          !Array.isArray(result.data.agenda_state.classes) || !Array.isArray(result.data.agenda_state.students) ||
+          !Array.isArray(result.data.agenda_state.exams) || typeof result.data.updated_at !== "string")) {
+        throw new Error("Buluttaki ajanda kaydı geçerli görünmüyor. Yerel kayıt korundu.");
+      }
       return result.data || null;
+    }
+
+    function acceptCloudVersion(row) {
+      cloudSync.rowVersion = row?.updated_at || null;
+      cloudSync.rowChecked = true;
+    }
+
+    function cloudSnapshotMatches(row) {
+      // Focus/navigation and reminder delivery logs are local UI state. Ignore
+      // them when recognizing an otherwise identical saved cloud document.
+      function comparableAgenda(value) {
+        const copy = normalizeState(JSON.parse(JSON.stringify(value)));
+        for (const key of ["updatedAt", "lessonPlannerFocusDate", "lessonPlannerAutomaticWeek", "birthdayReminderLog", "birthdaySnoozeLog"]) delete copy[key];
+        return copy;
+      }
+      function comparablePlanner(value) {
+        if (!value || typeof value !== "object") return null;
+        const copy = JSON.parse(JSON.stringify(value));
+        for (const key of ["currentWeek", "lastFocusDate", "activeSinif"]) delete copy[key];
+        // Official defaults are derived; teacher overrides remain part of the cloud document.
+        copy.tatiller = (copy.tatiller || []).filter(item => item.source !== 'tr-official' || item.customized || item.disabled);
+        return copy;
+      }
+      function stable(value) {
+        if (Array.isArray(value)) return value.map(stable);
+        if (!value || typeof value !== "object") return value;
+        return Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])]));
+      }
+      return JSON.stringify(stable({ agenda: comparableAgenda(state), planner: comparablePlanner(readLessonPlannerBackup()) })) ===
+        JSON.stringify(stable({ agenda: comparableAgenda(row.agenda_state), planner: comparablePlanner(row.lesson_planner_state) }));
     }
 
     function applyCloudRow(row) {
@@ -501,8 +582,9 @@
         state = normalizeState(JSON.parse(JSON.stringify(incoming)));
         restoreLessonPlannerBackup(row.lesson_planner_state || null);
         ensureInitialClass();
-        saveState({ skipCloud: true });
+        saveState({ skipCloud: true, preserveTimestamp: true });
         renderAll();
+        acceptCloudVersion(row);
       } finally {
         cloudSync.applyingRemote = false;
       }
@@ -535,11 +617,18 @@
         state.scheduleItems?.length ||
         state.calendarEvents?.length ||
         (state.classes.length > 1) ||
+        state.classes.some(item => item?.name && item.name !== "Sınıfım") ||
         state.teacher?.photo ||
         state.teacher?.schoolLogo ||
         state.teacher?.schoolName ||
-        readLessonPlannerBackup()
+        lessonPlannerHasMeaningfulData(readLessonPlannerBackup())
       );
+    }
+
+    function lessonPlannerHasMeaningfulData(planner) {
+      if (!planner || typeof planner !== "object") return false;
+      return Boolean(Object.values(planner.programs || {}).some(days => Object.values(days || {}).some(items => Array.isArray(items) && items.some(item => item?.ders && !item?.isHoliday))) ||
+        Object.values(planner.yillikPlanlar || {}).some(items => Array.isArray(items) && items.length) || planner.etutler?.length);
     }
 
     function payloadBytes(payload) {
@@ -625,11 +714,11 @@
         const classId = uid("class");
         state.classes.push({ id: classId, name: "Sınıfım", year: "2025-2026", teacherName: "Kemal Öğretmen" });
         state.activeClassId = classId;
-        saveState();
+        saveState({ skipCloud: true, preserveTimestamp: true });
       }
       if (!state.activeClassId || !state.classes.some((item) => item.id === state.activeClassId)) {
         state.activeClassId = state.classes[0].id;
-        saveState();
+        saveState({ skipCloud: true, preserveTimestamp: true });
       }
       els.examDate.value = today();
       els.manualExamDate.value = today();
@@ -685,6 +774,10 @@
       els.activeClassSelect.innerHTML = state.classes.map((item) => (
         `<option value="${escapeHtml(item.id)}" ${item.id === state.activeClassId ? "selected" : ""}>${escapeHtml(classLabel(item))}</option>`
       )).join("");
+      const importClass = els.studentImportClass.value;
+      els.studentImportClass.innerHTML = els.activeClassSelect.innerHTML;
+      els.studentImportClass.value = state.classes.some(item => item.id === importClass) ? importClass : state.activeClassId;
+      if (pendingStudentImport && !state.classes.some(item => item.id === pendingStudentImport.classId)) clearStudentRosterImport();
     }
 
     function renderSettings() {
@@ -941,11 +1034,11 @@
     }
 
     function renderSchoolLogo() {
-      els.schoolLogoPreview.innerHTML = state.teacher?.schoolLogo ? `<img src="${state.teacher.schoolLogo}" alt="">` : "Logo";
+      els.schoolLogoPreview.innerHTML = state.teacher?.schoolLogo ? `<img src="${escapeHtml(safeImageSource(state.teacher.schoolLogo))}" alt="">` : "Logo";
     }
 
     function teacherAvatarHtml() {
-      if (state.teacher?.photo) return `<img src="${state.teacher.photo}" alt="">`;
+      if (state.teacher?.photo) return `<img src="${escapeHtml(safeImageSource(state.teacher.photo))}" alt="">`;
       return "KÖ";
     }
 
@@ -1066,12 +1159,12 @@
     }
 
     function avatarHtml(student) {
-      if (student.photo) return `<img src="${student.photo}" alt="" style="${studentPhotoStyle(student)}">`;
+      if (student.photo) return `<img src="${escapeHtml(safeImageSource(student.photo))}" alt="" style="${studentPhotoStyle(student)}">`;
       return escapeHtml(initials(student));
     }
 
     function studentPhotoStyle(student) {
-      const fit = student.photoFit || "contain";
+      const fit = ["cover", "contain", "fill", "none", "scale-down"].includes(student.photoFit) ? student.photoFit : "contain";
       const x = clampNumber(student.photoX, 0, 100, 50);
       const y = clampNumber(student.photoY, 0, 100, 50);
       return `object-fit:${fit};object-position:${x}% ${y}%;`;
@@ -1168,7 +1261,7 @@
       els.studentPhotoFit.value = student.photoFit || "contain";
       els.studentPhotoX.value = clampNumber(student.photoX, 0, 100, 50);
       els.studentPhotoY.value = clampNumber(student.photoY, 0, 100, 50);
-      els.photoPreview.innerHTML = student.photo ? `<img src="${student.photo}" alt="" style="${studentPhotoStyle(student)}">` : "Foto";
+      els.photoPreview.innerHTML = student.photo ? `<img src="${escapeHtml(safeImageSource(student.photo))}" alt="" style="${studentPhotoStyle(student)}">` : "Foto";
       els.studentPhoto.value = "";
     }
 
@@ -1342,7 +1435,7 @@
       ctx.fillRect(0, 0, outputSize, outputSize);
       ctx.drawImage(els.cropImage, sx, sy, sw, sh, 0, 0, outputSize, outputSize);
       const dataUrl = canvas.toDataURL("image/jpeg", .84);
-      els.photoPreview.innerHTML = `<img src="${dataUrl}" alt="" style="${currentPhotoStyle()}">`;
+      els.photoPreview.innerHTML = `<img src="${escapeHtml(safeImageSource(dataUrl))}" alt="" style="${currentPhotoStyle()}">`;
       els.photoPreview.dataset.photo = dataUrl;
       els.studentPhotoFit.value = "contain";
       els.studentPhotoX.value = 50;
@@ -1597,7 +1690,7 @@
         .filter((exam) => exam.results?.[student.id])
         .map((exam) => {
           const total = exam.results[student.id].total;
-          return `<tr><td>${escapeHtml(exam.name)}</td><td>${formatDate(exam.date)}</td><td>${total.d}</td><td>${total.y}</td><td>${total.b}</td><td>${formatPercent(total.percent)}</td></tr>`;
+          return `<tr><td>${escapeHtml(exam.name)}</td><td>${formatDate(exam.date)}</td><td>${escapeHtml(total.d)}</td><td>${escapeHtml(total.y)}</td><td>${escapeHtml(total.b)}</td><td>${formatPercent(total.percent)}</td></tr>`;
         }).join("");
       els.studentAcademic.innerHTML = rows
         ? `<div class="table-wrap"><table><thead><tr><th>Sınav</th><th>Tarih</th><th>D</th><th>Y</th><th>B</th><th>Başarı</th></tr></thead><tbody>${rows}</tbody></table></div>`
@@ -1947,6 +2040,222 @@
       student.family = student.family || {};
       student.notes = student.notes || [];
       student.meetings = student.meetings || [];
+    }
+
+    function clearStudentRosterImport(dropWorkbook = false) {
+      studentImportVersion += 1;
+      pendingStudentImport = null;
+      els.studentImportSummary.textContent = '';
+      els.studentImportPreview.replaceChildren();
+      els.confirmStudentImportBtn.disabled = true;
+      if (dropWorkbook) {
+        studentRosterWorkbook = null;
+        els.studentImportSheet.innerHTML = '<option value="">Önce dosya seçin</option>';
+        els.studentImportSheet.disabled = true;
+      }
+    }
+
+    function extractStudentRoster(rows) {
+      const aliases = {
+        schoolNo: ['NO', 'OKUL NO', 'OKUL NUMARASI', 'OGRENCI NO', 'OGRENCI NUMARASI', 'NUMARA', 'NUMARASI'],
+        firstName: ['AD', 'ADI', 'OGRENCI ADI', 'OGRENCININ ADI', 'ISIM'],
+        lastName: ['SOYAD', 'SOYADI', 'OGRENCI SOYADI', 'OGRENCININ SOYADI', 'SOYISIM'],
+        fullName: ['AD SOYAD', 'ADI SOYADI', 'ADISOYADI', 'AD VE SOYAD', 'ADI VE SOYADI', 'OGRENCI', 'OGRENCI AD SOYAD', 'OGRENCI ADI SOYADI', 'OGRENCININ ADI SOYADI'],
+        className: ['SINIF', 'SINIFI', 'SINIF SUBE', 'SINIFI SUBESI', 'SUBE', 'SUBESI']
+      };
+      let header = null;
+      let start = 0;
+      for (let index = 0; index < Math.min(rows.length, 30); index += 1) {
+        const columns = {};
+        (rows[index] || []).forEach((cell, column) => {
+          const label = normalize(cell);
+          for (const [key, names] of Object.entries(aliases)) if (names.includes(label)) columns[key] = column;
+        });
+        if (columns.fullName !== undefined || (columns.firstName !== undefined && columns.lastName !== undefined)) {
+          header = columns; start = index + 1; break;
+        }
+      }
+      if (!header) throw new Error('Ad ve Soyad veya Ad Soyad başlıkları bulunamadı. Boş Excel şablonunu kullanabilirsiniz.');
+      const students = [];
+      for (let index = start; index < rows.length; index += 1) {
+        const row = rows[index] || [];
+        if (!row.some(cell => cleanCell(cell))) continue;
+        const read = key => header[key] === undefined ? '' : cleanName(row[header[key]]);
+        let firstName = read('firstName');
+        let lastName = read('lastName');
+        if (!firstName && header.fullName !== undefined) {
+          const parts = read('fullName').split(' ').filter(Boolean);
+          firstName = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
+          lastName = parts.length > 1 ? parts.at(-1) : '';
+        }
+        const name = normalize(`${firstName} ${lastName}`);
+        if (['TOPLAM', 'GENEL TOPLAM', 'AD SOYAD', 'ADI SOYADI'].includes(name)) continue;
+        students.push({sourceRow: index + 1, schoolNo: read('schoolNo'), firstName, lastName: lastName.toLocaleUpperCase('tr-TR'), className: read('className')});
+      }
+      if (!students.length) throw new Error('Dosyada öğrenci satırı bulunamadı.');
+      return students;
+    }
+
+    function rosterNumber(value) {
+      const number = cleanCell(value).replace(/\s+/g, '');
+      return /^\d+$/.test(number) ? number.replace(/^0+(?=\d)/, '') : normalize(number);
+    }
+
+    function studentRosterSignature(classId) {
+      return JSON.stringify(state.students.filter(student => student.classId === classId)
+        .map(student => [student.id, student.schoolNo, student.firstName, student.lastName]).sort((a,b) => String(a[0]).localeCompare(String(b[0]))));
+    }
+
+    function buildStudentRosterPlan(rows, classId) {
+      if (!state.classes.some(item => item.id === classId)) throw new Error('Öğrencilerin ekleneceği sınıfı seçin.');
+      const students = state.students.filter(student => student.classId === classId);
+      const seenNumbers = new Set();
+      const seenNames = new Set();
+      const matchedStudents = new Set();
+      const namesWithNumber = new Set(rows.filter(row => rosterNumber(row.schoolNo)).map(row => normalize(`${row.firstName} ${row.lastName}`)));
+      const entries = rows.map(row => {
+        const name = normalize(`${row.firstName} ${row.lastName}`);
+        const number = rosterNumber(row.schoolNo);
+        const entry = {...row, action: 'add', studentId: null, selected: true, reason: 'Eklenecek'};
+        const skip = reason => ({...entry, action: 'skip', selected: false, reason});
+        if (!row.firstName || [row.firstName, row.lastName, row.schoolNo].some(value => String(value).length > 150)) return skip('Ad eksik veya alan çok uzun');
+        if (!number && namesWithNumber.has(name)) return skip('Aynı öğrencinin okul numaralı satırı kullanılacak');
+        if ((number && seenNumbers.has(number)) || (!number && seenNames.has(name))) return skip('Dosyada tekrar eden öğrenci');
+        if (number) seenNumbers.add(number);
+        seenNames.add(name);
+        const byNumber = number ? students.filter(student => rosterNumber(student.schoolNo) === number) : [];
+        const byName = students.filter(student => normalize(fullName(student)) === name);
+        if (byNumber.length > 1 || (!byNumber.length && byName.length > 1)) return skip('Birden fazla kayıt eşleşiyor; elle kontrol edin');
+        if (byNumber.length) {
+          if (normalize(fullName(byNumber[0])) !== name) return skip('Okul numarası başka bir öğrenciye ait');
+          return skip('Bu sınıfta zaten kayıtlı');
+        }
+        if (byName.length) {
+          const student = byName[0];
+          if (number && student.schoolNo && rosterNumber(student.schoolNo) !== number) return skip('Aynı isimde farklı okul numarası; elle kontrol edin');
+          if (number && !student.schoolNo) {
+            if (matchedStudents.has(student.id)) return skip('Aynı öğrenci dosyada birden fazla kez eşleşiyor');
+            matchedStudents.add(student.id);
+            return {...entry, action:'complete', studentId:student.id, reason:'Eksik okul numarası tamamlanacak'};
+          }
+          return skip('Bu sınıfta zaten kayıtlı');
+        }
+        return entry;
+      });
+      // Two new pupils with the same name and different numbers are ambiguous,
+      // but both can be valid. Repeated numbers are never imported twice.
+      return {classId, rows, entries, signature: studentRosterSignature(classId)};
+    }
+
+    async function previewStudentRosterImport() {
+      const file = els.studentRosterFile.files?.[0];
+      const version = ++studentImportVersion;
+      pendingStudentImport = null;
+      els.confirmStudentImportBtn.disabled = true;
+      els.studentImportPreview.replaceChildren();
+      if (!file) { els.studentImportSummary.textContent = 'Önce öğrenci listesini seçin.'; return; }
+      if (file.size > 8 * 1024 * 1024) { els.studentImportSummary.textContent = 'Dosya en fazla 8 MB olabilir.'; return; }
+      if (!window.XLSX) { els.studentImportSummary.textContent = 'Excel okuma aracı yüklenemedi. Sayfayı yenileyin.'; return; }
+      const classId = els.studentImportClass.value;
+      els.studentImportSummary.textContent = 'Dosya inceleniyor…';
+      try {
+        if (!studentRosterWorkbook || studentRosterWorkbook.file !== file) {
+          const buffer = await file.arrayBuffer();
+          if (version !== studentImportVersion) return;
+          const workbook = XLSX.read(buffer, {type:'array', cellDates:true, sheetRows:5032, cellFormula:false, cellHTML:false});
+          studentRosterWorkbook = {file, workbook};
+          els.studentImportSheet.innerHTML = workbook.SheetNames.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+          els.studentImportSheet.disabled = workbook.SheetNames.length < 2;
+        }
+        const workbook = studentRosterWorkbook.workbook;
+        const sheet = workbook.Sheets[els.studentImportSheet.value];
+        if (!sheet) throw new Error('Çalışma sayfası bulunamadı.');
+        const range = sheet['!fullref'] || sheet['!ref'];
+        if (range && XLSX.utils.decode_range(range).e.r >= 5031) throw new Error('Tek seferde en fazla 5.000 öğrenci aktarılabilir. Dosyayı bölerek yükleyin.');
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', raw:false});
+        const students = extractStudentRoster(rows);
+        if (students.length > 5000) throw new Error('Tek seferde en fazla 5.000 öğrenci aktarılabilir.');
+        pendingStudentImport = buildStudentRosterPlan(students, classId);
+        renderStudentRosterPreview();
+      } catch (error) {
+        if (version === studentImportVersion) els.studentImportSummary.textContent = error.message || 'Öğrenci listesi okunamadı.';
+      }
+    }
+
+    function renderStudentRosterPreview() {
+      const plan = pendingStudentImport;
+      if (!plan) return;
+      const classInfo = state.classes.find(item => item.id === plan.classId);
+      const eligible = plan.entries.filter(entry => entry.action !== 'skip');
+      const refreshSelection = () => {
+        const count = plan.entries.filter(entry => entry.selected && entry.action !== 'skip').length;
+        els.studentImportSummary.textContent = `${classLabel(classInfo)} · ${count} seçili · ${eligible.length} eklenebilir / tamamlanabilir · ${plan.entries.length - eligible.length} atlanacak`;
+        els.confirmStudentImportBtn.disabled = count === 0;
+      };
+      els.studentImportPreview.innerHTML = `<table><thead><tr><th>Seç</th><th>Satır</th><th>Okul No</th><th>Ad Soyad</th><th>Dosyadaki sınıf</th><th>Durum</th></tr></thead><tbody>${plan.entries.map((entry,index) => `<tr>
+        <td><input type="checkbox" data-roster-row="${index}" aria-label="${escapeHtml(`${entry.firstName} ${entry.lastName}`)} seç" ${entry.selected ? 'checked' : ''} ${entry.action === 'skip' ? 'disabled' : ''}></td>
+        <td>${entry.sourceRow}</td><td>${escapeHtml(entry.schoolNo || '-')}</td><td>${escapeHtml(`${entry.firstName} ${entry.lastName}`)}</td><td>${escapeHtml(entry.className || '-')}</td><td>${escapeHtml(entry.reason)}</td></tr>`).join('')}</tbody></table>`;
+      els.studentImportPreview.querySelectorAll('[data-roster-row]').forEach(input => input.addEventListener('change', () => {
+        plan.entries[Number(input.dataset.rosterRow)].selected = input.checked;
+        refreshSelection();
+      }));
+      refreshSelection();
+    }
+
+    function commitStudentRosterImport() {
+      const plan = pendingStudentImport;
+      if (!plan || !state.classes.some(item => item.id === plan.classId)) return;
+      if (plan.signature !== studentRosterSignature(plan.classId)) {
+        pendingStudentImport = buildStudentRosterPlan(plan.rows, plan.classId);
+        renderStudentRosterPreview();
+        toast('Sınıf listesi değişti. Önizlemeyi yeniden kontrol edip onaylayın.');
+        return;
+      }
+      const selected = plan.entries.filter(entry => entry.selected && entry.action !== 'skip');
+      if (!selected.length) return;
+      if (state.activeClassId !== plan.classId && !canDiscardManualExam()) return;
+      const previous = state.students;
+      const previousClass = state.activeClassId;
+      const next = previous.slice();
+      let added = 0, completed = 0;
+      selected.forEach(entry => {
+        if (entry.action === 'complete') {
+          const index = next.findIndex(student => student.id === entry.studentId && student.classId === plan.classId);
+          next[index] = {...next[index], schoolNo:entry.schoolNo};
+          completed += 1;
+        } else {
+          next.push({...blankStudent(), classId:plan.classId, firstName:entry.firstName, lastName:entry.lastName, schoolNo:entry.schoolNo});
+          added += 1;
+        }
+      });
+      state.students = next;
+      state.activeClassId = plan.classId;
+      if (!saveState()) { state.students = previous; state.activeClassId = previousClass; return; }
+      if (previousClass !== plan.classId) resetManualExam();
+      selectedStudentIds.clear();
+      clearStudentRosterImport();
+      renderAll();
+      els.studentImportSummary.textContent = `${added} öğrenci eklendi, ${completed} öğrencinin okul numarası tamamlandı.`;
+      toast('Öğrenci listesi kaydedildi.');
+    }
+
+    function downloadStudentRosterTemplate() {
+      if (!window.XLSX) { toast('Excel aracı yüklenemedi.'); return; }
+      downloadRosterWorkbook([['Okul No', 'Ad', 'Soyad']], 'ogrenci-listesi-sablonu.xlsx');
+    }
+
+    function exportStudentRoster() {
+      if (!window.XLSX || !activeStudents().length) { toast('Bu sınıfta dışa aktarılacak öğrenci yok veya Excel aracı yüklenemedi.'); return; }
+      const rows = [['Okul No', 'Ad', 'Soyad', 'Sınıf'], ...activeStudents().map(student => [student.schoolNo || '', student.firstName || '', student.lastName || '', classLabel(activeClass())])];
+      downloadRosterWorkbook(rows, `ogrenci-listesi-${safeFileName(classLabel(activeClass()))}.xlsx`);
+    }
+
+    function downloadRosterWorkbook(rows, fileName) {
+      const workbook = XLSX.utils.book_new();
+      const sheet = XLSX.utils.aoa_to_sheet(rows);
+      sheet['!cols'] = [{wch:12}, {wch:24}, {wch:24}, {wch:24}];
+      XLSX.utils.book_append_sheet(workbook, sheet, 'Öğrenciler');
+      downloadBlob(new Blob([XLSX.write(workbook, {bookType:'xlsx',type:'array'})], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), fileName);
     }
 
     async function parseExcelFile(file) {
@@ -2877,9 +3186,12 @@
     function syncLessonPlannerFrame() {
       if (!els.lessonPlannerFrame?.contentWindow) return;
       const focusDate = isDateKey(state.lessonPlannerFocusDate) ? state.lessonPlannerFocusDate : today();
+      const activityPath = document.documentElement.dataset.kemalActivityPath || "";
+      const plannerTab = new URLSearchParams(activityPath.split("?")[1] || "").get("plannerTab");
       els.lessonPlannerFrame.contentWindow.postMessage({
         type: "kemal-ajanda-focus-week",
-        date: focusDate
+        date: focusDate,
+        ...(["tab-program", "tab-plan", "tab-yukle", "tab-tatil"].includes(plannerTab) ? { plannerTab } : {})
       }, window.location.origin === 'null' ? '*' : window.location.origin);
     }
 
@@ -2888,6 +3200,8 @@
       const data = event.data || {};
       if (data.type === "kemal-lesson-planner-data-changed") {
         saveState();
+        renderCalendar();
+        renderDashboard();
         return;
       }
       if (data.type !== "kemal-lesson-planner-week-changed") return;
@@ -3013,7 +3327,37 @@
 
     function calendarEventsForDate(value) {
       const key = typeof value === "string" ? value : dateKey(value);
-      return activeCalendarEvents().filter((event) => event.date === key);
+      return [...activeCalendarEvents().filter((event) => event.date === key), ...holidayEventsForDate(key)];
+    }
+
+    function holidayEventsForDate(key) {
+      const tools = window.KemalAgendaHolidays;
+      if (!tools || !tools.validDate(key)) return [];
+      let raw;
+      try { raw = localStorage.getItem(LESSON_PLANNER_STORE_KEY); } catch { raw = null; }
+      if (raw !== holidayPlannerCache.raw) {
+        let planner;
+        try { planner = JSON.parse(raw); } catch { planner = null; }
+        holidayPlannerCache = { raw, planner: planner && typeof planner === 'object' && !Array.isArray(planner) ? planner : { tatiller: [] }, years: new Set() };
+      }
+      const year = Number(key.slice(0, 4));
+      if (!holidayPlannerCache.years.has(year)) {
+        tools.ensure(holidayPlannerCache.planner, [year - 1, year, year + 1]);
+        holidayPlannerCache.years.add(year);
+      }
+      return tools.matching(holidayPlannerCache.planner, key).map((item, index) => ({
+        id: `holiday_${item.officialId || index}_${key}`, synthetic: true, date: key,
+        type: 'holiday', title: item.name + (item.period === 'afternoon' ? ' · Yarım gün' : ''),
+        time: item.period === 'afternoon' ? '13:00' : '',
+        note: item.customized || !tools.isOfficial(item) ? 'Öğretmen tarafından düzenlenen tatil' : 'Türkiye resmî tatil takvimi'
+      }));
+    }
+
+    function openHolidayManager() {
+      showView('scheduleView');
+      els.lessonPlannerFrame?.contentWindow?.postMessage({
+        type: 'kemal-ajanda-focus-week', date: selectedCalendarDate, plannerTab: 'tab-tatil'
+      }, window.location.origin === 'null' ? '*' : window.location.origin);
     }
 
     function birthdayEventsForDate(value) {
@@ -3250,6 +3594,7 @@
         birthday: "🎂",
         exam: "📊",
         meb: "🇹🇷",
+        holiday: "🇹🇷",
         meeting: "☎️",
         reminder: "🔔",
         special: "⭐",
@@ -3262,6 +3607,7 @@
         birthday: "Doğum günü",
         exam: "Sınav / ölçme",
         meb: "MEB akademik takvim",
+        holiday: "Resmî / özel tatil",
         meeting: "Görüşme",
         reminder: "Hatırlatıcı",
         special: "Önemli gün",
@@ -3470,7 +3816,7 @@
       const school = state.teacher?.schoolName || "Kemal Öğretmenim";
       return `
         <div class="letterhead">
-          <div class="letterhead-logo">${state.teacher?.schoolLogo ? `<img src="${state.teacher.schoolLogo}" alt="">` : systemLogoHtml()}</div>
+          <div class="letterhead-logo">${state.teacher?.schoolLogo ? `<img src="${escapeHtml(safeImageSource(state.teacher.schoolLogo))}" alt="">` : systemLogoHtml()}</div>
           <div>
             <h2>${escapeHtml(title)}</h2>
             <p>${escapeHtml(school)}${subtitle ? ` · ${escapeHtml(subtitle)}` : ""}</p>
@@ -3500,7 +3846,7 @@
     }
 
     function photoBoxHtml(student, className = "class-list-photo") {
-      return `<div class="${className}">${student.photo ? `<img src="${student.photo}" alt="" style="${studentPhotoStyle(student)}">` : escapeHtml(initials(student))}</div>`;
+      return `<div class="${className}">${student.photo ? `<img src="${escapeHtml(safeImageSource(student.photo))}" alt="" style="${studentPhotoStyle(student)}">` : escapeHtml(initials(student))}</div>`;
     }
 
     function buildRankingListReport() {
@@ -3554,15 +3900,15 @@
             <tbody>
               ${rankedRows.map((row) => `
                 <tr>
-                  <td><strong>${row.rank}</strong></td>
+                  <td><strong>${escapeHtml(row.rank)}</strong></td>
                   <td><strong>${escapeHtml(row.name)}</strong></td>
                   <td>${escapeHtml(row.schoolNo || "-")}</td>
                   <td>${escapeHtml(row.className || "-")}</td>
                   <td>${escapeHtml(row.schoolName || "-")}</td>
                   <td>${escapeHtml(row.provinceName || "-")}</td>
-                  <td>${row.d}</td>
-                  <td>${row.y}</td>
-                  <td>${row.b}</td>
+                  <td>${escapeHtml(row.d)}</td>
+                  <td>${escapeHtml(row.y)}</td>
+                  <td>${escapeHtml(row.b)}</td>
                   <td>${formatNet(row.net)}</td>
                   ${scoreCells(row)}
                 </tr>
@@ -3849,7 +4195,7 @@
           <div class="report-kpi"><span>İlk Deneme Başarısı</span><b>${formatPercent(first.percent)}</b><p>${escapeHtml(first.exam.name)} · ${formatDate(first.exam.date)}</p></div>
           <div class="report-kpi"><span>Son Deneme Başarısı</span><b class="${deltaClass(percentDelta)}">${formatPercent(latest.percent)}</b><p>${escapeHtml(latest.exam.name)} · ${formatDate(latest.exam.date)}</p></div>
           <div class="report-kpi"><span>Başarı Değişimi</span><b class="${deltaClass(percentDelta)}">${formatPercentDelta(percentDelta)}</b><p>İlk denemeye göre</p></div>
-          <div class="report-kpi"><span>Doğru / Yanlış / Boş</span><b>${latest.d} / ${latest.y} / ${latest.b}</b><p>${countDeltaText(latest.d - first.d, "D")} · ${countDeltaText(latest.y - first.y, "Y")} · ${countDeltaText(latest.b - first.b, "B")}</p></div>
+          <div class="report-kpi"><span>Doğru / Yanlış / Boş</span><b>${escapeHtml(latest.d)} / ${escapeHtml(latest.y)} / ${escapeHtml(latest.b)}</b><p>${countDeltaText(latest.d - first.d, "D")} · ${countDeltaText(latest.y - first.y, "Y")} · ${countDeltaText(latest.b - first.b, "B")}</p></div>
         </div>
         <h3 class="report-section-title">Deneme Başarı Grafiği</h3>
         <div class="chart-panel">
@@ -3884,9 +4230,9 @@
                   <tr>
                     <td><strong>${escapeHtml(item.exam.name)}</strong></td>
                     <td>${formatDate(item.exam.date)}</td>
-                    <td>${item.d}</td>
-                    <td>${item.y}</td>
-                    <td>${item.b}</td>
+                    <td>${escapeHtml(item.d)}</td>
+                    <td>${escapeHtml(item.y)}</td>
+                    <td>${escapeHtml(item.b)}</td>
                     <td class="${deltaClass(index ? valueDelta(item.percent, first.percent) : 0)}"><strong>${formatPercent(item.percent)}</strong></td>
                     <td>${formatPercent(item.classAverage)}</td>
                     <td>${formatPercent(item.generalAverage)}</td>
@@ -3913,7 +4259,7 @@
                     <td><strong>${escapeHtml(subject)}</strong></td>
                     ${snapshots.map((item) => {
                       const subjectResult = item.result.subjects?.[subject];
-                      return `<td>${subjectResult ? `<strong>${formatPercent(subjectResult.percent)}</strong><br><span style="color:#667085;font-size:12px">${subjectResult.d}D · ${subjectResult.y}Y · ${subjectResult.b}B</span>` : "-"}</td>`;
+                      return `<td>${subjectResult ? `<strong>${formatPercent(subjectResult.percent)}</strong><br><span style="color:#667085;font-size:12px">${escapeHtml(subjectResult.d)}D · ${escapeHtml(subjectResult.y)}Y · ${escapeHtml(subjectResult.b)}B</span>` : "-"}</td>`;
                     }).join("")}
                     <td><span class="delta-pill ${deltaClass(delta)}">${formatPercentDelta(delta)}</span></td>
                   </tr>
@@ -4159,9 +4505,9 @@
         return `
           <tr>
             <td><strong>${escapeHtml(item.name)}</strong></td>
-            <td>${item.d}</td>
-            <td>${item.y}</td>
-            <td>${item.b}</td>
+            <td>${escapeHtml(item.d)}</td>
+            <td>${escapeHtml(item.y)}</td>
+            <td>${escapeHtml(item.b)}</td>
             <td>${formatNet(item.net)}</td>
             <td class="${status.className}">${formatPercent(item.percent)}</td>
             <td>${formatPercent(item.classAverage)}</td>
@@ -4185,9 +4531,9 @@
           <div class="report-photo">${avatarHtml(student)}</div>
         </div>
         <div class="report-kpis">
-          <div class="report-kpi"><span>Toplam Doğru</span><b>${report.total.d}</b></div>
-          <div class="report-kpi"><span>Toplam Yanlış</span><b>${report.total.y}</b></div>
-          <div class="report-kpi"><span>Toplam Boş</span><b>${report.total.b}</b></div>
+          <div class="report-kpi"><span>Toplam Doğru</span><b>${escapeHtml(report.total.d)}</b></div>
+          <div class="report-kpi"><span>Toplam Yanlış</span><b>${escapeHtml(report.total.y)}</b></div>
+          <div class="report-kpi"><span>Toplam Boş</span><b>${escapeHtml(report.total.b)}</b></div>
           <div class="report-kpi"><span>Başarı</span><b class="${totalStatus.className}">${formatPercent(report.total.percent)}</b></div>
         </div>
         <div class="comparison-grid">
@@ -4209,8 +4555,8 @@
         </div>
         ${showRankingBlock ? `
           <div class="ranking-grid">
-            <div class="ranking-card"><span>Sınıf Sırası</span><b>${ranking.classRank || "-"} / ${ranking.classTotal || "-"}</b></div>
-            <div class="ranking-card"><span>${escapeHtml(rankScopeText)} Sırası</span><b>${ranking.generalRank || "-"} / ${ranking.generalTotal || "-"}</b></div>
+            <div class="ranking-card"><span>Sınıf Sırası</span><b>${escapeHtml(ranking.classRank || "-")} / ${escapeHtml(ranking.classTotal || "-")}</b></div>
+            <div class="ranking-card"><span>${escapeHtml(rankScopeText)} Sırası</span><b>${escapeHtml(ranking.generalRank || "-")} / ${escapeHtml(ranking.generalTotal || "-")}</b></div>
             <div class="ranking-card"><span>Başarı Puanı</span><b>${formatScore(ranking.score, ranking.maxScore)}</b></div>
           </div>
         ` : ""}
@@ -4239,9 +4585,9 @@
               ${rows || `<tr><td colspan="10">Seçili derslerde veri yok.</td></tr>`}
               <tr>
                 <td><strong>TOPLAM</strong></td>
-                <td><strong>${report.total.d}</strong></td>
-                <td><strong>${report.total.y}</strong></td>
-                <td><strong>${report.total.b}</strong></td>
+                <td><strong>${escapeHtml(report.total.d)}</strong></td>
+                <td><strong>${escapeHtml(report.total.y)}</strong></td>
+                <td><strong>${escapeHtml(report.total.b)}</strong></td>
                 <td><strong>${formatNet(report.total.net)}</strong></td>
                 <td class="${totalStatus.className}"><strong>${formatPercent(report.total.percent)}</strong></td>
                 <td><strong>${formatPercent(report.total.classAverage)}</strong></td>
@@ -4745,6 +5091,13 @@
       if (!data) return;
       try {
         localStorage.setItem(LESSON_PLANNER_STORE_KEY, JSON.stringify(data));
+        // The iframe may already have initialized before the asynchronous cloud
+        // read completes. Updating shared storage alone leaves its state stale.
+        els.lessonPlannerFrame?.contentWindow?.postMessage({
+          type: "kemal-ajanda-restore-planner",
+          plannerState: data,
+          date: isDateKey(state.lessonPlannerFocusDate) ? state.lessonPlannerFocusDate : today()
+        }, window.location.origin === 'null' ? '*' : window.location.origin);
       } catch (error) {
         console.warn(error);
         toast("Ders planlama yedeği geri yüklenemedi; ajanda verileri yüklendi.");
@@ -4918,6 +5271,16 @@
     function cssEscape(value) {
       if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
       return String(value).replace(/["\\]/g, "\\$&");
+    }
+
+    function safeImageSource(value) {
+      if (typeof value !== "string") return "";
+      if (/^data:image\/(?:png|jpeg|jpg|gif|webp);base64,[a-zA-Z0-9+/=\s]+$/.test(value)) return value;
+      try {
+        const url = new URL(value);
+        if (url.protocol === "https:" && !url.username && !url.password) return url.href;
+      } catch { /* Untrusted imported image fields stay inert. */ }
+      return "";
     }
 
     function escapeHtml(value) {

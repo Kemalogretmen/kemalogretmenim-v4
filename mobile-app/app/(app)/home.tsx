@@ -2,12 +2,13 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { Button, Card, EmptyState, Header, LoadingState, Screen, SectionTitle, Stat, styles } from '@/components/ui';
-import { colors } from '@/constants/theme';
+import { useMobileColors } from '@/components/ui';
 import { displayName, roleLabel, shortDate } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
 import { useDashboard } from '@/hooks/useDashboard';
 
 export default function HomeScreen() {
+  const colors = useMobileColors();
   const { profile } = useAuth();
   const { data, loading, error, refresh } = useDashboard();
 

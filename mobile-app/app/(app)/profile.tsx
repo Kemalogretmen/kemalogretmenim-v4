@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Text } from 'react-native';
 
 import { Button, Card, Field, Header, Screen, SelectField } from '@/components/ui';
-import { colors } from '@/constants/theme';
+import { useMobileColors } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import { validateContentFields } from '@/lib/contentSafety';
 import { roleLabel } from '@/lib/format';
@@ -22,6 +22,7 @@ import {
 } from '@/services/schoolOptions';
 
 export default function ProfileScreen() {
+  const colors = useMobileColors();
   const { profile, signOut, updateProfile, refreshProfile } = useAuth();
   const [firstName, setFirstName] = useState(profile?.first_name ?? '');
   const [lastName, setLastName] = useState(profile?.last_name ?? '');

@@ -3,13 +3,14 @@ import { useState } from 'react';
 import { Alert, Text } from 'react-native';
 
 import { Button, Card, EmptyState, Header, LoadingState, Screen, SectionTitle, styles } from '@/components/ui';
-import { colors } from '@/constants/theme';
+import { useMobileColors } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import { shortDate } from '@/lib/format';
 import { updateAssignmentProgress } from '@/services/api';
 import { useDashboard } from '@/hooks/useDashboard';
 
 export default function AssignmentsScreen() {
+  const colors = useMobileColors();
   const { profile } = useAuth();
   const { data, loading, error, refresh } = useDashboard();
   const [busyId, setBusyId] = useState('');

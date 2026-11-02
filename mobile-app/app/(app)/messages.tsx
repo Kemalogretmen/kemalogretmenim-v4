@@ -2,13 +2,15 @@ import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import { Button, Card, Field, Header, LoadingState, Screen, SectionTitle, styles } from '@/components/ui';
-import { colors, radius, spacing } from '@/constants/theme';
+import { radius, spacing } from '@/constants/theme';
+import { useMobileColors } from '@/components/ui';
 import { useAuth } from '@/context/AuthContext';
 import { displayName, shortDate } from '@/lib/format';
 import { markMessageRead, sendMessage } from '@/services/api';
 import { useDashboard } from '@/hooks/useDashboard';
 
 export default function MessagesScreen() {
+  const colors = useMobileColors();
   const { profile } = useAuth();
   const { data, loading, error, refresh } = useDashboard();
   const [recipientId, setRecipientId] = useState('');

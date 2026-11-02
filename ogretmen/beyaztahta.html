@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/css/whiteboard-fonts.css?v=20261010">
   <link rel="stylesheet" href="/css/whiteboard-icons.css?v=20260926-math1">
   <link rel="stylesheet" href="/css/whiteboard-math.css?v=20260928-math3">
-  <link rel="stylesheet" href="/css/smartboard-studio.css?v=20261029-1">
+  <link rel="stylesheet" href="/css/smartboard-studio.css?v=20261102-sand-practice-1">
     <title>Akıllı Tahta — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
@@ -386,26 +386,18 @@
     /* Kum Havuzu modu */
     .sandbox-layer {
       position: absolute; inset: 0; z-index: 18; display: none;
-      padding: clamp(14px, 2.2vw, 30px);
-      background:
-        radial-gradient(circle at 18% 10%, rgba(255,255,255,0.76), transparent 30%),
-        linear-gradient(135deg, rgba(222,246,255,0.95), rgba(246,251,255,0.92) 44%, rgba(255,248,232,0.86));
+      padding: 0;
       touch-action: none;
     }
-    .board-plane.sand-mode .sandbox-layer { display: grid; }
+    .board-plane.sand-mode .sandbox-layer { display: block; }
     .board-plane.sand-mode .board-surface { pointer-events: none; }
     .sandbox-wrap {
-      min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
-      padding: clamp(10px, 1.6vw, 18px);
-      border-radius: clamp(22px, 3vw, 38px);
-      background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.72));
-      border: 2px solid rgba(202,184,255,0.86);
-      box-shadow: 0 26px 54px rgba(108,61,237,0.16), inset 0 1px 0 rgba(255,255,255,0.78);
+      position: absolute; inset: 0; min-width: 0;
       overflow: hidden;
     }
     .sandbox-topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-      padding: 4px 4px 0;
+      position: absolute; top: 8px; right: 8px; z-index: 20;
+      max-width: calc(100% - 96px); display: flex; gap: 6px; flex-wrap: wrap;
     }
     .sandbox-title { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
     .sandbox-title-icon {
@@ -415,14 +407,14 @@
     }
     .sandbox-title strong { display: block; font-family: 'Baloo 2', cursive; font-size: clamp(22px, 2.8vw, 34px); line-height: 0.95; color: #7c3f16; }
     .sandbox-title span:last-child { display: block; margin-top: 3px; color: #7c6a56; font-size: 12px; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; }
-    .sandbox-letter-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+    .sandbox-letter-row { display: flex; gap: 5px; flex-wrap: wrap; max-height: 120px; overflow-y: auto; padding: 3px; }
     .sand-chip,
     .sand-mini-btn {
       border: none; cursor: pointer; font: inherit; font-weight: 900; -webkit-tap-highlight-color: transparent;
       transition: transform .12s, box-shadow .12s, background .12s;
     }
     .sand-chip {
-      min-width: 34px; height: 34px; padding: 0 10px; border-radius: 12px;
+      min-width: 36px; height: 36px; padding: 0 8px; border-radius: 6px;
       background: #fff8dc; color: #7c3f16; border: 1.5px solid rgba(202,138,4,0.28);
       box-shadow: 0 5px 10px rgba(124,63,22,0.08);
     }
@@ -435,9 +427,9 @@
     .sand-mode-switch button { min-height: 38px; padding: 6px 10px; border: 0; border-radius: 5px; background: transparent; color: #5b4b72; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
     .sand-mode-switch button[aria-pressed="true"] { background: #6c3ded; color: #fff; }
     .sand-mode-switch button:focus-visible { outline: 2px solid #1584ca; outline-offset: 2px; }
-    .sandbox-layer.is-plain .sandbox-letter-row, .sandbox-layer.is-plain #sandRandomBtn { visibility: hidden; }
+    .sandbox-layer.is-plain #sandRandomBtn { display: none; }
     .sand-mini-btn {
-      min-height: 36px; padding: 0 12px; border-radius: 13px;
+      min-height: 40px; min-width: 40px; padding: 0 10px; border-radius: 6px;
       background: rgba(255,255,255,0.88); color: #5b4b72; border: 1.5px solid rgba(227,214,255,0.9);
       box-shadow: 0 6px 14px rgba(32,16,74,0.08);
       display: inline-flex; align-items: center; justify-content: center; gap: 7px;
@@ -446,34 +438,21 @@
     .sand-chip:active { transform: scale(0.94); }
     .sand-mini-btn.danger { color: #dc2626; background: #fff1f2; border-color: #fecdd3; }
     .sandbox-bed {
-      position: relative; min-height: 480px; border-radius: clamp(22px, 3vw, 34px);
+      position: absolute; inset: 0;
       overflow: hidden; cursor: none; touch-action: none;
       background: #a77745;
-      border: clamp(12px, 2vw, 24px) solid #c9853c;
-      box-shadow:
-        inset 0 18px 32px rgba(67,34,11,0.42),
-        inset 0 -16px 26px rgba(255,244,210,0.18),
-        0 18px 34px rgba(124,63,22,0.2);
-    }
-    .sandbox-bed::before {
-      content: ""; position: absolute; inset: -2px; pointer-events: none; z-index: 14;
-      background:
-        linear-gradient(90deg, rgba(255,255,255,0.16), transparent 12%, transparent 88%, rgba(67,34,11,0.18)),
-        linear-gradient(180deg, rgba(67,34,11,0.2), transparent 14%, transparent 82%, rgba(67,34,11,0.16));
-      mix-blend-mode: multiply;
+      border: 0; border-radius: 0; box-shadow: none;
     }
     .sandbox-bottom,
     .sandbox-canvas,
-    .sandbox-guide,
+    .sandbox-guide-layer,
     .sandbox-cursor { position: absolute; inset: 0; }
     .sandbox-bottom { z-index: 1; background-color: #a9794b; }
     .sandbox-canvas { z-index: 5; width: 100%; height: 100%; display: block; touch-action: none; }
+    .sandbox-bed.is-panning, .sandbox-bed.is-panning .sandbox-canvas { cursor: grab; }
+    .sandbox-guide-layer { z-index: 8; width: 100%; height: 100%; max-width: none; pointer-events: none; overflow: visible; }
     .sandbox-guide {
-      z-index: 8; display: grid; place-items: center; pointer-events: none;
-      color: rgba(93,58,28,0.22); text-align: center; white-space: pre-line;
-      font-family: 'Baloo 2', cursive; font-weight: 800; font-size: clamp(110px, 22vw, 280px);
-      line-height: .85; letter-spacing: 0;
-      text-shadow: 0 2px 0 rgba(255,255,255,0.2);
+      font-family: 'TTKB Dik Temel Abece', sans-serif; font-weight: 400; letter-spacing: 0;
     }
     .sandbox-cursor {
       z-index: 16; width: 58px; height: 58px; inset: auto; left: 0; top: 0; pointer-events: none;
@@ -483,14 +462,12 @@
     }
     .sandbox-cursor.is-visible { display: flex; }
     .sandbox-cursor svg { width: 58px; height: 58px; }
-    .sandbox-bed.is-shaking { animation: sandShake .38s ease; }
-    @keyframes sandShake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px) rotate(-.35deg); }
-      50% { transform: translateX(5px) rotate(.35deg); }
-      75% { transform: translateX(-4px) rotate(-.25deg); }
-    }
-    .sand-tools-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .sand-leveler { display: none; position: absolute; left: -4px; right: -4px; top: 0; height: 30px; z-index: 12; pointer-events: none; border: 1px solid #70502e; border-radius: 3px;
+      background: repeating-linear-gradient(2deg, #ba8b51 0 3px, #c99c62 3px 5px, #b2844c 5px 6px); box-shadow: 0 5px 8px #3c302b45, inset 0 2px 0 #f3d4a2; }
+    .sand-leveler::before,.sand-leveler::after { content: ''; position: absolute; top: -18px; width: 58px; height: 20px; border: 6px solid #8f6237; border-bottom: 0; border-radius: 8px 8px 0 0; }
+    .sand-leveler::before { left: 25%; }.sand-leveler::after { right: 25%; }
+    .sandbox-bed.is-leveling .sand-leveler { display: block; }
+    .sand-tools-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .sand-tool-btn {
       height: 36px; border-radius: 10px; border: 1.5px solid rgba(227,214,255,.78);
       background: #fff; color: #6b7280; cursor: pointer; font-size: 15px;
@@ -508,11 +485,9 @@
     .sand-target-input:focus { border-color: #c4b5fd; box-shadow: 0 0 0 4px rgba(108,61,237,0.08); }
 
     @media (max-width: 760px) {
-      .sandbox-layer { padding: 8px; }
-      .sandbox-wrap { border-radius: 22px; padding: 10px; gap: 8px; }
-      .sandbox-bed { min-height: 420px; border-width: 12px; }
+      .sandbox-topbar { max-width: calc(100% - 16px); }
       .sandbox-title span:last-child { display: none; }
-      .sand-mini-btn { min-height: 34px; padding: 0 10px; }
+      .sand-mini-btn { min-height: 40px; padding: 0 8px; }
     }
 
 
@@ -1015,11 +990,17 @@
   .float-panel { border-radius: 8px; box-shadow: 0 4px 16px #17233b20; max-height: min(480px, 65vh); overflow-y: auto; }
   .float-panel.is-open { animation: none; }
   .toolbar-btn i { font-size: 19px; }
-  .sandbox-layer { bottom: auto; padding: 10px 10px 10px 86px; }
-  .sandbox-layer { touch-action: auto; }
   .board-stage.is-sand-mode { touch-action: pan-x pan-y; }
-  .sandbox-wrap { min-width: 0; border-radius: 8px; padding: 10px; box-shadow: none; }
-  .sandbox-bed { min-height: 180px; border-radius: 8px; }
+  #whiteboardStage.is-sand-mode:fullscreen, #whiteboardStage.is-sand-mode:-webkit-full-screen { padding: 0; }
+  /* Landscape phones still need a scrollable frame around the intentionally
+     gesture-owned sand canvas. Only the canvas itself consumes drawing moves. */
+  @media (orientation:landscape) and (max-height:620px) {
+    html, body { height:auto; min-height:100%; overflow-y:auto; overscroll-behavior-y:auto; }
+    #whiteboardStage { height:calc(100vh - 142px); min-height:300px; overflow-y:auto; overflow-x:auto; touch-action:pan-y; -webkit-overflow-scrolling:touch; }
+    #whiteboardStage.is-sand-mode { touch-action:pan-y; }
+    #whiteboardStage.is-sand-mode .sandbox-bed,
+    #whiteboardStage.is-sand-mode .sandbox-canvas { touch-action:none; }
+  }
   .sandbox-title strong { font-size: 24px; }
   @media (max-width:760px) {
     .tools-page { width: calc(100% - 8px); }
@@ -1031,14 +1012,12 @@
     .pro-toolbar .toolbar-main { overflow-x: auto; }
     .pro-toolbar .tool-grid-4 { flex-wrap: nowrap; flex-direction: row; justify-content: flex-start; }
     .pro-toolbar .float-panel { max-height: min(360px, 44vh); }
-    .sandbox-layer { padding: 8px 8px 82px; }
     .sandbox-title { display: none; }
-    .sandbox-topbar { min-width: 0; display: grid; gap: 6px; padding: 0; }
-    .sandbox-letter-row { min-width: 0; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; padding: 2px 0 6px; touch-action: pan-x; }
-    .sand-chip { flex: 0 0 40px; height: 40px; }
-    .sand-mini-actions { justify-content: flex-start; gap: 4px; }
+    .sandbox-topbar { min-width: 0; gap: 4px; padding: 0; }
+    .sandbox-letter-row { min-width: 0; }
+    .sand-chip { height: 40px; }
+    .sand-mini-actions { gap: 4px; }
     .sand-mini-actions .sand-mini-btn { min-height: 40px; padding: 0 8px; font-size: 12px; }
-    .sandbox-guide { font-size: 120px; line-height: 1.2; overflow: hidden; }
   }
 </style>
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
@@ -1104,39 +1083,13 @@
               <div class="sandbox-layer" id="sandboxLayer" aria-hidden="true">
                 <div class="sandbox-wrap">
                   <div class="sandbox-topbar">
-                    <div class="sandbox-title">
-                      <span class="sandbox-title-icon"><i class="fas fa-umbrella-beach"></i></span>
-                      <span>
-                        <strong>Kum Havuzu</strong>
-                        <span>Harf ve ses yazma alanı</span>
-                      </span>
-                    </div>
-                    <div class="sandbox-letter-row" id="sandLetterRow" aria-label="Kum havuzu harfleri">
-                      <button class="sand-chip is-active" type="button" data-sand-target="A">A</button>
-                      <button class="sand-chip" type="button" data-sand-target="N">N</button>
-                      <button class="sand-chip" type="button" data-sand-target="E">E</button>
-                      <button class="sand-chip" type="button" data-sand-target="T">T</button>
-                      <button class="sand-chip" type="button" data-sand-target="İ">İ</button>
-                      <button class="sand-chip" type="button" data-sand-target="L">L</button>
-                      <button class="sand-chip" type="button" data-sand-target="O">O</button>
-                      <button class="sand-chip" type="button" data-sand-target="K">K</button>
-                      <button class="sand-chip" type="button" data-sand-target="R">R</button>
-                      <button class="sand-chip" type="button" data-sand-target="İ">İ</button>
-                      <button class="sand-chip" type="button" data-sand-target="M">M</button>
-                      <button class="sand-chip" type="button" data-sand-target="Ü">Ü</button>
-                      <button class="sand-chip" type="button" data-sand-target="S">S</button>
-                      <button class="sand-chip" type="button" data-sand-target="Ö">Ö</button>
-                      <button class="sand-chip" type="button" data-sand-target="Y">Y</button>
-                      <button class="sand-chip" type="button" data-sand-target="D">D</button>
-                      <button class="sand-chip" type="button" data-sand-target="Z">Z</button>
-                    </div>
                     <div class="sand-mini-actions">
                       <div class="sand-mode-switch" role="group" aria-label="Kum havuzu arka planı">
                         <button type="button" data-sand-mode="guided" aria-pressed="true">Harfli</button>
                         <button type="button" data-sand-mode="plain" aria-pressed="false">Sadece kum</button>
                       </div>
-                      <button class="sand-mini-btn" type="button" id="sandRandomBtn"><i class="fas fa-random"></i> Rastgele</button>
-                      <button class="sand-mini-btn danger" type="button" id="sandClearTopBtn"><i class="fas fa-broom"></i> Temizle</button>
+                      <button class="sand-mini-btn" type="button" id="sandRandomBtn" title="Rastgele harf" aria-label="Rastgele harf"><i class="fas fa-random"></i></button>
+                      <button class="sand-mini-btn danger" type="button" id="sandClearTopBtn" title="Kumu temizle" aria-label="Kumu temizle"><i class="fas fa-broom"></i></button>
                       <button class="sand-mini-btn" type="button" id="sandUndoBtn" title="Kumdaki son işlemi geri al" aria-label="Kumdaki son işlemi geri al" disabled><i class="fas fa-undo"></i></button>
                       <button class="sand-mini-btn" type="button" id="sandCloseBtn" aria-label="Kum havuzunu kapat"><i class="fas fa-times"></i></button>
                     </div>
@@ -1144,7 +1097,12 @@
                   <div class="sandbox-bed" id="sandboxBed">
                     <div class="sandbox-bottom" id="sandBottomLayer"></div>
                     <canvas class="sandbox-canvas" id="sandCanvas"></canvas>
-                    <div class="sandbox-guide" id="sandGuideText">A</div>
+                    <svg class="sandbox-guide-layer" id="sandGuideLines" data-lines="none" role="img" aria-label="Harf yazma kılavuzu">
+                      <rect id="sandGuideShade" fill="rgba(255,248,166,.26)"></rect>
+                      <path id="sandGuidePath" fill="none" stroke-width="1.2"></path>
+                      <text class="sandbox-guide" id="sandGuideText" text-anchor="middle">Aa</text>
+                    </svg>
+                    <div class="sand-leveler" id="sandLeveler" aria-hidden="true"></div>
                     <div class="sandbox-cursor" id="sandCursor" aria-hidden="true"></div>
                   </div>
                 </div>
@@ -1255,7 +1213,45 @@
                   </div>
                   <div class="sand-material-controls">
                     <label for="sandBrushWidth">İz genişliği <input id="sandBrushWidth" type="range" min="12" max="52" step="2" value="28"></label>
+                    <label for="sandGrainSize"><span>Tane boyutu <output id="sandGrainValue">1</output></span><input id="sandGrainSize" type="range" min="0.75" max="3" step="0.25" value="1"></label>
+                    <span>Kum rengi</span>
+                    <div class="sand-colors" role="group" aria-label="Kum rengi">
+                      <button class="sand-color" type="button" data-sand-color="#ddc394" style="--sand-swatch:#ddc394" aria-label="Doğal kum" title="Doğal kum" aria-pressed="true"></button>
+                      <button class="sand-color" type="button" data-sand-color="#e5e2d4" style="--sand-swatch:#e5e2d4" aria-label="Beyaz kum" title="Beyaz kum" aria-pressed="false"></button>
+                      <button class="sand-color" type="button" data-sand-color="#d9a1ae" style="--sand-swatch:#d9a1ae" aria-label="Pembe kum" title="Pembe kum" aria-pressed="false"></button>
+                      <button class="sand-color" type="button" data-sand-color="#8dc5bb" style="--sand-swatch:#8dc5bb" aria-label="Turkuaz kum" title="Turkuaz kum" aria-pressed="false"></button>
+                      <button class="sand-color" type="button" data-sand-color="#91b9dd" style="--sand-swatch:#91b9dd" aria-label="Mavi kum" title="Mavi kum" aria-pressed="false"></button>
+                      <button class="sand-color" type="button" data-sand-color="#b9a5d0" style="--sand-swatch:#b9a5d0" aria-label="Lila kum" title="Lila kum" aria-pressed="false"></button>
+                      <input class="sand-custom-color" id="sandCustomColor" type="color" value="#ddc394" title="Özel kum rengi" aria-label="Özel kum rengi">
+                    </div>
+                    <label class="sand-check"><input id="sandMixedColor" type="checkbox">Karışık renkli taneler</label>
+                    <label for="sandLineStyle">Kılavuz çizgileri<select id="sandLineStyle"><option value="none">Kapalı</option><option value="ruled">Çizgili</option><option value="grid">Kareli</option><option value="handwriting">Yazı kılavuzu</option></select></label>
+                    <label for="sandLineSpacing"><span>Kılavuz boyutu <output id="sandLineValue">48</output></span><input id="sandLineSpacing" type="range" min="24" max="96" step="4" value="48"></label>
                     <label class="sand-check"><input id="sandSoundToggle" type="checkbox">Kum sesi</label>
+                  </div>
+                  <div class="sand-mode-switch sand-case-switch" role="group" aria-label="Harf biçimi">
+                    <button type="button" data-sand-case="upper" aria-pressed="false">Büyük</button>
+                    <button type="button" data-sand-case="lower" aria-pressed="false">Küçük</button>
+                    <button type="button" data-sand-case="pair" aria-pressed="true">Birlikte</button>
+                  </div>
+                  <div class="sandbox-letter-row" id="sandLetterRow" aria-label="Kum havuzu harfleri">
+                    <button class="sand-chip is-active" type="button" data-sand-target="A">A</button>
+                    <button class="sand-chip" type="button" data-sand-target="N">N</button>
+                    <button class="sand-chip" type="button" data-sand-target="E">E</button>
+                    <button class="sand-chip" type="button" data-sand-target="T">T</button>
+                    <button class="sand-chip" type="button" data-sand-target="İ">İ</button>
+                    <button class="sand-chip" type="button" data-sand-target="L">L</button>
+                    <button class="sand-chip" type="button" data-sand-target="O">O</button>
+                    <button class="sand-chip" type="button" data-sand-target="K">K</button>
+                    <button class="sand-chip" type="button" data-sand-target="R">R</button>
+                    <button class="sand-chip" type="button" data-sand-target="İ">İ</button>
+                    <button class="sand-chip" type="button" data-sand-target="M">M</button>
+                    <button class="sand-chip" type="button" data-sand-target="Ü">Ü</button>
+                    <button class="sand-chip" type="button" data-sand-target="S">S</button>
+                    <button class="sand-chip" type="button" data-sand-target="Ö">Ö</button>
+                    <button class="sand-chip" type="button" data-sand-target="Y">Y</button>
+                    <button class="sand-chip" type="button" data-sand-target="D">D</button>
+                    <button class="sand-chip" type="button" data-sand-target="Z">Z</button>
                   </div>
                   <div>
                     <div class="sub-label" style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Hedef Yazı</div>
@@ -1440,7 +1436,9 @@
   <script src="/js/site-data.js?v=20261029-smartboard"></script>
   <script src="/js/site.js?v=20261030-icons"></script>
   <script src="/js/whiteboard-math.js?v=20260928-math3"></script>
-  <script src="/js/smartboard-sand.js?v=20261029-1"></script>
+  <script src="/js/smartboard-sand-sound.js?v=20261102-sand-practice-1"></script>
+  <script src="/js/smartboard-sand-guide.js?v=20261102-sand-practice-1"></script>
+  <script src="/js/smartboard-sand.js?v=20261102-sand-practice-1"></script>
   <script src="/js/smartboard-studio.js?v=20261029-1"></script>
   <script src="/js/smartboard-ink.js?v=20261029-1"></script>
   <script>
@@ -1479,7 +1477,8 @@
         activeText: null, textAlign: 'left', textWeight: '400', textStyle: 'normal', textSize: 32, textFont: 'ttkb'
       },
       sand: {
-        active: false, tool: 'finger', target: 'A', guideVisible: true, font: 'ttkb', brushWidth: 28,
+        active: false, tool: 'finger', target: 'A', guideVisible: true, font: 'ttkb', letterCase: 'pair', brushWidth: 28, cleaning: false,
+        material: window.createSmartSand.material(),
         drawing: false, pointerId: null, lastPoint: null, lastStamp: null, pixelRatio: 1, logicalWidth: 0, logicalHeight: 0,
         topPattern: null, bottomPattern: null, cursorVisible: false
       },
@@ -1653,6 +1652,8 @@
           size: S.board.size,
           textFont: S.board.textFont,
           sandFont: S.sand.font,
+          sandMaterial: S.sand.material,
+          sandLetterCase: S.sand.letterCase,
           shapeStrokeColor: S.board.shapeStrokeColor,
           shapeFillColor: S.board.shapeFillColor,
           shapeFillEnabled: S.board.shapeFillEnabled,
@@ -1677,6 +1678,8 @@
         S.board.size = Number(stored.size) || S.board.size;
         S.board.textFont = stored.textFont === 'nunito' ? 'nunito' : 'ttkb';
         S.sand.font = stored.sandFont === 'nunito' ? 'nunito' : 'ttkb';
+        S.sand.material = window.createSmartSand.material(stored.sandMaterial);
+        S.sand.letterCase = ['upper','lower','pair'].indexOf(stored.sandLetterCase)>-1 ? stored.sandLetterCase : 'pair';
         S.board.shapeStrokeColor = stored.shapeStrokeColor || S.board.shapeStrokeColor;
         S.board.shapeFillColor = stored.shapeFillColor || S.board.shapeFillColor;
         S.board.shapeFillEnabled = !!stored.shapeFillEnabled;
@@ -1690,10 +1693,11 @@
     function deletePage() { if (S.board.pages.length <= 1) { clearBoard(); return; } S.board.pages.splice(S.board.pageIndex, 1); if (S.board.pageIndex >= S.board.pages.length) S.board.pageIndex = S.board.pages.length - 1; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
     function prevPage() { if (S.board.pageIndex > 0) { S.board.pageIndex--; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
     function nextPage() { if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
-    function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); scheduleBoardAutosave(); }
+    function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); if(S.sand.active)centerSandbox(false);scheduleBoardAutosave(); }
 
     var boardCtx = null; var boardPreviewCtx = null; var sandCtx = null; var mathTools = null; var studioTools = null;
     var sandEngine = window.createSmartSand(E.sandCanvas);
+    var sandGuideMeasure = document.createElement('canvas').getContext('2d');
     var boardImages = new Map();
     var inkLayers = window.SmartboardInk.create({ preview: E.boardPreview, style: boardStrokeStyle,
       ratio: function() { return S.board.pixelRatio || 1; }, width: function() { return S.board.logicalWidth; }, height: function() { return S.board.logicalHeight; } });
@@ -1837,6 +1841,7 @@
     function positionBoardToolbar() {
       if(!E.boardStage || !E.boardToolbar || !E.boardPlane) return;
       mountBoardToolbar();
+      positionSandActions();
       var mobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
       var toolbarWidth = E.boardToolbar.offsetWidth || 62;
       var toolbarHeight = E.boardToolbar.offsetHeight || 0;
@@ -1867,46 +1872,38 @@
       E.boardToolbar.style.right = 'auto';
       E.boardToolbar.style.bottom = 'auto';
     }
+    function positionSandActions() {
+      if(!S.sand.active)return;
+      var bar=E.sandboxLayer.querySelector('.sandbox-topbar'),rect=E.boardStage.getBoundingClientRect();
+      var right=Math.min(window.innerWidth,rect.right),left=Math.max(0,rect.left),top=Math.max(0,rect.top);
+      bar.style.position='fixed';bar.style.maxWidth=Math.max(180,right-left-(window.innerWidth<=760?16:100))+'px';
+      bar.style.width='max-content';bar.style.left='auto';bar.style.right=(window.innerWidth-right+8)+'px';bar.style.top=(top+8)+'px';
+      bar.style.visibility=rect.bottom>0&&rect.top<window.innerHeight?'visible':'hidden';
+    }
 
-    function parseHexColor(hex) {
-      var value = String(hex || '#d8b16f').replace('#', '');
-      if(value.length === 3) value = value.split('').map(function(ch) { return ch + ch; }).join('');
-      return {
-        r: parseInt(value.slice(0, 2), 16) || 0,
-        g: parseInt(value.slice(2, 4), 16) || 0,
-        b: parseInt(value.slice(4, 6), 16) || 0
-      };
-    }
-    function createSandTextureCanvas(baseColor, noiseIntensity, size) {
-      var tile = document.createElement('canvas');
-      tile.width = size;
-      tile.height = size;
-      var ctx = tile.getContext('2d');
-      var base = parseHexColor(baseColor);
-      var img = ctx.createImageData(size, size);
-      for(var i = 0; i < img.data.length; i += 4) {
-        var fleck = Math.random() > 0.965 ? 34 : 0;
-        var shade = (Math.random() - 0.5) * noiseIntensity + fleck;
-        img.data[i] = Math.max(0, Math.min(255, base.r + shade));
-        img.data[i + 1] = Math.max(0, Math.min(255, base.g + shade * 0.82));
-        img.data[i + 2] = Math.max(0, Math.min(255, base.b + shade * 0.46));
-        img.data[i + 3] = 255;
-      }
-      ctx.putImageData(img, 0, 0);
-      return tile;
-    }
     function ensureSandPatterns() {
       if(!sandCtx) return;
       if(!S.sand.topPattern) {
-        var topTile = createSandTextureCanvas('#ddc394', 30, 128);
+        var topTile = window.createSmartSand.texture(S.sand.material, false);
         S.sand.topPattern = sandCtx.createPattern(topTile, 'repeat');
+        sandEngine.setMaterial(S.sand.material);
       }
       if(!S.sand.bottomPattern && E.sandBottomLayer) {
-        var bottomTile = createSandTextureCanvas('#a78b5d', 25, 96);
+        var bottomTile = window.createSmartSand.texture(S.sand.material, true);
         S.sand.bottomPattern = bottomTile;
         E.sandBottomLayer.style.backgroundImage = 'url(' + bottomTile.toDataURL('image/png') + ')';
-        E.sandBottomLayer.style.backgroundSize = '96px 96px';
       }
+      if(E.sandBottomLayer) E.sandBottomLayer.style.backgroundSize = (256 * S.board.zoom) + 'px ' + (256 * S.board.zoom) + 'px';
+    }
+    function changeSandMaterial() {
+      sandEngine.cancelLeveling();
+      S.sand.material = window.createSmartSand.material(S.sand.material);
+      S.sand.topPattern = null; S.sand.bottomPattern = null;
+      if(sandCtx) {
+        ensureSandPatterns();
+        sandEngine.retexture(sandCtx, S.sand.logicalWidth, S.sand.logicalHeight, S.sand.topPattern);
+      }
+      syncSandboxUI(); scheduleBoardAutosave();
     }
     function fillSandTop() {
       if(!sandCtx || !E.sandCanvas) return;
@@ -1923,20 +1920,21 @@
     function resizeSandbox() {
       if(!E.sandboxBed || !E.sandCanvas) return;
       if(!S.sand.active) return;
-      E.sandboxLayer.style.width = E.boardStage.clientWidth + 'px';
-      E.sandboxLayer.style.height = Math.max(360, E.boardStage.clientHeight) + 'px';
-      // The canvas occupies the bed's inner area, excluding its wooden border.
-      var width = E.sandCanvas.clientWidth;
-      var height = E.sandCanvas.clientHeight;
+      // Use page coordinates, not viewport coordinates: zoom never moves or stretches a mark.
+      var width = S.board.logicalWidth;
+      var height = S.board.logicalHeight;
       if(width < 4 || height < 4) return;
       var nativeRatio = window.devicePixelRatio || 1;
       var ratio = Math.min(nativeRatio, 1.2);
       var maxPixels = 2200000;
       var pixels = width * height * ratio * ratio;
-      if(pixels > maxPixels) ratio = Math.max(0.65, Math.sqrt(maxPixels / Math.max(1, width * height)));
+      if(pixels > maxPixels) ratio = Math.sqrt(maxPixels / Math.max(1, width * height));
       var nextW = Math.max(1, Math.floor(width * ratio));
       var nextH = Math.max(1, Math.floor(height * ratio));
+      syncSandGuides();
+      if(E.sandBottomLayer) E.sandBottomLayer.style.backgroundSize = (256 * S.board.zoom) + 'px ' + (256 * S.board.zoom) + 'px';
       if(E.sandCanvas.width === nextW && E.sandCanvas.height === nextH && S.sand.logicalWidth === width && S.sand.logicalHeight === height && sandCtx) return;
+      sandEngine.cancelLeveling();
       var previous = null;
       if(sandCtx && S.sand.logicalWidth && S.sand.logicalHeight) {
         previous = document.createElement('canvas');
@@ -1961,60 +1959,118 @@
       }
     }
     function setSandTarget(value) {
-      var next = String(value || '').trim().toLocaleUpperCase('tr-TR');
+      var next = String(value || '').trim();
       if(!next) next = 'A';
       S.sand.target = next.slice(0, 12);
       syncSandboxUI();
     }
     function setSandTool(tool) {
       S.sand.tool = ['finger', 'rake', 'star', 'smooth'].indexOf(tool) > -1 ? tool : 'finger';
-      syncSandboxUI();
+      if(S.board.tool === 'pan') S.board.tool = 'pen';
+      syncBoardUI();
+    }
+    function syncSandGuides() {
+      var lines = document.getElementById('sandGuideLines'), m = S.sand.material;
+      lines.dataset.lines = m.lines;
+      lines.style.setProperty('--sand-line-step', (m.spacing * S.board.zoom) + 'px');
+      if(!S.board.logicalWidth || !S.board.logicalHeight) return;
+      var color=hexLuma(m.color)<95&&!m.mixed?'#ffffffa6':'#20374999';
+      var value=window.SmartSandGuide.text(S.sand.target,S.sand.letterCase),family=boardFontFamily(S.sand.font);
+      sandGuideMeasure.font='400 100px '+family;
+      var cap=sandGuideMeasure.measureText('H'),lower=sandGuideMeasure.measureText('x'),desc=sandGuideMeasure.measureText('gjyp');
+      var g=window.SmartSandGuide.layout(S.board.logicalWidth,S.board.logicalHeight,m.spacing,value,
+        {cap:cap.actualBoundingBoxAscent||72,x:lower.actualBoundingBoxAscent||36,descent:desc.actualBoundingBoxDescent||30,width:sandGuideMeasure.measureText(value).width});
+      S.sand.guideLayout=g;S.sand.guideColor=color;
+      lines.setAttribute('viewBox','0 0 '+S.board.logicalWidth+' '+S.board.logicalHeight);
+      lines.setAttribute('aria-label','Harf yazma kılavuzu: '+value);
+      var shade=document.getElementById('sandGuideShade'),path=document.getElementById('sandGuidePath');
+      shade.setAttribute('x',g.left);shade.setAttribute('y',g.middle);shade.setAttribute('width',g.right-g.left);shade.setAttribute('height',g.baseline-g.middle);
+      shade.style.display=m.lines==='handwriting'?'':'none';path.setAttribute('d',window.SmartSandGuide.path(g,m.lines));path.setAttribute('stroke',color);
+      E.sandGuideText.setAttribute('x',g.cx);E.sandGuideText.setAttribute('y',g.baseline);E.sandGuideText.setAttribute('fill',color);
+      E.sandGuideText.style.fontSize=g.fontSize+'px';E.sandGuideText.style.fontFamily=family;
+      E.sandGuideText.textContent=S.sand.guideVisible?value:'';E.sandGuideText.style.opacity='.6';
     }
     function syncSandboxUI() {
-      if(E.sandGuideText) {
-        E.sandGuideText.textContent = S.sand.guideVisible ? S.sand.target : '';
-        E.sandGuideText.style.opacity = S.sand.guideVisible ? '1' : '0';
-        E.sandGuideText.style.fontFamily = boardFontFamily(S.sand.font);
-        E.sandGuideText.style.fontWeight = '400';
-      }
+      var m = S.sand.material;
+      document.getElementById('sandGrainSize').value = m.grain;
+      document.getElementById('sandGrainValue').textContent = m.grain.toLocaleString('tr-TR');
+      document.getElementById('sandCustomColor').value = m.color;
+      document.getElementById('sandMixedColor').checked = m.mixed;
+      document.getElementById('sandLineStyle').value = m.lines;
+      document.getElementById('sandLineSpacing').value = m.spacing;
+      document.getElementById('sandLineSpacing').disabled = m.lines === 'none';
+      document.getElementById('sandLineValue').textContent = m.spacing;
+      document.querySelectorAll('[data-sand-color]').forEach(function(btn) { btn.setAttribute('aria-pressed', String(btn.dataset.sandColor === m.color)); });
+      E.sandboxBed.classList.toggle('is-panning', S.board.tool === 'pan');
+      syncSandGuides();
       if(E.sandTargetInput && E.sandTargetInput.value !== S.sand.target) E.sandTargetInput.value = S.sand.target;
       E.sandToolBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.sandTool === S.sand.tool); });
-      E.sandTargetBtns.forEach(function(btn) { btn.classList.toggle('is-active', btn.dataset.sandTarget === S.sand.target); });
+      E.sandTargetBtns.forEach(function(btn) {
+        btn.textContent=window.SmartSandGuide.text(btn.dataset.sandTarget,S.sand.letterCase);
+        btn.classList.toggle('is-active',btn.dataset.sandTarget===S.sand.target.toLocaleUpperCase('tr-TR'));
+      });
+      document.querySelectorAll('[data-sand-case]').forEach(function(btn){btn.setAttribute('aria-pressed',String(btn.dataset.sandCase===S.sand.letterCase));});
       E.sandModeBtns.forEach(function(btn) { btn.setAttribute('aria-pressed', String((btn.dataset.sandMode === 'guided') === S.sand.guideVisible)); });
       if(E.sandboxLayer) E.sandboxLayer.classList.toggle('is-plain', !S.sand.guideVisible);
+      positionSandActions();
       if(E.sandTargetInput) E.sandTargetInput.disabled = !S.sand.guideVisible;
       document.getElementById('sandFontSelect').value = S.sand.font;
       document.getElementById('sandUndoBtn').disabled = !sandEngine.canUndo();
+      if(S.sand.active){E.boardUndoBtn.disabled=!sandEngine.canUndo();E.boardRedoBtn.disabled=true;}
+      [E.sandClearTopBtn,E.sandClearPanelBtn].forEach(function(btn){if(btn)btn.disabled=S.sand.cleaning;});
       E.sandToolBtns.forEach(function(btn) { btn.setAttribute('aria-pressed', String(btn.dataset.sandTool === S.sand.tool)); });
       updateSandCursorIcon();
     }
+    function centerSandbox(scrollWindow) {
+      if(!S.sand.active)return;
+      if(scrollWindow&&fsEl()!==E.boardStage) {
+        var reserved=0;
+        document.querySelectorAll('#mainNav,.platform-chrome').forEach(function(el){
+          var pos=getComputedStyle(el).position,r=el.getBoundingClientRect();
+          if((pos==='fixed'||pos==='sticky')&&r.top<12)reserved=Math.max(reserved,r.bottom);
+        });
+        var rect=E.boardStage.getBoundingClientRect(),target=reserved+(window.innerHeight-reserved)/2;
+        window.scrollTo({top:Math.max(0,window.scrollY+rect.top+rect.height/2-target),behavior:'instant'});
+      }
+      E.boardStage.scrollLeft=Math.max(0,(S.board.displayWidth-E.boardStage.clientWidth)/2);
+      E.boardStage.scrollTop=Math.max(0,(S.board.displayHeight-E.boardStage.clientHeight)/2);
+      positionBoardToolbar();
+    }
     function setSandboxMode(active) {
       sandEngine.stopSound();
+      sandEngine.cancelLeveling();
       S.sand.drawing = false; S.sand.pointerId = null; S.sand.lastPoint = null;
       hideSandCursor();
       S.sand.active = !!active;
+      if(active) S.board.tool = 'pen';
       if(active && mathTools) mathTools.hide();
       commitTextOverlay(true);
       if(S.sand.active) {
         closeAllSubPanels();
-        E.boardStage.scrollTop = 0;
-        E.boardStage.scrollLeft = 0;
-        if(window.innerWidth <= 760) E.boardStage.scrollIntoView({ block: 'start', behavior: 'instant' });
       } else if(sandSubPanel) {
         sandSubPanel.classList.remove('is-open');
       }
       syncBoardUI();
-      if(S.sand.active) resizeSandbox();
-    }
-    function clearSand(playShake) {
-      if(sandCtx) sandEngine.checkpoint();
-      if(playShake && E.sandboxBed) {
-        E.sandboxBed.classList.remove('is-shaking');
-        void E.sandboxBed.offsetWidth;
-        E.sandboxBed.classList.add('is-shaking');
-        setTimeout(function() { if(E.sandboxBed) E.sandboxBed.classList.remove('is-shaking'); }, 420);
+      if(S.sand.active) {
+        resizeBoard();
+        centerSandbox(true);
+        // Android WebView can deliver the first portrait layout after the tool
+        // click. Keep the same canvas and size it again once that layout lands.
+        requestAnimationFrame(function() { if(S.sand.active) { resizeBoard(); centerSandbox(true); } });
       }
-      fillSandTop();
+    }
+    function clearSand(animate) {
+      if(S.sand.cleaning||!sandCtx)return;
+      sandEngine.stopSound();S.sand.drawing=false;S.sand.pointerId=null;hideSandCursor();
+      if(sandCtx) sandEngine.checkpoint();
+      if(!animate){fillSandTop();syncSandboxUI();return;}
+      S.sand.cleaning=true;E.sandboxBed.classList.add('is-leveling');E.sandboxLayer.setAttribute('aria-busy','true');
+      ensureSandPatterns();
+      sandEngine.level(sandCtx,S.sand.logicalWidth,S.sand.logicalHeight,S.sand.topPattern,function(y){
+        document.getElementById('sandLeveler').style.transform='translateY('+(y*S.board.zoom-15)+'px)';
+      },function(){
+        S.sand.cleaning=false;E.sandboxBed.classList.remove('is-leveling');E.sandboxLayer.setAttribute('aria-busy','false');syncSandboxUI();
+      },window.matchMedia('(prefers-reduced-motion: reduce)').matches);
       syncSandboxUI();
     }
     function getSandPoint(evt) {
@@ -2118,11 +2174,13 @@
     }
     function updateSandCursor(evt) {
       if(!E.sandCursor || !E.sandboxBed) return;
+      if(S.board.tool === 'pan') { hideSandCursor(); return; }
       var point = getSandPoint(evt);
       // Match each SVG's contact point to the canvas's drawing coordinate.
       var hotspot = S.sand.tool === 'finger' ? { x: 20, y: 2 } : S.sand.tool === 'rake' ? { x: 32, y: 54 } : { x: 32, y: 32 };
       var scale = 58 / 64;
-      E.sandCursor.style.transform = 'translate(' + (point.x - hotspot.x * scale) + 'px, ' + (point.y - hotspot.y * scale) + 'px)';
+      var zoom = S.board.zoom || 1;
+      E.sandCursor.style.transform = 'translate(' + (point.x * zoom - hotspot.x * scale) + 'px, ' + (point.y * zoom - hotspot.y * scale) + 'px)';
       E.sandCursor.classList.add('is-visible');
     }
     function hideSandCursor() {
@@ -2473,7 +2531,8 @@
     }
 
     function setBoardTool(tool) {
-      if(S.sand.active) {
+      if(S.sand.active && tool !== 'pan') {
+        sandEngine.cancelLeveling();sandEngine.stopSound();hideSandCursor();
         S.sand.active = false;
         if(sandSubPanel) sandSubPanel.classList.remove('is-open');
       }
@@ -2527,12 +2586,20 @@
       syncBoardUI(); resizeBoard(); scheduleBoardAutosave();
     }
     function clearBoard() { commitTextOverlay(false); var page = getActivePage(); page.items = []; S.board.selectedItem = null; saveSnapshot(); clearPreview(); redrawBoard(); }
-    function undoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex > 0) { page.undoIndex--; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
+    function undoBoard() { if(S.sand.active){sandEngine.cancelLeveling();if(!S.sand.drawing&&sandCtx)sandEngine.undo(sandCtx,S.sand.logicalWidth,S.sand.logicalHeight);syncSandboxUI();return;}commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex > 0) { page.undoIndex--; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
     function redoBoard() { commitTextOverlay(false); var page = getActivePage(); if(page.undoIndex < page.undoStack.length - 1) { page.undoIndex++; page.items = cloneBoardItems(page.undoStack[page.undoIndex]); S.board.selectedItem = null; redrawBoard(); scheduleBoardAutosave(); } }
     function toggleBoardFs() { fsEl() === E.boardStage ? exitFs().catch(function(){}) : reqFs(E.boardStage).catch(function(){}); }
 
     function getCompositeDataURL() {
       var comp = document.createElement('canvas'); comp.width = E.boardCanvas.width; comp.height = E.boardCanvas.height; var ctx = comp.getContext('2d');
+      if(S.sand.active && sandCtx) {
+        var w = S.sand.logicalWidth, h = S.sand.logicalHeight, m = S.sand.material;
+        ctx.setTransform(comp.width / w, 0, 0, comp.height / h, 0, 0);
+        ctx.fillStyle = ctx.createPattern(S.sand.bottomPattern, 'repeat'); ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(E.sandCanvas, 0, 0, w, h);
+        if(S.sand.guideLayout)window.SmartSandGuide.paint(ctx,S.sand.guideLayout,m.lines,S.sand.guideColor,S.sand.guideVisible,boardFontFamily(S.sand.font));
+        return comp.toDataURL('image/png');
+      }
       ctx.fillStyle = S.board.backgroundColor || (S.board.paper === 'guide' ? '#e6f8ff' : '#ffffff'); ctx.fillRect(0, 0, comp.width, comp.height);
       var ratio = window.devicePixelRatio || 1; var step = 34 * ratio;
       if (S.board.paper === 'lined') { ctx.strokeStyle = 'rgba(115,128,255,0.16)'; ctx.lineWidth = 1.5 * ratio; ctx.beginPath(); for (var y = step; y < comp.height; y += step) { ctx.moveTo(0, y); ctx.lineTo(comp.width, y); } ctx.stroke(); } 
@@ -2977,9 +3044,21 @@
       try { E.boardPreview.releasePointerCapture(evt.pointerId); } catch(err) {}
     }
     function bindSandboxControls() {
+      document.querySelectorAll('[data-sand-case]').forEach(function(btn){btn.addEventListener('click',function(){
+        S.sand.letterCase=btn.dataset.sandCase;syncSandboxUI();scheduleBoardAutosave();
+      });});
+      document.querySelectorAll('[data-sand-color]').forEach(function(btn) {
+        btn.addEventListener('click', function() { S.sand.material.color = btn.dataset.sandColor; changeSandMaterial(); });
+      });
+      document.getElementById('sandCustomColor').addEventListener('change', function(evt) { S.sand.material.color = evt.target.value; changeSandMaterial(); });
+      document.getElementById('sandMixedColor').addEventListener('change', function(evt) { S.sand.material.mixed = evt.target.checked; changeSandMaterial(); });
+      document.getElementById('sandGrainSize').addEventListener('input', function(evt) { document.getElementById('sandGrainValue').textContent = Number(evt.target.value).toLocaleString('tr-TR'); });
+      document.getElementById('sandGrainSize').addEventListener('change', function(evt) { S.sand.material.grain = Number(evt.target.value); changeSandMaterial(); });
+      document.getElementById('sandLineStyle').addEventListener('change', function(evt) { S.sand.material.lines = evt.target.value; syncSandboxUI(); scheduleBoardAutosave(); });
+      document.getElementById('sandLineSpacing').addEventListener('input', function(evt) { S.sand.material.spacing = Number(evt.target.value); syncSandboxUI(); scheduleBoardAutosave(); });
       document.getElementById('sandBrushWidth').addEventListener('input', function(evt) { S.sand.brushWidth = Number(evt.target.value); });
       document.getElementById('sandSoundToggle').addEventListener('change', function(evt) { sandEngine.setSound(evt.target.checked); });
-      document.getElementById('sandUndoBtn').addEventListener('click', function() { if(!S.sand.drawing && sandCtx) sandEngine.undo(sandCtx, S.sand.logicalWidth, S.sand.logicalHeight); syncSandboxUI(); });
+      document.getElementById('sandUndoBtn').addEventListener('click', function() { sandEngine.cancelLeveling();if(!S.sand.drawing && sandCtx) sandEngine.undo(sandCtx, S.sand.logicalWidth, S.sand.logicalHeight); syncSandboxUI(); });
       if(E.sandGroupBtn) E.sandGroupBtn.addEventListener('click', function(evt) {
         evt.preventDefault();
         evt.stopPropagation();
@@ -3041,7 +3120,13 @@
         updateSandCursor(evt);
         if(!S.sand.drawing || S.sand.pointerId !== evt.pointerId) return;
         evt.preventDefault();
+        if(S.sand.pan) {
+          E.boardStage.scrollLeft = S.sand.pan.left - (evt.clientX - S.sand.pan.x);
+          E.boardStage.scrollTop = S.sand.pan.top - (evt.clientY - S.sand.pan.y);
+          return;
+        }
         var rect = E.sandCanvas.getBoundingClientRect();
+        sandEngine.moveSound(getSandPoint(evt),evt.timeStamp||performance.now(),S.sand.tool);
         var events = getFastPointerEvents(evt, S.sand.tool === 'star' ? 4 : 7);
         events.forEach(function(ev) {
           var point = getSandPointFromRect(ev, rect);
@@ -3065,19 +3150,29 @@
       }
       function startSandPointer(evt) {
         if(!S.sand.active) return;
+        if(S.sand.cleaning)return;
         if(S.sand.drawing) return;
         if(typeof evt.button === 'number' && evt.button > 0) return;
         evt.preventDefault();
         dismissBoardTransientUi();
-        E.sandboxBed.classList.remove('is-shaking');
+        // Read the current page geometry on the first contact as well, so a
+        // hidden/initially narrow WebView never needs a rotation to start drawing.
+        if(S.board.logicalWidth < 4 || !sandCtx) resizeBoard();
         resizeSandbox();
         if(!sandCtx) return;
+        if(S.board.tool === 'pan') {
+          S.sand.drawing = true; S.sand.pointerId = evt.pointerId;
+          S.sand.pan = { x: evt.clientX, y: evt.clientY, left: E.boardStage.scrollLeft, top: E.boardStage.scrollTop };
+          try { E.sandCanvas.setPointerCapture(evt.pointerId); } catch(err) {}
+          return;
+        }
+        S.sand.pan = null;
         sandEngine.checkpoint();
-        sandEngine.startSound();
         document.getElementById('sandUndoBtn').disabled = false;
         S.sand.drawing = true;
         S.sand.pointerId = evt.pointerId;
         var point = getSandPoint(evt);
+        sandEngine.startSound(point,evt.timeStamp||performance.now());
         S.sand.lastPoint = point;
         S.sand.lastStamp = point;
         updateSandCursor(evt);
@@ -3093,8 +3188,10 @@
         S.sand.pointerId = null;
         S.sand.lastPoint = null;
         S.sand.lastStamp = null;
+        S.sand.pan = null;
         if(evt.pointerType !== 'mouse' || evt.type === 'pointercancel') hideSandCursor();
         try { E.sandCanvas.releasePointerCapture(evt.pointerId); } catch(err) {}
+        syncSandboxUI();
       }
       if(window.PointerEvent) {
         E.sandCanvas.addEventListener('pointerdown', startSandPointer, { passive: false });
@@ -3167,7 +3264,8 @@
       ['boardClearBtn', 'clearBoardBtn'].forEach(function(id) {
         var btn = document.getElementById(id);
         if(btn) btn.addEventListener('click', function() {
-          if(confirm('Bu sayfadaki tüm yazı ve çizimler silinsin mi?')) clearBoard();
+          if(S.sand.active)clearSand(true);
+          else if(confirm('Bu sayfadaki tüm yazı ve çizimler silinsin mi?')) clearBoard();
         });
       });
       if(E.boardUndoBtn) E.boardUndoBtn.addEventListener('click', undoBoard);
@@ -3303,6 +3401,7 @@
         mountBoardToolbar();
         setTimeout(function() {
           resizeBoard();
+          if(S.sand.active)centerSandbox(false);
           positionBoardToolbar();
         }, 20);
       });
@@ -3311,9 +3410,14 @@
     bindWhiteboardControls(); bindWhiteboardPointerEvents(); bindSandboxControls(); bindSandboxPointerEvents(); loadBoardFromMemory(); syncBoardUI(); initBoardDrag(); resizeBoard();
     if(window.ResizeObserver) {
       new ResizeObserver(function() { if(S.sand.active) resizeSandbox(); }).observe(E.sandboxBed);
+      var lastStageWidth = E.boardStage.clientWidth;
+      new ResizeObserver(function() {
+        var width = E.boardStage.clientWidth;
+        if(width > 3 && width !== lastStageWidth) { lastStageWidth = width; resizeBoard(); }
+      }).observe(E.boardStage);
     }
     if(document.fonts) {
-      Promise.all([document.fonts.load('400 32px "TTKB Dik Temel Abece"'), document.fonts.load('700 32px "TTKB Dik Temel Abece"')]).then(function() { redrawBoard(); }).catch(function() {});
+      Promise.all([document.fonts.load('400 32px "TTKB Dik Temel Abece"'), document.fonts.load('700 32px "TTKB Dik Temel Abece"')]).then(function() { redrawBoard();syncSandGuides(); }).catch(function() {});
     }
     mathTools = window.initWhiteboardMathTools({
       plane: E.boardPlane, stage: E.boardStage, button: E.boardProtractorBtn,
