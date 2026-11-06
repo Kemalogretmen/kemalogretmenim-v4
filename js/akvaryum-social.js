@@ -51,9 +51,34 @@
     }
     return {reset,pick,defer(now=0){next=Math.max(next,now+60000);}};
   }
+  const birthdayGreetings=Object.freeze([
+    {kind:'message',text:'Doğum günün kutlu olsun!'},
+    {kind:'cake',text:'🎂'},
+    {kind:'confetti',text:'🎉'}
+  ].map(Object.freeze));
+  function createBirthdaySchedule(random=Math.random){
+    let day='';
+    const classes=new Map();
+    return {pick(date,classId,now,nearby){
+      if(day!==date){day=date;classes.clear();}
+      if(!classes.has(classId))classes.set(classId,{next:now+6000,pairs:new Map(),recipients:new Map()});
+      const schedule=classes.get(classId);
+      if(now<schedule.next)return null;
+      schedule.next=now+500;
+      const key=pair=>pair.speakerId+':'+pair.recipientId;
+      const last=pair=>schedule.recipients.get(pair.recipientId)??-1;
+      const eligible=nearby().filter(pair=>now-(schedule.pairs.get(key(pair))??-Infinity)>=600000);
+      eligible.sort((a,b)=>last(a)-last(b)||a.distance-b.distance);
+      const chosen=eligible[0];
+      if(!chosen)return null;
+      schedule.next=now+35000+random()*20000;
+      schedule.pairs.set(key(chosen),now);schedule.recipients.set(chosen.recipientId,now);
+      return chosen;
+    }};
+  }
   const praises=Object.freeze(['Çabanı fark ettim, güzel bir adım attın!','Yeniden denedin, işte bu çok değerli!','Küçük adımlarınla ilerliyorsun!','Bugünkü emeğine kocaman bir teşekkür!','Öğrenirken gösterdiğin çaba harika!','Bir güzel adım daha, birlikte devam!','Paylaştığın emek sınıfımıza renk katıyor!','Kendi yolunda ilerlemene sevindim!']);
   const invitations=Object.freeze(['Şimdi seni dinliyoruz!','Söz sende, birlikte düşünelim!','Fikrini bizimle paylaşmak ister misin?','Hazırsan seni dinlemeye hazırız!']);
   const milestones=Object.freeze(['Birlikte güzel bir yol aldık!','Her küçük katkı bizi ilerletiyor!','Birbirimize destek olarak devam edelim!','Hedefimize adım adım yaklaşıyoruz!']);
-  function create(random=Math.random){return {encouragement:deck(encouragements,random),greeting:deck(greetings,random),hunger:deck(hungerReminders,random),praise:deck(praises,random),invitation:deck(invitations,random),milestone:deck(milestones,random)};}
-  return {create,encouragements,greetings,hungerReminders,praises,invitations,milestones,createHungerSchedule};
+  function create(random=Math.random){return {encouragement:deck(encouragements,random),greeting:deck(greetings,random),birthday:deck(birthdayGreetings,random),hunger:deck(hungerReminders,random),praise:deck(praises,random),invitation:deck(invitations,random),milestone:deck(milestones,random)};}
+  return {create,encouragements,greetings,hungerReminders,praises,invitations,milestones,createHungerSchedule,createBirthdaySchedule};
 });

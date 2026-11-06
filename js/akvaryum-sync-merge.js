@@ -20,6 +20,8 @@
     if(equal(base,right))return clone(left);
     // Delete versus edit must never silently resurrect or erase a record.
     if(left===undefined||right===undefined)conflict();
+    // A day and month belong to one birthday and must be reconciled together.
+    if(field==='birthday')conflict();
     if(object(left)&&object(right)&&(base===undefined||object(base))){
       const result={};for(const key of new Set([...Object.keys(base||{}),...Object.keys(left),...Object.keys(right)])){
         if(['__proto__','constructor','prototype'].includes(key))conflict();
@@ -92,6 +94,7 @@
     if(base!==undefined&&(left===undefined||right===undefined))return undefined;
     if(left===undefined)return clone(right);
     if(right===undefined)return clone(left);
+    if(field==='birthday')return clone(right);
     if(object(left)&&object(right)&&(base===undefined||object(base))){
       const result={};
       for(const key of new Set([...Object.keys(base||{}),...Object.keys(left),...Object.keys(right)])){

@@ -99,6 +99,7 @@
   function isBirthday(student, date = new Date()) {
     return !!(validBirthday(student.birthday) && student.birthday.month===date.getMonth()+1 && student.birthday.day===date.getDate());
   }
+  const validAgendaStudentId = value => typeof value==='string' && /^[\w-]{1,90}$/.test(value) && !['__proto__','constructor','prototype'].includes(value);
   function removeClass(state,id) {
     if(!state.classes.some(c=>c.id===id)) return false;
     state.classes=state.classes.filter(c=>c.id!==id);
@@ -352,6 +353,7 @@
         if (!s || !clean(s.name) || !s.days || typeof s.days !== 'object' || Array.isArray(s.days) || Object.keys(s.days).length > 4000 || !Array.isArray(s.feeds) || s.feeds.length > 80000) throw new Error('Öğrenci kaydı geçersiz.');
         const student = { id: identifier(s.id), name: clean(s.name), species: species(s.species).id, cosmetics:Cosmetics.normalize(s.cosmetics,s.species), days: {}, feeds: [] };
         if(s.speciesCatalogVersion===2)student.speciesCatalogVersion=2;
+        if(validAgendaStudentId(s.agendaStudentId))student.agendaStudentId=s.agendaStudentId;
         if(s.birthday != null) {
           if(!validBirthday(s.birthday)) throw new Error('Doğum günü için geçerli bir gün ve ay girin.');
           student.birthday={day:s.birthday.day,month:s.birthday.month};
@@ -429,5 +431,5 @@
     return {id: pool[Math.floor(value * pool.length)].id, reset: !remaining.length,
       eligible: eligible.length, remaining: pool.length - 1};
   }
-  return { charactersUnlocked, unlockCharacters, canSelectSpecies, selectSpecies, visibleCosmetics:Cosmetics.effective, cosmetics:Cosmetics.normalize, customization:Cosmetics.config, unlockCustomization, dailyChampions, MAX_BEHAVIORS, MAX_DAILY_TASKS, waterSettings, pickStudent, validBirthday, isBirthday, removeClass, TASK_ICON_GROUPS, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
+  return { charactersUnlocked, unlockCharacters, canSelectSpecies, selectSpecies, visibleCosmetics:Cosmetics.effective, cosmetics:Cosmetics.normalize, customization:Cosmetics.config, unlockCustomization, dailyChampions, MAX_BEHAVIORS, MAX_DAILY_TASKS, waterSettings, pickStudent, validBirthday, isBirthday, validAgendaStudentId, removeClass, TASK_ICON_GROUPS, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
 });

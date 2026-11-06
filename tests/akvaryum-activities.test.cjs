@@ -72,5 +72,5 @@ test('birthdays keep only a valid day/month, support leap days, and stay out of 
  const saved=C.validate(state);assert.deepEqual(saved.classes[0].students[0].birthday,{day:29,month:2});
  assert.equal(C.isBirthday(s,new Date(2028,1,29,23,50)),true);assert.equal(C.isBirthday(s,new Date(2027,1,28)),false);assert.equal(C.isBirthday(s,new Date(2028,2,1)),false);
  for(const birthday of [{day:31,month:4},{day:0,month:1},{day:10,month:13},{day:1.5,month:1}]) {s.birthday=birthday;assert.throws(()=>C.validate(state),/Doğum günü/);}
- s.birthday={day:9,month:10};const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});assert.equal(JSON.stringify(window.AquariumSharing.snapshot(state.classes[0],state.settings)).includes('birthday'),false);
+ s.birthday={day:9,month:10};s.agendaStudentId='private-agenda-id';const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});assert.doesNotMatch(JSON.stringify(window.AquariumSharing.snapshot(state.classes[0],state.settings)),/birthday|agendaStudentId|private-agenda-id/);
 });

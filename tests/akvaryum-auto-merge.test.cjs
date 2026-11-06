@@ -35,6 +35,20 @@ test('identical saved award and feed IDs are counted once across retries',()=>{
  assert.deepEqual(reconcile(b,l,result),result);assert.deepEqual(reconcile(result,result,result),result);
 });
 
+test('concurrent agenda imports keep one new pupil and reconcile birthdays as complete dates',async()=>{
+ const Agenda=require('../js/akvaryum-agenda.js'),base=initial();pupil(base).birthday={day:29,month:1};
+ const local=copy(base),remote=copy(base);
+ pupil(local).birthday={day:29,month:2};pupil(remote).birthday={day:31,month:1};
+ const source=Agenda.studentDetails({name:'Can Gül'},{id:'agenda-can',firstName:'Can',birthDate:'2018-02-30'});
+ assert.equal(source.birthday,null);
+ const [left,right]=await Promise.all([local,remote].map(doc=>Agenda.newStudent(doc.classes[0].id,{newName:'Can',source})));
+ assert.equal(left.id,right.id);assert.notEqual(left.id,source.id);
+ local.classes[0].students.push(left);remote.classes[0].students.push(right);award(local);
+ const result=reconcile(base,local,remote);
+ assert.deepEqual(pupil(result).birthday,{day:31,month:1});assert.equal(C.earned(pupil(result)),1);
+ assert.equal(result.classes[0].students.filter(s=>s.agendaStudentId===source.id).length,1);
+});
+
 test('known-base offline edits retain their additions while database deletions defeat stale edits',()=>{
  const b=initial(),l=copy(b),r=copy(b);award(l);r.classes[0].students=[];
  assert.deepEqual(reconcile(b,l,r).classes[0].students,[]);

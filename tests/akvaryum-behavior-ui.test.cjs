@@ -329,7 +329,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   window.kemalUserAuth={ready:()=>authPending?new Promise(()=>{}):Promise.resolve(),getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
   window.AquariumCloud=cloudFactory?{create:cloudFactory}:null;if(cloudFactory)window.kemalUserAuth.getClient=()=>({});
   window.AquariumLive=liveClient?require('../js/akvaryum-live.js'):null;if(liveClient)window.kemalUserAuth.getClient=()=>liveClient;
-  if(chatTest)window.AquariumMotion={...window.AquariumMotion,step:fish=>fish.forEach(f=>{f.x=100;f.y=200;})};
+  if(chatTest)window.AquariumMotion={...window.AquariumMotion,step:typeof chatTest==='function'?chatTest:fish=>fish.forEach(f=>{f.x=100;f.y=200;})};
   window.AquariumSharing={removeClass:async()=>{deleteCalls++;if(deleteError)throw Error("Bağlantı yok. Sınıf silinmedi.");}};
   if(cloudFactory)window.AquariumSharing.snapshot=()=>({});
   window.matchMedia=()=>({matches:reduced,addEventListener(){}});
@@ -342,7 +342,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   const app=document.getElementById('aquariumApp');
   app.requestFullscreen=async()=>{document.fullscreenElement=app;document.dispatchEvent(new window.Event('fullscreenchange'));};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
-  const context={window,document,navigator:{share:webShare,clipboard:{writeText:async value=>clipboard?.(value)}},location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,performance:{now:()=>frameNow},console,
+  const context={window,document,navigator:{share:webShare,clipboard:{writeText:async value=>clipboard?.(value)}},location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,AbortController,performance:{now:()=>frameNow},console,
     localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith('_seasonal_dismissals')?(cloudStorage.get(key)||null):key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key.startsWith('kemal_class_aquarium_v1')&&!key.endsWith('_seasonal_dismissals')){directDocumentWrites++;if(localQuota)throw Error('QuotaExceededError');}if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith('_seasonal_dismissals'))cloudStorage.set(key,value);else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
     setTimeout:(fn,ms)=>{if(ms===0)zeroTimers.push(fn);if(ms===12000&&timeoutAuth)Promise.resolve().then(fn);return 1;},clearTimeout(){},setInterval:(fn,ms)=>{intervals.push(fn);intervalPeriods.push(ms);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
     FormData:class {constructor(form){this.form=form;}get(name){const fields=[...this.form.querySelectorAll('[name="'+name+'"]')];return (fields.find(f=>f.type==='radio'&&f.checked)||fields[0])?.value;}}};
@@ -804,6 +804,58 @@ test('teacher can save a birthday, see its cake and greeting, reject invalid dat
  h.click('[data-action="edit-student"]');form=d.getElementById('editStudentForm');select('birthDay',31);select('birthMonth',4);h.submit(form);assert.match(d.getElementById('formError').textContent,/Geçerli/);
  select('birthDay','');select('birthMonth','');h.submit(form);assert.equal(d.querySelector('.fish-birthday').hidden,true);assert.equal(h.saved().classes[0].students[0].birthday,undefined);
  assert.match(d.getElementById('localTime').textContent,/\d{2}:\d{2}/);assert.ok(d.getElementById('localDate').textContent.length>10);
+});
+
+test('agenda preview matches existing fish safely and imports only names and day/month',async()=>{
+ const h=await harness({ageDays:0,species:'turtle',extraNames:['Ada'],configure:(doc,cls,s)=>C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id)});
+ const d=h.document,today=new Date(),date='2020-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+ const roster={activeClassId:'a',classes:[{id:'a',name:'1/A'},{id:'b',name:'2/B'}],students:[
+  {id:'first',classId:'a',firstName:'DENİZ',lastName:'Yılmaz',birthDate:date,healthStatus:'private-test',schoolNo:'4112'},
+  {id:'ada1',classId:'a',firstName:'Ada',lastName:'Ak',birthDate:'2018-01-10'},
+  {id:'ada2',classId:'a',firstName:'Ada',lastName:'Kaya',birthDate:'2018-03-12'},
+  {id:'new',classId:'a',firstName:'Ece',lastName:'Gül',birthDate:'2016-02-29'},
+  {id:'other',classId:'b',firstName:'Başka',lastName:'Öğrenci',birthDate:'2018-01-10'}]};
+ const original=h.saved().classes[0].students[0];
+ const session={user:{id:'test-teacher'},profile:{role:'teacher',approval_status:'active'}};
+ const calls=[];
+ h.window.SmartboardRoster=require('../js/smartboard-roster.js');
+ h.window.AquariumAgenda=require('../js/akvaryum-agenda.js');
+ Object.assign(h.window.kemalUserAuth,{ready:async()=>session,getState:()=>session,getClient:()=>({from(table){calls.push(table);return {select(){return this;},eq(key,value){calls.push([key,value]);return this;},async maybeSingle(){return {data:{agenda_state:roster}};}};}})});
+ const open=async()=>{h.click('[data-action="settings"]');h.click('[data-action="import-agenda"]');await new Promise(r=>setImmediate(r));};
+ await open();
+ assert.deepEqual(calls,['teacher_agenda_states',['user_id','test-teacher']]);
+ assert.ok(!d.getElementById('agendaImportNew').checked);
+ assert.match(d.getElementById('agendaImportSummary').textContent,/0 yeni balık · 1 doğum günü.*2 belirsiz/);
+ assert.doesNotMatch(d.getElementById('agendaImportRows').textContent,/20(?:16|18|20)|private-test|4112|Başka/);
+ const include=d.getElementById('agendaImportNew');include.checked=true;include.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ h.submit(d.getElementById('agendaImportForm'));
+ for(let i=0;i<30&&h.modal.open;i++)await new Promise(r=>setTimeout(r,5));
+ const saved=h.saved().classes[0].students;
+ assert.deepEqual(saved.map(s=>s.name),['Deniz','Ada','Ece']);
+ assert.equal(saved[0].id,original.id);assert.equal(saved[0].species,'turtle');assert.deepEqual(saved[0].feeds,original.feeds);
+ assert.deepEqual(saved[0].birthday,{day:today.getDate(),month:today.getMonth()+1});
+ assert.deepEqual(saved[2].birthday,{day:29,month:2});assert.equal(C.validate(h.saved()).classes[0].students[0].agendaStudentId,'first');
+ assert.equal(d.querySelector('.fish-name .fish-birthday:not([hidden])').textContent,'🎂');
+ await open();assert.equal(d.getElementById('agendaImportApply').disabled,true,'reimporting the same class does not duplicate pupils');
+});
+
+test('nearby birthday greetings vary and trigger the recipient’s own joy without points or feeding',async()=>{
+ const today=new Date(),birthday={day:today.getDate(),month:today.getMonth()+1};let nearby=false;
+ const h=await harness({ageDays:0,species:'puffer',extraNames:['Ada','Ece','Can'],configure:(doc,cls,s)=>{s.birthday=birthday;},
+  chatTest:fish=>fish.forEach((f,i)=>{f.x=100+(nearby?i*12:i*200);f.y=200;})});
+ const d=h.document,recipient=d.querySelector('.birthday-fish'),before=h.saved(),seen=new Set();
+ const frame=now=>h.frames.pop()(now);
+ frame(20);frame(6500);assert.equal(d.querySelector('.birthday-note'),null);
+ nearby=true;
+ for(const time of [7100,65000,124000]){
+  frame(time);const bubble=d.querySelector('.birthday-note.visible');assert.ok(bubble);assert.notEqual(bubble.closest('.fish'),recipient);
+  seen.add(bubble.textContent);if(bubble.textContent==='🎉')assert.equal(bubble.querySelectorAll('.birthday-confetti').length,10);
+  frame(time+2400);assert.equal(d.querySelector('.birthday-note'),null);
+  frame(time+3000);assert.ok(recipient.classList.contains('is-rewarding'));assert.ok(recipient.classList.contains('is-puffed'));
+  frame(time+8000);assert.equal(recipient.classList.contains('is-rewarding'),false);
+ }
+ assert.deepEqual(seen,new Set(['🎂','🎉','Doğum günün kutlu olsun!']));
+ assert.deepEqual(h.saved(),before);assert.equal(h.sounds(),0);
 });
 
 

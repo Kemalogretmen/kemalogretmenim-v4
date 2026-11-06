@@ -1,7 +1,7 @@
 (async function () {
   'use strict';
   const C = window.AquariumCore, Motion = window.AquariumMotion, Anatomy = window.AquariumAnatomy, Rewards=window.AquariumRewards, Ray=window.AquariumRay, Expressive=window.AquariumExpressive, Energy=window.AquariumEnergy, Cosmetics=window.AquariumCosmetics;
-  let KEY = 'kemal_class_aquarium_v1';
+  let KEY = 'kemal_class_aquarium_v1', accountId = '';
   const params = new URLSearchParams(location.search), childViewing = params.has('cocuk'), viewToken = params.get(childViewing ? 'cocuk' : 'izle');
   const viewing = params.has('izle') || childViewing, demoOnly = !viewing && params.get('demo') === '1';
   // This preference belongs to the device, never to a shared class snapshot.
@@ -171,7 +171,8 @@
       if (!user || profile?.role !== 'teacher' || profile?.approval_status !== 'active' || profile?.active === false) {
         lockAccess('Bu ekranı yalnızca onaylı öğretmen hesabı yönetebilir. Veli ve öğrenciler öğretmenin paylaştığı izleme bağlantısını kullanmalıdır.'); return;
       }
-      KEY += '_' + user.id;
+      accountId = user.id;
+      KEY += '_' + accountId;
       window.addEventListener('kemal-user-auth-changed', () => {
         const authState=window.kemalUserAuth.getState(); if(!authState.ready || authState.error) return;
         if (window.kemalUserAuth.getUser()?.id !== user.id || window.kemalUserAuth.getProfile()?.active === false || window.kemalUserAuth.getProfile()?.role !== 'teacher' || window.kemalUserAuth.getProfile()?.approval_status !== 'active') location.reload();
@@ -198,7 +199,7 @@
 
   document.body.classList.remove('access-pending');
   let demo = false, beforeDemo = null, selected = '', tab = 'students', today = C.dayKey(), toastTimer;
-  let importedClasses = [], pendingRestore = null, confirmAction = null;
+  let importedClasses = [], agendaImport = null, pendingRestore = null, confirmAction = null;
   const modal = $('modal');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   const swimmers = new Map();
@@ -210,6 +211,8 @@
   const teacherVisitQueue=[],praiseCooldown=new Map();
   let energyStats=new Map(),energyClassId=null,nextEnergyCheck=0,hungerSpeaker=null;
   const hungerSchedule=window.AquariumSocial?.createHungerSchedule();
+  const birthdaySchedule=window.AquariumSocial.createBirthdaySchedule();
+  let birthdayRecipients=[],birthdayGreeting=null;
   const pickerRounds = new Map();
   let pickerFrame = 0, pickerEpoch = 0, pickerResult = null;
   const focusTimer = viewing ? null : window.AquariumTimer.create();
@@ -423,11 +426,12 @@
     try{previous.render();modal.scrollTop=previous.scroll||0;}finally{goingBack=false;}
   }
   function openModal(title, html, eyebrow = 'SINIF AKVARYUMU') {
-    clearHungerReminder();stopPicker();
+    clearHungerReminder();clearBirthdayGreeting();stopPicker();
     // Dismiss pointer/focus holds before the glass layer opens. The aquarium
     // remains animated behind every settings and scoring route.
     releaseFish();
     const route=pendingModalRoute || (modal.open && $('modalTitle').textContent===title ? modalRoute : null) || {key:title,render:()=>openModal(title,html,eyebrow)};pendingModalRoute=null;
+    if(route.key!=='agendaImport')cancelAgendaImport();
     if(!modal.open) modalHistory=[];
     else if(!goingBack && modalRoute?.key!==route.key) {
       const index=modalHistory.findIndex(r=>r.key===route.key);
@@ -448,7 +452,7 @@
     if (field) field.focus();
   }
   function releaseFish() { inspectedId = ''; swimmers.forEach(f => { f.hover = false; f.keyboard = false; f.pressed = false; f.el.classList.remove('is-selected'); }); }
-  function closeModal() { stopPicker();cancelParentHistory();modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); document.documentElement.classList.remove('aquarium-modal-open');document.body.classList.remove('dialog-open');restartAnimation(); releaseFish(); confirmAction = null; pendingRestore = null; }
+  function closeModal() { stopPicker();cancelParentHistory();cancelAgendaImport();modalHistory=[];modalRoute=null;pendingModalRoute=null;modal.close(); document.documentElement.classList.remove('aquarium-modal-open');document.body.classList.remove('dialog-open');restartAnimation(); releaseFish(); confirmAction = null; pendingRestore = null; }
   function confirm(title, description, callback) {
     confirmAction = callback;
     openModal(title, '<p class="modal-intro">' + esc(description) + '</p><div class="form-actions"><button class="button" data-action="close">Vazgeç</button><button class="button danger" data-action="confirm">Onayla</button></div>');
@@ -476,7 +480,7 @@
   function addModal(setup = false) {
     rememberModal('addModal'+String(setup),()=>addModal(setup));
     if (demo) return toast('Öğrenci eklemek için önce kendi sınıfınıza dönün.');
-    openModal(setup ? 'Sınıfımızla tanışalım' : 'Yeni deniz dostları', '<p class="modal-intro">Öğrencilerinizi ekleyin. Her öğrenci daha sonra “Balığımı seç” ekranından kendi canlısını seçebilir.</p><form id="addForm">' + (setup ? '<label class="field">Sınıf adı<input name="className" value="' + esc(classroom().name) + '" maxlength="80" required autofocus></label>' : '') + '<label class="field">Öğrenci adları<textarea name="names" placeholder="Her satıra bir öğrenci adı yazın" maxlength="5000" required ' + (!setup ? 'autofocus' : '') + '></textarea><span class="field-hint">Tek öğrenci veya tüm sınıfı ekleyebilirsiniz. Sınıf başına en fazla 60 öğrenci.</span></label>' + speciesPicker('clown') + '<p class="form-error" id="formError" role="alert"></p><div class="form-actions"><button type="button" class="button subtle" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button primary" type="submit">Akvaryuma ekle ' + icon('plus') + '</button></div></form>');
+    openModal(setup ? 'Sınıfımızla tanışalım' : 'Yeni deniz dostları', '<p class="modal-intro">Öğrencilerinizi ekleyin. Her öğrenci daha sonra “Balığımı seç” ekranından kendi canlısını seçebilir.</p><button type="button" class="button" data-action="import-agenda">Ajandadan öğrenci ve doğum günü al</button><form id="addForm">' + (setup ? '<label class="field">Sınıf adı<input name="className" value="' + esc(classroom().name) + '" maxlength="80" required autofocus></label>' : '') + '<label class="field">Öğrenci adları<textarea name="names" placeholder="Her satıra bir öğrenci adı yazın" maxlength="5000" required ' + (!setup ? 'autofocus' : '') + '></textarea><span class="field-hint">Tek öğrenci veya tüm sınıfı ekleyebilirsiniz. Sınıf başına en fazla 60 öğrenci.</span></label>' + speciesPicker('clown') + '<p class="form-error" id="formError" role="alert"></p><div class="form-actions"><button type="button" class="button subtle" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button primary" type="submit">Akvaryuma ekle ' + icon('plus') + '</button></div></form>');
   }
   function chooseModal(id = selected) {
     rememberModal('chooseModal'+String(id),()=>chooseModal(id));
@@ -562,9 +566,9 @@
   function settingsModal() {
     rememberModal('settingsModal',()=>settingsModal());
     const panels={
-      class:'<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="'+esc(classroom().name)+'" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions settings-menu"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">'+icon('plus')+'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button subtle" data-action="help">Nasıl çalışır?</button></div></div><div class="danger-zone"><div class="settings-actions"><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div>',
+      class:'<form id="renameClassForm"><div class="inline-form"><label class="field">Sınıf adı<input name="name" value="'+esc(classroom().name)+'" required maxlength="80"></label><button class="button" type="submit">Adı kaydet</button></div></form><div class="settings-section"><h3>Öğrenciler ve sorumluluklar</h3><div class="settings-actions settings-menu"><button class="button" data-action="activities">Sınıf etkinlikleri</button><button class="button" data-action="manage-panel">Sınıf yönetimi</button><button class="button" data-action="add">'+icon('plus')+'Öğrenci ekle</button><button class="button" data-action="import-class">Sınıfım & Çark’tan al</button><button type="button" class="button" data-action="import-agenda">Ajandadan öğrenci ve doğum günü al</button><button class="button" data-action="tasks">Görevleri düzenle</button><button class="button" data-action="growth">Yumurta ve büyüme hedefleri</button><button class="button" data-action="new-class">Yeni sınıf</button><button class="button subtle" data-action="help">Nasıl çalışır?</button></div></div><div class="danger-zone"><div class="settings-actions"><button class="button danger" data-action="delete-class">Bu sınıfı sil</button><button class="button subtle" data-action="deleted-class-backup">Son silme öncesi yedeği indir</button></div></div>',
       aquarium:'<div class="settings-section"><h3>Görünüm</h3><button class="button" data-action="themes">Arka planı değiştir</button>'+settingToggle('pointsToggle','points','Balıkların üzerinde toplam puanlarını göster')+settingToggle('classPointsToggle','classPoints','Sınıf puanlarını göster · İstiridye ve inci')+settingToggle('namesToggle','names','Öğrenci adlarını göster')+settingToggle('hungerTextToggle','hungerText','Besleme hatırlatmasında geçen gün sayısını göster')+'</div>'+customizationControls(),
-      motion:'<div class="settings-section"><h3>Canlı hareketleri</h3>'+settingToggle('motionToggle','motion','Canlıların yüzmesi ve su hareketleri')+settingToggle('rewardMotionToggle','rewardMotion','Puan kazanınca özel hareketler')+settingToggle('chatToggle','chat','Seyrek sohbetler ve besleme hatırlatmaları')+'<p class="settings-note">Her canlı yeni bir olumlu puanda kısa bir kutlama yapar. Ortak sınıf hedefine puan kazanarak ulaşınca bütün canlılar birlikte kutlar. Eski kayıtlar ve ayar değişiklikleri kutlama başlatmaz.</p></div><div class="settings-section"><h3>Su, ışık ve baloncuklar</h3>'+settingToggle('lightMotionToggle','lightMotion','Su yüzeyinde ve kumda hareketli ışık yansımaları')+settingToggle('waterWavesToggle','waterWaves','Su yüzeyinde ve zeminde hafif dalga')+effectRange('bubbleAmountRange','Baloncuk miktarı')+effectRange('lightStrengthRange','Işık yansımalarının belirginliği')+effectRange('waveStrengthRange','Deniz dalgasının belirginliği')+'<p class="settings-note">%100 doğal düzeydir. Aralıklar doğal görünümü koruyacak şekilde sınırlıdır. Genel hareket kapalıysa veya cihazda hareketi azaltma açıksa efektler durur.</p>'+(reduced.matches?'<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık.</p>':'')+'</div>',
+      motion:'<div class="settings-section"><h3>Canlı hareketleri</h3>'+settingToggle('motionToggle','motion','Canlıların yüzmesi ve su hareketleri')+settingToggle('rewardMotionToggle','rewardMotion','Puan ve kutlamalarda özel hareketler')+settingToggle('chatToggle','chat','Seyrek sohbetler, doğum günü selamları ve besleme hatırlatmaları')+'<p class="settings-note">Her canlı yeni bir olumlu puanda kısa bir kutlama yapar. Ortak sınıf hedefine puan kazanarak ulaşınca bütün canlılar birlikte kutlar. Doğum günü balığı, yakından geçen arkadaşlarının selamlarına kendi sevinme hareketiyle karşılık verir.</p></div><div class="settings-section"><h3>Su, ışık ve baloncuklar</h3>'+settingToggle('lightMotionToggle','lightMotion','Su yüzeyinde ve kumda hareketli ışık yansımaları')+settingToggle('waterWavesToggle','waterWaves','Su yüzeyinde ve zeminde hafif dalga')+effectRange('bubbleAmountRange','Baloncuk miktarı')+effectRange('lightStrengthRange','Işık yansımalarının belirginliği')+effectRange('waveStrengthRange','Deniz dalgasının belirginliği')+'<p class="settings-note">%100 doğal düzeydir. Aralıklar doğal görünümü koruyacak şekilde sınırlıdır. Genel hareket kapalıysa veya cihazda hareketi azaltma açıksa efektler durur.</p>'+(reduced.matches?'<p class="settings-note">Cihazınızda hareketi azaltma tercihi açık.</p>':'')+'</div>',
       teacher:'<p class="modal-intro">Öğretmen balığı çabayı fark eder, söz hakkına eşlik eder ve sınıfı ortak hedefe teşvik eder. Puanlara ve öğrenci sayısına dahil edilmez.</p><button class="button" data-action="teacher-fish">Öğretmen balığını ve adını seç</button><div class="settings-section"><h3>Eşlik ve mesajlar</h3>'+settingToggle('teacherPraiseToggle','teacherPraise','Olumlu adımları öğrencinin yanında kutlasın')+settingToggle('teacherPickerToggle','teacherPicker','Rastgele seçilen öğrenciye söz hakkı için eşlik etsin')+settingToggle('teacherGoalToggle','teacherGoal','Ortak hedefin ara aşamalarında sınıfı motive etsin')+settingToggle('teacherEncouragementToggle','teacherEncouragement','Geliştirmesi gereken davranışta destekleyici hatırlatma yapsın')+settingToggle('teacherGlowToggle','teacherGlow','Öğretmen balığının çevresinde hafif bir ışıltı olsun')+'<p class="settings-note">Ziyaret sırasında öğrenci ve öğretmen kısa süre birlikte durur, sonra yüzmeye devam eder. Mesajlarda puan veya karşılaştırma yoktur. Olumlu ziyaretler seyrek tutulur; ortak hedef mesajları %25, %50 ve %75 aşamalarında gösterilir. Öğretmen balığı açık olmalıdır. Mesajlar veli ve ziyaretçi ekranlarına aktarılmaz.</p></div>',
       sound:soundSettings(),
       sharing:'<div class="settings-section"><h3>Veli ve ziyaretçi görünümü</h3><p class="modal-intro">Kimin hangi balıkları ve puanları görebileceğini belirleyin.</p><button class="button primary" data-action="sharing">Veli kodları ve sınıf paylaşımı</button></div>',
@@ -1071,6 +1075,7 @@
     width=sceneWidth;height=sceneHeight;
     refreshEnergy();
     if(!state.settings.motion||!state.settings.chat||reduced.matches)clearHungerReminder();
+    birthdayRecipients=[];
     const actual = classroom().students;
     const champion=!viewing?C.dailyChampions(classroom(),today):{ids:[],points:0};
     const items = actual.length || viewing || classroom().teacher?.enabled ? [...actual] : ['clown', 'tang', 'turtle'].map((kind, i) => ({ id: 'preview-' + i, name: '', species: kind, days: {}, feeds: [] }));
@@ -1090,7 +1095,7 @@
       const placement = layout.get(s.id), size = placement.size;
       if (!fish) {
         const el = document.createElement('button'); el.type = 'button'; el.className = 'fish';
-        el.innerHTML = '<span class="fish-chat" aria-hidden="true"></span><span class="fish-egg" aria-hidden="true"><i></i><img class="egg-embryo" alt="" draggable="false"></span><span class="fish-art" aria-hidden="true"><span class="fish-turn-volume"><img alt="" draggable="false"></span><span class="fish-side"><img class="fish-body-image" alt="" draggable="false"><img class="fish-tail-image" alt="" draggable="false"></span></span><span class="fish-name"></span><span class="fish-birthday" hidden aria-label="Bugün doğum günü">🎂</span><span class="fish-points"></span><span class="fish-hunger" hidden></span>';
+        el.innerHTML = '<span class="fish-chat" aria-hidden="true"></span><span class="fish-egg" aria-hidden="true"><i></i><img class="egg-embryo" alt="" draggable="false"></span><span class="fish-art" aria-hidden="true"><span class="fish-turn-volume"><img alt="" draggable="false"></span><span class="fish-side"><img class="fish-body-image" alt="" draggable="false"><img class="fish-tail-image" alt="" draggable="false"></span></span><span class="fish-name"></span><span class="fish-points"></span><span class="fish-hunger" hidden></span>';
         el.dataset.action = s.isTeacher ? 'teacher-fish' : 'fish-behaviors'; el.dataset.id = s.id;
         $('swimArea').append(el);
         fish = { el, art: el.querySelector('.fish-art'), eggArt:el.querySelector('.fish-egg'), side:el.querySelector('.fish-side'), volume:el.querySelector('.fish-turn-volume'), ...placement, direction: index % 2 ? -1 : 1, phase: index * 1.8, mood: fishMood(s), hover: false, keyboard: false, angle: index % 2 ? 180 : 0, turn: null, cruise: 1 };
@@ -1141,7 +1146,8 @@
       for(const name of ['happy','sad','resting','ready','calm','hungry']) fish.el.classList.toggle('mood-'+name,fish.mood.id===name);
       fish.el.dataset.species=s.species;fish.el.classList.toggle('is-character',C.species(s.species).category==='character');
       const birthday=!viewing && !s.isTeacher && C.isBirthday(s);
-      fish.el.classList.toggle('birthday-fish',birthday);fish.el.querySelector('.fish-birthday').hidden=!birthday;
+      fish.birthday=birthday;fish.el.classList.toggle('birthday-fish',birthday);
+      if(birthday)birthdayRecipients.push(fish);
       const joint=tailJoints[s.species];
       fish.el.classList.toggle('has-tail',!!joint);
       fish.el.style.setProperty('--tail-joint',(joint || 0)+'%');
@@ -1153,10 +1159,14 @@
       fish.cosmetics=Cosmetics.effective(s.cosmetics,s.species,classroom().customization);
       configureCreature(fish);paintFishCosmetics(fish);
       if(!fish.energy||fish.energy.hungerDays<1||fish.energy.absent||fish.egg)clearHungerReminder(fish);
-      fish.el.setAttribute('aria-label', (state.settings.names && s.name ? s.name + ', ' : '') + C.species(s.species).name + (growth.egg ? ', yumurta' : '') + (state.settings.points && score(s) !== null ? ', toplam ' + score(s) + ' puan' : ''));
-      fish.el.querySelector('.fish-name').hidden = !state.settings.names || !s.name;
-      const isChampion=champion.ids.includes(s.id),nameEl=fish.el.querySelector('.fish-name');
-      nameEl.innerHTML=state.settings.names?'<span class="fish-label-text">'+esc(s.name)+(growth.trophy?' 🏆':'')+'</span>'+(isChampion?'<span class="daily-champion-medal" role="img" aria-label="Günün şampiyonu · Bugün '+champion.points+' puan" title="Günün şampiyonu · Bugün '+champion.points+' puan">🥇</span>':''):'';
+      const showName=state.settings.names&&!!s.name,isChampion=showName&&champion.ids.includes(s.id),nameEl=fish.el.querySelector('.fish-name');
+      const label=(showName?s.name+', ':'')+C.species(s.species).name+(growth.egg?', yumurta':'')+(birthday?', bugün doğum günü':'');
+      fish.el.setAttribute('aria-label',label+(state.settings.points&&score(s)!==null?', toplam '+score(s)+' puan':''));
+      nameEl.hidden=!showName&&!birthday;
+      nameEl.classList.toggle('birthday-badge-only',birthday&&!showName);
+      nameEl.innerHTML=(showName?'<span class="fish-label-text">'+esc(s.name)+(growth.trophy?' 🏆':'')+'</span>':'')+
+        '<span class="fish-birthday" aria-hidden="true" '+(birthday?'>🎂':'hidden>')+'</span>'+
+        (isChampion?'<span class="daily-champion-medal" role="img" aria-label="Günün şampiyonu · Bugün '+champion.points+' puan" title="Günün şampiyonu · Bugün '+champion.points+' puan">🥇</span>':'');
       if(isChampion && state.settings.names)fish.el.setAttribute('aria-label',fish.el.getAttribute('aria-label')+', günün şampiyonu, bugün '+champion.points+' puan');
       const pointsEl=fish.el.querySelector('.fish-points'); pointsEl.hidden=!state.settings.points || score(s) === null; pointsEl.textContent='★ '+(score(s) ?? 0).toLocaleString('tr-TR');
       updateHungerLabel(fish, s);
@@ -1167,6 +1177,7 @@
       placeFish(fish);
     });
     updateRestingFish();
+    if(!birthdayGreetingsAllowed() || !birthdayRecipients.includes(birthdayGreeting?.recipient))clearBirthdayGreeting();
     restartAnimation();
   }
   function updateRestingFish() {
@@ -1242,6 +1253,10 @@
   function rewardActive(fish,now){
     return rewardEnabled() && (now<(fish.rewardStarted??-Infinity)+(fish.egg?2800:Rewards.profile(fish.species).duration*1000) || now<(fish.goalStarted??-Infinity)+4600);
   }
+  function startFishReward(fish,now){
+    fish.rewardStarted=now;
+    if(fish.species==='puffer'&&!fish.egg)fish.puffStarted=now;
+  }
   function startGoalCelebration(title,now){
     clearGoalCelebration();goalCelebrationUntil=now+5400;
     const layer=document.createElement('div');layer.id='goalCelebration';layer.className='goal-celebration';
@@ -1270,8 +1285,7 @@
     const now=performance.now(),ids=[...new Set(events.awards.filter(e=>e.classId===cls.id).map(e=>e.studentId))];
     ids.forEach((id,i)=>{
       const fish=swimmers.get(id);if(!fish)return;
-      fish.rewardStarted=now+(fish.species==='puffer'?0:Math.min(i,8)*70);
-      if(fish.species==='puffer'&&!fish.egg)fish.puffStarted=now;
+      startFishReward(fish,now+(fish.species==='puffer'?0:Math.min(i,8)*70));
     });
     const goal=events.goals.find(g=>g.classId===cls.id);if(goal)startGoalCelebration(goal.title,now);
     if(ids.length||goal){for(const fish of swimmers.values())if(rewardActive(fish,now))placeFish(fish,false);restartAnimation();}
@@ -1520,6 +1534,80 @@
       return;
     }
   }
+  function birthdayGreetingsAllowed(){
+    return !viewing && birthdayRecipients.length>0 && state.settings.chat && state.settings.motion && !reduced.matches && !document.hidden && !modal.open;
+  }
+  function hideBirthdayBubble(speaker){
+    const bubble=speaker.el.querySelector('.birthday-note');
+    if(!bubble)return;
+    bubble.classList.remove('birthday-note','birthday-symbol','visible');bubble.replaceChildren();
+    bubble.style.removeProperty('left');bubble.style.removeProperty('top');
+  }
+  function clearBirthdayGreeting(){
+    if(!birthdayGreeting)return;
+    hideBirthdayBubble(birthdayGreeting.speaker);birthdayGreeting=null;
+  }
+  function nearbyBirthdayFish(fishList,now){
+    const nearby=[];
+    const greeters=fishList.filter(f=>!f.el.disabled&&!f.el.classList.contains('teacher-fish')&&!f.bottomRest&&!f.held&&!f.guidance&&!rewardActive(f,now));
+    const scene=birthdayRecipients.some(f=>f.egg)?$('swimArea').getBoundingClientRect():null;
+    const bed=scene?$('eggBed').getBoundingClientRect():null;
+    for(const recipient of birthdayRecipients){
+      if(recipient.absent||recipient.held||rewardActive(recipient,now))continue;
+      const x=recipient.x+recipient.size/2+(recipient.egg?bed.left-scene.left:0);
+      const y=recipient.y+recipient.size/3+(recipient.egg?bed.top-scene.top:0);
+      for(const speaker of greeters){
+        if(speaker===recipient)continue;
+        const dx=speaker.x+speaker.size/2-x,dy=speaker.y+speaker.size/3-y;
+        const reach=Math.min(125,Math.max(48,(speaker.size+recipient.size)*.52));
+        if(Math.abs(dx)>reach || Math.abs(dy)>reach*.62)continue;
+        const distance=Math.hypot(dx,dy);
+        if(distance<=reach)nearby.push({speakerId:speaker.el.dataset.id,recipientId:recipient.el.dataset.id,distance});
+      }
+    }
+    return nearby;
+  }
+  function placeBirthdayBubble(speaker,bubble){
+    const margin=Math.min(width/2,90),center=Math.max(margin,Math.min(width-margin,speaker.x+speaker.size/2));
+    // Leave room for the score badge above the fish, even near the surface.
+    const top=speaker.y>=92?-86:speaker.size*.67+30;
+    bubble.style.left=(center-speaker.x).toFixed(1)+'px';
+    bubble.style.top=Math.max(5-speaker.y,Math.min(top,height-speaker.y-48)).toFixed(1)+'px';
+  }
+  function birthdayChat(now,fishList){
+    if(!birthdayGreetingsAllowed()){clearBirthdayGreeting();return false;}
+    if(birthdayGreeting){
+      const {speaker,recipient,until}=birthdayGreeting;
+      if(!birthdayRecipients.includes(recipient)||recipient.absent||!speaker.el.isConnected||speaker.absent){clearBirthdayGreeting();return false;}
+      if(now<until){placeBirthdayBubble(speaker,speaker.el.querySelector('.birthday-note'));return true;}
+      hideBirthdayBubble(speaker);
+      if(rewardEnabled()&&(recipient.mentorPaused||rewardActive(recipient,now)))return true;
+      clearBirthdayGreeting();
+      // The same species-specific gesture as a reward, with no score or feed event.
+      if(rewardEnabled())startFishReward(recipient,now);
+      return true;
+    }
+    if(teacherVisit || goalCelebrationUntil)return false;
+    const pair=birthdaySchedule.pick(today,classroom().id,now,()=>document.querySelector('.fish-chat.visible')?[]:nearbyBirthdayFish(fishList,now));
+    if(!pair)return false;
+    const speaker=swimmers.get(pair.speakerId),recipient=swimmers.get(pair.recipientId),bubble=speaker.el.querySelector('.fish-chat');
+    const greeting=conversations.birthday();
+    speaker.lastChat=recipient.lastChat=now;
+    bubble.textContent=greeting.text;bubble.classList.add('visible','birthday-note');
+    bubble.classList.toggle('birthday-symbol',greeting.kind!=='message');
+    if(greeting.kind==='confetti'){
+      const count=window.SitePerformance?.lite()?6:10;
+      for(let i=0;i<count;i++){
+        const bit=document.createElement('i'),angle=Math.PI*(.12+.76*i/(count-1));bit.className='birthday-confetti';
+        bit.style.setProperty('--scatter-x',(Math.cos(angle)*(34+i%3*12)).toFixed(1)+'px');
+        bit.style.setProperty('--scatter-y',(-Math.sin(angle)*(34+i%4*9)).toFixed(1)+'px');
+        bit.style.setProperty('--spin',(i%2?210:-210)+'deg');bit.style.animationDelay=(i%4)*.04+'s';
+        bubble.append(bit);
+      }
+    }
+    placeBirthdayBubble(speaker,bubble);birthdayGreeting={speaker,recipient,until:now+2300};
+    return true;
+  }
   let frameSamples=0,slowSamples=0,previousFrame=0,reportingPerformance=false,qualityNeedsRender=false;
   function tick(now) {
     if(document.hidden) {frame=0;return;}
@@ -1565,7 +1653,7 @@
     const paintStarted=performance.now();
     for(const fish of fishList) placeFish(fish,paintModels);
     if(paintModels){modelPaintAt=now;if(modelAllowed){modelSlowBatches=performance.now()-paintStarted>10?modelSlowBatches+1:Math.max(0,modelSlowBatches-1);if(modelSlowBatches>=12)restoreNaturalCreatures('Cihazın akıcılığı için doğal hareketlere dönüldü.');}}
-    hungerChat(now);chat(now);
+    if(!birthdayChat(now,fishList)){hungerChat(now);chat(now);}
   }
   function restartAnimation() {
     cancelAnimationFrame(frame);frame=0;lastTime=0;previousFrame=0;
@@ -1630,6 +1718,100 @@
     try { const raw = JSON.parse(localStorage.getItem('kemal_teacher_tools_panel_v2') || 'null'); if (Array.isArray(raw?.classes)) importedClasses = raw.classes.filter(c => c && typeof c.name === 'string' && Array.isArray(c.students)).slice(0, 30); }
     catch (error) { /* Show the same explicit empty state for unavailable or malformed source data. */ }
     openModal('Sınıfım & Çark’tan aktar', '<p class="modal-intro">Bu tarayıcıda kayıtlı sınıflardan birini akvaryuma kopyalayın. Kaynak sınıf listeniz değişmez. Aktarılan öğrenciler kendi canlılarını daha sonra seçebilir.</p>' + (importedClasses.length ? importedClasses.map((c, i) => '<div class="import-choice"><div><strong>' + esc(c.name) + '</strong><small>' + c.students.length + ' öğrenci</small></div><button class="button primary" data-action="import-selected" data-index="' + i + '">Sınıfı kopyala</button></div>').join('') : '<div class="panel-empty"><p>Bu tarayıcıda kayıtlı bir Sınıfım & Çark listesi bulunamadı.</p><button class="button primary" data-action="add">Öğrencileri yazarak ekle</button></div>'));
+  }
+  function canImportAgenda() {
+    if(viewing || demo || demoOnly || !accountId) return false;
+    const session=window.kemalUserAuth.getState();
+    return !session.error && session.profile?.approval_status==='active' && window.SmartboardRoster?.owner(session)===accountId;
+  }
+  function cancelAgendaImport() {
+    agendaImport?.controller.abort();
+    agendaImport=null;
+  }
+  function currentAgendaImport(job) {
+    return job && job===agendaImport && modal.open && modalRoute?.key==='agendaImport' && job.classId===classroom().id && canImportAgenda();
+  }
+  async function agendaImportModal() {
+    if(!canImportAgenda() || !window.AquariumAgenda) return toast('Ajandadan aktarım için onaylı öğretmen hesabınızla kendi sınıfınızı açın.');
+    cancelAgendaImport();
+    const cls=classroom(),job={classId:cls.id,controller:new AbortController()};
+    agendaImport=job;
+    const title='Ajandadan öğrenci ve doğum günü al';
+    rememberModal('agendaImport',agendaImportModal);
+    openModal(title,'<p role="status">Öğretmen Ajandası’ndaki sınıflar alınıyor…</p>');
+    const timeout=setTimeout(()=>job.controller.abort(),9000);
+    try {
+      const result=await window.SmartboardRoster.load(window.kemalUserAuth,localStorage,{details:window.AquariumAgenda.studentDetails,signal:job.controller.signal});
+      if(!currentAgendaImport(job) || result.owner!==accountId) return;
+      job.sources=result.classes;
+      if(!job.sources.length) {
+        const message=result.status==='error'?'Ajanda listesi alınamadı. Bağlantınızı kontrol edip yeniden deneyin.':'Bu hesapta öğrenci bulunan bir ajanda sınıfı yok. Öğretmen Ajandası’nda sınıfınızı kaydedip yeniden deneyin.';
+        $('modalContent').innerHTML='<p class="modal-intro" role="status">'+message+'</p><button type="button" class="button" data-action="import-agenda">Yeniden dene</button>';
+        return;
+      }
+      const source=job.sources.find(c=>c.name.localeCompare(cls.name,'tr-TR',{sensitivity:'accent'})===0) || job.sources.find(c=>c.active) || job.sources[0];
+      $('modalContent').innerHTML='<p class="modal-intro"><strong>'+esc(classroom().name)+'</strong> akvaryumuna adları ve doğum günlerini alın. Mevcut balıkların adları ve puan geçmişi korunur. Doğum tarihinden yalnızca gün ve ay kaydedilir.</p>'+
+        (result.status==='local'?'<p class="settings-note">Bu hesaba ait cihazdaki ajanda kaydı gösteriliyor.</p>':'')+
+        '<form id="agendaImportForm"><label class="field">Ajanda sınıfı<select id="agendaImportSource">'+job.sources.map(c=>'<option value="'+esc(c.id)+'" '+(c===source?'selected':'')+'>'+esc(c.name)+' · '+c.students.length+' öğrenci</option>').join('')+'</select></label>'+
+        '<label class="toggle-row">Eşleşmeyen öğrenciler için yeni balık ekle<input type="checkbox" id="agendaImportNew" '+(!classroom().students.length?'checked':'')+'></label>'+
+        '<p id="agendaImportSummary" class="settings-note" role="status"></p><ul id="agendaImportRows" class="agenda-import-list" aria-label="Aktarım önizlemesi"></ul><button id="agendaImportApply" class="button primary full" type="submit">Akvaryuma aktar</button></form>';
+      renderAgendaImport();
+    } catch(e) {
+      if(currentAgendaImport(job))$('modalContent').innerHTML='<p class="modal-intro" role="status">Ajanda listesi alınamadı.</p><button type="button" class="button" data-action="import-agenda">Yeniden dene</button>';
+    } finally {clearTimeout(timeout);}
+  }
+  function agendaImportPlan(job) {
+    const source=job.sources.find(c=>c.id===$('agendaImportSource').value);
+    return source ? window.AquariumAgenda.plan(classroom().students,source.students).sort((a,b)=>a.source.name.localeCompare(b.source.name,'tr-TR')) : [];
+  }
+  function renderAgendaImport(notice='') {
+    const job=agendaImport;
+    if(!currentAgendaImport(job) || !$('agendaImportSource'))return;
+    const rows=agendaImportPlan(job),includeNew=$('agendaImportNew').checked;
+    job.preview=JSON.stringify(rows);
+    const add=includeNew?rows.filter(row=>row.kind==='add').length:0;
+    const update=rows.filter(row=>row.kind==='update').length;
+    const ambiguous=rows.filter(row=>row.kind==='ambiguous').length;
+    const overLimit=classroom().students.length+add>60;
+    const date=b=>b?b.day+'.'+String(b.month).padStart(2,'0'):'—';
+    $('agendaImportRows').innerHTML=rows.map(({source,kind,newName,targetName,previous})=>{
+      const description=kind==='ambiguous'?'Eşleşme belirsiz · Atlanacak':kind==='add'?(includeNew?'Yeni balık · '+newName:'Atlanacak · Akvaryumda eşleşme yok'):kind==='update'?(targetName+(previous?' · Önceki tarih '+date(previous):' · Doğum günü eklenecek')):(source.birthday?'Zaten güncel':'Ajandada doğum tarihi yok');
+      return '<li><span><strong>'+esc(source.name)+'</strong><small>'+esc(description)+'</small></span><span class="agenda-import-date">'+(source.birthday?'🎂 '+date(source.birthday):'—')+'</span></li>';
+    }).join('');
+    $('agendaImportSummary').textContent=[notice,overLimit?'Bir akvaryumda en fazla 60 öğrenci olabilir. Yeni balık seçeneğini kapatıp eşleşenlerin doğum günlerini aktarabilirsiniz.':add+' yeni balık · '+update+' doğum günü güncellenecek.',ambiguous?ambiguous+' belirsiz eşleşme atlanacak. Bu doğum günlerini Öğrenciyi düzenle ekranından girebilirsiniz.':''].filter(Boolean).join(' ');
+    $('agendaImportApply').disabled=job.applying || overLimit || !add && !update;
+  }
+  async function applyAgendaImport() {
+    const job=agendaImport;
+    if(!currentAgendaImport(job) || job.applying || $('agendaImportApply').disabled)return;
+    const rows=agendaImportPlan(job),preview=job.preview,includeNew=$('agendaImportNew').checked;
+    const additions=includeNew?rows.filter(row=>row.kind==='add'):[];
+    if(JSON.stringify(rows)!==preview || classroom().students.length+additions.length>60) return renderAgendaImport('Akvaryum listesi güncellendi. Aktarımı yeniden kontrol edin.');
+    const controls=[$('agendaImportSource'),$('agendaImportNew'),$('agendaImportApply')];
+    let notice='';
+    job.applying=true;controls.forEach(control=>control.disabled=true);
+    try {
+      const newStudents=await Promise.all(additions.map(row=>window.AquariumAgenda.newStudent(job.classId,row)));
+      if(!currentAgendaImport(job))return;
+      const cls=classroom();
+      if(JSON.stringify(agendaImportPlan(job))!==preview || cls.students.length+newStudents.length>60) {
+        notice='Akvaryum listesi güncellendi. Aktarımı yeniden kontrol edin.';return;
+      }
+      const usedIds=new Set(state.classes.flatMap(c=>c.students.map(s=>s.id)));
+      if(newStudents.some(s=>usedIds.has(s.id)))throw Error('Bu öğrencilerden biri akvaryumda zaten var.');
+      const updates=rows.filter(row=>row.kind==='update');
+      for(const row of updates) {
+        const target=cls.students.find(s=>s.id===row.targetId);
+        target.birthday={...row.source.birthday};target.agendaStudentId=row.source.id;
+      }
+      cls.students.push(...newStudents);
+      closeModal();commit();toast(newStudents.length+' yeni balık eklendi · '+updates.length+' doğum günü güncellendi.');
+    } catch(e) {
+      notice='Aktarım tamamlanamadı. Listeyi yeniden açıp tekrar deneyin.';
+    } finally {
+      job.applying=false;
+      if(currentAgendaImport(job)){controls.forEach(control=>control.disabled=false);renderAgendaImport(notice);}
+    }
   }
   function cancelParentHistory() {
     parentHistoryEpoch++;parentHistoryController?.abort();parentHistoryController=null;parentHistoryLoading=false;parentReport=null;
@@ -1931,6 +2113,7 @@
         });break;
       }
       case 'new-class': openModal('Yeni bir sınıf', '<form id="newClassForm"><label class="field">Sınıf adı<input name="name" placeholder="Örn. 2-A" maxlength="80" required autofocus></label><p class="form-error" id="formError" role="alert"></p><div class="form-actions"><button class="button primary" type="submit">Sınıfı oluştur</button></div></form>'); break;
+      case 'import-agenda': await agendaImportModal(); break;
       case 'import-class': importClassesModal(); break;
       case 'import-selected': {
         const source = importedClasses[Number(button.dataset.index)];
@@ -1965,9 +2148,10 @@
   });
   document.addEventListener('click', event => { const button = event.target.closest('[data-action]'); if (button && !button.disabled) act(button); });
   modal.addEventListener('click', event => { if (event.target === modal) { const r = modal.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closeModal(); } });
-  modal.addEventListener('close', () => { if(modal.open)return;stopPicker();cancelParentHistory();document.documentElement.classList.remove('aquarium-modal-open');document.body.classList.remove('dialog-open');restartAnimation();releaseFish(); confirmAction = null; pendingRestore = null; });
+  modal.addEventListener('close', () => { if(modal.open)return;stopPicker();cancelParentHistory();cancelAgendaImport();document.documentElement.classList.remove('aquarium-modal-open');document.body.classList.remove('dialog-open');restartAnimation();releaseFish(); confirmAction = null; pendingRestore = null; });
   document.addEventListener('submit', event => {
     const form = event.target; if (!modal.contains(form)) return; event.preventDefault(); if (viewing) return;
+    if(form.id==='agendaImportForm'){void applyAgendaImport();return;}
     const data = new FormData(form);
     if(form.id==='cosmeticsForm'){
       const cls=classroom(),s=cls.students.find(x=>x.id===cosmeticDraft?.studentId),cfg=C.customization(cls.customization);
@@ -2085,6 +2269,7 @@
       renderFish();return;
     }
     if(input.id==='settingsSection'){selectSettingsTab(input.value);return;}
+    if(input.id==='agendaImportSource' || input.id==='agendaImportNew'){renderAgendaImport();return;}
     if(input.id?.startsWith('childScope-') && input.dataset.linkId) {await saveShareControl(input);return;}
     if(input.id==='publicSharePoints' && shareRecord?.enabled) {await saveShareControl(input);return;}
     if(input.id==='historySeasonSelect'){historySeasonId=input.value;historyPage=0;historyModal();return;}
@@ -2148,7 +2333,7 @@
   });
   document.addEventListener('visibilitychange', () => {
     $('aquariumApp').classList.toggle('page-hidden',document.hidden);
-    if(document.hidden){clearHungerReminder();hungerSchedule?.defer(performance.now());suspendTeacherVisit();Audio.cancelPicker?.();if(pickerFrame){stopPicker();if(modal.open && modalRoute?.key==='random-student')randomStudentModal();}}
+    if(document.hidden){clearBirthdayGreeting();clearHungerReminder();hungerSchedule?.defer(performance.now());suspendTeacherVisit();Audio.cancelPicker?.();if(pickerFrame){stopPicker();if(modal.open && modalRoute?.key==='random-student')randomStudentModal();}}
     else {refreshDate();updateTimer();}
     restartAnimation();
   });
