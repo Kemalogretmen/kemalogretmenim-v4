@@ -390,6 +390,81 @@ html[data-theme="dark"] :is(.pager-btn, .pager-chip, .view-mode-btn, .shortcut-k
 html[data-theme="dark"] .viewer-toolbar :is(.toolbar-btn, .toolbar-brand, .toolbar-label, .toolbar-section-title, .toggle-collapse-btn) { color: var(--theme-text); }
 html[data-theme="dark"] .viewer-toolbar :is(.toolbar-btn:hover, .doc-tool-group-tabs button[aria-pressed="true"]),
 html[data-theme="dark"] :is(.pager-btn:hover:not(:disabled), .view-mode-btn.active) { background: var(--theme-accent-soft); color: var(--theme-accent); }
+/* Document tools are injected into lesson previews as well as the standalone
+   reader. Their original light-only fills made the icon and label contrast
+   disappear in dark mode, especially for disabled actions. Keep the document
+   paper untouched; only the surrounding control chrome is themed here. */
+html[data-theme="dark"] .viewer-toolbar {
+  background: rgba(25, 31, 45, .96);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .34), 0 2px 8px rgba(0, 0, 0, .22);
+}
+html[data-theme="dark"] .viewer-toolbar :is(
+  .toolbar-header, .doc-color-grid, .advanced-tools, .toolbar-compact-pages,
+  .shape-panel, .doc-stamp-settings, .doc-tool-group-tabs, .doc-tool-panel-head button
+) {
+  background: var(--theme-surface-alt);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+}
+html[data-theme="dark"] .viewer-toolbar :is(.toolbar-drag-icon, .toolbar-drag-label, .toolbar-title, .doc-tool-group-hint) {
+  color: var(--theme-muted);
+}
+html[data-theme="dark"] .viewer-toolbar :is(.doc-tool-panel-head, .doc-active-tool) {
+  color: var(--theme-text);
+  border-color: var(--theme-border);
+}
+html[data-theme="dark"] .viewer-toolbar .toolbar-btn {
+  background: transparent;
+  border-color: transparent;
+  color: var(--theme-text);
+}
+html[data-theme="dark"] .viewer-toolbar :is(#docArrowToggleBtn, #docStampToggleBtn, #docCompassBtn, #docShapeToggleBtn) {
+  background: var(--theme-surface-alt);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+}
+html[data-theme="dark"] .viewer-toolbar .toolbar-btn:hover:not(:disabled),
+html[data-theme="dark"] .viewer-toolbar :is(#docArrowToggleBtn, #docStampToggleBtn, #docCompassBtn, #docShapeToggleBtn):hover:not(:disabled) {
+  background: var(--theme-accent-soft);
+  border-color: #7357ad;
+  color: var(--theme-accent);
+}
+html[data-theme="dark"] .viewer-toolbar .toolbar-btn:is(.active, .is-active),
+html[data-theme="dark"] .viewer-toolbar :is(#docArrowToggleBtn, #docStampToggleBtn, #docCompassBtn, #docShapeToggleBtn):is(.active, .is-active) {
+  background: #7151b9;
+  border-color: #8b70ce;
+  color: #fff;
+}
+html[data-theme="dark"] .viewer-toolbar .toolbar-btn:disabled {
+  background: #252d3c;
+  border-color: #3c4659;
+  color: #8995a8;
+  opacity: 1;
+}
+html[data-theme="dark"] .viewer-toolbar .toolbar-btn:disabled svg { opacity: .68; }
+html[data-theme="dark"] .viewer-toolbar #docShapeTools .toolbar-btn {
+  background: var(--theme-surface-alt);
+  border-color: var(--theme-border);
+  color: var(--theme-text);
+}
+html[data-theme="dark"] .viewer-toolbar #docShapeTools [data-tool="checkmark"],
+html[data-theme="dark"] .viewer-toolbar #docShapeTools [data-tool="correct-stamp"] {
+  background: #183e32;
+  border-color: #37745e;
+  color: #84d9af;
+}
+html[data-theme="dark"] .viewer-toolbar #docShapeTools [data-tool="cross"],
+html[data-theme="dark"] .viewer-toolbar #docShapeTools [data-tool="wrong-stamp"] {
+  background: #472935;
+  border-color: #88485e;
+  color: #ff9aae;
+}
+html[data-theme="dark"] .viewer-toolbar .toolbar-btn:focus-visible {
+  outline: 2px solid #bda8f4;
+  outline-offset: 2px;
+}
 html[data-theme="dark"] .ebook-shell :is(.ebook-card, .ebook-empty, .ebook-loading) { background: var(--theme-surface); color: var(--theme-text); border-color: var(--theme-border); }
 html[data-theme="dark"] .ebook-shell :is(.ebook-card h2, .grade-tab, .library-search input) { color: var(--theme-text); }
 html[data-theme="dark"] .ebook-shell :is(.ebook-card-author, .ebook-card-description, .ebook-card-meta) { color: var(--theme-muted); }
