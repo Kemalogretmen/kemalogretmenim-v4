@@ -21,6 +21,7 @@ export function agendaActivityPath(path: string): string {
     const allowed = key === 'advanced' ? value === '1'
       : key === 'mobileView' ? views.has(value)
       : key === 'plannerTab' ? tabs.has(value)
+      : key === 'reportType' ? ['classAnalysis','academic','comparison'].includes(value)
       : key === 'focusDate' ? /^\d{4}-\d{2}-\d{2}$/.test(value)
       : key === 'classId' || key === 'studentId' ? /^[a-zA-Z0-9_-]{1,160}$/.test(value) : false;
     if (!allowed) throw new Error('Invalid agenda navigation hint');

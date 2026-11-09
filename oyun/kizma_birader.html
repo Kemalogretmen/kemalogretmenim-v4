@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kızma Birader Matematik Parkuru | Kemal Öğretmenim</title>
   <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
-  <link rel="stylesheet" href="/css/kizma-birader-dice.css?v=20261028">
+  <link rel="stylesheet" href="/css/kizma-birader-dice.css?v=20261103-fit2">
   <style>
     :root {
       --board-max: 690px;
@@ -2594,6 +2594,8 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="/css/game-viewport.css?v=20261103-fit5">
+  <link rel="stylesheet" href="/css/game-players.css?v=20261105">
 </head>
 <body>
   <div class="game-page">
@@ -2821,7 +2823,8 @@
   <script src="/js/site.js?v=20261030-icons"></script>
   <script src="/js/chance-audio.js?v=20261028"></script>
   <script src="/js/chance-studio.js?v=20261028"></script>
-  <script src="/js/kizma-birader-dice.js?v=20261028"></script>
+  <script src="/js/kizma-birader-dice.js?v=20261103-fit2"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
   <script>
     const COLORS = [
       { id: "mavi", label: "Mavi", hex: "#3B82F6", light: "#E8F2FF" },
@@ -3251,7 +3254,8 @@
       byId("diceWrap").className = `dice-wrap state-${stage}`;
       byId("diceShadow").className = `dice-shadow state-${stage}`;
       byId("rollBtn").setAttribute("aria-busy", String(stage === "rolling"));
-      if (stage === "ready" || stage === "hidden") window.kbDice3D?.hide();
+      if (stage === "ready") window.kbDice3D?.ready();
+      if (stage === "hidden") window.kbDice3D?.hide();
     }
 
     function updateDiceArenaLayout() {
@@ -3265,6 +3269,7 @@
       }
 
       const mainRect = main.getBoundingClientRect();
+      main.style.setProperty('--kb-board-height', byId('boardGridWrap').parentElement.clientHeight + 'px');
       const boardRect = boardWrap.getBoundingClientRect();
       const dockRect = dock.getBoundingClientRect();
       const diceSize = dice.getBoundingClientRect().width || 90;
@@ -4191,6 +4196,9 @@
       gameState.lastRoll = 0;
 
       byId("setupModal").style.display = "none";
+      document.body.classList.add('kb-playing');
+      window.kbViewport?.fit();
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
       tahtayiOlustur();
       buildScoreboard();
       buildRaceTrack();
@@ -4308,6 +4316,7 @@
       setDiceStage("hidden");
       resetQuestionCard();
       byId("gradeRuleHint").textContent = GRADE_HINTS[cfg.grade];
+      window.kbViewport = GameViewport.watch(window, byId('gameMain'), () => { updateDiceArenaLayout(); window.kbDice3D?.refresh(); });
     });
   </script>
 
@@ -4560,9 +4569,10 @@
       R.setPixelRatio(Math.min(devicePixelRatio || 1, portrait ? 1.75 : 2));
       R.setClearColor(0x000000, 0);
       R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap;
-      canvas.className = "board-3d";
-      canvas.setAttribute("role", "img"); canvas.setAttribute("aria-label", "3 boyutlu yol tahtası");
-      wrap.appendChild(canvas); wrap.classList.add("has-3d");
+      var main = document.getElementById('gameMain'), diceLayer = null;
+      canvas.className = "board-3d board-scene-wide";
+      canvas.setAttribute("role", "img"); canvas.setAttribute("aria-label", "3 boyutlu yol tahtası ve tek fiziksel zar");
+      main.appendChild(canvas); wrap.classList.add("has-3d");
       sunEl = document.createElement("div"); sunEl.className = "kb-sun"; sunEl.setAttribute("aria-hidden", "true"); wrap.appendChild(sunEl);
       skyEl = document.createElement("div"); skyEl.className = "kb-sky"; skyEl.setAttribute("aria-hidden", "true");
       skyEl.innerHTML = '<i class="kb-cloud" style="--t:3%;--d:120s;--dl:-30s"></i><i class="kb-cloud small" style="--t:9%;--d:170s;--dl:-125s"></i>'; wrap.appendChild(skyEl);
@@ -4789,9 +4799,23 @@
 
       function size() {
         var w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return;
-        if (mq.matches !== portrait) { portrait = mq.matches; build(); }
-        R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); fit();
-        window.kbDice3D?.refresh();
+        var nextPortrait = h > w * 1.05;
+        if (nextPortrait !== portrait) { portrait = nextPortrait; build(); }
+        R.setSize(main.clientWidth, main.clientHeight, false); cam.aspect = w / h; cam.updateProjectionMatrix(); fit();
+        diceLayer?.resize();
+      }
+
+      function renderScenes() {
+        var mr = main.getBoundingClientRect(), br = wrap.getBoundingClientRect();
+        R.autoClear = false;
+        R.setScissorTest(false); R.setViewport(0, 0, mr.width, mr.height); R.clear();
+        R.setViewport(br.left-mr.left, mr.height-(br.bottom-mr.top), br.width, br.height);
+        R.setScissor(br.left-mr.left, mr.height-(br.bottom-mr.top), br.width, br.height);
+        R.setScissorTest(true); R.render(scene, cam);
+        if (diceLayer) {
+          R.setScissorTest(false); R.setViewport(0, 0, mr.width, mr.height); R.clearDepth();
+          R.render(diceLayer.scene, diceLayer.camera);
+        }
       }
 
       function makePawn(i) {
@@ -4850,16 +4874,21 @@
         }
       };
 
-      // Aynı sahne, kamera, ışık ve zemin: zar tahta üzerine gerçekten gölge düşürür.
+      // Tek renderer ve tek zar: hazne, uçuş ve duruş aynı modelin devamıdır.
       try {
-        var physicalDie = window.KBBoardDice.mesh(T, document);
-        scene.add(physicalDie);
-        window.kbDice3D = window.KBBoardDice.create({
-          win: window, die: physicalDie,
-          toWorld: function (u, v) { return portrait ? [-v, u] : [u, v]; },
-          render: function () { R.render(scene, cam); }
+        diceLayer = window.KBBoardDice.layer({
+          T: T, win: window, main: main, dock: document.getElementById('diceDock'),
+          boardPoint: function (u, v) {
+            var p = portrait ? [-v, u] : [u, v];
+            cam.updateMatrixWorld();
+            var point = new T.Vector3(p[0], 0, p[1]).project(cam), mr = main.getBoundingClientRect(), br = wrap.getBoundingClientRect();
+            return { x: br.left-mr.left+(point.x*.5+.5)*br.width, y: br.top-mr.top+(-point.y*.5+.5)*br.height };
+          },
+          render: renderScenes
         });
+        window.kbDice3D = diceLayer.api;
         document.getElementById("diceArena").classList.add("has-physical-die");
+        if (gameState.gameStarted && gameState.phase === 'ready') window.kbDice3D.ready();
       } catch (error) {
         console.warn("Zar hafif 3B görünümde devam ediyor.", error);
       }
@@ -4915,7 +4944,7 @@
         requestAnimationFrame(loop);
         if (document.hidden || !onScreen) { last = now; return; }
         var dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
-        update(dt, time); R.render(scene, cam);
+        update(dt, time); renderScenes();
       }
       if ("IntersectionObserver" in window) new IntersectionObserver(function (en) { onScreen = en[0].isIntersecting; }).observe(wrap);
       if ("ResizeObserver" in window) new ResizeObserver(size).observe(wrap); else addEventListener("resize", size);
@@ -4941,5 +4970,6 @@
     }
   })();
   </script>
+  <script src="/js/game-players.js?v=20261105"></script>
 </body>
 </html>

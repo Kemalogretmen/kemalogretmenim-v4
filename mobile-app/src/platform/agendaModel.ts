@@ -4,6 +4,7 @@ export type AgendaItem = { id: string; [key: string]: any };
 export type AgendaState = { classes: AgendaItem[]; students: AgendaItem[]; exams: AgendaItem[]; calendarEvents: AgendaItem[]; scheduleItems: AgendaItem[]; activeClassId?: string; [key: string]: any };
 export type AgendaRow = { agenda_state: AgendaState; lesson_planner_state: Record<string, any> | null; updated_at: string; client_updated_at?: string };
 export type AgendaChange = { id: string; collection: 'calendarEvents' | 'students' | 'classes' | 'scheduleItems'; itemId: string; patch?: Record<string, unknown>; remove?: boolean; before?: Record<string, unknown> | null; createdAt: string }
+  | { id: string; collection: 'classRename'; itemId: string; agendaId?: string; plannerId?: string; name: string; beforeName: string; beforePlannerName?: string; createdAt: string }
   | { id: string; collection: 'plannerCell'; itemId: string; classId: string; day: string; period: number; patch: { ders: string; isHoliday: boolean }; before?: Record<string, unknown> | null; createdAt: string };
 export type ClassChoice = { id: string; name: string; agendaId?: string; plannerId?: string };
 export type DailyLesson = { id: string; period: number; title: string; teacher?: string; time?: string; outcome?: string; process?: string; additional?: { kazanim?: string; surec?: string }[]; note?: string; holiday?: boolean; color?: LessonColor };
@@ -108,7 +109,8 @@ export function agendaClassChoices(row: AgendaRow | null): ClassChoice[] {
   const choices: ClassChoice[] = classes.map((c, index) => {
     const key = classKeys[index], candidates = plannersByName.get(key) || [];
     // Duplicate normalized names on either side require an explicit choice.
-    const plannerId = rosterCounts.get(key) === 1 && candidates.length === 1 ? candidates[0].id : undefined;
+    const linked = typeof c.plannerId === 'string' && plannerClasses.some(p => p.id === c.plannerId) && classes.filter(other => other.plannerId === c.plannerId).length === 1 ? c.plannerId : undefined;
+    const plannerId = linked || (rosterCounts.get(key) === 1 && candidates.length === 1 ? candidates[0].id : undefined);
     return { id: c.id, name: String(c.name || 'Sınıfım'), agendaId: c.id, plannerId };
   });
   for (const p of plannerClasses) if (!choices.some(c => c.plannerId === p.id)) choices.push({ id: `planner:${p.id}`, name: String(p.name || 'Ders sınıfım'), plannerId: p.id });
@@ -206,7 +208,15 @@ export function applyAgendaChanges(row: AgendaRow, changes: AgendaChange[], enfo
   // Always apply small operations to the latest server document. Never replace unrelated records.
   const next: AgendaRow = JSON.parse(JSON.stringify(row));
   for (const op of changes) {
-    if (op.collection === 'plannerCell') {
+    if (op.collection === 'classRename') {
+      const name = (displayText(op.name, 80) || '').trim();
+      const roster = next.agenda_state.classes.find(c => c.id === op.agendaId);
+      const planner = next.lesson_planner_state?.siniflar?.find((c: any) => c.id === op.plannerId);
+      if (!name || (!roster && !planner) || (op.agendaId && !roster) || (op.plannerId && !planner)) throw new Error('Sınıf bulunamadı. Listeyi yenileyin.');
+      if (enforceConflicts && ((roster && roster.name !== op.beforeName && roster.name !== name) || (planner && planner.name !== op.beforePlannerName && planner.name !== name))) throw new Error('Sınıf adı başka cihazda değiştirildi. Kaydın korunuyor.');
+      if (roster) { roster.name = name; if (planner) roster.plannerId = planner.id; }
+      if (planner) planner.name = name;
+    } else if (op.collection === 'plannerCell') {
       const planner = next.lesson_planner_state;
       if (!planner?.programs?.[op.classId] || !/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)$/.test(op.day) || op.period < 0 || op.period > 9) throw new Error('Ders programı değişmiş. Programı yeniden açıp kontrol et.');
       const cells = planner.programs[op.classId][op.day] ||= [];
@@ -222,6 +232,28 @@ export function applyAgendaChanges(row: AgendaRow, changes: AgendaChange[], enfo
       if (op.remove) {
         if (enforceConflicts && old && op.before && JSON.stringify(old) !== JSON.stringify(op.before)) throw new Error('Bu kayıt başka bir cihazda değiştirildi. Silmeden önce yeniden kontrol et.');
         if (index >= 0) items.splice(index, 1);
+        if (op.collection === 'students' || op.collection === 'classes') {
+          const removedStudents = op.collection === 'students' ? [old || op.before].filter(object) : next.agenda_state.students.filter(s => s.classId === op.itemId);
+          const nameKey = (name: string) => name.replace(/\s+/g, ' ').trim().toLocaleUpperCase('tr-TR');
+          const names = new Set(removedStudents.map(s => nameKey(`${s.firstName || ''} ${s.lastName || ''}`)));
+          const studentIds = new Set(op.collection === 'students' ? [op.itemId] : next.agenda_state.students.filter(s => s.classId === op.itemId).map(s => s.id));
+          if (op.collection === 'classes') {
+            next.agenda_state.students = next.agenda_state.students.filter(s => !studentIds.has(s.id));
+            next.agenda_state.exams = next.agenda_state.exams.filter(e => e.classId !== op.itemId);
+            next.agenda_state.scheduleItems = next.agenda_state.scheduleItems.filter(e => e.classId !== op.itemId);
+            next.agenda_state.calendarEvents = next.agenda_state.calendarEvents.filter(e => e.classId !== op.itemId);
+            if (next.agenda_state.activeClassId === op.itemId) next.agenda_state.activeClassId = next.agenda_state.classes[0]?.id;
+          }
+          for (const exam of next.agenda_state.exams) {
+            for (const id of studentIds) if (exam.results) delete exam.results[id];
+            if (Array.isArray(exam.participants)) exam.participants = exam.participants.filter((p: any) => !studentIds.has(p.studentId));
+            if (Array.isArray(exam.importWarnings?.missingStudentIds)) exam.importWarnings.missingStudentIds = exam.importWarnings.missingStudentIds.filter((id: string) => !studentIds.has(id));
+            if (Array.isArray(exam.importWarnings?.noScoreNames)) exam.importWarnings.noScoreNames = exam.importWarnings.noScoreNames.filter((name: string) => !names.has(nameKey(name)));
+          }
+          for (const log of [next.agenda_state.birthdayReminderLog, next.agenda_state.birthdaySnoozeLog]) for (const key of Object.keys(log || {})) {
+            if ([...studentIds].some(id => key.slice(5) === `${id}_today` || key.slice(5) === `${id}_before`)) delete log[key];
+          }
+        }
       } else {
         if (enforceConflicts && old && !op.before) for (const key of Object.keys(op.patch || {})) {
           if (JSON.stringify(old[key]) !== JSON.stringify(op.patch![key])) throw new Error('Bu kayıt başka bir cihazda değiştirildi. Bekleyen kaydın korunuyor.');
@@ -259,6 +291,6 @@ export function agendaCache(row: AgendaRow): AgendaRow {
   // Do not persist photos, addresses, health or family details in the native display cache.
   const a = row.agenda_state;
   return { ...row, agenda_state: normalizeAgenda({ teacher: { name: a.teacher?.name }, classes: a.classes.map(c => ({ id: c.id, name: c.name })), activeClassId: a.activeClassId,
-    students: a.students.map(s => ({ id: s.id, classId: s.classId, firstName: s.firstName, lastName: s.lastName, schoolNo: s.schoolNo })),
+    students: a.students.map(s => ({ id: s.id, classId: s.classId, firstName: s.firstName, lastName: s.lastName, schoolNo: s.schoolNo, detailsUnavailable: true })),
     exams: a.exams.map(e => ({ id: e.id, name: e.name })), calendarEvents: a.calendarEvents, scheduleItems: a.scheduleItems }) };
 }

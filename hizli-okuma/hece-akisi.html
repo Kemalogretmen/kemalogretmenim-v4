@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hece Akışı - Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+  <link rel="stylesheet" href="/css/hece-akisi.css?v=20261106-1">
+</head>
+<body class="ha-page">
+  <section id="catalogView" hidden>
+    <header class="ha-topbar"><div class="ha-brand"><div class="ha-brand-mark" aria-hidden="true">H</div><div><strong>Hece Akışı</strong><span>Harfleri birleştir, akıcı oku</span></div></div><nav class="ha-top-actions"><a class="ha-btn" href="/hizli-okuma/index.html">Hızlı Okuma</a><a class="ha-btn" href="/siniflar/1-sinif.html">1. Sınıf</a></nav></header>
+    <main class="ha-main"><div class="ha-page-head"><div><h1>Hece birleştirme çalışmaları</h1><p>Sabit heceye inen harf ve heceleri okuyun. Otomatik çalışmalarda akış kendiliğinden, öğretmen kontrollü çalışmalarda her dokunuşla ilerler.</p></div><div class="ha-field" style="min-width:180px"><label for="catalogGrade">Sınıf düzeyi</label><select id="catalogGrade"><option value="">Tüm sınıflar</option><option value="1">1. Sınıf</option><option value="2">2. Sınıf</option><option value="3">3. Sınıf</option><option value="4">4. Sınıf</option><option value="5">5. Sınıf</option><option value="6">6. Sınıf</option><option value="7">7. Sınıf</option><option value="8">8. Sınıf</option></select></div></div><div class="ha-catalog" id="catalogGrid"><div class="ha-empty">Çalışmalar yükleniyor...</div></div></main>
+  </section>
+
+  <section id="setupView" hidden>
+    <header class="ha-topbar"><div class="ha-brand"><div class="ha-brand-mark" aria-hidden="true">H</div><div><strong>Hece Akışı</strong><span>Çalışma hazırlığı</span></div></div><a class="ha-btn" href="/hizli-okuma/hece-akisi.html">Çalışmalar</a></header>
+    <main class="ha-panel ha-setup"><div class="ha-panel-head"><div><h1 id="setupTitle" style="margin:0;font-size:23px">Hece Akışı</h1><p id="setupDescription" style="margin:5px 0 0;color:var(--ha-muted);font-size:13px"></p></div></div><div class="ha-panel-body">
+      <div class="ha-setup-summary"><div class="ha-summary-cell"><strong id="setupGrade">1. sınıf</strong><span>Düzey</span></div><div class="ha-summary-cell"><strong id="setupMode">Otomatik</strong><span>İlerleme</span></div><div class="ha-summary-cell"><strong id="setupCount">0</strong><span>Okuma birimi</span></div></div>
+      <div class="ha-notice" id="setupTiming"></div>
+      <div class="ha-field"><label for="readerName">Okuyucunun adı soyadı</label><input id="readerName" maxlength="120" autocomplete="name" placeholder="Ad soyad"><p class="ha-hint" id="readerNote"></p></div>
+      <button class="ha-btn ha-btn-primary" id="startButton" type="button" style="width:100%;margin-top:16px">Çalışmayı Başlat</button>
+    </div></main>
+  </section>
+
+  <section class="ha-stage" id="stageView" hidden>
+    <header class="ha-stage-bar"><div class="ha-stage-meta"><strong id="stageTitle">Hece Akışı</strong><span id="stageMode">Otomatik akış</span></div><div class="ha-stage-progress" aria-label="Çalışma ilerlemesi"><span id="stageProgressBar"></span></div><div class="ha-stage-controls"><button class="ha-icon-btn" id="fullscreenButton" type="button" title="Tam ekran" aria-label="Tam ekran">⛶</button><button class="ha-icon-btn" id="exitStageButton" type="button" title="Çalışmadan çık" aria-label="Çalışmadan çık">×</button></div></header>
+    <div class="ha-stage-canvas" id="stageCanvas"><div class="ha-stage-word"><span class="ha-stage-fixed" id="stageFixed">sa</span><span class="ha-stage-falling" id="stageFalling">n</span></div><span class="sr-only" id="stageLive" aria-live="polite"></span></div>
+    <footer class="ha-stage-footer"><span class="ha-badge" id="stageCounter">1 / 4</span><span class="ha-badge" id="stageClock">0:00</span><div class="ha-stage-tip" id="stageTip"></div><button class="ha-btn ha-btn-primary" id="manualNext" type="button" hidden>Sıradaki</button></footer>
+  </section>
+
+  <section id="resultView" hidden><main class="ha-panel ha-result"><div class="ha-panel-body"><div class="ha-result-mark" aria-hidden="true">✓</div><h1>Çalışma tamamlandı</h1><p><strong id="resultName"></strong> için okuma sonucu hazır.</p><div class="ha-result-grid"><div class="ha-result-value"><strong id="resultDuration">0:00</strong><span>Toplam süre</span></div><div class="ha-result-value"><strong id="resultWpm">0</strong><span>Kelime/dk karşılığı</span></div><div class="ha-result-value"><strong id="resultCount">0</strong><span>Okunan birim</span></div></div><div class="ha-notice" id="saveStatus">Sonuç kaydediliyor...</div><div class="ha-result-actions"><button class="ha-btn ha-btn-primary" id="restartButton" type="button">Tekrar Çalış</button><button class="ha-btn" id="backToSetup" type="button">Başlangıca Dön</button><a class="ha-btn" href="/hizli-okuma/hece-akisi.html">Diğer Çalışmalar</a></div></div></main></section>
+
+  <section id="errorView" hidden><main class="ha-panel ha-result"><div class="ha-panel-body"><div class="ha-result-mark" style="background:#fff1f3;color:var(--ha-danger)" aria-hidden="true">!</div><h1>Çalışma açılamadı</h1><p id="errorMessage"></p><div class="ha-result-actions"><button class="ha-btn ha-btn-primary" id="retryButton" type="button">Tekrar Dene</button><a class="ha-btn" href="/hizli-okuma/index.html">Hızlı Okumaya Dön</a></div></div></main></section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/user-auth.js?v=20261106-1"></script>
+  <script src="/js/hece-akisi-core.js?v=20261106-1"></script>
+  <script src="/js/hece-akisi-player.js?v=20261106-1"></script>
+</body>
+</html>

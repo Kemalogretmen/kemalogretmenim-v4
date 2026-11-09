@@ -12,7 +12,7 @@
   <link rel="icon" href="/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <title>Kronometre — Kemal Öğretmenim</title>
+    <title>Saat & Sayaç — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
 
@@ -870,30 +870,31 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="/css/teacher-workspace.css?v=20261104">
 </head>
-<body>
+<body class="teacher-workspace time-studio">
   <div class="sub-back">
     <a href="../ogretmen-araclari.html">← Araçlar</a>
-    <span style="font-size:20px">⏱</span>
-    <span class="sub-back-title">Kronometre</span>
+    <i class="fas fa-clock" aria-hidden="true"></i>
+    <span class="sub-back-title">Saat & Sayaç</span>
   </div>
   <main class="tools-page">
-    <h1 class="sr-only">Kronometre</h1>
+    <header class="workspace-intro"><div><span class="workspace-eyebrow">ZAMAN YÖNETİMİ</span><h1>Her dakikanın bir yeri var.</h1><p>Ders, etkinlik ve molalar için sınıfınızın saati.</p></div></header>
 
     <div class="time-bar glass">
-      <div class="time-bar-label">⏱️ Öğretmen Araçları</div>
+      <div class="time-bar-label">ÖĞRETMEN ARAÇLARI</div>
       <div class="time-bar-clock" id="timeBarClock">--:--:--</div>
       <div class="time-bar-date" id="timeBarDate">yükleniyor…</div>
-      <div class="time-bar-tz" id="timeBarTz">🌍 Yerel Saat</div>
+      <div class="time-bar-tz" id="timeBarTz">Yerel Saat</div>
     </div>
 
     <section class="workspace is-visible" id="countdownWorkspace" data-tool-panel="countdown">
       <article class="panel glass">
         <div class="panel-head">
-          <h2>Kronometre Sahnesi</h2>
+          <h2>Saat & Sayaç</h2>
           <div class="tool-actions">
             <div class="shortcut-help">
-              <button class="shortcut-help-btn" type="button" data-shortcut-target="timerShortcuts">!</button>
+              <button class="shortcut-help-btn" type="button" data-shortcut-target="timerShortcuts" aria-label="Klavye kısayolları" aria-expanded="false">!</button>
               <div class="shortcut-popover" id="timerShortcuts">
                 <div class="shortcut-popover-head">
                   <p class="shortcut-popover-title">Kronometre Kısayolları</p>
@@ -905,6 +906,9 @@
                   <div class="shortcut-row"><span class="shortcut-key">S</span><span>Durdur</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">C</span><span>Geri sayım</span></div>
                   <div class="shortcut-row"><span class="shortcut-key">I</span><span>İleri sayım</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">L</span><span>Tur kaydet</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">F</span><span>Tam ekran</span></div>
+                  <div class="shortcut-row"><span class="shortcut-key">Esc</span><span>Yardımı kapat</span></div>
                 </div>
               </div>
             </div>
@@ -913,12 +917,29 @@
           </div>
         </div>
         <div class="display-stage" id="timerStage">
-          <div class="mode-tabs" role="tablist">
-            <button class="mode-tab active" type="button" data-mode="countdown">⏳ Geri sayım</button>
-            <button class="mode-tab" type="button" data-mode="stopwatch">🚀 İleri sayım</button>
+          <div class="studio-toolbar">
+          <div class="mode-tabs" role="group" aria-label="Sayaç modu">
+            <button class="mode-tab active" type="button" data-mode="countdown" aria-pressed="true">Geri sayım</button>
+            <button class="mode-tab" type="button" data-mode="stopwatch" aria-pressed="false">Kronometre</button>
+            <button class="mode-tab" type="button" data-mode="clock" aria-pressed="false">Saat</button>
+          </div>
+          <div class="view-switch" role="group" aria-label="Saat görünümü"><button type="button" data-timer-view="digital" aria-pressed="true">Dijital</button><button type="button" data-timer-view="analog" aria-pressed="false">Klasik</button><button type="button" data-timer-view="both" aria-pressed="false">Birlikte</button></div>
           </div>
           
           <div class="timer-grid">
+            <div class="timer-projection" id="timerProjection" data-view="digital">
+            <p class="session-caption" id="sessionCaption">Ders etkinliği</p>
+            <svg class="analog-clock" id="analogClock" viewBox="0 0 200 200" role="img" aria-label="Klasik sayaç">
+              <circle class="analog-face" cx="100" cy="100" r="98" />
+              <path class="analog-sector" id="analogSector" />
+              <g class="analog-ticks" id="analogTicks"></g>
+              <g id="analogLabels"></g>
+              <line class="hour-hand" id="analogHour" x1="100" y1="100" x2="100" y2="57" />
+              <line class="minute-hand" id="analogMinute" x1="100" y1="100" x2="100" y2="34" />
+              <line class="second-hand" id="analogSecond" x1="100" y1="112" x2="100" y2="24" />
+              <circle cx="100" cy="100" r="4" fill="var(--timer-color)" />
+            </svg>
+            <output class="analog-readout" id="analogReadout"></output>
             <div class="svg-timer-wrap">
               <svg class="svg-timer" viewBox="0 0 200 200">
                 <defs>
@@ -939,23 +960,32 @@
                 <div class="timer-digital-ms" id="bigDigitsMs" style="display:none;">.00</div>
               </div>
             </div>
+            </div>
 
             <div class="timer-controls-area">
+              <label class="session-label">ETKİNLİK ADI<input id="sessionName" type="text" maxlength="70" placeholder="Örn. Bağımsız okuma" autocomplete="off"></label>
               <div class="status-line">
                 <div class="chip" id="modeChip">Mod: Geri sayım</div>
                 <div class="chip" id="statusChip">Durum: Bekliyor</div>
                 <div class="chip" id="targetChip" style="grid-column: span 2;">Hedef: 5 dk</div>
               </div>
               
-              <div style="display: flex; gap: 12px; margin-top: 8px;">
+              <div id="timerPrimaryActions" style="display: flex; gap: 12px; margin-top: 8px;">
                 <button class="btn btn-primary btn-start" style="flex:1; height: 60px; font-size: 20px;" type="button" id="startPauseBtn"><i class="fas fa-play"></i> Başlat</button>
                 <button class="btn btn-stop" type="button" id="stopBtn" style="height: 60px; font-size: 18px; border-radius: 16px;"><i class="fas fa-stop"></i> Durdur</button>
               </div>
 
-              <div class="ctrl-secondary" style="margin-top: 8px;">
+              <div class="ctrl-secondary" id="timerSecondaryActions" style="margin-top: 8px;">
                 <button class="btn btn-secondary" type="button" id="resetBtn"><i class="fas fa-redo"></i> Sıfırla</button>
                 <button class="btn btn-teal" type="button" id="presetFiveBtn">5 dk</button>
                 <button class="btn btn-secondary" type="button" id="presetTenBtn">10 dk</button>
+                <button class="btn btn-secondary" type="button" data-preset="60">1 dk</button>
+                <button class="btn btn-secondary" type="button" data-preset="120">2 dk</button>
+                <button class="btn btn-secondary" type="button" data-preset="900">15 dk</button>
+                <button class="btn btn-secondary" type="button" data-preset="1500">25 dk</button>
+                <button class="btn btn-secondary" type="button" data-preset="2400">40 dk</button>
+                <button class="btn btn-secondary" type="button" id="addMinuteBtn">+1 dakika</button>
+                <button class="btn btn-secondary" type="button" id="lapBtn" hidden>Tur kaydet</button>
                 <label class="sw-wrap">
                   <span class="sw"><input type="checkbox" id="millisCb"><span class="sw-track"></span></span>
                   <span style="font-size:14px; font-weight:900; color:var(--navy); margin-left:4px;">Salise</span>
@@ -967,7 +997,9 @@
                 <div class="field"><label>Dakika</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="m">−</button><div class="step-value" id="mVal">05</div><button class="step-btn" type="button" data-adj="1" data-unit="m">+</button></div><input class="sr-only" id="mInput" type="number" min="0" max="59" value="5"></div>
                 <div class="field"><label>Saniye</label><div class="stepper"><button class="step-btn" type="button" data-adj="-1" data-unit="s">−</button><div class="step-value" id="sVal">00</div><button class="step-btn" type="button" data-adj="1" data-unit="s">+</button></div><input class="sr-only" id="sInput" type="number" min="0" max="59" value="0"></div>
               </div>
-              <div class="alarm-banner" id="alarmBanner"><span>⏰ Süre doldu!</span><button class="btn btn-secondary" type="button" id="alarmStopBtn">Sesi durdur</button></div>
+              <div class="timer-options"><label><input type="checkbox" id="keepAwakeCb">Ekranı açık tut</label><span id="wakeStatus" role="status"></span></div>
+              <ol class="lap-list" id="lapList" aria-label="Kronometre turları"></ol>
+              <div class="alarm-banner" id="alarmBanner" role="status"><span>Süre doldu!</span><button class="btn btn-secondary" type="button" id="alarmStopBtn">Kapat</button></div>
             </div>
           </div>
         </div>
@@ -1103,7 +1135,7 @@
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
     }
     function closeShortcutPopovers() {
-      E.shortcutHelpBtns.forEach(function(btn) { btn.classList.remove('is-open'); });
+      E.shortcutHelpBtns.forEach(function(btn) { btn.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); });
       E.shortcutPopovers.forEach(function(pop) { pop.classList.remove('is-open'); });
     }
     function toggleShortcutPopover(id) {
@@ -1114,7 +1146,7 @@
       if(shouldOpen) {
         target.classList.add('is-open');
         var trigger = E.shortcutHelpBtns.find(function(btn) { return btn.getAttribute('data-shortcut-target') === id; });
-        if(trigger) trigger.classList.add('is-open');
+        if(trigger) { trigger.classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true'); }
       }
     }
 
@@ -1141,7 +1173,7 @@
       ticks.innerHTML = h;
     }
     function fmtDur(ms) { var tot = Math.floor(ms/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; var p=[]; if(h) p.push(h+' sa'); if(m) p.push(m+' dk'); if(s||!p.length) p.push(s+' sn'); return p.join(' '); }
-    function updateClock() { var now = new Date(); var t = fmtTime.format(now); var d = fmtDate.format(now); if(E.timeBarClock) E.timeBarClock.textContent = t; if(E.timeBarDate) E.timeBarDate.textContent = d; }
+    function updateClock() { var now = new Date(); var t = fmtTime.format(now); var d = fmtDate.format(now); if(E.timeBarClock) E.timeBarClock.textContent = t; if(E.timeBarDate) E.timeBarDate.textContent = d; if(S.mode === 'clock') render(); }
     function render() {
       var ms = Math.max(0, S.dispMs); renderTimerSVG(ms);
       var modeTxt = S.mode==='countdown' ? 'Geri sayım' : 'İleri sayım';
@@ -1155,6 +1187,108 @@
       if(E.startPauseBtn) { E.startPauseBtn.innerHTML = S.running ? '<i class="fas fa-pause"></i> Duraklat' : '<i class="fas fa-play"></i> Başlat'; E.startPauseBtn.className = S.running ? 'btn btn-secondary btn-start' : 'btn btn-primary btn-start'; }
       if(E.stopBtn) { if(S.running) E.stopBtn.classList.add('is-pulsing'); else E.stopBtn.classList.remove('is-pulsing'); }
       if(E.cdSettings) E.cdSettings.style.display = S.mode==='countdown' ? '' : 'none';
+      renderTimeStudio(ms);
+    }
+    var studio = { view: 'digital', lastMode: null, laps: [], wakeLock: null, wakePending: false };
+    function formatLap(ms) {
+      var seconds = Math.floor(ms / 1000);
+      return pad2(Math.floor(seconds / 3600)) + ':' + pad2(Math.floor(seconds / 60) % 60) + ':' + pad2(seconds % 60) + '.' + pad2(Math.floor(ms % 1000 / 10));
+    }
+    function clearTimerLaps() { studio.laps = []; document.getElementById('lapList').textContent = ''; }
+    function recordTimerLap() {
+      if(S.mode !== 'stopwatch' || !S.running) return;
+      updateTimerState();
+      var previous = studio.laps.length ? studio.laps[studio.laps.length - 1] : 0;
+      studio.laps.push(S.dispMs);
+      var row = document.createElement('li');
+      [String(studio.laps.length) + '. tur', '+' + formatLap(S.dispMs - previous), formatLap(S.dispMs)].forEach(function(value) { var cell = document.createElement('span'); cell.textContent = value; row.appendChild(cell); });
+      document.getElementById('lapList').prepend(row);
+    }
+    function renderTimeStudio(ms) {
+      if(!studio) return;
+      var clock = S.mode === 'clock', countdown = S.mode === 'countdown', now = new Date();
+      E.timerStage.classList.toggle('is-long-time', clock || ms >= 3600000);
+      var seconds = clock ? now.getSeconds() : ms / 1000;
+      var minutes = clock ? now.getMinutes() + seconds / 60 : seconds / 60;
+      var hours = clock ? now.getHours() + minutes / 60 : minutes / 60;
+      document.getElementById('analogHour').setAttribute('transform', 'rotate(' + (hours % 12 * 30) + ' 100 100)');
+      document.getElementById('analogMinute').setAttribute('transform', 'rotate(' + (minutes % 60 * 6) + ' 100 100)');
+      document.getElementById('analogSecond').setAttribute('transform', 'rotate(' + (seconds % 60 * 6) + ' 100 100)');
+      var ratio = countdown ? Math.max(0, Math.min(1, ms / Math.max(1,S.cdTarget))) : 0;
+      var angle = ratio * Math.PI * 2, radius = 74;
+      var sector = ratio >= .99999 ? 'M100 26 A74 74 0 1 1 99.999 26 Z' : ratio > 0 ? 'M100 100 L100 26 A74 74 0 ' + (ratio > .5 ? 1 : 0) + ' 1 ' + (100 + Math.sin(angle)*radius) + ' ' + (100 - Math.cos(angle)*radius) + ' Z' : '';
+      document.getElementById('analogSector').setAttribute('d', sector);
+      document.getElementById('analogReadout').textContent = clock ? fmtTime.format(now) : fmtDur(ms);
+      var color = countdown && ms <= 10000 ? '#b84449' : countdown && ms <= 30000 ? '#a36c19' : '#287b70';
+      E.timerStage.style.setProperty('--timer-color', color);
+      if(clock) {
+        E.bigDigitsMain.textContent = fmtTime.format(now);
+        E.bigDigitsMs.style.display = 'none'; E.liveBadge.textContent = 'Yerel saat';
+        E.modeChip.textContent = 'Yerel saat'; E.statusChip.textContent = fmtDate.format(now); E.targetChip.textContent = '';
+        E.timerProgressRing.style.strokeDashoffset = '0';
+      }
+      document.getElementById('analogClock').setAttribute('aria-label', clock ? 'Yerel saat ' + fmtTime.format(now) : 'Klasik sayaç: ' + fmtDur(ms));
+      document.getElementById('timerPrimaryActions').hidden = clock;
+      document.getElementById('timerSecondaryActions').hidden = clock;
+      document.getElementById('lapBtn').hidden = S.mode !== 'stopwatch';
+      document.getElementById('lapBtn').disabled = !S.running;
+      document.getElementById('addMinuteBtn').hidden = !countdown;
+      document.querySelectorAll('[data-preset],#presetFiveBtn,#presetTenBtn').forEach(function(button) { button.hidden = !countdown; });
+      E.modeTabs.forEach(function(tab) { tab.setAttribute('aria-pressed', String(tab.dataset.mode === S.mode)); });
+      if(studio.lastMode !== S.mode) { clearTimerLaps(); studio.lastMode = S.mode; }
+    }
+    function saveTimePreferences() {
+      try { localStorage.setItem('kemal_time_studio_v1', JSON.stringify({ view: studio.view, label: document.getElementById('sessionName').value, sound: S.alarmOn })); } catch(error) {}
+    }
+    function setTimeView(view) {
+      studio.view = ['digital','analog','both'].indexOf(view) >= 0 ? view : 'digital';
+      document.getElementById('timerProjection').dataset.view = studio.view;
+      document.querySelectorAll('[data-timer-view]').forEach(function(button) { button.setAttribute('aria-pressed', String(button.dataset.timerView === studio.view)); });
+    }
+    async function requestStudioWakeLock() {
+      var checkbox = document.getElementById('keepAwakeCb'), status = document.getElementById('wakeStatus');
+      if(!checkbox.checked || document.hidden || studio.wakeLock || studio.wakePending) return;
+      studio.wakePending = true;
+      try {
+        if(!navigator.wakeLock) throw new Error('unsupported');
+        var lock = await navigator.wakeLock.request('screen');
+        if(!checkbox.checked) { await lock.release(); return; }
+        studio.wakeLock = lock; status.textContent = 'Etkin';
+        lock.addEventListener('release', function() { if(studio.wakeLock === lock) studio.wakeLock = null; status.textContent = ''; });
+      } catch(error) { status.textContent = 'Bu cihazda etkinleştirilemedi.'; checkbox.checked = false; }
+      finally { studio.wakePending = false; }
+    }
+    function initTimeStudio() {
+      var labels = '', ticks = '';
+      for(var i = 0; i < 60; i++) ticks += '<line x1="100" y1="6" x2="100" y2="' + (i % 5 ? 9 : 13) + '" stroke-width="' + (i % 5 ? .6 : 1.4) + '" transform="rotate(' + i*6 + ' 100 100)" />';
+      for(var n = 1; n <= 12; n++) { var a = n * Math.PI/6; labels += '<text x="' + (100 + Math.sin(a)*80) + '" y="' + (100 - Math.cos(a)*80) + '">' + n + '</text>'; }
+      document.getElementById('analogTicks').innerHTML = ticks;
+      document.getElementById('analogLabels').innerHTML = labels;
+      var preferences = {};
+      try { preferences = JSON.parse(localStorage.getItem('kemal_time_studio_v1')) || {}; } catch(error) {}
+      setTimeView(preferences.view);
+      S.alarmOn = preferences.sound !== false;
+      E.soundToggleBtn.innerHTML = S.alarmOn ? '<i class="fas fa-bell"></i> Ses açık' : '<i class="fas fa-bell-slash"></i> Ses kapalı';
+      E.soundToggleBtn.setAttribute('aria-pressed', String(S.alarmOn));
+      var nameInput = document.getElementById('sessionName');
+      nameInput.value = typeof preferences.label === 'string' ? preferences.label.slice(0,70) : '';
+      function updateCaption() { document.getElementById('sessionCaption').textContent = nameInput.value.trim() || 'Ders etkinliği'; }
+      updateCaption();
+      nameInput.addEventListener('input', function() { updateCaption(); saveTimePreferences(); });
+      document.querySelectorAll('[data-timer-view]').forEach(function(button) { button.addEventListener('click', function() { setTimeView(button.dataset.timerView); saveTimePreferences(); }); });
+      document.getElementById('addMinuteBtn').addEventListener('click', function() {
+        if(S.mode !== 'countdown') return;
+        updateTimerState(); clearAlarm(); S.cdTarget += 60000; S.dispMs += 60000; syncSteppers();
+        if(S.running) prepareTimerAlarm(); render();
+      });
+      document.getElementById('lapBtn').addEventListener('click', recordTimerLap);
+      E.resetBtn.addEventListener('click', clearTimerLaps);
+      document.getElementById('keepAwakeCb').addEventListener('change', function(event) {
+        if(event.target.checked) requestStudioWakeLock();
+        else if(studio.wakeLock) studio.wakeLock.release().catch(function() {});
+      });
+      document.addEventListener('visibilitychange', function() { if(!document.hidden) requestStudioWakeLock(); });
+      document.querySelectorAll('.step-btn').forEach(function(button) { var names = {h:'saat',m:'dakika',s:'saniye'}; button.setAttribute('aria-label', names[button.dataset.unit] + (Number(button.dataset.adj)>0 ? ' artır' : ' azalt')); });
     }
     function syncSteppers() { var tot = Math.floor(S.cdTarget/1000); var h = Math.floor(tot/3600); var m = Math.floor((tot%3600)/60); var s = tot%60; if(E.hVal) E.hVal.textContent = pad2(h); if(E.mVal) E.mVal.textContent = pad2(m); if(E.sVal) E.sVal.textContent = pad2(s); if(E.hInput) E.hInput.value = h; if(E.mInput) E.mInput.value = m; if(E.sInput) E.sInput.value = s; }
     function getInputMs() { var h = parseInt(E.hInput.value||0,10)||0; var m = parseInt(E.mInput.value||0,10)||0; var s = parseInt(E.sInput.value||0,10)||0; return (h*3600+m*60+s)*1000; }
@@ -1207,7 +1341,7 @@
     }
     function tick() { S.frame=null; updateTimerState(); if(S.running && !document.hidden) S.frame=requestAnimationFrame(tick); }
     function syncTimerVisibility() { stopLoop(); updateTimerState(); if(S.running && !document.hidden) tick(); }
-    function startTimer() { if(S.running) return; clearAlarm(); if(S.mode === 'countdown') { var dur = getInputMs(); if(S.dispMs === 0) { S.pausedAt=0; S.cdTarget=Math.max(dur,1000); S.dispMs=S.cdTarget; } } S.running=true; S.startedAt=Date.now(); stopLoop(); prepareTimerAlarm(); tick(); }
+    function startTimer() { if(S.running || S.mode === 'clock') return; clearAlarm(); if(S.mode === 'countdown') { var dur = getInputMs(); if(S.dispMs === 0) { S.pausedAt=0; S.cdTarget=Math.max(dur,1000); S.dispMs=S.cdTarget; } } S.running=true; S.startedAt=Date.now(); stopLoop(); prepareTimerAlarm(); tick(); }
     function pauseTimer() { if(!S.running) return; updateTimerState(); if(!S.running) return; S.pausedAt+=Math.max(0,Date.now()-S.startedAt); S.running=false; stopLoop(); cancelAlarmAudio(); render(); }
     function stopTimer() { pauseTimer(); }
     function resetTimer() { pauseTimer(); clearAlarm(); S.pausedAt = 0; S.dispMs = S.mode === 'countdown' ? S.cdTarget : 0; if(S.mode === 'countdown') syncSteppers(); render(); }
@@ -1232,7 +1366,7 @@
     function syncFsBtn() {
       if(E.stageFullscreenBtn) E.stageFullscreenBtn.innerHTML = fsEl() === E.timerStage ? '<i class="fas fa-compress"></i> Küçült' : '<i class="fas fa-expand"></i> Büyüt';
       if(E.boardFullscreenBtn) E.boardFullscreenBtn.innerHTML = fsEl() === E.boardStage ? '<i class="fas fa-compress"></i> Küçült' : '<i class="fas fa-expand"></i> Büyüt';
-      if(fsEl() === E.boardStage || S.tool === 'whiteboard') setTimeout(resizeBoard, 0);
+      // This page only owns the time studio fullscreen surface.
     }
 
     /* ── SINIFIM & ÇARK ── */
@@ -1912,6 +2046,8 @@
         S.alarmOn = !S.alarmOn;
         E.soundToggleBtn.innerHTML = S.alarmOn ? '<i class="fas fa-bell"></i> Ses açık' : '<i class="fas fa-bell-slash"></i> Ses kapalı';
         if(!S.alarmOn) clearAlarm(); else if(S.running) prepareTimerAlarm();
+        E.soundToggleBtn.setAttribute('aria-pressed', String(S.alarmOn));
+        saveTimePreferences();
       });
     }
     if(E.millisCb) {
@@ -1929,6 +2065,7 @@
     document.addEventListener('fullscreenchange', syncFsBtn);
     document.addEventListener('webkitfullscreenchange', syncFsBtn);
 
+    initTimeStudio();
     updateClock();
     buildTimerTicks();
     syncSteppers();
@@ -1944,13 +2081,19 @@
       render();
     });
     document.addEventListener('keydown', function(e) {
-      if(isEditableTarget(e.target)) return;
+      if(isEditableTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
       var k = e.key.toLowerCase();
-      if(k === ' ' || k === 'enter') {
+      if((k === ' ' || k === 'enter') && !e.target.closest('button,a')) {
         e.preventDefault();
         S.running ? pauseTimer() : startTimer();
       }
-      if(k === 'r') resetTimer();
+      if(k === 'r') { resetTimer(); clearTimerLaps(); }
+      if(k === 's') stopTimer();
+      if(k === 'c') setMode('countdown');
+      if(k === 'i' || k === 'ı') setMode('stopwatch');
+      if(k === 'l') recordTimerLap();
+      if(k === 'f') toggleStageFs();
+      if(k === 'escape') closeShortcutPopovers();
     });
 
 })();

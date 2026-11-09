@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hece Akışı - Öğretmen Paneli</title>
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+  <link rel="stylesheet" href="/css/hece-akisi.css?v=20261106-1">
+</head>
+<body class="ha-page" data-manager-role="teacher">
+  <header class="ha-topbar">
+    <div class="ha-brand"><div class="ha-brand-mark" aria-hidden="true">H</div><div><strong>Hece Akışı</strong><span>Öğretmen çalışma merkezi</span></div></div>
+    <nav class="ha-top-actions"><a class="ha-btn" href="/ogretmen-paneli.html">Öğretmen Paneli</a><a class="ha-btn" href="/hizli-okuma/hece-akisi.html">Genel Çalışmalar</a></nav>
+  </header>
+
+  <main class="ha-main">
+    <div class="ha-notice error" id="teacherBlocked" hidden>Bu alan yalnızca onaylı öğretmen hesaplarına açıktır. <a href="/giris.html">Öğretmen hesabıyla giriş yapın.</a></div>
+    <div id="managerView" hidden>
+      <div class="ha-page-head"><div><h1>Hece çalışmalarım</h1><p>Sabit heceyi ve yanına inecek harfleri hazırlayın; öğrenciyi ajandadan seçerek çalışmayı başlatın ve tüm sonuçları burada izleyin.</p></div><div class="ha-top-actions"><button class="ha-btn" id="refreshManager" type="button">Yenile</button><button class="ha-btn ha-btn-primary" id="newActivity" type="button">Yeni Çalışma</button></div></div>
+      <div class="ha-notice" id="managerNotice" hidden></div>
+      <div class="ha-manager-grid">
+        <div class="ha-stack">
+          <section class="ha-panel">
+            <div class="ha-panel-head"><h2 id="editorHeading">Yeni Hece Çalışması</h2><span class="ha-badge" id="unitCount">4 okuma birimi</span></div>
+            <div class="ha-panel-body">
+              <div class="ha-form-grid">
+                <div class="ha-field ha-field-wide"><label for="activityTitle">Çalışma adı</label><input id="activityTitle" maxlength="140" placeholder="Örn: SA hecesi birleştirme çalışması"></div>
+                <div class="ha-field ha-field-wide"><label for="activityDescription">Kısa açıklama</label><input id="activityDescription" maxlength="500" placeholder="Öğrenci için kısa çalışma açıklaması"></div>
+                <div class="ha-field"><label for="activityFixed">Sabit hece</label><input id="activityFixed" maxlength="20" value="sa"></div>
+                <div class="ha-field"><label for="activityGrade">Sınıf düzeyi</label><select id="activityGrade"><option value="1">1. Sınıf</option><option value="2">2. Sınıf</option><option value="3">3. Sınıf</option><option value="4">4. Sınıf</option><option value="5">5. Sınıf</option><option value="6">6. Sınıf</option><option value="7">7. Sınıf</option><option value="8">8. Sınıf</option></select></div>
+                <div class="ha-field ha-field-wide"><label for="activityUnits">İnecek harf veya heceler</label><textarea id="activityUnits" placeholder="n, t, l, k"></textarea><p class="ha-hint">Her birimi virgül, noktalı virgül veya yeni satırla ayırın. En fazla 200 birim eklenebilir.</p></div>
+                <div class="ha-field ha-field-wide"><label>İlerleme biçimi</label><div class="ha-segment"><label><input id="modeManual" type="radio" name="activityMode" value="manual" checked><span>Öğretmen dokunarak ilerletir</span></label><label><input id="modeAutomatic" type="radio" name="activityMode" value="automatic"><span>Belirlenen sürede otomatik iner</span></label></div><p class="ha-hint" id="modeHelp"></p></div>
+                <div class="ha-field" id="secondsField" hidden><label for="activitySeconds">Her birimin ekranda kalma süresi</label><input id="activitySeconds" type="number" min="0.3" max="10" step="0.1" value="2"><p class="ha-hint">Saniye cinsinden.</p></div>
+                <div class="ha-field"><label for="activityStatus">Kullanım durumu</label><select id="activityStatus"><option value="draft">Taslak</option><option value="published">Kullanıma hazır</option></select></div>
+              </div>
+              <div class="ha-form-actions"><button class="ha-btn ha-btn-primary" id="saveActivity" type="button">Çalışmayı Kaydet</button></div>
+            </div>
+          </section>
+        </div>
+        <aside class="ha-stack">
+          <section class="ha-panel"><div class="ha-panel-head"><h2>Canlı önizleme</h2></div><div class="ha-preview"><div class="ha-preview-word"><span class="ha-preview-fixed" id="previewFixed">sa</span><span class="ha-preview-falling" id="previewFalling">n</span></div><div class="ha-preview-note">İnen birim, öğrencinin ekranında bu şekilde birleşir.</div></div></section>
+          <section class="ha-panel" id="studentPickerWrap" hidden><div class="ha-panel-head"><h2>Okuyacak öğrenci</h2></div><div class="ha-panel-body"><div class="ha-field"><label for="studentPicker">Ajanda / panel öğrencisi</label><select id="studentPicker"></select><p class="ha-hint" id="rosterSummary"></p></div><p class="ha-hint">Seçimden sonra aşağıdaki çalışmalardan “Başlat” düğmesine basın. Sonuç bu öğrenciye kaydedilir.</p></div></section>
+        </aside>
+      </div>
+
+      <section class="ha-panel" style="margin-top:18px"><div class="ha-panel-head"><h2>Hazırladığım çalışmalar</h2></div><div class="ha-panel-body"><div class="ha-card-grid" id="activityList"><div class="ha-empty">Çalışmalar yükleniyor...</div></div></div></section>
+      <section class="ha-panel" style="margin-top:18px"><div class="ha-panel-head"><h2>Öğrenci sonuçları</h2><span class="ha-badge">Son 200 kayıt</span></div><div class="ha-table-wrap"><table class="ha-table"><thead><tr><th>Öğrenci</th><th>Çalışma</th><th>Tür</th><th>Süre</th><th>Birim/dk</th><th>Tarih</th></tr></thead><tbody id="resultRows"><tr><td colspan="6">Sonuçlar yükleniyor...</td></tr></tbody></table></div></section>
+    </div>
+  </main>
+  <div class="ha-toast" id="managerToast"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/user-auth.js?v=20261106-1"></script>
+  <script src="/js/hece-akisi-core.js?v=20261106-1"></script>
+  <script src="/js/hece-akisi-manager.js?v=20261106-1"></script>
+</body>
+</html>

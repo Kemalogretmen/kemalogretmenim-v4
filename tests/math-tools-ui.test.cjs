@@ -9,6 +9,8 @@ function setup(width = 1280) {
   const root = path.join(__dirname, '..');
   const { document, window } = parseHTML(fs.readFileSync(path.join(root, 'ogretmen/matematik.html'), 'utf8'));
   window.innerWidth = width; window.devicePixelRatio = 1;
+  window.innerHeight = 800;
+  window.HTMLElement.prototype.getBoundingClientRect = () => ({ top: 200 });
   window.setTimeout = () => 0; window.clearTimeout = () => {};
   const context2d = new Proxy({}, { get(target, key) { if (key === 'measureText') return () => ({ width: 20 }); if (key === 'getImageData') return () => ({ data: [] }); return () => {}; }, set() { return true; } });
   window.HTMLCanvasElement.prototype.getContext = () => context2d;
@@ -34,6 +36,18 @@ test('the studio preserves all tool controls and offers each geometry destinatio
   for (const href of ['birim-kup-uygulamasi.html', '3d-yapi-atolyesi.html', 'geometrik-cisimler-acilimlar.html', 'simetri.html']) assert.equal(q.document.querySelectorAll(`#mathWorkspace a[href="${href}"]`).length, 1);
   assert.equal(q.document.querySelector('.math-tool-launch-grid'), null);
   assert.equal(q.document.querySelectorAll('.math-nav-item svg').length, 15, 'Seven tools and four links have individual SVGs, plus four navigation arrows');
+});
+
+test('all library destinations share a keyboard-reachable scroller below the fixed heading and search', () => {
+  const q = setup(), library = q.document.getElementById('mathToolLibrary');
+  const scroller = library.querySelector('.math-library-scroll');
+  assert.equal(scroller.getAttribute('tabindex'), '0');
+  assert.equal(scroller.getAttribute('role'), 'region');
+  assert.equal(scroller.querySelectorAll('.math-nav-item').length, 11);
+  assert(!scroller.contains(q.document.getElementById('mathToolSearch')));
+  assert.equal(library.style.getPropertyValue('--math-library-height'), '580px');
+  q.window.innerHeight = 500; q.event(q.window, 'resize');
+  assert.equal(library.style.getPropertyValue('--math-library-height'), '280px');
 });
 
 test('all seven real tool modes remain functional and update the studio title and ARIA selection', () => {

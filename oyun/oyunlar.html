@@ -74,6 +74,33 @@
     </div>
 
     <div class="games-grid" id="gamesGrid">
+    <a href="onluk-kaydiragi.html" class="game-card" data-color="purple" data-cat="matematik" data-icon="numbers" data-new="true" data-date="2026-11-05T12:00:00+03:00">
+      <div class="gc-banner"><span class="gc-category">YENİ · Matematik</span><span class="gc-banner-em">🛝</span></div>
+      <div class="gc-body"><div class="gc-title">ONLUK KAYDIRAĞI</div><div class="gc-subtitle">En yakın onluğu ya da yüzlüğü seç, neşeyle kay! 2–4. sınıflar için tek ve iki kişilik yuvarlama macerası.</div><div class="gc-play"><span class="gc-play-lbl">Kaymaya başla!</span><span class="gc-play-arrow">→</span></div></div>
+    </a>
+    <a href="sayi-atolyesi.html" class="game-card" data-color="purple" data-cat="matematik" data-icon="cube" data-new="true" data-date="2026-11-04T18:00:00+03:00">
+      <div class="gc-banner"><span class="gc-category">YENİ · Matematik</span><span class="gc-banner-em">▦</span></div>
+      <div class="gc-body"><div class="gc-title">SAYI ATÖLYESİ</div><div class="gc-subtitle">Çarkı çevir; onluk bloklarla veya sayı boncuklarıyla sayını oluştur. Sınıfına uygun basamaklarla tek başına ya da arkadaşınla keşfet!</div><div class="gc-play"><span class="gc-play-lbl">Sayıları inşa et!</span><span class="gc-play-arrow">→</span></div></div>
+    </a>
+
+
+    <a href="zitlar-atolyesi.html" class="game-card" data-color="purple" data-cat="türkçe" data-icon="puzzle" data-new="true" data-date="2026-11-03T20:01:00+03:00">
+      <div class="gc-banner"><span class="gc-category">✨ YENİ · Türkçe</span><span class="gc-banner-em">🧩</span></div>
+      <div class="gc-body">
+        <div class="gc-title">ZITLAR ATÖLYESİ</div>
+        <div class="gc-subtitle">Zıt anlamları gerçek yapboz parçalarıyla birleştir. 6, 12 ve 20 parçada üç saklı dünyayı keşfet!</div>
+        <div class="gc-play"><span class="gc-play-lbl">Resmi keşfet!</span><span class="gc-play-arrow">→</span></div>
+      </div>
+    </a>
+
+    <a href="es-anlam-kuleleri.html" class="game-card" data-color="green" data-cat="türkçe" data-icon="book" data-new="true" data-date="2026-11-03T20:00:00+03:00">
+      <div class="gc-banner"><span class="gc-category">✨ YENİ · Türkçe</span><span class="gc-banner-em">▦</span></div>
+      <div class="gc-body">
+        <div class="gc-title">EŞ ANLAM KULELERİ</div>
+        <div class="gc-subtitle">İki sözcüklü blokları döndür, eş anlamlıları temas ettir. Yerçekimi ve zincirlerle kuleyi temizle!</div>
+        <div class="gc-play"><span class="gc-play-lbl">Kulelere katıl!</span><span class="gc-play-arrow">→</span></div>
+      </div>
+    </a>
 
     <!-- Ses Akışı: geliştirme için askıda; yeniden yayınlandığında oyun kartını buraya geri ekleyin. -->
 
@@ -527,7 +554,7 @@
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js?v=20261030-icons"></script>
   <script src="/js/user-auth.js"></script>
-  <script src="/js/games-catalog-data.js?v=20261029"></script>
+  <script src="/js/games-catalog-data.js?v=20261105-slide"></script>
   <script>
     const OYUN_KEY = 'kemal_oyunlar';
     const PAGE_SIZE = 12;
@@ -653,6 +680,8 @@
     };
 
     const GAME_DETAILS = {
+      'zitlar-atolyesi.html': { grade: '2–3. sınıf', duration: '4–8 dk', focus: 'Zıt anlam · Yapboz · 1–2 oyuncu' },
+      'es-anlam-kuleleri.html': { grade: '2–3. sınıf', duration: '4–8 dk', focus: 'Eş anlam · Sözcük bilgisi · 1–2 oyuncu' },
       'onluk-basket.html': { grade: '2. sınıf', duration: '2–5 dk', focus: 'Onluk · birlik · 1–3 oyuncu' },
       'carpim-kanatlari.html': { grade: '2–3. sınıf', duration: '4–8 dk', focus: 'Çarpma · 1–2 oyuncu' },
       'doga-dedektifleri.html': { grade: '1–4. sınıf', duration: '3–5 dk', focus: 'Yaşam becerileri' },

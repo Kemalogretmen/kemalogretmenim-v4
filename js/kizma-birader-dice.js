@@ -11,15 +11,26 @@
   function plan(value,random=Math.random){
     if(!Number.isInteger(value)||value<1||value>6)throw new RangeError('Zar sonucu 1–6 olmalı.');
     const p=Motion.dicePlan(1,random)[0];
-    return {...p,value,yaw:random()*Math.PI*2,fromU:-7.5,fromV:-1.74,
+    return {...p,value,yaw:.45+random()*.8,fromU:-7.5,fromV:-1.74,
       u:-4.1+random()*.75,v:-1.72+(random()-.5)*.08};
   }
   function pose(p,seconds){
     const t=clamp(seconds/duration,0,1),travel=1-(1-t)**3;
     const motion=Motion.dicePose(p,seconds*1.72/duration);
+    // Launch starts on the tray instead of popping into mid-air.
+    const flight=seconds*1.72/duration,s=clamp(flight/.76,0,1);
+    if(p.startQ){
+      const initial=Motion.dicePose(p,0).q;
+      const correction=product(p.startQ,{x:-initial.x,y:-initial.y,z:-initial.z,w:initial.w});
+      motion.q=product(slerp(correction,{x:0,y:0,z:0,w:1},clamp(t/.28,0,1)),motion.q);
+    }
+    const support=Motion.diceSupport(motion.q)+.01;
+    const y=p.startQ?Math.max(support,flight<=.76?.535+12*s*(1-s):Motion.diceHeight(flight)):motion.y;
     return {...motion,u:p.fromU+(p.u-p.fromU)*travel,v:p.fromV+(p.v-p.fromV)*travel,
-      y:motion.y*scale,settled:t>=1};
+      y:y*scale,settled:t>=1};
   }
+  function product(a,b){return {x:a.w*b.x+a.x*b.w+a.y*b.z-a.z*b.y,y:a.w*b.y-a.x*b.z+a.y*b.w+a.z*b.x,z:a.w*b.z+a.x*b.y-a.y*b.x+a.z*b.w,w:a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z};}
+  function slerp(a,b,t){let dot=a.x*b.x+a.y*b.y+a.z*b.z+a.w*b.w;if(dot<0){b={x:-b.x,y:-b.y,z:-b.z,w:-b.w};dot=-dot;}const angle=Math.acos(clamp(dot,-1,1)),sn=Math.sin(angle);const x=sn<1e-6?1-t:Math.sin((1-t)*angle)/sn,y=sn<1e-6?t:Math.sin(t*angle)/sn;return {x:a.x*x+b.x*y,y:a.y*x+b.y*y,z:a.z*x+b.z*y,w:a.w*x+b.w*y};}
   function cssTransform(value,yaw=0){
     const q=Motion.faceQuaternion(value,yaw),x=-q.x,y=q.y,z=-q.z,w=q.w;
     // Convert the shared Y-up quaternion to CSS's Y-down coordinate frame.
@@ -58,7 +69,7 @@
     let run=null,frame=0,currentPlan=null,available=true,stage='hidden';
     const now=()=>win.performance.now(),audio=()=>win.ChanceAudio;
     function draw(p,seconds){
-      const state=pose(p,seconds),[x,z]=toWorld(state.u,state.v);
+      const state=pose(p,seconds),[x,z]=toWorld(state.u,state.v,p);
       die.scale.setScalar(scale);die.position.set(x,state.y,z);die.quaternion.set(state.q.x,state.q.y,state.q.z,state.q.w);render();
     }
     function complete(ok){
@@ -77,8 +88,8 @@
         });
         if(t>=(run.reduced?.18:duration)){complete(true);return;}
       }else{
-        const p=clamp(t/(run.reduced?.12:.5),0,1),[x,z]=toWorld(currentPlan.u+(currentPlan.fromU-currentPlan.u)*p*p,currentPlan.v);
-        die.position.set(x,.67+Math.sin(p*Math.PI)*1.3,z);die.scale.setScalar(scale*(1-.8*p));render();
+        const p=clamp(t/(run.reduced?.12:.5),0,1),[x,z]=toWorld(currentPlan.u+(currentPlan.fromU-currentPlan.u)*p*p,currentPlan.v,currentPlan);
+        die.position.set(x,.67+Math.sin(p*Math.PI)*1.3,z);die.scale.setScalar(scale);render();
         if(p>=1){complete(true);return;}
       }
       frame=win.requestAnimationFrame(tick);
@@ -87,14 +98,22 @@
       if(!available)return Promise.resolve(false);
       complete(false);stage=kind==='roll'?'rolling':'exit';
       const reduced=!!win.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      if(kind==='roll')currentPlan=plan(value);
+      if(kind==='roll'){
+        const startQ={x:die.quaternion.x||0,y:die.quaternion.y||0,z:die.quaternion.z||0,w:die.quaternion.w??1};
+        currentPlan=plan(value);currentPlan.startQ=startQ;
+      }
       if(!currentPlan)return Promise.resolve(false);
       die.visible=true;
       return new Promise(resolve=>{run={kind,plan:currentPlan,valid:valid||(()=>true),start:now(),resolve,reduced,events:new Set()};frame=win.requestAnimationFrame(tick);});
     }
     const api={
       roll:(value,valid)=>launch('roll',value,valid),exit:valid=>launch('exit',null,valid),
-      refresh(){if(currentPlan&&die.visible&&stage==='landed')draw(currentPlan,duration);},
+      ready(){
+        if(!available)return;complete(false);stage='ready';die.visible=true;
+        const q=Motion.faceQuaternion(currentPlan?.value||1,currentPlan?.yaw||.65),p=currentPlan||plan(1,()=>.5);
+        const [x,z]=toWorld(p.fromU,p.fromV,p);die.position.set(x,(Motion.diceSupport(q)+.01)*scale,z);die.scale.setScalar(scale);die.quaternion.set(q.x,q.y,q.z,q.w);render();
+      },
+      refresh(){if(stage==='ready')api.ready();else if(currentPlan&&die.visible&&stage==='landed')draw(currentPlan,duration);},
       hide(){complete(false);die.visible=false;stage='hidden';render();},
       loseContext(){if(run)complete(run.valid());available=false;die.visible=false;stage='hidden';},
       get available(){return available;},get stage(){return stage;},get value(){return currentPlan?.value;}
@@ -104,5 +123,27 @@
     });
     win.addEventListener('pagehide',()=>api.hide());return api;
   }
-  return Object.freeze({duration,scale,contacts,plan,pose,cssTransform,mesh,create});
+  // A transparent pass in the board's existing renderer. One mesh travels from
+  // the actual tray rectangle to the board; no CSS/WebGL model swap or reroll.
+  function layer({T,win,main,dock,boardPoint,render}){
+    const scene=new T.Scene(),camera=new T.OrthographicCamera(-10,10,10,-10,.1,100);
+    camera.position.set(0,20*Math.sin(54*Math.PI/180),20*Math.cos(54*Math.PI/180));camera.lookAt(0,0,0);
+    scene.add(new T.HemisphereLight(0xffffff,0xa2a2b1,.85));
+    const light=new T.DirectionalLight(0xfff5df,1.1);light.position.set(-6,15,8);light.castShadow=true;
+    light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-35,right:35,top:35,bottom:-35,near:1,far:60});light.shadow.bias=-.0004;scene.add(light);
+    const floor=new T.Mesh(new T.PlaneGeometry(200,200),new T.ShadowMaterial({opacity:.2}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+    const die=mesh(T,win.document);scene.add(die);
+    const ray=new T.Raycaster(),plane=new T.Plane(new T.Vector3(0,1,0),0),point=new T.Vector3();
+    function resize(){const r=main.getBoundingClientRect(),b=win.document.getElementById('boardGridWrap').getBoundingClientRect(),px=clamp(b.width*.06,25,45);camera.left=-r.width/(px*2);camera.right=-camera.left;camera.top=r.height/(px*2);camera.bottom=-camera.top;camera.updateProjectionMatrix();camera.updateMatrixWorld();}
+    function toWorld(u,v,p){
+      const r=main.getBoundingClientRect(),d=dock.getBoundingClientRect(),target=boardPoint(p.u,p.v);
+      const t=(u-p.fromU)/(p.u-p.fromU),start={x:d.left-r.left+d.width/2,y:d.top-r.top+d.height*.72};
+      const end=target||{x:r.width*.65,y:r.height*.4};
+      const x=start.x+(end.x-start.x)*t,y=start.y+(end.y-start.y)*t;
+      ray.setFromCamera(new T.Vector2(x/r.width*2-1,1-y/r.height*2),camera);ray.ray.intersectPlane(plane,point);return [point.x,point.z];
+    }
+    resize();const api=create({win,die,toWorld,render});
+    return {scene,camera,die,api,resize(){resize();api.refresh();}};
+  }
+  return Object.freeze({duration,scale,contacts,plan,pose,cssTransform,mesh,create,layer});
 });

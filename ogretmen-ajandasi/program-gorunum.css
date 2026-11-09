@@ -1,0 +1,69 @@
+@media screen {
+  html.agenda-embedded body { min-height:0!important; background:transparent; }
+  html.agenda-embedded :is(.header,.footer,#shortcutDock,.shortcut-dock,.theme-control,#kemalNavMount,#kemalFooterMount,#kemalAnnounceMount) { display:none!important; }
+  html.agenda-embedded .tabs { padding:0 4px; gap:4px; position:static; border:0; background:transparent; overflow-x:auto; }
+  html.agenda-embedded .tab-btn { min-height:44px; padding:10px 14px; font-size:13px; white-space:nowrap; letter-spacing:0; }
+  html.agenda-embedded .page { max-width:none; padding:12px 0 0; }
+  html.agenda-embedded .card { border-radius:6px; box-shadow:none; margin-bottom:12px; padding:14px; }
+  html.agenda-embedded .planner-controls { padding:10px 12px!important; }
+  html.agenda-embedded .planner-controls > .form-row { align-items:center!important; gap:10px!important; }
+  html.agenda-embedded .planner-controls .form-group { min-width:120px; flex:0 1 170px; }
+  html.agenda-embedded .planner-controls .form-group label { display:none; }
+  html.agenda-embedded .week-nav { flex:1; gap:8px; width:auto; }
+  html.agenda-embedded .week-nav .btn,html.agenda-embedded #week-date-focus,html.agenda-embedded #week-date-note { display:none; }
+  html.agenda-embedded .week-label { font-size:16px; white-space:nowrap; }
+  html.agenda-embedded #week-jump { min-width:130px!important; max-width:250px; flex:1; }
+  html.agenda-embedded .legend { display:none; }
+  .planner-exports { position:relative; }
+  .planner-exports summary { cursor:pointer; border:1px solid var(--border); border-radius:5px; padding:9px 12px; min-height:40px; color:var(--text); background:var(--card); font-size:13px; font-weight:700; list-style:none; white-space:nowrap; }
+  .planner-exports summary::-webkit-details-marker { display:none; }
+  .planner-export-menu { position:absolute; right:0; top:calc(100% + 6px); z-index:30; min-width:150px; padding:6px; border:1px solid var(--border); background:var(--card); border-radius:6px; box-shadow:0 5px 18px #27313f22; }
+  .planner-export-menu .btn { display:block; width:100%; margin:3px 0; }
+  .planner-exports .btn { min-height:38px; padding:8px 10px; font-size:12px; }
+  .planner-view-switch { display:flex; justify-content:flex-end; gap:3px; margin:0; }
+  .planner-view-switch button { border:1px solid var(--border); background:var(--card); color:var(--muted); min-height:38px; padding:8px 16px; font:inherit; font-size:13px; border-radius:5px; cursor:pointer; }
+  .planner-view-switch button[aria-pressed=true] { background:#e2f2ed; color:#1a6c5b; border-color:#8ac2ae; }
+  .kemal-day-picker,.kemal-day-caption { display:none; }
+  html[data-planner-view=day] .kemal-day-picker { display:flex; gap:6px; overflow-x:auto; margin-bottom:12px; }
+  html[data-planner-view=day] .kemal-day-picker button { flex:1 0 45px; min-height:54px; padding:6px; border:1px solid var(--border); border-radius:6px; background:var(--card); color:var(--text); font:inherit; font-size:12px; line-height:1.5; cursor:pointer; }
+  html[data-planner-view=day] .kemal-day-picker button[aria-pressed=true] { background:#e2f2ed; color:#1a6c5b; border-color:#8ac2ae; font-weight:700; }
+  html[data-planner-view=day] .kemal-day-caption { display:block; color:var(--text); font-size:16px; font-weight:700; margin-bottom:12px; }
+  html[data-planner-view=day] #weekly-plan-container > div:first-child { display:none; }
+  html[data-planner-view=day] #weekly-plan-container > div { overflow:visible!important; }
+  html[data-planner-view=day] .plan-table { display:block; width:100%; table-layout:auto; min-width:0; border:0; box-shadow:none; }
+  html[data-planner-view=day] .plan-table :is(colgroup,thead) { display:none; }
+  html[data-planner-view=day] .plan-table tbody { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px; }
+  html[data-planner-view=day] .plan-table tr { display:block; padding:16px; border:1px solid var(--border); border-radius:6px; background:var(--card); }
+  html[data-planner-view=day] .plan-table td { display:none!important; border:0!important; background:transparent!important; padding:0!important; width:auto!important; height:auto; }
+  html[data-planner-view=day] .plan-table .row-label-cell { display:block!important; color:var(--muted); font-size:12px; margin-bottom:8px; }
+  html[data-planner-view=day] .plan-table td.kemal-active-day { display:block!important; }
+  html[data-planner-view=day] .plan-cell { height:auto; min-height:0; }
+  html[data-planner-view=day] .cell-ders-name { font-size:16px; }
+  html[data-planner-view=day] .cell-teacher { font-size:12px; margin:5px 0; color:var(--muted); border:0; }
+  html[data-planner-view=day] .cell-kazanim { font-size:14px; line-height:1.65; }
+  html[data-planner-view=day] .learning-output-more { min-height:40px; font-size:13px; }
+  html.agenda-embedded[data-planner-view=week] .plan-table { min-width:760px; }
+  html.agenda-embedded .program-settings-grid { gap:12px; }
+  @media(max-width:700px) {
+    html.agenda-embedded .planner-controls > .form-row { display:grid; grid-template-columns:minmax(90px,1fr) auto auto; gap:6px!important; }
+    html.agenda-embedded .planner-controls .form-group { min-width:0; width:100%; }
+    html.agenda-embedded .planner-controls .form-group select { width:100%; min-height:44px; }
+    html.agenda-embedded .week-nav { display:none; }
+    .planner-view-switch button { padding:8px 11px; min-height:40px; }
+    .planner-exports summary { padding:9px 8px; min-height:40px; font-size:12px; }
+    html[data-planner-view=day] .plan-table tbody { grid-template-columns:minmax(0,1fr); }
+    html.agenda-embedded #weekly-plan-card { padding:10px!important; }
+    html.agenda-embedded .tab-btn { padding:10px; font-size:12px; }
+  }
+}
+@media screen {
+  .exporting-a4 :is(.planner-view-switch,.kemal-day-picker,.kemal-day-caption) { display:none!important; }
+  html[data-planner-view=day] .exporting-a4 #weekly-plan-container > div { display:block; }
+  html[data-planner-view=day] .exporting-a4 .plan-table { display:table; }
+  html[data-planner-view=day] .exporting-a4 .plan-table colgroup { display:table-column-group; }
+  html[data-planner-view=day] .exporting-a4 .plan-table thead { display:table-header-group; }
+  html[data-planner-view=day] .exporting-a4 .plan-table tbody { display:table-row-group; }
+  html[data-planner-view=day] .exporting-a4 .plan-table tr { display:table-row; }
+  html[data-planner-view=day] .exporting-a4 .plan-table td { display:table-cell!important; }
+}
+@media print { .planner-view-switch,.kemal-day-picker,.kemal-day-caption { display:none!important; } }

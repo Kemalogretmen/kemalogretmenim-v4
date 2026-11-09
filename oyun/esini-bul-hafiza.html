@@ -542,8 +542,9 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/game-viewport.css?v=20261103-start">
 </head>
-<body data-theme="2">
+<body data-theme="4" class="memory-fit">
   <main class="page">
     <section class="game-shell" aria-label="Eşini bul hafıza oyunu">
       <header class="hero">
@@ -560,6 +561,7 @@
       </header>
 
       <section class="setup" id="setupScreen">
+        <div class="memory-setup-content">
         <div class="setup-panel">
           <div class="setup-grid">
             <div>
@@ -568,7 +570,7 @@
                 <button class="choice-btn is-active" type="button" data-age="4"><strong>4 Yaş</strong><span>4×3 · 6 eş</span></button>
                 <button class="choice-btn" type="button" data-age="5"><strong>5 Yaş</strong><span>4×4 · 8 eş</span></button>
                 <button class="choice-btn" type="button" data-age="6"><strong>6 Yaş</strong><span>5×4 · 10 eş</span></button>
-                <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>6×6 · 18 eş</span></button>
+                <button class="choice-btn" type="button" data-age="7"><strong>7+ Yaş</strong><span>36 kart · 18 eş</span></button>
               </div>
             </div>
 
@@ -586,6 +588,11 @@
           <h2 class="section-title">Skor</h2>
           <ul class="score-list" id="scoreList"></ul>
         </aside>
+        </div>
+        <div class="memory-setup-actions">
+          <p>Yaşını ve oyuncu sayısını seç, eşleri bulmaya başla!</p>
+          <button class="memory-start-btn" type="button" id="startGameBtn">Oyunu Başlat <span aria-hidden="true">→</span></button>
+        </div>
       </section>
 
       <nav class="control-row">
@@ -614,6 +621,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js?v=20261030-icons"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
   <script>
     // Büyük, kolay ayırt edilen ve farklı kategorilerden seçilmiş hafıza sembolleri.
     const SYMBOLS = [
@@ -641,7 +649,7 @@
     // 4 yaş: 4 sütun x 3 satır = 12 kart (6 çift)
     // 5 yaş: 4 sütun x 4 satır = 16 kart (8 çift)
     // 6 yaş: 5 sütun x 4 satır = 20 kart (10 çift)
-    // 7+ yaş: 6 sütun x 6 satır = 36 kart (18 çift)
+    // 7+ yaş: 36 kart (18 çift); sütun sayısı kullanılabilir ekrana uyarlanır.
     const ageConfigs = {
       4: { cols: 4, pairs: 6 },
       5: { cols: 4, pairs: 8 },
@@ -662,7 +670,8 @@
       totalPairs: 6,
       startedAt: 0,
       timerId: null,
-      soundOn: true
+      soundOn: true,
+      round: 0
     };
 
     const els = {
@@ -781,6 +790,7 @@
     function renderBoard() {
       const cfg = ageConfigs[state.age];
       els.board.style.setProperty("--cols", cfg.cols);
+      els.board.style.setProperty("--rows", Math.ceil(cfg.pairs * 2 / cfg.cols));
       els.board.dataset.density = cfg.pairs >= 18 ? "dense" : "regular";
       els.board.innerHTML = "";
       state.cards.forEach((card, index) => {
@@ -828,7 +838,7 @@
     }
 
     function flipCard(index, button) {
-      if (state.locked) return;
+      if (state.locked || !els.setup.classList.contains('hidden')) return;
       const card = state.cards[index];
       if (!card || card.found || state.open.includes(index)) return;
       startTimer();
@@ -836,16 +846,11 @@
       button.classList.add("is-open");
       button.setAttribute("aria-label", "Açıldı: " + card.item.name);
       state.open.push(index);
-      if (state.moves === 0 && state.open.length === 1 && !els.setup.classList.contains("hidden")) {
-        els.setup.classList.add("hidden");
-        els.setupToggle.textContent = "Ayarları Göster";
-        els.setupToggle.setAttribute("aria-expanded", "false");
-      }
-      
       if (state.open.length === 2) {
         state.moves += 1;
         state.locked = true;
-        window.setTimeout(checkPair, 650);
+        const round = state.round;
+        window.setTimeout(() => { if (round === state.round) checkPair(); }, 650);
       }
       renderStats();
     }
@@ -902,6 +907,7 @@
 
     function newGame() {
       stopTimer();
+      state.round += 1;
       const cfg = ageConfigs[state.age];
       els.body.setAttribute("data-theme", state.age); // Temayı dinamik değiştir
       state.totalPairs = cfg.pairs;
@@ -941,13 +947,25 @@
       });
     });
 
-    document.getElementById("newGameBtn").addEventListener("click", newGame);
+    function setSetupOpen(isOpen) {
+      els.setup.classList.toggle('hidden', !isOpen);
+      els.setupToggle.textContent = isOpen ? 'Ayarları Gizle' : 'Ayarları Göster';
+      els.setupToggle.setAttribute('aria-expanded', String(isOpen));
+      document.querySelector('.board-wrap').inert = isOpen;
+    }
+
+    function startGame() {
+      newGame();
+      setSetupOpen(false);
+      els.board.querySelector('.card-btn')?.focus?.({ preventScroll: true });
+    }
+
+    document.getElementById('startGameBtn').addEventListener('click', startGame);
+    document.getElementById('newGameBtn').addEventListener('click', startGame);
 
     document.getElementById("setupToggle").addEventListener("click", () => {
       const isOpening = els.setup.classList.contains("hidden");
-      els.setup.classList.toggle("hidden", !isOpening);
-      els.setupToggle.textContent = isOpening ? "Ayarları Gizle" : "Ayarları Göster";
-      els.setupToggle.setAttribute("aria-expanded", String(isOpening));
+      setSetupOpen(isOpening);
     });
 
     els.sound.addEventListener("click", () => {
@@ -958,7 +976,23 @@
       if (state.soundOn) playSound("flip");
     });
 
+    function fitMemoryBoard() {
+      const stage = document.querySelector('.memory-stage');
+      const shell = document.querySelector('.game-shell');
+      shell.style.setProperty('--memory-controls-bottom', (document.querySelector('.control-row').getBoundingClientRect().bottom - shell.getBoundingClientRect().top + 5) + 'px');
+      const cfg = ageConfigs[state.age];
+      const rect = stage.getBoundingClientRect();
+      const size = GameViewport.memoryLayout(rect.width, Math.max(1, rect.height - 8), cfg.pairs, cfg.cols);
+      els.board.style.setProperty('--cols', size.cols);
+      els.board.style.setProperty('--rows', size.rows);
+      els.board.style.width = size.width + 'px';
+      els.board.style.height = size.height + 'px';
+      els.board.style.setProperty('--memory-cell', size.cell + 'px');
+    }
     newGame();
+    setSetupOpen(true);
+    const memoryViewport = GameViewport.watch(window, document.querySelector('.game-shell'), fitMemoryBoard);
+    if ('ResizeObserver' in window) new ResizeObserver(fitMemoryBoard).observe(document.querySelector('.memory-stage'));
   </script>
 </body>
 </html>

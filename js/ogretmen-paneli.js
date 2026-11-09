@@ -33,6 +33,9 @@
     selectedAssignmentItem: null,
   };
   var client = null;
+  var agendaRoster = null;
+  var agendaRosterOwner = '';
+  var agendaRosterBusy = false;
 
   function getClient() {
     if (!window.kemalUserAuth) throw new Error('Oturum sistemi yüklenemedi. Sayfayı yenileyin.');
@@ -228,7 +231,7 @@
   }
 
   function isTeacherApproved() {
-    return !!(state.profile && state.profile.approval_status === 'active' && state.profile.active !== false);
+    return !!(state.profile && state.profile.role === 'teacher' && state.profile.approval_status === 'active' && state.profile.active !== false);
   }
 
   function sanitizeFileName(name) {
@@ -772,6 +775,12 @@
   }
 
   function renderClasses() {
+    var target = qs('agendaTargetClass');
+    if (target) {
+      var selected = target.value;
+      target.innerHTML = state.classes.map(function(item) { return '<option value="' + esc(item.id) + '">' + esc(item.name) + '</option>'; }).join('');
+      if (state.classes.some(function(item) { return item.id === selected; })) target.value = selected;
+    }
     var list = qs('classList');
     if (!list) return;
     if (!state.classes.length) {
@@ -817,7 +826,7 @@
           '<td><span class="teacher-pill ok">' + merit + ' puan</span></td>' +
           '<td>' + exams + ' test · ' + readings + ' okuma</td>' +
           '<td><span class="teacher-pill ok">' + esc(getAssignmentStatusLabel(item.status || 'active')) + '</span></td>' +
-          '<td><div class="teacher-row-actions"><button class="teacher-mini-btn primary" type="button" data-parent-code="' + esc(item.id) + '">Veli Kodu</button><button class="teacher-mini-btn danger" type="button" data-remove-student="' + esc(item.id) + '">Çıkar</button></div></td>' +
+          '<td><div class="teacher-row-actions">' + (item.agenda_source_student_id ? '<a class="teacher-mini-btn" href="/ogretmen-ajandasi/index.html?mobileView=studentsView&amp;classId=' + encodeURIComponent(item.agenda_source_class_id) + '&amp;studentId=' + encodeURIComponent(item.agenda_source_student_id) + '">Ajanda Bilgileri</a>' : '') + '<button class="teacher-mini-btn primary" type="button" data-parent-code="' + esc(item.id) + '">Veli Kodu</button><button class="teacher-mini-btn danger" type="button" data-remove-student="' + esc(item.id) + '">Çıkar</button></div></td>' +
         '</tr>';
       }).join('') +
       '</tbody></table>';
@@ -1538,6 +1547,62 @@
     }
   }
 
+  async function loadAgendaRoster() {
+    if (!isTeacherApproved() || agendaRosterBusy) return;
+    var owner = getTeacherId();
+    agendaRosterBusy = true;
+    qs('loadAgendaRosterBtn').disabled = true;
+    try {
+      var result = await getClient().from('teacher_agenda_states').select('agenda_state').eq('user_id', owner).maybeSingle();
+      if (owner !== getTeacherId()) return;
+      if (result.error) throw result.error;
+      agendaRoster = result.data && result.data.agenda_state;
+      agendaRosterOwner = owner;
+      if (!agendaRoster || !Array.isArray(agendaRoster.classes) || !Array.isArray(agendaRoster.students)) throw new Error('Bu hesapta kayıtlı bulut ajandası yok. Ajandayı buluta kaydedip tekrar deneyin.');
+      qs('agendaSourceClass').innerHTML = agendaRoster.classes.filter(function(c) { return c && typeof c.id === 'string'; }).map(function(c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join('');
+      renderAgendaRoster();
+    } catch (error) {
+      agendaRoster = null;
+      qs('agendaRosterPreview').replaceChildren();
+      qs('importAgendaRosterBtn').disabled = true;
+      setText('agendaRosterStatus', humanizeError(error));
+    } finally { agendaRosterBusy = false; qs('loadAgendaRosterBtn').disabled = false; }
+  }
+
+  function renderAgendaRoster() {
+    if (!agendaRoster || agendaRosterOwner !== getTeacherId()) return;
+    var source = qs('agendaSourceClass').value;
+    var rows = agendaRoster.students.filter(function(s) { return s && typeof s.id === 'string' && s.classId === source; });
+    qs('agendaRosterPreview').innerHTML = rows.map(function(s) {
+      return '<label style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid #dbe3ec;overflow-wrap:anywhere"><input type="checkbox" data-agenda-student="' + esc(s.id) + '"><span>' + esc([s.firstName,s.lastName].filter(Boolean).join(' ')) + ' · No: ' + esc(s.schoolNo || '—') + '</span></label>';
+    }).join('');
+    setText('agendaRosterStatus', rows.length + ' öğrenci · Fotoğraf, adres, sağlık ve veli bilgileri ajandada kalır.');
+    qs('importAgendaRosterBtn').disabled = !rows.length || !state.classes.length;
+  }
+
+  async function importAgendaRoster() {
+    if (!isTeacherApproved() || agendaRosterBusy || agendaRosterOwner !== getTeacherId()) return;
+    var owner = getTeacherId();
+    var selected = Array.from(qs('agendaRosterPreview').querySelectorAll('input:checked')).map(function(el) { return el.dataset.agendaStudent; });
+    var target = state.classes.find(function(c) { return c.id === qs('agendaTargetClass').value; });
+    if (!target || !selected.length) { toast('Hedef sınıfı ve aktarılacak öğrencileri seçin.', 'error'); return; }
+    if (!window.confirm(selected.length + ' öğrenci ' + target.name + ' sınıfına aktarılsın mı? Eşleşen kayıtlar ve mevcut veli bağlantıları korunacak.')) return;
+    agendaRosterBusy = true; qs('importAgendaRosterBtn').disabled = true;
+    try {
+      var result = await getClient().rpc('import_agenda_students', { source_class_id: qs('agendaSourceClass').value, target_class_id: target.id, selected_student_ids: selected });
+      if (owner !== getTeacherId()) return;
+      if (result.error) {
+        if (/PGRST202|42883/.test(String(result.error.code))) throw new Error('Aktarım kurulumu gerekli: Supabase SQL Editor içinde yalnızca supabase-ajanda-panel-aktarim.sql dosyasını çalıştırın.');
+        throw result.error;
+      }
+      var counts = result.data || {};
+      await loadTeacherData();
+      setText('agendaRosterStatus', (counts.added || 0) + ' yeni · ' + (counts.kept || 0) + ' mevcut kayıt korundu · ' + (counts.conflicts || 0) + ' eşleşme çakışması atlandı.');
+      toast('Ajanda öğrencileri aktarıldı.');
+    } catch (error) { setText('agendaRosterStatus', humanizeError(error)); }
+    finally { agendaRosterBusy = false; qs('importAgendaRosterBtn').disabled = false; }
+  }
+
   async function saveAssignment(event) {
     event.preventDefault();
     if (!isTeacherApproved()) {
@@ -2203,6 +2268,14 @@
     var profileForm = qs('teacherProfileForm');
     var messageForm = qs('teacherMessageForm');
     if (classForm) classForm.addEventListener('submit', saveClass);
+    if (qs('loadAgendaRosterBtn')) qs('loadAgendaRosterBtn').addEventListener('click', loadAgendaRoster);
+    if (qs('agendaSourceClass')) qs('agendaSourceClass').addEventListener('change', renderAgendaRoster);
+    if (qs('importAgendaRosterBtn')) qs('importAgendaRosterBtn').addEventListener('click', importAgendaRoster);
+    if (qs('selectAgendaRosterBtn')) qs('selectAgendaRosterBtn').addEventListener('click', function() {
+      var boxes = Array.from(qs('agendaRosterPreview').querySelectorAll('input'));
+      var all = boxes.length && boxes.every(function(box) { return box.checked; });
+      boxes.forEach(function(box) { box.checked = !all; });
+    });
     if (studentForm) studentForm.addEventListener('submit', saveStudent);
     if (assignmentForm) assignmentForm.addEventListener('submit', saveAssignment);
     if (profileForm) profileForm.addEventListener('submit', saveTeacherProfile);

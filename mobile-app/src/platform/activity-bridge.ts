@@ -387,6 +387,7 @@ function install(config: { origin: string; authKey: string; session: unknown; us
       if (input) { input.value = focusDate; input.dispatchEvent(new Event('change', { bubbles: true })); }
     }
     if (config.module === 'agenda' && view === 'reportsView') selectExisting('reportStudent', query.get('studentId'));
+    if (config.module === 'agenda' && view === 'reportsView' && ['classAnalysis','academic','comparison'].includes(query.get('reportType') || '')) selectExisting('reportType', query.get('reportType'));
     const grade = Number(new URLSearchParams(location.search).get('grade'));
     if (location.pathname.startsWith('/hizli-okuma/') && Number.isInteger(grade) && grade >= 1 && grade <= 8) document.querySelector<HTMLButtonElement>('.sinif-btn[data-s="' + grade + '"]')?.click();
     }, 0);

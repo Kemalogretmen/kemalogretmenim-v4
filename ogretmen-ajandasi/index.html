@@ -2618,10 +2618,20 @@
       }
       .student-report-page + .student-report-page { break-before: page; margin-top: 0; border-top: 0; padding-top: 0; }
     }
+    @media (max-width: 600px) {
+      .exam-import-results thead { display: none; }
+      .exam-import-results, .exam-import-results tbody, .exam-import-results tr, .exam-import-results td { display: block; width: 100%; min-width: 0; }
+      .exam-import-results tr { padding: 10px 0; border-bottom: 1px solid #e6edf5; }
+      .exam-import-results td { padding: 5px 8px; border: 0; white-space: normal; }
+      .exam-import-results td::before { content: attr(data-label); display: block; font-size: 11px; color: #667085; }
+      .exam-import-results td:nth-child(2) { font-weight: 700; }
+    }
   </style>
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="analiz.css">
+<link rel="stylesheet" href="ajanda-gorunum.css">
 </head>
 <body>
   <div class="app">
@@ -2673,6 +2683,7 @@
         </div>
         <div class="class-switcher">
           <select id="activeClassSelect" aria-label="Aktif sınıf"></select>
+          <button class="icon-btn" id="renameClassBtn" title="Sınıf adını düzenle" aria-label="Sınıf adını düzenle">✎</button>
           <button class="ghost-btn" id="quickAddClassBtn" title="Yeni sınıf ekle">＋ Sınıf</button>
         </div>
       </header>
@@ -2863,8 +2874,8 @@
       </section>
 
       <section id="examsView" class="content-view">
-        <div class="panel">
-          <h3>Excel Dosyasından Deneme / Test / Sınav Ekle</h3>
+        <div class="exam-upload-workspace">
+          <div class="exam-upload-header"><h3>Sınav Sonuçlarını İçe Aktar</h3><span class="badge blue">XLSX · XLS · CSV</span></div>
           <div class="form-grid">
             <div class="field">
               <label for="examName">Deneme sınavı adı</label>
@@ -2897,21 +2908,43 @@
               <label>Net hesabı</label>
               <label class="check-chip"><input id="examWrongPenalty" type="checkbox"> 3 yanlış 1 doğruyu götürsün</label>
             </div>
+            <div class="field">
+              <label for="examMaxScore">Toplam puan</label>
+              <input id="examMaxScore" type="number" min="1" value="500" placeholder="Örn. 100 veya 500">
+            </div>
             <div class="field full">
               <label for="examSubjectPoints">Ders puanları (opsiyonel)</label>
               <input id="examSubjectPoints" placeholder="Örn. Türkçe=40, Matematik=40, Hayat Bilgisi=20">
-              <span class="badge gold">Boş bırakılırsa sınav otomatik 100 puan üzerinden değerlendirilir.</span>
+              <span class="badge gold">Boş bırakılırsa Toplam puan kullanılır. Doldurursanız her derse ayrı puan yazın.</span>
             </div>
             <div class="field full">
               <label for="excelFile">Excel dosyası</label>
               <input id="excelFile" type="file" accept=".xlsx,.xls,.csv">
             </div>
+            <div class="field full">
+              <label for="examImportSheet">Excel sayfası</label>
+              <select id="examImportSheet" disabled><option value="">Otomatik bul</option></select>
+            </div>
           </div>
           <div class="actions" style="margin-top:12px">
-            <button class="primary-btn" id="importExamBtn">Excel'i Kontrol Et</button>
-            <span class="badge blue">İki satırlı ve tek satırlı D/Y/B Excel düzenleri desteklenir.</span>
+            <button class="primary-btn" id="uploadExamBtn" type="button">Yükle</button>
+            <button class="ghost-btn" id="importExamBtn">Önizle ve Düzenle</button>
+            <button class="ghost-btn" id="mapExamColumnsBtn" type="button">Sütunları Eşleştir</button>
+            <button class="ghost-btn" id="downloadExamTemplateBtn" type="button">Sınıfımla Sınav Şablonu İndir</button>
           </div>
           <div id="importSummary" style="margin-top:12px"></div>
+          <div id="examColumnMapping" class="exam-mapping" hidden>
+            <h3>Sütun Eşleştirme</h3>
+            <div class="form-grid">
+              <div class="field"><label for="mappingHeaderRow">Başlık satırı</label><input id="mappingHeaderRow" type="number" min="1" max="30" value="1"></div>
+              <div class="field"><label for="mappingName">Ad soyad sütunu</label><select id="mappingName"></select></div>
+              <div class="field"><label for="mappingSchoolNo">Okul no sütunu</label><select id="mappingSchoolNo"></select></div>
+              <div class="field"><label for="mappingSurname">Soyad sütunu (ayrıysa)</label><select id="mappingSurname"></select></div>
+            </div>
+            <div id="mappingSubjects"></div>
+            <div class="actions"><button class="ghost-btn" id="addMappingSubjectBtn" type="button">Ders Ekle</button><button class="primary-btn" id="applyExamMappingBtn" type="button">Eşleştirmeyi Kontrol Et</button></div>
+            <div id="mappingSample" class="table-wrap" style="max-height:260px;margin-top:14px"></div>
+          </div>
         </div>
 
         <div class="panel" style="margin-top:16px">
@@ -2984,16 +3017,15 @@
       </section>
 
       <section id="scheduleView" class="content-view">
-        <div class="panel schedule-focus-panel">
+        <div class="schedule-focus-panel">
           <div>
-            <h3>Ders Programı</h3>
             <p id="lessonPlannerFocusInfo">Bugünün haftası açılacak. Değiştirirseniz sistem bu haftayı hatırlar.</p>
           </div>
           <div class="schedule-date-control">
-            <button class="ghost-btn" id="lessonPlannerPrevWeekBtn">‹ Önceki Hafta</button>
+            <button class="ghost-btn" id="lessonPlannerPrevWeekBtn" aria-label="Önceki hafta" title="Önceki hafta">‹</button>
             <input id="lessonPlannerFocusDate" type="date" aria-label="Ders programı odak tarihi">
             <button class="ghost-btn" id="lessonPlannerTodayBtn">Bugün</button>
-            <button class="ghost-btn" id="lessonPlannerNextWeekBtn">Sonraki Hafta ›</button>
+            <button class="ghost-btn" id="lessonPlannerNextWeekBtn" aria-label="Sonraki hafta" title="Sonraki hafta">›</button>
           </div>
         </div>
         <div class="embedded-tool-shell">
@@ -3003,23 +3035,29 @@
 
       <section id="calendarView" class="content-view">
         <div class="calendar-shell">
-          <div class="panel">
+          <div class="calendar-workspace">
             <div class="calendar-toolbar">
               <div class="actions">
-                <button class="ghost-btn" id="prevCalendarMonthBtn">‹</button>
+                <button class="ghost-btn" id="prevCalendarMonthBtn" aria-label="Önceki hafta">‹</button>
                 <button class="ghost-btn" id="todayCalendarBtn">Bugün</button>
-                <button class="ghost-btn" id="nextCalendarMonthBtn">›</button>
+                <button class="ghost-btn" id="nextCalendarMonthBtn" aria-label="Sonraki hafta">›</button>
               </div>
               <h3 id="calendarTitle">Takvim</h3>
+              <div class="calendar-mode" role="group" aria-label="Takvim görünümü"><button type="button" data-calendar-mode="week" aria-pressed="true">Hafta</button><button type="button" data-calendar-mode="month" aria-pressed="false">Ay</button></div>
               <div class="actions">
                 <button class="ghost-btn" id="manageHolidaysBtn">Tatil Günleri</button>
                 <button class="ghost-btn" id="requestNotificationBtn">Bildirim İzni</button>
+                <button class="primary-btn" id="newCalendarNoteBtn" type="button">+ Yeni Not</button>
               </div>
             </div>
             <div id="calendarGrid" class="calendar-grid"></div>
           </div>
-          <div class="panel">
-            <h3>Gün Ajandası</h3>
+          <section class="calendar-day-panel" id="selectedDayPanel" aria-labelledby="selectedDayTitle">
+            <div class="calendar-selected-heading"><h3 id="selectedDayTitle">Seçili Gün</h3><span id="calendarSelectedCount"></span></div>
+            <div id="selectedDayEvents" class="selected-day-list"></div>
+          </section>
+          <details class="calendar-composer" id="calendarComposer">
+            <summary>Not veya Plan Ekle</summary>
             <div class="field">
               <label for="calendarEventDate">Tarih</label>
               <input id="calendarEventDate" type="date">
@@ -3063,21 +3101,21 @@
               <button class="primary-btn" id="saveCalendarEventBtn">Takvime Ekle</button>
               <button class="ghost-btn" id="clearCalendarFormBtn">Temizle</button>
             </div>
-            <h3 style="margin-top:18px">Seçili Gün</h3>
-            <div id="selectedDayEvents" class="selected-day-list"></div>
-          </div>
+          </details>
         </div>
       </section>
 
       <section id="reportsView" class="content-view">
-        <div class="panel printable">
-          <h3>Karne Hazırlama</h3>
+        <div class="report-workspace printable">
+          <div class="analysis-heading"><div><h3>Analiz ve Karne Merkezi</h3><span id="analysisClassLabel"></span></div><div class="report-mode-tabs" role="tablist" aria-label="Analiz görünümü"><button type="button" role="tab" data-report-mode="classAnalysis">Sınıf Analizi</button><button type="button" role="tab" data-report-mode="academic">Öğrenci Karnesi</button><button type="button" role="tab" data-report-mode="comparison">Deneme Karşılaştırma</button></div></div>
+          <div id="analysisOverview" class="analysis-overview" aria-live="polite"></div>
           <div class="report-options">
             <div class="form-grid">
               <div class="field full">
                 <label for="reportType">Rapor türü</label>
                 <select id="reportType">
                   <option value="academic">Akademik karne</option>
+                  <option value="classAnalysis">Sınıf analiz raporu</option>
                   <option value="comparison">Karşılaştırmalı karne</option>
                   <option value="rankingList">Sınav sıralama listesi</option>
                   <option value="classList">Resimli sınıf listesi</option>
@@ -3165,11 +3203,13 @@
             </div>
           </div>
           <div id="reportExamPicker" class="subject-picker report-exam-picker" hidden></div>
+          <div id="classAnalysisOptions" class="analysis-settings" hidden><label for="analysisTarget">Hedef başarı (%)</label><input id="analysisTarget" type="number" min="0" max="100" value="70"><label class="check-chip"><input id="analysisStudentNames" type="checkbox" checked> Öğrenci ayrıntıları</label></div>
           <div class="actions" style="margin-top:12px">
             <button class="primary-btn" id="refreshReportBtn">Karneyi Oluştur</button>
             <button class="ghost-btn" id="downloadPdfBtn">PDF</button>
             <button class="ghost-btn" id="downloadPngBtn">PNG</button>
             <button class="ghost-btn" id="downloadJpegBtn">JPEG</button>
+            <button class="ghost-btn" id="downloadAnalysisExcelBtn" type="button">Analiz Excel</button>
             <button class="ghost-btn" id="shareWhatsappBtn">WhatsApp</button>
             <button class="ghost-btn" onclick="window.print()">Yazdır</button>
           </div>
@@ -3525,6 +3565,6 @@
   <script src="../js/user-auth.js"></script>
   <script src="resmi-tatiller-veri.js"></script>
   <script src="resmi-tatiller.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20261103-exam-import"></script>
 </body>
 </html>

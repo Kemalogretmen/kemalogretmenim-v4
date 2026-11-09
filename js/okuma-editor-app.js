@@ -30,6 +30,7 @@
   const SIZE_VALUES = ['14px', '16px', '18px', '20px', '22px', '24px', '28px', '32px', '36px', '42px'];
   const LINE_HEIGHT_VALUES = ['1.4', '1.6', '1.8', '2', '2.2'];
   const PARAGRAPH_SPACING_VALUES = ['0px', '8px', '12px', '16px', '24px'];
+  const FIRST_LINE_INDENT_VALUES = ['1.5em', '2em', '2.5em', '3em'];
   const WIZARD_LAST_STEP = 6;
   const LEVEL_LABELS = {
     baslangic: 'Başlangıç',
@@ -451,6 +452,30 @@
     return hasVisibleContent ? clean : '';
   }
 
+  function migrateLegacyFirstLineIndentHtml(html) {
+    if (!html || !/ql-indent-\d+/.test(html)) {
+      return html;
+    }
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    container.querySelectorAll('p[class*="ql-indent-"], h1[class*="ql-indent-"], h2[class*="ql-indent-"], h3[class*="ql-indent-"], h4[class*="ql-indent-"], h5[class*="ql-indent-"], h6[class*="ql-indent-"], blockquote[class*="ql-indent-"]').forEach(function(block) {
+      const legacyClass = Array.from(block.classList).find(function(className) {
+        return /^ql-indent-\d+$/.test(className);
+      });
+      if (!legacyClass) {
+        return;
+      }
+      const legacyLevel = parseInt(legacyClass.slice('ql-indent-'.length), 10) || 1;
+      const indentIndex = Math.min(FIRST_LINE_INDENT_VALUES.length - 1, Math.max(0, legacyLevel - 1));
+      block.classList.remove(legacyClass);
+      block.style.textIndent = FIRST_LINE_INDENT_VALUES[indentIndex];
+      if (!block.className) {
+        block.removeAttribute('class');
+      }
+    });
+    return container.innerHTML;
+  }
+
   function normalizeTitleHtml(html) {
     return normalizeEditorHtml(html)
       .replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '')
@@ -547,8 +572,13 @@
       scope: Parchment.Scope.BLOCK,
       whitelist: PARAGRAPH_SPACING_VALUES,
     });
+    const FirstLineIndentStyle = new Parchment.Attributor.Style('firstlineindent', 'text-indent', {
+      scope: Parchment.Scope.BLOCK,
+      whitelist: FIRST_LINE_INDENT_VALUES,
+    });
     window.Quill.register(LineHeightStyle, true);
     window.Quill.register(ParagraphSpacingStyle, true);
+    window.Quill.register(FirstLineIndentStyle, true);
   }
 
   function initQuill() {
@@ -653,7 +683,7 @@
 
     setCheckedGrades(text && text.siniflar, text && text.sinif);
 
-    const html = normalizeEditorHtml(text && (text.icerik_html || text.icerik) ? (text.icerik_html || text.icerik) : '');
+    const html = migrateLegacyFirstLineIndentHtml(normalizeEditorHtml(text && (text.icerik_html || text.icerik) ? (text.icerik_html || text.icerik) : ''));
     state.quill.setContents([]);
     if (html) {
       state.quill.clipboard.dangerouslyPasteHTML(html);
@@ -1001,6 +1031,17 @@
     return SIZE_VALUES[Math.max(0, Math.min(SIZE_VALUES.length - 1, index + direction))];
   }
 
+  function getNextFirstLineIndent(current, direction) {
+    const currentIndex = FIRST_LINE_INDENT_VALUES.indexOf(String(current || ''));
+    if (direction > 0) {
+      return FIRST_LINE_INDENT_VALUES[Math.min(FIRST_LINE_INDENT_VALUES.length - 1, currentIndex + 1)] || FIRST_LINE_INDENT_VALUES[0];
+    }
+    if (currentIndex <= 0) {
+      return false;
+    }
+    return FIRST_LINE_INDENT_VALUES[currentIndex - 1];
+  }
+
   function applyInlineTool(editor, action, value) {
     const range = focusEditor(editor);
     if (!range) {
@@ -1049,7 +1090,10 @@
       return;
     }
     if (action === 'indent' || action === 'outdent') {
-      editor.formatLine(range.index, Math.max(range.length, 1), 'indent', action === 'indent' ? '+1' : '-1');
+      const lineFormats = editor.getFormat(range.index, 0);
+      const nextIndent = getNextFirstLineIndent(lineFormats.firstlineindent, action === 'indent' ? 1 : -1);
+      editor.formatLine(range.index, 0, 'firstlineindent', nextIndent, 'user');
+      editor.setSelection(range.index, range.length, 'silent');
       return;
     }
     if (action === 'lineheight' || action === 'paragraphspacing') {

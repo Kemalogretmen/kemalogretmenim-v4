@@ -59,7 +59,7 @@
 .home-platform .home-section-head h2{font-size:29px;font-weight:800;line-height:1.3;letter-spacing:-.8px;margin-top:8px}
 .home-platform .home-section-head>p{color:#7c7e88;line-height:1.7;font-size:12px}
 .home-platform .home-section-description{font-size:13px;line-height:1.7;margin-top:9px;color:var(--home-muted)}
-.home-platform .home-area-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:17px}
+.home-platform .home-area-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:17px}
 .home-platform .home-area{display:flex;flex-direction:column;padding:25px 22px 22px;border:1px solid var(--home-line);border-radius:12px;background:#fff;text-decoration:none;transition:border-color .18s,transform .18s}
 .home-platform .home-area:hover{border-color:#b5a3d1;transform:translateY(-3px)}
 .home-platform .home-area-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:11px;margin-bottom:22px}
@@ -68,6 +68,7 @@
 .home-platform .home-tone-peach{background:#fbede6;color:#b37150}
 .home-platform .home-tone-green{background:#e8f2ee;color:#458573}
 .home-platform .home-tone-yellow{background:#faf3dc;color:#9e8744}
+.home-platform .home-tone-blue{background:#e7f1f7;color:#477f9c}
 .home-platform .home-area h3{font-size:17px;font-weight:800;letter-spacing:-.3px}
 .home-platform .home-area p{font-size:12px;line-height:1.8;color:var(--home-muted);margin:10px 0 25px}
 .home-platform .home-card-link{margin-top:auto;display:flex;justify-content:space-between;gap:6px;font-size:11px;font-weight:800;color:#54446f}
@@ -147,6 +148,7 @@
 .home-platform .home-demo{padding-inline:20px}
 .home-platform .home-fraction-note{right:0;font-size:9px}
 .home-platform .home-fraction-disc{width:174px;height:174px}
+.home-platform .home-area-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .home-platform .home-area{padding-inline:17px}.home-platform .home-area h3{font-size:16px}
 .home-platform .home-audience-grid{gap:16px}.home-platform .home-audience-grid a{padding-right:0;gap:10px}.home-platform .home-audience-grid a+a{padding-left:18px}
 .home-platform .home-about-inner{gap:45px}

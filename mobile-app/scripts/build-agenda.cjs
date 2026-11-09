@@ -59,7 +59,7 @@ function bundle(file) {
       const resolved = cdnScripts.get(url) || assetPath(url, file);
       const source = ({ 'ogretmen-ajandasi/vendor/xlsx.full.min.js': 'mobile-app/vendor/agenda/xlsx.full.min.js', 'ogretmen-ajandasi/vendor/jspdf.umd.min.js': 'mobile-app/vendor/agenda/jspdf.umd.min.js' })[resolved] || resolved;
       if (strippedScripts.has(source)) return '';
-      if (!['js/platform-icons.js', 'ogretmen-ajandasi/app.js', 'ogretmen-ajandasi/resmi-tatiller-veri.js', 'ogretmen-ajandasi/resmi-tatiller.js', ...cdnScripts.values()].includes(source)) throw new Error('Unexpected agenda script: ' + url);
+      if (!['js/platform-icons.js', 'ogretmen-ajandasi/app.js', 'ogretmen-ajandasi/program-gorunum.js', 'ogretmen-ajandasi/resmi-tatiller-veri.js', 'ogretmen-ajandasi/resmi-tatiller.js', ...cdnScripts.values()].includes(source)) throw new Error('Unexpected agenda script: ' + url);
       const shared = { 'mobile-app/vendor/agenda/xlsx.full.min.js': 'XLSX', 'ogretmen-ajandasi/vendor/html2canvas.min.js': 'html2canvas', 'mobile-app/vendor/agenda/jspdf.umd.min.js': 'jspdf' }[source];
       scripts.push(file.endsWith('/ders-programi.html') && shared
         ? inlineScript(`window.${shared}=window.parent.${shared};`, ` data-kemal-shared-vendor="${shared}"`)
@@ -82,7 +82,6 @@ function bundle(file) {
 
 let planner = bundle('ogretmen-ajandasi/ders-programi.html');
 planner = planner.replace('<!--KEMAL_CHILD_HEAD_END-->', '<style data-kemal-mobile-planner>' + read('mobile-app/vendor/agenda/planner-mobile.css').toString('utf8') + '</style>');
-planner = planner.replace('<!--KEMAL_CHILD_BODY_END-->', inlineScript(read('mobile-app/vendor/agenda/planner-mobile.js').toString('utf8'), ' data-kemal-mobile-planner'));
 // srcdoc inherits its parent's storage/security origin. Copy only document UI
 // metadata; credentials and the auth adapter stay in the trusted parent bootstrap.
 planner = planner.replace('<!--KEMAL_CHILD_HEAD_START-->', inlineScript(`(function(){try{var root=window.parent.document;var meta=root.querySelector('meta[name="kemal-native-agenda"]');if(meta){var copy=document.createElement('meta');copy.name=meta.name;copy.content=meta.content;document.head.appendChild(copy);}document.documentElement.classList.add('kemal-native');document.documentElement.dataset.kemalNativeModule='teacher-agenda';var activityPath=root.documentElement.dataset.kemalActivityPath||'';var queryAt=activityPath.indexOf('?');document.documentElement.dataset.kemalActivityPath='/ogretmen-ajandasi/ders-programi.html'+(queryAt<0?'':activityPath.slice(queryAt));document.documentElement.dataset.theme=root.documentElement.dataset.theme||'light';}catch(error){}})();`, ' data-kemal-agenda-child-bootstrap'));

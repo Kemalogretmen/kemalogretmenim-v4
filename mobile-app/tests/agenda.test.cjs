@@ -82,3 +82,26 @@ test('class matching retains distinct Turkish branch letters and does not guess 
   assert.equal(choices.find(choice => choice.agendaId === 'c').plannerId, undefined);
   assert.equal(choices.find(choice => choice.plannerId === 'q').agendaId, undefined);
 });
+
+test('native student and class removal cleans exam links while preserving other classes and planner data', () => {
+  const row = fixture();
+  row.agenda_state.activeClassId = 'a';
+  row.agenda_state.students.push({id:'keep',classId:'b',firstName:'Başka',lastName:'Öğrenci'});
+  row.agenda_state.exams = [{id:'own',classId:'a'}, {id:'shared',classId:'b',results:{s:{score:5},keep:{score:10}},participants:[{studentId:'s'},{studentId:'keep'},{studentId:null,name:'External'}],importWarnings:{missingStudentIds:['s','keep'],noScoreNames:['Test','Other Name']}}];
+  row.agenda_state.birthdayReminderLog = {'2026_s_before':'seen','2026_keep_today':'seen'};
+  for (const collection of ['students','classes']) {
+    const op={id:'remove',collection,itemId:collection==='students'?'s':'a',remove:true,createdAt:'now'};
+    const next=m.applyAgendaChanges(row,[op]);
+    const exam=next.agenda_state.exams.find(e=>e.id==='shared');
+    assert.equal(next.agenda_state.students.some(s=>s.id==='s'),false);
+    assert.deepEqual(Object.keys(exam.results),['keep']);
+    assert.equal(exam.participants.length,2);
+    assert.deepEqual(Array.from(exam.importWarnings.missingStudentIds),['keep']);
+    assert.deepEqual(Array.from(exam.importWarnings.noScoreNames),['Other Name']);
+    assert.deepEqual(Object.keys(next.agenda_state.birthdayReminderLog),['2026_keep_today']);
+    assert.deepEqual(JSON.parse(JSON.stringify(next.lesson_planner_state)),JSON.parse(JSON.stringify(row.lesson_planner_state)));
+    assert.equal(m.applyAgendaChanges(next,[op]).agenda_state.exams.find(e=>e.id==='shared').participants.length,2);
+    if(collection==='classes') { assert.equal(next.agenda_state.activeClassId,'b'); assert.equal(next.agenda_state.exams.some(e=>e.id==='own'),false); }
+  }
+  assert.equal(row.agenda_state.students.length,2,'Input document remains unchanged');
+});

@@ -14,13 +14,15 @@
       examsView: ["Sınavlar", "Excel dosyalarından deneme, test ve sınav sonuçlarını içe aktarın."],
       scheduleView: ["Ders Programı", "Ders programı ve haftalık planlama sisteminizi ajanda içinde kullanın."],
       calendarView: ["Akademik Takvim", "Doğum günleri, MEB takvimi, önemli günler ve hatırlatıcılarla günlük planlama yapın."],
-      reportsView: ["Karneler", "Öğrenciye özel akademik karneleri PDF, PNG veya JPEG olarak kaydedin."],
+      reportsView: ["Analiz ve Karneler", "Sınıf başarısı, sınav karşılaştırmaları ve öğrenci karneleri"],
       backupView: ["Yedek", "Tüm ajanda verinizi güvenle dışa aktarın veya geri yükleyin."]
     };
 
     let state = loadState();
     let editingStudentId = null;
     let pendingImport = null;
+    let examColumnDraft = null;
+    let examImportVersion = 0;
     let pendingStudentImport = null;
     let studentRosterWorkbook = null;
     let studentImportVersion = 0;
@@ -33,6 +35,8 @@
     let cropState = null;
     let calendarCursor = new Date();
     let selectedCalendarDate = today();
+    let calendarViewMode = 'week';
+    let openedLinkedStudent = '';
     let holidayPlannerCache = { raw: undefined, planner: { tatiller: [] }, years: new Set() };
     let activeBirthdayPopups = [];
     let clockTimer = null;
@@ -47,6 +51,7 @@
       client: null,
       timer: 0,
       saving: false,
+      saveAgain: false,
       applyingRemote: false,
       lastSavedAt: "",
       lastLoadedAt: "",
@@ -68,9 +73,10 @@
     });
 
     function bindElements() {
+      ['newCalendarNoteBtn','calendarComposer','selectedDayTitle','calendarSelectedCount'].forEach(id=>{els[id]=document.getElementById(id);});
       [
         "activeClassSelect", "pageTitle", "pageSubtitle", "statsGrid", "teacherName", "schoolName",
-        "className", "classYear", "newClassName", "saveSettingsBtn", "addClassBtn", "deleteClassBtn",
+        "className", "classYear", "newClassName", "saveSettingsBtn", "addClassBtn", "deleteClassBtn", "renameClassBtn",
         "classListPanel", "topClockTime", "topClockDate", "cloudSyncBadge", "cloudSyncStatus",
         "cloudSyncDetail", "cloudBackupStatus", "cloudSaveNowBtn", "cloudLoadNowBtn",
         "cloudSaveNowBtnBackup", "cloudLoadNowBtnBackup", "studentSearch", "studentGrid",
@@ -83,16 +89,16 @@
         "schoolTransport", "homeOwnership", "householdSize", "studyRoomStatus", "studentAchievements",
         "specialPrograms", "healthStatus", "noteDate", "noteText", "addNoteBtn",
         "noteList", "meetingDate", "meetingType", "meetingText", "addMeetingBtn", "meetingList",
-        "studentAcademic", "examName", "examDate", "excelFile", "importExamBtn", "importSummary",
+        "studentAcademic", "examName", "examDate", "excelFile", "examImportSheet", "importExamBtn", "uploadExamBtn", "importSummary", "downloadExamTemplateBtn", "mapExamColumnsBtn", "examColumnMapping", "mappingHeaderRow", "mappingName", "mappingSchoolNo", "mappingSurname", "mappingSubjects", "addMappingSubjectBtn", "applyExamMappingBtn", "mappingSample", "downloadAnalysisExcelBtn",
         "studentImportPanel", "studentImportClass", "studentRosterFile", "studentImportSheet",
         "previewStudentImportBtn", "downloadStudentTemplateBtn", "exportStudentRosterBtn", "studentImportSummary", "studentImportPreview", "confirmStudentImportBtn",
-        "examList", "reportStudent", "reportExam", "subjectPicker", "refreshReportBtn", "reportCard",
+        "examList", "reportStudent", "reportExam", "subjectPicker", "refreshReportBtn", "reportCard", "analysisOverview", "analysisClassLabel", "classAnalysisOptions", "analysisTarget", "analysisStudentNames",
         "downloadPdfBtn", "downloadPngBtn", "downloadJpegBtn", "shareWhatsappBtn", "exportBackupBtn", "backupFile",
         "importBackupBtn", "clearAllBtn", "recentAcademic", "quickAddClassBtn", "importReviewDialog",
         "importReviewBody", "closeImportReviewBtn", "cancelImportReviewBtn", "confirmImportReviewBtn",
         "allowNewStudents", "manualExamName", "manualExamDate", "manualSubjects", "prepareManualExamBtn",
         "saveManualExamBtn", "manualExamEntry", "examScope", "showRankings", "examWrongPenalty",
-        "examSubjectPoints", "manualExamScope", "manualShowRankings", "manualWrongPenalty",
+        "examSubjectPoints", "examMaxScore", "manualExamScope", "manualShowRankings", "manualWrongPenalty",
         "manualSubjectPoints", "manualMaxScore", "manualExamType", "manualClass", "manualStudent",
         "cancelManualExamBtn", "manualExamStatus", "reportExamPicker", "teacherPhoto", "teacherPhotoPreview", "heroTeacherPhoto", "heroGreeting",
         "heroSummary", "heroClassBadge", "heroTodayLine", "dashboardFocusTitle", "dashboardFocusText",
@@ -142,6 +148,7 @@
         els.newClassName?.focus();
       });
       els.saveSettingsBtn.addEventListener("click", saveSettingsAndClass);
+      els.renameClassBtn?.addEventListener('click', () => editClassFromPanel(state.activeClassId));
       els.addClassBtn.addEventListener("click", addClassFromPanel);
       els.teacherPhoto.addEventListener("change", handleTeacherPhotoUpload);
       els.schoolLogo.addEventListener("change", handleSchoolLogoUpload);
@@ -155,6 +162,15 @@
       els.confirmStudentImportBtn.addEventListener("click", commitStudentRosterImport);
       els.downloadStudentTemplateBtn.addEventListener("click", downloadStudentRosterTemplate);
       els.exportStudentRosterBtn.addEventListener("click", exportStudentRoster);
+      els.excelFile.addEventListener("change", resetExamImport);
+      els.uploadExamBtn?.addEventListener('click', () => importExamFromExcel({auto:true}));
+      els.mapExamColumnsBtn?.addEventListener('click', openExamColumnMapping);
+      els.addMappingSubjectBtn?.addEventListener('click', () => addExamMappingSubject());
+      els.applyExamMappingBtn?.addEventListener('click', applyExamColumnMapping);
+      els.mappingHeaderRow?.addEventListener('change', renderExamMappingColumns);
+      els.downloadAnalysisExcelBtn?.addEventListener('click', downloadAnalysisExcel);
+      els.examImportSheet.addEventListener("change", () => { examImportVersion += 1; pendingImport = null; examColumnDraft = null; els.examColumnMapping.hidden = true; els.importSummary.textContent = ''; });
+      els.downloadExamTemplateBtn.addEventListener("click", downloadExamTemplate);
       els.selectAllStudents.addEventListener("change", toggleSelectAllStudents);
       els.clearStudentSelectionBtn.addEventListener("click", clearStudentSelection);
       els.deleteSelectedStudentsBtn.addEventListener("click", deleteSelectedStudents);
@@ -216,6 +232,21 @@
       });
       els.reportStudent.addEventListener("change", () => { updateSubjectPicker(); buildReport(); });
       els.reportExam.addEventListener("change", () => { renderReportOptions(); updateSubjectPicker(); buildReport(); });
+      document.querySelectorAll('[data-report-mode]').forEach(button => button.addEventListener('click', () => {
+        els.reportType.value = button.dataset.reportMode;
+        renderReportOptions(); buildReport();
+      }));
+      document.querySelector('.report-mode-tabs')?.addEventListener('keydown', event => {
+        if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+        const tabs=Array.from(document.querySelectorAll('[data-report-mode]'));
+        const current=tabs.indexOf(document.activeElement);
+        if(current<0)return;
+        event.preventDefault();
+        const index=event.key==='Home'?0:event.key==='End'?tabs.length-1:(current+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+        tabs[index].focus();tabs[index].click();
+      });
+      els.analysisTarget?.addEventListener('change', buildReport);
+      els.analysisStudentNames?.addEventListener('change', buildReport);
       els.refreshReportBtn.addEventListener("click", buildReport);
       els.reportType.addEventListener("change", () => {
         renderReportOptions();
@@ -254,6 +285,10 @@
       els.prevCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(-1));
       els.nextCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(1));
       els.todayCalendarBtn.addEventListener("click", goTodayCalendar);
+      els.newCalendarNoteBtn?.addEventListener('click',()=>openCalendarComposer(selectedCalendarDate));
+      document.querySelectorAll('[data-calendar-mode]').forEach(button=>button.addEventListener('click',()=>{
+        calendarViewMode=button.dataset.calendarMode==='month'?'month':'week';renderCalendar();
+      }));
       els.manageHolidaysBtn?.addEventListener("click", openHolidayManager);
       els.requestNotificationBtn.addEventListener("click", requestNotificationPermission);
       els.calendarEventDate.addEventListener("change", () => selectCalendarDate(els.calendarEventDate.value || today()));
@@ -352,13 +387,14 @@
           const base = window.__KEMAL_AGENDA_LOCAL_BASE__;
           if (base?.checked && (typeof base.revision === "string" || base.revision === null)) {
             cloudSync.rowVersion = base.revision; cloudSync.rowChecked = true;
-          }
+          } else restoreCloudVersion(user.id);
         }
         cloudSync.client = window.kemalUserAuth.getClient();
         cloudSync.userId = user.id;
         cloudSync.enabled = true;
         setCloudSyncStatus("syncing", "Bulut kontrol ediliyor", "Ajandanızın son bulut kaydı karşılaştırılıyor.");
         await reconcileCloudState(options);
+        openLinkedAgendaStudent();
       } catch (error) {
         console.warn(error);
         disableCloudSync("Yerel mod", "Bulut bağlantısı kurulamadı; yerel kayıt açık kalır.");
@@ -367,6 +403,7 @@
 
     function disableCloudSync(status, detail) {
       clearTimeout(cloudSync.timer);
+      cloudSync.saveAgain = false;
       cloudSync.ready = false;
       cloudSync.enabled = false;
       cloudSync.client = null;
@@ -377,8 +414,16 @@
     }
 
     async function reconcileCloudState(options = {}) {
+      const userId = cloudSync.userId;
       try {
         const row = await fetchCloudRow();
+        if (userId !== cloudSync.userId) return;
+        const owner = localStorage.getItem(`${STORE_KEY}.owner`);
+        if (owner && owner !== cloudSync.userId && localHasMeaningfulAgenda()) {
+          cloudSync.ready = false;
+          setCloudSyncError('Bu cihazdaki ajanda başka hesaba ait. Yerel kayıt korunuyor; Buluttan Al ile kendi ajandanızı açın.');
+          return;
+        }
         if (!row) {
           acceptCloudVersion(null);
           cloudSync.ready = true;
@@ -432,6 +477,8 @@
 
     function queueCloudSave() {
       if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId || !cloudSync.ready || cloudSync.applyingRemote) return;
+      // Edits/deletions made during a slow request need a second snapshot.
+      if (cloudSync.saving) { cloudSync.saveAgain = true; return; }
       clearTimeout(cloudSync.timer);
       cloudSync.timer = setTimeout(() => {
         saveCloudNow({ queued: true });
@@ -446,10 +493,29 @@
         return false;
       }
       if (cloudSync.saving) return false;
+      const userId = cloudSync.userId;
+      const client = cloudSync.client;
       clearTimeout(cloudSync.timer);
       cloudSync.saving = true;
       setCloudSyncStatus("syncing", "Buluta kaydediliyor", "Yerel ajanda verisi öğretmen hesabınıza aktarılıyor.");
       try {
+        if (options.manual && (!cloudSync.rowChecked || !cloudSync.ready)) {
+          const latest = await fetchCloudRow();
+          if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
+          if (latest && cloudSnapshotMatches(latest)) acceptCloudVersion(latest);
+          else {
+            const owner = localStorage.getItem(`${STORE_KEY}.owner`);
+            if (owner && owner !== cloudSync.userId) throw new Error('Bu cihazdaki ajanda başka hesaba ait. Yerel yedeği aldıktan sonra Buluttan Al ile kendi ajandanızı açın.');
+            if (latest && !confirm('Yerel ve bulut kayıtları farklı. Bu cihazdaki ajanda buluttaki kaydın yerine yazılsın mı? İki sürüm de bu tarayıcıda güvenlik yedeği olarak saklanacak. Diğer cihazlarda yapılan değişiklikler bu seçimle yerel sürümle değiştirilir.')) {
+              setCloudSyncError('İşlem iptal edildi. Yerel ve bulut kayıtları değiştirilmedi.');
+              return false;
+            }
+            // A recovery is explicit, backed up, and still guarded by the freshly read revision.
+            localStorage.setItem(`${STORE_KEY}.kurtarma-yerel`, JSON.stringify(buildCloudSnapshot()));
+            if (latest) localStorage.setItem(`${STORE_KEY}.kurtarma-bulut`, JSON.stringify(latest));
+            acceptCloudVersion(latest);
+          }
+        }
         if (!cloudSync.rowChecked) throw new Error("Bulut kaydı henüz doğrulanmadı. Önce bulut kontrolünün tamamlanmasını bekleyin.");
         const snapshot = buildCloudSnapshot();
         const bytes = payloadBytes(snapshot);
@@ -457,7 +523,7 @@
           throw new Error(`Ajanda verisi bulut sınırını aşıyor (${formatBytes(bytes)}). Fotoğrafları küçültüp tekrar deneyin ya da JSON yedek kullanın.`);
         }
         const payload = {
-          user_id: cloudSync.userId,
+          user_id: userId,
           agenda_state: snapshot.agendaState,
           lesson_planner_state: snapshot.lessonPlannerState,
           app_version: "teacher-agenda-v1",
@@ -466,20 +532,22 @@
         };
         // Compare the server revision we loaded, not just the client's clock.
         // A second device's work must survive a stale autosave on this device.
-        let query = cloudSync.client.from(CLOUD_SYNC_TABLE);
+        let query = client.from(CLOUD_SYNC_TABLE);
         query = cloudSync.rowVersion
-          ? query.update(payload).eq("user_id", cloudSync.userId).eq("updated_at", cloudSync.rowVersion)
+          ? query.update(payload).eq("user_id", userId).eq("updated_at", cloudSync.rowVersion)
           : query.insert(payload);
         const result = await query.select("updated_at,storage_bytes").maybeSingle();
+        if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
         if (result.error) throw result.error;
         if (!result.data) {
+          cloudSync.ready = false;
           writeLocalBackupBeforeCloud();
           throw new Error("Ajanda başka bir cihazda değişti. Yerel çalışmanız korundu; Yedek bölümünden son bulut kaydını yükleyip yeniden deneyin.");
         }
-        cloudSync.rowVersion = result.data.updated_at;
+        acceptCloudVersion(result.data);
         cloudSync.ready = true;
         cloudSync.lastSavedAt = result.data?.updated_at || new Date().toISOString();
-        setCloudSyncStatus("ready", "Buluta kaydedildi", `Son kayıt: ${formatCloudDate(cloudSync.lastSavedAt)} · ${formatBytes(bytes)}.`);
+        setCloudSyncStatus("ready", "Buluta kaydedildi", `Son kayıt: ${formatCloudDate(cloudSync.lastSavedAt)} · Veri: ${formatBytes(result.data?.storage_bytes || bytes)}.`);
         if (options.manual) toast("Ajanda buluta kaydedildi.");
         return true;
       } catch (error) {
@@ -490,6 +558,10 @@
       } finally {
         cloudSync.saving = false;
         renderCloudSyncStatus();
+        if (cloudSync.saveAgain && userId === cloudSync.userId && client === cloudSync.client) {
+          cloudSync.saveAgain = false;
+          queueCloudSave();
+        }
       }
     }
 
@@ -499,10 +571,14 @@
         renderCloudSyncStatus();
         return false;
       }
+      const userId = cloudSync.userId;
       try {
         setCloudSyncStatus("syncing", "Buluttan alınıyor", "Öğretmen hesabınızdaki son ajanda kaydı okunuyor.");
         const row = await fetchCloudRow();
+        if (userId !== cloudSync.userId) return false;
         if (!row) {
+          acceptCloudVersion(null);
+          cloudSync.ready = true;
           setCloudSyncStatus("ready", "Bulut hazır", "Bu hesapta henüz bulut ajandası bulunamadı.");
           if (options.manual) toast("Bulutta kayıtlı ajanda bulunamadı.");
           return false;
@@ -544,6 +620,23 @@
     function acceptCloudVersion(row) {
       cloudSync.rowVersion = row?.updated_at || null;
       cloudSync.rowChecked = true;
+      if (cloudSync.userId) {
+        try {
+          localStorage.setItem(`${STORE_KEY}.base.${cloudSync.userId}`, JSON.stringify({ revision: cloudSync.rowVersion }));
+          localStorage.setItem(`${STORE_KEY}.owner`, cloudSync.userId);
+        } catch (error) { console.warn('Bulut sürüm bilgisi cihazda saklanamadı.'); }
+      }
+    }
+
+    function restoreCloudVersion(userId) {
+      try {
+        if (localStorage.getItem(`${STORE_KEY}.owner`) !== userId) return;
+        const base = JSON.parse(localStorage.getItem(`${STORE_KEY}.base.${userId}`));
+        if (base && (typeof base.revision === 'string' || base.revision === null)) {
+          cloudSync.rowVersion = base.revision;
+          cloudSync.rowChecked = true;
+        }
+      } catch (error) { /* Missing lineage requires an explicit recovery, never an overwrite. */ }
     }
 
     function cloudSnapshotMatches(row) {
@@ -768,6 +861,21 @@
       updateSubjectPicker();
       buildReport();
       checkDueReminders();
+      openLinkedAgendaStudent();
+    }
+
+    function openLinkedAgendaStudent() {
+      const query = new URLSearchParams(window.location?.search || '');
+      const id = query.get('studentId');
+      const classId = query.get('classId');
+      if (!id || id === openedLinkedStudent || query.get('mobileView') !== 'studentsView') return;
+      if (!cloudSync.userId || localStorage.getItem(`${STORE_KEY}.owner`) !== cloudSync.userId) return;
+      const student = state.students.find(item => item.id === id && item.classId === classId);
+      if (!student || !state.classes.some(item => item.id === classId)) return;
+      state.activeClassId = classId;
+      renderClassSelect(); renderStudents(); showView('studentsView');
+      openedLinkedStudent = id;
+      openStudentDialog(id);
     }
 
     function renderClassSelect() {
@@ -838,7 +946,11 @@
     }
 
     function editClassFromPanel(classId) {
+      showView('dashboardView');
       selectClassFromPanel(classId);
+      const settings = els.className?.closest('details');
+      if (settings) settings.open = true;
+      els.className?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
       els.className?.focus();
       els.className?.select();
       toast("Sınıf adını ve yılını panelden düzenleyebilirsiniz.");
@@ -912,7 +1024,7 @@
           ? todayEvents.slice(0, 4).map((event) => dashboardBriefItemHtml(
             calendarEventIcon(event.type),
             event.title,
-            [event.time, calendarEventLabel(event.type), event.note].filter(Boolean).join(" · ")
+            [event.time, calendarEventLabel(event.type), event.note].filter(Boolean).join(" · "), event.type || 'note'
           )).join("")
           : dashboardEmptyHtml("Bugün için kayıt görünmüyor. Takvimden not, görüşme veya hatırlatıcı ekleyebilirsiniz.");
       }
@@ -921,7 +1033,7 @@
           ? upcomingEvents.slice(0, 4).map((event) => dashboardBriefItemHtml(
             calendarEventIcon(event.type),
             event.title,
-            `${dashboardDateLabel(event.dashboardDate)}${event.time ? ` · ${event.time}` : ""}`
+            `${dashboardDateLabel(event.dashboardDate)}${event.time ? ` · ${event.time}` : ""}`, event.type || 'note'
           )).join("")
           : dashboardEmptyHtml("Önümüzdeki yedi gün için kayıt yok. Haftanızı planlamak için takvimi kullanabilirsiniz.");
       }
@@ -1009,9 +1121,9 @@
       }
     }
 
-    function dashboardBriefItemHtml(icon, title, detail) {
+    function dashboardBriefItemHtml(icon, title, detail, noteType) {
       return `
-        <div class="dashboard-brief-item">
+        <div class="dashboard-brief-item ${noteType ? `agenda-sticky event-${calendarNoteType(noteType)}` : ''}">
           <span class="dashboard-brief-icon">${escapeHtml(icon || "•")}</span>
           <span><strong>${escapeHtml(title || "Kayıt")}</strong><small>${escapeHtml(detail || "")}</small></span>
         </div>
@@ -1141,8 +1253,9 @@
       toast(`${names.length} öğrenci silindi.`);
     }
 
-    function deleteStudentsByIds(ids) {
+    function deleteStudentsByIds(ids, options = {}) {
       const idSet = new Set(ids);
+      const names = new Set(state.students.filter(student => idSet.has(student.id)).map(student => normalize(fullName(student))));
       state.students = state.students.filter((student) => !idSet.has(student.id));
       state.exams.forEach((exam) => {
         ids.forEach((id) => {
@@ -1154,8 +1267,12 @@
         if (exam.importWarnings?.missingStudentIds) {
           exam.importWarnings.missingStudentIds = exam.importWarnings.missingStudentIds.filter((id) => !idSet.has(id));
         }
+        if (Array.isArray(exam.importWarnings?.noScoreNames)) exam.importWarnings.noScoreNames = exam.importWarnings.noScoreNames.filter(name => !names.has(normalize(name)));
       });
-      saveState();
+      for (const log of [state.birthdayReminderLog, state.birthdaySnoozeLog]) {
+        for (const key of Object.keys(log || {})) if (ids.some(id => key.slice(5) === `${id}_today` || key.slice(5) === `${id}_before`)) delete log[key];
+      }
+      if (options.save !== false) saveState();
     }
 
     function avatarHtml(student) {
@@ -1703,17 +1820,29 @@
     }
 
     function saveSettingsAndClass() {
+      const before = JSON.parse(JSON.stringify(state));
       const teacherName = els.teacherName.value.trim() || "Kemal Öğretmen";
       state.teacher = state.teacher || {};
       state.teacher.name = teacherName;
       state.teacher.schoolName = els.schoolName.value.trim();
       const current = activeClass();
+      const oldName = current?.name;
+      const planner = readLessonPlannerBackup();
+      const plannerClasses = Array.isArray(planner?.siniflar) ? planner.siniflar : [];
+      const matches = plannerClasses.filter(item => current?.plannerId ? item.id === current.plannerId : normalize(item.name) === normalize(oldName));
+      const uniqueRoster = state.classes.filter(item => normalize(item.name) === normalize(oldName)).length === 1;
+      const linkedPlanner = matches.length === 1 && (current?.plannerId || uniqueRoster) ? matches[0] : null;
       if (current) {
         current.name = cleanClassName(els.className.value) || current.name || "Sınıfım";
         current.teacherName = teacherName;
         current.year = els.classYear.value.trim() || current.year || "";
+        if (linkedPlanner) current.plannerId = linkedPlanner.id;
       }
-      saveState();
+      if (!saveState()) { state = before; toast('Sınıf adı kaydedilemedi. Cihazdaki boş alanı kontrol edin.'); return; }
+      if (linkedPlanner && current.name !== oldName) {
+        linkedPlanner.name = current.name;
+        restoreLessonPlannerBackup(planner);
+      }
       renderAll();
       toast("Aktif sınıf bilgileri güncellendi.");
     }
@@ -1753,6 +1882,7 @@
         return;
       }
       if (!confirm(`${current.name} sınıfı ve bu sınıfa ait öğrenciler/sınavlar silinsin mi?`)) return;
+      deleteStudentsByIds(state.students.filter(student => student.classId === current.id).map(student => student.id), { save: false });
       state.classes = state.classes.filter((item) => item.id !== current.id);
       state.students = state.students.filter((student) => student.classId !== current.id);
       state.exams = state.exams.filter((exam) => exam.classId !== current.id);
@@ -1765,8 +1895,11 @@
       toast("Sınıf silindi.");
     }
 
-    async function importExamFromExcel() {
+    async function importExamFromExcel(options = {}) {
+      const version = ++examImportVersion;
+      pendingImport = null;
       const file = els.excelFile.files?.[0];
+      const classId = state.activeClassId;
       const selectedExam = state.exams.find((exam) => exam.id === els.updateExamSelect.value);
       const examName = els.examName.value.trim() || selectedExam?.name || "";
       if (!file) {
@@ -1783,11 +1916,16 @@
       }
 
       try {
-        const parsed = await parseExcelFile(file);
+        const parsed = options.parsed || await parseExcelFile(file, version, {editable:true});
+        if (options.parsed && examColumnDraft?.file === file) examColumnDraft.version = version;
+        if (version !== examImportVersion || classId !== state.activeClassId) return;
         if (!parsed.students.length) throw new Error("Öğrenci satırı bulunamadı.");
 
         const existing = selectedExam || state.exams.find((exam) => exam.classId === state.activeClassId && exam.name === examName);
-        const scoring = scoringOptionsFromInputs(parsed.subjects, els.examSubjectPoints.value, els.examWrongPenalty.checked, normalizeScoringOptions(existing?.scoring).maxScore);
+        const maxScore = toNumberOrNull(els.examMaxScore.value);
+        if (!isFiniteNumber(maxScore) || maxScore <= 0) throw new Error('Toplam puan sıfırdan büyük bir sayı olmalı.');
+        const scoring = scoringOptionsFromInputs(parsed.subjects, els.examSubjectPoints.value, els.examWrongPenalty.checked, maxScore);
+        if (els.examSubjectPoints.value.trim() && Object.keys(scoring.subjectPoints).length !== parsed.subjects.length) throw new Error('Ders puanları yazıyorsanız her derse puan girin. Yalnız toplam puanı belirtmek için Toplam puan alanını kullanıp ders puanlarını boş bırakın.');
         if (existing && !confirm("Bu isimde bir sınav zaten var. Tamam derseniz mevcut sınav güncellenir ve yeni Excel verileri aynı sınava işlenir.")) return;
 
         pendingImport = buildImportPlan(parsed, {
@@ -1797,28 +1935,87 @@
           scope: els.examScope.value,
           showRankings: els.showRankings.checked,
           scoring,
-          existingExamId: existing?.id || null
+          classId,
+          rosterSignature: studentRosterSignature(classId),
+          sheetName: parsed.sheetName,
+          formatNote: parsed.formatNote,
+          existingExamId: existing?.id || null,
+          allowReview: true
         });
+        if (options.auto && !existing && pendingImport.rows.every(row=>row.matchId && row.hasScores && !row.errors.length) && !pendingImport.noScoreRows.length) {
+          els.allowNewStudents.checked = false;
+          commitPendingImport();
+          return;
+        }
         renderImportReview(pendingImport);
         els.importReviewDialog.showModal();
       } catch (error) {
+        if (version !== examImportVersion) return;
         console.error(error);
         els.importSummary.innerHTML = `<div class="empty">Excel okunamadı: ${escapeHtml(error.message || String(error))}</div>`;
       }
+    }
+
+    function validImportSubjects(subjects) {
+      const values=Object.values(subjects || {});
+      return values.length>0 && values.every(item=>item && ['d','y','b'].every(key=>Number.isSafeInteger(item[key])&&item[key]>=0)) && values.some(item=>item.d+item.y+item.b>0);
+    }
+
+    function importEditorHtml(plan) {
+      const page=plan.reviewPage || 0, pageSize=25;
+      const rows=plan.rows.slice(page*pageSize,(page+1)*pageSize);
+      const errors=plan.rows.filter(row=>!row.excluded&&row.errors.length).length;
+      return `<div class="import-review-toolbar"><strong data-import-review-status>${errors?`${errors} satır düzeltme bekliyor`:'Kontroller tamam · yüklemeye hazır'}</strong><button type="button" class="ghost-btn" data-recheck-import>Düzeltmeleri Kontrol Et</button><span>${page+1} / ${Math.max(1,Math.ceil(plan.rows.length/pageSize))}</span><button type="button" class="ghost-btn" data-import-page="${page-1}" ${page===0?'disabled':''}>‹</button><button type="button" class="ghost-btn" data-import-page="${page+1}" ${(page+1)*pageSize>=plan.rows.length?'disabled':''}>›</button></div>
+        <div class="import-edit-grid"><table class="exam-import-results"><thead><tr><th>Al</th><th>Okul no</th><th>Ad</th><th>Soyad</th>${plan.subjects.map(subject=>`<th>${escapeHtml(subject)}<br>D / Y / B</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr class="${row.excluded?'import-row-excluded':row.errors.length?'import-row-error':''}" data-edit-import-row="${row.index}"><td><input type="checkbox" data-import-field="include" aria-label="${escapeHtml(fullName(row.rowStudent))} satırını al" ${row.excluded?'':'checked'}></td>${['schoolNo','firstName','lastName'].map(key=>`<td><input class="identity-input" data-import-field="${key}" aria-label="${escapeHtml(fullName(row.rowStudent)+' '+({schoolNo:'Okul no',firstName:'Ad',lastName:'Soyad'}[key]))}" value="${escapeHtml(row.rowStudent[key] || '')}">${key==='firstName'?`<small class="import-row-status">${escapeHtml(row.errors.join(' · ') || (row.excluded?'Atlandı':row.matchName?`Eşleşti: ${row.matchName}`:'Yeni öğrenci'))}</small>`:''}</td>`).join('')}${plan.subjects.map(subject=>`<td><div class="import-counts">${['d','y','b'].map(key=>`<input data-import-field="${key}" data-import-subject="${escapeHtml(subject)}" inputmode="numeric" aria-label="${escapeHtml(fullName(row.rowStudent)+' '+subject+' '+key.toUpperCase())}" value="${escapeHtml(row.rowStudent.subjects?.[subject]?.[key] ?? '')}">`).join('')}</div></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function recheckExamImport(page) {
+      if (!pendingImport) return;
+      const allowNew=els.allowNewStudents.checked;
+      const raw=pendingImport.rows.map(row=>JSON.parse(JSON.stringify(row.rowStudent)));
+      els.importReviewBody.querySelectorAll('[data-edit-import-row]').forEach(tr=>{
+        const row=raw[Number(tr.dataset.editImportRow)];if(!row)return;
+        row.excluded=!tr.querySelector('[data-import-field="include"]').checked;
+        for(const key of ['schoolNo','firstName','lastName']) row[key]=tr.querySelector(`[data-import-field="${key}"]`).value.trim();
+        for(const subject of pendingImport.subjects) {
+          const inputs=Array.from(tr.querySelectorAll('[data-import-subject]')).filter(input=>input.dataset.importSubject===subject);
+          const values=inputs.map(input=>input.value.trim());
+          if(values.every(value=>value==='')) delete row.subjects[subject];
+          else row.subjects[subject]=Object.fromEntries(inputs.map(input=>[input.dataset.importField,/^\d+$/.test(input.value.trim())?Number(input.value):input.value.trim()]));
+        }
+        row.hasScores=Object.keys(row.subjects).length>0;
+      });
+      const next=buildImportPlan({subjects:pendingImport.subjects,students:raw},pendingImport.meta);
+      next.reviewPage=Number.isInteger(page)?page:(pendingImport.reviewPage || 0);
+      pendingImport=next;
+      renderImportReview(next);
+      els.allowNewStudents.checked=allowNew;
     }
 
     function buildImportPlan(parsed, meta) {
       const currentStudents = activeStudents();
       const matchedExistingIds = new Set();
       const participants = [];
+      const identities = new Set();
       const rows = parsed.students.map((rowStudent, index) => {
-        const match = findStudentMatch(rowStudent, currentStudents);
-        if (match) matchedExistingIds.add(match.id);
-        if (rowStudent.hasScores) {
+        let match = null;
+        const errors = [];
+        if (!rowStudent.excluded) {
+          try {match = findStudentMatch(rowStudent, currentStudents);} catch(error) {if(!meta.allowReview) throw error;errors.push(error.message);}
+          if (rowStudent.hasScores && !validImportSubjects(rowStudent.subjects)) errors.push('D/Y/B alanları sıfır veya pozitif tam sayı olmalı.');
+          if (!fullName(rowStudent).trim()) errors.push('Öğrenci adı gerekli.');
+        }
+        const key = match?.id || (rowStudent.schoolNo ? `no:${rosterNumber(rowStudent.schoolNo)}` : `name:${normalize(fullName(rowStudent))}`);
+        if (!rowStudent.excluded && identities.has(key)) {const message=`${fullName(rowStudent)} için birden fazla satır bulundu. Tekrar eden satırı atlayın.`;if(!meta.allowReview)throw new Error(message);errors.push(message);}
+        if (!rowStudent.excluded) identities.add(key);
+        if (match && !rowStudent.excluded) matchedExistingIds.add(match.id);
+        if (rowStudent.hasScores && !rowStudent.excluded && !errors.length) {
           participants.push(makeParticipantFromRow(rowStudent, index, match?.id || null, meta.scoring));
         }
         return {
           index,
+          errors,
+          excluded: !!rowStudent.excluded,
           rowStudent,
           matchId: match?.id || null,
           matchName: match ? fullName(match) : "",
@@ -1826,9 +2023,9 @@
           hasScores: rowStudent.hasScores
         };
       });
-      const newRows = rows.filter((row) => !row.matchId);
-      const matchedRows = rows.filter((row) => row.matchId);
-      const noScoreRows = rows.filter((row) => !row.hasScores);
+      const newRows = rows.filter((row) => !row.excluded && !row.matchId);
+      const matchedRows = rows.filter((row) => !row.excluded && row.matchId);
+      const noScoreRows = rows.filter((row) => !row.excluded && !row.hasScores);
       const missingStudents = currentStudents.filter((student) => !matchedExistingIds.has(student.id));
       return {
         meta,
@@ -1844,11 +2041,19 @@
 
     function findStudentMatch(rowStudent, students) {
       if (rowStudent.schoolNo) {
-        const byNo = students.find((student) => String(student.schoolNo || "") === String(rowStudent.schoolNo));
-        if (byNo) return byNo;
+        const matches = students.filter(student => rosterNumber(student.schoolNo) === rosterNumber(rowStudent.schoolNo));
+        if (matches.length > 1) throw new Error(`${rowStudent.schoolNo} okul numarası sınıfta birden fazla öğrencide var. Önce öğrenci listesini düzeltin.`);
+        const byNo = matches[0];
+        if (byNo) {
+          if (normalize(fullName(byNo)) !== normalize(fullName(rowStudent))) throw new Error(`${rowStudent.schoolNo} okul numarası ${fullName(byNo)} adına kayıtlı; dosyada ${fullName(rowStudent)} yazıyor. Eşleşmeyi düzeltin.`);
+          return byNo;
+        }
       }
       const keyName = normalize(`${rowStudent.firstName} ${rowStudent.lastName}`);
-      return students.find((student) => normalize(fullName(student)) === keyName) || null;
+      const matches = students.filter(student => normalize(fullName(student)) === keyName);
+      if (matches.length > 1) throw new Error(`${fullName(rowStudent)} adı birden fazla öğrencide var. Dosyaya okul numarası ekleyin.`);
+      if (matches[0]?.schoolNo && rowStudent.schoolNo && rosterNumber(matches[0].schoolNo) !== rosterNumber(rowStudent.schoolNo)) throw new Error(`${fullName(rowStudent)} için okul numarası farklı. Öğrenci listesini veya dosyayı düzeltin.`);
+      return matches[0] || null;
     }
 
     function renderImportReview(plan) {
@@ -1862,6 +2067,8 @@
         <div class="note-item">
           <strong>${escapeHtml(plan.meta.name)}</strong>
           <p>${formatDate(plan.meta.date)} · ${escapeHtml(plan.meta.sourceFile)} · ${plan.subjects.map(escapeHtml).join(", ")}${plan.meta.existingExamId ? " · mevcut sınav güncellenecek" : ""}</p>
+          <p>${escapeHtml(plan.meta.sheetName || '')} · ${escapeHtml(plan.meta.formatNote || 'D/Y/B sütunları okundu.')} Sınıf: ${escapeHtml(classLabel(activeClass()))}</p>
+          <p>Yayınevinin puanı ve sıralaması aktarılmaz. Puan ve sıralama burada seçtiğiniz puanlama ve katılımcılara göre hesaplanır.</p>
           <div class="badges">
             <span class="badge green">${plan.matchedRows.length} eşleşen</span>
             <span class="badge blue">${plan.newRows.length} yeni</span>
@@ -1869,9 +2076,16 @@
             <span class="badge gold">${scored} sonuçlu kayıt</span>
             <span class="badge blue">${scopeLabel(plan.meta.scope)} kıyas havuzu: ${plan.participants.length}</span>
             ${plan.meta.scoring?.wrongPenalty ? `<span class="badge red">3 yanlış 1 doğru</span>` : ""}
-            ${plan.meta.scoring?.pointTotal ? `<span class="badge gold">Puanlı: ${formatNumber(plan.meta.scoring.pointTotal)} puan</span>` : `<span class="badge gold">100 puanlık otomatik değerlendirme</span>`}
+            ${plan.meta.scoring?.pointTotal ? `<span class="badge gold">Puanlı: ${formatNumber(plan.meta.scoring.pointTotal)} puan</span>` : `<span class="badge gold">${formatNumber(plan.meta.scoring?.maxScore || 100)} puan üzerinden değerlendirme</span>`}
           </div>
         </div>
+        ${importEditorHtml(plan)}
+        <details><summary>Okunan sonuçlar — D: doğru, Y: yanlış, B: boş</summary>
+        <div style="overflow:auto;max-height:360px" tabindex="0" aria-label="Okunan sınav sonuçları">
+          <table class="exam-import-results"><thead><tr><th>Okul no</th><th>Öğrenci</th>${plan.subjects.map(subject => `<th>${escapeHtml(subject)}<br>D / Y / B</th>`).join('')}</tr></thead>
+          <tbody>${plan.rows.slice(0,200).map(row => `<tr><td data-label="Okul no">${escapeHtml(row.rowStudent.schoolNo || '—')}</td><td data-label="Öğrenci">${escapeHtml(fullName(row.rowStudent))}</td>${plan.subjects.map(subject => { const s = row.rowStudent.subjects[subject]; return `<td data-label="${escapeHtml(subject)} (D/Y/B)">${s ? `${escapeHtml(s.d)} / ${escapeHtml(s.y)} / ${escapeHtml(s.b)}` : 'Sonuç yok'}</td>`; }).join('')}</tr>`).join('')}</tbody></table>
+        </div>
+        </details>
         <div class="review-grid" style="margin-top:12px">
           <div class="review-box">
             <h4>Eşleşen öğrenciler</h4>
@@ -1893,10 +2107,22 @@
         <p style="margin-bottom:0;color:#667085">Onaydan sonra eşleşen öğrencilerin sınav sonucu kaydedilir. Yeni öğrenci seçeneğini kapatırsanız yeni görünen satırlar sınava eklenmez.</p>
       `;
       els.allowNewStudents.checked = plan.meta.scope === "class";
+      els.confirmImportReviewBtn.disabled = plan.rows.some(row=>!row.excluded&&row.errors.length>0) || !plan.rows.some(row=>!row.excluded&&row.hasScores);
+      els.importReviewBody.querySelectorAll('[data-import-field]').forEach(input=>input.addEventListener('input',()=>{
+        pendingImport.dirty = true; els.confirmImportReviewBtn.disabled = true;
+        const status=els.importReviewBody.querySelector('[data-import-review-status]');if(status)status.textContent='Düzenlemeler kontrol bekliyor.';
+      }));
+      els.importReviewBody.querySelector('[data-recheck-import]')?.addEventListener('click',recheckExamImport);
+      els.importReviewBody.querySelectorAll('[data-import-page]').forEach(button=>button.addEventListener('click',()=>recheckExamImport(Number(button.dataset.importPage))));
     }
 
     function commitPendingImport() {
       if (!pendingImport) return;
+      if (pendingImport.dirty || pendingImport.rows.some(row=>!row.excluded&&row.errors?.length)) {toast('Önce düzeltmeleri kontrol edin.');return;}
+      if (!pendingImport.rows.some(row=>!row.excluded&&row.hasScores)) {toast('Yüklenecek geçerli sınav sonucu yok.');return;}
+      if (pendingImport.meta.classId && pendingImport.meta.classId !== state.activeClassId) { pendingImport = null; els.importReviewDialog.close(); toast('Sınıf değişti. Dosyayı yeniden kontrol edin.'); return; }
+      if (pendingImport.meta.rosterSignature && pendingImport.meta.rosterSignature !== studentRosterSignature(state.activeClassId)) { pendingImport = null; els.importReviewDialog.close(); toast('Öğrenci listesi değişti. Dosyayı yeniden kontrol edin.'); return; }
+      const before = JSON.parse(JSON.stringify(state));
       const allowNew = els.allowNewStudents.checked;
       const results = {};
       let created = 0;
@@ -1906,6 +2132,7 @@
       const wasUpdate = !!pendingImport.meta.existingExamId;
 
       pendingImport.rows.forEach((row) => {
+        if (row.excluded) return;
         let student = row.matchId ? state.students.find((item) => item.id === row.matchId) : null;
         if (student) {
           matched += 1;
@@ -1945,7 +2172,7 @@
       };
       if (pendingImport.meta.existingExamId) mergeExamPayload(examPayload);
       else state.exams.push(examPayload);
-      saveState();
+      if (!saveState()) { state = before; return; }
       els.importSummary.innerHTML = `<div class="note-item"><strong>${escapeHtml(pendingImport.meta.name)}</strong><p>${matched} eşleşen, ${created} yeni öğrenci, ${skippedNew} atlanan yeni öğrenci, ${scored} sınav sonucu ${pendingImport.meta.existingExamId ? "güncellendi" : "eklendi"}. Excel'de görünmeyen sınıf öğrencisi: ${pendingImport.missingStudents.length}.</p></div>`;
       els.excelFile.value = "";
       els.examName.value = "";
@@ -1966,8 +2193,8 @@
       exam.scope = payload.scope || exam.scope || "class";
       exam.showRankings = payload.showRankings;
       exam.scoring = normalizeScoringOptions(payload.scoring || exam.scoring);
-      exam.sourceFile = [exam.sourceFile, payload.sourceFile].filter(Boolean).join(" + ");
-      exam.subjects = Array.from(new Set([...(exam.subjects || []), ...(payload.subjects || [])]));
+      exam.sourceFile = Array.from(new Set([...(exam.sourceFile || '').split(' + '), payload.sourceFile].filter(Boolean))).join(' + ');
+      exam.subjects = Array.from(new Map([...(exam.subjects || []), ...(payload.subjects || [])].map(subject => [normalize(subject), cleanName(subject).toLocaleUpperCase('tr-TR')])).values());
       exam.results = mergeExamResults(exam.results || {}, payload.results || {}, exam.scoring);
       exam.participants = mergeParticipants(exam.participants || [], payload.participants || [], exam.scoring);
       exam.importWarnings = {
@@ -1985,15 +2212,18 @@
           merged[studentId] = makeResult(result.subjects || {}, scoring);
           return;
         }
-        merged[studentId] = makeResult({
-          ...(merged[studentId].subjects || {}),
-          ...(result.subjects || {})
-        }, scoring);
+        merged[studentId] = makeResult(mergeImportedSubjects(merged[studentId].subjects, result.subjects), scoring);
       });
       Object.entries(merged).forEach(([studentId, result]) => {
-        merged[studentId] = makeResult(result.subjects || {}, scoring);
+        merged[studentId] = makeResult(mergeImportedSubjects({}, result.subjects), scoring);
       });
       return merged;
+    }
+
+    function mergeImportedSubjects(existing = {}, incoming = {}) {
+      const subjects = new Map();
+      for (const [name, score] of [...Object.entries(existing), ...Object.entries(incoming)]) subjects.set(normalize(name), [cleanName(name).toLocaleUpperCase('tr-TR'), score]);
+      return Object.fromEntries(subjects.values());
     }
 
     function mergeParticipants(existing, incoming, scoring = {}) {
@@ -2009,15 +2239,12 @@
         map.set(key, {
           ...current,
           ...item,
-          result: makeResult({
-            ...(current.result?.subjects || {}),
-            ...(item.result?.subjects || {})
-          }, scoring)
+          result: makeResult(mergeImportedSubjects(current.result?.subjects, item.result?.subjects), scoring)
         });
       });
       return Array.from(map.values()).map((item) => ({
         ...item,
-        result: makeResult(item.result?.subjects || {}, scoring)
+        result: makeResult(mergeImportedSubjects({}, item.result?.subjects), scoring)
       }));
     }
 
@@ -2258,24 +2485,197 @@
       downloadBlob(new Blob([XLSX.write(workbook, {bookType:'xlsx',type:'array'})], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), fileName);
     }
 
-    async function parseExcelFile(file) {
+    function resetExamImport() {
+      examImportVersion += 1;
+      pendingImport = null;
+      examColumnDraft = null;
+      if (els.examColumnMapping) els.examColumnMapping.hidden = true;
+      els.examImportSheet.innerHTML = '<option value="">Otomatik bul</option>';
+      els.examImportSheet.disabled = true;
+      els.importSummary.textContent = '';
+    }
+
+    async function openExamColumnMapping() {
+      const file = els.excelFile.files?.[0];
+      if (!file || !window.XLSX) { toast('Önce Excel dosyasını seçin.'); return; }
+      const version = ++examImportVersion;
+      pendingImport = null;
+      try {
+        if (file.size > 10 * 1024 * 1024) throw new Error('Dosya 10 MB sınırını aşıyor.');
+        const buffer = await file.arrayBuffer();
+        if (version !== examImportVersion) return;
+        const workbook = XLSX.read(buffer, {type:'array',cellDates:true,sheetRows:5032,cellFormula:false,cellHTML:false});
+        const chosen = els.examImportSheet.value;
+        els.examImportSheet.innerHTML = '<option value="">Sayfa seçin</option>' + workbook.SheetNames.map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+        els.examImportSheet.disabled = workbook.SheetNames.length <= 1;
+        const sheetName = workbook.SheetNames.includes(chosen) ? chosen : workbook.SheetNames.length === 1 ? workbook.SheetNames[0] : '';
+        els.examImportSheet.value = sheetName;
+        if (!sheetName) throw new Error('Birden fazla sayfa var. Önce Excel sayfasını seçin.');
+        const sheet = workbook.Sheets[sheetName];
+        const range = sheet['!ref'] && XLSX.utils.decode_range(sheet['!ref']);
+        if (!range || range.e.r >= 5031 || range.e.c >= 256) throw new Error('Dosya boş veya 5.000 öğrenci / 256 sütun sınırını aşıyor.');
+        const rows = XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',range:0});
+        applyMergedCells(rows,sheet['!merges'] || []);
+        examColumnDraft = {file,rows,sheetName,columnCount:range.e.c + 1,version};
+        els.mappingHeaderRow.value = '1';
+        els.mappingSubjects.innerHTML = '';
+        els.examColumnMapping.hidden = false;
+        renderExamMappingColumns();
+        addExamMappingSubject();
+      } catch (error) { els.importSummary.textContent = error.message; }
+    }
+
+    function examColumnOptions(selected = '') {
+      if (!examColumnDraft) return '';
+      const headerIndex = Math.max(0,Math.min(29,Number(els.mappingHeaderRow.value || 1)-1));
+      const header = examColumnDraft.rows[headerIndex] || [];
+      return '<option value="">Seçin</option>' + Array.from({length:examColumnDraft.columnCount},(_,index)=>
+        `<option value="${index}" ${String(selected) === String(index) ? 'selected' : ''}>${XLSX.utils.encode_col(index)} · ${escapeHtml(String(header[index] || 'Başlıksız').slice(0,100))}</option>`).join('');
+    }
+
+    function renderExamMappingColumns() {
+      if (!examColumnDraft) return;
+      els.mappingHeaderRow.value = String(Math.max(1,Math.min(30,Math.trunc(Number(els.mappingHeaderRow.value)||1))));
+      [els.mappingName,els.mappingSchoolNo,els.mappingSurname,...els.mappingSubjects.querySelectorAll('select')].forEach(select=>{
+        const value = select.value;
+        select.innerHTML = examColumnOptions(value);
+      });
+      const start = Number(els.mappingHeaderRow.value)-1;
+      els.mappingSample.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Satır</th>${Array.from({length:examColumnDraft.columnCount},(_,c)=>`<th>${XLSX.utils.encode_col(c)}</th>`).join('')}</tr></thead><tbody>${examColumnDraft.rows.slice(start,start+6).map((row,index)=>`<tr><th>${start+index+1}</th>${Array.from({length:examColumnDraft.columnCount},(_,c)=>`<td>${escapeHtml(String(row[c] ?? '').slice(0,200))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function addExamMappingSubject() {
+      if (!examColumnDraft || els.mappingSubjects.children.length >= 20) return;
+      const row = document.createElement('div');
+      row.className = 'mapping-subject-row';
+      row.innerHTML = `<label>Ders<input data-mapping-subject placeholder="Ders adı" maxlength="80"></label>${['d','y','b'].map((key,index)=>`<label>${['Doğru','Yanlış','Boş'][index]}<select data-mapping-kind="${key}">${examColumnOptions()}</select></label>`).join('')}<button type="button" class="danger-btn" aria-label="Ders eşleştirmesini kaldır" title="Dersi kaldır">×</button>`;
+      row.querySelector('button').addEventListener('click',()=>row.remove());
+      els.mappingSubjects.appendChild(row);
+    }
+
+    function mappedExamData() {
+      const draft = examColumnDraft;
+      if (!draft || draft.file !== els.excelFile.files?.[0] || draft.version !== examImportVersion) throw new Error('Dosya veya sayfa değişti. Sütunları yeniden eşleştirin.');
+      if (els.mappingName.value === '') throw new Error('Öğrenci adı sütununu seçin.');
+      const identity = {order:null,fullName:els.mappingSurname.value === '' ? Number(els.mappingName.value) : null,firstName:els.mappingSurname.value !== '' ? Number(els.mappingName.value) : null,lastName:els.mappingSurname.value === '' ? null : Number(els.mappingSurname.value),schoolNo:els.mappingSchoolNo.value === '' ? null : Number(els.mappingSchoolNo.value),className:null,schoolName:null,provinceName:null};
+      const used = new Set();
+      Object.values(identity).filter(value=>value !== null).forEach(value=>{if(used.has(value))throw new Error('Kimlik alanları aynı sütun olamaz.');used.add(value);});
+      const groups = Array.from(els.mappingSubjects.children).map(row=>{
+        const subject = cleanName(row.querySelector('[data-mapping-subject]').value).toLocaleUpperCase('tr-TR');
+        if (!subject) throw new Error('Her dersin adını yazın.');
+        const group = {subject};
+        row.querySelectorAll('select').forEach(select=>{
+          if (select.value === '') throw new Error(`${subject}: D/Y/B sütunlarının tümünü seçin.`);
+          const column = Number(select.value);
+          if (used.has(column)) throw new Error('Bir sütun birden fazla alana atanamaz.');
+          used.add(column);group[`${select.dataset.mappingKind}Col`] = column;
+        });
+        return group;
+      });
+      if (!groups.length || new Set(groups.map(group=>normalize(group.subject))).size !== groups.length) throw new Error('En az bir ders gerekli; ders adları tekrar edemez.');
+      const students = extractExamStudents(draft.rows,{identity,groups,dataStart:Number(els.mappingHeaderRow.value)},{editable:true});
+      if (!students.length) throw new Error('Öğrenci satırı bulunamadı. Başlık satırını kontrol edin.');
+      return {students,subjects:groups.map(group=>group.subject),sheetName:draft.sheetName,formatNote:'Öğretmenin seçtiği sütun eşleştirmesi uygulandı.'};
+    }
+
+    function applyExamColumnMapping() {
+      try { const parsed = mappedExamData(); importExamFromExcel({parsed}); }
+      catch(error) { toast(error.message); }
+    }
+
+    function parseLongExamRows(rows, options = {}) {
+      for (let r = 0; r < Math.min(rows.length,30); r++) {
+        const labels = (rows[r] || []).map(normalize);
+        const subjectCol = labels.findIndex(label=>['DERS','DERS ADI','BRANS','SUBJECT'].includes(label));
+        const dCol = labels.findIndex(isD), yCol = labels.findIndex(isY), bCol = labels.findIndex(isB);
+        const nameCol = labels.findIndex(label=>['AD SOYAD','ADI SOYADI','OGRENCI','OGRENCI ADI SOYADI','STUDENT'].includes(label));
+        if ([subjectCol,dCol,yCol,bCol,nameCol].some(col=>col < 0)) continue;
+        const schoolNo = labels.findIndex(label=>['OKUL NO','OGRENCI NO','NUMARA'].includes(label));
+        const identity = {fullName:nameCol,schoolNo:schoolNo < 0 ? null : schoolNo};
+        const grouped = new Map(), subjects = new Set();
+        for (let i=r+1;i<rows.length;i++) {
+          const row=rows[i] || [], names=getStudentNamesFromRow(row,identity);
+          const subject=cleanName(row[subjectCol]).toLocaleUpperCase('tr-TR');
+          if (!names.firstName || !subject || isTotalLabel(subject) || ['ORTALAMA','GENEL ORTALAMA'].includes(normalize(fullName(names)))) continue;
+          const number=schoolNo < 0 ? '' : cleanCell(row[schoolNo]);
+          const key=JSON.stringify([rosterNumber(number),normalize(fullName(names))]);
+          let student=grouped.get(key);
+          if(!student) {student={...names,schoolNo:number,subjects:{},hasScores:false,sourceRow:i+1};grouped.set(key,student);}
+          if (student.subjects[subject]) throw new Error(`${i+1}. satır: ${fullName(names)} için ${subject} tekrarlanıyor.`);
+          const values=[row[dCol],row[yCol],row[bCol]];
+          if(values.every(value=>cleanCell(value)==='')) continue;
+          const counts=values.map(toNumberOrNull);
+          const valid=counts.every(value=>Number.isSafeInteger(value)&&value>=0);
+          if(!valid && !options.editable) throw new Error(`${i+1}. satır: D/Y/B pozitif tam sayı veya sıfır olmalı.`);
+          student.subjects[subject]=Object.fromEntries(['d','y','b'].map((key,index)=>[key,valid?counts[index]:values[index]]));
+          student.hasScores=true;subjects.add(subject);
+        }
+        return {subjects:Array.from(subjects),students:Array.from(grouped.values())};
+      }
+      return null;
+    }
+
+    function downloadExamTemplate() {
+      if (!window.XLSX) { toast('Excel aracı yüklenemedi.'); return; }
+      const rows = [['Okul No', 'Ad Soyad', 'Türkçe D', 'Türkçe Y', 'Türkçe B', 'Matematik D', 'Matematik Y', 'Matematik B', 'Hayat Bilgisi D', 'Hayat Bilgisi Y', 'Hayat Bilgisi B']];
+      activeStudents().forEach(student => rows.push([student.schoolNo || '', fullName(student)]));
+      const workbook = XLSX.utils.book_new();
+      const sheet = XLSX.utils.aoa_to_sheet(rows);
+      sheet['!cols'] = rows[0].map((_, i) => ({ wch: i === 1 ? 30 : 18 }));
+      XLSX.utils.book_append_sheet(workbook, sheet, 'Sınav Sonuçları');
+      downloadBlob(new Blob([XLSX.write(workbook, {bookType:'xlsx',type:'array'})], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'sinav-sonuclari-sablonu.xlsx');
+    }
+
+    async function parseExcelFile(file, version = examImportVersion, options = {}) {
+      if (file.size > 10 * 1024 * 1024) throw new Error('Dosya 10 MB sınırını aşıyor. Yalnız sonuç tablosunu içeren bir dosya seçin.');
       const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+      if (version !== examImportVersion) throw new Error('Dosya seçimi değişti.');
+      const workbook = XLSX.read(buffer, { type: 'array', cellDates: true, sheetRows: 5032, cellFormula: false, cellHTML: false });
+      const chosen = els.examImportSheet?.value || '';
+      if (els.examImportSheet) {
+        els.examImportSheet.innerHTML = '<option value="">Otomatik bul</option>' + workbook.SheetNames.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
+        els.examImportSheet.disabled = workbook.SheetNames.length <= 1;
+        els.examImportSheet.value = chosen;
+      }
+      if (chosen) {
+        if (!workbook.SheetNames.includes(chosen)) throw new Error('Seçilen sayfa bu dosyada yok. Dosyayı yeniden seçin.');
+        return parseExamSheet(workbook.Sheets[chosen], chosen, options);
+      }
+      const candidates = [];
+      const errors = [];
+      for (const name of workbook.SheetNames) {
+        try { candidates.push(parseExamSheet(workbook.Sheets[name], name, options)); }
+        catch (error) { errors.push(`${name}: ${error.message}`); }
+      }
+      if (candidates.length > 1) throw new Error('Birden fazla sonuç sayfası bulundu. Excel sayfasını seçip tekrar kontrol edin.');
+      if (!candidates.length) throw new Error(errors.slice(0, 3).join(' · '));
+      if (els.examImportSheet) els.examImportSheet.value = candidates[0].sheetName;
+      return candidates[0];
+    }
+
+    function parseExamSheet(sheet, sheetName, options = {}) {
+      const range = sheet['!ref'] && XLSX.utils.decode_range(sheet['!ref']);
+      if (range && (range.e.r >= 5031 || range.e.c >= 256)) throw new Error('En fazla 5.000 öğrenci ve 256 sütun okunabilir. Dosyayı bölerek yükleyin.');
+      // Start at A1 even if the file's used range starts at A2; keep source row numbers.
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', range: 0 });
       applyMergedCells(rows, sheet["!merges"] || []);
-      const structure = detectExamStructure(rows);
-      const students = extractExamStudents(rows, structure);
-      return { subjects: structure.groups.map((group) => group.subject), students };
+      const long = parseLongExamRows(rows, options);
+      const structure = long ? null : detectExamStructure(rows);
+      const students = long ? long.students : extractExamStudents(rows, structure, options);
+      if (!students.length) throw new Error('Öğrenci satırı bulunamadı.');
+      const subjects = long ? long.subjects : structure.groups.map(group => group.subject);
+      if (new Set(subjects.map(normalize)).size !== subjects.length) throw new Error('Aynı ders birden fazla kez bulundu. Ders başlıklarını kontrol edin.');
+      return { subjects, students, sheetName, formatNote: long ? 'Öğrenci / ders satırlarından birleştirildi.' : structure.formatNote || 'D/Y/B sütunları okundu. Yüzde sütunu gerekmez.' };
     }
 
     function applyMergedCells(rows, merges) {
       merges.forEach((merge) => {
+        if (merge.e.r >= 5032 || merge.e.c >= 256) throw new Error('Birleştirilmiş hücre aralığı çok büyük. Yalnız sonuç tablosunu yükleyin.');
         const value = rows[merge.s.r]?.[merge.s.c];
         if (value === undefined || value === "") return;
         for (let r = merge.s.r; r <= merge.e.r; r += 1) {
           rows[r] = rows[r] || [];
-          for (let c = merge.s.c; c <= merge.e.c; c += 1) rows[r][c] = rows[r][c] || value;
+          for (let c = merge.s.c; c <= merge.e.c; c += 1) if (rows[r][c] === '' || rows[r][c] === undefined) rows[r][c] = value;
         }
       });
     }
@@ -2293,7 +2693,7 @@
           break;
         }
       }
-      if (!groups.length) return detectFlatExamStructure(rows);
+      if (!groups.length) return detectCompactExamStructure(rows) || detectFlatExamStructure(rows);
       const identity = detectIdentityColumns(rows, subjectRow, groups[0].start);
       return { subjectRow, subRow, groups, identity, dataStart: subRow + 1 };
     }
@@ -2301,7 +2701,7 @@
     function detectFlatExamStructure(rows) {
       for (let r = 0; r < rows.length; r += 1) {
         const row = rows[r] || [];
-        const identity = detectIdentityColumns([row], 0, row.length);
+        let identity;
         const found = {};
         row.forEach((cell, c) => {
           const parsed = parseFlatScoreHeader(cell);
@@ -2312,12 +2712,13 @@
         const groups = Object.values(found)
           .filter((group) => group.dCol !== undefined && group.yCol !== undefined && group.bCol !== undefined)
           .map((group) => ({ ...group, start: group.dCol }));
-        const hasIdentity = identity.fullName !== null || identity.firstName !== null || identity.lastName !== null;
+        if (groups.length) identity = detectIdentityColumns(rows, r, Math.min(...groups.map(group => group.start)));
+        const hasIdentity = identity && (identity.fullName !== null || identity.firstName !== null);
         if (groups.length && hasIdentity) {
           return { subjectRow: r, subRow: r, groups, identity, dataStart: r + 1 };
         }
       }
-      throw new Error("Ders başlıkları ve D/Y/B alanları bulunamadı. Dosyada okul no, ad-soyad ve ders doğru/yanlış/boş sütunları olmalı.");
+      throw new Error("Ders başlıkları ve D/Y/B alanları bulunamadı. Ad Soyad ve her ders için Doğru/Yanlış/Boş sütunları ekleyin veya sınav şablonunu kullanın. Okul numarası zorunlu değildir.");
     }
 
     function parseFlatScoreHeader(value) {
@@ -2343,14 +2744,38 @@
 
     function detectSubjectGroups(subjects, subs) {
       const groups = [];
-      for (let c = 0; c < Math.max(subjects.length, subs.length) - 3; c += 1) {
+      for (let c = 0; c < Math.max(subjects.length, subs.length) - 2; c += 1) {
         const subject = cleanCell(subjects[c]);
         if (!subject || isTotalLabel(subject)) continue;
-        if (isD(subs[c]) && isY(subs[c + 1]) && isB(subs[c + 2]) && isPercent(subs[c + 3])) {
-          groups.push({ subject, start: c });
+        if (isD(subs[c]) && isY(subs[c + 1]) && isB(subs[c + 2])) {
+          groups.push({ subject: subject.toLocaleUpperCase('tr-TR'), start: c });
         }
       }
       return groups;
+    }
+
+    function detectCompactExamStructure(rows) {
+      // A known publisher layout: (question count) subject, then Net / D / Y
+      // in one cell. Never guess that an arbitrary three-number cell is D/Y/B.
+      const aliases = { TUR: 'TÜRKÇE', TURKCE: 'TÜRKÇE', MAT: 'MATEMATİK', MATEMATIK: 'MATEMATİK', 'HAYAT BILGISI': 'HAYAT BİLGİSİ', FEN: 'FEN BİLİMLERİ', 'FEN BILIMLERI': 'FEN BİLİMLERİ', SOSYAL: 'SOSYAL BİLGİLER', 'SOSYAL BILGILER': 'SOSYAL BİLGİLER', ING: 'İNGİLİZCE', INGILIZCE: 'İNGİLİZCE' };
+      for (let r = 0; r < Math.min(rows.length, 30); r++) {
+        const groups = [];
+        let aggregate = null;
+        (rows[r] || []).forEach((cell, c) => {
+          const match = cleanName(cell).match(/^\((\d+)\)\s*(.+)$/);
+          if (!match) return;
+          const count = Number(match[1]);
+          const label = normalize(match[2]).replace(/\.$/, '');
+          if (['LGS', 'TOPLAM', 'GENEL TOPLAM'].includes(label)) aggregate = { start: c, count };
+          else if (aliases[label] && count > 0) groups.push({ subject: aliases[label], start: c, count, compact: true });
+        });
+        if (!groups.length) continue;
+        const identity = detectIdentityColumns(rows, r, Math.min(...groups.map(g => g.start)));
+        if (identity.fullName === null) continue;
+        if (aggregate && aggregate.count !== groups.reduce((sum, g) => sum + g.count, 0)) throw new Error('Derslerin soru sayısı genel toplamla uyuşmuyor. Eksik ders başlığını kontrol edin.');
+        return { groups, identity, dataStart: r + 1, aggregate, formatNote: 'Yayınevi tablosu okundu: net/doğru/yanlış ayrıldı, boş sayıları soru sayısından hesaplandı. LGS toplamı derslere eklenmedi.' };
+      }
+      return null;
     }
 
     function detectIdentityColumns(rows, subjectRow, firstScoreCol) {
@@ -2361,42 +2786,35 @@
           const studentNameLabel = !label.includes("OKUL") && !label.includes("SINIF") && !label.includes("SUBE") && label !== "IL" && !label.includes("IL ADI") && !label.includes("SEHIR");
           if (label === "NO" || label.includes("OKUL NO") || label.includes("OKUL NUMARA") || label.includes("OGRENCI NO") || label.includes("NUMARA")) identity.schoolNo = c;
           if (label === "OKUL" || label.includes("OKUL AD")) identity.schoolName = c;
-          if (label === "SINIF" || label.includes("SINIF") || label === "SUBE" || label.includes("SUBE")) identity.className = c;
+          if (label === "SINIF" || label.includes("SINIF") || label === "SUBE" || label.includes("SUBE") || label === 'GRP') identity.className = c;
           if (label === "IL" || label === "SEHIR" || label.includes("IL ADI") || label.includes("SEHIR AD")) identity.provinceName = c;
           if (studentNameLabel && ((label.includes("AD") && label.includes("SOYAD")) || (label.includes("OGRENCI") && !label.includes("NO") && !label.includes("NUMARA")))) identity.fullName = c;
           if (studentNameLabel && (label === "AD" || label === "ADI" || label.includes("OGRENCI ADI"))) identity.firstName = c;
-          if (studentNameLabel && label.includes("SOYAD")) identity.lastName = c;
+          if (studentNameLabel && label.includes("SOYAD") && !label.includes('AD SOYAD') && !label.includes('ADI SOYADI') && !label.includes('AD VE SOYAD')) identity.lastName = c;
         }
       }
-      if (identity.firstName === null || identity.lastName === null) {
-        if (firstScoreCol >= 4) {
-          identity.schoolNo = identity.schoolNo ?? 1;
-          identity.firstName = 2;
-          identity.lastName = 3;
-        } else if (firstScoreCol >= 3) {
-          identity.schoolNo = identity.schoolNo ?? 0;
-          identity.firstName = 1;
-          identity.lastName = 2;
-        } else {
-          identity.firstName = 0;
-          identity.lastName = 1;
-        }
+      if (identity.fullName === null && identity.firstName === null) {
+        // The supplied simple sheet has names in the sole unlabelled column.
+        if (firstScoreCol === 1) identity.fullName = 0;
       }
+      if (identity.fullName === null && identity.firstName === null) throw new Error('Öğrenci adı sütunu bulunamadı. Ad Soyad başlığı ekleyin veya sınav şablonunu kullanın.');
       return identity;
     }
 
-    function extractExamStudents(rows, structure) {
+    function extractExamStudents(rows, structure, options = {}) {
       const students = [];
       for (let r = structure.dataStart; r < rows.length; r += 1) {
         const row = rows[r] || [];
         const names = getStudentNamesFromRow(row, structure.identity);
         const firstName = names.firstName;
         const lastName = names.lastName;
-        const schoolNo = cleanCell(row[structure.identity.schoolNo]);
+        const schoolNo = names.schoolNo || cleanCell(row[structure.identity.schoolNo]);
         const className = cleanName(row[structure.identity.className]);
         const schoolName = cleanName(row[structure.identity.schoolName]);
         const provinceName = cleanName(row[structure.identity.provinceName]);
         if (!firstName && !lastName) continue;
+        if (['ORTALAMA', 'GENEL ORTALAMA', 'TOPLAM', 'GENEL TOPLAM', 'AD SOYAD', 'OGRENCI'].includes(normalize(`${firstName} ${lastName}`))) continue;
+        if (!/[A-ZÇĞİÖŞÜ]/i.test(`${firstName} ${lastName}`)) throw new Error(`${r + 1}. satırda öğrenci adı okunamadı.`);
 
         const subjects = {};
         let hasScores = false;
@@ -2404,14 +2822,15 @@
           const dCol = group.dCol ?? group.start;
           const yCol = group.yCol ?? group.start + 1;
           const bCol = group.bCol ?? group.start + 2;
-          const d = toNumberOrNull(row[dCol]);
-          const y = toNumberOrNull(row[yCol]);
-          const b = toNumberOrNull(row[bCol]);
-          const subjectHasScore = d !== null || y !== null || b !== null;
+          const values = group.compact ? readCompactExamScore(row[group.start], group, r + 1) : [row[dCol], row[yCol], row[bCol]];
+          const subjectHasScore = values.some(value => cleanCell(value) !== '');
           if (subjectHasScore) {
-            const safeD = d || 0;
-            const safeY = y || 0;
-            const safeB = b || 0;
+            const counts = values.map(toNumberOrNull);
+            if (counts.some(value => value === null || !Number.isSafeInteger(value) || value < 0)) {
+              if(!options.editable) throw new Error(`${r + 1}. satır, ${group.subject}: D/Y/B alanlarının tümü sıfır veya pozitif tam sayı olmalı. Boş ve okunamayan hücreleri kontrol edin.`);
+              subjects[group.subject]={d:values[0],y:values[1],b:values[2]};hasScores=true;return;
+            }
+            const [safeD, safeY, safeB] = counts;
             const total = safeD + safeY + safeB;
             subjects[group.subject] = {
               d: safeD,
@@ -2422,19 +2841,39 @@
             hasScores = true;
           }
         });
+        if (structure.aggregate && hasScores) {
+          const total = readCompactExamScore(row[structure.aggregate.start], structure.aggregate, r + 1);
+          const sum = Object.values(subjects).reduce((a, s) => [a[0] + s.d, a[1] + s.y, a[2] + s.b], [0, 0, 0]);
+          if (total.length !== 3 || total.some((value, i) => value !== sum[i])) throw new Error(`${r + 1}. satır: Ders sonuçları LGS toplamıyla uyuşmuyor. Kaynak görselle karşılaştırın.`);
+        }
 
-        students.push({ schoolNo, firstName, lastName, className, schoolName, provinceName, subjects, hasScores });
+        students.push({ schoolNo, firstName, lastName, className, schoolName, provinceName, subjects, hasScores, sourceRow: r + 1 });
       }
       return students;
     }
 
+    function readCompactExamScore(value, group, sourceRow) {
+      const text = cleanName(value);
+      if (!text) return [];
+      const match = text.match(/^(-?\d+(?:[.,]\d+)?)\s+(\d+)\s+(\d+)$/);
+      if (!match) throw new Error(`${sourceRow}. satır, ${group.subject || 'LGS toplamı'}: net/doğru/yanlış okunamadı. Hücreyi kaynak görselle karşılaştırın.`);
+      const net = Number(match[1].replace(',', '.')), d = Number(match[2]), y = Number(match[3]);
+      const b = group.count - d - y;
+      if (b < 0 || (Math.abs(net - d) > .02 && Math.abs(net - (d - y / 3)) > .02 && Math.abs(net - (d - y / 4)) > .02)) throw new Error(`${sourceRow}. satır, ${group.subject || 'LGS toplamı'}: soru sayısı veya net tutarsız. Kaynak görseli kontrol edin.`);
+      return [d, y, b];
+    }
+
     function getStudentNamesFromRow(row, identity) {
       if (identity.fullName !== null && identity.fullName !== undefined) {
-        const parts = cleanName(row[identity.fullName]).split(" ").filter(Boolean);
-        if (parts.length <= 1) return { firstName: parts[0] || "", lastName: "" };
+        let name = cleanName(row[identity.fullName]);
+        const combined = name.match(/^(\d+)\s*[-–—]\s*(.+)$/);
+        const schoolNo = combined?.[1] || '';
+        if (combined) name = combined[2];
+        const parts = name.split(" ").filter(Boolean);
+        if (parts.length <= 1) return { firstName: parts[0] || "", lastName: "", schoolNo };
         return {
           firstName: parts.slice(0, -1).join(" "),
-          lastName: parts.slice(-1).join("").toLocaleUpperCase("tr-TR")
+          lastName: parts.slice(-1).join("").toLocaleUpperCase("tr-TR"), schoolNo
         };
       }
       return {
@@ -3037,6 +3476,7 @@
       els.showRankings.checked = !!exam.showRankings;
       els.examWrongPenalty.checked = !!exam.scoring?.wrongPenalty;
       els.examSubjectPoints.value = subjectPointText(exam.scoring);
+      els.examMaxScore.value = normalizeScoringOptions(exam.scoring).maxScore;
       toast("Seçili sınav yeni Excel verisiyle güncellenecek.");
     }
 
@@ -3161,7 +3601,7 @@
       state.lessonPlannerFocusDate = focusDate;
       if (els.lessonPlannerFocusDate) els.lessonPlannerFocusDate.value = focusDate;
       if (els.lessonPlannerFocusInfo) {
-        els.lessonPlannerFocusInfo.textContent = info || `${formatDate(focusDate)} tarihinin haftası. Her pazartesi güncel haftaya geçilir.`;
+        els.lessonPlannerFocusInfo.textContent = info || `${formatDate(focusDate)} haftası`;
       }
     }
 
@@ -3193,11 +3633,16 @@
         date: focusDate,
         ...(["tab-program", "tab-plan", "tab-yukle", "tab-tatil"].includes(plannerTab) ? { plannerTab } : {})
       }, window.location.origin === 'null' ? '*' : window.location.origin);
+      els.lessonPlannerFrame.contentWindow.postMessage({type:'kemal-ajanda-measure'},window.location.origin === 'null' ? '*' : window.location.origin);
     }
 
     function handleLessonPlannerMessage(event) {
       if (event.source !== els.lessonPlannerFrame?.contentWindow || event.origin !== window.location.origin) return;
       const data = event.data || {};
+      if(data.type==='kemal-lesson-planner-height') {
+        if(typeof data.height==='number' && Number.isFinite(data.height) && data.height>=100 && data.height<=20000) els.lessonPlannerFrame.style.height=`${Math.max(420,Math.ceil(data.height))}px`;
+        return;
+      }
       if (data.type === "kemal-lesson-planner-data-changed") {
         saveState();
         renderCalendar();
@@ -3214,7 +3659,7 @@
         data.range || "",
         data.focusDate ? `${formatDate(data.focusDate)} odaklı` : ""
       ].filter(Boolean);
-      renderLessonPlannerFocus(parts.length ? `Ders programı ${parts.join(" · ")} olarak hatırlandı.` : "");
+      renderLessonPlannerFocus(parts.slice(0,2).join(' · '));
     }
 
     function scheduleCellHtml(items) {
@@ -3263,6 +3708,9 @@
     }
 
     function moveCalendarMonth(delta) {
+      if(calendarViewMode==='week') {
+        const selected=parseDateValue(selectedCalendarDate) || new Date();selected.setDate(selected.getDate()+delta*7);selectCalendarDate(dateKey(selected));return;
+      }
       calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + delta, 1);
       const selected = parseDateValue(selectedCalendarDate);
       if (!selected || selected.getFullYear() !== calendarCursor.getFullYear() || selected.getMonth() !== calendarCursor.getMonth()) {
@@ -3281,23 +3729,33 @@
       const selectedDate = parseDateValue(selectedCalendarDate) || new Date();
       selectedCalendarDate = dateKey(selectedDate);
       els.calendarEventDate.value = selectedCalendarDate;
-      els.calendarTitle.textContent = cursor.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+      const weekly=calendarViewMode==='week';
+      document.querySelectorAll('[data-calendar-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.calendarMode===calendarViewMode)));
+      els.prevCalendarMonthBtn.setAttribute('aria-label',weekly?'Önceki hafta':'Önceki ay');
+      els.nextCalendarMonthBtn.setAttribute('aria-label',weekly?'Sonraki hafta':'Sonraki ay');
 
       const weekdays = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
       const firstDayOffset = (cursor.getDay() + 6) % 7;
-      const start = new Date(cursor.getFullYear(), cursor.getMonth(), 1 - firstDayOffset);
+      const start = weekly ? parseDateValue(calendarMondayKey(selectedDate)) : new Date(cursor.getFullYear(), cursor.getMonth(), 1 - firstDayOffset);
+      const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+6);
+      els.calendarTitle.textContent = weekly ? `${start.toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'})}` : cursor.toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+      els.calendarGrid.classList.toggle('calendar-week-board',weekly);
       const cells = [];
-      for (let i = 0; i < 42; i += 1) {
+      for (let i = 0; i < (weekly?7:42); i += 1) {
         const cellDate = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
         const key = dateKey(cellDate);
         const dayEvents = [...calendarEventsForDate(key), ...birthdayEventsForDate(key)].sort(sortCalendarEvents);
-        const visible = dayEvents.slice(0, 3);
+        const visible = dayEvents.slice(0,weekly?4:3);
         const classes = [
           "calendar-day",
-          cellDate.getMonth() !== cursor.getMonth() ? "muted" : "",
+          !weekly && cellDate.getMonth() !== cursor.getMonth() ? "muted" : "",
           key === today() ? "today" : "",
           key === selectedCalendarDate ? "selected" : ""
         ].filter(Boolean).join(" ");
+        if(weekly) {
+          cells.push(`<section class="${classes} calendar-week-column" data-week-date="${key}"><button class="calendar-week-heading" data-calendar-date="${key}" aria-pressed="${key===selectedCalendarDate}"><span>${weekdays[i]}</span><strong>${cellDate.getDate()}</strong></button><div class="calendar-week-notes">${visible.map(event=>`<button class="agenda-sticky event-${calendarNoteType(event.type)}" data-calendar-note-date="${key}" aria-label="${escapeHtml(event.title)} — ${formatDate(key)}"><small>${escapeHtml(event.time || calendarEventLabel(event.type))}</small><strong>${escapeHtml(event.title)}</strong>${event.note?`<p>${escapeHtml(event.note)}</p>`:''}</button>`).join('')}${dayEvents.length>visible.length?`<button class="calendar-more" data-calendar-note-date="${key}">+${dayEvents.length-visible.length} kayıt daha</button>`:''}${!dayEvents.length?`<button class="calendar-empty-add" data-add-note-date="${key}" aria-label="${formatDate(key)} için not ekle">+</button>`:''}</div></section>`);
+          continue;
+        }
         cells.push(`
           <div class="${classes}" data-calendar-date="${key}" role="button" tabindex="0" aria-label="${formatDate(key)}">
             <span class="calendar-day-number">${cellDate.getDate()}</span>
@@ -3308,11 +3766,16 @@
           </div>
         `);
       }
-      els.calendarGrid.innerHTML = weekdays.map((day) => `<div class="calendar-weekday">${day}</div>`).join("") + cells.join("");
+      els.calendarGrid.innerHTML = (weekly?'':weekdays.map((day) => `<div class="calendar-weekday">${day}</div>`).join("")) + cells.join("");
+      els.calendarGrid.querySelectorAll('[data-calendar-note-date]').forEach(button=>button.addEventListener('click',()=>{
+        selectCalendarDate(button.dataset.calendarNoteDate);document.getElementById('selectedDayPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+      }));
+      els.calendarGrid.querySelectorAll('[data-add-note-date]').forEach(button=>button.addEventListener('click',()=>openCalendarComposer(button.dataset.addNoteDate)));
       els.calendarGrid.querySelectorAll("[data-calendar-date]").forEach((day) => {
         day.addEventListener("click", () => {
           selectedCalendarDate = day.dataset.calendarDate;
           renderCalendar();
+          els.calendarGrid.querySelector(`[data-calendar-date="${selectedCalendarDate}"]`)?.focus({preventScroll:true});
         });
         day.addEventListener("keydown", (event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -3389,17 +3852,30 @@
 
     function renderSelectedDayEvents() {
       const events = [...calendarEventsForDate(selectedCalendarDate), ...birthdayEventsForDate(selectedCalendarDate)].sort(sortCalendarEvents);
+      if(els.selectedDayTitle)els.selectedDayTitle.textContent = (parseDateValue(selectedCalendarDate) || new Date()).toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'});
+      if(els.calendarSelectedCount)els.calendarSelectedCount.textContent = `${events.length} kayıt`;
       els.selectedDayEvents.innerHTML = events.length ? events.map((event) => `
-        <div class="calendar-event event-${escapeHtml(event.type || "note")} ${isReminderDue(event) ? "reminder-due" : ""}">
+        <article class="calendar-event agenda-sticky event-${calendarNoteType(event.type)} ${isReminderDue(event) ? "reminder-due" : ""}">
           <strong>${calendarEventIcon(event.type)} ${escapeHtml(event.title)}</strong>
           <small>${escapeHtml([event.time, calendarEventLabel(event.type), reminderLabel(event.reminder)].filter(Boolean).join(" · "))}</small>
           ${event.note ? `<small>${escapeHtml(event.note)}</small>` : ""}
           ${event.synthetic ? "" : `<button class="mini-delete" data-delete-calendar="${escapeHtml(event.id)}">Sil</button>`}
-        </div>
+        </article>
       `).join("") : `<div class="empty">${formatDate(selectedCalendarDate)} için ajanda kaydı yok.</div>`;
       els.selectedDayEvents.querySelectorAll("[data-delete-calendar]").forEach((button) => {
         button.addEventListener("click", () => deleteCalendarEvent(button.dataset.deleteCalendar));
       });
+    }
+
+    function calendarNoteType(type) {
+      return ['exam','meb','holiday','reminder','meeting','birthday','special'].includes(type)?type:'note';
+    }
+
+    function openCalendarComposer(date) {
+      selectCalendarDate(date);clearCalendarForm();
+      if(els.calendarComposer)els.calendarComposer.open=true;
+      els.calendarEventTitle?.focus();
+      els.calendarComposer?.scrollIntoView({behavior:'smooth',block:'center'});
     }
 
     function saveCalendarEvent() {
@@ -3743,13 +4219,19 @@
 
     function renderReportOptions() {
       const type = els.reportType?.value || "academic";
-      const usesAcademicSelectors = type === "academic" || type === "comparison";
+      const usesAcademicSelectors = ['academic', 'comparison', 'classAnalysis'].includes(type);
+      if (els.classAnalysisOptions) els.classAnalysisOptions.hidden = type !== 'classAnalysis';
+      els.refreshReportBtn.textContent = type === 'classAnalysis' ? 'Analizi Oluştur' : 'Karneyi Oluştur';
+      els.downloadAnalysisExcelBtn.style.display = usesAcademicSelectors ? '' : 'none';
+      els.shareWhatsappBtn.style.display = type === 'classAnalysis' ? 'none' : '';
+      document.querySelectorAll('[data-report-mode]').forEach(button => {button.setAttribute('aria-selected',String(button.dataset.reportMode === type));});
       els.reportExamPicker.hidden = !usesAcademicSelectors || els.reportExam.value !== '__selected__';
       document.querySelectorAll(".report-option-panel").forEach((panel) => panel.classList.remove("active"));
       [els.reportStudent, els.reportExam, els.subjectPicker].forEach((element) => {
         const field = element?.closest(".field");
         if (field) field.style.display = usesAcademicSelectors ? "" : "none";
       });
+      if (type === 'classAnalysis') els.reportStudent.closest('.field').style.display = 'none';
       if (type === "classList") els.classListOptions.classList.add("active");
       if (type === "rankingList") els.rankingReportOptions.classList.add("active");
       if (type === "meetings") els.meetingReportOptions.classList.add("active");
@@ -3840,7 +4322,7 @@
               <span>Ölçme değerlendirme sistemi</span>
             </div>
           </div>
-          <span>By Kemal Öğretmen · kemalogretmen.com.tr</span>
+          <span>By Kemal Öğretmen · kemalogretmenim.com.tr</span>
         </div>
       `;
     }
@@ -4175,7 +4657,7 @@
       const latest = snapshots[snapshots.length - 1];
       const percentDelta = valueDelta(latest.percent, first.percent);
       const subjects = comparisonSubjects(snapshots, selectedSubjects());
-      const trendChart = buildComparisonTrendChart(snapshots);
+      const trendChart = analysisTrendPages(snapshots);
       const examCountChart = buildExamCountStackedBars(snapshots);
       const subjectDeltaCards = buildSubjectDeltaCards(snapshots, subjects);
       const currentClass = activeClass();
@@ -4202,7 +4684,8 @@
           <div class="chart-panel-title"><strong>Zaman içindeki başarı</strong><span>Deneme deneme gelişim</span></div>
           ${trendChart}
           <div class="badges">
-            <span class="badge blue">Çizgi: öğrencinin deneme başarı yüzdesi</span>
+            <span class="badge blue">Mavi: öğrenci başarısı</span>
+            <span class="badge gold">Turuncu: sınıf ortalaması</span>
             <span class="badge green">Yeşil artış</span>
             <span class="badge red">Kırmızı düşüş</span>
           </div>
@@ -4258,7 +4741,7 @@
                   <tr>
                     <td><strong>${escapeHtml(subject)}</strong></td>
                     ${snapshots.map((item) => {
-                      const subjectResult = item.result.subjects?.[subject];
+                      const subjectResult = subjectValue(item.result.subjects,subject);
                       return `<td>${subjectResult ? `<strong>${formatPercent(subjectResult.percent)}</strong><br><span style="color:#667085;font-size:12px">${escapeHtml(subjectResult.d)}D · ${escapeHtml(subjectResult.y)}Y · ${escapeHtml(subjectResult.b)}B</span>` : "-"}</td>`;
                     }).join("")}
                     <td><span class="delta-pill ${deltaClass(delta)}">${formatPercentDelta(delta)}</span></td>
@@ -4282,7 +4765,7 @@
     }
 
     function comparisonSnapshot(exam, studentId) {
-      const result = exam.results?.[studentId] || { subjects: {}, total: {} };
+      const result = projectReportResult(exam, exam.results?.[studentId], selectedSubjects()) || { subjects: {}, total: {} };
       return {
         exam,
         result,
@@ -4290,30 +4773,34 @@
         y: result.total?.y || 0,
         b: result.total?.b || 0,
         percent: isFiniteNumber(result.total?.percent) ? result.total.percent : null,
-        classAverage: totalClassAverage(exam),
-        generalAverage: totalParticipantAverage(exam)
+        classAverage: average(classResultRows(exam,selectedSubjects()).map(row=>row.result.total.percent)),
+        generalAverage: totalParticipantAverage(exam, selectedSubjects())
       };
     }
 
     function comparisonSubjects(snapshots, selected) {
-      const all = Array.from(new Set(snapshots.flatMap((item) => Object.keys(item.result.subjects || {}))));
-      const pool = selected.length ? selected.filter((subject) => all.includes(subject)) : all;
+      const all = [...new Map(snapshots.flatMap(item=>Object.keys(item.result.subjects || {})).map(name=>[normalize(name),name])).values()];
+      const pool = selected.length ? all.filter(subject=>selected.some(name=>normalize(name)===normalize(subject))) : all;
       return pool.sort((a, b) => a.localeCompare(b, "tr"));
     }
 
-    function buildComparisonTrendChart(snapshots) {
+    function buildComparisonTrendChart(snapshots, classOnly = false) {
       const width = 860;
       const height = 286;
-      const left = 50;
-      const right = 28;
+      const left = 72;
+      const right = 62;
       const top = 28;
       const bottom = 66;
       const chartWidth = width - left - right;
       const chartHeight = height - top - bottom;
       const y = (value) => top + chartHeight - (clampPercent(value) / 100) * chartHeight;
       const x = (index) => snapshots.length === 1 ? left + chartWidth / 2 : left + (chartWidth * index) / (snapshots.length - 1);
-      const points = snapshots.map((item, index) => `${x(index)},${y(item.percent)}`).join(" ");
-      const area = `${left},${top + chartHeight} ${points} ${x(snapshots.length - 1)},${top + chartHeight}`;
+      const segments = key => {
+        const groups=[];let current=[];
+        snapshots.forEach((item,index)=>{if(isFiniteNumber(item[key])) current.push(`${x(index)},${y(item[key])}`);else if(current.length){groups.push(current);current=[];}});
+        if(current.length) groups.push(current);
+        return groups.map(points=>`<polyline class="${classOnly?'analysis-class-line':key==='classAverage'?'class-line':'trend-line'}" points="${points.join(' ')}"></polyline>`).join('');
+      };
       const grid = [0, 25, 50, 75, 100].map((tick) => {
         const yy = y(tick);
         return `<line class="grid-line" x1="${left}" y1="${yy}" x2="${width - right}" y2="${yy}"></line><text x="8" y="${yy + 4}">%${tick}</text>`;
@@ -4321,14 +4808,14 @@
       return `
         <svg class="comparison-trend-chart combo-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Denemeler arası başarı değişimini gösterir">
           ${grid}
-          <polygon class="trend-area" points="${area}"></polygon>
-          <polyline class="trend-line" points="${points}"></polyline>
+          ${segments('percent')}
+          ${classOnly?'':segments('classAverage')}
           ${snapshots.map((item, index) => {
             const label = shortExamLabel(item.exam);
             return `
-              <circle class="trend-dot" cx="${x(index)}" cy="${y(item.percent)}" r="7"></circle>
-              <text x="${x(index)}" y="${Math.max(16, y(item.percent) - 12)}" text-anchor="middle">${formatPercent(item.percent)}</text>
-              <text x="${x(index)}" y="${height - 30}" text-anchor="middle">${escapeHtml(label)}</text>
+              ${isFiniteNumber(item.percent)?`<circle class="trend-dot" cx="${x(index)}" cy="${y(item.percent)}" r="5"></circle><text x="${x(index)}" y="${Math.max(16, y(item.percent) - 12)}" text-anchor="middle">${formatPercent(item.percent)}</text>`:''}
+              ${!classOnly&&isFiniteNumber(item.classAverage)?`<circle class="chart-dot-class" cx="${x(index)}" cy="${y(item.classAverage)}" r="4"><title>Sınıf ortalaması: ${formatPercent(item.classAverage)}</title></circle>`:''}
+              <text x="${x(index)}" y="${height - 30}" text-anchor="middle">${escapeHtml(label.slice(0,14))}<title>${escapeHtml(item.exam.name)}</title></text>
               <text x="${x(index)}" y="${height - 12}" text-anchor="middle">${formatDate(item.exam.date)}</text>
             `;
           }).join("")}
@@ -4412,13 +4899,13 @@
     }
 
     function firstFiniteSubjectPercent(snapshots, subject) {
-      const item = snapshots.find((snapshot) => isFiniteNumber(snapshot.result.subjects?.[subject]?.percent));
-      return item?.result.subjects?.[subject]?.percent ?? null;
+      const item = snapshots.find((snapshot) => isFiniteNumber(subjectValue(snapshot.result.subjects,subject)?.percent));
+      return subjectValue(item?.result.subjects,subject)?.percent ?? null;
     }
 
     function lastFiniteSubjectPercent(snapshots, subject) {
-      const item = snapshots.slice().reverse().find((snapshot) => isFiniteNumber(snapshot.result.subjects?.[subject]?.percent));
-      return item?.result.subjects?.[subject]?.percent ?? null;
+      const item = snapshots.slice().reverse().find((snapshot) => isFiniteNumber(subjectValue(snapshot.result.subjects,subject)?.percent));
+      return subjectValue(item?.result.subjects,subject)?.percent ?? null;
     }
 
     function formatPercentDelta(value) {
@@ -4466,8 +4953,102 @@
       ];
     }
 
+    function projectReportResult(exam, result, selected = []) {
+      if (!result || typeof result !== 'object') return null;
+      const entries = Object.entries(result.subjects || {});
+      if (entries.length && !entries.some(([,item])=>item && ['d','y','b'].every(key=>Number.isSafeInteger(item[key])&&item[key]>=0) && item.d+item.y+item.b>0)) return null;
+      const keys = new Set(selected.map(normalize));
+      if (!selected.length || entries.every(([name]) => keys.has(normalize(name)))) {
+        if (isFiniteNumber(result.total?.percent) && result.total.percent >= 0 && result.total.percent <= 100) return result;
+      }
+      const subjects = Object.fromEntries(entries.filter(([name,item]) => (!selected.length || keys.has(normalize(name))) && item && ['d','y','b'].every(k => Number.isSafeInteger(item[k]) && item[k] >= 0) && item.d+item.y+item.b>0));
+      if (!Object.keys(subjects).length) return null;
+      const options = normalizeScoringOptions(exam.scoring);
+      options.subjectPoints = Object.fromEntries(Object.entries(options.subjectPoints).filter(([name]) => Object.keys(subjects).some(subject => normalize(subject) === normalize(name))));
+      const projected = makeResult(subjects, options);
+      return isFiniteNumber(projected.total.percent) ? projected : null;
+    }
+
+    function subjectValue(subjects, name) {
+      if (!subjects) return undefined;
+      if (Object.hasOwn(subjects,name)) return subjects[name];
+      const key = Object.keys(subjects).find(key=>normalize(key)===normalize(name));
+      return key === undefined ? undefined : subjects[key];
+    }
+
+    function classResultRows(exam, selected = []) {
+      if (!exam || exam.classId !== state.activeClassId) return [];
+      return activeStudents().map(student => ({ student, result: projectReportResult(exam, exam.results?.[student.id], selected) })).filter(item => item.result);
+    }
+
+    function classAnalysis(exams = selectedExamSet(), selected = selectedSubjects()) {
+      const own = exams.filter(exam => exam.classId === state.activeClassId).slice().sort((a,b) => `${a.date || ''} ${a.name}`.localeCompare(`${b.date || ''} ${b.name}`, 'tr'));
+      const snapshots = own.map(exam => {
+        const rows = classResultRows(exam, selected);
+        const mean = average(rows.map(item => item.result.total.percent));
+        const sums = rows.reduce((sum,{result}) => {for(const k of ['d','y','b','net']) if(isFiniteNumber(result.total[k])) sum[k] += result.total[k];return sum;},{d:0,y:0,b:0,net:0});
+        return {exam, rows, percent:mean, classAverage:mean, ...sums};
+      });
+      const entriesByStudent = new Map();
+      snapshots.forEach(snapshot=>snapshot.rows.forEach(row=>{
+        if (!entriesByStudent.has(row.student.id)) entriesByStudent.set(row.student.id,[]);
+        entriesByStudent.get(row.student.id).push({exam:snapshot.exam,result:row.result});
+      }));
+      const students = activeStudents().map(student => {
+        const entries = entriesByStudent.get(student.id) || [];
+        return {student, entries, percent:average(entries.map(entry => entry.result.total.percent))};
+      });
+      const names = [...new Map(snapshots.flatMap(snapshot=>snapshot.rows.flatMap(row=>Object.keys(row.result.subjects || {}))).map(name=>[normalize(name),name])).values()];
+      const subjects = names.map(name => {
+        const perExam = snapshots.map(snapshot => average(snapshot.rows.map(({result}) => subjectValue(result.subjects,name)?.percent).filter(isFiniteNumber)));
+        const results = snapshots.flatMap(snapshot => snapshot.rows.map(row => subjectValue(row.result.subjects,name)).filter(Boolean));
+        return {name,percent:average(perExam.filter(isFiniteNumber)),count:results.filter(item => isFiniteNumber(item.percent)).length,...results.reduce((sum,item) => {for(const k of ['d','y','b']) if(isFiniteNumber(item[k]))sum[k]+=item[k];return sum;},{d:0,y:0,b:0})};
+      }).filter(item => isFiniteNumber(item.percent));
+      return {snapshots,students,subjects,percent:average(snapshots.map(item=>item.percent).filter(isFiniteNumber)),resultCount:snapshots.reduce((sum,item)=>sum+item.rows.length,0)};
+    }
+
+    function renderAnalysisOverview() {
+      if (!els.analysisOverview) return;
+      const data = classAnalysis();
+      const scored = data.students.filter(item => isFiniteNumber(item.percent));
+      els.analysisClassLabel.textContent = classLabel(activeClass());
+      els.analysisOverview.innerHTML = [
+        ['Sınıf başarı ortalaması',formatPercent(data.percent),'Seçili sınavların ortalaması'],
+        ['Sınav',data.snapshots.length,`${activeExams().length} kayıtlı sınav`],
+        ['Sonucu bulunan öğrenci',`${scored.length} / ${data.students.length}`,'Seçili sınavlarda'],
+        ['Geçerli sonuç',data.resultCount,'Eksik sonuçlar ortalamaya katılmaz']
+      ].map(([label,value,detail]) => `<div class="analysis-metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(detail)}</small></div>`).join('');
+    }
+
+    function buildClassAnalysisReport() {
+      const data = classAnalysis();
+      els.reportCard.className = 'report-card class-analysis-report';
+      if (!data.resultCount) {els.reportCard.innerHTML='<div class="empty">Seçili sınıf ve sınavlarda analiz edilecek geçerli sonuç yok.</div>';return;}
+      const target = Math.max(0,Math.min(100,Number(els.analysisTarget?.value) || 0));
+      const scored = data.students.filter(item => isFiniteNumber(item.percent));
+      const bands = [[0,50,'0–49','#b85e58'],[50,70,'50–69','#c28c35'],[70,85,'70–84','#3a91aa'],[85,101,'85–100','#258579']];
+      const support = scored.filter(item => item.percent < target).length;
+      els.reportCard.innerHTML = `<article data-class-analysis="${escapeHtml(state.activeClassId)}">
+        <div class="report-header"><div><h2>${escapeHtml(activeClass()?.name || 'Sınıfım')}</h2><p>Sınıf Analiz Raporu · ${data.snapshots.length} sınav</p><p>${escapeHtml(state.teacher?.schoolName || '')} · ${escapeHtml(activeClass()?.teacherName || state.teacher?.name || '')}</p></div><div class="analysis-report-score"><strong>${formatPercent(data.percent)}</strong><span>Sınıf ortalaması</span></div></div>
+        <div class="analysis-summary-line"><span>${scored.length} / ${data.students.length} öğrenci</span><span>${data.resultCount} geçerli sonuç</span><span>Hedef: %${target}</span><span>Hedefin altında: ${support} öğrenci</span></div>
+        <section class="analysis-section"><h3>Sınavlara Göre Sınıf Başarısı</h3>${analysisTrendPages(data.snapshots,true)}<p class="analysis-caption">Her sınavda yalnız bu sınıfın geçerli öğrenci sonuçları kullanılır. Genel başarı, seçili sınav ortalamalarının aritmetik ortalamasıdır. Sonucu bulunmayan öğrenciler sıfır sayılmaz.</p></section>
+        <section class="analysis-section"><h3>Başarı Dağılımı</h3><div class="analysis-distribution">${bands.map(([min,max,label,color])=>`<div class="analysis-band" style="--band:${color}"><span>%${label}</span><strong>${scored.filter(item=>item.percent>=min&&item.percent<max).length}</strong><small>öğrenci ortalaması</small></div>`).join('')}</div></section>
+        <section class="analysis-section"><h3>Ders Bazında Sınıf Analizi</h3>${data.subjects.map(item=>`<div class="analysis-subject"><div><strong>${escapeHtml(item.name)}</strong><small>${item.count} ders sonucu · ${item.d} D / ${item.y} Y / ${item.b} B</small></div><div class="analysis-bar"><i style="width:${clampPercent(item.percent)}%"></i></div><strong>${formatPercent(item.percent)}</strong></div>`).join('')}</section>
+        <section class="analysis-section"><h3>Sınav Bazında Katılım ve Başarı</h3><div class="table-wrap"><table class="report-table"><thead><tr><th>Sınav</th><th>Tarih</th><th>Katılım</th><th>Sonuç yok</th><th>Sınıf Ort.</th><th>En düşük</th><th>En yüksek</th></tr></thead><tbody>${data.snapshots.map(item=>`<tr><td>${escapeHtml(item.exam.name)}</td><td>${formatDate(item.exam.date)}</td><td>${item.rows.length} / ${data.students.length}</td><td>${data.students.length-item.rows.length}</td><td><strong>${formatPercent(item.percent)}</strong></td><td>${item.rows.length?formatPercent(Math.min(...item.rows.map(row=>row.result.total.percent))):'—'}</td><td>${item.rows.length?formatPercent(Math.max(...item.rows.map(row=>row.result.total.percent))):'—'}</td></tr>`).join('')}</tbody></table></div></section>
+        ${els.analysisStudentNames?.checked ? `<section class="analysis-section"><h3>Öğrenci Bazında Sınav Özeti</h3><div class="table-wrap"><table class="report-table"><thead><tr><th>Öğrenci</th><th>Okul no</th><th>Sonuç</th><th>Ortalama</th><th>Sınıf farkı</th><th>Hedef</th></tr></thead><tbody>${data.students.map(item=>`<tr><td>${escapeHtml(fullName(item.student))}</td><td>${escapeHtml(item.student.schoolNo || '—')}</td><td>${item.entries.length} / ${data.snapshots.length}</td><td>${formatPercent(item.percent)}</td><td>${formatPercentDelta(valueDelta(item.percent,data.percent))}</td><td>${!isFiniteNumber(item.percent)?'Sonuç yok':item.percent>=target?'Hedefe ulaştı':'Destek planı'}</td></tr>`).join('')}</tbody></table></div></section>` : ''}
+        ${reportFooterHtml()}</article>`;
+    }
+
+    function analysisTrendPages(snapshots, classOnly = false) {
+      const pages=[];
+      for(let start=0;start<snapshots.length;start+=10) pages.push(`<div class="analysis-chart-scroll">${buildComparisonTrendChart(snapshots.slice(start,start+10),classOnly)}</div>`);
+      return pages.join('');
+    }
+
     function buildReport() {
       const type = els.reportType?.value || "academic";
+      renderAnalysisOverview();
+      if (type === 'classAnalysis') return buildClassAnalysisReport();
       if (type === "classList") return buildClassListReport();
       if (type === "rankingList") return buildRankingListReport();
       if (type === "meetings") return buildMeetingReport();
@@ -4609,26 +5190,25 @@
       const subjectMap = new Map();
       let total = { d: 0, y: 0, b: 0, net: 0, percent: null, classAverage: null, generalAverage: null };
       const allSubjects = Array.from(new Set(exams.flatMap((exam) => exam.subjects || [])));
-      const subjectsToUse = selected.length ? selected : allSubjects;
-      const usesFullSubjectSet = !selected.length || (selected.length === allSubjects.length && allSubjects.every((subject) => selected.includes(subject)));
+      const subjectsToUse = [...new Map((selected.length ? selected : allSubjects).map(name=>[normalize(name),name])).values()];
       const totalPercentSamples = [];
       subjectsToUse.forEach((subject) => subjectMap.set(subject, { name: subject, d: 0, y: 0, b: 0, net: 0, classAverageSamples: [], generalAverageSamples: [] }));
 
       exams.forEach((exam) => {
-        const result = exam.results?.[studentId];
-        if (usesFullSubjectSet && isFiniteNumber(result?.total?.percent)) totalPercentSamples.push(result.total.percent);
+        const result = projectReportResult(exam, exam.results?.[studentId], selected);
+        if (isFiniteNumber(result?.total?.percent)) totalPercentSamples.push(result.total.percent);
         const averages = classAverages(exam);
         const generalAverages = participantAverages(exam);
         subjectsToUse.forEach((subject) => {
-          const item = result?.subjects?.[subject];
+          const item = subjectValue(result?.subjects,subject);
           if (!item) return;
           const target = subjectMap.get(subject);
           target.d += item.d;
           target.y += item.y;
           target.b += item.b;
           target.net += isFiniteNumber(item.net) ? item.net : item.d;
-          if (isFiniteNumber(averages[subject])) target.classAverageSamples.push(averages[subject]);
-          if (isFiniteNumber(generalAverages[subject])) target.generalAverageSamples.push(generalAverages[subject]);
+          if (isFiniteNumber(subjectValue(averages,subject))) target.classAverageSamples.push(subjectValue(averages,subject));
+          if (isFiniteNumber(subjectValue(generalAverages,subject))) target.generalAverageSamples.push(subjectValue(generalAverages,subject));
         });
       });
 
@@ -4648,26 +5228,28 @@
       }).filter((item) => item.percent !== null);
       const totalDenom = total.d + total.y + total.b;
       total.percent = totalPercentSamples.length ? average(totalPercentSamples) : (totalDenom ? (total.net * 100) / totalDenom : null);
-      total.classAverage = average(exams.map(totalClassAverage).filter(isFiniteNumber));
-      total.generalAverage = average(exams.map(totalParticipantAverage).filter(isFiniteNumber));
+      total.classAverage = average(exams.map(exam=>average(classResultRows(exam, selected).map(row=>row.result.total.percent))).filter(isFiniteNumber));
+      total.generalAverage = average(exams.map(exam=>totalParticipantAverage(exam, selected)).filter(isFiniteNumber));
       return { subjects, total };
     }
 
     function classAverages(exam) {
       const sums = {};
       const counts = {};
-      Object.values(exam.results || {}).forEach((result) => {
+      const labels = {};
+      classResultRows(exam).forEach(({result}) => {
         Object.entries(result.subjects || {}).forEach(([subject, item]) => {
           if (!isFiniteNumber(item.percent)) return;
-          sums[subject] = (sums[subject] || 0) + item.percent;
-          counts[subject] = (counts[subject] || 0) + 1;
+          const key=normalize(subject);labels[key]=subject;
+          sums[key] = (sums[key] || 0) + item.percent;
+          counts[key] = (counts[key] || 0) + 1;
         });
       });
-      return Object.fromEntries(Object.keys(sums).map((subject) => [subject, sums[subject] / counts[subject]]));
+      return Object.fromEntries(Object.keys(sums).map((key) => [labels[key], sums[key] / counts[key]]));
     }
 
     function totalClassAverage(exam) {
-      const scores = Object.values(exam.results || {}).map((result) => result.total?.percent).filter(isFiniteNumber);
+      const scores = classResultRows(exam).map(({result}) => result.total?.percent).filter(isFiniteNumber);
       return average(scores);
     }
 
@@ -4679,18 +5261,20 @@
     function participantAverages(exam) {
       const sums = {};
       const counts = {};
+      const labels = {};
       getExamParticipants(exam).forEach((participant) => {
         Object.entries(participant.result?.subjects || {}).forEach(([subject, item]) => {
           if (!isFiniteNumber(item.percent)) return;
-          sums[subject] = (sums[subject] || 0) + item.percent;
-          counts[subject] = (counts[subject] || 0) + 1;
+          const key=normalize(subject);labels[key]=subject;
+          sums[key] = (sums[key] || 0) + item.percent;
+          counts[key] = (counts[key] || 0) + 1;
         });
       });
-      return Object.fromEntries(Object.keys(sums).map((subject) => [subject, sums[subject] / counts[subject]]));
+      return Object.fromEntries(Object.keys(sums).map((key) => [labels[key], sums[key] / counts[key]]));
     }
 
-    function totalParticipantAverage(exam) {
-      const scores = getExamParticipants(exam).map((participant) => participant.result?.total?.percent).filter(isFiniteNumber);
+    function totalParticipantAverage(exam, selected = []) {
+      const scores = getExamParticipants(exam).map((participant) => projectReportResult(exam, participant.result, selected)?.total?.percent).filter(isFiniteNumber);
       return average(scores);
     }
 
@@ -4700,8 +5284,8 @@
       const ownResult = exam.results?.[studentId];
       const ownScore = scoreForRanking(ownResult);
       if (!ownResult || !isFiniteNumber(ownScore)) return { allowed: false };
-      const classScores = Object.entries(exam.results || {})
-        .map(([id, result]) => ({ id, score: scoreForRanking(result) }))
+      const classScores = classResultRows(exam)
+        .map(({student,result}) => ({ id:student.id, score: scoreForRanking(result) }))
         .filter((item) => isFiniteNumber(item.score));
       const generalScores = getExamParticipants(exam)
         .map((participant) => ({ id: participant.studentId || participant.id, score: scoreForRanking(participant.result), schoolNo: participant.schoolNo, name: participant.name }))
@@ -4822,9 +5406,9 @@
       const clone = source.cloneNode(true);
       if (source !== els.reportCard) {
         clone.id = 'reportCard';
-        clone.className = 'report-card';
+        clone.className = source.classList.contains('class-analysis-report') ? 'report-card class-analysis-report' : 'report-card';
       }
-      const width = els.reportCard.offsetWidth || 900;
+      const width = 1000;
       const iframe = document.createElement("iframe");
       iframe.style.position = "fixed";
       iframe.style.left = "-10000px";
@@ -4840,9 +5424,11 @@
       document.body.appendChild(iframe);
       try {
         const doc = iframe.contentDocument;
-        const styles = Array.from(document.querySelectorAll("style")).map((style) => style.textContent).join("\n");
+        const styles = Array.from(document.styleSheets).map(sheet => {
+          try {return Array.from(sheet.cssRules).map(rule=>rule.cssText).join('\n');} catch {return '';}
+        }).join('\n');
         doc.open();
-        doc.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><style>${styles}</style></head><body style="margin:0;background:#fffdfa">${clone.outerHTML}</body></html>`);
+        doc.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><style>${styles}\n.analysis-chart-scroll{overflow:visible}.analysis-chart-scroll svg{min-width:0}#reportCard{padding:24px;box-sizing:border-box}</style></head><body style="margin:0;background:#fff">${clone.outerHTML}</body></html>`);
         doc.close();
         await waitForNextFrame();
         const target = doc.querySelector("#reportCard");
@@ -4916,6 +5502,7 @@
     }
 
     async function shareReportWhatsapp() {
+      if (els.reportType.value === 'classAnalysis') {toast('Sınıf analizini PDF veya Excel olarak dışa aktarın. Veliye paylaşmak için tek öğrenci karnesi seçin.');return;}
       if (els.reportStudent.value === '__all__' && ['academic', 'comparison'].includes(els.reportType.value)) {
         toast('Veliye göndermek için tek bir öğrenci seçin.');
         return;
@@ -4977,6 +5564,30 @@
       link.download = fileName;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function analysisWorkbookRows() {
+      const data = classAnalysis();
+      const sheets = {
+        'Sınavlar': [['Sınav','Tarih','Sınıf ortalaması (%)','Katılan','Sınıf mevcudu','Sonuç yok','Doğru','Yanlış','Boş','Net'],
+          ...data.snapshots.map(item=>[item.exam.name,item.exam.date,item.percent,item.rows.length,data.students.length,data.students.length-item.rows.length,item.d,item.y,item.b,item.net])],
+        'Dersler': [['Ders','Sınıf ortalaması (%)','Geçerli ders sonucu','Doğru','Yanlış','Boş'],...data.subjects.map(item=>[item.name,item.percent,item.count,item.d,item.y,item.b])],
+        'Özet': [['Sınıf',classLabel(activeClass())],['Genel başarı (%)',data.percent],['Sınav sayısı',data.snapshots.length],['Geçerli sonuç',data.resultCount],['Hesap','Seçili sınavların sınıf ortalamalarının aritmetik ortalaması. Eksik sonuçlar sıfır sayılmaz. Başarı yüzdesidir; ulusal yüzdelik sıralama değildir.']]
+      };
+      if (els.analysisStudentNames?.checked) sheets['Öğrenciler'] = [['Okul no','Öğrenci','Sonuç sayısı','Seçili sınav','Başarı (%)','Sınıf farkı (puan)'],...data.students.map(item=>[item.student.schoolNo || '',fullName(item.student),item.entries.length,data.snapshots.length,item.percent,valueDelta(item.percent,data.percent)])];
+      return sheets;
+    }
+
+    function downloadAnalysisExcel() {
+      if (!window.XLSX) {toast('Excel aracı yüklenemedi.');return;}
+      if (!classAnalysis().resultCount) {toast('Dışa aktarılacak geçerli sonuç yok.');return;}
+      const workbook=XLSX.utils.book_new();
+      for(const [name,rows] of Object.entries(analysisWorkbookRows())) {
+        const sheet=XLSX.utils.aoa_to_sheet(rows);
+        sheet['!cols']=rows[0].map((_,index)=>({wch:index===0?32:24}));
+        XLSX.utils.book_append_sheet(workbook,sheet,name);
+      }
+      downloadBlob(new Blob([XLSX.write(workbook,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`${safeFileName(activeClass()?.name || 'sinif')}-sinif-analizi.xlsx`);
     }
 
     function selectedReportStudentForShare() {
@@ -5044,12 +5655,37 @@
     }
 
     function reportExportTargets() {
+      const classReport = els.reportCard.querySelector('[data-class-analysis]');
+      if (classReport) {
+        const sections = [];
+        classReport.querySelectorAll('.analysis-section').forEach(section => {
+          const body = section.querySelector('tbody');
+          const charts = section.querySelectorAll('.analysis-chart-scroll');
+          const rows = body ? Array.from(body.children) : [];
+          const count = Math.max(1, charts.length, Math.ceil(rows.length / 20));
+          for (let page = 0; page < count; page++) {
+            const copy = section.cloneNode(true);
+            if (body) Array.from(copy.querySelector('tbody').children).forEach((row,index)=>{if(index < page*20 || index >= (page+1)*20)row.remove();});
+            if (charts.length) copy.querySelectorAll('.analysis-chart-scroll').forEach((chart,index)=>{if(index !== page)chart.remove();});
+            sections.push(copy);
+          }
+        });
+        return sections.map((section,index)=>{
+          const page=document.createElement('article');
+          page.className='report-card class-analysis-report';
+          page.innerHTML=classReport.querySelector('.report-header').outerHTML + classReport.querySelector('.analysis-summary-line').outerHTML;
+          page.appendChild(section);
+          page.insertAdjacentHTML('beforeend',`<p class="analysis-caption">${index+1} / ${sections.length}</p>${reportFooterHtml()}`);
+          return page;
+        });
+      }
       const pages = Array.from(els.reportCard.querySelectorAll('.student-report-page'));
       return pages.length ? pages : [els.reportCard];
     }
 
     function selectedReportName() {
       const type = els.reportType?.value || "academic";
+      if (type === "classAnalysis") return `${activeClass()?.name || 'sinif'}-sinif-analizi`;
       if (type === "classList") return `${activeClass()?.name || "sinif"}-resimli-sinif-listesi`;
       if (type === "rankingList") return `${selectedRankingExam()?.name || "sinav"}-siralamasi`;
       if (type === "meetings") return `${activeClass()?.name || "sinif"}-veli-gorusme-raporu`;
@@ -5142,6 +5778,7 @@
     }
 
     function showView(viewId) {
+      document.body.dataset.agendaView=viewId;
       document.querySelectorAll(".content-view").forEach((view) => view.classList.toggle("active", view.id === viewId));
       document.querySelectorAll(".nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
       els.pageTitle.textContent = pageMeta[viewId]?.[0] || "";
@@ -5223,7 +5860,7 @@
     function formatDate(value) {
       if (!value) return "Tarih yok";
       const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return value;
+      if (Number.isNaN(date.getTime())) return "Geçersiz tarih";
       return date.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" });
     }
 

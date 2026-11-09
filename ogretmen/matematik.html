@@ -623,6 +623,15 @@
     .digit-window::after { bottom: 0; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0)); border-radius: 0 0 13px 13px; }
     .digit-strip { display: flex; flex-direction: column; height: 4000%; width: 100%; }
     .digit-num { height: 2.5%; width: 100%; display: grid; place-items: center; font-family: 'Baloo 2', cursive; font-size: clamp(28px, 5vw, 72px); font-weight: 800; color: var(--navy); line-height: 1; }
+    .wheel-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .wheel-controls .wheel-settings { flex-wrap: wrap; max-width: 100%; }
+    .wheel-settings select { min-width: 0; padding: 7px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: var(--navy); font: inherit; font-weight: 800; }
+    .wheel-settings[hidden] { display: none; }
+    .wheel-decimal-mark { flex: 0 0 16px; align-self: center; font-size: 48px; font-weight: 900; color: var(--purple); }
+    .digit-window.is-fraction { border-color: #8b5cf6; background: #f5f3ff; }
+    .wheel-result { margin: 18px 0 0; color: var(--navy); font-weight: 900; font-size: clamp(18px, 3vw, 28px); overflow-wrap: anywhere; }
+    .wheel-place-help { margin: 12px 0 0; color: var(--slate); font-size: 14px; }
+    .wheel-container { justify-content: safe center; }
 
     /* KESİRLER VE SAYI DOĞRUSU CSS */
     .fraction-wrapper, .nl-wrapper { max-width: 900px; margin: 0 auto; width: 100%; background: #fff; padding: 36px; border-radius: 36px; border: 2px solid rgba(227,214,255,0.9); box-shadow: 0 20px 50px rgba(108,61,237,0.1); text-align: center; }
@@ -879,12 +888,12 @@
   .sub-back-title{font-size:17px;font-weight:900;color:#1e2a4a;}
   .tools-page{padding-top:24px!important;}
 </style>
-  <link rel="stylesheet" href="/css/math-tools.css?v=20261028-studio-3">
+  <link rel="stylesheet" href="/css/math-tools.css?v=20261102-library-scroll">
   <link rel="stylesheet" href="/css/chance-studio.css?v=20261028-flight-3">
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script defer src="/js/chance-audio.js?v=20261028-flight-3"></script>
   <script defer src="/js/chance-studio.js?v=20261028-flight-3"></script>
-  <script defer src="/js/math-tools-ui.js?v=20261028-studio-3"></script>
+  <script defer src="/js/math-tools-ui.js?v=20261102-library-scroll"></script>
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
@@ -1004,14 +1013,26 @@
               <div class="wheel-wrapper">
                 <div class="wheel-header">
                   <h3>Sayı Çarkı</h3>
+                  <div class="wheel-controls">
                   <div class="wheel-settings">
-                    <label>Basamak:</label>
+                    <label for="wheelNumberMode">Sayı türü:</label>
+                    <select id="wheelNumberMode"><option value="integer">Tam sayı</option><option value="decimal">Ondalıklı sayı</option></select>
+                  </div>
+                  <div class="wheel-settings">
+                    <label for="wheelDigitCount" id="wheelDigitLabel">Basamak:</label>
                     <input type="range" id="wheelDigitCount" min="2" max="12" value="3" style="accent-color: var(--purple); cursor: pointer; height: 6px;" aria-label="Sayı çarkı basamak sayısı">
                     <span id="wheelDigitDisplay" style="font-weight:900; color:var(--purple); font-size:22px; width:32px; text-align:center;">3</span>
                   </div>
+                  <div class="wheel-settings" id="wheelDecimalSettings" hidden>
+                    <label for="wheelDecimalCount">Ondalık basamak:</label>
+                    <select id="wheelDecimalCount"><option value="1">1 · Onda birler</option><option value="2" selected>2 · Yüzde birler</option><option value="3">3 · Binde birler</option></select>
+                  </div>
+                  </div>
+                  <p class="wheel-place-help" id="wheelPlaceHelp" hidden>Virgülün sağındaki mor çarklar: onda birler, yüzde birler.</p>
                 </div>
-                <div class="wheel-container" id="wheelContainer"></div>
-                <button class="btn btn-primary" type="button" onclick="spinNumberWheel()" style="width:100%; max-width:320px; height:64px; font-size:24px; font-family:'Baloo 2', cursive; letter-spacing: 1px; border-radius: 20px; box-shadow: 0 10px 20px rgba(108,61,237,0.25);">Çarkı Çevir</button>
+                <div class="wheel-container" id="wheelContainer" role="group" aria-label="Sayı çarkları"></div>
+                <button id="wheelSpinBtn" class="btn btn-primary" type="button" onclick="spinNumberWheel()" style="width:100%; max-width:320px; height:64px; font-size:24px; font-family:'Baloo 2', cursive; letter-spacing: 1px; border-radius: 20px; box-shadow: 0 10px 20px rgba(108,61,237,0.25);">Çarkı Çevir</button>
+                <p class="wheel-result" id="wheelResult" role="status" aria-live="polite" aria-atomic="true">Çarkı çevirerek bir sayı oluşturun.</p>
               </div>
             </div>
 
@@ -1919,13 +1940,31 @@
       var display = document.getElementById('wheelDigitDisplay');
       var container = document.getElementById('wheelContainer');
       if(!slider || !display || !container) return;
+      if(container.dataset.initialized) return;
+      container.dataset.initialized = 'true';
+      var mode = document.getElementById('wheelNumberMode');
+      var decimals = document.getElementById('wheelDecimalCount');
+      var placeNames = ['onda birler', 'yüzde birler', 'binde birler'];
 
       function buildDigits(count) {
-        container.style.setProperty('--wheel-digits', String(count));
+        var isDecimal = mode.value === 'decimal';
+        var fractionCount = isDecimal ? Number(decimals.value) : 0;
+        container.dataset.integerDigits = String(count);
+        container.dataset.fractionDigits = String(fractionCount);
+        container.setAttribute('aria-label', 'Sayı çarkları');
+        container.style.setProperty('--wheel-digits', String(count + fractionCount));
         container.innerHTML = '';
-        for(var i = 0; i < count; i += 1) {
+        for(var i = 0; i < count + fractionCount; i += 1) {
+          if(i === count) {
+            var comma = document.createElement('span');
+            comma.className = 'wheel-decimal-mark';
+            comma.textContent = ',';
+            comma.setAttribute('aria-label', 'Virgül');
+            container.appendChild(comma);
+          }
           var win = document.createElement('div');
-          win.className = 'digit-window';
+          win.className = 'digit-window' + (i >= count ? ' is-fraction' : '');
+          win.title = i >= count ? placeNames[i - count] : 'Tam kısım: sağdan ' + (count - i) + '. basamak';
           var strip = document.createElement('div');
           strip.className = 'digit-strip';
           strip.dataset.val = '0';
@@ -1936,26 +1975,45 @@
             strip.appendChild(num);
           }
           win.appendChild(strip);
+          strip.setAttribute('aria-hidden', 'true');
           container.appendChild(win);
         }
+        document.getElementById('wheelResult').textContent = 'Çarkı çevirerek bir sayı oluşturun.';
       }
 
-      slider.addEventListener('input', function() {
+      function rebuild() {
+        var isDecimal = mode.value === 'decimal';
+        slider.min = isDecimal ? '1' : '2';
+        if(Number(slider.value) < Number(slider.min)) slider.value = slider.min;
         display.textContent = slider.value;
+        document.getElementById('wheelDigitLabel').textContent = isDecimal ? 'Tam kısım:' : 'Basamak:';
+        slider.setAttribute('aria-label', isDecimal ? 'Virgülden önceki basamak sayısı' : 'Sayı çarkı basamak sayısı');
+        document.getElementById('wheelDecimalSettings').hidden = !isDecimal;
+        var help = document.getElementById('wheelPlaceHelp');
+        help.hidden = !isDecimal;
+        help.textContent = 'Virgülün sağındaki mor çarklar: ' + placeNames.slice(0, Number(decimals.value)).join(', ') + '.';
         buildDigits(parseInt(slider.value, 10) || 3);
-      });
-      buildDigits(parseInt(slider.value, 10) || 3);
+      }
+      slider.addEventListener('input', rebuild);
+      mode.addEventListener('change', rebuild);
+      decimals.addEventListener('change', rebuild);
+      rebuild();
     }
 
     window.spinNumberWheel = function() {
       var container = document.getElementById('wheelContainer');
       if(!container) return;
+      if(container.getAttribute('aria-busy') === 'true') return;
       var strips = Array.prototype.slice.call(container.querySelectorAll('.digit-strip'));
       if(!strips.length) {
         initNumberWheel();
         strips = Array.prototype.slice.call(container.querySelectorAll('.digit-strip'));
       }
       var spinDuration = 2 + Math.max(0, strips.length - 1) * 0.3;
+      var controls = ['wheelSpinBtn', 'wheelNumberMode', 'wheelDigitCount', 'wheelDecimalCount'].map(function(id) { return document.getElementById(id); });
+      controls.forEach(function(control) { control.disabled = true; });
+      container.setAttribute('aria-busy', 'true');
+      document.getElementById('wheelResult').textContent = 'Çarklar dönüyor…';
       playRotationSound('wheel', spinDuration);
       strips.forEach(function(strip) {
         strip.style.transition = 'none';
@@ -1964,7 +2022,8 @@
       });
       void container.offsetHeight;
       strips.forEach(function(strip, index) {
-        var targetVal = index === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
+        var allowLeadingZero = Number(container.dataset.fractionDigits) > 0 && Number(container.dataset.integerDigits) === 1;
+        var targetVal = index === 0 && !allowLeadingZero ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
         strip.dataset.val = String(targetVal);
         var finalIndex = 30 + targetVal;
         window.setTimeout(function() {
@@ -1972,6 +2031,16 @@
           strip.style.transform = 'translateY(-' + (finalIndex * 2.5) + '%)';
         }, 20);
       });
+      window.setTimeout(function() {
+        var digits = strips.map(function(strip) { return strip.dataset.val; }).join('');
+        var count = Number(container.dataset.integerDigits);
+        var result = digits.slice(0, count);
+        if(Number(container.dataset.fractionDigits)) result += ',' + digits.slice(count);
+        document.getElementById('wheelResult').textContent = 'Sonuç: ' + result;
+        container.setAttribute('aria-label', 'Sayı çarkları: ' + result);
+        container.setAttribute('aria-busy', 'false');
+        controls.forEach(function(control) { control.disabled = false; });
+      }, spinDuration * 1000 + 60);
     };
 
     function buildCircleFractionSvg(filled, total) {

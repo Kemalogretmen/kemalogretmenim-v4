@@ -2001,6 +2001,14 @@
     ].map(function(item) {
       return '<a href="' + item[0] + '" class="dd-item">' + item[1] + '</a>';
     }).join('');
+    const reading = [
+      ['/hizli-okuma/index.html', 'Hızlı Okuma'],
+      ['/hizli-okuma/e-kitaplar.html', 'E-Kitaplık'],
+      ['/hizli-okuma/hece-akisi.html', 'Hece Akışı'],
+      ['/hizli-okuma/karne.html', 'Okuma Karnem'],
+    ].map(function(item) {
+      return '<a href="' + item[0] + '" class="dd-item">' + item[1] + '</a>';
+    }).join('');
 
     return '<nav class="navbar platform-navbar" id="mainNav" aria-label="Ana menü">' +
       '<a href="/index.html" class="nav-logo" aria-label="Kemal Öğretmenim ana sayfa" title="Kemal Öğretmenim">' +
@@ -2027,7 +2035,10 @@
             '</div>' +
           '</div>' +
         '</li>' +
-        '<li class="nav-item" data-grade="hizli" data-nav-key="hizliokuma"><a href="/hizli-okuma/index.html" class="nav-btn">Okuma</a></li>' +
+        '<li class="nav-item" data-grade="hizli" data-nav-key="hizliokuma">' +
+          '<button class="nav-btn" type="button" aria-expanded="false" aria-controls="platformReadingMenu">Okuma' + chevron + '</button>' +
+          '<div class="dropdown-panel platform-reading-menu" id="platformReadingMenu">' + reading + '</div>' +
+        '</li>' +
         '<li class="nav-item" data-grade="sinav" data-nav-key="sinavlar"><a href="/sinav_sitesi/index.html" class="nav-btn">Sınavlar</a></li>' +
         '<li class="nav-item" data-grade="oyunlar" data-nav-key="oyunlar"><a href="/oyun/oyunlar.html" class="nav-btn">Oyunlar</a></li>' +
         '<li class="nav-item" data-grade="ogretmen" data-nav-key="ogretmen">' +
@@ -2053,6 +2064,7 @@
         '<div class="footer-col"><h3>Öğrenmeye başla</h3><ul class="footer-links">' +
           '<li><a href="/index.html#grade-title">Sınıflar ve Dersler</a></li>' +
           '<li><a href="/hizli-okuma/index.html">Okuma Merkezi</a></li>' +
+          '<li><a href="/hizli-okuma/e-kitaplar.html">E-Kitaplık</a></li>' +
           '<li><a href="/sinav_sitesi/index.html">Sınavlar</a></li>' +
           '<li><a href="/sinif-kaynaklari.html">Dokümanlar</a></li>' +
           '<li><a href="/oyun/oyunlar.html">Eğitsel Oyunlar</a></li>' +

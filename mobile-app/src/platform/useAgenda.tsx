@@ -130,7 +130,7 @@ export function AgendaProvider({ children }: PropsWithChildren) {
     void disk.current.catch(() => undefined).then(() => Promise.all([AsyncStorage.getItem(`${key}.pending`), AsyncStorage.getItem(`${key}.cache`)])).then(([rawQueue, rawCache]) => {
       if (!active || !owns(uid, token)) return;
       const pending = rawQueue ? JSON.parse(rawQueue) : [];
-      queue.current = Array.isArray(pending) ? pending.filter(p => p && typeof p.id === 'string' && typeof p.itemId === 'string' && ['calendarEvents', 'students', 'classes', 'scheduleItems', 'plannerCell'].includes(p.collection)).slice(0, 1000) : [];
+      queue.current = Array.isArray(pending) ? pending.filter(p => p && typeof p.id === 'string' && typeof p.itemId === 'string' && ['calendarEvents', 'students', 'classes', 'scheduleItems', 'plannerCell', 'classRename'].includes(p.collection)).slice(0, 1000) : [];
       let cached: AgendaRow | null = null;
       try { cached = normalizeAgendaRow(rawCache ? JSON.parse(rawCache) : null); } catch { /* a bad display cache cannot discard the outbox */ }
       server.current = cached;

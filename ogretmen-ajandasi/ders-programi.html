@@ -841,6 +841,7 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="program-gorunum.css">
 </head>
 <body data-kemal-chrome="off" data-kemal-shortcut-dock="only">
 
@@ -950,7 +951,7 @@
 <!-- ============ TAB 2: HAFTALIK PLAN ============ -->
 <div id="tab-plan" class="page">
 
-  <div class="card no-print">
+  <div class="card no-print planner-controls">
     <div class="form-row" style="align-items:flex-end; gap:16px; flex-wrap:wrap">
       <div class="form-group">
         <label>Sınıf</label>
@@ -969,9 +970,9 @@
         <button class="btn btn-secondary btn-sm" onclick="focusCurrentDateWeek()">Bugünün Haftası</button>
         <span class="week-date-note" id="week-date-note"></span>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ Yazdır / PDF</button>
+      <details class="planner-exports"><summary>↓ Çıktı</summary><div class="planner-export-menu"><button class="btn btn-secondary btn-sm" onclick="window.print()">Yazdır</button>
       <button class="btn btn-primary btn-sm" onclick="downloadWeeklyPlanPdf()">PDF İndir</button>
-      <button class="btn btn-secondary btn-sm" onclick="downloadWeeklyPlanPng()">PNG İndir</button>
+      <button class="btn btn-secondary btn-sm" onclick="downloadWeeklyPlanPng()">PNG İndir</button></div></details>
     </div>
   </div>
 
@@ -3534,5 +3535,6 @@ if (window.self !== window.top) {
 }
 </script>
 <script src="../js/site.js?v=20261030-icons"></script>
+<script src="program-gorunum.js"></script>
 </body>
 </html>

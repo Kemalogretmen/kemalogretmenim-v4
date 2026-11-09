@@ -50,6 +50,25 @@ test('each throw slows horizontally, ends in the clear lane and has successively
   assert.ok(peaks[0]>peaks[1]&&peaks[1]>peaks[2]);
   assert.equal(Dice.contacts.length,4);
 });
+test('the same mesh leaves the tray without changing orientation or size and returns with its last result',async()=>{
+  const h=harness();h.api.ready();assert.equal(h.api.stage,'ready');assert.equal(h.die.visible,true);
+  const initial={...h.die.quaternion},out=h.api.roll(5,()=>true);h.step(0);
+  near(Math.abs(['x','y','z','w'].reduce((sum,k)=>sum+h.die.quaternion[k]*initial[k],0)),1);
+  near(h.die.scale.value,Dice.scale);assert.ok(h.die.position.y<1);
+  h.step(2100);assert.equal(await out,true);const rest={...h.die.quaternion};
+  const exit=h.api.exit(()=>true);h.step(2700);await exit;h.api.ready();
+  near(Math.abs(['x','y','z','w'].reduce((sum,k)=>sum+h.die.quaternion[k]*rest[k],0)),1);
+  assert.equal(h.api.value,5);assert.equal(h.die.visible,true);
+});
+test('launches starting at every prior face remain above the plane and finish on every requested face',()=>{
+  for(let from=1;from<=6;from++)for(let to=1;to<=6;to++){
+    const p={...Dice.plan(to,()=>.4),startQ:Motion.faceQuaternion(from,.65)};
+    for(let i=0;i<=210;i++){
+      const state=Dice.pose(p,i/100);assert.ok(state.y>=Motion.diceSupport(state.q)*Dice.scale);
+    }
+    near(Motion.rotateVector(Motion.normalByFace[to],Dice.pose(p,Dice.duration).q)[1],1);
+  }
+});
 test('CSS fallback uses six fixed faces and valid finite matrices for every result',()=>{
   for(let n=1;n<=6;n++){
     const text=Dice.cssTransform(n);assert.match(text,/rotateX\(-48deg\).*matrix3d/);assert.doesNotMatch(text,/NaN|undefined|Infinity/);

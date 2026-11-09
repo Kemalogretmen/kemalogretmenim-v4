@@ -12,6 +12,7 @@ html=html.replace(/<script\b[^>]*src="([^"]+)"[^>]*><\/script>/g,(all,url)=>{
  if(!p.startsWith('js/'))throw new Error('Unexpected whiteboard script '+url);
  let js=read(p).toString('utf8');
  if(p==='js/smartboard-sand-sound.js')js=js.replace("'/assets/audio/sand-friction.wav'",JSON.stringify(dataUrl('assets/audio/sand-friction.wav')));
+ if(p==='js/smartboard-studio.js')js=js.replace(/root\.kemalUserAuth/g,'null');
  return '<script>'+js.replace(/<\/script/gi,'<\\/script')+'</script>';
 });
 html=html.replace(/<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/g,(all,url)=>'<style>'+css(read(url.split('?')[0].replace(/^\//,'')).toString('utf8'))+'</style>');

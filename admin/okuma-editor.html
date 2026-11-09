@@ -297,7 +297,7 @@
     /* ── ADIMLI YAYIN AKIŞI ── */
     #panelEdit{--wizard-accent:#5B34DA;}
     .admin-shell-main{overflow-x:clip!important;overflow-y:visible!important;}
-    .admin-shell-main .editor-toolbar-dock{top:12px;}
+    .admin-shell-main .editor-toolbar-dock,.admin-shell-main .question-toolbar{top:12px;}
     .edit-header{margin-bottom:18px;justify-content:space-between;gap:16px;}
     .edit-header-main{display:flex;align-items:center;gap:12px;min-width:0;}
     .edit-heading{min-width:0;}
@@ -380,7 +380,8 @@
     .editor-canvas-frame .ql-container.ql-snow{max-width:820px;margin:0 auto;background:white;border:1px solid #E1DCE9;box-shadow:0 8px 24px rgba(28,21,50,.06);}
     .editor-canvas-frame .ql-editor{min-height:680px;padding:54px 62px;font-size:18px;line-height:1.8;}
 
-    .question-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+    .question-toolbar{position:sticky;top:68px;z-index:125;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px;padding:12px 14px;border:1px solid #DDD7EE;border-radius:10px;background:rgba(255,255,255,.98);box-shadow:0 8px 18px rgba(35,22,75,.08);backdrop-filter:blur(10px);}
+    .question-toolbar::before{content:'Soru ekle';margin-right:2px;color:var(--slate);font-size:12px;font-weight:900;}
     .question-toolbar .btn-soru-ekle{width:auto;border-style:solid;border-radius:9px;padding:9px 12px;}
     .soru-item{border:1px solid #DDD7EE;border-radius:12px;background:#FCFBFE;}
 
@@ -456,6 +457,7 @@
       .title-settings,.form-grid,.form-grid.three{grid-template-columns:1fr;}
       .span-2,.span-3{grid-column:auto;}
       .editor-toolbar-dock{top:60px;}
+      .question-toolbar{top:60px;padding:10px;}
       .editor-canvas-frame{padding:0;background:white;min-height:460px;}
       .editor-canvas-frame .ql-container.ql-snow{border:0;box-shadow:none;}
       .editor-canvas-frame .ql-editor{min-height:520px;padding:28px 20px;}
@@ -636,8 +638,8 @@
                 </div>
                 <div class="editor-utility-row">
                   <div class="tool-group">
-                    <button class="tool-btn icon" type="button" onclick="metinArac('indent')" title="Girintiyi artır"><i data-lucide="indent-increase"></i></button>
-                    <button class="tool-btn icon" type="button" onclick="metinArac('outdent')" title="Girintiyi azalt"><i data-lucide="indent-decrease"></i></button>
+                    <button class="tool-btn icon" type="button" onclick="metinArac('indent')" title="İlk satır girintisini artır" aria-label="İlk satır girintisini artır"><i data-lucide="indent-increase"></i></button>
+                    <button class="tool-btn icon" type="button" onclick="metinArac('outdent')" title="İlk satır girintisini azalt" aria-label="İlk satır girintisini azalt"><i data-lucide="indent-decrease"></i></button>
                   </div>
                   <div class="tool-group">
                     <select class="tool-select" id="fSatirAraligi" onchange="metinArac('lineheight',this.value)" title="Satır aralığı"><option value="1.4">Satır 1,4</option><option value="1.6">Satır 1,6</option><option value="1.8" selected>Satır 1,8</option><option value="2">Satır 2,0</option><option value="2.2">Satır 2,2</option></select>
@@ -814,6 +816,6 @@
     });
   });
 </script>
-<script src="/js/okuma-editor-app.js?v=20260903-ttkb-font"></script>
+<script src="/js/okuma-editor-app.js?v=20261107-first-line-sticky"></script>
 </body>
 </html>

@@ -8,7 +8,17 @@
     ['note', 'Ders notu', 'sticky-note'], ['noise', 'Ses göstergesi', 'mic'],
     ['image', 'Görsel ekle', 'image-plus']
   ];
-  function icon(name) { return '<span class="sb-icon" aria-hidden="true" style="--sb-icon:url(/assets/smartboard-icons/' + name + '.svg)"></span>'; }
+  // Lucide ISC paths embedded for essential controls: no SVG-mask request is needed.
+  var CONTROL_ICONS = {
+    move: '<path d="M12 2v20m3-3-3 3-3-3m10-10 3 3-3 3M2 12h20M5 9l-3 3 3 3m4-10 3-3 3 3"/>',
+    plus: '<path d="M5 12h14M12 5v14"/>',
+    minus: '<path d="M5 12h14"/>',
+    x: '<path d="m18 6-12 12M6 6l12 12"/>'
+  };
+  function icon(name) {
+    if(CONTROL_ICONS[name]) return '<svg class="sb-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + CONTROL_ICONS[name] + '</svg>';
+    return '<span class="sb-icon" aria-hidden="true" style="--sb-icon:url(/assets/smartboard-icons/' + name + '.svg)"></span>';
+  }
   function iconButton(name, title, action) { return '<button type="button" class="sb-icon-button" title="' + title + '" aria-label="' + title + '" data-sb-action="' + action + '">' + icon(name) + '</button>'; }
   function splitNames(value) { return String(value || '').split(/[\n,;]/).map(function(s) { return s.trim(); }).filter(Boolean).slice(0, 200); }
   function shuffled(list) {
@@ -141,16 +151,8 @@
       var item = CATALOG.find(function(t) { return t[0] === type; }); if(!item) return;
       layout(); var w = baseWidget(type, item[1]), b = w.body, s = w.state;
       if(type === 'timer') timerWidget(w);
-      if(type === 'random' || type === 'groups') namesWidget(w, type === 'groups');
-      if(type === 'score') {
-        s.scores = Array.isArray(s.scores) ? s.scores.slice(0, 2) : [0, 0]; s.names = Array.isArray(s.names) ? s.names : ['1. Takım', '2. Takım'];
-        b.innerHTML = '<div class="sb-score-grid">' + [0, 1].map(function(i) { return '<div><input aria-label="' + (i + 1) + '. takım adı" maxlength="30"><output class="sb-score">0</output><div class="sb-actions">' + iconButton('minus', 'Puan azalt', 'less') + iconButton('plus', 'Puan ekle', 'more') + '</div></div>'; }).join('') + '</div>';
-        Array.from(b.querySelector('.sb-score-grid').children).forEach(function(team, i) {
-          var input = team.querySelector('input'), output = team.querySelector('output'); input.value = s.names[i]; output.value = Math.max(0, Number(s.scores[i]) || 0);
-          input.addEventListener('input', function() { s.names[i] = input.value; save(); });
-          team.querySelectorAll('button').forEach(function(button) { button.addEventListener('click', function() { s.scores[i] = Math.max(0, Math.min(9999, (Number(s.scores[i]) || 0) + (button.dataset.sbAction === 'more' ? 1 : -1))); output.value = s.scores[i]; save(); }); });
-        });
-      }
+      if(type === 'random' || type === 'groups') studentWidget(w, type === 'groups');
+      if(type === 'score') scoreWidget(w);
       if(type === 'signal') {
         b.innerHTML = '<div class="sb-signal">' + [['#c94e46', 'Sessizlik'], ['#e5af25', 'Hazırlanıyoruz'], ['#3d9560', 'Çalışıyoruz']].map(function(a, i) { return '<button type="button" style="--signal:' + a[0] + '" aria-label="' + a[1] + '" title="' + a[1] + '" data-signal="' + i + '"></button>'; }).join('') + '</div><output class="sb-result"></output><label>Çalışma biçimi<select><option>Bireysel çalışma</option><option>Eşli çalışma</option><option>Grup çalışması</option><option>Öğretmeni dinliyoruz</option></select></label>';
         var select = b.querySelector('select'); select.selectedIndex = Math.max(0, Math.min(3, Number(s.mode) || 0));
@@ -164,6 +166,40 @@
       }
       if(type === 'noise') noiseWidget(w);
       position(w); save();
+    }
+    function scoreWidget(w) {
+      var b = w.body, s = w.state, maxTeams = 20;
+      w.el.classList.add('sb-score-widget');
+      var length = Math.max(1, Math.min(maxTeams, Array.isArray(s.scores) && s.scores.length ? s.scores.length : 2));
+      s.scores = Array.from({ length: length }, function(_, i) { return Math.max(0, Math.min(9999, Math.floor(Number(s.scores && s.scores[i]) || 0))); });
+      s.names = Array.from({ length: length }, function(_, i) { return String(Array.isArray(s.names) && s.names[i] || (i + 1) + '. Takım').slice(0, 30); });
+      b.innerHTML = '<div class="sb-score-toolbar"><span class="sb-score-count" role="status"></span><button type="button" class="sb-command sb-add-team" data-sb-action="add-team">' + icon('plus') + '<span>Takım ekle</span></button></div><div class="sb-score-grid"></div>';
+      var grid = b.querySelector('.sb-score-grid'), add = b.querySelector('.sb-add-team');
+      function render(focusIndex) {
+        grid.replaceChildren();
+        s.scores.forEach(function(score, i) {
+          var team = document.createElement('div'); team.className = 'sb-score-team';
+          team.innerHTML = '<div class="sb-team-heading"><input aria-label="' + (i + 1) + '. takım adı" maxlength="30">' + iconButton('x', (i + 1) + '. takımı kaldır', 'remove-team') + '</div><output class="sb-score" aria-label="' + (i + 1) + '. takım puanı" aria-live="polite"></output><div class="sb-actions">' + iconButton('minus', 'Puan azalt', 'less') + iconButton('plus', 'Puan ekle', 'more') + '</div>';
+          var input = team.querySelector('input'), output = team.querySelector('output'); input.value = s.names[i]; output.value = score;
+          input.addEventListener('input', function() { s.names[i] = input.value; save(); });
+          ['less', 'more'].forEach(function(action) { team.querySelector('[data-sb-action="' + action + '"]').addEventListener('click', function() {
+            s.scores[i] = Math.max(0, Math.min(9999, s.scores[i] + (action === 'more' ? 1 : -1))); output.value = s.scores[i]; save();
+          }); });
+          var remove = team.querySelector('[data-sb-action="remove-team"]'); remove.disabled = s.scores.length === 1;
+          remove.addEventListener('click', function() {
+            if(s.scores[i] > 0 && !root.confirm(s.names[i] + ' ve ' + s.scores[i] + ' puanı kaldırılsın mı?')) return;
+            s.scores.splice(i, 1); s.names.splice(i, 1); render(Math.min(i, s.scores.length - 1)); save(); position(w);
+          });
+          grid.appendChild(team);
+        });
+        b.querySelector('.sb-score-count').textContent = s.scores.length + ' / ' + maxTeams + ' takım'; add.disabled = s.scores.length >= maxTeams;
+        if(typeof focusIndex === 'number') { var input = grid.children[focusIndex].querySelector('input'); input.focus(); if(input.scrollIntoView) input.scrollIntoView({ block: 'nearest' }); }
+      }
+      add.addEventListener('click', function() {
+        if(s.scores.length >= maxTeams) return;
+        s.scores.push(0); s.names.push(s.scores.length + '. Takım'); render(s.scores.length - 1); save(); position(w);
+      });
+      render();
     }
     function timerWidget(w) {
       var b = w.body, s = w.state, interval = null, audio = null;
@@ -202,25 +238,95 @@
       if(s.running) startInterval(); paint();
       w.dispose = function() { clearInterval(interval); if(audio) audio.close().catch(function() {}); };
     }
-    function namesWidget(w, groupMode) {
-      var b = w.body, s = w.state, pool = [];
-      b.innerHTML = '<label>Öğrenciler<textarea maxlength="5000" aria-label="Öğrenci listesi" placeholder="Her satıra bir öğrenci"></textarea></label>' +
-        (groupMode ? '<label>Grup sayısı<input type="number" min="1" max="30" value="3"></label>' : '<label class="sb-check"><input type="checkbox" checked>Herkese sıra gelsin</label>') +
-        '<button type="button" class="sb-command">' + (groupMode ? 'Grupları oluştur' : 'Öğrenci seç') + '</button><output class="sb-result" aria-live="polite"></output><div class="sb-group-list"></div>';
-      var other = widgets.get(groupMode ? 'random' : 'groups');
-      var names = b.querySelector('textarea'); names.value = String(s.names || (other && other.state.names) || '').slice(0, 5000);
-      names.addEventListener('input', function() { s.names = names.value; pool = []; save(); });
-      b.querySelector('.sb-command').addEventListener('click', function() {
-        var list = splitNames(names.value), out = b.querySelector('output'), result = b.querySelector('.sb-group-list'); result.replaceChildren();
-        if(!list.length) { out.textContent = 'Öğrenci listesi boş'; return; }
-        if(groupMode) {
-          var count = Math.max(1, Math.min(30, Number(b.querySelector('input').value) || 1));
-          makeGroups(list, count).forEach(function(group, i) { var section = document.createElement('section'), title = document.createElement('strong'), body = document.createElement('div'); title.textContent = (i + 1) + '. Grup'; body.textContent = group.join(', '); section.append(title, body); result.appendChild(section); }); out.textContent = '';
-        } else {
-          if(!pool.length || !b.querySelector('input').checked) pool = shuffled(list);
-          out.textContent = pool.pop();
-        }
+    function studentWidget(w, groupMode) {
+      var b = w.body, s = w.state, classes = [], source = '', pool = [], frame = null, generation = 0, closed = false, rosterTimer = null;
+      w.el.classList.add(groupMode ? 'sb-groups' : 'sb-picker');
+      b.innerHTML = '<div class="sb-roster-source"><label>Öğrenci kaynağı<select aria-label="Öğrenci kaynağı"><option value="">Elle girilen liste</option></select></label>' + iconButton('rotate-ccw', 'Ajanda listesini yenile', 'refresh-roster') + '</div>' +
+        '<p class="sb-roster-status" role="status"></p><label class="sb-manual-list">Öğrenciler<textarea maxlength="5000" aria-label="Öğrenci listesi" placeholder="Her satıra bir öğrenci"></textarea></label>' +
+        (groupMode ? '<label>Grup sayısı<input type="number" min="1" max="30" value="3" aria-label="Grup sayısı"></label><output class="sb-result sb-group-summary" aria-live="polite"></output><div class="sb-group-list"></div>' :
+          '<div class="sb-picker-stage"><span class="sb-picker-avatar" aria-hidden="true">?</span><span class="sb-picker-roll" aria-hidden="true"></span><output class="sb-result" aria-live="polite">Sıra kimde?</output><span class="sb-picker-count"></span></div><label class="sb-check"><input type="checkbox">Herkese sıra gelsin</label>') +
+        '<button type="button" class="sb-command sb-pick-command">' + icon(groupMode ? 'users' : 'shuffle') + '<span>' + (groupMode ? 'Grupları oluştur' : 'Öğrenci seç') + '</span></button>';
+      var select = b.querySelector('select'), names = b.querySelector('textarea'), status = b.querySelector('.sb-roster-status');
+      var out = b.querySelector('output'), roll = b.querySelector('.sb-picker-roll'), avatar = b.querySelector('.sb-picker-avatar');
+      var count = b.querySelector('.sb-picker-count'), command = b.querySelector('.sb-pick-command'), repeat = b.querySelector('input[type=checkbox]');
+      names.value = String(s.names || '').slice(0, 5000); if(repeat) repeat.checked = s.noRepeat !== false;
+      if(groupMode) b.querySelector('input[type=number]').value = Math.max(1, Math.min(30, Number(s.groupCount) || 3));
+      function list() { var c = classes.find(function(c) { return c.id === source; }); return c ? c.students : splitNames(names.value).map(function(name, i) { return { id: i, name: name }; }); }
+      function cancel() {
+        if(frame !== null) cancelAnimationFrame(frame); frame = null; if(roll) roll.textContent = '';
+        if(!out.textContent && !groupMode) out.textContent = 'Sıra kimde?';
+        w.el.classList.remove('is-picking'); command.disabled = false; select.disabled = false; if(repeat) repeat.disabled = false;
+      }
+      function updateCount() { if(!count) return; var n = list().length, left = (pool.length || (w.el.classList.contains('has-winner') && repeat.checked)) ? pool.length : n; count.textContent = n ? left + ' / ' + n + ' öğrenci sırada' : 'Liste bekleniyor'; }
+      function reset() { cancel(); pool = []; out.textContent = groupMode ? list().length + ' öğrenci' : 'Sıra kimde?'; if(avatar) avatar.textContent = '?'; if(groupMode) b.querySelector('.sb-group-list').replaceChildren(); w.el.classList.remove('has-winner'); updateCount(); }
+      function syncSource() {
+        source = select.value; b.querySelector('.sb-manual-list').hidden = !!source;
+        s.classId = source; s.manualSource = !source; reset(); position(w); save();
+      }
+      select.addEventListener('change', syncSource);
+      names.addEventListener('input', function() { s.names = names.value; reset(); save(); });
+      if(repeat) repeat.addEventListener('change', function() { s.noRepeat = repeat.checked; reset(); save(); });
+      if(groupMode) b.querySelector('input[type=number]').addEventListener('change', function(event) {
+        s.groupCount = Math.max(1, Math.min(30, Number(event.target.value) || 3)); event.target.value = s.groupCount; reset(); save();
       });
+      command.addEventListener('click', function() {
+        var students = list(); if(!students.length) { out.textContent = 'Öğrenci listesi boş'; return; }
+        if(groupMode) {
+          var result = b.querySelector('.sb-group-list'), number = Math.max(1, Math.min(30, Number(b.querySelector('input[type=number]').value) || 3));
+          var groups = makeGroups(students, number); result.replaceChildren();
+          groups.forEach(function(group, i) {
+            var section = document.createElement('section'), title = document.createElement('strong'), members = document.createElement('ul');
+            title.textContent = (i + 1) + '. Grup · ' + group.length + ' öğrenci';
+            group.forEach(function(student) { var li = document.createElement('li'); li.textContent = student.name; members.appendChild(li); });
+            section.append(title, members); result.appendChild(section);
+          });
+          out.textContent = students.length + ' öğrenci · ' + groups.length + ' grup'; s.groupCount = number; save(); position(w); return;
+        }
+        cancel(); if(!pool.length || !repeat.checked) pool = shuffled(students);
+        var winner = pool[pool.length - 1], start = null, last = -1;
+        function finish() {
+          frame = null; pool.pop(); cancel(); out.textContent = winner.name;
+          avatar.textContent = winner.name.split(/\s+/).slice(0, 2).map(function(n) { return n.charAt(0); }).join('').toLocaleUpperCase('tr-TR');
+          w.el.classList.add('has-winner'); updateCount();
+          command.querySelector('span:last-child').textContent = 'Sıradaki öğrenciyi seç';
+        }
+        if(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+        command.disabled = true; select.disabled = true; repeat.disabled = true; w.el.classList.remove('has-winner'); w.el.classList.add('is-picking'); out.textContent = ''; avatar.textContent = '·';
+        function tick(time) {
+          if(start === null) start = time;
+          var progress = Math.min(1, (time - start) / 1400), step = Math.floor(18 * (1 - Math.pow(1 - progress, 2)));
+          if(step !== last) { roll.textContent = students[step % students.length].name; last = step; }
+          if(progress === 1) finish(); else frame = requestAnimationFrame(tick);
+        }
+        frame = requestAnimationFrame(tick);
+      });
+      async function refresh() {
+        clearTimeout(rosterTimer);
+        var token = ++generation; cancel(); classes = []; source = ''; select.replaceChildren();
+        var manual = document.createElement('option'); manual.value = ''; manual.textContent = 'Elle girilen liste'; select.appendChild(manual);
+        b.querySelector('.sb-manual-list').hidden = false; reset(); status.textContent = 'Ajanda kontrol ediliyor…';
+        try {
+          if(!root.SmartboardRoster) { status.textContent = 'Ajanda bağlantısı kullanılamıyor. Elle liste girebilirsiniz.'; return; }
+          var timer;
+          var data = await Promise.race([root.SmartboardRoster.load(root.kemalUserAuth, localStorage), new Promise(function(resolve) { timer = rosterTimer = setTimeout(function() { resolve({ classes: [], status: 'error' }); }, 9000); })]).finally(function() { clearTimeout(timer); });
+          if(closed || token !== generation) return;
+          classes = data.classes;
+          classes.forEach(function(c) { var option = document.createElement('option'); option.value = c.id; option.textContent = c.name + ' · ' + c.students.length + ' öğrenci'; select.appendChild(option); });
+          var selected = classes.find(function(c) { return c.id === s.classId; }) || classes.find(function(c) { return c.active; }) || classes[0];
+          if(selected && !s.manualSource) select.value = selected.id;
+          source = select.value; b.querySelector('.sb-manual-list').hidden = !!source;
+          status.textContent = classes.length ? (data.status === 'local' ? 'Çevrimdışı · Bu hesaba ait yerel ajanda' : 'Ajandadaki sınıflar hazır') :
+            data.status === 'guest' ? 'Ajandanız için öğretmen hesabınızla giriş yapın.' : data.status === 'error' ? 'Ajandaya ulaşılamadı. Yenileyebilir veya elle liste girebilirsiniz.' : 'Ajandada kayıtlı öğrenci bulunamadı.';
+          reset(); position(w);
+        } catch(error) { if(!closed && token === generation) status.textContent = 'Ajandaya ulaşılamadı. Elle liste girebilirsiniz.'; }
+      }
+      var refreshButton = b.querySelector('[data-sb-action="refresh-roster"]'); refreshButton.addEventListener('click', refresh);
+      function onStorage(event) { if(event.key === 'kemalOgretmenAjandasi.v1' || event.key === 'kemalOgretmenAjandasi.v1.owner') refresh(); }
+      function onVisibility() { if(document.hidden) cancel(); }
+      root.addEventListener('kemal-user-auth-changed', refresh); root.addEventListener('storage', onStorage); document.addEventListener('visibilitychange', onVisibility);
+      w.suspend = cancel;
+      w.dispose = function() { closed = true; generation++; clearTimeout(rosterTimer); cancel(); classes = []; root.removeEventListener('kemal-user-auth-changed', refresh); root.removeEventListener('storage', onStorage); document.removeEventListener('visibilitychange', onVisibility); };
+      refresh();
     }
     function noiseWidget(w) {
       var b = w.body, stream = null, context = null, interval = null, generation = 0;

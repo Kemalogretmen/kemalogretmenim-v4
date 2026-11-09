@@ -1,0 +1,149 @@
+/* Both games keep the turn, board and controls inside the available viewport. */
+body.kb-playing,body.memory-fit{height:100dvh;overflow:hidden;overflow-anchor:none}
+body.kb-playing #kemalFooter,body.memory-fit #kemalFooter{display:none}
+body.kb-playing .game-page,body.memory-fit .page{position:fixed;top:var(--game-chrome-top,108px);left:0;right:0;margin:0 auto;z-index:1}
+@media(max-width:360px){body:is(.kb-playing,.memory-fit) #mainNav{gap:5px;padding-inline:8px}body:is(.kb-playing,.memory-fit) #mainNav .nav-logo{gap:5px;min-width:0}body:is(.kb-playing,.memory-fit) #mainNav .nav-logo img{width:27px;height:27px}body:is(.kb-playing,.memory-fit) #mainNav .platform-brand-copy strong{font-size:11px}body:is(.kb-playing,.memory-fit) #mainNav .platform-brand-copy small{display:none}}
+body.kb-playing .game-page{max-width:1600px;padding:8px 12px}
+body.kb-playing .game-main{height:var(--play-height,calc(100dvh - 230px));min-height:0;grid-template-columns:minmax(240px,285px) minmax(0,1fr);gap:12px;margin:0}
+body.kb-playing .control-panel{height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:94px minmax(0,1fr) 34px;gap:7px}
+body.kb-playing .dice-dock{grid-area:1/1/2/3;padding:8px 12px;display:grid;grid-template-columns:minmax(85px,1fr) 78px;grid-template-rows:20px 1fr 20px;gap:0 8px;border-radius:16px;overflow:visible}
+body.kb-playing .dice-dock-label{font-size:12px;grid-area:1/1}.dice-dock-label::before{display:none}
+body.kb-playing .dice-well{height:auto;grid-area:1/2/4/3;border-radius:15px}
+body.kb-playing .roll-state{grid-area:2/1;padding:2px 0;font-size:11px;line-height:1.25}
+body.kb-playing .dice-result-badge{grid-area:3/1;padding:0;font-size:11px;white-space:nowrap}
+body.kb-playing .side-difficulty{grid-area:3/1;padding:0;border:0;box-shadow:none;background:none;display:flex;align-items:center;gap:3px}
+body.kb-playing .side-difficulty .meta-caption{display:none}
+body.kb-playing .difficulty-buttons{gap:4px;margin:0;display:flex}
+body.kb-playing .level-btn{min-height:32px;padding:5px 7px;font-size:10px;border-radius:9px}
+body.kb-playing .dice-sound-toggle{grid-area:3/2;min-height:32px;padding:5px 7px;font-size:10px}
+body.kb-playing .question-card{grid-area:2/1/3/3;min-height:0;height:100%;padding:10px;border-radius:17px}
+body.kb-playing .question-placeholder{min-height:0;height:100%;padding:12px;gap:5px}
+body.kb-playing .question-placeholder strong{font-size:18px}
+body.kb-playing .question-placeholder p{font-size:12px;line-height:1.4;margin:0}
+body.kb-playing .question-placeholder .emoji{font-size:30px}
+body.kb-playing .question-active{height:100%;min-height:0}
+body.kb-playing .question-card.active .question-active{display:grid;grid-template-rows:auto minmax(26px,.7fr) minmax(32px,.7fr) minmax(0,4fr);gap:6px}
+body.kb-playing .question-head{gap:4px;flex-wrap:nowrap}
+body.kb-playing .question-tag{font-size:9px;padding:4px 6px;max-width:53%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.kb-playing .question-turn{font-size:11px;line-height:1.15;min-width:0;text-align:right}
+body.kb-playing .math-problem{margin:0;font-size:clamp(24px,3vw,37px);line-height:1;display:grid;place-items:center}
+body.kb-playing .answer-display{height:auto;min-height:0;margin:0;font-size:28px;border-radius:10px}
+body.kb-playing .keypad{min-height:0;gap:6px;grid-template-columns:repeat(3,minmax(0,1fr)) .95fr;grid-template-rows:repeat(4,minmax(0,1fr));height:100%}
+body.kb-playing .key{min-height:0;padding:3px;font-size:22px;border-radius:9px;box-shadow:0 3px 0 #d9dced;touch-action:manipulation}
+body.kb-playing .key-ok{font-size:14px;grid-column:4;grid-row:1/5;white-space:normal}
+body.kb-playing .play-surface{min-height:0;height:100%;display:grid;grid-template-rows:65px minmax(0,1fr) 48px;gap:8px}
+body.kb-playing .players-strip{padding:6px;gap:6px;overflow:hidden;align-items:stretch;border-radius:16px}
+body.kb-playing .player-card{min-width:0;max-width:none;padding:5px 8px;gap:6px;transform:none;opacity:.65;border-radius:11px}
+body.kb-playing .player-card.active{transform:none;opacity:1;box-shadow:inset 0 0 0 2px var(--active-color,#6c3ded)}
+body.kb-playing .player-card.active::after{content:none}
+body.kb-playing .player-mini-pawn{width:28px;height:34px}
+body.kb-playing .player-main strong{font-size:13px}
+body.kb-playing .player-main span{font-size:9px;line-height:1.25}
+body.kb-playing .player-score{min-width:24px}
+body.kb-playing .player-score strong{font-size:18px}
+body.kb-playing .player-score span{font-size:9px}
+body.kb-playing .board-shell{padding:0;min-height:0;border-radius:18px;overflow:hidden}
+body.kb-playing .board-stage{padding:0;height:100%;min-height:0;border-radius:18px;display:grid;place-items:center}
+body.kb-playing .board-grid-wrap,body.kb-playing .board-grid-wrap.has-3d{width:100%;height:100%;max-width:100%;aspect-ratio:auto;margin:0}
+body.kb-playing .board-grid-wrap:not(.has-3d){width:min(100%,var(--kb-board-height,300px));height:auto;aspect-ratio:1}
+body.kb-playing .race-panel{padding:5px 10px;border-radius:13px;min-height:0}
+body.kb-playing .status-strip{display:flex;justify-content:space-between;gap:8px;height:100%}
+body.kb-playing .turn-pill{padding:3px 8px;border-radius:8px;box-shadow:none;min-width:0}
+body.kb-playing .turn-pill small{font-size:8px}
+body.kb-playing .turn-pill strong{font-size:14px;line-height:1.1}
+body.kb-playing #turnPillNote,body.kb-playing .race-track-shell,body.kb-playing .bottom-info-row{display:none}
+body.kb-playing .status-copy{min-width:0}.status-copy strong{overflow-wrap:anywhere}
+body.kb-playing .status-copy strong{font-size:12px;line-height:1.2}
+body.kb-playing .status-copy span{font-size:10px;line-height:1.2}
+body.kb-playing .board-status-chip{padding:5px 7px;font-size:10px;white-space:normal;text-align:center;max-width:170px}
+.board-3d.board-scene-wide{border-radius:0;background:none}
+.dice-arena.has-physical-die .dice-wrap,.dice-arena.has-physical-die .dice-shadow{visibility:hidden!important}
+@media(max-width:760px){
+ body.kb-playing .game-page{padding:6px 8px}
+ body.kb-playing .game-main{grid-template-columns:1fr;grid-template-rows:minmax(115px,1fr) minmax(350px,1.25fr);gap:6px}
+ body.kb-playing .play-surface{grid-area:1/1;grid-template-rows:44px minmax(0,1fr) 25px;gap:3px}
+ body.kb-playing .players-strip{padding:3px;border-radius:10px;gap:3px}
+ body.kb-playing .player-mini-pawn,body.kb-playing .player-score,body.kb-playing .player-main span{display:none}
+ body.kb-playing .player-card{padding:4px;justify-content:center}
+ body.kb-playing .player-main strong{font-size:11px}
+ body.kb-playing .status-copy,body.kb-playing .board-status-chip,body.kb-playing .turn-pill small{display:none}
+ body.kb-playing .race-panel{padding:0 5px}.race-panel .turn-pill{width:100%;text-align:center}
+ body.kb-playing .turn-pill strong{font-size:12px}
+ body.kb-playing .control-panel{grid-area:2/1;grid-template-rows:48px minmax(0,1fr) 30px;gap:4px}
+ body.kb-playing .dice-dock{grid-template-columns:1fr 56px 1fr;grid-template-rows:1fr;padding:3px 9px;gap:5px;border-radius:10px;align-items:center}
+ body.kb-playing .dice-dock-label{grid-area:1/1;font-size:11px}
+ body.kb-playing .dice-well{grid-area:1/2;height:40px;border-radius:10px}
+ body.kb-playing .roll-state{display:none}
+ body.kb-playing .dice-result-badge{grid-area:1/3;white-space:normal;font-size:10px}
+ body.kb-playing .question-card{padding:6px;border-radius:12px}
+ body.kb-playing .question-card.active .question-active{grid-template-columns:1fr 1fr;grid-template-rows:19px 34px minmax(0,1fr);gap:4px 8px}
+ body.kb-playing .question-head{grid-area:1/1/2/3}
+ body.kb-playing .math-problem{grid-area:2/1;font-size:25px}
+ body.kb-playing .answer-display{grid-area:2/2;font-size:24px}
+ body.kb-playing .keypad{grid-area:3/1/4/3;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:4px}
+ body.kb-playing .key-ok{grid-column:1/-1;grid-row:auto;font-size:14px}
+ body.kb-playing .key{font-size:18px}
+ body.kb-playing .level-btn,body.kb-playing .dice-sound-toggle{min-height:28px;font-size:10px}
+ body.kb-playing .question-placeholder{padding:4px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:9px}
+ body.kb-playing .question-placeholder strong{font-size:14px}
+ body.kb-playing .question-placeholder p{display:none}
+}
+@media(max-height:650px) and (min-width:761px){body.kb-playing .play-surface{grid-template-rows:48px minmax(0,1fr) 38px}body.kb-playing .control-panel{grid-template-rows:70px minmax(0,1fr) 30px}body.kb-playing .key{font-size:18px}body.kb-playing .question-card{padding:6px}}
+@media(max-height:700px) and (max-width:760px){
+ body.kb-playing .game-main{grid-template-rows:minmax(130px,1fr) minmax(200px,1.5fr)}
+ body.kb-playing .play-surface{grid-template-rows:28px minmax(0,1fr)}
+ body.kb-playing .race-panel,body.kb-playing .side-difficulty{display:none}
+ body.kb-playing .control-panel{position:relative;grid-template-rows:30px minmax(0,1fr)}
+ body.kb-playing .dice-dock{padding-right:35px}
+ body.kb-playing .dice-well{height:24px}
+ body.kb-playing .dice-sound-toggle{position:absolute;grid-area:auto;right:0;top:0;width:30px;height:30px;font-size:0;padding:0;z-index:5}
+ body.kb-playing .dice-sound-toggle::before{content:'♫';font-size:15px}
+ body.kb-playing .question-head{display:none}
+ body.kb-playing .question-card.active .question-active{grid-template-rows:28px minmax(0,1fr)}
+ body.kb-playing .math-problem{grid-area:1/1;font-size:22px}
+ body.kb-playing .answer-display{grid-area:1/2;font-size:22px}
+ body.kb-playing .keypad{grid-area:2/1/3/3}
+ body.kb-playing .key{font-size:16px}
+}
+
+/* Memory: settings float above the board instead of adding page height. */
+body.memory-fit #setupScreen:not(.hidden){top:var(--memory-controls-bottom,110px)}
+body.memory-fit .page{max-width:1240px;padding:8px 12px}
+body.memory-fit .game-shell{position:relative;height:var(--play-height,calc(100dvh - 230px));min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr);border-radius:20px}
+body.memory-fit .hero{padding:9px 16px;gap:10px;flex-direction:row;flex-wrap:nowrap;text-align:left}
+body.memory-fit .hero-text{min-width:0;flex:1}
+body.memory-fit .hero h1{font-size:clamp(18px,2.5vw,28px);margin:0;line-height:1.15}
+body.memory-fit .hero .kicker,body.memory-fit .hero p{display:none}
+body.memory-fit .stats{gap:4px;flex-wrap:nowrap}
+body.memory-fit .stat{min-width:48px;padding:4px 8px;border-radius:9px}
+body.memory-fit .stat span{font-size:9px}body.memory-fit .stat strong{font-size:15px;margin:0}
+body.memory-fit .control-row{padding:6px 14px;gap:7px;border-bottom:1px solid var(--line)}
+body.memory-fit .control-group{gap:6px}
+body.memory-fit .control-btn{min-height:34px;padding:6px 10px;font-size:11px;border-radius:10px}
+body.memory-fit .setup:not(.hidden){position:absolute;z-index:25;inset:var(--memory-controls-bottom,110px) 12px 12px;display:grid;align-content:start;overflow:auto;border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 40px #22345b40;background:#f8fbff;padding:14px}
+body.memory-fit .setup .choice-btn{min-height:56px}
+body.memory-fit #setupScreen:not(.hidden){grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;overflow:hidden;gap:12px}
+.memory-setup-content{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:14px;min-height:0;overflow:auto;align-content:start;padding:2px}
+.memory-setup-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 4px 0;border-top:1px solid var(--line);background:#f8fbff}
+.memory-setup-actions p{margin:0;color:#60708d;font-size:12px;font-weight:800;line-height:1.4}
+.memory-start-btn{display:inline-flex;align-items:center;justify-content:center;gap:24px;min-height:50px;padding:12px 28px;border:0;border-radius:14px;background:linear-gradient(135deg,#6c3ded,#4d2eaa);box-shadow:0 4px 0 #382079,0 8px 18px #6c3ded25;color:#fff;font:900 17px/1.2 var(--font-body,Nunito,system-ui,sans-serif);white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.memory-start-btn span{font-size:23px}.memory-start-btn:focus-visible{outline:3px solid #ffcf3f;outline-offset:3px}.memory-start-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #382079}
+@media(max-width:700px){.memory-setup-content{grid-template-columns:minmax(0,1fr)}.memory-setup-actions{padding-top:9px}.memory-setup-actions p{display:none}.memory-start-btn{width:100%;min-height:48px;font-size:16px}}
+body.memory-fit .board-wrap{min-width:0;min-height:0;overflow:hidden;padding:7px 12px 12px;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:6px}
+body.memory-fit .turn-indicator{position:relative;top:auto;margin:0 auto;min-height:42px;padding:5px 10px;gap:8px;border-radius:12px;max-width:780px;box-shadow:0 3px 8px #1f2c5710}
+body.memory-fit .turn-icon{height:30px;flex-basis:30px;border-radius:8px;font-size:15px}
+body.memory-fit .turn-copy span{font-size:8px}.memory-fit .turn-copy strong{font-size:13px}
+body.memory-fit .turn-score{font-size:10px;padding:4px 7px}
+body.memory-fit .memory-stage{width:100%;height:100%;min-width:0;min-height:0;max-width:none;margin:0;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;perspective:none;padding-bottom:8px}
+body.memory-fit .board{flex:none;max-width:100%;max-height:100%;padding:8px;border-width:4px;gap:6px;grid-template-rows:repeat(var(--rows,3),minmax(0,1fr));transform:none;border-radius:16px;box-shadow:inset 0 0 0 2px #ffffff44,0 5px 0 var(--accent-deep),0 8px 12px #27355225}
+body.memory-fit .card-btn{aspect-ratio:auto;min-width:0;min-height:0;height:100%;border-radius:10px;filter:none}
+body.memory-fit .card-face{border-radius:10px;box-shadow:inset 0 -3px 0 #19235212,0 3px 5px #141e461a}
+body.memory-fit .card-back{border-width:2px}
+body.memory-fit .symbol-emoji{font-size:clamp(14px,calc(var(--memory-cell,60px) * .52),64px);line-height:1}
+body.memory-fit .symbol-art{gap:1px;padding:2px;transform:none}
+body.memory-fit .symbol-label{font-size:clamp(7px,calc(var(--memory-cell,60px) * .12),11px);transform:none}
+body.memory-fit .back-gem{font-size:clamp(12px,calc(var(--memory-cell,60px) * .3),27px)}
+body.memory-fit .card-btn.is-found .card-front::after{width:13px;height:13px;font-size:9px;top:2px;right:2px}
+body.memory-fit .board-hint{display:none}
+body.memory-fit .feedback{min-height:26px;padding:5px 9px;font-size:11px;line-height:1.3;margin:0;border-radius:8px;text-align:center}
+@media(max-width:600px){body.memory-fit .page{padding:6px}body.memory-fit .hero{padding:8px 10px}body.memory-fit .hero h1{font-size:18px}body.memory-fit .stat{min-width:38px;padding:3px 5px}body.memory-fit .stat strong{font-size:13px}body.memory-fit .stat span{font-size:8px}body.memory-fit .control-row{padding:5px 8px}body.memory-fit .board-wrap{padding:5px 6px 10px;gap:5px}body.memory-fit .turn-indicator{padding:4px 6px;gap:5px;min-height:42px}body.memory-fit .turn-copy strong{font-size:11px}body.memory-fit .turn-scores{gap:3px}body.memory-fit .turn-score{font-size:8px;padding:3px 4px}body.memory-fit .setup:not(.hidden){grid-template-columns:1fr;inset:100px 6px 6px}body.memory-fit .feedback{font-size:10px;min-height:26px}}

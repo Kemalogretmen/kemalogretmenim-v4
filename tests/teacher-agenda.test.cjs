@@ -263,6 +263,58 @@ test('loading a cloud row explicitly binds the write baseline only after hydrati
   assert.equal(h.run('state.classes[0].id'),'cloud');
 });
 
+test('verified web cloud lineage survives reload and never migrates to a different account',()=>{
+  const h=agenda();
+  h.run(`cloudSync.userId='teacher-a';acceptCloudVersion({updated_at:'revision-a'});cloudSync.rowVersion=null;cloudSync.rowChecked=false;restoreCloudVersion('teacher-a');`);
+  assert.equal(h.run('cloudSync.rowVersion'),'revision-a');
+  assert.equal(h.run('cloudSync.rowChecked'),true);
+  h.run(`cloudSync.rowVersion=null;cloudSync.rowChecked=false;restoreCloudVersion('teacher-b');`);
+  assert.equal(h.run('cloudSync.rowChecked'),false);
+});
+
+test('manual legacy recovery requires consent, backs up both versions, and writes with current CAS revision',async()=>{
+  const h=agenda();
+  h.run(`let writes=[];cloudSync.userId='teacher';cloudSync.enabled=true;cloudSync.ready=false;
+    const remote={agenda_state:{...state,students:[]},lesson_planner_state:null,updated_at:'recovery-revision'};
+    fetchCloudRow=async()=>remote;
+    cloudSync.client={from:()=>({update:payload=>({eq:(key,user)=>({eq:(key,revision)=>{writes.push({revision,payload,user});return{select:()=>({maybeSingle:async()=>({data:{updated_at:'saved-revision'},error:null})})};}})})})};
+    confirm=()=>false;`);
+  assert.equal(await h.run('saveCloudNow({manual:true})'),false);
+  assert.equal(h.run('writes.length'),0);
+  assert.equal(h.run('cloudSync.rowChecked'),false);
+  h.run('confirm=()=>true');
+  assert.equal(await h.run('saveCloudNow({manual:true})'),true);
+  assert.equal(h.run('writes[0].revision'),'recovery-revision');
+  assert.equal(h.run('writes[0].payload.agenda_state.students.length'),3);
+  assert.ok(h.saved.has('kemalOgretmenAjandasi.v1.kurtarma-yerel'));
+  assert.ok(h.saved.has('kemalOgretmenAjandasi.v1.kurtarma-bulut'));
+  assert.equal(h.run('cloudSync.rowVersion'),'saved-revision');
+});
+
+test('manual recovery never overwrites a newer concurrent cloud edit or imports another account local data',async()=>{
+  const h=agenda();
+  h.run(`let writes=0;cloudSync.userId='b';cloudSync.enabled=true;cloudSync.ready=false;
+    fetchCloudRow=async()=>({agenda_state:{...state,students:[]},updated_at:'read-revision'});
+    cloudSync.client={from:()=>({update:()=>{writes++;return{eq:()=>({eq:()=>({select:()=>({maybeSingle:async()=>({data:null,error:null})})})})};}})};
+    localStorage.setItem('kemalOgretmenAjandasi.v1.owner','a');`);
+  assert.equal(await h.run('saveCloudNow({manual:true})'),false);
+  assert.equal(h.run('writes'),0);
+  h.saved.set('kemalOgretmenAjandasi.v1.owner','b');
+  assert.equal(await h.run('saveCloudNow({manual:true})'),false);
+  assert.equal(h.run('writes'),1);
+  assert.equal(h.run('cloudSync.ready'),false);
+  assert.equal(h.run('state.students.length'),3);
+});
+
+test('renaming a class is persisted and does not move pupils or alter another class',()=>{
+  const h=agenda();
+  h.run('renderSettings()'); h.$('#className').value='Birincilerim';
+  h.run('saveSettingsAndClass();state=loadState()');
+  assert.equal(h.run('state.classes[0].name'),'Birincilerim');
+  assert.equal(h.run('state.classes[1].name'),'3-A');
+  assert.equal(h.run('state.students[0].classId'),'c1');
+});
+
 test('imported teacher and student image fields cannot create markup, handlers or CSS attributes', () => {
   const h = agenda(), attack = '\" onerror=\"window.attacked=true\"><script>attack()</script>';
   h.run(`state.teacher.photo=${JSON.stringify(attack)}; state.teacher.schoolLogo=${JSON.stringify('javascript:attack()')}; renderTeacherPhoto(); renderSchoolLogo();`);

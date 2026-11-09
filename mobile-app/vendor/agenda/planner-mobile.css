@@ -17,15 +17,12 @@ html.kemal-native .week-label { flex:1;text-align:center;font-size:17px;align-se
 html.kemal-native #week-date-focus { min-width:0;width:100%;flex:1; }
 html.kemal-native #week-jump { min-width:0!important;flex:1; }
 html.kemal-native .legend { display:none; }
-html.kemal-native .kemal-day-picker { display:flex;overflow:auto;gap:6px;padding:0 0 14px;scrollbar-width:none; }
 html.kemal-native .kemal-day-picker button { min-width:62px;min-height:54px;flex:none;border:1px solid var(--theme-border);border-radius:14px;color:var(--theme-muted);background:var(--theme-surface);font:inherit;font-size:12px;line-height:1.5;padding:6px; }
 html.kemal-native .kemal-day-picker button[aria-pressed="true"] { background:var(--theme-accent-soft);color:var(--theme-accent);border-color:var(--theme-accent);font-weight:700; }
-html.kemal-native .kemal-day-caption { font-size:16px;font-weight:700;color:var(--theme-text);margin:0 0 12px; }
 html.kemal-native .plan-cell { min-height:0;height:auto; }
 html.kemal-native .learning-output-more { min-height:40px;font-size:13px; }
 html.kemal-native .popup-box { width:calc(100vw - 24px);max-height:85dvh;overflow:auto;background:var(--theme-surface);color:var(--theme-text);border-color:var(--theme-border);border-radius:20px; }
 html.kemal-native .program-settings-grid { grid-template-columns:1fr; }
-@media (min-width:701px) { .kemal-day-picker,.kemal-day-caption { display:none!important; } }
 @media (max-width:700px) {
 html.kemal-native .form-row { display:flex;flex-wrap:wrap; }
 html.kemal-native .form-group { flex:1 1 100%;min-width:0; }
@@ -33,15 +30,6 @@ html.kemal-native .form-group select { width:100%; }
 html.kemal-native .card-title { font-size:17px; }
 html.kemal-native .week-nav .btn { padding:9px 12px; }
 html.kemal-native #weekly-plan-card { border:0;padding:0!important;background:transparent; }
-html.kemal-native #weekly-plan-container>div:first-child { display:none; }
-html.kemal-native #weekly-plan-container>div { overflow:visible!important; }
-html.kemal-native .plan-table { display:block;border:0;box-shadow:none;table-layout:auto;width:100%;min-width:0; }
-html.kemal-native .plan-table :is(colgroup,thead) { display:none; }
-html.kemal-native .plan-table tbody { display:grid;gap:12px; }
-html.kemal-native .plan-table tr { display:block;padding:14px 16px;border:1px solid var(--theme-border);border-radius:16px;background:var(--theme-surface); }
-html.kemal-native .plan-table td { display:none!important;border:0!important;background:transparent!important;padding:0!important;width:auto!important; }
-html.kemal-native .plan-table .row-label-cell { display:block!important;color:var(--theme-muted);font-size:12px;font-weight:600;margin:0 0 7px; }
-html.kemal-native .plan-table td.kemal-active-day { display:block!important; }
 html.kemal-native .cell-ders-name { font-size:16px;line-height:1.4; }
 html.kemal-native .cell-teacher { color:var(--theme-muted);font-size:12px;border:0;font-weight:400; }
 html.kemal-native .cell-kazanim { color:var(--theme-text);font-size:14px;line-height:1.65; }

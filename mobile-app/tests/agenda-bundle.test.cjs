@@ -27,7 +27,7 @@ test('agenda and lesson planner are owned bundled documents without live-page, C
   assert.equal(parent.querySelectorAll('#lessonPlannerFrame').length, 1);
   assert.ok(parent.querySelector('style[data-kemal-agenda-shell]'));
   assert.ok(child.querySelector('style[data-kemal-mobile-planner]'));
-  assert.ok(child.querySelector('script[data-kemal-mobile-planner]'));
+  assert.ok(child.querySelector('script[data-kemal-source="ogretmen-ajandasi/program-gorunum.js"]'));
   assert.equal(parent.querySelector('script[data-kemal-source="js/user-auth.js"]'), null);
   assert.equal(parent.querySelector('script[data-kemal-source="js/site.js"]'), null);
   assert.equal(child.querySelectorAll('script[data-kemal-shared-vendor]').length, 3);
@@ -37,7 +37,7 @@ test('bundled agenda source hashes match all current repository engine and vendo
   for (const [file, hash] of Object.entries(source.agendaInputHashes)) assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(__dirname, '../..', file))).digest('hex'), hash, file);
   assert.ok(source.agendaInputHashes['ogretmen-ajandasi/app.js']);
   assert.ok(source.agendaInputHashes['ogretmen-ajandasi/ders-programi.html']);
-  assert.ok(source.agendaInputHashes['mobile-app/vendor/agenda/planner-mobile.js']);
+  assert.ok(source.agendaInputHashes['ogretmen-ajandasi/program-gorunum.js']);
   for (const [name, filename] of [['jszip', 'jszip.min.js'], ['mammoth', 'mammoth.browser.min.js']]) {
     const folder = path.join(__dirname, '../vendor/agenda');
     const provenance = JSON.parse(fs.readFileSync(path.join(folder, name + '-provenance.json'), 'utf8'));
@@ -70,6 +70,8 @@ test('capability bootstrap precedes the agenda engine, and policy permits only p
 test('document navigation metadata cannot inject HTML, foreign routes or arbitrary parameters', () => {
   const make = path => doc.createAgendaDocument({ bootstrap: 'true;', nonce: 'safe-capability', dark: false, path });
   assert.doesNotThrow(() => make('/ogretmen-ajandasi/?advanced=1&mobileView=reportsView&studentId=student_123&plannerTab=tab-yukle'));
+  assert.doesNotThrow(() => make('/ogretmen-ajandasi/?mobileView=reportsView&reportType=classAnalysis&classId=class_123'));
+  assert.throws(() => make('/ogretmen-ajandasi/?mobileView=reportsView&reportType=admin'));
   for (const bad of ['/ogretmen-ajandasi/index.html?advanced=2', '/other', 'https://evil.example/ogretmen-ajandasi/', '//evil.example/ogretmen-ajandasi/', '/ogretmen-ajandasi/../index.html', '/ogretmen-ajandasi/index.html?token=secret', '/ogretmen-ajandasi/index.html?classId=%22%3E%3Cscript%3E', '/ogretmen-ajandasi/index.html?mobileView=scheduleView&mobileView=backupView', '/ogretmen-ajandasi/index.html#x', '/ogretmen-ajandasi/index.html?mobileView=wrong']) assert.throws(() => make(bad), bad);
   assert.throws(() => doc.createAgendaDocument({ bootstrap: 'true;', nonce: '"><script>bad', dark: false, path: '/ogretmen-ajandasi/index.html' }));
 });
@@ -79,8 +81,9 @@ test('phone day projection selects focus date, supports day changes and never mu
   const state = Object.freeze({ lastFocusDate: '2026-11-03', other: 'unchanged' });
   const observer = class { observe() {} };
   const forbidden = () => { throw Error('projection must not access storage'); };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../vendor/agenda/planner-mobile.js'), 'utf8'), { window, document, state, MutationObserver: observer, Date, Array, String, localStorage: { getItem: forbidden, setItem: forbidden } });
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../ogretmen-ajandasi/program-gorunum.js'), 'utf8'), { window, document, state, MutationObserver: observer, Date, Array, String, localStorage: { getItem: forbidden, setItem: forbidden } });
   assert.equal(document.querySelectorAll('.kemal-day-picker button').length, 2);
+  assert.match(document.querySelector('.kemal-day-picker button').textContent, /^Pzt/);
   assert.equal(document.querySelector('.kemal-day-picker button[aria-pressed="true"]').getAttribute('aria-label'), 'Salı 3.11.2026');
   assert.deepEqual(Array.from(document.querySelectorAll('.kemal-active-day')).map(x => x.textContent), ['Salı Matematik', 'İngilizce']);
   document.querySelector('.kemal-day-picker button').dispatchEvent(new window.Event('click'));

@@ -69,7 +69,17 @@
       const meta = external[link.getAttribute('href')]; if (!meta) return;
       link.className = 'math-nav-item math-nav-link'; link.removeAttribute('style'); const image = node('span', 'math-nav-icon'); image.append(icon(meta.icon)); const copy = node('span', 'math-nav-copy'); copy.append(node('strong', '', meta.name), node('small', '', meta.hint)); const arrow = node('span', 'math-link-arrow'); arrow.append(icon('arrow')); link.replaceChildren(image, copy, arrow); externalGroup.append(link); items.push({ element: link, group: externalGroup, label: `${meta.name} ${meta.hint}` });
     });
-    library.append(localGroup, externalGroup, results);
+    const libraryScroll = node('div', 'math-library-scroll');
+    libraryScroll.tabIndex = 0; libraryScroll.setAttribute('role', 'region');
+    libraryScroll.setAttribute('aria-label', 'Tüm matematik araçları ve geometri atölyeleri');
+    libraryScroll.addEventListener('keydown', event => {
+      if (event.target !== libraryScroll || !['Home', 'End', 'PageUp', 'PageDown', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      event.preventDefault();
+      if (event.key === 'Home') libraryScroll.scrollTop = 0;
+      else if (event.key === 'End') libraryScroll.scrollTop = libraryScroll.scrollHeight;
+      else libraryScroll.scrollTop += (event.key === 'PageUp' || event.key === 'ArrowUp' ? -1 : 1) * (event.key.startsWith('Page') ? libraryScroll.clientHeight * .85 : 48);
+    });
+    libraryScroll.append(localGroup, externalGroup, results); library.append(libraryScroll);
     const workbench = node('div', 'math-workbench'); const titleBlock = node('div', 'math-workbench-title'); const activeIcon = node('span', 'math-active-icon'); activeIcon.id = 'mathActiveIcon';
     const titleCopy = node('div', 'math-workbench-copy'); const oldTitle = head.querySelector('h2'); oldTitle.id = 'mathActiveTitle'; const description = node('p'); description.id = 'mathActiveDescription'; titleCopy.append(oldTitle, description); titleBlock.append(activeIcon, titleCopy); head.prepend(titleBlock);
     const help = head.querySelector('.shortcut-help-btn'); if (help) { help.replaceChildren(icon('keyboard')); help.title = 'Klavye kısayolları'; help.setAttribute('aria-label', 'Klavye kısayollarını göster'); }
@@ -77,7 +87,12 @@
     const views = node('div', 'math-view-body'); tools.forEach(tool => { const view = document.getElementById(tool.view); if (view) views.append(view); }); workbench.append(views);
     const trigger = node('button', 'math-library-trigger'); trigger.type = 'button'; trigger.setAttribute('aria-controls', library.id); trigger.setAttribute('aria-expanded', 'false'); trigger.append(icon('calc'), node('span', '', 'Araç değiştir'), icon('chevron'));
     function closeLibrary() { library.classList.remove('is-open'); trigger.setAttribute('aria-expanded', 'false'); syncResponsive(); }
-    function syncResponsive() { const mobile = window.innerWidth <= 860; library.inert = mobile && !library.classList.contains('is-open'); }
+    function sizeLibrary() {
+      const top = Math.max(14, library.getBoundingClientRect().top);
+      const height = window.visualViewport?.height || window.innerHeight;
+      library.style.setProperty('--math-library-height', Math.max(180, height - top - 20) + 'px');
+    }
+    function syncResponsive() { const mobile = window.innerWidth <= 860; library.inert = mobile && !library.classList.contains('is-open'); sizeLibrary(); }
     trigger.addEventListener('click', () => { const open = library.classList.toggle('is-open'); trigger.setAttribute('aria-expanded', String(open)); syncResponsive(); });
     layout.append(trigger, library, workbench); measure.replaceChildren(layout);
     document.querySelector('#mathWorkspace .panel').removeAttribute('style'); document.querySelector('#mathWorkspace .display-stage').removeAttribute('style');
@@ -109,6 +124,13 @@
     }
     document.addEventListener('mathmodechange', event => sync(event.detail.mode));
     window.addEventListener('resize', syncResponsive); sync(oldMenu.querySelector('.active')?.dataset.mathMode || list.querySelector('.active')?.dataset.mathMode || 'calc');
+    let libraryFrame = null;
+    function queueLibrarySize() {
+      if (libraryFrame !== null) return;
+      libraryFrame = window.requestAnimationFrame(() => { libraryFrame = null; sizeLibrary(); });
+    }
+    window.addEventListener('scroll', queueLibrarySize, { passive: true });
+    window.visualViewport?.addEventListener('resize', queueLibrarySize);
     window.MathToolsUI = { filter, sync };
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();

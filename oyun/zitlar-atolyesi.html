@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Zıtlar Atölyesi | Kemal Öğretmenim</title>
+  <meta name="description" content="Zıt anlamlı sözcükleri yapboz parçalarıyla eşleştir, üç saklı görseli keşfet. Tek ve iki kişilik, dokunmatik uyumlu Türkçe oyunu.">
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/zitlar-atolyesi.html">
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/word-pairs-games.css?v=20261104-jigsaw2">
+  <link rel="stylesheet" href="/css/zitlar-atolyesi.css?v=20261104-lobby">
+  <link rel="stylesheet" href="/css/game-players.css?v=20261105">
+</head>
+<body class="wg-page" data-word-game="puzzle">
+  <main class="word-app" id="main-content">
+    <header class="wg-top">
+      <a href="/oyun/oyunlar.html" class="wg-back" aria-label="Oyun merkezine dön">←</a>
+      <div class="wg-brand"><span class="wg-brand-icon" aria-hidden="true">🧩</span><div><span class="wg-eyebrow">KELİMELERLE KEŞFET</span><h1>Zıtlar Atölyesi</h1></div></div>
+      <span class="wg-top-tag">Zıt anlamlılar · 2–3. sınıf</span>
+      <nav class="wg-actions" aria-label="Oyun kontrolleri">
+        <button type="button" id="wg-sound" aria-pressed="true" aria-label="Oyun sesini kapat">♫ <span>Ses açık</span></button>
+        <button type="button" id="wg-pause" hidden>Ⅱ Duraklat</button>
+        <button type="button" id="wg-menu" hidden>Menü</button>
+      </nav>
+    </header>
+    <div class="wg-stage">
+      <section id="wg-cover" class="wg-screen wg-cover" aria-labelledby="wg-cover-title">
+        <div class="wg-cover-copy">
+          <span class="wg-kicker">HER PARÇA YENİ BİR KEŞİF</span>
+          <h2 id="wg-cover-title">Zıtları birleştir.<br><em>Resmi keşfet.</em></h2>
+          <p>Zıt anlamlıları buluştur, renkli parçaları yerine yerleştir. Her eşleşmede saklı dünyanın bir parçasını keşfet.</p>
+          <div class="wg-features"><span>1–2 oyuncu</span><span>6 → 12 → 20 parça</span><span>Dokun ve keşfet</span></div>
+          <button class="wg-primary" type="button" id="wg-open-settings">Haydi Başlayalım <span aria-hidden="true">↗</span></button>
+          <span class="wg-cover-note">Öğren. Dene. Her eşleşmeyle ilerle.</span>
+        </div>
+        <div class="wg-cover-art" id="wg-cover-art" aria-hidden="true"></div>
+      </section>
+      <section id="wg-setup" class="wg-screen wg-setup" aria-labelledby="wg-setup-title" hidden>
+        <div class="wg-setup-head"><div><span class="wg-eyebrow">KEŞİF ATÖLYESİ</span><h2 id="wg-setup-title">Yapbozun için hazır mısın?</h2><p>Oyuncularını seç, maceranı hazırla.</p></div><button id="wg-back-cover" class="wg-soft" type="button">← Kapağa dön</button></div>
+        <form id="wg-settings">
+          <div class="wg-settings-body za-lobby-grid">
+            <div class="za-config-panel">
+            <fieldset class="wg-player-choice"><legend><i aria-hidden="true">01</i> Nasıl oynayalım?</legend><div class="wg-options">
+              <label><input type="radio" name="players" value="1" aria-label="Tek kişilik keşif Kendi hızında öğren." checked><span><i class="za-mode-number" aria-hidden="true">1</i><b>Tek kişilik keşif</b><small>Kendi hızında öğren.</small></span></label>
+              <label><input type="radio" name="players" value="2" aria-label="İki kişilik yarış Aynı ekran, eşit görevler."><span><i class="za-mode-number" aria-hidden="true">2</i><b>İki kişilik yarış</b><small>Aynı ekran, eşit görevler.</small></span></label>
+            </div></fieldset>
+            <div class="wg-name-fields"><label>1. oyuncunun adı<input id="wg-name-1" maxlength="24" value="Oyuncu 1" autocomplete="off"></label><label id="wg-name-2-label" hidden>2. oyuncunun adı<input id="wg-name-2" maxlength="24" value="Oyuncu 2" autocomplete="off"></label></div>
+            <h3 class="za-section-title"><i aria-hidden="true">02</i> Maceranı ayarla</h3>
+            <div class="wg-selects">
+              <label>Sözcük düzeyi<select id="wg-grade"><option value="2">2. sınıf · Temel sözcükler</option><option value="3">3. sınıf · Genişleyen sözcükler</option></select></label>
+              <label>Macera uzunluğu<select id="wg-rounds"><option value="3">3 bölüm · Kademeli keşif</option><option value="1">1 bölüm · Kısa çalışma</option></select></label>
+              <label id="wg-pace-label" hidden>Sözcüklerin inişi<select id="wg-pace"><option value="16">Rahat · 16 saniyeden başla</option><option value="12">Hareketli · 12 saniyeden başla</option><option value="0">Süresiz · Ben indiririm</option></select></label>
+            </div>
+            <div class="za-fair-note"><span aria-hidden="true">✦</span><p><b>Aynı parçalar, kendi keşfin.</b> İki oyuncu aynı görevlerle oynar; herkes kendi yapbozunu tamamlar.</p></div>
+            </div>
+            <aside class="za-preview-panel">
+              <div class="za-preview-heading"><span>PARÇA PARÇA BİR DÜNYA</span><b>Zıtlar buluşur, resim açılır.</b></div>
+              <div id="za-lobby-art" class="za-lobby-art" aria-hidden="true"></div>
+              <div class="wg-how"><strong>Seç, yerleştir, keşfet.</strong><p id="wg-how-text">Parçayı zıt anlamlı sözcüğün yuvasına sürükle. Doğru eşleşince resim açılır. İstersen parçayı seçip yuvaya dokunabilirsin.</p><span>İlk denemede 100 · Tekrar deneyerek 60 · İpucuyla 40 puan</span></div>
+              <ol class="za-route" aria-label="Keşif bölümleri">
+                <li><span class="za-route-art forest" aria-hidden="true"></span><b>6 parça</b><small>Saklı Orman</small></li>
+                <li><span class="za-route-art ocean" aria-hidden="true"></span><b>12 parça</b><small>Mercan Koyu</small></li>
+                <li><span class="za-route-art space" aria-hidden="true"></span><b>20 parça</b><small>Yıldız Bahçesi</small></li>
+              </ol>
+            </aside>
+          </div>
+          <footer class="wg-settings-footer"><p><span aria-hidden="true">✦</span> Her eşleşmeyle yeni bir parça.<small>Birlikte öğren, kendi hızında keşfet.</small></p><button class="wg-primary" type="submit">Oyunu Başlat <span aria-hidden="true">→</span></button></footer>
+        </form>
+      </section>
+      <section id="wg-arena" class="wg-screen wg-arena" aria-label="Oyun alanı" hidden></section>
+      <section id="wg-overlay" class="wg-overlay" role="dialog" aria-modal="true" aria-labelledby="wg-overlay-title" hidden>
+        <div class="wg-dialog"><span class="wg-dialog-icon" id="wg-overlay-icon" aria-hidden="true">✦</span><h2 id="wg-overlay-title"></h2><p id="wg-overlay-copy"></p><div id="wg-overlay-content"></div><div class="wg-dialog-actions" id="wg-overlay-actions"></div></div>
+      </section>
+    </div>
+  </main>
+  <script src="/js/site-data.js"></script>
+  <script src="/js/site.js?v=20261030-icons"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
+  <script src="/js/word-pairs-data.js?v=20261104"></script>
+  <script src="/js/word-jigsaw.js?v=20261104"></script>
+  <script src="/js/word-tower-rules.js?v=20261104"></script>
+  <script src="/js/word-pairs-rules.js?v=20261104"></script>
+  <script src="/js/word-pairs-games.js?v=20261104-lobby"></script>
+  <script src="/js/game-players.js?v=20261105"></script>
+</body>
+</html>

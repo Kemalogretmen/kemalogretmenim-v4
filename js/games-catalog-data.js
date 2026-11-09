@@ -4,6 +4,10 @@
 })(typeof window!=='undefined'?window:this,function(){
   'use strict';
   const covers={
+    'onluk-kaydiragi.html':'onluk-kaydiragi.svg',
+    'sayi-atolyesi.html':'sayi-atolyesi.svg',
+    'zitlar-atolyesi.html':'zitlar-atolyesi.webp',
+    'es-anlam-kuleleri.html':'es-anlam-kuleleri.svg',
     'onluk-basket.html':'onluk-basket.webp',
     'carpim-kanatlari.html':'carpim-kanatlari.webp',
     'esini-bul-hafiza.html':'esini-bul-hafiza.webp',

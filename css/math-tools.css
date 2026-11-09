@@ -23,7 +23,14 @@ body.math-studio-page::before,body.math-studio-page::after{display:none}
 .math-studio-page .measure-shell{display:block}
 .math-studio-layout{display:grid;grid-template-columns:238px minmax(0,1fr);align-items:start;gap:22px}
 .math-ui-icon{display:block;width:28px;height:28px;max-width:none!important;flex-shrink:0;pointer-events:none}
-.math-library{position:sticky;top:14px;border:1px solid #e0e7f1;background:#fff;border-radius:15px;max-height:calc(100dvh - 130px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:16px 10px 12px;box-shadow:0 3px 10px #15356003}
+.math-library{position:sticky;top:14px;display:flex;flex-direction:column;min-height:0;border:1px solid #e0e7f1;background:#fff;border-radius:15px;max-height:min(calc(100vh - 32px),var(--math-library-height,calc(100vh - 130px)));max-height:min(calc(100dvh - 32px),var(--math-library-height,calc(100dvh - 130px)));overflow:hidden;padding:16px 10px 12px;box-shadow:0 3px 10px #15356003}
+.math-library-heading,.math-library-search{flex-shrink:0}
+.math-library-scroll{min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;touch-action:pan-y;scrollbar-width:auto;scrollbar-color:#9aaecb #f1f5fa;scrollbar-gutter:stable;padding:0 3px 6px 0;-webkit-overflow-scrolling:touch}
+.math-library-scroll::-webkit-scrollbar{width:10px}
+.math-library-scroll::-webkit-scrollbar-track{background:#f1f5fa;border-radius:5px}
+.math-library-scroll::-webkit-scrollbar-thumb{background:#9aaecb;border:2px solid #f1f5fa;border-radius:5px}
+#mathToolLibrary{max-height:min(calc(100vh - 32px),var(--math-library-height,calc(100vh - 130px)));max-height:min(calc(100dvh - 32px),var(--math-library-height,calc(100dvh - 130px)));overflow:hidden;scroll-margin-top:110px}
+#mathToolLibrary.is-open{display:flex}
 .math-library-heading{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:700;color:#385171;padding:0 5px;margin:0 0 14px}
 .math-library-heading>.math-ui-icon{width:18px;height:18px;color:#7691b5}
 .math-library-heading small{font-size:9px;padding:3px 5px;background:#f0f4fa;border-radius:5px;margin-left:auto;color:#8a9ab0;font-weight:650}

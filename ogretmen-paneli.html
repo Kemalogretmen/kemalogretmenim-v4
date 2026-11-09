@@ -207,6 +207,7 @@
         <button class="teacher-tab" type="button" data-tab="messages">Mesajlar</button>
         <button class="teacher-tab" type="button" data-tab="library">Kaydettiklerim</button>
         <a class="teacher-tab" href="/ogretmen-ajandasi/index.html" style="text-decoration:none">Öğretmen Ajandası</a>
+        <a class="teacher-tab" href="/ogretmen/hece-akisi.html" style="text-decoration:none">Hece Akışı</a>
         <a class="teacher-tab" href="/ogretmen/akvaryum.html" style="text-decoration:none">🐠 Sınıf Akvaryumu</a>
         <button class="teacher-tab" type="button" data-tab="content">Araçlar</button>
         <button class="teacher-tab" type="button" data-tab="account">Kişisel Bilgiler</button>
@@ -292,6 +293,21 @@
             <h2>Sınıf Listesi</h2>
             <div class="teacher-list" id="classList"></div>
           </article>
+        </div>
+
+        <div class="teacher-panel-card" style="margin-top:16px">
+          <h2>Ajandadan Öğrenci Al</h2>
+          <div class="teacher-two">
+            <div class="teacher-field"><label for="agendaSourceClass">Ajanda sınıfı</label><select id="agendaSourceClass"><option value="">Önce ajanda listesini yükleyin</option></select></div>
+            <div class="teacher-field"><label for="agendaTargetClass">Paneldeki hedef sınıf</label><select id="agendaTargetClass"></select></div>
+          </div>
+          <div class="teacher-row-actions" style="margin-top:12px">
+            <button class="teacher-mini-btn" id="loadAgendaRosterBtn" type="button">Ajanda Listesini Yükle</button>
+            <button class="teacher-mini-btn" id="selectAgendaRosterBtn" type="button">Tümünü Seç</button>
+            <button class="teacher-mini-btn primary" id="importAgendaRosterBtn" type="button" disabled>Seçilenleri Aktar</button>
+          </div>
+          <div id="agendaRosterStatus" role="status" class="teacher-row-sub"></div>
+          <div id="agendaRosterPreview" style="max-height:360px;overflow:auto;margin-top:12px"></div>
         </div>
 
         <div class="teacher-panel-card" style="margin-top:16px">
@@ -487,6 +503,12 @@
               <a class="teacher-link" href="/ogretmen-ajandasi/index.html" style="display:inline-flex;width:max-content;margin-top:12px">Ajandayı Aç</a>
             </article>
             <article class="teacher-action-card">
+              <strong>Hece Akışı</strong>
+              <span>Sabit heceyle otomatik veya dokunarak ilerleyen çalışmalar hazırla, öğrencini seç ve sonuçları kaydet.</span>
+              <span class="teacher-pill ok">Harf ve Hece</span>
+              <a class="teacher-link" href="/ogretmen/hece-akisi.html" style="display:inline-flex;width:max-content;margin-top:12px">Çalışma Hazırla</a>
+            </article>
+            <article class="teacher-action-card">
               <strong>Matematik Araçları</strong>
               <span>Matematik dersleri için pratik araç ve etkinlik ekranları.</span>
               <span class="teacher-pill ok">➗ Matematik</span>
@@ -586,6 +608,6 @@
   <script src="/js/content-feed.js"></script>
   <script src="/js/content-reactions.js"></script>
   <script src="/js/content-saves.js"></script>
-  <script src="/js/ogretmen-paneli.js?v=20261005-auth-fix2"></script>
+  <script src="/js/ogretmen-paneli.js?v=20261103-agenda-roster"></script>
 </body>
 </html>

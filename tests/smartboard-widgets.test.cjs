@@ -24,10 +24,33 @@ test('notes and score edits survive reload; closing a widget removes its saved s
   q.click('[data-widget="score"] [data-sb-action="more"]');
   const data=JSON.parse(q.store.get('kemal_smartboard_addons_v1'));
   assert.equal(data.note.text,note.value);assert.equal(data.score.scores[0],1);
+  assert.equal(q.document.querySelectorAll('[data-widget="score"] button svg.sb-icon').length,9,'all scoreboard controls have embedded SVGs');
   const reload=setup(data);assert.equal(reload.document.querySelector('.sb-note').value,note.value);
   assert.equal(reload.document.querySelector('[data-widget="score"] output').value,1);
   reload.click('[data-widget="note"] [data-sb-action="close"]');
   assert.equal(JSON.parse(reload.store.get('kemal_smartboard_addons_v1')).note,undefined);
+});
+test('scoreboard adds up to twenty teams, preserves names and points, and removes a chosen empty team',()=>{
+  const q=setup();q.tools.open('score');
+  const team=()=>q.document.querySelectorAll('.sb-score-team');
+  q.click('[data-sb-action="more"]');
+  const first=team()[0].querySelector('input');first.value='Yıldızlar';first.dispatchEvent(new q.window.Event('input'));
+  for(let i=0;i<18;i++)q.click('[data-sb-action="add-team"]');
+  assert.equal(team().length,20);assert(q.document.querySelector('[data-sb-action="add-team"]').disabled);
+  q.click('[data-sb-action="add-team"]');assert.equal(team().length,20);
+  const saved=JSON.parse(q.store.get('kemal_smartboard_addons_v1'));const reload=setup(saved);
+  assert.equal(reload.document.querySelectorAll('.sb-score-team').length,20);
+  assert.equal(reload.document.querySelector('.sb-score-team input').value,'Yıldızlar');
+  assert.equal(reload.document.querySelector('.sb-score').value,1);
+  q.document.querySelectorAll('[data-sb-action="remove-team"]')[1].click();assert.equal(team().length,19);
+  assert.equal(team()[0].querySelector('.sb-score').value,1);assert(!q.document.querySelector('[data-sb-action="add-team"]').disabled);
+});
+test('removing a scored team requires confirmation and at least one team remains',()=>{
+  const q=setup();q.tools.open('score');q.click('[data-sb-action="more"]');
+  q.window.confirm=()=>false;q.click('[data-sb-action="remove-team"]');
+  assert.equal(q.document.querySelectorAll('.sb-score-team').length,2);assert.equal(q.document.querySelector('.sb-score').value,1);
+  q.window.confirm=()=>true;q.click('[data-sb-action="remove-team"]');
+  assert.equal(q.document.querySelectorAll('.sb-score-team').length,1);assert(q.document.querySelector('[data-sb-action="remove-team"]').disabled);
 });
 test('running timer catches up after background throttling and releases its interval on close',()=>{
   const q=setup();q.tools.open('timer');q.click('[data-widget="timer"] [data-sb-action="toggle"]');

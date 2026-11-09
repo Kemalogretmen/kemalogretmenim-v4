@@ -12,3 +12,11 @@
 Kontrol: `node --test tests/kizma-birader-dice.test.cjs tests/chance-studio.test.cjs tests/chance-audio.test.cjs`.
 
 Paylaşılan matematik aracı dosyaları bu görevde değiştirilmedi. Dağıtımda yeni zar dosyalarıyla birlikte `chance-studio.js` ve `chance-audio.js` dosyalarının da bulunması gerekir.
+
+## 3 Kasım 2026 düzeltmesi — yerel
+
+Haznedeki CSS zar ve tahtadaki WebGL zar arasında model değişimi kaldırıldı. Hazne, fırlatma, sekme, duruş ve hazneye dönüş boyunca **aynı Three.js mesh** kullanılır. Mevcut tek renderer/canvas, tahta için kırpılmış bir geçiş ve transparan zar katmanı çizer; ikinci WebGL bağlamı açılmaz. Küpün geometrisi, sabit benekleri, büyüklüğü ve yönelimi hareketin başında/sonunda korunur. İlk uçuş artık hazne tabanından yükselir; her iki oyun da gerçek üst menü ve kısayol çubuğu için alan ayırır.
+
+`css/game-viewport.css` ve `js/game-viewport.js` bağımlılıkları eklendi. Oyun başladıktan sonra parkur, tüm oyuncular, zar ve işlem tuşları kullanılabilir pencere yüksekliğinde kalır. Oyun sırasında sayfa altbilgisi gizlenir; üst menü ve kısayol araçları kullanılabilir. Telefon parkur yönü, sadece cihaz genişliğine değil ayrılmış tahta alanının en-boy oranına göre seçilir.
+
+Testler, 6×6 önceki/sonraki zar yüzü kombinasyonunu, başlangıç yöneliminin sürekliliğini, zemin desteğini, geri dönüşü ve aynı sonuçla devam etmeyi kapsar. Genel amaçlı fizik motoru kullanılmadığına ilişkin yukarıdaki sınır geçerlidir. Bu güncelleme canlıya gönderilmedi.

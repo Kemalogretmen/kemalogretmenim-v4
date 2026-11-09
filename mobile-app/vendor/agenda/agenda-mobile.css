@@ -25,8 +25,8 @@ html.kemal-native button:hover { transform:none; }
 html.kemal-native .panel { border:1px solid var(--theme-border);border-radius:18px;box-shadow:none;background:var(--theme-surface);padding:16px; }
 html.kemal-native .panel h3 { font-size:17px; }
 html.kemal-native :is(.grid.two,.grid.three,.report-tools,.calendar-shell) { grid-template-columns:1fr; }
-html.kemal-native .embedded-tool-frame { display:block;border:0;border-radius:0;box-shadow:none;background:var(--theme-bg);min-height:720px;height:calc(100dvh - 180px); }
-html.kemal-native .schedule-focus-panel { display:none; }
+html.kemal-native .embedded-tool-frame { display:block;border:0;border-radius:0;box-shadow:none;background:var(--theme-bg);min-height:0;height:720px; }
+html.kemal-native .schedule-focus-panel { display:grid;grid-template-columns:1fr; }
 html.kemal-native .table-wrap { -webkit-overflow-scrolling:touch; }
 html.kemal-native :is(.modal-head,.modal-body,.modal-foot) { padding:16px; }
 html.kemal-native dialog { max-width:min(640px,calc(100vw - 24px));border-radius:20px;max-height:92dvh;background:var(--theme-surface);color:var(--theme-text); }
