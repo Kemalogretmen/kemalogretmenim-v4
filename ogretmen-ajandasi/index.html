@@ -251,6 +251,20 @@
 
     .badge.cloud-local { background: var(--sun); color: #805f18; }
     .badge.cloud-syncing { background: var(--sky); color: #245f93; }
+    .agenda-save-warning:not([hidden]) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 12px 14px;
+      border: 1px solid #d9a45b;
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .agenda-save-warning p { flex: 1 1 230px; margin: 0; overflow-wrap: anywhere; }
     .badge.cloud-ready { background: var(--mint); color: #176948; }
     .badge.cloud-error { background: var(--rose); color: #9b3350; }
 
@@ -2675,6 +2689,7 @@
         <div>
           <h2 id="pageTitle">Panel</h2>
           <p id="pageSubtitle">Sınıfınızı, öğrencilerinizi ve deneme analizlerinizi tek yerden izleyin.</p>
+          <small id="agendaSaveStatus" role="status">Cihazda kayıt</small>
         </div>
         <div class="top-clock" aria-live="polite">
           <span>Bugün</span>
@@ -2687,6 +2702,10 @@
           <button class="ghost-btn" id="quickAddClassBtn" title="Yeni sınıf ekle">＋ Sınıf</button>
         </div>
       </header>
+      <div class="agenda-save-warning" data-agenda-save-warning hidden>
+        <p data-save-warning-message role="alert"></p>
+        <button class="ghost-btn" type="button" data-download-agenda-backup>JSON Yedeğini İndir</button>
+      </div>
 
       <section id="dashboardView" class="content-view active">
         <div class="dashboard-hero">
@@ -2828,7 +2847,7 @@
               </div>
             </div>
             <div class="actions" style="margin-top:12px">
-              <button class="primary-btn" id="saveSettingsBtn">Aktif Sınıfı Güncelle</button>
+              <button class="ghost-btn" id="saveSettingsBtn">Şimdi Kaydet</button>
               <button class="ghost-btn" id="addClassBtn">＋ Yeni Sınıf Ekle</button>
               <button class="danger-btn" id="deleteClassBtn">Aktif Sınıfı Sil</button>
             </div>
@@ -3098,8 +3117,8 @@
               </div>
             </div>
             <div class="actions" style="margin-top:12px">
-              <button class="primary-btn" id="saveCalendarEventBtn">Takvime Ekle</button>
-              <button class="ghost-btn" id="clearCalendarFormBtn">Temizle</button>
+              <button class="primary-btn" id="saveCalendarEventBtn">Notu Bitir</button>
+              <button class="ghost-btn" id="clearCalendarFormBtn">Yeni Not</button>
             </div>
           </details>
         </div>
@@ -3460,7 +3479,7 @@
           </div>
         </div>
         <div class="actions" style="margin-top:10px">
-          <button class="primary-btn" id="addNoteBtn">Not Ekle</button>
+          <button class="primary-btn" id="addNoteBtn">Notu Bitir</button>
         </div>
         <div id="noteList" class="note-list"></div>
       </div>
@@ -3486,7 +3505,7 @@
           </div>
         </div>
         <div class="actions" style="margin-top:10px">
-          <button class="primary-btn" id="addMeetingBtn">Görüşme Ekle</button>
+          <button class="primary-btn" id="addMeetingBtn">Görüşmeyi Bitir</button>
           <button class="ghost-btn" id="reportStudentMeetingsBtn">Görüşmeleri Raporla</button>
         </div>
         <div id="meetingList" class="note-list"></div>
@@ -3496,14 +3515,18 @@
         <div id="studentAcademic"></div>
       </div>
     </div>
+    <div class="agenda-save-warning" data-agenda-save-warning hidden>
+      <p data-save-warning-message role="alert"></p>
+      <button class="ghost-btn" type="button" data-download-agenda-backup>JSON Yedeğini İndir</button>
+    </div>
     <div class="modal-foot">
       <div class="actions">
         <button class="danger-btn" id="deleteStudentBtn">Öğrenciyi Sil</button>
         <button class="ghost-btn" id="studentSummaryReportBtn">Bilgileri Özetle</button>
       </div>
       <div class="actions">
-        <button class="ghost-btn" id="cancelStudentBtn">Vazgeç</button>
-        <button class="primary-btn" id="saveStudentBtn">Kaydet</button>
+        <button class="ghost-btn" id="cancelStudentBtn">Taslağı Bırak</button>
+        <button class="primary-btn" id="saveStudentBtn">Bitti</button>
       </div>
     </div>
   </dialog>
@@ -3572,6 +3595,6 @@
   <script src="../js/user-auth.js"></script>
   <script src="resmi-tatiller-veri.js"></script>
   <script src="resmi-tatiller.js"></script>
-  <script src="app.js?v=20261110-cloud-recovery"></script>
+  <script src="app.js?v=20261110-agenda-autosave"></script>
 </body>
 </html>

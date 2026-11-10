@@ -312,6 +312,40 @@ test('manual recovery never overwrites a newer concurrent cloud edit or imports 
   assert.equal(h.run('state.students.length'),3);
 });
 
+test('automatic reconnect does not upload over a newer cloud revision or open a replacement dialog', async () => {
+  const h = agenda();
+  h.run(`let writes=0;cloudSync.userId='teacher';cloudSync.enabled=true;cloudSync.pending=true;
+    cloudSync.ready=true;cloudSync.rowChecked=true;cloudSync.rowVersion='local-base';
+    state.updatedAt='2026-11-01T00:00:00Z';
+    fetchCloudRow=async()=>({agenda_state:{...state,students:[],updatedAt:'2026-11-10T00:00:00Z'},updated_at:'remote-change'});
+    cloudSync.client={from:()=>{writes++;throw new Error('Unexpected write');}};
+    confirm=()=>{throw new Error('Unexpected dialog');};`);
+  await h.run('retryPendingCloudSave()');
+  assert.equal(h.run('writes'), 0);
+  assert.equal(h.run('cloudSync.rowVersion'), 'local-base');
+  assert.equal(h.run('cloudSync.pending'), true);
+  assert.equal(h.run('cloudSync.ready'), false);
+  assert.equal(h.run('state.students.length'), 3);
+  assert.match(h.run('cloudSync.lastError'), /sürümü doğrulanamadı/);
+});
+
+test('invalid exam edits are not written by autosave', () => {
+  const h = agenda();
+  h.$('#manualSubjects').value = 'Türkçe';
+  h.$('#manualExamName').value = 'Otomatik sınav';
+  h.run('renderManualExamEntry()');
+  h.counts('s1', 'TÜRKÇE', 7);
+  assert.equal(h.run('saveManualExam({automatic:true})'), true);
+  h.counts('s1', 'TÜRKÇE', -1);
+  h.run('queueManualExamSave()');
+  assert.equal(h.run('flushFormSave("exam")'), false);
+  assert.equal(h.run('state.exams[0].results.s1.total.d'), 7);
+  h.counts('s1', 'TÜRKÇE', 8);
+  assert.equal(h.run('flushFormSave("exam")'), true);
+  assert.equal(h.run('state.exams.length'), 1);
+  assert.equal(h.run('state.exams[0].results.s1.total.d'), 8);
+});
+
 test('recovery failure or a local edit during backup never authorizes a cloud overwrite', async () => {
   const h = agenda();
   h.run(`cloudSync.userId='teacher';cloudSync.enabled=true;let writes=0;

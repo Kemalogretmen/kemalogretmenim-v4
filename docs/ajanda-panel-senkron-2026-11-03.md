@@ -19,6 +19,8 @@ Yalnızca ad-soyad, okul numarası ve kaynak kayıt kimlikleri panelle ilişkile
 
 ## Bulut Uyarısı
 
+Öğrenci profili, öğrenci notu, veli görüşmesi, elle girilen sınav, takvim notu ve sınıf ayarları geçerli alanlar girildiğinde önce cihaza, ardından bağlı öğretmen hesabına otomatik kaydedilir. Aynı açık formda yazmaya devam etmek aynı kaydı günceller. Bağlantı geçici olarak kesilirse eşitleme yeniden denenir; kayıt alınamazsa **JSON Yedeğini İndir** uyarısı görünür. Excel önizleme ve silme onayları otomatik uygulanmaz.
+
 Doğrulanan bulut sürümü artık hesap bazında cihazda saklanır. Başka bir cihazın yeni kaydı eski yerel sürümle otomatik olarak ezilmez.
 
 Önceki sürümden kalan doğrulanamayan kayıtlar için **Buluta Kaydet** mevcut bulut sürümünü yeniden kontrol eder. İki kayıt farklıysa, yerel sürümün bulutun yerine yazılacağı açıkça sorulur. Onay verilirse iki sürüm bu cihazdaki hesap kapsamlı IndexedDB deposuna kaydedilir ve yazma işlemi okunan bulut sürümüyle koşullandırılır. Son yedekler **Yedek → Kurtarma Yedeğini İndir** bölümünden ayrı ayrı indirilebilir. Yedek sırasında kayıt değişirse, yedek alınamazsa veya işlem iptal edilirse hiçbir bulut kaydının üzerine yazılmaz.

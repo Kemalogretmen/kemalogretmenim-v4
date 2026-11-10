@@ -3,6 +3,7 @@
     const CLOUD_SYNC_TABLE = "teacher_agenda_states";
     const CLOUD_SYNC_MAX_BYTES = 6 * 1024 * 1024;
     const CLOUD_SYNC_DEBOUNCE_MS = 2200;
+    const FORM_AUTOSAVE_MS = 700;
     const CLOUD_BACKUP_STORE = "snapshots";
     const SYSTEM_LOGO_SRC = "assets/kemal-kocar-logo-2025.png";
     const SYSTEM_LOGO_DATA_URL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAKMGlDQ1BJQ0MgUHJvZmlsZQAAeJydlndUVNcWh8+9d3qhzTAUKUPvvQ0gvTep0kRhmBlgKAMOMzSxIaICEUVEBBVBgiIGjIYisSKKhYBgwR6QIKDEYBRRUXkzslZ05eW9l5ffH2d9a5+99z1n733WugCQvP25vHRYCoA0noAf4uVKj4yKpmP7AQzwAAPMAGCyMjMCQj3DgEg+Hm70TJET+CIIgDd3xCsAN428g+h08P9JmpXBF4jSBInYgs3JZIm4UMSp2YIMsX1GxNT4FDHDKDHzRQcUsbyYExfZ8LPPIjuLmZ3GY4tYfOYMdhpbzD0i3pol5IgY8RdxURaXky3iWyLWTBWmcUX8VhybxmFmAoAiie0CDitJxKYiJvHDQtxEvBQAHCnxK47/igWcHIH4Um7pGbl8bmKSgK7L0qOb2doy6N6c7FSOQGAUxGSlMPlsult6WgaTlwvA4p0/S0ZcW7qoyNZmttbWRubGZl8V6r9u/k2Je7tIr4I/9wyi9X2x/ZVfej0AjFlRbXZ8scXvBaBjMwDy97/YNA8CICnqW/vAV/ehieclSSDIsDMxyc7ONuZyWMbigv6h/+nwN/TV94zF6f4oD92dk8AUpgro4rqx0lPThXx6ZgaTxaEb/XmI/3HgX5/DMISTwOFzeKKIcNGUcXmJonbz2FwBN51H5/L+UxP/YdiftDjXIlEaPgFqrDGQGqAC5Nc+gKIQARJzQLQD/dE3f3w4EL+8CNWJxbn/LOjfs8Jl4iWTm/g5zi0kjM4S8rMW98TPEqABAUgCKlAAKkAD6AIjYA5sgD1wBh7AFwSCMBAFVgEWSAJpgA+yQT7YCIpACdgBdoNqUAsaQBNoASdABzgNLoDL4Dq4AW6DB2AEjIPnYAa8AfMQBGEhMkSBFCBVSAsygMwhBuQIeUD+UAgUBcVBiRAPEkL50CaoBCqHqqE6qAn6HjoFXYCuQoPQPWgUmoJ+h97DCEyCqbAyrA2bwAzYBfaDw+CVcCK8Gs6DC+HtcBVcDx+D2+EL8HX4NjwCP4dnEYAQERqihhghDMQNCUSikQSEj6xDipFKpB5pQbqQXuQmMoJMI+9QGBQFRUcZoexR3qjlKBZqNWodqhRVjTqCakf1oG6iRlEzqE9oMloJbYC2Q/ugI9GJ6Gx0EboS3YhuQ19C30aPo99gMBgaRgdjg/HGRGGSMWswpZj9mFbMecwgZgwzi8ViFbAGWAdsIJaJFWCLsHuxx7DnsEPYcexbHBGnijPHeeKicTxcAa4SdxR3FjeEm8DN46XwWng7fCCejc/Fl+Eb8F34Afw4fp4gTdAhOBDCCMmEjYQqQgvhEuEh4RWRSFQn2hKDiVziBmIV8TjxCnGU+I4kQ9InuZFiSELSdtJh0nnSPdIrMpmsTXYmR5MF5O3kJvJF8mPyWwmKhLGEjwRbYr1EjUS7xJDEC0m8pJaki+QqyTzJSsmTkgOS01J4KW0pNymm1DqpGqlTUsNSs9IUaTPpQOk06VLpo9JXpSdlsDLaMh4ybJlCmUMyF2XGKAhFg+JGYVE2URoolyjjVAxVh+pDTaaWUL+j9lNnZGVkLWXDZXNka2TPyI7QEJo2zYeWSiujnaDdob2XU5ZzkePIbZNrkRuSm5NfIu8sz5Evlm+Vvy3/XoGu4KGQorBToUPhkSJKUV8xWDFb8YDiJcXpJdQl9ktYS4qXnFhyXwlW0lcKUVqjdEipT2lWWUXZSzlDea/yReVpFZqKs0qySoXKWZUpVYqqoypXtUL1nOozuizdhZ5Kr6L30GfUlNS81YRqdWr9avPqOurL1QvUW9UfaRA0GBoJGhUa3RozmqqaAZr5ms2a97XwWgytJK09Wr1ac9o62hHaW7Q7tCd15HV8dPJ0mnUe6pJ1nXRX69br3tLD6DH0UvT2693Qh/Wt9JP0a/QHDGADawOuwX6DQUO0oa0hz7DecNiIZORilGXUbDRqTDP2Ny4w7jB+YaJpEm2y06TX5JOplWmqaYPpAzMZM1+zArMus9/N9c1Z5jXmtyzIFp4W6y06LV5aGlhyLA9Y3rWiWAVYbbHqtvpobWPNt26xnrLRtImz2WczzKAyghiljCu2aFtX2/W2p23f2VnbCexO2P1mb2SfYn/UfnKpzlLO0oalYw7qDkyHOocRR7pjnONBxxEnNSemU73TE2cNZ7Zzo/OEi55Lsssxlxeupq581zbXOTc7t7Vu590Rdy/3Yvd+DxmP5R7VHo891T0TPZs9Z7ysvNZ4nfdGe/t57/Qe9lH2Yfk0+cz42viu9e3xI/mF+lX7PfHX9+f7dwXAAb4BuwIeLtNaxlvWEQgCfQJ3BT4K0glaHfRjMCY4KLgm+GmIWUh+SG8oJTQ29GjomzDXsLKwB8t1lwuXd4dLhseEN4XPRbhHlEeMRJpEro28HqUYxY3qjMZGh0c3Rs+u8Fixe8V4jFVMUcydlTorc1ZeXaW4KnXVmVjJWGbsyTh0XETc0bgPzEBmPXM23id+X/wMy421h/Wc7cyuYE9xHDjlnIkEh4TyhMlEh8RdiVNJTkmVSdNcN24192Wyd3Jt8lxKYMrhlIXUiNTWNFxaXNopngwvhdeTrpKekz6YYZBRlDGy2m717tUzfD9+YyaUuTKzU0AV/Uz1CXWFm4WjWY5ZNVlvs8OzT+ZI5/By+nL1c7flTuR55n27BrWGtaY7Xy1/Y/7oWpe1deugdfHrutdrrC9cP77Ba8ORjYSNKRt/KjAtKC94vSliU1ehcuGGwrHNXpubiySK+EXDW+y31G5FbeVu7d9msW3vtk/F7OJrJaYllSUfSlml174x+6bqm4XtCdv7y6zLDuzA7ODtuLPTaeeRcunyvPKxXQG72ivoFcUVr3fH7r5aaVlZu4ewR7hnpMq/qnOv5t4dez9UJ1XfrnGtad2ntG/bvrn97P1DB5wPtNQq15bUvj/IPXi3zquuvV67vvIQ5lDWoacN4Q293zK+bWpUbCxp/HiYd3jkSMiRniabpqajSkfLmuFmYfPUsZhjN75z/66zxailrpXWWnIcHBcef/Z93Pd3Tvid6D7JONnyg9YP+9oobcXtUHtu+0xHUsdIZ1Tn4CnfU91d9l1tPxr/ePi02umaM7Jnys4SzhaeXTiXd272fMb56QuJF8a6Y7sfXIy8eKsnuKf/kt+lK5c9L1/sdek9d8XhyumrdldPXWNc67hufb29z6qv7Sern9r6rfvbB2wGOm/Y3ugaXDp4dshp6MJN95uXb/ncun572e3BO8vv3B2OGR65y747eS/13sv7WffnH2x4iH5Y/EjqUeVjpcf1P+v93DpiPXJm1H2070nokwdjrLHnv2T+8mG88Cn5aeWE6kTTpPnk6SnPqRvPVjwbf57xfH666FfpX/e90H3xw2/Ov/XNRM6Mv+S/XPi99JXCq8OvLV93zwbNPn6T9mZ+rvitwtsj7xjvet9HvJ+Yz/6A/VD1Ue9j1ye/Tw8X0hYW/gUDmPP8uaxzGQAAGKtJREFUeNrVe3mUVdWV9++cc99Y9WouoIACFJAWjAJi2w6drhKHRo1GO1U4xCFxIAZFBWSlg1pF+7nSRpdGje0QOw5pMRa90mKMs1QhxjRh0hJBpECQYqjxDfe9O55z9vfHew+qoJikNN9317rrPYq7zn37t/f+7X323gf4Zi/W1NQkmpubDSIyiIgJIcAY6/8QY+Ccg4gYEYnm5majqalJAGD4//BiTU1NgojE/oLmriCAMgAjSktLR0UikZEAKgCEB3qYiHhDQ4PxTYExaIs2NDTwmpoaPn36dKm1zv+5+Kabbpo8efLk04ZVVU0pKy0bG4lGh4VD4WJhGGHOmdCatFLSdV3XtC27I5lKbN3T0dG6vrV11eOPP74WQGcfMERjYyMtWrRI/z+lcSISff5dfPfdd1+xdOlrTevWfbxrT0cnaep/aSKSisiXmqQiUvs/QEQ9vQlq/XR975tvvvXGAw88cDOAqr5ANDQ08L+55E1NTXvNvLq6euxvf/vbB1avWbvDTFt7BbFsV6cztp8yM34ylZbJVFolU2k9wK0SSVMlU2lppi3fsl2VB8Z1fWr99LOel19+5TcXXHDB1L5A/K14ghNRXgNV//ncc7/asGGjmRc6YzkymUrLRNLUKTNDZto66jtlZigHjExnbJkHo23LVtnUtOSlKVOmnAgAQgh8q9bQV+s/v6fhJ6vWrOsgInJ9TYlUxu9NmDqRylAilaFk6uiFT6XSZCZNSqfSlE6lyUyZZCZNSsaTOpVI+a7tEhHRxs82ZB576OFFAEI5DjK+ceGbm5vzLxn53rtv/4lIEhGR8mxfOpbWvkPad0h5NhFJ8jxJyaOxgFSabF9RmoiSOncTUSp3m7nPJJGUOS5ZsWbt6ssuvnhqziWMbywKNDc3G7W1tfJfZs6c3Jhw4YtJzxj++H8tk0nHFYZh9FuHNGFYSRi3XVWDSRPGwbJdcH7oV5FSMAoKsPuz9Ui+ugQs3gsIDggDEKLfzYQBxRgFlFT6xJOM5Oix9gd/+uMt9zQ2vpALvxoAHYlcR4QYERmMMXnrrbdff+fcO55N2Uqc/eNHJFBgQLADX8UZ4PhY9skOfPjMbJSWVUBKHwfJC0BKIVgQxc7NmxCfdQ0quvaAhUL7VET5V2S/EBGIiHGCEbdt1Tbzusi1dy18vqi4+DjGWOPRgGAcieYZY/JnP/v5nNvmzHl0eNVQmv/LFzUQNUJlUUipBmbJWBhf7kxh1fqtuPT8KiRND2IAAIgIgYCBeMZCzz0LUGUmoIcPB4jAOM/ZKNtnqlnhAa0hNWGM74nX/rqSMq6rZt96W4MiVsoYuz2nNHU4EIwjMfv58xfcNHfunY8Wl5QprSUXwuCMEZTSUHrg9QkajAMy//900HACNxzGV43zMGT9WuiKSjDSYEKAcQaw3J3XvgaYJkgAJaTwJgui8vqb2PFDKoUnlX/rrbPnKCKPMXZX3nK/FgBNTU2itrZWXnPNjy6efevsZ8rLK1RvIsUrymIsp4gjcJ3DkIxSYEWF2PKbp1G69BUYFRUgACxggAuRdSXG8l6QXVBpKACFRNjgEjbNuBQLrv4hlJTMlzIgIhH/llk3z08m47sYY4/klXjQeH6wtPbKK69UkydPHn/n3NtfGjN6FJnpNDMMMWhJBymFQFEhvmxuRujxXyJaWgrNGLghwA0BZnAwQ4AJAQiecwcGYgxBAHHPx59OOg033Ho7DNKQSkEIAdu2jXAkKm+84caHr7766vPPOeccmdtYHTEArLGxkSmlAv/2f+5/ecrkU4qSqbQWQvDBE14jGI1g15at8BoWoCRgQBkGeF+heXbXmPUAts+kiCB8Hy9XVuOSuXdhZHkZbNcD59mfJ4Rg6XSajx5VTbNnz3kxGo0Orauro4MlS3yg3RdjTD3w4IP3XHzRhaemM7YUQohBEz5PepaN7p/PRWWiByp6CNLrl+ll/X4pQqi6cTbOOe1UJM00joaThRDcdjx96tRTx82eM+cixhg1NDSIfgA0NjZyAKi/4orrjj9utPB8Xw2W9gUAn3F8dd89GPLpGlBJjvQMcRDSy/q91BoxpbDSVei4pB5XX3YZzHQGXycgSSmpKFZA59ZOvyEnL/UFgAFQAAITT5x4edZi9eDEfKWBWDG2L34Bpa81QZRXACxPegP4fc5dlNIIKY1220XLtH/ETTfPgvK8r138ISIhlWbjxo+vra6uHs45V3nl87q6Os4Yo0suuWTq2LHjxjquT4yxYwaAtAaiUexu/RjiqV8hWlwCzbDX7A8kvazfa63BtIZ0XDSNGIcr75yP0oIoPCm/Nidxzpnr+WrcuHHRa6+99jwi2ltF4j/96U8ZAJx77vnTh1cNg5RyUMyfEQGhEJy3X0dR2oQKhcA5zwo/EOnl/F5rQtRz8VK4GKfPmYfvHD8G6Ww4PjYeVorCoQBOnjz5vL5uwGtqaggARo8ZcxZjgNZ6UJyfkPXloYkekBBZRfN8Ts/3y/Tyfk8o9D28gyjKb5qNi/7xbKRSaQxGIpqvYQ4fPmIaAGEYhgLAeO5LoHJI5cTB7hUgC2hOTpZdmQ2wZSQNpTVCvosdIop7x9SjsPw4MGjIAoG7duvXgx93D//SJ1wHoIy1nNTU18HwUqb6+/rvvvve+EyrKzvc2SBX1RWtVLjc3N9u7+S1ScMYYw/fy//fhhx9mSCrZt8l0rRZrk+1KZTDjm9hclUyldQ9FTkoqcp1JHl2r0rNSomlaSMrMeg7fIaKQnl27KF7IuDJ+5Eokbdq48XG5HkSPwU0ZfujQIfz73/9GZ2cnJk2aBLfbjR07duDjjz/GzTffjJCQEGzdupXhw4dj9erVCAgIQFVVFfbv349ly5YhJSUFa9asweHDhwFg5MiR8PLywh//+EeMGjUKZ86cgUqlQps2bTBhwgSMHz8e0dHR2Lp1K1auXIkjR45g+fLlWL58OY4dO4axY8fi9OnTePbZZ3HkyBE8/PDDmDBhAm655RYMGDAA1dXVWLJkCfbs2YMyMjIwZMgQHD16FLt27cL06dMxY8YM3L59G9u3b8eECRPw9fUFgAEDBqCwsBCbN2/Gpk2b8N133+Hq1at49NFH8frrr+O5557D3Llz8eSTT2L06NGYPHkyVq9ejZUrV2L58uVYs2YNBg0ahAULFqB///74+OOP8dlnn2HAgAFYt24dpk2bhhdeeAHHjx/HokWL8PTpUzz55JOYMGECJk+ejC1btqB58+Y4fvw4unTpgu7du6O0tBQzZsxAZmYmBg8ejMTERKxcuRKrVq3CjBkz8Nlnn+HLL7/Eo48+ij179mD+/PkYMWIEunTpguHDh+PJJ5/EokWL8Pnnn+PSpUv4+OOP8fzzz+P555/HhAkTcOedd+Lw4cPYtm0bNmzYgK5du+L999/H+vXr8eyzz+L777/HqFGj8Nprr2Hq1KlYuHAhpk+fjgULFuD8+fPYtWsXHn/8cQwZMgTbtm3Drl278Oabb2LRokUYP348nnjiCZw9exYHDx7EsmXL8Pjjj2P8+PGYOXMmFixYgOXLl+PQoUM4fvw4Jk2ahIULF+LDDz/EqFGj8NBDD2H69Ol48skn8cILL+CKK67A4sWL8frrr+Pll1/GkSNH8Oijj+Lw4cPYvXs3Nm7ciKFDh+L555/HsGHD8OCDD+LQoUMYMWIEBg8ejODgYHz77bfYuHEjHn/8cWzatAkjR47EkiVL8Nprr2Hw4MF4+OGH8eyzz2L27NmYOHEiVq1ahf379+P111/Hrl27MHnyZLz88stYu3YtBg8ejK5du+L999/H4cOH8e677+LXX3/FmDFj8OCDD+LQoUMYMWIEtm/fjv379+P555/Hxo0b8fjjj+PQoUP4+uuv8eSTT+Lw4cPYu3cvrrjiCixatAjPPvss3n33XQwYMAA///wzbr31VowZMwYbN27E4sWL8eSTT+LkyZPYuHEjHn/8cSxatAiLFy/Gs88+i8TERHzzzTfYuHEjRo0ahU2bNuH48eOYOHEiBg8ejB49emD+/PkoKChAly5d8NRTT+H555/HsGHD8OCDD2LlypUYP348hg0bht69e+P999/H3Llz8cgjj+D111/HmTNn8OCDD+Lll1/G8uXL8fzzz+PQoUP44osv8OCDD2L27NmYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYODf5f8BUkRqbtB0q6MAAAAASUVORK5CYII=";
@@ -31,6 +32,12 @@
     let manualDraft = {};
     let manualDraftClassId = null;
     let manualDraftDirty = false;
+    let calendarDraftId = null;
+    const studentEntryIds = { notes: null, meetings: null };
+    const pendingFormSaves = new Map();
+    let localSaveError = "";
+    let failedAgendaBackup = null;
+    let failedPlannerBackup = null;
     let studentPhotoProcessing = false;
     let teacherPhotoProcessing = false;
     let cropState = null;
@@ -58,6 +65,8 @@
       lastSavedAt: "",
       lastLoadedAt: "",
       lastError: "",
+      pending: false,
+      retryCount: 0,
       rowVersion: null,
       rowChecked: false
     };
@@ -137,7 +146,7 @@
       });
 
       els.activeClassSelect.addEventListener("change", () => {
-        if (!canDiscardManualExam()) { els.activeClassSelect.value = state.activeClassId; return; }
+        if (!finishClassEditing()) { els.activeClassSelect.value = state.activeClassId; return; }
         resetManualExam();
         state.activeClassId = els.activeClassSelect.value;
         selectedStudentIds.clear();
@@ -176,9 +185,15 @@
       els.selectAllStudents.addEventListener("change", toggleSelectAllStudents);
       els.clearStudentSelectionBtn.addEventListener("click", clearStudentSelection);
       els.deleteSelectedStudentsBtn.addEventListener("click", deleteSelectedStudents);
-      els.closeStudentDialogBtn.addEventListener("click", () => els.studentDialog.close());
-      els.cancelStudentBtn.addEventListener("click", () => els.studentDialog.close());
-      els.saveStudentBtn.addEventListener("click", saveStudentFromDialog);
+      els.closeStudentDialogBtn.addEventListener("click", closeStudentEditor);
+      els.cancelStudentBtn.addEventListener("click", () => {
+        const keys = ["student", "note", "meeting"];
+        if (keys.some(key => pendingFormSaves.has(key)) && !confirm("Henüz kaydedilmemiş alanlar bırakılsın mı? Önceden kaydedilen değişiklikler kalır.")) return;
+        keys.forEach(clearFormSave);
+        els.studentDialog.close();
+      });
+      els.studentDialog.addEventListener("cancel", (event) => { event.preventDefault(); closeStudentEditor(); });
+      els.saveStudentBtn.addEventListener("click", closeStudentEditor);
       els.deleteStudentBtn.addEventListener("click", deleteStudentFromDialog);
       els.studentPhoto.addEventListener("change", handlePhotoUpload);
       els.studentPhotoFit.addEventListener("change", updatePhotoPreviewSettings);
@@ -211,7 +226,7 @@
         resetManualExam(); renderManualExamSelectors();
       });
       els.manualClass.addEventListener("change", () => {
-        if (!canDiscardManualExam()) { els.manualClass.value = state.activeClassId; return; }
+        if (!finishClassEditing()) { els.manualClass.value = state.activeClassId; return; }
         resetManualExam();
         state.activeClassId = els.manualClass.value;
         selectedStudentIds.clear();
@@ -225,13 +240,21 @@
       });
       [els.manualSubjects, els.manualSubjectPoints, els.manualMaxScore, els.manualWrongPenalty,
         els.manualExamName, els.manualExamType, els.manualExamDate, els.manualExamScope, els.manualShowRankings].forEach(input => {
-        input.addEventListener('input', () => { manualDraftDirty = true; });
+        input.addEventListener("input", queueManualExamSave);
+        input.addEventListener("change", queueManualExamSave);
       });
       window.addEventListener('beforeunload', event => {
-        if (!manualDraftDirty) return;
+        flushFormSaves();
+        if (!pendingFormSaves.size && !localSaveError && !failedPlannerBackup) return;
         event.preventDefault();
         event.returnValue = '';
       });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) return;
+        flushFormSaves();
+        if (cloudSync.pending && cloudSync.ready) void saveCloudNow();
+      });
+      window.addEventListener("online", retryPendingCloudSave);
       els.reportStudent.addEventListener("change", () => { updateSubjectPicker(); buildReport(); });
       els.reportExam.addEventListener("change", () => { renderReportOptions(); updateSubjectPicker(); buildReport(); });
       document.querySelectorAll('[data-report-mode]').forEach(button => button.addEventListener('click', () => {
@@ -271,6 +294,7 @@
       els.shareWhatsappBtn.addEventListener("click", shareReportWhatsapp);
       els.exportBackupBtn.addEventListener("click", exportBackup);
       document.getElementById("exportCloudRecoveryBtn")?.addEventListener("click", exportCloudRecovery);
+      document.querySelectorAll("[data-download-agenda-backup]").forEach(button => button.addEventListener("click", exportBackup));
       els.importBackupBtn.addEventListener("click", importBackup);
       els.clearAllBtn.addEventListener("click", clearAllData);
       els.cloudSaveNowBtn?.addEventListener("click", () => saveCloudNow({ manual: true }));
@@ -296,7 +320,7 @@
       els.requestNotificationBtn.addEventListener("click", requestNotificationPermission);
       els.calendarEventDate.addEventListener("change", () => selectCalendarDate(els.calendarEventDate.value || today()));
       els.saveCalendarEventBtn.addEventListener("click", saveCalendarEvent);
-      els.clearCalendarFormBtn.addEventListener("click", clearCalendarForm);
+      els.clearCalendarFormBtn.addEventListener("click", () => { if (flushFormSave("calendar")) clearCalendarForm(); });
       els.closeBirthdayDialogBtn.addEventListener("click", closeBirthdayDialog);
       els.birthdayLaterBtn.addEventListener("click", closeBirthdayDialog);
       els.birthdaySeenBtn.addEventListener("click", markBirthdayPopupSeen);
@@ -308,6 +332,39 @@
       document.querySelectorAll(".tab-btn").forEach((button) => {
         button.addEventListener("click", () => activateTab(button.dataset.tab));
       });
+      const watch = (fields, key, save) => fields.filter(Boolean).forEach(field => {
+        ["input", "change"].forEach(event => field.addEventListener(event, () => queueFormSave(key, save)));
+      });
+      watch([els.teacherName, els.schoolName, els.className, els.classYear], "settings", () => saveSettingsAndClass({ automatic: true }));
+      watch([...els.studentDialog.querySelectorAll("#tabPersonal input:not([type=file]), #tabFamily input, #tabFamily select, #tabFamily textarea, #tabHealth textarea, #tabPersonal select, #tabPersonal textarea")], "student", saveStudentFromDialog);
+      watch([els.noteText, els.noteDate], "note", () => addNoteToStudent({ automatic: true }));
+      watch([els.meetingText, els.meetingDate, els.meetingType], "meeting", () => addMeetingToStudent({ automatic: true }));
+      watch([els.calendarEventDate, els.calendarEventType, els.calendarEventTime, els.calendarEventTitle, els.calendarReminder, els.calendarEventNote], "calendar", () => saveCalendarEvent({ automatic: true }));
+    }
+
+    function queueFormSave(key, save) {
+      clearTimeout(pendingFormSaves.get(key)?.timer);
+      pendingFormSaves.set(key, { save, timer: setTimeout(() => flushFormSave(key), FORM_AUTOSAVE_MS) });
+      renderCloudSyncStatus();
+    }
+
+    function clearFormSave(key) {
+      clearTimeout(pendingFormSaves.get(key)?.timer);
+      pendingFormSaves.delete(key);
+    }
+
+    function flushFormSave(key) {
+      const job = pendingFormSaves.get(key);
+      if (!job) return true;
+      clearTimeout(job.timer);
+      if (job.save() === false) return false;
+      clearFormSave(key);
+      renderCloudSyncStatus();
+      return true;
+    }
+
+    function flushFormSaves() {
+      for (const key of pendingFormSaves.keys()) flushFormSave(key);
     }
 
     function loadState() {
@@ -345,13 +402,23 @@
       if (!options.preserveTimestamp) state.updatedAt = new Date().toISOString();
       try {
         localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        if (localSaveError && !options.skipCloud && pendingFormSaves.size <= 1) {
+          localSaveError = "";
+          failedAgendaBackup = null;
+          renderCloudSyncStatus();
+        }
         if (!options.skipCloud) queueCloudSave();
         return true;
       } catch (error) {
         console.error(error);
         const message = error?.name === "QuotaExceededError"
-          ? "Tarayıcı depolama alanı doldu. Fotoğraflar artık otomatik küçültülüyor; eski büyük fotoğrafları yenileriyle değiştirip tekrar deneyin veya Yedek bölümünden yedek alıp veriyi temizleyin."
-          : "Veriler kaydedilemedi. Lütfen tekrar deneyin.";
+          ? "Tarayıcı depolama alanı doldu. Sayfayı kapatmadan ajanda yedeğini indirin."
+          : "Değişiklikler bu cihaza kaydedilemedi. Sayfayı kapatmadan ajanda yedeğini indirin.";
+        if (!options.skipCloud) {
+          failedAgendaBackup = buildCloudSnapshot();
+          localSaveError = message;
+          renderCloudSyncStatus();
+        }
         toast(message);
         return false;
       }
@@ -405,6 +472,7 @@
     }
 
     function disableCloudSync(status, detail) {
+      const interrupted = cloudSync.enabled && cloudSync.pending;
       clearTimeout(cloudSync.timer);
       cloudSync.saveAgain = false;
       cloudSync.ready = false;
@@ -413,7 +481,8 @@
       cloudSync.userId = "";
       cloudSync.rowVersion = null;
       cloudSync.rowChecked = false;
-      setCloudSyncStatus("local", status, detail);
+      if (interrupted) setCloudSyncError("Bulut oturumu kapandı. Cihazdaki kayıt korunuyor; yeniden giriş yapın veya yedeğini indirin.");
+      else setCloudSyncStatus("local", status, detail);
     }
 
     async function reconcileCloudState(options = {}) {
@@ -430,6 +499,7 @@
         if (!row) {
           acceptCloudVersion(null);
           cloudSync.ready = true;
+          if (cloudSync.pending && localHasMeaningfulAgenda()) { queueCloudSave(); return; }
           setCloudSyncStatus("ready", "Bulut hazır", localHasMeaningfulAgenda()
             ? "Bu cihazdaki kayıt ilk değişiklikte buluta aktarılacak. İsterseniz Şimdi Buluta Kaydet düğmesini kullanın."
             : "Bu öğretmen hesabı için henüz bulut ajandası yok.");
@@ -439,15 +509,22 @@
         if (cloudSnapshotMatches(row)) {
           acceptCloudVersion(row);
           cloudSync.ready = true;
+          cloudSync.pending = false;
+          cloudSync.retryCount = 0;
           cloudSync.lastSavedAt = row.updated_at || row.client_updated_at || "";
           setCloudSyncStatus("ready", "Bulut güncel", `Son kayıt: ${formatCloudDate(row.updated_at || row.client_updated_at)} · ${formatBytes(row.storage_bytes || 0)}.`);
+          return;
+        }
+        if (localHasMeaningfulAgenda() && cloudSync.rowChecked && cloudSync.rowVersion === row.updated_at) {
+          cloudSync.ready = true;
+          await saveCloudNow({ silent: true });
           return;
         }
         const remoteTime = remoteUpdatedTime(row);
         const localTime = Date.parse(state.updatedAt || "") || 0;
         // Opening the page creates a default class. That initialization must
         // never win against a real cloud record just because its clock is newer.
-        if (!localHasMeaningfulAgenda() || (remoteTime && remoteTime > localTime + 2000)) {
+        if (!localHasMeaningfulAgenda() || (!options.retry && remoteTime && remoteTime > localTime + 2000)) {
           const shouldAsk = localHasMeaningfulAgenda() && localTime;
           const shouldLoad = !shouldAsk || confirm("Bulutta bu cihazdakinden daha yeni bir Öğretmen Ajandası kaydı var. Buluttaki veriyi bu cihaza yükleyelim mi? Mevcut yerel kayıt güvenlik yedeği olarak saklanacak.");
           if (shouldLoad) {
@@ -463,31 +540,53 @@
           return;
         }
 
-        // Only the revision that actually produced our local document can
-        // authorize an autosave. A newer device clock is not proof of that.
-        if (cloudSync.rowChecked && cloudSync.rowVersion === row.updated_at) {
-          cloudSync.ready = true;
-          await saveCloudNow({ silent: true });
-          return;
-        }
+        // A newer device clock cannot establish the local document's lineage.
         cloudSync.ready = false;
         setCloudSyncError("Bu cihazdaki ajandanın bulut sürümü doğrulanamadı. Yerel kayıt korundu; Yedek bölümünden yedek alıp son bulut kaydını yükleyin. Cihaz saati tek başına buluttaki kaydın üzerine yazılmasına izin vermez.");
       } catch (error) {
         if (userId !== cloudSync.userId) return;
         console.warn(error);
         setCloudSyncError(cloudErrorMessage(error));
+        scheduleCloudRetry(error);
       }
     }
 
     function queueCloudSave() {
-      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId || !cloudSync.ready || cloudSync.applyingRemote) return;
+      cloudSync.pending = true;
+      if (!cloudSync.enabled || !cloudSync.client || !cloudSync.userId || cloudSync.applyingRemote) return;
       // Edits/deletions made during a slow request need a second snapshot.
       if (cloudSync.saving) { cloudSync.saveAgain = true; return; }
+      if (!cloudSync.ready) return;
       clearTimeout(cloudSync.timer);
       cloudSync.timer = setTimeout(() => {
-        saveCloudNow({ queued: true });
+        if (cloudSync.pending) void saveCloudNow({ queued: true });
       }, CLOUD_SYNC_DEBOUNCE_MS);
       setCloudSyncStatus("syncing", "Buluta kaydedilecek", "Değişiklikler birkaç saniye içinde öğretmen hesabınıza aktarılır.");
+    }
+
+    function retryPendingCloudSave() {
+      if (!cloudSync.enabled || !cloudSync.pending || cloudSync.saving || cloudSync.loading || cloudSync.applyingRemote) return;
+      clearTimeout(cloudSync.timer);
+      // Re-read first: the previous write might have completed after a timeout.
+      return reconcileCloudState({ silent: true, retry: true });
+    }
+
+    function scheduleCloudRetry(error) {
+      if (!cloudSync.pending || !isCloudConnectionError(error) || cloudSync.retryCount >= 3) return;
+      const delay = 4000 * (2 ** cloudSync.retryCount++);
+      clearTimeout(cloudSync.timer);
+      cloudSync.timer = setTimeout(retryPendingCloudSave, delay);
+    }
+
+    function isCloudConnectionError(error) {
+      return /abort|fetch|network|time.?out|connection|50[234]|522/i.test(String(error?.message || error || ""));
+    }
+
+    function cloudRequest(query) {
+      if (typeof query.abortSignal !== "function") return query.maybeSingle();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      return Promise.resolve(query.abortSignal(controller.signal).maybeSingle()).finally(() => clearTimeout(timeout));
     }
 
     async function saveCloudNow(options = {}) {
@@ -552,7 +651,7 @@
         query = expectedRevision
           ? query.update(payload).eq("user_id", userId).eq("updated_at", expectedRevision)
           : query.insert(payload);
-        const result = await query.select("updated_at,storage_bytes").maybeSingle();
+        const result = await cloudRequest(query.select("updated_at,storage_bytes"));
         if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
         if (result.error && result.error.code !== "23505") throw result.error;
         if (!result.data) {
@@ -561,6 +660,8 @@
         }
         acceptCloudVersion(result.data);
         cloudSync.ready = true;
+        cloudSync.pending = cloudSync.saveAgain;
+        cloudSync.retryCount = 0;
         cloudSync.lastSavedAt = result.data?.updated_at || new Date().toISOString();
         setCloudSyncStatus("ready", "Buluta kaydedildi", `Son kayıt: ${formatCloudDate(cloudSync.lastSavedAt)} · Veri: ${formatBytes(result.data?.storage_bytes || bytes)}.`);
         if (options.manual) toast("Ajanda buluta kaydedildi.");
@@ -568,7 +669,9 @@
       } catch (error) {
         if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
         console.warn(error);
+        cloudSync.pending = true;
         setCloudSyncError(cloudErrorMessage(error));
+        scheduleCloudRetry(error);
         if (options.manual) toast(cloudErrorMessage(error));
         return false;
       } finally {
@@ -588,6 +691,11 @@
         return false;
       }
       if (cloudSync.loading || cloudSync.saving || cloudSync.applyingRemote) return false;
+      flushFormSaves();
+      if (pendingFormSaves.size || localSaveError || failedPlannerBackup) {
+        if (options.manual) toast("Tamamlanmamış veya kaydedilememiş değişiklikler var. Önce onları tamamlayın ya da yedek alın.");
+        return false;
+      }
       const userId = cloudSync.userId;
       cloudSync.loading = true;
       try {
@@ -630,11 +738,10 @@
     }
 
     async function fetchCloudRow() {
-      const result = await cloudSync.client
+      const result = await cloudRequest(cloudSync.client
         .from(CLOUD_SYNC_TABLE)
         .select("agenda_state,lesson_planner_state,client_updated_at,updated_at,storage_bytes")
-        .eq("user_id", cloudSync.userId)
-        .maybeSingle();
+        .eq("user_id", cloudSync.userId));
       if (result.error) throw result.error;
       if (result.data && (!result.data.agenda_state ||
           !Array.isArray(result.data.agenda_state.classes) || !Array.isArray(result.data.agenda_state.students) ||
@@ -697,6 +804,9 @@
         throw new Error("Buluttaki ajanda kaydı geçerli görünmüyor.");
       }
       if (cloudSync.applyingRemote) return false;
+      if (pendingFormSaves.size || localSaveError || failedPlannerBackup) {
+        throw new Error("Kaydedilmemiş değişiklikler nedeniyle bulut sürümü yüklenmedi. Cihazdaki kayıt korunuyor.");
+      }
       const userId = cloudSync.userId;
       const client = cloudSync.client;
       const ownerKey = `${STORE_KEY}.owner`;
@@ -711,7 +821,7 @@
           await writeCloudRecovery(backupOwner, snapshot, backupOwner === userId ? row : null);
         }
         if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
-        if (localStorage.getItem(ownerKey) !== owner ||
+        if (pendingFormSaves.size || localSaveError || failedPlannerBackup || localStorage.getItem(ownerKey) !== owner ||
             localStorage.getItem(STORE_KEY) !== storedAgenda ||
             localStorage.getItem(LESSON_PLANNER_STORE_KEY) !== storedPlanner ||
             JSON.stringify(snapshot) !== JSON.stringify(buildCloudSnapshot())) {
@@ -729,6 +839,8 @@
         ensureInitialClass();
         renderAll();
         acceptCloudVersion(row);
+        cloudSync.pending = false;
+        cloudSync.retryCount = 0;
         return true;
       } finally {
         cloudSync.applyingRemote = false;
@@ -848,10 +960,25 @@
       if (text.includes("JWT") || error?.code === "42501") {
         return "Oturum doğrulanamadı. Tekrar giriş yaptıktan sonra bulut senkronu deneyin.";
       }
+      if (isCloudConnectionError(error)) {
+        return "Bulut bağlantısı kesildi. Cihazdaki kayıt korunuyor; bağlantı geri geldiğinde tekrar denenecek.";
+      }
       return text || "Bulut senkron sırasında beklenmeyen bir hata oluştu.";
     }
 
     function renderCloudSyncStatus() {
+      const warning = localSaveError || (failedPlannerBackup ? "Ders planı bu cihaza kaydedilemedi. Sayfayı kapatmadan yedeğini indirin." : cloudSync.lastError);
+      document.querySelectorAll("[data-agenda-save-warning]").forEach(box => {
+        box.hidden = !warning;
+        const message = box.querySelector("[data-save-warning-message]");
+        if (message.textContent !== warning) message.textContent = warning;
+      });
+      const indicator = document.getElementById("agendaSaveStatus");
+      if (indicator) {
+        const text = warning ? "Kayıt uyarısı" : pendingFormSaves.size ? "Düzenleniyor" : cloudSync.enabled
+          ? cloudSync.status : "Cihazda kayıt";
+        if (indicator.textContent !== text) indicator.textContent = text;
+      }
       const badge = els.cloudSyncBadge;
       if (badge) {
         badge.textContent = cloudSync.status || "Yerel mod";
@@ -859,7 +986,7 @@
       }
       if (els.cloudSyncStatus) {
         els.cloudSyncStatus.textContent = cloudSync.enabled
-          ? "Kayıtlı öğretmen hesabı ile bulut senkron açık."
+          ? "Değişiklikler öğretmen hesabına otomatik kaydedilir."
           : "Giriş yapılmazsa veriler bu tarayıcıda kalır.";
       }
       if (els.cloudSyncDetail) {
@@ -987,11 +1114,12 @@
 
     function renderSettings() {
       const current = activeClass();
-      els.teacherName.value = current?.teacherName || state.teacher?.name || "";
-      els.schoolName.value = state.teacher?.schoolName || "";
-      els.classYear.value = current?.year || "2025-2026";
-      els.className.value = current?.name || "";
-      els.newClassName.value = "";
+      if (!pendingFormSaves.has("settings")) {
+        els.teacherName.value = current?.teacherName || state.teacher?.name || "";
+        els.schoolName.value = state.teacher?.schoolName || "";
+        els.classYear.value = current?.year || "2025-2026";
+        els.className.value = current?.name || "";
+      }
       renderTeacherPhoto();
       renderSchoolLogo();
       renderClassManager();
@@ -1035,7 +1163,8 @@
     }
 
     function selectClassFromPanel(classId) {
-      if (!state.classes.some((item) => item.id === classId)) return;
+      if (!state.classes.some((item) => item.id === classId) || classId === state.activeClassId || !finishClassEditing()) return;
+      resetManualExam();
       state.activeClassId = classId;
       selectedStudentIds.clear();
       saveState();
@@ -1405,6 +1534,8 @@
     }
 
     function openStudentDialog(studentId = null) {
+      ["student", "note", "meeting"].forEach(clearFormSave);
+      studentEntryIds.notes = studentEntryIds.meetings = null;
       editingStudentId = studentId;
       const student = studentId ? state.students.find((item) => item.id === studentId) : blankStudent();
       if (!student) return;
@@ -1659,7 +1790,7 @@
       els.photoCropDialog.close();
       studentPhotoProcessing = false;
       updatePhotoPreviewSettings();
-      toast("Fotoğraf kırpıldı. Kaydet düğmesiyle öğrenciye işleyebilirsiniz.");
+      queueFormSave("student", saveStudentFromDialog);
     }
 
     function updatePhotoPreviewSettings() {
@@ -1724,23 +1855,23 @@
       }
     }
 
+    function closeStudentEditor() {
+      if (!["student", "note", "meeting"].every(flushFormSave)) {
+        if (!localSaveError) toast("Tamamlanmamış alanlar var. Öğrenci için en az ad veya soyad gerekli.");
+        return;
+      }
+      els.studentDialog.close();
+    }
+
     function saveStudentFromDialog() {
       if (studentPhotoProcessing) {
-        toast("Fotoğraf hazırlanıyor. Lütfen birkaç saniye sonra tekrar kaydedin.");
-        return;
+        return false;
       }
       if (!els.studentFirstName.value.trim() && !els.studentLastName.value.trim()) {
-        toast("Öğrencinin adını veya soyadını yazın.");
-        return;
+        return false;
       }
-      let student = editingStudentId ? state.students.find((item) => item.id === editingStudentId) : null;
-      const createdNow = !student;
-      if (!student) {
-        student = blankStudent();
-        state.students.push(student);
-        editingStudentId = student.id;
-      }
-      student.classId = state.activeClassId;
+      const existing = state.students.find(item => item.id === editingStudentId);
+      const student = { ...(existing || blankStudent()) };
       student.schoolNo = els.studentNo.value.trim();
       student.firstName = cleanName(els.studentFirstName.value);
       student.lastName = cleanName(els.studentLastName.value).toLocaleUpperCase("tr-TR");
@@ -1774,24 +1905,30 @@
       student.healthStatus = els.healthStatus.value.trim();
       if (els.photoPreview.dataset.photo) {
         student.photo = els.photoPreview.dataset.photo;
-        delete els.photoPreview.dataset.photo;
       }
+      if (existing && JSON.stringify(existing) === JSON.stringify(student)) return true;
+      const before = state.students;
+      state.students = existing ? before.map(item => item === existing ? student : item) : [...before, student];
       if (!saveState()) {
-        if (createdNow) {
-          state.students = state.students.filter((item) => item.id !== student.id);
-          editingStudentId = null;
-        }
-        return;
+        state.students = before;
+        return false;
       }
-      toast("Öğrenci kaydedildi.");
-      els.studentDialog.close();
-      renderAll();
+      editingStudentId = student.id;
+      delete els.photoPreview.dataset.photo;
+      els.studentDialogTitle.textContent = fullName(student);
+      els.deleteStudentBtn.style.visibility = "visible";
+      renderStudents();
+      renderDashboard();
+      renderReportSelectors();
+      renderManualExamSelectors();
+      return true;
     }
 
     function deleteStudentFromDialog() {
       if (!editingStudentId) return;
       const student = state.students.find((item) => item.id === editingStudentId);
       if (!student || !confirm(`${fullName(student)} silinsin mi? Bu öğrencinin kişisel bilgileri silinir, sınav geçmişi sınav kayıtlarından da kaldırılır.`)) return;
+      ["student", "note", "meeting"].forEach(clearFormSave);
       deleteStudentsByIds([editingStudentId]);
       selectedStudentIds.delete(editingStudentId);
       els.studentDialog.close();
@@ -1799,35 +1936,37 @@
       toast("Öğrenci silindi.");
     }
 
-    function addNoteToStudent() {
-      const student = state.students.find((item) => item.id === editingStudentId);
-      if (!student || !els.noteText.value.trim()) return;
-      student.notes = student.notes || [];
-      student.notes.unshift({ id: uid("note"), date: els.noteDate.value || today(), text: els.noteText.value.trim() });
-      els.noteText.value = "";
-      saveState();
-      renderStudentNotes(student);
-      renderDashboard();
-      renderReportSelectors();
-      toast("Not eklendi.");
+    function addNoteToStudent(options = {}) {
+      return saveStudentEntry("notes", "note", els.noteText, { date: els.noteDate.value || today() }, options);
     }
 
-    function addMeetingToStudent() {
-      const student = state.students.find((item) => item.id === editingStudentId);
-      if (!student || !els.meetingText.value.trim()) return;
-      student.meetings = student.meetings || [];
-      student.meetings.unshift({
-        id: uid("meeting"),
-        date: els.meetingDate.value || today(),
-        type: els.meetingType.value,
-        text: els.meetingText.value.trim()
-      });
-      els.meetingText.value = "";
-      saveState();
-      renderStudentMeetings(student);
+    function addMeetingToStudent(options = {}) {
+      return saveStudentEntry("meetings", "meeting", els.meetingText, { date: els.meetingDate.value || today(), type: els.meetingType.value }, options);
+    }
+
+    function saveStudentEntry(list, key, field, details, options) {
+      const text = field.value.trim();
+      if (!text) return true;
+      if (!editingStudentId && !flushFormSave("student")) return false;
+      const student = state.students.find(item => item.id === editingStudentId);
+      if (!student) return false;
+      const previous = student[list] || [];
+      const existing = previous.find(item => item.id === studentEntryIds[list]);
+      const entry = { id: existing?.id || uid(key), ...details, text };
+      if (!existing || JSON.stringify(existing) !== JSON.stringify(entry)) {
+        student[list] = existing ? previous.map(item => item === existing ? entry : item) : [entry, ...previous];
+        if (!saveState()) { student[list] = previous; return false; }
+      }
+      studentEntryIds[list] = options.automatic ? entry.id : null;
+      if (!options.automatic) {
+        field.value = "";
+        clearFormSave(key);
+      }
+      if (list === "notes") renderStudentNotes(student);
+      else renderStudentMeetings(student);
       renderDashboard();
       renderReportSelectors();
-      toast("Veli görüşmesi eklendi.");
+      return true;
     }
 
     function renderStudentNotes(student) {
@@ -1916,7 +2055,7 @@
       document.querySelectorAll(".tab-panel").forEach((panel) => panel.classList.toggle("active", panel.id === tabId));
     }
 
-    function saveSettingsAndClass() {
+    function saveSettingsAndClass(options = {}) {
       const before = JSON.parse(JSON.stringify(state));
       const teacherName = els.teacherName.value.trim() || "Kemal Öğretmen";
       state.teacher = state.teacher || {};
@@ -1935,16 +2074,29 @@
         current.year = els.classYear.value.trim() || current.year || "";
         if (linkedPlanner) current.plannerId = linkedPlanner.id;
       }
-      if (!saveState()) { state = before; toast('Sınıf adı kaydedilemedi. Cihazdaki boş alanı kontrol edin.'); return; }
+      if (JSON.stringify(state) === JSON.stringify(before)) return true;
+      if (!saveState()) { state = before; return false; }
       if (linkedPlanner && current.name !== oldName) {
         linkedPlanner.name = current.name;
         restoreLessonPlannerBackup(planner);
       }
-      renderAll();
-      toast("Aktif sınıf bilgileri güncellendi.");
+      if (!options.automatic) clearFormSave("settings");
+      renderClassSelect();
+      renderClassManager();
+      renderDashboard();
+      renderReportSelectors();
+      renderManualExamSelectors();
+      return true;
+    }
+
+    function finishClassEditing() {
+      if (!flushFormSave("settings") || !flushFormSave("calendar") || !canDiscardManualExam()) return false;
+      if (calendarDraftId) clearCalendarForm();
+      return true;
     }
 
     function addClassFromPanel() {
+      if (!finishClassEditing()) return;
       const teacherName = els.teacherName.value.trim() || state.teacher?.name || "Kemal Öğretmen";
       const newClassName = cleanClassName(els.newClassName.value);
       if (!newClassName) {
@@ -1955,6 +2107,7 @@
       const year = els.classYear.value.trim() || "2025-2026";
       const sameClass = state.classes.find((item) => normalize(item.name) === normalize(newClassName) && normalize(item.year || "") === normalize(year));
       if (sameClass && !confirm(`${classLabel(sameClass)} zaten var. Yine de aynı adla yeni sınıf eklensin mi?`)) return;
+      const before = JSON.parse(JSON.stringify(state));
       state.teacher = state.teacher || {};
       state.teacher.name = teacherName;
       state.teacher.schoolName = els.schoolName.value.trim();
@@ -1966,8 +2119,9 @@
         teacherName
       });
       state.activeClassId = classId;
+      if (!saveState()) { state = before; return; }
       selectedStudentIds.clear();
-      saveState();
+      els.newClassName.value = "";
       renderAll();
       toast(`${newClassName} sınıfı eklendi.`);
     }
@@ -1979,6 +2133,8 @@
         return;
       }
       if (!confirm(`${current.name} sınıfı ve bu sınıfa ait öğrenciler/sınavlar silinsin mi?`)) return;
+      if (!finishClassEditing()) return;
+      const before = JSON.parse(JSON.stringify(state));
       deleteStudentsByIds(state.students.filter(student => student.classId === current.id).map(student => student.id), { save: false });
       state.classes = state.classes.filter((item) => item.id !== current.id);
       state.students = state.students.filter((student) => student.classId !== current.id);
@@ -1986,8 +2142,8 @@
       state.scheduleItems = (state.scheduleItems || []).filter((item) => item.classId !== current.id);
       state.calendarEvents = (state.calendarEvents || []).filter((item) => item.classId !== current.id);
       state.activeClassId = state.classes[0].id;
+      if (!saveState()) { state = before; return; }
       selectedStudentIds.clear();
-      saveState();
       renderAll();
       toast("Sınıf silindi.");
     }
@@ -3193,6 +3349,7 @@
     }
 
     function resetManualExam() {
+      clearFormSave("exam");
       manualDraftDirty = false;
       editingManualExamId = null;
       manualDraft = {};
@@ -3213,7 +3370,13 @@
     }
 
     function canDiscardManualExam() {
-      return !manualDraftDirty || confirm('Kaydedilmemiş sınav değişiklikleri var. Kaydetmeden devam edilsin mi?');
+      return !manualDraftDirty || flushFormSave("exam") && !manualDraftDirty ||
+        confirm('Tamamlanmamış sınav değişiklikleri var. Bu değişiklikler bırakılıp devam edilsin mi?');
+    }
+
+    function queueManualExamSave() {
+      manualDraftDirty = true;
+      queueFormSave("exam", () => saveManualExam({ automatic: true }));
     }
 
     function renderManualExamSelectors() {
@@ -3293,13 +3456,13 @@
         <tr>${metricHeaders}<th>Doğru</th><th>Yanlış</th><th>Boş</th><th>Net</th><th>%</th><th>Puan</th><th>Sınıf sırası</th></tr>
         </thead><tbody>${rows}</tbody></table></div><div class="manual-results-summary" role="status"></div>`;
       els.manualExamEntry.querySelectorAll('input').forEach(input => input.addEventListener('input', () => {
-        manualDraftDirty = true;
+        queueManualExamSave();
         updateManualExamTotals();
       }));
       els.manualExamEntry.querySelectorAll('[data-clear-result]').forEach(button => button.addEventListener('click', () => {
-        if (!confirm('Bu öğrencinin sınav sonucu kaldırılsın mı? Değişiklik kaydedildiğinde uygulanır.')) return;
+        if (!confirm('Bu öğrencinin sınav sonucu kaldırılsın mı?')) return;
         button.closest('tr').querySelectorAll('input').forEach(input => { input.value = ''; });
-        manualDraftDirty = true;
+        queueManualExamSave();
         updateManualExamTotals();
       }));
       updateManualExamTotals();
@@ -3362,16 +3525,16 @@
       els.manualExamName.scrollIntoView({behavior: 'smooth', block: 'center'});
     }
 
-    function saveManualExam() {
+    function saveManualExam(options = {}) {
       const name = els.manualExamName.value.trim();
       const subjects = parseSubjectList(els.manualSubjects.value);
       if (!name) {
-        toast("Elle sınav için sınav adını yazın.");
-        return;
+        if (!options.automatic) toast("Elle sınav için sınav adını yazın.");
+        return false;
       }
       if (!subjects.length) {
-        toast("En az bir ders adı yazın.");
-        return;
+        if (!options.automatic) toast("En az bir ders adı yazın.");
+        return false;
       }
       if (!els.manualExamEntry.querySelector("[data-manual-student]")) renderManualExamEntry();
 
@@ -3380,11 +3543,12 @@
       try {
         scoring = manualExamScoring(subjects);
         results = manualExamResults(subjects, scoring);
-      } catch (error) { toast(error.message); return; }
-      if (!Object.keys(results).length) { toast('En az bir öğrenci için sonuç girin.'); return; }
+      } catch (error) { if (!options.automatic) toast(error.message); return false; }
+      if (!Object.keys(results).length) { if (!options.automatic) toast('En az bir öğrenci için sonuç girin.'); return false; }
 
       const missingStudents = activeStudents().filter((student) => !results[student.id]);
-      if (missingStudents.length && !confirm(`${missingStudents.length} öğrencinin bu sınavda sonucu boş görünüyor. Yine de kaydedilsin mi?`)) return;
+      if (!options.automatic && missingStudents.length && manualDraftDirty &&
+          !confirm(`${missingStudents.length} öğrencinin sonucu boş. Sınav tamamlanmış olarak kapatılsın mı?`)) return false;
 
       const existing = activeExams().find(exam => exam.id === editingManualExamId);
       const exam = {
@@ -3413,10 +3577,20 @@
       const previousExams = state.exams.slice();
       if (existing) state.exams[state.exams.indexOf(existing)] = exam;
       else state.exams.push(exam);
-      if (!saveState()) { state.exams = previousExams; return; }
-      resetManualExam();
-      renderAll();
-      toast(existing ? 'Sınav güncellendi.' : 'Elle sınav sisteme eklendi.');
+      if (!saveState()) { state.exams = previousExams; return false; }
+      if (options.automatic) {
+        editingManualExamId = exam.id;
+        manualDraftDirty = false;
+        els.manualExamStatus.textContent = `Cihaza kaydedildi · ${Object.keys(results).length} öğrenci`;
+        els.saveManualExamBtn.textContent = "Sınavı Bitir";
+        renderExams();
+        renderDashboard();
+        renderReportSelectors();
+      } else {
+        resetManualExam();
+        renderAll();
+      }
+      return true;
     }
 
     function parseSubjectList(value) {
@@ -3580,9 +3754,10 @@
     function deleteExam(examId) {
       const exam = state.exams.find((item) => item.id === examId);
       if (!exam || !confirm(`${exam.name} sınavı silinsin mi?`)) return;
+      const previous = state.exams;
       state.exams = state.exams.filter((item) => item.id !== examId);
+      if (!saveState()) { state.exams = previous; return; }
       if (editingManualExamId === examId) resetManualExam();
-      saveState();
       renderAll();
       toast("Sınav silindi.");
     }
@@ -3740,7 +3915,14 @@
         if(typeof data.height==='number' && Number.isFinite(data.height) && data.height>=100 && data.height<=20000) els.lessonPlannerFrame.style.height=`${Math.max(420,Math.ceil(data.height))}px`;
         return;
       }
+      if (data.type === "kemal-lesson-planner-save-failed" && Array.isArray(data.plannerState?.siniflar)) {
+        if (!failedPlannerBackup) toast("Ders planı kaydedilemedi. Ajandadaki uyarıdan JSON yedeğini indirin.");
+        failedPlannerBackup = data.plannerState;
+        renderCloudSyncStatus();
+        return;
+      }
       if (data.type === "kemal-lesson-planner-data-changed") {
+        failedPlannerBackup = null;
         saveState();
         renderCalendar();
         renderDashboard();
@@ -3825,7 +4007,7 @@
       const cursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1);
       const selectedDate = parseDateValue(selectedCalendarDate) || new Date();
       selectedCalendarDate = dateKey(selectedDate);
-      els.calendarEventDate.value = selectedCalendarDate;
+      if (!calendarDraftId && !pendingFormSaves.has("calendar")) els.calendarEventDate.value = selectedCalendarDate;
       const weekly=calendarViewMode==='week';
       document.querySelectorAll('[data-calendar-mode]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.calendarMode===calendarViewMode)));
       els.prevCalendarMonthBtn.setAttribute('aria-label',weekly?'Önceki hafta':'Önceki ay');
@@ -3969,22 +4151,25 @@
     }
 
     function openCalendarComposer(date) {
-      selectCalendarDate(date);clearCalendarForm();
+      if (!flushFormSave("calendar")) return;
+      clearCalendarForm(false);
+      selectCalendarDate(date);
       if(els.calendarComposer)els.calendarComposer.open=true;
       els.calendarEventTitle?.focus();
       els.calendarComposer?.scrollIntoView({behavior:'smooth',block:'center'});
     }
 
-    function saveCalendarEvent() {
+    function saveCalendarEvent(options = {}) {
       const title = els.calendarEventTitle.value.trim();
       if (!title) {
-        toast("Takvim kaydı için başlık yazın.");
-        return;
+        if (!options.automatic) toast("Takvim kaydı için başlık yazın.");
+        return !els.calendarEventNote.value.trim() && !calendarDraftId;
       }
       const date = els.calendarEventDate.value || selectedCalendarDate || today();
-      state.calendarEvents = state.calendarEvents || [];
-      state.calendarEvents.push({
-        id: uid("calendar"),
+      const previous = state.calendarEvents || [];
+      const existing = previous.find(item => item.id === calendarDraftId);
+      const event = {
+        id: existing?.id || uid("calendar"),
         classId: state.activeClassId,
         date,
         type: els.calendarEventType.value || "note",
@@ -3992,19 +4177,25 @@
         title,
         reminder: els.calendarReminder.value,
         note: els.calendarEventNote.value.trim(),
-        remindedAt: "",
-        createdAt: new Date().toISOString()
-      });
+        remindedAt: existing?.remindedAt || "",
+        createdAt: existing?.createdAt || new Date().toISOString()
+      };
+      if (!existing || JSON.stringify(event) !== JSON.stringify(existing)) {
+        state.calendarEvents = existing ? previous.map(item => item === existing ? event : item) : [...previous, event];
+        if (!saveState()) { state.calendarEvents = previous; return false; }
+      }
+      calendarDraftId = event.id;
       selectedCalendarDate = date;
       calendarCursor = parseDateValue(date) || calendarCursor;
       calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1);
-      saveState();
-      clearCalendarForm(false);
+      if (!options.automatic) clearCalendarForm(false);
       renderCalendar();
-      toast("Takvim kaydı eklendi.");
+      return true;
     }
 
     function clearCalendarForm(resetDate = true) {
+      clearFormSave("calendar");
+      calendarDraftId = null;
       if (resetDate) els.calendarEventDate.value = selectedCalendarDate || today();
       els.calendarEventType.value = "note";
       els.calendarEventTime.value = "";
@@ -4016,8 +4207,10 @@
     function deleteCalendarEvent(id) {
       const event = (state.calendarEvents || []).find((item) => item.id === id);
       if (!event || !confirm(`${event.title} takvim kaydı silinsin mi?`)) return;
+      const previous = state.calendarEvents;
       state.calendarEvents = (state.calendarEvents || []).filter((item) => item.id !== id);
-      saveState();
+      if (!saveState()) { state.calendarEvents = previous; return; }
+      if (calendarDraftId === id) clearCalendarForm();
       renderCalendar();
       toast("Takvim kaydı silindi.");
     }
@@ -5798,7 +5991,12 @@
     }
 
     function exportBackup() {
-      downloadAgendaBackup(buildCloudSnapshot(), "yedek");
+      flushFormSaves();
+      const snapshot = failedAgendaBackup || buildCloudSnapshot();
+      downloadAgendaBackup({
+        ...snapshot,
+        lessonPlannerState: failedPlannerBackup || snapshot.lessonPlannerState
+      }, "yedek");
     }
 
     async function exportCloudRecovery() {
@@ -5841,10 +6039,13 @@
       if (!data) return;
       try {
         localStorage.setItem(LESSON_PLANNER_STORE_KEY, JSON.stringify(data));
+        failedPlannerBackup = null;
         notifyPlannerRestored(data);
       } catch (error) {
         console.warn(error);
-        toast("Ders planlama yedeği geri yüklenemedi; ajanda verileri yüklendi.");
+        failedPlannerBackup = data;
+        renderCloudSyncStatus();
+        toast("Ders planı kaydedilemedi. JSON yedeğini indirin.");
       }
     }
 
@@ -5900,6 +6101,7 @@
     }
 
     function showView(viewId) {
+      flushFormSaves();
       document.body.dataset.agendaView=viewId;
       document.querySelectorAll(".content-view").forEach((view) => view.classList.toggle("active", view.id === viewId));
       document.querySelectorAll(".nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
@@ -5915,8 +6117,12 @@
     function deleteNote(studentId, noteId) {
       const student = state.students.find((item) => item.id === studentId);
       if (!student) return;
+      const previous = student.notes;
       student.notes = (student.notes || []).filter((item) => item.id !== noteId);
-      saveState();
+      if (!saveState()) { student.notes = previous; return; }
+      if (studentEntryIds.notes === noteId) {
+        studentEntryIds.notes = null; els.noteText.value = ""; clearFormSave("note");
+      }
       renderStudentNotes(student);
       renderDashboard();
       renderReportSelectors();
@@ -5925,8 +6131,12 @@
     function deleteMeeting(studentId, meetingId) {
       const student = state.students.find((item) => item.id === studentId);
       if (!student) return;
+      const previous = student.meetings;
       student.meetings = (student.meetings || []).filter((item) => item.id !== meetingId);
-      saveState();
+      if (!saveState()) { student.meetings = previous; return; }
+      if (studentEntryIds.meetings === meetingId) {
+        studentEntryIds.meetings = null; els.meetingText.value = ""; clearFormSave("meeting");
+      }
       renderStudentMeetings(student);
       renderDashboard();
       renderReportSelectors();

@@ -1307,7 +1307,11 @@ function saveToStorage() {
     lastPlannerStorageValue = serialized;
     notifyParentDataChanged();
   } catch(e) {
-    alert('Tarayıcı hafızası dolu olabilir. Bazı veriler kaydedilemedi.');
+    if (window.parent !== window && window.location.origin !== 'null') {
+      window.parent.postMessage({type:'kemal-lesson-planner-save-failed', plannerState:state}, window.location.origin);
+    } else {
+      alert('Ders planı bu cihaza kaydedilemedi. Tarayıcı depolama alanını kontrol edin.');
+    }
   }
 }
 
