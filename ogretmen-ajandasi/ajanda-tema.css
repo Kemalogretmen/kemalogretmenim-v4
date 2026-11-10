@@ -1,0 +1,90 @@
+@media screen {
+  html[data-theme=dark] :is(.app, body > dialog) {
+    --agenda-control-border: #58657a;
+  }
+
+  html[data-theme=dark] body > dialog { --muted: var(--theme-muted); }
+  html[data-theme=dark] .app .side-card a { color: var(--theme-accent); }
+
+  html[data-theme=dark] .app :is(.analysis-heading h3, .top-clock strong) {
+    color: var(--theme-text);
+  }
+
+  html[data-theme=dark] .app :is(.analysis-heading span, .analysis-metric span, .analysis-metric small,
+    .brand p, .top-clock span, .top-clock small, .dashboard-command small, .dashboard-brief-item small,
+    .dashboard-panel-head span, .stat-tile span, .student-card p, .exam-row p, .manual-results-summary) {
+    color: var(--theme-muted);
+  }
+
+  html[data-theme=dark] .app :is(.analysis-overview, .subject-picker, .report-mode-tabs, .calendar-mode),
+  html[data-theme=dark] :is(.app, body > dialog) :is(.exam-row, .student-card, .note-item,
+    .optional-section, .review-box, .import-edit-grid, .empty):not(:where(.report-card *)),
+  html[data-theme=dark] body > dialog {
+    background: var(--theme-surface);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+  }
+
+  html[data-theme=dark] .app .analysis-metric { border-color: var(--theme-border); }
+  html[data-theme=dark] .app .analysis-metric strong { color: var(--theme-success); }
+  html[data-theme=dark] .app #reportsView .report-options { border-color: var(--theme-border); }
+  html[data-theme=dark] .app #reportsView .report-stage { background: var(--theme-surface); }
+
+  html[data-theme=dark] .app :is(.report-mode-tabs, .calendar-mode) button {
+    color: var(--theme-muted);
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) :is(.tab-btn.active, .student-card.selected),
+  html[data-theme=dark] .app :is(.report-mode-tabs button[aria-selected=true], .calendar-mode button[aria-pressed=true]) {
+    background: var(--theme-accent-soft);
+    border-color: var(--theme-accent);
+    color: var(--theme-accent);
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) :is(label, .optional-section summary, .review-box ul):not(:where(.report-card *)) {
+    color: var(--theme-muted);
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) :is(select, textarea,
+    input:not([type=checkbox], [type=radio], [type=range], [type=color]), .check-chip,
+    .agenda-panel-link, .tab-btn:not(.active)):not(:where(.report-card *)),
+  html[data-theme=dark] body > dialog :is(.ghost-btn, .icon-btn) {
+    background: var(--theme-surface-alt);
+    border-color: var(--agenda-control-border);
+    color: var(--theme-text);
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) :is(input, textarea)::placeholder {
+    color: var(--theme-muted);
+    opacity: 1;
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) :is(input, select, textarea, button, a):focus-visible {
+    outline: 2px solid var(--theme-accent);
+    outline-offset: 2px;
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) :is(th, td, .modal-head, .modal-foot):not(:where(.report-card *)) {
+    border-color: var(--theme-border);
+  }
+
+  html[data-theme=dark] :is(.app, body > dialog) th:not(:where(.report-card *)),
+  html[data-theme=dark] .app .manual-results-table [data-total] {
+    background: var(--theme-surface-alt);
+    color: var(--theme-text);
+  }
+
+  html[data-theme=dark] #importReviewDialog .import-row-error { background: var(--theme-danger-soft); }
+  html[data-theme=dark] #importReviewDialog .import-row-status { color: var(--theme-muted); }
+  html[data-theme=dark] #importReviewDialog .import-row-error .import-row-status { color: var(--theme-danger); }
+  html[data-theme=dark] .app .calendar-week-heading { color: var(--theme-muted); border-color: var(--theme-border); }
+  html[data-theme=dark] .app .calendar-week-heading[aria-pressed=true] { color: var(--theme-success); }
+  html[data-theme=dark] .app .calendar-week-heading strong { color: var(--theme-text); }
+
+  /* The workspace is dark; its report is still a printable sheet. */
+  html[data-theme=dark] .app .report-card .table-wrap {
+    background: var(--white);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+}

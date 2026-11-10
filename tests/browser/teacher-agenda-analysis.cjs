@@ -27,6 +27,40 @@ const folder = fs.mkdtempSync(path.join(os.tmpdir(),'agenda-analysis-browser-'))
       });
       await page.locator('.nav [data-view="reportsView"]').click();
       await page.locator('[data-report-mode="classAnalysis"]').click();
+      const assertReportLogo = async (selector = '#reportCard .report-brand-logo img') => {
+        const decoded = await page.locator(selector).first().evaluate(async img => {
+          await img.decode();
+          return img.naturalWidth > 0 && img.src === document.getElementById('agendaBrandLogo').src;
+        });
+        assert.ok(decoded, 'The report uses the decoded agenda brand image');
+      };
+      await assertReportLogo();
+      const colorPairs = async () => page.evaluate(() => [
+        ['.analysis-heading h3', 'body'],
+        ['.analysis-heading span', 'body'],
+        ['label[for="reportType"]', 'body'],
+        ['.analysis-metric strong', '.analysis-overview'],
+        ['.analysis-metric small', '.analysis-overview'],
+        ['[data-report-mode="academic"]', '.report-mode-tabs'],
+        ['[data-report-mode="classAnalysis"]', '[data-report-mode="classAnalysis"]'],
+        ['#reportType', '#reportType'],
+        ['.top-clock small', '.top-clock']
+      ].map(([label,surface]) => {
+        const luminance = value => value.match(/\d+/g).slice(0,3).map(Number)
+          .map(x => x/255).map(x => x <= .04045 ? x/12.92 : ((x+.055)/1.055)**2.4)
+          .reduce((sum,x,i) => sum+x*[.2126,.7152,.0722][i],0);
+        const foreground = luminance(getComputedStyle(document.querySelector(label)).color);
+        const background = luminance(getComputedStyle(document.querySelector(surface)).backgroundColor);
+        return [label, (Math.max(foreground,background)+.05)/(Math.min(foreground,background)+.05)];
+      }));
+      await page.locator('[data-theme-switch]').click();
+      await page.locator('html[data-theme="dark"]:not(.theme-changing)').waitFor();
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      for (const [label, ratio] of await colorPairs()) assert.ok(ratio >= 4.5, `${label}: dark contrast ${ratio.toFixed(2)}`);
+      assert.deepEqual(await page.locator('#reportCard .table-wrap').first().evaluate(el => {
+        const paper = getComputedStyle(el.closest('.report-card'));
+        return [paper.colorScheme, paper.backgroundColor, getComputedStyle(el).backgroundColor];
+      }), ['light', 'rgb(255, 255, 255)', 'rgb(255, 255, 255)']);
       assert.match(await page.locator('.analysis-report-score').textContent(),/%80/);
       assert.equal(await page.locator('#reportCard .analysis-chart-scroll').count(),2);
       assert.doesNotMatch(await page.locator('#reportCard').textContent(),/YABANCI/);
@@ -54,21 +88,56 @@ const folder = fs.mkdtempSync(path.join(os.tmpdir(),'agenda-analysis-browser-'))
       await page.locator('#analysisStudentNames').check();
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No page-wide overflow');
       assert.ok(await page.evaluate(()=>getComputedStyle(document.querySelector('#reportCard'),'::before').display==='none'),'No decorative layer covers class content');
-      await page.locator('#reportsView').scrollIntoViewIfNeeded();
+      await page.locator('.analysis-heading').evaluate(el => el.scrollIntoView({block:'center',behavior:'instant'}));
       await page.screenshot({path:path.join(folder,'analysis-'+width+'.png')});
       await page.locator('#reportCard').scrollIntoViewIfNeeded();
       await page.screenshot({path:path.join(folder,'report-'+width+'.png')});
-      const pixels=await page.evaluate(async()=>{const canvas=await renderReportCanvas(reportExportTargets()[0]);const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let ink=0;for(let i=0;i<data.length;i+=4)if(data[i]<220||data[i+1]<220||data[i+2]<220)ink++;return {width:canvas.width,height:canvas.height,ink};});
+      await page.locator('#reportCard .report-footer').screenshot({path:path.join(folder,'report-footer-'+width+'.png')});
+      const pixels=await page.evaluate(async()=>{
+        const capture=window.html2canvas;
+        let brandPixels=0;
+        window.html2canvas=async (target,options)=>{
+          const logo=target.querySelector('.report-brand-logo img');
+          const image=logo.getBoundingClientRect(), paper=target.getBoundingClientRect();
+          const canvas=await capture(target,options);
+          const s=options.scale;
+          const data=canvas.getContext('2d').getImageData(
+            Math.floor((image.left-paper.left)*s), Math.floor((image.top-paper.top)*s),
+            Math.ceil(image.width*s), Math.ceil(image.height*s)).data;
+          for(let i=0;i<data.length;i+=4) {
+            const [r,g,b]=data.subarray(i,i+3);
+            if(r>g+55 && r>b+55 || b>r+55 && g>r+25) brandPixels++;
+          }
+          return canvas;
+        };
+        try {
+          const canvas=await renderReportCanvas(reportExportTargets()[0]);
+          const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+          let ink=0;for(let i=0;i<data.length;i+=4)if(data[i]<220||data[i+1]<220||data[i+2]<220)ink++;
+          return {width:canvas.width,height:canvas.height,ink,brandPixels};
+        } finally { window.html2canvas=capture; }
+      });
       assert.ok(pixels.width>=1000&&pixels.height>300&&pixels.ink>10000,'Nonblank report/chart export');
+      assert.ok(pixels.brandPixels > 30, `Brand image appears in the export canvas (${pixels.brandPixels} pixels)`);
       if(width===1440) {
         const pdfEvent=page.waitForEvent('download');await page.locator('#downloadPdfBtn').click();
         const pdf=await pdfEvent;await pdf.saveAs(path.join(folder,'class-analysis.pdf'));
         assert.ok(fs.statSync(path.join(folder,'class-analysis.pdf')).size>20000);
+        await page.emulateMedia({media:'print'});
+        await assertReportLogo();
+        assert.equal(await page.locator('.analysis-heading').isVisible(), false);
+        await page.emulateMedia({media:'screen'});
       }
+      await page.locator('[data-report-mode="academic"]').click();
+      await page.locator('#reportStudent').selectOption('s0');
+      await assertReportLogo();
       await page.locator('[data-report-mode="comparison"]').click();
       await page.locator('#reportStudent').selectOption('s0');
       assert.ok(await page.locator('#reportCard .class-line').count()>0);
       assert.match(await page.locator('#reportCard').textContent(),/Sınıf Ort\./);
+      await assertReportLogo();
+      await page.locator('#reportType').selectOption('classList');
+      await assertReportLogo('#reportCard .letterhead-logo img');
 
       await page.locator('.nav [data-view="examsView"]').click();
       const workbook=async(rows)=>Buffer.from(await page.evaluate(rows=>{const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Sonuç');return [...new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'}))];},rows));
@@ -94,7 +163,7 @@ const folder = fs.mkdtempSync(path.join(os.tmpdir(),'agenda-analysis-browser-'))
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'Import no page overflow');
       await page.locator('#confirmImportReviewBtn').click();assert.equal(await page.evaluate(()=>state.exams.length),before+3);
       assert.deepEqual(errors,[]);
-      console.log(`PASS ${width}: class means, filters, privacy, charts/canvas/PDF/Excel, clean upload, corrections and column mapping.`);
+      console.log(`PASS ${width}: dark contrast, report branding, class means, filters, privacy, charts/canvas/PDF/Excel, clean upload, corrections and column mapping.`);
       await page.close();
     }
   } finally {await browser.close();}

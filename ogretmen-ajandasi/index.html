@@ -1319,6 +1319,14 @@
     }
 
     .report-card {
+      --ink: #27313f;
+      --muted: #667085;
+      --line: #dbe3ea;
+      --paper: #fffdfa;
+      --white: #ffffff;
+      --cloud: #f5f9fb;
+      color: var(--ink);
+      color-scheme: light;
       position: relative;
       width: min(940px, 100%);
       min-height: 720px;
@@ -2646,12 +2654,13 @@
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
 <link rel="stylesheet" href="analiz.css">
 <link rel="stylesheet" href="ajanda-gorunum.css">
+<link rel="stylesheet" href="ajanda-tema.css">
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark"><img src="assets/kemal-kocar-logo-2025.png" alt=""></div>
+        <div class="brand-mark"><img id="agendaBrandLogo" src="assets/kemal-kocar-logo-2025.png" alt=""></div>
         <div>
           <h1>Öğretmen Ajandası</h1>
           <p>By Kemal Öğretmen</p>
@@ -3595,6 +3604,6 @@
   <script src="../js/user-auth.js"></script>
   <script src="resmi-tatiller-veri.js"></script>
   <script src="resmi-tatiller.js"></script>
-  <script src="app.js?v=20261110-agenda-autosave"></script>
+  <script src="app.js?v=20261110-agenda-report-theme"></script>
 </body>
 </html>
