@@ -73,7 +73,7 @@ function harness({ planner = null, startChild = false, queueMessages = false } =
   const parentRun = code => vm.runInContext(code, parent);
   const childRun = code => vm.runInContext(code, child);
   parentRun(fs.readFileSync(path.join(root, 'ogretmen-ajandasi/app.js'), 'utf8'));
-  parentRun('bindElements(); renderAll = () => {};');
+  parentRun("bindElements(); renderAll = () => {}; cloudSync.userId = 'fixture-teacher'; accessCloudRecovery = async () => {};");
   const childHtml = fs.readFileSync(path.join(root, 'ogretmen-ajandasi/ders-programi.html'), 'utf8');
   const childSource = [...childHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].find(match => match[1].includes('function loadFromStorage()'))[1];
   // Skip automatic boot, then exercise the real storage, messages and rendering.
@@ -81,7 +81,7 @@ function harness({ planner = null, startChild = false, queueMessages = false } =
   if (startChild) childRun('loadFromStorage(); ensureStateDefaults(); renderSinifList(); applyInitialWeekFocus();');
   return {
     saved, writes, parentRun, childRun, childPosts, childDocument,
-    loadCloud(row = fixture()) { parentRun(`applyCloudRow(${JSON.stringify(row)})`); },
+    loadCloud(row = fixture()) { return parentRun(`applyCloudRow(${JSON.stringify(row)})`); },
     importBackup(backup) {
       parent.FileReader = class {
         readAsText() { this.result = JSON.stringify(backup); this.onload(); }
@@ -111,10 +111,10 @@ test('web cloud snapshots preserve the raw planner schema expected by native cod
   assert.equal(snapshot.lessonPlannerState.programs.planner.Mon[0].ders, 'MATEMATİK');
 });
 
-test('loading cloud after the iframe has initialized refreshes its visible planner classes', () => {
+test('loading cloud after the iframe has initialized refreshes its visible planner classes', async () => {
   const h = harness({ startChild: true });
   assert.equal(h.childState().siniflar.length, 0);
-  h.loadCloud();
+  await h.loadCloud();
   assert.equal(h.storedPlanner().siniflar[0].id, 'planner');
   assert.equal(h.childState().siniflar[0]?.id, 'planner', 'cloud hydration must also refresh the already-loaded iframe');
   assert.match(h.childDocument.getElementById('sinif-list').textContent, /3\/A/);
@@ -122,19 +122,19 @@ test('loading cloud after the iframe has initialized refreshes its visible plann
   assert.match(h.childDocument.getElementById('weekly-plan-container').textContent, /Fixture outcome/);
 });
 
-test('opening the lesson view after cloud hydration cannot replace the loaded planner with stale iframe state', () => {
+test('opening the lesson view after cloud hydration cannot replace the loaded planner with stale iframe state', async () => {
   const h = harness({ startChild: true });
-  h.loadCloud();
+  await h.loadCloud();
   h.parentRun('syncLessonPlannerFrame()');
   assert.equal(h.storedPlanner().siniflar[0]?.id, 'planner');
   assert.equal(h.storedPlanner().programs.planner?.Mon[0].ders, 'MATEMATİK');
   assert.equal(h.storedPlanner().yillikPlanlar['MATEMATİK']?.[0].kazanim, 'Fixture outcome');
 });
 
-test('a focus message queued before cloud hydration cannot leave stale planner data in storage', () => {
+test('a focus message queued before cloud hydration cannot leave stale planner data in storage', async () => {
   const h = harness({ startChild: true, queueMessages: true });
   h.parentRun('syncLessonPlannerFrame()');
-  h.loadCloud();
+  await h.loadCloud();
   h.writes.length = 0;
   h.flushMessages();
   assert.equal(h.writes.filter(item => item.key === plannerKey).some(item => JSON.parse(item.value).siniflar.length === 0), false);
@@ -142,16 +142,16 @@ test('a focus message queued before cloud hydration cannot leave stale planner d
   assert.equal(h.storedPlanner().programs.planner?.Mon[0].ders, 'MATEMATİK');
 });
 
-test('hydrating a planner renders without notifying the parent to save cloud data', () => {
+test('hydrating a planner renders without notifying the parent to save cloud data', async () => {
   const h = harness({ startChild: true });
   h.childPosts.length = 0;
-  h.loadCloud();
+  await h.loadCloud();
   assert.equal(h.childPosts.length, 0);
 });
 
-test('mobile import task stays on its requested tab when cloud focus arrives later', () => {
+test('mobile import task stays on its requested tab when cloud focus arrives later', async () => {
   const h = harness({ startChild: true });
-  h.loadCloud();
+  await h.loadCloud();
   h.message({ type: 'kemal-ajanda-focus-week', date: '2026-11-02', plannerTab: 'tab-yukle' });
   assert.ok(h.childDocument.getElementById('tab-yukle').classList.contains('active'));
   assert.equal(h.childState().siniflar[0].id, 'planner');
@@ -166,10 +166,10 @@ test('importing a JSON backup also refreshes the already-loaded lesson planner',
   assert.match(h.childDocument.getElementById('weekly-plan-container').textContent, /Fixture outcome/);
 });
 
-test('a null remote planner preserves the existing planner and its visible classes', () => {
+test('a null remote planner preserves the existing planner and its visible classes', async () => {
   const row = fixture(), h = harness({ planner: row.lesson_planner_state, startChild: true });
   const before = h.storedPlanner();
-  h.loadCloud({ ...row, lesson_planner_state: null });
+  await h.loadCloud({ ...row, lesson_planner_state: null });
   assert.deepEqual(h.storedPlanner(), before);
   assert.equal(h.childState().siniflar[0]?.id, 'planner');
 });

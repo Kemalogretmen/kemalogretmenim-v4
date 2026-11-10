@@ -20,12 +20,15 @@ function agenda() {
   });
   window.HTMLElement.prototype.scrollIntoView = function () {};
   const saved = new Map();
+  const recovery = new Map();
   const context = vm.createContext({ window, document, console, TextEncoder, URL, URLSearchParams, setTimeout: () => 0, clearTimeout() {},
     setInterval: () => 0, confirm: () => true, CSS: { escape: value => value },
-    localStorage: { getItem: key => saved.get(key) || null, setItem: (key, value) => saved.set(key, value) }
+    recovery,
+    localStorage: { getItem: key => saved.get(key) || null, setItem: (key, value) => saved.set(key, value), removeItem: key => saved.delete(key) }
   });
   const run = code => vm.runInContext(code, context);
   run(fs.readFileSync('ogretmen-ajandasi/app.js', 'utf8'));
+  run(`accessCloudRecovery = async (owner, value) => value ? recovery.set(owner, JSON.parse(JSON.stringify(value))) : recovery.get(owner);`);
   run(`bindElements(); state = normalizeState({
     classes: [{id:'c1',name:'2-B'},{id:'c2',name:'3-A'}], activeClassId:'c1',
     students:[{id:'s1',classId:'c1',firstName:'Ada',lastName:'Kaya',schoolNo:'1'},
@@ -39,7 +42,7 @@ function agenda() {
     for (const [kind, value] of Object.entries({d, y, b})) $(`[data-manual-student="${id}"] [data-subject="${subject}"][data-kind="${kind}"]`).value = String(value);
     run('updateManualExamTotals()');
   }
-  return { run, $, counts, json, saved, document };
+  return { run, $, counts, json, saved, recovery, document };
 }
 
 test('500 default, custom max, per-subject scores and legacy 100 remain distinct', () => {
@@ -205,7 +208,7 @@ test('a stale cloud save is rejected and preserves the local agenda', async () =
   assert.equal(await h.run('saveCloudNow({silent:true})'),false);
   assert.deepEqual(h.json('filters'),[['user_id','teacher'],['updated_at','server-version-one']]);
   assert.equal(h.run('state.students.length'),3);
-  assert.ok(h.saved.has('kemalOgretmenAjandasi.v1.bulut-oncesi-yedek'));
+  assert.equal(h.recovery.size, 0, 'a rejected write leaves the existing local snapshot intact');
   assert.match(h.run('cloudSync.lastError'),/başka bir cihazda değişti/);
 });
 
@@ -219,7 +222,7 @@ test('reading a newer cloud row does not authorize overwriting it', async () => 
   assert.equal(h.run('cloudSync.rowChecked'),true);
 });
 
-test('declining newer cloud hydration keeps the old compare-and-swap baseline', async () => {
+test('declining newer cloud hydration pauses writes and keeps the old baseline', async () => {
   const h = agenda();
   h.run(`let writtenRevision=null;state.updatedAt='2026-01-01T00:00:00Z';
     const newer={agenda_state:{...JSON.parse(JSON.stringify(state)),students:[{id:'remote-student',classId:'c1'}],updatedAt:'2026-11-02T00:00:00Z'},lesson_planner_state:null,updated_at:'server-new'};
@@ -228,7 +231,7 @@ test('declining newer cloud hydration keeps the old compare-and-swap baseline', 
   await h.run('reconcileCloudState({silent:true})');
   assert.equal(h.run('cloudSync.rowVersion'),'server-old');
   assert.equal(await h.run('saveCloudNow({silent:true})'),false);
-  assert.equal(h.run('writtenRevision'),'server-old');
+  assert.equal(h.run('writtenRevision'),null);
   assert.equal(h.run('state.students[0].id'),'s1');
 });
 
@@ -255,12 +258,13 @@ test('identical saved documents establish a baseline independently of navigation
   assert.equal(h.run('cloudSync.ready'),true);
 });
 
-test('loading a cloud row explicitly binds the write baseline only after hydration', () => {
+test('loading a cloud row explicitly binds the write baseline only after hydration', async () => {
   const h = agenda();
-  h.run(`applyCloudRow({agenda_state:{classes:[{id:'cloud',name:'4-C'}],students:[],exams:[],updatedAt:'2026-11-02T00:00:00Z'},lesson_planner_state:null,updated_at:'loaded-version'});`);
+  await h.run(`cloudSync.userId='teacher';applyCloudRow({agenda_state:{classes:[{id:'cloud',name:'4-C'}],students:[],exams:[],updatedAt:'2026-11-02T00:00:00Z'},lesson_planner_state:null,updated_at:'loaded-version'});`);
   assert.equal(h.run('cloudSync.rowVersion'),'loaded-version');
   assert.equal(h.run('cloudSync.rowChecked'),true);
   assert.equal(h.run('state.classes[0].id'),'cloud');
+  assert.equal(h.recovery.get('teacher').local.agendaState.students.length, 3);
 });
 
 test('verified web cloud lineage survives reload and never migrates to a different account',()=>{
@@ -282,12 +286,13 @@ test('manual legacy recovery requires consent, backs up both versions, and write
   assert.equal(await h.run('saveCloudNow({manual:true})'),false);
   assert.equal(h.run('writes.length'),0);
   assert.equal(h.run('cloudSync.rowChecked'),false);
-  h.run('confirm=()=>true');
+  h.run(`confirm=()=>true;const set = localStorage.setItem;
+    localStorage.setItem=(key,value)=>{if(value.length>140)throw new DOMException('full','QuotaExceededError');return set(key,value);};`);
   assert.equal(await h.run('saveCloudNow({manual:true})'),true);
   assert.equal(h.run('writes[0].revision'),'recovery-revision');
   assert.equal(h.run('writes[0].payload.agenda_state.students.length'),3);
-  assert.ok(h.saved.has('kemalOgretmenAjandasi.v1.kurtarma-yerel'));
-  assert.ok(h.saved.has('kemalOgretmenAjandasi.v1.kurtarma-bulut'));
+  assert.equal(h.recovery.get('teacher').local.agendaState.students.length, 3);
+  assert.equal(h.recovery.get('teacher').cloud.agendaState.students.length, 0);
   assert.equal(h.run('cloudSync.rowVersion'),'saved-revision');
 });
 
@@ -303,7 +308,41 @@ test('manual recovery never overwrites a newer concurrent cloud edit or imports 
   assert.equal(await h.run('saveCloudNow({manual:true})'),false);
   assert.equal(h.run('writes'),1);
   assert.equal(h.run('cloudSync.ready'),false);
+  assert.equal(h.run('cloudSync.rowChecked'),false,'failed recovery cannot persist the newly read revision');
   assert.equal(h.run('state.students.length'),3);
+});
+
+test('recovery failure or a local edit during backup never authorizes a cloud overwrite', async () => {
+  const h = agenda();
+  h.run(`cloudSync.userId='teacher';cloudSync.enabled=true;let writes=0;
+    fetchCloudRow=async()=>({agenda_state:{...state,students:[]},updated_at:'read-revision'});
+    cloudSync.client={from:()=>{writes++;throw new Error('unexpected write');}};
+    accessCloudRecovery=async()=>{throw new Error('IndexedDB denied');};`);
+  assert.equal(await h.run('saveCloudNow({manual:true})'), false);
+  assert.match(h.run('cloudSync.lastError'), /Güvenlik yedeği.*üzerine yazılmadı/);
+  h.run(`accessCloudRecovery=async()=>{state.students[0].firstName='Yerel değişiklik';};`);
+  assert.equal(await h.run('saveCloudNow({manual:true})'), false);
+  assert.match(h.run('cloudSync.lastError'), /cihazdaki kayıt değişti/);
+  assert.equal(h.run('writes'), 0);
+  assert.equal(h.run('cloudSync.rowChecked'), false);
+});
+
+test('a full local store rolls back both keys on cloud download and leaves the baseline unchanged', async () => {
+  const h = agenda();
+  h.run(`cloudSync.userId='teacher';cloudSync.enabled=true;cloudSync.client={};cloudSync.rowVersion='old';
+    const remote={agenda_state:{...state,students:[]},lesson_planner_state:{large:'x'.repeat(5000)},updated_at:'new'};
+    fetchCloudRow=async()=>remote;
+    saveState({skipCloud:true});localStorage.setItem(LESSON_PLANNER_STORE_KEY,'{"programs":{"old":{}}}');
+    const set=localStorage.setItem;localStorage.setItem=(key,value)=>{
+      if(key===LESSON_PLANNER_STORE_KEY&&value.length>400)throw Object.assign(new Error('full'),{name:'QuotaExceededError'});
+      return set(key,value);};`);
+  const before = [...h.saved.entries()];
+  assert.equal(await h.run('loadCloudNow({manual:true})'), false);
+  assert.deepEqual([...h.saved.entries()], before);
+  assert.equal(h.run('state.students.length'), 3);
+  assert.equal(h.run('cloudSync.rowVersion'), 'old');
+  assert.match(h.run('cloudSync.lastError'), /yeterli yer yok/);
+  assert.equal(h.recovery.get('teacher').local.agendaState.students.length, 3);
 });
 
 test('renaming a class is persisted and does not move pupils or alter another class',()=>{

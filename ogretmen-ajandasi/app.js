@@ -3,6 +3,7 @@
     const CLOUD_SYNC_TABLE = "teacher_agenda_states";
     const CLOUD_SYNC_MAX_BYTES = 6 * 1024 * 1024;
     const CLOUD_SYNC_DEBOUNCE_MS = 2200;
+    const CLOUD_BACKUP_STORE = "snapshots";
     const SYSTEM_LOGO_SRC = "assets/kemal-kocar-logo-2025.png";
     const SYSTEM_LOGO_DATA_URL = "data:image/png;base64,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D8OCDD+LQoUMYMWIEBg8ejODgYHz77bfYuHEjHn/8cWzatAkjR47EkiVL8Nprr2Hw4MF4+OGH8eyzz2L27NmYOHEiVq1ahf379+P111/Hrl27MHnyZLz88stYu3YtBg8ejK5du+L999/H4cOH8e677+LXX3/FmDFj8OCDD+LQoUMYMWIEtm/fjv379+P555/Hxo0b8fjjj+PQoUP4+uuv8eSTT+Lw4cPYu3cvrrjiCixatAjPPvss3n33XQwYMAA///wzbr31VowZMwYbN27E4sWL8eSTT+LkyZPYuHEjHn/8cSxatAiLFy/Gs88+i8TERHzzzTfYuHEjRo0ahU2bNuH48eOYOHEiBg8ejB49emD+/PkoKChAly5d8NRTT+H555/HsGHD8OCDD2LlypUYP348hg0bht69e+P999/H3Llz8cgjj+D111/HmTNn8OCDD+Lll1/G8uXL8fzzz+PQoUP44osv8OCDD2L27NmYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYPXs2Bg8ejL179+L999/H+vXr8eSTT2LlypWYODf5f8BUkRqbtB0q6MAAAAASUVORK5CYII=";
     const today = () => dateKey(new Date());
@@ -51,6 +52,7 @@
       client: null,
       timer: 0,
       saving: false,
+      loading: false,
       saveAgain: false,
       applyingRemote: false,
       lastSavedAt: "",
@@ -268,6 +270,7 @@
       els.downloadJpegBtn.addEventListener("click", () => downloadImage("jpeg"));
       els.shareWhatsappBtn.addEventListener("click", shareReportWhatsapp);
       els.exportBackupBtn.addEventListener("click", exportBackup);
+      document.getElementById("exportCloudRecoveryBtn")?.addEventListener("click", exportCloudRecovery);
       els.importBackupBtn.addEventListener("click", importBackup);
       els.clearAllBtn.addEventListener("click", clearAllData);
       els.cloudSaveNowBtn?.addEventListener("click", () => saveCloudNow({ manual: true }));
@@ -417,7 +420,7 @@
       const userId = cloudSync.userId;
       try {
         const row = await fetchCloudRow();
-        if (userId !== cloudSync.userId) return;
+        if (userId !== cloudSync.userId || cloudSync.saving || cloudSync.loading) return;
         const owner = localStorage.getItem(`${STORE_KEY}.owner`);
         if (owner && owner !== cloudSync.userId && localHasMeaningfulAgenda()) {
           cloudSync.ready = false;
@@ -433,6 +436,13 @@
           return;
         }
 
+        if (cloudSnapshotMatches(row)) {
+          acceptCloudVersion(row);
+          cloudSync.ready = true;
+          cloudSync.lastSavedAt = row.updated_at || row.client_updated_at || "";
+          setCloudSyncStatus("ready", "Bulut güncel", `Son kayıt: ${formatCloudDate(row.updated_at || row.client_updated_at)} · ${formatBytes(row.storage_bytes || 0)}.`);
+          return;
+        }
         const remoteTime = remoteUpdatedTime(row);
         const localTime = Date.parse(state.updatedAt || "") || 0;
         // Opening the page creates a default class. That initialization must
@@ -441,35 +451,29 @@
           const shouldAsk = localHasMeaningfulAgenda() && localTime;
           const shouldLoad = !shouldAsk || confirm("Bulutta bu cihazdakinden daha yeni bir Öğretmen Ajandası kaydı var. Buluttaki veriyi bu cihaza yükleyelim mi? Mevcut yerel kayıt güvenlik yedeği olarak saklanacak.");
           if (shouldLoad) {
-            applyCloudRow(row);
+            if (!await applyCloudRow(row)) return;
             cloudSync.ready = true;
             cloudSync.lastLoadedAt = new Date().toISOString();
             setCloudSyncStatus("ready", "Buluttan yüklendi", `Son bulut kaydı bu cihaza alındı. Veri boyutu: ${formatBytes(row.storage_bytes || 0)}.`);
             if (!options.silent) toast("Buluttaki ajanda bu cihaza yüklendi.");
             return;
           }
-          cloudSync.ready = true;
-          setCloudSyncStatus("ready", "Yerel kayıt korunuyor", "Buluttaki yeni kayıt alınmadı. İsterseniz Yedek bölümünden daha sonra buluttan yükleyebilirsiniz.");
-          return;
-        }
-
-        if (cloudSnapshotMatches(row)) {
-          acceptCloudVersion(row);
-          cloudSync.ready = true;
-          cloudSync.lastSavedAt = row.updated_at || row.client_updated_at || "";
-          setCloudSyncStatus("ready", "Bulut güncel", `Son kayıt: ${formatCloudDate(row.updated_at || row.client_updated_at)} · ${formatBytes(row.storage_bytes || 0)}.`);
+          cloudSync.ready = false;
+          setCloudSyncError("Yerel kayıt korundu. Buluttaki yeni kayıt alınmadı; iki sürümü karşılaştırıp hangisini kullanacağınızı seçin.");
           return;
         }
 
         // Only the revision that actually produced our local document can
         // authorize an autosave. A newer device clock is not proof of that.
         if (cloudSync.rowChecked && cloudSync.rowVersion === row.updated_at) {
+          cloudSync.ready = true;
           await saveCloudNow({ silent: true });
           return;
         }
         cloudSync.ready = false;
         setCloudSyncError("Bu cihazdaki ajandanın bulut sürümü doğrulanamadı. Yerel kayıt korundu; Yedek bölümünden yedek alıp son bulut kaydını yükleyin. Cihaz saati tek başına buluttaki kaydın üzerine yazılmasına izin vermez.");
       } catch (error) {
+        if (userId !== cloudSync.userId) return;
         console.warn(error);
         setCloudSyncError(cloudErrorMessage(error));
       }
@@ -492,32 +496,44 @@
         renderCloudSyncStatus();
         return false;
       }
-      if (cloudSync.saving) return false;
+      if (cloudSync.saving || cloudSync.loading || cloudSync.applyingRemote) return false;
       const userId = cloudSync.userId;
       const client = cloudSync.client;
       clearTimeout(cloudSync.timer);
       cloudSync.saving = true;
       setCloudSyncStatus("syncing", "Buluta kaydediliyor", "Yerel ajanda verisi öğretmen hesabınıza aktarılıyor.");
       try {
+        let expectedRevision = cloudSync.rowVersion;
+        let checked = cloudSync.rowChecked;
+        let snapshot;
+        const ownerKey = `${STORE_KEY}.owner`;
+        const owner = localStorage.getItem(ownerKey);
+        if (owner && owner !== userId) throw new Error('Bu cihazdaki ajanda başka hesaba ait. Yerel yedeği aldıktan sonra Buluttan Al ile kendi ajandanızı açın.');
+        if (!options.manual && !cloudSync.ready) return false;
         if (options.manual && (!cloudSync.rowChecked || !cloudSync.ready)) {
           const latest = await fetchCloudRow();
           if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
-          if (latest && cloudSnapshotMatches(latest)) acceptCloudVersion(latest);
-          else {
-            const owner = localStorage.getItem(`${STORE_KEY}.owner`);
-            if (owner && owner !== cloudSync.userId) throw new Error('Bu cihazdaki ajanda başka hesaba ait. Yerel yedeği aldıktan sonra Buluttan Al ile kendi ajandanızı açın.');
-            if (latest && !confirm('Yerel ve bulut kayıtları farklı. Bu cihazdaki ajanda buluttaki kaydın yerine yazılsın mı? İki sürüm de bu tarayıcıda güvenlik yedeği olarak saklanacak. Diğer cihazlarda yapılan değişiklikler bu seçimle yerel sürümle değiştirilir.')) {
+          if (owner !== localStorage.getItem(ownerKey)) throw new Error("Cihazdaki ajanda hesabı değişti. Yeniden deneyin.");
+          if (latest && !cloudSnapshotMatches(latest)) {
+            if (!confirm('Cihaz ve bulut ajandaları farklı. Bu cihazdaki sürüm buluttaki sürümün yerine yazılsın mı? İki sürüm de bu cihazda yedeklenecek ve Yedek bölümünden indirilebilecek.')) {
               setCloudSyncError('İşlem iptal edildi. Yerel ve bulut kayıtları değiştirilmedi.');
               return false;
             }
-            // A recovery is explicit, backed up, and still guarded by the freshly read revision.
-            localStorage.setItem(`${STORE_KEY}.kurtarma-yerel`, JSON.stringify(buildCloudSnapshot()));
-            if (latest) localStorage.setItem(`${STORE_KEY}.kurtarma-bulut`, JSON.stringify(latest));
-            acceptCloudVersion(latest);
+            snapshot = buildCloudSnapshot();
+            const storedAgenda = localStorage.getItem(STORE_KEY);
+            await writeCloudRecovery(userId, snapshot, latest);
+            if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
+            if (JSON.stringify(snapshot) !== JSON.stringify(buildCloudSnapshot()) ||
+                owner !== localStorage.getItem(ownerKey) || storedAgenda !== localStorage.getItem(STORE_KEY)) {
+              throw new Error("Yedek alınırken cihazdaki kayıt değişti. Hiçbir bulut kaydı değiştirilmedi; yeniden deneyin.");
+            }
           }
+          // A read (even after confirmation) is not a persisted write baseline.
+          expectedRevision = latest?.updated_at || null;
+          checked = true;
         }
-        if (!cloudSync.rowChecked) throw new Error("Bulut kaydı henüz doğrulanmadı. Önce bulut kontrolünün tamamlanmasını bekleyin.");
-        const snapshot = buildCloudSnapshot();
+        if (!checked) throw new Error("Bulut kaydı henüz doğrulanmadı. Önce bulut kontrolünün tamamlanmasını bekleyin.");
+        snapshot ||= buildCloudSnapshot();
         const bytes = payloadBytes(snapshot);
         if (bytes > CLOUD_SYNC_MAX_BYTES) {
           throw new Error(`Ajanda verisi bulut sınırını aşıyor (${formatBytes(bytes)}). Fotoğrafları küçültüp tekrar deneyin ya da JSON yedek kullanın.`);
@@ -533,15 +549,14 @@
         // Compare the server revision we loaded, not just the client's clock.
         // A second device's work must survive a stale autosave on this device.
         let query = client.from(CLOUD_SYNC_TABLE);
-        query = cloudSync.rowVersion
-          ? query.update(payload).eq("user_id", userId).eq("updated_at", cloudSync.rowVersion)
+        query = expectedRevision
+          ? query.update(payload).eq("user_id", userId).eq("updated_at", expectedRevision)
           : query.insert(payload);
         const result = await query.select("updated_at,storage_bytes").maybeSingle();
         if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
-        if (result.error) throw result.error;
+        if (result.error && result.error.code !== "23505") throw result.error;
         if (!result.data) {
           cloudSync.ready = false;
-          writeLocalBackupBeforeCloud();
           throw new Error("Ajanda başka bir cihazda değişti. Yerel çalışmanız korundu; Yedek bölümünden son bulut kaydını yükleyip yeniden deneyin.");
         }
         acceptCloudVersion(result.data);
@@ -551,6 +566,7 @@
         if (options.manual) toast("Ajanda buluta kaydedildi.");
         return true;
       } catch (error) {
+        if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
         console.warn(error);
         setCloudSyncError(cloudErrorMessage(error));
         if (options.manual) toast(cloudErrorMessage(error));
@@ -571,12 +587,19 @@
         renderCloudSyncStatus();
         return false;
       }
+      if (cloudSync.loading || cloudSync.saving || cloudSync.applyingRemote) return false;
       const userId = cloudSync.userId;
+      cloudSync.loading = true;
       try {
         setCloudSyncStatus("syncing", "Buluttan alınıyor", "Öğretmen hesabınızdaki son ajanda kaydı okunuyor.");
         const row = await fetchCloudRow();
         if (userId !== cloudSync.userId) return false;
         if (!row) {
+          const owner = localStorage.getItem(`${STORE_KEY}.owner`);
+          if (owner && owner !== userId && localHasMeaningfulAgenda()) {
+            cloudSync.ready = false;
+            throw new Error("Bu hesapta bulut ajandası bulunamadı. Bu cihazdaki diğer hesaba ait kayıt korunuyor.");
+          }
           acceptCloudVersion(null);
           cloudSync.ready = true;
           setCloudSyncStatus("ready", "Bulut hazır", "Bu hesapta henüz bulut ajandası bulunamadı.");
@@ -588,17 +611,21 @@
           renderCloudSyncStatus();
           return false;
         }
-        applyCloudRow(row);
+        if (!await applyCloudRow(row)) return false;
         cloudSync.ready = true;
         cloudSync.lastLoadedAt = new Date().toISOString();
         setCloudSyncStatus("ready", "Buluttan yüklendi", `Son bulut kaydı bu cihaza alındı. Veri boyutu: ${formatBytes(row.storage_bytes || 0)}.`);
         if (options.manual) toast("Buluttaki ajanda yüklendi.");
         return true;
       } catch (error) {
+        if (userId !== cloudSync.userId) return false;
         console.warn(error);
         setCloudSyncError(cloudErrorMessage(error));
         if (options.manual) toast(cloudErrorMessage(error));
         return false;
+      } finally {
+        cloudSync.loading = false;
+        renderCloudSyncStatus();
       }
     }
 
@@ -664,22 +691,66 @@
         JSON.stringify(stable({ agenda: comparableAgenda(row.agenda_state), planner: comparablePlanner(row.lesson_planner_state) }));
     }
 
-    function applyCloudRow(row) {
+    async function applyCloudRow(row) {
       const incoming = row?.agenda_state;
       if (!incoming || !Array.isArray(incoming.classes) || !Array.isArray(incoming.students) || !Array.isArray(incoming.exams)) {
         throw new Error("Buluttaki ajanda kaydı geçerli görünmüyor.");
       }
-      writeLocalBackupBeforeCloud();
+      if (cloudSync.applyingRemote) return false;
+      const userId = cloudSync.userId;
+      const client = cloudSync.client;
+      const ownerKey = `${STORE_KEY}.owner`;
+      const owner = localStorage.getItem(ownerKey);
+      const snapshot = buildCloudSnapshot();
+      const storedAgenda = localStorage.getItem(STORE_KEY);
+      const storedPlanner = localStorage.getItem(LESSON_PLANNER_STORE_KEY);
       cloudSync.applyingRemote = true;
       try {
-        state = normalizeState(JSON.parse(JSON.stringify(incoming)));
-        restoreLessonPlannerBackup(row.lesson_planner_state || null);
+        if (localHasMeaningfulAgenda()) {
+          const backupOwner = owner || userId;
+          await writeCloudRecovery(backupOwner, snapshot, backupOwner === userId ? row : null);
+        }
+        if (userId !== cloudSync.userId || client !== cloudSync.client) return false;
+        if (localStorage.getItem(ownerKey) !== owner ||
+            localStorage.getItem(STORE_KEY) !== storedAgenda ||
+            localStorage.getItem(LESSON_PLANNER_STORE_KEY) !== storedPlanner ||
+            JSON.stringify(snapshot) !== JSON.stringify(buildCloudSnapshot())) {
+          throw new Error("Yedek alınırken cihazdaki kayıt değişti. Buluttaki sürüm yüklenmedi; yeniden deneyin.");
+        }
+        const next = normalizeState(JSON.parse(JSON.stringify(incoming)));
+        ensureAgendaClass(next);
+        // A null planner can be a legacy cloud record, not a deletion.
+        const planner = row.lesson_planner_state || (owner && owner !== userId ? { siniflar: [], programs: {}, tatiller: [] } : null);
+        const entries = [[STORE_KEY, storedAgenda, JSON.stringify(next)]];
+        if (planner) entries.push([LESSON_PLANNER_STORE_KEY, storedPlanner, JSON.stringify(planner)]);
+        persistCloudDownload(entries);
+        state = next;
+        if (planner) notifyPlannerRestored(planner);
         ensureInitialClass();
-        saveState({ skipCloud: true, preserveTimestamp: true });
         renderAll();
         acceptCloudVersion(row);
+        return true;
       } finally {
         cloudSync.applyingRemote = false;
+      }
+    }
+
+    function persistCloudDownload(entries) {
+      // Free space from smaller replacements before writing larger ones.
+      const sizeChange = ([, oldValue, nextValue]) => (nextValue?.length || 0) - (oldValue?.length || 0);
+      const write = (key, value) => value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value);
+      const applied = [];
+      try {
+        for (const entry of entries.sort((a, b) => sizeChange(a) - sizeChange(b))) {
+          if (entry[1] === entry[2]) continue;
+          write(entry[0], entry[2]);
+          applied.push(entry);
+        }
+      } catch (error) {
+        for (const [key, previous] of applied.reverse()) {
+          try { write(key, previous); } catch (rollbackError) { console.warn("Yerel kayıt geri yazılamadı.", rollbackError); }
+        }
+        throw error;
       }
     }
 
@@ -690,16 +761,36 @@
       };
     }
 
-    function writeLocalBackupBeforeCloud() {
-      try {
-        const backup = {
-          ...state,
-          lessonPlannerBackup: readLessonPlannerBackup(),
-          savedBeforeCloudLoadAt: new Date().toISOString()
+    function accessCloudRecovery(owner, record) {
+      return new Promise((resolve, reject) => {
+        if (!owner || !window.indexedDB) { reject(new Error("Kurtarma deposu açılamadı.")); return; }
+        const request = window.indexedDB.open("kemal-ogretmen-ajandasi-recovery", 1);
+        request.onupgradeneeded = () => request.result.createObjectStore(CLOUD_BACKUP_STORE);
+        request.onerror = () => reject(request.error || new Error("Kurtarma deposu açılamadı."));
+        request.onblocked = () => reject(new Error("Kurtarma deposu başka bir sekmede açık."));
+        request.onsuccess = () => {
+          const db = request.result;
+          db.onversionchange = () => db.close();
+          try {
+            const tx = db.transaction(CLOUD_BACKUP_STORE, record ? "readwrite" : "readonly");
+            const store = tx.objectStore(CLOUD_BACKUP_STORE);
+            const operation = record ? store.put(record, owner) : store.get(owner);
+            tx.oncomplete = () => { db.close(); resolve(operation.result); };
+            tx.onabort = tx.onerror = () => { db.close(); reject(tx.error || operation.error || new Error("Kurtarma işlemi tamamlanmadı.")); };
+          } catch (error) { db.close(); reject(error); }
         };
-        localStorage.setItem(`${STORE_KEY}.bulut-oncesi-yedek`, JSON.stringify(backup));
+      });
+    }
+
+    async function writeCloudRecovery(owner, local, remote) {
+      try {
+        await accessCloudRecovery(owner, {
+          local,
+          cloud: remote ? { agendaState: remote.agenda_state, lessonPlannerState: remote.lesson_planner_state || null } : null
+        });
       } catch (error) {
-        console.warn("Bulut öncesi yerel yedek saklanamadı", error);
+        console.warn("Ajanda kurtarma yedeği saklanamadı.", error);
+        throw new Error("Güvenlik yedeği bu tarayıcıda saklanamadı. Hiçbir sürümün üzerine yazılmadı. Yedek bölümünden yerel JSON yedeğini indirin.");
       }
     }
 
@@ -748,10 +839,13 @@
 
     function cloudErrorMessage(error) {
       const text = String(error?.message || error || "");
-      if (error?.code === "42P01" || text.includes(CLOUD_SYNC_TABLE)) {
+      if (error?.name === "QuotaExceededError") {
+        return "Bu tarayıcıda ajanda için yeterli yer yok. Buluttaki kayıt değişmedi; Yedek bölümünden cihazdaki sürümü indirin.";
+      }
+      if (error?.code === "42P01" || error?.code === "PGRST205") {
         return "Bulut ajanda tablosu henüz Supabase üzerinde kurulmamış. SQL dosyasını çalıştırana kadar yerel kayıt devam eder.";
       }
-      if (text.includes("JWT") || text.includes("auth")) {
+      if (text.includes("JWT") || error?.code === "42501") {
         return "Oturum doğrulanamadı. Tekrar giriş yaptıktan sonra bulut senkronu deneyin.";
       }
       return text || "Bulut senkron sırasında beklenmeyen bir hata oluştu.";
@@ -775,10 +869,10 @@
         els.cloudBackupStatus.textContent = `${cloudSync.status || "Yerel mod"} · ${cloudSync.detail || "Yerel JSON yedek sistemi çalışmaya devam eder."}`;
       }
       [els.cloudSaveNowBtn, els.cloudSaveNowBtnBackup].forEach((button) => {
-        if (button) button.disabled = !cloudSync.enabled || cloudSync.saving;
+        if (button) button.disabled = !cloudSync.enabled || cloudSync.saving || cloudSync.loading || cloudSync.applyingRemote;
       });
       [els.cloudLoadNowBtn, els.cloudLoadNowBtnBackup].forEach((button) => {
-        if (button) button.disabled = !cloudSync.enabled || cloudSync.saving;
+        if (button) button.disabled = !cloudSync.enabled || cloudSync.saving || cloudSync.loading || cloudSync.applyingRemote;
       });
     }
 
@@ -802,17 +896,20 @@
       return `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} MB`;
     }
 
-    function ensureInitialClass() {
-      if (!state.classes.length) {
+    function ensureAgendaClass(agenda) {
+      if (!agenda.classes.length) {
         const classId = uid("class");
-        state.classes.push({ id: classId, name: "Sınıfım", year: "2025-2026", teacherName: "Kemal Öğretmen" });
-        state.activeClassId = classId;
-        saveState({ skipCloud: true, preserveTimestamp: true });
+        agenda.classes.push({ id: classId, name: "Sınıfım", year: "2025-2026", teacherName: "Kemal Öğretmen" });
       }
-      if (!state.activeClassId || !state.classes.some((item) => item.id === state.activeClassId)) {
-        state.activeClassId = state.classes[0].id;
-        saveState({ skipCloud: true, preserveTimestamp: true });
+      if (!agenda.classes.some((item) => item.id === agenda.activeClassId)) {
+        agenda.activeClassId = agenda.classes[0].id;
+        return true;
       }
+      return false;
+    }
+
+    function ensureInitialClass() {
+      if (ensureAgendaClass(state)) saveState({ skipCloud: true, preserveTimestamp: true });
       els.examDate.value = today();
       els.manualExamDate.value = today();
       els.manualSubjects.value = "Türkçe, Matematik, Hayat Bilgisi";
@@ -5701,14 +5798,31 @@
     }
 
     function exportBackup() {
-      const backup = {
-        ...state,
-        lessonPlannerBackup: readLessonPlannerBackup()
-      };
+      downloadAgendaBackup(buildCloudSnapshot(), "yedek");
+    }
+
+    async function exportCloudRecovery() {
+      const userId = cloudSync.userId;
+      const version = document.getElementById("cloudRecoveryVersion")?.value === "cloud" ? "cloud" : "local";
+      try {
+        if (!userId) { toast("Kurtarma yedekleri için ilgili öğretmen hesabıyla giriş yapın."); return; }
+        const record = await accessCloudRecovery(userId);
+        if (userId !== cloudSync.userId) return;
+        const snapshot = record?.[version];
+        if (!snapshot) { toast("Bu sürüm için bu cihazda kurtarma yedeği yok."); return; }
+        downloadAgendaBackup(snapshot, version === "cloud" ? "kurtarma-bulut" : "kurtarma-cihaz");
+      } catch (error) {
+        console.warn(error);
+        toast("Kurtarma yedeği açılamadı.");
+      }
+    }
+
+    function downloadAgendaBackup(snapshot, name) {
+      const backup = { ...snapshot.agendaState, lessonPlannerBackup: snapshot.lessonPlannerState };
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `kemal-ogretmen-ajandasi-yedek-${today()}.json`;
+      link.download = `kemal-ogretmen-ajandasi-${name}-${today()}.json`;
       link.click();
       URL.revokeObjectURL(link.href);
     }
@@ -5727,17 +5841,19 @@
       if (!data) return;
       try {
         localStorage.setItem(LESSON_PLANNER_STORE_KEY, JSON.stringify(data));
-        // The iframe may already have initialized before the asynchronous cloud
-        // read completes. Updating shared storage alone leaves its state stale.
-        els.lessonPlannerFrame?.contentWindow?.postMessage({
-          type: "kemal-ajanda-restore-planner",
-          plannerState: data,
-          date: isDateKey(state.lessonPlannerFocusDate) ? state.lessonPlannerFocusDate : today()
-        }, window.location.origin === 'null' ? '*' : window.location.origin);
+        notifyPlannerRestored(data);
       } catch (error) {
         console.warn(error);
         toast("Ders planlama yedeği geri yüklenemedi; ajanda verileri yüklendi.");
       }
+    }
+
+    function notifyPlannerRestored(data) {
+      els.lessonPlannerFrame?.contentWindow?.postMessage({
+        type: "kemal-ajanda-restore-planner",
+        plannerState: data,
+        date: isDateKey(state.lessonPlannerFocusDate) ? state.lessonPlannerFocusDate : today()
+      }, window.location.origin === 'null' ? '*' : window.location.origin);
     }
 
     function importBackup() {
@@ -5755,14 +5871,20 @@
           }
           const lessonPlannerBackup = imported.lessonPlannerBackup || null;
           delete imported.lessonPlannerBackup;
-          state = normalizeState(imported);
-          restoreLessonPlannerBackup(lessonPlannerBackup);
+          const next = normalizeState(imported);
+          ensureAgendaClass(next);
+          next.updatedAt = new Date().toISOString();
+          const entries = [[STORE_KEY, localStorage.getItem(STORE_KEY), JSON.stringify(next)]];
+          if (lessonPlannerBackup) entries.push([LESSON_PLANNER_STORE_KEY, localStorage.getItem(LESSON_PLANNER_STORE_KEY), JSON.stringify(lessonPlannerBackup)]);
+          persistCloudDownload(entries);
+          state = next;
+          if (lessonPlannerBackup) notifyPlannerRestored(lessonPlannerBackup);
           ensureInitialClass();
-          saveState();
+          queueCloudSave();
           renderAll();
           toast("Yedek yüklendi.");
         } catch (error) {
-          toast(error.message || "Yedek okunamadı.");
+          toast(error?.name === "QuotaExceededError" ? "Yedek bu tarayıcıya sığmadı. Mevcut kayıt korundu." : error.message || "Yedek okunamadı.");
         }
       };
       reader.readAsText(file);

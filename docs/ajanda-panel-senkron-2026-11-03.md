@@ -21,7 +21,7 @@ Yalnızca ad-soyad, okul numarası ve kaynak kayıt kimlikleri panelle ilişkile
 
 Doğrulanan bulut sürümü artık hesap bazında cihazda saklanır. Başka bir cihazın yeni kaydı eski yerel sürümle otomatik olarak ezilmez.
 
-Önceki sürümden kalan doğrulanamayan kayıtlar için **Buluta Kaydet** mevcut bulut sürümünü yeniden kontrol eder. İki kayıt farklıysa, yerel sürümün bulutun yerine yazılacağı açıkça sorulur. Onay verilirse iki sürüm tarayıcıda güvenlik yedeğine alınır ve yazma işlemi okunan bulut sürümüyle koşullandırılır. Onay sırasında başka cihaz değişiklik yaparsa işlem reddedilir. İptal edilirse hiçbir sürüm değiştirilmez. Güvenlik yedeği saklanamıyorsa kurtarma da ilerlemez.
+Önceki sürümden kalan doğrulanamayan kayıtlar için **Buluta Kaydet** mevcut bulut sürümünü yeniden kontrol eder. İki kayıt farklıysa, yerel sürümün bulutun yerine yazılacağı açıkça sorulur. Onay verilirse iki sürüm bu cihazdaki hesap kapsamlı IndexedDB deposuna kaydedilir ve yazma işlemi okunan bulut sürümüyle koşullandırılır. Son yedekler **Yedek → Kurtarma Yedeğini İndir** bölümünden ayrı ayrı indirilebilir. Yedek sırasında kayıt değişirse, yedek alınamazsa veya işlem iptal edilirse hiçbir bulut kaydının üzerine yazılmaz.
 
 Buluttaki sürüm doğruysa **Buluttan Al** tercih edilmelidir. Hangi sürümün doğru olduğu bilinmiyorsa önce Yedek bölümünden JSON dışa aktarılmalıdır. Başka hesaba ait yerel kayıt otomatik olarak yeni hesaba aktarılmaz.
 

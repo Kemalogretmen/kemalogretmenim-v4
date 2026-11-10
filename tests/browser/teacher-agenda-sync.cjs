@@ -3,7 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const os=require('node:os');
 const http=require('node:http');
-const {chromium}=require('playwright');
+const {chromium,webkit}=require('playwright');
 const repo=path.resolve(__dirname,'../..');
 (async()=>{
   const server=http.createServer((req,res)=>{
@@ -14,7 +14,9 @@ const repo=path.resolve(__dirname,'../..');
     fs.createReadStream(file).pipe(res);
   });
   await new Promise(done=>server.listen(0,'127.0.0.1',done));const origin='http://127.0.0.1:'+server.address().port;
-  const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_EXECUTABLE?{executablePath:process.env.CHROMIUM_EXECUTABLE}:{})});
+  const engine=process.env.AGENDA_ENGINE==='webkit'?webkit:chromium;
+  const executablePath=engine===webkit?process.env.WEBKIT_EXECUTABLE:process.env.CHROMIUM_EXECUTABLE;
+  const browser=await engine.launch({headless:true,...(executablePath?{executablePath}:{})});
   try{for(const width of[1440,390]){
     const page=await browser.newPage({viewport:{width,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
     await page.route('**/*',route=>{
@@ -50,6 +52,38 @@ const repo=path.resolve(__dirname,'../..');
     await page.waitForFunction(()=>JSON.parse(localStorage.getItem('kemalOgretmenAjandasi.v1')).classes[0].name==='Şampiyonlar');
     await page.reload();await page.waitForFunction(()=>cloudSync.ready);assert.equal(await page.evaluate(()=>cloudSync.rowChecked),true);
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
-    console.log(`PASS ${width}: scoped panel import, chosen student, deep link to own profile, class edit/save/reload, persisted cloud lineage`);await page.close();
+    const bytesBeforeQuota=await page.evaluate(()=>{
+      const key='kemalOgretmenAjandasi.v1', snapshot=JSON.parse(localStorage.getItem(key));
+      snapshot.updatedAt='2090-01-01T00:00:00Z';
+      localStorage.removeItem(key+'.base.teacher');
+      for (const megabytes of [3, 2, 1.5, 1]) {
+        snapshot.fixtureLargeField='x'.repeat(megabytes*1024*1024);
+        const serialized=JSON.stringify(snapshot);
+        try { localStorage.setItem(key,serialized); } catch(error) { if(error.name==='QuotaExceededError')continue;throw error; }
+        try { localStorage.setItem('quota-probe',serialized); localStorage.removeItem('quota-probe'); }
+        catch(error) { if(error.name==='QuotaExceededError')return snapshot.fixtureLargeField.length;throw error; }
+      }
+      return 0;
+    });
+    assert.ok(bytesBeforeQuota>0,'duplicating the active snapshot in localStorage must fail');
+    await page.goto(origin+'/ogretmen-ajandasi/index.html');
+    await page.waitForFunction(()=>cloudSync.mode==='error'&&!cloudSync.rowChecked);
+    await page.locator('button[data-view="backupView"]').click();
+    await page.locator('#cloudSaveNowBtnBackup').click();
+    await page.waitForFunction(()=>cloudSync.status==='Buluta kaydedildi');
+    assert.equal(await page.evaluate(()=>window.cloudWrites),1);
+    const recovery = await page.evaluate(async()=>{
+      const record=await accessCloudRecovery('teacher');
+      return {local:record.local.agendaState.fixtureLargeField.length,cloud:record.cloud.agendaState.classes[0].name,
+        other:!!(await accessCloudRecovery('another-teacher'))};
+    });
+    assert.deepEqual(recovery,{local:bytesBeforeQuota,cloud:'2-B',other:false});
+    await page.locator('#cloudRecoveryVersion').selectOption('cloud');
+    const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#exportCloudRecoveryBtn').click()]);
+    assert.match(download.suggestedFilename(),/kurtarma-bulut/);
+    const restored=JSON.parse(fs.readFileSync(await download.path(),'utf8'));
+    assert.equal(restored.classes[0].name,'2-B');
+    assert.deepEqual(errors,[]);
+    console.log(`PASS ${width}: panel import, reload, actual storage quota, indexed backups, revision and JSON download`);await page.close();
   }}finally{await browser.close();await new Promise(done=>server.close(done));}
 })().catch(error=>{console.error(error);process.exitCode=1;});
