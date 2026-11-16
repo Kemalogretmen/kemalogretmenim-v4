@@ -16,6 +16,7 @@
     overview: '📊 Genel Bakış',
     adminler: '👥 Alt Adminler',
     analytics: '📈 Site Analizleri',
+    reklamlar: 'Google Reklamları',
     reactions: '👍 Beğeni Analizi',
     ogretmenler: '🪪 Öğretmen Onayları',
     kullanicilar: '👥 Kayıtlı Kullanıcılar',
@@ -535,6 +536,7 @@
   function applyAccessControl() {
     const showSiteDashboard = canAccess('site_admin_dashboard');
     const ownerMode = isOwnerUser();
+    setElementVisible('btn-reklamlar', state.accessProfile?.isOwner === true);
 
     Object.entries(getSidebarPermissionMap()).forEach(function(entry) {
       const elementId = entry[0];
@@ -700,6 +702,10 @@
       toast('Alt admin yönetimi yalnızca ana yöneticiye açık.', 'error');
       return;
     }
+    if (id === 'reklamlar' && !state.accessProfile?.isOwner) {
+      toast('Reklam yönetimi yalnızca ana yöneticiye açık.', 'error');
+      return;
+    }
     if (id === 'ogretmenler' && !canAccess('teacher_approvals')) {
       toast('Öğretmen onayları için yetkin açık değil.', 'error');
       return;
@@ -754,6 +760,9 @@
     }
     if (id === 'analytics') {
       loadAnalytics(false);
+    }
+    if (id === 'reklamlar') {
+      window.KemalAdminAdSense?.open(window.kemalAdminAuth.getClient());
     }
     if (id === 'reactions') {
       loadReactions(false);

@@ -3,6 +3,11 @@
   publish = ".publish"
 
 [[redirects]]
+  from = "/ads.txt"
+  to = "/.netlify/functions/adsense-txt"
+  status = 200
+
+[[redirects]]
   from = "/sinav/:id"
   to = "/.netlify/functions/exam-share?examId=:id"
   status = 200

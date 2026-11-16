@@ -1446,6 +1446,9 @@
             <button class="side-btn" onclick="showPanel('analytics')" id="btn-analytics">
               <span class="em">📈</span><span>Site Analizleri</span>
             </button>
+            <button class="side-btn" type="button" onclick="showPanel('reklamlar')" id="btn-reklamlar" style="display:none;">
+              <span class="em" aria-hidden="true">▣</span><span>Google Reklamları</span>
+            </button>
             <button class="side-btn" onclick="showPanel('reactions')" id="btn-reactions">
               <span class="em">👍</span><span>Beğeni Analizi</span>
             </button>
@@ -2279,6 +2282,51 @@
         </div>
       </div>
 
+      <div class="panel" id="panel-reklamlar">
+        <div class="card" style="max-width:720px;">
+          <div class="card-title">Google AdSense</div>
+          <p class="admin-help-box" id="adsenseStatus" role="status">Reklam ayarı yükleniyor…</p>
+          <form id="adsenseForm">
+            <fieldset id="adsenseFields" disabled style="border:0;padding:0;min-width:0;">
+              <div class="form-row">
+                <div>
+                  <label for="adsensePublisher">Yayıncı kimliği</label>
+                  <input id="adsensePublisher" type="text" placeholder="ca-pub-…" autocomplete="off" maxlength="23">
+                </div>
+                <div>
+                  <label for="adsenseSlot">Görüntülü reklam birimi kimliği</label>
+                  <input id="adsenseSlot" type="text" placeholder="data-ad-slot değeri" inputmode="numeric" autocomplete="off" maxlength="20">
+                </div>
+              </div>
+              <fieldset style="border:0;padding:0;margin:0 0 16px;">
+                <legend style="font-weight:800;margin-bottom:8px;">Reklam alanları</legend>
+                <div class="admin-permission-section-grid">
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="home"> Ana sayfa</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="games"> Oyun kataloğu</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="reading"> Hızlı okuma girişi</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="exams"> Sınav merkezi girişi</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="resources"> Sınıf kaynakları girişi</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="teacher-tools"> Öğretmen araçları kataloğu</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="teacher-panel"> Öğretmen paneli giriş sekmesi</label>
+                  <label class="admin-permission-card"><input type="checkbox" name="adsensePlacement" value="student-panel"> Öğrenci paneli giriş sekmesi</label>
+                </div>
+              </fieldset>
+              <label for="adsenseArticles">Öğretmen ve veli yazıları (isteğe bağlı)</label>
+              <textarea id="adsenseArticles" placeholder="Her satıra bir makale bağlantısı" spellcheck="false"></textarea>
+              <p class="admin-help-box">Seçili sayfalarda en fazla bir reklam gösterilir. Yazı eklemek istersen yetişkinlere yönelik yazıları seç. Yayıncı kimliği kaydedildiğinde <a href="/ads.txt" target="_blank" rel="noopener">ads.txt</a> doğrulama kaydı oluşur.</p>
+              <button class="btn-save" type="submit">Ayarları kaydet ve reklamları kapat</button>
+            </fieldset>
+          </form>
+          <div style="margin-top:18px;">
+            <p id="adsenseEnableHint" class="admin-help-box">Reklamları açmadan önce sitenin AdSense durumu Hazır olmalı. Otomatik reklamları kapat, hassas kategorileri ve gizlilik ayarlarını kontrol et, ziyaretçi izin akışını doğrula.</p>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;">
+              <button id="adsenseEnable" class="btn-add" type="button" aria-describedby="adsenseEnableHint" disabled>Kontroller tamam, reklamları aç</button>
+              <button id="adsenseDisable" class="btn-danger" type="button" disabled>Reklamları kapat</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ══ YEDEK / SIFIRLA ══ -->
       <div class="panel" id="panel-yedek">
         <div class="card" style="max-width:520px;">
@@ -2304,6 +2352,7 @@
 <script src="/js/admin-shell.js?v=20260729-ebook"></script>
 <script src="/js/content-reactions.js"></script>
 <script src="/js/admin-system-health.js?v=20260721-modular-1"></script>
-<script src="/js/admin-dashboard.js?v=20260926-dock-size-buttons"></script>
+<script src="/js/admin-adsense.js?v=20261117"></script>
+<script src="/js/admin-dashboard.js?v=20261110-adsense"></script>
 </body>
 </html>

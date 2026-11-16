@@ -16,6 +16,7 @@
         linear-gradient(180deg, #FBF9FF 0%, #FFFFFF 48%, #FFF8EF 100%);
     }
     .article-shell {
+      position: relative;
       width: min(1040px, calc(100% - 32px));
       margin: 42px auto 72px;
       display: grid;
@@ -147,10 +148,18 @@
         padding: 22px;
       }
     }
+    #articleAdAnchor:empty {
+      position: absolute;
+      inset-inline: 0;
+      bottom: 0;
+      height: 1px;
+      pointer-events: none;
+    }
   </style>
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="/css/site-adsense.css?v=20261117">
 </head>
 <body>
   <main class="article-shell">
@@ -167,10 +176,12 @@
       </div>
     </article>
     <section class="article-content" id="articleContent" hidden></section>
+    <div id="articleAdAnchor" data-site-ad="article"></div>
   </main>
 
   <script src="/js/site-data.js"></script>
   <script src="/js/site.js?v=20261030-icons"></script>
+  <script src="/js/site-adsense.js?v=20261117"></script>
   <script>
     (function() {
       'use strict';
@@ -290,6 +301,9 @@
         state.hidden = true;
         hero.hidden = false;
         content.hidden = false;
+        if (stripHtml(articleHtml).trim().length >= 600) {
+          window.KemalSiteAdSense?.mount(document.getElementById('articleAdAnchor'), article.id).catch(() => {});
+        }
       }
 
       document.addEventListener('DOMContentLoaded', init);
