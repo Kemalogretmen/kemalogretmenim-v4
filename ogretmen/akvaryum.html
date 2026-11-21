@@ -137,7 +137,16 @@
         <button type="button" class="round-button random-button fullscreen-keep" data-action="random-student" aria-label="Rastgele öğrenci seç" title="Rastgele öğrenci seç"><svg><use href="#i-shuffle"/></svg></button>
         <button type="button" class="round-button activities-button fullscreen-keep" id="activitiesButton" data-action="activities" aria-label="Sınıf etkinlikleri" title="Sınıf etkinlikleri"><svg><use href="#i-clock"/></svg><span id="activityTimerBadge" aria-hidden="true" hidden></span></button>
         <button type="button" class="round-button fullscreen-keep bubble-games-entry" id="bubbleGamesButton" data-action="bubble-games" aria-label="Baloncuk Avı · On resif oyunu" title="Baloncuk Avı"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M10 9h12c4 0 5 3 6 9s-2 8-5 4l-3-3h-8l-3 3c-3 4-6 2-5-4s2-9 6-9Z"/><path d="M10 12v7m-3.5-3.5h7"/><circle cx="23" cy="13" r=".8"/><circle cx="20" cy="16" r=".8"/></svg></button>
-        <div class="sound-controls fullscreen-keep"><button type="button" class="icon-button" data-action="sound" aria-label="Ortam sesleri" title="Ses seç">♫</button><button type="button" class="sound-toggle" id="soundToggle" data-action="toggle-sound" aria-label="Sesi başlat" title="Sesi başlat" aria-pressed="false">▶</button></div>
+        <div class="sound-controls fullscreen-keep">
+          <button type="button" class="icon-button" data-action="sound" aria-label="Ortam sesleri" title="Ses seç">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M9 18V6l12-3v12M9 9l12-3"/>
+              <ellipse cx="6" cy="18" rx="3" ry="2.5"/>
+              <ellipse cx="18" cy="15" rx="3" ry="2.5"/>
+            </svg>
+          </button>
+          <button type="button" class="sound-toggle" id="soundToggle" data-action="toggle-sound" aria-label="Sesi başlat" title="Sesi başlat" aria-pressed="false">▶</button>
+        </div>
         <button type="button" class="round-button fullscreen-keep" data-action="fullscreen" aria-label="Tam ekran" title="Tam ekran" aria-pressed="false"><svg><use href="#i-expand"/></svg></button>
         <button type="button" class="round-button" data-action="panel" aria-label="Sınıf yönetimini aç" aria-expanded="false" aria-controls="studentPanel" title="Sınıf yönetimini aç"><svg><use href="#i-users"/></svg></button>
       </div>
