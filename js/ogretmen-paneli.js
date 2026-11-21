@@ -1018,7 +1018,7 @@
     var wpm = result.dakika_kelime || result.dakikada_kelime || meta.wpm || 0;
     var comprehension = result.anlama_yuzdesi || result.anlama || meta.comprehension || 0;
     var detail = [
-      wpm ? wpm + ' kelime/dk' : '',
+      wpm ? wpm + ' kelime/dk' + (meta.readingFlow === 'kelime-otomatik' ? ' gösterim temposu' : '') : '',
       comprehension ? '%' + Math.round(Number(comprehension || 0)) : '',
       formatDate(result.tarih || result.olusturma_tarihi || row.updated_at || row.created_at),
     ].filter(Boolean).join(' · ');
@@ -1034,6 +1034,12 @@
   }
 
   function renderReports() {
+    if (window.KemalTeacherExamAnalysis) {
+      window.KemalTeacherExamAnalysis.update({
+        classes: state.classes, students: state.students, records: state.studentProgress,
+        client: isTeacherApproved() ? getClient() : null, ownerId: getTeacherId(), canAnalyze: isTeacherApproved()
+      });
+    }
     var box = qs('reportList');
     if (!box) return;
     var students = state.students.filter(function(item) { return item.status !== 'removed'; });
@@ -2223,7 +2229,7 @@
       return;
     }
     localStorage.setItem(EXAM_KARNE_KEY, JSON.stringify(meta.resultSnapshot));
-    window.location.href = '/sinav_sitesi/sinav.html?adminKarne=1';
+    window.location.href = '/sinav_sitesi/sinav.html?adminKarne=1&panel=teacher';
   }
 
   function openTeacherReadingKarne(id) {
@@ -2240,6 +2246,8 @@
       baslik: result.metin_adi || row.title,
       kelime_sayisi: result.kelime_sayisi || meta.wordCount || 0,
       hedef_hiz: result.hedef_hiz || meta.targetWpm || 0,
+      readingFlow: meta.readingFlow,
+      resultDate: result.tarih || result.olusturma_tarihi || row.updated_at || row.created_at,
       sorular: [],
     }));
     sessionStorage.setItem('okuma_kullanici', JSON.stringify({
@@ -2258,7 +2266,7 @@
       detay: [],
     }));
     sessionStorage.setItem('okuma_attempt_id', meta.attemptId || 'teacher_panel_' + Date.now());
-    window.location.href = '/hizli-okuma/karne.html';
+    window.location.href = '/hizli-okuma/karne.html?arsiv=1';
   }
 
   function bindEvents() {

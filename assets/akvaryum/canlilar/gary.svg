@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="426" viewBox="0 0 640 426">
+<title>Gary, salyangoz</title>
+<defs><radialGradient id="shell" cx=".35" cy=".3"><stop stop-color="#f9c4d7"/><stop offset=".7" stop-color="#e49fbc"/><stop offset="1" stop-color="#c17d9f"/></radialGradient><linearGradient id="foot" x2="0" y2="1"><stop stop-color="#92d6ba"/><stop offset="1" stop-color="#5caa9e"/></linearGradient></defs>
+<g stroke="#304642" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round">
+<path d="M243 291Q194 273 186 211C178 157 199 101 246 91C306 75 358 119 361 176Q364 239 351 288L331 307Z" fill="url(#shell)"/>
+<path d="M253 235C224 210 230 163 252 161Q282 159 295 209Q313 267 285 302" fill="none" stroke="#c34663" stroke-width="14"/>
+<path d="M254 229Q240 211 245 193" fill="none" stroke="#ef8a9f" stroke-width="3"/>
+<g fill="#577fbb" stroke="none"><ellipse cx="220" cy="153" rx="8" ry="13" transform="rotate(31 220 153)"/><ellipse cx="249" cy="116" rx="12" ry="7" transform="rotate(-15 249 116)"/><ellipse cx="292" cy="133" rx="9" ry="12" transform="rotate(-26 292 133)"/><ellipse cx="327" cy="172" rx="8" ry="12" transform="rotate(-28 327 172)"/><ellipse cx="206" cy="191" rx="7" ry="10"/></g>
+<path d="M379 290Q383 242 367 182L354 163Q355 224 366 293M412 290Q419 217 416 154L429 148Q432 215 425 297" fill="#6fbd9f"/>
+<ellipse cx="356" cy="155" rx="30" ry="32" fill="#d6e77b"/>
+<ellipse cx="427" cy="148" rx="29" ry="31" fill="#d6e77b"/>
+<ellipse cx="367" cy="157" rx="12" ry="15" fill="#df653e" stroke-width="2"/>
+<ellipse cx="437" cy="150" rx="11" ry="15" fill="#df653e" stroke-width="2"/>
+<ellipse cx="370" cy="158" rx="6" ry="9" fill="#20382d" stroke="none"/>
+<ellipse cx="440" cy="151" rx="5" ry="9" fill="#20382d" stroke="none"/>
+<path d="M178 314Q188 293 249 298L334 296Q359 273 390 282Q428 284 439 299Q452 315 468 313Q449 335 400 332L237 334Q190 332 178 314Z" fill="url(#foot)"/>
+<path d="M176 317Q222 328 273 320Q320 331 367 320Q421 332 467 315L456 329Q401 344 349 334Q294 345 246 335Q200 341 176 326Z" fill="#d9e88f" stroke-width="2.8"/>
+<path d="M415 302q12 10 26 0" fill="none" stroke-width="3"/>
+</g>
+</svg>

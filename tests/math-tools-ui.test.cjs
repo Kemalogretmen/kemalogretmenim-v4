@@ -5,9 +5,12 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { parseHTML } = require('linkedom');
 
-function setup(width = 1280) {
+function setup(width = 1280, prettyUrls = false) {
   const root = path.join(__dirname, '..');
   const { document, window } = parseHTML(fs.readFileSync(path.join(root, 'ogretmen/matematik.html'), 'utf8'));
+  if (prettyUrls) for (const link of document.querySelectorAll('#mathWorkspace .mode-tabs a')) {
+    link.setAttribute('href', '/ogretmen/' + link.getAttribute('href').replace(/\.html$/, ''));
+  }
   window.innerWidth = width; window.devicePixelRatio = 1;
   window.innerHeight = 800;
   window.HTMLElement.prototype.getBoundingClientRect = () => ({ top: 200 });
@@ -48,6 +51,15 @@ test('all library destinations share a keyboard-reachable scroller below the fix
   assert.equal(library.style.getPropertyValue('--math-library-height'), '580px');
   q.window.innerHeight = 500; q.event(q.window, 'resize');
   assert.equal(library.style.getPropertyValue('--math-library-height'), '280px');
+});
+
+test('Netlify clean URLs keep all four workshops in the scrollable sidebar', () => {
+  const q = setup(1280, true);
+  const links = [...q.document.querySelectorAll('.math-library-scroll .math-nav-link')];
+  assert.deepEqual(links.map(link => link.getAttribute('href')), [
+    '/ogretmen/birim-kup-uygulamasi', '/ogretmen/3d-yapi-atolyesi',
+    '/ogretmen/geometrik-cisimler-acilimlar', '/ogretmen/simetri'
+  ]);
 });
 
 test('all seven real tool modes remain functional and update the studio title and ARIA selection', () => {

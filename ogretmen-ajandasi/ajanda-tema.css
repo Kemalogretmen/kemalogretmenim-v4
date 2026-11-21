@@ -74,6 +74,30 @@
     color: var(--theme-text);
   }
 
+  html[data-theme=dark] #studentDialog .table-wrap {
+    background: var(--theme-surface);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+  }
+
+  html[data-theme=dark] #studentDialog .agenda-save-warning:not([hidden]) {
+    background: var(--theme-warning-soft);
+    border-color: var(--theme-warning);
+    color: var(--theme-warning);
+  }
+
+  html[data-theme=dark] #studentDialog .danger-btn {
+    background: var(--theme-danger-soft);
+    border-color: #754052;
+    color: var(--theme-danger);
+  }
+
+  html[data-theme=dark] #studentDialog .photo-preview {
+    background: var(--theme-surface-alt);
+    border-color: var(--theme-border);
+    color: var(--theme-muted);
+  }
+
   html[data-theme=dark] #importReviewDialog .import-row-error { background: var(--theme-danger-soft); }
   html[data-theme=dark] #importReviewDialog .import-row-status { color: var(--theme-muted); }
   html[data-theme=dark] #importReviewDialog .import-row-error .import-row-status { color: var(--theme-danger); }

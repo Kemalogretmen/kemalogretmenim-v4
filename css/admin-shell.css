@@ -39,6 +39,11 @@
   padding-bottom: max(28px, env(safe-area-inset-bottom));
 }
 
+.admin-nav-sidebar > *,
+.sidebar > * {
+  flex-shrink: 0;
+}
+
 .admin-nav-sidebar::-webkit-scrollbar {
   width: 10px;
 }
@@ -257,7 +262,7 @@
 }
 
 .admin-nav-group.is-open .admin-nav-submenu {
-  max-height: 520px;
+  max-height: none;
   opacity: 1;
   padding: 8px 2px 2px 42px;
   transform: translateY(0);
@@ -821,9 +826,6 @@
   }
 
   .admin-nav-group.is-open .admin-nav-submenu {
-    max-height: 70vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     padding-left: 10px;
   }
 

@@ -8,7 +8,7 @@
   <title>⚙️ Yönetim Paneli — Kemal Öğretmenim</title>
   <meta name="robots" content="noindex,nofollow">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
+  <link rel="stylesheet" href="/css/admin-shell.css?v=20261119-scroll">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
 
@@ -72,6 +72,7 @@
       width: 286px;
       background: linear-gradient(180deg,#183B72 0%,#2F6697 58%,#5AA9D6 100%);
       height: 100vh;
+      height: 100dvh;
       padding: 28px 22px;
       position: fixed;
       left:0; top:0;
@@ -79,6 +80,8 @@
       flex-direction: column;
       gap: 16px;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
       overscroll-behavior: contain;
       scrollbar-width: thin;
       scrollbar-color: rgba(255,255,255,.54) rgba(255,255,255,.08);
@@ -1353,6 +1356,8 @@
         width:100%;
         min-height:auto;
         height:auto;
+        max-height: 78vh;
+        max-height: 78dvh;
         z-index:999;
         padding:16px 14px;
       }
@@ -1394,6 +1399,8 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="admin"></script>
 </head>
 <body>
 
@@ -1516,6 +1523,7 @@
           <div class="admin-nav-submenu">
             <a href="/admin/okuma-editor.html">Okuma Metinleri</a>
             <a href="/admin/hece-akisi.html">Hece Akışı</a>
+            <a href="/admin/okuma-akademisi.html">Okuma Akademisi</a>
             <a href="/admin/e-kitap-yonetimi.html">E-Kitap Yönetimi</a>
             <a href="/admin/e-kitap-sonuclari.html">E-Kitap Sonuçları</a>
             <a href="/admin/okuma-sonuclari.html">Okuma Sonuçları</a>
@@ -1686,6 +1694,11 @@
               <span class="admin-module-icon">📈</span>
               <strong>Site Analizleri</strong>
               <small>Ziyaret, trafik ve sayfa performansı</small>
+            </button>
+            <button class="admin-module-card tone-slate" type="button" onclick="showPanel('reklamlar')" id="quick-adsense" style="display:none;">
+              <span class="admin-module-icon" aria-hidden="true">▣</span>
+              <strong>Google Reklamları</strong>
+              <small>Reklam alanları ve açma-kapama</small>
             </button>
             <button class="admin-module-card tone-teal" type="button" onclick="showPanel('reactions')" id="quick-reactions">
               <span class="admin-module-icon">👍</span>
@@ -2285,6 +2298,7 @@
       <div class="panel" id="panel-reklamlar">
         <div class="card" style="max-width:720px;">
           <div class="card-title">Google AdSense</div>
+          <p class="admin-help-box">Bu bölümden reklam alanlarını seçebilir, yayını açabilir veya kapatabilirsin. Google onayını <a href="https://adsense.google.com/adsense/u/0/pub-4242003290700067/sites" target="_blank" rel="noopener">AdSense’teki Siteler bölümünden</a> kontrol edebilirsin.</p>
           <p class="admin-help-box" id="adsenseStatus" role="status">Reklam ayarı yükleniyor…</p>
           <form id="adsenseForm">
             <fieldset id="adsenseFields" disabled style="border:0;padding:0;min-width:0;">
@@ -2349,10 +2363,10 @@
 
 <script src="/js/site-data.js"></script>
 <script src="/js/admin-auth.js?v=20260721-health-1"></script>
-<script src="/js/admin-shell.js?v=20260729-ebook"></script>
+<script src="/js/admin-shell.js?v=20261119-reklam"></script>
 <script src="/js/content-reactions.js"></script>
 <script src="/js/admin-system-health.js?v=20260721-modular-1"></script>
 <script src="/js/admin-adsense.js?v=20261117"></script>
-<script src="/js/admin-dashboard.js?v=20261110-adsense"></script>
+<script src="/js/admin-dashboard.js?v=20261119-reklam"></script>
 </body>
 </html>

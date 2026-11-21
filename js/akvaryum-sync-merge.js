@@ -15,13 +15,14 @@
     return order.map(id=>combine(maps[0].get(id),maps[1].get(id),maps[2].get(id))).filter(v=>v!==undefined);
   }
   function combine(base,left,right,field=''){
+    if(field==='reefCollection')return C.reef.merge(base,left,right,(b,l,r)=>combine(b,l,r));
     if(equal(left,right))return clone(left);
     if(equal(base,left))return clone(right);
     if(equal(base,right))return clone(left);
     // Delete versus edit must never silently resurrect or erase a record.
     if(left===undefined||right===undefined)conflict();
     // A day and month belong to one birthday and must be reconciled together.
-    if(field==='birthday')conflict();
+    if(field==='birthday'||field==='publication')conflict();
     if(object(left)&&object(right)&&(base===undefined||object(base))){
       const result={};for(const key of new Set([...Object.keys(base||{}),...Object.keys(left),...Object.keys(right)])){
         if(['__proto__','constructor','prototype'].includes(key))conflict();
@@ -33,6 +34,17 @@
       if([...base||[],...left,...right].every(v=>object(v)&&typeof v.id==='string'))return keyed(base||[],left,right,v=>v.id);
     }
     conflict();
+  }
+  function mergeReefRewards(base,result){
+    for(const cls of result.classes){
+      if(!C.reef.linked(cls))continue;
+      const before=base.classes.find(c=>c.id===cls.id),sameGoal=before&&equal(before.goal,cls.goal);
+      cls.goal.target=cls.reefCollection.thresholds[3];
+      if(!sameGoal||!equal(before.goal,cls.goal))continue;
+      const original=new Map(before.students.flatMap(s=>Object.values(s.days).flatMap(d=>d.tasks.map(t=>[s.id+':'+t.id,t]))));
+      const positive=cls.students.some(s=>Object.values(s.days).some(d=>d.tasks.some(t=>t.status==='done'&&C.taskPoints(t)>0&&original.get(s.id+':'+t.id)?.status!=='done')));
+      if(positive)C.updateReefCollection(cls,C.goalProgress(before)?.points||0);
+    }
   }
   function merge(base,local,remote){
     const b=C.validate(clone(base)),l=C.validate(clone(local)),r=C.validate(clone(remote));
@@ -66,7 +78,7 @@
     // The active classroom is a navigation preference, not a score conflict.
     b.activeClassId=l.activeClassId;r.activeClassId=l.activeClassId;
     const result=combine(b,l,r);if(!result.classes.some(c=>c.id===result.activeClassId))result.activeClassId=result.classes[0]?.id;
-    return C.validate(result);
+    mergeReefRewards(b,result);return C.validate(result);
   }
   // Automatic sync needs a known acknowledged snapshot to distinguish an
   // offline addition from a record another device intentionally removed. With
@@ -84,9 +96,20 @@
   function automaticKeyed(base,left,right,field){
     const maps=field==='feeds'?[base,left,right].map(automaticFeedMap):[base,left,right].map(items=>new Map(items.map(v=>[v.id,v])));
     const order=[...new Set([...maps[2].keys(),...maps[1].keys(),...maps[0].keys()])];
-    return order.map(id=>automaticCombine(maps[0].get(id),maps[1].get(id),maps[2].get(id))).filter(v=>v!==undefined);
+    return order.map(id=>{
+      const [before,local,remote]=maps.map(map=>map.get(id));
+      const merged=automaticCombine(before,local,remote);
+      if(field==='students' && merged && local && remote && local.agendaStudentId!==remote.agendaStudentId){
+        // A refresh for the previous link must not pair its birthday with a
+        // concurrently selected pupil. The winning link owns the date.
+        const winner=merged.agendaStudentId===local.agendaStudentId?local:remote;
+        if(winner.birthday)merged.birthday=clone(winner.birthday);else delete merged.birthday;
+      }
+      return merged;
+    }).filter(v=>v!==undefined);
   }
   function automaticCombine(base,left,right,field=''){
+    if(field==='reefCollection')return C.reef.merge(base,left,right,(b,l,r)=>automaticCombine(b,l,r));
     if(equal(left,right))return clone(right);
     if(equal(base,left))return clone(right);
     if(equal(base,right))return clone(left);
@@ -94,7 +117,7 @@
     if(base!==undefined&&(left===undefined||right===undefined))return undefined;
     if(left===undefined)return clone(right);
     if(right===undefined)return clone(left);
-    if(field==='birthday')return clone(right);
+    if(field==='birthday'||field==='publication')return clone(right);
     if(object(left)&&object(right)&&(base===undefined||object(base))){
       const result={};
       for(const key of new Set([...Object.keys(base||{}),...Object.keys(left),...Object.keys(right)])){
@@ -199,7 +222,7 @@
     }
     // Navigation belongs to this device and cannot introduce a deleted class.
     result.activeClassId=result.classes.some(c=>c.id===l.activeClassId)?l.activeClassId:(result.classes.find(c=>c.id===r.activeClassId)||result.classes[0])?.id;
-    return C.validate(result);
+    mergeReefRewards(b,result);return C.validate(result);
   }
   return {merge,reconcile};
 });

@@ -6,7 +6,7 @@
 })(typeof window==='object'?window:this,function(){
   'use strict';
   const modelSpecies=['clown','jellyfish','turtle','octopus'];
-  const species=[...modelSpecies,'ray','seahorse','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish','eel','angler','mantis','crab','hammerhead','axolotl','spongebob','patrick','mrkrabs'];
+  const species=[...modelSpecies,'ray','seahorse','boxfish','bannerfish','batfish','cleanershrimp','hermitcrab','cuttlefish','eel','angler','mantis','crab','hammerhead','axolotl','spongebob','patrick','mrkrabs','plankton','gary','squidward','sandy'];
   const part=(clip,origin)=>({clip:'polygon('+clip+')',origin});
   const definitions={
     // Keep the new silhouettes whole. Rigid cutouts would detach legs, the lure
@@ -14,6 +14,7 @@
     eel:{parts:[],cutouts:[]},angler:{parts:[],cutouts:[]},mantis:{parts:[],cutouts:[]},crab:{parts:[],cutouts:[]},
     hammerhead:{parts:[],cutouts:[]},axolotl:{parts:[],cutouts:[]},
     spongebob:{parts:[],cutouts:[]},patrick:{parts:[],cutouts:[]},mrkrabs:{parts:[],cutouts:[]},
+    plankton:{parts:[],cutouts:[]},gary:{parts:[],cutouts:[]},squidward:{parts:[],cutouts:[]},sandy:{parts:[],cutouts:[]},
     jellyfish:{parts:[part('0% 59%,100% 59%,100% 100%,0% 100%','50% 60%')],cutouts:['M0 61H100V100H0Z']},
     turtle:{parts:[
       part('64% 42%,75% 48%,69% 71%,52% 91%,38% 96%,35% 89%,46% 64%','66% 45%'),

@@ -880,7 +880,7 @@
     var meta = getRemoteMeta(row);
     if (!meta.resultSnapshot) return;
     localStorage.setItem(EXAM_KARNE_KEY, JSON.stringify(meta.resultSnapshot));
-    window.location.href = '/sinav_sitesi/sinav.html?adminKarne=1';
+    window.location.href = '/sinav_sitesi/sinav.html?adminKarne=1&panel=parent';
   }
 
   function openReadingKarne(id) {
@@ -894,6 +894,8 @@
       baslik: result.metin_adi || row.title,
       kelime_sayisi: result.kelime_sayisi || meta.wordCount || 0,
       hedef_hiz: result.hedef_hiz || meta.targetWpm || 0,
+      readingFlow: meta.readingFlow,
+      resultDate: result.tarih || result.olusturma_tarihi || row.updated_at || row.created_at,
       sorular: [],
     }));
     sessionStorage.setItem('okuma_kullanici', JSON.stringify({
@@ -911,7 +913,7 @@
       detay: [],
     }));
     sessionStorage.setItem('okuma_attempt_id', meta.attemptId || 'parent_' + Date.now());
-    window.location.href = '/hizli-okuma/karne.html';
+    window.location.href = '/hizli-okuma/karne.html?arsiv=1';
   }
 
   async function saveProfile(event) {

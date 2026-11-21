@@ -5,7 +5,9 @@
   else root.AquariumExpressive=factory();
 })(typeof window==='object'?window:this,function(){
   'use strict';
-  const species=Object.freeze(['eel','angler','mantis','crab','lina','spongebob','patrick','mrkrabs','hammerhead','axolotl']);
+  // These sprites already have a 3:2 frame and each has its own stroke cadence.
+  const framedStrokeRates={catfish:1.65,megalodon:1.2,seal:1.85,penguin:2.4,plankton:1.7,gary:.85,squidward:1.3,sandy:1.6};
+  const species=Object.freeze(['eel','angler','mantis','crab','lina','spongebob','patrick','mrkrabs','hammerhead','axolotl',...Object.keys(framedStrokeRates)]);
   const supports=id=>species.includes(id),clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
   const region=(x,y,cx,cy,rx,ry)=>Math.max(0,1-((x-cx)/rx)**2-((y-cy)/ry)**2)**2;
@@ -56,6 +58,27 @@
       rotate(.64,.64,w*(3+b*14),region(x,y,.62,.77,.12,.17));
       rotate(.85,.64,-w*(2+b*7),region(x,y,.88,.76,.10,.15));
       rotate(.45,.59,w*(3+b*3),region(x,y,.43,.69,.11,.13));
+    }else if(id==='catfish'){
+      // The bend travels down the rear body. Below the mouth, the whiskers
+      // sway with the current while their roots and the eye stay fixed.
+      dy+=Math.sin(t-x*5)*(.041+b*.025)*(1-smooth(.14,.63,x));
+      dy+=w*(.014+b*.012)*smooth(.53,.66,y)*region(x,y,.79,.64,.24,.26);
+      rotate(.56,.48,w*(7+b*5),region(x,y,.54,.56,.19,.18));
+    }else if(id==='megalodon'){
+      const tail=1-smooth(.15,.66,x);
+      dy+=Math.sin(t-x*4.8)*(.032+b*.027)*tail;
+      dx+=w2*(.016+b*.012)*tail;
+      rotate(.58,.59,-w*(5+b*5),region(x,y,.43,.76,.27,.20));
+    }else if(id==='seal'){
+      const rear=1-smooth(.12,.59,x);
+      dy+=Math.sin(t-x*4.3)*(.044+b*.024)*rear;
+      dx+=w2*(.009+b*.008)*rear;
+      rotate(.65,.47,w*(11+b*7),region(x,y,.59,.65,.20,.20));
+    }else if(id==='penguin'){
+      // Two flipper strokes with opposite phases, blended at the shoulders.
+      rotate(.55,.39,w*(9+b*5),region(x,y,.24,.34,.32,.19));
+      rotate(.68,.50,-w*(15+b*7),region(x,y,.80,.70,.21,.22));
+      dy+=Math.sin(t+.8)*(.017+b*.011)*region(x,y,.12,.62,.19,.18);
     }else if(id==='spongebob'){
       // The face and torso are pinned; only the raised hand and feet flex.
       rotate(.62,.56,w*(7+b*19),region(x,y,.755,.32,.14,.29));
@@ -70,6 +93,27 @@
       rotate(.38,.47,-w*(7+b*18),region(x,y,.3,.34,.15,.25));
       rotate(.63,.62,w*(7+b*18),region(x,y,.72,.67,.17,.24));
       dy+=Math.sin(t*2+x*16)*((walking?.016:.005)+b*.009)*smooth(.76,.91,y);
+    }else if(id==='plankton'){
+      rotate(.474,.318,-w*(4+b*9),region(x,y,.418,.14,.066,.21));
+      rotate(.522,.315,w*(4+b*9),region(x,y,.533,.12,.052,.22));
+      rotate(.454,.57,-w*(8+b*13),region(x,y,.395,.627,.08,.12));
+      rotate(.55,.565,w*(8+b*13),region(x,y,.607,.56,.08,.15));
+      dx+=w2*((walking?.016:.005)+b*.009)*smooth(.76,.86,y)*region(x,y,.49,.84,.14,.13);
+    }else if(id==='gary'){
+      rotate(.58,.68,-w*(2+b*7),region(x,y,.56,.37,.075,.35));
+      rotate(.662,.69,w*(2+b*7),region(x,y,.67,.35,.06,.35));
+      dy+=Math.sin(t*2-x*7)*(.007+b*.009)*smooth(.69,.78,y);
+    }else if(id==='squidward'){
+      rotate(.462,.5,w*(5+b*13),region(x,y,.395,.615,.10,.15));
+      rotate(.545,.5,-w*(5+b*13),region(x,y,.59,.63,.10,.15));
+      dx+=Math.sin(t*2)*((walking?.02:.006)+b*.012)*smooth(.67,.83,y)*region(x,y,.437,.85,.10,.14);
+      dx-=Math.sin(t*2)*((walking?.02:.006)+b*.012)*smooth(.67,.83,y)*region(x,y,.57,.85,.10,.14);
+    }else if(id==='sandy'){
+      rotate(.557,.51,-w*(6+b*18),region(x,y,.662,.548,.13,.17));
+      rotate(.443,.54,w*(4+b*10),region(x,y,.40,.64,.075,.15));
+      dy+=Math.sin(t+.3)*(.008+b*.012)*region(x,y,.65,.49,.075,.23);
+      dx+=w2*((walking?.018:.004)+b*.01)*region(x,y,.45,.86,.08,.12);
+      dx-=w2*((walking?.018:.004)+b*.01)*region(x,y,.57,.86,.08,.12);
     }
     const maxX=Math.min(.065,Math.min(x,1-x)*.8),maxY=Math.min(.105,Math.min(y,1-y)*.8);
     return {x:x+clamp(dx,-maxX,maxX),y:y+clamp(dy,-maxY,maxY)};
@@ -88,10 +132,10 @@
   const frames=new Map(),bases=new Map(),MAX_FRAMES=160,MAX_PIXELS=6000000;
   function sourceKey(image){const url=image.currentSrc||image.src;if(url)return url;if(!identities.has(image))identities.set(image,++identity);return 'image-'+identities.get(image);}
   function context(canvas){if(!contexts.has(canvas)){let ctx=null;try{ctx=canvas.getContext('2d',{alpha:true});}catch(_){}contexts.set(canvas,ctx);}return contexts.get(canvas);}
-  function normalizeSource(doc,image,key,width,height){
+  function normalizeSource(doc,image,key,width,height,id){
     const k=key+'|'+width;let base=bases.get(k);if(base)return base;
     base=doc.createElement('canvas');base.width=width;base.height=height;const ctx=context(base);if(!ctx)return null;
-    if(image.naturalWidth===640&&image.naturalHeight===426)ctx.drawImage(image,0,0,width,height);
+    if(framedStrokeRates[id]||(image.naturalWidth===640&&image.naturalHeight===426))ctx.drawImage(image,0,0,width,height);
     else{
       // Original PNG fallback has the same contained/padded placement as WebP.
       const fit=Math.min(width*600/640/image.naturalWidth,height*398/426/image.naturalHeight),w=image.naturalWidth*fit,h=image.naturalHeight*fit;
@@ -112,18 +156,41 @@
     ctx.save();ctx.beginPath();ctx.moveTo(edge[0].x,edge[0].y);ctx.lineTo(edge[1].x,edge[1].y);ctx.lineTo(edge[2].x,edge[2].y);ctx.closePath();ctx.clip();
     ctx.transform(a,b,c,d,q[0].x-a*s[0].x-c*s[0].y,q[0].y-b*s[0].x-d*s[0].y);ctx.drawImage(image,0,0);ctx.restore();
   }
+  function spongeKiss(ctx,width,height,amount){
+    if(!(amount>0)||typeof ctx.ellipse!=='function')return;
+    const oval=(x,y,rx,ry,fill,stroke)=>{
+      ctx.beginPath();ctx.ellipse(x*width,y*height,rx*width,ry*height,0,0,Math.PI*2);
+      ctx.fillStyle=fill;ctx.fill();
+      if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width*.003;ctx.stroke();}
+    };
+    ctx.save();
+    const growth=1+.27*amount;
+    for(const [x,pupilX] of [[.437,.458],[.541,.529]]){
+      oval(x,.239,.054*growth,.082*growth,'#fffef2','#263d31');
+      oval(pupilX,.249,.019*growth,.030*growth,'#63c9e5','#263d31');
+      oval(pupilX,.249,.011*growth,.019*growth,'#1b3032');
+      oval(pupilX-.005,.24,.0045*growth,.007*growth,'#fff');
+    }
+    // Cover the open mouth only during the kiss, then return to the source face.
+    ctx.globalAlpha=amount;
+    oval(.487,.444,.073,.104,'#eae969');
+    oval(.484,.430,.017,.027,'#bc6d5d','#815148');
+    oval(.484,.430,.006,.013,'#703d39');
+    ctx.restore();
+  }
   function render(canvas,image,id,phase,{moving=false,boost=0,lite=false,width=120,dpr=1,walking=false}={}){
     if(!supports(id)||!image?.complete||!(image.naturalWidth>0&&image.naturalHeight>0))return false;
     const doc=canvas.ownerDocument,ctx=context(canvas);if(!doc?.createElement||!ctx)return false;
     if(cacheLite!==lite){frames.clear();bases.clear();pixels=0;cacheLite=lite;}
     const size=lite?112:width*clamp(dpr||1,1,2)>180?224:160,height=Math.round(size/1.5);
-    const steps=lite?12:20,cycle=Math.PI*2,t=Number.isFinite(phase)?phase:0;
+    const steps=lite?12:20,cycle=Math.PI*2;
+    const t=(Number.isFinite(phase)?phase:0)*(framedStrokeRates[id]??1);
     const frame=moving?Math.round((((t%cycle)+cycle)%cycle)/cycle*steps)%steps:0;
     const power=moving?Math.round(clamp(boost||0,0,1)*3)/3:0,source=sourceKey(image),key=[source,id,size,moving?frame:'rest',power,lite,walking].join('|');
     try{
       let rendered=frames.get(key);
       if(!rendered){
-        const base=normalizeSource(doc,image,source,size,height);if(!base)return false;
+        const base=normalizeSource(doc,image,source,size,height,id);if(!base)return false;
         rendered=doc.createElement('canvas');rendered.width=size;rendered.height=height;const paint=context(rendered);if(!paint)return false;
         const p=frame/steps*cycle;
         if(id==='angler'&&typeof paint.createRadialGradient==='function'){
@@ -132,6 +199,7 @@
         }
         if(!moving)paint.drawImage(base,0,0);
         else{const mesh=plan(id,p,{moving,boost:power,lite,walking});for(const indices of mesh.triangles)triangle(paint,base,mesh.vertices,indices,size,height);}
+        if(id==='spongebob')spongeKiss(paint,size,height,power);
         frames.set(key,rendered);pixels+=size*height;
         while(frames.size>MAX_FRAMES||pixels>MAX_PIXELS){const first=frames.keys().next().value,old=frames.get(first);pixels-=old.width*old.height;frames.delete(first);}
       }else{frames.delete(key);frames.set(key,rendered);}
@@ -170,19 +238,35 @@
       for(let j=0;j<=20;j++){const theta=j/20*Math.PI*2;points.push({x:cx+Math.cos(theta)*r,y:cy+Math.sin(theta)*r*1.5});}
       lines.push({points,color:i%2?'#e1f8ff':'#fbddeb',alpha:a*Math.sin(Math.PI*age)*.56,width:1,glow:2});
     }
-    if(['spongebob','patrick','mrkrabs'].includes(id)){
-      const colors=id==='patrick'?['#ffc4de','#eea6ff']:id==='mrkrabs'?['#ffd6a8','#ffafbd']:['#ffb6d3','#ffdfec'];
+    if(['patrick','gary'].includes(id))for(let i=0;i<(lite?3:7);i++){
+      const age=((t*.17+i/(lite?3:7))%1+1)%1;
+      const mouthX=id==='gary'?.68:.52,mouthY=id==='gary'?.65:.46;
+      const cx=mouthX+Math.sin(t*.6+i)*.045+age*.10,cy=mouthY-age*.33,r=.009+age*.022,points=[];
+      for(let j=0;j<=24;j++){const angle=j/24*Math.PI*2;points.push({x:cx+Math.cos(angle)*r,y:cy+Math.sin(angle)*r*1.5});}
+      lines.push({points,color:i%2?'#e2f9ff':'#b4e8f5',alpha:a*Math.sin(Math.PI*age)*.72,width:1.25,glow:2});
+    }
+    if(['spongebob','mrkrabs'].includes(id)){
+      const colors=id==='mrkrabs'?['#ffd6a8','#ffafbd']:['#ffb6d3','#ffdfec'];
       const count=lite?2:3;
       // Small outgoing hearts suggest a blown kiss, with smooth fades and no flash.
       for(let i=0;i<count;i++){
-        const age=((t*.11+i/count)%1+1)%1,mouthY=id==='patrick'?.43:id==='mrkrabs'?.5:.53;
-        const cx=.52+age*.22,cy=.5+(mouthY-.5)/1.6-age*.18+Math.sin(t+i)*.009,r=.022+age*.01,points=[];
+        const age=((t*.11+i/count)%1+1)%1,mouthY=id==='mrkrabs'?.5:.43;
+        const cx=.5+(.484-.5)/1.6+age*.12,cy=.5+(mouthY-.5)/1.6-age*.12+Math.sin(t+i)*.009,r=.012+age*.043,points=[];
         for(let j=0;j<=24;j++){
           const angle=j/24*Math.PI*2;
           points.push({x:cx+r*Math.sin(angle)**3,y:cy-r*(13*Math.cos(angle)-5*Math.cos(2*angle)-2*Math.cos(3*angle)-Math.cos(4*angle))/16});
         }
         lines.push({points,color:colors[i%2],alpha:a*Math.sin(Math.PI*age)*.8,width:1.8});
       }
+    }
+    if(['plankton','squidward','sandy'].includes(id))for(let i=0;i<(lite?2:4);i++){
+      const age=((t*.14+i/4)%1+1)%1;
+      const cx=.35+(i%2)*.29,cy=.43-age*.20,r=.009+age*.012,points=[];
+      for(let j=0;j<=8;j++){
+        const angle=j/8*Math.PI*2,reach=j%2?.35:1;
+        points.push({x:cx+Math.cos(angle)*r*reach,y:cy+Math.sin(angle)*r*1.5*reach});
+      }
+      lines.push({points,color:id==='plankton'?'#d6f2a0':id==='squidward'?'#bddbed':'#f9dab4',alpha:a*Math.sin(Math.PI*age)*.65,width:1.35,glow:2});
     }
     return lines;
   }

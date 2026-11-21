@@ -427,7 +427,7 @@
         var wpm = Number(meta.wpm || 0);
         var target = Number(meta.targetWpm || 0);
         var comprehension = Number(meta.comprehensionPercent || 0);
-        if (target > 0 && wpm >= target) readingPoints += 1;
+        if (meta.readingFlow !== 'kelime-otomatik' && target > 0 && wpm >= target) readingPoints += 1;
         if (comprehension >= 50) readingPoints += 1;
       }
       if (meta.saved) {
@@ -804,7 +804,7 @@
       var meta = item.meta || {};
       var haystack = filterText([item.title, item.grade, item.subject].join(' '));
       if (query && haystack.indexOf(query) < 0) return false;
-      if (statusFilter === 'target' && !(Number(meta.wpm || 0) >= Number(meta.targetWpm || 0) && Number(meta.targetWpm || 0) > 0)) return false;
+      if (statusFilter === 'target' && (meta.readingFlow === 'kelime-otomatik' || !(Number(meta.wpm || 0) >= Number(meta.targetWpm || 0) && Number(meta.targetWpm || 0) > 0))) return false;
       if (statusFilter === 'comprehension' && Number(meta.comprehensionPercent || 0) < 50) return false;
       return true;
     });
@@ -817,8 +817,8 @@
         var meta = item.meta || {};
         return '<div class="student-table-row">' +
           '<div><strong>' + esc(item.title || 'Okuma Metni') + '</strong><small>' + esc(item.grade || '') + '</small></div>' +
-          '<div>' + esc(meta.wpm || 0) + ' k/d</div>' +
-          '<div>' + esc(meta.targetWpm || 0) + ' k/d</div>' +
+          '<div>' + (meta.readingFlow === 'kelime-otomatik' ? 'Otomatik akış' : esc(meta.wpm || 0) + ' k/d') + '</div>' +
+          '<div>' + (meta.readingFlow === 'kelime-otomatik' ? '—' : esc(meta.targetWpm || 0) + ' k/d') + '</div>' +
           '<div>%' + esc(meta.comprehensionPercent || 0) + '</div>' +
           '<div>' + esc(meta.correct || 0) + '/' + esc(meta.total || 0) + '</div>' +
           '<div>' + esc(formatDate(meta.date || item.updatedAt)) + '</div>' +
@@ -1486,7 +1486,7 @@
     var snapshot = record && record.meta ? record.meta.resultSnapshot : null;
     if (!snapshot) return;
     localStorage.setItem(EXAM_KARNE_KEY, JSON.stringify(snapshot));
-    window.location.href = '/sinav_sitesi/sinav.html?adminKarne=1';
+    window.location.href = '/sinav_sitesi/sinav.html?adminKarne=1&panel=student';
   }
 
   function openReadingKarne(key) {
@@ -1499,6 +1499,8 @@
       baslik: row.metin_adi || record.title,
       kelime_sayisi: row.kelime_sayisi || meta.wordCount || 0,
       hedef_hiz: row.hedef_hiz || meta.targetWpm || 0,
+      readingFlow: meta.readingFlow,
+      resultDate: row.tarih || record.updatedAt,
       sorular: [],
     }));
     sessionStorage.setItem('okuma_kullanici', JSON.stringify({
@@ -1517,7 +1519,7 @@
       detay: [],
     }));
     sessionStorage.setItem('okuma_attempt_id', meta.attemptId || 'panel_' + Date.now());
-    window.location.href = '/hizli-okuma/karne.html';
+    window.location.href = '/hizli-okuma/karne.html?arsiv=1';
   }
 
   function bindEvents() {

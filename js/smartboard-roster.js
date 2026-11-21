@@ -16,7 +16,7 @@
       return { id: c.id, name: String(c.name || 'Sınıf').slice(0, 80), students: students, active: data.activeClassId === c.id };
     }).filter(function(c) { return c.students.length; });
   }
-  async function load(auth, storage, { details, signal } = {}) {
+  async function load(auth, storage, { details, signal, since } = {}) {
     if(!auth) return { classes: [], status: 'guest' };
     var state = await auth.ready(), id = owner(state);
     if(!id) return { classes: [], status: 'guest' };
@@ -26,12 +26,17 @@
       catch(error) { return []; }
     }
     try {
-      var query = auth.getClient().from('teacher_agenda_states').select('agenda_state').eq('user_id', id).maybeSingle();
+      var versioned = since !== undefined;
+      var query = auth.getClient().from('teacher_agenda_states').select(versioned ? 'agenda_state,updated_at' : 'agenda_state').eq('user_id', id);
+      if(since) query = query.neq('updated_at', since);
+      query = query.maybeSingle();
       var result = await (signal && query.abortSignal ? query.abortSignal(signal) : query);
       if(!current()) return { classes: [], status: 'guest' };
       if(result.error) throw result.error;
+      if(since && !result.data) return { classes: [], status: 'unchanged', owner: id };
       if(!result.data) { var cached = local(); if(cached.length) return { classes: cached, status: 'local', owner: id }; }
-      return { classes: roster(result.data && result.data.agenda_state, details), status: 'cloud', owner: id };
+      return { classes: roster(result.data && result.data.agenda_state, details), status: 'cloud', owner: id,
+        ...(versioned ? { revision: result.data?.updated_at || null } : {}) };
     } catch(error) {
       if(!current()) return { classes: [], status: 'guest' };
       var classes = local();

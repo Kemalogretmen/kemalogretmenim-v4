@@ -113,9 +113,17 @@ test('local date keys do not shift late-night work into another calendar day', (
   const local = new Date(2026, 9, 1, 23, 59);
   assert.equal(C.dayKey(local), TODAY);
 });
-test('all generated species have real alpha channels and all scene assets exist', () => {
+test('all species have transparent-capable artwork and all scene assets exist', () => {
   for (const s of C.SPECIES) {
     const buffer = fs.readFileSync(path.join(__dirname, '../assets/akvaryum/canlilar', s.file));
+    if(s.file.endsWith('.svg')) {
+      const {document}=require('linkedom').parseHTML(buffer.toString());
+      const svg=document.querySelector('svg');
+      assert.equal(svg.getAttribute('viewBox'),'0 0 640 426');
+      assert.ok(svg.querySelector('path'));
+      assert.equal(svg.querySelector('image,script,foreignObject'),null);
+      continue;
+    }
     assert.equal(buffer.subarray(1, 4).toString(), 'PNG');
     assert.equal(buffer[25], 6, s.name + ' must be RGBA PNG');
   }
@@ -220,16 +228,21 @@ test('repeated behavior awards have independent weighted history, feeds, correct
   day.absent=true;assert.equal(C.awardBehavior(student,cls,TODAY,id),null);
 });
 
-test('every selectable creature ships a lightweight transparent-capable WebP and its original fallback',()=>{
+test('every selectable creature ships lightweight transparent artwork with a raster fallback where needed',()=>{
  let bytes=0;
  for(const s of C.SPECIES) {
   const original=path.join(__dirname,'../assets/akvaryum/canlilar',s.file);
   const web=path.join(__dirname,'../assets/akvaryum/canlilar/web-v1',s.file.replace(/\.png$/,'.webp'));
   assert.ok(fs.existsSync(original),s.id+' fallback');
+  if(s.file.endsWith('.svg')) {
+    const data=fs.readFileSync(original);bytes+=data.length;
+    assert.ok(data.length<20000,s.id+' vector transfer budget');
+    continue;
+  }
   const data=fs.readFileSync(web);bytes+=data.length;
   assert.equal(data.toString('ascii',0,4),'RIFF',s.id);
   assert.equal(data.toString('ascii',8,12),'WEBP',s.id);
   assert.ok(data.length<120000,s.id+' transfer budget');
  }
- assert.ok(bytes<3000000,'complete catalogue transfer budget');
+ assert.ok(bytes<3200000,'complete catalogue transfer budget');
 });

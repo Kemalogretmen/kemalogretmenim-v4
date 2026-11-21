@@ -13,10 +13,10 @@
     { id: 'geo', name: 'Geometri', hint: 'GeoGebra ile çizin.', category: 'geometry', view: 'mathGeoView', description: 'GeoGebra araçlarıyla çizimler yapın, açıları ve geometrik ilişkileri keşfedin.' }
   ];
   const external = {
-    'birim-kup-uygulamasi.html': { icon: 'cube', name: 'Birim küpler', hint: 'Yapı kurun, görünüm çıkarın.' },
-    '3d-yapi-atolyesi.html': { icon: 'builder', name: 'Yapı atölyesi', hint: '2B şekiller ve 3B cisimler.' },
-    'geometrik-cisimler-acilimlar.html': { icon: 'nets', name: 'Cisim açılımları', hint: 'Açın, katlayın ve keşfedin.' },
-    'simetri.html': { icon: 'symmetry', name: 'Simetri aynası', hint: 'Çizin, yansıtın, karşılaştırın.' }
+    'birim-kup-uygulamasi': { icon: 'cube', name: 'Birim küpler', hint: 'Yapı kurun, görünüm çıkarın.' },
+    '3d-yapi-atolyesi': { icon: 'builder', name: 'Yapı atölyesi', hint: '2B şekiller ve 3B cisimler.' },
+    'geometrik-cisimler-acilimlar': { icon: 'nets', name: 'Cisim açılımları', hint: 'Açın, katlayın ve keşfedin.' },
+    simetri: { icon: 'symmetry', name: 'Simetri aynası', hint: 'Çizin, yansıtın, karşılaştırın.' }
   };
   const paths = {
     calc: '<rect x="5" y="3" width="22" height="27" rx="4"/><path d="M10 8h12v5H10Zm0 11h1m5 0h1m5 0h1M10 24h1m5 0h1m5 0h1"/>',
@@ -66,7 +66,11 @@
     });
     const externalGroup = node('nav', 'math-library-group'); externalGroup.setAttribute('aria-label', 'Geometri atölyeleri'); externalGroup.append(node('p', 'math-library-group-label', 'GEOMETRİ ATÖLYELERİ'));
     [...oldMenu.querySelectorAll('a')].forEach(link => {
-      const meta = external[link.getAttribute('href')]; if (!meta) return;
+      // Netlify serves these as /ogretmen/<slug>, while local files keep .html.
+      const path = (link.getAttribute('href') || '').split(/[?#]/, 1)[0].replace(/\/+$/, '');
+      const slug = path.slice(path.lastIndexOf('/') + 1).replace(/\.html$/i, '');
+      if (!Object.hasOwn(external, slug)) return;
+      const meta = external[slug];
       link.className = 'math-nav-item math-nav-link'; link.removeAttribute('style'); const image = node('span', 'math-nav-icon'); image.append(icon(meta.icon)); const copy = node('span', 'math-nav-copy'); copy.append(node('strong', '', meta.name), node('small', '', meta.hint)); const arrow = node('span', 'math-link-arrow'); arrow.append(icon('arrow')); link.replaceChildren(image, copy, arrow); externalGroup.append(link); items.push({ element: link, group: externalGroup, label: `${meta.name} ${meta.hint}` });
     });
     const libraryScroll = node('div', 'math-library-scroll');

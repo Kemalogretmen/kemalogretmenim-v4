@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Paneli — Kemal Öğretmenim</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
+<link rel="stylesheet" href="/css/admin-shell.css?v=20261119-scroll">
 <style>
 :root{
   --purple:#6C3DED;--purple-d:#5428C9;--purple-l:#8B5CF6;
@@ -126,7 +126,13 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .pdf-layout{display:flex;flex-direction:column;gap:16px}
 .pdf-main{width:100%;min-width:0}
 .pdf-controls{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--white);border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:8px;flex-wrap:wrap}
-.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#F8FAFC 0%,#EEF2FF 100%);overflow:auto;max-height:min(82vh,920px);min-height:680px;display:flex;align-items:flex-start;justify-content:center;padding:28px;cursor:crosshair;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.crop-mode-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-left:10px;border-left:1px solid var(--border)}
+.joined-crop-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;margin-bottom:8px;border:1px solid #C4B5FD;border-radius:12px;background:#F5F3FF;color:var(--slate);font-size:12px;line-height:1.55}
+.joined-crop-status img{width:52px;height:60px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:6px}
+.joined-crop-status .crop-instructions{flex:1;min-width:160px}
+.joined-crop-status strong{display:block;color:var(--navy);font-size:13px}
+.pdf-canvas-wrap{position:relative;border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,#F8FAFC 0%,#EEF2FF 100%);overflow:auto;max-height:min(82vh,920px);min-height:680px;display:flex;align-items:flex-start;justify-content:flex-start;padding:28px;cursor:crosshair;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.pdf-controls .btn,.joined-crop-status .btn{width:auto;flex-shrink:0}
 .pdf-canvas-wrap.hand-mode{cursor:grab}
 .pdf-canvas-wrap.hand-mode.dragging{cursor:grabbing}
 .pdf-canvas-wrap.drag-over,.pdf-dropzone.drag-over{border-color:var(--purple);background:#F5F3FF;box-shadow:0 0 0 4px rgba(108,61,237,.12)}
@@ -170,8 +176,16 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .data-table th{background:#F8FAFC;padding:10px 13px;text-align:left;font-size:11px;font-weight:800;color:var(--muted);border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
 .data-table td{padding:10px 13px;font-size:13px;border-bottom:1px solid var(--border)}
 .data-table tr:hover td{background:#FAFBFF}
-.score-bar-track{height:8px;background:#E2E8F0;border-radius:4px;overflow:hidden;width:60px;display:inline-block}
-.score-bar-fill{height:100%;border-radius:4px}
+.result-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:#F8FAFC;color:#64748B;font-size:10px;font-weight:800;font-family:var(--fb)}
+.result-chip.completed{background:#DCFCE7;color:#166534}
+.result-chip.in-progress{background:#FEF3C7;color:#92400E}
+.result-chip.has-appeals{background:#FFF7ED;color:#9A3412}
+.result-score{font-weight:700;color:var(--score-color);font-size:13px;font-family:var(--fd)}
+.result-score.high{--score-color:var(--green-d)}
+.result-score.medium{--score-color:#D97706}
+.result-score.low{--score-color:var(--red-d)}
+.score-bar-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden;width:60px;display:inline-block}
+.score-bar-fill{height:100%;border-radius:4px;background:var(--score-color)}
 
 /* TOGGLE SWITCH */
 .toggle-wrap{display:flex;align-items:center;gap:10px;cursor:pointer}
@@ -238,6 +252,76 @@ h1,h2,h3,h4{font-family:var(--fd)}
 .main-footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px}
 .main-footer a{color:var(--purple);text-decoration:none;font-family:var(--fd);font-weight:700;font-size:12px}
 
+@media screen {
+  html[data-theme="dark"] .result-management {
+    --slate:var(--theme-muted);
+    --muted:var(--theme-muted);
+    --border:var(--theme-border);
+    --green:var(--theme-success);
+    --green-d:var(--theme-success);
+    --red:var(--theme-danger);
+    --red-d:var(--theme-danger);
+  }
+  html[data-theme="dark"] .result-management .data-table tbody tr:is(:hover,:focus-within) td {
+    background:var(--theme-surface-alt);
+  }
+  html[data-theme="dark"] .result-score.medium { --score-color:var(--theme-warning); }
+  html[data-theme="dark"] :is(.result-chip,.result-action.disabled) {
+    background:var(--theme-surface-alt);color:var(--theme-muted);border-color:var(--theme-border);
+  }
+  html[data-theme="dark"] :is(.result-chip.completed,.result-action.outcome,.result-management .btn-green) {
+    background:var(--theme-success-soft);color:var(--theme-success);border-color:#42695d;
+  }
+  html[data-theme="dark"] :is(.result-chip.in-progress,.result-chip.has-appeals,.result-action.edit,.result-action.appeal) {
+    background:var(--theme-warning-soft);color:var(--theme-warning);border-color:#766044;
+  }
+  html[data-theme="dark"] .result-action.exam {
+    background:#23364d;color:#b6d6ff;border-color:#4a6588;
+  }
+  html[data-theme="dark"] :is(.result-action.center,.result-management .section-note) {
+    background:var(--theme-accent-soft);color:var(--theme-accent);border-color:#665580;
+  }
+  html[data-theme="dark"] :is(.result-action.del,.result-management .btn-red) {
+    background:var(--theme-danger-soft);color:var(--theme-danger);border-color:#754052;
+  }
+  html[data-theme="dark"] :is(.result-action,.result-management .btn-green,.result-management .btn-red):hover:not(:disabled) {
+    border-color:currentColor;box-shadow:inset 0 0 0 1px currentColor;
+  }
+  html[data-theme="dark"] .result-management :is(button,input,select):focus-visible {
+    outline:2px solid var(--theme-accent);outline-offset:2px;
+  }
+  html[data-theme="dark"] .result-management .modal-box {
+    background:var(--theme-surface);color:var(--theme-text);border:1px solid var(--theme-border);
+  }
+  html[data-theme="dark"] #resultEditModal .form-label { color:var(--theme-text); }
+  html[data-theme="dark"] .result-management .modal-box :is(.form-input,.btn-outline) {
+    background:var(--theme-surface-alt);color:var(--theme-text);border-color:var(--theme-border);
+  }
+  html[data-theme="dark"] #examAppealsModal {
+    --appeal-list-bg:var(--theme-bg);
+    --appeal-card-bg:var(--theme-surface);
+  }
+  html[data-theme="dark"] :is(.exam-command-deck,.exam-command-card) {
+    background:var(--theme-surface);color:var(--theme-text);border-color:var(--theme-border);box-shadow:none;
+  }
+  html[data-theme="dark"] .exam-command-head { border-color:var(--theme-border); }
+  html[data-theme="dark"] :is(.exam-command-pill,.exam-command-mini,.exam-command-card-icon) {
+    background:var(--theme-surface-alt);color:var(--theme-text);border-color:var(--theme-border);
+  }
+  html[data-theme="dark"] .exam-command-title { color:var(--theme-text); }
+  html[data-theme="dark"] .exam-command-kicker { color:var(--theme-accent); }
+  html[data-theme="dark"] :is(.exam-command-text,.exam-command-tip,.exam-command-card-desc,.exam-command-card-meta,.exam-command-card-state) {
+    color:var(--theme-muted);
+  }
+  html[data-theme="dark"] .exam-command-card:hover { border-color:var(--theme-accent); }
+  html[data-theme="dark"] .exam-command-card.active {
+    background:var(--theme-accent-soft);color:var(--theme-text);border-color:var(--theme-accent);box-shadow:none;
+  }
+  html[data-theme="dark"] .exam-command-card.active :is(.exam-command-card-desc,.exam-command-card-meta,.exam-command-card-state) {
+    color:var(--theme-accent);
+  }
+}
+
 @media(max-width:1180px){
   .q-panel{width:100%}
 }
@@ -274,6 +358,14 @@ h1,h2,h3,h4{font-family:var(--fd)}
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="./js/exam-workspace.css?v=20261118-crop">
+<script src="./js/exam-workspace.js?v=1"></script>
+<script src="./js/exam-option-editor.js?v=1"></script>
+<link rel="stylesheet" href="./js/exam-analysis.css?v=20261118-layout">
+<script src="./js/exam-analysis.js?v=20261118"></script>
+<script src="./js/exam-analysis-view.js?v=20261118"></script>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="exams"></script>
 </head>
 <body>
 <div id="toast-wrap"></div>
@@ -286,7 +378,7 @@ h1,h2,h3,h4{font-family:var(--fd)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="/js/admin-shell.js?v=20260526-2"></script>
+<script src="/js/admin-shell.js?v=20261119-reklam"></script>
 
 <script type="module">
 import { app, db } from "./js/firebase.js";
@@ -376,6 +468,9 @@ let currentUserIsAdmin=false;
 let currentAdminAccessProfile=null;
 let questionSortables=[];
 let preserveCreateDraftOnReturn=false;
+let disposeCropGesture=null;
+let pdfRenderTask=null;
+let pdfRenderVersion=0;
 const PDF_BASE_ZOOM=2.2;
 const PDF_RENDER_BOOST=3.0;
 const QUESTION_IMAGE_MAX_EDGE=3600;
@@ -393,7 +488,7 @@ function createInitialState(overrides={}){
     categoryGrade:1,
     questionSections:[],
     questions:[],
-    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:PDF_BASE_ZOOM,imgData:null,cropTool:'crop',
+    pdfDoc:null,pdfPage:1,pdfTotal:0,imgLoaded:false,pdfZoom:PDF_BASE_ZOOM,imgData:null,cropTool:'crop',cropMode:'single',cropAnchor:null,
     pubTitle:'',pubDur:30,pubDisplayOrder:'',pubAccessScope:'public',pubHidden:false,editExamId:null,
     coverImageUrl:'',coverImagePath:'',coverImageData:'',coverImageRemoved:false,
     scoringMode:'auto',scoreScaleInput:'',
@@ -643,8 +738,8 @@ function sortResultRecords(list){
   });
 }
 function getResultProgressMeta(status){
-  if(status==='in_progress') return{label:'Devam Ediyor',bg:'#FEF3C7',color:'#92400E'};
-  return{label:'Tamamlandı',bg:'#DCFCE7',color:'#166534'};
+  if(status==='in_progress') return{label:'Devam Ediyor',className:'in-progress'};
+  return{label:'Tamamlandı',className:'completed'};
 }
 function getResultAppealMeta(resultId,examId){
   const list=(A.appeals||[]).filter(item=>{
@@ -1105,6 +1200,8 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
   if((parseInt(result?.total,10)||0)!==totalQuestions) return null;
   if(details.length!==totalQuestions) return null;
   const selectedMap=buildResultAnswerMap(result);
+  const originalDetails=new Map((Array.isArray(result.answerDetails)?result.answerDetails:[])
+    .map(detail=>[Number(detail?.questionNo),detail]));
   const scoreScale=resolveExamScoreScale(examMeta.grade,examMeta.subject,examMeta.scoreScale||result?.scoreScale||'');
   let correct=0,wrong=0,blank=0;
   let weightedCorrect=0,weightedWrong=0;
@@ -1125,7 +1222,9 @@ function calculateRevisedResultSnapshot(result,examMeta,questions){
       weightedWrong=roundPointValue(weightedWrong+pointValue);
     }
     else blank++;
+    const original=originalDetails.get(questionNo);
     return{
+      ...(original?.ink?{ink:original.ink,inkImage:original.inkImage||''}:{}),
       questionNo,
       questionId:question?.id||'',
       order:question?.order??index,
@@ -1303,6 +1402,8 @@ async function placeExamAtDisplayOrder(examId,grade,requestedOrder){
   return insertOrder;
 }
 function resetBuilderState(nextPage='create'){
+  disposeCropGesture?.();
+  cancelPdfRender();
   A=createInitialState({
     page:nextPage,
     categoryMap:A.categoryMap||createDefaultCategoryMap(),
@@ -1425,6 +1526,8 @@ function renderNotAuthorized(){
 
 /* ── SHELL ── */
 function renderShell(content){
+  disposeCropGesture?.();
+  cancelPdfRender();
   const sidebarHtml=window.KemalAdminShell
     ? window.KemalAdminShell.renderSidebar({
         activeKey:`exam-${A.page}`,
@@ -1446,7 +1549,7 @@ function renderShell(content){
     window.KemalAdminShell.bindSidebar(appEl().querySelector('.admin-nav-sidebar'),()=>W.logout());
   }
 }
-function setContent(html){const el=document.getElementById('mainContent');if(el)el.innerHTML=html;}
+function setContent(html){disposeCropGesture?.();cancelPdfRender();const el=document.getElementById('mainContent');if(el)el.innerHTML=html;}
 
 function getExamCommandDeckStats(){
   const activeExamCount=(Array.isArray(A.exams)?A.exams:[]).filter(exam=>getExamStatus(exam)==='active').length;
@@ -1659,11 +1762,16 @@ function renderStep3(){
             <button class="btn btn-sm btn-outline" onclick="W.zoomIn()" style="width:30px;padding:0;height:30px;font-size:16px">+</button>
           </div>
           <div style="display:flex;align-items:center;gap:6px;margin-left:8px;border-left:1px solid var(--border);padding-left:10px">
-            <button class="btn btn-sm ${A.cropTool==='crop'?'btn-primary':'btn-outline'}" type="button" onclick="W.setCropTool('crop')">✂️ Kırp</button>
-            <button class="btn btn-sm ${A.cropTool==='pan'?'btn-primary':'btn-outline'}" type="button" onclick="W.setCropTool('pan')">✋ Taşı</button>
+            <button class="btn btn-sm ${A.cropTool==='crop'?'btn-primary':'btn-outline'}" data-crop-tool="crop" type="button" onclick="W.setCropTool('crop')">✂️ Kırp</button>
+            <button class="btn btn-sm ${A.cropTool==='pan'?'btn-primary':'btn-outline'}" data-crop-tool="pan" type="button" onclick="W.setCropTool('pan')">✋ Taşı</button>
+          </div>
+          <div class="crop-mode-controls" role="group" aria-label="Kırpma biçimi">
+            <button class="btn btn-sm btn-outline" data-crop-mode="single" type="button" onclick="W.setCropMode('single')">Tek alan</button>
+            <button class="btn btn-sm btn-outline" data-crop-mode="joined" type="button" onclick="W.setCropMode('joined')">İki alanı birleştir</button>
           </div>
           <span class="text-xs text-muted" id="cropHint" style="margin-left:8px">${A.cropTool==='pan'?'💡 El aracı açık. PDF alanını tutup sürükleyerek gezebilirsin.':'💡 Kırp aracı açık. Soru alanını sürükleyerek seçebilirsin.'}</span>
         </div>
+        <div id="joinedCropStatus" class="joined-crop-status" style="display:none" role="status" aria-live="polite"></div>
         <div id="pdfCont" class="pdf-canvas-wrap" style="display:${A.pdfDoc||A.imgLoaded?'flex':'none'}">
           <div class="pdf-canvas-stage" id="pdfStage">
             <canvas id="pdfCanvas"></canvas>
@@ -1699,7 +1807,8 @@ function renderQList(){
         <span class="q-order" style="font-size:11px">${i+1}</span>
         <button class="q-remove-btn" onclick="W.removeQ(${i})" title="Kaldır" style="font-size:14px;line-height:1;padding:0 2px">×</button>
       </div>
-      <img class="q-thumb" src="${q.img}" alt="">
+      <img class="q-thumb" src="${esc(q.img)}" alt="">
+      <button type="button" class="btn btn-sm btn-outline" onclick="W.editOptionPositions(${i})">Şık konumları</button>
       <div style="width:100%;text-align:center">
         <span class="ans-badge">${q.ans}</span>
         ${q.pointValue?`<div style="margin-top:3px"><span class="section-tag" style="font-size:9px">💯 ${formatPointValue(q.pointValue)} puan</span></div>`:''}
@@ -1715,7 +1824,8 @@ function renderPreviewQuestionList(){
     <div class="q-item">
       <button class="q-handle" type="button" title="Soru sırasını değiştir">⋮⋮</button>
       <span class="q-order">${i+1}.</span>
-      <img class="q-thumb" src="${q.img}" alt="">
+      <img class="q-thumb" src="${esc(q.img)}" alt="">
+      <button type="button" class="btn btn-sm btn-outline" onclick="W.editOptionPositions(${i})">Şık konumları</button>
       <div class="q-meta">
         <div class="text-xs text-muted">Mini önizleme</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px">
@@ -1945,6 +2055,7 @@ function renderAdminExams(){
           ${shareAction}
           ${hasExamPerm('exam_appeals')?`<button class="btn btn-sm btn-outline" onclick="W.showExamAppeals('${e.id}')">📝 İtirazlar</button>`:''}
           ${hasAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'])?`<button class="btn btn-sm btn-outline" onclick="W.showResults('${e.id}')">📊 Sonuçlar</button>`:''}
+          ${hasAnyExamPerm(EXAM_PAGE_PERMISSIONS.results)?`<button class="btn btn-sm btn-primary" type="button" onclick="W.openExamAnalysis('${e.id}')">Sınav Analizi</button>`:''}
           ${hasExamPerm('exam_delete')?`<button class="btn btn-sm btn-red" onclick="W.delExam('${e.id}')">🗑 Sil</button>`:''}
         </div>
       </div>`;}).join('');
@@ -1967,6 +2078,11 @@ function renderAdminExams(){
 }
 
 /* ── RESULTS ── */
+function renderResultItemAnalysis(){
+  if(!A.rf.examId) return '';
+  return `<button class="btn btn-primary" type="button" style="margin-bottom:14px" onclick="W.openExamAnalysis()">Sınav Analizini Aç</button>`;
+}
+
 function renderAdminResults(){
   const gOpts=GRADES.map(g=>`<option value="${g}" ${A.rf.grade==g?'selected':''}>${g}. Sınıf</option>`).join('');
   const sOpts=getAllKnownSubjects([
@@ -1977,7 +2093,8 @@ function renderAdminResults(){
   const activeExam=A.rf.examId?(A.exams||[]).find(exam=>exam.id===A.rf.examId):null;
   const hasActiveFilters=!!(A.rf.grade||A.rf.sube||A.rf.subject||A.rf.name||A.rf.examId);
   const rows=A.results.map(r=>{
-    const sc=r.score;const col=sc>=70?'#059669':sc>=50?'#D97706':'#DC2626';
+    const sc=r.score;
+    const scoreLevel=sc>=70?'high':sc>=50?'medium':'low';
     const locationMeta=buildLocationText(r);
     const statusMeta=getResultProgressMeta(r.status);
     const appealMeta=getResultAppealMeta(r.id,r.examId);
@@ -1993,20 +2110,20 @@ function renderAdminResults(){
         <div>${esc(r.firstName)} ${esc(r.lastName)}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">
           ${locationMeta?`<span style="font-size:11px;color:var(--muted);font-family:var(--fb);font-weight:600">${esc(locationMeta)}</span>`:''}
-          <span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:${statusMeta.bg};color:${statusMeta.color};font-size:10px;font-weight:800;font-family:var(--fb)">${statusMeta.label}</span>
-          <span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:${appealMeta.total?'#FFF7ED':'#F8FAFC'};color:${appealMeta.total?'#9A3412':'#64748B'};font-size:10px;font-weight:800;font-family:var(--fb)">${appealMeta.total?`📝 ${appealMeta.total} itiraz${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}`:'💬 İtiraz yok'}</span>
+          <span class="result-chip ${statusMeta.className}">${statusMeta.label}</span>
+          <span class="result-chip${appealMeta.total?' has-appeals':''}">${appealMeta.total?`📝 ${appealMeta.total} itiraz${appealMeta.pending?` · ${appealMeta.pending} bekliyor`:''}`:'💬 İtiraz yok'}</span>
         </div>
       </td>
       <td><span class="badge badge-blue">${r.grade}. Sınıf${r.sube?' '+r.sube:''}</span></td>
-      <td style="font-size:12px;color:var(--slate)">${r.subject||'—'}</td>
+      <td style="font-size:12px;color:var(--slate)">${esc(r.subject||'—')}</td>
       <td style="font-size:12px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.examTitle||'—')}</td>
       <td style="color:var(--green);font-weight:700;font-family:var(--fd)">${r.correct}</td>
       <td style="color:var(--red);font-weight:700;font-family:var(--fd)">${r.wrong}</td>
       <td style="color:var(--muted);font-family:var(--fd)">${r.blank}</td>
       <td>
-        <div class="flex items-center gap-8">
-          <div class="score-bar-track"><div class="score-bar-fill" style="width:${sc}%;background:${col}"></div></div>
-          <span style="font-weight:700;color:${col};font-size:13px;font-family:var(--fd)">%${sc}</span>
+        <div class="result-score ${scoreLevel} flex items-center gap-8">
+          <div class="score-bar-track"><div class="score-bar-fill" style="width:${sc}%"></div></div>
+          <span>%${sc}</span>
         </div>
       </td>
       <td style="font-size:11px;color:var(--muted)">${fmtDT(r.date)}</td>
@@ -2019,7 +2136,7 @@ function renderAdminResults(){
         </div>
       </td>
     </tr>`;}).join('');
-  return`<div class="page-pad">
+  return`<div class="page-pad result-management">
     <div class="flex justify-between items-center mb-4" style="flex-wrap:wrap;gap:12px">
       <div>
         <h2 style="font-size:20px;margin-bottom:2px">Sınav Sonuçları</h2>
@@ -2033,6 +2150,9 @@ function renderAdminResults(){
     </div>
     ${renderExamCommandDeck()}
     <div class="flex gap-8 mb-4 flex-wrap">
+      <select class="form-input" style="width:min(300px,100%)" aria-label="Analiz için sınav seç" onchange="W.filterRes('examId',this.value)">
+        <option value="">Tüm sınavlar</option>${A.exams.map(exam=>`<option value="${esc(exam.id)}" ${A.rf.examId===exam.id?'selected':''}>${esc(exam.title)}</option>`).join('')}
+      </select>
       <select class="form-input" style="width:130px" onchange="W.filterRes('grade',this.value)"><option value="">Tüm Sınıflar</option>${gOpts}</select>
       <select class="form-input" style="width:130px" onchange="W.filterRes('sube',this.value)"><option value="">Tüm Şubeler</option>${subeOpts}</select>
       <select class="form-input" style="width:150px" onchange="W.filterRes('subject',this.value)"><option value="">Tüm Dersler</option>${sOpts}</select>
@@ -2042,6 +2162,7 @@ function renderAdminResults(){
       <span>🎯 Sonuçlar şu anda belirli bir sınava göre filtreleniyor: <strong>${esc(activeExam?.title||'Sınav bulunamadı')}</strong></span>
       <button class="btn btn-outline" type="button" onclick="W.clearResultsExamFilter()">Tüm Sınavları Göster</button>
     </div>`:''}
+    ${renderResultItemAnalysis()}
     <div class="card" style="overflow-x:auto">
       <table class="data-table">
         <thead><tr><th>Ad Soyad</th><th>Sınıf/Şube</th><th>Ders</th><th>Sınav</th><th>✓ D</th><th>✗ Y</th><th>○ B</th><th>Başarı</th><th>Tarih</th><th>İşlem</th></tr></thead>
@@ -2124,6 +2245,13 @@ function renderAdminCategories(){
 }
 
 /* ── IMAGE/PDF ── */
+function cancelPdfRender(){
+  pdfRenderVersion++;
+  const task=pdfRenderTask;
+  task?.cancel();
+  return task?task.promise.catch(()=>{}):Promise.resolve();
+}
+
 function syncPdfStage(width,height){
   const stage=document.getElementById('pdfStage');
   const pdfCanvas=document.getElementById('pdfCanvas');
@@ -2170,13 +2298,54 @@ function syncCropToolUI(){
     wrap.classList.remove('dragging');
   }
   const canvas=document.getElementById('cropCanvas');
-  if(canvas) canvas.style.cursor=A.cropTool==='pan'?'grab':'crosshair';
+  const ready=document.getElementById('pdfCanvas')?.dataset.cropReady!=='false';
+  if(canvas) canvas.style.cursor=!ready?'wait':A.cropTool==='pan'?'grab':'crosshair';
+  [['[data-crop-tool]','cropTool'],['[data-crop-mode]','cropMode']].forEach(([selector,field])=>{
+    document.querySelectorAll(selector).forEach(button=>{
+      const active=button.getAttribute(field==='cropTool'?'data-crop-tool':'data-crop-mode')===A[field];
+      button.classList.toggle('btn-primary',active);
+      button.classList.toggle('btn-outline',!active);
+      button.setAttribute('aria-pressed',String(active));
+    });
+  });
   const hint=document.getElementById('cropHint');
   if(hint){
-    hint.textContent=A.cropTool==='pan'
+    hint.textContent=!ready?'Sayfa hazırlanıyor…':A.cropTool==='pan'
       ? '💡 El aracı açık. PDF alanını tutup sürükleyerek gezebilirsin.'
-      : '💡 Kırp aracı açık. Soru alanını sürükleyerek seçebilirsin.';
+      : A.cropMode==='joined'
+        ? (A.cropAnchor?'İkinci alanı seç. İki kırpma yan yana tek soru olacak.':'İlk alanı seç. Bu parça birleşik sorunun solunda yer alacak.')
+        : '💡 Kırp aracı açık. Soru alanını sürükleyerek seçebilirsin.';
   }
+  const status=document.getElementById('joinedCropStatus');
+  if(status){
+    status.style.display=A.cropMode==='joined'&&(A.pdfDoc||A.imgLoaded)?'flex':'none';
+    status.innerHTML=A.cropAnchor
+      ? `<img src="${A.cropAnchor.thumbnail}" alt="Korunan ilk alan"><div class="crop-instructions"><strong>1. alan hazır · Şimdi soru alanını seç</strong>İlk alan solda, ikinci alan sağda ve üstten hizalı birleşir. Aynı metinle sonraki soruyu eklemek için yalnızca yeni soru alanını seçebilirsin.</div><button type="button" class="btn btn-sm btn-outline" onclick="W.resetCropAnchor()">İlk alanı değiştir</button>`
+      : '<div class="crop-instructions"><strong>1. Solda gösterilecek metni seç</strong>Ardından 2. alan olarak soruyu seç. İki ayrı kırpma yan yana tek soru görseli olarak eklenecek.</div>';
+  }
+}
+
+function joinQuestionCrops(first,second){
+  // Use document units so zoom changes between selections preserve the text scale.
+  const totalWidth=first.width+second.width;
+  const totalHeight=Math.max(first.height,second.height);
+  const density=Math.min(
+    Math.max(first.canvas.width/first.width,second.canvas.width/second.width),
+    QUESTION_IMAGE_MAX_EDGE/Math.max(totalWidth,totalHeight)
+  );
+  const firstWidth=Math.max(1,Math.round(first.width*density));
+  const secondWidth=Math.max(1,Math.round(second.width*density));
+  const canvas=document.createElement('canvas');
+  canvas.width=firstWidth+secondWidth;
+  canvas.height=Math.max(1,Math.round(totalHeight*density));
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#FFFFFF';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(first.canvas,0,0,firstWidth,Math.max(1,Math.round(first.height*density)));
+  ctx.drawImage(second.canvas,firstWidth,0,secondWidth,Math.max(1,Math.round(second.height*density)));
+  return canvas;
 }
 
 function setUploadDragState(active){
@@ -2263,6 +2432,8 @@ function optimizeQuestionCanvas(sourceCanvas){
 
 function renderImageOnCanvas(){
   const img=A.imgData;if(!img)return;
+  disposeCropGesture?.();
+  cancelPdfRender();
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
   if(!c||!cc)return;
   const wrap=document.getElementById('pdfCont');
@@ -2273,6 +2444,7 @@ function renderImageOnCanvas(){
   const contentHeight=img.height*scale;
   const renderBoost=getCanvasRenderBoost();
   c.width=Math.round(contentWidth*renderBoost);c.height=Math.round(contentHeight*renderBoost);
+  c.dataset.documentWidth=String(img.width);c.dataset.documentHeight=String(img.height);
   c.style.width=contentWidth+'px';c.style.height=contentHeight+'px';
   syncPdfStage(contentWidth,contentHeight);
   const stage=document.getElementById('pdfStage');
@@ -2284,6 +2456,7 @@ function renderImageOnCanvas(){
   ctx.fillStyle='#FFFFFF';
   ctx.fillRect(0,0,c.width,c.height);
   ctx.drawImage(img,0,0,c.width,c.height);
+  c.dataset.cropReady='true';
   const zl=document.getElementById('zoomLbl');if(zl)zl.textContent=Math.round(A.pdfZoom/PDF_BASE_ZOOM*100)+'%';
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=true;
   const bn=document.getElementById('btnPDFNext');if(bn)bn.disabled=true;
@@ -2293,7 +2466,11 @@ function renderImageOnCanvas(){
 
 async function loadSelectedUploadFile(file){
   if(!file) return;
+  disposeCropGesture?.();
+  await cancelPdfRender();
   removeCropModal();
+  A.cropAnchor=null;
+  syncCropToolUI();
   A.draftImg=null;
   A.draftAns=null;
   A.pdfZoom=PDF_BASE_ZOOM;
@@ -2335,12 +2512,24 @@ async function loadFile(inp){
 
 async function renderPage(n){
   if(!A.pdfDoc)return;
-  const page=await A.pdfDoc.getPage(n);
-  const vp=page.getViewport({scale:A.pdfZoom});
+  const source=A.pdfDoc,zoom=A.pdfZoom;
+  disposeCropGesture?.();
+  const pendingCanvas=document.getElementById('pdfCanvas');
+  if(pendingCanvas) pendingCanvas.dataset.cropReady='false';
+  syncCropToolUI();
+  const previous=cancelPdfRender(),version=pdfRenderVersion;
+  await previous;
+  if(version!==pdfRenderVersion||source!==A.pdfDoc) return;
+  const page=await source.getPage(n);
+  if(version!==pdfRenderVersion||source!==A.pdfDoc) return;
+  const vp=page.getViewport({scale:zoom});
   const c=document.getElementById('pdfCanvas');const cc=document.getElementById('cropCanvas');
   if(!c||!cc)return;
   const renderBoost=getCanvasRenderBoost();
   c.width=Math.round(vp.width*renderBoost);c.height=Math.round(vp.height*renderBoost);
+  c.dataset.documentWidth=String(vp.width/zoom);c.dataset.documentHeight=String(vp.height/zoom);
+  c.dataset.cropReady='false';
+  syncCropToolUI();
   c.style.width=vp.width+'px';c.style.height=vp.height+'px';
   syncPdfStage(vp.width,vp.height);
   const stage=document.getElementById('pdfStage');
@@ -2349,11 +2538,22 @@ async function renderPage(n){
   const ctx=c.getContext('2d',{alpha:false});
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
-  await page.render({
+  const task=page.render({
     canvasContext:ctx,
     viewport:vp,
     transform:renderBoost>1?[renderBoost,0,0,renderBoost,0,0]:null
-  }).promise;
+  });
+  pdfRenderTask=task;
+  try{
+    await task.promise;
+  }catch(error){
+    if(error.name==='RenderingCancelledException') return;
+    throw error;
+  }finally{
+    if(pdfRenderTask===task) pdfRenderTask=null;
+  }
+  if(version!==pdfRenderVersion||source!==A.pdfDoc||c!==document.getElementById('pdfCanvas')) return;
+  c.dataset.cropReady='true';
   const pj=document.getElementById('pageJump');if(pj)pj.value=n;
   const bp=document.getElementById('btnPDFPrev');if(bp)bp.disabled=(n<=1);
   const bn=document.getElementById('btnPDFNext');if(bn)bn.disabled=(n>=A.pdfTotal);
@@ -2363,12 +2563,14 @@ async function renderPage(n){
 }
 
 function setupCrop(){
+  disposeCropGesture?.();
   const cc=document.getElementById('cropCanvas');const pc=document.getElementById('pdfCanvas');
   if(!cc||!pc)return;
+  if(pc.dataset.cropReady!=='true') return;
   const wrap=document.getElementById('pdfCont');
   const newCC=cc.cloneNode(false);cc.parentNode.replaceChild(newCC,cc);
   const contentBox=getPdfStageContentBox();
-  let drawing=false,panning=false,sx=0,sy=0,startClientX=0,startClientY=0,startScrollLeft=0,startScrollTop=0;
+  let drawing=false,panning=false,pointerId=null,sx=0,sy=0,startClientX=0,startClientY=0,startScrollLeft=0,startScrollTop=0;
   const ctx=newCC.getContext('2d');
   const getPos=e=>{
     const rect=newCC.getBoundingClientRect();
@@ -2378,14 +2580,22 @@ function setupCrop(){
     const cy=point.clientY;
     return{x:(cx-rect.left)*sx2,y:(cy-rect.top)*sy2};
   };
-  const drawSelection=(ex,ey)=>{
+  const drawAnchor=()=>{
     ctx.clearRect(0,0,newCC.width,newCC.height);
+    const anchor=A.cropMode==='joined'?A.cropAnchor:null;
+    if(!anchor||anchor.page!==A.pdfPage) return;
+    const {x,y,width,height}=anchor.rect;
+    ctx.strokeStyle='#0F766E';ctx.lineWidth=2;ctx.setLineDash([6,3]);
+    ctx.strokeRect(contentBox.x+x*contentBox.width,contentBox.y+y*contentBox.height,width*contentBox.width,height*contentBox.height);
+  };
+  const drawSelection=(ex,ey)=>{
+    drawAnchor();
     ctx.strokeStyle='#6C3DED';ctx.lineWidth=2;ctx.setLineDash([6,3]);
     ctx.strokeRect(sx,sy,ex-sx,ey-sy);
     ctx.fillStyle='rgba(108,61,237,.08)';ctx.fillRect(sx,sy,ex-sx,ey-sy);
   };
   const finishSelection=p=>{
-    ctx.clearRect(0,0,newCC.width,newCC.height);
+    drawAnchor();
     const left=Math.max(Math.min(sx,p.x),contentBox.x);
     const top=Math.max(Math.min(sy,p.y),contentBox.y);
     const right=Math.min(Math.max(sx,p.x),contentBox.x+contentBox.width);
@@ -2415,10 +2625,26 @@ function setupCrop(){
       tmp.width,
       tmp.height
     );
-    A.draftImg=optimizeQuestionCanvas(tmp);A.draftAns=null;
+    let questionCanvas=tmp;
+    if(A.cropMode==='joined'){
+      const documentWidth=Number(pc.dataset.documentWidth);
+      const documentHeight=Number(pc.dataset.documentHeight);
+      const crop={canvas:tmp,width:w/contentBox.width*documentWidth,height:h/contentBox.height*documentHeight};
+      if(!A.cropAnchor){
+        A.cropAnchor={...crop,page:A.pdfPage,
+          rect:{x:(left-contentBox.x)/contentBox.width,y:(top-contentBox.y)/contentBox.height,width:w/contentBox.width,height:h/contentBox.height},
+          thumbnail:resizeCanvas(tmp,Math.min(1,120/Math.max(tmp.width,tmp.height))).toDataURL('image/png')};
+        syncCropToolUI();
+        drawAnchor();
+        return;
+      }
+      questionCanvas=joinQuestionCrops(A.cropAnchor,crop);
+    }
+    A.draftImg=optimizeQuestionCanvas(questionCanvas);A.draftAns=null;
     showCropModal();
   };
   const handleMove=e=>{
+    if(e.pointerId!==pointerId) return;
     if(panning&&wrap){
       wrap.scrollLeft=startScrollLeft-(e.clientX-startClientX);
       wrap.scrollTop=startScrollTop-(e.clientY-startClientY);
@@ -2430,27 +2656,27 @@ function setupCrop(){
     drawSelection(p.x,p.y);
     e.preventDefault();
   };
-  const handleUp=e=>{
-    if(panning){
-      panning=false;
-      wrap?.classList.remove('dragging');
-      newCC.style.cursor='grab';
-      window.removeEventListener('pointermove',handleMove);
-      window.removeEventListener('pointerup',handleUp);
-      window.removeEventListener('pointercancel',handleUp);
-      return;
-    }
-    if(!drawing)return;
-    drawing=false;
+  const stopGesture=()=>{
+    drawing=false;panning=false;pointerId=null;
+    wrap?.classList.remove('dragging');
+    newCC.style.cursor=A.cropTool==='pan'?'grab':'crosshair';
     window.removeEventListener('pointermove',handleMove);
     window.removeEventListener('pointerup',handleUp);
     window.removeEventListener('pointercancel',handleUp);
-    finishSelection(getPos(e));
   };
+  const handleUp=e=>{
+    if(e.pointerId!==pointerId) return;
+    const complete=drawing&&e.type!=='pointercancel';
+    stopGesture();
+    if(complete) finishSelection(getPos(e));
+    else drawAnchor();
+  };
+  disposeCropGesture=()=>{stopGesture();newCC.onpointerdown=null;drawAnchor();disposeCropGesture=null;};
   newCC.style.cursor=A.cropTool==='pan'?'grab':'crosshair';
   newCC.style.touchAction='none';
-  newCC.addEventListener('pointerdown',e=>{
-    if(typeof e.button==='number'&&e.button!==0) return;
+  newCC.onpointerdown=e=>{
+    if(pointerId!==null||(typeof e.button==='number'&&e.button!==0)||!newCC.isConnected) return;
+    pointerId=e.pointerId;
     if(A.cropTool==='pan'){
       panning=true;
       startClientX=e.clientX;
@@ -2472,8 +2698,39 @@ function setupCrop(){
     window.addEventListener('pointerup',handleUp);
     window.addEventListener('pointercancel',handleUp);
     e.preventDefault();
-  });
+  };
   newCC.addEventListener('dragstart',e=>e.preventDefault());
+  drawAnchor();
+}
+
+let readCropOptionPositions=null;
+let cropOcrBusy=false;
+
+function editOptionPositions(index){
+  const question=A.questions[index];
+  if(!question) return;
+  const overlay=document.createElement('div');
+  overlay.className='modal-overlay';
+  overlay.innerHTML=`<div class="modal-box exam-layout-modal" role="dialog" aria-modal="true" aria-label="Şık konumları">
+    <h3>${index+1}. soru · Şık konumları</h3>
+    <div data-option-editor></div>
+    <div class="flex gap-8 justify-between">
+      <button type="button" class="btn btn-outline" data-close>İptal</button>
+      <button type="button" class="btn btn-primary" data-save>Konumları kaydet</button>
+    </div>
+  </div>`;
+  document.body.append(overlay);
+  const read=window.KemalExamOptionEditor.mount(overlay.querySelector('[data-option-editor]'),{
+    source:question.img,count:A.optionCount,initial:question.optionPositions
+  });
+  overlay.querySelector('[data-close]').addEventListener('click',()=>overlay.remove());
+  overlay.querySelector('[data-save]').addEventListener('click',()=>{
+    question.optionPositions=read();
+    overlay.remove();
+    toast('Şık konumları sınav taslağına kaydedildi.','success');
+  });
+  overlay.addEventListener('keydown',event=>{if(event.key==='Escape') overlay.remove();});
+  overlay.querySelector('button').focus();
 }
 
 function showCropModal(){
@@ -2481,9 +2738,9 @@ function showCropModal(){
   const OPTS=getOPTS();
   const opts=OPTS.map(a=>`<div class="ans-opt ${A.draftAns===a?'sel':''}" onclick="W.setDraftAns('${a}')">${a}</div>`).join('');
   const el=document.createElement('div');el.id='cropModal';el.className='modal-overlay';
-  el.innerHTML=`<div class="modal-box">
+  el.innerHTML=`<div class="modal-box exam-layout-modal" role="dialog" aria-modal="true" aria-label="Yeni soru">
     <div style="font-size:17px;font-weight:800;margin-bottom:12px;font-family:var(--fd)">✂️ Soru ${A.questions.length+1} — Cevabı İşaretle</div>
-    <img src="${A.draftImg}" style="max-width:100%;border:1px solid var(--border);border-radius:8px;display:block;max-height:300px;object-fit:contain">
+    <div data-option-editor></div>
     <div style="text-align:center;margin-top:16px">
       <div class="form-label text-center" style="margin-bottom:10px;font-size:13px">Doğru cevabı seçin (${OPTS.length} şık)</div>
       <div style="display:flex;gap:10px;justify-content:center" id="ansOpts">${opts}</div>
@@ -2494,8 +2751,20 @@ function showCropModal(){
     </div>
   </div>`;
   document.body.appendChild(el);
+  readCropOptionPositions=window.KemalExamOptionEditor.mount(el.querySelector('[data-option-editor]'),{
+    source:A.draftImg,count:A.optionCount,auto:true,
+    onBusy(busy){
+      if(!el.isConnected) return;
+      cropOcrBusy=busy;
+      el.querySelector('#confirmBtn').disabled=busy||!A.draftAns;
+    }
+  });
 }
-function removeCropModal(){const el=document.getElementById('cropModal');if(el)el.remove();}
+function removeCropModal(){
+  document.getElementById('cropModal')?.remove();
+  readCropOptionPositions=null;
+  cropOcrBusy=false;
+}
 
 /* ── FIREBASE ── */
 async function fbLoadExams(gf){
@@ -2520,7 +2789,9 @@ async function fbLoadExams(gf){
 
 async function fbLoadResults(rf){
   try{
-    const q=query(collection(db,'results'),orderBy('date','desc'));
+    const q=rf.examId
+      ?query(collection(db,'results'),where('examId','==',rf.examId))
+      :query(collection(db,'results'),orderBy('date','desc'));
     const snap=await getDocs(q);
     let res=snap.docs.map(d=>({id:d.id,...d.data()})).map(r=>({...r,studentKey:getResultStudentKey(r)}));
     if(rf.grade) res=res.filter(r=>r.grade==rf.grade);
@@ -2533,7 +2804,7 @@ async function fbLoadResults(rf){
     if(rf.examId) res=res.filter(r=>r.examId===rf.examId);
     return sortResultRecords(res);
   }catch{
-    const snap=await getDocs(collection(db,'results'));
+    const snap=await getDocs(rf.examId?query(collection(db,'results'),where('examId','==',rf.examId)):collection(db,'results'));
     let res=snap.docs.map(d=>({id:d.id,...d.data()})).map(r=>({...r,studentKey:getResultStudentKey(r)}));
     if(rf.grade) res=res.filter(r=>r.grade==rf.grade);
     if(rf.sube) res=res.filter(r=>r.sube===rf.sube);
@@ -3102,12 +3373,14 @@ const W={
     A.draftAns=a;
     const opts=document.getElementById('ansOpts');
     if(opts) opts.innerHTML=getOPTS().map(x=>`<div class="ans-opt ${a===x?'sel':''}" onclick="W.setDraftAns('${x}')">${x}</div>`).join('');
-    const btn=document.getElementById('confirmBtn');if(btn)btn.disabled=false;
+    const btn=document.getElementById('confirmBtn');if(btn)btn.disabled=cropOcrBusy;
   },
+  editOptionPositions,
   closeCropModal(){removeCropModal();A.draftImg=null;A.draftAns=null;},
   confirmQ(){
+    if(cropOcrBusy) return;
     if(!A.draftAns){toast('Cevap seçin','error');return;}
-    A.questions.push({img:A.draftImg,ans:A.draftAns,learningOutcome:'',pointValue:'',order:A.questions.length});
+    A.questions.push({img:A.draftImg,ans:A.draftAns,optionPositions:readCropOptionPositions?.()||{},learningOutcome:'',pointValue:'',order:A.questions.length});
     syncQuestionOrder();
     removeCropModal();A.draftImg=null;A.draftAns=null;
     toast(`✓ Soru ${A.questions.length} eklendi!`,'success');
@@ -3129,6 +3402,18 @@ const W={
   },
   setCropTool(tool){
     A.cropTool=tool==='pan'?'pan':'crop';
+    syncCropToolUI();
+    setupCrop();
+  },
+  setCropMode(mode){
+    const next=mode==='joined'?'joined':'single';
+    if(A.cropMode!==next) A.cropAnchor=null;
+    A.cropMode=next;A.cropTool='crop';
+    syncCropToolUI();
+    setupCrop();
+  },
+  resetCropAnchor(){
+    A.cropAnchor=null;A.cropTool='crop';
     syncCropToolUI();
     setupCrop();
   },
@@ -3256,6 +3541,7 @@ const W={
           imageUrl:uploadedImage.imageUrl,
           imagePath:preservedImagePath,
           correctAnswer:A.questions[i].ans,
+          optionPositions:window.KemalExamWorkspace.normalizeOptions(A.questions[i].optionPositions,A.optionCount),
           sectionTitle:sectionData.assignments[i+1]||'',
           learningOutcome:String(A.questions[i].learningOutcome||'').trim(),
           pointValue:scoreConfig.questionPoints[i]??0,
@@ -3444,6 +3730,7 @@ const W={
             id:qd.id,
             img:data.imageData||data.imageUrl||'',
             ans:data.correctAnswer||'A',
+            optionPositions:data.optionPositions||{},
             sectionTitle:data.sectionTitle||'',
             learningOutcome:data.learningOutcome||data.outcome||data.kazanim||'',
             pointValue:toPositiveDecimal(data.pointValue),
@@ -3530,6 +3817,19 @@ const W={
       A.exams=sortAdminExamRecords(A.exams.filter(e=>e.id!==id));setContent(renderAdminExams());
     }catch(e){hideLoad();toast('Hata: '+e.message,'error');}
   },
+  openExamAnalysis(examId=A.rf.examId){
+    if(!requireAnyExamPerm(EXAM_PAGE_PERMISSIONS.results,'Sınav analizi')) return;
+    if(!examId){toast('Önce analiz edilecek sınavı seçin.','error');return;}
+    const filters=A.page==='results'?{...A.rf,examId}:{examId};
+    const scope=[filters.grade?filters.grade+'. sınıf':'',filters.sube?filters.sube+' şubesi':'',filters.name?'Arama '+filters.name:''].filter(Boolean).join(' · ')||'Seçilen sınavın tüm sonuçları';
+    window.KemalExamAnalysisView.open({scope,load:async()=>{
+      const [examDoc,questions,results]=await Promise.all([
+        getDoc(doc(db,'exams',examId)),fbLoadExamQuestions(examId),fbLoadResults(filters)
+      ]);
+      if(!examDoc.exists()) throw new Error('Sınav bulunamadı.');
+      return {exam:{...examDoc.data(),id:examId},questions,results};
+    }});
+  },
   async showResults(examId){
     if(!requireAnyExamPerm(['exam_results','exam_results_edit','exam_results_delete','exam_single_report','exam_report_center'],'Sonuçlar')) return;
     await this.nav('results',{examId});
@@ -3581,7 +3881,7 @@ const W={
     const gradeOptions=GRADES.map(grade=>`<option value="${grade}" ${Number(result.grade)===grade?'selected':''}>${grade}. Sınıf</option>`).join('');
     const subeOptions=['','A','B','C','D','E','F','G','H'].map(sube=>`<option value="${sube}" ${String(result.sube||'')===sube?'selected':''}>${sube?sube+' Şubesi':'Şube Seçilmedi'}</option>`).join('');
     const el=document.createElement('div');
-    el.className='modal-overlay';
+    el.className='modal-overlay result-management';
     el.id='resultEditModal';
     el.innerHTML=`<div class="modal-box" style="max-width:640px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px">
@@ -3793,7 +4093,7 @@ const W={
           const meta=getAppealStatusMeta(deriveAppealStatus(appeal));
           const questionNos=getAppealQuestionNumbers(appeal);
           return `
-            <div style="border:1px solid var(--border);border-radius:18px;padding:16px 18px;background:#fff;margin-bottom:12px">
+            <div style="border:1px solid var(--border);border-radius:18px;padding:16px 18px;background:var(--appeal-card-bg,#fff);margin-bottom:12px">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
                 <div>
                   <div style="font-family:var(--fd);font-size:18px;font-weight:900">${esc(appeal.firstName||'')} ${esc(appeal.lastName||'')}</div>
@@ -3816,7 +4116,7 @@ const W={
             </div>`;
         }).join('');
     const el=document.createElement('div');
-    el.className='modal-overlay';
+    el.className='modal-overlay result-management';
     el.id='examAppealsModal';
     el.innerHTML=`<div class="modal-box" style="max-width:860px;padding:0;overflow:hidden">
       <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
@@ -3826,7 +4126,7 @@ const W={
         </div>
         <button class="btn btn-outline" onclick="W.closeExamAppeals()">Kapat</button>
       </div>
-      <div style="padding:18px;max-height:75vh;overflow-y:auto;background:#F8FAFC">${body}</div>
+      <div style="padding:18px;max-height:75vh;overflow-y:auto;background:var(--appeal-list-bg,#F8FAFC)">${body}</div>
     </div>`;
     document.body.appendChild(el);
     el.addEventListener('click',event=>{if(event.target===el)W.closeExamAppeals();});

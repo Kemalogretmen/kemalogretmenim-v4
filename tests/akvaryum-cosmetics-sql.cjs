@@ -12,7 +12,7 @@ const C=require('../js/akvaryum-core.js'),{PGlite}=require(process.argv[2]||'@el
  select exists(select 1 from public.user_profiles where id=auth.uid() and role='teacher' and approval_status='active' and active)$$;
  insert into auth.users values('${owner}'),('${other}');insert into user_profiles values('${owner}','teacher','active',true),('${other}','teacher','active',true);
  create publication supabase_realtime;`);
- for(const file of ['supabase-akvaryum.sql','supabase-akvaryum-veli.sql','supabase-akvaryum-cloud.sql','supabase-akvaryum-veli-rapor.sql','supabase-akvaryum-paylasim-gorunumu.sql','supabase-akvaryum-anlik.sql','supabase-akvaryum-cakisma-duzeltme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-canlilar-20261028.sql','supabase-akvaryum-canlilar-20261028.sql'])await db.exec(fs.readFileSync(file,'utf8'));
+ for(const file of ['supabase-akvaryum.sql','supabase-akvaryum-veli.sql','supabase-akvaryum-cloud.sql','supabase-akvaryum-veli-rapor.sql','supabase-akvaryum-paylasim-gorunumu.sql','supabase-akvaryum-anlik.sql','supabase-akvaryum-cakisma-duzeltme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-ozellestirme.sql','supabase-akvaryum-canlilar-20261028.sql','supabase-akvaryum-canlilar-20261111.sql','supabase-akvaryum-canlilar-20261111.sql','supabase-akvaryum-karakterler-20261117.sql','supabase-akvaryum-karakterler-20261117.sql'])await db.exec(fs.readFileSync(file,'utf8'));
  for(const file of ['tests/akvaryum-rls.sql','tests/akvaryum-child-rls.sql','tests/akvaryum-cloud-rls.sql'])await db.exec(fs.readFileSync(file,'utf8'));
  const authenticate=async id=>{await db.exec('reset role');await db.query("select set_config('request.jwt.claim.sub',$1,false)",[id]);await db.exec('set role authenticated');};
  const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});
@@ -61,18 +61,28 @@ const C=require('../js/akvaryum-core.js'),{PGlite}=require(process.argv[2]||'@el
   await db.exec('reset role;set role anon');view=(await db.query('select public.view_aquarium($1) as data',[token])).rows[0].data;
   assert.equal(view.students[0].species,kind);assert.ok(!JSON.stringify(view).includes('characterUnlocked'));await authenticate(owner);
  }
- for(const kind of ['hammerhead','axolotl']){
+ for(const kind of ['hammerhead','axolotl','catfish','megalodon','seal','penguin','plankton','gary','squidward','sandy']){
+  const version=['hammerhead','axolotl'].includes(kind)?2:['catfish','megalodon','seal','penguin'].includes(kind)?3:4;
   const latest=await read(),pupil=latest.classes[0].students[0];C.selectSpecies(pupil,kind);
-  latest.classes[0].teacher={enabled:true,name:'Öğretmen',species:kind,speciesCatalogVersion:2};revision=await save(latest,revision);
+  pupil.speciesCatalogVersion=version;
+  latest.classes[0].teacher={enabled:true,name:'Öğretmen',species:kind,speciesCatalogVersion:version};revision=await save(latest,revision);
   const stale=JSON.parse(JSON.stringify(latest));delete stale.classes[0].students[0].speciesCatalogVersion;stale.classes[0].students[0].species='clown';
   delete stale.classes[0].teacher.speciesCatalogVersion;stale.classes[0].teacher.species='clown';
+  if(version>=3){stale.classes[0].students[0].speciesCatalogVersion=version-1;stale.classes[0].teacher.speciesCatalogVersion=version-1;}
   C.awardBehavior(stale.classes[0].students[1],stale.classes[0],C.dayKey(),stale.classes[0].tasks[0].id);
   const points=C.earned(stale.classes[0].students[1]);revision=await save(stale,revision);const retained=await read();
-  assert.equal(retained.classes[0].students[0].species,kind);assert.equal(retained.classes[0].students[0].speciesCatalogVersion,2);
-  assert.equal(retained.classes[0].teacher.species,kind);assert.equal(retained.classes[0].teacher.speciesCatalogVersion,2);assert.equal(C.earned(retained.classes[0].students[1]),points);
+  assert.equal(retained.classes[0].students[0].species,kind);assert.equal(retained.classes[0].students[0].speciesCatalogVersion,version);
+  assert.equal(retained.classes[0].teacher.species,kind);assert.equal(retained.classes[0].teacher.speciesCatalogVersion,version);assert.equal(C.earned(retained.classes[0].students[1]),points);
   await db.exec('reset role;set role anon');view=(await db.query('select public.view_aquarium($1) as data',[token])).rows[0].data;
   assert.equal(view.students[0].species,kind);assert.ok(!JSON.stringify(view).includes('speciesCatalogVersion'));await authenticate(owner);
-  const changed=await read();C.selectSpecies(changed.classes[0].students[0],'clown');changed.classes[0].teacher.species='clown';revision=await save(changed,revision);
+  if(version===4){
+   const noVersion=await read();noVersion.classes[0].students[0].species='clown';delete noVersion.classes[0].students[0].speciesCatalogVersion;
+   noVersion.classes[0].teacher.species='clown';delete noVersion.classes[0].teacher.speciesCatalogVersion;
+   revision=await save(noVersion,revision);
+   const checked=await read();
+   assert.equal(checked.classes[0].students[0].species,kind);assert.equal(checked.classes[0].teacher.species,kind);
+  }
+  const changed=await read();C.selectSpecies(changed.classes[0].students[0],'clown');changed.classes[0].teacher.species='clown';changed.classes[0].teacher.speciesCatalogVersion=C.SPECIES_CATALOG_VERSION;revision=await save(changed,revision);
   assert.equal((await read()).classes[0].students[0].species,'clown');assert.equal((await read()).classes[0].teacher.species,'clown');
  }
  const explicit=await read();explicit.classes[0].students[0].species='clown';revision=await save(explicit,revision);assert.equal((await read()).classes[0].students[0].species,'clown');

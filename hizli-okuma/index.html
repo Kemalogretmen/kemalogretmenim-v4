@@ -442,8 +442,10 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="reading"></script>
 </head>
-<body>
+<body data-kemal-shortcut-dock="reading-hub">
 
   <div class="ho-hero">
     <span class="ho-hero-em">📖</span>
@@ -451,6 +453,7 @@
     <p>Sınıfını seç → Metni bul → Okumaya başla!</p>
     <div class="ho-hero-actions">
       <a class="ho-hero-btn primary" href="#step1">Sınıfını Seç</a>
+      <a class="ho-hero-btn" href="/hizli-okuma/akademi.html">Okuma ve Anlama Akademisi</a>
       <a class="ho-hero-btn" href="/hizli-okuma/hece-akisi.html">Hece Akışı</a>
       <a class="ho-hero-btn" href="/hizli-okuma/e-kitaplar.html">E-Kitaplık</a>
       <a class="ho-hero-btn" href="/hizli-okuma/karne.html" data-auth-entry="reading-report" data-auth-mode="optional">Okuma Karnem</a>
@@ -621,7 +624,8 @@
 
   <script src="/js/site-data.js?v=20260418-2"></script>
   <script defer src="/js/site-adsense.js?v=20261117"></script>
-  <script src="/js/site.js?v=20261030-icons"></script>
+  <script src="/js/site.js?v=20261114-okuma-merkezi"></script>
+  <script src="/js/okuma-ayar.js?v=1"></script>
   <script src="/js/user-auth.js"></script>
   <script src="/js/meb-schools.js"></script>
   <script src="/js/content-progress.js?v=20260729-ebook"></script>
@@ -1270,7 +1274,7 @@
 
     function applyMetinFilters() {
       tumMetinler = sortMetinler(tumMetinlerKaynak.filter(function(metin) {
-        if (metinFiltreleri.tur !== 'all' && metin.goruntuleme_modu !== metinFiltreleri.tur) {
+        if (metinFiltreleri.tur !== 'all' && metin.goruntuleme_modu !== metinFiltreleri.tur && !window.ReadingSettings.isAllGrades(metin)) {
           return false;
         }
         if (metinFiltreleri.seviye !== 'all' && normalizeTrainingProfile(metin.egitim_json).seviye !== metinFiltreleri.seviye) {
@@ -1326,7 +1330,7 @@
       ];
 
       const kartHTML = sayfa.map((m, i) => {
-        const mod    = m.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+        const mod    = window.ReadingSettings.isAllGrades(m) ? 'Okuma biçimini seç' : m.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
         const modCls = m.goruntuleme_modu === 'kelime' ? 'badge-kw' : 'badge-tam';
         const hiz    = m.hedef_hiz    ? `${m.hedef_hiz} k/dk` : '';
         const kw     = m.kelime_sayisi ? `${m.kelime_sayisi} kelime` : '';
@@ -1539,7 +1543,7 @@
       }
 
       // Bilgilendirme paneli
-      const mod = selectedMetin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
+      const mod = window.ReadingSettings.isAllGrades(selectedMetin) ? 'Okuma biçimini sen seç' : selectedMetin.goruntuleme_modu === 'kelime' ? '⚡ Kelime Kelime' : '📄 Tam Metin';
       const selectedProfile = normalizeTrainingProfile(selectedMetin.egitim_json);
       const selectedMeta = [
         mod,

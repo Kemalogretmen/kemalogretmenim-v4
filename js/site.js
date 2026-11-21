@@ -1582,6 +1582,7 @@
       { uid: 'static:home', title: 'Ana Sayfa', href: '/index.html', icon: '🏠', gradeLabel: 'Genel', subjectLabel: 'Başlangıç', contentTypeLabel: 'Sayfa' },
       { uid: 'static:latest', title: 'Yeni İçerikler', href: '/yeni.html', icon: '🌟', gradeLabel: 'Genel', subjectLabel: 'Güncel', contentTypeLabel: 'Liste' },
       { uid: 'static:reading', title: 'Hızlı Okuma Merkezi', href: '/hizli-okuma/index.html', icon: '📖', gradeLabel: '1-8. Sınıf', subjectLabel: 'Okuma Anlama', contentTypeLabel: 'Merkez' },
+      { uid: 'static:reading-academy', title: 'Okuma ve Anlama Akademisi', href: '/hizli-okuma/akademi.html', icon: '📚', gradeLabel: '1-8. Sınıf', subjectLabel: 'Akıcı Okuma, Dikkat, Anlama', contentTypeLabel: 'Alıştırma' },
       { uid: 'static:games', title: 'Eğitim Oyunları', href: '/oyun/oyunlar.html', icon: '🎮', gradeLabel: 'Genel', subjectLabel: 'Oyunlar', contentTypeLabel: 'Merkez' },
       { uid: 'static:exams', title: 'Sınav Merkezi', href: '/sinav_sitesi/index.html', icon: '📝', gradeLabel: '1-8. Sınıf', subjectLabel: 'Deneme ve Test', contentTypeLabel: 'Merkez' },
       { uid: 'static:class-resources', title: 'Sınıf Kaynakları', href: '/sinif-kaynaklari.html', icon: '📚', gradeLabel: '1-8. Sınıf', subjectLabel: 'Doküman ve Çalışma', contentTypeLabel: 'Merkez' },
@@ -2003,6 +2004,7 @@
     }).join('');
     const reading = [
       ['/hizli-okuma/index.html', 'Hızlı Okuma'],
+      ['/hizli-okuma/akademi.html', 'Okuma ve Anlama Akademisi'],
       ['/hizli-okuma/e-kitaplar.html', 'E-Kitaplık'],
       ['/hizli-okuma/hece-akisi.html', 'Hece Akışı'],
       ['/hizli-okuma/karne.html', 'Okuma Karnem'],
@@ -2065,6 +2067,7 @@
           '<li><a href="/index.html#grade-title">Sınıflar ve Dersler</a></li>' +
           '<li><a href="/hizli-okuma/index.html">Okuma Merkezi</a></li>' +
           '<li><a href="/hizli-okuma/e-kitaplar.html">E-Kitaplık</a></li>' +
+          '<li><a href="/hizli-okuma/akademi.html">Okuma ve Anlama Akademisi</a></li>' +
           '<li><a href="/sinav_sitesi/index.html">Sınavlar</a></li>' +
           '<li><a href="/sinif-kaynaklari.html">Dokümanlar</a></li>' +
           '<li><a href="/oyun/oyunlar.html">Eğitsel Oyunlar</a></li>' +
@@ -2090,6 +2093,7 @@
 
   function isShortcutDockAllowed() {
     const path = String(window.location.pathname || '').toLowerCase();
+    if (document.body?.dataset.kemalShortcutDock === 'reading-hub' && path.startsWith('/hizli-okuma/')) return true;
     return !(
       path.indexOf('/hizli-okuma/') === 0 ||
       path.indexOf('/sinav_sitesi/') === 0 ||

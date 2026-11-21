@@ -1,0 +1,47 @@
+.reading-choice {
+  width: min(100%, 420px);
+  display: grid;
+  gap: 12px;
+  color: #fff;
+  text-align: left;
+  margin: 0 auto 18px;
+}
+.reading-choice [hidden], .reading-choice[hidden], .reading-word-nav[hidden] { display: none; }
+.reading-choice fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.reading-choice legend { font-weight: 800; margin-bottom: 6px; }
+.reading-choice-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.reading-choice-options label {
+  display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 10px;
+  border: 1px solid #8f85b0; border-radius: 8px; cursor: pointer; background: #251b4d;
+}
+.reading-choice-options label:has(:checked) { border-color: #ddceff; background: #4e368e; }
+.reading-choice input { accent-color: #bfa4ff; }
+.reading-choice-pace { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+.reading-choice-pace input { grid-column: 1 / -1; width: 100%; }
+.reading-word-nav { position: absolute; bottom: 18px; inset-inline: 12px; display: flex; justify-content: center; gap: 8px; }
+.reading-word-nav button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+  min-width: 44px; padding: 8px 12px; color: #fff; background: #332656;
+  border: 1px solid #9a86be; border-radius: 8px; cursor: pointer; font-weight: 800;
+}
+.reading-word-nav button:disabled { opacity: .55; cursor: default; }
+.reading-word-nav .platform-ui-icon { width: 18px; height: 18px; }
+.reading-back-icon { transform: rotate(180deg); }
+.reading-plain-text { white-space: pre-wrap; }
+#hazirEkran:has(.reading-choice:not([hidden])) { gap: 14px; }
+#hazirEkran:has(.reading-choice:not([hidden])) .hazir-em { font-size: 48px; color: #c7b3ff; }
+#hazirEkran:has(.reading-choice:not([hidden])) .hazir-basla-btn { animation: none; }
+#kelimeEkran:has(.reading-word-nav:not([hidden])) .kk-kelime,
+#kelimeEkran:has(#kkControls[style*="flex"]) .kk-kelime { overflow-wrap: anywhere; }
+#kelimeEkran:has(.reading-word-nav:not([hidden])) .kk-progress-wrap { bottom: 76px; }
+#kelimeEkran:has(.reading-word-nav:not([hidden])) .kk-kelime-wrap { padding-bottom: 48px; }
+#kelimeEkran:has(#kkControls[style*="flex"]) .kk-kelime-wrap { padding-bottom: 64px; }
+@media (max-height: 460px) {
+  #hazirEkran:has(.reading-choice:not([hidden])) { justify-content: flex-start; }
+  .reading-word-nav { bottom: 8px; }
+  #kelimeEkran:has(.reading-word-nav:not([hidden])) .kk-progress-wrap { bottom: 58px; }
+  #kelimeEkran:has(#kkControls[style*="flex"]) .kk-controls { bottom: 62px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #kelimeEkran .kk-kelime { animation: none !important; }
+}

@@ -1,0 +1,3360 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Kuvvet ve Yaylar · Fen Laboratuvarı | Kemal Öğretmenim</title>
+  <meta name="description" content="Üç boyutlu fen laboratuvarında yayların uzamasını karşılaştır, dinamometreyle kuvvet ölç ve beceri testini çöz.">
+  <script src="../js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="../js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="../css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="../css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+  <link rel="stylesheet" href="../css/theme-control.css?v=20261029">
+  <link rel="stylesheet" href="../css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <style>
+    body.ko-lab {
+      background: var(--theme-bg, #fafaf7);
+      color: var(--theme-text, #252b3b);
+    }
+    .lab-workspace {
+      --bg: var(--theme-bg, #fafaf7);
+      --paper: var(--theme-surface, #fff);
+      --paper-subtle: var(--theme-surface-alt, #f2f1f6);
+      --ink: var(--theme-text, #252b3b);
+      --muted: var(--theme-muted, #657080);
+      --line: var(--theme-border, #e1e2e9);
+      --green: var(--theme-accent, #7151b9);
+      --green-dark: var(--green);
+      --on-accent: #fff;
+      --mint: var(--theme-accent-soft, #eee8f6);
+      --orange: #c17545;
+      --coral: #ef4f3b;
+      --amber-bg: var(--theme-warning-soft, #fff8e9);
+      --amber-line: var(--theme-border, #eee1c2);
+      --amber-ink: var(--theme-warning, #78612d);
+      --danger: var(--theme-danger, #bd4d3d);
+      --danger-bg: var(--theme-danger-soft, #f9e9e2);
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body, Nunito, system-ui, sans-serif);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    html[data-theme="dark"] .lab-workspace {
+      --on-accent: #1b202c;
+    }
+    .lab-workspace [hidden] { display: none !important; }
+    .no-select { user-select: none; -webkit-user-select: none; }
+
+    /* Üst Kurumsal Başlık (student-header & topbar uyumlu) */
+    .student-header {
+      min-height: 70px;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px max(20px, calc((100vw - 1400px) / 2));
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    body.ko-lab.embed-mode .student-header {
+      min-height: 54px;
+      padding: 6px 14px;
+    }
+    .lab-heading h1 { margin: 0; font-size: 23px; line-height: 1.25; letter-spacing: -.03em; }
+    .lab-back { color: var(--green); font-size: 12px; font-weight: 750; text-underline-offset: 3px; }
+    .lab-workspace :focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }
+
+    /* Modül Sekmeleri (.paper-mode-tabs uyumlu) */
+    .lab-tabs {
+      display: flex;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 3px;
+      background: var(--paper-subtle);
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .lab-tabs button {
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 650;
+      color: var(--muted);
+      transition: background 0.15s, color 0.15s;
+    }
+    .lab-tabs button.active {
+      background: var(--green);
+      color: var(--on-accent);
+    }
+
+    .online-header-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* Genel Butonlar & Form Elemanları (style.css uyumlu) */
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 36px;
+      padding: 7px 13px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .button.primary {
+      background: var(--green);
+      color: var(--on-accent);
+    }
+    .button.primary:hover { background: color-mix(in srgb, var(--green) 90%, var(--ink)); }
+    .button.secondary {
+      background: var(--paper);
+      border-color: var(--line);
+      color: var(--ink);
+    }
+    .button.secondary:hover { border-color: var(--green); }
+    .button.secondary.active-chip {
+      background: var(--mint);
+      border-color: var(--green);
+      color: var(--green-dark);
+      font-weight: 700;
+    }
+    body.ko-lab.dark-mode .button.secondary.active-chip {
+      color: #ffffff;
+    }
+    .button.coral {
+      background: var(--coral);
+      color: #ffffff;
+    }
+    .button.small {
+      min-height: 30px;
+      padding: 5px 10px;
+      font-size: 12px;
+    }
+    .button.full { width: 100%; }
+
+    .lab-workspace :is(input[type="number"], input[type="text"], select) {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+    }
+    .lab-workspace :is(input[type="number"], input[type="text"], select):focus {
+      border-color: var(--green);
+    }
+    .lab-workspace input[type="checkbox"] {
+      accent-color: var(--green);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .lab-workspace input[type="range"] {
+      accent-color: var(--green);
+      width: 100%;
+      cursor: pointer;
+    }
+
+    /* Ana Çalışma Alanı Izgarası */
+    .lab-main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 18px 20px 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 350px);
+      grid-template-areas: "stage controls" "measurements controls";
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    body.ko-lab.embed-mode .lab-main {
+      padding: 12px;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--green);
+      display: block;
+    }
+
+    /* 3B Sahne Kutusu */
+    .stage-panel { grid-area: stage; padding: 0; overflow: hidden; }
+    .measurements-card { grid-area: measurements; min-width: 0; }
+    .stage-box {
+      width: 100%;
+      height: clamp(360px, 59vh, 620px);
+      background: var(--paper-subtle);
+    }
+    canvas#labCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+    canvas#labCanvas:active { cursor: grabbing; }
+
+    .stage-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .stage-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .stage-caption {
+      padding: 9px 12px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* Ölçüm Özeti Tablosu (.report-table uyumlu) */
+    .summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .summary-header h2 {
+      font-size: 15px;
+      margin: 0;
+      font-weight: 700;
+    }
+    .summary-formula {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .report-table-scroll { overflow-x: auto; }
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .report-table th {
+      text-align: left;
+      color: var(--muted);
+      background: var(--paper-subtle);
+      font-size: 12px;
+      font-weight: 650;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .report-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    .report-table tbody th {
+      background: transparent;
+      color: var(--ink);
+      font-size: inherit;
+    }
+    .report-table td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .material-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-inline-end: 6px;
+      border-radius: 50%;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .status-badge.ok { background: var(--mint); color: var(--green-dark); }
+    body.ko-lab.dark-mode .status-badge.ok { color: #a7f3d0; }
+    .status-badge.danger { background: var(--danger-bg); color: var(--danger); }
+
+    /* Sağ Kontrol Sütunu */
+    .control-sidebar {
+      grid-area: controls;
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+    .goal-banner {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 15px 16px;
+    }
+    .goal-banner h2 {
+      font-size: 16px;
+      margin: 4px 0 6px;
+      color: var(--ink);
+    }
+    .goal-banner p {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .panel-section {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .panel-section:first-child {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+
+    .preset-btn {
+      border: 1px solid var(--line);
+      background: var(--paper-subtle);
+      color: var(--ink);
+      border-radius: 9px;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .preset-btn small {
+      display: block;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .preset-btn.active {
+      background: var(--mint);
+      border-color: var(--green);
+      color: var(--green-dark);
+    }
+    body.ko-lab.dark-mode .preset-btn.active { color: #ffffff; }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 9px;
+      background: var(--paper-subtle);
+      border: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .item-card {
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--paper-subtle);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+    }
+    .item-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Değişken Özeti Kutusu (Fen Müfredatı) */
+    .var-box {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-line);
+      color: var(--amber-ink);
+      font-size: 12px;
+    }
+    .var-box div { display: flex; justify-content: space-between; gap: 8px; }
+    .var-box strong { font-weight: 700; }
+
+    /* Canlı Uzama Çubukları */
+    .bar-row {
+      display: grid;
+      grid-template-columns: minmax(84px, 145px) minmax(0, 1fr) max-content;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin: 6px 0;
+    }
+    .bar-track {
+      height: 10px;
+      background: var(--paper-subtle);
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 99px;
+      transition: width 0.2s;
+    }
+
+    /* Öğrenci Test Kutusu */
+    .quiz-box {
+      padding: 12px;
+      border-radius: 11px;
+      background: var(--paper-subtle);
+      border: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+    .notice-box {
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.5;
+      border: 1px solid var(--line);
+    }
+    .notice-box.ok { background: var(--mint); border-color: var(--green); color: var(--ink); }
+    .notice-box.err { background: var(--danger-bg); border-color: var(--danger); color: var(--ink); }
+    .notice-box.hint { background: var(--amber-bg); border-color: var(--amber-line); color: var(--amber-ink); }
+
+    .lab-fallback { max-width: 42rem; margin: 16px auto; }
+
+    @media (max-width: 1024px) {
+      .lab-main {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "stage" "controls" "measurements";
+        grid-template-rows: auto;
+      }
+    }
+    @media (max-width: 640px) {
+      .student-header { padding: 10px 14px; }
+      .lab-main { padding: 12px; }
+      .stage-box { height: clamp(290px, 55svh, 440px); }
+      .lab-tabs { width: 100%; }
+      .lab-tabs button { flex: 1; padding-inline: 7px; }
+      .stage-actions .button { white-space: normal; min-height: 36px; }
+      .report-table { font-size: 12px; }
+      .report-table :is(th, td) { padding-inline: 5px; }
+      .grid-5 { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="labs"></script>
+</head>
+<body class="ko-lab">
+  <div id="kemalNavMount"></div>
+  <main class="lab-workspace" id="lab-content">
+
+  <!-- ===================================================================== -->
+  <!-- ÜST KURUMSAL BAŞLIK (KEMAL ÖĞRETMENİM · ATÖLYE)                       -->
+  <!-- ===================================================================== -->
+  <header class="student-header no-select">
+    <div class="lab-heading">
+      <a class="lab-back" href="../ogretmen-araclari.html#fen-laboratuvari">← Fen Laboratuvarı</a>
+      <h1>Kuvvet ve Yaylar</h1>
+    </div>
+
+    <nav class="lab-tabs" aria-label="Laboratuvar bölümleri">
+      <button type="button" id="pillarBtn-dyn" aria-controls="panel-dyn" aria-pressed="false" onclick="switchLab('dyn')">Dinamometre</button>
+      <button type="button" id="pillarBtn-spring" class="active" aria-controls="panel-spring" aria-pressed="true" onclick="switchLab('spring')">Esneklik Deneyi</button>
+      <button type="button" id="pillarBtn-quiz" aria-controls="panel-quiz" aria-pressed="false" onclick="switchLab('quiz')">Beceri Testi</button>
+    </nav>
+
+    <div class="online-header-tools">
+      <button type="button" id="soundBtn" class="button secondary small" onclick="toggleSound()" title="Ses Efektleri">
+        Ses açık
+      </button>
+      <button type="button" id="fullscreenBtn" class="button secondary small" onclick="toggleFullscreen()" title="Tam Ekran / Akıllı Tahta">
+        ⛶ Tam ekran
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- ANA ÇALIŞMA ALANI: SOL 3B SAHNE + SAĞ KONTROL PANELİ                  -->
+  <!-- ===================================================================== -->
+  <div class="lab-main" id="lab-main">
+
+    <!-- SOL SÜTUN: 3B ETKİLEŞİMLİ LABORATUVAR SAHNESİ VE ÖZET TABLO -->
+    <section class="card stage-panel" aria-label="Deney düzeneği">
+        <div class="stage-toolbar">
+          <div class="stage-actions" id="quickZoomBar" role="group" aria-label="Kamera"></div>
+          <div class="stage-actions" role="group" aria-label="Deney kontrolleri">
+            <button type="button" id="hudEnvBtn" class="button secondary small" onclick="setGravityEnv(state.dynLab.gravityEnv === 'earth' ? 'moon' : 'earth')">Dünya</button>
+            <button type="button" id="slowMoBtn" class="button secondary small" onclick="toggleSlowMo()" aria-pressed="false">Yavaş çekim</button>
+            <button type="button" id="transpToggleBtn" class="button secondary small" onclick="toggleTransparency()">Şeffaf gövde</button>
+            <button type="button" id="hangAllBtn" class="button primary small" onclick="toggleHangAll()"><span id="hangAllText">Ağırlıkları as</span></button>
+          </div>
+        </div>
+        <div class="stage-box no-select">
+          <canvas id="labCanvas" aria-label="Üç boyutlu deney düzeneği" aria-describedby="stageHintBanner"></canvas>
+        </div>
+        <p class="stage-caption" id="stageHintBanner"></p>
+    </section>
+
+    <!-- SAĞ SÜTUN: ÖĞRETMEN & ÖĞRENCİ KONTROL PANELİ -->
+    <aside class="control-sidebar">
+
+      <!-- Kazanım / Amaç Kartı -->
+      <div class="goal-banner">
+        <span class="eyebrow" id="goalBadge">FEN BİLİMLERİ · KUVVETİN ÖLÇÜLMESİ</span>
+        <h2 id="goalTitle">Özdeş dinamometrelerle kuvvet ölçümü</h2>
+        <p id="goalDesc">Masadaki K, L, M cisimlerini kancalara sürükleyin veya aşağıdaki panelden ölçek ve bölme değerlerini değiştirin.</p>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PANEL 1: DİNAMOMETRE LABORATUVARI                                 -->
+      <!-- ================================================================= -->
+      <div id="panel-dyn" class="card" hidden>
+
+        <!-- Hazır Senaryolar -->
+        <div class="panel-section">
+          <div class="section-title"><span>Hazır Deney Düzenekleri</span></div>
+          <div class="grid-2">
+            <button type="button" id="dynPreset-identical" class="preset-btn active" onclick="applyDynPreset('identical')">
+              ⚖️ Özdeş Sistem<small>Aynı ölçek, farklı yük</small>
+            </button>
+            <button type="button" id="dynPreset-sensitivity" class="preset-btn" onclick="applyDynPreset('sensitivity')">
+              🔬 Hassasiyet Farkı<small>20 N · 50 N · 100 N</small>
+            </button>
+            <button type="button" id="dynPreset-overload" class="preset-btn" onclick="applyDynPreset('overload')">
+              ⚡ Esneklik Sınırı<small>Aşırı yük &amp; bozulma</small>
+            </button>
+            <button type="button" id="dynPreset-reallife" class="preset-btn" onclick="applyDynPreset('reallife')">
+              🍎 Günlük Hayat<small>Elma, Kitap, Çanta</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dinamometre Sayısı & Ölçek -->
+        <div class="panel-section" style="display:grid;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:12px;font-weight:700">Dinamometre Sayısı</span>
+            <div style="display:flex;gap:4px">
+              <button type="button" id="dCountBtn-1" class="button secondary small" onclick="setDynCount(1)">1</button>
+              <button type="button" id="dCountBtn-2" class="button secondary small" onclick="setDynCount(2)">2</button>
+              <button type="button" id="dCountBtn-3" class="button secondary small active-chip" onclick="setDynCount(3)">3</button>
+            </div>
+          </div>
+
+          <label class="check-row">
+            <span>Özdeş Dinamometreler (Ortak Ölçek)</span>
+            <input type="checkbox" id="dynIdenticalChk" checked onchange="toggleDynIdentical(this.checked)">
+          </label>
+
+          <!-- Ortak Ölçek Ayar Kutusu -->
+          <div id="dynSharedConfigBox" class="item-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <label for="dynCustomMaxInput" style="font-size:12px;font-weight:700">Maksimum Ölçüm (Fₘₐₓ):</label>
+              <div style="display:flex;align-items:center;gap:4px;width:95px">
+                <input type="number" id="dynCustomMaxInput" min="1" max="1000" value="60" onchange="setDynSharedMax(this.value)">
+                <span style="font-size:12px;font-weight:700">N</span>
+              </div>
+            </div>
+            <div class="grid-5">
+              <button type="button" id="dMaxBtn-10" class="button secondary small" onclick="setDynSharedMax(10)">10 N</button>
+              <button type="button" id="dMaxBtn-20" class="button secondary small" onclick="setDynSharedMax(20)">20 N</button>
+              <button type="button" id="dMaxBtn-50" class="button secondary small" onclick="setDynSharedMax(50)">50 N</button>
+              <button type="button" id="dMaxBtn-60" class="button secondary small active-chip" onclick="setDynSharedMax(60)">60 N</button>
+              <button type="button" id="dMaxBtn-100" class="button secondary small" onclick="setDynSharedMax(100)">100 N</button>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px">
+              <span style="font-size:12px;font-weight:700">Eşit Bölme Sayısı:</span>
+              <span id="dynPerDivBadge" class="status-badge ok">Her bölme = 6 N</span>
+            </div>
+            <div class="grid-4">
+              <button type="button" id="dDivBtn-5" class="button secondary small" onclick="setDynSharedDivisions(5)">5</button>
+              <button type="button" id="dDivBtn-10" class="button secondary small active-chip" onclick="setDynSharedDivisions(10)">10</button>
+              <button type="button" id="dDivBtn-15" class="button secondary small" onclick="setDynSharedDivisions(15)">15</button>
+              <button type="button" id="dDivBtn-20" class="button secondary small" onclick="setDynSharedDivisions(20)">20</button>
+            </div>
+          </div>
+
+          <!-- Gövde Görünümü & Ortam -->
+          <div class="grid-2">
+            <button type="button" id="viewNormalBtn" class="button secondary small" onclick="setTransparentMode(false)">Kapalı Gövde</button>
+            <button type="button" id="viewTranspBtn" class="button secondary small active-chip" onclick="setTransparentMode(true)">Şeffaf (Yay Görünür)</button>
+          </div>
+
+          <label class="check-row">
+            <span>Bölmelerde Newton (N) değerlerini göster</span>
+            <input type="checkbox" id="showDivNumsChk" checked onchange="toggleDivNumbers(this.checked)">
+          </label>
+
+          <div class="check-row" style="cursor:default">
+            <span>Yer Çekimi Ortamı:</span>
+            <div style="display:flex;gap:4px">
+              <button type="button" id="envBtn-earth" class="button primary small" onclick="setGravityEnv('earth')">🌍 Dünya</button>
+              <button type="button" id="envBtn-moon" class="button secondary small" onclick="setGravityEnv('moon')">🌙 Ay (1/6)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cisimler (K, L, M) ve Tekil Dinamometre Kontrolleri -->
+        <div class="panel-section">
+          <div id="perDynControlsBox" style="display:grid;gap:8px"></div>
+          <div class="grid-2" style="margin-top:8px">
+            <button type="button" class="button secondary small" onclick="resetAndRepairDyns()">🛠️ Onar / Sıfırla</button>
+            <button type="button" class="button secondary small" onclick="resetCameraView()">🔄 Kamerayı Sıfırla</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PANEL 2: ESNEKLİK DENEYLERİ (YAYLAR)                              -->
+      <!-- ================================================================= -->
+      <div id="panel-spring" class="card">
+        <div class="panel-section">
+          <div class="section-title"><span>Deney türü</span></div>
+          <div style="display:grid;gap:6px">
+            <button type="button" id="spModeBtn-1" class="preset-btn active" onclick="setSpringMode(1)">
+              Malzeme<small>Tel kalınlığı ve ilk boy sabit</small>
+            </button>
+            <button type="button" id="spModeBtn-2" class="preset-btn" onclick="setSpringMode(2)">
+              Tel kalınlığı<small>Malzeme ve ilk boy sabit</small>
+            </button>
+            <button type="button" id="spModeBtn-3" class="preset-btn" onclick="setSpringMode(3)">
+              İlk boy<small>Malzeme ve tel kalınlığı sabit</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div id="springVariableControls" style="display:grid;gap:8px"></div>
+        </div>
+
+        <div class="panel-section" style="display:grid;gap:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <label for="spWeightSlider" style="font-size:12px;font-weight:700">Asılan Özdeş Ağırlık (F):</label>
+            <span id="spWeightBadge" class="status-badge ok">20 N (≈ 2 kg)</span>
+          </div>
+          <input type="range" id="spWeightSlider" min="10" max="50" step="5" value="20" oninput="setSpringWeight(+this.value)">
+          <div class="grid-5">
+            <button type="button" id="spWBtn-10" class="button secondary small" onclick="setSpringWeight(10)">10 N</button>
+            <button type="button" id="spWBtn-20" class="button secondary small active-chip" onclick="setSpringWeight(20)">20 N</button>
+            <button type="button" id="spWBtn-30" class="button secondary small" onclick="setSpringWeight(30)">30 N</button>
+            <button type="button" id="spWBtn-40" class="button secondary small" onclick="setSpringWeight(40)">40 N</button>
+            <button type="button" id="spWBtn-50" class="button secondary small" onclick="setSpringWeight(50)">50 N</button>
+          </div>
+
+          <label class="check-row">
+            <span>İlk boy ve uzama kılavuzlarını göster</span>
+            <input type="checkbox" id="showLasersChk" checked onchange="toggleLasers(this.checked)">
+          </label>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PANEL 3: ÖĞRENCİ TEST & DEĞERLENDİRME MERKEZİ                     -->
+      <!-- ================================================================= -->
+      <div id="panel-quiz" class="card" hidden>
+        <div class="panel-section">
+          <div class="section-title">
+            <span>Beceri &amp; Ölçüm Testi</span>
+            <div style="display:flex;gap:6px">
+              <span id="quizScoreBadge" class="status-badge ok">Doğru: 0 / 0</span>
+              <span id="quizStreakBadge" class="status-badge ok">🔥 0</span>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <button type="button" id="qTypeBtn-1" class="preset-btn active" onclick="setQuizType(1)">
+              Test 1 · Ağırlığı Bul<small>Asılı cismi ölç</small>
+            </button>
+            <button type="button" id="qTypeBtn-2" class="preset-btn" onclick="setQuizType(2)">
+              Test 2 · Fₘₐₓ Bul<small>En büyük değeri bul</small>
+            </button>
+            <button type="button" id="qTypeBtn-3" class="preset-btn" onclick="setQuizType(3)">
+              Test 3 · 1 Bölme<small>Bölme değerini hesapla</small>
+            </button>
+            <button type="button" id="qTypeBtn-4" class="preset-btn" onclick="setQuizType(4)">
+              Test 4 · MEB / LGS<small>Referans, ek yük &amp; sıralama</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="quiz-box">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <strong id="quizNumLabel" style="font-size:13px;color:var(--green)">Soru #1</strong>
+              <div style="display:flex;gap:6px">
+                <button type="button" class="button secondary small" onclick="toggleQuizHint()">💡 İpucu</button>
+                <button type="button" class="button primary small" onclick="generateQuizQuestion()">🎲 Yeni Soru</button>
+              </div>
+            </div>
+
+            <p id="quizPromptText" style="margin:0;font-size:13px;font-weight:600;line-height:1.5"></p>
+            <div id="quizHintBox" class="notice-box hint" hidden></div>
+            <div id="quizInputsArea" style="display:grid;gap:8px"></div>
+            <div id="quizChoiceArea" class="grid-2" hidden></div>
+
+            <div style="display:flex;gap:6px">
+              <button type="button" class="button primary full" onclick="checkStudentAnswer()">✅ Cevabı Kontrol Et</button>
+              <button type="button" id="quizNextObjBtn" class="button secondary small" onclick="nextOrSwapQuizObj()">⚓ Sıradaki Cisim</button>
+            </div>
+          </div>
+
+          <div id="quizFeedbackBox" class="notice-box" hidden style="margin-top:8px"></div>
+        </div>
+
+        <!-- Öğretmen Özel Soru Hazırlayıcı -->
+        <div class="panel-section">
+          <details class="item-card">
+            <summary style="font-size:12px;font-weight:700;cursor:pointer">👩‍🏫 Öğretmen: Özel Soru Düzeneği Kur</summary>
+            <div class="grid-3" style="margin-top:8px">
+              <label style="font-size:12px;font-weight:600">Max (N)
+                <input type="number" id="customQMax" value="80" min="5" max="1000" style="margin-top:4px">
+              </label>
+              <label style="font-size:12px;font-weight:600">Bölme
+                <select id="customQDivs" style="margin-top:4px">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+              <label style="font-size:12px;font-weight:600">Ağırlık (N)
+                <input type="number" id="customQWeight" value="32" min="1" max="1000" style="margin-top:4px">
+              </label>
+            </div>
+            <button type="button" class="button secondary small full" style="margin-top:8px" onclick="applyCustomTeacherQuiz()">
+              Bu Değerlerle Sahnede Soru Kur
+            </button>
+          </details>
+
+          <div class="grid-2" style="margin-top:8px">
+            <button type="button" id="qViewNormalBtn" class="button secondary small" onclick="setTransparentMode(false)">Kapalı Gövde</button>
+            <button type="button" id="qViewTranspBtn" class="button secondary small active-chip" onclick="setTransparentMode(true)">Şeffaf Gövde</button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <section class="card measurements-card" id="liveTableCard" aria-labelledby="liveTableTitle">
+        <div class="summary-header">
+          <h2 id="liveTableTitle">Dinamometre ölçümleri</h2>
+          <span class="summary-formula" id="liveFormulaNote">Ölçüm = Uzayan bölme × 1 bölme değeri</span>
+        </div>
+        <div class="report-table-scroll" id="liveTableContainer"></div>
+
+        <!-- Yalnızca Esneklik Deneyinde Görünen Canlı Uzama Çubukları -->
+        <div id="springChartBox" hidden style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">
+          <div class="summary-header" style="margin-bottom:6px">
+            <h2>Uzama karşılaştırması</h2>
+            <span class="summary-formula">Hooke Yasası: F = k · Δx</span>
+          </div>
+          <div id="springBarChart"></div>
+        </div>
+      </section>
+  </div>
+
+  <section id="lab-fallback" class="card lab-fallback" hidden>
+    <p>3B görünüm açılamadı. Yayların uzamasını iki boyutlu düzenekte karşılaştırabilirsin.</p>
+    <a class="lab-back" href="../yay-deneyleri.html">2B yay deneyini aç</a>
+  </section>
+
+  </main>
+  <div id="kemalFooterMount"></div>
+
+  <script>
+    // ============================================================================
+    // 0. KEMAL ÖĞRETMENİM SİTE & IFRAME UYUMLULUĞU
+    // ============================================================================
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('embed') === '1' || window.self !== window.top) {
+      document.body.classList.add('embed-mode');
+    }
+
+    function fmtNum(n, maxDec = 1) {
+      const rounded = Math.round(n * 100) / 100;
+      if (Math.abs(rounded - Math.round(rounded)) < 0.001) return String(Math.round(rounded));
+      return rounded.toFixed(maxDec).replace('.', ',');
+    }
+
+    function parseNumInput(val) {
+      if (typeof val !== 'string' && typeof val !== 'number') return NaN;
+      return parseFloat(String(val).trim().replace(',', '.'));
+    }
+
+    // ============================================================================
+    // 1. SABİTLER, FİZİKSEL ÖLÇEKLER VE RENK PALETLERİ
+    // ============================================================================
+    const T_TRAVEL = 8.4;         // Maksimum çubuk uzama boyu (cm)
+    const TOP_BEAM_Y = 14.4;      // Üst askı profili yüksekliği
+    const BASE_TABLE_Y = -17.5;   // Ahşap masa üst yüzeyi Y koordinatı
+    const BARREL_TOP_Y = 12.4;    // Dinamometre gövde üstü
+    const BARREL_BOT_Y = 0.0;     // Dinamometre gövde altı (0 bölme hizası)
+    const SPRING_TOP_Y = 11.6;    // İç sarmal yay üst pimi
+    const PISTON_0_Y = 8.9;       // 0 N konumunda piston yüksekliği
+
+    function getCapPalette(maxN) {
+      if (maxN <= 15) return { main: '#10b981', dark: '#047857', light: '#6ee7b7' };
+      if (maxN <= 30) return { main: '#f59e0b', dark: '#b45309', light: '#fde68a' };
+      if (maxN <= 65) return { main: '#16705c', dark: '#105241', light: '#6ee7b7' };
+      return { main: '#8b5cf6', dark: '#5b21b6', light: '#c4b5fd' };
+    }
+
+    const REAL_OBJECTS = [
+      { id: 'kure',    label: 'Metal Küre',    icon: '🟣', shape: 'sphere',   defaultN: 12, colors: ['#c084fc', '#9333ea', '#581c87'] },
+      { id: 'kup',     label: 'Mavi Küp',      icon: '🟦', shape: 'cube',     defaultN: 30, colors: ['#7dd3fc', '#0284c7', '#0c4a6e'] },
+      { id: 'altigen', label: 'Pembe Altıgen', icon: '🩷', shape: 'hex',      defaultN: 48, colors: ['#f9a8d4', '#db2777', '#831843'] },
+      { id: 'kutle',   label: 'Pirinç Kütle',  icon: '🟡', shape: 'cylinder', defaultN: 20, colors: ['#fef08a', '#eab308', '#713f12'] },
+      { id: 'elma',    label: 'Kırmızı Elma',  icon: '🍎', shape: 'apple',    defaultN: 2,  colors: ['#fca5a5', '#dc2626', '#7f1d1d'] },
+      { id: 'kitap',   label: 'Fen Kitabı',    icon: '📘', shape: 'book',     defaultN: 15, colors: ['#93c5fd', '#1d4ed8', '#1e3a8a'] },
+      { id: 'canta',   label: 'Okul Çantası',  icon: '🎒', shape: 'bag',      defaultN: 45, colors: ['#6ee7b7', '#059669', '#064e3b'] }
+    ];
+
+    const MATERIALS = {
+      demir:     { id: 'demir',     name: 'Demir Yay (Sert)',        shortName: 'Demir Yay',     E: 2.00, colors: { highlight: '#e2e8f0', mid: '#64748b', body: '#1e293b' } },
+      bakir:     { id: 'bakir',     name: 'Bakır Yay (Orta Esnek)',  shortName: 'Bakır Yay',     E: 1.00, colors: { highlight: '#e5b49a', mid: '#b37050', body: '#754633' } },
+      aluminyum: { id: 'aluminyum', name: 'Alüminyum (Çok Esnek)',   shortName: 'Alüminyum Yay', E: 0.65, colors: { highlight: '#e0e6eb', mid: '#a2aeb9', body: '#657481' } },
+      celik:     { id: 'celik',     name: 'Çelik Yay (Çok Sert)',    shortName: 'Çelik Yay',     E: 2.50, colors: { highlight: '#f1f5f9', mid: '#475569', body: '#0f172a' } },
+      plastik:   { id: 'plastik',   name: 'Plastik Yay (Çok Esnek)', shortName: 'Plastik Yay',   E: 0.45, colors: { highlight: '#d8b4fe', mid: '#9333ea', body: '#4c1d95' } },
+      lastik:    { id: 'lastik',    name: 'Lastik Yay (Çok Esnek)',  shortName: 'Lastik Yay',    E: 0.40, colors: { highlight: '#b9d3bf', mid: '#629675', body: '#325241' } }
+    };
+
+    const THICKNESS_PROFILES = {
+      ince:  { id: 'ince',  name: 'İnce Yay',  wireRadiusCm: 0.17, stiffnessFactor: 0.55 },
+      orta:  { id: 'orta',  name: 'Orta Yay',  wireRadiusCm: 0.27, stiffnessFactor: 1.00 },
+      kalin: { id: 'kalin', name: 'Kalın Yay', wireRadiusCm: 0.40, stiffnessFactor: 2.00 }
+    };
+
+    const LENGTH_PROFILES = {
+      kisa: { id: 'kisa', name: 'Kısa Yay (8 cm)',  initialLengthCm: 8,  coils: 8,  lengthComplianceFactor: 0.65 },
+      orta: { id: 'orta', name: 'Orta Yay (12 cm)', initialLengthCm: 12, coils: 11, lengthComplianceFactor: 1.00 },
+      uzun: { id: 'uzun', name: 'Uzun Yay (16 cm)', initialLengthCm: 16, coils: 15, lengthComplianceFactor: 1.40 }
+    };
+
+    // ============================================================================
+    // 2. UYGULAMA DURUMU (STATE)
+    // ============================================================================
+    function createDyn(idx, xCm, maxForceN = 60, divisions = 10) {
+      return {
+        index: idx,
+        name: `${idx + 1}. Dinamometre`,
+        xCm,
+        zCm: 0,
+        visible: true,
+        maxForceN,
+        divisions,
+        isBroken: false,
+        u: 0,
+        v: 0,
+        restTimer: 0,
+        primaryWeightIdx: idx,
+        stackedWeightIdx: -1,
+        screenHookPos: { x: 0, y: 0 },
+        screenStackHookPos: { x: 0, y: 0 }
+      };
+    }
+
+    function createWeightObj(idx, label, objectId, earthWeightN, homeX) {
+      return {
+        index: idx,
+        label,
+        objectId,
+        earthWeightN,
+        visible: true,
+        slot: idx,
+        isStacked: false,
+        dragging: false,
+        homeX,
+        homeZ: 6.4,
+        x: homeX,
+        y: BASE_TABLE_Y + 1.65,
+        z: 6.4,
+        screenPos: { x: 0, y: 0 }
+      };
+    }
+
+    const state = {
+      activeLab: 'spring',
+      studioDark: false,
+      soundEnabled: true,
+      slowMo: false,
+      showLasers: true,
+      showDivNumbers: true,
+      transparentBody: true,
+
+      camera: {
+        yaw: 0.14,
+        pitch: 0.09,
+        zoom: 0.96,
+        focusX: 0.0,
+        focusY: -0.6,
+        targetYaw: 0.14,
+        targetPitch: 0.09,
+        targetZoom: 0.96,
+        targetFocusX: 0.0,
+        targetFocusY: -0.6
+      },
+
+      dynLab: {
+        activePreset: 'identical',
+        count: 3,
+        identicalMode: true,
+        sharedMaxForceN: 60,
+        sharedDivisions: 10,
+        gravityEnv: 'earth',
+        dynamometers: [
+          createDyn(0, -12.5, 60, 10),
+          createDyn(1, 0.0, 60, 10),
+          createDyn(2, 12.5, 60, 10)
+        ],
+        weights: [
+          createWeightObj(0, 'K', 'kure', 12, -12.5),
+          createWeightObj(1, 'L', 'kup', 30, 0.0),
+          createWeightObj(2, 'M', 'altigen', 48, 12.5)
+        ]
+      },
+
+      springLab: {
+        mode: 1,
+        weightForceN: 20,
+        mode1Materials: ['demir', 'bakir', 'aluminyum'],
+        sharedMaterial: 'demir',
+        springs: []
+      },
+
+      quiz: {
+        type: 1,
+        subVariant4: 'reference',
+        questionCount: 0,
+        correctCount: 0,
+        totalAnswered: 0,
+        streak: 0,
+        answeredCurrent: false,
+        showHint: false,
+        hintText: '',
+        solutionText: '',
+        expectedAnswers: {},
+        selectedChoice: '',
+        activeObjCycle: 0
+      },
+
+      notebook: []
+    };
+
+    function getGravityMultiplier() {
+      return state.dynLab.gravityEnv === 'moon' ? (1 / 6) : 1.0;
+    }
+
+    function getWeightEffForce(w) {
+      if (!w || !w.visible) return 0;
+      const g = state.activeLab === 'quiz' ? 1.0 : getGravityMultiplier();
+      return w.earthWeightN * g;
+    }
+
+    function getDynLoadedForce(d) {
+      let total = 0;
+      if (d.primaryWeightIdx !== -1) {
+        const w1 = state.dynLab.weights[d.primaryWeightIdx];
+        if (w1 && w1.visible && !w1.dragging && w1.slot === d.index) total += getWeightEffForce(w1);
+      }
+      if (d.stackedWeightIdx !== -1) {
+        const w2 = state.dynLab.weights[d.stackedWeightIdx];
+        if (w2 && w2.visible && !w2.dragging && w2.slot === d.index) total += getWeightEffForce(w2);
+      }
+      return total;
+    }
+
+    // ============================================================================
+    // 3. SES EFEKTLERİ (WEB AUDIO) & ÜST ARAÇLAR
+    // ============================================================================
+    let audioCtx = null;
+    function getAudio() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      return audioCtx;
+    }
+
+    function playSound(kind) {
+      if (!state.soundEnabled) return;
+      try {
+        const ac = getAudio();
+        if (!ac) return;
+        if (ac.state === 'suspended') ac.resume();
+        const now = ac.currentTime;
+        const osc = ac.createOscillator();
+        const gain = ac.createGain();
+        osc.connect(gain);
+        gain.connect(ac.destination);
+
+        if (kind === 'hang') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(190, now);
+          osc.frequency.exponentialRampToValueAtTime(340, now + 0.10);
+          gain.gain.setValueAtTime(0.10, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+          osc.start(now); osc.stop(now + 0.14);
+        } else if (kind === 'break') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.linearRampToValueAtTime(55, now + 0.35);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+          osc.start(now); osc.stop(now + 0.38);
+        } else if (kind === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.09);
+          osc.frequency.setValueAtTime(783.99, now + 0.18);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now); osc.stop(now + 0.35);
+        } else if (kind === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(210, now);
+          osc.frequency.setValueAtTime(155, now + 0.12);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+          osc.start(now); osc.stop(now + 0.28);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(420, now);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.start(now); osc.stop(now + 0.05);
+        }
+      } catch (_) {}
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      const btn = document.getElementById('soundBtn');
+      if (btn) btn.textContent = state.soundEnabled ? 'Ses açık' : 'Ses kapalı';
+    }
+
+    function applyStudioTheme(theme) {
+      state.studioDark = theme === 'dark';
+      document.documentElement.dataset.theme = theme;
+      document.body.classList.toggle('dark-mode', state.studioDark);
+    }
+
+    function toggleSlowMo() {
+      state.slowMo = !state.slowMo;
+      const btn = document.getElementById('slowMoBtn');
+      if (btn) {
+        btn.classList.toggle('active-chip', state.slowMo);
+        btn.setAttribute('aria-pressed', String(state.slowMo));
+        btn.textContent = state.slowMo ? 'Yavaş çekim (¼×)' : 'Yavaş çekim';
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.()?.catch(() => {});
+      } else {
+        document.exitFullscreen?.()?.catch(() => {});
+      }
+    }
+
+    // ============================================================================
+    // 4. SEKME GEÇİŞLERİ VE KAMERA KONTROLLERİ
+    // ============================================================================
+    function switchLab(lab, playClick = true) {
+      state.activeLab = lab;
+      ['dyn', 'spring', 'quiz'].forEach(k => {
+        const b = document.getElementById(`pillarBtn-${k}`);
+        const p = document.getElementById(`panel-${k}`);
+        if (b) {
+          b.classList.toggle('active', k === lab);
+          b.setAttribute('aria-pressed', String(k === lab));
+        }
+        if (p) p.hidden = (k !== lab);
+      });
+
+      const chartBox = document.getElementById('springChartBox');
+      if (chartBox) chartBox.hidden = (lab !== 'spring');
+
+      const transpBtn = document.getElementById('transpToggleBtn');
+      if (transpBtn) transpBtn.hidden = (lab === 'spring');
+
+      document.getElementById('stageHintBanner').textContent = lab === 'spring'
+        ? 'Düzeneği çevirmek için boş alanı sürükle. Bir ağırlığa dokunarak onu as veya indir.'
+        : 'Düzeneği çevirmek için boş alanı sürükle. Cisimleri kancalara taşıyarak kuvveti ölç.';
+      const hudEnvBtn = document.getElementById('hudEnvBtn');
+      if (hudEnvBtn) hudEnvBtn.hidden = (lab !== 'dyn');
+
+      resetCameraView();
+
+      if (lab === 'dyn') {
+        applyDynPreset(state.dynLab.activePreset);
+      } else if (lab === 'spring') {
+        applySpringConfig();
+      } else if (lab === 'quiz') {
+        generateQuizQuestion();
+      }
+      updateQuickZoomBar();
+      updateHangAllButtonUI();
+      updateLiveViews();
+      if (playClick) playSound('click');
+    }
+
+    function resetCameraView() {
+      state.camera.targetYaw = 0.14;
+      state.camera.targetPitch = 0.09;
+      state.camera.targetZoom = 0.96;
+      state.camera.targetFocusX = 0.0;
+      state.camera.targetFocusY = -0.6;
+    }
+
+    function focusDynScale(idx) {
+      if (idx === -1) {
+        resetCameraView();
+      } else {
+        const items = state.activeLab === 'spring'
+          ? state.springLab.springs
+          : state.dynLab.dynamometers.filter(d => d.visible);
+        const item = items[idx] || items[0];
+        if (!item) return;
+        state.camera.targetFocusX = item.xCm;
+        state.camera.targetFocusY = -1.2;
+        state.camera.targetZoom = 1.62;
+        state.camera.targetYaw = 0.04;
+        state.camera.targetPitch = 0.04;
+      }
+      updateQuickZoomBar();
+    }
+
+    function stepZoom(delta) {
+      state.camera.targetZoom = Math.max(0.68, Math.min(2.35, state.camera.targetZoom + delta));
+    }
+
+    function updateQuickZoomBar() {
+      const bar = document.getElementById('quickZoomBar');
+      if (!bar) return;
+      const items = state.activeLab === 'spring'
+        ? state.springLab.springs.map((s, i) => ({ label: `Yay ${i + 1}`, idx: i }))
+        : state.dynLab.dynamometers.filter(d => d.visible).map(d => ({ label: `D${d.index + 1}`, idx: d.index }));
+
+      let html = `<button type="button" onclick="focusDynScale(-1)" class="button secondary small">Tüm görünüm</button>`;
+      items.forEach(it => {
+        html += `<button type="button" onclick="focusDynScale(${it.idx})" class="button secondary small" aria-label="${it.label} yakından göster">${it.label}</button>`;
+      });
+      html += `
+        <button type="button" onclick="stepZoom(-0.2)" class="button secondary small" title="Uzaklaştır">−</button>
+        <button type="button" onclick="stepZoom(0.2)" class="button secondary small" title="Yakınlaştır">＋</button>
+      `;
+      bar.innerHTML = html;
+    }
+
+    // ============================================================================
+    // 5. BÖLÜM 1: DİNAMOMETRE SENARYOLARI VE KONTROLLERİ
+    // ============================================================================
+    function applyDynPreset(preset) {
+      state.dynLab.activePreset = preset;
+      ['identical', 'sensitivity', 'overload', 'reallife'].forEach(p => {
+        const btn = document.getElementById(`dynPreset-${p}`);
+        if (btn) btn.classList.toggle('active', p === preset);
+      });
+
+      const dl = state.dynLab;
+      dl.gravityEnv = 'earth';
+      setGravityEnv('earth', true);
+
+      if (preset === 'identical') {
+        dl.count = 3;
+        dl.identicalMode = true;
+        dl.sharedMaxForceN = 60;
+        dl.sharedDivisions = 10;
+        const specs = [
+          { obj: 'kure',    w: 12 },
+          { obj: 'kup',     w: 30 },
+          { obj: 'altigen', w: 48 }
+        ];
+        dl.dynamometers.forEach((d, i) => {
+          d.visible = true; d.maxForceN = 60; d.divisions = 10; d.isBroken = false;
+          d.primaryWeightIdx = i; d.stackedWeightIdx = -1;
+        });
+        dl.weights.forEach((w, i) => {
+          w.visible = true; w.objectId = specs[i].obj; w.earthWeightN = specs[i].w;
+          w.slot = i; w.isStacked = false;
+        });
+      } else if (preset === 'sensitivity') {
+        dl.count = 3;
+        dl.identicalMode = false;
+        const maxes = [20, 50, 100];
+        dl.dynamometers.forEach((d, i) => {
+          d.visible = true; d.maxForceN = maxes[i]; d.divisions = 10; d.isBroken = false;
+          d.primaryWeightIdx = i; d.stackedWeightIdx = -1;
+        });
+        dl.weights.forEach((w, i) => {
+          w.visible = true; w.objectId = 'kutle'; w.earthWeightN = 20;
+          w.slot = i; w.isStacked = false;
+        });
+      } else if (preset === 'overload') {
+        dl.count = 3;
+        dl.identicalMode = true;
+        dl.sharedMaxForceN = 30;
+        dl.sharedDivisions = 10;
+        const forces = [15, 30, 50];
+        dl.dynamometers.forEach((d, i) => {
+          d.visible = true; d.maxForceN = 30; d.divisions = 10; d.isBroken = false;
+          d.primaryWeightIdx = i; d.stackedWeightIdx = -1;
+        });
+        dl.weights.forEach((w, i) => {
+          w.visible = true; w.objectId = i === 2 ? 'altigen' : 'kutle'; w.earthWeightN = forces[i];
+          w.slot = i; w.isStacked = false;
+        });
+      } else if (preset === 'reallife') {
+        dl.count = 3;
+        dl.identicalMode = false;
+        const cfg = [
+          { max: 10, div: 10, obj: 'elma',  w: 2 },
+          { max: 30, div: 10, obj: 'kitap', w: 15 },
+          { max: 60, div: 10, obj: 'canta', w: 45 }
+        ];
+        dl.dynamometers.forEach((d, i) => {
+          d.visible = true; d.maxForceN = cfg[i].max; d.divisions = cfg[i].div; d.isBroken = false;
+          d.primaryWeightIdx = i; d.stackedWeightIdx = -1;
+        });
+        dl.weights.forEach((w, i) => {
+          w.visible = true; w.objectId = cfg[i].obj; w.earthWeightN = cfg[i].w;
+          w.slot = i; w.isStacked = false;
+        });
+      }
+
+      applyDynConfig();
+    }
+
+    function applyDynConfig() {
+      const dl = state.dynLab;
+      const xs = dl.count === 1 ? [0] : (dl.count === 2 ? [-8.5, 8.5] : [-12.5, 0, 12.5]);
+
+      dl.dynamometers.forEach((d, i) => {
+        d.visible = i < dl.count;
+        if (d.visible) d.xCm = xs[i];
+        if (dl.identicalMode) {
+          d.maxForceN = dl.sharedMaxForceN;
+          d.divisions = dl.sharedDivisions;
+        }
+        checkDynOverload(d);
+      });
+
+      dl.weights.forEach((w, i) => {
+        w.visible = i < dl.count;
+        if (w.visible) w.homeX = xs[i];
+        if (w.slot >= dl.count) {
+          w.slot = -1; w.isStacked = false;
+        }
+      });
+
+      [1, 2, 3].forEach(c => {
+        const b = document.getElementById(`dCountBtn-${c}`);
+        if (b) b.classList.toggle('active-chip', c === dl.count);
+      });
+
+      const idChk = document.getElementById('dynIdenticalChk');
+      if (idChk) idChk.checked = dl.identicalMode;
+      const sharedBox = document.getElementById('dynSharedConfigBox');
+      if (sharedBox) sharedBox.hidden = !dl.identicalMode;
+
+      updateDynScaleUI();
+      renderPerDynControls();
+      updateGoalBannerForDyn();
+      updateQuickZoomBar();
+      updateHangAllButtonUI();
+      updateLiveViews();
+    }
+
+    function setDynCount(cnt) {
+      state.dynLab.count = cnt;
+      applyDynConfig();
+      playSound('click');
+    }
+
+    function toggleDynIdentical(checked) {
+      state.dynLab.identicalMode = checked;
+      applyDynConfig();
+    }
+
+    function setDynSharedMax(val) {
+      const n = Math.max(1, Math.min(1000, Math.round(parseNumInput(val) || 60)));
+      state.dynLab.sharedMaxForceN = n;
+      state.dynLab.dynamometers.forEach(d => { d.isBroken = false; });
+      applyDynConfig();
+    }
+
+    function setDynSharedDivisions(divs) {
+      state.dynLab.sharedDivisions = divs;
+      applyDynConfig();
+    }
+
+    function setGravityEnv(env, silent = false) {
+      state.dynLab.gravityEnv = env;
+      const eBtn = document.getElementById('envBtn-earth');
+      const mBtn = document.getElementById('envBtn-moon');
+      if (eBtn) eBtn.className = env === 'earth' ? 'button primary small' : 'button secondary small';
+      if (mBtn) mBtn.className = env === 'moon' ? 'button primary small' : 'button secondary small';
+
+      const hud = document.getElementById('hudEnvBtn');
+      if (hud) hud.textContent = env === 'earth' ? 'Dünya' : 'Ay';
+
+      state.dynLab.dynamometers.forEach(d => checkDynOverload(d));
+      if (!silent) {
+        updateLiveViews();
+        playSound('click');
+      }
+    }
+
+    function setTransparentMode(val) {
+      state.transparentBody = val;
+      updateTransparencyButtons();
+    }
+
+    function toggleTransparency() {
+      state.transparentBody = !state.transparentBody;
+      updateTransparencyButtons();
+    }
+
+    function updateTransparencyButtons() {
+      const t = state.transparentBody;
+      ['viewNormalBtn', 'qViewNormalBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active-chip', !t);
+      });
+      ['viewTranspBtn', 'qViewTranspBtn', 'transpToggleBtn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('active-chip', t);
+      });
+    }
+
+    function toggleDivNumbers(checked) {
+      state.showDivNumbers = checked;
+    }
+
+    function resetAndRepairDyns() {
+      state.dynLab.dynamometers.forEach(d => {
+        if (d.isBroken || getDynLoadedForce(d) > d.maxForceN + 0.001) {
+          state.dynLab.weights.forEach(w => {
+            if (w.slot === d.index) detachWeight(w);
+          });
+        }
+        d.isBroken = false;
+        d.u = 0;
+        d.v = 0;
+        checkDynOverload(d);
+      });
+      renderPerDynControls();
+      updateHangAllButtonUI();
+      updateLiveViews();
+      playSound('hang');
+    }
+
+    function updateDynScaleUI() {
+      const dl = state.dynLab;
+      const maxInp = document.getElementById('dynCustomMaxInput');
+      if (maxInp) maxInp.value = dl.sharedMaxForceN;
+
+      [10, 20, 50, 60, 100].forEach(m => {
+        const b = document.getElementById(`dMaxBtn-${m}`);
+        if (b) b.classList.toggle('active-chip', dl.sharedMaxForceN === m);
+      });
+      [5, 10, 15, 20].forEach(dv => {
+        const b = document.getElementById(`dDivBtn-${dv}`);
+        if (b) b.classList.toggle('active-chip', dl.sharedDivisions === dv);
+      });
+
+      const perDiv = dl.sharedMaxForceN / dl.sharedDivisions;
+      const badge = document.getElementById('dynPerDivBadge');
+      if (badge) badge.textContent = `Her bölme = ${fmtNum(perDiv, 2)} N`;
+    }
+
+    function renderPerDynControls() {
+      const box = document.getElementById('perDynControlsBox');
+      if (!box) return;
+      const dl = state.dynLab;
+
+      box.innerHTML = dl.weights.filter(w => w.visible).map((w, i) => {
+        const d = dl.dynamometers[i];
+        const perDiv = d.maxForceN / d.divisions;
+        const slotDesc = w.slot === -1
+          ? 'Masada'
+          : `${w.slot + 1}. Dinamometrede${w.isStacked ? ' (Altta Ekli)' : ''}`;
+
+        return `
+          <div class="item-card">
+            <div class="item-card-head">
+              <span>Cisim ${w.label} · <small style="color:var(--muted)">${slotDesc}</small></span>
+              <button type="button" class="button secondary small" onclick="quickToggleWeightSlot(${w.index})">
+                ${w.slot === -1 ? `⚓ D${i + 1}'e As` : '⬇️ Masaya İndir'}
+              </button>
+            </div>
+
+            ${!dl.identicalMode ? `
+              <div class="grid-2">
+                <label style="font-size:12px">D${i + 1} Fₘₐₓ (N)
+                  <input type="number" min="5" max="1000" value="${d.maxForceN}" onchange="setSingleDynMax(${i}, this.value)">
+                </label>
+                <label style="font-size:12px">Bölme (${fmtNum(perDiv, 1)}N)
+                  <select onchange="setSingleDynDivs(${i}, +this.value)">
+                    ${[5, 10, 15, 20].map(dv => `<option value="${dv}" ${d.divisions === dv ? 'selected' : ''}>${dv} Bölme</option>`).join('')}
+                  </select>
+                </label>
+              </div>
+            ` : ''}
+
+            <div class="grid-2">
+              <label style="font-size:12px">Cisim Türü
+                <select onchange="setWeightObjectType(${w.index}, this.value)">
+                  ${REAL_OBJECTS.map(o => `<option value="${o.id}" ${w.objectId === o.id ? 'selected' : ''}>${o.icon} ${o.label}</option>`).join('')}
+                </select>
+              </label>
+              <label style="font-size:12px">Dünya Ağırlığı (N)
+                <input type="number" min="1" max="500" value="${w.earthWeightN}" onchange="setWeightCustomN(${w.index}, this.value)">
+              </label>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setSingleDynMax(idx, val) {
+      const d = state.dynLab.dynamometers[idx];
+      if (!d) return;
+      d.maxForceN = Math.max(5, Math.min(1000, Math.round(parseNumInput(val) || 60)));
+      d.isBroken = false;
+      checkDynOverload(d);
+      renderPerDynControls();
+      updateLiveViews();
+    }
+
+    function setSingleDynDivs(idx, divs) {
+      const d = state.dynLab.dynamometers[idx];
+      if (!d) return;
+      d.divisions = divs;
+      renderPerDynControls();
+      updateLiveViews();
+    }
+
+    function setWeightObjectType(wIdx, objId) {
+      const w = state.dynLab.weights[wIdx];
+      const found = REAL_OBJECTS.find(o => o.id === objId);
+      if (!w || !found) return;
+      w.objectId = found.id;
+      w.earthWeightN = found.defaultN;
+      state.dynLab.dynamometers.forEach(d => checkDynOverload(d));
+      renderPerDynControls();
+      updateLiveViews();
+    }
+
+    function setWeightCustomN(wIdx, val) {
+      const w = state.dynLab.weights[wIdx];
+      if (!w) return;
+      w.earthWeightN = Math.max(1, Math.min(500, Math.round(parseNumInput(val) || 10)));
+      state.dynLab.dynamometers.forEach(d => checkDynOverload(d));
+      renderPerDynControls();
+      updateLiveViews();
+    }
+
+    function quickToggleWeightSlot(wIdx) {
+      const w = state.dynLab.weights[wIdx];
+      if (!w) return;
+      if (w.slot === -1) {
+        attachWeightToSlot(w, Math.min(wIdx, state.dynLab.count - 1), false);
+      } else {
+        detachWeight(w);
+      }
+      renderPerDynControls();
+      updateHangAllButtonUI();
+      updateLiveViews();
+    }
+
+    function updateGoalBannerForDyn() {
+      const badge = document.getElementById('goalBadge');
+      const title = document.getElementById('goalTitle');
+      const desc = document.getElementById('goalDesc');
+      if (!badge || !title || !desc) return;
+      const p = state.dynLab.activePreset;
+      badge.textContent = '1. BÖLÜM · DİNAMOMETRE LABORATUVARI';
+      if (p === 'identical') {
+        title.textContent = 'Özdeş Dinamometrelerle Farklı Kuvvetlerin Ölçümü';
+        desc.textContent = 'Uygulanan kuvvet arttıkça dinamometre içindeki yayın uzama miktarı ve dışarı çıkan bölme sayısı doğru orantılı artar.';
+      } else if (p === 'sensitivity') {
+        title.textContent = 'Dinamometrelerin Duyarlılığı (Hassasiyet Karşılaştırması)';
+        desc.textContent = 'Aynı ağırlık (20 N) asıldığında, ölçüm sınırı küçük (ince yaylı) dinamometre daha çok bölme uzar ve daha hassas ölçüm yapar.';
+      } else if (p === 'overload') {
+        title.textContent = 'Esneklik Sınırı ve Dinamometrenin Bozulması';
+        desc.textContent = 'Dinamometreye maksimum ölçüm sınırından (30 N) daha büyük bir kuvvet (50 N) uygulanırsa yay esneklik özelliğini kaybeder ve bozulur.';
+      } else {
+        title.textContent = 'Günlük Hayattaki Cisimlerin Ağırlık Ölçümü';
+        desc.textContent = 'Elma, kitap ve okul çantasını uygun ölçekli dinamometrelere asarak Newton (N) cinsinden ağırlıklarını karşılaştırın.';
+      }
+    }
+
+    // ============================================================================
+    // 6. BÖLÜM 2: ESNEKLİK DENEYLERİ (YAYLAR)
+    // ============================================================================
+    function setSpringMode(mode) {
+      state.springLab.mode = mode;
+      [1, 2, 3].forEach(m => {
+        const b = document.getElementById(`spModeBtn-${m}`);
+        if (b) b.classList.toggle('active', m === mode);
+      });
+      applySpringConfig();
+      playSound('click');
+    }
+
+    function applySpringConfig() {
+      const sl = state.springLab;
+      const xs = [-12.0, 0.0, 12.0];
+      const prevHang = sl.springs.length === 3 ? sl.springs.map(s => s.hasWeight) : [false, false, false];
+
+      if (sl.mode === 1) {
+        sl.springs = sl.mode1Materials.map((matId, i) => ({
+          index: i, xCm: xs[i], zCm: 0,
+          materialId: matId, thicknessId: 'orta', lengthId: 'orta',
+          coilRadiusCm: 1.55, wireRadiusCm: THICKNESS_PROFILES.orta.wireRadiusCm,
+          initialLengthCm: 12, coils: 11,
+          hasWeight: prevHang[i], currentExtensionCm: 0, velocity: 0
+        }));
+      } else if (sl.mode === 2) {
+        const tIds = ['ince', 'orta', 'kalin'];
+        sl.springs = tIds.map((tId, i) => ({
+          index: i, xCm: xs[i], zCm: 0,
+          materialId: sl.sharedMaterial, thicknessId: tId, lengthId: 'orta',
+          coilRadiusCm: 1.55, wireRadiusCm: THICKNESS_PROFILES[tId].wireRadiusCm,
+          initialLengthCm: 12, coils: 11,
+          hasWeight: prevHang[i], currentExtensionCm: 0, velocity: 0
+        }));
+      } else {
+        const lIds = ['kisa', 'orta', 'uzun'];
+        sl.springs = lIds.map((lId, i) => ({
+          index: i, xCm: xs[i], zCm: 0,
+          materialId: sl.sharedMaterial, thicknessId: 'orta', lengthId: lId,
+          coilRadiusCm: 1.55, wireRadiusCm: THICKNESS_PROFILES.orta.wireRadiusCm,
+          initialLengthCm: LENGTH_PROFILES[lId].initialLengthCm, coils: LENGTH_PROFILES[lId].coils,
+          hasWeight: prevHang[i], currentExtensionCm: 0, velocity: 0
+        }));
+      }
+
+      renderSpringVariableControls();
+      updateGoalBannerForSpring();
+      updateHangAllButtonUI();
+      updateLiveViews();
+    }
+
+    function renderSpringVariableControls() {
+      const box = document.getElementById('springVariableControls');
+      if (!box) return;
+      const sl = state.springLab;
+
+      if (sl.mode === 1) {
+        box.innerHTML = `
+          <div class="var-box">
+            <div><span>Bağımsız Değişken:</span><strong>Yayın Yapıldığı Maddenin Cinsi</strong></div>
+            <div><span>Bağımlı Değişken:</span><strong>Uzama Miktarı (Δx)</strong></div>
+            <div><span>Kontrol Edilen:</span><strong>İlk Boy (12 cm), Kalınlık, Ağırlık</strong></div>
+          </div>
+          <div class="grid-3">
+            ${[0, 1, 2].map(i => `
+              <label style="font-size:12px;font-weight:600">${i + 1}. Yay Cinsi
+                <select onchange="changeSpringMat(${i}, this.value)" style="margin-top:4px">
+                  ${Object.values(MATERIALS).map(m => `<option value="${m.id}" ${sl.mode1Materials[i] === m.id ? 'selected' : ''}>${m.shortName}</option>`).join('')}
+                </select>
+              </label>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        const indep = sl.mode === 2 ? 'Yayın Tel Kalınlığı (İnce/Orta/Kalın)' : 'Yayın İlk Boyu (8 / 12 / 16 cm)';
+        const ctrl = sl.mode === 2 ? 'Madde Cinsi, İlk Boy (12 cm), Ağırlık' : 'Madde Cinsi, Tel Kalınlığı, Ağırlık';
+        box.innerHTML = `
+          <div class="var-box">
+            <div><span>Bağımsız Değişken:</span><strong>${indep}</strong></div>
+            <div><span>Bağımlı Değişken:</span><strong>Uzama Miktarı (Δx)</strong></div>
+            <div><span>Kontrol Edilen:</span><strong>${ctrl}</strong></div>
+          </div>
+          <label style="font-size:12px;font-weight:600">Sabit Tutulan Yay Maddesi (Üç Yay İçin Ortak)
+            <select onchange="changeSharedSpringMat(this.value)" style="margin-top:4px">
+              ${Object.values(MATERIALS).map(m => `<option value="${m.id}" ${sl.sharedMaterial === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+            </select>
+          </label>
+        `;
+      }
+    }
+
+    function setMode1Preset(a, b, c) {
+      state.springLab.mode1Materials = [a, b, c];
+      applySpringConfig();
+    }
+
+    function changeSpringMat(idx, matId) {
+      state.springLab.mode1Materials[idx] = matId;
+      applySpringConfig();
+    }
+
+    function changeSharedSpringMat(matId) {
+      state.springLab.sharedMaterial = matId;
+      applySpringConfig();
+    }
+
+    function setSpringWeight(wN) {
+      state.springLab.weightForceN = wN;
+      const sl = document.getElementById('spWeightSlider');
+      if (sl) sl.value = wN;
+      const b = document.getElementById('spWeightBadge');
+      if (b) b.textContent = `${wN} N (≈ ${fmtNum(wN / 10, 1)} kg)`;
+      [10, 20, 30, 40, 50].forEach(v => {
+        const btn = document.getElementById(`spWBtn-${v}`);
+        if (btn) btn.classList.toggle('active-chip', v === wN);
+      });
+      updateLiveViews();
+    }
+
+    function toggleLasers(checked) {
+      state.showLasers = checked;
+    }
+
+    function getSpringK(sp) {
+      const mat = MATERIALS[sp.materialId];
+      const th = THICKNESS_PROFILES[sp.thicknessId];
+      const ln = LENGTH_PROFILES[sp.lengthId];
+      return (8.0 * mat.E * th.stiffnessFactor) / ln.lengthComplianceFactor;
+    }
+
+    function getSpringEqExt(sp) {
+      if (!sp.hasWeight) return 0;
+      return state.springLab.weightForceN / getSpringK(sp);
+    }
+
+    function updateGoalBannerForSpring() {
+      const badge = document.getElementById('goalBadge');
+      const title = document.getElementById('goalTitle');
+      const desc = document.getElementById('goalDesc');
+      if (!badge || !title || !desc) return;
+      badge.textContent = 'ESNEKLİK DENEYİ';
+      if (state.springLab.mode === 1) {
+        title.textContent = 'Malzemenin etkisi';
+        desc.textContent = 'Aynı boy ve kalınlıktaki yaylara eşit ağırlık as. Malzeme değiştiğinde uzama nasıl değişiyor?';
+      } else if (state.springLab.mode === 2) {
+        title.textContent = 'Tel kalınlığının etkisi';
+        desc.textContent = 'Malzemeyi ve ilk boyu sabit tut. Eşit ağırlık altında hangi tel daha çok uzuyor?';
+      } else {
+        title.textContent = 'Yay boyunun etkisi';
+        desc.textContent = 'Aynı telden yapılmış kısa, orta ve uzun yaylara eşit ağırlık as. Uzama miktarlarını karşılaştır.';
+      }
+    }
+
+    // ============================================================================
+    // 7. AĞIRLIK BAĞLAMA / ÇIKARMA VE TOPLU ASMA MANTIĞI
+    // ============================================================================
+    function attachWeightToSlot(weight, slotIdx, asStacked = false) {
+      const dl = state.dynLab;
+      const targetDyn = dl.dynamometers[slotIdx];
+      if (!targetDyn || !targetDyn.visible) return;
+
+      detachWeight(weight);
+
+      if (asStacked && targetDyn.primaryWeightIdx !== -1 && targetDyn.primaryWeightIdx !== weight.index) {
+        if (targetDyn.stackedWeightIdx !== -1) {
+          const oldS = dl.weights[targetDyn.stackedWeightIdx];
+          if (oldS) { oldS.slot = -1; oldS.isStacked = false; }
+        }
+        targetDyn.stackedWeightIdx = weight.index;
+        weight.slot = slotIdx;
+        weight.isStacked = true;
+      } else {
+        if (targetDyn.primaryWeightIdx !== -1 && targetDyn.primaryWeightIdx !== weight.index) {
+          const oldP = dl.weights[targetDyn.primaryWeightIdx];
+          if (oldP) { oldP.slot = -1; oldP.isStacked = false; }
+        }
+        if (targetDyn.stackedWeightIdx !== -1) {
+          const oldS = dl.weights[targetDyn.stackedWeightIdx];
+          if (oldS) { oldS.slot = -1; oldS.isStacked = false; }
+          targetDyn.stackedWeightIdx = -1;
+        }
+        targetDyn.primaryWeightIdx = weight.index;
+        weight.slot = slotIdx;
+        weight.isStacked = false;
+      }
+
+      targetDyn.v += 4.5;
+      checkDynOverload(targetDyn);
+      playSound(targetDyn.isBroken ? 'break' : 'hang');
+      updateHangAllButtonUI();
+    }
+
+    function detachWeight(weight) {
+      const dl = state.dynLab;
+      dl.dynamometers.forEach(d => {
+        if (d.primaryWeightIdx === weight.index) {
+          if (d.stackedWeightIdx !== -1) {
+            const w2 = dl.weights[d.stackedWeightIdx];
+            d.primaryWeightIdx = d.stackedWeightIdx;
+            d.stackedWeightIdx = -1;
+            if (w2) w2.isStacked = false;
+          } else {
+            d.primaryWeightIdx = -1;
+          }
+        } else if (d.stackedWeightIdx === weight.index) {
+          d.stackedWeightIdx = -1;
+        }
+      });
+      weight.slot = -1;
+      weight.isStacked = false;
+    }
+
+    function checkDynOverload(dyn) {
+      const f = getDynLoadedForce(dyn);
+      if (f > dyn.maxForceN + 0.001) {
+        dyn.isBroken = true;
+      }
+    }
+
+    function toggleHangAll() {
+      if (state.activeLab === 'spring') {
+        const allHung = state.springLab.springs.every(s => s.hasWeight);
+        state.springLab.springs.forEach(s => {
+          s.hasWeight = !allHung;
+          s.velocity += allHung ? -3.0 : 5.0;
+        });
+        playSound('hang');
+      } else {
+        const visW = state.dynLab.weights.filter(w => w.visible);
+        const anyOnTable = visW.some(w => w.slot === -1);
+        if (anyOnTable) {
+          visW.forEach((w, i) => attachWeightToSlot(w, i, false));
+        } else {
+          visW.forEach(w => detachWeight(w));
+          playSound('click');
+        }
+        renderPerDynControls();
+      }
+      updateHangAllButtonUI();
+      updateLiveViews();
+    }
+
+    function updateHangAllButtonUI() {
+      const txt = document.getElementById('hangAllText');
+      if (!txt) return;
+      if (state.activeLab === 'spring') {
+        const allHung = state.springLab.springs.every(s => s.hasWeight);
+        txt.textContent = allHung ? 'Ağırlıkları indir' : 'Ağırlıkları as';
+      } else {
+        const anyOnTable = state.dynLab.weights.filter(w => w.visible).some(w => w.slot === -1);
+        txt.textContent = anyOnTable ? 'Cisimleri as' : 'Cisimleri indir';
+      }
+    }
+
+    // ============================================================================
+    // 8. BÖLÜM 3: ÖĞRENCİ TEST MERKEZİ
+    // ============================================================================
+    function setQuizType(t) {
+      state.quiz.type = t;
+      [1, 2, 3, 4].forEach(k => {
+        const b = document.getElementById(`qTypeBtn-${k}`);
+        if (b) b.classList.toggle('active', k === t);
+      });
+      generateQuizQuestion();
+      playSound('click');
+    }
+
+    function applyCustomTeacherQuiz() {
+      const maxN = Math.max(5, Math.min(1000, Math.round(parseNumInput(document.getElementById('customQMax').value) || 80)));
+      const divs = parseInt(document.getElementById('customQDivs').value, 10) || 10;
+      const wN = Math.max(1, Math.min(maxN, Math.round(parseNumInput(document.getElementById('customQWeight').value) || 32)));
+
+      state.quiz.type = 1;
+      [1, 2, 3, 4].forEach(k => {
+        const b = document.getElementById(`qTypeBtn-${k}`);
+        if (b) b.classList.toggle('active', k === 1);
+      });
+
+      const dl = state.dynLab;
+      dl.count = 1;
+      dl.identicalMode = true;
+      dl.sharedMaxForceN = maxN;
+      dl.sharedDivisions = divs;
+      dl.dynamometers[0].visible = true;
+      dl.dynamometers[0].xCm = 0;
+      dl.dynamometers[0].maxForceN = maxN;
+      dl.dynamometers[0].divisions = divs;
+      dl.dynamometers[0].isBroken = false;
+      dl.dynamometers[1].visible = false;
+      dl.dynamometers[2].visible = false;
+
+      dl.weights[0].visible = true;
+      dl.weights[0].label = 'K';
+      dl.weights[0].earthWeightN = wN;
+      dl.weights[0].homeX = 0;
+      dl.weights[1].visible = false;
+      dl.weights[2].visible = false;
+      attachWeightToSlot(dl.weights[0], 0, false);
+
+      const q = state.quiz;
+      q.questionCount++;
+      q.answeredCurrent = false;
+      q.showHint = false;
+      q.expectedAnswers = { K: wN };
+      const extDiv = (wN / maxN) * divs;
+      q.hintText = `1 Bölme = ${maxN} ÷ ${divs} = ${fmtNum(maxN / divs, 2)} N. Dinamometre ${fmtNum(extDiv, 1)} bölme uzamıştır.`;
+      q.solutionText = `1 bölme = ${maxN} / ${divs} = ${fmtNum(maxN / divs, 2)} N → K = ${fmtNum(extDiv, 1)} × ${fmtNum(maxN / divs, 2)} = ${wN} N.`;
+
+      document.getElementById('quizNumLabel').textContent = `Özel Öğretmen Sorusu #${q.questionCount}`;
+      document.getElementById('quizPromptText').textContent =
+        `En fazla ${maxN} N ölçen ${divs} eşit bölmeli dinamometreye K cismi asıldığında ${fmtNum(extDiv, 1)} bölme uzuyor. K cisminin ağırlığı kaç Newton'dur?`;
+      document.getElementById('quizHintBox').hidden = true;
+      document.getElementById('quizFeedbackBox').hidden = true;
+      renderQuizInputs([{ key: 'K', label: 'K Cisminin Ağırlığı (N)' }]);
+      updateLiveViews();
+    }
+
+    function generateQuizQuestion() {
+      const q = state.quiz;
+      const dl = state.dynLab;
+      q.questionCount++;
+      q.answeredCurrent = false;
+      q.showHint = false;
+      q.selectedChoice = '';
+      dl.gravityEnv = 'earth';
+
+      const hintBox = document.getElementById('quizHintBox');
+      const fbBox = document.getElementById('quizFeedbackBox');
+      const nextBtn = document.getElementById('quizNextObjBtn');
+      if (hintBox) hintBox.hidden = true;
+      if (fbBox) fbBox.hidden = true;
+
+      const badge = document.getElementById('goalBadge');
+      const title = document.getElementById('goalTitle');
+      const desc = document.getElementById('goalDesc');
+      if (badge) badge.textContent = '3. BÖLÜM · ÖĞRENCİ BECERİ TESTİ';
+      if (title) title.textContent = `Soru #${q.questionCount} · Dinamometre Okuma ve Hesaplama`;
+      if (desc) desc.textContent = '3B sahnedeki dinamometre bölmelerini sayarak cevabınızı girin ve Kontrol Et düğmesine basın.';
+
+      document.getElementById('quizNumLabel').textContent = `Soru #${q.questionCount}`;
+
+      const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+      if (q.type === 1) {
+        // Test 1: 3 dinamometrede K, L, M cisimlerinin ağırlıklarını bul
+        dl.count = 3;
+        dl.identicalMode = false;
+        const maxPool = [40, 50, 60, 80, 100];
+        const xs = [-12.5, 0, 12.5];
+        q.expectedAnswers = {};
+        const labels = ['K', 'L', 'M'];
+        const solParts = [];
+
+        for (let i = 0; i < 3; i++) {
+          const maxN = pick(maxPool);
+          const divs = 10;
+          const ext = Math.floor(Math.random() * 7) + 2;
+          const force = (maxN / divs) * ext;
+          const d = dl.dynamometers[i];
+          d.visible = true; d.xCm = xs[i]; d.maxForceN = maxN; d.divisions = divs; d.isBroken = false;
+          const w = dl.weights[i];
+          w.visible = true; w.label = labels[i]; w.earthWeightN = force; w.homeX = xs[i];
+          attachWeightToSlot(w, i, false);
+          q.expectedAnswers[labels[i]] = force;
+          solParts.push(`${labels[i]} = (${maxN}÷10)×${ext} = ${force} N`);
+        }
+
+        document.getElementById('quizPromptText').textContent =
+          '10 eşit bölmeli dinamometrelere K, L ve M cisimleri asılmıştır. Her dinamometrenin maksimum değeri (Fₘₐₓ) ve uzayan bölme sayısına göre K, L, M ağırlıklarını bulunuz.';
+        q.hintText = 'Her dinamometre için: 1 Bölme = Fₘₐₓ ÷ 10. Ardından uzayan bölme sayısı ile çarpın.';
+        q.solutionText = solParts.join(' · ');
+        if (nextBtn) nextBtn.hidden = false;
+        renderQuizInputs([
+          { key: 'K', label: 'K (N)' },
+          { key: 'L', label: 'L (N)' },
+          { key: 'M', label: 'M (N)' }
+        ]);
+      } else if (q.type === 2) {
+        // Test 2: Maksimum ölçüm değerini (F_max) bul
+        dl.count = 1;
+        const divs = pick([5, 10, 20]);
+        const perDiv = pick([2, 4, 5, 6, 8, 10]);
+        const maxN = divs * perDiv;
+        const ext = Math.floor(Math.random() * (divs - 2)) + 2;
+        const force = ext * perDiv;
+
+        dl.dynamometers[0].visible = true; dl.dynamometers[0].xCm = 0;
+        dl.dynamometers[0].maxForceN = maxN; dl.dynamometers[0].divisions = divs; dl.dynamometers[0].isBroken = false;
+        dl.dynamometers[1].visible = false; dl.dynamometers[2].visible = false;
+
+        dl.weights[0].visible = true; dl.weights[0].label = 'K'; dl.weights[0].earthWeightN = force; dl.weights[0].homeX = 0;
+        dl.weights[1].visible = false; dl.weights[2].visible = false;
+        attachWeightToSlot(dl.weights[0], 0, false);
+
+        q.expectedAnswers = { Fmax: maxN };
+        document.getElementById('quizPromptText').textContent =
+          `${divs} eşit bölmeli dinamometreye ${force} N ağırlığında K cismi asıldığında ${ext} bölme uzuyor. Bu dinamometrenin ölçebileceği en büyük kuvvet (Fₘₐₓ) kaç N'dur?`;
+        q.hintText = `1 Bölme = ${force} N ÷ ${ext} bölme = ${perDiv} N. Toplam ${divs} bölme olduğuna göre ${divs} × ${perDiv} işlemini yapın.`;
+        q.solutionText = `1 bölme = ${force} ÷ ${ext} = ${perDiv} N → Fₘₐₓ = ${divs} × ${perDiv} = ${maxN} N.`;
+        if (nextBtn) nextBtn.hidden = true;
+        renderQuizInputs([{ key: 'Fmax', label: 'Maksimum Kuvvet Fₘₐₓ (N)' }]);
+      } else if (q.type === 3) {
+        // Test 3: 1 bölme değerini bul
+        dl.count = 1;
+        const divs = pick([5, 10, 15, 20]);
+        const perDiv = pick([2, 3, 4, 5, 6, 8]);
+        const maxN = divs * perDiv;
+        const ext = Math.floor(Math.random() * (divs - 2)) + 2;
+        const force = ext * perDiv;
+
+        dl.dynamometers[0].visible = true; dl.dynamometers[0].xCm = 0;
+        dl.dynamometers[0].maxForceN = maxN; dl.dynamometers[0].divisions = divs; dl.dynamometers[0].isBroken = false;
+        dl.dynamometers[1].visible = false; dl.dynamometers[2].visible = false;
+
+        dl.weights[0].visible = true; dl.weights[0].label = 'K'; dl.weights[0].earthWeightN = force; dl.weights[0].homeX = 0;
+        dl.weights[1].visible = false; dl.weights[2].visible = false;
+        attachWeightToSlot(dl.weights[0], 0, false);
+
+        q.expectedAnswers = { perDiv };
+        document.getElementById('quizPromptText').textContent =
+          `En fazla ${maxN} N ölçebilen ${divs} bölmeli dinamometreye ${force} N'luk K cismi asılıdır. Bu dinamometrede 1 bölme kaç Newton değerindedir?`;
+        q.hintText = `1 Bölme Değeri = Maksimum Kuvvet (${maxN} N) ÷ Bölme Sayısı (${divs}).`;
+        q.solutionText = `1 bölme = ${maxN} ÷ ${divs} = ${perDiv} N.`;
+        if (nextBtn) nextBtn.hidden = true;
+        renderQuizInputs([{ key: 'perDiv', label: '1 Bölme Değeri (N)' }]);
+      } else {
+        // Test 4: MEB / LGS Beceri Temelli (Referans, Uç uca ek yük veya Sıralama)
+        const variants = ['reference', 'stacked', 'order'];
+        q.subVariant4 = variants[q.questionCount % 3];
+
+        if (q.subVariant4 === 'reference') {
+          dl.count = 2;
+          const perDiv = pick([3, 4, 5, 6]);
+          const maxN = perDiv * 10;
+          const extK = pick([2, 3, 4]);
+          const extL = pick([5, 6, 7, 8]);
+          const fK = extK * perDiv, fL = extL * perDiv;
+
+          [-8.5, 8.5].forEach((x, i) => {
+            const d = dl.dynamometers[i];
+            d.visible = true; d.xCm = x; d.maxForceN = maxN; d.divisions = 10; d.isBroken = false;
+          });
+          dl.dynamometers[2].visible = false;
+
+          dl.weights[0].visible = true; dl.weights[0].label = 'K'; dl.weights[0].earthWeightN = fK; dl.weights[0].homeX = -8.5;
+          dl.weights[1].visible = true; dl.weights[1].label = 'L'; dl.weights[1].earthWeightN = fL; dl.weights[1].homeX = 8.5;
+          dl.weights[2].visible = false;
+          attachWeightToSlot(dl.weights[0], 0, false);
+          attachWeightToSlot(dl.weights[1], 1, false);
+
+          q.expectedAnswers = { L: fL };
+          document.getElementById('quizPromptText').textContent =
+            `Özdeş iki dinamometreden birincisine ${fK} N ağırlığındaki K cismi asıldığında ${extK} bölme uzuyor. İkincisine L cismi asıldığında ${extL} bölme uzadığına göre L kaç Newton'dur?`;
+          q.hintText = `K cismi ${extK} bölme uzattığına göre 1 bölme = ${fK} ÷ ${extK} = ${perDiv} N'dur.`;
+          q.solutionText = `1 bölme = ${fK} ÷ ${extK} = ${perDiv} N → L = ${extL} × ${perDiv} = ${fL} N.`;
+          if (nextBtn) nextBtn.hidden = true;
+          renderQuizInputs([{ key: 'L', label: 'L Cisminin Ağırlığı (N)' }]);
+        } else if (q.subVariant4 === 'stacked') {
+          dl.count = 2;
+          const perDiv = pick([3, 4, 5]);
+          const maxN = perDiv * 10;
+          const extK = pick([2, 3, 4]);
+          const extL = pick([3, 4, 5]);
+          const fK = extK * perDiv, fL = extL * perDiv;
+
+          [-8.5, 8.5].forEach((x, i) => {
+            const d = dl.dynamometers[i];
+            d.visible = true; d.xCm = x; d.maxForceN = maxN; d.divisions = 10; d.isBroken = false;
+          });
+          dl.dynamometers[2].visible = false;
+
+          dl.weights[0].visible = true; dl.weights[0].label = 'K'; dl.weights[0].earthWeightN = fK; dl.weights[0].homeX = -8.5;
+          dl.weights[1].visible = true; dl.weights[1].label = 'K'; dl.weights[1].earthWeightN = fK; dl.weights[1].homeX = 8.5;
+          dl.weights[2].visible = true; dl.weights[2].label = 'L'; dl.weights[2].earthWeightN = fL; dl.weights[2].homeX = 8.5;
+          attachWeightToSlot(dl.weights[0], 0, false);
+          attachWeightToSlot(dl.weights[1], 1, false);
+          attachWeightToSlot(dl.weights[2], 1, true);
+
+          q.expectedAnswers = { L: fL };
+          document.getElementById('quizPromptText').textContent =
+            `Özdeş (Fₘₐₓ = ${maxN} N, 10 bölmeli) dinamometrelerden 1.'de yalnız K cismi (${extK} bölme), 2.'de ise K ve L cisimleri uç uca (${extK + extL} bölme) asılıdır. L cismi yalnız başına kaç N'dur?`;
+          q.hintText = `2. dinamometredeki toplam uzamadan (${extK + extL} bölme) K'nin uzamasını (${extK} bölme) çıkarıp 1 bölme değeri (${perDiv} N) ile çarpın.`;
+          q.solutionText = `L uzaması = ${extK + extL} − ${extK} = ${extL} bölme → L = ${extL} × ${perDiv} = ${fL} N.`;
+          if (nextBtn) nextBtn.hidden = true;
+          renderQuizInputs([{ key: 'L', label: 'L Cisminin Ağırlığı (N)' }]);
+        } else {
+          dl.count = 3;
+          const xs = [-12.5, 0, 12.5];
+          const perms = [
+            { forces: [24, 42, 12], ans: 'L > K > M' },
+            { forces: [42, 18, 30], ans: 'K > M > L' },
+            { forces: [18, 30, 48], ans: 'M > L > K' },
+            { forces: [36, 24, 12], ans: 'K > L > M' }
+          ];
+          const chosen = pick(perms);
+          ['K', 'L', 'M'].forEach((lbl, i) => {
+            const d = dl.dynamometers[i];
+            d.visible = true; d.xCm = xs[i]; d.maxForceN = 60; d.divisions = 10; d.isBroken = false;
+            const w = dl.weights[i];
+            w.visible = true; w.label = lbl; w.earthWeightN = chosen.forces[i]; w.homeX = xs[i];
+            attachWeightToSlot(w, i, false);
+          });
+
+          q.expectedAnswers = { order: chosen.ans };
+          document.getElementById('quizPromptText').textContent =
+            'Özdeş dinamometrelere K, L ve M cisimleri asıldığında çıkan bölme sayıları sahnede görülmektedir. Cisimlerin ağırlıklarının büyükten küçüğe sıralanışı hangisidir?';
+          q.hintText = 'Özdeş dinamometrelerde daha fazla bölme çıkaran cismin ağırlığı daha büyüktür.';
+          q.solutionText = `Uzama miktarlarına göre doğru sıralama: ${chosen.ans}.`;
+          if (nextBtn) nextBtn.hidden = true;
+          renderQuizChoices(['L > K > M', 'K > M > L', 'M > L > K', 'K > L > M']);
+        }
+      }
+
+      updateQuickZoomBar();
+      updateLiveViews();
+    }
+
+    function renderQuizInputs(fields) {
+      const inpArea = document.getElementById('quizInputsArea');
+      const chArea = document.getElementById('quizChoiceArea');
+      if (chArea) chArea.hidden = true;
+      if (!inpArea) return;
+      inpArea.hidden = false;
+      inpArea.innerHTML = `<div class="${fields.length === 3 ? 'grid-3' : 'grid-1'}">` +
+        fields.map(f => `
+          <label style="font-size:12px;font-weight:700">${f.label}
+            <input type="number" id="qInput-${f.key}" placeholder="Değer yazın..." style="margin-top:4px" onkeydown="if(event.key==='Enter')checkStudentAnswer()">
+          </label>
+        `).join('') + `</div>`;
+    }
+
+    function renderQuizChoices(choices) {
+      const inpArea = document.getElementById('quizInputsArea');
+      const chArea = document.getElementById('quizChoiceArea');
+      if (inpArea) inpArea.hidden = true;
+      if (!chArea) return;
+      chArea.hidden = false;
+      chArea.innerHTML = choices.map(c => `
+        <button type="button" class="button secondary small quiz-choice-btn" data-choice="${c}" onclick="selectQuizOrder('${c}')">${c}</button>
+      `).join('');
+    }
+
+    function selectQuizOrder(choice) {
+      state.quiz.selectedChoice = choice;
+      document.querySelectorAll('.quiz-choice-btn').forEach(btn => {
+        btn.classList.toggle('active-chip', btn.dataset.choice === choice);
+      });
+    }
+
+    function nextOrSwapQuizObj() {
+      const visW = state.dynLab.weights.filter(w => w.visible);
+      const anyTable = visW.some(w => w.slot === -1);
+      if (anyTable) {
+        visW.forEach((w, i) => attachWeightToSlot(w, i, false));
+      } else {
+        visW.forEach(w => detachWeight(w));
+      }
+      updateLiveViews();
+    }
+
+    function toggleQuizHint() {
+      const q = state.quiz;
+      q.showHint = !q.showHint;
+      const box = document.getElementById('quizHintBox');
+      if (box) {
+        box.hidden = !q.showHint;
+        box.textContent = `💡 İpucu: ${q.hintText}`;
+      }
+    }
+
+    function checkStudentAnswer() {
+      const q = state.quiz;
+      const fb = document.getElementById('quizFeedbackBox');
+      if (!fb) return;
+
+      let allOk = true;
+      if (q.type === 4 && q.subVariant4 === 'order') {
+        if (!q.selectedChoice) {
+          fb.hidden = false;
+          fb.className = 'notice-box hint';
+          fb.textContent = 'Lütfen önce sıralama seçeneklerinden birini seçin.';
+          return;
+        }
+        allOk = (q.selectedChoice === q.expectedAnswers.order);
+      } else {
+        for (const [k, expected] of Object.entries(q.expectedAnswers)) {
+          const el = document.getElementById(`qInput-${k}`);
+          const val = el ? parseNumInput(el.value) : NaN;
+          if (Number.isNaN(val)) {
+            fb.hidden = false;
+            fb.className = 'notice-box hint';
+            fb.textContent = 'Lütfen tüm cevap kutularına sayısal bir değer yazın.';
+            return;
+          }
+          if (Math.abs(val - expected) > 0.25) allOk = false;
+        }
+      }
+
+      if (!q.answeredCurrent) {
+        q.totalAnswered++;
+        if (allOk) {
+          q.correctCount++;
+          q.streak++;
+          q.answeredCurrent = true;
+        } else {
+          q.streak = 0;
+        }
+      }
+
+      document.getElementById('quizScoreBadge').textContent = `Doğru: ${q.correctCount} / ${q.totalAnswered}`;
+      document.getElementById('quizStreakBadge').textContent = `🔥 ${q.streak}`;
+
+      fb.hidden = false;
+      if (allOk) {
+        fb.className = 'notice-box ok';
+        fb.innerHTML = `<strong>✅ Tebrikler, Doğru Cevap!</strong><br>${q.solutionText}`;
+        playSound('success');
+      } else {
+        fb.className = 'notice-box err';
+        fb.innerHTML = `<strong>❌ Tekrar Deneyelim.</strong> İpucu: ${q.hintText}`;
+        playSound('wrong');
+      }
+      updateLiveViews();
+    }
+
+    function recordObservation() {}
+    function clearNotebook() {}
+
+    // ============================================================================
+    // 9. 3B PROJEKSİYON VE TEMEL ÇİZİM YARDIMCILARI
+    // ============================================================================
+    const canvas = document.getElementById('labCanvas');
+    const ctx = canvas.getContext('2d');
+    const CAMERA_DISTANCE = 46;
+    let springBenchY = BASE_TABLE_Y;
+    function projectionScale(W, H) {
+      const benchY = state.activeLab === 'spring' ? springBenchY : BASE_TABLE_Y;
+      return Math.min(W, H) * 0.0255 * state.camera.zoom * Math.min(1, 34 / (TOP_BEAM_Y - benchY));
+    }
+
+    function projectionFocusY() {
+      const benchY = state.activeLab === 'spring' ? springBenchY : BASE_TABLE_Y;
+      return state.camera.focusY + (benchY - BASE_TABLE_Y) * 0.5;
+    }
+
+    function project3D(x, y, z, W, H) {
+      const cam = state.camera;
+      const rx = x - cam.focusX;
+      const ry = y - projectionFocusY();
+      const rz = z;
+
+      const cosY = Math.cos(cam.yaw), sinY = Math.sin(cam.yaw);
+      const x1 = rx * cosY + rz * sinY;
+      const z1 = -rx * sinY + rz * cosY;
+
+      const cosP = Math.cos(cam.pitch), sinP = Math.sin(cam.pitch);
+      const y2 = ry * cosP - z1 * sinP;
+      const z2 = ry * sinP + z1 * cosP;
+
+      const dist = CAMERA_DISTANCE - z2;
+      const scale = projectionScale(W, H) * CAMERA_DISTANCE / dist;
+
+      return {
+        x: W * 0.5 + x1 * scale,
+        y: H * 0.48 - y2 * scale,
+        z: z2,
+        scale
+      };
+    }
+
+    function unprojectZPlane(sx, sy, targetZ, W, H) {
+      const { yaw, pitch, focusX } = state.camera;
+      const syaw = Math.sin(yaw), cyaw = Math.cos(yaw);
+      const spitch = Math.sin(pitch), cpitch = Math.cos(pitch);
+      const focalLength = projectionScale(W, H) * CAMERA_DISTANCE;
+      const dx = (sx - W * 0.5) / focalLength;
+      const dy = (H * 0.48 - sy) / focalLength;
+      const rayZ = -dy * spitch - cpitch;
+      const originZ = CAMERA_DISTANCE * cpitch * cyaw;
+      const directionZ = dx * syaw + rayZ * cyaw;
+      if (Math.abs(directionZ) < 0.00001) return null;
+      const t = (targetZ - originZ) / directionZ;
+      if (t <= 0) return null;
+      return {
+        x: focusX - originZ * Math.tan(yaw) + t * (dx * cyaw - rayZ * syaw),
+        y: projectionFocusY() + CAMERA_DISTANCE * spitch + t * (dy * cpitch - spitch)
+      };
+    }
+
+    function drawLine(p1, p2, color, width) {
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    }
+
+    function drawQuad3D(p1, p2, p3, p4, fill, stroke, lw = 1) {
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
+      ctx.lineTo(p4.x, p4.y);
+      ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); }
+    }
+
+    function drawBox3D(x0, x1, y0, y1, z0, z1, colors, W, H) {
+      const v = [
+        project3D(x0, y0, z0, W, H),
+        project3D(x1, y0, z0, W, H),
+        project3D(x1, y1, z0, W, H),
+        project3D(x0, y1, z0, W, H),
+        project3D(x0, y0, z1, W, H),
+        project3D(x1, y0, z1, W, H),
+        project3D(x1, y1, z1, W, H),
+        project3D(x0, y1, z1, W, H)
+      ];
+      drawQuad3D(v[3], v[2], v[6], v[7], colors.top, colors.stroke, 1);
+      if (state.camera.yaw >= 0) drawQuad3D(v[0], v[4], v[7], v[3], colors.side, colors.stroke, 1);
+      else drawQuad3D(v[1], v[5], v[6], v[2], colors.side, colors.stroke, 1);
+      drawQuad3D(v[4], v[5], v[6], v[7], colors.front, colors.stroke, 1);
+    }
+
+    const dynamometerLabels = [];
+
+    function drawDynamometerLabel(x, y, text, W, H, align = 'center', alert = false) {
+      ctx.save();
+      ctx.font = '600 11px system-ui, sans-serif';
+      const w = ctx.measureText(text).width + 10, h = 18;
+      const x0 = align === 'right' ? x - w : align === 'left' ? x : x - w / 2;
+      const y0 = y - h / 2;
+      if (x0 < 4 || x0 + w > W - 4 || y0 < 4 || y0 + h > H - 4 ||
+          dynamometerLabels.some(r => x0 < r.x + r.w + 4 && x0 + w + 4 > r.x &&
+            y0 < r.y + r.h + 4 && y0 + h + 4 > r.y)) {
+        ctx.restore();
+        return;
+      }
+      dynamometerLabels.push({ x: x0, y: y0, w, h });
+      ctx.fillStyle = alert ? '#fbe3df' : state.studioDark ? '#344255' : '#f8fafc';
+      ctx.beginPath();
+      ctx.roundRect(x0, y0, w, h, 4);
+      ctx.fill();
+      ctx.fillStyle = alert ? '#8d3030' : state.studioDark ? '#eef2f6' : '#334152';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x0 + w / 2, y);
+      ctx.restore();
+    }
+
+    // ============================================================================
+    // 10. STÜDYO LABORATUVAR MASASI VE GERÇEKÇİ DİNAMOMETRE ÇİZİMİ
+    // ============================================================================
+    function drawStudioLabBench(W, H, withGridBackboard = false) {
+      const dark = state.studioDark;
+      const benchY = withGridBackboard ? springBenchY : BASE_TABLE_Y;
+      ctx.fillStyle = dark ? '#1e2630' : '#edf0f2';
+      ctx.fillRect(0, 0, W, H);
+
+      // 3B Ahşap Deney Masası
+      drawBox3D(-25, 25, benchY - 2.2, benchY, -9.5, 11.5, {
+        top: dark ? '#756b61' : '#c8b9a7',
+        front: dark ? '#585049' : '#a89480',
+        side: dark ? '#49413b' : '#938270',
+        stroke: 'rgba(0,0,0,0.18)'
+      }, W, H);
+
+      // Döküm Statif Tabanı
+      drawBox3D(-19.5, 19.5, benchY, benchY + 0.85, -5.2, 2.2, {
+        top: '#334155', front: '#1e293b', side: '#0f172a', stroke: 'rgba(255,255,255,0.12)'
+      }, W, H);
+
+      // Arka Ölçüm Panosu
+      const zBoard = -2.2;
+      const yStart = SPRING_TOP_Y;
+      const yEnd = benchY + 0.85;
+      const b1 = project3D(-17.8, TOP_BEAM_Y - 0.3, zBoard, W, H);
+      const b2 = project3D(17.8, TOP_BEAM_Y - 0.3, zBoard, W, H);
+      const b3 = project3D(17.8, yEnd, zBoard, W, H);
+      const b4 = project3D(-17.8, yEnd, zBoard, W, H);
+      drawQuad3D(b1, b2, b3, b4,
+        dark ? 'rgba(15, 23, 42, 0.78)' : 'rgba(255, 255, 255, 0.90)',
+        dark ? 'rgba(148, 163, 184, 0.25)' : 'rgba(148, 163, 184, 0.45)', 1.2
+      );
+
+      const maxCm = withGridBackboard ? yStart - yEnd : 20;
+      const stepCm = withGridBackboard ? 2 : 2.5;
+      for (let cm = 0; cm <= maxCm; cm += stepCm) {
+        const yW = yStart - cm;
+        if (yW < yEnd + 0.4) break;
+        const pL = project3D(-17.2, yW, zBoard + 0.05, W, H);
+        const pR = project3D(17.2, yW, zBoard + 0.05, W, H);
+        ctx.beginPath();
+        ctx.moveTo(pL.x, pL.y);
+        ctx.lineTo(pR.x, pR.y);
+        ctx.strokeStyle = (cm % 4 === 0)
+          ? (dark ? 'rgba(148,163,184,0.30)' : 'rgba(100,116,139,0.26)')
+          : (dark ? 'rgba(148,163,184,0.12)' : 'rgba(100,116,139,0.13)');
+        ctx.lineWidth = (cm % 4 === 0) ? 1.2 : 0.7;
+        ctx.stroke();
+      }
+
+      // Sol ve Sağ Krom Statif Direkleri
+      ctx.save();
+      ctx.lineCap = 'round';
+      const beamLeft = project3D(-18.2, TOP_BEAM_Y, 0, W, H);
+      const beamRight = project3D(18.2, TOP_BEAM_Y, 0, W, H);
+      drawLine(beamLeft, project3D(-18.2, yEnd, 0, W, H), '#596575', beamLeft.scale * 0.65);
+      drawLine(beamRight, project3D(18.2, yEnd, 0, W, H), '#596575', beamRight.scale * 0.65);
+      drawLine(beamLeft, beamRight, '#82909f', (beamLeft.scale + beamRight.scale) * 0.42);
+      ctx.restore();
+
+      return { zBoard, yStart, yEnd };
+    }
+
+    function drawRealisticDynamometer3D(dyn, isHoverTarget, hideScaleNums, W, H) {
+      const x = dyn.xCm;
+      const z = dyn.zCm;
+      const u = dyn.u;
+      const yRodBottom = BARREL_BOT_Y - u;
+      const yPiston = PISTON_0_Y - u;
+
+      const pBeam = project3D(x, TOP_BEAM_Y, z, W, H);
+      const pRingC = project3D(x, BARREL_TOP_Y + 1.0, z, W, H);
+      const pBarTop = project3D(x, BARREL_TOP_Y, z, W, H);
+      const pBarBot = project3D(x, BARREL_BOT_Y, z, W, H);
+      const pRodBot = project3D(x, yRodBottom, z, W, H);
+
+      const sTop = pBarTop.scale;
+      const sBot = pBarBot.scale;
+      const sAvg = (sTop + sBot) * 0.5;
+      const rBarCm = 1.38;
+      const rRodCm = 0.72;
+      const rxTop = rBarCm * sTop;
+      const rxBot = rBarCm * sBot;
+      const ryTop = Math.max(3, rxTop * 0.25);
+      const ryBot = Math.max(3, rxBot * 0.25);
+      const capPal = getCapPalette(dyn.maxForceN);
+
+      // 1. Üst Askı Halkası
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pRingC.x, pRingC.y, Math.max(6, 0.72 * sTop), 0, Math.PI * 2);
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = Math.max(2.5, 0.22 * sTop);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(pBeam.x, pBeam.y);
+      ctx.lineTo(pRingC.x, pRingC.y - 0.5 * sTop);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+
+      // 2. Ölçekli İç Çubuk (Kavuniçi / Fıstık Yeşili Şeritler)
+      const rRodPx = Math.max(7, rRodCm * sBot);
+      const divStepCm = T_TRAVEL / dyn.divisions;
+      for (let i = 0; i < dyn.divisions; i++) {
+        const segTopW = yRodBottom + (i + 1) * divStepCm;
+        const segBotW = yRodBottom + i * divStepCm;
+        const visTopW = state.transparentBody ? segTopW : Math.min(BARREL_BOT_Y, segTopW);
+        if (visTopW <= segBotW) continue;
+
+        const pST = project3D(x, visTopW, z, W, H);
+        const pSB = project3D(x, segBotW, z, W, H);
+
+        const isEven = (dyn.divisions - 1 - i) % 2 === 0;
+        const cLeft = dyn.isBroken ? '#fca5a5' : (isEven ? '#f8cfb4' : '#d9e58a');
+        const cMid  = dyn.isBroken ? '#ef4444' : (isEven ? '#fde6d5' : '#eef5be');
+        const cRight = dyn.isBroken ? '#991b1b' : (isEven ? '#d89b72' : '#a8b853');
+
+        const gSeg = ctx.createLinearGradient(pST.x - rRodPx, 0, pST.x + rRodPx, 0);
+        gSeg.addColorStop(0, cRight);
+        gSeg.addColorStop(0.42, cMid);
+        gSeg.addColorStop(1, cLeft);
+
+        drawQuad3D(
+          { x: pST.x - rRodPx, y: pST.y }, { x: pST.x + rRodPx, y: pST.y },
+          { x: pSB.x + rRodPx, y: pSB.y }, { x: pSB.x - rRodPx, y: pSB.y }, gSeg
+        );
+
+        ctx.beginPath();
+        ctx.moveTo(pSB.x - rRodPx, pSB.y);
+        ctx.lineTo(pSB.x + rRodPx, pSB.y);
+        ctx.strokeStyle = dyn.isBroken ? '#7f1d1d' : '#b91c1c';
+        ctx.lineWidth = 1.25;
+        ctx.stroke();
+
+        if (state.showDivNumbers && !hideScaleNums) {
+          const forceVal = ((dyn.divisions - i) / dyn.divisions) * dyn.maxForceN;
+          const stepFilter = dyn.divisions <= 10 ? 1 : 2;
+          if ((dyn.divisions - i) % stepFilter === 0 && segBotW <= BARREL_BOT_Y + 0.15) {
+            ctx.fillStyle = '#0f172a';
+            ctx.font = `bold ${Math.max(9, Math.min(11, Math.round(0.55 * sBot)))}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`${fmtNum(forceVal, 1)}`, pSB.x, pSB.y - 2);
+          }
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.lineWidth = 1.1;
+      const topVisRodY = state.transparentBody ? project3D(x, yPiston, z, W, H).y : pBarBot.y;
+      ctx.strokeRect(pRodBot.x - rRodPx, topVisRodY, rRodPx * 2, Math.max(1, pRodBot.y - topVisRodY));
+
+      // 3. Silindir Gövde Arka Duvarı
+      ctx.save();
+      const glassBg = ctx.createLinearGradient(pBarTop.x - rxTop, 0, pBarTop.x + rxTop, 0);
+      if (state.transparentBody) {
+        glassBg.addColorStop(0, 'rgba(71, 85, 105, 0.34)');
+        glassBg.addColorStop(0.28, 'rgba(241, 245, 249, 0.18)');
+        glassBg.addColorStop(0.55, 'rgba(255, 255, 255, 0.30)');
+        glassBg.addColorStop(0.85, 'rgba(100, 116, 139, 0.24)');
+        glassBg.addColorStop(1, 'rgba(30, 41, 59, 0.42)');
+      } else {
+        glassBg.addColorStop(0, '#475569');
+        glassBg.addColorStop(0.25, '#cbd5e1');
+        glassBg.addColorStop(0.5, '#f8fafc');
+        glassBg.addColorStop(0.8, '#94a3b8');
+        glassBg.addColorStop(1, '#334155');
+      }
+      ctx.beginPath();
+      ctx.moveTo(pBarTop.x - rxTop, pBarTop.y);
+      ctx.lineTo(pBarBot.x - rxBot, pBarBot.y);
+      ctx.ellipse(pBarBot.x, pBarBot.y, rxBot, ryBot, 0, Math.PI, 0, true);
+      ctx.lineTo(pBarTop.x + rxTop, pBarTop.y);
+      ctx.closePath();
+      ctx.fillStyle = glassBg;
+      ctx.fill();
+      ctx.strokeStyle = dyn.isBroken ? '#ef4444' : 'rgba(71, 85, 105, 0.65)';
+      ctx.lineWidth = dyn.isBroken ? 2.2 : 1.3;
+      ctx.stroke();
+      ctx.restore();
+
+      // 4. İç Sarmal Yay ve Piston (Şeffaf Gövdede Görünür)
+      if (state.transparentBody) {
+        const pPTop = project3D(x, yPiston + 0.42, z, W, H);
+        const pPBot = project3D(x, yPiston - 0.32, z, W, H);
+        const rPist = rxBot * 0.66;
+        ctx.fillStyle = dyn.isBroken ? '#dc2626' : '#ef4444';
+        ctx.fillRect(pPTop.x - rPist, pPTop.y, rPist * 2, Math.max(4, pPBot.y - pPTop.y));
+
+        const coils = 12;
+        const segs = coils * 12;
+        const rCoil = rBarCm * 0.55;
+        const ySStart = SPRING_TOP_Y;
+        const ySEnd = yPiston + 0.42;
+
+        for (let s = 0; s < segs; s++) {
+          const t1 = s / segs, t2 = (s + 1) / segs;
+          const a1 = t1 * coils * Math.PI * 2, a2 = t2 * coils * Math.PI * 2;
+          const wy1 = ySStart - t1 * (ySStart - ySEnd);
+          const wy2 = ySStart - t2 * (ySStart - ySEnd);
+          const jitter = dyn.isBroken ? Math.sin(s * 0.8) * 0.16 : 0;
+          const c1 = project3D(x + Math.cos(a1) * (rCoil + jitter), wy1, z + Math.sin(a1) * rCoil, W, H);
+          const c2 = project3D(x + Math.cos(a2) * (rCoil + jitter), wy2, z + Math.sin(a2) * rCoil, W, H);
+          const front = Math.sin((a1 + a2) * 0.5 + state.camera.yaw) > 0;
+          ctx.beginPath();
+          ctx.moveTo(c1.x, c1.y);
+          ctx.lineTo(c2.x, c2.y);
+          ctx.strokeStyle = dyn.isBroken ? (front ? '#f87171' : '#991b1b') : (front ? '#e2e8f0' : '#475569');
+          ctx.lineWidth = Math.max(1.5, 0.14 * sAvg);
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+      }
+
+      // 5. Üst Kapak ve Alt Kırmızı Okuma Bileziği
+      ctx.save();
+      const capH = Math.max(6, 0.68 * sTop);
+      ctx.beginPath();
+      ctx.roundRect(pBarTop.x - rxTop * 1.05, pBarTop.y - capH * 0.5, rxTop * 2.1, capH, 4);
+      ctx.fillStyle = capPal.main;
+      ctx.fill();
+      ctx.strokeStyle = capPal.dark;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      const colH = Math.max(5, 0.45 * sBot);
+      ctx.beginPath();
+      ctx.roundRect(pBarBot.x - rxBot * 1.07, pBarBot.y - colH * 0.5, rxBot * 2.14, colH, 3);
+      ctx.fillStyle = '#e11d48';
+      ctx.fill();
+      ctx.strokeStyle = '#881337';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Gövde Üzeri Dikey Serigrafi Kapasite Yazısı (Kutusu Yok, Yayları Kapatmaz)
+      const hideMax = state.activeLab === 'quiz' && !state.quiz.answeredCurrent && (state.quiz.type === 2 || state.quiz.type === 4);
+      const midBarX = (pBarTop.x + pBarBot.x) * 0.5;
+      const midBarY = (pBarTop.y + pBarBot.y) * 0.5;
+      const barLbl = hideMax ? '? N' : `${fmtNum(dyn.maxForceN, 0)} N`;
+      ctx.save();
+      ctx.translate(midBarX, midBarY);
+      ctx.rotate(-Math.PI * 0.5);
+      ctx.font = `bold ${Math.max(11, Math.min(13, Math.round(0.68 * sAvg)))}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = state.transparentBody ? 'rgba(15, 23, 42, 0.72)' : 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 2.8;
+      ctx.strokeText(barLbl, 0, 0);
+      ctx.fillStyle = state.transparentBody ? '#ffffff' : '#0f172a';
+      ctx.fillText(barLbl, 0, 0);
+      ctx.restore();
+      ctx.restore();
+
+      // 6. Alt Metal Kanca
+      const yHookLoopY = yRodBottom - 1.12;
+      const pHookC = project3D(x, yHookLoopY, z, W, H);
+      const rHook = Math.max(5.5, 0.52 * pRodBot.scale);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(pRodBot.x, pRodBot.y);
+      ctx.lineTo(pHookC.x, pHookC.y - rHook * 0.85);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = Math.max(2.5, 0.22 * pRodBot.scale);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pHookC.x, pHookC.y, rHook, -Math.PI * 0.35, Math.PI * 1.18);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = Math.max(2.8, 0.24 * pRodBot.scale);
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      if (isHoverTarget) {
+        ctx.beginPath();
+        ctx.arc(pHookC.x, pHookC.y + 2, rHook * 2.1, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(22, 112, 92, 0.22)';
+        ctx.fill();
+        ctx.strokeStyle = '#16705c';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+
+      dyn.screenHookPos = { x: pHookC.x, y: pHookC.y + rHook * 0.4 };
+      const extDivs = Math.min(dyn.divisions * 1.35, (u / T_TRAVEL) * dyn.divisions);
+
+      return { yHookLoopY, yRodBottom, yBarrelBot: BARREL_BOT_Y, pBarTop, pBarBot, pRodBot, extDivs };
+    }
+
+    // ============================================================================
+    // 11. 3B CİSİMLER (MASAÜSTÜ + KANCADA ASILI + UÇ UCA 2. CİSİM)
+    // ============================================================================
+    const CYLINDER_PROFILE = Array.from({ length: 24 }, (_, i) => {
+      const angle = i * Math.PI / 12;
+      return { x: Math.cos(angle), z: Math.sin(angle) };
+    });
+
+    function drawCylinder3D(x, yTop, yBot, z, colors, W, H) {
+      const ring = y => CYLINDER_PROFILE.map(p => project3D(x + p.x * 1.92, y, z + p.z * 1.92, W, H));
+      const top = ring(yTop), bottom = ring(yBot);
+      const vertices = [...top, ...bottom];
+      const gradient = ctx.createLinearGradient(Math.min(...vertices.map(p => p.x)), 0, Math.max(...vertices.map(p => p.x)), 0);
+      gradient.addColorStop(0, colors[2]);
+      gradient.addColorStop(0.4, colors[1]);
+      gradient.addColorStop(0.7, colors[0]);
+      gradient.addColorStop(1, colors[2]);
+
+      top.forEach((a, i) => {
+        const j = (i + 1) % top.length;
+        const b = top[j], c = bottom[j], d = bottom[i];
+        if ((b.x - a.x) * (d.y - a.y) - (b.y - a.y) * (d.x - a.x) < 0) {
+          drawQuad3D(a, b, c, d, gradient, gradient, 0.7);
+        }
+      });
+
+      const cameraY = projectionFocusY() + CAMERA_DISTANCE * Math.sin(state.camera.pitch);
+      if (cameraY <= yTop && cameraY >= yBot) return;
+      const cap = cameraY > yTop ? top : bottom;
+      ctx.beginPath();
+      cap.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+      ctx.closePath();
+      ctx.fillStyle = cameraY > yTop ? colors[0] : colors[2];
+      ctx.fill();
+    }
+
+    function drawSingleShape3D(x, yTop, yBot, z, obj, isHover, W, H, benchY = BASE_TABLE_Y) {
+      const pT = project3D(x, yTop, z, W, H);
+      const pB = project3D(x, yBot, z, W, H);
+      const midY = (pT.y + pB.y) * 0.5;
+      const centerX = (pT.x + pB.x) * 0.5;
+      const scale = (pT.scale + pB.scale) * 0.5;
+      const rPx = 1.92 * scale;
+
+      // Masa gölgesi
+      const pS = project3D(x, benchY + 0.08, z, W, H);
+      const dist = Math.max(0, yBot - benchY);
+      ctx.save();
+      ctx.beginPath();
+      ctx.ellipse(pS.x, pS.y, rPx * 1.15, rPx * 0.36, 0, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0,0,0,${Math.max(0.10, 0.34 - dist * 0.014)})`;
+      ctx.fill();
+      ctx.restore();
+
+      // Üst bağlantı halkası
+      const pRing = project3D(x, yTop + 0.32, z, W, H);
+      ctx.beginPath();
+      ctx.arc(pRing.x, pRing.y, Math.max(3.5, 0.36 * scale), 0, Math.PI * 2);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      if (isHover) {
+        ctx.beginPath();
+        ctx.arc(centerX, midY, rPx * 1.25, 0, Math.PI * 2);
+        ctx.strokeStyle = '#16705c';
+        ctx.lineWidth = 2.2;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      const c = obj.colors;
+      if (obj.shape === 'sphere' || obj.shape === 'apple' || obj.shape === 'cannon') {
+        const g = ctx.createRadialGradient(pT.x - rPx * 0.35, midY - rPx * 0.35, rPx * 0.12, pT.x, midY, rPx);
+        g.addColorStop(0, c[0]);
+        g.addColorStop(0.55, c[1]);
+        g.addColorStop(1, c[2]);
+        ctx.beginPath();
+        ctx.arc(centerX, midY, rPx * 0.96, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+        if (obj.shape === 'apple') {
+          ctx.beginPath();
+          ctx.moveTo(pT.x, pT.y + 3);
+          ctx.quadraticCurveTo(pT.x + 8, pT.y - 8, pT.x + 14, pT.y - 3);
+          ctx.strokeStyle = '#16a34a';
+          ctx.lineWidth = 3.5;
+          ctx.stroke();
+        }
+      } else if (obj.shape === 'cube' || obj.shape === 'book' || obj.shape === 'bag') {
+        const hw = obj.shape === 'book' ? 1.85 : 1.58;
+        drawBox3D(x - hw, x + hw, yBot, yTop, z - hw, z + hw, {
+          top: c[0], front: c[1], side: c[2], stroke: 'rgba(255,255,255,0.45)'
+        }, W, H);
+      } else if (obj.shape === 'hex') {
+        const rh = 1.90;
+        const topPts = [], botPts = [];
+        for (let k = 0; k < 6; k++) {
+          const ang = (k * Math.PI) / 3 + Math.PI / 6;
+          const vx = x + rh * Math.cos(ang), vz = z + rh * Math.sin(ang);
+          topPts.push(project3D(vx, yTop, vz, W, H));
+          botPts.push(project3D(vx, yBot, vz, W, H));
+        }
+        const faces = [];
+        for (let k = 0; k < 6; k++) {
+          const next = (k + 1) % 6;
+          const avgZ = (topPts[k].z + topPts[next].z + botPts[k].z + botPts[next].z) * 0.25;
+          const shadeIdx = (k === 0 || k === 5) ? 0 : (k === 1 || k === 4 ? 1 : 2);
+          faces.push({ k, next, avgZ, fill: c[shadeIdx] });
+        }
+        faces.sort((a, b) => a.avgZ - b.avgZ);
+        faces.forEach(f => drawQuad3D(topPts[f.k], topPts[f.next], botPts[f.next], botPts[f.k], f.fill, 'rgba(255,255,255,0.42)', 1.2));
+        const capPts = pT.z >= pB.z ? topPts : botPts;
+        ctx.beginPath();
+        capPts.forEach((pt, idx) => idx === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y));
+        ctx.closePath();
+        ctx.fillStyle = c[0];
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+      } else {
+        drawCylinder3D(x, yTop, yBot, z, c, W, H);
+      }
+
+      const pBotRing = project3D(x, yBot - 0.22, z, W, H);
+      ctx.beginPath();
+      ctx.arc(pBotRing.x, pBotRing.y, Math.max(3, 0.28 * scale), 0, Math.PI * 2);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      return {
+        centerX, centerY: midY,
+        topY: pT.y, botY: pB.y,
+        leftX: pT.x - rPx, rightX: pT.x + rPx,
+        botRingPos: { x: pBotRing.x, y: pBotRing.y }, yBot, scale
+      };
+    }
+
+    // ============================================================================
+    // 12. ANA SAHNE RENDERER (DİNAMOMETRE & ESNEKLİK)
+    // ============================================================================
+    function renderDynamometerLabScene(W, H) {
+      drawStudioLabBench(W, H, false);
+      dynamometerLabels.length = 0;
+      const dl = state.dynLab;
+      const isQuiz = state.activeLab === 'quiz';
+      const q = state.quiz;
+      const hideMax = isQuiz && !q.answeredCurrent && (q.type === 2 || q.type === 4);
+
+      const dynGeoms = new Map();
+      dl.dynamometers.filter(d => d.visible).forEach(d => {
+        const dragHover = pointer.dragType === 'weight' && pointer.snapDynIdx === d.index && !pointer.snapStacked;
+        const geom = drawRealisticDynamometer3D(d, dragHover, false, W, H);
+        dynGeoms.set(d.index, geom);
+      });
+
+      const weightInfos = new Map();
+      const orderedWeights = dl.weights.filter(w => w.visible).map(w => ({
+        w, depth: project3D(w.x, w.y, w.z, W, H).z
+      })).sort((a, b) => a.depth - b.depth);
+      orderedWeights.forEach(({ w }) => {
+        const obj = REAL_OBJECTS.find(o => o.id === w.objectId) || REAL_OBJECTS[0];
+        const hCm = 3.1;
+        const wx = w.x, wyTop = w.y + hCm * 0.5, wz = w.z;
+
+        if (w.isStacked && w.slot !== -1) {
+          const d = dl.dynamometers[w.slot];
+          const pW = dl.weights[d.primaryWeightIdx];
+          if (pW && pW.slot === w.slot) {
+            const pT1 = project3D(w.x, w.y + hCm * 0.5 + 0.5, w.z, W, H);
+            const pT0 = project3D(pW.x, pW.y - hCm * 0.5 - 0.15, pW.z, W, H);
+            ctx.beginPath();
+            ctx.moveTo(pT0.x, pT0.y);
+            ctx.lineTo(pT1.x, pT1.y);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+          }
+        }
+
+        const isHov = pointer.hoveredWeightIdx === w.index;
+        const info = drawSingleShape3D(wx, wyTop, wyTop - hCm, wz, obj, isHov, W, H);
+        w.screenPos = { x: info.centerX, y: info.centerY };
+        weightInfos.set(w.index, info);
+
+        if (!w.isStacked && w.slot !== -1 && state.dynLab.dynamometers[w.slot]) {
+          state.dynLab.dynamometers[w.slot].screenStackHookPos = info.botRingPos;
+          if (pointer.dragType === 'weight' && pointer.snapDynIdx === w.slot && pointer.snapStacked) {
+            ctx.beginPath();
+            ctx.arc(info.botRingPos.x, info.botRingPos.y + 4, 15, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(22, 112, 92, 0.25)';
+            ctx.fill();
+            ctx.strokeStyle = '#16705c';
+            ctx.lineWidth = 2.2;
+            ctx.setLineDash([4, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+      });
+
+      // Ön Katman: Kompakt Üst Sensör Kartı ve Bölme Rozeti
+      dl.dynamometers.filter(d => d.visible).forEach(d => {
+        const geom = dynGeoms.get(d.index);
+        if (!geom) return;
+
+        const pH = project3D(d.xCm, TOP_BEAM_Y + 1.35, 1.5, W, H);
+        const maxLabel = hideMax ? '? N' : `${fmtNum(d.maxForceN, 0)} N`;
+        drawDynamometerLabel(pH.x, pH.y, `${maxLabel} · ${d.divisions} bölme`, W, H, 'center', d.isBroken);
+
+        if (d.u > 0.08) {
+          const pTE = project3D(d.xCm + 1.35, geom.yBarrelBot, 1.4, W, H);
+          const pBE = project3D(d.xCm + 1.35, geom.yRodBottom, 1.4, W, H);
+          const midY = (pTE.y + pBE.y) * 0.5;
+          const hasAnyW = d.primaryWeightIdx !== -1;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(pTE.x - 3, pTE.y);
+          ctx.lineTo(pTE.x + 2, pTE.y);
+          ctx.lineTo(pBE.x + 2, pBE.y);
+          ctx.lineTo(pBE.x - 3, pBE.y);
+          ctx.strokeStyle = d.isBroken ? '#ef4444' : '#f59e0b';
+          ctx.lineWidth = 2.2;
+          ctx.stroke();
+
+          const bTxt = d.isBroken
+            ? (hasAnyW ? '⚠️ YAY BOZUK!' : "⚠️ 0'a DÖNMEZ!")
+            : `${fmtNum(geom.extDivs, 1)} Bölme`;
+          drawDynamometerLabel(pBE.x + 6, midY, bTxt, W, H, 'left', d.isBroken);
+          ctx.restore();
+        }
+      });
+
+      // Cisim Etiketleri: Masadaysa nesnenin altında, kancadaysa sol dışında (Nesneyi kapatmaz!)
+      dl.weights.filter(w => w.visible).forEach(w => {
+        const info = weightInfos.get(w.index);
+        if (!info) return;
+        const hideW = isQuiz && !q.answeredCurrent && (
+          q.type === 1 ||
+          (q.type === 4 && (
+            (q.subVariant4 === 'reference' && w.label === 'L') ||
+            (q.subVariant4 === 'stacked' && w.isStacked) ||
+            q.subVariant4 === 'order'
+          ))
+        );
+        const effF = getWeightEffForce(w);
+        const txt = hideW ? `${w.label} = ? N` : `${w.label} · ${fmtNum(effF, 1)} N`;
+        if (w.slot === -1 && !w.dragging) {
+          drawDynamometerLabel(info.centerX, info.botY + 13, txt, W, H);
+        } else {
+          drawDynamometerLabel(info.leftX - 6, info.centerY, txt, W, H, 'right');
+        }
+      });
+    }
+
+    const SPRING_WEIGHT = { shape: 'cylinder', colors: ['#e3c785', '#ba9653', '#7a633d'] };
+
+    function drawSpringWire(sp, yTop, yBot, W, H) {
+      const colors = MATERIALS[sp.materialId].colors;
+      const parseColor = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+      const shadow = parseColor(colors.body);
+      const light = parseColor(colors.mid);
+      const steps = sp.coils * 20;
+      const segments = [];
+      let previous = project3D(sp.xCm, yTop, sp.zCm, W, H);
+      for (let i = 1; i <= steps; i++) {
+        const progress = i / steps;
+        const angle = progress * sp.coils * Math.PI * 2;
+        const radius = sp.coilRadiusCm * Math.min(1, i / 8, (steps - i) / 8);
+        const next = project3D(
+          sp.xCm + Math.cos(angle) * radius,
+          yTop + (yBot - yTop) * progress,
+          sp.zCm + Math.sin(angle) * radius, W, H
+        );
+        const shade = 0.26 + 0.74 * (1 + Math.cos(angle - 2.3)) / 2;
+        const color = light.map((v, channel) => Math.round(shadow[channel] + (v - shadow[channel]) * shade));
+        segments.push({ from: previous, to: next, depth: (previous.z + next.z) / 2, color: `rgb(${color.join(',')})` });
+        previous = next;
+      }
+
+      segments.sort((a, b) => a.depth - b.depth);
+      ctx.save();
+      ctx.lineCap = 'round';
+      for (const { from, to, color } of segments) {
+        drawLine(from, to, color, Math.max(1.3, sp.wireRadiusCm * (from.scale + to.scale)));
+      }
+      ctx.restore();
+    }
+
+    function renderSpringLabScene(W, H) {
+      const sl = state.springLab;
+      // Leave space for a full oscillation at the selected load, even before it is hung.
+      const maxLength = Math.max(...sl.springs.map(sp =>
+        sp.initialLengthCm + Math.max(1.35 * sl.weightForceN / getSpringK(sp), sp.currentExtensionCm)
+      ));
+      springBenchY = Math.min(BASE_TABLE_Y, SPRING_TOP_Y - maxLength - 5.5);
+      const { zBoard, yStart, yEnd } = drawStudioLabBench(W, H, true);
+
+      ctx.font = '600 11px system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = state.studioDark ? '#c1cad6' : '#526171';
+      let lastTickY = -Infinity;
+      for (let cm = 0; yStart - cm > yEnd; cm += 4) {
+        const p = project3D(-17, yStart - cm, zBoard + 0.08, W, H);
+        if (p.y - lastTickY < 18 || p.y < 12 || p.y > H - 12 || p.x < 4 || p.x > W - 30) continue;
+        ctx.fillText(cm === 0 ? '0 cm' : String(cm), p.x, p.y - 7);
+        lastTickY = p.y;
+      }
+
+      const springs = sl.springs.map(sp => ({
+        sp,
+        depth: project3D(sp.xCm, yStart, sp.zCm, W, H).z
+      })).sort((a, b) => a.depth - b.depth);
+
+      for (const { sp } of springs) {
+        const point = (x, y, z = sp.zCm) => project3D(x, y, z, W, H);
+        const yNatural = yStart - sp.initialLengthCm;
+        const yEndOfWire = yNatural - sp.currentExtensionCm;
+        const x = sp.xCm;
+        const pin = point(x, yStart);
+
+        if (state.showLasers) {
+          ctx.save();
+          ctx.setLineDash([4, 3]);
+          drawLine(point(x - 1.9, yNatural, zBoard + 0.12), point(x + 2.9, yNatural, zBoard + 0.12),
+            state.studioDark ? '#aab6c4' : '#758393', 1);
+          ctx.setLineDash([]);
+          if (sp.currentExtensionCm > 0.06) {
+            drawLine(point(x + 2.9, yNatural, zBoard + 0.12), point(x + 2.9, yEndOfWire, zBoard + 0.12), '#a37c43', 1.5);
+            drawLine(point(x + 1.8, yEndOfWire, zBoard + 0.12), point(x + 2.9, yEndOfWire, zBoard + 0.12), '#a37c43', 1.5);
+          }
+          ctx.restore();
+        }
+
+        drawLine(point(x, TOP_BEAM_Y), pin, '#687788', Math.max(2, pin.scale * 0.22));
+        drawSpringWire(sp, yStart, yEndOfWire, W, H);
+        const hook = point(x, yEndOfWire - 0.93);
+        drawLine(point(x, yEndOfWire), hook, '#687788', Math.max(2, hook.scale * 0.18));
+        if (!sp.hasWeight) {
+          ctx.beginPath();
+          ctx.arc(hook.x, hook.y, Math.max(2.5, hook.scale * 0.27), 0, Math.PI * 2);
+          ctx.strokeStyle = '#687788';
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        }
+        const hangingTop = yEndOfWire - 1.25;
+        const weightTop = sp.hasWeight ? hangingTop : springBenchY + 3.1;
+        const weightZ = sp.hasWeight ? sp.zCm : 6.4;
+        const info = drawSingleShape3D(x, weightTop, weightTop - 3, weightZ, SPRING_WEIGHT,
+          pointer.hoveredSpringIdx === sp.index, W, H, springBenchY);
+        sp.screenWeightPos = { x: info.centerX, y: info.centerY, z: point(x, weightTop - 1.5, weightZ).z, radius: info.scale * 2.2 };
+      }
+
+      // Only the instrument number stays on the scene. The table carries the measurements.
+      const occupied = [];
+      for (const { sp } of springs) {
+        const p = project3D(sp.xCm, TOP_BEAM_Y + 1.35, sp.zCm, W, H);
+        if (p.x < 10 || p.x > W - 10 || p.y < 10 || p.y > H - 10 ||
+            occupied.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 22)) continue;
+        occupied.push(p);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+        ctx.fillStyle = state.studioDark ? '#344255' : '#e0e6eb';
+        ctx.fill();
+        ctx.fillStyle = state.studioDark ? '#eef2f6' : '#334152';
+        ctx.font = '700 11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(sp.index + 1), p.x, p.y + 0.5);
+      }
+    }
+
+    // ============================================================================
+    // 13. ETKİLEŞİM: MASAÜSTÜNDEN KANCAYA SÜRÜKLE-BIRAK, ÇİFT TIK ODAK, ZOOM
+    // ============================================================================
+    const pointer = {
+      dragType: 'none',
+      dragWeightIdx: -1,
+      hoveredWeightIdx: -1,
+      hoveredSpringIdx: -1,
+      snapDynIdx: -1,
+      snapStacked: false,
+      lastX: 0,
+      lastY: 0
+    };
+
+    function getCanvasPos(e) {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    }
+
+    function pickSpringWeight(pos, padding) {
+      let match = null;
+      for (const spring of state.springLab.springs) {
+        const weight = spring.screenWeightPos;
+        if (weight && Math.hypot(pos.x - weight.x, pos.y - weight.y) <= weight.radius + padding &&
+            (!match || weight.z > match.screenWeightPos.z)) match = spring;
+      }
+      return match;
+    }
+
+    canvas.addEventListener('pointerdown', e => {
+      const pos = getCanvasPos(e);
+      pointer.lastX = pos.x;
+      pointer.lastY = pos.y;
+
+      if (state.activeLab === 'spring') {
+        const spring = pickSpringWeight(pos, e.pointerType === 'touch' ? 8 : 3);
+        if (spring) {
+          spring.hasWeight = !spring.hasWeight;
+          spring.velocity += spring.hasWeight ? 5 : -3;
+          playSound('hang');
+          updateHangAllButtonUI();
+          updateLiveViews();
+          return;
+        }
+      } else {
+        const visW = state.dynLab.weights.filter(w => w.visible);
+        for (let i = visW.length - 1; i >= 0; i--) {
+          const w = visW[i];
+          if (w.screenPos && Math.hypot(pos.x - w.screenPos.x, pos.y - w.screenPos.y) < 34) {
+            pointer.dragType = 'weight';
+            pointer.dragWeightIdx = w.index;
+            detachWeight(w);
+            w.dragging = true;
+            w.z = 1.8;
+            canvas.setPointerCapture(e.pointerId);
+            updateHangAllButtonUI();
+            updateLiveViews();
+            return;
+          }
+        }
+      }
+
+      pointer.dragType = 'orbit';
+      canvas.setPointerCapture(e.pointerId);
+    });
+
+    canvas.addEventListener('pointermove', e => {
+      const pos = getCanvasPos(e);
+      const dx = pos.x - pointer.lastX;
+      const dy = pos.y - pointer.lastY;
+      pointer.lastX = pos.x;
+      pointer.lastY = pos.y;
+
+      if (pointer.dragType === 'orbit') {
+        state.camera.targetYaw = Math.max(-0.68, Math.min(0.68, state.camera.targetYaw + dx * 0.0065));
+        state.camera.targetPitch = Math.max(-0.22, Math.min(0.45, state.camera.targetPitch + dy * 0.0055));
+        return;
+      }
+
+      if (pointer.dragType === 'weight' && pointer.dragWeightIdx !== -1) {
+        const w = state.dynLab.weights[pointer.dragWeightIdx];
+        const W = canvas.clientWidth || 900;
+        const H = canvas.clientHeight || 580;
+        const worldPt = unprojectZPlane(pos.x, pos.y, w.z, W, H);
+        if (!worldPt) return;
+        w.x = Math.max(-18, Math.min(18, worldPt.x));
+        w.y = Math.max(BASE_TABLE_Y + 1.65, Math.min(8, worldPt.y));
+
+        pointer.snapDynIdx = -1;
+        pointer.snapStacked = false;
+        state.dynLab.dynamometers.filter(d => d.visible).forEach(d => {
+          const dHook = Math.hypot(pos.x - d.screenHookPos.x, pos.y - d.screenHookPos.y);
+          if (dHook < 52) {
+            pointer.snapDynIdx = d.index;
+            pointer.snapStacked = false;
+          } else if (d.primaryWeightIdx !== -1 && d.screenStackHookPos) {
+            const dStack = Math.hypot(pos.x - d.screenStackHookPos.x, pos.y - d.screenStackHookPos.y);
+            if (dStack < 48) {
+              pointer.snapDynIdx = d.index;
+              pointer.snapStacked = true;
+            }
+          }
+        });
+        return;
+      }
+
+      pointer.hoveredWeightIdx = -1;
+      pointer.hoveredSpringIdx = -1;
+      if (state.activeLab === 'spring') {
+        pointer.hoveredSpringIdx = pickSpringWeight(pos, 3)?.index ?? -1;
+      } else {
+        state.dynLab.weights.filter(w => w.visible).forEach(w => {
+          if (w.screenPos && Math.hypot(pos.x - w.screenPos.x, pos.y - w.screenPos.y) < 32) {
+            pointer.hoveredWeightIdx = w.index;
+          }
+        });
+      }
+    });
+
+    function finishPointerDrag() {
+      if (pointer.dragType === 'weight' && pointer.dragWeightIdx !== -1) {
+        const w = state.dynLab.weights[pointer.dragWeightIdx];
+        w.dragging = false;
+        if (pointer.snapDynIdx !== -1) {
+          attachWeightToSlot(w, pointer.snapDynIdx, pointer.snapStacked);
+        } else {
+          w.slot = -1;
+          w.isStacked = false;
+          playSound('click');
+        }
+        pointer.snapDynIdx = -1;
+        pointer.snapStacked = false;
+        renderPerDynControls();
+        updateHangAllButtonUI();
+        updateLiveViews();
+      }
+      pointer.dragType = 'none';
+      pointer.dragWeightIdx = -1;
+    }
+
+    canvas.addEventListener('pointerup', finishPointerDrag);
+    canvas.addEventListener('pointercancel', finishPointerDrag);
+
+    canvas.addEventListener('dblclick', e => {
+      const pos = getCanvasPos(e);
+      if (state.activeLab !== 'spring') {
+        const vis = state.dynLab.dynamometers.filter(d => d.visible);
+        let best = -1, bestDist = 95;
+        vis.forEach(d => {
+          const dist = Math.abs(pos.x - d.screenHookPos.x);
+          if (dist < bestDist) { bestDist = dist; best = d.index; }
+        });
+        if (state.camera.targetZoom > 1.25) focusDynScale(-1);
+        else focusDynScale(best);
+      } else {
+        if (state.camera.targetZoom > 1.25) focusDynScale(-1);
+        else focusDynScale(1);
+      }
+    });
+
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      stepZoom(e.deltaY < 0 ? 0.12 : -0.12);
+    }, { passive: false });
+
+    // ============================================================================
+    // 14. ANLIK ÖLÇÜM TABLOSU VE ESNEKLİK GRAFİĞİ GÜNCELLEMESİ
+    // ============================================================================
+    function updateLiveViews() {
+      const titleEl = document.getElementById('liveTableTitle');
+      const noteEl = document.getElementById('liveFormulaNote');
+      const tblBox = document.getElementById('liveTableContainer');
+      if (!tblBox) return;
+
+      if (state.activeLab === 'spring') {
+        if (titleEl) titleEl.textContent = 'Yay ölçümleri';
+        if (noteEl) noteEl.textContent = 'Uzama = son boy − ilk boy';
+
+        const sl = state.springLab;
+        tblBox.innerHTML = `
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Yay</th>
+                <th>İlk boy</th>
+                <th>Yük</th>
+                <th>Uzama</th>
+                <th>Son boy</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sl.springs.map((sp, i) => {
+                const mat = MATERIALS[sp.materialId];
+                const eq = getSpringEqExt(sp);
+                const prop = sl.mode === 1 ? mat.shortName : (sl.mode === 2 ? THICKNESS_PROFILES[sp.thicknessId].name : LENGTH_PROFILES[sp.lengthId].name);
+                return `
+                  <tr>
+                    <th scope="row"><span class="material-dot" style="background:${mat.colors.mid}"></span>${i + 1}. ${prop}</th>
+                    <td>${sp.initialLengthCm} cm</td>
+                    <td>${sp.hasWeight ? `${sl.weightForceN} N` : '0 N'}</td>
+                    <td><strong>${fmtNum(eq, 1)} cm</strong></td>
+                    <td><strong>${fmtNum(sp.initialLengthCm + eq, 1)} cm</strong></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+
+        const barChart = document.getElementById('springBarChart');
+        if (barChart) {
+          const scaleMax = Math.max(4, ...sl.springs.map(getSpringEqExt));
+          barChart.innerHTML = sl.springs.map((sp, i) => {
+            const eq = getSpringEqExt(sp);
+            const pct = Math.min(100, (eq / scaleMax) * 100);
+            const mat = MATERIALS[sp.materialId];
+            const lbl = sl.mode === 1 ? mat.shortName : (sl.mode === 2 ? THICKNESS_PROFILES[sp.thicknessId].name : LENGTH_PROFILES[sp.lengthId].name);
+            return `
+              <div class="bar-row">
+                <strong>${i + 1}. ${lbl}</strong>
+                <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${mat.colors.mid}"></div></div>
+                <strong style="text-align:right">+${fmtNum(eq, 1)} cm</strong>
+              </div>
+            `;
+          }).join('');
+        }
+      } else {
+        const isQuiz = state.activeLab === 'quiz';
+        const q = state.quiz;
+        const hideMax = isQuiz && !q.answeredCurrent && (q.type === 2 || q.type === 4);
+        const hideForce = isQuiz && !q.answeredCurrent && (q.type === 1 || q.type === 4);
+
+        if (titleEl) titleEl.textContent = 'Dinamometre ölçümleri';
+        if (noteEl) noteEl.textContent = 'Ölçülen Kuvvet (N) = Uzayan Bölme Sayısı × 1 Bölme Değeri';
+
+        const dl = state.dynLab;
+        tblBox.innerHTML = `
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Dinamometre</th>
+                <th>Kapasite (Fₘₐₓ) &amp; Ölçek</th>
+                <th>1 Bölme Değeri</th>
+                <th>Asılı Cisim</th>
+                <th>Çıkan Bölme</th>
+                <th>Ölçülen Değer (N)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dl.dynamometers.filter(d => d.visible).map(d => {
+                const perDiv = d.maxForceN / d.divisions;
+                const f = getDynLoadedForce(d);
+                const extDiv = d.isBroken ? d.divisions * 1.25 : (f / d.maxForceN) * d.divisions;
+                const w1 = d.primaryWeightIdx !== -1 ? dl.weights[d.primaryWeightIdx] : null;
+                const w2 = d.stackedWeightIdx !== -1 ? dl.weights[d.stackedWeightIdx] : null;
+                const wNames = [w1 ? w1.label : null, w2 ? w2.label : null].filter(Boolean).join(' + ') || 'Yok (Boş)';
+
+                return `
+                  <tr>
+                    <td><strong>${d.name}</strong></td>
+                    <td>${hideMax ? '? N' : `${d.maxForceN} N`} · ${d.divisions} Bölme</td>
+                    <td>${hideMax || (isQuiz && !q.answeredCurrent && q.type === 3) ? '? N' : `${fmtNum(perDiv, 2)} N`}</td>
+                    <td><strong>${wNames}</strong></td>
+                    <td>${d.isBroken ? '<span class="status-badge danger">Aşırı Yük!</span>' : `<strong>${fmtNum(extDiv, 1)} bölme</strong>`}</td>
+                    <td>
+                      ${d.isBroken
+                        ? '<span class="status-badge danger">⚠️ Yay Bozuldu</span>'
+                        : `<span class="status-badge ok">${hideForce && f > 0 ? '? N' : `${fmtNum(f, 1)} N`}</span>`}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({ type: 'kemal-lab-resize', height: document.body.scrollHeight }, '*');
+        } catch (_) {}
+      }
+    }
+
+    // ============================================================================
+    // 15. FİZİK VE ANİMASYON DÖNGÜSÜ (60 FPS)
+    // ============================================================================
+    let lastFrameTime = performance.now();
+
+    function animate(now) {
+      const ts = typeof now === 'number' ? now : performance.now();
+      const rawDt = Math.min(0.05, Math.max(0.004, (ts - lastFrameTime) / 1000));
+      lastFrameTime = ts;
+      const dt = state.slowMo ? rawDt * 0.25 : rawDt;
+
+      // Kamera yumuşak geçişi
+      const cam = state.camera;
+      cam.yaw += (cam.targetYaw - cam.yaw) * 0.14;
+      cam.pitch += (cam.targetPitch - cam.pitch) * 0.14;
+      cam.zoom += (cam.targetZoom - cam.zoom) * 0.14;
+      cam.focusX += (cam.targetFocusX - cam.focusX) * 0.14;
+      cam.focusY += (cam.targetFocusY - cam.focusY) * 0.14;
+
+      if (state.activeLab === 'spring') {
+        state.springLab.springs.forEach(sp => {
+          const target = getSpringEqExt(sp);
+          const subDt = dt / 4;
+          for (let step = 0; step < 4; step++) {
+            const acc = (target - sp.currentExtensionCm) * 52 - sp.velocity * 5.8;
+            sp.velocity += acc * subDt;
+            const next = sp.currentExtensionCm + sp.velocity * subDt;
+            sp.currentExtensionCm = Math.max(0, next);
+            if (next < 0) sp.velocity = 0;
+          }
+        });
+      } else {
+        const dl = state.dynLab;
+        const subSteps = 6;
+        const subDt = dt / subSteps;
+
+        dl.dynamometers.filter(d => d.visible).forEach(d => {
+          const f = getDynLoadedForce(d);
+          if (f > d.maxForceN + 0.001) d.isBroken = true;
+
+          let targetU = 0;
+          if (d.isBroken) {
+            targetU = f > 0 ? T_TRAVEL * 1.24 : T_TRAVEL * 0.42;
+          } else {
+            targetU = (f / d.maxForceN) * T_TRAVEL;
+          }
+
+          for (let s = 0; s < subSteps; s++) {
+            const acc = (targetU - d.u) * 85 - d.v * 7.5;
+            d.v += acc * subDt;
+            d.u = Math.max(0, d.u + d.v * subDt);
+          }
+        });
+
+        dl.weights.filter(w => w.visible).forEach(w => {
+          if (w.dragging) return;
+          if (w.slot !== -1 && dl.dynamometers[w.slot] && dl.dynamometers[w.slot].visible) {
+            const d = dl.dynamometers[w.slot];
+            const hookY = BARREL_BOT_Y - d.u - 1.5 - 1.7;
+            const targetY = w.isStacked ? (hookY - 3.65) : hookY;
+            w.x += (d.xCm - w.x) * 0.32;
+            w.y += (targetY - w.y) * 0.35;
+            w.z += (d.zCm - w.z) * 0.32;
+          } else {
+            const homeY = BASE_TABLE_Y + 1.65;
+            w.x += (w.homeX - w.x) * 0.22;
+            w.y += (homeY - w.y) * 0.22;
+            w.z += (w.homeZ - w.z) * 0.22;
+          }
+        });
+      }
+
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const cw = canvas.clientWidth || 900;
+      const ch = canvas.clientHeight || 580;
+      if (canvas.width !== Math.round(cw * dpr) || canvas.height !== Math.round(ch * dpr)) {
+        canvas.width = Math.round(cw * dpr);
+        canvas.height = Math.round(ch * dpr);
+      }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      if (state.activeLab === 'spring') {
+        renderSpringLabScene(cw, ch);
+      } else {
+        renderDynamometerLabScene(cw, ch);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Başlangıç Kurulumu
+    window.addEventListener('kemal:themechange', event => applyStudioTheme(event.detail.theme));
+    applyStudioTheme(window.kemalTheme?.getResolvedTheme() ?? (params.get('theme') === 'dark' ? 'dark' : 'light'));
+    if (ctx) {
+      switchLab('spring', false);
+      requestAnimationFrame(animate);
+    } else {
+      document.getElementById('lab-main').hidden = true;
+      document.querySelector('.lab-tabs').hidden = true;
+      document.querySelector('.online-header-tools').hidden = true;
+      document.getElementById('lab-fallback').hidden = false;
+    }
+  </script>
+  <script src="../js/site-data.js?v=20261029-smartboard"></script>
+  <script src="../js/site.js?v=20261030-icons"></script>
+</body>
+</html>

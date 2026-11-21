@@ -1,4 +1,5 @@
     const STORE_KEY = "kemalOgretmenAjandasi.v1";
+    const ATTENDANCE_DISPLAY_KEY = `${STORE_KEY}.attendance-display`;
     const LESSON_PLANNER_STORE_KEY = "ogretmen_plan_v2";
     const CLOUD_SYNC_TABLE = "teacher_agenda_states";
     const CLOUD_SYNC_MAX_BYTES = 6 * 1024 * 1024;
@@ -6,14 +7,35 @@
     const FORM_AUTOSAVE_MS = 700;
     const CLOUD_BACKUP_STORE = "snapshots";
     const SYSTEM_LOGO_SRC = "assets/kemal-kocar-logo-2025.png";
+    const taskTypes = { prep: "Ders hazırlığı", homework: "Ödev", meeting: "Veli görüşmesi", admin: "Okul işleri", other: "Diğer" };
+    const attendanceStatuses = { present: "Geldi", absent: "Gelmedi", excused: "İzinli", sick: "Hasta", late: "Geç" };
+    const attendanceLayouts = ["photos", "cards", "list"];
+    const weeklyPlanDays = [
+      { value: 1, label: "Pazartesi", short: "Pzt" },
+      { value: 2, label: "Salı", short: "Sal" },
+      { value: 3, label: "Çarşamba", short: "Çar" },
+      { value: 4, label: "Perşembe", short: "Per" },
+      { value: 5, label: "Cuma", short: "Cum" }
+    ];
+    const weeklyPlanDayPalettes = [
+      { accent: "#2f7187", soft: "#e5f2f6" },
+      { accent: "#4d8567", soft: "#e8f4ec" },
+      { accent: "#b37b2b", soft: "#fff2d8" },
+      { accent: "#80639b", soft: "#f0e9f6" },
+      { accent: "#b95f69", soft: "#fae8eb" }
+    ];
+    const weeklyPlanDefaultTimes = ["08.30-09.10", "09.25-10.05", "10.15-10.55", "11.05-11.45", "12.40-13.20", "13.30-14.10", "14.20-15.00", "15.10-15.50", "16.00-16.40", "16.50-17.30"];
+    const attendanceCollator = new Intl.Collator("tr", { numeric: true, sensitivity: "base" });
     const today = () => dateKey(new Date());
     const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
     const pageMeta = {
-      dashboardView: ["Panel", "Sınıfınızı, öğrencilerinizi ve deneme analizlerinizi tek yerden izleyin."],
+      dashboardView: ["Bugün", ""],
+      trackingView: ["Sınıf Takibi", "Görevler ve günlük yoklama"],
       studentsView: ["Öğrenciler", "Öğrenci profilleri, veli bilgileri, sağlık durumu ve özel notlar."],
       examsView: ["Sınavlar", "Excel dosyalarından deneme, test ve sınav sonuçlarını içe aktarın."],
       scheduleView: ["Ders Programı", "Ders programı ve haftalık planlama sisteminizi ajanda içinde kullanın."],
+      weeklyPlanView: ["Haftalık Plan", "Ders, etkinlik, kitap ve ödev akışını velilerle paylaşılabilir tek sayfalık bir planda hazırlayın."],
       calendarView: ["Akademik Takvim", "Doğum günleri, MEB takvimi, önemli günler ve hatırlatıcılarla günlük planlama yapın."],
       reportsView: ["Analiz ve Karneler", "Sınıf başarısı, sınav karşılaştırmaları ve öğrenci karneleri"],
       backupView: ["Yedek", "Tüm ajanda verinizi güvenle dışa aktarın veya geri yükleyin."]
@@ -32,6 +54,9 @@
     let manualDraftClassId = null;
     let manualDraftDirty = false;
     let calendarDraftId = null;
+    let taskDraft = null;
+    let trackingTab = "tasks";
+    let attendanceLayout = "photos";
     const studentEntryIds = { notes: null, meetings: null };
     const pendingFormSaves = new Map();
     let localSaveError = "";
@@ -47,6 +72,9 @@
     let holidayPlannerCache = { raw: undefined, planner: { tatiller: [] }, years: new Set() };
     let activeBirthdayPopups = [];
     let clockTimer = null;
+    let weeklyPlanCursor = calendarMondayKey(new Date());
+    let weeklyPlanDayFocus = "all";
+    let activeWeeklyPlanTab = "edit";
     const selectedStudentIds = new Set();
     const cloudSync = {
       ready: false,
@@ -111,9 +139,12 @@
         "examSubjectPoints", "examMaxScore", "manualExamScope", "manualShowRankings", "manualWrongPenalty",
         "manualSubjectPoints", "manualMaxScore", "manualExamType", "manualClass", "manualStudent",
         "cancelManualExamBtn", "manualExamStatus", "reportExamPicker", "teacherPhoto", "teacherPhotoPreview", "heroTeacherPhoto", "heroGreeting",
-        "heroSummary", "heroClassBadge", "heroTodayLine", "dashboardFocusTitle", "dashboardFocusText",
+        "heroClassBadge", "heroTodayLine", "dashboardWeek", "dashboardTasks", "dashboardTaskCount", "dashboardAttendance",
         "dashboardTodayLabel", "dashboardTodayAgenda", "dashboardUpcoming", "dashboardAttention",
-        "dashboardReadinessValue", "dashboardReadinessText", "dashboardReadinessBar",
+        "agendaTaskPane", "agendaTaskFilter", "agendaTaskList", "agendaTaskDialog", "agendaTaskForm", "agendaTaskHeading",
+        "agendaTaskTitle", "agendaTaskType", "agendaTaskDue", "agendaTaskNote", "agendaTaskSubmit", "agendaTaskDelete", "agendaTaskClose",
+        "agendaAttendancePane", "attendanceDate", "attendanceToday", "attendanceSummary", "attendanceList", "attendanceSort",
+        "attendanceBulkStatus", "attendanceBulkScope", "attendanceMarkAll", "attendanceExport", "attendanceSave", "attendanceSaveStatus",
         "updateExamSelect", "selectAllStudents", "selectedStudentCount",
         "clearStudentSelectionBtn", "deleteSelectedStudentsBtn", "reportType", "classListOptions",
         "classListParents", "rankingReportOptions", "rankingExam", "rankingScope", "rankingClassFilter",
@@ -126,7 +157,16 @@
         "scheduleGroup", "scheduleRoom", "scheduleColor", "scheduleNote", "saveScheduleItemBtn",
         "clearScheduleFormBtn", "scheduleBoard", "scheduleSummary", "lessonPlannerFrame",
         "lessonPlannerFocusDate", "lessonPlannerFocusInfo", "lessonPlannerPrevWeekBtn",
-        "lessonPlannerTodayBtn", "lessonPlannerNextWeekBtn", "prevCalendarMonthBtn",
+        "lessonPlannerTodayBtn", "lessonPlannerNextWeekBtn", "weeklyPlanWeekTitle", "weeklyPlanWeekInput",
+        "weeklyPlanPrevBtn", "weeklyPlanNextBtn", "weeklyPlanTodayBtn", "weeklyPlanPeriodCount",
+        "weeklyPlanUseRepeatBtn", "weeklyPlanSaveBtn", "weeklyPlanStatus", "weeklyPlanDayTabs",
+        "weeklyPlanPreviewDayTabs", "weeklyPlanEditTab", "weeklyPlanPreviewTab",
+        "weeklyPlanEditPane", "weeklyPlanPreviewPane",
+        "weeklyPlanEditor", "weeklyPlanAnnouncements", "weeklyPlanEvents", "weeklyPlanSaveBadge",
+        "weeklyPlanPrintSheet", "weeklyPlanPdfBtn", "weeklyPlanPngBtn", "weeklyPlanJpegBtn",
+        "weeklyPlanShareBtn", "weeklyPlanEmailBtn", "weeklyPlanPrintBtn", "weeklyPlanShareDialog",
+        "weeklyPlanShareCloseBtn", "weeklyPlanRecipient", "weeklyPlanNativeShareBtn", "weeklyPlanWhatsappBtn",
+        "prevCalendarMonthBtn",
         "nextCalendarMonthBtn", "todayCalendarBtn", "requestNotificationBtn", "manageHolidaysBtn", "calendarTitle",
         "calendarGrid", "calendarEventDate", "calendarEventType", "calendarEventTime",
         "calendarEventTitle", "calendarReminder", "calendarEventNote", "saveCalendarEventBtn",
@@ -143,6 +183,7 @@
       document.querySelectorAll("[data-jump]").forEach((button) => {
         button.addEventListener("click", () => showView(button.dataset.jump));
       });
+      bindAgendaTracking();
 
       els.activeClassSelect.addEventListener("change", () => {
         if (!finishClassEditing()) { els.activeClassSelect.value = state.activeClassId; return; }
@@ -155,6 +196,8 @@
 
       els.quickAddClassBtn.addEventListener("click", () => {
         showView("dashboardView");
+        const settings = els.newClassName?.closest("details");
+        if (settings) settings.open = true;
         els.newClassName?.focus();
       });
       els.saveSettingsBtn.addEventListener("click", saveSettingsAndClass);
@@ -307,6 +350,35 @@
       els.lessonPlannerPrevWeekBtn?.addEventListener("click", () => shiftLessonPlannerFocus(-7));
       els.lessonPlannerTodayBtn?.addEventListener("click", () => setLessonPlannerFocusDate(today()));
       els.lessonPlannerNextWeekBtn?.addEventListener("click", () => shiftLessonPlannerFocus(7));
+      els.weeklyPlanPrevBtn?.addEventListener("click", () => moveWeeklyPlanWeek(-7));
+      els.weeklyPlanNextBtn?.addEventListener("click", () => moveWeeklyPlanWeek(7));
+      els.weeklyPlanTodayBtn?.addEventListener("click", () => setWeeklyPlanWeek(today()));
+      els.weeklyPlanWeekInput?.addEventListener("change", () => setWeeklyPlanWeek(els.weeklyPlanWeekInput.value));
+      els.weeklyPlanPeriodCount?.addEventListener("change", changeWeeklyPlanPeriodCount);
+      els.weeklyPlanUseRepeatBtn?.addEventListener("click", useRepeatedWeeklyPlan);
+      els.weeklyPlanSaveBtn?.addEventListener("click", () => saveWeeklyPlan({ manual: true }));
+      [els.weeklyPlanDayTabs, els.weeklyPlanPreviewDayTabs].filter(Boolean).forEach(group => {
+        group.addEventListener("click", handleWeeklyPlanDayFocus);
+      });
+      document.querySelectorAll("[data-weekly-plan-tab]").forEach(button => {
+        button.addEventListener("click", () => showWeeklyPlanTab(button.dataset.weeklyPlanTab));
+      });
+      document.querySelector(".weekly-plan-view-tabs")?.addEventListener("keydown", handleWeeklyPlanTabKeys);
+      els.weeklyPlanEditor?.addEventListener("input", handleWeeklyPlanEditorInput);
+      els.weeklyPlanEditor?.addEventListener("change", handleWeeklyPlanEditorInput);
+      [els.weeklyPlanAnnouncements, els.weeklyPlanEvents].filter(Boolean).forEach(input => {
+        input.addEventListener("input", queueWeeklyPlanSave);
+        input.addEventListener("change", queueWeeklyPlanSave);
+      });
+      els.weeklyPlanPdfBtn?.addEventListener("click", downloadWeeklyPlanPdf);
+      els.weeklyPlanPngBtn?.addEventListener("click", () => downloadWeeklyPlanImage("png"));
+      els.weeklyPlanJpegBtn?.addEventListener("click", () => downloadWeeklyPlanImage("jpeg"));
+      els.weeklyPlanShareBtn?.addEventListener("click", openWeeklyPlanShareDialog);
+      els.weeklyPlanEmailBtn?.addEventListener("click", emailWeeklyPlan);
+      els.weeklyPlanPrintBtn?.addEventListener("click", printWeeklyPlan);
+      els.weeklyPlanShareCloseBtn?.addEventListener("click", () => els.weeklyPlanShareDialog?.close());
+      els.weeklyPlanNativeShareBtn?.addEventListener("click", () => shareWeeklyPlanFile());
+      els.weeklyPlanWhatsappBtn?.addEventListener("click", shareWeeklyPlanWhatsapp);
       window.addEventListener("message", handleLessonPlannerMessage);
       els.prevCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(-1));
       els.nextCalendarMonthBtn.addEventListener("click", () => moveCalendarMonth(1));
@@ -389,7 +461,12 @@
       input.students = Array.isArray(input.students) ? input.students : [];
       input.exams = Array.isArray(input.exams) ? input.exams : [];
       input.scheduleItems = Array.isArray(input.scheduleItems) ? input.scheduleItems : [];
+      input.weeklyPlans = Array.isArray(input.weeklyPlans)
+        ? input.weeklyPlans.filter(item => item && typeof item.classId === "string" && isDateKey(item.weekStart)).map(normalizeWeeklyPlan)
+        : [];
       input.calendarEvents = Array.isArray(input.calendarEvents) ? input.calendarEvents : [];
+      input.teacherTasks = Array.isArray(input.teacherTasks) ? input.teacherTasks.filter(item => item && typeof item.id === "string" && typeof item.title === "string") : [];
+      input.attendanceRecords = Array.isArray(input.attendanceRecords) ? input.attendanceRecords.filter(item => item && typeof item.classId === "string" && isDateKey(item.date) && Array.isArray(item.marks)) : [];
       input.birthdayReminderLog = input.birthdayReminderLog && typeof input.birthdayReminderLog === "object" ? input.birthdayReminderLog : {};
       input.birthdaySnoozeLog = input.birthdaySnoozeLog && typeof input.birthdaySnoozeLog === "object" ? input.birthdaySnoozeLog : {};
       input.lessonPlannerFocusDate = today();
@@ -910,7 +987,10 @@
         state.students.length ||
         state.exams.length ||
         state.scheduleItems?.length ||
+        state.weeklyPlans?.length ||
         state.calendarEvents?.length ||
+        state.teacherTasks?.length ||
+        state.attendanceRecords?.length ||
         (state.classes.length > 1) ||
         state.classes.some(item => item?.name && item.name !== "Sınıfım") ||
         state.teacher?.photo ||
@@ -1069,10 +1149,12 @@
       renderClassSelect();
       renderSettings();
       renderDashboard();
+      renderAgendaTracking();
       renderStudents();
       renderExams();
       renderManualExamSelectors();
       renderSchedule();
+      renderWeeklyPlan();
       renderTopClock();
       startClock();
       renderCloudSyncStatus();
@@ -1188,9 +1270,8 @@
       const meetings = students.reduce((sum, student) => sum + (student.meetings?.length || 0), 0);
       const current = activeClass();
       const teacherName = current?.teacherName || state.teacher?.name || "Öğretmenim";
-      els.heroGreeting.textContent = `${teacherName} için ajanda paneli`;
+      els.heroGreeting.textContent = `Merhaba, ${teacherName}`;
       els.heroClassBadge.textContent = `${current?.name || "Sınıfım"} · ${current?.year || "Eğitim yılı"}`;
-      els.heroSummary.textContent = `${students.length} öğrenci, ${exams.length} sınav/deneme, ${notes} öğretmen notu ve ${meetings} veli görüşmesi bu ajandada izleniyor.`;
       els.heroTeacherPhoto.innerHTML = teacherAvatarHtml();
       els.statsGrid.innerHTML = [
         statTile("Öğrenci", students.length, "tile-mint"),
@@ -1199,6 +1280,7 @@
         statTile("Veli Görüşmesi", meetings, "tile-lavender")
       ].join("");
       renderDashboardBriefing(students, exams);
+      renderDashboardTracking(students);
 
       const recent = exams.slice(0, 5).map((exam) => {
         const count = Object.keys(exam.results || {}).length;
@@ -1220,6 +1302,7 @@
       const now = new Date();
       const todayKey = dateKey(now);
       const todayEvents = [...calendarEventsForDate(todayKey), ...birthdayEventsForDate(todayKey)].sort(sortCalendarEvents);
+      renderDashboardWeek(now);
       const upcomingEvents = [];
       for (let offset = 1; offset <= 7; offset += 1) {
         const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
@@ -1247,20 +1330,20 @@
       if (els.dashboardTodayAgenda) {
         els.dashboardTodayAgenda.innerHTML = todayEvents.length
           ? todayEvents.slice(0, 4).map((event) => dashboardBriefItemHtml(
-            calendarEventIcon(event.type),
+            dashboardEventGlyph(event.type),
             event.title,
-            [event.time, calendarEventLabel(event.type), event.note].filter(Boolean).join(" · "), event.type || 'note'
+            [event.time, calendarEventLabel(event.type), event.note].filter(Boolean).join(" · ")
           )).join("")
-          : dashboardEmptyHtml("Bugün için kayıt görünmüyor. Takvimden not, görüşme veya hatırlatıcı ekleyebilirsiniz.");
+          : dashboardEmptyHtml("Bugün takvim kaydı yok.");
       }
       if (els.dashboardUpcoming) {
         els.dashboardUpcoming.innerHTML = upcomingEvents.length
           ? upcomingEvents.slice(0, 4).map((event) => dashboardBriefItemHtml(
-            calendarEventIcon(event.type),
+            dashboardEventGlyph(event.type),
             event.title,
-            `${dashboardDateLabel(event.dashboardDate)}${event.time ? ` · ${event.time}` : ""}`, event.type || 'note'
+            `${dashboardDateLabel(event.dashboardDate)}${event.time ? ` · ${event.time}` : ""}`
           )).join("")
-          : dashboardEmptyHtml("Önümüzdeki yedi gün için kayıt yok. Haftanızı planlamak için takvimi kullanabilirsiniz.");
+          : dashboardEmptyHtml("Yaklaşan takvim kaydı yok.");
       }
 
       const latestExam = exams[0] || null;
@@ -1275,13 +1358,13 @@
       const dueReminders = activeCalendarEvents().filter(isReminderDue).length;
       const attentionItems = [];
       if (!students.length) {
-        attentionItems.push(["👥", "Sınıf listesi bekleniyor", "Excel yükleyebilir veya öğrencileri tek tek ekleyebilirsiniz."]);
+        attentionItems.push(["users", "Sınıf listesi bekleniyor", "Öğrenci kaydı yok."]);
       } else {
-        if (latestExam && missingResults) attentionItems.push(["📊", `${missingResults} öğrencinin sınav sonucu eksik`, latestExam.name]);
-        if (!latestExam) attentionItems.push(["📊", "Henüz sınav eklenmedi", "İlk Excel dosyanızı yükleyerek akademik takibi başlatın."]);
-        if (missingFamilyContact) attentionItems.push(["☎️", `${missingFamilyContact} öğrencide veli telefonu yok`, "Öğrenci profillerinden iletişim bilgilerini tamamlayın."]);
-        if (missingBirthDate) attentionItems.push(["🎂", `${missingBirthDate} öğrencide doğum tarihi yok`, "Doğum günü hatırlatıcıları için bilgileri tamamlayın."]);
-        if (dueReminders) attentionItems.unshift(["🔔", `${dueReminders} hatırlatıcı zamanı geldi`, "Takvim kayıtlarınızı kontrol edin."]);
+        if (latestExam && missingResults) attentionItems.push(["chart", `${missingResults} öğrencinin sınav sonucu eksik`, latestExam.name]);
+        if (!latestExam) attentionItems.push(["chart", "Henüz sınav eklenmedi", ""]);
+        if (missingFamilyContact) attentionItems.push(["user", `${missingFamilyContact} öğrencide veli telefonu yok`, ""]);
+        if (missingBirthDate) attentionItems.push(["calendar", `${missingBirthDate} öğrencide doğum tarihi yok`, ""]);
+        if (dueReminders) attentionItems.unshift(["bell", `${dueReminders} hatırlatıcının zamanı geldi`, ""]);
       }
       if (els.dashboardAttention) {
         els.dashboardAttention.innerHTML = attentionItems.length
@@ -1289,68 +1372,322 @@
           : dashboardEmptyHtml("Takip gerektiren eksik görünmüyor. Sınıf kayıtlarınız düzenli.");
       }
 
-      const focus = dashboardFocus(todayEvents, upcomingEvents, students, latestExam, missingResults, dueReminders);
-      if (els.dashboardFocusTitle) els.dashboardFocusTitle.textContent = focus.title;
-      if (els.dashboardFocusText) els.dashboardFocusText.textContent = focus.text;
-      renderDashboardReadiness(students, exams);
     }
 
-    function dashboardFocus(todayEvents, upcomingEvents, students, latestExam, missingResults, dueReminders) {
-      if (dueReminders) {
-        return { title: `${dueReminders} hatırlatıcı bekliyor`, text: "Bugünün takvim kayıtlarını kontrol ederek güne başlayabilirsiniz." };
-      }
-      if (todayEvents.length) {
-        return { title: todayEvents[0].title, text: `Bugün ajandanızda ${todayEvents.length} kayıt bulunuyor.` };
-      }
-      if (!students.length) {
-        return { title: "Sınıfınızı oluşturarak başlayın", text: "Öğrenci listenizi Excel'den yükleyebilir veya tek tek ekleyebilirsiniz." };
-      }
-      if (latestExam && missingResults) {
-        return { title: "Sınav verisini tamamlayın", text: `${latestExam.name} sınavında ${missingResults} öğrencinin sonucu henüz yok.` };
-      }
-      if (upcomingEvents.length) {
-        return { title: `Sıradaki: ${upcomingEvents[0].title}`, text: `${dashboardDateLabel(upcomingEvents[0].dashboardDate)} için planlandı.` };
-      }
-      return { title: "Sınıf görünümü güncel", text: "Bugün acil takip gerektiren bir kayıt görünmüyor." };
+    function renderDashboardWeek(now) {
+      if (!els.dashboardWeek) return;
+      const monday = parseDateValue(calendarMondayKey(now));
+      const current = dateKey(now);
+      els.dashboardWeek.innerHTML = Array.from({ length: 7 }, (_, offset) => {
+        const date = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + offset);
+        const key = dateKey(date);
+        const count = calendarEventsForDate(key).length + birthdayEventsForDate(key).length;
+        const label = `${date.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" })}, ${count} kayıt`;
+        return `<button type="button" data-agenda-date="${key}" ${key === current ? 'aria-current="date"' : ''} aria-label="${escapeHtml(label)}"><span>${date.toLocaleDateString("tr-TR", { weekday: "short" })}</span><strong>${date.getDate()}</strong><i aria-hidden="true" ${count ? 'class="has-event"' : ''}></i></button>`;
+      }).join("");
     }
 
-    function renderDashboardReadiness(students, exams) {
-      const current = activeClass();
-      const familyReady = students.length && students.some((student) => {
-        const family = student.family || {};
-        return family.motherPhone || family.fatherPhone || family.backupContactPhone;
+    function bindAgendaTracking() {
+      if (!els.agendaTaskForm) return;
+      els.attendanceDate.value = today();
+      document.querySelectorAll("[data-open-tracking], [data-tracking-tab]").forEach(button => button.addEventListener("click", () => {
+        trackingTab = button.dataset.openTracking || button.dataset.trackingTab;
+        if (button.dataset.openTracking) {
+          if (trackingTab === "attendance") els.attendanceDate.value = today();
+          showView("trackingView");
+        } else renderAgendaTracking();
+      }));
+      document.querySelectorAll("[data-open-task]").forEach(button => button.addEventListener("click", () => openAgendaTask()));
+      document.querySelector("[data-today-lessons]")?.addEventListener("click", () => {
+        setLessonPlannerFocusDate(today());
+        showView("scheduleView");
       });
-      const checkpoints = [
-        Boolean((current?.teacherName || state.teacher?.name || "").trim()),
-        Boolean((state.teacher?.schoolName || "").trim()),
-        Boolean(current?.name && current.name !== "Sınıfım"),
-        students.length > 0,
-        Boolean(familyReady),
-        exams.length > 0,
-        activeCalendarEvents().length > 0
-      ];
-      const completed = checkpoints.filter(Boolean).length;
-      const percentage = Math.round((completed / checkpoints.length) * 100);
-      const missing = [];
-      if (!state.teacher?.schoolName) missing.push("okul adı");
-      if (!students.length) missing.push("öğrenci listesi");
-      if (students.length && !familyReady) missing.push("veli iletişim bilgileri");
-      if (!exams.length) missing.push("ilk sınav");
-      if (!activeCalendarEvents().length) missing.push("takvim kaydı");
-      if (els.dashboardReadinessValue) els.dashboardReadinessValue.textContent = `%${percentage}`;
-      if (els.dashboardReadinessBar) els.dashboardReadinessBar.style.width = `${percentage}%`;
-      if (els.dashboardReadinessText) {
-        els.dashboardReadinessText.textContent = missing.length
-          ? `Sıradaki öneri: ${missing.slice(0, 2).join(" ve ")} bilgilerini tamamlayın.`
-          : "Temel ajanda bilgileri tamamlandı. Rapor ve takip araçları kullanıma hazır.";
+      for (const list of [els.dashboardTasks, els.agendaTaskList]) {
+        list.addEventListener("change", event => {
+          const checkbox = event.target.closest("[data-task-check]");
+          const task = activeAgendaTasks().find(item => item.id === checkbox?.dataset.taskCheck);
+          if (!task) return;
+          if (!commitAgendaTracking("teacherTasks", state.teacherTasks.map(item => item === task ? { ...task, done: checkbox.checked } : item))) {
+            checkbox.checked = Boolean(task.done);
+            return;
+          }
+          (Array.from(list.querySelectorAll("[data-task-check]")).find(input => input.dataset.taskCheck === task.id) || list.querySelector("[data-task-check]") || list.parentElement.querySelector("button")).focus();
+        });
+        list.addEventListener("click", event => {
+          const button = event.target.closest("[data-edit-task]");
+          if (button) openAgendaTask(button.dataset.editTask);
+        });
+      }
+      els.dashboardWeek.addEventListener("click", event => {
+        const day = event.target.closest("[data-agenda-date]");
+        if (!day) return;
+        showView("calendarView");
+        selectCalendarDate(day.dataset.agendaDate);
+        els.selectedDayTitle?.scrollIntoView({ block: "center" });
+      });
+      els.agendaTaskFilter.addEventListener("change", renderAgendaTracking);
+      els.agendaTaskClose.addEventListener("click", () => els.agendaTaskDialog.close());
+      els.agendaTaskForm.addEventListener("submit", event => { event.preventDefault(); saveAgendaTask(); });
+      els.agendaTaskDelete.addEventListener("click", deleteAgendaTask);
+      bindAttendanceControls();
+    }
+
+    function bindAttendanceControls() {
+      els.attendanceBulkStatus.innerHTML = attendanceOptions("present");
+      for (const select of [els.attendanceBulkStatus, els.attendanceBulkScope]) {
+        select.addEventListener("change", () => updateAttendanceBulkButton());
+      }
+      try {
+        const preferences = JSON.parse(localStorage.getItem(ATTENDANCE_DISPLAY_KEY) || "{}");
+        if (attendanceLayouts.includes(preferences?.layout)) attendanceLayout = preferences.layout;
+        els.attendanceSort.value = preferences?.sort === "name" ? "name" : "number";
+      } catch { /* The current view still works without browser preferences. */ }
+      const changeDisplay = () => {
+        try { localStorage.setItem(ATTENDANCE_DISPLAY_KEY, JSON.stringify({ layout: attendanceLayout, sort: els.attendanceSort.value })); } catch {}
+        renderAgendaTracking();
+      };
+      document.querySelectorAll("[data-attendance-layout]").forEach(button => button.addEventListener("click", () => {
+        attendanceLayout = button.dataset.attendanceLayout;
+        changeDisplay();
+      }));
+      els.attendanceSort.addEventListener("change", changeDisplay);
+      els.attendanceDate.addEventListener("change", renderAgendaTracking);
+      els.attendanceToday.addEventListener("click", () => { els.attendanceDate.value = today(); renderAgendaTracking(); });
+      els.attendanceList.addEventListener("change", event => {
+        const select = event.target.closest("[data-attendance-student]");
+        if (!select || !activeStudents().some(student => student.id === select.dataset.attendanceStudent)) return;
+        const id = select.dataset.attendanceStudent;
+        const marks = attendanceForDate(attendanceDateKey());
+        const previous = marks.get(id) || "";
+        if (select.value === previous) return;
+        if (Object.hasOwn(attendanceStatuses, select.value)) marks.set(id, select.value);
+        else marks.delete(id);
+        if (!saveAttendance(marks)) select.value = previous;
+        else Array.from(els.attendanceList.querySelectorAll("select")).find(input => input.dataset.attendanceStudent === id)?.focus({ preventScroll: true });
+      });
+      els.attendanceMarkAll.addEventListener("click", applyBulkAttendance);
+      els.attendanceExport.addEventListener("click", exportAttendance);
+      els.attendanceSave.addEventListener("click", () => {
+        const marks = attendanceForDate(attendanceDateKey());
+        if (marks.size && saveAttendance(marks, { confirm: true })) toast("Yoklama bu cihaza kaydedildi.");
+      });
+    }
+
+    function activeAgendaTasks() {
+      return state.teacherTasks.filter(item => item.classId === state.activeClassId).sort((a, b) =>
+        Number(Boolean(a.done)) - Number(Boolean(b.done)) || String(a.due || "9999").localeCompare(String(b.due || "9999")));
+    }
+
+    function taskRowHtml(task) {
+      const title = escapeHtml(task.title);
+      const overdue = !task.done && task.due && task.due < today();
+      const date = task.due ? (task.due === today() ? "Bugün" : formatDate(task.due)) : "";
+      const category = Object.hasOwn(taskTypes, task.type) ? taskTypes[task.type] : taskTypes.other;
+      return `<div class="agenda-task-row ${task.done ? 'done' : ''}">
+        <label class="agenda-task-check"><input type="checkbox" data-task-check="${escapeHtml(task.id)}" aria-label="${title}: tamamlandı" ${task.done ? 'checked' : ''}></label>
+        <div><strong>${title}</strong><small>${category}${date ? ` · <span${overdue ? ' class="agenda-overdue"' : ''}>${overdue ? 'Gecikti: ' : ''}${escapeHtml(date)}</span>` : ''}</small>${task.note ? `<p>${escapeHtml(task.note)}</p>` : ''}</div>
+        <button type="button" class="icon-btn" data-edit-task="${escapeHtml(task.id)}" title="Görevi düzenle" aria-label="Görevi düzenle: ${title}"><span data-ui-icon="pen" aria-hidden="true"></span></button>
+      </div>`;
+    }
+
+    function openAgendaTask(id) {
+      const task = id ? activeAgendaTasks().find(item => item.id === id) : null;
+      if (!activeClass() || (id && !task)) return;
+      taskDraft = { id: task?.id, classId: state.activeClassId, owner: cloudSync.userId };
+      els.agendaTaskHeading.textContent = task ? "Görevi düzenle" : "Yeni görev";
+      els.agendaTaskSubmit.textContent = task ? "Değişiklikleri uygula" : "Görev ekle";
+      els.agendaTaskDelete.hidden = !task;
+      els.agendaTaskTitle.value = task?.title || "";
+      els.agendaTaskType.value = task?.type || "prep";
+      els.agendaTaskDue.value = task?.due || "";
+      els.agendaTaskNote.value = task?.note || "";
+      els.agendaTaskDialog.showModal();
+      els.agendaTaskTitle.focus();
+    }
+
+    function validTaskDraft() {
+      return taskDraft?.classId === state.activeClassId && taskDraft.owner === cloudSync.userId;
+    }
+
+    function saveAgendaTask() {
+      if (!validTaskDraft()) { toast("Sınıf veya hesap değişti. Görevi yeniden açın."); return; }
+      const title = els.agendaTaskTitle.value.trim();
+      if (!title) { toast("Bir görev adı girin."); els.agendaTaskTitle.focus(); return; }
+      const existing = activeAgendaTasks().find(item => item.id === taskDraft.id);
+      if (taskDraft.id && !existing) { toast("Görev artık bulunamıyor."); return; }
+      const task = { ...existing, id: existing?.id || uid("task"), classId: taskDraft.classId,
+        title, type: els.agendaTaskType.value, due: els.agendaTaskDue.value, note: els.agendaTaskNote.value.trim(), done: Boolean(existing?.done) };
+      const tasks = existing ? state.teacherTasks.map(item => item === existing ? task : item) : [...state.teacherTasks, task];
+      if (commitAgendaTracking("teacherTasks", tasks)) els.agendaTaskDialog.close();
+    }
+
+    function deleteAgendaTask() {
+      if (!validTaskDraft()) return;
+      const task = activeAgendaTasks().find(item => item.id === taskDraft.id);
+      if (!task || !confirm(`“${task.title}” görevi silinsin mi?`)) return;
+      if (commitAgendaTracking("teacherTasks", state.teacherTasks.filter(item => item !== task))) els.agendaTaskDialog.close();
+    }
+
+    function attendanceDateKey() {
+      return els.attendanceDate.value || today();
+    }
+
+    function attendanceRecord(date) {
+      return state.attendanceRecords.find(item => item.classId === state.activeClassId && item.date === date);
+    }
+
+    function attendanceConfirmedAt(date) {
+      const value = attendanceRecord(date)?.confirmedAt;
+      return typeof value === "string" && Number.isFinite(Date.parse(value)) ? value : "";
+    }
+
+    function attendanceForDate(date) {
+      const row = attendanceRecord(date);
+      return new Map((row?.marks || []).filter(mark => Array.isArray(mark) && typeof mark[0] === "string" && typeof mark[1] === "string" && Object.hasOwn(attendanceStatuses, mark[1])));
+    }
+
+    function attendanceOptions(selected) {
+      return Object.entries(attendanceStatuses).map(([key, label]) => `<option value="${key}" ${selected === key ? 'selected' : ''}>${label}</option>`).join("");
+    }
+
+    function bulkAttendanceTargets(marks, students) {
+      const status = els.attendanceBulkStatus.value;
+      const all = els.attendanceBulkScope.value === "all";
+      return Object.hasOwn(attendanceStatuses, status)
+        ? students.filter(student => marks.get(student.id) !== status && (all || !marks.has(student.id))) : [];
+    }
+
+    function updateAttendanceBulkButton(marks = attendanceForDate(attendanceDateKey()), students = activeStudents()) {
+      els.attendanceMarkAll.disabled = !bulkAttendanceTargets(marks, students).length;
+    }
+
+    function applyBulkAttendance() {
+      const marks = attendanceForDate(attendanceDateKey());
+      const targets = bulkAttendanceTargets(marks, activeStudents());
+      if (!targets.length) return;
+      const status = els.attendanceBulkStatus.value;
+      const label = attendanceStatuses[status];
+      const overwritten = targets.filter(student => marks.has(student.id)).length;
+      if (overwritten && !confirm(`Daha önce işaretlenmiş ${overwritten} öğrencinin durumu “${label}” olarak değiştirilecek. Devam edilsin mi?`)) return;
+      for (const student of targets) marks.set(student.id, status);
+      if (saveAttendance(marks)) {
+        toast(`${targets.length} öğrenci “${label}” olarak işaretlendi.`);
+        els.attendanceSave.focus({ preventScroll: true });
       }
     }
 
-    function dashboardBriefItemHtml(icon, title, detail, noteType) {
+    function attendanceStudents() {
+      const byNumber = els.attendanceSort?.value !== "name";
+      return activeStudents().sort((a, b) => {
+        if (byNumber) {
+          const left = cleanCell(a.schoolNo), right = cleanCell(b.schoolNo);
+          const compare = Number(!left) - Number(!right) || attendanceCollator.compare(left, right);
+          if (compare) return compare;
+        }
+        return attendanceCollator.compare(fullName(a), fullName(b));
+      });
+    }
+
+    function saveAttendance(marks, options = {}) {
+      const classId = state.activeClassId, date = attendanceDateKey();
+      if (!activeClass() || !isDateKey(date)) return false;
+      const records = state.attendanceRecords.filter(item => item.classId !== classId || item.date !== date);
+      if (marks.size) records.push({ classId, date, marks: Array.from(marks), ...(options.confirm ? { confirmedAt: new Date().toISOString() } : {}) });
+      return commitAgendaTracking("attendanceRecords", records);
+    }
+
+    function commitAgendaTracking(key, value) {
+      const previous = state[key];
+      state[key] = value;
+      if (!saveState()) {
+        state[key] = previous;
+        if (key === "attendanceRecords") updateAttendanceSaveStatus(attendanceDateKey(), false);
+        return false;
+      }
+      renderAgendaTracking();
+      renderDashboardTracking();
+      return true;
+    }
+
+    function renderDashboardTracking(students = activeStudents()) {
+      if (!els.dashboardTasks) return;
+      const open = activeAgendaTasks().filter(task => !task.done);
+      els.dashboardTaskCount.textContent = `${open.length} bekleyen görev`;
+      els.dashboardTasks.innerHTML = open.length ? open.slice(0, 3).map(taskRowHtml).join("") : dashboardEmptyHtml("Bekleyen görev yok.");
+      const marks = attendanceForDate(today());
+      const marked = students.filter(student => marks.has(student.id)).length;
+      const confirmed = attendanceConfirmedAt(today());
+      els.dashboardAttendance.textContent = !students.length ? "Bu sınıfta öğrenci yok." : confirmed
+        ? `${marked} / ${students.length} öğrenci · Yoklama kaydedildi` : `${marked} / ${students.length} öğrenci işaretlendi`;
+    }
+
+    function renderAgendaTracking() {
+      if (!els.agendaTaskPane || !document.getElementById("trackingView").classList.contains("active")) return;
+      const attendance = trackingTab === "attendance";
+      els.agendaAttendancePane.hidden = !attendance;
+      els.agendaTaskPane.hidden = attendance;
+      document.querySelectorAll("[data-tracking-tab]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.trackingTab === trackingTab)));
+      if (!attendance) {
+        const filter = els.agendaTaskFilter.value;
+        const tasks = activeAgendaTasks().filter(task => filter === "all" || Boolean(task.done) === (filter === "done"));
+        els.agendaTaskList.innerHTML = tasks.length ? tasks.map(taskRowHtml).join("") : dashboardEmptyHtml(filter === "done" ? "Tamamlanan görev yok." : filter === "open" ? "Bekleyen görev yok." : "Henüz görev eklenmedi.");
+        return;
+      }
+      renderAttendance();
+    }
+
+    function renderAttendance() {
+      const date = attendanceDateKey(), students = attendanceStudents(), marks = attendanceForDate(date);
+      const summaryLabels = { ...attendanceStatuses, pending: "İşaretlenmedi" };
+      const counts = Object.fromEntries(Object.keys(summaryLabels).map(key => [key, 0]));
+      students.forEach(student => counts[marks.get(student.id) || "pending"]++);
+      els.attendanceSummary.innerHTML = Object.entries(summaryLabels).map(([key, label]) =>
+        `<span data-attendance-status="${key}"><strong>${counts[key]}</strong> ${label}</span>`).join("");
+      updateAttendanceBulkButton(marks, students);
+      const hasMarks = counts.pending < students.length;
+      els.attendanceExport.disabled = !hasMarks;
+      els.attendanceSave.disabled = !hasMarks;
+      updateAttendanceSaveStatus(date, hasMarks);
+      document.querySelectorAll("[data-attendance-layout]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.attendanceLayout === attendanceLayout)));
+      els.attendanceList.dataset.layout = attendanceLayout;
+      els.attendanceList.innerHTML = students.length ? students.map(student => {
+        const status = marks.get(student.id) || "";
+        const name = escapeHtml(fullName(student));
+        const photo = attendanceLayout === "photos" ? `<span class="agenda-attendance-avatar avatar" aria-hidden="true">${avatarHtml(student, { lazy: true })}</span>` : "";
+        return `<label class="agenda-attendance-row" data-attendance-status="${status}"><span class="agenda-attendance-identity">${photo}<span><strong>${name}</strong>${student.schoolNo ? `<small>No. ${escapeHtml(student.schoolNo)}</small>` : ''}</span></span>
+          <select data-attendance-student="${escapeHtml(student.id)}" data-attendance-status="${status}" aria-label="${name}: yoklama durumu"><option value="">İşaretlenmedi</option>${attendanceOptions(status)}</select></label>`;
+      }).join("") : dashboardEmptyHtml("Bu sınıfta henüz öğrenci yok.");
+    }
+
+    function updateAttendanceSaveStatus(date, hasMarks) {
+      const confirmedAt = attendanceConfirmedAt(date);
+      const saved = !localSaveError && hasMarks && Boolean(confirmedAt);
+      const message = localSaveError ? "Kayıt uyarısını kontrol edin." : saved ? `Cihaza kaydedildi · ${formatCloudDate(confirmedAt)}` : hasMarks ? "İşaretler bu cihazda otomatik saklanıyor." : "";
+      els.attendanceSaveStatus.dataset.confirmed = String(saved);
+      if (els.attendanceSaveStatus.textContent !== message) els.attendanceSaveStatus.textContent = message;
+    }
+
+    function exportAttendance() {
+      if (!window.XLSX) { toast("Excel aracı yüklenemedi."); return; }
+      const date = attendanceDateKey(), marks = attendanceForDate(date);
+      const rows = [["Sınıf", classLabel(activeClass()), "Tarih", date], ["Okul no", "Öğrenci", "Durum"],
+        ...attendanceStudents().map(student => [student.schoolNo || "", fullName(student), attendanceStatuses[marks.get(student.id)] || "İşaretlenmedi"])];
+      const book = XLSX.utils.book_new();
+      const sheet = XLSX.utils.aoa_to_sheet(rows);
+      sheet['!cols'] = [{ wch: 18 }, { wch: 36 }, { wch: 20 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(book, sheet, "Yoklama");
+      downloadBlob(new Blob([XLSX.write(book, { bookType: "xlsx", type: "array" })], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `yoklama-${safeFileName(activeClass()?.name || 'sinif')}-${date}.xlsx`);
+    }
+
+    function dashboardEventGlyph(type) {
+      return ({ birthday: "sparkle", exam: "chart", meeting: "users", reminder: "bell", meb: "calendar", holiday: "calendar", special: "bookmark" })[type] || "clipboard";
+    }
+
+    function dashboardBriefItemHtml(icon, title, detail) {
       return `
-        <div class="dashboard-brief-item ${noteType ? `agenda-sticky event-${calendarNoteType(noteType)}` : ''}">
-          <span class="dashboard-brief-icon">${escapeHtml(icon || "•")}</span>
-          <span><strong>${escapeHtml(title || "Kayıt")}</strong><small>${escapeHtml(detail || "")}</small></span>
+        <div class="dashboard-brief-item">
+          <span class="dashboard-brief-icon" data-ui-icon="${escapeHtml(icon)}" aria-hidden="true"></span>
+          <span><strong>${escapeHtml(title || "Kayıt")}</strong>${detail ? `<small>${escapeHtml(detail)}</small>` : ''}</span>
         </div>
       `;
     }
@@ -1483,6 +1820,10 @@
       const idSet = new Set(ids);
       const names = new Set(state.students.filter(student => idSet.has(student.id)).map(student => normalize(fullName(student))));
       state.students = state.students.filter((student) => !idSet.has(student.id));
+      state.attendanceRecords = (state.attendanceRecords || []).map(record => {
+        const marks = record.marks.filter(mark => !idSet.has(mark?.[0]));
+        return marks.length === record.marks.length ? record : { classId: record.classId, date: record.date, marks };
+      }).filter(record => record.marks.length);
       state.exams.forEach((exam) => {
         ids.forEach((id) => {
           if (exam.results) delete exam.results[id];
@@ -1501,8 +1842,9 @@
       if (options.save !== false) saveState();
     }
 
-    function avatarHtml(student) {
-      if (student.photo) return `<img src="${escapeHtml(safeImageSource(student.photo))}" alt="" style="${studentPhotoStyle(student)}">`;
+    function avatarHtml(student, options = {}) {
+      const source = safeImageSource(student.photo);
+      if (source) return `<img src="${escapeHtml(source)}" alt=""${options.lazy ? ' loading="lazy" decoding="async"' : ''} style="${studentPhotoStyle(student)}">`;
       return escapeHtml(initials(student));
     }
 
@@ -2140,7 +2482,10 @@
       state.students = state.students.filter((student) => student.classId !== current.id);
       state.exams = state.exams.filter((exam) => exam.classId !== current.id);
       state.scheduleItems = (state.scheduleItems || []).filter((item) => item.classId !== current.id);
+      state.weeklyPlans = (state.weeklyPlans || []).filter((item) => item.classId !== current.id);
       state.calendarEvents = (state.calendarEvents || []).filter((item) => item.classId !== current.id);
+      state.teacherTasks = (state.teacherTasks || []).filter((item) => item.classId !== current.id);
+      state.attendanceRecords = (state.attendanceRecords || []).filter((item) => item.classId !== current.id);
       state.activeClassId = state.classes[0].id;
       if (!saveState()) { state = before; return; }
       selectedStudentIds.clear();
@@ -3834,6 +4179,573 @@
       const todayDay = new Date().getDay();
       const todayItems = items.filter((item) => item.day === todayDay).sort((a, b) => (a.period || 0) - (b.period || 0));
       els.scheduleSummary.innerHTML = todayItems.map((item) => lessonChipHtml(item, false)).join("") || `<div class="empty">Bugün için ders programı kaydı yok.</div>`;
+    }
+
+    function normalizeWeeklyPlan(input) {
+      const periodCount = Math.max(6, Math.min(10, Number(input?.periodCount) || 8));
+      const days = {};
+      weeklyPlanDays.forEach(({ value }) => {
+        const source = input?.days?.[value] || input?.days?.[String(value)] || [];
+        days[value] = Array.from({ length: periodCount }, (_, index) => {
+          const item = source[index] || {};
+          return {
+            lesson: cleanCell(item.lesson),
+            activity: cleanCell(item.activity),
+            book: cleanCell(item.book),
+            homework: cleanCell(item.homework)
+          };
+        });
+      });
+      return {
+        id: typeof input?.id === "string" ? input.id : uid("weekplan"),
+        classId: typeof input?.classId === "string" ? input.classId : "",
+        weekStart: isDateKey(input?.weekStart) ? input.weekStart : calendarMondayKey(new Date()),
+        periodCount,
+        periodTimes: Array.from({ length: periodCount }, (_, index) => cleanCell(input?.periodTimes?.[index]) || weeklyPlanDefaultTimes[index] || ""),
+        days,
+        announcements: cleanCell(input?.announcements),
+        events: cleanCell(input?.events),
+        createdAt: input?.createdAt || new Date().toISOString(),
+        updatedAt: input?.updatedAt || null
+      };
+    }
+
+    function blankWeeklyPlan(weekStart = weeklyPlanCursor) {
+      return normalizeWeeklyPlan({ classId: state.activeClassId, weekStart, periodCount: 8 });
+    }
+
+    function cloneWeeklyPlan(plan) {
+      return normalizeWeeklyPlan(JSON.parse(JSON.stringify(plan)));
+    }
+
+    function weeklyPlanForWeek(weekStart = weeklyPlanCursor) {
+      const records = (state.weeklyPlans || []).filter(item => item.classId === state.activeClassId);
+      const exact = records.find(item => item.weekStart === weekStart);
+      if (exact) return { plan: cloneWeeklyPlan(exact), explicit: true, inheritedFrom: "" };
+      const source = records
+        .filter(item => item.weekStart < weekStart)
+        .sort((a, b) => b.weekStart.localeCompare(a.weekStart))[0];
+      if (!source) return { plan: blankWeeklyPlan(weekStart), explicit: false, inheritedFrom: "" };
+      const plan = cloneWeeklyPlan(source);
+      plan.id = uid("weekplan");
+      plan.weekStart = weekStart;
+      plan.createdAt = new Date().toISOString();
+      plan.updatedAt = null;
+      return { plan, explicit: false, inheritedFrom: source.weekStart };
+    }
+
+    function weeklyPlanDate(dayValue, weekStart = weeklyPlanCursor) {
+      const date = parseDateValue(weekStart) || new Date();
+      date.setDate(date.getDate() + Number(dayValue) - 1);
+      return date;
+    }
+
+    function weeklyPlanRangeLabel(weekStart = weeklyPlanCursor) {
+      const start = weeklyPlanDate(1, weekStart);
+      const end = weeklyPlanDate(5, weekStart);
+      const options = { day: "2-digit", month: "long" };
+      return `${start.toLocaleDateString("tr-TR", options)} – ${end.toLocaleDateString("tr-TR", { ...options, year: "numeric" })}`;
+    }
+
+    function weeklyPlanDayLabel(day, weekStart = weeklyPlanCursor) {
+      const date = weeklyPlanDate(day.value, weekStart);
+      return `${day.label}<small>${date.toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit" })}</small>`;
+    }
+
+    function weeklyPlanColor(lesson) {
+      if (!cleanCell(lesson)) return { bg: "#f8fafc", line: "#cbd5e1", ink: "#334155" };
+      const palettes = [
+        { bg: "#e0f0ff", line: "#3f86c6", ink: "#1f5685" },
+        { bg: "#e5f4df", line: "#66a84f", ink: "#3d7130" },
+        { bg: "#fff0c9", line: "#d79e2f", ink: "#8a6218" },
+        { bg: "#f9e0ee", line: "#c96599", ink: "#8d3b68" },
+        { bg: "#e9e1fa", line: "#8065bd", ink: "#5c4692" },
+        { bg: "#dff4f1", line: "#3c9a8c", ink: "#276e64" },
+        { bg: "#ffe4d6", line: "#d47b4e", ink: "#8d4b2b" },
+        { bg: "#e5eaf5", line: "#65769d", ink: "#455473" }
+      ];
+      const label = normalize(lesson);
+      const known = [
+        ["TURKCE", 0], ["MATEMATIK", 1], ["FEN", 2], ["HAYAT", 5],
+        ["INGILIZCE", 3], ["GÖRSEL", 6], ["GORSEL", 6], ["MUZIK", 4],
+        ["BEDEN", 3], ["SOSYAL", 7], ["DIN", 1], ["REHBERLIK", 5]
+      ].find(([key]) => label.includes(key));
+      if (known) return palettes[known[1]];
+      let hash = 0;
+      for (const char of label) hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
+      return palettes[Math.abs(hash) % palettes.length];
+    }
+
+    function weeklyPlanColorStyle(lesson) {
+      const color = weeklyPlanColor(lesson);
+      return `--lesson-bg:${color.bg};--lesson-line:${color.line};--lesson-ink:${color.ink}`;
+    }
+
+    function showWeeklyPlanTab(tab) {
+      const nextTab = tab === "preview" ? "preview" : "edit";
+      if (nextTab === "preview" && pendingFormSaves.has("weeklyPlan") && !flushFormSave("weeklyPlan")) return;
+      activeWeeklyPlanTab = nextTab;
+      renderWeeklyPlanTabState();
+      if (nextTab === "preview") renderWeeklyPlanPreview(weeklyPlanForWeek().plan);
+    }
+
+    function renderWeeklyPlanTabState() {
+      const isPreview = activeWeeklyPlanTab === "preview";
+      if (els.weeklyPlanEditPane) els.weeklyPlanEditPane.hidden = isPreview;
+      if (els.weeklyPlanPreviewPane) els.weeklyPlanPreviewPane.hidden = !isPreview;
+      [els.weeklyPlanEditTab, els.weeklyPlanPreviewTab].filter(Boolean).forEach(button => {
+        const selected = button.dataset.weeklyPlanTab === activeWeeklyPlanTab;
+        button.setAttribute("aria-selected", String(selected));
+        button.tabIndex = selected ? 0 : -1;
+      });
+    }
+
+    function handleWeeklyPlanTabKeys(event) {
+      if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+      const tabs = [els.weeklyPlanEditTab, els.weeklyPlanPreviewTab].filter(Boolean);
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0) return;
+      event.preventDefault();
+      const index = event.key === "Home" ? 0
+        : event.key === "End" ? tabs.length - 1
+          : (current + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[index].focus();
+      tabs[index].click();
+    }
+
+    function renderWeeklyPlan() {
+      if (!els.weeklyPlanEditor || !els.weeklyPlanPrintSheet) return;
+      const result = weeklyPlanForWeek();
+      const plan = result.plan;
+      els.weeklyPlanWeekTitle.textContent = weeklyPlanRangeLabel();
+      els.weeklyPlanWeekInput.value = weeklyPlanCursor;
+      els.weeklyPlanPeriodCount.value = String(plan.periodCount);
+      els.weeklyPlanUseRepeatBtn.disabled = !result.explicit;
+      els.weeklyPlanUseRepeatBtn.title = result.explicit ? "Bu haftaya özel değişiklikleri kaldır ve önceki planı yeniden kullan" : "Bu hafta zaten otomatik tekrar düzenini kullanıyor";
+      els.weeklyPlanStatus.innerHTML = result.explicit
+        ? `<strong>Bu hafta kaydedildi.</strong> Yapacağınız değişiklikler yalnızca ${escapeHtml(weeklyPlanRangeLabel())} haftasını etkiler.`
+        : result.inheritedFrom
+          ? `<strong>Otomatik tekrar açık.</strong> ${escapeHtml(weeklyPlanRangeLabel(result.inheritedFrom))} planı kullanılıyor; ilk değişiklikte bu haftaya özel kopya oluşur.`
+          : `<strong>Yeni plan.</strong> Bu sınıf için ilk haftalık planınızı hazırlayın; sonraki haftalarda otomatik tekrar eder.`;
+      [els.weeklyPlanDayTabs, els.weeklyPlanPreviewDayTabs].filter(Boolean).forEach(group => {
+        group.querySelectorAll("[data-weekly-focus]").forEach(button => {
+          button.setAttribute("aria-pressed", String(button.dataset.weeklyFocus === weeklyPlanDayFocus));
+        });
+      });
+      els.weeklyPlanEditor.dataset.focusDay = weeklyPlanDayFocus;
+      els.weeklyPlanEditor.innerHTML = weeklyPlanEditorHtml(plan);
+      els.weeklyPlanAnnouncements.value = plan.announcements;
+      els.weeklyPlanEvents.value = plan.events;
+      renderWeeklyPlanPreview(plan);
+      renderWeeklyPlanSaveBadge();
+      renderWeeklyPlanTabState();
+    }
+
+    function weeklyPlanEditorHtml(plan) {
+      return `
+        <thead><tr>
+          <th class="weekly-plan-period-head">Ders / Saat</th>
+          ${weeklyPlanDays.map(day => `<th data-weekly-day-column="${day.value}" ${weeklyPlanDayFocus !== "all" && weeklyPlanDayFocus !== String(day.value) ? "hidden" : ""}>${weeklyPlanDayLabel(day)}</th>`).join("")}
+        </tr></thead>
+        <tbody>${Array.from({ length: plan.periodCount }, (_, index) => `
+          <tr>
+            <th class="weekly-plan-period-head">
+              <strong>${index + 1}. Ders</strong>
+              <input data-weekly-period-time="${index}" value="${escapeHtml(plan.periodTimes[index] || "")}" aria-label="${index + 1}. ders saati" placeholder="08.30-09.10">
+            </th>
+            ${weeklyPlanDays.map(day => {
+              const item = plan.days[day.value][index] || {};
+              const hidden = weeklyPlanDayFocus !== "all" && weeklyPlanDayFocus !== String(day.value);
+              return `<td data-weekly-day-column="${day.value}" ${hidden ? "hidden" : ""} style="${weeklyPlanColorStyle(item.lesson)}">
+                <div class="weekly-plan-cell" data-weekly-day="${day.value}" data-weekly-period="${index}">
+                  <input data-weekly-field="lesson" value="${escapeHtml(item.lesson)}" aria-label="${day.label} ${index + 1}. ders adı" placeholder="Ders adı">
+                  <textarea data-weekly-field="activity" aria-label="${day.label} ${index + 1}. ders etkinliği" placeholder="Yapılacak etkinlik / çalışma">${escapeHtml(item.activity)}</textarea>
+                  <div class="weekly-plan-small-fields">
+                    <input data-weekly-field="book" value="${escapeHtml(item.book)}" aria-label="${day.label} ${index + 1}. ders kitabı" placeholder="Kitap / sayfa">
+                    <input data-weekly-field="homework" value="${escapeHtml(item.homework)}" aria-label="${day.label} ${index + 1}. ders ödevi" placeholder="Ödev">
+                  </div>
+                </div>
+              </td>`;
+            }).join("")}
+          </tr>`).join("")}</tbody>`;
+    }
+
+    function collectWeeklyPlan() {
+      const existing = weeklyPlanForWeek();
+      const periodCount = Math.max(6, Math.min(10, Number(els.weeklyPlanPeriodCount.value) || existing.plan.periodCount || 8));
+      const plan = normalizeWeeklyPlan({
+        ...existing.plan,
+        classId: state.activeClassId,
+        weekStart: weeklyPlanCursor,
+        periodCount,
+        periodTimes: Array.from({ length: periodCount }, (_, index) => els.weeklyPlanEditor.querySelector(`[data-weekly-period-time="${index}"]`)?.value || weeklyPlanDefaultTimes[index] || ""),
+        announcements: els.weeklyPlanAnnouncements.value,
+        events: els.weeklyPlanEvents.value,
+        updatedAt: new Date().toISOString()
+      });
+      weeklyPlanDays.forEach(day => {
+        plan.days[day.value] = Array.from({ length: periodCount }, (_, index) => {
+          const cell = els.weeklyPlanEditor.querySelector(`[data-weekly-day="${day.value}"][data-weekly-period="${index}"]`);
+          return {
+            lesson: cell?.querySelector('[data-weekly-field="lesson"]')?.value.trim() || "",
+            activity: cell?.querySelector('[data-weekly-field="activity"]')?.value.trim() || "",
+            book: cell?.querySelector('[data-weekly-field="book"]')?.value.trim() || "",
+            homework: cell?.querySelector('[data-weekly-field="homework"]')?.value.trim() || ""
+          };
+        });
+      });
+      return plan;
+    }
+
+    function storeWeeklyPlan(plan) {
+      state.weeklyPlans = state.weeklyPlans || [];
+      const index = state.weeklyPlans.findIndex(item => item.classId === plan.classId && item.weekStart === plan.weekStart);
+      if (index >= 0) {
+        plan.id = state.weeklyPlans[index].id;
+        plan.createdAt = state.weeklyPlans[index].createdAt || plan.createdAt;
+        state.weeklyPlans[index] = plan;
+      } else {
+        state.weeklyPlans.push(plan);
+      }
+    }
+
+    function saveWeeklyPlan(options = {}) {
+      if (!activeClass() || !els.weeklyPlanEditor) return false;
+      const previous = state.weeklyPlans;
+      const plan = collectWeeklyPlan();
+      state.weeklyPlans = [...(state.weeklyPlans || [])];
+      storeWeeklyPlan(plan);
+      if (!saveState()) {
+        state.weeklyPlans = previous;
+        return false;
+      }
+      renderWeeklyPlanPreview(plan);
+      els.weeklyPlanStatus.innerHTML = `<strong>Bu hafta kaydedildi.</strong> Son kayıt: ${escapeHtml(new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }))}.`;
+      renderWeeklyPlanSaveBadge(options.automatic ? "Otomatik kaydedildi" : "Kaydedildi");
+      if (options.manual) {
+        clearFormSave("weeklyPlan");
+        renderWeeklyPlan();
+        toast("Haftalık plan kaydedildi.");
+      }
+      return true;
+    }
+
+    function queueWeeklyPlanSave() {
+      renderWeeklyPlanSaveBadge("Kaydediliyor…");
+      queueFormSave("weeklyPlan", () => saveWeeklyPlan({ automatic: true }));
+    }
+
+    function renderWeeklyPlanSaveBadge(message) {
+      if (!els.weeklyPlanSaveBadge) return;
+      els.weeklyPlanSaveBadge.textContent = message || (cloudSync.enabled ? "Cihaz ve bulut senkronu açık" : "Bu tarayıcıda saklanır");
+    }
+
+    function handleWeeklyPlanEditorInput(event) {
+      const input = event.target.closest?.("[data-weekly-field]");
+      if (input?.dataset.weeklyField === "lesson") {
+        const cell = input.closest("td");
+        if (cell) cell.setAttribute("style", weeklyPlanColorStyle(input.value));
+      }
+      queueWeeklyPlanSave();
+    }
+
+    function handleWeeklyPlanDayFocus(event) {
+      const button = event.target.closest("[data-weekly-focus]");
+      if (!button || button.dataset.weeklyFocus === weeklyPlanDayFocus) return;
+      if (pendingFormSaves.has("weeklyPlan") && !flushFormSave("weeklyPlan")) return;
+      weeklyPlanDayFocus = button.dataset.weeklyFocus;
+      renderWeeklyPlan();
+    }
+
+    function setWeeklyPlanWeek(value) {
+      const date = parseDateValue(value);
+      if (!date) return;
+      if (pendingFormSaves.has("weeklyPlan") && !flushFormSave("weeklyPlan")) return;
+      weeklyPlanCursor = calendarMondayKey(date);
+      renderWeeklyPlan();
+    }
+
+    function moveWeeklyPlanWeek(days) {
+      const date = parseDateValue(weeklyPlanCursor) || new Date();
+      date.setDate(date.getDate() + Number(days || 0));
+      setWeeklyPlanWeek(dateKey(date));
+    }
+
+    function changeWeeklyPlanPeriodCount() {
+      const plan = collectWeeklyPlan();
+      plan.periodCount = Math.max(6, Math.min(10, Number(els.weeklyPlanPeriodCount.value) || 8));
+      const resized = normalizeWeeklyPlan(plan);
+      const previous = state.weeklyPlans;
+      state.weeklyPlans = [...(state.weeklyPlans || [])];
+      storeWeeklyPlan(resized);
+      if (!saveState()) state.weeklyPlans = previous;
+      renderWeeklyPlan();
+    }
+
+    function useRepeatedWeeklyPlan() {
+      const exact = (state.weeklyPlans || []).find(item => item.classId === state.activeClassId && item.weekStart === weeklyPlanCursor);
+      if (!exact) return;
+      if (!confirm(`${weeklyPlanRangeLabel()} haftasına özel değişiklikler kaldırılsın ve önceki haftanın düzeni kullanılsın mı?`)) return;
+      const previous = state.weeklyPlans;
+      state.weeklyPlans = state.weeklyPlans.filter(item => item !== exact);
+      if (!saveState()) state.weeklyPlans = previous;
+      renderWeeklyPlan();
+      toast("Bu hafta yeniden otomatik tekrar düzenine alındı.");
+    }
+
+    function weeklyPlanText(value) {
+      return escapeHtml(value || "").replace(/\r?\n/g, "<br>");
+    }
+
+    function weeklyPlanDayHeaderStyle(day) {
+      const palette = weeklyPlanDayPalettes[Math.max(0, weeklyPlanDays.findIndex(item => item.value === day.value))] || weeklyPlanDayPalettes[0];
+      return `--day-accent:${palette.accent};--day-soft:${palette.soft}`;
+    }
+
+    function weeklyPlanPreviewMetrics(plan, selectedDays) {
+      return selectedDays.reduce((totals, day) => {
+        (plan.days[day.value] || []).forEach(item => {
+          if (item.lesson) totals.lessons += 1;
+          if (item.book) totals.books += 1;
+          if (item.homework) totals.homework += 1;
+          if (item.activity) totals.activities += 1;
+        });
+        return totals;
+      }, { lessons: 0, books: 0, homework: 0, activities: 0 });
+    }
+
+    function renderWeeklyPlanPreview(inputPlan) {
+      if (!els.weeklyPlanPrintSheet) return;
+      const plan = normalizeWeeklyPlan(inputPlan || weeklyPlanForWeek().plan);
+      const selectedDays = weeklyPlanDayFocus === "all"
+        ? weeklyPlanDays
+        : weeklyPlanDays.filter(day => String(day.value) === weeklyPlanDayFocus);
+      const current = activeClass() || {};
+      const school = state.teacher?.schoolName || "Okul adı belirtilmedi";
+      const teacher = current.teacherName || state.teacher?.name || "Sınıf öğretmeni";
+      const logo = state.teacher?.schoolLogo
+        ? `<img src="${escapeHtml(safeImageSource(state.teacher.schoolLogo))}" alt="Okul logosu">`
+        : systemLogoHtml();
+      const dayTitle = selectedDays.length === 1 ? `${selectedDays[0].label} Ders Planı` : "Haftalık Ders Planı";
+      const metrics = weeklyPlanPreviewMetrics(plan, selectedDays);
+      els.weeklyPlanPrintSheet.className = `weekly-plan-sheet${selectedDays.length === 1 ? " is-day" : ""}`;
+      els.weeklyPlanPrintSheet.innerHTML = `
+        <div class="weekly-plan-sheet-ribbon" aria-hidden="true">${weeklyPlanDayPalettes.map(item => `<span style="background:${item.accent}"></span>`).join("")}</div>
+        <header class="weekly-plan-sheet-header">
+          <div class="weekly-plan-sheet-logo">${logo}</div>
+          <div class="weekly-plan-sheet-title"><span>Haftalık Öğrenme Planı</span><h2>${escapeHtml(dayTitle)}</h2></div>
+          <div class="weekly-plan-sheet-week"><span>Plan dönemi</span><strong>${escapeHtml(weeklyPlanRangeLabel(plan.weekStart))}</strong></div>
+        </header>
+        <div class="weekly-plan-sheet-meta">
+          <div><span>Okul</span><strong>${escapeHtml(school)}</strong></div>
+          <div><span>Sınıf</span><strong>${escapeHtml(classLabel(current))}</strong></div>
+          <div><span>Sınıf Öğretmeni</span><strong>${escapeHtml(teacher)}</strong></div>
+        </div>
+        <div class="weekly-plan-sheet-summary" aria-label="Plan özeti">
+          <span><b>${metrics.lessons}</b> planlı ders</span>
+          <span><b>${metrics.activities}</b> çalışma</span>
+          <span><b>${metrics.books}</b> kitap kaydı</span>
+          <span><b>${metrics.homework}</b> ödev</span>
+        </div>
+        <table class="weekly-plan-print-table">
+          <thead><tr><th class="weekly-plan-period-title">Ders / Saat</th>${selectedDays.map(day => `<th class="weekly-plan-day-heading" style="${weeklyPlanDayHeaderStyle(day)}">${weeklyPlanDayLabel(day, plan.weekStart)}</th>`).join("")}</tr></thead>
+          <tbody>${Array.from({ length: plan.periodCount }, (_, index) => `
+            <tr>
+              <th class="print-period"><strong>${index + 1}. Ders</strong><small>${escapeHtml(plan.periodTimes[index] || "")}</small></th>
+              ${selectedDays.map(day => weeklyPlanPrintCell(plan.days[day.value][index] || {})).join("")}
+            </tr>`).join("")}
+          </tbody>
+        </table>
+        <div class="weekly-plan-print-notes">
+          <section class="weekly-plan-print-note"><h3><i aria-hidden="true"></i>Haftalık Duyurular</h3><p>${weeklyPlanText(plan.announcements) || "Bu hafta için ek duyuru bulunmuyor."}</p></section>
+          <section class="weekly-plan-print-note"><h3><i aria-hidden="true"></i>Etkinlikler ve Önemli Günler</h3><p>${weeklyPlanText(plan.events) || "Bu hafta için ek etkinlik bulunmuyor."}</p></section>
+        </div>
+        <footer class="weekly-plan-sheet-footer"><span>${escapeHtml(classLabel(current))} · ${escapeHtml(weeklyPlanRangeLabel(plan.weekStart))}</span><span>By Kemal Öğretmen · kemalogretmenim.com.tr</span></footer>`;
+    }
+
+    function weeklyPlanPrintCell(item) {
+      const hasContent = item.lesson || item.activity || item.book || item.homework;
+      if (!hasContent) return `<td class="weekly-plan-print-cell" style="${weeklyPlanColorStyle("")}"></td>`;
+      return `<td class="weekly-plan-print-cell" style="${weeklyPlanColorStyle(item.lesson)}">
+        ${item.lesson ? `<strong>${weeklyPlanText(item.lesson)}</strong>` : ""}
+        ${item.activity ? `<span><b>Çalışma:</b> ${weeklyPlanText(item.activity)}</span>` : ""}
+        ${item.book ? `<span><b>Kitap:</b> ${weeklyPlanText(item.book)}</span>` : ""}
+        ${item.homework ? `<span><b>Ödev:</b> ${weeklyPlanText(item.homework)}</span>` : ""}
+      </td>`;
+    }
+
+    function prepareWeeklyPlanExport() {
+      if (pendingFormSaves.has("weeklyPlan")) flushFormSave("weeklyPlan");
+      renderWeeklyPlanPreview(weeklyPlanForWeek().plan);
+      return els.weeklyPlanPrintSheet;
+    }
+
+    async function renderWeeklyPlanCanvas() {
+      if (!window.html2canvas) throw new Error("Görsel dışa aktarma kütüphanesi yüklenemedi.");
+      const source = prepareWeeklyPlanExport();
+      const clone = source.cloneNode(true);
+      const width = weeklyPlanDayFocus === "all" ? 1123 : 794;
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = `position:fixed;left:-10000px;top:0;width:${width}px;height:1400px;border:0;pointer-events:none`;
+      clone.style.width = `${width}px`;
+      clone.style.maxWidth = "none";
+      clone.style.margin = "0";
+      prepareImagesForExport(clone);
+      document.body.appendChild(iframe);
+      try {
+        const doc = iframe.contentDocument;
+        const styles = Array.from(document.styleSheets).map(sheet => {
+          try { return Array.from(sheet.cssRules).map(rule => rule.cssText).join("\n"); } catch { return ""; }
+        }).join("\n");
+        doc.open();
+        doc.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><style>${styles}</style></head><body style="margin:0;background:#fff">${clone.outerHTML}</body></html>`);
+        doc.close();
+        await waitForNextFrame();
+        const target = doc.querySelector("#weeklyPlanPrintSheet");
+        await waitForExportImages(doc.body);
+        return await html2canvas(target, { scale: 2, backgroundColor: "#ffffff", allowTaint: false, useCORS: false, imageTimeout: 0, logging: false });
+      } finally {
+        iframe.remove();
+      }
+    }
+
+    function weeklyPlanFileName(extension) {
+      const day = weeklyPlanDayFocus === "all" ? "haftalik" : weeklyPlanDays.find(item => String(item.value) === weeklyPlanDayFocus)?.label || "gunluk";
+      return `${safeFileName(`${activeClass()?.name || "sinif"}-${day}-plan-${weeklyPlanCursor}`)}.${extension}`;
+    }
+
+    async function downloadWeeklyPlanImage(type) {
+      try {
+        const canvas = await renderWeeklyPlanCanvas();
+        const mime = type === "jpeg" ? "image/jpeg" : "image/png";
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL(mime, .94);
+        link.download = weeklyPlanFileName(type === "jpeg" ? "jpg" : "png");
+        link.click();
+        toast(`Haftalık plan ${type === "jpeg" ? "JPEG" : "PNG"} olarak kaydedildi.`);
+      } catch (error) {
+        console.error(error);
+        toast(error.message || "Plan görseli oluşturulamadı.");
+      }
+    }
+
+    async function createWeeklyPlanPdf() {
+      if (!window.jspdf) throw new Error("PDF dışa aktarma kütüphanesi yüklenemedi.");
+      const canvas = await renderWeeklyPlanCanvas();
+      const { jsPDF } = window.jspdf;
+      const orientation = weeklyPlanDayFocus === "all" ? "l" : "p";
+      const pdf = new jsPDF({ orientation, unit: "mm", format: "a4", compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const scale = Math.min((pageWidth - 12) / canvas.width, (pageHeight - 12) / canvas.height);
+      const width = canvas.width * scale;
+      const height = canvas.height * scale;
+      pdf.addImage(canvas.toDataURL("image/jpeg", .94), "JPEG", (pageWidth - width) / 2, (pageHeight - height) / 2, width, height);
+      return pdf;
+    }
+
+    async function downloadWeeklyPlanPdf() {
+      try {
+        const pdf = await createWeeklyPlanPdf();
+        pdf.save(weeklyPlanFileName("pdf"));
+        toast("Haftalık plan tek sayfalık PDF olarak kaydedildi.");
+      } catch (error) {
+        console.error(error);
+        toast(error.message || "PDF oluşturulamadı.");
+      }
+    }
+
+    function weeklyPlanShareText() {
+      const focus = weeklyPlanDayFocus === "all" ? "haftalık ders planı" : `${weeklyPlanDays.find(item => String(item.value) === weeklyPlanDayFocus)?.label || "günlük"} ders planı`;
+      return `${classLabel(activeClass())} için ${weeklyPlanRangeLabel()} ${focus} hazırlandı.\nBy Kemal Öğretmen · kemalogretmenim.com.tr`;
+    }
+
+    function weeklyPlanRecipients() {
+      const recipients = [];
+      const seen = new Set();
+      activeStudents().forEach(student => {
+        const family = student.family || {};
+        [
+          [family.motherPhone, family.motherName || "Anne"],
+          [family.fatherPhone, family.fatherName || "Baba"],
+          [family.backupContactPhone, family.backupContactName || "Yedek iletişim"]
+        ].forEach(([rawPhone, parent]) => {
+          const phone = normalizeWhatsappPhone(rawPhone);
+          if (!phone || seen.has(phone)) return;
+          seen.add(phone);
+          recipients.push({ phone, label: `${fullName(student)} · ${parent}` });
+        });
+      });
+      return recipients;
+    }
+
+    function openWeeklyPlanShareDialog() {
+      if (pendingFormSaves.has("weeklyPlan")) flushFormSave("weeklyPlan");
+      const recipients = weeklyPlanRecipients();
+      els.weeklyPlanRecipient.innerHTML = `<option value="">WhatsApp'ta kişi seç</option>` + recipients.map(item => `<option value="${escapeHtml(item.phone)}">${escapeHtml(item.label)}</option>`).join("");
+      els.weeklyPlanShareDialog.showModal();
+    }
+
+    async function weeklyPlanPngFile() {
+      const canvas = await renderWeeklyPlanCanvas();
+      const blob = await canvasToBlob(canvas, "image/png", .94);
+      return { blob, file: new File([blob], weeklyPlanFileName("png"), { type: "image/png" }) };
+    }
+
+    async function shareWeeklyPlanFile() {
+      try {
+        const { blob, file } = await weeklyPlanPngFile();
+        if (navigator.canShare?.({ files: [file] }) && navigator.share) {
+          await navigator.share({ title: "Haftalık Ders Planı", text: weeklyPlanShareText(), files: [file] });
+          els.weeklyPlanShareDialog?.close();
+          toast("Plan paylaşım menüsüne gönderildi.");
+          return;
+        }
+        downloadBlob(blob, weeklyPlanFileName("png"));
+        toast("Plan PNG olarak indirildi. Paylaşacağınız uygulamada dosyayı ekleyebilirsiniz.");
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        console.error(error);
+        toast("Paylaşım dosyası hazırlanamadı.");
+      }
+    }
+
+    async function shareWeeklyPlanWhatsapp() {
+      try {
+        const { blob } = await weeklyPlanPngFile();
+        const copied = await copyImageToClipboard(blob);
+        if (!copied) downloadBlob(blob, weeklyPlanFileName("png"));
+        openWhatsapp(els.weeklyPlanRecipient.value, `${weeklyPlanShareText()}\n\n${copied ? "Plan görseli panoya kopyalandı; görüşmeye yapıştırabilirsiniz." : "Plan görseli indirildi; görüşmeye dosya olarak ekleyebilirsiniz."}`);
+        els.weeklyPlanShareDialog?.close();
+        toast(copied ? "Plan panoya kopyalandı ve WhatsApp açıldı." : "Plan indirildi ve WhatsApp açıldı.");
+      } catch (error) {
+        console.error(error);
+        toast("WhatsApp paylaşımı hazırlanamadı.");
+      }
+    }
+
+    async function emailWeeklyPlan() {
+      try {
+        const pdf = await createWeeklyPlanPdf();
+        const blob = pdf.output("blob");
+        downloadBlob(blob, weeklyPlanFileName("pdf"));
+        const subject = encodeURIComponent(`${classLabel(activeClass())} · Haftalık Ders Planı`);
+        const body = encodeURIComponent(`${weeklyPlanShareText()}\n\nPDF dosyası bilgisayarınıza indirildi. E-postaya ekleyerek gönderebilirsiniz.`);
+        window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+        toast("PDF indirildi ve e-posta taslağı açıldı.");
+      } catch (error) {
+        console.error(error);
+        toast("E-posta dosyası hazırlanamadı.");
+      }
+    }
+
+    function printWeeklyPlan() {
+      prepareWeeklyPlanExport();
+      document.body.classList.add("weekly-plan-printing");
+      const cleanup = () => document.body.classList.remove("weekly-plan-printing");
+      window.addEventListener("afterprint", cleanup, { once: true });
+      window.print();
+      setTimeout(cleanup, 1500);
     }
 
     function renderTopClock() {
@@ -6097,17 +7009,26 @@
     }
 
     function showView(viewId) {
+      if (!Object.hasOwn(pageMeta, viewId)) return;
       flushFormSaves();
+      const changed = document.body.dataset.agendaView !== viewId;
       document.body.dataset.agendaView=viewId;
       document.querySelectorAll(".content-view").forEach((view) => view.classList.toggle("active", view.id === viewId));
-      document.querySelectorAll(".nav button").forEach((button) => button.classList.toggle("active", button.dataset.view === viewId));
+      document.querySelectorAll(".nav button").forEach((button) => {
+        const active = button.dataset.view === viewId;
+        button.classList.toggle("active", active);
+        if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
+      });
       els.pageTitle.textContent = pageMeta[viewId]?.[0] || "";
       els.pageSubtitle.textContent = pageMeta[viewId]?.[1] || "";
+      if (viewId === "trackingView") renderAgendaTracking();
       if (viewId === "reportsView") buildReport();
       if (viewId === "scheduleView") {
         renderLessonPlannerFocus();
         syncLessonPlannerFrame();
       }
+      if (viewId === "weeklyPlanView") renderWeeklyPlan();
+      if (changed) window.scrollTo?.({ top: 0, behavior: "instant" });
     }
 
     function deleteNote(studentId, noteId) {

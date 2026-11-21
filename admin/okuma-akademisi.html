@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Okuma Akademisi Yönetimi | Kemal Öğretmenim</title>
+  <link rel="stylesheet" href="/css/admin-shell.css?v=20261119-scroll">
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/hece-akisi.css?v=20261114-katalog">
+  <link rel="stylesheet" href="/css/okuma-akademi-admin.css?v=1">
+  <link rel="stylesheet" href="/css/okuma-soru-aktar.css?v=1">
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="admin"></script>
+</head>
+<body class="ha-page academy-manager">
+  <form id="academyLogin" class="ha-panel ha-login" hidden>
+    <h1>Okuma Akademisi</h1>
+    <div class="ha-field"><label for="acEmail">E-posta</label><input type="email" id="acEmail" autocomplete="username" required></div>
+    <div class="ha-field"><label for="acPassword">Şifre</label><input type="password" id="acPassword" autocomplete="current-password" required></div>
+    <p id="acLoginStatus" role="alert"></p>
+    <button class="ha-btn ha-btn-primary" type="submit">Giriş yap</button>
+  </form>
+  <div id="academyManager" hidden>
+    <main class="ha-main">
+      <div class="ha-page-head">
+        <h1>Okuma Akademisi</h1>
+        <div class="ha-top-actions">
+          <a class="ha-btn" href="/hizli-okuma/akademi.html" target="_blank" rel="noopener">Öğrenci sayfası</a>
+          <button class="ha-btn" id="acNew" type="button"><span data-ui-icon="pen"></span> Yeni çalışma</button>
+        </div>
+      </div>
+      <p id="acStatus" class="ha-notice" role="status">Çalışmalar yükleniyor…</p>
+      <div class="ac-layout">
+        <section aria-labelledby="acListHeading">
+          <h2 id="acListHeading">Eklenen çalışmalar</h2>
+          <div class="ac-list" id="acList"></div>
+        </section>
+        <form id="acForm" class="ha-panel">
+          <div class="ha-panel-head"><h2 id="acEditorTitle">Yeni çalışma</h2><span class="ha-badge" id="acState">Taslak</span></div>
+          <div class="ha-panel-body ha-form-grid">
+            <div class="ha-field"><label for="acLevel">Sınıf düzeyi</label><select id="acLevel"></select></div>
+            <div class="ha-field"><label for="acCategory">Çalışma alanı</label><select id="acCategory"></select></div>
+            <div class="ha-field"><label for="acType">Çalışma türü</label><select id="acType"></select></div>
+            <div class="ha-field"><label for="acSkill">Kazanım</label><input id="acSkill" maxlength="100"></div>
+            <div class="ha-field ha-field-wide"><label for="acTitle">Çalışma adı</label><input id="acTitle" maxlength="120"></div>
+            <div class="ha-field ha-field-wide"><label for="acTask">Öğrenci yönergesi</label><textarea id="acTask" maxlength="500" rows="2"></textarea></div>
+            <div class="ha-field ha-field-wide"><label for="acPassageTitle">Okuma metni başlığı</label><input id="acPassageTitle" maxlength="120"></div>
+            <div class="ha-field ha-field-wide"><label for="acPassage">Okuma metni</label><textarea id="acPassage" maxlength="36050" rows="5"></textarea><p class="ha-hint">Paragrafları bir boş satırla ayırın.</p></div>
+            <div class="ha-field ha-field-wide" id="acSecondField" hidden><label for="acSecond">İkinci okuma yönergesi</label><textarea id="acSecond" maxlength="500" rows="2"></textarea></div>
+            <section class="ha-field-wide" id="acQuestions">
+              <h3>Sorular ve yanıt açıklamaları</h3>
+              <div class="question-tools">
+                <button class="ha-btn" id="acAddQuestion" type="button"><span data-ui-icon="clipboard"></span> Soru ekle</button>
+                <button class="ha-btn" id="bulkAcademyQuestions" type="button"><span data-ui-icon="clipboard"></span> Toplu yapıştır</button>
+              </div>
+              <div id="acQuestionList"></div>
+            </section>
+            <div class="ha-field ha-field-wide" id="acWritingFields" hidden>
+              <label for="acExample">Örnek yanıt</label><textarea id="acExample" maxlength="1800" rows="3"></textarea>
+              <label for="acCriteria">Kontrol maddeleri (her satıra bir madde)</label><textarea id="acCriteria" maxlength="1090" rows="3"></textarea>
+            </div>
+            <div class="ac-actions ha-field-wide">
+              <button class="ha-btn" id="acPreview" type="button"><span data-ui-icon="monitor"></span> Önizle</button>
+              <button class="ha-btn" id="acDraft" type="submit">Taslak olarak kaydet</button>
+              <button class="ha-btn ha-btn-primary" id="acPublish" type="submit">Yayınla</button>
+            </div>
+            <p id="acFormStatus" class="ha-field-wide" role="status"></p>
+          </div>
+        </form>
+      </div>
+    </main>
+    <dialog id="acPreviewDialog" aria-labelledby="acPreviewHeading" class="ha-panel ac-dialog">
+      <div class="ha-panel-head"><h2 id="acPreviewHeading">Önizleme</h2><form method="dialog"><button class="ha-btn" aria-label="Önizlemeyi kapat"><span data-ui-icon="cross"></span></button></form></div>
+      <div id="acPreviewBody" class="ha-panel-body"></div>
+    </dialog>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/site-data.js?v=20260418-2"></script>
+  <script src="/js/admin-auth.js?v=20261114-akademi"></script>
+  <script src="/js/admin-shell.js?v=20261119-reklam"></script>
+  <script src="/js/okuma-akademi-icerik.js?v=2"></script>
+  <script src="/js/okuma-soru-aktar.js?v=1"></script>
+  <script src="/js/okuma-akademi-admin.js?v=20261116-soru-aktar"></script>
+</body>
+</html>

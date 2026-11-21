@@ -74,8 +74,10 @@
   }
 
   function sourceLabel(book) {
-    if (book.kaynak_turu === 'images') return 'Görsel kitap';
-    if (book.kaynak_turu === 'external_pdf') return 'Bağlantılı PDF';
+    const type = window.kemalEKitapKaynak.sourceType(book);
+    if (type === 'images') return 'Görsel kitap';
+    if (type === 'fliphtml5') return 'FlipHTML5';
+    if (type === 'external_pdf') return 'Bağlantılı PDF';
     return 'PDF kitap';
   }
 
@@ -179,7 +181,7 @@
   async function loadBooks() {
     const response = await sb
       .from('e_kitaplar')
-      .select('id,baslik,yazar,aciklama,sinif,siniflar,kelime_sayisi,hedef_hiz,tahmini_dk,kaynak_turu,sayfa_sayisi,kapak_yolu,kapak_renk,gizli,oturum_gerekli,siralama,olusturma_tarihi')
+      .select('id,baslik,yazar,aciklama,sinif,siniflar,kelime_sayisi,hedef_hiz,tahmini_dk,kaynak_turu,kaynak_meta,sayfa_sayisi,kapak_yolu,kapak_renk,gizli,oturum_gerekli,siralama,olusturma_tarihi')
       .eq('aktif', true)
       .eq('gizli', false)
       .order('siralama', { ascending: true })

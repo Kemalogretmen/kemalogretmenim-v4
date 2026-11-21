@@ -1,0 +1,34 @@
+/* Calendar messages and single-gesture celebrations float independently of fish labels. */
+.reef-date-greetings{position:absolute;z-index:7;top:5px;left:12px;right:12px;display:grid;justify-items:start;gap:6px;pointer-events:none}
+.reef-calendar-note{max-width:100%;margin:0;padding:7px 12px;border:1px solid #cde6dc45;border-radius:14px;background:#093c4bdc;color:#e6fff1;font-size:12px;line-height:1.4;font-weight:650}
+.reef-calendar-note span{margin-inline-end:3px}
+.reef-birthday-bubbles{max-width:100%;display:flex;flex-wrap:wrap;gap:6px;max-height:96px;overflow:auto;pointer-events:auto;padding:3px;scrollbar-width:thin}
+.reef-birthday-bubble{display:inline-flex;align-items:center;gap:6px;min-height:35px;max-width:100%;padding:7px 12px;border:1px solid #cceeed8c;border-radius:999px;background:radial-gradient(ellipse at 20% 5%,#ffffff2c,transparent 45%),linear-gradient(140deg,#124957e8,#206575e8);color:#fff6dc;box-shadow:inset 0 -4px 10px #80dcd221,0 5px 16px #062c4156;font-weight:700;font-size:12px;pointer-events:auto}
+.reef-birthday-bubble span:last-child{min-width:0;overflow-wrap:anywhere}
+.reef-birthday-bubble:hover,.reef-birthday-bubble:focus-visible{background-color:#15586a;border-color:#d4fff2}
+.reef-birthday-effects{position:absolute;inset:0;overflow:hidden;z-index:22;pointer-events:none}
+.reef-birthday-effects:empty{display:none}
+.reef-birthday-message{position:absolute;z-index:2;top:30%;left:50%;translate:-50% 0;max-width:calc(100% - 32px);width:max-content;margin:0;padding:12px 20px;border:1px solid #e7edba76;border-radius:18px;background:#093748ed;box-shadow:0 8px 38px #05243578;color:#ffedbd;font-size:clamp(19px,3vw,34px);font-weight:800;text-align:center;line-height:1.28;text-wrap:balance}
+.reef-birthday-pop{position:absolute;display:block;width:44px;height:44px;border:2px solid #c9faf5;border-radius:50%;box-shadow:0 0 22px #c1ffedb0,inset 0 0 12px #c7ffff88;animation:reef-birthday-pop .55s ease-out both}
+.reef-birthday-paper{position:absolute;display:block;width:6px;height:10px;border-radius:1px;background:var(--c);animation:reef-birthday-paper 2.6s var(--wait) cubic-bezier(.22,.61,.44,1) both}
+.reef-birthday-emoji{position:absolute;display:block;font:normal 20px/1 system-ui;filter:drop-shadow(0 2px 3px #12333f80);animation:reef-birthday-emoji 1.8s var(--wait) ease-in-out both}
+@keyframes reef-birthday-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.75)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}
+@keyframes reef-birthday-paper{0%{opacity:0;transform:translate(0,0)}12%{opacity:1;transform:translate(calc(var(--dx)*.56),-37px) rotate(38deg)}80%{opacity:.9}100%{opacity:0;transform:translate(var(--dx),var(--fall)) rotate(var(--spin))}}
+@keyframes reef-birthday-emoji{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}17%{opacity:1}55%{transform:translate(calc(var(--dx)*.55 - 50%),calc(var(--dy)*.55 - 48px)) scale(1.08)}82%{opacity:1}100%{opacity:0;transform:translate(calc(var(--dx) - 50%),calc(var(--dy) - 50%)) scale(.55)}}
+.news-greeting{display:grid;grid-template-columns:auto 1fr;align-items:start;gap:12px;margin:14px 0;padding:13px 16px;color:#234a42;background:#e4ede0;border:1px solid #bfcebb;border-radius:5px}
+.news-greeting>span{font-size:21px;line-height:1.2}.news-greeting h3{margin:0 0 4px;font:700 clamp(17px,2.5vw,24px)/1.2 Georgia,serif}.news-greeting p{margin:0;font-size:14px;line-height:1.5}
+@media(max-width:800px){.reef-date-greetings{left:5px;right:5px}.reef-calendar-note,.reef-birthday-bubble{font-size:11px}.reef-birthday-bubbles{max-height:83px}}
+@media(prefers-reduced-motion:reduce){.reef-birthday-pop,.reef-birthday-paper,.reef-birthday-emoji{display:none;animation:none}}
+
+/* Two low, grounded clusters leave the centre and fish labels free. */
+.reef-foreground{position:absolute;inset:0;z-index:4;pointer-events:none}
+.reef-foreground img{position:absolute;bottom:-6px;left:-8px;width:clamp(85px,14vw,214px);max-height:32%;aspect-ratio:1;object-fit:contain;object-position:bottom;transform-origin:45% 93%;filter:saturate(.83) brightness(.82) drop-shadow(0 5px 5px #153b3865);opacity:.88;animation:reef-plant-sway 8.5s ease-in-out infinite alternate}
+.reef-foreground img+img{left:auto;right:-8px;width:clamp(76px,12vw,185px);animation-duration:10.8s;animation-delay:-4s;opacity:.8}
+@keyframes reef-plant-sway{0%{transform:rotate(-2.6deg) skewX(-2deg)}100%{transform:rotate(2.2deg) skewX(2.6deg)}}
+.no-motion .reef-foreground img,html.performance-lite .reef-foreground img{animation:none}
+@media(prefers-reduced-motion:reduce){.reef-foreground img{animation:none}}
+.reef-birthday-paper.is-raining{animation-name:reef-birthday-rain;animation-duration:3.1s}
+.receiving-birthday::after{content:'';position:absolute;inset:7% 8% 22%;border-radius:50%;box-shadow:0 0 18px 7px #ffe3a471;pointer-events:none;animation:reef-recipient 2s ease-in-out 3}
+@keyframes reef-birthday-rain{0%{opacity:0;transform:translate(0,0)}12%,85%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--fall)) rotate(var(--spin))}}
+@keyframes reef-recipient{0%,100%{opacity:0;transform:scale(.8)}50%{opacity:.7;transform:scale(1.02)}}
+@media(prefers-reduced-motion:reduce){.receiving-birthday::after{display:none;animation:none}}

@@ -12,6 +12,7 @@
           children: [
             { key: 'main-overview', icon: '📊', label: 'Genel Bakış', description: 'Site durumu ve yönetim özetini aç', href: '/admin/index.html#overview' },
             { key: 'main-analytics', icon: '📈', label: 'Site Analizleri', description: 'Ziyaret ve içerik istatistiklerini incele', href: '/admin/index.html#analytics' },
+            { key: 'main-adsense', icon: '▣', label: 'Google Reklamları', description: 'Reklam alanlarını ve yayın durumunu yönet', href: '/admin/index.html#reklamlar' },
             { key: 'main-reactions', icon: '👍', label: 'Beğeni Analizi', description: 'İçerik beğenilerini ve geri bildirimleri gör', href: '/admin/index.html#reactions' },
             { key: 'main-duyurular', icon: '📢', label: 'Duyurular', description: 'Ana sayfa duyurularını yönet', href: '/admin/index.html#duyurular' },
             { key: 'main-badges', icon: '🔔', label: 'YENİ Rozetleri', description: 'Yeni içerik rozetlerini düzenle', href: '/admin/index.html#badges' },
@@ -41,6 +42,7 @@
           children: [
             { key: 'okuma-editor', icon: '📝', label: 'Okuma Metinleri', description: 'Metinleri, soruları ve yayın durumunu düzenle', href: '/admin/okuma-editor.html' },
             { key: 'hece-akisi-admin', icon: '🔤', label: 'Hece Akışı', description: 'Harf ve hece birleştirme çalışmalarını yayınla', href: '/admin/hece-akisi.html' },
+            { key: 'academy-admin', icon: '📚', label: 'Okuma Akademisi', description: 'Alıştırmaları hazırla ve yayımla', href: '/admin/okuma-akademisi.html' },
             { key: 'e-kitap-admin', icon: '📗', label: 'E-Kitap Yönetimi', description: 'PDF ve görsel kitapları, soruları ve yayın ayarlarını yönet', href: '/admin/e-kitap-yonetimi.html' },
             { key: 'e-kitap-sonuclari', icon: '📈', label: 'E-Kitap Sonuçları', description: 'E-kitap hız, anlama ve öğrenci kayıtlarını incele', href: '/admin/e-kitap-sonuclari.html' },
             { key: 'okuma-sonuclari', icon: '📊', label: 'Okuma Sonuçları', description: 'Öğrenci okuma performanslarını incele', href: '/admin/okuma-sonuclari.html' },
@@ -104,6 +106,7 @@
     'homepage-vitrin': ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme', 'site_admin_dashboard'],
     'okuma-editor': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
     'hece-akisi-admin': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
+    'academy-admin': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
     'e-kitap-admin': ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'],
     'e-kitap-sonuclari': ['okuma_sonuclari', 'okuma_sonuclari_duzenleme', 'okuma_karne'],
     'okuma-sonuclari': ['okuma_sonuclari', 'okuma_sonuclari_duzenleme'],
@@ -259,6 +262,9 @@
   }
 
   function profileCanSeeKey(key, profile) {
+    if (key === 'main-adsense' && profile) {
+      return profile.isOwner === true;
+    }
     if (!key || !profile || profile.isOwner || profile.legacyMode) {
       return true;
     }
@@ -300,7 +306,8 @@
       html += '<div class="admin-nav-submenu">';
       html += visibleChildren.map(function(child) {
         const childClass = 'admin-nav-submenu-link' + (child.key === activeKey ? ' is-active is-current' : '');
-        return '<a class="' + childClass + '" href="' + child.href + '" data-admin-permission-key="' + child.key + '">' + child.label + '</a>';
+        const ownerHidden = child.key === 'main-adsense' && !permissionProfile?.isOwner ? ' style="display:none"' : '';
+        return '<a class="' + childClass + '" href="' + child.href + '" data-admin-permission-key="' + child.key + '"' + ownerHidden + '>' + child.label + '</a>';
       }).join('');
       html += '</div>';
     }
@@ -380,6 +387,9 @@
     }
     try {
       const profile = await window.kemalAdminAuth.getAdminAccessProfile(false);
+      root.querySelectorAll('[data-admin-permission-key="main-adsense"]').forEach(function(node) {
+        node.style.display = profile?.isOwner === true ? '' : 'none';
+      });
       if (!profile || profile.isOwner || profile.legacyMode) {
         return;
       }

@@ -16,7 +16,9 @@
     boxfish:['wiggle',3.2,.8],safiye:['curtsy',3.6,1.1],puffer:['inflate',5,1],
     eel:['serpentine',3.6,1],angler:['beacon',3.7,1],mantis:['mantis-greet',3.5,1],crab:['side-step',3.6,1],
     lina:['veil-fan',3.8,1],spongebob:['sponge-dance',4.2,1],patrick:['star-dance',4,1],mrkrabs:['claw-clap',3.8,1],
-    hammerhead:['hammer-glide',3.8,1],axolotl:['gill-wave',4.2,1]
+    plankton:['antenna-dance',3.7,1],gary:['snail-greet',4.1,1],squidward:['tentacle-ballet',4.3,1],sandy:['squirrel-cheer',4.2,1],
+    hammerhead:['hammer-glide',3.8,1],axolotl:['gill-wave',4.2,1],
+    catfish:['ripple',3.4,1],megalodon:['hammer-glide',4.2,.8],seal:['arc',3.6,1],penguin:['paddle',3.2,1.3]
   };
   function makeProfile(id){
     const n=C.SPECIES.findIndex(s=>s.id===id),p=profiles[id]||['wiggle',2.9+(Math.max(0,n)%4)*.15,.8+(Math.max(0,n)%3)*.12];
@@ -42,6 +44,18 @@
     }else if(p.kind==='star-dance'){
       const dance=Math.sin(u*Math.PI*5);result.x=dance*3.7*a;result.y=-7*Math.sin(u*Math.PI*3)**2*a;result.bank=dance*6.3*a;
       result.scaleX=1+wave*.025*a;result.scaleY=1-wave*.02*a;result.joints=1.4*envelope;
+    }else if(p.kind==='antenna-dance'){
+      result.x=Math.sin(u*Math.PI*8)*2.2*a;result.y=-6*Math.sin(u*Math.PI*3)**2*a;
+      result.bank=Math.sin(u*Math.PI*6)*4.7*a;result.joints=1.3*envelope;
+    }else if(p.kind==='snail-greet'){
+      result.x=Math.sin(u*Math.PI*2)*2.1*a;result.y=-1.8*a;result.bank=wave*1.2*a;
+      result.scaleY=1+Math.sin(u*Math.PI*4)*.02*a;result.joints=1.2*envelope;
+    }else if(p.kind==='tentacle-ballet'){
+      result.x=Math.sin(u*Math.PI*4)*3.4*a;result.y=-5*Math.sin(u*Math.PI*2)**2*a;
+      result.bank=Math.sin(u*Math.PI*4)*7.2*a;result.joints=1.5*envelope;
+    }else if(p.kind==='squirrel-cheer'){
+      result.x=Math.sin(u*Math.PI*6)*1.8*a;result.y=-9*Math.sin(u*Math.PI*3)**2*a;
+      result.bank=Math.sin(u*Math.PI*3)*3.8*a;result.scaleX=1+Math.sin(u*Math.PI*6)*.022*a;result.joints=1.45*envelope;
     }else if(p.kind==='claw-clap'){
       result.x=Math.sin(u*Math.PI*6)*4.5*a;result.bank=wave*1.6*a;result.joints=1.6*envelope;
     }else if(p.kind==='serpentine'){
@@ -58,17 +72,17 @@
       result.x=wave*1.7*a;result.y=-4*a;result.bank=wave*2.2*a;result.tail=envelope;result.joints=1.35*envelope;
     }else if(p.kind==='veil-fan'){
       result.y=-5*a;result.bank=wave*3.2*a;result.tail=1.65*envelope;result.joints=1.4*envelope;
-    }else if(p.kind==='glide'){result.y=-7*a;result.bank=wave*3*a;result.joints=1.4*envelope;}
+    }else if(p.kind==='glide'){result.y=-7*a;result.orbitX=Math.sin(u*Math.PI*2)*.11*a;result.bank=wave*4*a;result.joints=1.65*envelope;}
     else if(p.kind==='paddle'){result.y=-5*a;result.bank=wave*2*a;result.joints=1.1*envelope;}
     else if(p.kind==='pulse'){const pulse=(Math.sin(elapsed*7)+1)/2;result.scaleX=1-.055*pulse*a;result.scaleY=1+.045*pulse*a;result.y=-7*a;}
     else if(p.kind==='greet'){result.bank=wave*3*a;result.joints=1.25*envelope;result.y=-2*a;}
     else if(p.kind==='antenna'){result.bank=wave*1.6*a;result.joints=1.5*envelope;result.x=Math.sin(elapsed*7)*2*a;}
     else if(p.kind==='ripple'){result.scaleY=1+wave*.025*a;result.joints=envelope;result.y=-3*a;}
-    else if(p.kind==='arc'){result.y=-10*a;result.bank=Math.sin(elapsed*2.4)*5*a;result.tail=envelope;}
+    else if(p.kind==='arc'){result.y=-9*a;result.orbitX=Math.sin(u*Math.PI*2)*.14*a;result.bank=Math.sin(elapsed*2.4)*7*a;result.tail=1.35*envelope;}
     else if(p.kind==='cruise'){result.x=wave*4*a;result.bank=wave*1.5*a;result.tail=envelope;}
     else if(p.kind==='fan'){result.bank=wave*2.5*a;result.tail=1.3*envelope;result.y=-3*a;}
     else if(p.kind==='curtsy'){result.bank=Math.sin(elapsed*3)*5*a;result.y=-4*a;result.tail=envelope;}
-    else {result.bank=wave*3*a;result.x=wave*2*a;result.tail=envelope;}
+    else {result.bank=wave*6*a;result.x=wave*3.5*a;result.y=-6*Math.sin(u*Math.PI*2)**2*a;result.tail=1.45*envelope;}
     return result;
   }
   // Keep event identities, not a comparison of total scores: reversals, imports,

@@ -19,9 +19,12 @@
       supabaseAnonKey: 'sb_publishable__nk391uzfRC4bg3HQFHjlA_tH5kzmDY',
     };
 
-  const client = window.kemalUserAuth && typeof window.kemalUserAuth.getClient === 'function'
-    ? window.kemalUserAuth.getClient()
-    : window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+  let readingClient;
+  function getReadingClient() {
+    readingClient ||= window.kemalUserAuth?.getClient?.() ||
+      window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey);
+    return readingClient;
+  }
   const PENDING_RESULTS_KEY = 'kemal_okuma_pending_results_v1';
   const LEVEL_LABELS = {
     baslangic: 'Başlangıç',
@@ -40,13 +43,6 @@
 
   function stripHtml(value) {
     return (value || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  function escHtml(value) {
-    return (value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
   }
 
   function parseOptionalJson(value) {
@@ -112,16 +108,23 @@
   }
 
   function getRuntime() {
+    const attemptId = sessionStorage.getItem('okuma_attempt_id') || '';
+    const selection = parseOptionalJson(sessionStorage.getItem('okuma_secili_akis')) || {};
+    const flow = attemptId && selection.attemptId === attemptId ? selection.flow : '';
+    const getFlow = metin => flow || metin.readingFlow ||
+      (metin.goruntuleme_modu === 'kelime' ? (metin.tikla_mod ? 'kelime-tikla' : 'kelime-otomatik') : 'tam');
     const main = {
       metin: JSON.parse(sessionStorage.getItem('okuma_metin') || 'null'),
       kullanici: JSON.parse(sessionStorage.getItem('okuma_kullanici') || 'null'),
       sureSn: parseFloat(sessionStorage.getItem('okuma_sure_sn') || '0'),
       wpm: parseInt(sessionStorage.getItem('okuma_wpm') || '0', 10),
       cevaplar: JSON.parse(sessionStorage.getItem('okuma_cevaplar') || 'null'),
-      attemptId: sessionStorage.getItem('okuma_attempt_id') || '',
+      attemptId: attemptId,
+      flow: flow,
     };
 
     if (main.metin && main.kullanici) {
+      main.flow = getFlow(main.metin);
       sessionStorage.setItem('okuma_son_oturum', JSON.stringify({
         metin: main.metin,
         kullanici: main.kullanici,
@@ -140,7 +143,8 @@
       sureSn: parseFloat(sessionStorage.getItem('okuma_sure_sn') || '0'),
       wpm: parseInt(sessionStorage.getItem('okuma_wpm') || '0', 10),
       cevaplar: JSON.parse(sessionStorage.getItem('okuma_cevaplar') || 'null'),
-      attemptId: sessionStorage.getItem('okuma_attempt_id') || '',
+      attemptId: attemptId,
+      flow: getFlow(backup.metin),
     };
   }
 
@@ -222,7 +226,7 @@
       combined.includes('permission denied');
   }
 
-  async function insertResultPayloadDirect(payload) {
+  async function insertResultPayloadDirect(client, payload) {
     let response = await client.from('sonuclar').insert(payload);
     if (response.error && response.error.message && response.error.message.includes('detay_json')) {
       const fallbackPayload = Object.assign({}, payload);
@@ -236,12 +240,13 @@
   }
 
   async function insertResultPayload(payload) {
+    const client = getReadingClient();
     const rpcResponse = await client.rpc('submit_reading_result', { p_payload: payload });
     if (!rpcResponse.error) {
       return rpcResponse.data || null;
     }
     if (shouldFallbackToDirectInsert(rpcResponse.error)) {
-      return insertResultPayloadDirect(payload);
+      return insertResultPayloadDirect(client, payload);
     }
     throw rpcResponse.error;
   }
@@ -265,141 +270,6 @@
     return { before: pending.length, after: remaining.length };
   }
 
-  function createStableIndex(base, listLength) {
-    let hash = 0;
-    for (let i = 0; i < base.length; i += 1) {
-      hash = ((hash << 5) - hash) + base.charCodeAt(i);
-      hash |= 0;
-    }
-    return Math.abs(hash) % listLength;
-  }
-
-  function chooseMessage(list, seed) {
-    return list[createStableIndex(seed, list.length)];
-  }
-
-  function getFeedback(runtime, hedefWpm, comprehension) {
-    const ad = runtime.kullanici.ad;
-    const profile = normalizeTrainingProfile(runtime.metin.egitim_json);
-    const focusText = profile.kazanim || profile.tema || '';
-    const hizOran = hedefWpm ? runtime.wpm / hedefWpm : 0;
-    const anlama = comprehension.toplam ? comprehension.yuzde : -1;
-    const hizDurum = hizOran >= 1.15 ? 'yuksek' : hizOran >= 0.85 ? 'denge' : 'gelisiyor';
-    const anlamaDurum = anlama < 0 ? 'yok' : anlama >= 80 ? 'guclu' : anlama >= 55 ? 'orta' : 'gelisiyor';
-    const anahtar = hizDurum + '_' + anlamaDurum;
-
-    const headings = {
-      yuksek_guclu: 'Harika bir denge kurdun',
-      yuksek_orta: 'Hızın çok güçlü, anlama daha da yükselebilir',
-      yuksek_gelisiyor: 'Çok hızlısın, şimdi kaliteyi güçlendirelim',
-      denge_guclu: 'Sağlam bir okuma performansı',
-      denge_orta: 'İyi bir temel oluşturdun',
-      denge_gelisiyor: 'Hedefe çok yakınsın',
-      gelisiyor_guclu: 'Anlama yönün çok güçlü',
-      gelisiyor_orta: 'Düzenli çalışmayla hızlı ilerlersin',
-      gelisiyor_gelisiyor: 'Başlangıç sağlam, devamı gelecek',
-      yuksek_yok: 'Hız performansın dikkat çekici',
-      denge_yok: 'Okuma hızın iyi bir çizgide',
-      gelisiyor_yok: 'Hızını adım adım yükseltebilirsin',
-    };
-
-    const speedMessages = {
-      yuksek: [
-        ad + ', hedef hızın üstüne çıkarak oldukça güçlü bir tempo yakaladın.',
-        ad + ', okuma hızında sınıf hedefinin üzerinde bir performans gösterdin.',
-      ],
-      denge: [
-        ad + ', hız bölümünde hedefe oldukça yakın ya da hedef bandında bir okuma yaptın.',
-        ad + ', okuma hızın dengeli; küçük bir düzenli pratikle daha da yukarı çıkabilir.',
-      ],
-      gelisiyor: [
-        ad + ', hızın şu an gelişim aşamasında; düzenli kısa çalışmalarla belirgin biçimde artabilir.',
-        ad + ', bugünkü tempo sana iyi bir başlangıç veriyor; istikrar kurarsan hızın hızlı yükselir.',
-      ],
-    };
-
-    const comprehensionMessages = {
-      guclu: [
-        'Anlama bölümünde ayrıntıları iyi yakalamışsın ve metni dikkatle takip etmişsin.',
-        'Sorulardaki başarın, okurken anlamı koruyabildiğini gösteriyor.',
-      ],
-      orta: [
-        'Anlama bölümünde temel fikri yakalamışsın; birkaç ayrıntıyı kaçırmış olabilirsin.',
-        'Genel kavrayışın iyi, ama önemli detaylarda biraz daha dikkat sana ek puan kazandırır.',
-      ],
-      gelisiyor: [
-        'Anlama kısmında biraz daha yavaş ve dikkatli okumak sana ciddi katkı sağlayacak.',
-        'Bazı kritik noktaları atlamış görünüyorsun; paragraf sonlarında kısa iç tekrarlar iyi gelebilir.',
-      ],
-      yok: [
-        'Bu metinde soru olmadığı için yalnızca hız verisi üzerinden değerlendirme yapıldı.',
-      ],
-    };
-
-    const actionMessages = {
-      yuksek_guclu: [
-        'Bir sonraki adımda daha uzun metinlerle aynı dengeyi korumayı deneyebilirsin.',
-        'Zorlayıcı metin türlerine geçmek artık senin için uygun görünüyor.',
-      ],
-      yuksek_orta: [
-        'Hızını korurken her paragraf sonunda kısa bir zihinsel özet yapman anlama puanını artırır.',
-        'Bir tık daha yavaşlayıp anahtar kelimeleri zihninde işaretlemek iyi sonuç verir.',
-      ],
-      yuksek_gelisiyor: [
-        'Bir sonraki okumada hızını biraz düşürüp anlam odaklı ilerlemen daha dengeli sonuç verebilir.',
-        'Hız gücünü korurken cümle sonlarında kısa duraklamalar eklemek işini kolaylaştırır.',
-      ],
-      denge_guclu: [
-        'Bu çizgiyi korumak için düzenli günlük okuma rutini çok işe yarar.',
-        'Aynı disiplini sürdürürsen hem hız hem anlama birlikte yükselecek.',
-      ],
-      denge_orta: [
-        'Ayrıntı takibini güçlendirmek için önemli kelimeleri zihninde öne çıkarmayı dene.',
-        'Okurken “kim, ne yaptı, neden yaptı?” sorularını akılda tutmak yardımcı olur.',
-      ],
-      denge_gelisiyor: [
-        'Kısa metinlerde anlam takibini güçlendirip sonra tekrar hızlanmak iyi bir yol olur.',
-        'Önce anlaşılabilir tempoyu bulup sonra süre çalışmaları eklemek sana daha çok kazandırır.',
-      ],
-      gelisiyor_guclu: [
-        'Anlama becerin güçlü olduğu için şimdi odak noktanı akıcılığı artırmaya çevirebilirsin.',
-        'Göz hareketi ve süreli okuma çalışmaları hızını yukarı taşımaya hazır görünüyor.',
-      ],
-      gelisiyor_orta: [
-        'Her gün 10 dakikalık süreli okuma ve ardından kısa özet çalışması iyi bir denge kurar.',
-        'Akıcılığı artırırken anlamı korumak için kısa ama düzenli tekrarlar yeterli olabilir.',
-      ],
-      gelisiyor_gelisiyor: [
-        'Şimdilik en önemli şey düzenli tekrar; kısa ama sürekli okuma çalışması en etkili yol.',
-        'Her yeni okuma seni biraz daha ileri taşır; küçük adımlar burada çok değerlidir.',
-      ],
-      yuksek_yok: [
-        'Aynı metni tekrar okuyup kendi hızını geçmeye çalışman güzel bir egzersiz olur.',
-      ],
-      denge_yok: [
-        'Bir sonraki okumada kendi süreni biraz daha aşağı çekmeyi hedefleyebilirsin.',
-      ],
-      gelisiyor_yok: [
-        'Kısa günlük alıştırmalarla hızını güvenli biçimde yükseltmek en iyi adım olur.',
-      ],
-    };
-
-    const speed = chooseMessage(speedMessages[hizDurum], runtime.attemptId + '_speed');
-    const comprehensionText = chooseMessage(comprehensionMessages[anlamaDurum], runtime.attemptId + '_comp');
-    const action = chooseMessage(actionMessages[anahtar], runtime.attemptId + '_action');
-    const profileLine = focusText
-      ? '<br><br><strong>Çalışma Odağı:</strong> Bu metin ' + escHtml(focusText) + ' için seçilmiş. Bir sonraki tekrarında bu odağa özellikle dikkat et.'
-      : '';
-
-    return {
-      heading: headings[anahtar] || 'Okuma performansın değerlendirildi',
-      html:
-        '<strong>Okuma Hızı:</strong> ' + speed + '<br><br>' +
-        '<strong>Anlama:</strong> ' + comprehensionText + '<br><br>' +
-        '<strong>Sana Önerim:</strong> ' + action +
-        profileLine,
-    };
-  }
 
   function isTeacherSession() {
     const auth = window.kemalUserAuth && typeof window.kemalUserAuth.getState === 'function'
@@ -450,7 +320,8 @@
         attempt_status: 'completed',
         attempt_id: runtime.attemptId || '',
         cevaplar: comprehension.detay,
-        goruntuleme_modu: runtime.metin.goruntuleme_modu,
+        goruntuleme_modu: runtime.flow ? (runtime.flow === 'tam' ? 'tam' : 'kelime') : runtime.metin.goruntuleme_modu,
+        ...(runtime.flow ? { ogrenci_okuma_akisi: runtime.flow } : {}),
         egitim_profili: normalizeTrainingProfile(runtime.metin.egitim_json),
         completed_at: new Date().toISOString(),
         account_uid: runtime.kullanici.accountUid || '',
@@ -514,71 +385,13 @@
     sessionStorage.setItem('okuma_karne_kaydedildi', runtime.attemptId);
   }
 
-  async function downloadPdf() {
-    const button = document.getElementById('indirBtn');
-    const card = document.getElementById('karneKart');
-    const altButtons = document.querySelector('.karne-govde-alt');
-
-    button.disabled = true;
-    button.textContent = '⏳ PDF hazırlanıyor…';
-    if (altButtons) {
-      altButtons.style.display = 'none';
-    }
-
-    try {
-      const canvas = await window.html2canvas(card, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-      });
-      const pdfLib = window.jspdf && window.jspdf.jsPDF ? window.jspdf.jsPDF : null;
-      if (!pdfLib) {
-        throw new Error('PDF kütüphanesi yüklenemedi.');
-      }
-
-      const pdf = new pdfLib('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const imageWidth = pageWidth - (margin * 2);
-      const imageHeight = (canvas.height * imageWidth) / canvas.width;
-      const imageData = canvas.toDataURL('image/png');
-
-      let heightLeft = imageHeight;
-      let position = margin;
-      pdf.addImage(imageData, 'PNG', margin, position, imageWidth, imageHeight);
-      heightLeft -= (pageHeight - (margin * 2));
-
-      while (heightLeft > 0) {
-        position = heightLeft - imageHeight + margin;
-        pdf.addPage();
-        pdf.addImage(imageData, 'PNG', margin, position, imageWidth, imageHeight);
-        heightLeft -= (pageHeight - (margin * 2));
-      }
-
-      const fileName = 'karne_' + (document.getElementById('karneAd').textContent || 'ogrenci').replace(/\s+/g, '_') + '.pdf';
-      pdf.save(fileName);
-      button.textContent = '✅ PDF indirildi';
-    } catch (error) {
-      console.error(error);
-      button.textContent = '❌ PDF oluşturulamadı';
-    } finally {
-      if (altButtons) {
-        altButtons.style.display = '';
-      }
-      setTimeout(function() {
-        button.disabled = false;
-        button.textContent = '📄 PDF İndir';
-      }, 1800);
-    }
-  }
 
   function repeatReading(runtime) {
     sessionStorage.setItem('okuma_metin', JSON.stringify(runtime.metin));
     sessionStorage.setItem('okuma_kullanici', JSON.stringify(runtime.kullanici));
     sessionStorage.removeItem('okuma_sure_sn');
     sessionStorage.removeItem('okuma_wpm');
+    sessionStorage.removeItem('okuma_secili_akis');
     sessionStorage.removeItem('okuma_cevaplar');
     sessionStorage.removeItem('okuma_karne_kaydedildi');
     sessionStorage.removeItem('okuma_karne_kuyrukta');
@@ -602,6 +415,8 @@
         accountUid: runtime.kullanici && runtime.kullanici.accountUid ? runtime.kullanici.accountUid : '',
         email: runtime.kullanici && runtime.kullanici.email ? runtime.kullanici.email : '',
         attemptId: runtime.attemptId || '',
+        ...(runtime.flow ? { readingFlow: runtime.flow } : {}),
+        ...(runtime.readingAttempts ? { readingAttempts: runtime.readingAttempts } : {}),
         wpm: runtime.wpm || 0,
         targetWpm: hedefWpm || 0,
         wordCount: kelimeSayisi || 0,
@@ -627,85 +442,169 @@
           yanlis_sayisi: comprehension && comprehension.yanlis ? comprehension.yanlis : 0,
           toplam_soru: comprehension && comprehension.toplam ? comprehension.toplam : 0,
           anlama_yuzdesi: comprehension && comprehension.yuzde ? comprehension.yuzde : 0,
-          tarih: new Date().toISOString(),
+          tarih: runtime.readingAttempts?.[0]?.date || new Date().toISOString(),
         },
       },
     });
   }
 
+  function durationLabel(seconds) {
+    const total = Math.max(0, Math.round(seconds || 0));
+    return total >= 60 ? Math.floor(total / 60) + ' dk ' + (total % 60) + ' sn' : total + ' sn';
+  }
+
+  function renderReview(comprehension) {
+    const list = document.getElementById('soruDetayList');
+    document.getElementById('karneNoReview').textContent = comprehension.detay.length ? '' : comprehension.toplam
+      ? 'Bu kayıt için soru ayrıntısı bulunmuyor.' : 'Bu okumada anlama puanı ölçülmedi.';
+    comprehension.detay.forEach((item, index) => {
+      const correct = item.isDogru ?? item.isDogu;
+      const blank = item.secilen === null;
+      const li = document.createElement('li');
+      li.dataset.reportBlock = '';
+      li.dataset.answer = correct ? 'correct' : blank ? 'blank' : 'incorrect';
+      const title = document.createElement('strong');
+      title.textContent = (index + 1) + '. ' + (item.soru || '');
+      const answer = document.createElement('p');
+      answer.textContent = (correct ? 'Doğru' : blank ? 'Boş' : 'Yanlış') + ' · Yanıtın: ' + (item.secilenMetin || '—');
+      li.append(title, answer);
+      if (!correct && item.dogruMetin && item.dogruMetin !== '—') {
+        const expected = document.createElement('p');
+        expected.textContent = 'Doğru yanıt: ' + item.dogruMetin;
+        li.append(expected);
+      }
+      list.append(li);
+    });
+  }
+
+  function coach(runtime, comprehension, hasTarget, target, autoPaced) {
+    if (!comprehension.toplam) return ['Kısa bir özet yap', (autoPaced ? 'Gösterim temposu kendi okuma hızın değildir. ' : '') +
+      'Bu metin için ölçülmüş bir anlama puanı yok. Metni kapatıp ana düşünceyi bir cümleyle söyle, sonra metinden bir ayrıntıyla kontrol et.'];
+    if (comprehension.yuzde < 60) return ['Önce anlamı güçlendir', 'Yanlış veya boş bıraktığın bir soruyu seç. Yanıtını destekleyen cümleyi bulup kendi sözlerinle açıkla. İkinci okumada yetişmeye çalışmadan bu bölüme odaklan.'];
+    if (comprehension.yuzde < 85) return ['Metinden kanıt bul', 'Bir soruda neden o şıkkı seçtiğini söyle. Sonra metindeki bir cümleyi kanıt olarak göster ve yanıt incelemesinden kontrol et.'];
+    if (autoPaced) return ['Şimdi kendi temponu dene', 'Anlama sorularında iyi bir sonuç aldın. Metni tam metin görünümünde yeniden okuyup durakları ve geri dönüşleri kendin belirle.'];
+    if (hasTarget && runtime.wpm < target) return ['Anlamı koruyarak akıcı oku', 'Anlama sonucun güçlü. Bir paragrafı önce sessizce, sonra anlam gruplarında kısa duraklarla sesli oku. İkinci denemede anlamı ve rahatlığı birlikte gözle.'];
+    return ['Okuduğunu yorumla', 'Metnin ana fikrini iki cümlede anlat. Ardından “Yazar bunu hangi örnekle destekliyor?” sorusuna metinden bir kanıtla cevap ver.'];
+  }
+
+  async function compareReadings(runtime, snapshot, archive) {
+    const auth = window.kemalUserAuth;
+    if (!runtime.kullanici.accountUid || !auth?.ready || !snapshot.id) return;
+    const state = await auth.ready();
+    const userId = state?.user?.id;
+    if (userId !== runtime.kullanici.accountUid || state?.profile?.role !== 'student') return;
+    const tools = window.ReadingReportTools;
+    const local = window.kemalContentProgress?.listRecords() || [];
+    const current = { ...snapshot, title: runtime.metin.baslik };
+    const past = tools.previousAttempts(local, userId, current);
+    tools.renderHistory(past, current);
+    if (!archive) {
+      const currentRecord = local.find(record => record.type === 'reading' && String(record.id) === String(runtime.metin.id));
+      const own = currentRecord ? tools.previousAttempts([currentRecord], userId, current) : [];
+      // Keep earlier attempts in the existing per-text progress row; dashboards still see one row per text.
+      runtime.readingAttempts = [snapshot, ...own.map(({ title, ...item }) => item)];
+    }
+    try {
+      const query = auth.getClient().from('user_content_progress')
+        .select('user_id,content_type,content_id,status,title,detail_json,completed_at,updated_at')
+        .eq('user_id', userId).eq('content_type', 'reading').eq('status', 'completed')
+        .order('completed_at', { ascending: false }).limit(24);
+      const { data, error } = await (typeof query.abortSignal === 'function' ? query.abortSignal(AbortSignal.timeout(4500)) : query);
+      if (error || auth.getState()?.user?.id !== userId) return;
+      const all = tools.previousAttempts([...local, ...(data || [])], userId, current);
+      tools.renderHistory(all, current);
+      if (!archive && data?.length) {
+        const matchingRows = data.filter(row => String(row.content_id) === String(runtime.metin.id));
+        const snapshots = tools.previousAttempts([...matchingRows, ...local.filter(row => String(row.id) === String(runtime.metin.id))], userId, current);
+        runtime.readingAttempts = [snapshot, ...snapshots.map(({ title, ...item }) => item)];
+      }
+    } catch (_) { /* Previously synced readings remain available locally. */ }
+  }
+
   function render(runtime) {
-    const sinif = runtime.kullanici.sinif;
-    const norm = NORMS[sinif] || NORMS[4];
-    const hedefWpm = runtime.metin.hedef_hiz || norm.hedef;
-    const kelimeSayisi = runtime.metin.kelime_sayisi || stripHtml(runtime.metin.icerik_html || runtime.metin.icerik || '').split(/\s+/).filter(Boolean).length;
+    const byId = id => document.getElementById(id);
+    const norm = NORMS[runtime.kullanici.sinif] || NORMS[4];
+    const configured = Number(runtime.metin.hedef_hiz);
+    const target = configured > 0 ? configured : norm.hedef;
+    const words = Number(runtime.metin.kelime_sayisi) || stripHtml(runtime.metin.icerik_html || runtime.metin.icerik || '').split(/\s+/).filter(Boolean).length;
     const comprehension = getComprehensionSummary(runtime);
-    const today = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    const blank = comprehension.detay.filter(item => item.secilen === null).length;
+    const autoPaced = runtime.flow === 'kelime-otomatik';
+    const archive = new URLSearchParams(window.location.search).get('arsiv') === '1';
+    const storedDate = archive ? runtime.metin.resultDate : sessionStorage.getItem('okuma_baslangic_tarihi');
+    const day = storedDate && Number.isFinite(Date.parse(storedDate)) ? new Date(storedDate) : new Date();
     const locationLine = getUserLocationLine(runtime.kullanici);
+    const grade = runtime.kullanici.sinif ? runtime.kullanici.sinif + '. sınıf' : '';
 
-    document.getElementById('karneAd').textContent = runtime.kullanici.ad + ' ' + runtime.kullanici.soyad;
-    document.getElementById('karneSinifSube').textContent = runtime.kullanici.sinif + '. Sınıf / ' + runtime.kullanici.sube + ' Şubesi' + (locationLine ? ' · ' + locationLine : '');
-    document.getElementById('karneTarih').textContent = today;
-    document.getElementById('karneMetinAdi').textContent = runtime.metin.baslik;
-    document.getElementById('karneWpm').textContent = String(runtime.wpm);
-    document.getElementById('karneHedef').textContent = String(hedefWpm);
-
-    const star = runtime.wpm >= hedefWpm * 1.2 ? '🌟🌟🌟' : runtime.wpm >= hedefWpm ? '⭐⭐⭐' : runtime.wpm >= hedefWpm * 0.7 ? '⭐⭐' : '⭐';
-    document.getElementById('karneWpmStar').textContent = star;
-
-    const barMax = norm.maksimum;
-    const fillPercent = Math.min(100, Math.round((runtime.wpm / barMax) * 100));
-    const targetPercent = Math.min(98, Math.round((hedefWpm / barMax) * 100));
-    document.getElementById('hizBarOrta').textContent = hedefWpm + ' k/dk';
-    document.getElementById('hizBarHedef').style.left = targetPercent + '%';
-    document.getElementById('hizBarFill').style.background =
-      runtime.wpm >= hedefWpm ? 'linear-gradient(90deg,#00C9B1,#55EFC4)' :
-      runtime.wpm >= hedefWpm * 0.75 ? 'linear-gradient(90deg,#FFD93D,#FF9F43)' :
-      'linear-gradient(90deg,#FF6052,#FF9F43)';
-    window.setTimeout(function() {
-      document.getElementById('hizBarFill').style.width = fillPercent + '%';
-    }, 350);
-
-    if (!comprehension.toplam) {
-      document.getElementById('anlamaSeksiyon').innerHTML =
-        '<div style="text-align:center;color:var(--muted);padding:20px;">Bu metin için anlama sorusu eklenmemiş.</div>';
-      document.getElementById('anlamaBolme').style.display = 'none';
-    } else {
-      const color = comprehension.yuzde >= 80 ? '#00C9B1' : comprehension.yuzde >= 55 ? '#FFD93D' : '#FF6052';
-      const circle = document.getElementById('anlamaDaire');
-      circle.style.background = 'conic-gradient(' + color + ' ' + (comprehension.yuzde * 3.6) + 'deg, #F0EBFF 0deg)';
-      circle.style.boxShadow = '0 0 0 8px #F0EBFF, 0 6px 20px rgba(0,0,0,.1)';
-      document.getElementById('anlamaYuzde').textContent = comprehension.yuzde + '%';
-      document.getElementById('anlamaYuzde').style.color = color;
-      document.getElementById('anlamaSoruRow').innerHTML =
-        '<div class="anlama-kutu dogru">✅ ' + comprehension.dogru + ' Doğru</div>' +
-        '<div class="anlama-kutu yanlis">❌ ' + comprehension.yanlis + ' Yanlış</div>' +
-        '<div class="anlama-kutu dogru" style="background:#EFF7FF;color:var(--purple);">📊 ' + comprehension.yuzde + '% Başarı</div>';
-      document.getElementById('soruDetayList').innerHTML = comprehension.detay.map(function(item, index) {
-        const isCorrect = item.isDogru != null ? item.isDogru : item.isDogu;
-        return (
-          '<div class="soru-detay-item ' + (isCorrect ? 'dogru' : 'yanlis') + '">' +
-            '<div class="sdi-soru">' + (index + 1) + '. ' + escHtml(item.soru) + '</div>' +
-            '<div class="sdi-sec ' + (isCorrect ? 'dogru' : 'yanlis') + '">' +
-              (isCorrect ? '✅' : '❌') + ' Cevabın: ' + escHtml(item.secilenMetin || '—') +
-              (!isCorrect ? '<br>✅ Doğru Cevap: ' + escHtml(item.dogruMetin || '—') : '') +
-            '</div>' +
-          '</div>'
-        );
-      }).join('');
+    byId('karneAd').textContent = [runtime.kullanici.ad, runtime.kullanici.soyad].filter(Boolean).join(' ');
+    byId('karneSinifSube').textContent = [grade, runtime.kullanici.sube ? runtime.kullanici.sube + ' şubesi' : '', locationLine].filter(Boolean).join(' · ');
+    byId('karneTarih').dateTime = day.toISOString();
+    byId('karneTarih').textContent = day.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+    byId('karneMetinAdi').textContent = runtime.metin.baslik;
+    byId('karneDuration').textContent = durationLabel(runtime.sureSn);
+    byId('karneWords').textContent = words ? words + ' kelime' : 'Kelime sayısı yok';
+    byId('karneWpm').textContent = runtime.wpm > 0 ? String(runtime.wpm) : '—';
+    byId('anlamaYuzde').textContent = comprehension.toplam ? '%' + comprehension.yuzde : '—';
+    byId('karneAnswers').textContent = comprehension.toplam
+      ? comprehension.dogru + '/' + comprehension.toplam + ' doğru · ' + Math.max(0, comprehension.yanlis - blank) + ' yanlış' + (blank ? ' · ' + blank + ' boş' : '')
+      : 'Ölçülmedi';
+    if (comprehension.toplam && comprehension.detay.length === comprehension.toplam) {
+      const chart = byId('karneAnswerBreakdown');
+      const legend = chart.querySelector('.rk-answer-legend');
+      const segments = chart.querySelectorAll('.rk-answer-track span');
+      const counts = [comprehension.dogru, Math.max(0, comprehension.yanlis - blank), blank];
+      counts.forEach((value, index) => {
+        segments[index].style.width = (value / comprehension.toplam * 100) + '%';
+        const item = document.createElement('li');
+        item.textContent = value + ' ' + ['doğru', 'yanlış', 'boş'][index];
+        legend.append(item);
+      });
+      chart.hidden = false;
     }
 
-    const feedback = getFeedback(runtime, hedefWpm, comprehension);
-    document.getElementById('donutBaslik').textContent = '💡 ' + feedback.heading;
-    document.getElementById('donutMetin').innerHTML = feedback.html;
-    document.getElementById('karneSubTitle').textContent = runtime.kullanici.ad + ' için hız ve anlama değerlendirmesi hazır.';
+    if (autoPaced) {
+      byId('karneHizBaslik').textContent = 'Gösterim temposu';
+      byId('karneHizEtiket').textContent = 'Gösterim temposu';
+      byId('hizBarWrap').hidden = true;
+      byId('karneAkisNotu').hidden = false;
+    } else {
+      const maximum = Math.max(1, runtime.wpm, target) * 1.15;
+      const difference = runtime.wpm - target;
+      byId('karneHizBaslik').textContent = configured > 0 ? 'Metnin hız hedefi' : 'Sınıf için referans hedef';
+      byId('karneHedef').textContent = 'Hedef: ' + target + ' k/dk';
+      byId('karneTempoValue').textContent = 'Bu okuma: ' + (runtime.wpm || '—') + ' k/dk';
+      byId('hizBarHedef').style.width = (target / maximum * 100) + '%';
+      byId('hizBarFill').style.width = (Math.max(0, runtime.wpm) / maximum * 100) + '%';
+      byId('karneTempoNote').textContent = runtime.wpm <= 0 ? 'Hız ölçülemedi.' : difference === 0
+        ? 'Bu okumada hedefe ulaştın.' : 'Bu okuma hedefin ' + Math.abs(difference) + ' k/dk ' + (difference > 0 ? 'üzerinde.' : 'altında.');
+    }
 
-    markReadingCompleted(runtime, hedefWpm, comprehension, kelimeSayisi);
-    saveResult(runtime, hedefWpm, comprehension, kelimeSayisi);
-
-    window.karnePdfIndir = downloadPdf;
-    window.tekrarOku = function() {
-      repeatReading(runtime);
-    };
+    renderReview(comprehension);
+    const [heading, advice] = coach(runtime, comprehension, configured > 0, target, autoPaced);
+    byId('donutBaslik').textContent = heading;
+    byId('donutMetin').textContent = advice;
+    const profile = normalizeTrainingProfile(runtime.metin.egitim_json);
+    if (profile.kazanim || profile.tema) {
+      byId('karneFocus').textContent = 'Çalışma odağı: ' + (profile.kazanim || profile.tema);
+      byId('karneFocus').hidden = false;
+    }
+    const tools = window.ReadingReportTools;
+    const summary = ['Okuma Karnesi · ' + runtime.metin.baslik, 'Süre: ' + durationLabel(runtime.sureSn),
+      (autoPaced ? 'Gösterim temposu: ' : 'Okuma hızı: ') + (runtime.wpm ? runtime.wpm + ' k/dk' : 'ölçülmedi'),
+      'Anlama: ' + (comprehension.toplam ? '%' + comprehension.yuzde + ' (' + comprehension.dogru + '/' + comprehension.toplam + ')' : 'ölçülmedi')].join('\n');
+    tools.bindExport();
+    tools.bindShare(summary);
+    byId('karneRepeat').addEventListener('click', () => {
+      if (archive) window.location.href = '/hizli-okuma/index.html?metinId=' + encodeURIComponent(runtime.metin.id);
+      else repeatReading(runtime);
+    });
+    const snapshot = { id: runtime.attemptId, date: day.toISOString(), mode: runtime.flow, speed: runtime.wpm,
+      comprehension: comprehension.toplam ? comprehension.yuzde : null };
+    if (archive) setReadingSaveStatus('saved', 'Arşivdeki karne', 'Bu görüntüleme yeni bir sonuç kaydı oluşturmaz.');
+    else saveResult(runtime, target, comprehension, words);
+    compareReadings(runtime, snapshot, archive).catch(() => {}).finally(() => {
+      if (!archive && !isTeacherSession()) markReadingCompleted(runtime, target, comprehension, words);
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function() {

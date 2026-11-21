@@ -1156,7 +1156,7 @@
     ];
   }
 
-  function normalizeChoiceCorrectness(choices) {
+  function normalizeChoiceCorrectness(choices, preserveUnanswered) {
     const safeChoices = (choices || []).map(function(choice) {
       return {
         secenek_metni: choice && choice.secenek_metni ? choice.secenek_metni : '',
@@ -1171,7 +1171,7 @@
     return safeChoices.map(function(choice, index) {
       return {
         secenek_metni: choice.secenek_metni,
-        dogru_mu: index === (firstCorrectIndex >= 0 ? firstCorrectIndex : 0),
+        dogru_mu: index === (firstCorrectIndex >= 0 || preserveUnanswered ? firstCorrectIndex : 0),
       };
     });
   }
@@ -1195,7 +1195,7 @@
     ];
   }
 
-  function getEditableChoices(type, choices) {
+  function getEditableChoices(type, choices, preserveUnanswered) {
     const safeType = normalizeQuestionType(type);
     if (safeType === QUESTION_TYPES.TRUE_FALSE) {
       return getTrueFalseChoices(choices);
@@ -1204,7 +1204,8 @@
     const safeChoices = normalizeChoiceCorrectness(
       Array.isArray(choices) && choices.length
         ? choices.slice(0, 5)
-        : getDefaultQuestionChoices(safeType)
+        : getDefaultQuestionChoices(safeType),
+      preserveUnanswered
     );
 
     const targetLength = safeType === QUESTION_TYPES.CHOICE
@@ -1291,7 +1292,7 @@
       (safeType === QUESTION_TYPES.FILL
         ? '<div class="bosluk-ipucu">Örnek kullanım: "Betül kendini _____ hissetti." Öğrenci alttaki seçeneklerden birini seçer.</div>'
         : '') +
-      '<div class="sik-list">' + buildChoiceRows(safeType, radioName, getEditableChoices(safeType, data && data.secenekler)) + '</div>' +
+      '<div class="sik-list">' + buildChoiceRows(safeType, radioName, getEditableChoices(safeType, data && data.secenekler, item.dataset.imported === 'true')) + '</div>' +
       '<button class="btn-sik-ekle" onclick="sikEkle(\'' + item.id + '\')" type="button">' + buttonLabel + '</button>';
   }
 
@@ -1318,7 +1319,7 @@
     };
   }
 
-  function addQuestion(typeOrData, maybeData) {
+  function addQuestion(typeOrData, maybeData, imported = false) {
     state.questionCounter += 1;
     const questionId = 'soru_' + state.questionCounter;
     const questionList = document.getElementById('soruList');
@@ -1329,6 +1330,7 @@
     wrapper.className = 'soru-item';
     wrapper.id = questionId;
     wrapper.dataset.questionType = questionType;
+    if (imported) wrapper.dataset.imported = 'true';
     wrapper.innerHTML =
       '<div class="soru-item-header">' +
         '<span class="soru-no-badge">' + (questionList.children.length + 1) + '</span>' +
@@ -1340,7 +1342,7 @@
 
     questionList.appendChild(wrapper);
     renderQuestionBody(wrapper, questionType, data);
-    renumberQuestions();
+    if (!imported) renumberQuestions();
   }
 
   function addChoice(questionId) {
@@ -1669,9 +1671,8 @@
     }
 
     const titleStyle = getTitleStyle();
-    const titleHtml = getTitleHtml();
-    titleNode.innerHTML = titleHtml || '<p>' + escHtml(getTitlePlainText()) + '</p>';
-    titleNode.style.color = titleStyle.renk;
+    titleNode.textContent = getTitlePlainText();
+    titleNode.style.color = '#1c2725';
     titleNode.style.fontSize = titleStyle.boyut + 'px';
     titleNode.style.textAlign = titleStyle.hiza;
     bodyNode.innerHTML = normalizeEditorHtml(state.quill.root.innerHTML);
@@ -1957,6 +1958,20 @@
   }
 
   function bindEvents() {
+    const importer = window.ReadingQuestionImport;
+    importer?.mount(document.getElementById('bulkReadingQuestions'), {
+      existing: () => Array.from(document.querySelectorAll('#soruList .soru-item'), item => ({
+        prompt: item.querySelector('.soru-input').value,
+        options: readQuestionDraft(item).secenekler.map(choice => choice.secenek_metni).filter(text => text.trim()),
+      })),
+      append: questions => {
+        const list = document.getElementById('soruList');
+        const first = list.children.length;
+        questions.forEach(question => addQuestion(QUESTION_TYPES.CHOICE, importer.asReadingQuestion(question), true));
+        renumberQuestions();
+        window.requestAnimationFrame(() => list.children[first]?.querySelector('.soru-input')?.focus());
+      },
+    });
     document.getElementById('loginEmail').addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
         doLogin();

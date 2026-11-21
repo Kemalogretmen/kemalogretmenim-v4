@@ -49,6 +49,18 @@ test('concurrent agenda imports keep one new pupil and reconcile birthdays as co
  assert.equal(result.classes[0].students.filter(s=>s.agendaStudentId===source.id).length,1);
 });
 
+test('a manual agenda reassignment wins over a date refresh for the old pupil',()=>{
+ const base=initial(),student=pupil(base);
+ student.agendaStudentId='old-pupil';student.birthday={day:7,month:2};
+ const local=copy(base),remote=copy(base);
+ pupil(local).agendaStudentId='new-pupil';delete pupil(local).birthday;
+ pupil(remote).birthday={day:9,month:2};award(remote);
+ const merged=pupil(reconcile(base,local,remote));
+ assert.equal(merged.agendaStudentId,'new-pupil');
+ assert.equal(merged.birthday,undefined);
+ assert.equal(C.earned(merged),1);
+});
+
 test('known-base offline edits retain their additions while database deletions defeat stale edits',()=>{
  const b=initial(),l=copy(b),r=copy(b);award(l);r.classes[0].students=[];
  assert.deepEqual(reconcile(b,l,r).classes[0].students,[]);

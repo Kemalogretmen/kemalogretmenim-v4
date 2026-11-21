@@ -9,7 +9,7 @@
   <script>window.kemalAdminScope = 'reading';</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <link rel="stylesheet" href="/css/admin-shell.css?v=20260526-2">
+  <link rel="stylesheet" href="/css/admin-shell.css?v=20261119-scroll">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap');
     :root {
@@ -58,7 +58,7 @@
     .books-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
     .book-card{display:grid;grid-template-columns:74px minmax(0,1fr);gap:14px;padding:16px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 26px rgba(23,35,60,.05)}
     .book-cover{width:74px;aspect-ratio:3/4;border-radius:7px;display:grid;place-items:center;background:var(--cover,#DFF7F2);color:#fff;font-size:34px;overflow:hidden}
-    .book-cover img{width:100%;height:100%;object-fit:cover}
+    .book-cover img{width:100%;height:100%;object-fit:contain}
     .book-main{min-width:0}
     .book-title{font-family:'Fredoka',sans-serif;font-size:18px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .book-author{margin-top:3px;color:var(--muted);font-size:12px;font-weight:800}
@@ -81,7 +81,7 @@
     .panel+.panel{margin-top:14px}
     .panel h2{margin:0 0 14px;font-family:'Fredoka',sans-serif;font-size:19px}
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .source-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+    .source-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:14px}
     .source-tab{padding:12px;border:1.5px solid var(--line);border-radius:8px;background:#fff;color:var(--muted);font-weight:900;text-align:left}
     .source-tab span{display:block;margin-top:3px;font-size:10px;font-weight:700;line-height:1.35}
     .source-tab.active{border-color:var(--teal);background:#EAF9F6;color:var(--teal-dark)}
@@ -129,6 +129,7 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/okuma-soru-aktar.css?v=1">
 </head>
 <body>
   <div class="login-screen" id="loginScreen">
@@ -225,6 +226,7 @@
                 <button class="source-tab active" type="button" data-source="supabase_pdf">PDF Yükle<span>PDF'nin aslı korunarak private depoya yüklenir.</span></button>
                 <button class="source-tab" type="button" data-source="images">Çoklu Görsel<span>Görseller sıralanır ve WebP olarak optimize edilir.</span></button>
                 <button class="source-tab" type="button" data-source="external_pdf">PDF Linki<span>R2, doğrudan PDF veya paylaşım bağlantısı kullanılır.</span></button>
+                <button class="source-tab" type="button" data-source="fliphtml5">FlipHTML5</button>
               </div>
               <div class="source-box active" data-source-box="supabase_pdf">
                 <label for="fPdf">PDF dosyası</label>
@@ -242,7 +244,7 @@
                 <input type="url" id="fExternalUrl" placeholder="https://.../kitap.pdf">
                 <label for="fExternalPages">Sayfa sayısı</label>
                 <input type="number" id="fExternalPages" min="1" max="1000" value="10">
-                <div class="hint">Flipbook için bağlantının tarayıcıdan CORS erişimine açık olması gerekir. Uygun değilse okuyucu güvenli harici görüntüleme seçeneği sunar.</div>
+                <div class="hint" id="fExternalHint">Flipbook için bağlantının tarayıcıdan CORS erişimine açık olması gerekir. Uygun değilse okuyucu güvenli harici görüntüleme seçeneği sunar.</div>
               </div>
               <div class="upload-status" id="uploadStatus"></div>
             </div>
@@ -250,7 +252,10 @@
             <div class="panel">
               <div class="question-head">
                 <h2 style="margin:0">Kitap Sonu Soruları</h2>
-                <button class="btn btn-secondary" id="addQuestionButton" type="button">+ Soru Ekle</button>
+                <div class="question-tools">
+                  <button class="btn btn-secondary" id="addQuestionButton" type="button">+ Soru Ekle</button>
+                  <button class="btn btn-secondary" id="bulkBookQuestions" type="button"><span data-ui-icon="clipboard"></span> Toplu yapıştır</button>
+                </div>
               </div>
               <p class="hint">Test, doğru-yanlış ve yazılı boşluk doldurma soruları eklenebilir.</p>
               <div class="question-list" id="questionList"></div>
@@ -317,7 +322,7 @@
 
   <script src="/js/site-data.js"></script>
   <script src="/js/admin-auth.js?v=20260729-ebook"></script>
-  <script src="/js/admin-shell.js?v=20260729-ebook"></script>
+  <script src="/js/admin-shell.js?v=20261119-reklam"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       if (!window.KemalAdminShell) return;
@@ -333,6 +338,8 @@
       });
     });
   </script>
-  <script src="/js/e-kitap-admin.js?v=20260729-1"></script>
+  <script src="/js/e-kitap-kaynak.js?v=20261112"></script>
+  <script src="/js/okuma-soru-aktar.js?v=1"></script>
+  <script src="/js/e-kitap-admin.js?v=20261116-soru-aktar"></script>
 </body>
 </html>

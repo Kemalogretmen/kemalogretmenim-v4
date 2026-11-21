@@ -22,9 +22,10 @@
   }
   function humanError(error) {
     var message = String(error && (error.message || error.error_description) || 'İşlem tamamlanamadı.');
-    if (/syllable_streams|syllable_stream_results|schema cache|does not exist/i.test(message)) {
+    if (error && (['42P01', 'PGRST205'].includes(error.code) || /schema cache|relation .+ does not exist/i.test(message))) {
       return 'Hece Akışı tabloları henüz hazır değil. supabase-hece-akisi.sql dosyasını Supabase SQL Editor içinde bir kez çalıştırın.';
     }
+    if (error?.code === '42501') return 'Bu işlem için yönetici yetkiniz bulunmuyor veya yayın izinleri eksik.';
     return message;
   }
   function toast(message, isError) {
@@ -65,6 +66,15 @@
       byId('managerView').hidden = true;
       return false;
     }
+    try {
+      await window.kemalAdminAuth.ensureCurrentPageAccess(session);
+    } catch (error) {
+      byId('loginError').textContent = humanError(error);
+      byId('loginError').hidden = false;
+      byId('adminLogin').hidden = false;
+      byId('managerView').hidden = true;
+      return false;
+    }
     state.client = window.kemalAdminAuth.getClient();
     state.user = session.user;
     byId('adminLogin').hidden = true;
@@ -77,8 +87,7 @@
     errorNode.hidden = true;
     try {
       await window.kemalAdminAuth.signIn(byId('loginEmail').value, byId('loginPassword').value);
-      await authenticateAdmin();
-      await loadAll();
+      if (await authenticateAdmin()) await loadAll();
     } catch (error) {
       errorNode.textContent = humanError(error);
       errorNode.hidden = false;
@@ -157,9 +166,38 @@
       }
       var result = await query;
       if (result.error) throw result.error;
-      toast(state.editingId ? 'Çalışma güncellendi.' : 'Yeni çalışma kaydedildi.');
+      if (role === 'admin' && payload.status === 'published') await verifyPublication(result.data.id);
+      else toast(role === 'admin' ? 'Taslak kaydedildi. Ziyaretçilere görünmez.' : 'Çalışma kaydedildi.');
       resetForm();
       await loadAll();
+    } catch (error) {
+      toast(humanError(error), true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function verifyPublication(id) {
+    try {
+      const result = await window.HeceAkisiPublic.publicQuery('id').eq('id', id).maybeSingle();
+      if (result.error) throw result.error;
+      if (result.data) toast('Yayınlandı ve ziyaretçi kataloğunda doğrulandı.');
+      else toast('Yayın durumu kaydedildi, ancak çalışma ziyaretçi kataloğunda görünmüyor.', true);
+    } catch (_) {
+      toast('Yayın durumu kaydedildi; ziyaretçi kontrolü şu an yapılamadı.', true);
+    }
+  }
+
+  async function publishActivity(activity) {
+    if (!window.confirm('“' + activity.title + '” herkese açık yayımlansın mı?')) return;
+    setBusy(true);
+    try {
+      const result = await state.client.from('syllable_streams')
+        .update({ status: 'published', visibility: 'public' }).eq('id', activity.id).select('id').single();
+      if (result.error) throw result.error;
+      if (state.editingId === activity.id) byId('activityStatus').value = 'published';
+      await loadAll();
+      await verifyPublication(result.data.id);
     } catch (error) {
       toast(humanError(error), true);
     } finally {
@@ -305,8 +343,11 @@
       return;
     }
     grid.innerHTML = state.activities.map(function(item) {
-      var statusClass = item.status === 'published' ? 'live' : 'draft';
-      var statusLabel = item.status === 'published' ? (role === 'admin' ? 'Herkese açık' : 'Kullanıma hazır') : 'Taslak';
+      var isPublic = item.status === 'published' && item.visibility === 'public';
+      var statusClass = (role === 'admin' ? isPublic : item.status === 'published') ? 'live' : 'draft';
+      var statusLabel = role === 'admin'
+        ? (isPublic ? 'Herkese açık' : item.status === 'published' ? 'Ziyaretçilere kapalı' : 'Taslak')
+        : (item.status === 'published' ? 'Kullanıma hazır' : 'Taslak');
       var mode = item.mode === 'automatic' ? 'Otomatik · ' + ((item.interval_ms || 0) / 1000) + ' sn' : 'Dokunarak ilerle';
       return '<article class="ha-activity-card" data-id="' + escapeHtml(item.id) + '">' +
         '<h3>' + escapeHtml(item.title) + '</h3>' +
@@ -317,6 +358,7 @@
         '<span class="ha-badge">' + escapeHtml((item.falling_units || []).length) + ' birim</span></div>' +
         '<div class="ha-card-actions"><button class="ha-btn" type="button" data-action="run">Başlat</button>' +
         '<button class="ha-btn" type="button" data-action="edit">Düzenle</button>' +
+        (role === 'admin' && !isPublic ? '<button class="ha-btn ha-btn-primary" type="button" data-action="publish">Yayınla</button>' : '') +
         '<button class="ha-btn ha-btn-danger" type="button" data-action="archive">Arşivle</button></div></article>';
     }).join('');
   }
@@ -376,9 +418,10 @@
     setBusy(true);
     try {
       await loadActivities();
+      renderActivities();
       await Promise.all([loadResults(), loadRoster()]);
       renderRoster();
-      renderActivities();
+      if (role === 'teacher') renderActivities();
       renderResults();
       byId('managerNotice').hidden = true;
     } catch (error) {
@@ -404,6 +447,10 @@
       if (!activity) return;
       if (button.dataset.action === 'edit') fillForm(activity);
       if (button.dataset.action === 'archive') archiveActivity(activity.id);
+      if (button.dataset.action === 'publish' && role === 'admin') {
+        button.disabled = true;
+        publishActivity(activity).finally(function() { button.disabled = false; });
+      }
       if (button.dataset.action === 'run') window.open(runHref(activity), '_blank', 'noopener');
     });
     if (role === 'teacher') byId('studentPicker').addEventListener('change', renderActivities);

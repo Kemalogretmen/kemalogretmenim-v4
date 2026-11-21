@@ -294,8 +294,12 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="/css/okuma-tercih.css?v=1">
+<link rel="stylesheet" href="/css/okuma-odak.css?v=20261116-kagit">
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="reading"></script>
 </head>
-<body>
+<body class="reading-book">
 
   <!-- ─── HAZIR EKRANI ─── -->
   <div id="hazirEkran" style="display:flex;">
@@ -304,33 +308,68 @@
     <div class="hazir-title" id="hazirBaslik">Metin Yükleniyor…</div>
     <div class="hazir-kullanici" id="hazirKullanici">—</div>
     <p class="hazir-sub" id="hazirBilgi">Hazır olduğunda başla butonuna bas.</p>
+    <div class="reading-choice" id="readingChoice" hidden>
+      <fieldset>
+        <legend>Okuma biçimi</legend>
+        <div class="reading-choice-options">
+          <label><input type="radio" name="readingMode" value="tam" checked> Tam metin</label>
+          <label><input type="radio" name="readingMode" value="kelime"> Kelime kelime</label>
+        </div>
+      </fieldset>
+      <fieldset id="readingAdvance" hidden>
+        <legend>İlerleme</legend>
+        <div class="reading-choice-options">
+          <label><input type="radio" name="readingAdvance" value="auto" checked> Otomatik</label>
+          <label><input type="radio" name="readingAdvance" value="click"> Tıklayarak</label>
+        </div>
+      </fieldset>
+      <div class="reading-choice-pace" id="readingPace" hidden>
+        <label for="readingWordMs">Kelime başına süre</label>
+        <output id="readingWordMsValue" for="readingWordMs">1 sn</output>
+        <input id="readingWordMs" type="range" min="300" max="3000" step="100" value="1000">
+      </div>
+    </div>
     <button class="hazir-basla-btn" id="hazirBtn" onclick="okumaBaslat()" disabled>⏳ Yükleniyor…</button>
   </div>
 
   <!-- ─── TAM METİN MODU ─── -->
   <div id="tamMetinEkran">
-    <div class="okuma-topbar">
-      <div class="okuma-kullanici" id="tamMetinKullanici">👤 —</div>
-      <div class="sayac-display" id="sayacDisplay">00:00</div>
-    </div>
-    <div class="kitap-wrapper">
-      <div class="kitap-baslik" id="tamMetinBaslik">—</div>
-      <div class="okuma-visual" id="okumaVisual" style="display:none;">
-        <img id="okumaVisualImg" alt="">
-        <div class="okuma-visual-caption" id="okumaVisualCaption" style="display:none;"></div>
+    <header class="okuma-topbar">
+      <span class="reading-bar-label"><span data-ui-icon="book"></span> Okuma</span>
+      <div class="reading-bar-actions">
+        <span class="sayac-display" aria-label="Geçen süre"><span data-ui-icon="timer"></span><span id="sayacDisplay" role="timer">00:00</span></span>
+        <button class="reading-focus-button" type="button" data-reading-fullscreen><span data-ui-icon="monitor"></span><span data-fullscreen-label>Tam ekran</span></button>
       </div>
-      <div class="kitap-metin" id="tamMetinIcerik"></div>
-    </div>
-    <div class="bitti-alani">
-      <button class="bitti-btn" onclick="okumaBitti()">✅ Okumam Bitti!</button>
-    </div>
+    </header>
+    <article class="kitap-wrapper" aria-labelledby="tamMetinBaslik">
+      <div id="readingPageWindow">
+        <div class="reading-page-track">
+          <div id="readingPageFlow">
+            <h1 class="kitap-baslik" id="tamMetinBaslik">—</h1>
+            <div class="okuma-visual" id="okumaVisual" style="display:none;">
+              <img id="okumaVisualImg" alt="">
+              <div class="okuma-visual-caption" id="okumaVisualCaption" style="display:none;"></div>
+            </div>
+            <div class="kitap-metin" id="tamMetinIcerik"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+    <nav class="reading-pages" aria-label="Okuma sayfaları">
+      <button type="button" id="readingPageBack" class="reading-page-button" aria-label="Önceki sayfa" title="Önceki sayfa" disabled><span data-ui-icon="arrow"></span><span class="reading-page-label">Önceki</span></button>
+      <output id="readingPageCount" aria-live="polite" aria-atomic="true">1 / 1</output>
+      <button type="button" id="readingPageNext" class="bitti-btn reading-page-button" onclick="okumaBitti()" disabled><span id="readingPageNextLabel">Okumam bitti</span><span id="readingPageNextIcon" data-ui-icon="arrow" hidden></span></button>
+    </nav>
   </div>
 
   <!-- ─── KELIME KELIME MODU ─── -->
-  <div id="kelimeEkran" onclick="kelimeTikla()">
+  <div id="kelimeEkran" onclick="kelimeTikla(event)">
     <div class="kk-top">
       <div class="kk-meta" id="kkMeta">—</div>
-      <div class="kk-sayac" id="kkSayac">00:00</div>
+      <div class="reading-bar-actions">
+        <span class="kk-sayac" id="kkSayac" role="timer" aria-label="Geçen süre">00:00</span>
+        <button class="reading-focus-button" type="button" data-reading-fullscreen><span data-fullscreen-label>Tam ekran</span></button>
+      </div>
     </div>
     <div class="kk-kelime-wrap">
       <span class="kk-kelime" id="kkKelime">●</span>
@@ -342,15 +381,22 @@
       <div class="kk-progress-txt" id="kkProgressTxt">0 / 0 kelime</div>
     </div>
     <div class="kk-controls" id="kkControls">
-      <button type="button" onclick="kelimeHiziDegistir(-50)">−</button>
+      <button type="button" aria-label="Yavaşlat" title="Yavaşlat" onclick="kelimeHiziDegistir(-50)">−</button>
       <span class="kk-speed-label" id="kkSpeedLabel">120 k/dk</span>
-      <button type="button" onclick="kelimeHiziDegistir(50)">+</button>
+      <button type="button" aria-label="Hızlandır" title="Hızlandır" onclick="kelimeHiziDegistir(50)">+</button>
     </div>
     <div class="kk-click-hint" id="kkHint">herhangi bir yere tıkla →</div>
+    <div class="reading-word-nav" id="readingWordNav" hidden>
+      <button type="button" id="readingWordBack" aria-label="Önceki kelime" title="Önceki kelime"><span class="reading-back-icon" data-ui-icon="arrow"></span></button>
+      <button type="button" id="readingWordNext"><span id="readingWordNextLabel">Sonraki kelime</span> <span data-ui-icon="arrow"></span></button>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/site-data.js?v=20260418-2"></script>
-  <script src="/js/okuma-screen.js?v=20261008-dik-temel"></script>
+  <script src="/js/okuma-ayar.js?v=1"></script>
+  <script src="/js/okuma-odak.js?v=1"></script>
+  <script src="/js/okuma-sayfalari.js?v=20261116-kagit"></script>
+  <script src="/js/okuma-screen.js?v=20261116-sayfalar"></script>
 </body>
 </html>

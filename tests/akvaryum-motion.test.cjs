@@ -51,6 +51,21 @@ test('resting layout follows an off-center pearl, and releases its space when hi
  const settled={x:fish.x,y:fish.y};advance([fish],100,900,600);assert.deepEqual({x:fish.x,y:fish.y},settled);
  fish.hungry=false;advance([fish],100,900,600);assert.notEqual(fish.x,settled.x);
 });
+test('a sleeping classroom spreads across the scene with room for names and score badges',()=>{
+ const w=1800,h=720,pearl={x:815,y:565,width:170,height:145};
+ const fish=C.SPECIES.slice(0,24).map((s,i)=>({id:'fish-'+i,species:s.id,size:s.size}));
+ const scene=M.layout(fish,w,h),items=fish.map(s=>({...scene.get(s.id),id:s.id}));
+ const places=M.restLayout(items,w,h,pearl);
+ assert.deepEqual(M.restLayout([...items].reverse(),w,h,pearl),places);
+ const boxes=items.map(s=>{
+  const {x,y}=places.get(s.id),center=x+s.size/2,half=Math.max(86,s.size)/2;
+  return {left:center-half,right:center+half,top:y-27,bottom:y+s.size*.67+55};
+ });
+ for(const [i,a] of boxes.entries())for(const b of boxes.slice(i+1)){
+  assert.ok(a.right<=b.left || b.right<=a.left || a.bottom<=b.top || b.bottom<=a.top);
+ }
+ assert.ok(new Set([...places.values()].map(p=>Math.round(p.x/90))).size>=10);
+});
 test('short classroom board lanes keep fish visible before growth instead of shrinking each grid row',()=>{
  const items=Array.from({length:25},(_,i)=>({id:String(i),species:i===24?'goldfish':'betta',size:125}));
  const board=M.layout(items,1240,242),desktop=M.layout(items,1240,540);
@@ -204,7 +219,8 @@ test('soft turns ease through intermediate headings over 2.6 seconds, keep volum
   assert.equal(f.direction,-initial);assert.equal(f.turn,null);assert.equal(f.angle,initial>0?180:0);
   assert.ok(Math.abs(poses[0].yaw-(initial>0?0:180))<.02,'gentle acceleration at start');
   assert.ok(poses.some(p=>p.fullness>.97&&p.round>.99),'solid core persists across the edge-on heading');
-  assert.ok(poses.every(p=>Math.abs(p.bank)<=3.5&&p.scale<=1.035&&p.lift>=-2.5));
+  assert.ok(poses.every(p=>Math.abs(p.bank)<=5&&p.scale<=1.065&&p.lift>=-3.5));
+  assert.ok(poses.some(p=>Math.abs(p.bank)>4.5&&p.pitch<-6&&p.scale>1.05));
   assert.equal(poses.at(-1).fullness,0);assert.ok(Math.abs(poses.at(-1).bank)<.0001);
   const facing=f.angle;M.step([f],.05,1000,600,()=>.5);assert.equal(f.angle,facing);
  }
@@ -248,8 +264,8 @@ test('crabs walk and drift sideways without mirroring or turning their whole bod
   f.bottomRest=true;f.angle=180;M.step([f],.05,1000,600);assert.equal(f.angle,0);
  }
 });
-test('all three characters alternate smooth swimming and sand walking independently, and hunger pauses the cycle',()=>{
- for(const species of ['spongebob','patrick','mrkrabs']){
+test('walking characters alternate smooth swimming and sand walking independently, and hunger pauses the cycle',()=>{
+ for(const species of ['spongebob','patrick','mrkrabs','plankton','squidward','sandy']){
   const f={...animals(1,1000,600)[0],species,profile:M.profile(species),x:400,y:180,minY:30,maxY:480,characterClock:33,phase:0};
   let walked=false,swamAfter=false,walkFrames=0;
   for(let i=0;i<2100;i++){

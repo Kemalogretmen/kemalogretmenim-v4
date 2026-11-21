@@ -4,8 +4,11 @@
   const S=window.AquariumSounds, titles=Object.fromEntries(S.catalogue.map(t=>[t.id,t.name])), tracks={off:'Sessiz',...titles};
   let channels=new Map(),generation=0,volume=.3,userPaused=false,mix=[];
   let context,master;
+  let feedPlayer=null,feedGeneration=0;
+  let gameNodes=[],gameGeneration=0,gamePlayer=null,pianoRequest=0,pianoPlayed=0;
   let alarmNodes=[],alarmGeneration=0;
   let pickerNodes=[],pickerGeneration=0;
+  let birthdayNotes=[],birthdayGeneration=0;
   function ensureContext() {
     const Type=window.AudioContext||window.webkitAudioContext;
     if(!Type) throw Error('Bu tarayıcı uyarı sesini desteklemiyor.');
@@ -101,18 +104,91 @@
       pickerNote(ctx,start+t,260,'sine',.2,.065);
     }
   }
-  async function feed() {
-    ensureContext();
-    master.gain.value = volume; await context.resume();
-    [523.25, 659.25, 783.99].forEach((frequency, i) => {
-      const at = context.currentTime + i * .1, osc = context.createOscillator(), gain = context.createGain();
-      osc.frequency.value = frequency; gain.gain.setValueAtTime(0, at); gain.gain.linearRampToValueAtTime(.16, at + .04); gain.gain.exponentialRampToValueAtTime(.0001, at + .3);
-      osc.connect(gain); gain.connect(master); osc.start(at); osc.stop(at + .35);
-      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+  function cancelGame(){
+    gameGeneration++;
+    if(gamePlayer){dispose({audio:gamePlayer});gamePlayer=null;}
+    gameNodes.forEach(({osc,gain})=>{try{osc.stop();}catch(e){}osc.disconnect();gain.disconnect();});gameNodes=[];
+  }
+  async function pianoNote(index){
+    if(volume===0)return;
+    const request=gameGeneration,order=++pianoRequest,ctx=ensureContext();master.gain.value=volume;
+    if(gamePlayer){dispose({audio:gamePlayer});gamePlayer=null;}
+    await ctx.resume();if(request!==gameGeneration||order<pianoPlayed)return;pianoPlayed=order;
+    // A short hammer attack with independently decaying harmonics, no pitch glide.
+    // Four overlapping voices allow successive notes to form a connected phrase.
+    while(gameNodes.length>9){const node=gameNodes.shift();try{node.osc.stop();}catch(e){}node.osc.disconnect();node.gain.disconnect();}
+    const frequency=[293.66,329.63,349.23,392][index],start=ctx.currentTime;
+    [[1,.17,.82],[2,.05,.48],[3,.02,.29]].forEach(([harmonic,peak,length])=>{
+      const osc=ctx.createOscillator(),gain=ctx.createGain(),node={osc,gain,piano:true};osc.type='sine';osc.frequency.setValueAtTime(frequency*harmonic,start);
+      gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(peak,start+.006);gain.gain.exponentialRampToValueAtTime(peak*.32,start+.13);gain.gain.exponentialRampToValueAtTime(.0001,start+length);
+      osc.connect(gain);gain.connect(master);gameNodes.push(node);osc.onended=()=>{osc.disconnect();gain.disconnect();gameNodes=gameNodes.filter(n=>n!==node);};osc.start(start);osc.stop(start+length+.025);
     });
   }
-  function setVolume(value){volume=S.level(value,0);volumes();if(master)master.gain.setTargetAtTime(volume,context.currentTime,.1);}
+  async function bubblePop(kind='correct'){
+    if(/^tone-[0-3]$/.test(kind))return pianoNote(Number(kind.slice(-1)));
+    cancelGame();if(volume===0)return;
+    const request=gameGeneration;
+    if(kind==='correct'||kind==='select'){
+      const audio=new window.Audio('/assets/akvaryum/sesler/baloncuk-patlama.mp3');gamePlayer=audio;audio.loop=false;audio.preload='auto';audio.volume=volume;
+      audio.addEventListener('ended',()=>{if(gamePlayer===audio){gamePlayer=null;dispose({audio});}});
+      try{await audio.play();if(request!==gameGeneration||gamePlayer!==audio)audio.pause();}
+      catch(e){if(request!==gameGeneration||gamePlayer!==audio)return;cancelGame();throw Error('Baloncuk patlama sesi çalınamadı.');}
+      return;
+    }
+    const ctx=ensureContext();master.gain.value=volume;await ctx.resume();if(request!==gameGeneration)return;
+    const frequencies=kind==='wrong'?[220,174.61]:kind==='finish'?[523.25,659.25,783.99]:[/^tone-[0-3]$/.test(kind)?[261.63,329.63,392,523.25][Number(kind.slice(-1))]:kind==='select'?680:880],start=ctx.currentTime;
+    frequencies.forEach((frequency,i)=>{
+      const at=start+i*.09,osc=ctx.createOscillator(),gain=ctx.createGain(),node={osc,gain};
+      osc.type='sine';osc.frequency.setValueAtTime(frequency,at);osc.frequency.exponentialRampToValueAtTime(frequency*.72,at+.14);
+      gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(kind==='wrong'?.075:.18,at+.012);gain.gain.exponentialRampToValueAtTime(.0001,at+.19);
+      osc.connect(gain);gain.connect(master);gameNodes.push(node);osc.onended=()=>{osc.disconnect();gain.disconnect();gameNodes=gameNodes.filter(n=>n!==node);};osc.start(at);osc.stop(at+.21);
+    });
+  }
+  function cancelBirthday(){
+    birthdayGeneration++;
+    for(const {osc,gain} of birthdayNotes){try{osc.stop();}catch(e){}osc.disconnect();gain.disconnect();}
+    birthdayNotes=[];
+  }
+  async function birthday(){
+    cancelBirthday();if(volume===0)return;
+    const request=birthdayGeneration,ctx=ensureContext();master.gain.value=volume;
+    await ctx.resume();if(request!==birthdayGeneration||ctx.state==='suspended')return;
+    // Familiar birthday melody, played as a short instrumental on the shared volume control.
+    const notes=[67,67,69,67,72,71,67,67,69,67,74,72,67,67,79,76,72,71,69,77,77,76,72,74,72];
+    const lengths=[.5,.5,1,1,1,1.5,.5,.5,1,1,1,1.5,.5,.5,1,1,1,1,1.5,.5,.5,1,1,1,2];
+    let at=ctx.currentTime+.025;
+    for(const [i,note] of notes.entries()){
+      const duration=lengths[i]*.36,frequency=440*2**((note-69)/12);
+      const osc=ctx.createOscillator(),gain=ctx.createGain(),node={osc,gain};
+      osc.type='triangle';osc.frequency.setValueAtTime(frequency,at);
+      gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.20,at+.012);
+      gain.gain.exponentialRampToValueAtTime(.0001,at+duration+.045);
+      osc.connect(gain);gain.connect(master);birthdayNotes.push(node);
+      osc.onended=()=>{osc.disconnect();gain.disconnect();birthdayNotes=birthdayNotes.filter(other=>other!==node);};
+      osc.start(at);osc.stop(at+duration+.055);at+=duration;
+    }
+  }
+  function cancelFeed() {
+    feedGeneration++;
+    if(feedPlayer){dispose({audio:feedPlayer});feedPlayer=null;}
+  }
+  async function feedback(negative=false) {
+    cancelFeed();
+    if(volume===0)return;
+    const request=feedGeneration,audio=new window.Audio('/assets/akvaryum/sesler/'+(negative?'olumsuz':'olumlu')+'.mp3');
+    feedPlayer=audio;audio.loop=false;audio.preload='auto';audio.volume=volume;
+    audio.addEventListener('ended',()=>{if(feedPlayer===audio){feedPlayer=null;dispose({audio});}});
+    try{
+      await audio.play();
+      if(request!==feedGeneration||feedPlayer!==audio)audio.pause();
+    }catch(e){
+      if(request!==feedGeneration||feedPlayer!==audio)return;
+      cancelFeed();throw Error((negative?'Olumsuz':'Olumlu')+' davranış sesi çalınamadı. Ses ayarını ve bağlantınızı kontrol edin.');
+    }
+  }
+  const feed=()=>feedback(false),negative=()=>feedback(true);
+  function setVolume(value){volume=S.level(value,0);volumes();if(feedPlayer)feedPlayer.volume=volume;if(gamePlayer)gamePlayer.volume=volume;if(master)master.gain.setTargetAtTime(volume,context.currentTime,.1);}
   // Background tabs retain playback; explicit pause or leaving this page stops it.
-  window.addEventListener('pagehide',()=>{stop();cancelTimer();cancelPicker();});
-  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,setVolume,setLayerVolume,describe,scheduleTimer,cancelTimer,pickerSound,cancelPicker,current:()=>mix[0]?.id||'off',isPlaying};
+  window.addEventListener('pagehide',()=>{stop();cancelTimer();cancelPicker();cancelFeed();cancelGame();cancelBirthday();});
+  window.AquariumAudio={tracks,titles,catalogue:S.catalogue,play,playMix,stop,pause,resume,toggle,feed,negative,cancelFeed,bubblePop,cancelGame,birthday,cancelBirthday,setVolume,setLayerVolume,describe,scheduleTimer,cancelTimer,pickerSound,cancelPicker,current:()=>mix[0]?.id||'off',isPlaying};
 })();

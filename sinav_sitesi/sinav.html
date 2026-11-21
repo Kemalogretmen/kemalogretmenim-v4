@@ -188,14 +188,9 @@ body.theme-dark{
 .question-image-status-card button[hidden]{display:none}
 .question-image-status-card .spinner[hidden]{display:none}
 .question-hint{font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
-.exam-answers{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:0 10px}
-.ans-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border:2px solid #CBD5E0;border-radius:40px;background:var(--panel-surface);cursor:pointer;font-size:14px;font-weight:700;transition:all .18s;font-family:var(--fb);color:var(--navy)}
+.ans-btn{border:2px solid #CBD5E0;border-radius:12px;background:var(--panel-surface);cursor:pointer;font:800 16px var(--fb);transition:background-color .18s,border-color .18s;color:var(--navy)}
 .ans-btn:hover{border-color:var(--purple);color:var(--purple)}
 .ans-btn.selected{border-color:#4C1D95;background:#6D28D9;color:#fff;box-shadow:0 0 0 3px #DDD6FE,0 4px 10px rgba(76,29,149,.22)}
-.ans-btn.selected .ans-circle{background:#fff;border-color:#fff;color:#5B21B6}
-.ans-circle{width:28px;height:28px;border-radius:50%;border:2.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
-.exam-navrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px;background:var(--white);border-top:1.5px solid var(--border);flex-shrink:0;flex-wrap:wrap}
-.exam-nav-main{flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:380px;margin:0 auto}
 .exam-nav-btn{min-height:40px;padding:0 16px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple-l));color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:800;font-family:var(--fd);transition:transform .18s,box-shadow .18s,opacity .18s;box-shadow:0 6px 16px rgba(108,61,237,.22)}
 .exam-nav-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 20px rgba(108,61,237,.28)}
 .exam-nav-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
@@ -224,10 +219,8 @@ body.theme-dark{
 .op-bub.blank{background:#E2E8F0;border-color:#CBD5E0;color:var(--muted)}
 
 /* Mobile optic toggle */
-.optic-fab{display:none;position:fixed;bottom:80px;right:16px;z-index:200;width:52px;height:52px;border-radius:50%;background:var(--navy);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:var(--sh-lg);align-items:center;justify-content:center;flex-direction:column;gap:1px}
-.optic-fab-count{font-size:10px;font-weight:700;line-height:1}
-.optic-drawer{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--white);border-radius:20px 20px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.15);max-height:55vh;overflow:hidden;flex-direction:column;transform:translateY(100%);transition:transform .3s ease}
-.optic-drawer.open{transform:translateY(0)}
+.optic-drawer{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--white);border-radius:20px 20px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.15);max-height:55vh;overflow:hidden;flex-direction:column;transform:translateY(100%);visibility:hidden;pointer-events:none}
+.optic-drawer.open{transform:translateY(0);visibility:visible;pointer-events:auto;transition:transform .3s ease}
 .od-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:10px auto 0}
 .od-close{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
 .od-close span{font-family:var(--fd);font-size:14px;font-weight:800}
@@ -299,18 +292,6 @@ body.theme-dark .size-value{color:var(--muted)}
 .btn-outline:hover{border-color:var(--purple);color:var(--purple)}
 
 /* LIGHTBOX */
-.image-lightbox{position:fixed;inset:0;background:rgba(15,23,42,.94);display:none;align-items:center;justify-content:center;z-index:700;overflow:hidden}
-.image-lightbox.open{display:flex}
-.lb-close{position:absolute;top:18px;right:18px;width:44px;height:44px;border:none;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:24px;cursor:pointer;z-index:2}
-.lb-close:hover{background:rgba(255,255,255,.18)}
-.lb-hint{position:absolute;top:24px;left:24px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);font-size:12px;font-weight:600;z-index:2}
-.lb-stage{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none}
-.lb-stage.dragging{cursor:grabbing}
-.lb-img{max-width:min(92vw,1200px);max-height:86vh;object-fit:contain;will-change:transform;transform-origin:center center;user-select:none}
-.lb-controls{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);z-index:2}
-.lb-btn{width:40px;height:40px;border:none;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:20px;cursor:pointer}
-.lb-btn:hover{background:rgba(255,255,255,.22)}
-.lb-scale{min-width:62px;text-align:center;color:#fff;font-size:12px;font-weight:700}
 
 /* TIMEOUT SCREEN */
 #screenTimeout{display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px}
@@ -467,7 +448,6 @@ body.theme-dark .size-value{color:var(--muted)}
   .etb-title{display:none}
   .theme-toggle span:last-child{display:none}
   .optic-panel{display:none}
-  .optic-fab{display:flex}
   .optic-drawer{display:flex}
   .exam-q-wrap{justify-content:flex-start;padding:10px 10px;gap:8px}
   .question-media-shell{width:100%}
@@ -475,11 +455,6 @@ body.theme-dark .size-value{color:var(--muted)}
   .status-pills,.status-actions{width:100%}
   .exam-media-stage{width:100%;height:clamp(380px,calc(100dvh - 250px),620px);border-radius:18px;padding:7px}
   .stage-workspace{border-radius:15px}
-  .exam-answers{gap:6px;padding:0;width:100%}
-  .ans-btn{flex:1 1 64px;justify-content:center;min-height:44px;padding:8px 10px;font-size:13px}
-  .exam-navrow{padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
-  .exam-nav-main{max-width:none;width:100%}
-  .finish-btn{margin-left:auto}
   .karne-topbar{padding:14px 16px}
   .karne-topbar-copy,.karne-actions-shell{width:100%}
   .karne-actions-shell{align-items:stretch}
@@ -506,15 +481,11 @@ body.theme-dark .size-value{color:var(--muted)}
   .feedback-kicker{border-right:none;border-bottom:1px solid #D6E2F1}
   .sheet-footer{grid-template-columns:1fr;text-align:center}
   .sheet-footer div:last-child,.sheet-footer-center{text-align:center;justify-self:center}
-  .lb-hint{left:14px;right:68px;top:14px}
-  .lb-controls{bottom:18px}
 }
 @media(max-width:480px){
   .modal-metrics{grid-template-columns:1fr}
   .warn-card{padding:24px 20px}
   .tool-btn{padding:8px 12px}
-  .exam-nav-btn{min-height:52px;font-size:15px}
-  .finish-btn{width:100%;justify-content:center}
   .exam-section-banner{width:100%;justify-content:center;text-align:center;flex-wrap:wrap}
   .mini-action-btn{flex:1;justify-content:center}
   .question-status-strip{display:none}
@@ -522,7 +493,6 @@ body.theme-dark .size-value{color:var(--muted)}
   .exam-media-stage{height:clamp(380px,calc(100dvh - 218px),620px)}
   .karne-stats{grid-template-columns:1fr}
   .ko-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .lb-hint{font-size:11px;padding:8px 12px}
 }
 
 body.karne-export-mode #screenKarne{background:#fff!important}
@@ -562,9 +532,13 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
 }
 @page{size:A4 landscape;margin:0}
 </style>
+<link rel="stylesheet" href="./js/exam-workspace.css?v=2">
+<script src="./js/exam-workspace.js?v=1"></script>
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="exams"></script>
 </head>
 <body>
 
@@ -611,7 +585,7 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
   </div>
 </div>
 
-<div id="screenExam" style="display:none;height:100vh;overflow:hidden;flex-direction:column">
+<div id="screenExam" style="display:none">
   <div class="exam-topbar">
     <div class="etb-left">
       <div class="etb-grade-badge" id="topGradeBadge"></div>
@@ -622,13 +596,19 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
     </div>
     <div class="etb-right">
       <span data-theme-control-slot></span>
+      <button id="examFullscreenButton" class="theme-toggle exam-fullscreen-button" type="button" onclick="toggleExamFullscreen()" aria-label="Tam ekran" aria-pressed="false"><svg class="exam-fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg><span>Tam ekran</span></button>
       <div class="etb-qprog" id="qProg">0 / 0</div>
     </div>
   </div>
-  <div class="exam-body">
+  <div class="exam-section-tabs" id="examSectionTabs" role="tablist" aria-label="Sınav dersleri" hidden></div>
+  <div class="exam-body" id="examTabPanel" role="tabpanel">
     <div class="exam-main" id="examMain">
       <div class="exam-q-wrap">
-        <div class="exam-q-num" id="qNum"></div>
+        <div class="exam-question-meta">
+          <div class="exam-q-num" id="qNum" aria-live="polite"></div>
+          <button class="exam-workspace-action" id="flagQuestion" type="button" onclick="toggleQuestionFlag()" aria-pressed="false">Daha sonra dön</button>
+          <button class="exam-workspace-action" id="nextFlaggedQuestion" type="button" onclick="goToFlaggedQuestion()" hidden></button>
+        </div>
         <div class="exam-section-banner" id="questionSectionBanner"></div>
         <div class="question-media-shell">
           <div class="exam-media-stage" id="mediaStage">
@@ -651,26 +631,26 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
                   </div>
                   <div class="toolbar-divider"></div>
                   <div class="toolbar-section">
-                    <button class="tool-btn compact" type="button" data-draw-tool="select" onclick="setDrawTool('select')" title="Seçim aracı (S)">
-                      <span class="tool-icon">🖱️</span><span class="tool-label-sm">Seçim</span>
+                    <button class="tool-btn compact" type="button" data-draw-tool="select" onclick="setDrawTool('select')" title="Görsel üzerinden şık seç veya yakınlaştırılan soruyu sürükle (S)">
+                      <svg class="exam-tool-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l13 10-6 1-3 6z"/></svg><span class="tool-label-sm">Şık seç</span>
                     </button>
                     <button class="tool-btn compact" type="button" data-draw-tool="pencil" onclick="setDrawTool('pencil',{togglePanel:true})" title="Kalem aracı (K)">
-                      <span class="tool-icon">✏️</span><span class="tool-label-sm">Kalem</span>
+                      <svg class="exam-tool-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v3h3L20 7l-3-3zM14 7l3 3"/></svg><span class="tool-label-sm">Kalem</span>
                     </button>
                     <button class="tool-btn compact" type="button" data-draw-tool="eraser" onclick="setDrawTool('eraser')" title="Silgi aracı (L)">
-                      <span class="tool-icon">⬜</span><span class="tool-label-sm">Silgi</span>
+                      <svg class="exam-tool-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 19h12M4 14l8-9a2 2 0 0 1 3 0l4 4a2 2 0 0 1 0 3l-7 7H9zM8 10l7 7"/></svg><span class="tool-label-sm">Silgi</span>
                     </button>
                   </div>
                   <div class="toolbar-divider"></div>
                   <div class="toolbar-action-stack">
                     <button class="tool-btn compact" type="button" onclick="resetQuestionZoom()" title="Yakınlaştırmayı sıfırla (0)">
-                      <span class="tool-icon">↺</span><span class="tool-label-sm">Zoom Sıfırla</span>
+                      <svg class="exam-tool-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2 7m-2-7V4m0 7h7"/></svg><span class="tool-label-sm">Sığdır</span>
                     </button>
-                    <button class="tool-btn compact" type="button" onclick="openImageLightbox()" title="Soruyu tam ekranda aç">
-                      <span class="tool-icon">🔍</span><span class="tool-label-sm">Tam Ekran</span>
+                    <button class="tool-btn compact" type="button" id="undoExamInk" onclick="undoExamDrawing()" title="Son çizgiyi geri al">
+                      <svg class="exam-tool-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6l-4 4 4 4m-4-4h10a5 5 0 0 1 0 10"/></svg><span class="tool-label-sm">Geri al</span>
                     </button>
                     <button class="tool-btn compact" type="button" onclick="clearCurrentDrawing()" title="Bu sorudaki çizimleri temizle">
-                      <span class="tool-icon">🗑️</span><span class="tool-label-sm">Temizle</span>
+                      <svg class="exam-tool-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7m4-7v7"/></svg><span class="tool-label-sm">Temizle</span>
                     </button>
                   </div>
                 </div>
@@ -703,7 +683,8 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
             </div>
             <div class="stage-workspace" id="stageWorkspace">
               <div class="question-transform-layer" id="questionTransformLayer">
-                <img class="exam-q-img" id="qImg" src="" alt="Soru görseli" draggable="false">
+                <img class="exam-q-img" id="qImg" alt="Soru görseli" draggable="false">
+                <div class="exam-option-overlay" id="examOptionOverlay" hidden></div>
               </div>
               <canvas class="draw-canvas" id="drawCanvas" aria-hidden="true"></canvas>
               <div class="question-image-status" id="questionImageStatus" role="status" aria-live="polite" hidden>
@@ -717,7 +698,6 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
             </div>
           </div>
         </div>
-        <div class="exam-answers" id="examAnswers"></div>
       </div>
     </div>
     <div class="optic-panel" id="opticPanel">
@@ -733,39 +713,26 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
   </div>
   <div class="exam-navrow">
     <div class="exam-nav-main">
-      <button class="exam-nav-btn" id="btnPrev" onclick="prevQ()" title="Önceki soru (Sol ok)"><span>◀</span><span>Önceki Soru</span></button>
-      <button class="exam-nav-btn" id="btnNext" onclick="nextQ()" title="Sonraki soru (Sağ ok)"><span>Sonraki Soru</span><span>▶</span></button>
+      <button class="exam-nav-btn" id="btnPrev" type="button" onclick="prevQ()" aria-label="Önceki soru" title="Önceki soru (Sol ok)"><span aria-hidden="true">‹</span><span class="exam-nav-label">Önceki Soru</span></button>
+      <div class="exam-answers" id="examAnswers" role="group" aria-label="Cevap seçenekleri"></div>
+      <button class="exam-nav-btn" id="btnNext" type="button" onclick="nextQ()" aria-label="Sonraki soru" title="Sonraki soru (Sağ ok)"><span class="exam-nav-label">Sonraki Soru</span><span aria-hidden="true">›</span></button>
     </div>
-    <button class="finish-btn" onclick="showFinishConfirm()"><span class="finish-icon">⚠️</span><span>Sınavı Bitir</span></button>
+    <div class="exam-nav-actions">
+      <button class="exam-optic-btn" id="opticFab" type="button" onclick="toggleDrawer()" aria-controls="opticDrawer" aria-expanded="false">
+        <span>Optik Form</span><span id="fabCount">0</span>
+      </button>
+      <button class="finish-btn" type="button" onclick="showFinishConfirm()"><span class="finish-icon" aria-hidden="true">⚠️</span><span>Sınavı Bitir</span></button>
+    </div>
   </div>
 </div>
 
-<button class="optic-fab" id="opticFab" onclick="toggleDrawer()">
-  <span>📋</span>
-  <span class="optic-fab-count" id="fabCount">0</span>
-</button>
-
-<div class="optic-drawer" id="opticDrawer">
+<div class="optic-drawer" id="opticDrawer" inert>
   <div class="od-handle"></div>
   <div class="od-close">
     <span>📋 Optik Cevap Kağıdı</span>
-    <button onclick="toggleDrawer()">✕</button>
+    <button type="button" onclick="toggleDrawer()" aria-label="Optik formu kapat">✕</button>
   </div>
   <div class="od-content"><div class="od-grid" id="drawerGrid"></div></div>
-</div>
-
-<div class="image-lightbox" id="imageLightbox" aria-hidden="true">
-  <button class="lb-close" type="button" onclick="closeImageLightbox()">×</button>
-  <div class="lb-hint">Yakınlaştırmak için iki parmağını açabilir, fare tekerleğini kullanabilir veya alttaki düğmeleri deneyebilirsin.</div>
-  <div class="lb-stage" id="lightboxStage">
-    <img class="lb-img" id="lightboxImg" src="" alt="Büyütülmüş soru görseli">
-  </div>
-  <div class="lb-controls">
-    <button class="lb-btn" type="button" onclick="zoomLightbox(-0.25)">−</button>
-    <div class="lb-scale" id="lightboxScale">100%</div>
-    <button class="lb-btn" type="button" onclick="zoomLightbox(0.25)">＋</button>
-    <button class="tool-btn" type="button" onclick="resetLightbox()">Sıfırla</button>
-  </div>
 </div>
 
 <div id="screenTimeout" style="display:none;min-height:100vh;background:linear-gradient(145deg,#0F172A,#1E293B);align-items:center;justify-content:center;padding:20px">
@@ -793,6 +760,7 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
     <div class="karne-actions-shell">
       <div class="karne-actions-row">
         <button class="appeal-btn" id="appealResultBtn" type="button" onclick="showAppealModal()" style="display:none">⚖️ Sonuca İtiraz Et</button>
+        <button class="print-btn" type="button" onclick="openKarneShare()">Paylaş</button>
         <button class="print-btn" id="karnePngBtn" type="button" onclick="exportSingleKarneAsImage('png')">🖼️ PNG İndir</button>
         <button class="print-btn" id="karneJpegBtn" type="button" onclick="exportSingleKarneAsImage('jpeg')">🖼️ JPEG İndir</button>
         <button class="print-btn" id="karnePdfBtn" type="button" onclick="exportSingleKarneAsPdf()">📄 PDF Çıktı Al</button>
@@ -905,6 +873,10 @@ body.karne-export-mode .sheet-footer div:last-child{text-align:right!important}
           <span class="chart-pill">Konu Bazlı Görünüm</span>
         </div>
         <div class="section-performance-grid" id="karneSectionList"></div>
+        <details id="karneLearningOutcomes" hidden style="margin:0 16px 16px">
+          <summary>Kazanımlara göre sonuçlar</summary>
+          <div class="exam-outcome-list"></div>
+        </details>
         <div class="outcome-list" id="karneOutcomeList" style="display:none"></div>
       </section>
 
@@ -976,6 +948,7 @@ let P={
   timeLeft:0,
   timer:null,
   started:false,
+  ending:false,
   result:null,
   OPTS:[],
   drawings:{},
@@ -1001,16 +974,10 @@ let P={
   stageGesture:null,
   ignoreStageClick:false,
   appealSelection:[],
-  lightbox:{
-    scale:1,
-    x:0,
-    y:0,
-    dragging:false,
-    dragOriginX:0,
-    dragOriginY:0,
-    pinchDistance:0,
-    startScale:1
-  }
+  flagged: new Set(),
+  sections: [],
+  lastBySection: new Map(),
+  reviewInk: new Map()
 };
 let questionImageLoader=null;
 let donutChartInstance=null;
@@ -1025,6 +992,16 @@ function getSearchParams(){
 
 function isAdminKarneMode(){
   return getSearchParams().get('adminKarne')==='1';
+}
+
+function getKarneBackDestination(){
+  if(!isAdminKarneMode()) return {label:'Sınav Merkezi',path:'index.html'};
+  switch(getSearchParams().get('panel')){
+    case 'teacher':return {label:'Öğretmen Paneli',path:'/ogretmen-paneli.html'};
+    case 'student':return {label:'Öğrenci Paneli',path:'/ogrenci-paneli.html'};
+    case 'parent':return {label:'Veli Paneli',path:'/veli-paneli.html'};
+    default:return {label:'Sınav Paneli',path:'admin.html'};
+  }
 }
 
 function isTeacherSession(){
@@ -1093,7 +1070,7 @@ function markExamCompleted(result){
       resultId:result.resultId||'',
       clientAttemptId:result.clientAttemptId||'',
       negativeMarking:!!result.negativeMarking,
-      answerDetails:Array.isArray(result.answerDetails)?result.answerDetails:[],
+      answerDetails:Array.isArray(result.answerDetails)?result.answerDetails.map(({ink,inkImage,...detail})=>detail):[],
       questionSections:Array.isArray(result.questionSections)?result.questionSections:[],
       resultSnapshot:{
         resultId:result.resultId||'',
@@ -1115,6 +1092,9 @@ function markExamCompleted(result){
         blank:result.blank||0,
         netCorrect:result.netCorrect||0,
         score:result.score||0,
+        score100:result.score100,
+        examScore:result.examScore,
+        scoreScale:result.scoreScale,
         total:result.total||0,
         negativeMarking:!!result.negativeMarking,
         answerDetails:Array.isArray(result.answerDetails)?result.answerDetails:[],
@@ -1223,23 +1203,26 @@ function buildResultSnapshot(status='completed'){
   let weightedCorrect=0,weightedWrong=0;
   const scoreScale=resolveExamScoreScale(P.exam.grade,P.exam.subject,P.exam.scoreScale);
   const studentKey=buildStudentKey(P.student);
+  const captured=window.KemalExamWorkspace.captureInk(qs,
+    index=>P.drawings[getQuestionKey(index)]?.strokes,getQuestionImageSrc);
   const answerDetails=qs.map((q,i)=>{
     const a=ans[i];
+    const annotation=captured.get(i)||{};
     const sectionTitle=getQuestionSectionDisplay(q,i,P.exam.subject,P.exam.questionSections);
     const learningOutcome=String(q?.learningOutcome||'').trim();
     const pointValue=getQuestionPointValue(q,qs.length,P.exam);
     if(!a){
       blank++;
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
+      return {...annotation,questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:'',correctAnswer:q.correctAnswer||'',outcome:'B'};
     }
     if(a===q.correctAnswer){
       correct++;
       weightedCorrect=roundPointValue(weightedCorrect+pointValue);
-      return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
+      return {...annotation,questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'D'};
     }
     wrong++;
     weightedWrong=roundPointValue(weightedWrong+pointValue);
-    return {questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
+    return {...annotation,questionNo:i+1,questionId:q.id||'',order:q.order??i,sectionTitle,learningOutcome,pointValue,selectedAnswer:a,correctAnswer:q.correctAnswer||'',outcome:'Y'};
   });
   let netCorrect=correct;
   if(P.exam.negativeMarking) netCorrect=Math.max(0,correct-Math.floor(wrong/3));
@@ -1289,8 +1272,9 @@ function getResultQuestionEntries(result){
   const details=Array.isArray(result?.answerDetails)?result.answerDetails:[];
   if(details.length){
     return details.map((item,index)=>{
-      const question=result?.questions?.[index]||{};
       const questionNo=parseInt(item?.questionNo,10)||index+1;
+      const question=result?.questions?.find(question=>item?.questionId&&question.id===item.questionId)
+        || result?.questions?.[questionNo-1] || {};
       const selectedAnswer=String(item?.selectedAnswer||result?.answers?.[questionNo-1]||'').trim();
       const correctAnswer=String(item?.correctAnswer||question?.correctAnswer||'').trim();
       const sectionTitle=String(
@@ -1311,7 +1295,9 @@ function getResultQuestionEntries(result){
         correctAnswer,
         outcome,
         imageUrl:question?.imageUrl||question?.imageData||'',
-        hasVisual:!!(question?.imageUrl||question?.imageData)
+        hasVisual:!!(question?.imageUrl||question?.imageData),
+        ink:item?.ink||'',
+        inkImage:item?.inkImage||''
       };
     });
   }
@@ -1535,6 +1521,7 @@ async function openAdminKarne(){
       score100:Number(storedResult.score100||storedResult.score||0),
       examScore:Number.isFinite(Number(storedResult.examScore))?Number(storedResult.examScore):Number(storedResult.score||0),
       scoreScale:Number(storedResult.scoreScale||exam.scoreScale||100),
+      clientAttemptId:storedResult.clientAttemptId||'',
       total:Number(storedResult.total||questions.length||(storedResult.answerDetails||[]).length||0),
       negativeMarking:typeof storedResult.negativeMarking==='boolean'?storedResult.negativeMarking:!!exam.negativeMarking,
       answers:answers,
@@ -1711,6 +1698,9 @@ function findNextBlankQuestionIndex(startIndex=P.curQ){
 
 function syncCurrentAnswerButtons(){
   const currentAnswer=P.answers[P.curQ]||'';
+  document.querySelectorAll('[data-image-answer]').forEach(button=>{
+    button.setAttribute('aria-pressed',String(button.dataset.imageAnswer===currentAnswer));
+  });
   document.querySelectorAll('.ans-btn').forEach((button,index)=>{
     const selected=P.OPTS[index]===currentAnswer;
     button.classList.toggle('selected',selected);
@@ -1719,6 +1709,7 @@ function syncCurrentAnswerButtons(){
 }
 
 function setAnswerForQuestion(index,answer,{allowToggle=true}={}){
+  if(P.ending) return;
   const normalizedAnswer=String(answer||'').trim().toUpperCase();
   const currentAnswer=String(P.answers[index]||'').trim().toUpperCase();
   if(!normalizedAnswer){
@@ -1732,6 +1723,7 @@ function setAnswerForQuestion(index,answer,{allowToggle=true}={}){
   updateOpticStats();
   renderMobileDrawer();
   if(index===P.curQ) syncCurrentAnswerButtons();
+  syncExamSections();
   renderQuestionStatus();
 }
 
@@ -1805,7 +1797,9 @@ function renderQuestionStatus(){
 
 function syncDrawingToolbar(){
   document.querySelectorAll('[data-draw-tool]').forEach(btn=>{
-    btn.classList.toggle('active',btn.dataset.drawTool===P.drawingTool);
+    const active=btn.dataset.drawTool===P.drawingTool;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',String(active));
   });
   document.querySelectorAll('[data-draw-color]').forEach(btn=>{
     btn.classList.toggle('active',btn.dataset.drawColor===P.brushColor);
@@ -1827,6 +1821,7 @@ function syncDrawingToolbar(){
     stage.style.setProperty('--question-pan-x',`${P.questionPanX||0}px`);
     stage.style.setProperty('--question-pan-y',`${P.questionPanY||0}px`);
   }
+  document.querySelectorAll('[data-image-answer]').forEach(button=>{button.tabIndex=P.drawingTool==='select'?0:-1;});
   syncToolbarDock();
   renderQuestionStatus();
 }
@@ -1988,6 +1983,12 @@ function drawStoredStroke(ctx,stroke,width,height){
   ctx.restore();
 }
 
+function getInkRect(layer){
+  const image=document.getElementById('qImg');
+  if(image?.naturalWidth) return image.getBoundingClientRect();
+  return layer.getBoundingClientRect();
+}
+
 function redrawDrawingCanvas(){
   const canvas=document.getElementById('drawCanvas');
   const layer=document.getElementById('questionTransformLayer');
@@ -1996,7 +1997,7 @@ function redrawDrawingCanvas(){
   const height=parseFloat(canvas.style.height)||0;
   if(!width||!height) return;
   const canvasRect=canvas.getBoundingClientRect();
-  const layerRect=layer.getBoundingClientRect();
+  const layerRect=getInkRect(layer);
   if(!canvasRect.width||!canvasRect.height||!layerRect.width||!layerRect.height) return;
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
@@ -2004,13 +2005,14 @@ function redrawDrawingCanvas(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   // Keep the canvas over the entire workspace; only the stored ink follows the question.
   ctx.setTransform(
-    dpr*layerRect.width/canvasRect.width,0,
-    0,dpr*layerRect.height/canvasRect.height,
+    dpr*width/canvasRect.width,0,
+    0,dpr*height/canvasRect.height,
     dpr*(layerRect.left-canvasRect.left)*width/canvasRect.width,
     dpr*(layerRect.top-canvasRect.top)*height/canvasRect.height
   );
+  if(questionImageLoader&&questionImageLoader.getState().status!=='ready') return;
   const drawing=getQuestionDrawing();
-  drawing.strokes.forEach(stroke=>drawStoredStroke(ctx,stroke,width,height));
+  drawing.strokes.forEach(stroke=>drawStoredStroke(ctx,stroke,layerRect.width,layerRect.height));
 }
 
 function syncDrawingSurface(){
@@ -2029,6 +2031,7 @@ function syncDrawingSurface(){
   canvas.height=Math.round(height*dpr);
   clampQuestionPan();
   syncDrawingToolbar();
+  positionAnswerOverlay();
   redrawDrawingCanvas();
 }
 
@@ -2041,7 +2044,7 @@ function getCanvasPoint(event){
   const clientY=event.clientY;
   if(clientX==null||clientY==null) return null;
   if(clientX<rect.left||clientX>rect.right||clientY<rect.top||clientY>rect.bottom) return null;
-  const layerRect=layer.getBoundingClientRect();
+  const layerRect=getInkRect(layer);
   if(!layerRect.width||!layerRect.height) return null;
   // Points outside the scaled question can be negative or greater than one when normalized.
   // They are still valid notes in the visible margins of the workspace after zooming out.
@@ -2054,7 +2057,8 @@ function getCanvasPoint(event){
 }
 
 function beginStageGesture(event){
-  if(event.button!==0||P.stageGesture) return;
+  if(event.button!==0||P.ending||P.stageGesture||event.target?.closest?.('.exam-option-target')) return;
+  if(questionImageLoader&&questionImageLoader.getState().status!=='ready') return;
   const point=getCanvasPoint(event);
   if(!point) return;
   const stage=document.getElementById('mediaStage');
@@ -2099,7 +2103,7 @@ function beginStageGesture(event){
 }
 
 function moveStageGesture(event){
-  if(!P.stageGesture||P.stageGesture.pointerId!==event.pointerId) return;
+  if(P.ending||!P.stageGesture||P.stageGesture.pointerId!==event.pointerId) return;
   if(P.stageGesture.tool==='select'){
     const dx=event.clientX-P.stageGesture.originX;
     const dy=event.clientY-P.stageGesture.originY;
@@ -2150,25 +2154,7 @@ function finishStageGesture(event){
   }
   stage?.classList.remove('is-dragging');
   P.stageGesture=null;
-}
-
-function setLightboxScale(value){
-  P.lightbox.scale=Math.max(1,Math.min(4.5,value));
-  if(P.lightbox.scale===1){
-    P.lightbox.x=0;
-    P.lightbox.y=0;
-  }
-  const img=document.getElementById('lightboxImg');
-  const scaleLabel=document.getElementById('lightboxScale');
-  if(img) img.style.transform=`translate(${P.lightbox.x}px, ${P.lightbox.y}px) scale(${P.lightbox.scale})`;
-  if(scaleLabel) scaleLabel.textContent=`${Math.round(P.lightbox.scale*100)}%`;
-}
-
-function getTouchDistance(touches){
-  if(touches.length<2) return 0;
-  const dx=touches[0].clientX-touches[1].clientX;
-  const dy=touches[0].clientY-touches[1].clientY;
-  return Math.hypot(dx,dy);
+  syncUndoButton();
 }
 
 function isTypingTarget(target){
@@ -2182,18 +2168,12 @@ function isExamScreenVisible(){
 }
 
 function handleExamKeydown(event){
-  const lightbox=document.getElementById('imageLightbox');
-  const lightboxOpen=!!lightbox&&lightbox.classList.contains('open');
   const finishModal=document.getElementById('finishModal1')||document.getElementById('finishModal2');
   const genericModal=!finishModal?document.querySelector('.modal-overlay'):null;
   const drawer=document.getElementById('opticDrawer');
 
   if(event.key==='Escape'){
-    if(lightboxOpen){
-      window.closeImageLightbox?.();
-      event.preventDefault();
-      return;
-    }
+    if(document.getElementById('karneShareDialog')?.open) return;
     if(finishModal){
       closeFinishModals();
       event.preventDefault();
@@ -2211,7 +2191,11 @@ function handleExamKeydown(event){
     }
   }
 
-  if(!isExamScreenVisible()||lightboxOpen||finishModal||genericModal) return;
+  if(event.key==='Escape'&&document.getElementById('screenExam').classList.contains('exam-expanded')){
+    exitExamFullscreen();
+    return;
+  }
+  if(!isExamScreenVisible()||finishModal||genericModal||event.target?.closest?.('[role="tablist"]')) return;
   if(event.metaKey||event.ctrlKey||event.altKey||isTypingTarget(event.target)) return;
 
   const key=event.key;
@@ -2262,6 +2246,11 @@ function handleExamKeydown(event){
     event.preventDefault();
     return;
   }
+  if(upper==='R'){
+    window.toggleQuestionFlag();
+    event.preventDefault();
+    return;
+  }
   if(upper==='G'){
     window.goToNextBlankQuestion?.();
     event.preventDefault();
@@ -2280,8 +2269,18 @@ function bindExamInteractions(){
   const toolbarDock=document.getElementById('toolbarDock');
   const toolbarHandle=document.getElementById('toolbarDragHandle');
   const pencilPanel=document.getElementById('pencilPanel');
-  const lightbox=document.getElementById('imageLightbox');
-  const lightboxStage=document.getElementById('lightboxStage');
+  document.addEventListener('fullscreenchange',()=>{
+    setExamExpanded(document.fullscreenElement===document.documentElement&&isExamScreenVisible());
+  });
+  document.getElementById('examSectionTabs').addEventListener('keydown',event=>{
+    const buttons=[...event.currentTarget.querySelectorAll('button')];
+    const current=buttons.indexOf(event.target);
+    const destination={ArrowLeft:(current+buttons.length-1)%buttons.length,ArrowRight:(current+1)%buttons.length,Home:0,End:buttons.length-1}[event.key];
+    if(current<0||destination===undefined) return;
+    event.preventDefault();
+    buttons[destination].click();
+    buttons[destination].focus();
+  });
 
   stage.addEventListener('pointerdown',beginStageGesture);
   stage.addEventListener('pointermove',moveStageGesture);
@@ -2314,65 +2313,14 @@ function bindExamInteractions(){
     syncDrawingToolbar();
   });
 
-  lightbox.addEventListener('click',event=>{
-    if(event.target===lightbox||event.target===lightboxStage) closeImageLightbox();
-  });
-  lightboxStage.addEventListener('wheel',event=>{
-    event.preventDefault();
-    zoomLightbox(event.deltaY<0?0.2:-0.2);
-  },{ passive:false });
-  lightboxStage.addEventListener('mousedown',event=>{
-    if(P.lightbox.scale<=1||event.button!==0) return;
-    P.lightbox.dragging=true;
-    P.lightbox.dragOriginX=event.clientX-P.lightbox.x;
-    P.lightbox.dragOriginY=event.clientY-P.lightbox.y;
-    lightboxStage.classList.add('dragging');
-  });
-  window.addEventListener('mousemove',event=>{
-    if(!P.lightbox.dragging) return;
-    P.lightbox.x=event.clientX-P.lightbox.dragOriginX;
-    P.lightbox.y=event.clientY-P.lightbox.dragOriginY;
-    setLightboxScale(P.lightbox.scale);
-  });
-  window.addEventListener('mouseup',()=>{
-    P.lightbox.dragging=false;
-    lightboxStage.classList.remove('dragging');
-  });
-  lightboxStage.addEventListener('touchstart',event=>{
-    if(event.touches.length===2){
-      P.lightbox.pinchDistance=getTouchDistance(event.touches);
-      P.lightbox.startScale=P.lightbox.scale;
-      P.lightbox.dragging=false;
-    }else if(event.touches.length===1&&P.lightbox.scale>1){
-      P.lightbox.dragging=true;
-      P.lightbox.dragOriginX=event.touches[0].clientX-P.lightbox.x;
-      P.lightbox.dragOriginY=event.touches[0].clientY-P.lightbox.y;
-    }
-  },{ passive:false });
-  lightboxStage.addEventListener('touchmove',event=>{
-    if(event.touches.length===2){
-      const distance=getTouchDistance(event.touches);
-      if(P.lightbox.pinchDistance){
-        setLightboxScale(P.lightbox.startScale*(distance/P.lightbox.pinchDistance));
-      }
-      event.preventDefault();
-      return;
-    }
-    if(event.touches.length===1&&P.lightbox.dragging&&P.lightbox.scale>1){
-      P.lightbox.x=event.touches[0].clientX-P.lightbox.dragOriginX;
-      P.lightbox.y=event.touches[0].clientY-P.lightbox.dragOriginY;
-      setLightboxScale(P.lightbox.scale);
-      event.preventDefault();
-    }
-  },{ passive:false });
-  lightboxStage.addEventListener('touchend',event=>{
-    if(event.touches.length<2) P.lightbox.pinchDistance=0;
-    if(event.touches.length===0) P.lightbox.dragging=false;
-  });
 }
 
 function showScreen(id){
-  if(id!=='screenExam') closeImageLightbox(true);
+  document.body.classList.toggle('exam-running',id==='screenExam');
+  if(id!=='screenExam'){
+    exitExamFullscreen();
+    setOpticDrawerOpen(false);
+  }
   ['screenLoad','screenWarn','screenExam','screenTimeout','screenKarne'].forEach(s=>{
     const el=document.getElementById(s);
     el.style.display='none';
@@ -2478,6 +2426,105 @@ window.beginExam=function(){
 };
 
 // ===== EXAM UI =====
+function mountExamSectionTabs(){
+  P.sections=window.KemalExamWorkspace.groupSections(P.questions,(question,index)=>getQuestionSectionDisplay(question,index));
+  const tabs=document.getElementById('examSectionTabs');
+  tabs.hidden=P.sections.length<2;
+  tabs.innerHTML=tabs.hidden?'':P.sections.map(({label},index)=>`
+    <button type="button" role="tab" id="examCourse-${index}" aria-controls="examTabPanel"
+      aria-selected="false" onclick="goToExamSection(${index})">
+      ${escHtml(label)}<small data-section-count></small>
+    </button>`).join('');
+}
+
+function syncExamSections(){
+  const panel=document.getElementById('examTabPanel');
+  const tabs=document.getElementById('examSectionTabs').children;
+  P.sections.forEach(({indices},index)=>{
+    const button=tabs[index];
+    if(!button) return;
+    const active=indices.includes(P.curQ);
+    button.setAttribute('aria-selected',String(active));
+    button.tabIndex=active?0:-1;
+    button.querySelector('small').textContent=`${indices.filter(i=>P.answers[i]).length}/${indices.length}`;
+    if(active) panel.setAttribute('aria-labelledby',button.id);
+  });
+}
+
+window.goToExamSection=function(index){
+  const question=P.lastBySection.get(index)??P.sections[index]?.indices[0];
+  if(question!==undefined&&question!==P.curQ) renderQuestion(question);
+};
+
+function syncQuestionFlags(){
+  const flag=document.getElementById('flagQuestion');
+  const next=document.getElementById('nextFlaggedQuestion');
+  flag.setAttribute('aria-pressed',String(P.flagged.has(P.curQ)));
+  next.hidden=!P.flagged.size;
+  next.textContent=`İşaretli sorular (${P.flagged.size})`;
+}
+
+window.toggleQuestionFlag=function(){
+  if(P.flagged.has(P.curQ)) P.flagged.delete(P.curQ);
+  else P.flagged.add(P.curQ);
+  syncQuestionFlags();
+  renderOptic();
+};
+
+window.goToFlaggedQuestion=function(){
+  const flagged=[...P.flagged].sort((a,b)=>a-b);
+  const next=flagged.find(index=>index>P.curQ)??flagged[0];
+  if(next!==undefined&&next!==P.curQ) renderQuestion(next);
+};
+
+function renderAnswerOverlay(){
+  const overlay=document.getElementById('examOptionOverlay');
+  const positions=window.KemalExamWorkspace.normalizeOptions(P.questions[P.curQ]?.optionPositions,P.OPTS.length);
+  const options=Object.entries(positions);
+  overlay.replaceChildren(...options.map(([letter,point])=>{
+    const button=document.createElement('button');
+    button.className='exam-option-target';
+    button.type='button';
+    button.dataset.imageAnswer=letter;
+    button.style.left=`${point.x*100}%`;
+    button.style.top=`${point.y*100}%`;
+    button.setAttribute('aria-label',`Görseldeki ${letter} şıkkı`);
+    button.tabIndex=P.drawingTool==='select'?0:-1;
+    button.addEventListener('click',()=>window.pickAns(letter));
+    return button;
+  }));
+  overlay.hidden=!options.length;
+  positionAnswerOverlay();
+  syncCurrentAnswerButtons();
+}
+
+function positionAnswerOverlay(){
+  const overlay=document.getElementById('examOptionOverlay');
+  if(overlay.hidden) return;
+  const layer=document.getElementById('questionTransformLayer');
+  const image=document.getElementById('qImg');
+  const layerRect=layer.getBoundingClientRect();
+  const imageRect=image.getBoundingClientRect();
+  const zoom=P.questionZoom/100;
+  overlay.style.left=`${(imageRect.left-layerRect.left)/zoom}px`;
+  overlay.style.top=`${(imageRect.top-layerRect.top)/zoom}px`;
+  overlay.style.width=`${imageRect.width/zoom}px`;
+  overlay.style.height=`${imageRect.height/zoom}px`;
+}
+
+function syncUndoButton(){
+  const button=document.getElementById('undoExamInk');
+  button.disabled=!getQuestionDrawing().strokes.length;
+}
+
+window.undoExamDrawing=function(){
+  if(P.stageGesture) return;
+  getQuestionDrawing().strokes.pop();
+  redrawDrawingCanvas();
+  syncUndoButton();
+};
+
+
 function renderExamUI(){
   restoreDrawingPrefs();
   bindExamInteractions();
@@ -2486,6 +2533,7 @@ function renderExamUI(){
   const badge=document.getElementById('topGradeBadge');
   badge.textContent=`${g}. Sınıf — ${ex.subject}`;badge.style.background=gc.bg;
   document.getElementById('topTitle').textContent=ex.title;
+  mountExamSectionTabs();
   syncDrawingToolbar();
   renderQuestion(0);
   renderOptic();
@@ -2494,14 +2542,21 @@ function renderExamUI(){
 function renderQuestion(i){
   const qs=P.questions;
   if(i<0||i>=qs.length)return;
+  P.stageGesture=null;
+  document.getElementById('mediaStage').classList.remove('is-dragging');
   P.curQ=i;
+  const section=P.sections.findIndex(group=>group.indices.includes(i));
+  P.lastBySection.set(section,i);
+  syncExamSections();
+  syncQuestionFlags();
+  syncUndoButton();
   P.questionPanX=0;
   P.questionPanY=0;
   const q=qs[i];const curAns=P.answers[i];
   document.getElementById('qNum').textContent=`Soru ${i+1} / ${qs.length}`;
   const sectionBanner=document.getElementById('questionSectionBanner');
   const sectionTitle=getQuestionSectionTitle(q,i);
-  if(sectionTitle){
+  if(sectionTitle&&P.sections.length<2){
     sectionBanner.style.display='inline-flex';
     sectionBanner.innerHTML=`<span class="section-kicker">Ders</span><span>${escHtml(sectionTitle)}</span>`;
   }else{
@@ -2510,12 +2565,12 @@ function renderQuestion(i){
   }
   getQuestionImageLoader().show(getQuestionImageSrc(q));
   document.getElementById('examAnswers').innerHTML=P.OPTS.map(opt=>`
-    <button class="ans-btn ${curAns===opt?'selected':''}" aria-pressed="${curAns===opt}" onclick="pickAns('${opt}')" title="${opt} şıkkı (${opt} tuşu)">
-      <div class="ans-circle">${opt}</div>${opt} şıkkı
-    </button>`).join('');
+    <button class="ans-btn ${curAns===opt?'selected':''}" type="button" aria-label="${opt} şıkkı"
+      aria-pressed="${curAns===opt}" onclick="pickAns('${opt}')" title="${opt} şıkkı (${opt} tuşu)">${opt}</button>`).join('');
   document.getElementById('qProg').textContent=`${i+1} / ${qs.length}`;
   document.getElementById('btnPrev').disabled=i===0;
   document.getElementById('btnNext').disabled=i===qs.length-1;
+  document.getElementById('examMain').scrollTop=0;
   // Update optic current row
   document.querySelectorAll('.op-row').forEach((r,j)=>r.classList.toggle('cur',j===i));
   syncDrawingToolbar();
@@ -2538,7 +2593,11 @@ function getQuestionImageLoader(){
       document.getElementById('questionImageSpinner').hidden=!loading;
       document.getElementById('questionImageRetry').hidden=loading||ready;
       document.getElementById('stageWorkspace').setAttribute('aria-busy',String(loading));
-      if(!ready) document.getElementById('qImg').style.visibility='hidden';
+      document.getElementById('examOptionOverlay').hidden=true;
+      if(!ready){
+        document.getElementById('qImg').style.visibility='hidden';
+        redrawDrawingCanvas();
+      }
       document.getElementById('questionImageTitle').textContent=loading
         ? 'Soru görseli yükleniyor…'
         : 'Soru görseline ulaşılamadı';
@@ -2554,6 +2613,7 @@ function getQuestionImageLoader(){
       image.style.visibility='visible';
       const previous=document.getElementById('qImg');
       if(previous!==image) previous.replaceWith(image);
+      renderAnswerOverlay();
       requestAnimationFrame(syncDrawingSurface);
     }
   });
@@ -2578,7 +2638,7 @@ function renderOptic(){
   for(let i=0;i<n;i++){
     const ca=P.answers[i];
     html+=`<div class="op-row ${i===P.curQ?'cur':''}" onclick="goQ(${i})">
-      <div class="op-qnum">${i+1}</div>
+      <div class="op-qnum">${i+1}${P.flagged.has(i)?'<span class="exam-flag-mark" title="Gözden geçirilecek soru">◆</span>':''}</div>
       <div class="op-bubbles">${P.OPTS.map(o=>`<div class="op-bub ${ca===o?'sel':''}" onclick="event.stopPropagation();opticPick(${i},'${o}')">${o}</div>`).join('')}</div>
     </div>`;
   }
@@ -2602,7 +2662,7 @@ function renderMobileDrawer(){
   for(let i=0;i<n;i++){
     const ca=P.answers[i];
     html+=`<div class="od-item">
-      <div class="od-item-q">${i+1}</div>
+      <div class="od-item-q">${i+1}${P.flagged.has(i)?'<span class="exam-flag-mark" title="Gözden geçirilecek soru">◆</span>':''}</div>
       <div class="od-bubble ${ca?'sel':''}" onclick="goQ(${i});toggleDrawer()" style="${ca?'':'border-color:#CBD5E0'}">${ca||''}</div>
     </div>`;
   }
@@ -2775,50 +2835,54 @@ window.clearCurrentDrawing=function(){
     return;
   }
   drawing.strokes=[];
+  syncUndoButton();
   redrawDrawingCanvas();
   toast('Bu sorudaki çizimler temizlendi.');
 };
 
-window.openImageLightbox=function(){
-  if(questionImageLoader?.getState().status!=='ready'){
-    toast('Soru görseli yüklendiğinde tam ekranı açabilirsin.','info');
+function setExamExpanded(expanded){
+  document.getElementById('screenExam').classList.toggle('exam-expanded',expanded);
+  const button=document.getElementById('examFullscreenButton');
+  const label=expanded?'Tam ekrandan çık':'Tam ekran';
+  button.setAttribute('aria-pressed',String(expanded));
+  button.setAttribute('aria-label',label);
+  button.querySelector('span').textContent=label;
+  requestAnimationFrame(()=>{if(isExamScreenVisible()) syncDrawingSurface();});
+}
+
+function exitExamFullscreen(){
+  if(!document.getElementById('screenExam')?.classList.contains('exam-expanded')) return;
+  setExamExpanded(false);
+  if(document.fullscreenElement===document.documentElement) document.exitFullscreen?.().catch(()=>{});
+}
+
+window.toggleExamFullscreen=async function(){
+  if(document.getElementById('screenExam').classList.contains('exam-expanded')){
+    exitExamFullscreen();
     return;
   }
-  const src=document.getElementById('qImg')?.src;
-  if(!src) return;
-  const lightbox=document.getElementById('imageLightbox');
-  document.getElementById('lightboxImg').src=src;
-  resetLightbox();
-  lightbox.classList.add('open');
-  lightbox.setAttribute('aria-hidden','false');
-  document.body.style.overflow='hidden';
+  setExamExpanded(true);
+  try{
+    await document.documentElement.requestFullscreen?.();
+    if(!isExamScreenVisible()&&document.fullscreenElement===document.documentElement) await document.exitFullscreen();
+  }catch(error){
+    // iOS browsers and embedded web views can still use the viewport layout.
+  }
 };
 
-window.closeImageLightbox=function(silent=false){
-  const lightbox=document.getElementById('imageLightbox');
-  if(!lightbox) return;
-  lightbox.classList.remove('open');
-  lightbox.setAttribute('aria-hidden','true');
-  P.lightbox.dragging=false;
-  P.lightbox.pinchDistance=0;
-  document.getElementById('lightboxStage')?.classList.remove('dragging');
-  document.body.style.overflow='';
-  if(!silent) document.getElementById('lightboxImg').src='';
-};
-
-window.resetLightbox=function(){
-  P.lightbox.x=0;
-  P.lightbox.y=0;
-  setLightboxScale(1);
-};
-
-window.zoomLightbox=function(delta){
-  setLightboxScale(P.lightbox.scale+delta);
-};
+function setOpticDrawerOpen(open){
+  const drawer=document.getElementById('opticDrawer');
+  drawer.classList.toggle('open',open);
+  drawer.inert=!open;
+  document.getElementById('opticFab').setAttribute('aria-expanded',String(open));
+}
 
 window.toggleDrawer=function(){
-  const d=document.getElementById('opticDrawer');
-  d.classList.toggle('open');
+  const drawer=document.getElementById('opticDrawer');
+  const open=!drawer.classList.contains('open');
+  setOpticDrawerOpen(open);
+  const target=open?drawer.querySelector('.od-close button'):document.getElementById('opticFab');
+  target?.focus({preventScroll:true});
 };
 
 // ===== TIMER =====
@@ -2851,6 +2915,9 @@ function updateTimerUI(){
 }
 
 async function timeUp(){
+  if(P.ending) return;
+  P.ending=true;
+  closeFinishModals();
   clearInterval(P.timer);
   const result=calcResult();
   setExamSaving();
@@ -2869,6 +2936,7 @@ async function timeUp(){
 
 // ===== FINISH =====
 window.showFinishConfirm=function(){
+  if(P.ending) return;
   closeFinishModals();
   const summary=getFinishSummary();
   const blankPreview=summary.blankList.length<=12?summary.blankList.join(', '):`${summary.blankList.slice(0,12).join(', ')} ...`;
@@ -2881,6 +2949,7 @@ window.showFinishConfirm=function(){
       <div class="metric-chip"><strong>${summary.answered}</strong><span>Cevaplanan</span></div>
       <div class="metric-chip"><strong>${summary.timeText}</strong><span>Kalan Süre</span></div>
     </div>
+    ${P.flagged.size?`<p class="modal-warn">Gözden geçirmek için işaretlenen soru: ${[...P.flagged].sort((a,b)=>a-b).map(i=>i+1).join(', ')}</p>`:''}
     ${summary.blank>0?`<p class="modal-warn">⭕ ${summary.blank} soru hâlâ boş görünüyor${blankPreview?` (${blankPreview})`:''}</p>`:'<p class="modal-good">✅ Tüm sorular cevaplandı. İstersen son kez gözden geçirip sonra bitirebilirsin.</p>'}
     <div class="modal-note"><strong>Öneri:</strong> Kalan süreyi kullanarak işaretlemelerini tekrar kontrol etmen, boş soruları gözden geçirmen ve dikkat hatalarını fark etmen sınav başarın için faydalı olur.</div>
     <div class="modal-btns">
@@ -2927,6 +2996,8 @@ async function persistResultRecord(result,options={}){
 }
 
 window.finishExam=async function(){
+  if(P.ending) return;
+  P.ending=true;
   clearInterval(P.timer);
   const r=calcResult();
   setExamSaving();
@@ -3068,18 +3139,16 @@ function renderKarne(){
   const backBtn=document.getElementById('karneBackBtn');
   const appealBtn=document.getElementById('appealResultBtn');
   if(backBtn){
-    if(isAdminKarneMode()){
-      backBtn.textContent='← Sınav Paneli';
-      backBtn.onclick=()=>{window.location.href='admin.html';};
-    }else{
-      backBtn.textContent='← Ana Sayfa';
-      backBtn.onclick=()=>{window.location.href='index.html';};
-    }
+    const destination=getKarneBackDestination();
+    backBtn.textContent='← '+destination.label;
+    backBtn.onclick=()=>{window.location.href=destination.path;};
   }
   if(appealBtn){
     appealBtn.style.display=!isAdminKarneMode()&&!!r.resultId?'inline-flex':'none';
   }
-  if(isAdminKarneMode()||isTeacherSession()){
+  if(isAdminKarneMode()){
+    setExamSaveStatus('saved','Kayıtlı sınav sonucu','Bu karne daha önce tamamlanmış bir sınavdan açıldı.');
+  }else if(isTeacherSession()){
     setExamSaveStatus('saved','Öğretmen önizlemesi','Bu karne kontrol amacıyla açıldı; öğrenci adına yeni sonuç kaydı oluşturulmadı.');
   }else if(r.resultId){
     setExamSaved(r);
@@ -3210,6 +3279,13 @@ function renderKarne(){
       <div class="analysis-card-body">${topOutcome?`<strong>${escHtml(topOutcome.label)}</strong> kazanımına bağlı ${topOutcome.questions.length} soru için kısa tekrar planı hazırlanabilir. Ardından benzer yeni sorularla pekiştirme yapmak en verimli sonraki adım olur.`:`${r.negativeMarking?'Neti korumak için riskli sorularda dikkatli işaretleme pratiği yapılmalı.':'Boş ve yanlış kalan sorular için kısa tekrar planı oluşturmak başarıyı hızla yukarı taşıyabilir.'}`}</div>
     </div>`;
 
+  const outcomes=window.KemalExamWorkspace.summarizeOutcomes(getResultQuestionEntries(r));
+  const outcomeDetails=document.getElementById('karneLearningOutcomes');
+  outcomeDetails.hidden=!outcomes.length;
+  outcomeDetails.querySelector('div').innerHTML=outcomes.map(row=>`<div class="exam-outcome-row">
+    <strong>${escHtml(row.label)}</strong>
+    <small>${escHtml(row.section)} · ${row.correct} doğru · ${row.wrong} yanlış · ${row.blank} boş</small>
+  </div>`).join('');
   document.getElementById('karneSectionList').innerHTML=sectionSummary.map(section=>`
     <div class="section-card">
       <div class="section-card-top">
@@ -3423,37 +3499,208 @@ window.exportSingleKarneAsPdf=async function(){
   }
 };
 
+function mountQuestionReview(modal,entry,source){
+  const surface=modal.querySelector('.review-surface');
+  const image=surface.querySelector('img');
+  const [studentCanvas,reviewCanvas]=surface.querySelectorAll('canvas');
+  const original=entry.inkImage===window.KemalExamWorkspace.visualKey(source)
+    ? window.KemalExamWorkspace.unpackInk(entry.ink)
+    : [];
+  const reviewKey=`${P.result.clientAttemptId||P.result.resultId||P.result.examId}:${entry.questionNo}`;
+  const notes=P.reviewInk.get(reviewKey)||[];
+  P.reviewInk.set(reviewKey,notes);
+  let active=null;
+  const toggle=modal.querySelector('[data-review-edit]');
+  const visibility=modal.querySelector('[data-review-ink]');
+  const status=modal.querySelector('.review-help');
+  visibility.disabled=!original.length;
+  status.textContent=original.length?'Öğrencinin sınavdaki çözümü.':
+    entry.ink?'Soru görseli değiştiği için kayıtlı çizim yerleştirilemedi.':'Bu soru için kayıtlı öğrenci çizimi yok.';
+
+  const bounds={left:0,top:0,right:1,bottom:1};
+  original.forEach(stroke=>stroke.points.forEach(({x,y})=>{
+    bounds.left=Math.min(bounds.left,x);
+    bounds.top=Math.min(bounds.top,y);
+    bounds.right=Math.max(bounds.right,x);
+    bounds.bottom=Math.max(bounds.bottom,y);
+  }));
+  const span=bounds.right-bounds.left;
+  image.style.width='100%';
+
+  function paint(canvas,strokes){
+    const frame=surface.getBoundingClientRect();
+    const rect=image.getBoundingClientRect();
+    if(!frame.width||!frame.height||!rect.width||!rect.height) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    const width=Math.round(frame.width*dpr),height=Math.round(frame.height*dpr);
+    if(canvas.width!==width||canvas.height!==height){
+      canvas.width=width;
+      canvas.height=height;
+    }
+    const ctx=canvas.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,width,height);
+    ctx.setTransform(dpr,0,0,dpr,(rect.left-frame.left)*dpr,(rect.top-frame.top)*dpr);
+    strokes.forEach(stroke=>drawStoredStroke(ctx,stroke,rect.width,rect.height));
+  }
+
+  function paintReview(){
+    paint(studentCanvas,original);
+    paint(reviewCanvas,notes);
+  }
+
+  function setReady(ready){
+    toggle.disabled=!ready;
+    visibility.disabled=!ready||!original.length;
+    if(ready){
+      const verticalScale=image.naturalHeight/image.naturalWidth/span*100;
+      surface.style.padding=`${-bounds.top*verticalScale}% ${(bounds.right-1)/span*100}% ${(bounds.bottom-1)*verticalScale}% ${-bounds.left/span*100}%`;
+      paintReview();
+    }else status.textContent='Soru görseline ulaşılamadı.';
+  }
+
+  toggle.addEventListener('click',()=>{
+    const editing=surface.classList.toggle('is-editing');
+    toggle.setAttribute('aria-pressed',String(editing));
+  });
+  visibility.addEventListener('click',()=>{
+    studentCanvas.hidden=!studentCanvas.hidden;
+    visibility.setAttribute('aria-pressed',String(!studentCanvas.hidden));
+  });
+  modal.querySelector('[data-review-undo]').addEventListener('click',()=>{
+    if(active) return;
+    notes.pop();
+    paint(reviewCanvas,notes);
+  });
+  modal.querySelector('[data-review-clear]').addEventListener('click',()=>{
+    if(active) return;
+    notes.length=0;
+    paint(reviewCanvas,notes);
+  });
+  function point(event){
+    const rect=image.getBoundingClientRect();
+    return {x:(event.clientX-rect.left)/rect.width,y:(event.clientY-rect.top)/rect.height};
+  }
+  reviewCanvas.addEventListener('pointerdown',event=>{
+    if(event.button!==0||active||!image.naturalWidth) return;
+    const stroke={tool:'pencil',color:'#2563EB',size:3,points:[point(event)]};
+    active={id:event.pointerId,stroke};
+    notes.push(stroke);
+    reviewCanvas.setPointerCapture?.(event.pointerId);
+    paint(reviewCanvas,notes);
+  });
+  reviewCanvas.addEventListener('pointermove',event=>{
+    if(active?.id!==event.pointerId) return;
+    active.stroke.points.push(point(event));
+    paint(reviewCanvas,notes);
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(type=>reviewCanvas.addEventListener(type,event=>{
+    if(active?.id===event.pointerId) active=null;
+  }));
+  image.addEventListener('load',()=>setReady(true));
+  image.addEventListener('error',()=>setReady(false));
+  toggle.disabled=true;
+  visibility.disabled=true;
+  image.src=source;
+  if(image.complete&&image.naturalWidth) setReady(true);
+  if(typeof ResizeObserver==='function'){
+    const observer=new ResizeObserver(paintReview);
+    observer.observe(image);
+    const cleanup=new MutationObserver(()=>{
+      if(!modal.isConnected){observer.disconnect();cleanup.disconnect();}
+    });
+    cleanup.observe(modal.parentNode,{childList:true});
+  }
+}
+
+function getKarneShareSummary(){
+  const result=P.result;
+  const score=formatExamScoreValue(result.examScore??result.score,result.scoreScale);
+  return `${result.examTitle}\n${result.date} · ${result.grade}. sınıf\nPuan: ${score}\n${result.correct} doğru, ${result.wrong} yanlış, ${result.blank} boş`;
+}
+
+window.openKarneShare=function(){
+  if(!P.result||document.getElementById('karneShareDialog')) return;
+  const text=getKarneShareSummary();
+  const dialog=document.createElement('dialog');
+  dialog.id='karneShareDialog';
+  dialog.className='modal-box';
+  dialog.style.margin='auto';
+  dialog.style.border='none';
+  dialog.innerHTML=`<form method="dialog">
+    <h3>Karne özetini paylaş</h3>
+    <p style="white-space:pre-line">${escHtml(text)}</p>
+    <div class="exam-share-actions">
+      ${typeof navigator.share==='function'?'<button class="btn btn-primary" type="button" data-native-share>Paylaşım menüsü</button>':''}
+      <a class="btn btn-outline" href="mailto:?subject=${encodeURIComponent('Sınav Karnesi')}&amp;body=${encodeURIComponent(text)}">E-posta</a>
+      <a class="btn btn-outline" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      <button class="btn btn-outline" type="button" data-copy-summary>Özeti kopyala</button>
+      <button class="btn btn-outline" value="close">Kapat</button>
+    </div>
+    <p class="review-help" role="status" data-share-feedback></p>
+  </form>`;
+  document.body.append(dialog);
+  dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+  dialog.querySelector('[data-native-share]')?.addEventListener('click',async ()=>{
+    try{
+      await navigator.share({title:'Sınav Karnesi',text});
+    }catch(error){
+      if(error.name!=='AbortError') dialog.querySelector('[data-share-feedback]').textContent='Paylaşım menüsü açılamadı. E-posta, WhatsApp veya kopyalamayı kullanabilirsin.';
+    }
+  });
+  dialog.querySelector('[data-copy-summary]').addEventListener('click',async ()=>{
+    try{
+      await navigator.clipboard.writeText(text);
+      dialog.querySelector('[data-share-feedback]').textContent='Özet kopyalandı.';
+    }catch(error){
+      dialog.querySelector('[data-share-feedback]').textContent='Kopyalama izni bulunamadı. Üstteki özeti seçip kopyalayabilirsin.';
+    }
+  });
+  dialog.showModal();
+};
+
 // Karnede Soru İnceleme Modeli
 window.showQuestionModal=function(i){
   const r=P.result;if(!r)return;
   const entries=getResultQuestionEntries(r);
   const entry=entries[i];
   if(!entry) return;
-  const q=r.questions[i]||{};
+  const q=r.questions?.[i]||{};
   const ua=entry.selectedAnswer;const ca=entry.correctAnswer;
   const isC=entry.outcome==='D',isB=entry.outcome==='B';
   const statusBg=isB?'#64748B':isC?'#10B981':'#EF4444';
   const statusTxt=isB?'Boş bırakıldı':isC?'Doğru cevap!':'Yanlış cevap';
   const sectionTitle=entry.sectionTitle||getQuestionSectionTitle(q,i,r.questionSections);
   const learningOutcome=entry.learningOutcome||q.learningOutcome||'';
-  const visual=entry.imageUrl||q.imageUrl||q.imageData||'';
+  const visual=entry.imageUrl||'';
   const bodyHtml=visual
-    ? `<img src="${visual}" style="max-width:100%;border-radius:8px;display:block;margin:0 auto;box-shadow:0 2px 10px rgba(0,0,0,.1)">`
+    ? `<p class="review-help" role="status"></p>
+       <div class="review-tools">
+         <button class="exam-workspace-action" type="button" data-review-ink aria-pressed="true">Öğrenci çizimi</button>
+         <button class="exam-workspace-action" type="button" data-review-edit aria-pressed="false">İnceleme kalemi</button>
+         <button class="exam-workspace-action" type="button" data-review-undo>Geri al</button>
+         <button class="exam-workspace-action" type="button" data-review-clear>İnceleme çizimini sil</button>
+       </div>
+       <div class="review-surface">
+         <img alt="${entry.questionNo}. soru" draggable="false">
+         <canvas aria-hidden="true"></canvas><canvas aria-hidden="true"></canvas>
+       </div>
+       <p class="review-help">İnceleme çizimleri bu karne oturumunda kalır.</p>`
     : `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px">
          <div style="font-size:13px;color:var(--slate);line-height:1.8">
            <div><strong>Soru No:</strong> ${entry.questionNo}</div>
            <div><strong>Bölüm:</strong> ${escHtml(sectionTitle||r.subject||'Genel')}</div>
            ${learningOutcome?`<div><strong>Kazanım:</strong> ${escHtml(learningOutcome)}</div>`:''}
-           <div><strong>Verilen Cevap:</strong> ${ua||'Boş'}</div>
-           <div><strong>Doğru Cevap:</strong> ${ca||'—'}</div>
+           <div><strong>Verilen Cevap:</strong> ${escHtml(ua||'Boş')}</div>
+           <div><strong>Doğru Cevap:</strong> ${escHtml(ca||'—')}</div>
            <div><strong>Durum:</strong> ${isB?'Boş':isC?'Doğru':'Yanlış'}</div>
            <div style="margin-top:10px;color:var(--muted)">Bu eski kayıtta soru görseli saklanmadığı için özet bilgi gösteriliyor.</div>
          </div>
        </div>`;
   const el=document.createElement('div');el.className='modal-overlay';
-  el.innerHTML=`<div class="modal-box" style="max-width:600px;padding:0;overflow:hidden;text-align:left">
+  el.innerHTML=`<div class="modal-box" role="dialog" aria-modal="true" aria-label="Soru inceleme" style="max-width:850px;padding:0;overflow:hidden;text-align:left">
     <div style="background:${statusBg};padding:12px 18px;display:flex;align-items:center;justify-content:space-between">
-      <div style="color:#fff;font-weight:700;font-size:14px">${entry.questionNo}. Soru${sectionTitle?' — <strong>'+escHtml(sectionTitle)+'</strong>':''} — ${statusTxt}${ua&&!isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong> / Verilen: <strong>'+ua+'</strong>':isC?' &nbsp;|&nbsp; Doğru: <strong>'+ca+'</strong>':''}</div>
+      <div style="color:#fff;font-weight:700;font-size:14px">${entry.questionNo}. Soru${sectionTitle?' — <strong>'+escHtml(sectionTitle)+'</strong>':''} — ${statusTxt}${ua&&!isC?' &nbsp;|&nbsp; Doğru: <strong>'+escHtml(ca)+'</strong> / Verilen: <strong>'+escHtml(ua)+'</strong>':isC?' &nbsp;|&nbsp; Doğru: <strong>'+escHtml(ca)+'</strong>':''}</div>
       <button onclick="this.closest('.modal-overlay').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>
     </div>
     <div style="padding:16px;background:#f8fafc;max-height:65vh;overflow-y:auto">
@@ -3466,6 +3713,7 @@ window.showQuestionModal=function(i){
     </div>
   </div>`;
   document.body.appendChild(el);
+  if(visual) mountQuestionReview(el,entry,visual);
   el.addEventListener('click',e=>{if(e.target===el)el.remove();});
 };
 

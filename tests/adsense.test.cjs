@@ -160,6 +160,19 @@ test('the admin shutdown uses only the enable flag and can stop a newer configur
   assert.equal(row.enabled, true);
 });
 
+test('the shared administration menu exposes advertisement settings only to the owner', async () => {
+  for (const profile of [{ isOwner: true }, { permissions: { site_admin_dashboard: true } }, { legacyMode: true }]) {
+    const { document, window } = parseHTML('<html><body><div id="app"><div class="topbar">İçerik yönetimi</div></div></body></html>');
+    window.kemalAdminAuth = { getAdminAccessProfile: async () => profile };
+    vm.runInNewContext(fs.readFileSync('js/admin-shell.js', 'utf8'), { window, document });
+    window.KemalAdminShell.initStandalone({ activeKey: 'main-overview' });
+    await tick();
+    const link = document.querySelector('[data-admin-permission-key="main-adsense"]');
+    assert.equal(link.getAttribute('href'), '/admin/index.html#reklamlar');
+    assert.equal(link.style.display === 'none', profile.isOwner !== true);
+  }
+});
+
 test('ads.txt uses only the stored publisher and stays available while ad serving is off', async () => {
   const exports = {};
   let row = { enabled: false, publisher_id: publisher };

@@ -282,7 +282,7 @@ test('two open devices synchronize appearance edits alongside an independent sco
  a.submit(a.document.getElementById('cosmeticsForm'));await a.flushWrites();await new Promise(r=>setImmediate(r));
  for(const h of [a,b]){const s=h.saved().classes[0].students[0];assert.equal(C.earned(s),7);assert.equal(s.cosmetics.accessory,'leaf');assert.equal(h.document.querySelector('.fish .fish-accessory').hidden,false);}
 });
-async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,webShare=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false,raySurface=false,expressiveSurface=false,expressiveUnavailable=false,captureEnergy=false}={}) {
+async function harness({absent=false,sound=true,reduced=false,extraNames=[],deleteError=false,ageDays=2,chatTest=false,growth=false,species='clown',creatureMode=null,modelAvailable=true,lite=false,drawCost=0,autoQuality=false,displaySize=100,sceneWidth=900,sceneHeight=600,configure=null,clipboard=null,webShare=null,pearlRect=null,water=false,cloudFactory=null,liveClient=null,seasonalDate=null,search='',authPending=false,timeoutAuth=false,cacheWriteFailure=false,cacheReadFailure=false,localQuota=false,raySurface=false,expressiveSurface=false,expressiveUnavailable=false,captureEnergy=false,agendaFixture=null}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
   delete window.AquariumNativeShare;
   const state=C.initialState(),cls=state.classes[0],s=C.newStudent('Deniz',species);
@@ -291,7 +291,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   const day=C.ensureDay(s,cls);day.absent=absent;
   state.settings.points=true;state.settings.classPoints=true;state.settings.feedSound=sound;
   configure?.(state,cls,s);
-  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0,directDocumentWrites=0;const intervals=[],intervalPeriods=[],frames=[],resizeObservers=[],zeroTimers=[];let timerNow=Date.now(),frameNow=0,rafId=0;
+  let saved=JSON.stringify(state),backup=null,deleteCalls=0,sounds=0,negativeSounds=0,directDocumentWrites=0;const intervals=[],intervalPeriods=[],frames=[],resizeObservers=[],zeroTimers=[];let timerNow=Date.now(),frameNow=0,rafId=0;
   const cloudStorage=new Map([['kemal_class_aquarium_v1_test-teacher',saved]]);
   const durableRows=new Map(),clone=value=>value==null?null:JSON.parse(JSON.stringify(value));
   window.AquariumStorage={create:()=>({
@@ -325,13 +325,15 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   window.AquariumCreature3D={create:()=>{modelCreates++;return {supported:modelAvailable,render:(canvas,...args)=>{modelCalls.push(args);frameNow+=drawCost;return !modelFail;},dispose:()=>modelDisposes++};}};
   window.SitePerformance={lite:()=>lite,mode:()=>lite?'lite':'auto',reportSlow(){if(autoQuality&&!lite){lite=true;window.dispatchEvent(new window.Event('site-performance-change'));}},set:value=>{lite=value==='lite';window.dispatchEvent(new window.Event('site-performance-change'));}};
   window.AquariumSocial=require('../js/akvaryum-social.js');
-  window.AquariumEnergy=require('../js/akvaryum-energy.js');window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');if(captureEnergy){const original=window.AquariumMotion;window.AquariumMotion={...original,step(fish,...args){motionSpeeds=fish.map(f=>({id:f.el.dataset.id,speed:f.mood.speed,hungry:f.hungry,absent:f.absent}));return original.step(fish,...args);}};}window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;}};
+  window.AquariumBubbleGames={...require('../js/akvaryum-bubble-games.js'),create:options=>require('../js/akvaryum-bubble-games.js').create({...options,scheduler:context,now:()=>timerNow})};
+  window.AquariumNewspaper=require('../js/akvaryum-newspaper.js');window.AquariumEnergy=require('../js/akvaryum-energy.js');window.AquariumCore=C;window.AquariumTimer={...require('../js/akvaryum-timer.js'),create:()=>require('../js/akvaryum-timer.js').create(()=>timerNow)};window.AquariumMotion=require('../js/akvaryum-motion.js');if(captureEnergy){const original=window.AquariumMotion;window.AquariumMotion={...original,step(fish,...args){motionSpeeds=fish.map(f=>({id:f.el.dataset.id,speed:f.mood.speed,hungry:f.hungry,absent:f.absent}));return original.step(fish,...args);}};}window.AquariumAudio={catalogue:require('../js/akvaryum-sounds.js').catalogue,tracks:{off:'Sessiz'},titles:{},current:()=> 'off',isPlaying:()=>false,setVolume(){},feed:async()=>{sounds++;},negative:async()=>{negativeSounds++;}};
   window.kemalUserAuth={ready:()=>authPending?new Promise(()=>{}):Promise.resolve(),getState:()=>({ready:true}),getProfile:()=>({role:'teacher',approval_status:'active'}),getUser:()=>({id:'test-teacher'})};
   window.AquariumCloud=cloudFactory?{create:cloudFactory}:null;if(cloudFactory)window.kemalUserAuth.getClient=()=>({});
   window.AquariumLive=liveClient?require('../js/akvaryum-live.js'):null;if(liveClient)window.kemalUserAuth.getClient=()=>liveClient;
   if(chatTest)window.AquariumMotion={...window.AquariumMotion,step:typeof chatTest==='function'?chatTest:fish=>fish.forEach(f=>{f.x=100;f.y=200;})};
   window.AquariumSharing={removeClass:async()=>{deleteCalls++;if(deleteError)throw Error("Bağlantı yok. Sınıf silinmedi.");}};
   if(cloudFactory)window.AquariumSharing.snapshot=()=>({});
+  agendaFixture?.(window);
   window.matchMedia=()=>({matches:reduced,addEventListener(){}});
   for(const el of document.querySelectorAll('*')) el.getBoundingClientRect=()=>({left:0,top:0,width:1000,height:700});
   let shellRect=pearlRect||{left:sceneWidth/2-85,top:sceneHeight-160,width:170,height:145};
@@ -343,15 +345,15 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   app.requestFullscreen=async()=>{document.fullscreenElement=app;document.dispatchEvent(new window.Event('fullscreenchange'));};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
   const context={window,document,navigator:{share:webShare,clipboard:{writeText:async value=>clipboard?.(value)}},location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URL,URLSearchParams,AbortController,performance:{now:()=>frameNow},console,
-    localStorage:{getItem:key=>key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith('_seasonal_dismissals')?(cloudStorage.get(key)||null):key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key.startsWith('kemal_class_aquarium_v1')&&!key.endsWith('_seasonal_dismissals')){directDocumentWrites++;if(localQuota)throw Error('QuotaExceededError');}if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith('_seasonal_dismissals'))cloudStorage.set(key,value);else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
-    setTimeout:(fn,ms)=>{if(ms===0)zeroTimers.push(fn);if(ms===12000&&timeoutAuth)Promise.resolve().then(fn);return 1;},clearTimeout(){},setInterval:(fn,ms)=>{intervals.push(fn);intervalPeriods.push(ms);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
+    localStorage:{getItem:key=>key.startsWith('kemal_reef_games_v1_')?(cloudStorage.get(key)||null):key==='kemal_aquarium_display_size'?String(displaySize):key==='kemal_aquarium_creature_mode'?creatureMode:key.endsWith('_seasonal_dismissals')?(cloudStorage.get(key)||null):key.endsWith("_beforeClassDelete")?backup:cloudFactory?(cloudStorage.get(key)||null):saved,setItem:(key,value)=>{if(key.startsWith('kemal_class_aquarium_v1')&&!key.endsWith('_seasonal_dismissals')){directDocumentWrites++;if(localQuota)throw Error('QuotaExceededError');}if(key.startsWith('kemal_reef_games_v1_'))cloudStorage.set(key,value);else if(key==='kemal_aquarium_display_size')displaySize=Number(value);else if(key==='kemal_aquarium_creature_mode')creatureMode=value;else if(key.endsWith('_seasonal_dismissals'))cloudStorage.set(key,value);else if(key.endsWith("_beforeClassDelete"))backup=value;else if(cloudFactory){cloudStorage.set(key,value);if(key==='kemal_class_aquarium_v1_test-teacher')saved=value;}else saved=value;}},
+    setTimeout:(fn,ms)=>{if(ms===0)zeroTimers.push(fn);if(ms===12000&&timeoutAuth)Promise.resolve().then(fn);return 1;},clearTimeout(){},clearInterval(){},setInterval:(fn,ms)=>{intervals.push(fn);intervalPeriods.push(ms);return intervals.length;},requestAnimationFrame:fn=>{const callback=now=>{frameNow=now;fn(now);};callback.id=++rafId;frames.push(callback);return callback.id;},cancelAnimationFrame:id=>{const index=frames.findIndex(fn=>fn.id===id);if(index>=0)frames.splice(index,1);},ResizeObserver:class{constructor(callback){this.callback=callback;}observe(element){resizeObservers.push({element,callback:this.callback});}},
     FormData:class {constructor(form){this.form=form;}get(name){const fields=[...this.form.querySelectorAll('[name="'+name+'"]')];return (fields.find(f=>f.type==='radio'&&f.checked)||fields[0])?.value;}}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
   if(raySurface)for(const img of document.querySelectorAll('.fish[data-species="ray"] .fish-body-image'))Object.defineProperties(img,{complete:{value:true},naturalWidth:{value:640},naturalHeight:{value:360}});
   if(expressiveSurface)for(const img of document.querySelectorAll('.fish .fish-body-image'))if(window.AquariumExpressive.supports(img.closest('.fish').dataset.species))Object.defineProperties(img,{complete:{value:true},naturalWidth:{value:640},naturalHeight:{value:426}});
   const click=selector=>{const el=typeof selector==='string'?document.querySelector(selector):selector;assert.ok(el,selector);el.dispatchEvent(new window.Event('click',{bubbles:true}));};
   const submit=form=>form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));
-  return {motionSpeeds:()=>motionSpeeds,rayPaints,expressionPaints,directDocumentWrites:()=>directDocumentWrites,flushWrites:async()=>{let count=0;while(zeroTimers.length){assert.ok(count++<10,'writes must settle');await zeroTimers.shift()();}},pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
+  return {motionSpeeds:()=>motionSpeeds,rayPaints,expressionPaints,directDocumentWrites:()=>directDocumentWrites,flushWrites:async()=>{let count=0;while(zeroTimers.length){assert.ok(count++<10,'writes must settle');await zeroTimers.shift()();}},pollCloud:()=>intervals[intervalPeriods.indexOf(3000)](),window,document,waterPaints,modal,click,submit,intervals,frames,resizeScene:(w,h)=>{sceneWidth=w;sceneHeight=h;resizeObservers.filter(o=>o.element===area).forEach(o=>o.callback());},resizePearl:rect=>{shellRect=rect;resizeObservers.filter(o=>o.element===shell).forEach(o=>o.callback());},advanceTimer:ms=>{timerNow+=ms;intervals[1]();},saved:()=>JSON.parse(saved),sounds:()=>sounds,negativeSounds:()=>negativeSounds,backup:()=>JSON.parse(backup),deleteCalls:()=>deleteCalls,modelCalls,modelCreates:()=>modelCreates,modelDisposes:()=>modelDisposes,failModels:()=>{modelFail=true;},creatureMode:()=>creatureMode,displaySize:()=>displaySize};
 }
 test('board magnification stays device-local and preserves young fish growth, points and lightweight motion',async()=>{
  const options={ageDays:0,growth:true,sceneWidth:1240,sceneHeight:242,extraNames:Array.from({length:23},(_,i)=>'Öğrenci '+i),lite:true};
@@ -699,7 +701,8 @@ test('fullscreen retains working timer, audio and scene controls and restores th
  h.click(toggle);await new Promise(resolve=>setImmediate(resolve));
  assert.equal(d.fullscreenElement,app);assert.equal(toggle.getAttribute('aria-label'),'Tam ekrandan çık');
  assert.equal(toggle.querySelector('use').getAttribute('href'),'#i-collapse');assert.equal(h.modal.parentNode,d.getElementById('aquarium'));
- assert.equal(d.querySelectorAll('.scene-controls>.fullscreen-keep').length,4);
+ assert.equal(d.querySelectorAll('.scene-controls>.fullscreen-keep').length,5);
+ assert.ok(d.querySelector('#bubbleGamesButton.fullscreen-keep'));
  h.click('#activitiesButton');assert.equal(d.getElementById('modalTitle').textContent,'Saat ve sayaç');
  assert.equal(h.modal.querySelector('[data-action="activities"]'),null);
  h.submit(d.getElementById('timerForm'));assert.equal(h.modal.open,false);assert.equal(d.fullscreenElement,app);
@@ -791,6 +794,8 @@ test('an unavailable lightweight fish image falls back once to the same species 
  assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
  img.dispatchEvent(new h.window.Event('error',{bubbles:true}));
  assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
+ h.click('.fish');h.click('.behavior-choice');
+ assert.equal(img.getAttribute('src'),'/assets/akvaryum/canlilar/palyaco-baligi.png');
 });
 
 test('teacher can save a birthday, see its cake and greeting, reject invalid dates and remove it',async()=>{
@@ -837,6 +842,58 @@ test('agenda preview matches existing fish safely and imports only names and day
  assert.deepEqual(saved[2].birthday,{day:29,month:2});assert.equal(C.validate(h.saved()).classes[0].students[0].agendaStudentId,'first');
  assert.equal(d.querySelector('.fish-name .fish-birthday:not([hidden])').textContent,'🎂');
  await open();assert.equal(d.getElementById('agendaImportApply').disabled,true,'reimporting the same class does not duplicate pupils');
+ h.click(d.querySelector('[data-action="link-agenda"][data-id="'+saved[1].id+'"]'));
+ await new Promise(r=>setImmediate(r));
+ const select=d.getElementById('agendaLinkStudent');
+ assert.ok(select.querySelector('[value="first"]').hasAttribute('disabled'));
+ select.querySelector('[value=""]').selected=false;select.querySelector('[value="ada2"]').selected=true;
+ h.submit(d.getElementById('agendaImportForm'));
+ assert.equal(h.saved().classes[0].students[1].agendaStudentId,'ada2');
+ assert.deepEqual(h.saved().classes[0].students[1].birthday,{day:12,month:3});
+ h.click('.fish[data-id="'+saved[1].id+'"]');h.click('[data-action="edit-student"]');
+ h.click('[data-action="link-agenda"]');await new Promise(r=>setImmediate(r));
+ assert.equal(d.getElementById('agendaLinkStudent').value,'ada2');
+ h.click('[data-action="unlink-agenda"]');
+ assert.equal(h.saved().classes[0].students[1].agendaStudentId,null);
+});
+
+test('opening the aquarium and an agenda revision refresh update linked dates without adding fish',async()=>{
+ const date=C.dayKey();
+ const doc={classes:[{id:'one',name:'1/A'},{id:'two',name:'2/A'}],students:[
+  {classId:'one',id:'deniz',firstName:'Deniz',lastName:'Gül',birthDate:'2018-02-15'},
+  {classId:'one',id:'ada',firstName:'Ada',lastName:'Yılmaz',birthDate:'2018-05-20'},
+  {classId:'two',id:'ece',firstName:'Ece',lastName:'Ak',birthDate:'2018-05-07'},
+  {classId:'one',id:'new',firstName:'Can',lastName:'Demir',birthDate:'2018-04-10'}
+ ]};
+ let revision='2026-11-10T10:00:00Z',downloads=0;
+ const session={user:{id:'test-teacher'},profile:{role:'teacher',approval_status:'active'}};
+ const h=await harness({ageDays:0,extraNames:['Ada','Takma ad'],configure:(state,cls,s)=>{
+  cls.name='1/A';cls.students[1].agendaStudentId=null;cls.students[2].agendaStudentId='ece';
+  C.awardBehavior(s,cls,date,cls.tasks[0].id);
+ },agendaFixture:window=>{
+  window.SmartboardRoster=require('../js/smartboard-roster.js');
+  window.AquariumAgenda=require('../js/akvaryum-agenda.js');
+  Object.assign(window.kemalUserAuth,{ready:async()=>session,getState:()=>session,getClient:()=>({from(table){
+   assert.equal(table,'teacher_agenda_states');let previous;
+   return {select(fields){assert.equal(fields,'agenda_state,updated_at');return this;},
+    eq(key,value){assert.deepEqual([key,value],['user_id','test-teacher']);return this;},
+    neq(key,value){assert.equal(key,'updated_at');previous=value;return this;},
+    async maybeSingle(){if(previous===revision)return {data:null};downloads++;return {data:{agenda_state:doc,updated_at:revision}};}
+   };
+  }})});
+ }});
+ const settle=()=>new Promise(resolve=>setImmediate(resolve));
+ await settle();
+ const pupils=()=>h.saved().classes[0].students;
+ assert.deepEqual(pupils().map(s=>s.agendaStudentId),['deniz',null,'ece']);
+ assert.deepEqual(pupils().map(s=>s.birthday),[{day:15,month:2},undefined,{day:7,month:5}]);
+ h.window.dispatchEvent(new h.window.Event('online'));await settle();assert.equal(downloads,1);
+ revision='2026-11-10T10:10:00Z';doc.students[0].birthDate='2018-03-16';doc.students[2].birthDate='';
+ h.window.dispatchEvent(new h.window.Event('online'));await settle();
+ assert.equal(downloads,2);
+ assert.deepEqual(pupils().map(s=>s.birthday),[{day:16,month:3},undefined,{day:7,month:5}]);
+ assert.equal(C.earned(pupils()[0]),7);
+ assert.deepEqual(pupils().map(s=>s.name),['Deniz','Ada','Takma ad']);
 });
 
 test('nearby birthday greetings vary and trigger the recipient’s own joy without points or feeding',async()=>{
@@ -1667,8 +1724,8 @@ test('teacher shine can be disabled independently and tail accents follow the an
  h.click('[data-action="settings"]');h.click('#settings-tab-teacher');const toggle=d.getElementById('teacherGlowToggle');toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));assert.equal(d.querySelector('.teacher-fish').classList.contains('teacher-glow'),false);
  assert.equal(h.saved().settings.teacherGlow,false);assert.equal(C.earned(h.saved().classes[0].students[0]),7);
 });
-test('hammerhead and axolotl animate intact, celebrate fresh points, obey motion preferences and keep transient poses out of storage',async()=>{
- for(const species of ['hammerhead','axolotl'])for(const lite of [false,true]){
+test('the new swimmers animate intact, celebrate fresh points, obey motion preferences and keep transient poses out of storage',async()=>{
+ for(const species of ['hammerhead','axolotl','catfish','megalodon','seal','penguin'])for(const lite of [false,true]){
   const h=await harness({species,ageDays:0,expressiveSurface:true,lite}),d=h.document,fish=d.querySelector('.fish');
   h.frames.pop()(100);assert.ok(fish.classList.contains('has-expressive-surface'));assert.equal(fish.querySelectorAll('.creature-joint').length,0);assert.equal(fish.querySelector('.fish-art').style.getPropertyValue('--body-mask'),'none');
   const paints=h.expressionPaints.transforms;for(let i=0;i<20;i++)h.frames.pop()(150+i*50);assert.ok(h.expressionPaints.transforms>paints);
@@ -1680,13 +1737,13 @@ test('hammerhead and axolotl animate intact, celebrate fresh points, obey motion
  }
 });
 test('the new animals hatch as the selected species and their explicit demo remains separate from a teacher document',async()=>{
- for(const species of ['hammerhead','axolotl']){
+ for(const species of ['hammerhead','axolotl','catfish','megalodon','seal','penguin']){
   const h=await harness({species,ageDays:0,growth:true,expressiveSurface:true}),d=h.document;assert.ok(d.querySelector('.fish').classList.contains('is-egg'));
   h.click('.fish');h.click('.behavior-choice');assert.equal(d.querySelector('.fish').classList.contains('is-egg'),false);assert.equal(h.saved().classes[0].students[0].species,species);
   assert.ok(d.querySelector('.fish .fish-body-image').getAttribute('src').includes(C.species(species).file.replace('.png','.webp')));
  }
  const h=await harness({search:'?demo=1&yeniler=1',ageDays:0}),d=h.document,before=h.saved();
- assert.deepEqual([...d.querySelectorAll('.fish')].map(f=>f.dataset.species),['hammerhead','axolotl']);
+ assert.deepEqual([...d.querySelectorAll('.fish')].map(f=>f.dataset.species),['hammerhead','axolotl','catfish','megalodon','seal','penguin']);
  h.click('.fish');h.click('.behavior-choice');assert.deepEqual(h.saved(),before);assert.equal(h.frames.length,1);
 });
 
@@ -1735,4 +1792,114 @@ test('the compact portrait settings selector exposes Sharing and every group wit
  assert.equal(select.querySelectorAll('option').length,7);select.querySelector('[value="sharing"]').selected=true;select.dispatchEvent(new h.window.Event('change',{bubbles:true}));
  assert.equal(d.getElementById('settings-panel-sharing').hidden,false);assert.equal(d.getElementById('settings-tab-sharing').getAttribute('aria-selected'),'true');
  h.click('[data-action="settings-tab"][data-tab="backup"]');assert.equal(select.value,'backup');
+});
+
+test('four milestone characters load their vector art through the chooser and celebrate without saving animation state',async()=>{
+ for(const species of ['plankton','gary','squidward','sandy']){
+  const h=await harness({ageDays:0,expressiveSurface:true,configure:(doc,cls,s)=>{
+   C.updateTaskPoints(cls,cls.tasks[0].id,100);C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id);
+  }}),d=h.document;
+  h.click('.fish');h.click('[data-action="choose"]');
+  assert.equal(d.querySelector('[value="'+species+'"]').disabled,false);
+  chooseSpeciesRadio(h,species);h.submit(d.getElementById('chooseForm'));
+  const fish=d.querySelector('[data-species="'+species+'"]');
+  assert.ok(fish.classList.contains('is-character'));
+  assert.equal(fish.querySelector('.fish-body-image').getAttribute('src'),'/assets/akvaryum/canlilar/'+species+'.svg');
+  assert.ok(fish.querySelector('.expressive-surface'));assert.ok(fish.querySelector('.expressive-effects'));
+  h.click(fish);h.click('.behavior-choice');h.frames.pop()(1100);
+  assert.ok(fish.classList.contains('is-rewarding'));
+  h.frames.pop()(7000);assert.equal(fish.classList.contains('is-rewarding'),false);
+  assert.equal(C.earned(h.saved().classes[0].students[0]),200);
+  assert.equal(h.saved().classes[0].students[0].species,species);
+  assert.doesNotMatch(JSON.stringify(h.saved()),/expressiveCanvas|lastExpressivePose|rewardStarted/);
+ }
+});
+
+test('teacher newspaper stores drafts, publishes own-child targets and previews without changing points or stopping fish',async()=>{
+ const N=require('../js/akvaryum-newspaper.js'),h=await harness({ageDays:0,extraNames:['Ece']}),d=h.document;
+ const before=h.saved(),pupil=before.classes[0].students[0];h.click('[data-action="activities"]');h.click('[data-action="newspaper-editor"]');assert.equal(h.modal.open,true);assert.equal(d.getElementById('newspaperStand').hidden,true);
+ let form=d.getElementById('newspaperForm');form.querySelector('[name="title"]').value='Gezi haftası';form.querySelector('[name="body"]').value='Cuma günü kitaplarımızı getirelim.';form.querySelector('[name="target"]').value='Üç gün kitap oku.';
+ form.dispatchEvent(new h.window.Event('submit',{bubbles:true,cancelable:true}));await h.flushWrites();let cl=h.saved().classes[0];
+ assert.equal(cl.newspaper.weeks[N.week()].published,false);assert.equal(cl.newspaper.weeks[N.week()].targets[pupil.id],'Üç gün kitap oku.');assert.equal(C.earned(cl.students[0]),0);
+ const enabled=d.getElementById('newspaperEnabled');enabled.checked=true;enabled.dispatchEvent(new h.window.Event('change',{bubbles:true}));h.click('[data-action="newspaper-send"]');await h.flushWrites();
+ const fish=d.querySelector('.fish');h.click('[data-action="newspaper-preview"]');assert.equal(h.modal.open,false);assert.equal(d.getElementById('newspaperPanel').hidden,false);assert.match(d.getElementById('newspaperContent').textContent,/Gezi haftası/);assert.match(d.getElementById('newspaperContent').textContent,/Üç gün kitap oku/);
+ const position=fish.style.transform;for(let i=0;i<12;i++)h.frames.shift()?.(100+i*80);assert.notEqual(fish.style.transform,position);
+ h.click('[data-action="newspaper-close"]');assert.equal(d.getElementById('newspaperPanel').hidden,true);assert.equal(h.saved().classes[0].students[0].feeds.length,0);
+});
+
+test('newspaper keeps distinct unsaved child targets and week drafts when the teacher switches selectors',async()=>{
+ const N=require('../js/akvaryum-newspaper.js'),h=await harness({ageDays:0,extraNames:['Ece']}),d=h.document;
+ h.click('[data-action="activities"]');h.click('[data-action="newspaper-editor"]');const form=d.getElementById('newspaperForm'),ids=h.saved().classes[0].students.map(s=>s.id);
+ form.querySelector('[name="body"]').value='Ortak duyuru';form.querySelector('[name="target"]').value='Deniz hedefi';
+ const select=d.getElementById('newspaperEditorStudent');Object.defineProperty(select,'value',{value:ids[1],configurable:true});select.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ assert.equal(form.querySelector('[name="target"]').value,'');form.querySelector('[name="target"]').value='Ece hedefi';Object.defineProperty(select,'value',{value:ids[0],configurable:true});select.dispatchEvent(new h.window.Event('change',{bubbles:true}));assert.equal(form.querySelector('[name="target"]').value,'Deniz hedefi');
+ const week=d.getElementById('newspaperEditorWeek'),previous=N.shift(N.week(),-7);Object.defineProperty(week,'value',{value:previous});week.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ assert.equal(d.querySelector('#newspaperForm [name="body"]').value,'');d.querySelector('#newspaperForm [name="body"]').value='Geçen haftanın duyurusu';
+ const current=d.getElementById('newspaperEditorWeek');Object.defineProperty(current,'value',{value:N.week()});current.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ const savedForm=d.getElementById('newspaperForm');assert.equal(savedForm.querySelector('[name="body"]').value,'Ortak duyuru');h.submit(savedForm);await h.flushWrites();
+ const issue=h.saved().classes[0].newspaper.weeks[N.week()];assert.equal(issue.targets[ids[0]],'Deniz hedefi');assert.equal(issue.targets[ids[1]],'Ece hedefi');assert.equal(issue.body,'Ortak duyuru');
+});
+
+test('newspaper is opt-in, save never sends, and disable or withdraw preserves draft and scores',async()=>{
+ const N=require('../js/akvaryum-newspaper.js'),h=await harness({ageDays:0}),d=h.document;
+ assert.equal(d.getElementById('newspaperStand').hidden,true);h.click('[data-action="settings"]');h.click('[data-action="newspaper-editor"]');
+ let form=d.getElementById('newspaperForm');assert.equal(form.querySelector('[data-action="newspaper-send"]').disabled,true);
+ form.querySelector('[name="body"]').value='Birinci haber';h.submit(form);await h.flushWrites();assert.equal(h.saved().classes[0].newspaper.weeks[N.week()].published,false);
+ const toggle=d.getElementById('newspaperEnabled');toggle.checked=true;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));h.click('[data-action="newspaper-send"]');await h.flushWrites();
+ const first=h.saved().classes[0].newspaper.weeks[N.week()];assert.equal(first.publication.body,'Birinci haber');assert.equal(first.published,true);
+ form.querySelector('[name="body"]').value='İkinci taslak';h.submit(form);await h.flushWrites();const draft=h.saved().classes[0].newspaper.weeks[N.week()];assert.equal(draft.body,'İkinci taslak');assert.equal(draft.publication.body,'Birinci haber');
+ h.click('[data-action="newspaper-send"]');await h.flushWrites();assert.equal(h.saved().classes[0].newspaper.weeks[N.week()].publication.body,'İkinci taslak');
+ h.click('[data-action="newspaper-withdraw"]');await h.flushWrites();assert.equal(h.saved().classes[0].newspaper.weeks[N.week()].published,false);
+ toggle.checked=false;toggle.dispatchEvent(new h.window.Event('change',{bubbles:true}));await h.flushWrites();assert.equal(d.getElementById('newspaperStand').hidden,true);assert.equal(h.saved().classes[0].newspaper.weeks[N.week()].body,'İkinci taslak');assert.equal(C.earned(h.saved().classes[0].students[0]),0);
+});
+test('negative feedback is played only for a saved deduction and obeys the existing sound preference',async()=>{
+ for(const sound of [true,false]){
+  const h=await harness({ageDays:0,sound,configure:(doc,cls,s)=>{cls.tasks.push({id:'negative-task',title:'Söz sıramı beklemeliyim',points:-2,icon:''});C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id);}});
+  h.click('.fish');h.click('[data-kind="development"]');h.click('[data-action="reward-behavior"]');await h.flushWrites();assert.equal(h.negativeSounds(),sound?1:0);assert.equal(h.sounds(),0);assert.equal(C.earned(h.saved().classes[0].students[0]),5);
+ }
+});
+
+test('five reef games run without changing aquarium points, feeding, goals, sharing or the swimming loop',async()=>{
+ const h=await harness({ageDays:0}),d=h.document,before=h.saved(),fish=d.querySelector('.fish');
+ h.click('#bubbleGamesButton');assert.equal(d.getElementById('bubbleGames').hidden,false);assert.equal(h.modal.open,undefined);assert.equal(d.querySelectorAll('#bubbleGames [data-game-id]').length,5);
+ const fixed=d.querySelector('[data-game-setting="stationary"]');fixed.checked=true;fixed.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ const position=fish.style.transform;for(let i=0;i<20;i++)h.frames.shift()?.(100+i*40);assert.notEqual(fish.style.transform,position);
+ h.click('#bubbleGames [data-game-id="multiply"]');const stem=d.querySelector('.bubble-question h3').textContent,[a,b]=stem.split(' × ').map(Number),answer=[...d.querySelectorAll('.answer-orb')].find(el=>el.textContent===String(a*b));h.click(answer);
+ assert.equal(d.querySelector('[data-game-score]').textContent,'10');h.click('#bubbleGames [data-game-action="finish"]');assert.equal(d.querySelector('.result-orb strong').textContent,'10');h.click('#bubbleGames [data-game-action="close"]');await h.flushWrites();
+ assert.deepEqual(h.saved(),before);assert.equal(d.querySelector('.fish'),fish);assert.equal(d.getElementById('bubbleGames').hidden,true);assert.ok(h.frames.length>0);
+});
+test('reef game opens from activities and in fullscreen, and a changed class closes the current round',async()=>{
+ const h=await harness({ageDays:0,configure:(state,cls)=>{state.settings.motion=false;const other=C.newClass('Diğer sınıf');other.students=[C.newStudent('Ece')];state.classes.push(other);}}),d=h.document;
+ h.click('[data-action="activities"]');h.click('.activity-card[data-action="bubble-games"]');assert.equal(h.modal.open,false);assert.equal(d.querySelectorAll('#bubbleGames [data-game-id]').length,5);
+ h.click('#bubbleGames [data-game-id="rounding"]');const select=d.getElementById('classSelect');Object.defineProperty(select,'value',{value:h.saved().classes[1].id});select.dispatchEvent(new h.window.Event('change',{bubbles:true}));await h.flushWrites();assert.equal(d.getElementById('bubbleGames').hidden,true);
+ h.click('.scene-controls [data-action="fullscreen"]');await new Promise(r=>setImmediate(r));h.click('#bubbleGamesButton');assert.equal(d.getElementById('bubbleGames').hidden,false);h.click('#bubbleGames [data-game-action="close"]');
+});
+test('a fair picker result launches games for that pupil without redrawing or awarding aquarium points',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada','Ece'],reduced:true}),d=h.document,before=h.saved();
+ h.click('[data-action="random-student"]');assert.equal(d.getElementById('pickerResultActions').hidden,true);h.click('[data-action="random-draw"]');const chosen=d.getElementById('pickerName').textContent;
+ h.click('[data-action="random-game"]');assert.equal(h.modal.open,false);assert.equal(d.querySelector('.bubble-game-player strong').textContent,chosen);assert.equal(d.querySelectorAll('#bubbleGames [data-game-id]').length,5);
+ h.click('#bubbleGames [data-game-id="multiply"]');const [a,b]=d.querySelector('.bubble-question h3').textContent.split(' × ').map(Number);h.click([...d.querySelectorAll('.answer-orb')].find(el=>el.textContent===String(a*b)));h.click('#bubbleGames [data-game-action="finish"]');assert.equal(d.querySelector('.result-orb strong').textContent,'10');h.click('#bubbleGames [data-game-action="close"]');
+ h.click('[data-action="random-student"]');assert.equal(d.getElementById('pickerName').textContent,chosen);assert.match(d.getElementById('pickerRound').textContent,/1 \/ 3/);h.click('[data-action="random-draw"]');assert.notEqual(d.getElementById('pickerName').textContent,chosen);assert.match(d.getElementById('pickerRound').textContent,/2 \/ 3/);
+ h.click('[data-action="close"]');h.click('#bubbleGamesButton');assert.equal(d.querySelector('.bubble-game-player strong').textContent,before.classes[0].students[0].name);assert.deepEqual(h.saved(),before);
+});
+
+test('teacher starts reef construction in activities and can hide a permanently earned ship',async()=>{
+ const h=await harness({ageDays:0});
+ h.click('[data-action="activities"]');h.click('[data-action="reef-collection"]');
+ const form=h.document.getElementById('reefForm');
+ for(let i=0;i<4;i++)form.querySelector('[name="threshold'+i+'"]').value=String(i+1);
+ form.querySelector('[name="enabled"]').checked=true;form.querySelector('[name="visible"]').checked=true;
+ h.submit(form);
+ assert.equal(h.document.getElementById('reefShip'),null);
+ h.click('#modal [data-action="close"]');h.click('.fish');h.click('.behavior-choice');
+ const ship=h.document.getElementById('reefShip');
+ assert.match(ship.getAttribute('src'),/kayip-gemi-4\.svg$/);
+ assert.equal(C.reef.stage(h.saved().classes[0].reefCollection),4);
+ h.click('#modal [data-action="close"]');h.click('[data-action="activities"]');h.click('[data-action="reef-collection"]');
+ const settings=h.document.getElementById('reefForm');
+ assert.equal(settings.querySelectorAll('input[disabled]').length,4);
+ settings.querySelector('[name="visible"]').checked=false;settings.querySelector('[name="enabled"]').checked=true;
+ h.submit(settings);
+ assert.equal(h.document.getElementById('reefShip'),null);
+ assert.equal(C.reef.stage(h.saved().classes[0].reefCollection),4);
 });

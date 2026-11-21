@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>E-Kitap Okuyucu - Kemal Öğretmenim</title>
-  <link rel="stylesheet" href="/css/e-kitap.css?v=20260729-2">
+  <link rel="stylesheet" href="/css/e-kitap.css?v=20261116-okunabilir-sorular">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
@@ -18,6 +18,8 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="reading"></script>
 </head>
 <body class="reader-body">
   <div class="reader-app">
@@ -147,7 +149,7 @@
             <div class="book-root" id="bookRoot"></div>
             <div class="reader-fallback-page" id="fallbackPage"></div>
             <div class="external-frame-wrap" id="externalFrameWrap">
-              <iframe class="external-frame" id="externalFrame" title="Harici e-kitap" referrerpolicy="no-referrer"></iframe>
+              <iframe class="external-frame" id="externalFrame" title="Harici e-kitap" referrerpolicy="no-referrer" allow="fullscreen" allowfullscreen></iframe>
             </div>
           </div>
           <button class="reader-arrow next" id="nextPage" type="button" title="Sonraki sayfa"><i data-lucide="chevron-right"></i></button>
@@ -161,6 +163,7 @@
           <button class="tool-button" id="zoomInButton" type="button" title="Yakınlaştır"><i data-lucide="zoom-in"></i></button>
           <button class="tool-button" id="fitButton" type="button" title="Sayfayı ekrana sığdır"><i data-lucide="scan"></i></button>
           <button class="tool-button" id="fullscreenButton" type="button" title="Tam ekran"><i data-lucide="maximize"></i></button>
+          <a class="tool-button" id="readerExternalLink" hidden target="_blank" rel="noopener noreferrer" title="Kitabı yeni sekmede aç" aria-label="Kitabı yeni sekmede aç"><i data-lucide="external-link"></i></a>
           <button class="finish-reading" id="finishReadingButton" type="button">Kitabı Bitirdim</button>
         </div>
       </section>
@@ -237,6 +240,7 @@
   <script src="/js/user-auth.js"></script>
   <script src="/js/meb-schools.js"></script>
   <script src="/js/content-progress.js?v=20260729-ebook"></script>
-  <script src="/js/e-kitap-okuyucu.js?v=20260729-2"></script>
+  <script src="/js/e-kitap-kaynak.js?v=20261112"></script>
+  <script src="/js/e-kitap-okuyucu.js?v=20261112"></script>
 </body>
 </html>

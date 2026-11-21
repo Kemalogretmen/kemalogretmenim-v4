@@ -6,7 +6,7 @@ const editorPage = fs.readFileSync('admin/okuma-editor.html', 'utf8');
 const editorApp = fs.readFileSync('js/okuma-editor-app.js', 'utf8');
 
 test('okuma editor applies indentation to only the current paragraph first line', () => {
-  assert.match(editorPage, /okuma-editor-app\.js\?v=20261107-first-line-sticky/);
+  assert.match(editorPage, /okuma-editor-app\.js\?v=\d{8}-[^"]+/);
   assert.match(editorApp, /Attributor\.Style\('firstlineindent', 'text-indent'/);
   assert.match(editorApp, /scope: Parchment\.Scope\.BLOCK/);
   assert.match(editorApp, /migrateLegacyFirstLineIndentHtml\(normalizeEditorHtml/);

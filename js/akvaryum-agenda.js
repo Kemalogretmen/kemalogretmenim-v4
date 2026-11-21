@@ -19,7 +19,7 @@
         birthday = { day: parsed.getUTCDate(), month: parsed.getUTCMonth() + 1 };
       }
     }
-    return { id: source.id, name, firstName, birthday };
+    return { id: source.id, name, firstName, birthday, schoolNo: C.clean(source.schoolNo, 16) };
   }
 
   function plan(students, roster) {
@@ -35,7 +35,7 @@
       const uniqueFirst = sources.filter(row => row.first === first).length === 1;
       const target = matches[0]?.student;
       const ambiguous = !uniqueId || matches.length > 1 || (!linked.length && (
-        !uniqueName || (short.length && (!exact.length || first===name) && !uniqueFirst) || !!target?.agendaStudentId
+        !uniqueName || (short.length && (!exact.length || first===name) && !uniqueFirst) || (target && target.agendaStudentId !== undefined)
       ));
       return { source, target, linked: linked.length > 0, exact: exact.length > 0, ambiguous,
         newName: uniqueFirst && source.firstName ? source.firstName : source.name };
@@ -47,9 +47,41 @@
       // A saved link or an exact full name takes precedence over a first-name guess.
       const ambiguous = row.ambiguous || otherMatches.some(other => other.linked || !row.linked && (other.exact || !row.exact));
       const unchanged = !source.birthday || (target?.birthday?.day === source.birthday.day && target.birthday.month === source.birthday.month);
-      const kind = ambiguous ? 'ambiguous' : !target ? 'add' : unchanged ? 'same' : 'update';
+      const kind = ambiguous ? 'ambiguous' : !target ? 'add' : !unchanged ? 'update' : row.linked ? 'same' : 'link';
       return { source, kind, newName, targetId: target?.id, targetName: target?.name, previous: target?.birthday };
     });
+  }
+
+  function setLink(student, source) {
+    const id = source?.id ?? null;
+    const previous = student.agendaStudentId;
+    const birthday = source?.birthday;
+    const changedDate = birthday && (student.birthday?.day !== birthday.day || student.birthday?.month !== birthday.month);
+    if (previous === id && !changedDate) return false;
+    student.agendaStudentId = id;
+    if (birthday) student.birthday = { ...birthday };
+    else if (source && previous && previous !== id) delete student.birthday;
+    return true;
+  }
+
+  function synchronize(classes, sources) {
+    const roster = sources.flatMap(source => source.students);
+    const byId = new Map();
+    for (const source of roster) byId.set(source.id, byId.has(source.id) ? null : source);
+    let changed = false;
+    for (const cls of classes) {
+      const named = sources.filter(source => nameKey(source.name) === nameKey(cls.name));
+      const source = cls.agendaClassId ? sources.find(c => c.id === cls.agendaClassId) : named.length === 1 ? named[0] : null;
+      const suggestions = source ? plan(cls.students, source.students) : [];
+      const links = new Map(suggestions.filter(row => row.kind === 'link' || row.kind === 'update').map(row => [row.targetId, row.source.id]));
+      for (const student of cls.students) {
+        const id = student.agendaStudentId === undefined ? links.get(student.id) : student.agendaStudentId;
+        if (!id || cls.students.some(other => other !== student && other.agendaStudentId === id)) continue;
+        const match = byId.get(id);
+        if (match && setLink(student, match)) changed = true;
+      }
+    }
+    return changed;
   }
 
   async function newStudent(classId, row) {
@@ -64,5 +96,5 @@
     return student;
   }
 
-  return { studentDetails, plan, newStudent };
+  return { studentDetails, plan, newStudent, setLink, synchronize };
 });

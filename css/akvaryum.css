@@ -21,7 +21,7 @@ dialog{color-scheme:dark;color:var(--ink);background:#103a49;border:1px solid #8
 body:not(.access-pending) .access-gate { display:none; }
 .access-pending #aquariumApp,.access-pending #modal,.access-pending #toast { display:none!important; }
 .view-only .topbar,.view-only .save-line,.view-only .scene-heading,.view-only #studentPanel,.view-only .scene-footer,.view-only #welcome,.view-only #demoBanner { display:none!important; }
-.view-only .scene-controls > :not([data-action="fullscreen"]) { display:none!important; }
+.view-only .scene-controls > :not([data-action="fullscreen"]):not([data-action="bubble-games"]) { display:none!important; }
 .view-only #aquarium { height:100svh; min-height:0; }
 .view-only #swimArea { inset:75px 20px 30px; height:auto; }
 .view-only .fish { cursor:default; }
@@ -35,7 +35,7 @@ body:not(.access-pending) .access-gate { display:none; }
 .app:fullscreen { background:#062f40; overflow:hidden!important; }
 .app:fullscreen > :not(#aquarium) { display:none!important; }
 .app:fullscreen #aquarium { height:100vh!important; min-height:0!important; margin:0!important; border-radius:0; }
-.app:fullscreen #aquarium > :not(#swimArea):not(.water-light):not(#waterWaves):not(#bubbles):not(#feedingEffects):not(#classPearl):not(#eggBed):not(#localClock):not(#cloudWarning):not(#modal):not(.scene-controls) { display:none!important; }
+.app:fullscreen #aquarium > :not(#swimArea):not(.water-light):not(#waterWaves):not(#bubbles):not(#feedingEffects):not(#classPearl):not(#eggBed):not(#localClock):not(#cloudWarning):not(#modal):not(#bubbleGames):not(#bubbleGamesPop):not(.scene-controls) { display:none!important; }
 .app:fullscreen #swimArea { inset:55px 30px 35px!important; height:auto!important; width:auto!important; }
 .app:fullscreen .mood-symbol { display:none!important; }
 .app:fullscreen .fish { pointer-events:none; }
@@ -52,12 +52,12 @@ body:not(.access-pending) .access-gate { display:none; }
 
 /* Teacher-controlled audio, labels and the shared classroom pearl. */
 .sound-controls{display:flex;flex-direction:column;align-items:center;gap:3px}.sound-toggle{width:34px;height:25px;border:1px solid #bce4de55;background:#103e50cc;border-radius:9px;color:#cff5e2;font-size:13px;line-height:1;cursor:pointer}.sound-toggle[aria-pressed=true]{background:#bee6cd;color:#113e45}.scene-controls{align-items:flex-start}
-.fish-points{position:absolute;top:calc(-23px - var(--points-gap, 10px) + var(--label-adjustment,0px));left:50%;transform:translateX(-50%);min-width:34px;padding:3px 7px;border:1px solid #f9e4a456;border-radius:9px;background:#163d49db;color:#fff0b2!important;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2;box-shadow:0 3px 10px #06293430}
+.fish-points{--score-spacing:max(2px,calc(var(--points-gap,10px) - 8px));position:absolute;top:calc(-23px - var(--score-spacing) + var(--label-adjustment,0px));left:50%;transform:translateX(-50%);min-width:34px;padding:3px 7px;border:1px solid #f9e4a456;border-radius:9px;background:#163d49db;color:#fff0b2!important;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2;box-shadow:0 3px 10px #06293430}
 .fish-points[hidden],.fish-name[hidden]{display:none!important}.fish-chat{top:-70px}
 .class-pearl{position:absolute;z-index:3;left:calc((100% - 350px)/2);bottom:55px;transform:translateX(-50%);width:170px;pointer-events:auto;filter:drop-shadow(0 10px 13px #052f4460);border:0;padding:0;background:transparent;color:inherit;appearance:none;cursor:pointer}.class-pearl[hidden]{display:none!important}.class-pearl img{width:100%;display:block;pointer-events:none}.pearl-score{position:absolute;top:42%;left:50%;transform:translate(-50%,-5%);display:grid;justify-items:center;text-align:center;gap:1px;width:138px;color:#24444b;text-shadow:0 1px 4px #fff,0 0 9px #fff;pointer-events:none}.pearl-score span{font-size:7px;letter-spacing:1px;font-weight:800}.pearl-score strong{font-size:24px;line-height:1.05;font-variant-numeric:tabular-nums;max-width:130px;overflow-wrap:anywhere}.pearl-score small{font-size:8px;font-weight:700}.panel-hidden .class-pearl,.view-only .class-pearl{left:50%;bottom:32px}
 .app:fullscreen #aquarium > #classPearl:not([hidden]){display:block!important;left:50%;bottom:18px;width:180px}.app:fullscreen #classPearl[hidden]{display:none!important}.app:fullscreen .pearl-score span,.app:fullscreen .pearl-score small{display:none}.app:fullscreen .pearl-score strong{font-size:28px}
 .child-share{padding:16px;border:1px solid #70a4ac55;border-radius:12px;margin:12px 0;display:grid;gap:12px}.child-share>.field{margin:0}.child-share input{font-size:12px;font-family:ui-monospace,monospace}.child-share .button{font-size:11px}.parent-code-form{width:min(560px,100%);text-align:left}.parent-code-form .button{width:100%}.parent-code-form input{color:#ecfbff}
-@media(max-width:800px){.class-pearl{left:50%;top:calc(495px - 100px);bottom:auto;width:130px}.pearl-score{width:110px}.pearl-score strong{font-size:20px}.pearl-score span{font-size:6px}.panel-hidden .class-pearl,.view-only .class-pearl{top:auto;bottom:12px}.fish-points{font-size:10px;top:calc(-20px - var(--points-gap, 8px) + var(--label-adjustment,0px))}.sound-toggle{height:23px}.app:fullscreen .class-pearl{top:auto}}
+@media(max-width:800px){.class-pearl{left:50%;top:calc(495px - 100px);bottom:auto;width:130px}.pearl-score{width:110px}.pearl-score strong{font-size:20px}.pearl-score span{font-size:6px}.panel-hidden .class-pearl,.view-only .class-pearl{top:auto;bottom:12px}.fish-points{font-size:10px;top:calc(-20px - var(--score-spacing) + var(--label-adjustment,0px))}.sound-toggle{height:23px}.app:fullscreen .class-pearl{top:auto}}
 @media(min-width:801px){.aquarium #swimArea{bottom:30px}}
 @media(max-width:800px){.aquarium:has(.class-pearl:not([hidden])):not(.panel-hidden) .student-panel{margin-top:595px}.class-pearl{top:492px}.panel-hidden .class-pearl{top:auto;bottom:72px}.view-only .class-pearl{top:auto;bottom:15px}}
 .app:fullscreen #aquarium #swimArea,.view-only #aquarium #swimArea{bottom:30px!important}
@@ -134,10 +134,9 @@ dialog .field input,dialog .field textarea,dialog .field select{background:#062c
 /* Shared stacking context lets living creatures pass behind and in front of the timer. */
 .scene-timer{position:absolute;left:50%;top:70%;transform:translate(-50%,-50%) perspective(700px) rotateY(-8deg);z-index:2;pointer-events:none;text-align:center;width:clamp(150px,24vw,290px);color:#dcfafca6;text-shadow:1px 2px 0 #357e9299,2px 4px 0 #184c6466,0 0 22px #b7f5ff5c;filter:drop-shadow(0 15px 7px #032c4166)}
 .scene-timer strong{display:block;font-size:clamp(48px,7vw,96px);line-height:1.15;letter-spacing:-3px;font-weight:650;font-variant-numeric:tabular-nums}.scene-timer>span{display:block;font-size:11px;letter-spacing:1px;max-width:100%;overflow-wrap:anywhere;text-shadow:0 1px 4px #042b45}.scene-timer::after{content:'';position:absolute;bottom:-14px;left:8%;right:8%;height:11px;border-radius:50%;background:#03294144;filter:blur(6px);transform:rotateX(45deg)}.scene-timer[data-status=paused]{opacity:.6}.scene-timer[data-status=done]{color:#c5f7d6bf}
-.scene-kelp{position:absolute;inset:auto 0 0;height:90px;z-index:4;pointer-events:none;opacity:.5;filter:blur(.25px)}.scene-kelp i{position:absolute;bottom:-10px;left:2%;height:80px;width:12px;border-radius:90% 0 90% 0;background:linear-gradient(80deg,#145a61,#69a88970);transform-origin:bottom;transform:rotate(-15deg);animation:kelp-sway 9s ease-in-out infinite alternate}.scene-kelp i:nth-child(2){left:4%;height:110px;animation-delay:-3s}.scene-kelp i:nth-child(3){left:7%;height:65px;animation-delay:-5s}.scene-kelp i:nth-child(4){left:94%;height:95px;animation-delay:-2s}.scene-kelp i:nth-child(5){left:97%;height:120px;animation-delay:-6s}@keyframes kelp-sway{to{transform:rotate(10deg) skewX(6deg)}}
-.no-motion .scene-kelp i{animation:none}.app:fullscreen .scene-timer{top:70%}.app:fullscreen .scene-timer>span{display:none}
+.app:fullscreen .scene-timer{top:70%}.app:fullscreen .scene-timer>span{display:none}
 @media(max-width:600px){.history-entry{align-items:flex-start;flex-direction:column}.growth-thresholds{gap:0 10px}.growth-thresholds .field{font-size:10px}.scene-timer{left:50%;top:70%;width:155px}.scene-timer strong{font-size:48px}.scene-timer>span{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.scene-kelp i,.is-hatching .fish-egg,.is-hatching .fish-art{animation:none}.is-hatching .fish-egg{display:none}}
+@media(prefers-reduced-motion:reduce){.is-hatching .fish-egg,.is-hatching .fish-art{animation:none}.is-hatching .fish-egg{display:none}}
 @media(prefers-reduced-transparency:reduce){dialog,.behavior-modal{background:#103a49;backdrop-filter:none;-webkit-backdrop-filter:none}dialog::backdrop{background:#032431b5}}
 /* Eggs rest at the actual scene floor, independently of the fish swimming bounds. */
 .egg-bed{position:absolute;inset:0 380px 8px 20px;pointer-events:none;z-index:3;overflow:hidden}.egg-bed .fish{pointer-events:auto}.panel-hidden .egg-bed,.view-only .egg-bed{right:20px}
@@ -232,7 +231,6 @@ dialog *,.fish-name,.fish-points,.fish-hunger{backdrop-filter:none!important;-we
 .dialog-open dialog *{animation-play-state:running!important}
 .dialog-open dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none;background:#03243165}
 html.performance-lite dialog{background:linear-gradient(135deg,#1b4a59fa,#092f41fa);text-shadow:none}
-html.performance-lite .scene-kelp{display:none}
 /* Coral bubbles rise from the two coral banks without adding more particles. */
 #aquarium[data-theme="coral-island"] .bubble{bottom:12%;}
 html.performance-lite .bubbles i:nth-child(n+10){display:none}
@@ -257,8 +255,7 @@ dialog.species-picker-modal{width:min(1240px,calc(100% - 32px));max-height:94svh
 .species-picker-modal .species-card strong{font-size:12px;line-height:1.25;color:#f0fffb}
 .species-picker-modal .species-card small{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:9px;line-height:1.25;color:#b7d6d3}
 .species-picker-modal .species-result-count{margin:7px 0 0;font-size:11px;color:#bfe3dc}
-.fish-name{margin-top:calc(6px - var(--label-adjustment,0px))}
-@media(max-width:800px){.fish-points{top:calc(-20px - var(--points-gap, 8px) + var(--label-adjustment,0px))}}
+.fish-name{margin-top:calc(1px - var(--label-adjustment,0px))}
 /* Egg cards use a compact label plate so names and scores remain legible on the sand. */
 .egg-bed .fish-art{height:0;aspect-ratio:auto;flex:0 0 0;visibility:hidden}
 .egg-bed .fish-egg{top:calc(6px + var(--egg-size,48px)*.35);width:calc(var(--egg-size,48px)*.7);height:calc(var(--egg-size,48px)*.7)}
@@ -625,6 +622,7 @@ html.performance-lite .fish.birthday-fish .fish-art {
   box-shadow:inset -3px -5px 7px #bd4c0057,inset 2px 2px 4px #fff6cba1,0 0 12px #ffe2a9c9;
 }
 .birthday-fish .fish-name { gap:5px; border-color:#ffe1a67a; padding:2px 7px; }
+.birthday-fish:not(.is-egg) .fish-name { max-width:max(86px,100%); }
 .birthday-fish .fish-name.birthday-badge-only { padding:0; border:0; background:transparent; box-shadow:none; }
 .fish-birthday { flex:none; font-size:clamp(24px,calc(var(--fish-size,100px) * .36),32px); line-height:1.08; }
 .egg-bed .fish-birthday { font-size:clamp(16px,calc(var(--egg-size,32px) * .8),22px); }
@@ -657,3 +655,17 @@ html.performance-lite .fish.birthday-fish .fish-art {
 .agenda-import-list strong { font-size:13px; }
 .agenda-import-list small { margin-top:2px; color:var(--muted); font-size:11px; }
 .agenda-import-date { flex:none; color:#ffe9bf; font-size:12px; font-variant-numeric:tabular-nums; }
+
+/* Dragging across the aquarium should not highlight labels or artwork. */
+#aquariumApp {
+  -webkit-user-select: none;
+  user-select: none;
+}
+#aquariumApp :is(input, textarea, [contenteditable="true"]) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.bubble-games-entry span{font-size:30px;line-height:1;font-weight:800;color:#b9f2ec}.bubble-games-entry{flex-shrink:0}
+
+.bubble-games-entry svg{width:30px;height:30px;opacity:.85;fill:none;stroke:currentColor;stroke-width:1.6}.bubble-games-entry{background:radial-gradient(circle at 30% 20%,#d4fcff30,#81dce60c)!important;box-shadow:inset 0 0 13px #e0ffff24}

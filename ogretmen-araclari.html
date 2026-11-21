@@ -649,6 +649,17 @@
       gap: 12px;
     }
 
+    .science-tools { scroll-margin-top: 96px; }
+    .science-tools h3 { margin: 0 0 4px; font-size: 22px; }
+    .science-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .science-tools .science-topic { margin: 0 0 12px; color: var(--desk-muted, var(--muted)); font-weight: 750; }
+    .science-tools .science-group > .tool-grid { grid-template-columns: minmax(0, 1fr); }
+    .science-tools:not([hidden]) + .tool-grid:not(:empty) { margin-top: 20px; }
+
+    @media (max-width: 680px) {
+      .science-groups { grid-template-columns: minmax(0, 1fr); }
+    }
+
     .tool-card {
       --accent: var(--blue);
       display: grid;
@@ -745,7 +756,7 @@
       background: #fffbeb;
     }
 
-    .tool-card h3 {
+    .tool-card .tool-title {
       margin: 0;
       font-family: 'Sora', sans-serif;
       font-size: 22px;
@@ -886,7 +897,9 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
-<link rel="stylesheet" href="/css/teacher-workspace.css?v=20261104">
+<link rel="stylesheet" href="/css/teacher-workspace.css?v=20261112">
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="labs"></script>
 </head>
 <body class="teacher-workspace tools-catalog-page">
   <main class="teacher-tools">
@@ -901,7 +914,7 @@
         <span class="date" id="timeBarDate">yükleniyor...</span>
       </div>
       <div class="command-actions">
-        <span class="status-pill"><i class="fas fa-layer-group"></i> <b id="toolCountBadge">19</b> araç</span>
+        <span class="status-pill"><i class="fas fa-layer-group"></i> <b id="toolCountBadge">23</b> araç</span>
         <span class="status-pill"><i class="fas fa-star"></i> Favoriler saklanır</span>
         <span class="timezone" id="timeBarTz"><i class="fas fa-globe"></i> Yerel Saat</span>
       </div>
@@ -960,9 +973,23 @@
         <button class="filter-btn" type="button" data-filter="anlatim"><i class="fas fa-chalkboard"></i> Anlatım</button>
         <button class="filter-btn" type="button" data-filter="sinif"><i class="fas fa-users"></i> Sınıf</button>
         <button class="filter-btn" type="button" data-filter="matematik"><i class="fas fa-calculator"></i> Matematik</button>
+        <button class="filter-btn" type="button" data-filter="fen"><i class="fas fa-flask" aria-hidden="true"></i> Fen Laboratuvarı</button>
         <button class="filter-btn" type="button" data-filter="icerik"><i class="fas fa-folder-open"></i> İçerik</button>
       </div>
 
+      <section class="science-tools" id="fen-laboratuvari" aria-labelledby="scienceTitle" hidden>
+        <h3 id="scienceTitle">Fen Laboratuvarı</h3>
+        <div class="science-groups">
+          <section class="science-group" data-science-topic="Kuvvet ve Yaylar" aria-labelledby="scienceTopic">
+            <h4 class="science-topic" id="scienceTopic">Kuvvet ve Yaylar</h4>
+            <div class="tool-grid" id="scienceToolGrid"></div>
+          </section>
+          <section class="science-group" data-science-topic="Hücre ve Organeller" aria-labelledby="scienceCellTopic">
+            <h4 class="science-topic" id="scienceCellTopic">Hücre ve Organeller</h4>
+            <div class="tool-grid"></div>
+          </section>
+        </div>
+      </section>
       <section class="tool-grid" id="toolGrid" aria-label="Araç kartları"></section>
       <div class="empty-state" id="emptyState">Bu aramaya uygun araç bulunamadı.</div>
     </section>
@@ -994,6 +1021,7 @@
     (function(){
       'use strict';
       const FAVORITE_KEY = 'kemal_ogretmen_araclari_favoriler';
+      const categoryLabels = { anlatim:'Anlatım', sinif:'Sınıf', matematik:'Matematik', fen:'Fen Laboratuvarı', icerik:'İçerik' };
       const tools = [
         { id:'akilli-tahtam', title:'Akıllı Tahta', desc:'Çizim, yazı, kum havuzu ve etkileşimli ders araçları.', href:'/ogretmen/beyaztahta.html', icon:'fa-pen-nib', category:'anlatim', label:'Anlatım', accent:'#6c3ded', featured:true },
         { id:'kronometre', title:'Saat & Sayaç', desc:'Dijital ve klasik saat, görsel geri sayım ve tur kayıtları.', href:'/ogretmen/kronometre.html', icon:'fa-stopwatch', category:'anlatim', label:'Zaman', accent:'#2563eb' },
@@ -1006,6 +1034,8 @@
         { id:'3d-yapi-atolyesi', title:'3D Yapı Atölyesi', desc:'Geometrik cisimleri birleştir, döndür ve kendi yapını kur.', href:'/ogretmen/3d-yapi-atolyesi.html', icon:'fa-cubes-stacked', category:'matematik', label:'3B Geometri', accent:'#7c3aed' },
         { id:'cisim-acilimlari', title:'Cisim Açılımları', desc:'Prizma, piramit, koni, silindir ve küre modellerini katla.', href:'/ogretmen/geometrik-cisimler-acilimlar.html', icon:'fa-shapes', category:'matematik', label:'Geometri', accent:'#0f9f75' },
         { id:'simetri', title:'Simetri Aynası', desc:'Şekil, çizim ve yansıma araçlarıyla simetri anlat.', href:'/ogretmen/simetri.html', icon:'fa-clone', category:'matematik', label:'Simetri', accent:'#0b78e3' },
+        { id:'yaylarda-esneklik', title:'Yaylarda Esneklik Laboratuvarı', desc:'Yayların uzamasını karşılaştır, dinamometreyle kuvvet ölç ve beceri testini çöz.', href:'/ogretmen/yaylarda-esneklik-laboratuvari.html', icon:'fa-flask', category:'fen', label:'3B deney', topic:'Kuvvet ve Yaylar', accent:'#0f766e' },
+        { id:'hucre-laboratuvari', title:'Hücre Laboratuvarı', desc:'3B mikroskopta preparat hazırla, hücre ve organelleri incele, etkinlikleri ve beş denemeyi çöz.', href:'/ogretmen/hucre-laboratuvari.html', icon:'fa-microscope', category:'fen', label:'5. Sınıf · 3B ve 2B', topic:'Hücre ve Organeller', accent:'var(--theme-accent)' },
         { id:'belge', title:'Belge ve Sertifika', desc:'Sertifika, teşekkür belgesi ve sınıf içi çıktı tasarımları.', href:'/ogretmen/belge-studyo.html', icon:'fa-medal', category:'icerik', label:'Belge', accent:'#ef5b4d' },
         { id:'hizli-okuma', title:'Hızlı Okuma', desc:'Okuma etkinlikleri, süreli çalışmalar ve rapor ekranları.', href:'/hizli-okuma/index.html', icon:'fa-book-open', category:'icerik', label:'Okuma', accent:'#16a34a' },
         { id:'odak-seridi', title:'Odak Şeridi', desc:'Metni satır satır takip ettir, odak alanını ve hızı ayarla.', href:'/ogretmen/odak-seridi.html', icon:'fa-align-center', category:'icerik', label:'Okuma', accent:'#2563eb' },
@@ -1021,6 +1051,8 @@
       let activeFilter = 'all';
       let favorites = readFavorites();
       const grid = document.getElementById('toolGrid');
+      const scienceSection = document.getElementById('fen-laboratuvari');
+      const scienceGroups = new Map([...scienceSection.querySelectorAll('[data-science-topic]')].map(group => [group.dataset.scienceTopic, group]));
       const search = document.getElementById('toolSearch');
       const introText = document.querySelector('.browser-head p');
       const toolCountBadge = document.getElementById('toolCountBadge');
@@ -1053,7 +1085,7 @@
         document.querySelectorAll('.filter-btn').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === activeFilter)));
         const term = search.value.trim().toLocaleLowerCase('tr-TR');
         const visible = tools.filter(tool => {
-          const haystack = `${tool.title} ${tool.desc} ${tool.label}`.toLocaleLowerCase('tr-TR');
+          const haystack = `${tool.title} ${tool.desc} ${tool.label} ${tool.topic || ''} ${categoryLabels[tool.category]}`.toLocaleLowerCase('tr-TR');
           const matchesSearch = !term || haystack.includes(term);
           const matchesFilter = activeFilter === 'all'
             || (activeFilter === 'favorites' ? favorites.has(tool.id) : tool.category === activeFilter);
@@ -1061,7 +1093,13 @@
         });
 
         grid.textContent = '';
-        visible.forEach(tool => grid.appendChild(createToolCard(tool)));
+        for (const group of scienceGroups.values()) group.querySelector('.tool-grid').replaceChildren();
+        visible.forEach(tool => {
+          const target = scienceGroups.get(tool.topic)?.querySelector('.tool-grid') || grid;
+          target.appendChild(createToolCard(tool));
+        });
+        for (const group of scienceGroups.values()) group.hidden = group.querySelector('.tool-grid').childElementCount === 0;
+        scienceSection.hidden = [...scienceGroups.values()].every(group => group.hidden);
         document.getElementById('emptyState').classList.toggle('show', visible.length === 0);
         introText.textContent = `${countFormatter.format(visible.length)} araç · Dersinize uygun olanı seçin.`;
         if (toolCountBadge) {
@@ -1071,6 +1109,7 @@
 
       function createToolCard(tool) {
         const card = document.createElement('article');
+        const heading = tool.category === 'fen' ? 'h5' : 'h3';
         card.className = `tool-card${tool.featured ? ' featured' : ''}`;
         card.style.setProperty('--accent', tool.accent);
         card.innerHTML = `
@@ -1081,11 +1120,11 @@
             </div>
             <div class="tool-body">
               <span class="tool-meta"><i class="fas fa-circle-dot"></i> ${tool.label}</span>
-              <h3><a class="tool-title-link" href="${tool.href}">${tool.title}</a></h3>
+              <${heading} class="tool-title"><a class="tool-title-link" href="${tool.href}">${tool.title}</a></${heading}>
               <p>${tool.desc}</p>
             </div>
             <div class="tool-bottom">
-              <span class="tool-tag">${tool.category === 'matematik' ? 'Matematik' : tool.category === 'sinif' ? 'Sınıf' : tool.category === 'anlatim' ? 'Anlatım' : 'İçerik'}</span>
+              <span class="tool-tag">${categoryLabels[tool.category]}</span>
               <span class="open-text">Aç <i class="fas fa-arrow-right"></i></span>
             </div>
           </div>

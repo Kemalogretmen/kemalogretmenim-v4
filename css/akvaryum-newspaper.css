@@ -1,0 +1,41 @@
+/* A readable paper on the reef; the aquarium keeps animating around it. */
+.newspaper-stand{position:absolute;left:28px;bottom:38px;z-index:9;width:120px;padding:13px 11px 10px;border:1px solid #d3b98c;border-radius:4px;background:#f4ecd9;color:#263d40;box-shadow:4px 5px 0 #193c43,0 13px 24px #001b3266;transform:rotate(-5deg);text-align:left}
+.newspaper-stand:after{content:'';position:absolute;left:14px;right:14px;bottom:-9px;height:7px;background:#a77b49;border-radius:2px}
+.newspaper-stand>span{display:block;border-block:2px solid #29494b;font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:.95;font-weight:900;padding:6px 0;letter-spacing:-.5px}
+.newspaper-stand small{display:block;font-size:10px;margin-top:6px;font-weight:650}
+.newspaper-panel{position:fixed;z-index:14;top:var(--news-top,16px);left:var(--news-left,28px);bottom:auto;width:var(--news-width,min(530px,calc(100vw - 32px)));height:var(--news-height,calc(100dvh - 32px));max-height:none;display:flex;flex-direction:column;background:#f7f2e7;color:#263d40;border:1px solid #cfbf9d;box-shadow:0 24px 55px #001b3273;border-radius:6px;isolation:isolate;overflow:hidden}
+.newspaper-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#e7decb;border-bottom:1px solid #cbbc9e;padding:9px 14px;flex:none}
+.newspaper-toolbar label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;min-width:0}
+.newspaper-toolbar select{max-width:100%;min-width:0;padding:6px;border:1px solid #c2b294;border-radius:4px;background:#faf6ed;color:#263d40;font-size:12px}
+.newspaper-close{border:0;background:none;color:#263d40;font-size:28px;line-height:1;width:36px;height:36px;border-radius:5px;flex:none}
+.newspaper-content{flex:1 1 0;overflow-y:scroll;scrollbar-gutter:stable;overscroll-behavior:contain;scrollbar-color:#baa888 #eee6d8;padding:19px 24px 16px;min-height:0;line-height:1.55}
+.newspaper-content:focus-visible{outline-offset:-4px}
+.news-masthead{text-align:center;border-bottom:3px double #76817a;padding-bottom:13px;margin-bottom:18px}
+.news-masthead>span,.news-kicker{font-family:inherit;font-size:9px;letter-spacing:1.6px;font-weight:800;color:#32615a;display:block}
+.news-masthead h2{font-family:Georgia,'Times New Roman',serif;font-size:42px;letter-spacing:-1.7px;line-height:1.1;margin:5px 0 9px;color:#213e3e}
+.news-masthead p{margin:0;font-size:12px;font-weight:650}
+.news-masthead small{display:block;margin-top:4px;font-size:11px;color:#596d68}
+.news-story{display:grid;grid-template-columns:106px 1fr;gap:17px;align-items:center}
+.news-portrait{aspect-ratio:1;background:#deebe1;border:1px solid #c5d7c8;border-radius:50%;display:grid;place-items:center;overflow:hidden}
+.news-portrait img{width:94%;height:94%;object-fit:contain;filter:drop-shadow(0 7px 4px #577a6c40)}
+.news-story h3{font-family:Georgia,'Times New Roman',serif;font-size:25px;line-height:1.15;margin:5px 0 9px;letter-spacing:-.3px;overflow-wrap:anywhere}
+.news-story p,.news-section p,.news-announcement p,.news-reward p{font-size:13px;margin:7px 0;line-height:1.65;overflow-wrap:anywhere}
+.news-stats{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid #c9c6b4;margin:20px 0 0;padding:12px 0;gap:8px}
+.news-stats div{text-align:center;border-right:1px solid #d7d1bf}.news-stats div:last-child{border:0}
+.news-stats dt{font-size:10px;font-weight:600}.news-stats dd{font-family:Georgia,'Times New Roman',serif;font-size:29px;font-weight:700;margin:3px 0 0;color:#24594e;line-height:1.1}
+.news-section{border-bottom:1px solid #d6cebc;padding:18px 0}.news-section h3,.news-announcement h3{font-family:Georgia,'Times New Roman',serif;font-size:21px;margin:3px 0 10px;line-height:1.2}
+.news-highlights{list-style:none;padding:0;margin:0}.news-highlights li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:7px 0;font-size:13px;border-bottom:1px dotted #c7c3b4}.news-highlights li b{font-size:11px;white-space:nowrap;color:#31594c}.news-highlights li span{overflow-wrap:anywhere}
+.news-section .news-note,.news-colophon,.news-reward small,.news-section small{display:block;font-size:10px;line-height:1.6;color:#60716a}
+.news-reward{padding:17px 15px;border:1px solid #d1b975;background:#f0e7c8;margin-top:18px}.news-reward strong{display:block;font-family:Georgia,'Times New Roman',serif;font-size:23px;line-height:1.2;margin-top:7px;color:#63501d}
+.news-personal-goal,.news-announcement p{white-space:pre-wrap}.news-personal-goal{font-weight:650;color:#28594d}
+.news-announcement{margin:22px 0 0;padding:20px 0 17px;background:transparent;border-top:5px solid #264f48;border-bottom:3px double #567269}.news-announcement>.news-kicker{font-size:11px;font-weight:900;letter-spacing:2.2px;color:#244b43}.news-announcement h3{font-family:Georgia,'Times New Roman',serif;font-size:clamp(25px,3vw,34px);line-height:1.13;font-weight:900;letter-spacing:-.6px;margin:10px 0 13px;overflow-wrap:anywhere}.news-announcement p{font-size:15px;line-height:1.75;font-weight:550;color:#293e37}.news-announcement p::first-letter{font-family:Georgia,serif;font-size:1.65em;font-weight:800}
+.news-colophon{padding-top:16px;margin-top:15px;border-top:3px double #c0bdac}
+.news-status{padding:20px 0;font-size:13px;line-height:1.7}.news-retry{border:1px solid #8b9f8b;padding:10px 16px;background:#e4ecde;border-radius:4px;color:#244b40;margin-bottom:16px}
+.news-publish{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.5;margin:16px 0}.news-publish input{margin-top:5px;flex:none}
+.newspaper-panel :focus-visible,.newspaper-stand:focus-visible{outline:3px solid #31776b;outline-offset:2px}
+
+@media(max-width:800px){.newspaper-stand{left:18px;bottom:28px;width:102px}.newspaper-stand>span{font-size:18px}.newspaper-stand small{font-size:9px}.newspaper-content{padding:16px}.news-masthead h2{font-size:36px}.news-story{grid-template-columns:78px 1fr;gap:12px}.news-story h3{font-size:22px}.newspaper-toolbar label{flex-direction:column;align-items:flex-start;gap:3px}.newspaper-toolbar select{font-size:11px}.newspaper-toolbar{padding:8px 12px}}
+@media(max-height:560px){.newspaper-stand{bottom:30px}}
+@media(prefers-reduced-motion:reduce){.newspaper-stand{transform:none}}
+
+.newspaper-scroll-hint{flex:0 0 auto;padding:8px 14px;background:#e7decb;border-top:1px solid #cbbc9e;font-size:10px;line-height:1.5;text-align:center;color:#486058}

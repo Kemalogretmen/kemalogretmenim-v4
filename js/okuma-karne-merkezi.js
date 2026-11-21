@@ -184,6 +184,14 @@
     localStorage.removeItem(SELECTED_RESULT_KEY);
   }
 
+  function isAutoPaced(row) {
+    let detail = row.detay_json;
+    if (typeof detail === 'string') {
+      try { detail = JSON.parse(detail); } catch (_) { return false; }
+    }
+    return detail?.ogrenci_okuma_akisi === 'kelime-otomatik';
+  }
+
   function seedPendingSelection() {
     const pending = getPendingSelection();
     if (!pending) {
@@ -199,6 +207,7 @@
       normKey: normName(fullName),
       metin: str(pending.metin_adi || pending.metin || 'Okuma Kaydi'),
       wpm: num(pending.dakika_kelime || pending.wpm),
+      autoPaced: isAutoPaced(pending),
       hedef: num(pending.hedef_hiz || pending.hedef),
       sure: num(pending.okuma_suresi_sn || pending.sure),
       dogru: num(pending.dogru_sayisi || pending.dogru),
@@ -432,6 +441,7 @@
       normKey: normName(fullName),
       metin: str(row.metin_adi || ''),
       wpm: num(row.dakika_kelime || 0),
+      autoPaced: isAutoPaced(row),
       hedef: num(row.hedef_hiz || 0),
       sure: num(row.okuma_suresi_sn || 0),
       dogru: num(row.dogru_sayisi || 0),
@@ -540,7 +550,7 @@
       tbody.innerHTML += '<tr>' +
         numberCell +
         '<td title="' + escHtml(item.metin) + '">' + escHtml(item.metin.length > 22 ? item.metin.substring(0, 22) + '…' : item.metin) + '<span class="src-dot" style="background:' + srcColor + '" title="' + getSourceLabel(item.src) + '"></span></td>' +
-        '<td><span class="spill ' + speedClass + '">' + item.wpm + '</span><div class="wbar-wrap"><div class="wbar" style="width:' + barWidth + '%;background:' + barColor + '"></div></div></td>' +
+        '<td>' + (item.autoPaced ? '—' : '<span class="spill ' + speedClass + '">' + item.wpm + '</span><div class="wbar-wrap"><div class="wbar" style="width:' + barWidth + '%;background:' + barColor + '"></div></div>') + '</td>' +
         '<td style="font-size:9px;color:var(--gray-400)">' + targetText + '</td>' +
         '<td style="font-size:9.5px">' + fmtSure(item.sure) + '</td>' +
         '<td style="font-weight:800;font-size:9.5px">' + dyText + '</td>' +
@@ -561,7 +571,7 @@
     const labels = uniqueRows.map(function(item) {
       return item.metin.length > 11 ? item.metin.substring(0, 11) + '…' : item.metin;
     });
-    const wpms = uniqueRows.map(function(item) { return item.wpm; });
+    const wpms = uniqueRows.map(function(item) { return item.autoPaced ? null : item.wpm; });
     const comprehension = uniqueRows.map(function(item) { return item.anlama; });
     const speedSets = [{
       label: 'Hiz',
@@ -636,10 +646,11 @@
       metinMap[item.metin.toLocaleLowerCase('tr-TR')] = item;
     });
     const uniqueRows = Object.values(metinMap);
-    const wpms = uniqueRows.map(function(item) { return item.wpm; });
+    const measured = uniqueRows.filter(item => !item.autoPaced);
+    const wpms = measured.map(function(item) { return item.wpm; });
     const comprehensions = uniqueRows.map(function(item) { return item.anlama; });
-    const avgWpm = Math.round(wpms.reduce(function(sum, value) { return sum + value; }, 0) / wpms.length);
-    const maxWpm = Math.max.apply(null, wpms);
+    const avgWpm = wpms.length ? Math.round(wpms.reduce(function(sum, value) { return sum + value; }, 0) / wpms.length) : 0;
+    const maxWpm = wpms.length ? Math.max.apply(null, wpms) : 0;
     const avgComprehension = Math.round(comprehensions.reduce(function(sum, value) { return sum + value; }, 0) / comprehensions.length);
     const firstWpm = wpms[0];
     const lastWpm = wpms[wpms.length - 1];
@@ -647,7 +658,7 @@
     const totalWrong = uniqueRows.reduce(function(sum, item) { return sum + item.yanlis; }, 0);
     const totalQuestions = totalCorrect + totalWrong;
     const totalDuration = uniqueRows.reduce(function(sum, item) { return sum + item.sure; }, 0);
-    const targetWpm = data.find(function(item) { return item.hedef; })?.hedef || 0;
+    const targetWpm = data.find(function(item) { return !item.autoPaced && item.hedef; })?.hedef || 0;
     const classEntry = data.find(function(item) { return item.sinif; });
     const sourceSet = Array.from(new Set(data.map(function(item) { return item.src; })));
 
@@ -676,14 +687,14 @@
     }
     document.getElementById('k1-sure').textContent = '⏱️ ' + fmtSure(totalDuration);
 
-    document.getElementById('k1-avghiz').textContent = avgWpm + ' wpm';
-    document.getElementById('k1-maxhiz').textContent = maxWpm + ' wpm';
+    document.getElementById('k1-avghiz').textContent = wpms.length ? avgWpm + ' wpm' : '—';
+    document.getElementById('k1-maxhiz').textContent = wpms.length ? maxWpm + ' wpm' : '—';
     document.getElementById('k1-avganlama').textContent = '%' + avgComprehension;
     document.getElementById('k1-doran').textContent = '%' + (totalQuestions > 0 ? Math.round(totalCorrect / totalQuestions * 100) : 0);
 
     const speedDiff = lastWpm - firstWpm;
-    document.getElementById('k1-hizgel').textContent = (speedDiff >= 0 ? '+' : '') + speedDiff + ' wpm';
-    document.getElementById('k1-hizgel-sub').textContent = firstWpm + ' → ' + lastWpm + ' kelime/dk';
+    document.getElementById('k1-hizgel').textContent = wpms.length > 1 ? (speedDiff >= 0 ? '+' : '') + speedDiff + ' wpm' : '—';
+    document.getElementById('k1-hizgel-sub').textContent = wpms.length > 1 ? firstWpm + ' → ' + lastWpm + ' kelime/dk' : 'En az iki hız ölçümü gerekir';
     document.getElementById('k1-hizbar').style.width = Math.min(100, Math.round(avgWpm / (targetWpm || Math.max(avgWpm, 40)) * 100)) + '%';
     document.getElementById('k1-anlamagel').textContent = '%' + avgComprehension;
     document.getElementById('k1-anlamabar').style.width = avgComprehension + '%';
@@ -702,14 +713,14 @@
       const firstNames = parts.slice(0, -1).join(' ') || lastName;
       document.getElementById('k2-name').innerHTML = escHtml(firstNames) + ' <span>' + escHtml(lastName) + '</span>';
       document.getElementById('k2-toplam').textContent = uniqueRows.length;
-      document.getElementById('k2-avgwpm').textContent = avgWpm + ' wpm';
+      document.getElementById('k2-avgwpm').textContent = wpms.length ? avgWpm + ' wpm' : '—';
       document.getElementById('k2-avganlama').textContent = '%' + avgComprehension;
       fillTableBody('k2-tbody', uniqueRows.slice(15), true, 16);
 
       const maxComprehensionRow = uniqueRows.reduce(function(best, item) {
         return !best || item.anlama >= best.anlama ? item : best;
       }, null);
-      const maxSpeedRow = uniqueRows.reduce(function(best, item) {
+      const maxSpeedRow = measured.reduce(function(best, item) {
         return !best || item.wpm >= best.wpm ? item : best;
       }, null);
       document.getElementById('k2-en-hizli-metin').textContent = maxSpeedRow ? (maxSpeedRow.metin.length > 18 ? maxSpeedRow.metin.substring(0, 18) + '…' : maxSpeedRow.metin) : '—';
@@ -721,11 +732,11 @@
       const successful = uniqueRows.filter(function(item) { return item.anlama >= 80; }).length;
       const medium = uniqueRows.filter(function(item) { return item.anlama >= 60 && item.anlama < 80; }).length;
       const low = uniqueRows.filter(function(item) { return item.anlama < 60; }).length;
-      const hitTarget = targetWpm ? uniqueRows.filter(function(item) { return item.wpm >= targetWpm; }).length : 0;
+      const hitTarget = targetWpm ? measured.filter(function(item) { return item.wpm >= targetWpm; }).length : 0;
       document.getElementById('k2-basarili').textContent = successful + ' metin';
       document.getElementById('k2-orta').textContent = medium + ' metin';
       document.getElementById('k2-dusuk').textContent = low + ' metin';
-      document.getElementById('k2-hedefe').textContent = targetWpm ? (hitTarget + ' / ' + uniqueRows.length) : '—';
+      document.getElementById('k2-hedefe').textContent = targetWpm && measured.length ? (hitTarget + ' / ' + measured.length) : '—';
       document.getElementById('k2-genel-durum').textContent =
         avgComprehension >= 80 ? '🏆 Mukemmel' :
         avgComprehension >= 65 ? '👍 Iyi' :

@@ -1,0 +1,114 @@
+.ra-page {
+  --ra-bg: #f5f8f7; --ra-surface: #fff; --ra-ink: #172d2a; --ra-muted: #465e58;
+  --ra-line: #ccdcd7; --ra-accent: #08604d; --ra-tint: #e6f4ee; --ra-warm: #ffedda;
+  --ra-warm-ink: #773c18; --ra-solid: #08604d; --ra-sky: #e6f1f7;
+  margin: 0; background: var(--ra-bg); color: var(--ra-ink); font-family: var(--font-body, system-ui, sans-serif);
+}
+[data-theme="dark"] .ra-page {
+  --ra-bg: #131c1b; --ra-surface: #1b2825; --ra-ink: #eef8f3; --ra-muted: #b9d1c7;
+  --ra-line: #455f56; --ra-accent: #a3ead2; --ra-tint: #223e34; --ra-warm: #4b3526;
+  --ra-warm-ink: #ffdab7; --ra-solid: #09624f; --ra-sky: #243944;
+}
+.ra-page [hidden] { display: none; }
+.ra-page main { background: var(--ra-bg); color: var(--ra-ink); }
+.ra-page :focus-visible { outline: 3px solid var(--ra-accent); outline-offset: 3px; }
+.ra-page h1, .ra-page h2, .ra-page h3, .ra-page p { margin: 0; letter-spacing: 0; }
+.ra-page h1, .ra-page h2, .ra-page h3 { line-height: 1.2; overflow-wrap: anywhere; }
+.ra-sources a { color: var(--ra-accent); text-underline-offset: .2em; }
+.ra-shell { width: min(100% - 36px, 1080px); margin-inline: auto; }
+.ra-page .platform-ui-icon { width: 20px; height: 20px; vertical-align: middle; }
+.ra-banner {
+  display: flex; align-items: end; min-height: 186px; padding-block: 28px; color: #fff;
+  background: linear-gradient(90deg, #133f35 8%, #133f35ed 46%, #133f3555), url('/assets/vitrin-gecici/03-hizli-okuma.jpg') center 55% / cover;
+}
+.ra-banner h1 { max-width: 19ch; font-size: 39px; font-weight: 900; }
+.ra-kicker { display: flex; align-items: center; gap: 8px; color: var(--ra-accent); font-size: 14px; font-weight: 900; }
+.ra-banner .ra-kicker { color: #c7f2e1; margin-bottom: 8px; }
+.ra-library { padding-block: 24px 48px; }
+.ra-level-fieldset { border: 0; margin: 0; padding: 0; min-inline-size: 0; }
+.ra-level-fieldset legend { margin-bottom: 8px; font-weight: 800; }
+.ra-levels, .ra-grid { display: grid; gap: 10px; }
+.ra-levels { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ra-level {
+  display: flex; align-items: center; gap: 9px; min-height: 52px; padding: 10px 12px;
+  background: var(--ra-surface); color: var(--ra-ink); border: 1px solid var(--ra-line); border-radius: 8px; cursor: pointer; font-weight: 800;
+}
+.ra-level:has(:checked) { background: var(--ra-tint); border-color: var(--ra-accent); color: var(--ra-accent); }
+.ra-page input { accent-color: var(--ra-solid); }
+.ra-section-head, .ra-practice-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.ra-section-head { margin-block: 24px 14px; }
+.ra-section-head h2, .ra-workspace h2 { font-size: 28px; font-weight: 900; margin-top: 4px; }
+.ra-progress-label { display: flex; align-items: center; gap: 6px; color: var(--ra-muted); font-size: 14px; font-weight: 800; }
+.ra-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ra-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; font-weight: 800; }
+.ra-filters select { min-height: 42px; max-width: 100%; padding: 6px 10px; color: var(--ra-ink); background: var(--ra-surface); border: 1px solid var(--ra-line); border-radius: 8px; font: inherit; }
+.ra-empty { padding: 12px 0; color: var(--ra-muted); }
+.ra-activity {
+  display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  min-height: 88px; text-align: left; padding: 12px; border: 1px solid var(--ra-line); border-radius: 8px;
+  background: var(--ra-surface); color: var(--ra-ink); font: inherit; cursor: pointer;
+}
+.ra-activity:hover, .ra-btn:not(.ra-btn-primary):hover, .ra-answer:hover { border-color: var(--ra-accent); background: var(--ra-tint); }
+.ra-activity-mark {
+  width: 42px; height: 42px; display: grid; place-items: center; border-radius: 8px;
+  color: var(--ra-accent); background: var(--ra-tint);
+}
+.ra-activity-mark[data-ui-icon="timer"] { color: var(--ra-warm-ink); background: var(--ra-warm); }
+.ra-activity-mark[data-ui-icon="pen"], .ra-activity-mark[data-ui-icon="clipboard"] { background: var(--ra-sky); }
+.ra-activity strong, .ra-activity small { display: block; overflow-wrap: anywhere; }
+.ra-activity small { margin-top: 2px; color: var(--ra-muted); }
+.ra-sources { margin-top: 28px; padding-block: 15px; border-block: 1px solid var(--ra-line); color: var(--ra-muted); }
+.ra-sources summary { font-weight: 800; cursor: pointer; color: var(--ra-ink); }
+.ra-sources ul { margin: 10px 0; padding-inline-start: 22px; }
+.ra-sources li { margin-block: 6px; }
+.ra-practice { padding-block: 16px 46px; }
+.ra-practice-top { margin-bottom: 14px; }
+.ra-step { color: var(--ra-muted); font-weight: 800; }
+.ra-workspace { max-width: 800px; margin: auto; padding: 22px; background: var(--ra-surface); border: 1px solid var(--ra-line); border-radius: 8px; }
+.ra-workspace #raBody { margin-top: 12px; }
+.ra-task { color: var(--ra-muted); margin-bottom: 14px !important; }
+.ra-passage { margin-block: 14px; padding: 16px; background: var(--ra-bg); border-inline-start: 3px solid var(--ra-accent); border-radius: 0 8px 8px 0; }
+.ra-passage p { margin-top: 10px; font-size: 19px; line-height: 1.65; overflow-wrap: anywhere; }
+.ra-practice[data-level="temel"] .ra-passage p { font-size: 23px; }
+.ra-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.ra-passage-tools { margin-top: 0; margin-bottom: 8px; }
+.ra-btn, .ra-answer {
+  min-height: 44px; border: 1px solid var(--ra-line); border-radius: 8px; padding: 8px 13px;
+  background: var(--ra-surface); color: var(--ra-ink); font: inherit; font-weight: 800; cursor: pointer;
+}
+.ra-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ra-btn-primary { background: var(--ra-solid); border-color: var(--ra-solid); color: white; }
+.ra-btn-primary:hover { filter: brightness(.9); }
+.ra-btn[aria-pressed="true"] { background: var(--ra-tint); border-color: var(--ra-accent); }
+.ra-btn:disabled { opacity: .6; cursor: default; }
+.ra-arrow-back { display: inline-flex; transform: rotate(180deg); }
+.ra-clock { font-weight: 900; font-variant-numeric: tabular-nums; min-width: 55px; }
+.ra-answers { display: grid; gap: 8px; margin-block: 14px; }
+.ra-answer { text-align: start; overflow-wrap: anywhere; font-size: 20px; line-height: 1.5; min-height: 54px; }
+#raPrompt { font-size: 26px; line-height: 1.45; }
+.ra-answer:disabled { cursor: default; }
+.ra-answer[data-result="correct"], .ra-feedback[data-result="correct"] { background: var(--ra-tint); color: var(--ra-accent); border-color: var(--ra-accent); }
+.ra-answer[data-result="retry"], .ra-feedback[data-result="retry"] { background: var(--ra-warm); color: var(--ra-warm-ink); border-color: var(--ra-warm-ink); }
+.ra-feedback { padding: 11px 13px; border: 1px solid var(--ra-line); border-radius: 8px; }
+.ra-review { margin-block: 12px; }
+.ra-review summary { color: var(--ra-accent); font-weight: 800; cursor: pointer; }
+.ra-page textarea { display: block; width: 100%; min-height: 125px; border: 1px solid var(--ra-line); border-radius: 8px; padding: 10px; margin-top: 5px; resize: vertical; font: inherit; color: var(--ra-ink); background: var(--ra-bg); }
+.ra-criteria { display: grid; gap: 5px; border: 0; padding: 0; margin: 12px 0; }
+.ra-criteria legend { font-weight: 800; }
+.ra-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr)); gap: 12px; margin: 12px 0; }
+.ra-results div { padding: 10px 0; border-bottom: 1px solid var(--ra-line); }
+.ra-results dt { color: var(--ra-muted); font-size: 14px; }
+.ra-results dd { font-weight: 900; font-size: 21px; margin: 0; }
+@media (max-width: 600px) {
+  .ra-shell { width: min(100% - 24px, 1080px); }
+  .ra-banner { min-height: 154px; background-position: center, 64% 54%; }
+  .ra-banner h1 { font-size: 29px; }
+  .ra-library { padding-top: 16px; }
+  .ra-grid { grid-template-columns: 1fr; }
+  .ra-level { padding: 7px 5px; gap: 3px; font-size: 13px; }
+  .ra-levels { gap: 4px; }
+  .ra-section-head h2, .ra-workspace h2 { font-size: 24px; }
+  .ra-workspace { padding: 14px; }
+  #raPrompt { font-size: 22px; }
+  .ra-answer { font-size: 18px; }
+}

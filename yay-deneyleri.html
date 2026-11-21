@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Üç eşit ağırlıkla yayların malzemesinin, tel kalınlığının ve boyunun uzamayı nasıl etkilediğini keşfet.">
+    <title>Yayların Esnekliği | Fen Bilimleri Laboratuvarı</title>
+    <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+    <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+    <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+    <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+    <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+    <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+    <style>
+        :root {
+            --paper: var(--theme-bg, #f8f7f2);
+            --ink: var(--theme-text, #192923);
+            --muted: var(--theme-muted, #50615b);
+            --line: var(--theme-border, #dedfd6);
+            --green: #155541;
+            --mint: #9fe4c6;
+            --gold: #f5cb76;
+            --bench: #102a2a;
+            font-family: "DM Sans", system-ui, sans-serif;
+            font-synthesis: none;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; background: var(--paper); color: var(--ink); }
+        main.wrap { padding-bottom: max(90px, 9vh); }
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+        button:disabled { cursor: default; }
+        :focus-visible { outline: 3px solid #217656; outline-offset: 4px; }
+        [hidden] { display: none !important; }
+        p, h1, h2, h3, dl, dd { margin: 0; }
+        h1, h2, h3 { line-height: 1.12; letter-spacing: -.035em; }
+
+        .wrap { width: min(1160px, calc(100% - 48px)); margin-inline: auto; }
+        .masthead { border-bottom: 1px solid var(--line); }
+        .masthead .wrap { display: flex; align-items: center; gap: 11px; min-height: 63px; font-size: .88rem; font-weight: 750; }
+        .lab-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--green); color: #fff; }
+        .lab-mark::before { content: "↕"; font-size: 1.15rem; line-height: 1; }
+        main { padding-block: 28px 36px; }
+        .intro h1 { font-size: clamp(2.3rem, 5vw, 4rem); font-weight: 800; letter-spacing: -.065em; }
+        .intro p { margin-top: 8px; color: var(--muted); line-height: 1.5; }
+        .experiments { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 5px; margin-block: 22px 15px; background: #eceee6; border-radius: 14px; }
+        .experiments button { min-width: 0; min-height: 47px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #3d534b; font-size: .94rem; font-weight: 750; }
+        .experiments button[aria-pressed="true"] { border-color: #d8ded3; background: #fff; color: var(--green); box-shadow: 0 2px 5px #122d1410; }
+        .experiments button:hover { background: #ffffffa3; }
+
+        .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(258px, .38fr); gap: 16px; align-items: start; }
+        .bench {
+            min-width: 0;
+            overflow: hidden;
+            padding: 21px 19px 17px;
+            border: 1px solid #243e3c;
+            border-radius: 21px;
+            color: #f4faf7;
+            background: radial-gradient(ellipse at 50% 22%, #21423e, transparent 72%), var(--bench);
+            box-shadow: 0 14px 30px #132e2520;
+        }
+        .bench-header h2 { font-size: clamp(1.23rem, 3.5vw, 1.75rem); }
+        .constants { margin-top: 7px; color: #b9d3ca; font-size: .85rem; line-height: 1.45; }
+        .constants strong { color: #e5f4ec; }
+        .spring-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; position: relative; margin-top: 17px; }
+        .spring-grid::before {
+            content: "";
+            position: absolute;
+            z-index: 1;
+            pointer-events: none;
+            top: 10px;
+            inset-inline: 0;
+            height: 12px;
+            border: 1px solid #6d8a80;
+            border-radius: 4px;
+            background: repeating-linear-gradient(127deg, #ffffff0f 0 3px, transparent 3px 8px), linear-gradient(#63877a, #33554d);
+            box-shadow: 0 3px 8px #081c1a80;
+        }
+        .lane {
+            min-width: 0;
+            text-align: center;
+            border: 1px solid #46615b;
+            border-radius: 12px;
+            padding: 0 7px 7px;
+            background: linear-gradient(#0a201c1f, #0a201c61);
+        }
+        .lane[data-drop="true"] { outline: 2px solid var(--gold); background: #3a4938; }
+        .lane canvas { display: block; width: 100%; height: clamp(248px, 28vw, 292px); }
+        .lane h3 { color: var(--material-color, inherit); font-size: clamp(.86rem, 1.6vw, 1.18rem); }
+        .lane-meta { margin-top: 4px; font-size: .75rem; color: #b9d3ca; }
+        .measurements { display: grid; grid-template-columns: 1fr 1fr; margin-top: 10px; padding-block: 7px; border-top: 1px solid #46615b; }
+        .measurements dt { font-size: .73rem; color: #bbd6cd; }
+        .measurements dd { margin-top: 2px; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; font-size: .92rem; }
+        .stretch { color: var(--gold); }
+        .spring-action { width: 100%; min-height: 41px; border: 1px solid #5b7c72; border-radius: 8px; color: #f2fbf6; background: #ffffff10; font-weight: 750; font-size: .83rem; padding: 3px; }
+        .spring-action:hover { background: #ffffff26; }
+        .bench :focus-visible { outline-color: var(--mint); outline-offset: 1px; }
+        .legend { display: flex; flex-wrap: wrap; gap: 5px 17px; margin-top: 12px; color: #d1e4dc; font-size: .75rem; }
+        .legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .legend span::before { content: ""; width: 17px; border-top: 2px dashed var(--mint); }
+        .legend span + span::before { border-top: 2px solid var(--gold); }
+
+        .side { display: grid; gap: 12px; }
+        .panel { background: #fff; border: 1px solid var(--line); border-radius: 17px; padding: 16px; }
+        .panel h2 { font-size: 1.2rem; }
+        .panel p { color: var(--muted); line-height: 1.44; font-size: .88rem; margin-top: 7px; }
+        fieldset { border: 0; padding: 0; margin: 14px 0 0; min-width: 0; }
+        legend { font-size: .8rem; font-weight: 750; padding: 0; margin-bottom: 5px; }
+        .forces { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .forces label { display: block; position: relative; cursor: pointer; }
+        .forces input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+        .forces span { display: grid; place-items: center; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; font-size: .88rem; font-weight: 750; }
+        .forces input:checked + span { border-color: #8ab7a2; background: #e1f2e8; color: var(--green); }
+        .forces input:focus-visible + span { outline: 3px solid #217656; outline-offset: 2px; }
+        .tokens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+        .token { display: grid; justify-items: center; gap: 4px; min-height: 67px; padding: 7px 2px 4px; border: 1px solid #e4dac3; border-radius: 10px; background: #faf5e9; color: #543916; font-size: .75rem; font-weight: 750; cursor: grab; }
+        .token:not(:disabled):hover, .token[aria-pressed="true"] { border-color: #a87420; background: #ffefc7; }
+        .token[aria-pressed="true"] { box-shadow: inset 0 0 0 1px #a87420; }
+        .token:disabled { border-color: var(--line); background: #f5f6f2; color: #58615a; }
+        .weight-icon { width: 29px; height: 23px; position: relative; margin-top: 5px; border: 1px solid #ac7525; border-radius: 5px; background: linear-gradient(140deg, #ffe6a9, #d69c44); box-shadow: inset 0 1px #fff8; }
+        .weight-icon::before { content: ""; position: absolute; top: -7px; left: 8px; width: 11px; height: 7px; border: 2px solid #ac7525; border-bottom: 0; border-radius: 5px 5px 0 0; }
+        .token:disabled .weight-icon { filter: grayscale(1); opacity: .55; }
+        .tray-footer { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+        .tray-footer p { margin: 0; font-size: .78rem; }
+        .clear { border: 0; padding: 5px 0; background: transparent; color: var(--green); font-size: .78rem; font-weight: 750; text-decoration: underline; text-underline-offset: 2px; }
+        .clear:disabled { color: #65726b; text-decoration: none; }
+        .observation { background: #ecf2e9; border-color: #d5e2d2; }
+        .observation details { margin-top: 9px; }
+        .observation summary { cursor: pointer; color: var(--green); font-size: .88rem; font-weight: 750; padding-block: 3px; }
+        .model-note { margin-top: 14px; color: var(--muted); font-size: .78rem; line-height: 1.5; }
+        .model-note strong { color: var(--ink); }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+        @media (max-width: 790px) {
+            .workspace { grid-template-columns: 1fr; }
+            .side { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+        }
+        @media (max-width: 540px) {
+            .wrap { width: calc(100% - 20px); }
+            .masthead .wrap { min-height: 51px; }
+            main { padding-top: 19px; }
+            .experiments { margin-top: 17px; gap: 3px; }
+            .experiments button { padding-inline: 3px; font-size: .78rem; }
+            .workspace { gap: 10px; }
+            .bench { padding: 14px 7px 12px; border-radius: 15px; }
+            .bench-header, .legend { padding-inline: 4px; }
+            .spring-grid { gap: 4px; }
+            .lane { padding-inline: 3px; }
+            .lane canvas { height: 246px; }
+            .measurements { grid-template-columns: 1fr; gap: 4px; }
+            .measurements > div { display: flex; justify-content: center; align-items: baseline; gap: 3px; }
+            .measurements dt { font-size: .65rem; }
+            .measurements dd { font-size: .76rem; }
+            .spring-action { font-size: .7rem; min-height: 44px; }
+            .side { grid-template-columns: 1fr; }
+        }
+    </style>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="labs"></script>
+</head>
+<body>
+    <div id="kemalNavMount"></div>
+    <header class="masthead">
+        <div class="wrap"><span class="lab-mark" aria-hidden="true"></span> <a href="/ogretmen/yaylarda-esneklik-laboratuvari.html">Fen Bilimleri Laboratuvarı · 3B deneylere dön</a></div>
+    </header>
+    <main class="wrap">
+        <div class="intro">
+            <h1>Yayların esnekliği</h1>
+            <p>Üç yaya eşit ağırlıklar as. Cetvelden ne kadar uzadıklarını karşılaştır.</p>
+        </div>
+        <nav class="experiments" aria-label="Deney seçimi">
+            <button type="button" data-experiment="0" aria-pressed="true">Maddenin cinsi</button>
+            <button type="button" data-experiment="1" aria-pressed="false">Tel kalınlığı</button>
+            <button type="button" data-experiment="2" aria-pressed="false">Yay uzunluğu</button>
+        </nav>
+        <div class="workspace">
+            <section class="bench" aria-labelledby="question">
+                <div class="bench-header">
+                    <h2 id="question"></h2>
+                    <p class="constants"><strong>Sabit tutulanlar</strong> <span id="constants"></span></p>
+                </div>
+                <div class="spring-grid" id="spring-grid"></div>
+                <div class="legend">
+                    <span>Yüksüz yayın ucu</span>
+                    <span>Yüklü yayın denge konumu</span>
+                </div>
+            </section>
+
+            <div class="side">
+                <section class="panel" aria-labelledby="tray-title">
+                    <h2 id="tray-title">Ağırlık tepsisi</h2>
+                    <p>Cisimleri yaylara sürükle veya yayın altındaki düğmeyle as. Seçtiğin ağırlık üç cisim için de geçerli.</p>
+                    <fieldset>
+                        <legend>Her cismin ağırlığı</legend>
+                        <div class="forces">
+                            <label><input type="radio" name="force" value="1"><span>1 N</span></label>
+                            <label><input type="radio" name="force" value="2" checked><span>2 N</span></label>
+                            <label><input type="radio" name="force" value="3"><span>3 N</span></label>
+                        </div>
+                    </fieldset>
+                    <div class="tokens" aria-label="Üç eşit ağırlıktaki cisim">
+                        <button type="button" class="token" data-token="0" aria-pressed="false"><span class="weight-icon" aria-hidden="true"></span><span class="token-label"></span></button>
+                        <button type="button" class="token" data-token="1" aria-pressed="false"><span class="weight-icon" aria-hidden="true"></span><span class="token-label"></span></button>
+                        <button type="button" class="token" data-token="2" aria-pressed="false"><span class="weight-icon" aria-hidden="true"></span><span class="token-label"></span></button>
+                    </div>
+                    <div class="tray-footer">
+                        <p id="count"></p>
+                        <button type="button" class="clear" id="clear">Tümünü çıkar</button>
+                    </div>
+                </section>
+
+                <section class="panel observation" aria-labelledby="observation-title">
+                    <h2 id="observation-title">Gözlem</h2>
+                    <p id="prompt"></p>
+                    <details id="answer" hidden>
+                        <summary>Sonucu göster</summary>
+                        <p id="result"></p>
+                    </details>
+                </section>
+            </div>
+        </div>
+        <p class="model-note"><strong>Uzama</strong> = yüklü boy − yüksüz boy. Modelde ölçüler örnektir ve sarım çapı her yay için aynıdır. Bu yük aralığında uzamanın kuvvetle orantılı olduğu kabul edilir.</p>
+        <p class="sr-only" id="announcement" aria-live="polite"></p>
+    </main>
+
+    <template id="lane-template">
+        <article class="lane">
+            <canvas aria-hidden="true"></canvas>
+            <h3></h3>
+            <p class="lane-meta"></p>
+            <dl class="measurements">
+                <div><dt>Boy</dt><dd class="length"></dd></div>
+                <div><dt>Uzama</dt><dd class="stretch"></dd></div>
+            </dl>
+            <button class="spring-action" type="button"></button>
+        </article>
+    </template>
+
+    <script>
+        const format = new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 1 });
+        const centimeters = value => `${format.format(value)} cm`;
+        const letters = ['A', 'B', 'C'];
+        const steel = { cmPerNewton: 1.2, colors: ['#a4aab3', '#f0f2f6', '#697480'] };
+        const copper = { cmPerNewton: 2.15, colors: ['#d57e57', '#ffbf99', '#a9583e'] };
+        const rubber = { cmPerNewton: 3.6, colors: ['#49b665', '#9de7a2', '#268348'] };
+        const makeSpring = (name, material = steel, wire = 2, length = 12) => ({
+            name, material, wire, length,
+            // With equal coil diameter and pitch, active coil count scales with free length.
+            cmPerNewton: material.cmPerNewton * (2 / wire) ** 4 * (length / 12)
+        });
+        const experiments = [
+            {
+                question: 'Maddenin cinsi uzamayı etkiler mi?',
+                constants: '12 cm yay boyu, 2 mm tel kalınlığı',
+                springs: [makeSpring('Çelik'), makeSpring('Bakır', copper), makeSpring('Lastik', rubber)],
+                meta: spring => `${spring.length} cm · ${format.format(spring.wire)} mm`,
+                result: 'Bu düzenekte lastik yay en çok, çelik yay en az uzadı. Yayın malzemesi, eşit kuvvet altında ne kadar uzadığını etkiler.'
+            },
+            {
+                question: 'Tel kalınlığı uzamayı etkiler mi?',
+                constants: 'Çelik yay, 12 cm yay boyu',
+                springs: [makeSpring('İnce', steel, 1.8), makeSpring('Orta'), makeSpring('Kalın', steel, 2.2)],
+                meta: spring => `${format.format(spring.wire)} mm tel`,
+                result: 'İnce telli yay en çok, kalın telli yay en az uzadı. Aynı malzeme ve boyda, daha ince telden yapılmış yay eşit kuvvetle daha çok uzar.'
+            },
+            {
+                question: 'Yay uzunluğu uzamayı etkiler mi?',
+                constants: 'Çelik yay, 2 mm tel kalınlığı',
+                springs: [makeSpring('Kısa', steel, 2, 8), makeSpring('Orta'), makeSpring('Uzun', steel, 2, 16)],
+                meta: spring => `${spring.length} cm yüksüz boy`,
+                result: 'Uzun yay en çok, kısa yay en az uzadı. Malzeme, tel kalınlığı ve sarım aralığı aynıyken daha fazla sarımı olan yay eşit kuvvetle daha çok uzar.'
+            }
+        ];
+        const states = experiments.map(() => ({ force: 2, loads: [null, null, null] }));
+        let active = 0;
+        let selectedToken = null;
+        let draggedToken = null;
+        let animationFrame = 0;
+        const byId = id => document.getElementById(id);
+        const tabs = [...document.querySelectorAll('[data-experiment]')];
+        const tokens = [...document.querySelectorAll('[data-token]')];
+        const forces = [...document.querySelectorAll('[name="force"]')];
+        const answer = byId('answer');
+        const grid = byId('spring-grid');
+        const announcement = byId('announcement');
+        const state = () => states[active];
+        const experiment = () => experiments[active];
+        const extension = (spring, load) => load === null ? 0 : Math.round(spring.cmPerNewton * state().force * 10) / 10;
+
+        const lanes = experiments[0].springs.map((_, index) => {
+            const lane = byId('lane-template').content.firstElementChild.cloneNode(true);
+            grid.append(lane);
+            const button = lane.querySelector('button');
+            button.addEventListener('click', () => {
+                const loads = state().loads;
+                if (loads[index] !== null) {
+                    loads[index] = null;
+                    render();
+                    announceMeasurement(index);
+                    return;
+                }
+                const token = selectedToken ?? tokens.findIndex((_, number) => !loads.includes(number));
+                attach(index, token);
+            });
+            lane.addEventListener('dragover', event => {
+                if (draggedToken === null || state().loads[index] !== null) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                lane.dataset.drop = 'true';
+            });
+            lane.addEventListener('dragleave', event => {
+                if (!lane.contains(event.relatedTarget)) delete lane.dataset.drop;
+            });
+            lane.addEventListener('drop', event => {
+                event.preventDefault();
+                delete lane.dataset.drop;
+                const token = draggedToken;
+                draggedToken = null;
+                if (token !== null) attach(index, token);
+            });
+            const canvas = lane.querySelector('canvas');
+            return {
+                lane, button, canvas, ctx: canvas.getContext('2d'),
+                name: lane.querySelector('h3'), meta: lane.querySelector('.lane-meta'),
+                length: lane.querySelector('.length'), stretch: lane.querySelector('.stretch'),
+                displayed: 0, target: 0, motion: null
+            };
+        });
+
+        function attach(index, token) {
+            const loads = state().loads;
+            if (!letters[token] || loads.includes(token) || loads[index] !== null) return;
+            loads[index] = token;
+            selectedToken = null;
+            render();
+            announceMeasurement(index);
+        }
+
+        function announceMeasurement(index) {
+            const spring = experiment().springs[index];
+            const load = state().loads[index];
+            const stretch = extension(spring, load);
+            const action = load === null ? 'ağırlık çıkarıldı' : `${state().force} N asıldı`;
+            announcement.textContent = `${spring.name} yay için ${action}. Boy ${centimeters(spring.length + stretch)}, uzama ${centimeters(stretch)}.`;
+        }
+
+        function render() {
+            const current = experiment();
+            const { force, loads } = state();
+            const count = loads.filter(load => load !== null).length;
+            tabs.forEach((tab, index) => tab.setAttribute('aria-pressed', index === active));
+            forces.forEach(input => { input.checked = Number(input.value) === force; });
+            byId('question').textContent = current.question;
+            byId('constants').textContent = current.constants;
+            byId('count').textContent = `${count}/3 cisim asılı`;
+            byId('clear').disabled = count === 0;
+            byId('prompt').textContent = count === 3
+                ? 'En çok ve en az uzayan yay hangisi? Ölçümlerine bakarak açıkla.'
+                : 'Sence en çok hangi yay uzayacak? Tahminini üç yaya da ağırlık asarak dene.';
+            answer.hidden = count !== 3;
+            if (answer.hidden) answer.open = false;
+            byId('result').textContent = current.result;
+
+            tokens.forEach((token, index) => {
+                const used = loads.includes(index);
+                token.disabled = used;
+                token.draggable = !used;
+                token.setAttribute('aria-pressed', selectedToken === index);
+                token.setAttribute('aria-label', `${letters[index]} cismi, ${force} N${used ? ', asılı' : ''}`);
+                token.querySelector('.token-label').textContent = used ? `${letters[index]} · Asılı` : `${letters[index]} · ${force} N`;
+            });
+
+            lanes.forEach((view, index) => {
+                const spring = current.springs[index];
+                const load = loads[index];
+                const stretch = extension(spring, load);
+                view.lane.style.setProperty('--material-color', active === 0 ? spring.material.colors[1] : 'inherit');
+                view.name.textContent = spring.name;
+                view.meta.textContent = current.meta(spring);
+                view.length.textContent = centimeters(spring.length + stretch);
+                view.stretch.textContent = centimeters(stretch);
+                view.button.textContent = load === null ? 'Ağırlık as' : 'Ağırlığı çıkar';
+                view.button.setAttribute('aria-label', load === null
+                    ? `${spring.name} yaya ${force} N ağırlık as`
+                    : `${spring.name} yaydan ${letters[load]} cismini çıkar`);
+                if (view.target !== stretch) {
+                    view.motion = { from: view.displayed, start: performance.now() };
+                    view.target = stretch;
+                }
+            });
+            if (!animationFrame) animationFrame = requestAnimationFrame(animate);
+        }
+
+        const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+        function animate(now) {
+            animationFrame = 0;
+            let moving = false;
+            lanes.forEach((view, index) => {
+                const spring = experiment().springs[index];
+                const load = state().loads[index];
+                const { motion, target } = view;
+                if (motion) {
+                    const elapsed = Math.max(0, now - motion.start);
+                    const period = 450 * Math.sqrt(target / 3.6);
+                    const duration = load === null ? 550 : 2 * period;
+                    if (reducedMotion.matches || elapsed >= duration) {
+                        view.displayed = target;
+                        view.motion = null;
+                    } else {
+                        const phase = load === null ? elapsed / 65 : (2 * Math.PI * elapsed) / period;
+                        // Release returns to the unloaded length. A suspended weight oscillates about equilibrium.
+                        const offset = load === null
+                            ? Math.exp(-phase) * (1 + phase)
+                            : Math.exp(-0.55 * phase) * (Math.cos(phase) + 0.55 * Math.sin(phase));
+                        view.displayed = target + (motion.from - target) * offset;
+                        moving = true;
+                    }
+                }
+                drawSpring(view, spring, load);
+            });
+            if (moving) animationFrame = requestAnimationFrame(animate);
+        }
+
+        function drawSpring(view, spring, load) {
+            const { canvas, ctx, displayed } = view;
+            if (!ctx) return;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            if (!width || !height) return;
+            const pixelRatio = window.devicePixelRatio || 1;
+            const pixelsWide = Math.round(width * pixelRatio);
+            const pixelsHigh = Math.round(height * pixelRatio);
+            if (canvas.width !== pixelsWide || canvas.height !== pixelsHigh) {
+                canvas.width = pixelsWide;
+                canvas.height = pixelsHigh;
+            }
+            ctx.setTransform(pixelsWide / width, 0, 0, pixelsHigh / height, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const x = width * 0.42;
+            const ruler = width - (width < 110 ? 23 : 31);
+            const zero = 32;
+            const scale = (height - zero - 32) / 25;
+            const natural = zero + spring.length * scale;
+            const end = natural + displayed * scale;
+            const radius = Math.min(width * 0.19, 30);
+            const line = (x1, y1, x2, y2, color, thickness = 1) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = thickness;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            };
+
+            ctx.font = `600 ${width < 110 ? 10 : 11}px system-ui`;
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#d4e8e0';
+            ctx.fillText('cm', ruler + 3, 26);
+            line(ruler, zero, ruler, zero + 25 * scale, '#71988c');
+            for (let cm = 0; cm <= 25; cm++) {
+                const y = zero + cm * scale;
+                const major = cm % 5 === 0;
+                line(ruler - (major ? 7 : 3), y, ruler, y, major ? '#b3d0c6' : '#71988c');
+                if (major) ctx.fillText(String(cm), ruler + 3, y + (cm === 0 ? 5 : 0));
+            }
+
+            ctx.setLineDash([4, 3]);
+            line(Math.max(1, x - radius - 7), natural, ruler, natural, '#9fe4c6');
+            ctx.setLineDash([]);
+            if (load !== null) {
+                const bracket = Math.max(2, x - radius - 8);
+                const equilibrium = natural + view.target * scale;
+                line(x, equilibrium, ruler, equilibrium, '#f5cb76', 1.5);
+                line(bracket, natural, bracket, equilibrium, '#f5cb76');
+                line(bracket - 2, natural, bracket + 2, natural, '#f5cb76');
+                line(bracket - 2, equilibrium, bracket + 2, equilibrium, '#f5cb76');
+            }
+
+            ctx.fillStyle = '#9db9ab';
+            ctx.beginPath();
+            ctx.roundRect(x - 7, 14, 14, 10, 3);
+            ctx.fill();
+            line(x, 23, x, zero + 6, '#c9dfd6', 3);
+
+            const coilTop = zero + 6;
+            const coilEnd = end - 6;
+            const turns = spring.length;
+            const samples = turns * 18;
+            const coil = new Path2D();
+            coil.moveTo(x, coilTop);
+            for (let i = 1; i <= samples; i++) {
+                const progress = i / samples;
+                coil.lineTo(x + Math.sin(progress * turns * 2 * Math.PI) * radius, coilTop + progress * (coilEnd - coilTop));
+            }
+            coil.quadraticCurveTo(x + 6, end - 3, x, end);
+            const finish = ctx.createLinearGradient(x - radius, 0, x + radius, 0);
+            spring.material.colors.forEach((color, index) => finish.addColorStop(index / 2, color));
+            const stroke = spring.wire * 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#061e1bc0';
+            ctx.lineWidth = stroke + 2;
+            ctx.stroke(coil);
+            ctx.strokeStyle = finish;
+            ctx.lineWidth = stroke;
+            ctx.stroke(coil);
+            ctx.lineCap = 'butt';
+
+            if (load === null) {
+                ctx.beginPath();
+                ctx.arc(x, end + 4, 4, 0, Math.PI * 2);
+                ctx.strokeStyle = spring.material.colors[1];
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                return;
+            }
+
+            const blockWidth = Math.min(54, width * 0.48);
+            const blockTop = end + 9;
+            ctx.beginPath();
+            ctx.arc(x, end + 6, 5, Math.PI, Math.PI * 2);
+            ctx.strokeStyle = '#f5cb76';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            const brass = ctx.createLinearGradient(x - blockWidth / 2, blockTop, x + blockWidth / 2, blockTop + 22);
+            brass.addColorStop(0, '#ffe7a5');
+            brass.addColorStop(1, '#d29a42');
+            ctx.beginPath();
+            ctx.roundRect(x - blockWidth / 2, blockTop, blockWidth, 23, 4);
+            ctx.fillStyle = brass;
+            ctx.fill();
+            ctx.strokeStyle = '#f9db91';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#352510';
+            ctx.font = '800 11px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${letters[load]} · ${state().force} N`, x, blockTop + 12, blockWidth - 5);
+            ctx.textAlign = 'start';
+        }
+
+        tabs.forEach((tab, index) => tab.addEventListener('click', () => {
+            if (active === index) return;
+            active = index;
+            selectedToken = null;
+            answer.open = false;
+            lanes.forEach((view, laneIndex) => {
+                view.target = extension(experiment().springs[laneIndex], state().loads[laneIndex]);
+                view.displayed = view.target;
+                view.motion = null;
+            });
+            render();
+        }));
+
+        forces.forEach(input => input.addEventListener('change', () => {
+            state().force = Number(input.value);
+            render();
+            announcement.textContent = `Üç cismin her biri ${state().force} N. Yayların ölçümleri güncellendi.`;
+        }));
+
+        tokens.forEach((token, index) => {
+            token.addEventListener('click', () => {
+                selectedToken = selectedToken === index ? null : index;
+                render();
+                announcement.textContent = selectedToken === null ? 'Cisim seçimi kaldırıldı.' : `${letters[index]} cismi seçildi. Bir yaya asabilirsin.`;
+            });
+            token.addEventListener('dragstart', event => {
+                draggedToken = index;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', letters[index]);
+            });
+            token.addEventListener('dragend', () => {
+                draggedToken = null;
+                lanes.forEach(({ lane }) => { delete lane.dataset.drop; });
+            });
+        });
+
+        byId('clear').addEventListener('click', () => {
+            state().loads.fill(null);
+            selectedToken = null;
+            render();
+            announcement.textContent = 'Tüm ağırlıklar çıkarıldı. Yaylar ilk boylarına döndü.';
+            lanes[0].button.focus();
+        });
+
+        const observer = new ResizeObserver(() => {
+            if (!animationFrame) animationFrame = requestAnimationFrame(animate);
+        });
+        lanes.forEach(({ canvas }) => observer.observe(canvas));
+        render();
+    </script>
+    <script src="/js/site.js?v=20261030-icons"></script>
+</body>
+</html>

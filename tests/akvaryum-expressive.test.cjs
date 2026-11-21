@@ -1,6 +1,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const E=require('../js/akvaryum-expressive.js'),R=require('../js/akvaryum-rewards.js');
-const faces={eel:[.86,.52],angler:[.83,.55],mantis:[.7,.27],crab:[.65,.37],lina:[.85,.44],spongebob:[.5,.36],patrick:[.51,.34],mrkrabs:[.49,.4],hammerhead:[.82,.47],axolotl:[.80,.52]};
+const faces={eel:[.86,.52],angler:[.83,.55],mantis:[.7,.27],crab:[.65,.37],lina:[.85,.44],spongebob:[.5,.36],patrick:[.51,.34],mrkrabs:[.49,.4],hammerhead:[.82,.47],axolotl:[.80,.52],
+ catfish:[.77,.44],megalodon:[.85,.41],seal:[.88,.37],penguin:[.81,.27],plankton:[.503,.40],gary:[.42,.45],squidward:[.50,.28],sandy:[.49,.32]};
 test('every new creature keeps a pinned face, bounded whole silhouette and non-folding shared mesh edges',()=>{
  for(const id of E.species)for(const lite of [false,true])for(let t=0;t<6.3;t+=.18)for(const boost of [0,.5,1]){
   const [x,y]=faces[id];assert.deepEqual(E.point(id,x,y,t,{boost}),{x,y},id+' face');
@@ -10,11 +11,26 @@ test('every new creature keeps a pinned face, bounded whole silhouette and non-f
  }
 });
 test('the raised hand, claws, feelers and veil have visible local motion without detached parts',()=>{
- const tips={eel:[.16,.55],angler:[.885,.24],mantis:[.88,.29],crab:[.4,.63],lina:[.21,.68],spongebob:[.755,.32],patrick:[.71,.38],mrkrabs:[.3,.34],hammerhead:[.16,.55],axolotl:[.62,.79]};
+ const tips={eel:[.16,.55],angler:[.885,.24],mantis:[.88,.29],crab:[.4,.63],lina:[.21,.68],spongebob:[.755,.32],patrick:[.71,.38],mrkrabs:[.3,.34],hammerhead:[.16,.55],axolotl:[.62,.79],
+  catfish:[.08,.42],megalodon:[.09,.31],seal:[.59,.65],penguin:[.80,.72],plankton:[.418,.14],gary:[.56,.37],squidward:[.395,.615],sandy:[.662,.548]};
  for(const id of E.species){const [x,y]=tips[id],frames=Array.from({length:40},(_,i)=>E.point(id,x,y,i/40*Math.PI*2,{boost:1}));
   const span=Math.hypot(Math.max(...frames.map(p=>p.x))-Math.min(...frames.map(p=>p.x)),Math.max(...frames.map(p=>p.y))-Math.min(...frames.map(p=>p.y)));
   assert.ok(span>.018,id+' appendage should visibly move');
   for(const t of [0,1,100])assert.deepEqual(E.point(id,x,y,t,{moving:false,boost:1}),{x,y});
+ }
+});
+test('new swimmers visibly move both tail and fins during normal strokes and strengthen the motion for rewards',()=>{
+ const limbs={catfish:[[.08,.42],[.54,.56],[.75,.66]],megalodon:[[.09,.31],[.43,.76]],
+  seal:[[.10,.44],[.59,.65]],penguin:[[.24,.34],[.80,.72]]};
+ for(const [id,points] of Object.entries(limbs))for(const [x,y] of points){
+  const span=boost=>{
+   const frames=Array.from({length:40},(_,i)=>E.point(id,x,y,i/40*Math.PI*2,{boost}));
+   const xs=frames.map(p=>p.x),ys=frames.map(p=>p.y);
+   return Math.hypot(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys));
+  };
+  const swim=span(0);
+  assert.ok(swim>.014,id+' should visibly move at '+x+','+y);
+  assert.ok(span(1)>swim,id+' reward should strengthen the stroke');
  }
 });
 function renderer(){
@@ -60,10 +76,10 @@ test('crab dances laterally several times while eel orbits and the angler jaw op
  const closed=E.point('angler',.82,.66,1,{boost:0}),open=E.point('angler',.82,.66,1,{boost:1});assert.ok(open.y-closed.y>.06);
  const upper=E.point('crab',.64,.57,.8,{boost:1}),lower=E.point('crab',.64,.65,.8,{boost:1});assert.ok(upper.y<.57&&lower.y<.65,'both claws lift as one connected shape');
 });
-test('character kisses send different small hearts and walking feet retain a connected, non-folding body',()=>{
+test('character kisses and Patrick bubbles stop cleanly while walking feet retain a connected body',()=>{
  const signatures=new Set();
  for(const id of ['spongebob','patrick','mrkrabs']){
-  const lines=E.effects(id,1,1);assert.equal(lines.length,3);assert.equal(E.effects(id,1,1,{lite:true}).length,2);assert.deepEqual(E.effects(id,1,0),[]);signatures.add(JSON.stringify(lines));
+  const lines=E.effects(id,1,1);assert.equal(lines.length,id==='patrick'?7:3);assert.equal(E.effects(id,1,1,{lite:true}).length,id==='patrick'?3:2);assert.deepEqual(E.effects(id,1,0),[]);signatures.add(JSON.stringify(lines));
   for(const line of lines){assert.equal(line.points.length,25);assert.ok(line.alpha>=0&&line.alpha<=.8);}
   for(const lite of [true,false])for(let t=0;t<6.3;t+=.2){
    const mesh=E.plan(id,t,{walking:true,boost:1,lite});for(const ix of mesh.triangles){const [a,b,c]=ix.map(i=>mesh.vertices[i].target);assert.ok((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)>0);}
@@ -89,4 +105,29 @@ test('axolotl gills, tail and waving hand move visibly while the face stays pinn
  assert.equal(E.effects('axolotl',1,1).length,5);assert.equal(E.effects('axolotl',1,1,{lite:true}).length,3);assert.deepEqual(E.effects('axolotl',1,0),[]);
  for(const line of E.effects('axolotl',1,1)){assert.equal(line.points.length,21);assert.ok(line.alpha>0&&line.alpha<.6);assert.ok(line.points.every(p=>p.x>=0&&p.x<=1&&p.y>=0&&p.y<=1));}
  assert.equal(R.profile('hammerhead').kind,'hammer-glide');assert.equal(R.profile('axolotl').kind,'gill-wave');
+});
+
+test('SpongeBob eyes grow only for a reward, while Patrick and Gary produce round bubbles',()=>{
+ const ellipses=[];
+ const h=renderer(),oldCreate=h.doc.createElement;
+ h.doc.createElement=()=>{
+  const canvas=oldCreate(),get=canvas.getContext;
+  canvas.getContext=()=>({...get(),ellipse(x,y,rx,ry){ellipses.push([x,y,rx,ry]);},fill(){}});
+  return canvas;
+ };
+ const canvas=h.doc.createElement('canvas');
+ E.render(canvas,h.image,'spongebob',.75,{moving:true,boost:1});
+ assert.ok(ellipses.some(([,cy,rx,ry])=>Math.abs(cy-canvas.height*.239)<.01&&rx>canvas.width*.054&&ry>canvas.height*.082));
+ const drawn=ellipses.length;E.render(canvas,h.image,'spongebob',1,{moving:false,boost:0});assert.equal(ellipses.length,drawn);
+ for(const id of ['gary','patrick']){
+  const effects=E.effects(id,2,1);
+  assert.equal(effects.length,7);assert.equal(E.effects(id,2,1,{lite:true}).length,3);
+  assert.deepEqual(E.effects(id,2,0),[]);
+  for(const line of effects)assert.deepEqual(line.points[0],line.points.at(-1));
+ }
+ for(const id of ['plankton','squidward','sandy']){
+  assert.equal(E.effects(id,2,1).length,4);
+  assert.equal(E.effects(id,2,1,{lite:true}).length,2);
+  assert.deepEqual(E.effects(id,2,0),[]);
+ }
 });

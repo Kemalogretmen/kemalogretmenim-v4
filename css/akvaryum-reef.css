@@ -1,0 +1,19 @@
+/* Shared, permanent class decor. Fish keep their existing front/back depths. */
+.reef-ship{position:absolute;z-index:2;pointer-events:none;bottom:1.5%;left:3%;width:clamp(180px,32%,460px);max-height:34%;aspect-ratio:800/430;object-fit:contain;object-position:bottom;filter:drop-shadow(0 8px 7px #04333340);opacity:.94}
+.reef-ship[data-side="right"]{left:auto;right:3%}
+.reef-ship[data-size="small"]{width:clamp(140px,25%,345px);max-height:27%}
+.reef-ship.reef-arriving{animation:reef-arrive 2s ease-out both}
+.reef-unlock{position:absolute;z-index:26;pointer-events:none;bottom:22%;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 40px);padding:15px 24px;text-align:center;color:#fff4cd;border:1px solid #c8e8da80;border-radius:18px;background:#073d48ed;box-shadow:0 12px 40px #06293660;animation:reef-news 5.5s ease both}
+.reef-unlock span{display:block;font-size:11px;letter-spacing:.14em;color:#b1d8cc;margin-bottom:5px;font-weight:800}.reef-unlock strong{font-size:clamp(17px,2vw,25px)}
+.reef-overview{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center;margin:18px 0;padding:18px;background:#edf6f3;border:1px solid #cfdfd9;border-radius:16px;color:#204e49}
+.reef-overview img{width:100%;height:100px;object-fit:contain}.reef-overview h3{margin:0 0 5px}.reef-overview p{margin:0;line-height:1.6;font-size:14px}.reef-overview .reef-status{font-weight:800;margin-bottom:4px}
+.reef-stages{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.reef-stage{border:1px solid #d5e0dc;border-radius:12px;padding:14px;background:#fff;min-width:0}.reef-stage.is-earned{border-color:#87b5a3;background:#f1f8f4}.reef-stage b{display:block;font-size:14px;line-height:1.5}.reef-stage small{display:block;color:#637975;margin-top:4px}.reef-stage input{width:100%;margin-top:9px}.reef-stage img{width:100%;height:82px;object-fit:contain;margin-bottom:5px}.reef-appearance{display:grid;grid-template-columns:1fr 1fr;gap:12px}.reef-progress-list{padding-left:20px;line-height:1.9}.news-reef{background:#e6eee2;border:1px solid #bfcdb5;padding:22px;margin:26px 0}.news-reef img{float:right;width:160px;max-width:40%;height:100px;object-fit:contain}.news-reef h3{font-family:Georgia,serif;font-size:25px;margin:8px 0}.news-reef p{font-size:16px;line-height:1.65}.news-reef:after{content:"";display:table;clear:both}
+@keyframes reef-arrive{from{opacity:0;transform:translateY(22px);filter:drop-shadow(0 0 20px #ecedbf)}to{opacity:.94;transform:translateY(0)}}
+@keyframes reef-news{0%{opacity:0;translate:0 12px}12%,83%{opacity:1;translate:0 0}100%{opacity:0;translate:0 -8px}}
+@media(max-width:600px){.reef-overview{grid-template-columns:95px 1fr;padding:13px;gap:12px}.reef-overview img{height:75px}.reef-stage{padding:11px}.reef-stage img{height:65px}.reef-ship{width:46%;min-width:0;bottom:1%;max-height:25%}.reef-ship[data-size="small"]{width:36%;max-height:20%}}
+@media(prefers-reduced-motion:reduce){.reef-arriving,.reef-unlock{animation:none!important}}
+
+/* Leave the newspaper a clear corner when both objects share the reef floor. */
+@media(min-width:801px){
+  .aquarium:has(.newspaper-stand:not([hidden])) .reef-ship[data-side="left"]{left:max(3%,126px)}
+}

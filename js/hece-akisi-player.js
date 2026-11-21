@@ -24,13 +24,14 @@
     });
   }
   function showView(name) {
+    document.body.classList.toggle('hece-playing', name === 'stage');
     ['catalog', 'setup', 'stage', 'result', 'error'].forEach(function(key) {
       byId(key + 'View').hidden = key !== name;
     });
   }
   function humanError(error) {
     var message = String(error && (error.message || error.error_description) || 'İşlem tamamlanamadı.');
-    if (/syllable_streams|schema cache|does not exist/i.test(message)) return 'Hece Akışı sistemi henüz etkinleştirilmemiş. Yönetici SQL kurulumunu tamamlamalı.';
+    if (error && (['42P01', 'PGRST205'].includes(error.code) || /schema cache|relation .+ does not exist/i.test(message))) return 'Hece Akışı sistemi henüz etkinleştirilmemiş. Yönetici SQL kurulumunu tamamlamalı.';
     return message;
   }
   function showError(error) {
@@ -48,17 +49,13 @@
   }
 
   async function loadCatalog() {
-    var result = await state.client
-      .from('syllable_streams')
-      .select('*')
-      .eq('status', 'published')
-      .eq('visibility', 'public')
+    showView('catalog');
+    var result = await window.HeceAkisiPublic.publicQuery('id,title,description,fixed_unit,mode,interval_ms,grade_level')
       .order('grade_level')
       .order('created_at', { ascending: false });
     if (result.error) throw result.error;
     state.publicStreams = result.data || [];
     renderCatalog();
-    showView('catalog');
   }
 
   function renderCatalog() {
@@ -66,7 +63,7 @@
     var items = state.publicStreams.filter(function(item) { return !grade || String(item.grade_level) === grade; });
     var grid = byId('catalogGrid');
     if (!items.length) {
-      grid.innerHTML = '<div class="ha-empty">Bu sınıf düzeyinde yayımlanmış hece çalışması bulunmuyor.</div>';
+      grid.innerHTML = '<div class="ha-empty">' + (grade ? 'Bu sınıf düzeyinde yayımlanmış hece çalışması bulunmuyor.' : 'Henüz herkese açık hece çalışması yayımlanmadı.') + '</div>';
       return;
     }
     grid.innerHTML = items.map(function(item) {
@@ -305,9 +302,11 @@
         showView('setup');
         return;
       }
-      await initAuth();
       var id = params.get('id');
-      if (id) await loadStream(id);
+      if (id) {
+        await initAuth();
+        await loadStream(id);
+      }
       else await loadCatalog();
     } catch (error) {
       showError(error);

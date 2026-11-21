@@ -20,6 +20,38 @@
   let questionLoadState = getQuestionCount() > 0 ? 'loaded' : 'idle';
   let questionLoadPromise = null;
   let readingClient = null;
+  const settings = window.ReadingSettings;
+  const canChooseMode = settings.isAllGrades(metin);
+  let mode = metin.goruntuleme_modu === 'kelime' ? 'kelime' : 'tam';
+  let manual = Boolean(metin.tikla_mod);
+  let isStarting = false;
+  let isFinished = false;
+  let readingPages;
+
+  function formatWordTime(ms) {
+    return (ms / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 }) + ' sn';
+  }
+
+  function syncReadyChoices() {
+    mode = document.querySelector('[name="readingMode"]:checked').value;
+    manual = document.querySelector('[name="readingAdvance"]:checked').value === 'click';
+    currentKelimeMs = Number(document.getElementById('readingWordMs').value);
+    document.getElementById('readingAdvance').hidden = mode !== 'kelime';
+    document.getElementById('readingPace').hidden = mode !== 'kelime' || manual;
+    document.getElementById('readingWordMsValue').value = formatWordTime(currentKelimeMs);
+    document.getElementById('readingWordMs').setAttribute('aria-valuetext', formatWordTime(currentKelimeMs));
+  }
+
+  function setupReadingChoices() {
+    if (!canChooseMode) return;
+    const choice = document.getElementById('readingChoice');
+    choice.querySelector('[name="readingMode"][value="' + mode + '"]').checked = true;
+    choice.querySelector('[name="readingAdvance"][value="' + (manual ? 'click' : 'auto') + '"]').checked = true;
+    document.getElementById('readingWordMs').value = settings.defaultWordMs;
+    choice.addEventListener('input', syncReadyChoices);
+    syncReadyChoices();
+    choice.hidden = false;
+  }
 
   function getKullaniciMetaLine() {
     const parts = [
@@ -254,12 +286,7 @@
     if (!style || !titleNode) {
       return;
     }
-    if (style.html) {
-      titleNode.innerHTML = style.html;
-    }
-    titleNode.style.color = style.renk || '';
-    titleNode.style.fontSize = style.boyut ? style.boyut + 'px' : '';
-    titleNode.style.textAlign = style.hiza || '';
+    if (['left', 'center', 'right'].includes(style.hiza)) titleNode.style.textAlign = style.hiza;
   }
 
   function applyBodyStyle(node) {
@@ -281,9 +308,38 @@
       'courier-new': '"Courier New", monospace',
       'Courier New,monospace': '"Courier New", monospace',
     };
-    node.style.fontFamily = fontMap[metin.yazi_tipi] || '"TTKB Dik Temel Abece", ttkb-dik-temel, "Nunito", sans-serif';
+    const font = fontMap[metin.yazi_tipi] || 'Nunito, sans-serif';
+    if (node.id === 'tamMetinIcerik') {
+      const paper = node.closest('.kitap-wrapper');
+      paper.style.setProperty('--reading-font', font);
+      paper.style.setProperty('--reading-size', Math.max(20, Math.min(34, Number(metin.yazi_boyutu) || 22)) + 'px');
+      if (font.includes('TTKB')) paper.style.setProperty('--reading-weight', '700');
+      return;
+    }
+    node.style.fontFamily = font;
     node.style.fontSize = (metin.yazi_boyutu || 18) + 'px';
     node.style.color = metin.yazi_rengi || '#1A1040';
+  }
+
+  function refreshReadingContrast() {
+    const body = document.getElementById('tamMetinIcerik');
+    const paper = body.closest('.kitap-wrapper');
+    const luminance = rgb => (rgb.match(/[\d.]+/g) || []).slice(0, 3).reduce((sum, channel, index) => {
+      const value = Number(channel) / 255;
+      return sum + [0.2126, 0.7152, 0.0722][index] * (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    }, 0);
+    const pageLight = luminance(getComputedStyle(paper).backgroundColor);
+    for (const element of body.querySelectorAll('[style], .reading-low-contrast')) {
+      element.classList.remove('reading-low-contrast');
+      if (element.style.color || element.style.backgroundColor) {
+        const colors = getComputedStyle(element);
+        const foreground = luminance(colors.color);
+        const channels = colors.color.match(/[\d.]+/g) || [];
+        if (channels.length > 3 && Number(channels[3]) < 1 || (Math.max(pageLight, foreground) + .05) / (Math.min(pageLight, foreground) + .05) < 4.5 || element.style.backgroundColor) {
+          element.classList.add('reading-low-contrast');
+        }
+      }
+    }
   }
 
   function renderReadingVisual() {
@@ -354,9 +410,15 @@
   }
 
   async function startReading() {
+    if (isStarting || startedAt !== null) return;
+    isStarting = true;
+    const button = document.getElementById('hazirBtn');
+    button.disabled = true;
+    window.ReadingFocus.enter();
     const readyState = await hydrateQuestions();
     if (readyState === 'error') {
-      const button = document.getElementById('hazirBtn');
+      await window.ReadingFocus.exit();
+      isStarting = false;
       if (button) {
         button.textContent = '🔄 Soruları Tekrar Yükle';
         button.disabled = false;
@@ -372,17 +434,17 @@
     sessionStorage.removeItem('okuma_cevaplar');
     sessionStorage.removeItem('okuma_karne_kaydedildi');
     sessionStorage.removeItem('okuma_karne_kuyrukta');
+    sessionStorage.setItem('okuma_baslangic_tarihi', new Date().toISOString());
+    if (canChooseMode) {
+      const flow = mode === 'tam' ? 'tam' : (manual ? 'kelime-tikla' : 'kelime-otomatik');
+      sessionStorage.setItem('okuma_secili_akis', JSON.stringify({ attemptId: sessionStorage.getItem('okuma_attempt_id'), flow: flow }));
+    } else {
+      sessionStorage.removeItem('okuma_secili_akis');
+    }
 
     document.getElementById('hazirEkran').style.display = 'none';
-    const launch = function() {
-      if (metin.goruntuleme_modu === 'kelime') {
-        startWordMode();
-      } else {
-        startFullTextMode();
-      }
-    };
-
-    launch();
+    if (mode === 'kelime') startWordMode();
+    else startFullTextMode();
   }
 
   function startFullTextMode() {
@@ -390,7 +452,6 @@
     const content = document.getElementById('tamMetinIcerik');
     screen.style.display = 'flex';
 
-    document.getElementById('tamMetinKullanici').innerHTML = '👤 <strong>' + kullanici.ad + ' ' + kullanici.soyad + '</strong> · ' + getKullaniciMetaLine();
     document.getElementById('tamMetinBaslik').textContent = metin.baslik;
     applyTitleStyle();
     renderReadingVisual();
@@ -399,9 +460,12 @@
     if ((metin.icerik_html || '').trim()) {
       content.innerHTML = metin.icerik_html;
     } else {
-      content.innerHTML = getPlainText().replace(/\n/g, '<br>');
+      content.classList.add('reading-plain-text');
+      content.textContent = getPlainText();
     }
 
+    refreshReadingContrast();
+    readingPages = window.ReadingPages.create(screen);
     startClock('sayacDisplay');
   }
 
@@ -426,6 +490,11 @@
     node.style.color = '#FFFFFF';
     node.style.fontSize = '';
     node.textContent = words[wordIndex] || '';
+    if (canChooseMode && manual) {
+      document.getElementById('readingWordBack').disabled = wordIndex === 0;
+      document.getElementById('readingWordNextLabel').textContent =
+        wordIndex >= words.length - 1 ? 'Okumayı bitir' : 'Sonraki kelime';
+    }
     updateWordProgress();
   }
 
@@ -448,6 +517,7 @@
   }
 
   function getWordModeDelay() {
+    if (canChooseMode) return currentKelimeMs;
     const profile = getTrainingProfile();
     const block = words[wordIndex] || '';
     const punctuationPause = /[.!?;:…]$/.test(block.trim()) ? profile.rsvp.noktalama_duraklama_ms : 0;
@@ -455,12 +525,11 @@
   }
 
   function scheduleNextWord() {
+    window.clearTimeout(wordTimer);
     wordTimer = window.setTimeout(function() {
       wordIndex += 1;
       if (wordIndex >= words.length) {
-        window.clearTimeout(wordTimer);
-        stopClock();
-        window.setTimeout(finishWordMode, 450);
+        finishWordMode();
         return;
       }
       renderWord();
@@ -474,47 +543,49 @@
       return;
     }
     const profile = getTrainingProfile();
-    const groupSize = profile.rsvp.grup_boyutu || 1;
+    const groupSize = canChooseMode ? 1 : profile.rsvp.grup_boyutu || 1;
     const wpm = Math.round((60000 / Math.max(150, currentKelimeMs)) * groupSize);
-    node.textContent = wpm + ' k/dk';
+    node.textContent = canChooseMode ? formatWordTime(currentKelimeMs) + ' / kelime' : wpm + ' k/dk';
   }
 
   function startWordMode() {
     const screen = document.getElementById('kelimeEkran');
     const profile = getTrainingProfile();
-    words = buildWordBlocks(getPlainText(), profile.rsvp.grup_boyutu);
+    words = buildWordBlocks(getPlainText(), canChooseMode ? 1 : profile.rsvp.grup_boyutu);
     wordIndex = 0;
-    currentKelimeMs = metin.kelime_ms || 500;
 
     screen.style.display = 'flex';
-    document.getElementById('kkMeta').innerHTML = '📖 <strong>' + metin.baslik + '</strong>';
-    document.getElementById('kkHint').style.display = metin.tikla_mod ? 'block' : 'none';
-    document.getElementById('kkControls').style.display = (!metin.tikla_mod && profile.rsvp.ogrenci_hiz_kontrolu) ? 'flex' : 'none';
-    screen.style.cursor = metin.tikla_mod ? 'pointer' : 'default';
+    document.getElementById('kkMeta').textContent = '📖 ' + metin.baslik;
+    document.getElementById('kkHint').style.display = manual && !canChooseMode ? 'block' : 'none';
+    document.getElementById('readingWordNav').hidden = !canChooseMode || !manual;
+    document.getElementById('kkControls').style.display = !manual && (canChooseMode || profile.rsvp.ogrenci_hiz_kontrolu) ? 'flex' : 'none';
+    screen.style.cursor = manual ? 'pointer' : 'default';
     updateSpeedLabel();
 
     renderWord();
     startClock('kkSayac');
 
-    if (!metin.tikla_mod) {
+    if (!manual) {
       scheduleNextWord();
     }
   }
 
-  function clickWordMode() {
-    if (!metin.tikla_mod) {
-      return;
-    }
+  function clickWordMode(event) {
+    if (event?.target.closest('button, a, input, select, label')) return;
+    if (mode !== 'kelime' || !manual || startedAt === null || isFinished) return;
     wordIndex += 1;
     if (wordIndex >= words.length) {
-      stopClock();
-      window.setTimeout(finishWordMode, 450);
+      finishWordMode();
       return;
     }
     renderWord();
   }
 
-  function completeReading(durationMs) {
+  async function completeReading(durationMs) {
+    if (isFinished || startedAt === null) return;
+    isFinished = true;
+    stopClock();
+    window.clearTimeout(wordTimer);
     const durationSeconds = durationMs / 1000;
     const wordCount = metin.kelime_sayisi || getPlainText().split(/\s+/).filter(Boolean).length;
     const wpm = durationSeconds > 0 ? Math.round((wordCount / durationSeconds) * 60) : 0;
@@ -522,6 +593,9 @@
     sessionStorage.setItem('okuma_sure_sn', durationSeconds.toFixed(1));
     sessionStorage.setItem('okuma_wpm', String(wpm));
 
+    if ((metin.sorular || []).length && window.ReadingFocus.isActive()) sessionStorage.setItem('okuma_soru_odagi', '1');
+    else sessionStorage.removeItem('okuma_soru_odagi');
+    await window.ReadingFocus.exit();
     if ((metin.sorular || []).length > 0) {
       window.location.href = '/hizli-okuma/sorular.html';
     } else {
@@ -530,8 +604,19 @@
   }
 
   document.addEventListener('DOMContentLoaded', async function() {
-    const modeLabel = metin.goruntuleme_modu === 'kelime'
-      ? (metin.tikla_mod ? '⚡ Kelime Kelime (Tıklayarak)' : '⚡ Kelime Kelime (Otomatik)')
+    window.addEventListener('kemal:themechange', () => {
+      if (mode === 'tam' && startedAt !== null) refreshReadingContrast();
+    });
+    setupReadingChoices();
+    document.getElementById('readingWordNext').addEventListener('click', () => clickWordMode());
+    document.getElementById('readingWordBack').addEventListener('click', () => {
+      if (!isFinished && wordIndex > 0) {
+        wordIndex -= 1;
+        renderWord();
+      }
+    });
+    const modeLabel = mode === 'kelime'
+      ? (manual ? '⚡ Kelime Kelime (Tıklayarak)' : '⚡ Kelime Kelime (Otomatik)')
       : '📄 Tam Metin';
     document.getElementById('hazirBaslik').textContent = metin.baslik;
     renderReadyCover();
@@ -541,7 +626,7 @@
     readyButton.disabled = true;
     const readyState = await hydrateQuestions();
     document.getElementById('hazirBilgi').innerHTML =
-      '<strong>' + modeLabel + '</strong><br>' +
+      (canChooseMode ? '' : '<strong>' + modeLabel + '</strong><br>') +
       (metin.kelime_sayisi || '?') + ' kelime · ' +
       (readyState === 'error'
         ? 'Anlama soruları yeniden yüklenemedi'
@@ -554,12 +639,14 @@
   window.okumaBaslat = startReading;
   window.kelimeTikla = clickWordMode;
   window.kelimeHiziDegistir = function(delta) {
-    currentKelimeMs = Math.max(150, Math.min(1500, currentKelimeMs - delta));
+    if (startedAt === null || isFinished || manual || mode !== 'kelime') return;
+    currentKelimeMs = canChooseMode
+      ? Math.max(settings.minWordMs, Math.min(settings.maxWordMs, currentKelimeMs - Math.sign(delta) * 100))
+      : Math.max(150, Math.min(1500, currentKelimeMs - delta));
     updateSpeedLabel();
+    if (canChooseMode) scheduleNextWord();
   };
   window.okumaBitti = function() {
-    stopClock();
-    elapsedMs = Date.now() - startedAt;
-    completeReading(elapsedMs);
+    if (startedAt !== null && !readingPages?.next()) completeReading(Date.now() - startedAt);
   };
 })();

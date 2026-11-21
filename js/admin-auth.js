@@ -187,6 +187,7 @@
   const PAGE_PERMISSION_MAP = [
     { suffix: '/admin/okuma-editor.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
     { suffix: '/admin/hece-akisi.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
+    { suffix: '/admin/okuma-akademisi.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
     { suffix: '/admin/e-kitap-yonetimi.html', anyOf: ['okuma_metinleri', 'okuma_metni_ekleme', 'okuma_metni_duzenleme'] },
     { suffix: '/admin/e-kitap-sonuclari.html', anyOf: ['okuma_sonuclari', 'okuma_sonuclari_duzenleme', 'okuma_karne'] },
     { suffix: '/admin/dokuman-yonetimi.html', anyOf: ['dokuman_ekleme', 'dokuman_duzenleme', 'dokuman_silme'] },
@@ -261,6 +262,7 @@
     if (
       currentPath.indexOf('/admin/okuma-editor.html') !== -1 ||
       currentPath.indexOf('/admin/hece-akisi.html') !== -1 ||
+      currentPath.indexOf('/admin/okuma-akademisi.html') !== -1 ||
       currentPath.indexOf('/admin/e-kitap-yonetimi.html') !== -1 ||
       currentPath.indexOf('/admin/e-kitap-sonuclari.html') !== -1 ||
       currentPath.indexOf('/admin/okuma-sonuclari.html') !== -1 ||

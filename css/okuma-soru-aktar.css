@@ -1,0 +1,37 @@
+.question-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.question-head:has(.question-tools) { flex-wrap: wrap; }
+.question-tools svg, #bulkReadingQuestions svg { width: 18px; height: 18px; vertical-align: middle; }
+.reading-import {
+  position: fixed; inset: 0; margin: auto; width: min(680px, calc(100% - 24px)); max-height: min(88dvh, 780px);
+  box-sizing: border-box; padding: 0; border: 1px solid var(--theme-border, #d6dce6); border-radius: 8px;
+  background: var(--theme-surface, #fff); color: var(--theme-text, #18213a);
+}
+.reading-import[open] { display: flex; flex-direction: column; }
+.reading-import::backdrop { background: #12142b99; }
+.reading-import-head, .reading-import-actions { display: flex; align-items: center; gap: 8px; padding: 12px 16px; }
+.reading-import-head { justify-content: space-between; border-bottom: 1px solid var(--theme-border, #d6dce6); }
+.reading-import-head h2 { margin: 0; color: inherit; font-size: 20px; letter-spacing: 0; }
+.reading-import-body { padding: 14px 16px; min-height: 0; overflow: auto; }
+.reading-import-body label { display: block; margin-bottom: 6px; color: inherit; font-weight: 800; }
+.reading-import-body textarea, .reading-import-body select {
+  display: block; width: 100%; max-width: 100%; padding: 8px;
+  border: 1px solid var(--theme-border, #d6dce6); border-radius: 8px;
+  font: inherit; background: var(--theme-surface-alt, #f7f8fc); color: inherit;
+}
+.reading-import-body textarea { min-height: 96px; resize: vertical; }
+.reading-import-body p { margin: 8px 0 0; color: var(--theme-muted, #485568); font-size: 14px; }
+.reading-import-body .is-error { color: var(--theme-danger, #a5213d); }
+.reading-import-results { display: grid; gap: 12px; padding-inline-start: 24px; margin: 14px 0 0; }
+.reading-import-results:empty { display: none; }
+.reading-import-results li { overflow-wrap: anywhere; }
+.reading-import-results ul { list-style: none; margin: 5px 0; padding: 0; color: var(--theme-muted, #485568); }
+.reading-import-results select { margin: 5px 0 0; min-height: 42px; }
+.reading-import-actions { justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--theme-border, #d6dce6); }
+.reading-import button {
+  min-height: 42px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--theme-border, #d6dce6);
+  font: inherit; font-weight: 800; background: var(--theme-surface-alt, #f7f8fc); color: inherit; cursor: pointer;
+}
+.reading-import button[data-append] { background: #5633be; border-color: #5633be; color: #fff; }
+.reading-import button:disabled { opacity: .55; cursor: default; }
+.reading-import-close { min-width: 42px; }
+.reading-import-close svg { width: 18px; height: 18px; vertical-align: middle; }

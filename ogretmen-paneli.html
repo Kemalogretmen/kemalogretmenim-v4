@@ -153,6 +153,9 @@
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+<link rel="stylesheet" href="/sinav_sitesi/js/exam-analysis.css?v=20261118-layout">
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="panels"></script>
 </head>
 <body data-kemal-chrome="off">
   <main class="teacher-panel">
@@ -422,6 +425,16 @@
 
       <section class="teacher-section" id="section-reports">
         <div class="teacher-panel-card">
+          <h2>Sınav Analizi</h2>
+          <p>Bağlı öğrencilerinizin tamamladığı bir sınavı seçerek ders, kazanım ve soru dağılımını inceleyin.</p>
+          <div class="teacher-form-grid" style="margin:12px 0">
+            <label>Sınav<select id="teacherAnalysisExam"><option value="">Sınav seçin</option></select></label>
+            <label>Sınıf<select id="teacherAnalysisClass"><option value="">Tüm sınıflarım</option></select></label>
+          </div>
+          <button class="teacher-btn" type="button" id="teacherExamAnalysisBtn">Sınav Analizini Aç</button>
+          <p id="teacherAnalysisStatus" role="status"></p>
+        </div>
+        <div class="teacher-panel-card" style="margin-top:16px">
           <h2>Öğrenci Karneleri ve İlerleme</h2>
           <p>Kendi sınıflarındaki öğrenciler için okuma sonuçları, ödev tamamlama durumu ve liyakat puanları birlikte izlenir.</p>
           <div id="reportList"></div>
@@ -611,6 +624,9 @@
   <script src="/js/content-feed.js"></script>
   <script src="/js/content-reactions.js"></script>
   <script src="/js/content-saves.js"></script>
-  <script src="/js/ogretmen-paneli.js?v=20261103-agenda-roster"></script>
+  <script src="/sinav_sitesi/js/exam-analysis.js?v=20261118"></script>
+  <script src="/sinav_sitesi/js/exam-analysis-view.js?v=20261118"></script>
+  <script src="/sinav_sitesi/js/teacher-exam-analysis.js?v=20261118"></script>
+  <script src="/js/ogretmen-paneli.js?v=20261118-sinav-analiz"></script>
 </body>
 </html>

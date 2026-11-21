@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Hücre Laboratuvarı · Fen Laboratuvarı | Kemal Öğretmenim</title>
+  <meta name="description" content="5. sınıf hücre ve mikroskop laboratuvarı. 3B mikroskopta örnek incele, hücre ve organelleri keşfet, hücreden organizmaya ilerle ve değerlendirme etkinliklerini çöz.">
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <link rel="stylesheet" href="/css/hucre-laboratuvari.css?v=20261118-import">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script defer src="/js/hucre-laboratuvari.js?v=20261118-import"></script>
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="labs"></script>
+</head>
+<body class="cell-lab-page">
+  <div id="kemalNavMount"></div>
+  <main class="cell-lab-workspace" id="cell-lab">
+    <a class="cell-lab-back" href="/ogretmen-araclari.html#fen-laboratuvari">← Fen Laboratuvarı</a>
+
+
+<!-- ÜST BAR -->
+<header class="top-header">
+  <div class="brand-box">
+    <div class="brand-logo">🔬</div>
+    <div class="brand-title">
+      <h1>3B GERÇEKÇİ HÜCRE VE MİKROSKOP LABORATUVARI</h1>
+      <p>5. Sınıf Fen Bilimleri · Canlıların Yapısına Yolculuk · Kemal KOCAR (Kemal Öğretmen)</p>
+    </div>
+  </div>
+
+  <nav class="nav-tabs" id="mainNavTabs">
+    <button class="nav-tab active" onclick="switchModule('microscope')">
+      <span class="step-badge">1</span> 🔬 3B Mikroskop & Preparat
+    </button>
+    <button class="nav-tab" onclick="switchModule('cell')">
+      <span class="step-badge">2</span> 🧫 3B/2B Hücre ve Organelleri
+    </button>
+    <button class="nav-tab" onclick="switchModule('hierarchy')">
+      <span class="step-badge">3</span> 🧬 Hücreden Organizmaya
+    </button>
+    <button class="nav-tab" onclick="switchModule('evaluation')">
+      <span class="step-badge">4</span> 📝 Değerlendirme & Etkinlikler
+    </button>
+  </nav>
+
+  <div class="header-actions">
+    <button class="icon-btn" id="soundToggleBtn" onclick="toggleSound()">🔊 Ses Açık</button>
+    <button class="icon-btn" onclick="toggleFullscreen()">⛶ Tam Ekran</button>
+  </div>
+</header>
+
+<!-- =========================================================================
+     MODÜL 1: TAM EKRAN 3B MİKROSKOP VE ANİMASYONLU PREPARAT İNCELEME
+========================================================================== -->
+<section class="module-section active" id="mod-microscope">
+  <div class="full-stage-wrapper">
+    <!-- ÜST ARAÇ ÇUBUĞU -->
+    <div class="stage-toolbar">
+      <div class="pill-group">
+        <button class="pill-btn animal-btn active" id="sp-animal" onclick="selectSpecimen('animal')">🦁 Hayvan Hücresi (Ağız İçi Epitel)</button>
+        <button class="pill-btn plant-btn" id="sp-plant" onclick="selectSpecimen('plant')">🌿 Bitki Hücresi (Soğan Zarı)</button>
+      </div>
+
+      <div class="pill-group">
+        <button class="pill-btn active" id="micView3DBtn" onclick="setMicroscopeViewMode('3d')">🔬 3B Mikroskop</button>
+        <button class="pill-btn" id="micViewEyepieceBtn" onclick="setMicroscopeViewMode('eyepiece')">👁️ Oküler Vizörü</button>
+        <button class="pill-btn active" id="micLabelsBtn" onclick="toggleMicroscopeLabels()">🏷️ Etiketler</button>
+        <button class="pill-btn" id="micAutoSpinBtn" onclick="toggleMicroscopeAutoSpin()">▶️ Döndür (Kapalı)</button>
+        <button class="pill-btn" onclick="resetMicroscopeCamera()">🎯 Kamerayı Sıfırla</button>
+        <button class="pill-btn drawer-toggle-btn" id="micDrawerBtn" onclick="toggleDrawer('micDrawer', 'micDrawerBtn')">⚙️ Netleme & Bölüm Bilgisi</button>
+      </div>
+    </div>
+
+    <!-- 3B Mikroskop WebGL Alanı -->
+    <div class="canvas-holder" id="microscopeCanvasHolder">
+      <div class="labels-overlay" id="microscopeLabelsOverlay"></div>
+    </div>
+
+    <!-- Durum Bilgisi -->
+    <div id="micStatusBanner" style="position:absolute; top:66px; left:50%; transform:translateX(-50%); z-index:22; background:rgba(8,14,28,0.92); border:1px solid var(--primary); padding:8px 18px; border-radius:12px; font-weight:700; font-size:0.86rem; color:#fff; box-shadow:0 8px 25px rgba(0,0,0,0.6); text-align:center;">
+      🔬 3B Mikroskop Hazır! Aşağıdaki "Animasyon ile İncele" butonuna basarak adım adım lam-lamel hazırlığını başlatabilirsin.
+    </div>
+
+    <!-- OKÜLER VİZÖRÜ -->
+    <div class="eyepiece-hud" id="eyepieceHud">
+      <div class="eyepiece-ring">
+        <canvas id="eyepieceCanvas" width="520" height="520"></canvas>
+        <div class="crosshair"></div>
+        <div id="eyepieceOverlayInfo" style="position:absolute; bottom:18px; left:50%; transform:translateX(-50%); background:rgba(7,11,25,0.88); padding:5px 14px; border-radius:20px; font-size:0.78rem; font-weight:700; color:#38bdf8; border:1px solid rgba(56,189,248,0.4); white-space:nowrap;">
+          Büyütme: 100× | Netlik: %20 (Bulanık)
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button class="action-btn amber" onclick="autoFocusEyepiece()">
+          ⚙️ Ayar Vidalarıyla Görüntüyü Netle
+        </button>
+        <button class="action-btn success" onclick="zoomFromEyepieceToCellLab()">
+          🔍 Hücreye Yaklaş ve 3B Organelleri İncele →
+        </button>
+      </div>
+    </div>
+
+    <!-- AÇILIR/KAPANIR MİKROSKOP KONTROL ÇEKMECESİ -->
+    <div class="slide-drawer" id="micDrawer">
+      <div class="panel-header">
+        <h2>⚙️ Mikroskop Ayarları & Bölümleri</h2>
+        <button class="popup-close-btn" style="width:28px;height:28px;font-size:0.9rem;" onclick="toggleDrawer('micDrawer', 'micDrawerBtn')">✕</button>
+      </div>
+
+      <div style="background:rgba(15,23,42,0.9); border:1px solid rgba(56,189,248,0.35); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.78rem; font-weight:700;">
+          <span>🔭 Objektif Seçimi:</span>
+          <span id="objValLabel" style="color:var(--primary)">10× (Toplam 100×)</span>
+        </div>
+        <div class="pill-group" style="justify-content:space-between;">
+          <button class="pill-btn" id="obj-4" onclick="setObjective(4)">4×</button>
+          <button class="pill-btn active" id="obj-10" onclick="setObjective(10)">10×</button>
+          <button class="pill-btn" id="obj-40" onclick="setObjective(40)">40×</button>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:4px;">
+            <span>🔩 Makro (Kaba) Vida</span><span id="coarseValLabel">%20</span>
+          </div>
+          <input type="range" id="coarseSlider" min="0" max="100" value="20" oninput="onFocusSliderChange()">
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.76rem; margin-bottom:4px;">
+            <span>🔧 Mikro (İnce) Vida</span><span id="fineValLabel">%25</span>
+          </div>
+          <input type="range" id="fineSlider" min="0" max="100" value="25" oninput="onFocusSliderChange()">
+        </div>
+
+        <button class="chip-btn" id="lightSwitchBtn" style="justify-content:center;" onclick="toggleMicroscopeLight()">💡 Işık Kaynağını Aç / Kapat</button>
+      </div>
+
+      <div id="micPartDetailBox" style="background:rgba(15,23,42,0.85); border-left:4px solid var(--primary); padding:12px; border-radius:10px;">
+        <h4 id="micPartTitle" style="color:var(--primary); font-size:0.92rem; margin-bottom:4px;">🔬 Oküler (Göz Merceği)</h4>
+        <p id="micPartDesc" style="font-size:0.8rem; color:#e2e8f0; line-height:1.45;">
+          Gözümüzü dayayarak baktığımız üst mercek kısmıdır. Genellikle görüntüyü 10 kat (10×) büyütür.
+        </p>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:5px;" id="micPartsChips"></div>
+    </div>
+
+    <div class="stage-footer-hint">
+      🖱️ Sürükle: 3B Mikroskobu İncele · Tekerlek: Yakınlaştır · Etikete Tıkla: Görevini Gör
+    </div>
+  </div>
+
+  <!-- ALT PREPARAT ADIMLARI BARI -->
+  <div class="bottom-dock">
+    <div class="dock-group">
+      <button class="action-btn" id="startMicAnimBtn" onclick="runNextMicroscopeStep()">
+        ▶ Animasyon ile İncele (Adım 1: Lam-Lamel Hazırla)
+      </button>
+      <button class="chip-btn active" id="mstep-1" onclick="jumpToMicroscopeStep(1)">1. Lam-Lamel</button>
+      <button class="chip-btn" id="mstep-2" onclick="jumpToMicroscopeStep(2)">2. Tablaya Koy</button>
+      <button class="chip-btn" id="mstep-3" onclick="jumpToMicroscopeStep(3)">3. Işığı Aç</button>
+      <button class="chip-btn" id="mstep-4" onclick="jumpToMicroscopeStep(4)">4. Okülerden Bak</button>
+      <button class="chip-btn" id="mstep-5" onclick="jumpToMicroscopeStep(5)">5. Netle</button>
+      <button class="chip-btn" id="mstep-6" onclick="jumpToMicroscopeStep(6)">6. Hücreye Gir →</button>
+    </div>
+    <button class="icon-btn" onclick="resetMicroscopeSim()">↺ Sıfırla</button>
+  </div>
+</section>
+
+<!-- =========================================================================
+     MODÜL 2: TAM EKRAN 3B GERÇEKÇİ HÜCRE VE ORGANELLERİ LABORATUVARI
+========================================================================== -->
+<section class="module-section" id="mod-cell">
+  <div class="full-stage-wrapper">
+    <!-- ÜST ARAÇ ÇUBUĞU -->
+    <div class="stage-toolbar">
+      <div class="pill-group">
+        <button class="pill-btn animal-btn active" id="btnCellAnimal" onclick="setCellType('animal')">🦁 Hayvan Hücresi</button>
+        <button class="pill-btn plant-btn" id="btnCellPlant" onclick="setCellType('plant')">🌿 Bitki Hücresi</button>
+        <button class="pill-btn compare-btn" id="btnCellCompare" onclick="setCellType('compare')">⚖️ İkisini Birlikte Karşılaştır</button>
+      </div>
+
+      <div class="pill-group">
+        <button class="pill-btn active" id="btnDim3D" onclick="setCellDimension('3d')">🧊 3B Gerçekçi Model</button>
+        <button class="pill-btn" id="btnDim2D" onclick="setCellDimension('2d')">📐 2B Kesit Görünümü</button>
+        <button class="pill-btn active" id="btnCellLabels" onclick="toggleCellLabels()">🏷️ Etiketler</button>
+        <button class="pill-btn" id="btnCellSpin" onclick="toggleCellAutoSpin()">▶️ Döndür (Kapalı)</button>
+        <button class="pill-btn" onclick="resetCellCamera()">🎯 Açıyı Sıfırla</button>
+        <button class="pill-btn drawer-toggle-btn" id="cellDrawerBtn" onclick="toggleDrawer('cellCompareDrawer', 'cellDrawerBtn')">📊 Karşılaştırma & Çalışma Prensipleri</button>
+      </div>
+    </div>
+
+    <!-- 3B Hücre WebGL Alanı -->
+    <div class="canvas-holder" id="cellCanvasHolder">
+      <div class="labels-overlay" id="cellLabelsOverlay"></div>
+    </div>
+
+    <!-- 2B Kesit Hücre Görünümü -->
+    <div class="cell-2d-container" id="cell2DContainer"></div>
+
+    <!-- 3B ve 2B ORTAK YAKINLAŞTIRMA / UZAKLAŞTIRMA (ZOOM) BARI -->
+    <div class="cell-zoom-bar">
+      <button onclick="stepCellZoom(-15)" title="Uzaklaştır">−</button>
+      <span style="font-size:0.74rem; color:#94a3b8;">🔍</span>
+      <input type="range" id="cellZoomSlider" min="55" max="220" value="100" oninput="onCellZoomSlider(this.value)">
+      <button onclick="stepCellZoom(15)" title="Yakınlaştır">+</button>
+      <span id="cellZoomLabel" style="font-size:0.75rem; font-weight:700; color:#38bdf8; min-width:38px; text-align:right;">%100</span>
+      <button onclick="resetCellZoom()" title="Yakınlaştırmayı Sıfırla" style="font-size:0.75rem;">↺</button>
+    </div>
+
+    <!-- AÇILIR/KAPANIR KARŞILAŞTIRMA & ÇALIŞMA PRENSİPLERİ ÇEKMECESİ -->
+    <div class="slide-drawer" id="cellCompareDrawer">
+      <div class="panel-header">
+        <h2>⚖️ Bitki ve Hayvan Hücresi Karşılaştırması</h2>
+        <button class="popup-close-btn" style="width:28px;height:28px;font-size:0.9rem;" onclick="toggleDrawer('cellCompareDrawer', 'cellDrawerBtn')">✕</button>
+      </div>
+
+      <div class="pill-group" style="width:100%; justify-content:space-between;">
+        <button class="pill-btn active" id="cmpTab-diff" onclick="switchCompareSubTab('diff')">🔍 Farklar</button>
+        <button class="pill-btn" id="cmpTab-sim" onclick="switchCompareSubTab('sim')">🤝 Benzerlikler</button>
+        <button class="pill-btn" id="cmpTab-work" onclick="switchCompareSubTab('work')">⚙️ Çalışma Prensibi</button>
+      </div>
+
+      <div id="cmpContent-diff" style="display:flex; flex-direction:column; gap:8px;">
+        <p style="font-size:0.76rem; color:var(--text-muted);">Satıra tıklayarak o organelin büyük görselini ve 3B modelini açabilirsin:</p>
+        <table class="compare-table">
+          <thead>
+            <tr><th>Yapı / Özellik</th><th>🌿 Bitki</th><th>🦁 Hayvan</th></tr>
+          </thead>
+          <tbody>
+            <tr onclick="openOrganellePopup('hucre_duvari')"><td><strong>Şekil</strong></td><td>Köşeli</td><td>Yuvarlak / Oval</td></tr>
+            <tr onclick="openOrganellePopup('hucre_duvari')"><td><strong>Hücre Duvarı</strong></td><td class="yes-badge">✓ Var</td><td class="no-badge">✗ Yok</td></tr>
+            <tr onclick="openOrganellePopup('kloroplast')"><td><strong>Kloroplast</strong></td><td class="yes-badge">✓ Var</td><td class="no-badge">✗ Yok</td></tr>
+            <tr onclick="openOrganellePopup('sentrozom')"><td><strong>Sentrozom</strong></td><td class="no-badge">✗ Yok</td><td class="yes-badge">✓ Var</td></tr>
+            <tr onclick="openOrganellePopup('koful')"><td><strong>Koful</strong></td><td>Büyük ve Az</td><td>Küçük ve Çok</td></tr>
+            <tr onclick="openOrganellePopup('lizozom')"><td><strong>Lizozom</strong></td><td>İlkel bitkide</td><td class="yes-badge">✓ Var</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="cmpContent-sim" style="display:none; flex-direction:column; gap:10px; font-size:0.81rem; line-height:1.45;">
+        <div style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.35); padding:11px; border-radius:10px;">
+          <strong style="color:#4ade80;">1. Ortak Temel Kısımlar:</strong><br>
+          Hem bitki hem de hayvan hücresinde <strong>Hücre Zarı</strong>, <strong>Sitoplazma</strong> ve <strong>Çekirdek</strong> ortak olarak bulunur.
+        </div>
+        <div style="background:rgba(56,189,248,0.12); border:1px solid rgba(56,189,248,0.35); padding:11px; border-radius:10px;">
+          <strong style="color:#38bdf8;">2. Ortak Organeller:</strong><br>
+          • <strong>Mitokondri:</strong> Enerji (ATP) üretir.<br>
+          • <strong>Ribozom:</strong> Protein sentezler.<br>
+          • <strong>Endoplazmik Retikulum:</strong> Madde iletir.<br>
+          • <strong>Golgi Cisimciği:</strong> Salgı üretir ve paketler.<br>
+          • <strong>Koful:</strong> Su, besin ve atık depolar.
+        </div>
+      </div>
+
+      <div id="cmpContent-work" style="display:none; flex-direction:column; gap:10px; font-size:0.8rem; line-height:1.45;">
+        <div style="background:rgba(168,85,247,0.12); border:1px solid rgba(168,85,247,0.35); padding:11px; border-radius:10px;">
+          <strong style="color:#c084fc;">🏭 1. Yönetim ve Üretim Zinciri:</strong><br>
+          <strong>Çekirdek</strong> yönetim emrini verir → <strong>Ribozom</strong> protein üretir → <strong>Endoplazmik Retikulum</strong> kanallarıyla taşır → <strong>Golgi Cisimciği</strong> paketleyip salgıya dönüştürür.
+        </div>
+        <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); padding:11px; border-radius:10px;">
+          <strong style="color:#fbbf24;">⚡ 2. Enerji ve Besin Döngüsü:</strong><br>
+          Bitkide <strong>Kloroplast</strong> güneş ışığıyla besin ve oksijen üretir; her iki hücrede <strong>Mitokondri</strong> besinleri oksijenle parçalayarak enerji (ATP) üretir.
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-footer-hint">
+      👆 Organelin Üzerine, Etiketine veya Aşağıdaki İsmine Tıkla: Büyük Boyutlu Görselli & 3B Pop-up Menüyü Aç
+    </div>
+  </div>
+
+  <!-- ALT KOMPAKT ORGANEL VE TEMEL KISIM SEÇİM BARI -->
+  <div class="bottom-dock">
+    <div class="dock-group" id="basicPartsList"></div>
+    <div class="dock-group" id="organellesList"></div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     MODÜL 3: HÜCREDEN ORGANİZMAYA GÖRSEL VE ANİMASYONLU GEÇİŞ SAHNESİ
+========================================================================== -->
+<section class="module-section" id="mod-hierarchy">
+  <div class="full-stage-wrapper">
+    <!-- Üst Araç Çubuğu -->
+    <div class="stage-toolbar">
+      <div class="pill-group">
+        <button class="pill-btn animal-btn active" id="hPathAnimal" onclick="setHierarchyPath('animal')">🧍 İnsan / Hayvan Örneği</button>
+        <button class="pill-btn plant-btn" id="hPathPlant" onclick="setHierarchyPath('plant')">🌻 Çiçekli Bitki Örneği</button>
+      </div>
+
+      <div class="pill-group">
+        <button class="pill-btn" id="hAutoPlayBtn" onclick="toggleHierarchyAutoPlay()">🎬 Geçiş Animasyonunu Oynat</button>
+        <button class="pill-btn" onclick="prevHierarchyStage()">◀ Önceki</button>
+        <button class="pill-btn" onclick="nextHierarchyStage()">Sonraki ▶</button>
+        <button class="pill-btn drawer-toggle-btn" id="hierOrderDrawerBtn" onclick="toggleDrawer('hierOrderDrawer', 'hierOrderDrawerBtn')">🎯 Sıralama Etkinliği</button>
+      </div>
+    </div>
+
+    <!-- Görsel ve Animasyonlu Geçiş Sahnesi -->
+    <div class="hierarchy-visual-stage">
+      <div class="hierarchy-main-card">
+        <!-- Klasördeki Üretilen Görsel Çerçevesi + Efekt Kanvası -->
+        <div class="hierarchy-img-frame">
+          <img id="hierarchyStageImg" src="/assets/fen-laboratuvari/gorseller/asama1_hucre.png" alt="Hücreden Organizmaya Aşama Görseli">
+          <canvas id="hierarchyFxCanvas" width="700" height="430" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;"></canvas>
+        </div>
+
+        <!-- Sağ Açıklama ve Çoğalma Bilgi Kartı -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          <span class="badge" id="hStageBadge" style="align-self:flex-start; font-size:0.82rem; padding:5px 12px;">Basamak 1 / 5</span>
+          <h2 id="hStageTitle" style="font-size:1.65rem; font-weight:800; color:#38bdf8;">1. Basamak: Hücre (Kalp Kası Hücresi)</h2>
+          <p id="hStageDesc" style="font-size:0.96rem; color:#e2e8f0; line-height:1.6;">
+            Canlıların canlılık özelliği gösteren en küçük yapı ve görev birimidir. Kalp kası hücresi kendi başına kasılıp gevşeyebilen mikroskobik bir birimdir.
+          </p>
+          <div style="background:rgba(30,41,59,0.65); border-left:4px solid #a855f7; padding:12px 14px; border-radius:10px; font-size:0.84rem; color:#cbd5e1; line-height:1.5;" id="hStageAnalogy">
+            🏙️ <strong>Günlük Yaşam Benzetmesi:</strong> Bir binayı oluşturan tek bir <strong>Tuğla</strong> veya bir kitaptaki tek bir <strong>Harf</strong> gibidir.
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="action-btn" onclick="nextHierarchyStage()">✨ Efektli Geçişle Sonraki Basamağa İlerle →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Açılır Sıralama Etkinliği Çekmecesi -->
+    <div class="slide-drawer" id="hierOrderDrawer">
+      <div class="panel-header">
+        <h2>🎯 Basitten Karmaşığa Sıralama</h2>
+        <button class="popup-close-btn" style="width:28px;height:28px;font-size:0.9rem;" onclick="toggleDrawer('hierOrderDrawer', 'hierOrderDrawerBtn')">✕</button>
+      </div>
+      <p style="font-size:0.8rem; color:var(--text-muted);">Kavramlara en basit (küçük) birimden en karmaşık yapıya doğru sırayla tıkla:</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;" id="orderPool"></div>
+      <div id="orderSelectedBox" style="min-height:120px; background:rgba(15,23,42,0.75); border:1px dashed var(--primary); border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px;"></div>
+      <div id="orderFeedback" style="font-size:0.84rem; font-weight:700;"></div>
+      <button class="icon-btn" style="justify-content:center;" onclick="initOrderGame()">↺ Karıştır & Yenile</button>
+    </div>
+  </div>
+
+  <!-- Alt 5 Basamak Seçici -->
+  <div class="hierarchy-strip">
+    <button class="h-card-btn active" id="hbtn-1" onclick="setHierarchyStage(1)">
+      <span style="font-size:1.5rem;">🧫</span>
+      <div style="text-align:left;"><strong style="display:block;font-size:0.86rem;">1. HÜCRE</strong><span style="font-size:0.72rem;color:var(--text-muted);">En Küçük Birim</span></div>
+    </button>
+    <button class="h-card-btn" id="hbtn-2" onclick="setHierarchyStage(2)">
+      <span style="font-size:1.5rem;">🧱</span>
+      <div style="text-align:left;"><strong style="display:block;font-size:0.86rem;">2. DOKU</strong><span style="font-size:0.72rem;color:var(--text-muted);">Hücre Topluluğu</span></div>
+    </button>
+    <button class="h-card-btn" id="hbtn-3" onclick="setHierarchyStage(3)">
+      <span style="font-size:1.5rem;">❤️</span>
+      <div style="text-align:left;"><strong style="display:block;font-size:0.86rem;">3. ORGAN</strong><span style="font-size:0.72rem;color:var(--text-muted);">Dokuların Birleşimi</span></div>
+    </button>
+    <button class="h-card-btn" id="hbtn-4" onclick="setHierarchyStage(4)">
+      <span style="font-size:1.5rem;">🩸</span>
+      <div style="text-align:left;"><strong style="display:block;font-size:0.86rem;">4. SİSTEM</strong><span style="font-size:0.72rem;color:var(--text-muted);">Organlar Ağı</span></div>
+    </button>
+    <button class="h-card-btn" id="hbtn-5" onclick="setHierarchyStage(5)">
+      <span style="font-size:1.5rem;">🧍</span>
+      <div style="text-align:left;"><strong style="display:block;font-size:0.86rem;">5. ORGANİZMA</strong><span style="font-size:0.72rem;color:var(--text-muted);">Canlı Bütünü</span></div>
+    </button>
+  </div>
+</section>
+
+<!-- =========================================================================
+     MODÜL 4: KAPSAMLI ÜNİTE DEĞERLENDİRME VE ETKİNLİK MERKEZİ
+========================================================================== -->
+<section class="module-section" id="mod-evaluation">
+  <div class="eval-nav-bar">
+    <div class="eval-subtabs">
+      <button class="eval-tab-btn active" id="etab-fill" onclick="switchEvalTab('fill')">✍️ 1. Boşluk Doldurma (12)</button>
+      <button class="eval-tab-btn" id="etab-match" onclick="switchEvalTab('match')">🧩 2. Eşleştirme (12)</button>
+      <button class="eval-tab-btn" id="etab-classify" onclick="switchEvalTab('classify')">⚖️ 3. Sınıflandırma (11)</button>
+      <button class="eval-tab-btn" id="etab-tf" onclick="switchEvalTab('tf')">✔✖ 4. Doğru / Yanlış (12)</button>
+      <button class="eval-tab-btn" id="etab-quiz" onclick="switchEvalTab('quiz')">🏆 5. Online Denemeler (5×10)</button>
+    </div>
+    <div class="eval-score-pill" id="totalScoreBadge">🌟 Toplam Puan: 0</div>
+  </div>
+
+  <!-- 1. BOŞLUK DOLDURMA -->
+  <div class="exam-sheet" id="evalSection-fill">
+    <div class="exam-sheet-header">
+      <h2>✍️ 1. Etkinlik: Boşluk Doldurma (12 Kavram Sorusu)</h2>
+      <button class="exam-btn-secondary" onclick="resetFillBlanks()">↺ Sıfırla</button>
+    </div>
+    <div class="exam-hint-bar">
+      💡 Yukarıdaki kavramları <strong>fareyle veya parmağınla sürükleyip</strong> cümledeki <strong>……………</strong> boşluğuna bırak (ya da kavramı seçip boşluğa dokun). Ardından en alttan cevaplarını kontrol et!
+    </div>
+    <div class="word-bank" id="fillWordBank"></div>
+    <div id="fillQuestionsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <div class="exam-check-footer">
+      <button class="exam-check-btn" onclick="checkFillBlanks()">✅ Cevapları Kontrol Et</button>
+      <button class="exam-btn-secondary" onclick="resetFillBlanks()">↺ Tekrar Çöz</button>
+    </div>
+    <div class="exam-result-banner" id="fillResultBanner"></div>
+  </div>
+
+  <!-- 2. EŞLEŞTİRME -->
+  <div class="exam-sheet" id="evalSection-match" style="display:none;">
+    <div class="exam-sheet-header">
+      <h2>🧩 2. Etkinlik: Organel, Kısım ve Mikroskop Eşleştirme</h2>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="exam-btn-secondary active" id="msetBtn-1" onclick="loadMatchSet(0)">Set 1: Organeller (6)</button>
+        <button class="exam-btn-secondary" id="msetBtn-2" onclick="loadMatchSet(1)">Set 2: Temel Kısımlar & Mikroskop (6)</button>
+        <button class="exam-btn-secondary" onclick="loadMatchSet(currentMatchSet)">↺ Sıfırla</button>
+      </div>
+    </div>
+    <div class="exam-hint-bar">
+      💡 Sol sütundan bir kavramı seçip sağ sütundaki görevine tıkla ve eşleştir. Tüm eşleştirmelerini yaptıktan sonra alttaki butona bas!
+    </div>
+    <div class="match-columns">
+      <div id="matchLeftCol" style="display:flex; flex-direction:column; gap:9px;"></div>
+      <div id="matchRightCol" style="display:flex; flex-direction:column; gap:9px;"></div>
+    </div>
+    <div class="exam-check-footer">
+      <button class="exam-check-btn" onclick="checkMatchAnswers()">✅ Cevapları Kontrol Et</button>
+      <button class="exam-btn-secondary" onclick="loadMatchSet(currentMatchSet)">↺ Tekrar Eşleştir</button>
+    </div>
+    <div class="exam-result-banner" id="matchFeedbackBanner"></div>
+  </div>
+
+  <!-- 3. SINIFLANDIRMA -->
+  <div class="exam-sheet" id="evalSection-classify" style="display:none;">
+    <div class="exam-sheet-header">
+      <h2>⚖️ 3. Etkinlik: Bitki, Hayvan ve Ortak Yapıları Sınıflandırma (11 Yapı)</h2>
+      <button class="exam-btn-secondary" onclick="resetClassifyGame()">↺ Sıfırla</button>
+    </div>
+    <div class="exam-hint-bar">
+      💡 Her yapının hangi hücrede bulunduğunu işaretle, ardından en alttaki <strong>Cevapları Kontrol Et</strong> butonuyla dönütünü gör!
+    </div>
+    <div id="classifyList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <div class="exam-check-footer">
+      <button class="exam-check-btn" onclick="checkClassifyAnswers()">✅ Cevapları Kontrol Et</button>
+      <button class="exam-btn-secondary" onclick="resetClassifyGame()">↺ Tekrar Çöz</button>
+    </div>
+    <div class="exam-result-banner" id="classifyScoreText"></div>
+  </div>
+
+  <!-- 4. DOĞRU / YANLIŞ -->
+  <div class="exam-sheet" id="evalSection-tf" style="display:none;">
+    <div class="exam-sheet-header">
+      <h2>✔✖ 4. Etkinlik: Doğru / Yanlış Soruları (12 İfade)</h2>
+      <button class="exam-btn-secondary" onclick="resetTFGame()">↺ Sıfırla</button>
+    </div>
+    <div class="exam-hint-bar">
+      💡 Her ifadenin <strong>Doğru (D)</strong> ya da <strong>Yanlış (Y)</strong> olduğunu seç. Bitirdiğinde alttaki <strong>Cevapları Kontrol Et</strong> butonuyla yeşil tik / kırmızı çarpı ve açıklamalı dönütünü gör!
+    </div>
+    <div id="tfList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <div class="exam-check-footer">
+      <button class="exam-check-btn" onclick="checkTFGame()">✅ Cevapları Kontrol Et</button>
+      <button class="exam-btn-secondary" onclick="resetTFGame()">↺ Tekrar Çöz</button>
+    </div>
+    <div class="exam-result-banner" id="tfResultBanner"></div>
+  </div>
+
+  <!-- 5. ONLİNE DENEME SINAVI SİSTEMİ (5 DENEME × 10 SORU) -->
+  <div class="exam-sheet" id="evalSection-quiz" style="display:none;">
+    <!-- 5A. GİRİŞ VE DENEME SEÇİM EKRANI -->
+    <div id="examWelcomeView" style="display:flex; flex-direction:column; gap:18px;">
+      <div class="exam-sheet-header">
+        <h2>🏆 5. Bölüm: Online Ünite Deneme Sınavları (5 Deneme · Kolaydan Zora)</h2>
+        <span class="eval-score-pill" style="background:#eef2ff; color:#312e81; border-color:#c7d2fe;">50 Kazanım & Yeni Nesil Soru</span>
+      </div>
+
+      <div class="student-login-card">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+          <strong style="font-size:1rem; color:#1e293b;">🎓 Öğrenci Bilgileri (Sınav Karnesi İçin)</strong>
+          <span style="font-size:0.78rem; color:#64748b;">Bilgilerin tarayıcıda güvenle saklanır</span>
+        </div>
+        <div class="student-form-grid">
+          <div>
+            <label for="stuNameInput">Adı Soyadı *</label>
+            <input type="text" id="stuNameInput" placeholder="Örn: Elif Yılmaz" oninput="saveStudentData()">
+          </div>
+          <div>
+            <label for="stuClassInput">Sınıfı</label>
+            <input type="text" id="stuClassInput" placeholder="Örn: 5/A" oninput="saveStudentData()">
+          </div>
+          <div>
+            <label for="stuSchoolInput">Okulu</label>
+            <input type="text" id="stuSchoolInput" placeholder="Örn: Cumhuriyet Ortaokulu" oninput="saveStudentData()">
+          </div>
+        </div>
+      </div>
+
+      <div class="exam-hint-bar">
+        💡 Aşağıdaki denemeler <strong>kolaydan zora</strong> sıralanmıştır. Her deneme 10 sorudan oluşur; görselli, tablolu, tanısal ağaçlı ve 5. denemede <strong>beceri temelli (yeni nesil)</strong> gerçek olay soruları içerir!
+      </div>
+
+      <div class="exam-cards-grid" id="examCardsGrid"></div>
+    </div>
+
+    <!-- 5B. TEK SORULUK SINAV ÇÖZÜM EKRANI + KALEM + OPTİK KAĞIT -->
+    <div id="examRunnerView" class="exam-runner-shell" style="display:none;">
+      <div class="runner-topbar">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <button class="exam-btn-secondary" onclick="exitExamRunner()">← Denemelere Dön</button>
+          <strong id="runnerExamTitle" style="color:#0f172a; font-size:1rem;">Deneme 1</strong>
+          <span class="badge" style="background:#dbeafe; color:#1e40af; border-color:#93c5fd;" id="runnerStudentBadge">👤 Öğrenci</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span id="runnerTimer" style="font-weight:800; font-size:1rem; background:#f1f5f9; padding:5px 12px; border-radius:9px; border:1px solid #cbd5e1;">⏱️ 15:00</span>
+          <span id="runnerQCounter" style="font-weight:800; color:#2563eb;">Soru 1 / 10</span>
+        </div>
+      </div>
+
+      <div class="draw-toolbar">
+        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+          <button class="draw-tool-btn active" id="dt-cursor" onclick="setDrawTool('cursor')">👆 Seç</button>
+          <button class="draw-tool-btn" id="dt-red" onclick="setDrawTool('pen', '#ef4444')">🔴 Kırmızı</button>
+          <button class="draw-tool-btn" id="dt-blue" onclick="setDrawTool('pen', '#2563eb')">🔵 Mavi</button>
+          <button class="draw-tool-btn" id="dt-green" onclick="setDrawTool('pen', '#16a34a')">🟢 Yeşil</button>
+          <button class="draw-tool-btn" id="dt-eraser" onclick="setDrawTool('eraser')">🧽 Silgi</button>
+          <button class="draw-tool-btn" onclick="clearQuestionDrawing()">🗑️ Temizle</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button class="draw-tool-btn" onclick="changeExamZoom(-10)">🔍−</button>
+          <span id="examZoomVal" style="font-size:0.8rem; font-weight:800; color:#334155;">%100</span>
+          <button class="draw-tool-btn" onclick="changeExamZoom(10)">🔍+</button>
+        </div>
+      </div>
+
+      <div class="exam-workspace">
+        <!-- SOL: SORU SAHNESİ VE ÇİZİM TUVALİ -->
+        <div class="question-stage" id="questionStage">
+          <canvas id="evalDrawCanvas"></canvas>
+          <div id="questionContentArea" style="display:flex; flex-direction:column; gap:14px; position:relative; z-index:2;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="badge" id="qDifficultyTag" style="background:#eef2ff; color:#3730a3; border-color:#c7d2fe;">Konu</span>
+            </div>
+            <div id="qStemText" style="font-weight:700; color:#0f172a; line-height:1.58;"></div>
+            <div id="qMediaBox" style="display:none; justify-content:center; align-items:center; padding:6px 0;"></div>
+            <div class="runner-options-list" id="qOptionsList"></div>
+          </div>
+
+          <div class="runner-nav-footer" style="position:relative; z-index:3;">
+            <button class="exam-btn-secondary" id="prevQBtn" onclick="prevExamQuestion()">◀ Önceki Soru</button>
+            <button class="exam-check-btn" style="padding:10px 20px; font-size:0.9rem;" id="nextQBtn" onclick="nextExamQuestion()">Sonraki Soru ▶</button>
+          </div>
+        </div>
+
+        <!-- SAĞ: OPTİK CEVAP KAĞIDI -->
+        <aside class="optical-sidebar">
+          <div class="optical-header">
+            <strong>📝 Optik Cevap Kağıdı</strong>
+            <div style="font-size:0.78rem; color:#475569; margin-top:4px;">
+              Dolu: <strong id="optFilledCount" style="color:#16a34a;">0</strong> · Boş: <strong id="optBlankCount" style="color:#dc2626;">10</strong>
+            </div>
+          </div>
+          <div class="optical-grid" id="opticalGrid"></div>
+          <button class="exam-check-btn" style="width:100%; font-size:0.86rem; padding:11px; background:linear-gradient(135deg,#f59e0b,#ea580c);" onclick="confirmFinishExam()">
+            ⚠️ Sınavı Bitir ve Karneyi Gör
+          </button>
+        </aside>
+      </div>
+    </div>
+
+    <!-- 5C. SINAV BAŞARI KARNESİ -->
+    <div id="examKarneView" class="karne-panel" style="display:none;">
+      <div class="exam-sheet-header">
+        <div>
+          <h2 id="karneTitle">Deneme Başarı Karnesi</h2>
+          <p id="karneStudentInfo" style="font-size:0.86rem; color:#475569; margin-top:3px;"></p>
+        </div>
+        <button class="exam-btn-secondary" onclick="backToExamWelcome()">← Tüm Denemelere Dön</button>
+      </div>
+
+      <div class="karne-kpi-grid">
+        <div class="kpi-box ok"><span>DOĞRU</span><strong id="kpiCorrect">0</strong></div>
+        <div class="kpi-box err"><span>YANLIŞ</span><strong id="kpiWrong">0</strong></div>
+        <div class="kpi-box blank"><span>BOŞ</span><strong id="kpiBlank">0</strong></div>
+        <div class="kpi-box net"><span>NET</span><strong id="kpiNet">0</strong></div>
+        <div class="kpi-box score"><span>PUAN</span><strong id="kpiScore">0</strong></div>
+      </div>
+
+      <div class="karne-summary-row">
+        <div id="karneDonutChart" style="display:flex; align-items:center; justify-content:center;"></div>
+        <div class="karne-note-box">
+          <strong style="color:#1e40af; font-size:0.9rem;">👩‍🏫 Öğretmen Değerlendirmesi</strong>
+          <p id="karneTeacherNote" style="font-size:0.92rem; color:#1e293b; margin-top:5px; line-height:1.5;"></p>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-size:1rem; color:#1e293b; margin-bottom:10px;">🔍 Soru Bazlı İnceleme (Çözümü görmek için soruya tıkla)</h3>
+        <div class="karne-pills-grid" id="karneQuestionPills"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SINAV SORU İNCELEME POP-UP MODALI -->
+<div class="eval-modal-backdrop" id="examReviewModal" onclick="if(event.target.id==='examReviewModal') closeExamReviewModal()">
+  <div class="eval-review-card" onclick="event.stopPropagation()">
+    <div class="exam-sheet-header">
+      <h3 id="revModalTitle" style="font-size:1.08rem; color:#0f172a;">Soru İncelemesi</h3>
+      <button class="exam-btn-secondary" onclick="closeExamReviewModal()">✕ Kapat</button>
+    </div>
+    <div id="revModalQ" style="font-weight:700; color:#0f172a; font-size:0.95rem; line-height:1.55;"></div>
+    <div id="revModalMedia" style="display:none; justify-content:center; padding:6px 0;"></div>
+    <div id="revModalOpts" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <div id="revModalExp" style="background:#eff6ff; border-left:4px solid #2563eb; padding:11px 14px; border-radius:10px; color:#1e3a8a; font-size:0.88rem; line-height:1.5;"></div>
+  </div>
+</div>
+
+<!-- =========================================================================
+     AÇILABİLİR ORGANEL POP-UP MENÜSÜ (KLASÖR GÖRSELİ + 3B ETKİLEŞİMLİ MODEL)
+========================================================================== -->
+<div class="organelle-modal-backdrop" id="organelleModalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="organelle-popup-card" onclick="event.stopPropagation()">
+    <div class="popup-top-bar">
+      <div class="popup-title-wrap">
+        <span id="popupIcon" style="font-size:1.9rem;">⚡</span>
+        <div>
+          <h3 id="popupTitle">Mitokondri</h3>
+          <span class="badge" id="popupCategoryBadge">Organel · Enerji Merkezi</span>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="pill-btn" id="popupSpinBtn" onclick="togglePopupSpin()">▶️ 3B Modeli Döndür (Kapalı)</button>
+        <button class="popup-close-btn" onclick="closeOrganellePopup()" title="Kapat">✕</button>
+      </div>
+    </div>
+
+    <div class="popup-body">
+      <!-- Eş Zamanlı Büyük Görsel (/assets/fen-laboratuvari/gorseller/ klasöründen) + Canlı 3B Model -->
+      <div class="popup-dual-visual">
+        <div class="popup-visual-box">
+          <span class="popup-box-tag">🖼️ Organel Kesit Görseli</span>
+          <img id="popupFolderImg" src="/assets/fen-laboratuvari/gorseller/mitokondri.png" alt="Organel Görseli">
+        </div>
+        <div class="popup-visual-box">
+          <span class="popup-box-tag">🧊 360° 3B Etkileşimli Model (Sürükle & İncele)</span>
+          <div id="popup3DHolder" style="width:100%; height:100%; cursor:grab;"></div>
+        </div>
+      </div>
+
+      <!-- Kısa ve Öz Görev Açıklaması -->
+      <div class="popup-summary-box">
+        <h4>📌 Kısa ve Öz Görevi</h4>
+        <p id="popupShortTask"></p>
+      </div>
+
+      <div class="popup-meta-grid">
+        <div class="popup-meta-item">
+          <span> Bulunduğu Hücre Tipi</span>
+          <strong id="popupPresence">🌿 Bitki ve 🦁 Hayvan Hücresi (Ortak)</strong>
+        </div>
+        <div class="popup-meta-item">
+          <span>💡 Günlük Hayat Benzetmesi</span>
+          <strong id="popupAnalogy">⚡ Şehrin Elektrik / Enerji Santrali</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  </main>
+  <div id="kemalFooterMount"></div>
+  <script src="/js/site-data.js?v=20261029-smartboard"></script>
+  <script src="/js/site.js?v=20261030-icons"></script>
+</body>
+</html>

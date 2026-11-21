@@ -30,12 +30,20 @@
     lina: { speed:.55,bob:4,tilt:1,depth:.5,pulse:0 },
     hammerhead: { speed:.92,bob:2.5,tilt:.8,depth:.43,pulse:0 },
     axolotl: { speed:.33,bob:2.5,tilt:.7,depth:.76,pulse:0 },
+    catfish: { speed:.48,bob:2,tilt:.9,depth:.82,pulse:0 },
+    megalodon: { speed:.83,bob:2.4,tilt:.75,depth:.46,pulse:0 },
+    seal: { speed:.81,bob:5.5,tilt:1.8,depth:.38,pulse:0 },
+    penguin: { speed:1.12,bob:4.5,tilt:2,depth:.36,pulse:0 },
     spongebob: { speed:.3,bob:3,tilt:.65,depth:.62,pulse:0 },
     patrick: { speed:.27,bob:4,tilt:.8,depth:.64,pulse:0 },
-    mrkrabs: { speed:.24,bob:.6,tilt:.4,depth:.64,pulse:0 }
+    mrkrabs: { speed:.24,bob:.6,tilt:.4,depth:.64,pulse:0 },
+    plankton: { speed:.32,bob:2.1,tilt:.9,depth:.67,pulse:0 },
+    gary: { speed:.13,bob:.25,tilt:.2,depth:.98,pulse:0,floor:true },
+    squidward: { speed:.25,bob:2.6,tilt:.55,depth:.64,pulse:0 },
+    sandy: { speed:.42,bob:3.2,tilt:.85,depth:.59,pulse:0 }
   };
   const profile = id => profiles[id] || normal;
-  const characters=new Set(['spongebob','patrick','mrkrabs']);
+  const characters=new Set(['spongebob','patrick','mrkrabs','plankton','squidward','sandy']);
   function characterTravel(f,dt){
     if(!characters.has(f.species))return;
     // Each character has its own clock; modal/reflow and awards never reset it.
@@ -60,16 +68,28 @@
   // The body banks into a turn while labels and scores remain screen-facing.
   function turnPose(f) {
     // A crab side-steps in both directions; its whole front view stays intact.
-    if(f.species==='crab')return {yaw:0,round:0,fullness:0,bank:0,lift:0,scale:1,width:.2,height:.2};
+    if(f.species==='crab')return {yaw:0,round:0,fullness:0,bank:0,pitch:0,lift:0,scale:1,width:.2,height:.2};
     const angle=clamp(Number.isFinite(f.angle)?f.angle:0,0,180);
     const round=Math.max(0,Math.sin(angle*Math.PI/180));
     const sign=f.turn ? Math.sign(f.turn.to-f.turn.from)||1 : f.direction>0?1:-1;
-    const flat=['ray','shark','hammerhead','axolotl','dolphin','cleanershrimp','hermitcrab','eel','mantis','crab'].includes(f.species);
+    const flat=['ray','shark','hammerhead','axolotl','dolphin','cleanershrimp','hermitcrab','eel','mantis','crab','catfish','megalodon','penguin'].includes(f.species);
     const tall=['seahorse','angelfish','batfish','discus'].includes(f.species);
-    const fullness=clamp((round-.7)/.3,0,1);
-    return {yaw:angle,round:round<.0001?0:round,fullness,bank:round*sign*3.5,
-      lift:-round*2.5,scale:1+round*.035,
+    const edge=clamp((round-.66)/.34,0,1),fullness=edge*edge*(3-2*edge);
+    const arc=(f.turn?.arc??1)*round;
+    return {yaw:angle,round:round<.0001?0:round,fullness,bank:arc*sign*(flat?7:5),pitch:arc*-7,
+      lift:-arc*(flat?4.7:3.5),scale:1+arc*.065,
       width:flat?.20:tall?.24:.30,height:flat?.20:tall?.57:.43};
+  }
+  const gliders=new Set(['ray','dolphin','shark','hammerhead','megalodon','seal','swordfish','penguin','turtle']);
+  const slowSwimmers=new Set(['seahorse','jellyfish','octopus','cuttlefish','puffer','eel']);
+  function swimPose(f,phase,active,turningAmount=0){
+    if(!active)return {stroke:0,tilt:0};
+    const gliding=gliders.has(f.species),slow=slowSwimmers.has(f.species);
+    const beat=phase*(gliding?4.8:slow?5.6:7.2);
+    const stroke=Math.sin(beat)*(.86+.14*Math.sin(phase*1.8))+.14*Math.sin(beat*2-.65);
+    const pitch=clamp((f.verticalVelocity||0)*.30,-2.8,2.8)*(f.direction||1);
+    const tilt=Math.sin(phase*1.4)*(f.profile||normal).tilt+pitch;
+    return {stroke:stroke*(1+turningAmount*.25),tilt};
   }
   // Scale the score badge offset with the rendered fish size while keeping a
   // clear minimum for young, small fish.
@@ -87,12 +107,17 @@
     // a few pixels before growth and camera scaling were even applied.
     const magnification = Number.isFinite(displayScale) ? clamp(displayScale,1,2) : 1;
     const maxSize = Math.max(18, Math.min(172 * magnification, (cellW - 18) * magnification, width - 18, (height - 59) / .67));
-    const largest = Math.max(...items.map(s => s.size));
-    const scale = clamp(maxSize / largest, .12, magnification);
+    // Megalodons have their own size cap so adding one doesn't shrink the class.
+    const largest = Math.max(...items.filter(s=>s.species!=='megalodon').map(s=>s.size));
+    const referenceSize = Number.isFinite(largest) ? largest : 172;
+    const scale = clamp(maxSize / referenceSize, .12, magnification);
     const sorted = [...items].sort((a,b) => profile(a.species).depth - profile(b.species).depth);
     const result = new Map();
     sorted.forEach((s,i) => {
-      const size = s.size * scale, p = profile(s.species), row = Math.floor(i / columns);
+      const size = s.species === 'megalodon'
+        ? Math.min(s.size * scale, Math.max(18, Math.min(maxSize * 1.42, width - 18, (height - 59) / .67)))
+        : s.size * scale;
+      const p = profile(s.species), row = Math.floor(i / columns);
       let minY = Math.min(26, Math.max(0,height - size * .67 - 30));
       const maxY = Math.max(minY,height - size * .67 - 30);
       if (p.floor) minY = Math.max(minY, maxY - height * .08);
@@ -101,6 +126,7 @@
       let target = rowStart + (rowEnd-rowStart) * (.25 + (i % columns) / Math.max(1,columns-1) * .5);
       if (s.species === 'octopus' && items.filter(item=>item.species==='octopus').length <= columns) target = Math.max(target, minY + (maxY-minY) * .9);
       if (s.species === 'ray' && items.filter(item=>item.species==='ray').length <= columns) target = Math.max(target, minY + (maxY-minY) * .65);
+      if (s.species === 'catfish') target = Math.max(target, minY + (maxY-minY) * .7);
       result.set(s.id,{size,x:clamp((i%columns+.5)*cellW-size/2,0,Math.max(0,width-size)),y:target,minY,maxY,
         bandTop:minY,bandBottom:maxY,anchorY:target,profile:p,routeTime:0,targetX:null,targetY:null,
         waterDepth:initialDepth(s.id),depthTarget:initialDepth(s.id),depthTime:12+(i%7)*3});
@@ -153,40 +179,51 @@
       return [item.id,{size,eggSize,labelSize,labelWidth:Math.max(size,cellWidth-6),x,y}];
     }));
   }
-  // Only resting destinations avoid the pearl; swimming routes stay unrestricted.
-  function restLayout(items, width, height, pearl = null) {
-    const result=new Map();if(!items.length)return result;
-    const footprint=s=>Math.max(70,s.size),footHeight=s=>s.size*.67+55;
-    const columns=Math.max(1,Math.floor(width/(Math.max(60,...items.map(s=>footprint(s)))+18)));
-    const rows=Math.ceil(items.length/columns),rowGap=Math.min(70,height*.25/Math.max(1,rows));
-    const floor=s=>Math.max(s.minY,Math.min(s.maxY,height-footHeight(s)));
-    items.forEach((s,i)=>{
-      const count=Math.min(columns,items.length-Math.floor(i/columns)*columns);
-      result.set(s.id,{x:clamp((i%columns+.5)*width/count-s.size/2,0,Math.max(0,width-s.size)),
-        y:Math.max(s.minY,floor(s)-Math.floor(i/columns)*rowGap)});
-    });
-    if(!pearl || ![pearl.x,pearl.y,pearl.width,pearl.height].every(Number.isFinite) || pearl.width<=0 || pearl.height<=0)return result;
-    const padding=16,left=clamp(pearl.x-padding,0,width),right=clamp(pearl.x+pearl.width+padding,0,width);
-    const top=pearl.y-padding,bottom=pearl.y+pearl.height+padding;
-    const overlaps=s=>{const p=result.get(s.id),extra=(footprint(s)-s.size)/2;
-      return p.x-extra<right && p.x+s.size+extra>left && p.y+footHeight(s)>top && p.y<bottom;};
-    if(!items.some(overlaps))return result;
-    const widest=Math.max(...items.map(footprint));
-    const banks=[{x:0,width:left},{x:right,width:Math.max(0,width-right)}].map(b=>({...b,columns:Math.floor((b.width+18)/(widest+18))}));
-    const slots=[];
-    for(let column=0;column<Math.max(...banks.map(b=>b.columns));column++)banks.forEach(b=>{if(column<b.columns)slots.push({x:b.x+(column+.5)*b.width/b.columns});});
-    if(slots.length) {
-      const rows=Math.ceil(items.length/slots.length),gap=Math.min(70,height*.25/Math.max(1,rows));
-      items.forEach((s,i)=>result.set(s.id,{x:clamp(slots[i%slots.length].x-s.size/2,0,Math.max(0,width-s.size)),
-        y:Math.max(s.minY,floor(s)-Math.floor(i/slots.length)*gap)}));
-    } else {
-      // On a narrow screen a large fish can rest above the shell instead.
-      items.forEach(s=>{const p=result.get(s.id);if(overlaps(s))p.y=Math.max(s.minY,Math.min(p.y,top-footHeight(s)));});
+  // Pack the fish and their labels together. Stable, staggered positions avoid
+  // towers of fish when a large class rests around the pearl.
+  function restLayout(items, width, height, pearl = null, obstacles = []) {
+    const result=new Map(), occupied=[];
+    const shell=pearl?.width>0&&pearl?.height>0&&Number.isFinite(pearl.x)&&Number.isFinite(pearl.y)
+      ? {left:pearl.x-16,right:pearl.x+pearl.width+16,top:pearl.y-16,bottom:pearl.y+pearl.height+16} : null;
+    const reserved=obstacles.filter(r=>r.width>0&&r.height>0).map(r=>({left:r.x,right:r.x+r.width,top:r.y,bottom:r.y+r.height}));
+    if(shell)reserved.push(shell);
+    const overlap=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*
+      Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+    // Floor-bound animals get the space they need before the other swimmers.
+    const ordered=[...items].sort((a,b)=>b.minY-a.minY||b.size-a.size||a.id.localeCompare(b.id));
+    for(const item of ordered){
+      const {id,size,minY,maxY}=item,half=Math.max(86,size)/2+4,body=size*.67+55;
+      const floor=clamp(height-body,minY,maxY),seed=initialDepth(id);
+      const preferredX=items.length===1?width/2:width*(.06+.88*seed);
+      const preferredY=Math.max(minY,floor-(items.length===1?0:seed*15));
+      const inset=Math.min(half,width/2);
+      const minX=Math.max(0,inset-size/2),maxX=Math.max(minX,width-inset-size/2);
+      const steps=Math.max(1,Math.ceil((maxX-minX)/24));
+      const xs=Array.from({length:steps+1},(_,i)=>minX+i*(maxX-minX)/steps);
+      xs.push(clamp(preferredX-size/2,minX,maxX));
+      const ys=[preferredY,floor,minY];
+      for(let y=preferredY-16;y>minY;y-=16)ys.push(y);
+      if(shell){
+        xs.push(clamp(shell.left-half-size/2,minX,maxX),clamp(shell.right+half-size/2,minX,maxX));
+        ys.push(clamp(shell.top-body,minY,floor));
+      }
+      let best=null,bestCost=Infinity;
+      for(const y of ys)for(const x of xs){
+        const center=x+size/2;
+        const box={left:center-half,right:center+half,top:y-27,bottom:y+body};
+        const shellOverlap=reserved.reduce((sum,r)=>sum+overlap(box,r),0);
+        const cost=Math.abs(y-preferredY)*.65+Math.abs(center-preferredX)*.075+
+          (shellOverlap>0?1e6+shellOverlap:0);
+        if(cost>=bestCost)continue;
+        const total=occupied.reduce((sum,other)=>sum+overlap(box,other),cost);
+        if(total<bestCost){bestCost=total;best={x,y,box};}
+      }
+      occupied.push(best.box);result.set(id,{x:best.x,y:best.y});
     }
     return result;
   }
   function startTurn(f) {
-    if (!f.turn && f.turnCooldown <= 0) f.turn = {elapsed:0,duration:2.6,from:f.angle,to:f.direction>0?180:0};
+    if (!f.turn && f.turnCooldown <= 0) f.turn = {elapsed:0,duration:2.6,from:f.angle,to:f.direction>0?180:0,arc:gliders.has(f.species)?1.12:1};
   }
   // Seasonal decoration uses front/back render layers, never a vertical
   // collision wall. The fish keeps its own route when crossing either decor.
@@ -227,7 +264,7 @@
       const p=f.profile||normal;
       characterTravel(f,dt);
       const pulse=Math.pow((Math.sin(f.phase*3)+1)/2,3);
-      const strokeFactor=f.anatomicalMotion && f.species==='octopus'?.7+pulse*.6:1;
+      const strokeFactor=f.anatomicalMotion && f.species==='octopus'?.7+pulse*.6:gliders.has(f.species)?.92+pulse*.19:1;
       const speed=24*f.mood.speed*p.speed*f.cruise*strokeFactor*(f.characterWalking?1.35:1);
       const maxX=Math.max(0,width-f.size),edge=Math.min(25,maxX/4);
       if(f.anatomicalMotion && f.species==='jellyfish') {
@@ -292,7 +329,9 @@
       f.phase+=dt*.7*f.mood.speed*f.cruise;
       const wanted=clamp(f.characterFloor?f.maxY:(f.targetY??f.anchorY)+Math.sin(f.phase)*p.bob,f.minY,f.maxY);
       const character=characters.has(f.species),verticalSpeed=character?22:Math.max(2,speed*.45);
-      f.y+=clamp((wanted-f.y)*(character?.55:.22),-verticalSpeed,verticalSpeed)*dt;
+      const desiredY=clamp((wanted-f.y)*(character?.55:.22),-verticalSpeed,verticalSpeed);
+      f.verticalVelocity=(f.verticalVelocity||0)+(desiredY-(f.verticalVelocity||0))*Math.min(1,dt*3.5);
+      f.y+=f.verticalVelocity*dt;
       f.x=clamp(f.x,0,maxX);f.y=clamp(f.y,f.minY,f.maxY);
     });
   }
@@ -303,5 +342,5 @@
     const amount=!Number.isFinite(elapsed)||elapsed<0||elapsed>=5?0:elapsed<.28?smooth(elapsed/.28):elapsed<4.25?1:1-smooth((elapsed-4.25)/.75);
     return {amount,x:1+.28*amount,y:1+.8*amount};
   }
-  return {profile,layout,reflow,eggLayout,restLayout,step,perspective,turnPose,labelGap,labelAdjustment,puffPose};
+  return {profile,layout,reflow,eggLayout,restLayout,step,perspective,turnPose,swimPose,labelGap,labelAdjustment,puffPose};
 });

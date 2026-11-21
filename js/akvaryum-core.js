@@ -1,8 +1,8 @@
 (function (root, factory) {
   'use strict';
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./akvaryum-sounds.js'),require('./akvaryum-cosmetics.js'));
-  else root.AquariumCore = factory(root.AquariumSounds,root.AquariumCosmetics);
-})(typeof window === 'object' ? window : this, function (Sounds, Cosmetics) {
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('./akvaryum-sounds.js'),require('./akvaryum-cosmetics.js'),require('./akvaryum-newspaper.js'),require('./akvaryum-reef.js'));
+  else root.AquariumCore = factory(root.AquariumSounds,root.AquariumCosmetics,root.AquariumNewspaper,root.AquariumReef);
+})(typeof window === 'object' ? window : this, function (Sounds, Cosmetics, Newspaper, Reef) {
   'use strict';
   const SPECIES = [
     { id: 'clown', name: 'Palyaço balığı', file: 'palyaco-baligi.png', detail: 'Mercan resiflerinin turuncu sakini', size: 112 },
@@ -54,9 +54,17 @@
     { id: 'lina', name: 'Lina Balığı', file: 'lina-baligi.png', detail: 'Turuncu pulları ve ipek gibi peçeli kuyruğuyla', size: 145 },
     { id: 'hammerhead', name: 'Çekiç başlı köpekbalığı', file: 'cekic-basli-kopekbaligi.png', detail: 'Güçlü kuyruğuyla yüzer, ödülde zarifçe süzülür', size: 174 },
     { id: 'axolotl', name: 'Aksolotl', file: 'aksolotl.png', detail: 'Pembe solungaçları kıpırdar, ödülde el sallar', size: 145 },
+    { id: 'catfish', name: 'Yayın balığı', file: 'yayin-baligi.png', detail: 'Uzun bıyıklarıyla zemine yakın süzülür', size: 155 },
+    { id: 'megalodon', name: 'Megalodon', file: 'megalodon.png', detail: 'Geniş gövdesiyle güçlü ve sakin yüzer', size: 246 },
+    { id: 'seal', name: 'Fok', file: 'fok.png', detail: 'Yumuşak kavislerle suyun içinde süzülür', size: 161 },
+    { id: 'penguin', name: 'Penguen', file: 'penguen.png', detail: 'Yüzgeçleriyle çevikçe yüzer', size: 148 },
     { id: 'spongebob', name: 'SüngerBob', file: 'sungerbob.png', detail: 'Akvaryumun neşeli sünger dostu', size: 152, unlockAt: 100, category: 'character' },
     { id: 'patrick', name: 'Patrick', file: 'patrick.png', detail: 'Gülümseyen pembe denizyıldızı', size: 148, unlockAt: 100, category: 'character' },
-    { id: 'mrkrabs', name: 'Bay Yengeç', file: 'bay-yengec.png', detail: 'Kıskaçlarıyla neşeyle selam verir', size: 150, unlockAt: 100, category: 'character' }
+    { id: 'mrkrabs', name: 'Bay Yengeç', file: 'bay-yengec.png', detail: 'Kıskaçlarıyla neşeyle selam verir', size: 150, unlockAt: 100, category: 'character' },
+    { id: 'plankton', name: 'Plankton', file: 'plankton.svg', detail: 'Antenlerini oynatır, sevinince küçük bir zafer dansı yapar', size: 110, unlockAt: 100, category: 'character' },
+    { id: 'gary', name: 'Gary · Salyangoz', file: 'gary.svg', detail: 'Kabuklu dostumuz gözlerini uzatıp baloncuklarla selam verir', size: 136, unlockAt: 100, category: 'character' },
+    { id: 'squidward', name: 'Squidward', file: 'squidward.svg', detail: 'Kollarını ve ayaklarını oynatır, sevinince zarifçe dans eder', size: 152, unlockAt: 100, category: 'character' },
+    { id: 'sandy', name: 'Sandy', file: 'sandy.svg', detail: 'Kasklı sincap dostumuz sevinince zıplar ve el sallar', size: 154, unlockAt: 100, category: 'character' }
   ];
   const THEMES = [
     { id: 'reef', name: 'Mercan resifi', file: 'mercan-resifi.jpg', description: 'Güneşli, turkuaz bir dünya' },
@@ -77,20 +85,21 @@
   const validScore = value => typeof value==='number' && validPoints(Math.abs(value));
   const taskPoints = task => task.points === undefined ? 1 : task.points;
   const MAX_BEHAVIORS = 100;
+  const SPECIES_CATALOG_VERSION = 4;
   const MAX_DAILY_TASKS = 2000;
   function newClass(name = 'Sınıfım') {
     return { id: uid(), name: clean(name), theme: 'reef', seasonStartedOn: dayKey(), seasons: [], customization:Cosmetics.config(), students: [], tasks: ['Kitabımı okudum', 'Ödevimi tamamladım', 'Sorumluluğumu yerine getirdim'].map(title => ({ id: uid(), title, icon: '', points: 1 })) };
   }
   function newStudent(name, kind = 'clown') {
     const chosen=species(kind).unlockAt ? 'clown' : species(kind).id;
-    return { id: uid(), name: clean(name), species: chosen, speciesCatalogVersion:2, characterUnlocked:false, cosmetics:Cosmetics.normalize(null,chosen), createdAt: Date.now(), days: {}, feeds: [] };
+    return { id: uid(), name: clean(name), species: chosen, speciesCatalogVersion:SPECIES_CATALOG_VERSION, characterUnlocked:false, cosmetics:Cosmetics.normalize(null,chosen), createdAt: Date.now(), days: {}, feeds: [] };
   }
   function charactersUnlocked(student){return !!student && (student.characterUnlocked===true || earned(student)>=100);}
   function unlockCharacters(student){if(charactersUnlocked(student))student.characterUnlocked=true;}
   function canSelectSpecies(student,id){const kind=SPECIES.find(s=>s.id===id);return !!kind&&(!kind.unlockAt||charactersUnlocked(student));}
   function selectSpecies(student,id){
     if(!student||!canSelectSpecies(student,id))return false;
-    unlockCharacters(student);student.species=id;student.speciesCatalogVersion=2;student.cosmetics=Cosmetics.normalize(student.cosmetics,id);return true;
+    unlockCharacters(student);student.species=id;student.speciesCatalogVersion=SPECIES_CATALOG_VERSION;student.cosmetics=Cosmetics.normalize(student.cosmetics,id);return true;
   }
   function validBirthday(value) {
     return !!(value && Number.isInteger(value.month) && value.month>=1 && value.month<=12 &&
@@ -215,7 +224,8 @@
     const choice = behaviorChoices(student, classroom, date).find(t => t.id === taskId);
     if (!choice || !validScore(choice.points)) return null;
     unlockCharacters(student);
-    const wasComplete=goalProgress(classroom)?.complete===true;
+    const progressBefore=goalProgress(classroom);
+    const wasComplete=progressBefore?.complete===true,reefBefore=progressBefore?.points||0;
     const original = day.tasks.find(t => t.id === taskId) || day.tasks.find(t=>t.sourceId===taskId&&t.status!=='done');
     if (choice.points<0) {
       const points=-Math.min(earned(student),Math.abs(choice.points));
@@ -228,12 +238,12 @@
       const result=completeAndFeed(student,date,original.id);
       // The template is a choice; an actual reward needs its own identity even
       // on the first use, so concurrent devices never edit the same award.
-      if(result){original.id=uid();original.sourceId=taskId;original.awardedAt=Date.now();unlockCustomization(classroom,wasComplete);unlockCharacters(student);}
+      if(result){original.id=uid();original.sourceId=taskId;original.awardedAt=Date.now();unlockCustomization(classroom,wasComplete);updateReefCollection(classroom,reefBefore);unlockCharacters(student);}
       return result;
     }
     const entry = {id:uid(), sourceId:taskId, title:choice.title, icon:taskIcon(choice.icon), points:choice.points, status:'done', awardedAt:Date.now()};
     day.tasks.push(entry);
-    unlockCustomization(classroom,wasComplete);
+    unlockCustomization(classroom,wasComplete);updateReefCollection(classroom,reefBefore);
     unlockCharacters(student);
     return {points:entry.points, fed:feed(student, date)};
   }
@@ -277,8 +287,33 @@
   function goalProgress(classroom) {
     const goal = classroom.goal;
     if (!goal) return null;
-    const points = classroom.students.reduce((sum,s) => sum + Math.max(0,earned(s)-(Object.hasOwn(goal.baseline,s.id) ? goal.baseline[s.id] : 0)),0);
-    return {points, target:goal.target, percent:Math.min(100,Math.floor(points/goal.target*100)), complete:points>=goal.target};
+    const offset=goal.reefId?(goal.reefOffset||0):0;
+    const points = goal.reefId&&!goal.enabled ? offset : offset+classroom.students.reduce((sum,s) => sum + Math.max(0,earned(s)-(Object.hasOwn(goal.baseline,s.id) ? goal.baseline[s.id] : 0)),0);
+    return {points,target:goal.target,percent:Math.min(100,Math.floor(points/goal.target*100)),complete:points>=goal.target};
+  }
+  function startReefGoal(classroom,title,thresholds,options={}) {
+    if(!clean(title,120)||!Reef.validThresholds(thresholds))return false;
+    const prior=classroom.reefCollection,active=Reef.linked(classroom),current=active?(goalProgress(classroom)?.points||0):0;
+    if(prior)for(let i=0;i<4;i++){
+      if(prior.earned[Reef.PARTS[i].id]&&thresholds[i]!==prior.thresholds[i])return false;
+      if(!prior.earned[Reef.PARTS[i].id]&&thresholds[i]!==prior.thresholds[i]&&thresholds[i]<=current)return false;
+    }
+    const collection={version:1,id:prior?.id||uid(),thresholds:[...thresholds],earned:prior?{...prior.earned}:{},visible:options.visible!==false,side:options.side==='right'?'right':'left',size:options.size==='small'?'small':'medium'};
+    const enabled=options.enabled!==false,wasEnabled=active&&classroom.goal.enabled;
+    if(!active)startGoal(classroom,title,thresholds[3]);else Object.assign(classroom.goal,{title:clean(title,120),target:thresholds[3]});
+    classroom.reefCollection=collection;
+    classroom.goal.reefId=collection.id;
+    classroom.goal.enabled=enabled;
+    if(!active||enabled!==wasEnabled){
+      const checkpoint=thresholds[Reef.stage(prior)-1]||0;
+      classroom.goal.reefOffset=Math.min(1000000,active?current:checkpoint);
+      classroom.goal.baseline=Object.fromEntries(classroom.students.map(s=>[s.id,earned(s)]));
+    }
+    return true;
+  }
+  function updateReefCollection(classroom,previousPoints,now=Date.now()) {
+    const p=goalProgress(classroom);if(!p||p.points<=previousPoints)return [];
+    return Reef.award(classroom,p.points,{now,on:dayKey(new Date(now))});
   }
   function unlockCustomization(classroom,wasComplete) {
     if(!wasComplete && classroom.goal?.enabled && goalProgress(classroom)?.complete)classroom.customization={...Cosmetics.config(classroom.customization),collectionUnlocked:true};
@@ -299,9 +334,11 @@
     }
     const season = { id: uid(), label: 'Sezon ' + ((classroom.seasons || []).length + 1), startedOn: classroom.seasonStartedOn || date, endedOn: date, students, awards };
     // Construct the archive first; only clear active score history after it is complete.
+    const reefCarry=Reef.linked(classroom)?Math.min(1000000,goalProgress(classroom).points):null;
     classroom.seasons = [...(classroom.seasons || []), season];
     classroom.seasonStartedOn = date;
     classroom.students.forEach(student => { unlockCharacters(student);student.days = {}; student.feeds = []; student.createdAt = now; });
+    if(reefCarry!==null){classroom.goal.reefOffset=reefCarry;classroom.goal.baseline=Object.fromEntries(classroom.students.map(s=>[s.id,0]));}
     return season;
   }
   function validateGoal(raw) {
@@ -313,7 +350,9 @@
       if(!/^[\w-]{1,90}$/.test(id) || ['__proto__','constructor','prototype'].includes(id) || !Number.isSafeInteger(points) || points<0 || points>80000000) throw new Error('Ortak hedef başlangıç puanı geçersiz.');
       baseline[id]=points;
     }
-    return {title:clean(raw.title,120),target:raw.target,enabled:raw.enabled,startedOn:raw.startedOn,baseline};
+    const goal={title:clean(raw.title,120),target:raw.target,enabled:raw.enabled,startedOn:raw.startedOn,baseline};
+    if(raw.reefId!==undefined){if(typeof raw.reefId!=='string'||!/^[-\w]{1,90}$/.test(raw.reefId)||!Number.isInteger(raw.reefOffset)||raw.reefOffset<0||raw.reefOffset>1000000)throw Error('Resif hedefi başlangıç kaydı geçersiz.');goal.reefId=raw.reefId;goal.reefOffset=raw.reefOffset;}
+    return goal;
   }
   function hungerDays(student, now = Date.now()) {
     const latest = student.feeds.reduce((at, f) => Math.max(at, f.at), 0);
@@ -349,11 +388,12 @@
         if (!validScore(taskPoints(t))) throw new Error('Davranış puanı büyüklüğü 1–1000 arasında tam sayı olmalıdır.');
         return { id: identifier(t.id), title: clean(t.title, 120), icon: taskIcon(t.icon), points: taskPoints(t) };
       }), students: [] };
+      if(validAgendaStudentId(c.agendaClassId))cls.agendaClassId=c.agendaClassId;
       cls.students = c.students.map(s => {
         if (!s || !clean(s.name) || !s.days || typeof s.days !== 'object' || Array.isArray(s.days) || Object.keys(s.days).length > 4000 || !Array.isArray(s.feeds) || s.feeds.length > 80000) throw new Error('Öğrenci kaydı geçersiz.');
         const student = { id: identifier(s.id), name: clean(s.name), species: species(s.species).id, cosmetics:Cosmetics.normalize(s.cosmetics,s.species), days: {}, feeds: [] };
-        if(s.speciesCatalogVersion===2)student.speciesCatalogVersion=2;
-        if(validAgendaStudentId(s.agendaStudentId))student.agendaStudentId=s.agendaStudentId;
+        if([2,3,SPECIES_CATALOG_VERSION].includes(s.speciesCatalogVersion))student.speciesCatalogVersion=s.speciesCatalogVersion;
+        if(s.agendaStudentId===null || validAgendaStudentId(s.agendaStudentId))student.agendaStudentId=s.agendaStudentId;
         if(s.birthday != null) {
           if(!validBirthday(s.birthday)) throw new Error('Doğum günü için geçerli bir gün ve ay girin.');
           student.birthday={day:s.birthday.day,month:s.birthday.month};
@@ -411,9 +451,12 @@
       if(c.teacher !== undefined) {
         if (!c.teacher || !clean(c.teacher.name) || typeof c.teacher.enabled !== 'boolean') throw new Error('Öğretmen balığı kaydı geçersiz.');
         cls.teacher = {name:clean(c.teacher.name), species:species(c.teacher.species).id, enabled:c.teacher.enabled};
-        if(c.teacher.speciesCatalogVersion===2)cls.teacher.speciesCatalogVersion=2;
+        if([2,3,SPECIES_CATALOG_VERSION].includes(c.teacher.speciesCatalogVersion))cls.teacher.speciesCatalogVersion=c.teacher.speciesCatalogVersion;
       }
       if(c.goal !== undefined) cls.goal = validateGoal(c.goal);
+      if(c.reefCollection!==undefined)cls.reefCollection=Reef.validate(c.reefCollection);
+      if(cls.goal?.reefId&&cls.reefCollection?.id!==cls.goal.reefId)throw Error('Resif koleksiyonu ve hedefi eşleşmiyor.');
+      if(c.newspaper!==undefined)cls.newspaper=Newspaper.validate(c.newspaper,cls.students.map(s=>s.id));
       cls.customization=Cosmetics.config(c.customization);
       return cls;
     });
@@ -431,5 +474,5 @@
     return {id: pool[Math.floor(value * pool.length)].id, reset: !remaining.length,
       eligible: eligible.length, remaining: pool.length - 1};
   }
-  return { charactersUnlocked, unlockCharacters, canSelectSpecies, selectSpecies, visibleCosmetics:Cosmetics.effective, cosmetics:Cosmetics.normalize, customization:Cosmetics.config, unlockCustomization, dailyChampions, MAX_BEHAVIORS, MAX_DAILY_TASKS, waterSettings, pickStudent, validBirthday, isBirthday, validAgendaStudentId, removeClass, TASK_ICON_GROUPS, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
+  return { reef:Reef, startReefGoal, updateReefCollection, charactersUnlocked, unlockCharacters, canSelectSpecies, selectSpecies, visibleCosmetics:Cosmetics.effective, cosmetics:Cosmetics.normalize, customization:Cosmetics.config, unlockCustomization, dailyChampions, MAX_BEHAVIORS, MAX_DAILY_TASKS, SPECIES_CATALOG_VERSION, waterSettings, pickStudent, validBirthday, isBirthday, validAgendaStudentId, removeClass, TASK_ICON_GROUPS, TASK_ICONS, taskIcon, updateTask, behaviorChoices, awardBehavior, correctAward, growth, defaultThresholds, validThresholds, SPECIES, THEMES, uid, dayKey, clean, species, newClass, newStudent, initialState, ensureDay, earned, balance, setTask, feed, mood, validate, settingsOf, validScore, validPoints, taskPoints, completedCount, updateTaskPoints, completeAndFeed, hungerDays, rewardGroup, startGoal, goalProgress, validGoalTarget, startNewSeason };
 });

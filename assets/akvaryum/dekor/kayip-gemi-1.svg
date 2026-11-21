@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 430" role="img"><title>Kayıp Gemi · 1. aşama</title><defs>
+<linearGradient id="wood" x2=".2" y2="1"><stop stop-color="#c5a069"/><stop offset=".42" stop-color="#815533"/><stop offset="1" stop-color="#3a3030"/></linearGradient>
+<linearGradient id="edge" x2="0" y2="1"><stop stop-color="#e3bf86"/><stop offset="1" stop-color="#8c6242"/></linearGradient>
+<linearGradient id="hull" x2=".15" y2="1"><stop stop-color="#a87c50"/><stop offset=".6" stop-color="#604b3c"/><stop offset="1" stop-color="#313c3b"/></linearGradient>
+<linearGradient id="metal" x2="1" y2="1"><stop stop-color="#93b9ad"/><stop offset=".48" stop-color="#405b57"/><stop offset="1" stop-color="#b6c8a7"/></linearGradient>
+<radialGradient id="glass"><stop stop-color="#56b3b3"/><stop offset="1" stop-color="#0e3f4a"/></radialGradient>
+<linearGradient id="sail" x2="1" y2="1"><stop stop-color="#e0d8b7"/><stop offset=".7" stop-color="#9bab98"/><stop offset="1" stop-color="#547c78"/></linearGradient>
+<radialGradient id="sand"><stop stop-color="#284b45" stop-opacity=".5"/><stop offset="1" stop-color="#173f41" stop-opacity="0"/></radialGradient>
+<pattern id="grain" width="48" height="14" patternUnits="userSpaceOnUse"><path d="M0 4Q13 0 27 5T52 4M5 11q14-4 33 0" fill="none" stroke="#ead0a0" stroke-opacity=".12" stroke-width="1"/></pattern>
+</defs><ellipse cx="407" cy="396" rx="350" ry="35" fill="url(#sand)"/>
+<path d="M102 330Q344 400 693 314L665 352Q377 425 139 366Z" fill="#35413a"/>
+<path d="M104 327Q347 389 695 311L684 329Q373 408 126 349Z" fill="url(#edge)"/>
+<path d="M133 346Q377 401 677 330" fill="none" stroke="#d0aa6e" stroke-opacity=".5" stroke-width="3"/>
+<path d="M143 255q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M143 253q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M211 268q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M211 266q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M287 274q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M287 272q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M368 274q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M368 272q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M449 267q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M449 265q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M531 254q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M531 252q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M602 236q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="#382f29" stroke-width="15"/><path d="M602 234q-9 46 20 85l30-6q-22-35-19-78" fill="none" stroke="url(#edge)" stroke-width="9"/><path d="M109 306L89 275l31 6 30 45M654 303l40-71 19-4-25 86" fill="url(#wood)" stroke="#b69c69" stroke-width="3"/>
+<path d="M116 291l538-24M140 320l539-27" stroke="#6f5840" stroke-width="7"/>
+<path d="M166 378l68 7 46-16-19-7-90 8Z" fill="#8d744c"/>
+</svg>

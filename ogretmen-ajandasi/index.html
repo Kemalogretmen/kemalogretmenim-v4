@@ -2654,7 +2654,11 @@
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
 <link rel="stylesheet" href="analiz.css">
 <link rel="stylesheet" href="ajanda-gorunum.css">
-<link rel="stylesheet" href="ajanda-tema.css">
+<link rel="stylesheet" href="ajanda-tema.css?v=20261111">
+<link rel="stylesheet" href="ajanda-masa.css?v=3">
+<link rel="stylesheet" href="haftalik-plan.css?v=20261111">
+  <link rel="stylesheet" href="/css/site-release-notes.css?v=20261119">
+  <script defer src="/js/site-release-notes.js?v=20261119" data-release-section="agenda"></script>
 </head>
 <body>
   <div class="app">
@@ -2668,13 +2672,15 @@
       </div>
 
       <nav class="nav" aria-label="Ana menü">
-        <button class="active" data-view="dashboardView">🏠 Panel</button>
-        <button data-view="studentsView">👧 Öğrenciler</button>
-        <button data-view="examsView">📊 Sınavlar</button>
-        <button data-view="scheduleView">🗓️ Ders Programı</button>
-        <button data-view="calendarView">📅 Akademik Takvim</button>
-        <button data-view="reportsView">🎒 Karneler</button>
-        <button data-view="backupView">💾 Yedek</button>
+        <button class="active" data-view="dashboardView" aria-current="page"><span data-ui-icon="home" aria-hidden="true"></span>Bugün</button>
+        <button data-view="trackingView"><span data-ui-icon="clipboard" aria-hidden="true"></span>Sınıf Takibi</button>
+        <button data-view="studentsView"><span data-ui-icon="users" aria-hidden="true"></span>Öğrenciler</button>
+        <button data-view="scheduleView"><span data-ui-icon="grid" aria-hidden="true"></span>Ders Programı</button>
+        <button data-view="weeklyPlanView"><span data-ui-icon="clipboard" aria-hidden="true"></span>Haftalık Plan</button>
+        <button data-view="calendarView"><span data-ui-icon="calendar" aria-hidden="true"></span>Akademik Takvim</button>
+        <button data-view="examsView"><span data-ui-icon="chart" aria-hidden="true"></span>Sınavlar</button>
+        <button data-view="reportsView"><span data-ui-icon="file" aria-hidden="true"></span>Karneler</button>
+        <button data-view="backupView"><span data-ui-icon="download" aria-hidden="true"></span>Yedek</button>
         <a class="agenda-panel-link" href="/ogretmen-paneli.html">Öğretmen Paneline Dön</a>
       </nav>
 
@@ -2696,8 +2702,8 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <h2 id="pageTitle">Panel</h2>
-          <p id="pageSubtitle">Sınıfınızı, öğrencilerinizi ve deneme analizlerinizi tek yerden izleyin.</p>
+          <h2 id="pageTitle">Bugün</h2>
+          <p id="pageSubtitle"></p>
           <small id="agendaSaveStatus" role="status">Cihazda kayıt</small>
         </div>
         <div class="top-clock" aria-live="polite">
@@ -2717,99 +2723,66 @@
       </div>
 
       <section id="dashboardView" class="content-view active">
-        <div class="dashboard-hero">
-          <div class="hero-content">
-            <span class="agenda-hero-eyebrow">Öğretmen çalışma alanı</span>
-            <div class="hero-profile">
-              <div id="heroTeacherPhoto" class="hero-profile-photo">KÖ</div>
-              <div>
-                <span class="badge gold" id="heroClassBadge">Ajanda Paneli</span>
-                <h3 id="heroGreeting">Öğretmen ajandanız hazır.</h3>
-              </div>
-            </div>
-            <p id="heroSummary">Sınıf listesi, sınav analizleri, veli görüşmeleri ve öğrenci karneleri tek düzenli çalışma alanında.</p>
-            <div class="hero-today-line" id="heroTodayLine">Bugünün çalışma özeti hazırlanıyor.</div>
-            <div class="hero-actions">
-              <button class="primary-btn" data-jump="examsView">Sınav / Excel Ekle</button>
-              <button class="ghost-btn" data-jump="calendarView">Günü Planla</button>
+        <div class="agenda-welcome">
+          <div class="agenda-welcome-copy">
+            <div id="heroTeacherPhoto" class="hero-profile-photo" aria-hidden="true">KÖ</div>
+            <div>
+              <p id="heroTodayLine"></p>
+              <h3 id="heroGreeting">Öğretmen Ajandası</h3>
+              <p id="heroClassBadge"></p>
             </div>
           </div>
-          <aside class="hero-focus" aria-label="Günün odağı">
-            <span>Günün odağı</span>
-            <strong id="dashboardFocusTitle">Ajandanız hazırlanıyor</strong>
-            <p id="dashboardFocusText">Takvim, sınav ve öğrenci kayıtları birlikte değerlendiriliyor.</p>
-          </aside>
+          <div class="actions">
+            <button class="ghost-btn" type="button" data-open-task><span data-ui-icon="pen" aria-hidden="true"></span>Görev ekle</button>
+            <button class="primary-btn" type="button" data-open-tracking="attendance"><span data-ui-icon="clipboard" aria-hidden="true"></span>Yoklama al</button>
+          </div>
         </div>
 
-        <div class="dashboard-command-grid" aria-label="Hızlı işlemler">
-          <button class="dashboard-command" data-jump="studentsView">
-            <span class="dashboard-command-icon">👥</span>
-            <span><strong>Öğrenci Yönetimi</strong><small>Profil, veli ve takip notları</small></span>
-          </button>
-          <button class="dashboard-command" data-jump="examsView">
-            <span class="dashboard-command-icon">📊</span>
-            <span><strong>Sınav Ekle</strong><small>Excel yükle veya elle gir</small></span>
-          </button>
-          <button class="dashboard-command" data-jump="scheduleView">
-            <span class="dashboard-command-icon">🗓️</span>
-            <span><strong>Ders Programı</strong><small>Haftalık planı düzenle</small></span>
-          </button>
-          <button class="dashboard-command" data-jump="calendarView">
-            <span class="dashboard-command-icon">🔔</span>
-            <span><strong>Takvim ve Hatırlatıcı</strong><small>Görüşme, sınav ve özel günler</small></span>
-          </button>
-          <button class="dashboard-command" data-jump="reportsView">
-            <span class="dashboard-command-icon">📄</span>
-            <span><strong>Rapor Merkezi</strong><small>Karne, liste ve görüşme raporu</small></span>
-          </button>
-        </div>
-
-        <div class="grid three" id="statsGrid" style="margin-top:16px"></div>
-
-        <div class="dashboard-overview-grid">
-          <section class="panel dashboard-overview-panel">
+        <div class="agenda-desk">
+          <section class="agenda-desk-pane">
             <div class="dashboard-panel-head">
               <div><h3>Bugünün Ajandası</h3><span id="dashboardTodayLabel">Bugün</span></div>
               <button class="ghost-btn" data-jump="calendarView">Takvim</button>
             </div>
+            <div class="agenda-week-strip" id="dashboardWeek" aria-label="Bu hafta"></div>
             <div id="dashboardTodayAgenda" class="dashboard-brief-list"></div>
-          </section>
-
-          <section class="panel dashboard-overview-panel">
-            <div class="dashboard-panel-head">
-              <div><h3>Yaklaşanlar</h3><span>Önümüzdeki 7 gün</span></div>
-              <button class="ghost-btn" data-jump="calendarView">Planla</button>
-            </div>
+            <div class="agenda-desk-subhead"><h4>Yaklaşanlar</h4><span>Önümüzdeki 7 gün</span></div>
             <div id="dashboardUpcoming" class="dashboard-brief-list"></div>
           </section>
 
-          <section class="panel dashboard-overview-panel">
+          <section class="agenda-desk-pane">
+            <div class="dashboard-panel-head">
+              <div><h3>Görevler</h3><span id="dashboardTaskCount"></span></div>
+              <button class="ghost-btn" type="button" data-open-tracking="tasks">Tümü</button>
+            </div>
+            <div id="dashboardTasks" class="agenda-task-list"></div>
+            <div class="agenda-desk-subhead"><h4>Bugünün Yoklaması</h4></div>
+            <p class="agenda-attendance-brief" id="dashboardAttendance"></p>
+          </section>
+        </div>
+
+        <div class="agenda-shortcuts" aria-label="Hızlı işlemler">
+          <button class="ghost-btn" data-jump="studentsView"><span data-ui-icon="users" aria-hidden="true"></span>Öğrenciler</button>
+          <button class="ghost-btn" type="button" data-today-lessons><span data-ui-icon="grid" aria-hidden="true"></span>Bugünün dersleri</button>
+          <button class="ghost-btn" data-jump="examsView"><span data-ui-icon="chart" aria-hidden="true"></span>Sınav ekle</button>
+          <button class="ghost-btn" data-jump="reportsView"><span data-ui-icon="file" aria-hidden="true"></span>Karneler</button>
+        </div>
+        <div class="grid three" id="statsGrid"></div>
+        <div class="grid two agenda-desk-secondary">
+          <section class="agenda-desk-pane">
             <div class="dashboard-panel-head">
               <div><h3>Takip Merkezi</h3><span>Eksik ve bekleyen işler</span></div>
               <button class="ghost-btn" data-jump="studentsView">İncele</button>
             </div>
             <div id="dashboardAttention" class="dashboard-brief-list"></div>
           </section>
-        </div>
-
-        <div class="grid two" style="margin-top:16px">
-          <div class="panel">
+          <section class="agenda-desk-pane">
             <div class="dashboard-panel-head">
               <div><h3>Son Akademik İzlenimler</h3><span>En yeni sınavlar</span></div>
               <button class="ghost-btn" data-jump="reportsView">Raporlar</button>
             </div>
             <div id="recentAcademic"></div>
-          </div>
-
-          <div class="panel">
-            <div class="dashboard-panel-head">
-              <div><h3>Ajanda Hazırlık Durumu</h3><span id="dashboardReadinessValue">%0</span></div>
-              <button class="ghost-btn" data-jump="backupView">Yedek</button>
-            </div>
-            <p id="dashboardReadinessText">Ajanda bilgileri kontrol ediliyor.</p>
-            <div class="readiness-meter" aria-hidden="true"><span id="dashboardReadinessBar" style="width:0%"></span></div>
-            <p>Öğretmen, sınıf ve öğrenci bilgileri tamamlandıkça raporlar daha kapsamlı hale gelir.</p>
-          </div>
+          </section>
         </div>
 
         <details class="dashboard-settings">
@@ -3061,6 +3034,116 @@
         </div>
       </section>
 
+      <section id="weeklyPlanView" class="content-view">
+        <div class="weekly-plan-toolbar panel">
+          <div class="weekly-plan-week-nav">
+            <button class="icon-btn" id="weeklyPlanPrevBtn" type="button" aria-label="Önceki hafta" title="Önceki hafta">‹</button>
+            <div>
+              <span class="weekly-plan-eyebrow">Planlanan hafta</span>
+              <strong id="weeklyPlanWeekTitle">Hafta yükleniyor</strong>
+            </div>
+            <button class="icon-btn" id="weeklyPlanNextBtn" type="button" aria-label="Sonraki hafta" title="Sonraki hafta">›</button>
+            <input id="weeklyPlanWeekInput" type="date" aria-label="Haftalık plan tarihi">
+            <button class="ghost-btn" id="weeklyPlanTodayBtn" type="button">Bu Hafta</button>
+          </div>
+          <div class="weekly-plan-toolbar-actions">
+            <label class="weekly-plan-period-control" for="weeklyPlanPeriodCount">Ders sayısı
+              <select id="weeklyPlanPeriodCount">
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8" selected>8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+              </select>
+            </label>
+            <button class="ghost-btn" id="weeklyPlanUseRepeatBtn" type="button">Önceki Düzeni Kullan</button>
+            <button class="primary-btn" id="weeklyPlanSaveBtn" type="button">Planı Kaydet</button>
+          </div>
+          <p id="weeklyPlanStatus" class="weekly-plan-status" role="status"></p>
+        </div>
+
+        <div class="weekly-plan-view-tabs" role="tablist" aria-label="Haftalık plan çalışma alanı">
+          <button id="weeklyPlanEditTab" type="button" role="tab" data-weekly-plan-tab="edit" aria-controls="weeklyPlanEditPane" aria-selected="true" tabindex="0">
+            <span>Planı Düzenle</span>
+            <small>Dersleri ve haftalık notları girin</small>
+          </button>
+          <button id="weeklyPlanPreviewTab" type="button" role="tab" data-weekly-plan-tab="preview" aria-controls="weeklyPlanPreviewPane" aria-selected="false" tabindex="-1">
+            <span>Veli Önizleme</span>
+            <small>Paylaşılacak A4 planını inceleyin</small>
+          </button>
+        </div>
+
+        <div id="weeklyPlanEditPane" class="weekly-plan-pane" role="tabpanel" aria-labelledby="weeklyPlanEditTab">
+          <div class="weekly-plan-day-tabs" id="weeklyPlanDayTabs" role="group" aria-label="Düzenlenecek gün">
+            <button type="button" data-weekly-focus="all" aria-pressed="true">Tüm Hafta</button>
+            <button type="button" data-weekly-focus="1" aria-pressed="false">Pazartesi</button>
+            <button type="button" data-weekly-focus="2" aria-pressed="false">Salı</button>
+            <button type="button" data-weekly-focus="3" aria-pressed="false">Çarşamba</button>
+            <button type="button" data-weekly-focus="4" aria-pressed="false">Perşembe</button>
+            <button type="button" data-weekly-focus="5" aria-pressed="false">Cuma</button>
+          </div>
+
+          <div class="weekly-plan-editor-shell panel">
+            <div class="weekly-plan-editor-head">
+              <div>
+                <h3>Haftalık Ders Akışı</h3>
+                <p>Ders adını yazdığınızda renk otomatik belirlenir. Boş alanlar veli planında gösterilmez.</p>
+              </div>
+              <span class="badge blue" id="weeklyPlanSaveBadge">Cihazda otomatik saklanır</span>
+            </div>
+            <div class="weekly-plan-table-wrap">
+              <table class="weekly-plan-edit-table" id="weeklyPlanEditor"></table>
+            </div>
+            <div class="weekly-plan-notes-grid">
+              <div class="field">
+                <label for="weeklyPlanAnnouncements">Haftalık duyurular</label>
+                <textarea id="weeklyPlanAnnouncements" placeholder="Veli bilgilendirmeleri, getirilecek malzemeler, hatırlatmalar..."></textarea>
+              </div>
+              <div class="field">
+                <label for="weeklyPlanEvents">Haftanın etkinlikleri</label>
+                <textarea id="weeklyPlanEvents" placeholder="Gezi, tören, kulüp, toplantı, değerlendirme çalışması..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="weeklyPlanPreviewPane" class="weekly-plan-pane" role="tabpanel" aria-labelledby="weeklyPlanPreviewTab" hidden>
+          <div class="weekly-plan-preview-controls panel">
+            <div class="weekly-plan-preview-heading">
+              <div>
+                <h3>Veliye Gönderilecek Plan</h3>
+                <p>Haftanın tamamı yatay, seçili gün dikey A4 olarak hazırlanır.</p>
+              </div>
+              <div class="weekly-plan-day-tabs" id="weeklyPlanPreviewDayTabs" role="group" aria-label="Önizlenecek gün">
+                <button type="button" data-weekly-focus="all" aria-pressed="true">Tüm Hafta</button>
+                <button type="button" data-weekly-focus="1" aria-pressed="false">Pazartesi</button>
+                <button type="button" data-weekly-focus="2" aria-pressed="false">Salı</button>
+                <button type="button" data-weekly-focus="3" aria-pressed="false">Çarşamba</button>
+                <button type="button" data-weekly-focus="4" aria-pressed="false">Perşembe</button>
+                <button type="button" data-weekly-focus="5" aria-pressed="false">Cuma</button>
+              </div>
+            </div>
+            <div class="weekly-plan-export-bar">
+              <div class="weekly-plan-export-copy">
+                <strong>Kaydet veya gönder</strong>
+                <span>Hazır planı istediğiniz biçimde paylaşın.</span>
+              </div>
+              <div class="actions">
+                <button class="ghost-btn" id="weeklyPlanPdfBtn" type="button">PDF</button>
+                <button class="ghost-btn" id="weeklyPlanPngBtn" type="button">PNG</button>
+                <button class="ghost-btn" id="weeklyPlanJpegBtn" type="button">JPEG</button>
+                <button class="ghost-btn" id="weeklyPlanShareBtn" type="button">Velilerle Paylaş</button>
+                <button class="ghost-btn" id="weeklyPlanEmailBtn" type="button">E-posta</button>
+                <button class="ghost-btn" id="weeklyPlanPrintBtn" type="button">Yazdır</button>
+              </div>
+            </div>
+          </div>
+          <div class="weekly-plan-preview-stage">
+            <article id="weeklyPlanPrintSheet" class="weekly-plan-sheet" aria-label="Haftalık plan A4 önizlemesi"></article>
+          </div>
+        </div>
+      </section>
+
       <section id="calendarView" class="content-view">
         <div class="calendar-shell">
           <div class="calendar-workspace">
@@ -3131,6 +3214,55 @@
             </div>
           </details>
         </div>
+      </section>
+
+      <section id="trackingView" class="content-view">
+        <button class="ghost-btn agenda-back-today" type="button" data-jump="dashboardView"><span data-ui-icon="home" aria-hidden="true"></span>Bugün</button>
+        <div class="agenda-segments" role="group" aria-label="Sınıf takibi görünümü">
+          <button type="button" data-tracking-tab="tasks" aria-controls="agendaTaskPane" aria-pressed="true"><span data-ui-icon="clipboard" aria-hidden="true"></span>Görevler</button>
+          <button type="button" data-tracking-tab="attendance" aria-controls="agendaAttendancePane" aria-pressed="false"><span data-ui-icon="users" aria-hidden="true"></span>Yoklama</button>
+        </div>
+        <section id="agendaTaskPane" class="agenda-desk-pane">
+          <div class="agenda-tracking-head">
+            <h3>Sınıf Görevleri</h3>
+            <div class="actions">
+              <select id="agendaTaskFilter" aria-label="Görev durumu"><option value="open">Bekleyenler</option><option value="done">Tamamlananlar</option><option value="all">Tüm görevler</option></select>
+              <button type="button" class="primary-btn" data-open-task><span data-ui-icon="pen" aria-hidden="true"></span>Görev ekle</button>
+            </div>
+          </div>
+          <div id="agendaTaskList" class="agenda-task-list"></div>
+        </section>
+        <section id="agendaAttendancePane" class="agenda-desk-pane" hidden>
+          <div class="agenda-tracking-head">
+            <h3>Sınıf Yoklaması</h3>
+            <div class="actions">
+              <input type="date" id="attendanceDate" aria-label="Yoklama tarihi">
+              <button type="button" class="ghost-btn" id="attendanceToday">Bugün</button>
+            </div>
+          </div>
+          <div id="attendanceSummary" class="agenda-attendance-summary" role="status"></div>
+          <div class="agenda-attendance-controls">
+            <div class="agenda-segments agenda-attendance-modes" role="group" aria-label="Yoklama görünümü">
+              <button type="button" data-attendance-layout="photos" aria-pressed="true"><span data-ui-icon="camera" aria-hidden="true"></span>Fotoğraflı</button>
+              <button type="button" data-attendance-layout="cards" aria-pressed="false"><span data-ui-icon="grid" aria-hidden="true"></span>Kartlar</button>
+              <button type="button" data-attendance-layout="list" aria-pressed="false"><span data-ui-icon="clipboard" aria-hidden="true"></span>Liste</button>
+            </div>
+            <label class="agenda-attendance-sort" for="attendanceSort"><span>Sırala</span>
+              <select id="attendanceSort"><option value="number">Okul numarası</option><option value="name">Öğrenci adı</option></select>
+            </label>
+          </div>
+          <div class="actions agenda-attendance-actions">
+            <div class="agenda-attendance-bulk" role="group" aria-label="Toplu yoklama">
+              <label class="field"><span>Toplu durum</span><select id="attendanceBulkStatus"></select></label>
+              <label class="field"><span>Kapsam</span><select id="attendanceBulkScope"><option value="blank">Boş satırlar</option><option value="all">Tüm sınıf</option></select></label>
+              <button type="button" id="attendanceMarkAll" class="ghost-btn"><span data-ui-icon="check" aria-hidden="true"></span>Uygula</button>
+            </div>
+            <button type="button" id="attendanceExport" class="ghost-btn"><span data-ui-icon="download" aria-hidden="true"></span>Excel</button>
+            <button type="button" id="attendanceSave" class="primary-btn"><span data-ui-icon="check" aria-hidden="true"></span>Yoklamayı kaydet</button>
+          </div>
+          <p id="attendanceSaveStatus" role="status"></p>
+          <div id="attendanceList" class="agenda-attendance-list"></div>
+        </section>
       </section>
 
       <section id="reportsView" class="content-view">
@@ -3282,6 +3414,19 @@
       </section>
     </main>
   </div>
+
+  <dialog id="agendaTaskDialog">
+    <form id="agendaTaskForm" aria-labelledby="agendaTaskHeading">
+      <div class="modal-head"><strong id="agendaTaskHeading">Yeni görev</strong><button type="button" id="agendaTaskClose" class="icon-btn" aria-label="Kapat" title="Kapat"><span data-ui-icon="cross" aria-hidden="true"></span></button></div>
+      <div class="modal-body form-grid">
+        <div class="field full"><label for="agendaTaskTitle">Görev</label><input id="agendaTaskTitle" maxlength="160" required></div>
+        <div class="field"><label for="agendaTaskType">Kategori</label><select id="agendaTaskType"><option value="prep">Ders hazırlığı</option><option value="homework">Ödev</option><option value="meeting">Veli görüşmesi</option><option value="admin">Okul işleri</option><option value="other">Diğer</option></select></div>
+        <div class="field"><label for="agendaTaskDue">Son tarih</label><input id="agendaTaskDue" type="date"></div>
+        <div class="field full"><label for="agendaTaskNote">Not</label><textarea id="agendaTaskNote" maxlength="1200"></textarea></div>
+      </div>
+      <div class="modal-foot"><button type="button" class="danger-btn" id="agendaTaskDelete" hidden>Görevi sil</button><button type="submit" class="primary-btn" id="agendaTaskSubmit">Görev ekle</button></div>
+    </form>
+  </dialog>
 
   <dialog id="studentDialog">
     <div class="modal-head">
@@ -3597,6 +3742,24 @@
     </div>
   </dialog>
 
+  <dialog id="weeklyPlanShareDialog" class="weekly-plan-share-dialog">
+    <div class="modal-head">
+      <strong>Haftalık Planı Veliyle Paylaş</strong>
+      <button class="icon-btn" id="weeklyPlanShareCloseBtn" type="button" aria-label="Kapat">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="weekly-plan-share-note">Öğrenci bilgilerinde kayıtlı veli telefonlarından birini seçin. Telefon bulunmuyorsa WhatsApp kişi seçme ekranı açılır.</p>
+      <div class="field">
+        <label for="weeklyPlanRecipient">Veli</label>
+        <select id="weeklyPlanRecipient"></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="ghost-btn" id="weeklyPlanNativeShareBtn" type="button">Paylaş Menüsü</button>
+      <button class="primary-btn" id="weeklyPlanWhatsappBtn" type="button">WhatsApp</button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="../js/site-data.js"></script>
@@ -3604,6 +3767,6 @@
   <script src="../js/user-auth.js"></script>
   <script src="resmi-tatiller-veri.js"></script>
   <script src="resmi-tatiller.js"></script>
-  <script src="app.js?v=20261110-agenda-report-theme"></script>
+  <script src="app.js?v=20261111-weekly-plan"></script>
 </body>
 </html>

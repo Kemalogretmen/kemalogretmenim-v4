@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="426" viewBox="0 0 640 426">
+<title>Plankton</title>
+<defs><linearGradient id="body" x1="0" x2="1"><stop stop-color="#487d6c"/><stop offset=".55" stop-color="#9ed3a4"/><stop offset="1" stop-color="#78b595"/></linearGradient><linearGradient id="antenna"><stop stop-color="#264b43"/><stop offset="1" stop-color="#639c73"/></linearGradient><radialGradient id="eye"><stop stop-color="#fffbd4"/><stop offset="1" stop-color="#e4e7a1"/></radialGradient></defs>
+<g stroke="#233f37" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+<g fill="none" stroke="url(#antenna)" stroke-width="8">
+<path d="M304 133Q287 79 254 33"/><path d="M327 132Q345 72 334 24"/>
+</g><g fill="none" stroke-width="2.6"><path d="M288 94l-13-1m7-8-13-1m5-9-11-1m3-10-12-1m6-10-12-2m6-9-10-3M338 100l12-5m-10-8 11-5m-10-7 11-6m-10-7 10-6m-10-8 8-6m-10-5 8-5"/>
+<path d="M290 258Q262 279 250 267M252 267l-5-7m5 7-8 1m9 1-3 7" stroke-width="5"/>
+<path d="M354 253Q382 254 389 234m0 0-4-7m5 8 6-3m-7 3 6 5" stroke-width="5"/></g>
+<path d="M293 321Q288 350 275 359Q282 370 302 354L312 324M331 325L337 356Q350 370 366 360L349 344L347 318" fill="#78b595"/>
+<path d="M295 121C270 139 278 193 284 229L288 297Q294 336 321 337Q355 333 359 302L356 161Q350 120 323 115Q307 113 295 121Z" fill="url(#body)"/>
+<path d="M289 160Q281 239 299 297" fill="none" stroke="#c9e8b2" stroke-width="6" opacity=".45"/>
+<ellipse cx="322" cy="174" rx="26" ry="36" fill="url(#eye)"/>
+<ellipse cx="327" cy="174" rx="12" ry="19" fill="#d56336" stroke-width="2.5"/>
+<ellipse cx="330" cy="174" rx="6" ry="12" fill="#273c31" stroke="none"/>
+<ellipse cx="324" cy="164" rx="3" ry="5" fill="#fff" stroke="none"/>
+<path d="M296 141Q311 151 338 135" fill="none" stroke="#254439" stroke-width="7"/>
+<path d="M297 215Q323 238 350 204Q349 254 328 263Q305 263 297 215Z" fill="#fffbe2"/>
+<path d="M302 227Q326 244 346 219M310 226l4 26m11-23 3 29m10-30 1 22" fill="none" stroke-width="2.1"/>
+<path d="M311 282l11-10 12 11 12-12" fill="none" stroke-width="3"/>
+</g>
+</svg>

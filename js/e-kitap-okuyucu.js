@@ -20,6 +20,7 @@
     pages: [],
     questions: [],
     pageUrls: [],
+    pageSizes: [],
     coverUrl: '',
     pageFlip: null,
     fallbackMode: false,
@@ -120,8 +121,9 @@
     document.getElementById('errorTitle').textContent = title || 'Kitap açılamadı';
     document.getElementById('errorText').textContent = message || 'Lütfen daha sonra tekrar deneyin.';
     const externalButton = document.getElementById('externalOpenButton');
-    if (externalUrl) {
-      externalButton.href = externalUrl;
+    const url = window.kemalEKitapKaynak.webUrl(externalUrl);
+    if (url) {
+      externalButton.href = url.href;
       externalButton.style.display = 'inline-flex';
     } else {
       externalButton.style.display = 'none';
@@ -194,7 +196,7 @@
         accountUid: authUser ? authUser.id : '',
         currentPage: state.currentPage + 1,
         maxPageVisited: state.maxPageVisited + 1,
-        totalPages: Number(state.book.sayfa_sayisi || state.pageUrls.length || 1),
+        totalPages: Number(state.pageUrls.length || state.book.sayfa_sayisi || 1),
         activeSeconds: Math.round(state.activeMs / 1000),
         saved: Boolean(existing.meta && existing.meta.saved),
         favorite: Boolean(existing.meta && existing.meta.favorite),
@@ -535,6 +537,7 @@
       );
       const page = await pdf.getPage(pageNumber);
       const base = page.getViewport({ scale: 1 });
+      state.pageSizes.push({ width: base.width, height: base.height });
       const target = window.innerWidth <= 700 ? 1200 : 1600;
       const scale = Math.min(2.5, Math.max(1.2, target / Math.max(base.width, base.height)));
       const viewport = page.getViewport({ scale: scale });
@@ -564,18 +567,39 @@
   }
 
   function normalizeExternalUrl(url, preview) {
-    const raw = clean(url);
-    const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([^/]+)/i) || raw.match(/[?&]id=([^&]+)/i);
-    if (driveMatch) {
+    const parsed = window.kemalEKitapKaynak.webUrl(url);
+    if (!parsed) return '';
+    if (parsed.hostname === 'drive.google.com') {
+      const id = parsed.pathname.match(/^\/file\/d\/([a-z0-9_-]+)/i)?.[1] || parsed.searchParams.get('id');
+      if (!id || !/^[a-z0-9_-]+$/i.test(id)) return parsed.href;
       return preview
-        ? 'https://drive.google.com/file/d/' + driveMatch[1] + '/preview'
-        : 'https://drive.google.com/uc?export=download&id=' + driveMatch[1];
+        ? 'https://drive.google.com/file/d/' + id + '/preview'
+        : 'https://drive.google.com/uc?export=download&id=' + id;
     }
-    return raw;
+    return parsed.href;
+  }
+
+  function showExternalBook(url, label, flipHtml5) {
+    if (!url) throw new Error('Geçersiz kitap bağlantısı.');
+    state.externalFrameMode = true;
+    const frame = document.getElementById('externalFrame');
+    if (flipHtml5) frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
+    frame.title = state.book.baslik + ' · ' + label;
+    frame.src = url;
+    document.getElementById('externalFrameWrap').classList.add('active');
+    document.getElementById('bookRoot').style.display = 'none';
+    ['thumbnailButton', 'toolbarPrevious', 'toolbarNext', 'previousPage', 'nextPage', 'zoomInButton', 'zoomOutButton', 'fitButton'].forEach(function(id) {
+      document.getElementById(id).hidden = true;
+    });
+    document.getElementById('pageIndicator').textContent = label;
+    const link = document.getElementById('readerExternalLink');
+    link.href = url;
+    link.hidden = false;
   }
 
   async function loadExternalPdf() {
     const directUrl = normalizeExternalUrl(state.book.harici_url, false);
+    if (!directUrl) throw new Error('Geçersiz PDF bağlantısı.');
     setLoading('Harici PDF kontrol ediliyor', 'Bağlantı flipbook görünümü için hazırlanıyor.', 10);
     try {
       const response = await fetch(directUrl, { mode: 'cors', credentials: 'omit' });
@@ -586,16 +610,7 @@
       }
       return renderPdfPages(await blob.arrayBuffer());
     } catch (error) {
-      state.externalFrameMode = true;
-      document.getElementById('externalFrame').src = normalizeExternalUrl(state.book.harici_url, true);
-      document.getElementById('externalFrameWrap').classList.add('active');
-      document.getElementById('bookRoot').style.display = 'none';
-      document.getElementById('thumbnailButton').disabled = true;
-      document.getElementById('toolbarPrevious').disabled = true;
-      document.getElementById('toolbarNext').disabled = true;
-      document.getElementById('previousPage').disabled = true;
-      document.getElementById('nextPage').disabled = true;
-      document.getElementById('pageIndicator').textContent = 'Harici PDF';
+      showExternalBook(normalizeExternalUrl(state.book.harici_url, true), 'Harici PDF', false);
       return [];
     }
   }
@@ -622,7 +637,7 @@
       image.onload = function() {
         resolve({ width: image.naturalWidth || 600, height: image.naturalHeight || 800 });
       };
-      image.onerror = function() { resolve({ width: 600, height: 800 }); };
+      image.onerror = function() { resolve(null); };
       image.src = url;
     });
   }
@@ -637,40 +652,78 @@
     }).join('');
   }
 
-  async function buildBook(urls) {
+  function getBookRatio(sizes) {
+    const interior = sizes.length > 2 ? sizes.slice(1, -1) : sizes.slice(-1);
+    const formats = new Map();
+    for (const size of interior) {
+      if (!size?.width || !size?.height) continue;
+      const ratio = size.width / size.height;
+      const key = ratio.toFixed(2);
+      const format = formats.get(key) || { ratio, count: 0 };
+      format.count += 1;
+      formats.set(key, format);
+    }
+    const preferred = [...formats.values()].sort((a, b) => b.count - a.count)[0];
+    const first = sizes.find(size => size?.width && size?.height);
+    return preferred?.ratio || (first ? first.width / first.height : 0.75);
+  }
+
+  function syncCoverOrigin(root) {
+    const bounds = state.pageFlip.getBoundsRect();
+    root.style.setProperty('--book-left', bounds.left + 'px');
+    root.style.setProperty('--book-top', bounds.top + 'px');
+  }
+
+  function buildBook(urls) {
     state.pageUrls = urls;
-    if (!urls.length && state.externalFrameMode) return;
+    if (!urls.length) throw new Error('Kitabın görüntülenecek sayfası yok.');
     const root = document.getElementById('bookRoot');
+    const ratio = getBookRatio(state.pageSizes);
     root.style.display = 'block';
     root.innerHTML = urls.map(function(url, index) {
+      const size = state.pageSizes[index];
+      const pageRatio = size ? size.width / size.height : ratio;
+      const width = Math.min(1, pageRatio / ratio) * 100;
+      const height = Math.min(1, ratio / pageRatio) * 100;
       return '<div class="ebook-page" data-density="' + (index === 0 || index === urls.length - 1 ? 'hard' : 'soft') + '">' +
-        '<img src="' + esc(url) + '" alt="Sayfa ' + (index + 1) + '">' +
+        '<img src="' + esc(url) + '" alt="Sayfa ' + (index + 1) + '" style="width:' + width + '%;height:' + height + '%">' +
       '</div>';
     }).join('');
     buildThumbnails(urls);
-    const size = await getImageSize(urls[0]);
-    const ratio = Math.max(0.62, Math.min(0.82, size.width / Math.max(1, size.height)));
     const baseHeight = 800;
-    const baseWidth = Math.round(baseHeight * ratio);
+    const baseWidth = baseHeight * ratio;
 
     if (window.St && window.St.PageFlip) {
       state.pageFlip = new window.St.PageFlip(root, {
         width: baseWidth,
         height: baseHeight,
         size: 'stretch',
-        minWidth: 250,
-        maxWidth: 720,
-        minHeight: 340,
-        maxHeight: 980,
+        minWidth: ratio > 1 ? 360 : 245,
+        maxWidth: 1600,
+        minHeight: 1,
+        maxHeight: 1600,
         maxShadowOpacity: 0.28,
         showCover: true,
         mobileScrollSupport: false,
         usePortrait: true,
-        autoSize: true,
+        autoSize: false,
         flippingTime: 650,
         startPage: Math.min(state.currentPage, urls.length - 1),
       });
       state.pageFlip.loadFromHTML(root.querySelectorAll('.ebook-page'));
+      syncCoverOrigin(root);
+      const refreshBounds = function() {
+        if (!root.clientWidth || !root.clientHeight) return;
+        state.pageFlip.update();
+        syncCoverOrigin(root);
+      };
+      if (window.ResizeObserver) {
+        const observer = new ResizeObserver(refreshBounds);
+        observer.observe(root);
+        window.addEventListener('pagehide', function(event) { if (!event.persisted) observer.disconnect(); });
+      } else {
+        window.addEventListener('resize', refreshBounds);
+      }
       state.pageFlip.on('flip', function(event) {
         updateCurrentPage(Number(event.data || 0));
       });
@@ -690,7 +743,7 @@
   }
 
   function updateCurrentPage(index) {
-    const total = Number(state.book?.sayfa_sayisi || state.pageUrls.length || 1);
+    const total = Number(state.pageUrls.length || state.book?.sayfa_sayisi || 1);
     state.currentPage = Math.max(0, Math.min(Math.max(0, total - 1), Number(index || 0)));
     state.maxPageVisited = Math.max(state.maxPageVisited, state.currentPage);
     document.getElementById('pageIndicator').textContent = (state.currentPage + 1) + ' / ' + total;
@@ -742,24 +795,32 @@
   async function prepareReader() {
     setStage('loadingStage');
     setLoading('Kitap hazırlanıyor', 'Dosya kaynağı kontrol ediliyor.', 3);
+    const source = window.kemalEKitapKaynak.sourceType(state.book);
     try {
       let urls = [];
-      if (state.book.kaynak_turu === 'images') {
+      state.pageSizes = [];
+      if (source === 'fliphtml5') {
+        showExternalBook(window.kemalEKitapKaynak.flipHtml5Url(state.book.harici_url), 'FlipHTML5', true);
+      } else if (source === 'images') {
         urls = await loadImagePages();
-      } else if (state.book.kaynak_turu === 'external_pdf') {
+        state.pageSizes = await Promise.all(urls.map(function(url, index) {
+          const { genislik, yukseklik } = state.pages[index];
+          return genislik > 0 && yukseklik > 0 ? { width: genislik, height: yukseklik } : getImageSize(url);
+        }));
+      } else if (source === 'external_pdf') {
         urls = await loadExternalPdf();
       } else {
         urls = await loadSupabasePdf();
       }
-      await buildBook(urls);
       setStage('bookStage');
+      if (!state.externalFrameMode) buildBook(urls);
       startTimer();
     } catch (error) {
       console.error(error);
       showError(
         'Kitap görüntülenemedi',
-        'Dosya indirilemedi veya PDF biçimi tarayıcı tarafından okunamadı.',
-        state.book.kaynak_turu === 'external_pdf' ? state.book.harici_url : ''
+        source === 'fliphtml5' ? 'FlipHTML5 bağlantısı geçerli değil. Kitabın paylaşım bağlantısını kontrol edin.' : 'Dosya indirilemedi veya tarayıcı tarafından okunamadı.',
+        source === 'external_pdf' ? state.book.harici_url : ''
       );
     }
   }
@@ -796,7 +857,7 @@
   }
 
   async function finishReading() {
-    const total = Number(state.book.sayfa_sayisi || state.pageUrls.length || 1);
+    const total = Number(state.pageUrls.length || state.book.sayfa_sayisi || 1);
     const lastReached = state.externalFrameMode || state.maxPageVisited >= total - 2;
     const message = lastReached
       ? 'Kitabı bitirip anlama sorularına geçmek istiyor musun? Okuma süresi duracak.'

@@ -16,6 +16,7 @@
 * { box-sizing: border-box; }
 html, body { min-height: 100%; margin: 0; }
 body.ha-page { background: var(--ha-bg); color: var(--ha-ink); font-family: Nunito, Arial, sans-serif; }
+body.hece-playing :is(#kemalAnnounceMount, #kemalNavMount, #kemalFooterMount, #shortcutDock, #skipToContent) { display: none; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 [hidden] { display: none !important; }

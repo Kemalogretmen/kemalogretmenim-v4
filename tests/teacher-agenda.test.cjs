@@ -190,6 +190,64 @@ test('week number follows imported calendar and Sunday belongs to previous Monda
   assert.equal(h.run(`calendarMondayKey(new Date(2026,10,1))`), '2026-10-26');
 });
 
+test('weekly plan repeats the latest saved week until a week gets its own version', () => {
+  const h = agenda();
+  h.run(`state.weeklyPlans = [normalizeWeeklyPlan({
+    id:'base-week',classId:'c1',weekStart:'2026-11-02',periodCount:8,
+    days:{1:[{lesson:'Türkçe',activity:'Okuma çalışması',book:'Başarıyorum 1',homework:'Sayfa 24'}]},
+    announcements:'Kitaplar getirilecek',events:'Cuma günü sergi'
+  })]; weeklyPlanCursor='2026-11-09';`);
+  const repeated = h.json(`weeklyPlanForWeek()`);
+  assert.equal(repeated.explicit, false);
+  assert.equal(repeated.inheritedFrom, '2026-11-02');
+  assert.equal(repeated.plan.weekStart, '2026-11-09');
+  assert.equal(repeated.plan.days['1'][0].lesson, 'Türkçe');
+  h.run(`state.weeklyPlans.push(normalizeWeeklyPlan({
+    id:'changed-week',classId:'c1',weekStart:'2026-11-09',periodCount:8,
+    days:{1:[{lesson:'Matematik',activity:'Problem çözme'}]}
+  }));`);
+  const changed = h.json(`weeklyPlanForWeek()`);
+  assert.equal(changed.explicit, true);
+  assert.equal(changed.inheritedFrom, '');
+  assert.equal(changed.plan.days['1'][0].lesson, 'Matematik');
+  assert.equal(h.run(`state.weeklyPlans[0].days[1][0].lesson`), 'Türkçe');
+});
+
+test('weekly plan is class scoped, normalized and included in meaningful cloud agenda data', () => {
+  const h = agenda();
+  h.run(`state.weeklyPlans = [
+    normalizeWeeklyPlan({id:'c1-plan',classId:'c1',weekStart:'2026-11-02',periodCount:99,days:{1:[{lesson:'Fen'}]}}),
+    normalizeWeeklyPlan({id:'c2-plan',classId:'c2',weekStart:'2026-11-02',periodCount:6,days:{1:[{lesson:'İngilizce'}]}})
+  ]; weeklyPlanCursor='2026-11-09';`);
+  assert.equal(h.run(`state.weeklyPlans[0].periodCount`), 10);
+  assert.equal(h.run(`weeklyPlanForWeek().plan.days[1][0].lesson`), 'Fen');
+  assert.equal(h.run(`localHasMeaningfulAgenda()`), true);
+  h.run(`state.activeClassId='c2'`);
+  assert.equal(h.run(`weeklyPlanForWeek().plan.days[1][0].lesson`), 'İngilizce');
+  assert.equal(h.run(`buildCloudSnapshot().agendaState.weeklyPlans.length`), 2);
+});
+
+test('weekly plan page exposes daily focus, A4 exports and registered parent sharing controls', () => {
+  const html = fs.readFileSync('ogretmen-ajandasi/index.html', 'utf8');
+  assert.match(html, /data-view="weeklyPlanView"/);
+  assert.match(html, /id="weeklyPlanEditTab"/);
+  assert.match(html, /id="weeklyPlanPreviewTab"/);
+  assert.match(html, /id="weeklyPlanEditPane"/);
+  assert.match(html, /id="weeklyPlanPreviewPane"[^>]*hidden/);
+  assert.match(html, /id="weeklyPlanDayTabs"/);
+  assert.match(html, /id="weeklyPlanPreviewDayTabs"/);
+  assert.match(html, /id="weeklyPlanPdfBtn"/);
+  assert.match(html, /id="weeklyPlanPngBtn"/);
+  assert.match(html, /id="weeklyPlanJpegBtn"/);
+  assert.match(html, /id="weeklyPlanWhatsappBtn"/);
+  assert.match(html, /id="weeklyPlanEmailBtn"/);
+  assert.match(html, /id="weeklyPlanPrintBtn"/);
+  const css = fs.readFileSync('ogretmen-ajandasi/haftalik-plan.css', 'utf8');
+  assert.match(css, /size: A4 landscape/);
+  assert.match(css, /weekly-plan-sheet-ribbon/);
+  assert.match(css, /weekly-plan-day-heading/);
+});
+
 test('new-device default class never overwrites an older real cloud agenda', async () => {
   const h=agenda();
   h.run(`state=normalizeState({classes:[],students:[],exams:[],updatedAt:null});ensureInitialClass();`);
@@ -407,4 +465,111 @@ test('imported result count strings render as inert text in the student academic
   assert.equal(h.$('#studentAcademic').querySelectorAll('img,[onerror]').length,0);
   assert.ok(h.$('#studentAcademic').textContent.includes(attack));
   assert.ok(h.$('#studentAcademic').textContent.includes('80'));
+});
+
+test('class tasks can be created, completed, edited and recovered in the existing agenda snapshot', () => {
+  const h = agenda();
+  h.run(`els.agendaTaskDialog.showModal = () => {}; els.agendaTaskDialog.close = () => {};
+    showView('trackingView'); bindAgendaTracking(); openAgendaTask();
+    els.agendaTaskTitle.value = 'Matematik <föyü>'; els.agendaTaskType.value = 'homework'; els.agendaTaskDue.value = '2026-11-09';
+    saveAgendaTask();`);
+  const first = h.json('buildCloudSnapshot().agendaState.teacherTasks[0]');
+  assert.equal(first.classId, 'c1');
+  assert.equal(first.type, 'homework');
+  assert.match(h.$('#agendaTaskList').textContent, /Matematik <föyü>/);
+  assert.equal(h.$('#agendaTaskList föyü'), null);
+  const checkbox = h.$('[data-task-check]');
+  checkbox.checked = true;
+  checkbox.dispatchEvent(new h.document.defaultView.Event('change', { bubbles: true }));
+  assert.equal(h.run('state.teacherTasks[0].done'), true);
+  h.run(`state = loadState(); els.agendaTaskFilter.value = 'done'; renderAgendaTracking();`);
+  assert.match(h.$('#agendaTaskList').textContent, /Matematik/);
+  h.run(`openAgendaTask(state.teacherTasks[0].id); els.agendaTaskTitle.value = 'Kesirler'; saveAgendaTask();`);
+  assert.equal(h.run('state.teacherTasks[0].id'), first.id);
+  assert.equal(h.run('state.teacherTasks[0].title'), 'Kesirler');
+  h.run(`state.activeClassId = 'c2'; renderAgendaTracking();`);
+  assert.doesNotMatch(h.$('#agendaTaskList').textContent, /Kesirler/);
+  h.run(`state.activeClassId = 'c1'; openAgendaTask(state.teacherTasks[0].id); deleteAgendaTask();`);
+  assert.deepEqual(h.json('loadState().teacherTasks'), []);
+});
+
+test('bulk attendance preserves exceptions, isolates dates and classes, and follows student deletion', () => {
+  const h = agenda();
+  h.run(`showView('trackingView'); bindAgendaTracking(); trackingTab = 'attendance';
+    els.attendanceDate.value = '2026-11-10'; saveAttendance(new Map([['s1','late']]));`);
+  h.$('#attendanceMarkAll').click();
+  assert.deepEqual(h.json(`Array.from(attendanceForDate('2026-11-10'))`), [['s1','late'], ['s2','present']]);
+  assert.match(h.$('#attendanceSummary').textContent, /1 Geç/);
+  h.run(`els.attendanceDate.value = '2026-11-09'; saveAttendance(new Map([['s1','excused']]));
+    state.activeClassId = 'c2'; saveAttendance(new Map([['other','absent']])); state = loadState();`);
+  assert.deepEqual(h.json(`Array.from(attendanceForDate('2026-11-09'))`), [['other','absent']]);
+  h.run(`state.activeClassId = 'c1'; deleteStudentsByIds(['s1']);`);
+  assert.deepEqual(h.json(`buildCloudSnapshot().agendaState.attendanceRecords.map(record => record.marks)`), [[['s2','present']], [['other','absent']]]);
+});
+
+test('bulk status can fill blanks or replace marks only after confirmation', () => {
+  const h = agenda();
+  h.run(`showView('trackingView'); bindAgendaTracking(); trackingTab = 'attendance';
+    els.attendanceDate.value = '2026-11-10'; saveAttendance(new Map([['s1','late']]));
+    let prompts = 0; confirm = () => { prompts++; return false; };`);
+  h.$('#attendanceBulkStatus').value = 'sick';
+  h.$('#attendanceMarkAll').click();
+  assert.equal(h.run('prompts'), 0);
+  assert.deepEqual(h.json(`Array.from(attendanceForDate('2026-11-10'))`), [['s1','late'], ['s2','sick']]);
+  assert.match(h.$('#attendanceSummary').textContent, /1 Hasta/);
+  h.$('#attendanceBulkScope').value = 'all';
+  h.$('#attendanceMarkAll').click();
+  assert.equal(h.run('prompts'), 1);
+  assert.deepEqual(h.json(`Array.from(attendanceForDate('2026-11-10'))`), [['s1','late'], ['s2','sick']]);
+  h.run(`confirm = () => true; applyBulkAttendance(); state = loadState();`);
+  assert.deepEqual(h.json(`Array.from(attendanceForDate('2026-11-10'))`), [['s1','sick'], ['s2','sick']]);
+  assert.equal(h.$('#attendanceMarkAll').disabled, true);
+});
+
+test('attendance layouts and sort preferences do not alter marks or the last explicit save', () => {
+  const h = agenda();
+  h.run(`state.students[0].schoolNo = '21';
+    state.students[0].photo = 'data:image/png;base64,aGVsbG8=';
+    showView('trackingView'); bindAgendaTracking(); trackingTab = 'attendance';
+    els.attendanceDate.value = '2026-11-10'; saveAttendance(new Map([['s1','absent'],['s2','late']]));`);
+  const ids = () => Array.from(h.$('#attendanceList').querySelectorAll('select'), select => select.dataset.attendanceStudent);
+  assert.deepEqual(ids(), ['s2', 's1']);
+  assert.equal(h.$('#attendanceList .agenda-attendance-avatar img').getAttribute('loading'), 'lazy');
+  assert.equal(h.$('#attendanceSaveStatus').dataset.confirmed, 'false');
+  h.$('#attendanceSave').click();
+  assert.equal(h.$('#attendanceSaveStatus').dataset.confirmed, 'true');
+  const saved = h.json('loadState().attendanceRecords');
+  assert.ok(saved[0].confirmedAt);
+  h.$('#attendanceSort').value = 'name';
+  h.$('#attendanceSort').dispatchEvent(new h.document.defaultView.Event('change'));
+  assert.deepEqual(ids(), ['s1', 's2']);
+  for (const layout of ['cards', 'list']) {
+    h.$(`[data-attendance-layout="${layout}"]`).click();
+    assert.equal(h.$('#attendanceList').dataset.layout, layout);
+    assert.equal(h.$('#attendanceList .agenda-attendance-avatar'), null);
+  }
+  assert.deepEqual(h.json('loadState().attendanceRecords'), saved);
+  assert.deepEqual(JSON.parse(h.saved.get('kemalOgretmenAjandasi.v1.attendance-display')), { layout:'list', sort:'name' });
+  h.run(`saveAttendance(new Map([['s1','excused']]));`);
+  assert.equal(h.$('#attendanceSaveStatus').dataset.confirmed, 'false');
+  assert.equal(h.run('loadState().attendanceRecords[0].confirmedAt'), undefined);
+  h.run(`console = { ...console, error: () => {} };
+    localStorage.setItem = () => {throw Object.assign(new Error('full'), {name:'QuotaExceededError'});};`);
+  h.$('#attendanceSave').click();
+  assert.equal(h.$('#attendanceSaveStatus').dataset.confirmed, 'false');
+  assert.match(h.$('#attendanceSaveStatus').textContent, /Kayıt uyarısı/);
+  assert.equal(h.run('state.attendanceRecords[0].confirmedAt'), undefined);
+});
+
+test('tracking-only edits count as meaningful and a failed local write leaves a recoverable backup', () => {
+  const h = agenda();
+  h.run(`state = normalizeState({classes:[{id:'c1',name:'Sınıfım'}],students:[],exams:[],activeClassId:'c1'});
+    localStorage.setItem = () => {throw Object.assign(new Error('full'), {name:'QuotaExceededError'});};
+    console = { ...console, error: () => {} };`);
+  assert.equal(h.run(`commitAgendaTracking('teacherTasks', [{id:'pending',classId:'c1',title:'Hazırlık'}])`), false);
+  assert.deepEqual(h.json('state.teacherTasks'), []);
+  assert.equal(h.run('failedAgendaBackup.agendaState.teacherTasks[0].title'), 'Hazırlık');
+  assert.match(h.run('localSaveError'), /yedeğini indir/);
+  h.run(`state = failedAgendaBackup.agendaState;`);
+  assert.equal(h.run('localHasMeaningfulAgenda()'), true);
 });

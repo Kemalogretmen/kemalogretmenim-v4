@@ -134,19 +134,26 @@
   function getSourceLabel(type) {
     if (type === 'images') return 'Çoklu görsel';
     if (type === 'external_pdf') return 'Harici PDF';
+    if (type === 'fliphtml5') return 'FlipHTML5';
     return 'Supabase PDF';
   }
 
   function setSourceType(type) {
-    state.sourceType = ['supabase_pdf', 'images', 'external_pdf'].includes(type)
+    state.sourceType = ['supabase_pdf', 'images', 'external_pdf', 'fliphtml5'].includes(type)
       ? type
       : 'supabase_pdf';
     document.querySelectorAll('[data-source]').forEach(function(button) {
       button.classList.toggle('active', button.dataset.source === state.sourceType);
     });
+    const flipHtml5 = state.sourceType === 'fliphtml5';
     document.querySelectorAll('[data-source-box]').forEach(function(box) {
-      box.classList.toggle('active', box.dataset.sourceBox === state.sourceType);
+      box.classList.toggle('active', box.dataset.sourceBox === (flipHtml5 ? 'external_pdf' : state.sourceType));
     });
+    document.querySelector('label[for="fExternalUrl"]').textContent = flipHtml5 ? 'FlipHTML5 kitap bağlantısı' : 'Doğrudan PDF / harici depolama bağlantısı';
+    document.getElementById('fExternalUrl').placeholder = flipHtml5 ? 'https://online.fliphtml5.com/abcd/efgh/' : 'https://.../kitap.pdf';
+    document.getElementById('fExternalHint').textContent = flipHtml5
+      ? 'FlipHTML5’te yayımlanmış kitabın paylaşım bağlantısı.'
+      : 'PDF bağlantısının tarayıcıdan erişime açık olması gerekir.';
     updateSummary();
   }
 
@@ -332,9 +339,7 @@
         toast('Test sorusunda en az 2 seçenek olmalı.', 'error');
         return;
       }
-      const removedWasCorrect = Boolean(options[optionIndex] && options[optionIndex].dogru_mu);
       options.splice(optionIndex, 1);
-      if (removedWasCorrect && options[0]) options[0].dogru_mu = true;
       renderQuestions();
     }
   }
@@ -556,7 +561,7 @@
             grades.map(function(grade) { return '<span class="badge">' + grade + '. Sınıf</span>'; }).join('') +
             '<span class="badge ' + (book.aktif ? '' : 'off') + '">' + (book.aktif ? 'Yayında' : 'Taslak') + '</span>' +
           '</div>' +
-          '<div class="book-meta"><span>' + Number(book.sayfa_sayisi || 0) + ' sayfa</span><span>' + Number(book.kelime_sayisi || 0) + ' kelime</span><span>Hedef ' + Number(book.hedef_hiz || 0) + '</span><span>' + esc(getSourceLabel(book.kaynak_turu)) + '</span></div>' +
+          '<div class="book-meta"><span>' + Number(book.sayfa_sayisi || 0) + ' sayfa</span><span>' + Number(book.kelime_sayisi || 0) + ' kelime</span><span>Hedef ' + Number(book.hedef_hiz || 0) + '</span><span>' + esc(getSourceLabel(window.kemalEKitapKaynak.sourceType(book))) + '</span></div>' +
           statsHtml +
         '</div>' +
         '<div class="card-actions">' +
@@ -660,7 +665,7 @@
     document.getElementById('fHidden').checked = Boolean(book.gizli);
     document.getElementById('fLoginRequired').checked = Boolean(book.oturum_gerekli);
     setSelectedGrades(Array.isArray(book.siniflar) && book.siniflar.length ? book.siniflar : [book.sinif]);
-    setSourceType(book.kaynak_turu || 'supabase_pdf');
+    setSourceType(window.kemalEKitapKaynak.sourceType(book) || 'supabase_pdf');
     renderQuestions();
     showEditor();
   }
@@ -789,9 +794,17 @@
       }
     }
     if (state.sourceType === 'external_pdf') {
-      if (!externalUrl) throw new Error('Harici PDF bağlantısını girmelisin.');
-      try { new URL(externalUrl); } catch (error) { throw new Error('Harici PDF bağlantısı geçerli değil.'); }
+      const url = window.kemalEKitapKaynak.webUrl(externalUrl);
+      if (!url) throw new Error('Geçerli bir PDF bağlantısı gir.');
+      if (window.kemalEKitapKaynak.flipHtml5Url(externalUrl)) throw new Error('Bu kitap bağlantısı için FlipHTML5 kaynağını seç.');
+      return url.href;
     }
+    if (state.sourceType === 'fliphtml5') {
+      const url = window.kemalEKitapKaynak.flipHtml5Url(externalUrl);
+      if (!url) throw new Error('Geçerli bir FlipHTML5 kitap bağlantısı gir.');
+      return url;
+    }
+    return null;
   }
 
   async function saveBook() {
@@ -817,9 +830,10 @@
       return;
     }
 
-    let questions;
+    let questions, externalUrl;
+    const isFlipHtml5 = state.sourceType === 'fliphtml5';
     try {
-      getSourceValidation();
+      externalUrl = getSourceValidation();
       questions = validateQuestions();
     } catch (error) {
       toast(error.message, 'error');
@@ -913,10 +927,10 @@
         sourcePath = null;
         coverPath = null;
         pages = [];
-        fileName = clean(document.getElementById('fExternalUrl').value).split('/').pop() || 'harici-kitap.pdf';
+        fileName = isFlipHtml5 ? 'FlipHTML5' : (new URL(externalUrl).pathname.split('/').pop() || 'harici-kitap.pdf');
         fileSize = 0;
         pageCount = Math.max(1, Number(document.getElementById('fExternalPages').value || 1));
-        mimeType = 'application/pdf';
+        mimeType = isFlipHtml5 ? 'text/html' : 'application/pdf';
       }
 
       const bookPayload = {
@@ -929,9 +943,9 @@
         kelime_sayisi: Math.round(wordCount),
         hedef_hiz: Math.round(targetWpm),
         tahmini_dk: Math.max(1, Number(document.getElementById('fEstimatedMinutes').value || 5)),
-        kaynak_turu: state.sourceType,
+        kaynak_turu: isFlipHtml5 ? 'external_pdf' : state.sourceType,
         dosya_yolu: sourcePath,
-        harici_url: state.sourceType === 'external_pdf' ? clean(document.getElementById('fExternalUrl').value) : null,
+        harici_url: externalUrl,
         dosya_adi: fileName,
         dosya_boyutu: fileSize,
         mime_type: mimeType,
@@ -939,6 +953,7 @@
         kapak_yolu: coverPath,
         kapak_renk: document.getElementById('fColor').value || '#0F9F8F',
         kaynak_meta: {
+          ...(isFlipHtml5 ? { external_provider: 'fliphtml5' } : {}),
           image_quality: state.sourceType === 'images' ? IMAGE_QUALITY : null,
           image_long_edge: state.sourceType === 'images' ? IMAGE_LONG_EDGE : null,
         },
@@ -1031,6 +1046,20 @@
   }
 
   function bindEvents() {
+    const importer = window.ReadingQuestionImport;
+    importer?.mount(document.getElementById('bulkBookQuestions'), {
+      minOptions: 2,
+      existing: () => state.questions.map(question => ({
+        prompt: question.soru_metni,
+        options: question.secenekler.map(choice => choice.secenek_metni).filter(text => text.trim()),
+      })),
+      append: questions => {
+        const first = state.questions.length;
+        state.questions.push(...questions.map(question => normalizeQuestion(importer.asReadingQuestion(question))));
+        renderQuestions();
+        window.requestAnimationFrame(() => document.querySelector('#questionList [data-question-index="' + first + '"][data-question-field="soru_metni"]')?.focus());
+      },
+    });
     document.getElementById('loginButton').addEventListener('click', signIn);
     document.getElementById('logoutButton').addEventListener('click', async function() {
       await window.kemalAdminAuth.signOut();

@@ -537,6 +537,7 @@
     const showSiteDashboard = canAccess('site_admin_dashboard');
     const ownerMode = isOwnerUser();
     setElementVisible('btn-reklamlar', state.accessProfile?.isOwner === true);
+    setElementVisible('quick-adsense', state.accessProfile?.isOwner === true);
 
     Object.entries(getSidebarPermissionMap()).forEach(function(entry) {
       const elementId = entry[0];
@@ -1964,6 +1965,8 @@
         break;
       case 'analytics':
         renderAnalytics();
+        break;
+      case 'reklamlar':
         break;
       case 'reactions':
         renderReactions();

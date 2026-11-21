@@ -1,0 +1,139 @@
+.reading-book {
+  --reading-desk: #e8eeeb; --reading-paper: #faf7ed; --reading-ink: #1c2725;
+  --reading-line: #d2dad2; --reading-tool: #265b50;
+}
+html[data-theme="dark"] .reading-book {
+  --reading-desk: #172125; --reading-paper: #222e2e; --reading-ink: #f5f1e5;
+  --reading-line: #485b55; --reading-tool: #a7e5ca;
+}
+.reading-focus .theme-control-fallback { display: none; }
+body.reading-book #tamMetinEkran { background: var(--reading-desk); min-height: 100dvh; }
+.reading-book #tamMetinEkran .okuma-topbar {
+  background: var(--reading-desk); color: var(--reading-ink); border-bottom: 1px solid var(--reading-line);
+  padding: 10px 18px; gap: 8px; flex-wrap: wrap;
+}
+.reading-bar-label, .reading-bar-actions, .reading-focus-button, .reading-book .sayac-display { display: inline-flex; align-items: center; gap: 8px; }
+.reading-bar-label { font-weight: 900; }
+.reading-bar-actions { flex-wrap: wrap; }
+.reading-bar-label svg, .reading-book .sayac-display svg, .reading-focus-button svg { width: 18px; height: 18px; }
+.reading-book #tamMetinEkran .sayac-display {
+  background: var(--reading-paper); border: 1px solid var(--reading-line); color: var(--reading-ink);
+  min-height: 42px; border-radius: 8px; font-size: 17px; font-family: var(--font-body);
+  font-variant-numeric: tabular-nums; justify-content: center; letter-spacing: 0;
+}
+.reading-focus-button {
+  min-height: 42px; padding: 8px 12px; border: 1px solid var(--reading-line, #a698cb);
+  border-radius: 8px; color: inherit; background: transparent; font: inherit; font-size: 14px;
+  font-weight: 800; cursor: pointer; justify-content: center;
+}
+.reading-focus-button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.reading-book:has(#tamMetinEkran[style*="flex"]) .theme-control-fallback,
+.reading-book:has(#kelimeEkran[style*="flex"]) .theme-control-fallback { display: none; }
+.reading-book .kitap-wrapper {
+  flex: 0 1 auto; min-width: 0; width: calc(100% - 28px); max-width: 780px; margin: 24px auto 0;
+  padding: 36px; background: var(--reading-paper); color: var(--reading-ink);
+  border: 1px solid var(--reading-line); border-radius: 5px 8px 8px 5px;
+  box-shadow: inset 3px 0 var(--reading-line), 0 12px 24px #17262414;
+}
+.reading-book .kitap-baslik, .reading-book :is(#tamMetinIcerik, .reading-fragment .kitap-metin) { font-family: var(--reading-font, var(--font-body)) !important; color: var(--reading-ink); }
+.reading-book .kitap-baslik {
+  font-size: 29px; font-weight: 800; line-height: 1.3; border-bottom: 1px solid var(--reading-line);
+  margin: 0 0 24px; padding: 0 0 18px; overflow-wrap: anywhere;
+}
+.reading-book :is(#tamMetinIcerik, .reading-fragment .kitap-metin) {
+  font-size: var(--reading-size, 22px); font-weight: var(--reading-weight, 600); line-height: 1.7;
+  padding: 0; max-height: none; overflow: visible; overflow-wrap: anywhere; box-shadow: none;
+  background: transparent; border: 0; border-radius: 0;
+}
+.reading-book .kitap-metin * { font-family: inherit !important; }
+.reading-book :is(#tamMetinIcerik, .reading-fragment .kitap-metin) p { color: inherit; }
+.reading-book :is(#tamMetinIcerik, .reading-fragment .kitap-metin) p:not(:has(> br:only-child)) + p:not(:has(> br:only-child)) { margin-block-start: .65em; }
+.reading-book .kitap-metin .reading-low-contrast { color: var(--reading-ink) !important; background-color: transparent !important; }
+.reading-book .kitap-metin img { max-width: 100%; height: auto; }
+.reading-book .bitti-alani { padding: 22px 14px 32px; }
+.reading-book .bitti-btn { background: #226454; box-shadow: none; }
+.reading-book .kk-top { color: #fff; z-index: 1; }
+.reading-book .kk-meta { color: #f0ebff; overflow-wrap: anywhere; }
+.reading-book .kk-sayac { color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.reading-book .kk-progress-txt { color: #cfc5e8; }
+.reading-book #tamMetinEkran.reading-paginated {
+  display: grid !important; grid-template-rows: auto minmax(0, 1fr) auto; height: 100dvh; overflow: hidden;
+}
+.reading-book .reading-paginated .kitap-wrapper {
+  position: relative; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); min-height: 0; margin: 12px auto 0;
+  padding: 26px 42px;
+}
+.reading-paginated #readingPageWindow {
+  position: relative; min-width: 0; overflow: hidden; scroll-behavior: auto; touch-action: pan-y pinch-zoom;
+}
+.reading-paginated .reading-page-track {
+  width: 100%; height: 100%;
+}
+.reading-paginated :is(#readingPageFlow, .reading-leaf-copy) {
+  --reading-column-gap: 32px;
+  width: 100%; height: 100%;
+  column-count: 1; column-fill: auto; column-gap: var(--reading-column-gap);
+}
+.reading-paginated .reading-leaf-copy { position: absolute; top: 0; }
+.reading-compact-source { opacity: 0; pointer-events: none; }
+.reading-compact-surface {
+  position: absolute; overflow: hidden; touch-action: pan-y pinch-zoom; background: var(--reading-paper);
+}
+.reading-compact-surface[hidden] { display: none; }
+.reading-leaf-static { height: 100%; overflow: hidden; }
+.reading-fragment-continuation .kitap-metin > :first-child { text-indent: 0 !important; }
+.reading-paginated .kitap-baslik { break-after: avoid; break-inside: avoid; }
+.reading-paginated :is(#tamMetinIcerik, .reading-fragment .kitap-metin) { orphans: 2; widows: 2; }
+.reading-paginated .kitap-wrapper :is(figure, img) { break-inside: avoid; }
+.reading-paginated .kitap-wrapper img { display: block; max-height: calc(var(--reading-page-height, 320px) * .52); object-fit: contain; }
+.reading-paginated .okuma-visual { margin-top: 0; overflow: visible; }
+.reading-paginated .okuma-visual-caption { padding-block: 8px; }
+.reading-leaf {
+  position: absolute; z-index: 1; overflow: hidden; pointer-events: none; background: var(--reading-paper);
+}
+.reading-leaf-fold {
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, #bbac8e, #faf0d9 50%, #d8c8a6);
+}
+.reading-leaf-fold[data-direction="back"] { background: linear-gradient(245deg, #bbac8e, #faf0d9 50%, #d8c8a6); }
+html[data-theme="dark"] .reading-leaf-fold { filter: brightness(.48) saturate(.6); }
+.reading-pages {
+  width: min(780px, calc(100% - 28px)); margin-inline: auto; padding: 10px 0 max(10px, env(safe-area-inset-bottom, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; color: var(--reading-ink);
+}
+.reading-page-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 44px; max-width: 100%; padding: 6px 13px; border: 1px solid var(--reading-line);
+  border-radius: 8px; font: 800 15px/1.2 var(--font-body); background: var(--reading-paper); color: var(--reading-ink);
+  cursor: pointer;
+}
+.reading-page-button:disabled { opacity: .45; cursor: default; }
+.reading-page-button:focus-visible { outline: 2px solid var(--reading-tool); outline-offset: 2px; }
+#readingPageBack { grid-column: 1; justify-self: start; }
+#readingPageBack svg { transform: rotate(180deg); }
+#readingPageNext { grid-column: 3; justify-self: end; width: auto; color: #fff; transform: none; }
+.reading-page-button svg { width: 18px; height: 18px; }
+.reading-pages output { grid-column: 2; min-width: 6ch; text-align: center; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.reading-pages [hidden] { display: none !important; }
+@media (min-width: 650px) {
+  .reading-book .kitap-wrapper { padding: 44px 54px; }
+}
+@media (max-width: 640px) {
+  .reading-book .kitap-wrapper { margin-top: 14px; padding: 22px 19px; }
+  .reading-book .kitap-baslik { font-size: 24px; }
+  .reading-book :is(#tamMetinIcerik, .reading-fragment .kitap-metin) { font-size: min(var(--reading-size, 22px), 24px); }
+  .reading-book .kk-top { padding: 8px 12px; }
+  .reading-book .reading-paginated .kitap-wrapper { padding: 15px 16px; margin-top: 8px; }
+  .reading-paginated .kitap-baslik { margin-bottom: 14px; padding-bottom: 12px; }
+  .reading-pages { gap: 5px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .reading-book #tamMetinEkran .okuma-topbar { padding: 4px max(12px, env(safe-area-inset-right, 0px)) 4px max(12px, env(safe-area-inset-left, 0px)); }
+  .reading-book .reading-paginated .kitap-wrapper { margin-top: 5px; padding: 10px 24px; }
+  .reading-paginated .kitap-baslik { font-size: 22px; margin-bottom: 8px; padding-bottom: 8px; }
+  .reading-paginated :is(#tamMetinIcerik, .reading-fragment .kitap-metin) { line-height: 1.55; orphans: 1; widows: 1; }
+  .reading-pages { padding-top: 5px; padding-bottom: max(5px, env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 360px) {
+  .reading-pages .reading-page-label { display: none; }
+}

@@ -64,10 +64,12 @@ test('settings remain compatible with old backups and clamp unsafe input', () =>
   assert.equal(privateCue.settings.bubbleAmount,150);assert.equal(privateCue.settings.lightStrength,125);assert.equal(privateCue.settings.waveStrength,50);assert.equal(privateCue.settings.teacherEncouragement,undefined);
 });
 
-async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-111111111111') {
+async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-111111111111',{newspaper=false,newspaperReport:initialNewspaper=null,games=false}={}) {
   const {window,document}=parseHTML(fs.readFileSync('ogretmen/akvaryum.html','utf8'));
-  const intervals=[],frames=[]; let response=snapshot,report=null,reads=0,writes=0,rafId=0,clock=0; const urls=[],requests=[];
-  const localStorage={getItem(){reads++;throw Error('Viewer must not read teacher storage');},setItem(){writes++;}};
+  const intervals=[],frames=[]; let response=snapshot,report=null,reads=0,writes=0,rafId=0,clock=0; const urls=[],requests=[];let newspaperReport=initialNewspaper;const preferences=new Map();
+  const localStorage={getItem(key){if((key.startsWith('kemal_newspaper_closed_')||key.startsWith('kemal_reef_games_v1_')))return preferences.get(key);reads++;throw Error('Viewer must not read teacher storage');},setItem(key,value){if((key.startsWith('kemal_newspaper_closed_')||key.startsWith('kemal_reef_games_v1_'))){preferences.set(key,value);return;}writes++;},removeItem(key){preferences.delete(key);}};
+  if(games)window.AquariumBubbleGames={...require('../js/akvaryum-bubble-games.js'),create:options=>require('../js/akvaryum-bubble-games.js').create({...options,scheduler:context,now:()=>clock})};
+  if(newspaper)window.AquariumNewspaper=require('../js/akvaryum-newspaper.js');
   window.AquariumSocial=require('../js/akvaryum-social.js');
   window.AquariumExpressive=require('../js/akvaryum-expressive.js');
   window.AquariumCosmetics=require('../js/akvaryum-cosmetics.js');
@@ -79,10 +81,10 @@ async function viewerHarness(snapshot,search='?izle=11111111-1111-4111-8111-1111
   const modal=document.getElementById('modal');modal.close=()=>{modal.open=false;};modal.showModal=()=>{modal.open=true;};
   document.exitFullscreen=async()=>{document.fullscreenElement=null;document.dispatchEvent(new window.Event('fullscreenchange'));};
   const context={window,document,localStorage,location:{search,pathname:'/ogretmen/akvaryum.html',origin:'http://localhost'},URLSearchParams,URL,AbortController,performance:{now:()=>clock},console,
-    setTimeout:()=>1,clearTimeout(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},clearInterval(){},requestAnimationFrame:fn=>{const tick=now=>{clock=now;fn(now);};tick.id=++rafId;frames.push(tick);return tick.id;},cancelAnimationFrame:id=>{const at=frames.findIndex(fn=>fn.id===id);if(at>=0)frames.splice(at,1);},ResizeObserver:class{observe(){}},
-    fetch:async(url,options)=>{urls.push(url);const body=JSON.parse(options.body);requests.push({url,body});const value=url.endsWith('view_aquarium_child_history')?(typeof report==='function'?await report(body):report):response;return {ok:true,json:async()=>value};}};
+    setTimeout:()=>1,clearTimeout(){},clearInterval(){},setInterval:fn=>{intervals.push(fn);return intervals.length;},clearInterval(){},requestAnimationFrame:fn=>{const tick=now=>{clock=now;fn(now);};tick.id=++rafId;frames.push(tick);return tick.id;},cancelAnimationFrame:id=>{const at=frames.findIndex(fn=>fn.id===id);if(at>=0)frames.splice(at,1);},ResizeObserver:class{observe(){}},
+    fetch:async(url,options)=>{urls.push(url);const body=JSON.parse(options.body);requests.push({url,body});const value=url.endsWith('view_aquarium_child_newspaper')?(typeof newspaperReport==='function'?await newspaperReport(body):newspaperReport):url.endsWith('view_aquarium_child_history')?(typeof report==='function'?await report(body):report):response;return {ok:true,json:async()=>value};}};
   await vm.runInNewContext(fs.readFileSync('js/akvaryum.js','utf8'),context);
-  return {window,document,intervals,frames,urls,requests,setResponse(value){response=value;},setReport(value){report=value;},io:()=>({reads,writes})};
+  return {window,document,intervals,frames,urls,requests,setResponse(value){response=value;},setReport(value){report=value;},setNewspaper(value){newspaperReport=value;},preferences,io:()=>({reads,writes})};
 }
 
 test('visitor refreshes retain fish and teacher identity, positions and one continuing animation loop',async()=>{
@@ -313,4 +315,69 @@ test('a scoreless visitor view has no score or trophy in labels even if an unexp
  assert.equal(fish.querySelector('.fish-name').textContent,'Ada');assert.doesNotMatch(fish.getAttribute('aria-label'),/777/);
  assert.equal(fish.querySelector('.fish-points').textContent,'★ 0');assert.equal(d.getElementById('classPearl').hidden,true);
  assert.equal(d.getElementById('classPearlScore').textContent,'0');
+});
+
+test('private newspaper opens on the reef, keeps swimming, closes and reopens without touching teacher data',async()=>{
+ const N=require('../js/akvaryum-newspaper.js'),snapshot={settings:{names:true,motion:true},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy'}]};
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111',{newspaper:true,newspaperReport:{available:true,publishedWeeks:[N.week()],publicationId:'edition-1',weekStart:N.week(),name:'Ada',species:'clown'}}),d=h.document;
+ await new Promise(r=>setImmediate(r));assert.equal(d.getElementById('newspaperPanel').hidden,false);
+ h.setNewspaper({available:true,publishedWeeks:[N.week()],publicationId:'edition-1',weekStart:N.week(),name:'Ada',species:'clown',positiveCount:4,earned:12,activeDays:2,currentTotal:102,characterUnlocked:true,highlights:[{title:'Kitabımı okudum',count:4}],target:'Her gün oku',announcement:{title:'Kitap günü',body:'Cuma buluşalım.'}});
+ d.getElementById('newspaperStand').dispatchEvent(new h.window.Event('click',{bubbles:true}));await new Promise(r=>setImmediate(r));
+ assert.match(d.getElementById('newspaperContent').textContent,/Ada bu hafta 4 güzel adım attı/);assert.match(d.getElementById('newspaperContent').textContent,/Kitap günü/);assert.equal(d.getElementById('modal').open,undefined);
+ const fish=d.querySelector('.fish'),initial=fish.style.transform;for(let i=0;i<30;i++)h.frames.shift()?.(100+i*40);assert.notEqual(fish.style.transform,initial);assert.equal(h.frames.length,1);
+ d.querySelector('[data-action="newspaper-close"]').dispatchEvent(new h.window.Event('click',{bubbles:true}));assert.equal(d.getElementById('newspaperPanel').hidden,true);assert.equal(d.getElementById('newspaperContent').textContent,'');assert.equal(h.preferences.size,1);
+ d.getElementById('newspaperStand').dispatchEvent(new h.window.Event('click',{bubbles:true}));await new Promise(r=>setImmediate(r));assert.equal(d.getElementById('newspaperPanel').hidden,false);assert.equal(h.preferences.size,0);
+ const request=h.requests.filter(r=>r.url.endsWith('view_aquarium_child_newspaper')).at(-1);assert.deepEqual(Object.keys(request.body).sort(),['p_token','p_week']);assert.deepEqual(h.io(),{reads:0,writes:0});
+});
+test('public classroom cannot open newspaper, while private revocation clears every visible report',async()=>{
+ const N=require('../js/akvaryum-newspaper.js'),snapshot={settings:{names:true,motion:true},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy'}]};
+ const publicView=await viewerHarness(snapshot,undefined,{newspaper:true});assert.equal(publicView.document.getElementById('newspaperStand').hidden,true);assert.ok(!publicView.urls.some(u=>u.includes('child_newspaper')));
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111',{newspaper:true,newspaperReport:{available:true,publishedWeeks:[N.week()],publicationId:'edition-1',weekStart:N.week(),name:'Ada',species:'clown'}});await new Promise(r=>setImmediate(r));
+ let finish;h.setNewspaper(()=>new Promise(r=>finish=r));h.document.getElementById('newspaperStand').dispatchEvent(new h.window.Event('click',{bubbles:true}));
+ h.setResponse(null);await h.intervals[1]();finish({weekStart:N.week(),name:'STALE SECRET',species:'clown'});await new Promise(r=>setImmediate(r));
+ assert.equal(h.document.getElementById('newspaperPanel').hidden,true);assert.equal(h.document.getElementById('newspaperContent').textContent,'');assert.equal(h.document.getElementById('newspaperStand').hidden,true);
+});
+
+test('a parent sees nothing before activation and sending; a new sent edition reopens, withdraw removes it',async()=>{
+ const N=require('../js/akvaryum-newspaper.js'),snapshot={settings:{names:true,motion:true},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy'}]},week=N.week();
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111',{newspaper:true,newspaperReport:{available:false,weekStart:week,publishedWeeks:[]}}),d=h.document;
+ await new Promise(r=>setImmediate(r));assert.equal(d.getElementById('newspaperStand').hidden,true);assert.equal(d.getElementById('newspaperPanel').hidden,true);
+ const refresh=async()=>{Object.defineProperty(d,'hidden',{value:true,writable:true,configurable:true});d.dispatchEvent(new h.window.Event('visibilitychange'));d.hidden=false;d.dispatchEvent(new h.window.Event('visibilitychange'));await new Promise(r=>setImmediate(r));};
+ const edition=id=>({available:true,weekStart:week,publishedWeeks:[week],publicationId:id,name:'Ada',species:'clown',positiveCount:1});
+ h.setNewspaper(edition('first'));await refresh();assert.equal(d.getElementById('newspaperPanel').hidden,false);await refresh();assert.equal(d.getElementById('newspaperPanel').hidden,false,'an undiscarded issue returns after visibility revalidation');
+ d.querySelector('[data-action="newspaper-close"]').dispatchEvent(new h.window.Event('click',{bubbles:true}));await refresh();assert.equal(d.getElementById('newspaperPanel').hidden,true);
+ h.setNewspaper(edition('second'));await refresh();assert.equal(d.getElementById('newspaperPanel').hidden,false);
+ h.setNewspaper({available:false,weekStart:week,publishedWeeks:[]});await refresh();assert.equal(d.getElementById('newspaperPanel').hidden,true);assert.equal(d.getElementById('newspaperStand').hidden,true);assert.equal(d.getElementById('newspaperContent').textContent,'');
+});
+
+test('class and child viewers can open isolated games using only visible profiles',async()=>{
+ for(const query of ['?izle=','?cocuk=']){
+  const h=await viewerHarness({theme:'reef',settings:{names:true,motion:true},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy'},{id:'peer',name:'Ece',species:'tang',mood:'happy'}]},query+'11111111-1111-4111-8111-111111111111');
+  let options,opened;h.window.AquariumBubbleGames={create(value){options=value;return {open(trigger,value){opened=value;},close(){},isOpen(){return false;}};}};
+  h.document.getElementById('bubbleGamesButton').dispatchEvent(new h.window.Event('click',{bubbles:true}));
+  assert.ok(opened);assert.deepEqual(opened.players.map(p=>p.name),query==='?cocuk='?['Ada']:['Ada','Ece']);assert.equal(opened.drawPlayers,null);assert.ok(!opened.scope.includes('11111111'));assert.deepEqual(h.io(),{reads:0,writes:0});assert.ok(options.storage);
+ }
+});
+test('parent can finish a real game and store a local score without touching teacher storage or public scores',async()=>{
+ const snapshot={viewScope:'class',theme:'reef',settings:{names:true,motion:false},students:[{id:'my-child',name:'Ada',species:'clown',mood:'happy',points:7},{id:'peer',name:'PRIVATE-PEER',species:'tang',mood:'happy',points:999}]};
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111',{games:true}),d=h.document,click=selector=>d.querySelector(selector).dispatchEvent(new h.window.Event('click',{bubbles:true}));
+ click('#bubbleGamesButton');assert.equal(d.getElementById('bubbleGames').hidden,false);assert.ok(!d.getElementById('bubbleGames').textContent.includes('PRIVATE-PEER'));assert.deepEqual([...d.querySelectorAll('[data-game-player="0"] option')].map(o=>o.textContent),['Ada','Misafir oyuncu']);
+ click('[data-game-id="multiply"]');const [a,b]=d.querySelector('.bubble-question h3').textContent.split(' × ').map(Number),answer=[...d.querySelectorAll('.answer-orb')].find(el=>el.textContent===String(a*b));answer.dispatchEvent(new h.window.Event('click',{bubbles:true}));click('[data-game-action="finish"]');assert.equal(d.querySelector('.result-orb strong').textContent,'10');assert.equal(d.querySelectorAll('.reef-leaderboard li').length,1);assert.equal(d.querySelector('.reef-leaderboard li strong').textContent,'Ada');assert.deepEqual(h.io(),{reads:0,writes:0});assert.ok([...h.preferences.keys()].every(k=>k.startsWith('kemal_reef_games_v1_')));click('[data-game-action="close"]');
+});
+
+test('a parent sees the shared ship with no teacher writes, then loses it when hidden or access is revoked',async()=>{
+ const reef={version:1,stage:3,visible:true,side:'right',size:'small'};
+ const snapshot={viewScope:'child',theme:'reef',settings:{names:true,motion:true},reef,students:[{id:'my-child',name:'Ada',species:'tang',mood:'happy'}]};
+ const h=await viewerHarness(snapshot,'?cocuk=11111111-1111-4111-8111-111111111111');
+ const ship=h.document.getElementById('reefShip');
+ assert.match(ship.getAttribute('src'),/kayip-gemi-3\.svg$/);
+ assert.equal(ship.dataset.side,'right');
+ assert.equal(h.document.getElementById('reefUnlock'),null);
+ h.setResponse({...snapshot,reef:{...reef,visible:false}});await h.intervals[1]();
+ assert.equal(h.document.getElementById('reefShip'),null);
+ h.setResponse(snapshot);await h.intervals[1]();
+ assert.ok(h.document.getElementById('reefShip'));
+ h.setResponse(null);await h.intervals[1]();
+ assert.equal(h.document.getElementById('reefShip'),null);
+ assert.deepEqual(h.io(),{reads:0,writes:0});
 });

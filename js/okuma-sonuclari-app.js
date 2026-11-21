@@ -254,25 +254,30 @@
     return 'an-d';
   }
 
+  function isAutoPaced(row) {
+    return parseDetailJson(row.detay_json)?.ogrenci_okuma_akisi === 'kelime-otomatik';
+  }
+
   function updateStats() {
     const source = filteredResults.filter(isCompletedAttempt);
     const answerable = source.filter(function(row) {
       return (row.toplam_soru || 0) > 0;
     });
-    const avgWpm = source.length
-      ? Math.round(source.reduce(function(total, row) { return total + (row.dakika_kelime || 0); }, 0) / source.length)
+    const measured = source.filter(row => !isAutoPaced(row));
+    const avgWpm = measured.length
+      ? Math.round(measured.reduce(function(total, row) { return total + Number(row.dakika_kelime || 0); }, 0) / measured.length)
       : 0;
     const avgComprehension = answerable.length
       ? Math.round(answerable.reduce(function(total, row) { return total + (row.anlama_yuzdesi || 0); }, 0) / answerable.length)
       : 0;
-    const bestWpm = source.length
-      ? Math.max.apply(null, source.map(function(row) { return row.dakika_kelime || 0; }))
+    const bestWpm = measured.length
+      ? Math.max.apply(null, measured.map(function(row) { return row.dakika_kelime || 0; }))
       : 0;
 
     document.getElementById('sToplam').textContent = String(source.length);
-    document.getElementById('sOrtWpm').textContent = avgWpm + ' k/dk';
+    document.getElementById('sOrtWpm').textContent = measured.length ? avgWpm + ' k/dk' : '—';
     document.getElementById('sOrtAnlama').textContent = avgComprehension + '%';
-    document.getElementById('sEnIyi').textContent = bestWpm + ' k/dk';
+    document.getElementById('sEnIyi').textContent = measured.length ? bestWpm + ' k/dk' : '—';
   }
 
   function getSelectedIds() {
@@ -318,7 +323,7 @@
           '<div class="td">' + selectCell + '</div>' +
           '<div class="td bold">' + escHtml((row.ad || '') + ' ' + (row.soyad || '')) + '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px">' + (locationMeta ? '<span style="font-size:11px;color:var(--muted);font-weight:700">' + escHtml(locationMeta) + '</span>' : '') + '<span style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:' + statusMeta.bg + ';color:' + statusMeta.color + ';font-size:10px;font-weight:800">' + statusMeta.label + '</span></div></div>' +
           '<div class="td">' + (row.sinif || '?') + '/' + (row.sube || '?') + '</div>' +
-          '<div class="td"><span class="hiz-badge ' + speedClass(wpm, target) + '">' + wpm + '</span></div>' +
+          '<div class="td">' + (isAutoPaced(row) ? '— <small title="Otomatik gösterim temposu">Otomatik</small>' : '<span class="hiz-badge ' + speedClass(wpm, target) + '">' + wpm + '</span>') + '</div>' +
           '<div class="td"><span class="anlama-badge ' + comprehensionClass(percent, row.toplam_soru || 0) + '">' + comprehensionText + '</span></div>' +
           '<div class="td">' + escHtml(row.metin_adi || '—') + '</div>' +
           '<div class="td">' + formatDuration(row.okuma_suresi_sn || 0) + '</div>' +
@@ -360,7 +365,7 @@
           '</div>' +
           '<div class="msk-grid">' +
             '<div class="msk-item"><span>Metin</span><strong>' + escHtml(row.metin_adi || '—') + '</strong></div>' +
-            '<div class="msk-item"><span>Okuma Hızı</span><strong>' + (row.dakika_kelime || 0) + ' k/dk</strong></div>' +
+            '<div class="msk-item"><span>' + (isAutoPaced(row) ? 'Gösterim temposu' : 'Okuma Hızı') + '</span><strong>' + (row.dakika_kelime || 0) + ' k/dk</strong></div>' +
             '<div class="msk-item"><span>Anlama</span><strong>' + percent + '</strong></div>' +
             '<div class="msk-item"><span>Süre</span><strong>' + formatDuration(row.okuma_suresi_sn || 0) + '</strong></div>' +
           '</div>' +
@@ -629,7 +634,7 @@
       return;
     }
 
-    const header = ['Ad', 'Soyad', 'Sınıf', 'Şube', 'İl', 'Okul', 'Durum', 'Metin', 'WPM', 'Hedef WPM', 'Süre (sn)', 'Doğru', 'Yanlış', 'Toplam Soru', 'Anlama %', 'Tarih'];
+    const header = ['Ad', 'Soyad', 'Sınıf', 'Şube', 'İl', 'Okul', 'Durum', 'Metin', 'WPM', 'Hedef WPM', 'Süre (sn)', 'Doğru', 'Yanlış', 'Toplam Soru', 'Anlama %', 'Tarih', 'Gösterim temposu (k/dk)'];
     const rows = filteredResults.map(function(row) {
       return [
         row.ad,
@@ -640,14 +645,15 @@
         row.okul || '',
         getAttemptStatusMeta(row).label,
         row.metin_adi,
-        row.dakika_kelime,
-        row.hedef_hiz,
+        isAutoPaced(row) ? '' : row.dakika_kelime,
+        isAutoPaced(row) ? '' : row.hedef_hiz,
         row.okuma_suresi_sn,
         row.dogru_sayisi,
         row.yanlis_sayisi,
         row.toplam_soru,
         row.anlama_yuzdesi,
         formatDate(row.olusturma_tarihi),
+        isAutoPaced(row) ? row.dakika_kelime : '',
       ];
     });
     const csv = [header].concat(rows)
