@@ -4,7 +4,7 @@
   const key = 'kemal:home-release:' + version;
   const sections = [
     ['Akıllı Tahta ve PDF', '/ogretmen/beyaztahta.html', [
-      'PDF dosyalarını cihazınızdan açın; birden fazla belge arasında sekmelerle geçin. Sayfalara yazın, çizin, görsel veya metin ekleyin; notları seçin, kopyalayın, yapıştırın ve silin.',
+      '512 MB ve 2.000 sayfaya kadar PDF dosyalarını cihazınızdan açın; birden fazla belge arasında sekmelerle geçin. Büyük kitaplar gerektiği kadar parçalı okunur. Sayfalara yazın, çizin, görsel veya metin ekleyin; notları seçin, kopyalayın, yapıştırın ve silin.',
       'Tek sayfa, yan yana veya alt alta görünüm; kaydırarak sayfa geçişi, arama, yer imleri, sayfa ekleme, çoğaltma, sıralama ve silme. Klavye kısayolları, iki parmakla yakınlaştırma ve dokunmatik gezinme.',
       'Notlu PDF ve tekrar düzenlenebilir tahta dosyasını cihazınıza kaydedin. Sınırlı yerel saklama ile kaldığınız yerden devam edin; çevrimdışı kullanım paketini isteğe bağlı hazırlayın. PDF dosyaları buluta gönderilmez.',
       'Daha hafif çizim akışı, kesintisiz fosforlu ve karakalem izleri, yenilenen simgeler, daha geniş çalışma alanı ve başlangıçta kapalı renk paleti.'

@@ -32,7 +32,7 @@ body.has-board-fullscreen { overflow:hidden; }
 #boardPlane.has-pdf { margin-top:var(--pdf-controls-height,104px) !important; }
 .board-exit-fullscreen { top:calc(var(--pdf-controls-height,64px) + 8px); }
 .pdf-page-nav,.pdf-view-actions { display:flex; align-items:center; flex-shrink:0; gap:2px; }
-.pdf-page-nav input { width:48px; height:34px; padding:3px; text-align:center; border:1px solid #cad8df; border-radius:4px; color:inherit; background:#fff; font:inherit; }
+.pdf-page-nav input { width:64px; height:34px; padding:3px; text-align:center; border:1px solid #cad8df; border-radius:4px; color:inherit; background:#fff; font:inherit; font-variant-numeric:tabular-nums; }
 .pdf-count { white-space:nowrap; padding-right:3px; }
 .pdf-zoom { width:38px; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
 .pdf-menu { position:absolute; right:0; top:calc(100% + 5px); width:340px; max-width:calc(100vw - 24px); padding:12px; display:grid; gap:12px; overflow:auto; touch-action:pan-y; overscroll-behavior:contain; background:#fff; border:1px solid #c2d4df; border-radius:8px; box-shadow:0 8px 24px #18334226; }
@@ -62,7 +62,7 @@ body.has-board-fullscreen { overflow:hidden; }
   .pdf-view-actions .pdf-zoom { display:none; }
   .pdf-bar .smart-icon { width:19px; height:19px; flex-basis:19px; }
   #boardPlane.has-pdf { margin-top:var(--pdf-controls-height,104px) !important; }
-  .pdf-page-nav input { width:42px; }
+  .pdf-page-nav input { width:60px; }
   .pdf-menu { width:320px; }
 }
 @media(max-width:760px) { .pdf-tab { max-width:190px; } .pdf-tab .pdf-tab-select { max-width:146px; } .pdf-tab .pdf-tab-close { min-width:38px; flex-basis:38px; } }

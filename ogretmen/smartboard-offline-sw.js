@@ -1,7 +1,7 @@
 /* Only the public smartboard shell and its fixed, local libraries are cached.
    PDF documents, account responses and microphone data never enter this cache. */
 importScripts('/ogretmen/smartboard-offline-assets.js');
-const CACHE = 'kemal-smartboard-shell-20261124-reading-v3';
+const CACHE = 'kemal-smartboard-shell-20261124-large-pdf-v1';
 const ALLOWED = new Set(self.SMARTBOARD_OFFLINE_ASSETS);
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

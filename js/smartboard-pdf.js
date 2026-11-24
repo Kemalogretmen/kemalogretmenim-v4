@@ -1,8 +1,78 @@
 (function(root) {
   'use strict';
-  var BASE = '/vendor/smartboard-pdf/', MAX_FILE = 50 * 1024 * 1024, MAX_CACHE = 24 * 1024 * 1024;
-  var MAX_NOTES = 8 * 1024 * 1024, MAX_PAGES = 300, MAX_PIXELS = 1800000;
-  var MAX_TABS = 8, MAX_OPEN_BYTES = 100 * 1024 * 1024;
+  var BASE = '/vendor/smartboard-pdf/', MAX_FILE = 512 * 1024 * 1024, MAX_CACHE = 24 * 1024 * 1024;
+  var MAX_NOTES = 8 * 1024 * 1024, MAX_PAGES = 2000, MAX_PIXELS = 1800000;
+  var MAX_TABS = 8, MAX_OPEN_BYTES = 2 * 1024 * 1024 * 1024, RANGE_CHUNK = 256 * 1024, ARCHIVE_CHUNK = 1024 * 1024;
+  async function localSource(lib, blob, onError) {
+    var initial = new Uint8Array(await blob.slice(0, RANGE_CHUNK).arrayBuffer());
+    if(!new TextDecoder().decode(initial.subarray(0,1024)).includes('%PDF-')) throw new Error('Geçerli bir PDF seçin.');
+    var stopped = false, queue = [], active = 0;
+    var range = new lib.PDFDataRangeTransport(blob.size, initial, true);
+    function pump() {
+      while(!stopped && active < 2 && queue.length) {
+        var request = queue.shift(); active++;
+        (async function(part) {
+          try {
+            var bytes = new Uint8Array(await blob.slice(part.begin,part.end).arrayBuffer());
+            if(!stopped) range.onDataRange(part.begin,bytes);
+          } catch(error) { if(!stopped) { range.abort();onError(error); } }
+          finally { active--;pump(); }
+        })(request);
+      }
+    }
+    range.requestDataRange = function(begin,end) {
+      if(stopped)return;
+      if(!Number.isInteger(begin)||!Number.isInteger(end)||begin<0||end<=begin||end>blob.size) { range.abort();onError(new Error('PDF dosya aralığı okunamadı.'));return; }
+      queue.push({begin:begin,end:end});pump();
+    };
+    range.abort = function() { stopped=true;queue.length=0; };
+    // Read only requested local file ranges; do not prefetch an entire textbook.
+    return {range:range,length:blob.size,rangeChunkSize:RANGE_CHUNK,disableStream:true,disableAutoFetch:true};
+  }
+  async function readProject(file, zip) {
+    var entries = {}, streams = [], problem;
+    var archive = new zip.Unzip(function(entry) {
+      var limit = entry.name === 'source.pdf' ? MAX_FILE : entry.name === 'manifest.json' ? MAX_NOTES : 0;
+      if(!limit || entries[entry.name] || (entry.originalSize!==undefined && entry.originalSize>limit)) throw new Error('Tahta arşivi sınırları aşılıyor.');
+      var record = entries[entry.name] = {parts:[],size:0,done:false};streams.push(entry);
+      entry.ondata = function(error,data,final) {
+        if(problem)return;
+        if(error) { problem=error;entry.terminate();return; }
+        record.size+=data.length;
+        if(record.size>limit) { problem=new Error('Tahta arşivi sınırları aşılıyor.');entry.terminate();return; }
+        record.parts.push(new Blob([data]));record.done=final;
+      };
+      entry.start();
+    });
+    archive.register(zip.UnzipInflate);
+    try {
+      for(var offset=0;offset<file.size;offset+=ARCHIVE_CHUNK) {
+        var end=Math.min(file.size,offset+ARCHIVE_CHUNK);
+        archive.push(new Uint8Array(await file.slice(offset,end).arrayBuffer()),end===file.size);
+        if(problem)throw problem;
+      }
+      var pdf=entries['source.pdf'],notes=entries['manifest.json'];
+      if(!pdf||!notes||!pdf.done||!notes.done)throw new Error('Tahta dosyası eksik.');
+      return {blob:new Blob(pdf.parts,{type:'application/pdf'}),manifest:JSON.parse(await new Blob(notes.parts).text())};
+    } catch(error) { streams.forEach(function(entry){entry.terminate();});throw error; }
+  }
+  async function writeProject(blob, manifest, zip) {
+    var notes = new TextEncoder().encode(JSON.stringify(manifest));
+    if(notes.length>MAX_NOTES)throw new Error('Çizim kaydı 8 MB sınırını aşıyor. PDF olarak kaydedin.');
+    var parts=[],problem,complete=false;
+    var archive=new zip.Zip(function(error,data,final){if(error)problem=error;else{parts.push(new Blob([data]));complete=final;}});
+    try {
+      var metadata=new zip.ZipPassThrough('manifest.json');archive.add(metadata);metadata.push(notes,true);
+      var source=new zip.ZipPassThrough('source.pdf');archive.add(source);
+      for(var offset=0;offset<blob.size;offset+=ARCHIVE_CHUNK) {
+        var end=Math.min(blob.size,offset+ARCHIVE_CHUNK);
+        source.push(new Uint8Array(await blob.slice(offset,end).arrayBuffer()),end===blob.size);
+        if(problem)throw problem;
+      }
+      archive.end();if(problem)throw problem;if(!complete)throw new Error('Tahta dosyası hazırlanamadı.');
+      return new Blob(parts,{type:'application/octet-stream'});
+    } catch(error) { archive.terminate();throw error; }
+  }
   async function disposeDocument(owner) {
     if(!owner) return;
     var doc = owner.doc, task = owner.task || (doc && doc.loadingTask);
@@ -198,24 +268,20 @@
       return saving;
     }
     async function parse(file, savedManifest) {
-      if(!file || !file.size || file.size > MAX_FILE + MAX_NOTES + 1048576) throw new Error('En fazla 50 MB PDF veya 59 MB tahta dosyası seçin.');
+      if(!file || !file.size || file.size > MAX_FILE + MAX_NOTES + 1048576) throw new Error('En fazla 512 MB PDF veya 521 MB tahta dosyası seçin.');
       var blob = file, m = savedManifest || null;
       if(/\.tahta$/i.test(file.name || '')) {
-        var zip = await script('fflate.min.js','fflate'), unpacked = zip.unzipSync(new Uint8Array(await file.arrayBuffer()), { filter: function(f) {
-          var limit = f.name === 'source.pdf' ? MAX_FILE : f.name === 'manifest.json' ? MAX_NOTES : 0;
-          if(!limit || f.originalSize > limit) throw new Error('Tahta arşivi sınırları aşılıyor.'); return true;
-        } });
-        if(!unpacked['source.pdf'] || !unpacked['manifest.json']) throw new Error('Tahta dosyası eksik.');
-        m = JSON.parse(new TextDecoder().decode(unpacked['manifest.json'])); blob = new Blob([unpacked['source.pdf']],{type:'application/pdf'});
+        var zip = await script('fflate.min.js','fflate'), unpacked = await readProject(file,zip);
+        m = unpacked.manifest;blob = unpacked.blob;
       }
-      if(blob.size > MAX_FILE) throw new Error('PDF 50 MB sınırını aşıyor.');
-      var bytes = new Uint8Array(await blob.arrayBuffer());
-      if(!new TextDecoder().decode(bytes.subarray(0,1024)).includes('%PDF-')) throw new Error('Geçerli bir PDF seçin.');
-      var lib = await reader(), task = lib.getDocument({data:bytes,cMapUrl:BASE+'cmaps/',cMapPacked:true,standardFontDataUrl:BASE+'standard_fonts/',wasmUrl:BASE+'wasm/',isEvalSupported:false,enableXfa:false,stopAtErrors:false,maxImageSize:12000000,canvasMaxAreaInBytes:16000000});
+      if(blob.size > MAX_FILE) throw new Error('PDF 512 MB sınırını aşıyor.');
+      var lib = await reader(), task,readError;
+      var source = await localSource(lib,blob,function(error){readError=error;if(task)task.destroy().catch(function(){});});
+      task = lib.getDocument(Object.assign(source,{cMapUrl:BASE+'cmaps/',cMapPacked:true,standardFontDataUrl:BASE+'standard_fonts/',wasmUrl:BASE+'wasm/',isEvalSupported:false,enableXfa:false,stopAtErrors:false,maxImageSize:12000000,canvasMaxAreaInBytes:16000000}));
       task.onPassword = function(updatePassword) { var password = root.prompt('PDF parolası:'); if(password === null) task.destroy(); else updatePassword(password); };
       var doc;
       try {
-        doc = await task.promise; if(doc.numPages > MAX_PAGES) throw new Error('Akıcı kullanım için en fazla 300 sayfalık bir PDF seçin.');
+        doc = await task.promise; if(doc.numPages > MAX_PAGES) throw new Error('En fazla 2.000 sayfalık bir PDF seçin.');
         var pages = [];
         if(m) { validateManifest(m,doc.numPages); pages = m.pages; }
         else {
@@ -227,19 +293,22 @@
           }
         }
         return { blob:blob, doc:doc, task:task, name:String(m && m.name || file.name || 'Belge.pdf').slice(0,180), pages:pages, index:m?Math.max(0,Math.min(pages.length-1,Math.floor(Number(m.index)||0))):0, zoom:m?Number(m.zoom)||1:null, fit:m?(['width','page'].indexOf(m.fit)>=0?m.fit:null):'page',scroll:m&&m.scroll,layout:m&&['facing','continuous'].indexOf(m.layout)>=0?m.layout:'single' };
-      } catch(error) { await task.destroy(); throw error; }
+      } catch(error) { await task.destroy(); throw readError || error; }
     }
     async function open(file, savedManifest) {
       if(busy) return;
+      if(file&&!/\.tahta$/i.test(file.name||'')&&file.size>MAX_FILE){message('PDF 512 MB sınırını aşıyor.',true);return;}
       if(tabs.length>=MAX_TABS){message('En fazla 8 PDF sekmesi açabilirsiniz. Kullanmadığınız bir sekmeyi kapatın.',true);return;}
-      if(tabs.reduce(function(sum,t){return sum+t.blob.size;},0)+file.size>MAX_OPEN_BYTES){message('Açık PDF’ler için toplam 100 MB sınırına ulaşıldı.',true);return;}
+      if(tabs.reduce(function(sum,t){return sum+t.blob.size;},0)+file.size>MAX_OPEN_BYTES){message('Açık PDF’ler için toplam 2 GB sınırına ulaşıldı. Kullanmadığınız bir sekmeyi kapatın.',true);return;}
       setBusy(true,'Belge hazırlanıyor…');
-      var next;
+      var next,previous=session;
       try {
-        next = await parse(file, savedManifest);capture(true);
-        if(session){cancelRender(true);await serial.catch(function(){});await disposeDocument(session);}
+        capture(true);
+        if(previous){cancelRender(true);await serial.catch(function(){});await disposeDocument(previous);}
+        next = await parse(file, savedManifest);
+        if(tabs.reduce(function(sum,t){return sum+t.blob.size;},0)+next.blob.size>MAX_OPEN_BYTES)throw new Error('Açık PDF’ler için toplam 2 GB sınırına ulaşıldı. Kullanmadığınız bir sekmeyi kapatın.');
         next.id='pdf-tab-'+(++tabId);tabs.push(next);await mount(next);setBusy(false,'');renderTabs();change();
-      } catch(error) { if(next&&tabs.indexOf(next)<0)await disposeDocument(next);setBusy(false,'PDF açılamadı: ' + (error.message || 'Dosya okunamadı')); status.classList.add('is-error'); }
+      } catch(error) { if(next&&tabs.indexOf(next)<0)await disposeDocument(next);if(previous&&!previous.doc){try{await mount(previous);await serial.catch(function(){});}catch(restoreError){}}setBusy(false,'PDF açılamadı: ' + (error.message || 'Dosya okunamadı')); status.classList.add('is-error'); }
     }
     async function mount(next) {
       if(!next.doc){var loaded=await parse(new File([next.blob],'Belge.pdf',{type:'application/pdf'}),manifest(next));next.doc=loaded.doc;next.task=loaded.task;}
@@ -292,7 +361,7 @@
       api.commit(); var pages = api.pages(), index = api.index(), page = pages[index], next = index;
       if(action === 'prev' || action === 'next') next += action === 'next' ? 1 : -1;
       if(action === 'add' || action === 'duplicate') {
-        if(pages.length >= MAX_PAGES) { message('En fazla 300 sayfa kullanılabilir.',true); return; }
+        if(pages.length >= MAX_PAGES) { message('En fazla 2.000 sayfa kullanılabilir.',true); return; }
         var copy = action === 'duplicate' ? JSON.parse(JSON.stringify({pdf:page.pdf,items:page.items})) : {items:[],pdf:{page:null,width:page.pdf.width,height:page.pdf.height}};
         copy.pdf.bookmark = false; pages.splice(index+1,0,api.normalize(copy)); next++;
       }
@@ -311,13 +380,12 @@
     function setView(value){if(!session||busy)return;api.commit();menu.hidden=true;if(views)views.leave();session.layout=['facing','continuous'].indexOf(value)>=0?value:'single';sync();fit('page');change();}
     function download(blob, name) { var url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url);},60000); }
     async function project() {
-      api.commit(); var zip = await script('fflate.min.js','fflate'), m = JSON.stringify(manifest());
-      if(new Blob([m]).size>MAX_NOTES) throw new Error('Çizim kaydı 8 MB sınırını aşıyor. PDF olarak kaydedin.');
-      var archive = zip.zipSync({'manifest.json':new TextEncoder().encode(m),'source.pdf':new Uint8Array(await session.blob.arrayBuffer())},{level:0});
-      download(new Blob([archive],{type:'application/octet-stream'}),session.name.replace(/\.(pdf|tahta)$/i,'')+'.tahta');
+      api.commit(); var zip = await script('fflate.min.js','fflate'), current=session, m=manifest();
+      download(await writeProject(current.blob,m,zip),current.name.replace(/\.(pdf|tahta)$/i,'')+'.tahta');
     }
     async function exportPDF() {
       if(root.Worker){await exportWorker();return;}
+      if(session.blob.size>50*1024*1024)throw new Error('Bu tarayıcı büyük PDF kaydını arka planda hazırlayamıyor. Düzenlenebilir dosyayı kaydedin veya güncel bir tarayıcı kullanın.');
       api.commit(); var lib = await script('pdf-lib.min.js','PDFLib'), source = await lib.PDFDocument.load(await session.blob.arrayBuffer()), output = await lib.PDFDocument.create();
       var pages = JSON.parse(JSON.stringify(api.pages().map(function(p){return {pdf:p.pdf,items:p.items};})));
       for(var i=0;i<pages.length;i++) {
@@ -345,7 +413,7 @@
       worker.onerror=function(){pending.forEach(function(p){p.reject(new Error('PDF kaydetme aracı yüklenemedi. Çevrimdışı hazırlamayı kontrol edin.'));});pending.clear();};
       function request(op,data,transfers){return new Promise(function(resolve,reject){var key=++id;pending.set(key,{resolve:resolve,reject:reject});worker.postMessage({id:key,op:op,data:data},transfers||[]);});}
       try{
-        var bytes=await session.blob.arrayBuffer();await request('start',{bytes:bytes,library:library},[bytes]);
+        await request('start',{blob:session.blob,library:library});
         for(var i=0;i<pages.length;i++){
           message('PDF kaydediliyor · '+(i+1)+' / '+pages.length);var p=pages[i],overlay=null;
           if(p.items.length){var c=await api.annotationCanvas(p),blob=await new Promise(function(resolve){c.toBlob(resolve,'image/png');});if(!blob)throw new Error('Çizimler hazırlanamadı.');overlay=await blob.arrayBuffer();c.width=c.height=1;}
@@ -419,7 +487,10 @@
         if(cmd === 'fullscreen') { api.fullscreen(); return; }
         if(cmd === 'fit' || cmd === 'width') { fit(cmd); change(); return; }
         if(cmd === 'in' || cmd === 'out') { api.zoom(api.view().zoom*(cmd==='in'?1.2:1/1.2));update();change();return; }
-        if(cmd === 'project' || cmd === 'export') { setBusy(true,'Dosya hazırlanıyor…'); try { if(cmd === 'project') await project(); else await exportPDF(); message('Dosya cihazınıza kaydedildi.'); } finally { setBusy(false);update(); } }
+        if(cmd === 'project' || cmd === 'export') {
+          if(cmd==='export'&&session.blob.size>128*1024*1024&&!root.confirm('Büyük kitabın tamamını PDF olarak kaydetmek ek bellek gerektirir. Düşük özellikli cihazlarda düzenlenebilir dosya daha hafiftir. PDF kaydına devam edilsin mi?'))return;
+          setBusy(true,'Dosya hazırlanıyor…'); try { if(cmd === 'project') await project(); else await exportPDF(); message('Dosya cihazınıza kaydedildi.'); } finally { setBusy(false);update(); }
+        }
       } catch(error) { message(error.name==='EncryptedPDFError'?'Parolalı PDF dışa aktarılamıyor. Korumasız bir kopya açın; çizimlerinizi düzenlenebilir dosya olarak saklayabilirsiniz.':error.message || 'İşlem tamamlanamadı.',true); }
     }
     [bar,notice].forEach(function(el){el.addEventListener('click',action);});
@@ -474,6 +545,6 @@
       restoreZoomAnchor:function(a){if(a.multi&&views&&views.mode()!=='single'){views.restore(a);return;}var r=plane.getBoundingClientRect(),z=api.view().zoom;stage.scrollLeft+=r.left+a.x*z-a.clientX;stage.scrollTop+=r.top+a.y*z-a.clientY;},
       manualZoom:function(){if(session&&!fitting)session.fit=null;},export:function(){if(session&&!busy)action({target:bar.querySelector('[data-pdf=export]')});},paint:function(ctx,w,h){if(session&&!canvas.hidden)ctx.drawImage(canvas,0,0,w,h);},open:open,fit:fit};
   }
-  root.SmartboardPDF={init:init,bounds:bounds,validateManifest:validateManifest,overlayPlacement:overlayPlacement,disposeDocument:disposeDocument,limits:{file:MAX_FILE,cache:MAX_CACHE,pages:MAX_PAGES,tabs:MAX_TABS,openBytes:MAX_OPEN_BYTES}};
+  root.SmartboardPDF={init:init,bounds:bounds,validateManifest:validateManifest,overlayPlacement:overlayPlacement,disposeDocument:disposeDocument,localSource:localSource,readProject:readProject,writeProject:writeProject,limits:{file:MAX_FILE,cache:MAX_CACHE,pages:MAX_PAGES,tabs:MAX_TABS,openBytes:MAX_OPEN_BYTES}};
   if(typeof module!=='undefined'&&module.exports)module.exports=root.SmartboardPDF;
 })(typeof window!=='undefined'?window:globalThis);

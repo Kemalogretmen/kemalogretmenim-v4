@@ -3,7 +3,7 @@ let source, output;
 self.onmessage = async function(event) {
   const {id, op, data} = event.data;
   try {
-    if(op === 'start') { importScripts(data.library);source = await PDFLib.PDFDocument.load(data.bytes); output = await PDFLib.PDFDocument.create(); }
+    if(op === 'start') { importScripts(data.library);source = await PDFLib.PDFDocument.load(data.blob ? await data.blob.arrayBuffer() : data.bytes); output = await PDFLib.PDFDocument.create(); }
     if(op === 'page') {
       let page;
       if(data.page === null) page = output.addPage([595.28, 595.28 * data.height / data.width]);
