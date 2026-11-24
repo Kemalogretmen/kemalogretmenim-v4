@@ -34,8 +34,8 @@ test('Sayaçlar yalnızca gerçek, geçerli pozitif oturumlardan gelir; URL takm
   assert.equal(C.formatCount(999),'999');assert.equal(C.formatCount(1234567),'1,2 Mn');
 });
 test('Her statik oyuna ayrı kapak atanır; oyun bağlantıları ve yerel varlıklar mevcuttur',()=>{
-  const h=setup();const imgs=h.all('.game-card .gc-cover');assert.equal(imgs.length,36);
-  assert.equal(new Set(imgs.map(x=>x.src)).size,36);
+  const h=setup();const imgs=h.all('.game-card .gc-cover');assert.equal(imgs.length,38);
+  assert.equal(new Set(imgs.map(x=>x.src)).size,imgs.length);
   h.all('.game-card').forEach(card=>assert.ok(fs.existsSync('oyun/'+card.getAttribute('href')),card.getAttribute('href')));
   Object.values(C.covers).forEach(p=>assert.ok(fs.statSync('assets/game-covers/'+p).size<100000));
   assert.equal(h.$('.gc-preview'),null);assert.equal(h.$('.gc-banner-em'),null);
@@ -70,7 +70,7 @@ test('Kategori, alfabetik sıralama ve sayfalama birlikte çalışır',()=>{
 });
 test('Yönetimden eklenen oyunlar korunur ve iframe bağlantısı kodlanır',()=>{
   const h=setup({dynamic:[{aktif:true,tip:'iframe',id:'oyun a',ad:'Yeni Deneme',kat:'Türkçe',createdAt:'2026-11-04'}]});
-  assert.equal(h.all('.game-card').length,37);assert.equal(C.normalizePath(h.all('.game-card').find(c=>c.textContent.includes('Yeni Deneme')).getAttribute('href')),'iframe-oyun.html?id=oyun%20a');
+  assert.equal(h.all('.game-card').length,39);assert.equal(C.normalizePath(h.all('.game-card').find(c=>c.textContent.includes('Yeni Deneme')).getAttribute('href')),'iframe-oyun.html?id=oyun%20a');
   h.search('deneme');assert.equal(h.visible().length,1);assert.ok(h.visible()[0].querySelector('.gc-cover'));
 });
 test('Oyun kartına tıklama bir başlatma olayı üretir; vitrin etiketi korunur',async()=>{

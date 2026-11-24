@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Poster Yazıcı | Kemal Öğretmenim</title>
+  <meta name="description" content="Görsellerini çok sayfalı poster olarak düzenle, kesim ve birleştirme kılavuzuyla PDF oluştur ya da yazdır." />
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/ogretmen/poster-yazici.html" />
+  <link rel="icon" href="/gorseller/logo.png" />
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home" />
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles />
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029" />
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles />
+  <link rel="stylesheet" href="/css/poster-yazici.css?v=20261124-release" />
+  <style id="dynamicPrintStyle"></style>
+</head>
+<body class="poster-yazici-page" data-kemal-local="true">
+  <main id="main-content" class="poster-studio" aria-labelledby="posterTitle">
+  <div id="app" class="app-shell">
+    <!-- ==================== TOP HEADER ==================== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="2" width="10.5" height="10.5" rx="2" fill="#2563EB" />
+            <rect x="15.5" y="2" width="10.5" height="10.5" rx="2" fill="#60A5FA" />
+            <rect x="2" y="15.5" width="10.5" height="10.5" rx="2" fill="#93C5FD" />
+            <rect x="15.5" y="15.5" width="10.5" height="10.5" rx="2" fill="#1D4ED8" />
+            <path d="M14 5V23M5 14H23" stroke="#FFFFFF" stroke-width="1.4" stroke-dasharray="2 2" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 id="posterTitle" class="brand-name">Poster Yazıcı</h1>
+          <a class="poster-back" href="/ogretmen-araclari.html">← Öğretmen araçları</a>
+        </div>
+      </div>
+
+      <div id="headerMetrics" class="header-metrics hidden">
+        <div class="metric-pill" title="Yazdırılacak toplam sayfa ve ızgara düzeni">
+          <span class="metric-dot blue"></span>
+          <span id="metricPages">4 Sayfa (2×2)</span>
+        </div>
+        <div class="metric-pill" title="Birleştirilmiş posterin fiziksel boyutu">
+          <span class="metric-dot slate"></span>
+          <span id="metricSize">37.0 × 54.4 cm</span>
+        </div>
+        <div id="metricDpiPill" class="metric-pill dpi-excellent" title="Etkili baskı çözünürlüğü (DPI)">
+          <span class="metric-dot"></span>
+          <span id="metricDpi">180 DPI · Mükemmel</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="btnPreviewMap" class="btn btn-ghost hidden" type="button" title="Birleştirme haritasını önizle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Harita</span>
+        </button>
+        <button id="btnPrintDirect" class="btn btn-secondary" type="button" disabled title="Doğrudan yazıcıya gönder">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <span>Yazdır</span>
+        </button>
+        <button id="btnDownloadPdf" class="btn btn-primary" type="button" disabled title="Çok sayfalı PDF poster indir">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>PDF İndir</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hidden File Input -->
+    <input id="fileInput" type="file" accept="image/*" hidden />
+
+    <!-- ==================== WORKSPACE ==================== -->
+    <div class="workspace">
+      <!-- ==================== LEFT CONTROLS SIDEBAR ==================== -->
+      <aside id="controlsPanel" class="controls-panel">
+        <!-- 1. GÖRSEL -->
+        <section class="card" id="cardImage">
+          <div class="card-header">
+            <h2 class="card-title">1. Görsel</h2>
+            <button id="btnChangeImage" class="link-btn hidden" type="button">Değiştir</button>
+          </div>
+
+          <div id="imageEmptyMini" class="empty-mini">
+            <button id="btnSideUpload" class="btn btn-secondary btn-block" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Görsel Yükle
+            </button>
+            <p class="hint-text">JPG, PNG, WebP, GIF, AVIF, SVG • Tarayıcıda yerel işlenir</p>
+          </div>
+
+          <div id="imageInfoBox" class="image-info-box hidden">
+            <div class="image-meta-row">
+              <canvas id="thumbCanvas" class="thumb-preview" width="56" height="56"></canvas>
+              <div class="image-meta-text">
+                <div id="imgFileName" class="img-filename">poster.jpg</div>
+                <div id="imgDimensions" class="img-dims">2400 × 1600 px · 3:2</div>
+              </div>
+            </div>
+
+            <div class="transform-bar" aria-label="Görsel dönüştürme">
+              <button id="btnRotateLeft" class="icon-btn" type="button" title="90° Sola Döndür">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                <span>-90°</span>
+              </button>
+              <button id="btnRotateRight" class="icon-btn" type="button" title="90° Sağa Döndür">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+                <span>+90°</span>
+              </button>
+              <button id="btnFlipH" class="icon-btn" type="button" title="Yatay Çevir">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M8 7l-5 5 5 5V7z"/><path d="M16 7l5 5-5 5V7z"/></svg>
+                <span>Yatay</span>
+              </button>
+              <button id="btnFlipV" class="icon-btn" type="button" title="Dikey Çevir">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18"/><path d="M7 8l5-5 5 5H7z"/><path d="M7 16l5 5 5-5H7z"/></svg>
+                <span>Dikey</span>
+              </button>
+            </div>
+
+            <div class="field-group compact">
+              <label class="field-label">Renk Modu</label>
+              <div class="segmented" id="colorModeSeg" role="radiogroup" aria-label="Renk Modu">
+                <button type="button" class="seg-btn active" data-value="original">Orijinal</button>
+                <button type="button" class="seg-btn" data-value="grayscale">Siyah-Beyaz</button>
+                <button type="button" class="seg-btn" data-value="highcontrast">Yüksek Kontrast</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. POSTER BOYUTU & IZGARA -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">2. Poster Boyutu</h2>
+          </div>
+
+          <div class="segmented mb-12" id="sizingModeSeg" role="tablist" aria-label="Boyutlandırma Modu">
+            <button type="button" class="seg-btn active" data-value="grid">Sayfa Izgarası</button>
+            <button type="button" class="seg-btn" data-value="dimensions">Poster Boyutu (cm)</button>
+          </div>
+
+          <!-- Grid Mode Controls -->
+          <div id="panelGridMode">
+            <div class="preset-chips mb-12" id="gridPresets" aria-label="Hızlı ızgara şablonları">
+              <button type="button" class="chip" data-cols="2" data-rows="1">2×1</button>
+              <button type="button" class="chip active" data-cols="2" data-rows="2">2×2</button>
+              <button type="button" class="chip" data-cols="3" data-rows="2">3×2</button>
+              <button type="button" class="chip" data-cols="3" data-rows="3">3×3</button>
+              <button type="button" class="chip" data-cols="4" data-rows="3">4×3</button>
+              <button type="button" class="chip" data-cols="4" data-rows="4">4×4</button>
+            </div>
+
+            <div class="grid-2 mb-10">
+              <div class="field-group">
+                <label class="field-label" for="inputCols">Genişlik (Sütun)</label>
+                <div class="stepper">
+                  <button type="button" class="step-btn" data-step="cols" data-delta="-1" aria-label="Sütun azalt">−</button>
+                  <input id="inputCols" type="number" min="1" max="20" value="2" />
+                  <button type="button" class="step-btn" data-step="cols" data-delta="1" aria-label="Sütun artır">+</button>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="inputRows">Yükseklik (Satır)</label>
+                <div class="stepper">
+                  <button type="button" class="step-btn" data-step="rows" data-delta="-1" aria-label="Satır azalt">−</button>
+                  <input id="inputRows" type="number" min="1" max="20" value="2" />
+                  <button type="button" class="step-btn" data-step="rows" data-delta="1" aria-label="Satır artır">+</button>
+                </div>
+              </div>
+            </div>
+
+            <label class="toggle-row mb-12">
+              <input id="chkLockAspectGrid" type="checkbox" />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">Görsel en-boy oranına göre satırı otomatik ayarla</span>
+            </label>
+
+            <div class="field-group mb-12">
+              <label class="field-label">Görsel Yerleşimi</label>
+              <div class="segmented" id="fitModeSeg">
+                <button type="button" class="seg-btn active" data-value="contain">Sığdır</button>
+                <button type="button" class="seg-btn" data-value="cover">Kapla (Kırp)</button>
+                <button type="button" class="seg-btn" data-value="stretch">Uzat</button>
+              </div>
+              <p id="coverPanHint" class="hint-text hidden">İpucu: Önizleme alanında görseli sürükleyerek kadrajı kaydırabilirsiniz.</p>
+            </div>
+          </div>
+
+          <!-- Physical Dimensions Mode Controls -->
+          <div id="panelDimMode" class="hidden">
+            <div class="preset-chips mb-12" id="dimPresets" aria-label="Hızlı cm genişlikleri">
+              <button type="button" class="chip" data-cm="40">40 cm</button>
+              <button type="button" class="chip" data-cm="60">60 cm</button>
+              <button type="button" class="chip" data-cm="80">80 cm</button>
+              <button type="button" class="chip" data-cm="100">100 cm</button>
+              <button type="button" class="chip" data-cm="120">120 cm</button>
+            </div>
+
+            <div class="grid-2 mb-10">
+              <div class="field-group">
+                <label class="field-label" for="inputTargetW">Genişlik (cm)</label>
+                <input id="inputTargetW" class="num-input" type="number" min="10" max="500" step="1" value="60" />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="inputTargetH">Yükseklik (cm)</label>
+                <input id="inputTargetH" class="num-input" type="number" min="10" max="500" step="1" value="40" />
+              </div>
+            </div>
+
+            <label class="toggle-row mb-10">
+              <input id="chkLockAspectDim" type="checkbox" checked />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">En-boy oranını kilitle</span>
+            </label>
+
+            <div id="dimSheetSummary" class="info-callout mb-12">
+              Gereken kağıt: <strong>2 × 2 = 4 Sayfa</strong>
+            </div>
+          </div>
+
+          <!-- Alignment 9-Point Grid -->
+          <div class="align-row">
+            <div>
+              <div class="field-label">Sayfa Hizalama</div>
+              <div class="hint-text" id="alignLabelText">Ortalanmış</div>
+              <button id="btnResetPan" class="link-btn hidden" type="button">Kaydırmayı Sıfırla</button>
+            </div>
+            <div class="align-pad" id="alignPad" role="radiogroup" aria-label="Hizalama noktası">
+              <button type="button" class="align-dot" data-ax="0"   data-ay="0"   title="Sol Üst"></button>
+              <button type="button" class="align-dot" data-ax="0.5" data-ay="0"   title="Üst Orta"></button>
+              <button type="button" class="align-dot" data-ax="1"   data-ay="0"   title="Sağ Üst"></button>
+              <button type="button" class="align-dot" data-ax="0"   data-ay="0.5" title="Sol Orta"></button>
+              <button type="button" class="align-dot active" data-ax="0.5" data-ay="0.5" title="Tam Orta"></button>
+              <button type="button" class="align-dot" data-ax="1"   data-ay="0.5" title="Sağ Orta"></button>
+              <button type="button" class="align-dot" data-ax="0"   data-ay="1"   title="Sol Alt"></button>
+              <button type="button" class="align-dot" data-ax="0.5" data-ay="1"   title="Alt Orta"></button>
+              <button type="button" class="align-dot" data-ax="1"   data-ay="1"   title="Sağ Alt"></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. KAĞIT & YAZICI -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">3. Kağıt &amp; Yazıcı</h2>
+          </div>
+
+          <div class="field-group mb-12">
+            <label class="field-label" for="selectPaper">Kağıt Boyutu</label>
+            <select id="selectPaper" class="select-input">
+              <option value="a4" selected>A4 (210 × 297 mm)</option>
+              <option value="a3">A3 (297 × 420 mm)</option>
+              <option value="a5">A5 (148 × 210 mm)</option>
+              <option value="letter">Letter (216 × 279 mm)</option>
+              <option value="legal">Legal (216 × 356 mm)</option>
+              <option value="custom">Özel Boyut (mm)</option>
+            </select>
+          </div>
+
+          <div id="customPaperBox" class="grid-2 mb-12 hidden">
+            <div class="field-group">
+              <label class="field-label" for="inputCustomW">Kağıt Eni (mm)</label>
+              <input id="inputCustomW" class="num-input" type="number" min="50" max="2000" value="210" />
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="inputCustomH">Kağıt Boyu (mm)</label>
+              <input id="inputCustomH" class="num-input" type="number" min="50" max="2000" value="297" />
+            </div>
+          </div>
+
+          <div class="field-group mb-12">
+            <label class="field-label">Kağıt Yönü</label>
+            <div class="segmented" id="orientationSeg">
+              <button type="button" class="seg-btn active" data-value="auto" id="btnOrientAuto">Otomatik</button>
+              <button type="button" class="seg-btn" data-value="portrait">Dikey</button>
+              <button type="button" class="seg-btn" data-value="landscape">Yatay</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="slider-header">
+              <label class="field-label" for="rangeMargin">Yazıcı Kenar Boşluğu</label>
+              <span class="slider-val"><strong id="valMargin">10</strong> mm</span>
+            </div>
+            <input id="rangeMargin" class="range-input" type="range" min="0" max="25" step="1" value="10" />
+            <div class="preset-chips mt-6" id="marginPresets">
+              <button type="button" class="chip sm" data-mm="0">0 mm (Kenarsız)</button>
+              <button type="button" class="chip sm" data-mm="5">5 mm</button>
+              <button type="button" class="chip sm active" data-mm="10">10 mm</button>
+              <button type="button" class="chip sm" data-mm="15">15 mm</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. KESİM & BİRLEŞTİRME -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">4. Kesim &amp; Birleştirme</h2>
+          </div>
+
+          <div class="field-group mb-14">
+            <div class="slider-header">
+              <label class="field-label" for="rangeOverlap">Bindirme / Yapıştırma Payı</label>
+              <span class="slider-val"><strong id="valOverlap">10</strong> mm</span>
+            </div>
+            <input id="rangeOverlap" class="range-input" type="range" min="0" max="25" step="1" value="10" />
+            <div class="preset-chips mt-6" id="overlapPresets">
+              <button type="button" class="chip sm" data-mm="0">Yok (0 mm)</button>
+              <button type="button" class="chip sm active" data-mm="10">10 mm</button>
+              <button type="button" class="chip sm" data-mm="15">15 mm</button>
+              <button type="button" class="chip sm" data-mm="20">20 mm</button>
+            </div>
+            <p class="hint-text mt-4">Komşu sayfaların kenarında üst üste binen kopya şerit bırakır; yapıştırmayı kusursuzlaştırır.</p>
+          </div>
+
+          <div class="toggles-stack mb-14">
+            <label class="toggle-row">
+              <input id="chkCutMarks" type="checkbox" checked />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">Kesim işaretleri (köşe çizgileri)</span>
+            </label>
+            <label class="toggle-row">
+              <input id="chkOverlapGuides" type="checkbox" checked />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">Bindirme hizalama çizgisi</span>
+            </label>
+            <label class="toggle-row">
+              <input id="chkPageLabels" type="checkbox" checked />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">Sayfa numarası &amp; koordinat etiketi</span>
+            </label>
+            <label class="toggle-row">
+              <input id="chkAssemblyMap" type="checkbox" checked />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">Birleştirme haritası ekle (1. Sayfa)</span>
+            </label>
+            <label class="toggle-row">
+              <input id="chkSkipBlank" type="checkbox" checked />
+              <span class="toggle-switch"></span>
+              <span class="toggle-label">Boş sayfaları otomatik atla</span>
+            </label>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">PDF Çıktı Kalitesi</label>
+            <div class="segmented" id="qualitySeg">
+              <button type="button" class="seg-btn" data-value="150">150 DPI</button>
+              <button type="button" class="seg-btn active" data-value="220">220 DPI</button>
+              <button type="button" class="seg-btn" data-value="300">300 DPI</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. BASKI KALİTESİ (DPI) -->
+        <section id="cardDpi" class="card dpi-card hidden">
+          <div class="dpi-head">
+            <span class="card-title">Baskı Çözünürlüğü</span>
+            <strong id="dpiValueBadge" class="dpi-badge">180 DPI</strong>
+          </div>
+          <div class="dpi-bar-track">
+            <div id="dpiBarFill" class="dpi-bar-fill" style="width: 80%"></div>
+          </div>
+          <p id="dpiDescText" class="hint-text">Yakından bile çok net baskı.</p>
+        </section>
+      </aside>
+
+      <!-- ==================== RIGHT INTERACTIVE STAGE ==================== -->
+      <section class="stage-panel" id="stagePanel" aria-label="Poster önizlemesi">
+        <!-- Empty Upload Dropzone -->
+        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Görsel yükle veya sürükleyip bırak">
+          <div class="dropzone-card">
+            <div class="dropzone-art" aria-hidden="true">
+              <svg width="118" height="92" viewBox="0 0 118 92" fill="none">
+                <!-- 4 A4 sheets with a mountain/sun poster spread across them -->
+                <rect x="6" y="6" width="48" height="36" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+                <rect x="64" y="6" width="48" height="36" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+                <rect x="6" y="50" width="48" height="36" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+                <rect x="64" y="50" width="48" height="36" rx="4" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+                <!-- Art inside sheets -->
+                <rect x="11" y="11" width="38" height="26" rx="2" fill="#DBEAFE"/>
+                <circle cx="24" cy="21" r="6" fill="#F59E0B"/>
+                <rect x="69" y="11" width="38" height="26" rx="2" fill="#DBEAFE"/>
+                <path d="M69 37L85 20L107 37H69Z" fill="#60A5FA"/>
+                <rect x="11" y="55" width="38" height="26" rx="2" fill="#EFF6FF"/>
+                <path d="M11 81L29 60L49 81H11Z" fill="#2563EB"/>
+                <rect x="69" y="55" width="38" height="26" rx="2" fill="#EFF6FF"/>
+                <path d="M69 81L86 58L107 81H69Z" fill="#1D4ED8"/>
+                <!-- Scissors / join hints -->
+                <line x1="59" y1="4" x2="59" y2="88" stroke="#2563EB" stroke-width="1.4" stroke-dasharray="3 3"/>
+                <line x1="4" y1="46" x2="114" y2="46" stroke="#2563EB" stroke-width="1.4" stroke-dasharray="3 3"/>
+              </svg>
+            </div>
+            <h1 class="dropzone-title">Görselinizi Çoklu A4 Postere Dönüştürün</h1>
+            <p class="dropzone-sub">
+              Tek bir fotoğrafı, çizimi veya afişi birden fazla A4 sayfaya otomatik bölün.
+              Kesim çizgileri, yapıştırma payı ve birleştirme haritası dahil hazır PDF indirin.
+            </p>
+            <div class="dropzone-actions">
+              <button id="btnHeroUpload" class="btn btn-primary btn-lg" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Görsel Seç
+              </button>
+              <button id="btnLoadSample" class="btn btn-secondary btn-lg" type="button">
+                Örnek Poster ile Dene
+              </button>
+            </div>
+            <p class="dropzone-hint">veya görseli bu alana sürükleyip bırakın • Panodan yapıştırmak için <kbd>⌘V</kbd> / <kbd>Ctrl+V</kbd></p>
+            <div class="dropzone-badges">
+              <span class="soft-badge">JPG • PNG • WebP • GIF • AVIF • SVG</span>
+              <span class="soft-badge green">Tarayıcıda %100 Yerel &amp; Gizli</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Interactive Preview -->
+        <div id="previewWorkspace" class="preview-workspace hidden">
+          <div class="stage-toolbar">
+            <div class="toolbar-left">
+              <div class="segmented sm" id="viewModeSeg">
+                <button type="button" class="seg-btn active" data-value="assembled">Birleşik Poster</button>
+                <button type="button" class="seg-btn" data-value="exploded">Ayrık Sayfalar</button>
+              </div>
+              <button id="btnToggleOverlapVis" class="tool-chip active" type="button" title="Bindirme şeritlerini önizlemede vurgula">
+                <span class="swatch amber"></span>
+                Bindirme
+              </button>
+              <button id="btnToggleGuidesVis" class="tool-chip active" type="button" title="Sayfa numaralarını ve çizgileri göster">
+                <span class="swatch blue"></span>
+                Izgara &amp; No
+              </button>
+            </div>
+
+            <div class="toolbar-right">
+              <button id="btnZoomOut" class="zoom-btn" type="button" title="Uzaklaştır">−</button>
+              <span id="zoomLabel" class="zoom-label">100%</span>
+              <button id="btnZoomIn" class="zoom-btn" type="button" title="Yakınlaştır">+</button>
+              <button id="btnZoomFit" class="tool-chip" type="button" title="Ekrana Sığdır">Sığdır</button>
+            </div>
+          </div>
+
+          <div id="stageViewport" class="stage-viewport">
+            <canvas id="previewCanvas" tabindex="0" aria-label="Poster önizlemesi. Ok tuşlarıyla sayfa seçin, Enter ile açın. Artı ve eksi tuşlarıyla yakınlaştırın."></canvas>
+            <div id="hoverTooltip" class="hover-tooltip hidden"></div>
+          </div>
+
+          <div class="stage-footer">
+            <div class="stage-footer-left">
+              <span id="stageHint" aria-live="polite">Sayfayı açmak için dokunun veya ok tuşlarıyla seçip Enter’a basın.</span>
+              <button id="btnRestoreExcluded" class="link-btn hidden" type="button">Hariç tutulanları geri al</button>
+            </div>
+            <div class="print-rule-pill">
+              <strong>Yazdırma İpucu:</strong> PDF yazdırırken ölçeği <strong>%100 (Gerçek Boyut)</strong> seçin.
+            </div>
+          </div>
+        </div>
+
+        <!-- Drag Overlay when dragging a new file over the stage -->
+        <div id="dragOverlay" class="drag-overlay hidden">
+          <div class="drag-overlay-box">
+            <strong>Görseli buraya bırakın</strong>
+            <span>Mevcut poster ayarlarınızla anında bölünecektir</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ==================== SINGLE SHEET / MAP INSPECTION MODAL ==================== -->
+  <div id="sheetModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalTitle" class="modal-title">Sayfa 1 / 4 — S1-K1</h3>
+          <p id="modalSub" class="modal-sub">A4 Dikey • Kenar: 10 mm • Bindirme: 10 mm</p>
+        </div>
+        <div class="modal-nav">
+          <button id="btnModalPrev" class="icon-btn" type="button" title="Önceki sayfa">←</button>
+          <button id="btnModalNext" class="icon-btn" type="button" title="Sonraki sayfa">→</button>
+          <button id="btnModalClose" class="icon-btn close-btn" type="button" aria-label="Kapat">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <canvas id="modalCanvas"></canvas>
+      </div>
+      <div class="modal-footer">
+        <label id="modalIncludeWrap" class="toggle-row">
+          <input id="chkModalInclude" type="checkbox" checked />
+          <span class="toggle-switch"></span>
+          <span class="toggle-label">Bu sayfayı PDF'ye dahil et</span>
+        </label>
+        <div class="modal-footer-actions">
+          <button id="btnModalDownloadPng" class="btn btn-secondary" type="button">Bu Sayfayı PNG İndir</button>
+          <button id="btnModalOk" class="btn btn-primary" type="button">Kapat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXPORT PROGRESS MODAL ==================== -->
+  <div id="exportModal" class="modal-backdrop hidden" role="status" aria-live="polite">
+    <div class="export-dialog">
+      <div class="spinner" aria-hidden="true"></div>
+      <h3 id="exportTitle" class="export-title">PDF Hazırlanıyor...</h3>
+      <p id="exportStep" class="export-step">Sayfalar işleniyor</p>
+      <div class="progress-track">
+        <div id="exportProgressBar" class="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION ==================== -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <!-- ==================== DIRECT BROWSER PRINT CONTAINER ==================== -->
+  <div id="printContainer" class="print-container" aria-hidden="true"></div>
+</main>
+
+  <script src="/js/site.js?v=20261124-local"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
+  <script src="/js/poster-yazici/geometry.js?v=20261124"></script>
+  <script src="/js/poster-yazici/pdf-writer.js?v=20261124"></script>
+  <script src="/js/poster-yazici/app.js?v=20261124"></script>
+</body>
+</html>

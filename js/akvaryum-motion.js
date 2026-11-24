@@ -115,7 +115,7 @@
     const result = new Map();
     sorted.forEach((s,i) => {
       const size = s.species === 'megalodon'
-        ? Math.min(s.size * scale, Math.max(18, Math.min(maxSize * 1.42, width - 18, (height - 59) / .67)))
+        ? Math.min(s.size * scale, Math.max(18, Math.min(maxSize * 1.42, width - 18, (height - 59) / .67)) * .7)
         : s.size * scale;
       const p = profile(s.species), row = Math.floor(i / columns);
       let minY = Math.min(26, Math.max(0,height - size * .67 - 30));

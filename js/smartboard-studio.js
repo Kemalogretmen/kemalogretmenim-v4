@@ -2,7 +2,7 @@
   'use strict';
   var CATALOG = [
     ['spotlight', 'Odak ışığı', 'scan-eye'], ['shade', 'Ekran perdesi', 'panel-top-close'],
-    ['laser', 'Lazer işaretçi', 'mouse-pointer-2'], ['timer', 'Görsel süre', 'timer'],
+    ['laser', 'Lazer işaretçi', 'mouse-pointer-2'], ['reading', 'Okuma şeridi', 'book-open'], ['timer', 'Görsel süre', 'timer'],
     ['random', 'Öğrenci seç', 'shuffle'], ['groups', 'Grup oluştur', 'users'],
     ['score', 'Puan tablosu', 'trophy'], ['signal', 'Çalışma modu', 'traffic-cone'],
     ['note', 'Ders notu', 'sticky-note'], ['noise', 'Ses göstergesi', 'mic'],
@@ -48,13 +48,15 @@
     function layout() {
       resizeQueued = false;
       var parent = document.fullscreenElement || document.webkitFullscreenElement;
-      var target = parent === stage ? stage : document.body;
+      var target = parent === stage || stage.classList.contains('is-board-fullscreen') ? stage : document.body;
       if(host.parentNode !== target) target.appendChild(host);
       if(catalog.parentNode !== target) target.appendChild(catalog);
       var r = stage.getBoundingClientRect(), top = Math.max(0, r.top), left = Math.max(0, r.left);
       host.style.left = left + 'px'; host.style.top = top + 'px';
       host.style.width = Math.max(0, Math.min(innerWidth, r.right) - left) + 'px';
       host.style.height = Math.max(0, Math.min(innerHeight, r.bottom) - top) + 'px';
+      host.classList.toggle('has-pdf',stage.classList.contains('has-pdf'));
+      host.style.setProperty('--pdf-controls-height',(Number(stage.dataset.pdfTop)||70)+'px');
       host.hidden = r.bottom <= 0 || r.top >= innerHeight;
       widgets.forEach(function(w) { position(w); });
     }
@@ -62,7 +64,7 @@
     function position(w) {
       var maxX = Math.max(0, host.clientWidth - w.el.offsetWidth - 8), maxY = Math.max(0, host.clientHeight - w.el.offsetHeight - 80);
       w.el.style.left = Math.max(8, Math.min(maxX, Number(w.state.x) || maxX - 4)) + 'px';
-      w.el.style.top = Math.max(8, Math.min(maxY, Number(w.state.y) || 12)) + 'px'; w.el.style.right = 'auto';
+      w.el.style.top = Math.max(stage.classList.contains('has-pdf')?(Number(stage.dataset.pdfTop)||70):8, Math.min(maxY, Number(w.state.y) || 12)) + 'px'; w.el.style.right = 'auto';
     }
     function closeCatalog() { catalog.hidden = true; launches.forEach(function(button) { button.setAttribute('aria-expanded', 'false'); }); }
     launches.forEach(function(button) { button.addEventListener('click', function() {
@@ -79,7 +81,7 @@
       if(button.dataset.sbAction === 'close-catalog') { closeCatalog(); activeLaunch.focus(); return; }
       var type = button.dataset.sbTool; if(!type) return;
       if(type !== 'image') api.activate();
-      if(['spotlight', 'shade', 'laser'].indexOf(type) >= 0) { openEffect(type); }
+      if(['spotlight', 'shade', 'laser', 'reading'].indexOf(type) >= 0) { openEffect(type); }
       else if(type === 'image') { imageInput.click(); }
       else openWidget(type);
       if(type !== 'image') closeCatalog();
@@ -87,25 +89,26 @@
     function closeEffect() { if(effect) { effect.remove(); effect = null; } }
     function openEffect(type) {
       closeEffect(); layout();
+      var isLight = type === 'spotlight' || type === 'reading';
       var el = document.createElement('div'); el.className = 'sb-focus'; el.dataset.effect = type;
-      el.innerHTML = (type === 'spotlight' ? '<div class="sb-spot-hole"></div>' : type === 'shade' ? '<div class="sb-shade"><span class="sb-shade-grip">' + icon('move') + '</span></div>' : '<div class="sb-laser-dot" hidden></div>') +
+      el.innerHTML = (isLight ? '<div class="sb-spot-hole"></div>' : type === 'shade' ? '<div class="sb-shade"><span class="sb-shade-grip">' + icon('move') + '</span></div>' : '<div class="sb-laser-dot" hidden></div>') +
         '<div class="sb-focus-controls"><strong>' + CATALOG.find(function(t) { return t[0] === type; })[1] + '</strong>' +
-        (type !== 'laser' ? '<input type="range" min="' + (type === 'spotlight' ? 70 : 0) + '" max="' + (type === 'spotlight' ? 460 : 100) + '" value="' + (type === 'spotlight' ? 200 : 0) + '" aria-label="' + (type === 'spotlight' ? 'Odak boyutu' : 'Perdeyi aç') + '">' : '') + iconButton('x', 'Aracı kapat', 'close-effect') + '</div>';
+        (type !== 'laser' ? '<input type="range" min="' + (isLight ? 40 : 0) + '" max="' + (isLight ? 460 : 100) + '" value="' + (isLight ? 200 : 0) + '" aria-label="' + (isLight ? 'Odak boyutu' : 'Perdeyi aç') + '">' : '') + iconButton('x', 'Aracı kapat', 'close-effect') + '</div>';
       host.prepend(el); effect = el;
       var x = host.clientWidth / 2, y = host.clientHeight / 2, size = Math.min(200, host.clientWidth * .7), down = null;
       function paint() {
         var hole = el.querySelector('.sb-spot-hole');
-        if(hole) { hole.style.left = (x - size / 2) + 'px'; hole.style.top = (y - size / 2) + 'px'; hole.style.setProperty('--spot-size', size + 'px'); }
+        if(hole) { hole.style.left = (type === 'reading' ? 0 : x - size / 2) + 'px'; hole.style.top = (y - size / 2) + 'px'; hole.style.setProperty('--spot-size', size + 'px'); }
       }
       paint();
       var slider = el.querySelector('input');
-      if(slider) slider.addEventListener('input', function() { if(type === 'spotlight') { size = Number(slider.value); paint(); } else el.querySelector('.sb-shade').style.setProperty('--reveal', slider.value + '%'); });
+      if(slider) slider.addEventListener('input', function() { if(isLight) { size = Number(slider.value); paint(); } else el.querySelector('.sb-shade').style.setProperty('--reveal', slider.value + '%'); });
       el.querySelector('[data-sb-action="close-effect"]').addEventListener('click', closeEffect);
       el.addEventListener('pointerdown', function(e) {
         if(e.target.closest('.sb-focus-controls')) return;
         e.preventDefault(); var r = host.getBoundingClientRect();
         down = e.pointerId; el.setPointerCapture(down); x = e.clientX - r.left; y = e.clientY - r.top;
-        if(type === 'spotlight') paint();
+        if(isLight) paint();
       });
       el.addEventListener('pointermove', function(e) {
         if(e.target.closest('.sb-focus-controls')) return;
@@ -114,7 +117,7 @@
           var dot = el.querySelector('.sb-laser-dot'); dot.hidden = false; dot.style.left = (e.clientX - r.left) + 'px'; dot.style.top = (e.clientY - r.top) + 'px';
         } else if(down === e.pointerId) {
           e.preventDefault(); x = e.clientX - r.left; y = e.clientY - r.top;
-          if(type === 'spotlight') paint();
+          if(isLight) paint();
           else { slider.value = Math.max(0, Math.min(100, 100 - y / Math.max(1, host.clientHeight) * 100)); slider.dispatchEvent(new Event('input')); }
         }
       });
@@ -330,21 +333,67 @@
     }
     function noiseWidget(w) {
       var b = w.body, stream = null, context = null, interval = null, generation = 0;
-      b.innerHTML = '<div class="sb-noise-meter"><span></span></div><output class="sb-noise-label" aria-live="polite">Mikrofon kapalı</output><label>Hassasiyet<input type="range" min="1" max="12" value="5"></label><button class="sb-command" type="button">Mikrofonu aç</button>';
-      var button = b.querySelector('button'), output = b.querySelector('output');
+      var history = [], smooth = 0, expanded = false, phase = 0, disposed = false;
+      w.el.classList.add('sb-noise-widget');
+      b.innerHTML = '<div class="sb-noise-scene" data-mode="bubbles" aria-hidden="true"><div class="sb-noise-bubbles">' + Array.from({length:16},function(_,i){return '<span style="--bubble:'+i+';--bubble-color:'+['#32a8ac','#e5b635','#e67b79','#6c9e48'][i%4]+'"></span>';}).join('') + '</div><div class="sb-noise-columns">' + Array.from({length:16},function(){return '<span></span>';}).join('') + '</div><div class="sb-noise-caption">Sakin sınıf</div></div>' +
+        '<div class="sb-noise-summary"><output class="sb-noise-label" aria-live="polite">Mikrofon kapalı</output><output class="sb-noise-value">0 / 100</output></div><div class="sb-noise-meter"><span></span><i class="sb-noise-limit"></i></div>' +
+        '<svg class="sb-noise-graph" viewBox="0 0 300 70" preserveAspectRatio="none" role="img" aria-label="Son 14 saniyenin göreceli ses grafiği"><path class="sb-noise-grid" d="M0 20H300M0 45H300"/><path class="sb-noise-target"/><path class="sb-noise-line"/></svg>' +
+        '<div class="sb-noise-controls"><label>Görünüm<select class="sb-noise-mode"><option value="bubbles">Baloncuklar</option><option value="columns">Ritim çubukları</option><option value="graph">Ses grafiği</option></select></label><label>Çalışma<select class="sb-noise-preset"><option value="35">Sessiz çalışma</option><option value="60" selected>Grup çalışması</option><option value="85">Alkış ölçer</option></select></label><label>Hassasiyet<input class="sb-noise-sensitivity" type="range" min="1" max="12" value="5"></label><label>Ses sınırı <output class="sb-noise-target-value">60</output><input class="sb-noise-threshold" type="range" min="10" max="95" value="60"></label><label class="sb-check"><input class="sb-noise-smoothing" type="checkbox" checked>Ani sesleri yumuşat</label></div>' +
+        '<div class="sb-actions"><button class="sb-command" type="button">Mikrofonu aç</button>'+iconButton('expand','Ses göstergesini tam ekran aç','noise-fullscreen')+'</div><p class="sb-noise-privacy">Göreceli seviye; desibel ölçümü değildir. Ses kaydedilmez veya gönderilmez.</p>';
+      var button = b.querySelector('.sb-command'), output = b.querySelector('.sb-noise-label'), scene = b.querySelector('.sb-noise-scene');
+      var gain = b.querySelector('.sb-noise-sensitivity'), threshold = b.querySelector('.sb-noise-threshold'), smoothing = b.querySelector('.sb-noise-smoothing');
+      var bubbles = b.querySelectorAll('.sb-noise-bubbles span'), columns = b.querySelectorAll('.sb-noise-columns span');
+      function settings() {
+        b.querySelector('.sb-noise-limit').style.left = threshold.value+'%'; b.querySelector('.sb-noise-target-value').value=threshold.value;
+        var y=66-Number(threshold.value)*.6;b.querySelector('.sb-noise-target').setAttribute('d','M0 '+y+'H300');
+        w.state.sensitivity=Number(gain.value);w.state.threshold=Number(threshold.value);w.state.noiseMode=b.querySelector('.sb-noise-mode').value;save();
+      }
+      gain.value = Math.max(1,Math.min(12,Number(w.state.sensitivity)||5));threshold.value=Math.max(10,Math.min(95,Number(w.state.threshold)||60));
+      if(['bubbles','columns','graph'].indexOf(w.state.noiseMode)>=0)b.querySelector('.sb-noise-mode').value=w.state.noiseMode;
+      scene.dataset.mode=b.querySelector('.sb-noise-mode').value;
+      b.querySelector('.sb-noise-mode').addEventListener('change',function(e){scene.dataset.mode=e.target.value;settings();});
+      b.querySelector('.sb-noise-preset').addEventListener('change',function(e){threshold.value=e.target.value;settings();});
+      gain.addEventListener('input',settings);threshold.addEventListener('input',settings);settings();
+      function paint(level) {
+        phase++;
+        var limit=Number(threshold.value), high=level>limit, color=high?'#c94e46':level>limit*.72?'#c19124':'#278b83';
+        var bar=b.querySelector('.sb-noise-meter span');bar.style.width=level+'%';bar.style.background=color;
+        b.querySelector('.sb-noise-value').value=Math.round(level)+' / 100';
+        var text=high?'Biraz daha sessiz':level>limit*.72?'Sınıf hareketli':'Sakin sınıf';if(stream&&output.value!==text)output.value=text;
+        scene.classList.toggle('is-loud',high);scene.querySelector('.sb-noise-caption').textContent=stream?text:'Mikrofon kapalı';
+        history.push(level);if(history.length>120)history.shift();
+        b.querySelector('.sb-noise-line').setAttribute('d',history.map(function(v,i){return (i?'L':'M')+(i*300/119).toFixed(1)+' '+(66-v*.6).toFixed(1);}).join(' '));
+        var reduced=root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        bubbles.forEach(function(el,i){var jump=reduced?0:level*(.35+((i*7)%11)/14)*Math.abs(Math.sin(phase*.34+i*1.7));el.style.transform='translateY(-'+jump.toFixed(1)+'px)';});
+        columns.forEach(function(el,i){el.style.height=Math.max(4,level*(.35+Math.abs(Math.sin(phase*.3+i))*.65))+'%';el.style.background=color;});
+      }
+      function exitExpanded() {
+        if(!expanded)return;expanded=false;w.el.classList.remove('is-noise-expanded');host.appendChild(w.el);position(w);
+        var fs=document.fullscreenElement||document.webkitFullscreenElement;if(fs===w.el){var exit=document.exitFullscreen||document.webkitExitFullscreen;if(exit)Promise.resolve(exit.call(document)).catch(function(){});}
+        var control=b.querySelector('[data-sb-action=noise-fullscreen]');control.setAttribute('aria-label','Ses göstergesini tam ekran aç');control.title='Ses göstergesini tam ekran aç';
+      }
+      b.querySelector('[data-sb-action=noise-fullscreen]').addEventListener('click',function(){
+        if(expanded){exitExpanded();return;}expanded=true;w.el.classList.add('is-noise-expanded');
+        (document.fullscreenElement||document.webkitFullscreenElement||(stage.classList.contains('is-board-fullscreen')?stage:document.body)).appendChild(w.el);
+        this.setAttribute('aria-label','Ses göstergesini küçült');this.title='Ses göstergesini küçült';
+        var enter=w.el.requestFullscreen||w.el.webkitRequestFullscreen;if(enter)Promise.resolve(enter.call(w.el)).catch(function(){});
+      });
+      function fullscreenChanged(){if(expanded&&!(document.fullscreenElement||document.webkitFullscreenElement))exitExpanded();}
+      function escape(e){if(e.key==='Escape')exitExpanded();}
+      ['fullscreenchange','webkitfullscreenchange'].forEach(function(n){document.addEventListener(n,fullscreenChanged);});document.addEventListener('keydown',escape);
       function stop() {
         generation++; clearInterval(interval); interval = null;
         if(stream) stream.getTracks().forEach(function(track) { track.stop(); }); stream = null;
         if(context) context.close().catch(function() {}); context = null;
-        button.textContent = 'Mikrofonu aç'; button.disabled = false; output.value = 'Mikrofon kapalı'; b.querySelector('.sb-noise-meter span').style.width = '0%';
+        button.textContent = 'Mikrofonu aç'; button.disabled = false; output.value = 'Mikrofon kapalı'; smooth=0;history=[];paint(0);
       }
       button.addEventListener('click', async function() {
         if(stream) { stop(); return; }
         if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { output.value = 'Bu tarayıcıda mikrofon kullanılamıyor'; return; }
         var request = ++generation; button.disabled = true;
         try {
-          var next = await navigator.mediaDevices.getUserMedia({ audio: true });
-          if(request !== generation || !w.el.isConnected) { next.getTracks().forEach(function(t) { t.stop(); }); return; }
+          var next = await navigator.mediaDevices.getUserMedia({ audio: {echoCancellation:false,noiseSuppression:false,autoGainControl:false} });
+          if(request !== generation || disposed || !w.el.isConnected) { next.getTracks().forEach(function(t) { t.stop(); }); return; }
           stream = next; var Audio = root.AudioContext || root.webkitAudioContext; context = new Audio(); await context.resume();
           if(request !== generation || !context) { stop(); return; }
           var analyser = context.createAnalyser(); analyser.fftSize = 1024; context.createMediaStreamSource(stream).connect(analyser);
@@ -352,17 +401,16 @@
           interval = setInterval(function() {
             analyser.getByteTimeDomainData(data); var sum = 0;
             for(var i = 0; i < data.length; i++) { var n = (data[i] - 128) / 128; sum += n * n; }
-            var level = Math.min(100, Math.sqrt(sum / data.length) * Number(b.querySelector('input').value) * 100);
-            var bar = b.querySelector('.sb-noise-meter span'); bar.style.width = level + '%'; bar.style.background = level > 75 ? '#c94e46' : level > 45 ? '#c19124' : '#368650';
-            var text = level > 75 ? 'Ses yüksek' : level > 45 ? 'Orta ses' : 'Sakin'; if(output.value !== text) output.value = text;
+            var level = Math.min(100, Math.sqrt(sum / data.length) * Number(gain.value) * 100);
+            smooth=smoothing.checked?smooth*.68+level*.32:level;paint(smooth);
           }, 120);
           button.textContent = 'Mikrofonu kapat'; button.disabled = false;
         } catch(error) { stop(); output.value = 'Mikrofon açılamadı. Tarayıcı iznini kontrol edin.'; }
       });
       function onVisibility() { if(document.hidden) stop(); }
       document.addEventListener('visibilitychange', onVisibility);
-      w.suspend = stop;
-      w.dispose = function() { stop(); document.removeEventListener('visibilitychange', onVisibility); };
+      w.suspend = function(){stop();exitExpanded();};
+      w.dispose = function() { disposed=true;stop();exitExpanded();document.removeEventListener('visibilitychange', onVisibility);document.removeEventListener('keydown',escape);['fullscreenchange','webkitfullscreenchange'].forEach(function(n){document.removeEventListener(n,fullscreenChanged);}); };
     }
     var imageInput = document.createElement('input'); imageInput.type = 'file'; imageInput.accept = 'image/png,image/jpeg,image/webp'; imageInput.hidden = true; catalog.appendChild(imageInput);
     imageInput.addEventListener('change', async function() {

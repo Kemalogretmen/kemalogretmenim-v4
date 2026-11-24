@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Ritmik Yılan 3D | Kemal Öğretmenim</title>
+  <meta name="description" content="1'er ile 10'ar arasındaki ritmik saymaları 3B dünyada numaralı elmaları toplayarak pekiştir. Tek başına veya aynı ekranda iki kişi oyna." />
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/ritmik-yilan-3d.html" />
+  <link rel="icon" href="/gorseller/logo.png" />
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home" />
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles />
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029" />
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles />
+  <link rel="stylesheet" href="/css/ritmik-yilan-3d.css?v=20261124-controls" />
+</head>
+<body class="snake-page" data-kemal-local="true">
+  <main id="main-content" class="snake-game" aria-label="Ritmik Yılan 3D">
+    <canvas id="gameCanvas" tabindex="-1" aria-label="Üç boyutlu oyun alanı"></canvas>
+    <canvas id="overlayCanvas" aria-hidden="true"></canvas>
+    <section id="snakeUnavailable" class="snake-unavailable" hidden>
+      <h1>Ritmik Yılan 3D</h1>
+      <p>3B oyun alanı açılamadı. WebGL 2 desteği olan bir tarayıcıda yeniden deneyebilirsin.</p>
+      <a class="nav-pill" href="/oyun/oyunlar.html">← Oyunlara dön</a>
+    </section>
+
+    <!-- ==================== 1-PLAYER IN-GAME HUD ==================== -->
+    <div id="hudSingle" class="hud-layer hidden">
+      <div class="hud-top-left">
+        <!-- Education Mode Panel -->
+        <div id="eduHudPanel" class="edu-panel">
+          <div class="edu-header">
+            <span id="p1ModeTag" class="mode-tag">1'ER RİTMİK SAYMA</span>
+            <span id="singleTimer" class="timer-tag">00:00</span>
+          </div>
+          <div class="edu-numbers">
+            <div class="num-card last">
+              <span class="num-label">SON YENEN</span>
+              <strong id="p1LastNum" class="num-val">—</strong>
+            </div>
+            <div class="num-arrow">➜</div>
+            <div class="num-card next">
+              <span class="num-label">SIRADAKİ</span>
+              <strong id="p1NextNum" class="num-val">1</strong>
+            </div>
+            <div class="num-card prog">
+              <span class="num-label">ELMALAR</span>
+              <strong id="p1Progress" class="num-val small">0 / 20</strong>
+            </div>
+          </div>
+          <div class="edu-sub-row">
+            <span class="edu-player-name" id="eduPlayerNameTag">Oyuncu 1</span>
+            <span class="edu-score-chip">Puan: <strong id="p1EduScore">0</strong></span>
+          </div>
+          <div class="progress-track">
+            <div id="p1ProgressBar" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Fun Mode (Endless) Panel -->
+        <div id="funHudPanel" class="edu-panel fun hidden">
+          <div class="edu-header">
+            <span class="mode-tag gold">SONSUZ EĞLENCE MODU</span>
+            <span id="funPlayerNameTag" class="timer-tag">Oyuncu 1</span>
+          </div>
+          <div class="edu-numbers">
+            <div class="num-card next">
+              <span class="num-label">SKOR</span>
+              <strong id="funScore" class="num-val">0</strong>
+            </div>
+            <div class="num-card last">
+              <span class="num-label">UZUNLUK</span>
+              <strong id="funLength" class="num-val">10</strong>
+            </div>
+            <div class="num-card prog">
+              <span class="num-label">REKOR</span>
+              <strong id="funBest" class="num-val small">0</strong>
+            </div>
+          </div>
+          <div id="funComboBadge" class="combo-strip hidden">
+            <span id="funComboText">KOMBO x2</span>
+            <div class="combo-track"><div id="funComboBar" class="combo-fill"></div></div>
+          </div>
+          <div id="funMagnetBadge" class="magnet-strip hidden">
+            <span class="chip-dot"></span> MIKNATIS AKTİF <strong id="funMagnetTime">7.0s</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-top-center">
+        <div id="pointerHint" class="hint-pill">
+          <strong>A/D</strong> Dön &bull; <strong>S</strong> Yavaşla &bull; <strong>Shift</strong> Turbo &bull; <strong>Space</strong> Zıpla
+        </div>
+      </div>
+
+      <div class="hud-top-right">
+        <div class="radar-wrap">
+          <canvas id="radarSingle" width="156" height="156"></canvas>
+          <span class="radar-label">TPS RADAR</span>
+        </div>
+        <div class="quick-actions">
+          <button id="btnMusicHud" class="icon-btn" title="Müziği Aç/Kapat (N)">
+            🎵 <span id="musicHudLabel">Müzik</span>
+          </button>
+          <button id="btnCamera" class="icon-btn" title="TPS Kamera Açısı (C)">
+            <span class="key-cap">C</span> Kamera
+          </button>
+          <button id="btnSettingsHud" class="icon-btn" title="Ayarlar">
+            ⚙
+          </button>
+          <button id="btnPause" class="icon-btn" title="Duraklat (P)">
+            <span class="key-cap">P</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hud-bottom-center">
+        <div class="action-bar">
+          <div class="meter-group">
+            <div class="meter-header">
+              <span>TURBO <kbd>Shift</kbd> &bull; FREN <kbd>S</kbd></span>
+              <span id="p1Speed">7 m/s</span>
+            </div>
+            <div class="meter-track">
+              <div id="p1TurboBar" class="meter-fill"></div>
+            </div>
+          </div>
+          <div class="action-divider"></div>
+          <div id="p1JumpIndicator" class="ability-pill ready">
+            <span class="ability-title">ZIPLA <kbd>Space</kbd></span>
+            <span id="p1JumpStatus" class="ability-state">HAZIR</span>
+          </div>
+          <div class="action-divider"></div>
+          <div class="ability-pill cam-pill">
+            <span class="ability-title">KAMERA</span>
+            <span id="camModeLabel" class="ability-state">KLASİK TPS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Responsive Multi-Touch / Smartboard Controls (1P) -->
+      <div id="touchSingle" class="touch-single hidden">
+        <div class="joy-zone">
+          <div id="joyBase" class="joy-base">
+            <div class="joy-arrows">
+              <span>◀</span>
+              <span>▶</span>
+            </div>
+            <div id="joyKnob" class="joy-knob"></div>
+          </div>
+          <span class="joy-caption">YÖNLENDİR</span>
+        </div>
+        <div class="touch-actions">
+          <button id="t1Brake" class="t-btn brake">YAVAŞLA</button>
+          <button id="t1Turbo" class="t-btn turbo">TURBO</button>
+          <button id="t1Jump" class="t-btn jump">ZIPLA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2-PLAYER SPLIT-SCREEN HUD ==================== -->
+    <div id="hudSplit" class="hud-layer hidden">
+      <div class="split-divider"></div>
+
+      <div class="split-center-bar">
+        <span id="splitModeTag" class="split-mode-chip">1'ER SAYMA YARIŞI</span>
+        <span id="splitTimer" class="split-timer-chip">00:00</span>
+        <button id="btnMusicSplit" class="mini-icon-btn" title="Müzik (N)">🎵</button>
+        <button id="btnSettingsSplit" class="mini-icon-btn" title="Ayarlar">⚙</button>
+        <button id="btnPauseSplit" class="mini-icon-btn" title="Duraklat (P)">⏸</button>
+      </div>
+
+      <!-- Left Half: Player 1 -->
+      <div class="split-pane left">
+        <div class="split-top">
+          <div class="split-card p1">
+            <div class="split-card-head">
+              <span class="p-dot p1"></span>
+              <strong id="sp1Name">1. OYUNCU</strong>
+              <span id="sp1Prog" class="sp-prog">0 / 20</span>
+            </div>
+            <div class="split-nums">
+              <span><span id="sp1LblA">Son:</span> <strong id="sp1Last">—</strong></span>
+              <span><span id="sp1LblB">Sıradaki:</span> <strong id="sp1Next" class="hl">1</strong></span>
+            </div>
+            <div class="progress-track compact">
+              <div id="sp1Bar" class="progress-fill p1"></div>
+            </div>
+          </div>
+          <div class="radar-wrap small">
+            <canvas id="radarP1" width="112" height="112"></canvas>
+            <span class="radar-label">P1</span>
+          </div>
+        </div>
+
+        <div class="split-bottom-wrap">
+          <div class="split-action">
+            <div class="meter-track thin"><div id="sp1Turbo" class="meter-fill"></div></div>
+            <span class="split-keys"><kbd>A</kbd><kbd>D</kbd> Dön &bull; <kbd>W</kbd>/<kbd>S</kbd> Hız &bull; <kbd>Space</kbd> Zıpla</span>
+          </div>
+          <!-- Smartboard / Tablet 2P Multi-Touch (Left) -->
+          <div id="touchSplitP1" class="touch-split hidden">
+            <div class="ts-group">
+              <button id="tp1Left" class="ts-btn">◀</button>
+              <button id="tp1Right" class="ts-btn">▶</button>
+            </div>
+            <div class="ts-group">
+              <button id="tp1Turbo" class="ts-btn turbo">HIZ</button>
+              <button id="tp1Jump" class="ts-btn jump">ZIPLA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Half: Player 2 -->
+      <div class="split-pane right">
+        <div class="split-top">
+          <div class="split-card p2">
+            <div class="split-card-head">
+              <span class="p-dot p2"></span>
+              <strong id="sp2Name">2. OYUNCU</strong>
+              <span id="sp2Prog" class="sp-prog">0 / 20</span>
+            </div>
+            <div class="split-nums">
+              <span><span id="sp2LblA">Son:</span> <strong id="sp2Last">—</strong></span>
+              <span><span id="sp2LblB">Sıradaki:</span> <strong id="sp2Next" class="hl">1</strong></span>
+            </div>
+            <div class="progress-track compact">
+              <div id="sp2Bar" class="progress-fill p2"></div>
+            </div>
+          </div>
+          <div class="radar-wrap small">
+            <canvas id="radarP2" width="112" height="112"></canvas>
+            <span class="radar-label">P2</span>
+          </div>
+        </div>
+
+        <div class="split-bottom-wrap">
+          <div class="split-action">
+            <div class="meter-track thin"><div id="sp2Turbo" class="meter-fill p2"></div></div>
+            <span class="split-keys"><kbd>←</kbd><kbd>→</kbd> Dön &bull; <kbd>↑</kbd>/<kbd>↓</kbd> Hız &bull; <kbd>Enter</kbd> Zıpla</span>
+          </div>
+          <!-- Smartboard / Tablet 2P Multi-Touch (Right) -->
+          <div id="touchSplitP2" class="touch-split hidden">
+            <div class="ts-group">
+              <button id="tp2Left" class="ts-btn">◀</button>
+              <button id="tp2Right" class="ts-btn">▶</button>
+            </div>
+            <div class="ts-group">
+              <button id="tp2Turbo" class="ts-btn turbo p2">HIZ</button>
+              <button id="tp2Jump" class="ts-btn jump">ZIPLA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Event Toasts -->
+    <div id="toastCenter" class="toast-container center"></div>
+    <div id="toastLeft" class="toast-container left"></div>
+    <div id="toastRight" class="toast-container right"></div>
+
+    <!-- ==================== PROFESSIONAL STUDIO ENTRY SCREEN ==================== -->
+    <div id="startOverlay" class="title-screen">
+      <div class="cover-bg">
+        <img src="/assets/game-covers/ritmik-yilan-3d.webp" alt="" class="cover-img" />
+        <div class="cover-vignette"></div>
+        <div class="cover-sparkles" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="title-shell">
+        <!-- Studio Top Bar -->
+        <header class="title-topbar">
+          <div class="studio-logo">
+            <div class="logo-emblem">🐍</div>
+            <div class="logo-text">
+              <span class="logo-sub">AÇIK DÜNYA 3D TPS</span>
+              <h1 class="logo-title">RİTMİK YILAN <span>3D</span></h1>
+            </div>
+          </div>
+
+          <nav class="title-nav" aria-label="Oyun menüsü">
+            <a href="/oyun/oyunlar.html" class="nav-pill">← Oyunlar</a>
+            <span id="snakeRenderMode" class="nav-pill" role="status" hidden>Üstten görünüm</span>
+            <button id="btnMusicTitle" class="nav-pill" title="Fantastik Müziği Aç/Kapat">
+              <span class="nav-ico">🎵</span>
+              <span id="musicTitleLabel">Müzik: Açık</span>
+            </button>
+            <button id="btnOpenScoreboard" class="nav-pill gold">
+              <span class="nav-ico">🏆</span>
+              <span>Skor Tablosu</span>
+            </button>
+            <button id="btnOpenSettings" class="nav-pill">
+              <span class="nav-ico">⚙</span>
+              <span>Ayarlar</span>
+            </button>
+          </nav>
+        </header>
+
+        <!-- Main Title Hub Card -->
+        <section class="title-hub" aria-label="Oyun seçenekleri">
+          <!-- Two Core Game Mode Pillars -->
+          <div class="pillar-grid" id="gameTypeSelector">
+            <button class="pillar-card active" data-gametype="edu">
+              <div class="pillar-ico edu">🎓</div>
+              <div class="pillar-body">
+                <div class="pillar-head">
+                  <strong>EĞİTİM MODU</strong>
+                  <span class="pillar-badge">RİTMİK SAYMA</span>
+                </div>
+                <p>1'er – 10'ar ritmik sayma! Açık dünyadaki numaralı elmaları sırasıyla toplayıp turu bitir.</p>
+              </div>
+            </button>
+
+            <button class="pillar-card" data-gametype="fun">
+              <div class="pillar-ico fun">🎮</div>
+              <div class="pillar-body">
+                <div class="pillar-head">
+                  <strong>EĞLENCE MODU</strong>
+                  <span class="pillar-badge fun">SONSUZ BÜYÜME</span>
+                </div>
+                <p>Engeller arasında elma, altın küre ve mıknatıs topla; yanana kadar büyü ve rekor kır!</p>
+              </div>
+            </button>
+          </div>
+
+          <!-- Players & Nicknames Row -->
+          <div class="hub-row players-row">
+            <div class="option-section">
+              <label class="option-label">OYUNCU SAYISI</label>
+              <div class="option-grid two" id="playerCountSelector">
+                <button class="opt-btn compact active" data-players="1">👤 1 Oyuncu</button>
+                <button class="opt-btn compact" data-players="2">👥 2 Oyuncu (İkili Ekran)</button>
+              </div>
+            </div>
+
+            <div class="option-section names-section">
+              <label class="option-label">OYUNCU ADI (SKOR TABLOSU İÇİN)</label>
+              <div class="name-inputs">
+                <div class="input-wrap p1">
+                  <span class="p-dot p1"></span>
+                  <input id="inputNameP1" type="text" maxlength="18" placeholder="1. Oyuncu Adı" aria-label="1. oyuncu adı" autocomplete="off" />
+                </div>
+                <div id="inputWrapP2" class="input-wrap p2 hidden">
+                  <span class="p-dot p2"></span>
+                  <input id="inputNameP2" type="text" maxlength="18" placeholder="2. Oyuncu Adı" aria-label="2. oyuncu adı" autocomplete="off" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Education-Specific Options -->
+          <div id="eduConfigPanel" class="mode-config-box">
+            <div class="option-label-row">
+              <label class="option-label">RİTMİK SAYMA ADIMI</label>
+              <span id="sequencePreview" class="seq-preview">Hedef: 1 → 2 → 3 → ... → 20</span>
+            </div>
+            <div class="step-grid" id="stepSelector">
+              <button class="step-btn active" data-step="1">1'er</button>
+              <button class="step-btn" data-step="2">2'şer</button>
+              <button class="step-btn" data-step="3">3'er</button>
+              <button class="step-btn" data-step="4">4'er</button>
+              <button class="step-btn" data-step="5">5'er</button>
+              <button class="step-btn" data-step="6">6'şar</button>
+              <button class="step-btn" data-step="7">7'şer</button>
+              <button class="step-btn" data-step="8">8'er</button>
+              <button class="step-btn" data-step="9">9'ar</button>
+              <button class="step-btn" data-step="10">10'ar</button>
+            </div>
+            <div class="hub-row compact-row">
+              <div class="option-section">
+                <label class="option-label">TUR UZUNLUĞU</label>
+                <div class="option-grid three" id="countSelector">
+                  <button class="opt-btn compact" data-count="10">10 Elma</button>
+                  <button class="opt-btn compact" data-count="15">15 Elma</button>
+                  <button class="opt-btn compact active" data-count="20">20 Elma</button>
+                </div>
+              </div>
+              <div class="option-section">
+                <label class="option-label">ENGELLER / ZORLUK</label>
+                <div class="option-grid three" id="diffSelectorEdu">
+                  <button class="opt-btn compact active" data-diff="easy">Kolay</button>
+                  <button class="opt-btn compact" data-diff="normal">Orta</button>
+                  <button class="opt-btn compact" data-diff="hard">Zor</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fun Mode-Specific Options -->
+          <div id="funConfigPanel" class="mode-config-box hidden">
+            <div class="fun-highlights">
+              <div class="fh-chip"><span>🍎</span> Elma <strong>+10</strong></div>
+              <div class="fh-chip gold"><span>🌟</span> Altın Elma <strong>+35</strong></div>
+              <div class="fh-chip cyan"><span>💎</span> Mıknatıs <strong>8 sn</strong></div>
+              <div class="fh-chip"><span>♾️</span> <strong>Sınırsız Büyüme</strong></div>
+            </div>
+            <div class="hub-row compact-row">
+              <div class="option-section">
+                <label class="option-label">ENGELLER / ZORLUK</label>
+                <div class="option-grid three" id="diffSelectorFun">
+                  <button class="opt-btn compact active" data-diff="easy">Kolay</button>
+                  <button class="opt-btn compact" data-diff="normal">Orta</button>
+                  <button class="opt-btn compact" data-diff="hard">Zor</button>
+                </div>
+              </div>
+              <div class="option-section">
+                <label class="option-label">EĞLENCE REKORU</label>
+                <div class="fun-record-pill">
+                  🏆 En Yüksek Skor: <strong id="titleFunBest">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer: Speed quick status + Start CTA -->
+          <div class="hub-footer">
+            <button id="btnQuickSpeed" class="speed-status-btn" title="Hızı Ayarlamak İçin Tıkla">
+              <span>⚡ Yılan Hızı: <strong id="titleSpeedSummary">%100 • 6.8 m/s</strong></span>
+              <small>Değiştir ⚙</small>
+            </button>
+            <button id="btnStart" class="cta-btn snake-start-btn" type="button">▶ OYUNA BAŞLA</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== PROFESSIONAL SETTINGS MODAL ==================== -->
+    <div id="settingsOverlay" class="modal-backdrop hidden">
+      <div class="modal-card settings-card">
+        <div class="modal-header-row">
+          <div>
+            <div class="brand-badge">OYUN AYARLARI</div>
+            <h2 class="modal-heading left">Ayarlar &amp; Kontroller</h2>
+          </div>
+          <button id="btnCloseSettings" class="close-x-btn" title="Kapat">✕</button>
+        </div>
+
+        <div class="settings-body">
+          <!-- Speed Control -->
+          <div class="setting-group">
+            <div class="setting-title-row">
+              <span class="setting-title">🐍 Yılan Hızı</span>
+              <span id="setSpeedVal" class="setting-value-pill">%100 (6.8 m/s)</span>
+            </div>
+            <input id="sliderSpeed" type="range" min="50" max="160" step="5" value="100" class="studio-slider" />
+            <div class="preset-chips" id="speedPresets">
+              <button class="preset-chip" data-spd="65">Çok Yavaş (%65)</button>
+              <button class="preset-chip" data-spd="85">Yavaş (%85)</button>
+              <button class="preset-chip" data-spd="100">Normal (%100)</button>
+              <button class="preset-chip" data-spd="130">Hızlı (%130)</button>
+            </div>
+          </div>
+
+          <!-- Music & Audio -->
+          <div class="setting-group">
+            <span class="setting-title">🎵 Müzik &amp; Ses Efektleri</span>
+
+            <div class="setting-switch-row">
+              <div class="sw-info">
+                <strong>Fantastik Oyun Müziği</strong>
+                <span>Hafif arp &amp; flüt açık dünya müziği</span>
+              </div>
+              <button id="swMusic" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="vol-row">
+              <span>Müzik Sesi</span>
+              <input id="sliderMusicVol" type="range" min="0" max="100" step="5" value="55" class="studio-slider slim" />
+              <strong id="setMusicVolVal">%55</strong>
+            </div>
+
+            <div class="setting-switch-row">
+              <div class="sw-info">
+                <strong>Ses Efektleri (SFX)</strong>
+                <span>Elma toplama, zıplama, buton ve zafer sesleri</span>
+              </div>
+              <button id="swSfx" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+            </div>
+            <div class="vol-row">
+              <span>Efekt Sesi</span>
+              <input id="sliderSfxVol" type="range" min="0" max="100" step="5" value="85" class="studio-slider slim" />
+              <strong id="setSfxVolVal">%85</strong>
+            </div>
+
+            <div class="setting-switch-row">
+              <div class="sw-info">
+                <strong>Türkçe Sesli Sayma (Eğitim)</strong>
+                <span>Yutulan elma numarasını sesli okur</span>
+              </div>
+              <button id="swSpeech" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+            </div>
+          </div>
+
+          <!-- Touch, Smartboard & Camera -->
+          <div class="setting-group">
+            <span class="setting-title">📱 Dokunmatik, Akıllı Tahta &amp; Kamera</span>
+
+            <div class="setting-sub-block">
+              <label class="option-label">DOKUNMATİK / AKILLI TAHTA KONTROLLERİ</label>
+              <div class="option-grid three" id="touchModeSelector">
+                <button class="opt-btn compact active" data-touch="auto">Otomatik</button>
+                <button class="opt-btn compact" data-touch="on">Her Zaman Açık</button>
+                <button class="opt-btn compact" data-touch="off">Kapalı</button>
+              </div>
+            </div>
+
+            <div class="setting-sub-block">
+              <label class="option-label">TPS KAMERA AÇISI</label>
+              <div class="option-grid three" id="camSelector">
+                <button class="opt-btn compact active" data-cam="0">Klasik TPS</button>
+                <button class="opt-btn compact" data-cam="1">Yakın TPS</button>
+                <button class="opt-btn compact" data-cam="2">Geniş TPS</button>
+              </div>
+            </div>
+
+            <div class="setting-switch-row">
+              <div class="sw-info">
+                <strong>Sıradaki Sayı İpucu (Eğitim)</strong>
+                <span>Kapatılırsa öğrenci sıradaki sayıyı zihninden bulur</span>
+              </div>
+              <button id="swHint" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btnSaveSettings" class="cta-btn">KAYDET VE KAPAT</button>
+      </div>
+    </div>
+
+    <!-- ==================== TOP-10 SCOREBOARD MODAL ==================== -->
+    <div id="scoreboardOverlay" class="modal-backdrop hidden">
+      <div class="modal-card scoreboard-card">
+        <div class="modal-header-row">
+          <div>
+            <div class="brand-badge gold">YEREL İLK 10 LİDERLİK TABLOSU</div>
+            <h2 class="modal-heading left">🏆 Skor Tablosu</h2>
+          </div>
+          <button id="btnCloseScoreboard" class="close-x-btn" title="Kapat">✕</button>
+        </div>
+
+        <div class="sb-tabs" id="sbTabs">
+          <button class="sb-tab active" data-sbtab="edu">🎓 Eğitim Modu (İlk 10)</button>
+          <button class="sb-tab" data-sbtab="fun">🎮 Eğlence Modu (İlk 10)</button>
+        </div>
+
+        <div id="sbListWrap" class="sb-list-wrap"></div>
+
+        <div class="sb-footer">
+          <button id="btnClearSb" class="ghost-btn danger-txt">Bu Tabloyu Sıfırla</button>
+          <button id="btnCloseSbBottom" class="secondary-btn auto-w">Kapat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PAUSE MODAL ==================== -->
+    <div id="pauseOverlay" class="modal-backdrop hidden">
+      <div class="modal-card narrow">
+        <div class="brand-badge">DURAKLATILDI</div>
+        <h2 class="modal-heading">Oyun Duraklatıldı</h2>
+        <p class="modal-desc">Devam etmek için <strong>P</strong> veya <strong>ESC</strong> tuşuna basabilirsin.</p>
+        <div class="modal-btn-stack">
+          <button id="btnResume" class="cta-btn">▶ DEVAM ET</button>
+          <button id="btnSettingsPause" class="secondary-btn">⚙ AYARLAR (HIZ / MÜZİK)</button>
+          <button id="btnRestartPause" class="secondary-btn">↻ YENİDEN BAŞLAT (R)</button>
+          <button id="btnMenuPause" class="ghost-btn">ANA MENÜYE DÖN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== END / VICTORY / GAME OVER MODAL ==================== -->
+    <div id="endOverlay" class="modal-backdrop hidden">
+      <div class="modal-card narrow">
+        <div id="endBadge" class="brand-badge">TUR TAMAMLANDI</div>
+        <div id="endRecordBanner" class="record-banner hidden">🏆 YENİ REKOR! İLK 10'DA 1. SIRADASIN!</div>
+        <h2 id="endTitle" class="modal-heading">Tebrikler!</h2>
+        <p id="endDesc" class="modal-desc">Tüm sayıları sırasıyla topladın!</p>
+
+        <div id="endSummarySingle" class="summary-grid">
+          <div class="summary-box">
+            <span id="endStat1Lbl">PUAN</span>
+            <strong id="endStat1Val">0</strong>
+          </div>
+          <div class="summary-box">
+            <span id="endStat2Lbl">TOPLANAN</span>
+            <strong id="endStat2Val">20 / 20</strong>
+          </div>
+          <div class="summary-box">
+            <span id="endStat3Lbl">SÜRE</span>
+            <strong id="endStat3Val">00:45</strong>
+          </div>
+          <div class="summary-box">
+            <span id="endStat4Lbl">UZUNLUK</span>
+            <strong id="endStat4Val">70</strong>
+          </div>
+        </div>
+
+        <div id="endSummarySplit" class="split-summary hidden">
+          <div class="race-box p1">
+            <span class="race-who"><span class="p-dot p1"></span> <span id="endP1Name">1. OYUNCU</span></span>
+            <strong id="endP1Prog">0</strong>
+            <small id="endP1Detail">—</small>
+          </div>
+          <div class="race-box p2">
+            <span class="race-who"><span class="p-dot p2"></span> <span id="endP2Name">2. OYUNCU</span></span>
+            <strong id="endP2Prog">0</strong>
+            <small id="endP2Detail">—</small>
+          </div>
+        </div>
+
+        <div class="modal-btn-stack">
+          <button id="btnNextLevel" class="cta-btn gold hidden">SONRAKİ SEVİYEYE GEÇ</button>
+          <button id="btnPlayAgain" class="cta-btn">↻ TEKRAR OYNA (Space / R)</button>
+          <button id="btnEndScoreboard" class="secondary-btn">🏆 SKOR TABLOSUNU GÖR</button>
+          <button id="btnMenuEnd" class="ghost-btn">ANA MENÜYE DÖN</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/site.js?v=20261124-local"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
+  <script src="/js/ritmik-yilan-3d/math3d.js?v=20261123"></script>
+  <script src="/js/ritmik-yilan-3d/scoreboard.js?v=20261123"></script>
+  <script src="/js/ritmik-yilan-3d/audio.js?v=20261123"></script>
+  <script src="/js/ritmik-yilan-3d/engine3d.js?v=20261123"></script>
+  <script src="/js/ritmik-yilan-3d/game.js?v=20261124"></script>
+</body>
+</html>

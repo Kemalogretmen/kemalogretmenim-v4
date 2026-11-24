@@ -891,33 +891,79 @@
   function activitiesModal() {
     rememberModal('activitiesModal'+'',()=>activitiesModal());
     releaseFish();
-    openModal('Birlikte güzel adımlar', '<p class="modal-intro">' + esc(classroom().name) + ' · Sınıf etkinliklerini tek yerden yönetin.</p>' + goalCard() + '<div class="activity-grid"><button class="activity-card" data-action="group-reward">' + icon('heart') + '<strong>Birlikte ödüllendir</strong><span>Davranışı ve öğrencileri seç, tek işlemle puan ver ve besle.</span></button><button class="activity-card" data-action="goal">' + icon('leaf') + '<strong>Ortak sınıf hedefi</strong><span>Birlikte biriktirilen puanlarla ortak bir hedefe ilerleyin.</span></button><button class="activity-card" data-action="reef-collection"><span aria-hidden="true">⚓</span><strong>İnciyle Resif İnşası</strong><span>Dört ortak hedefle Kayıp Gemi’yi tamamlayın. Kazanılan parçalar kalıcıdır.</span></button><button class="activity-card" data-action="timer">' + icon('clock') + '<strong>Odaklanma sayacı</strong><span>Okuma, çalışma veya sınıf geçişleri için kısa bir süre belirleyin.</span></button><button class="activity-card" data-action="bubble-games"><span aria-hidden="true">◌</span><strong>Baloncuk Avı</strong><span>On resif oyunu, ikili karşılaşma ve yerel ilk 5 tablosu.</span></button><button class="activity-card" data-action="newspaper-editor"><span aria-hidden="true">▤</span><strong>Resif Postası</strong><span>Haftalık duyuru ve kişisel hedef ekleyin, veli sayısını önizleyin.</span></button></div><p class="settings-note">Puanlar yalnızca öğretmenin seçtiği olumlu davranışlarla verilir. Ortak hedefte bireysel sıralama yapılmaz.</p>');
+    openModal('Birlikte güzel adımlar', '<p class="modal-intro">' + esc(classroom().name) + ' · Sınıf etkinliklerini tek yerden yönetin.</p>' + goalCard() + '<div class="activity-grid"><button class="activity-card" data-action="group-reward">' + icon('heart') + '<strong>Birlikte ödüllendir</strong><span>Olumlu veya geliştirmesi gereken davranışı seç, öğrencilere birlikte uygula.</span></button><button class="activity-card" data-action="goal">' + icon('leaf') + '<strong>Ortak sınıf hedefi</strong><span>Birlikte biriktirilen puanlarla ortak bir hedefe ilerleyin.</span></button><button class="activity-card" data-action="reef-collection"><span aria-hidden="true">⚓</span><strong>İnciyle Resif İnşası</strong><span>Dört ortak hedefle Kayıp Gemi’yi tamamlayın. Kazanılan parçalar kalıcıdır.</span></button><button class="activity-card" data-action="timer">' + icon('clock') + '<strong>Odaklanma sayacı</strong><span>Okuma, çalışma veya sınıf geçişleri için kısa bir süre belirleyin.</span></button><button class="activity-card" data-action="bubble-games"><span aria-hidden="true">◌</span><strong>Baloncuk Avı</strong><span>On resif oyunu, ikili karşılaşma ve yerel ilk 5 tablosu.</span></button><button class="activity-card" data-action="newspaper-editor"><span aria-hidden="true">▤</span><strong>Resif Postası</strong><span>Haftalık duyuru ve kişisel hedef ekleyin, veli sayısını önizleyin.</span></button></div><p class="settings-note">Puanlar yalnızca öğretmenin seçtiği olumlu davranışlarla verilir. Ortak hedefte bireysel sıralama yapılmaz.</p>');
   }
-  function groupRewardModal() {
-    rememberModal('groupRewardModal'+'',()=>groupRewardModal());
+  function groupRewardModal(kind = 'positive') {
+    const development=kind==='development';
+    const selectedIds=new Set([...modal.querySelectorAll('#groupStudents input:checked')].map(input=>input.value));
+    rememberModal('groupRewardModal'+kind,()=>groupRewardModal(kind));
     ensureDays();
-    openModal('Birlikte ödüllendir', '<p class="modal-intro">Olumlu davranışı ve ödüllendireceğiniz öğrencileri seçin.</p><form id="groupRewardForm" data-class-id="' + classroom().id + '" data-date="' + today + '"><div class="group-controls"><label class="field">Olumlu davranış<select id="groupTask" name="taskId" required>' + classroom().tasks.filter(t=>C.taskPoints(t)>0).map(t => '<option value="' + t.id + '">' + esc(t.title) + ' · +' + C.taskPoints(t) + ' puan</option>').join('') + '</select></label><div class="settings-actions"><button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button><button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button></div></div><div id="groupStudents" class="group-students"></div><p id="groupSummary" class="settings-note" role="status"></p><button id="groupSubmit" class="button primary full" type="submit" disabled>Puan ver ve besle</button></form><p class="settings-note">Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.</p>' + (!classroom().tasks.length ? '<button class="button" data-action="tasks">Önce davranış ekle</button>' : ''));
+    const tasks=classroom().tasks.filter(t=>(C.taskPoints(t)<0)===development);
+    openModal('Birlikte ödüllendir', `
+      <div class="behavior-tabs" role="group" aria-label="Toplu davranış türü">
+        <button type="button" data-action="group-behavior-type" data-kind="positive" aria-pressed="${!development}">Olumlu</button>
+        <button type="button" data-action="group-behavior-type" data-kind="development" aria-pressed="${development}">Geliştirmesi gereken</button>
+      </div>
+      <p class="modal-intro">${development?'Geliştirmesi gereken davranışı ve puanını düşüreceğiniz öğrencileri seçin.':'Olumlu davranışı ve ödüllendireceğiniz öğrencileri seçin.'}</p>
+      <form id="groupRewardForm" data-kind="${development?'development':'positive'}" data-class-id="${classroom().id}" data-date="${today}">
+        <div class="group-controls">
+          <label class="field">${development?'Geliştirmesi gereken davranış':'Olumlu davranış'}
+            <select id="groupTask" name="taskId" required ${tasks.length?'':'disabled'}>
+              ${tasks.length?tasks.map(t=>'<option value="'+t.id+'">'+esc(t.title)+' · '+signed(C.taskPoints(t))+' puan</option>').join(''):'<option value="">Bu türde davranış eklenmemiş</option>'}
+            </select>
+          </label>
+          <div class="settings-actions">
+            <button class="button subtle" type="button" data-action="group-select">Uygun öğrencileri seç</button>
+            <button class="button subtle" type="button" data-action="group-clear">Seçimi kaldır</button>
+          </div>
+        </div>
+        <div id="groupStudents" class="group-students"></div>
+        <p id="groupSummary" class="settings-note" role="status"></p>
+        <button id="groupSubmit" class="button ${development?'danger':'primary'} full" type="submit" disabled>${development?'Puanı düşür':'Puan ver ve besle'}</button>
+      </form>
+      <p class="settings-note">${development?'Kesinti öğrencinin mevcut puanını aşmaz. Sıfır puanlı ve bugün gelmeyen öğrenciler seçilemez. Her kesintiyi Puan geçmişi bölümünden geri alabilirsiniz.':'Bugün gelmeyenler seçilemez. Aynı davranışı yeniden ödüllendirebilirsiniz; her ödülü Puan geçmişi bölümünden ayrı ayrı geri alabilirsiniz.'}</p>
+      ${!tasks.length?'<button class="button" data-action="tasks">Davranış ekle</button>':''}
+    `);
     modal.classList.add('group-reward-modal');
-    renderGroupStudents();
+    renderGroupStudents(selectedIds);
   }
-  function renderGroupStudents() {
+  function groupStudentPoints(student, taskId) {
+    const choice=C.behaviorChoices(student,classroom(),today).find(t=>t.id===taskId);
+    if(!choice) return 0;
+    const points=C.taskPoints(choice);
+    const development=$('groupRewardForm').dataset.kind==='development';
+    if((points<0)!==development) return 0;
+    return development?-Math.min(C.earned(student),Math.abs(points)):points;
+  }
+  function renderGroupStudents(selectedIds = new Set()) {
     const taskId = $('groupTask').value;
+    const development=$('groupRewardForm').dataset.kind==='development';
     // Sort only the visible roster. Student IDs and the stored classroom order
-    // stay intact so a bulk reward still reaches the selected children.
+    // stay intact so a bulk behavior entry reaches the selected children.
     const students = [...classroom().students].sort((a,b) => a.name.localeCompare(b.name,'tr-TR',{sensitivity:'base',numeric:true}));
     $('groupStudents').setAttribute('aria-label','Öğrenciler · Türkçe A–Z sırası');
     $('groupStudents').innerHTML = students.map(s => {
-      const d = day(s), t = C.behaviorChoices(s, classroom(), today).find(t => t.id === taskId), eligible = !!t && !d.absent;
-      return '<label class="group-student' + (eligible ? '' : ' unavailable') + '"><input type="checkbox" name="studentId" value="' + s.id + '" ' + (eligible ? '' : 'disabled') + '><img src="' + image(s.species) + '" alt=""><span><strong>' + esc(s.name) + '</strong><small>' + (d.absent ? 'Bugün izinli' : !t ? 'Bu davranış bugün yok' : '+' + C.taskPoints(t) + ' puan' + (t.count ? ' · Bugün ' + t.count + ' kez' : '')) + '</small></span></label>';
+      const d=day(s),points=groupStudentPoints(s,taskId);
+      const t=C.behaviorChoices(s,classroom(),today).find(t=>t.id===taskId);
+      const eligible=!!points&&!d.absent;
+      const detail=d.absent?'Bugün izinli':!t?'Bu davranış bugün yok':development&&!C.earned(s)?'Toplam puanı 0':signed(points)+' puan'+(t.count?' · Bugün '+t.count+' kez':'');
+      return '<label class="group-student' + (eligible ? '' : ' unavailable') + '"><input type="checkbox" name="studentId" value="' + s.id + '" ' + (eligible ? '' : 'disabled') + (eligible&&selectedIds.has(s.id)?' checked':'')+'><img src="' + image(s.species) + '" alt=""><span><strong>' + esc(s.name) + '</strong><small>' + detail + '</small></span></label>';
     }).join('') || '<p class="settings-note">Önce sınıfınıza öğrenci ekleyin.</p>';
     updateGroupSummary();
   }
   function updateGroupSummary() {
-    const inputs = [...modal.querySelectorAll('[name="studentId"]')].filter(el => el.checked && !el.disabled), taskId = $('groupTask').value;
-    const points = inputs.reduce((sum,el) => sum + C.taskPoints(C.behaviorChoices(classroom().students.find(s=>s.id===el.value), classroom(), today).find(t=>t.id===taskId)),0);
-    $('groupSummary').textContent = inputs.length ? inputs.length + ' öğrenci seçildi · Toplam +' + points + ' puan.' : 'Ödüllendirmek istediğiniz öğrencileri seçin.';
-    $('groupSubmit').disabled = !inputs.length;
-    $('groupSubmit').textContent = inputs.length ? inputs.length + ' öğrenciye puan ver ve besle' : 'Puan ver ve besle';
+    const inputs=[...modal.querySelectorAll('[name="studentId"]')].filter(el=>el.checked&&!el.disabled);
+    const taskId=$('groupTask').value,development=$('groupRewardForm').dataset.kind==='development';
+    const points=inputs.reduce((sum,input)=>{
+      const student=classroom().students.find(s=>s.id===input.value);
+      return sum+groupStudentPoints(student,taskId);
+    },0);
+    $('groupSummary').textContent=inputs.length
+      ? inputs.length+' öğrenci seçildi · Toplam '+signed(points)+' puan.'
+      : development?'Puanını düşürmek istediğiniz öğrencileri seçin.':'Ödüllendirmek istediğiniz öğrencileri seçin.';
+    $('groupSubmit').disabled=!inputs.length||!points;
+    const label=development?'puanı düşür':'puan ver ve besle';
+    $('groupSubmit').textContent=inputs.length?inputs.length+' öğrenciye '+label:development?'Puanı düşür':'Puan ver ve besle';
   }
   function reefModal() {
     rememberModal('reef-collection',reefModal);
@@ -1932,7 +1978,6 @@
   function tick(now) {
     if(document.hidden) {frame=0;return;}
     if(goalCelebrationUntil && now>=goalCelebrationUntil)clearGoalCelebration();
-    water?.draw(now);seasonal?.draw(now);
     const elapsed=previousFrame?now-previousFrame:0;previousFrame=now;
     // Sustained low frame delivery triggers the lighter compositor path. One
     // long task or a tab switch alone must not downgrade the device.
@@ -1941,10 +1986,16 @@
     // A synchronous quality event restarts the loop; don't schedule a second
     // RAF from the old tick as well.
     if(qualityNeedsRender){qualityNeedsRender=false;renderFish();return;}
+    // The arcade has priority; keep its aquarium backdrop alive at a lower rate.
+    // Skip expensive water, fish and model work before it starts, not afterward.
+    const gameOpen=bubbleGameController?.isOpen()===true;
+    const frameInterval=gameOpen?1000/15:window.SitePerformance?.lite()?1000/30:0;
+    if(lastTime&&now-lastTime<frameInterval){frame=requestAnimationFrame(tick);return;}
+    water?.draw(now);seasonal?.draw(now);
     updateTeacherVisit(now);
     const wallNow=Date.now(),fishList=[];
     if(wallNow>=nextEnergyCheck)refreshEnergy(wallNow);
-    const energyDt=elapsed>0?Math.min(.1,elapsed/1000):0;
+    const energyDt=lastTime?Math.min(.1,(now-lastTime)/1000):0;
     for(const f of swimmers.values()) {
       if(f.egg){ // Sand eggs only need frames during their brief reward.
         if(rewardActive(f,now)||f.el.classList.contains('is-rewarding'))placeFish(f,false);
@@ -1962,14 +2013,11 @@
     }
     if(!fishList.length&&!water?.active()&&!seasonal?.active()&&![...swimmers.values()].some(f=>rewardActive(f,now))&&!goalCelebrationUntil){frame=0;lastTime=0;return;}
     frame=requestAnimationFrame(tick);
-    // Compare against the last processed motion frame, not the last RAF.
-    // Otherwise a 60/120Hz display skips every single lightweight frame.
-    if(window.SitePerformance?.lite() && lastTime && now-lastTime<1000/30) return;
     const dt=lastTime?Math.min((now-lastTime)/1000,.08):0;lastTime=now;
     updateTeacherVisit(now);
     Motion.step(fishList,dt,width,height);
     updateTeacherVisit(now);
-    const paintModels=now-modelPaintAt>=MODEL_INTERVAL;
+    const paintModels=now-modelPaintAt>=(gameOpen?1000/6:MODEL_INTERVAL);
     const paintStarted=performance.now();
     for(const fish of fishList) placeFish(fish,paintModels);
     if(paintModels){modelPaintAt=now;if(modelAllowed){modelSlowBatches=performance.now()-paintStarted>10?modelSlowBatches+1:Math.max(0,modelSlowBatches-1);if(modelSlowBatches>=12)restoreNaturalCreatures('Cihazın akıcılığı için doğal hareketlere dönüldü.');}}
@@ -2423,6 +2471,7 @@
       case 'random-draw': drawRandomStudent(); break;
       case 'random-show': case 'random-game': case 'random-game-duel': case 'random-behaviors': case 'random-tasks': openPickedStudent(action); break;
       case 'group-reward': groupRewardModal(); break;
+      case 'group-behavior-type': groupRewardModal(button.dataset.kind); break;
       case 'group-select': case 'group-clear': modal.querySelectorAll('[name="studentId"]:not(:disabled)').forEach(el=>el.checked=action==='group-select'); updateGroupSummary(); break;
       case 'reef-collection': reefModal(); break;
       case 'goal': goalModal(); break;
@@ -2595,14 +2644,22 @@
       if (!modal.open || form.dataset.submitted === 'true') return;
       if(form.dataset.classId!==classroom().id || form.dataset.date!==C.dayKey()) { refreshDate(); closeModal(); return toast('Sınıf veya gün değişti. Öğrencileri yeniden seçin.'); }
       const ids=[...form.querySelectorAll('[name="studentId"]')].filter(el=>el.checked&&!el.disabled).map(el=>el.value);
-      const results=C.rewardGroup(classroom(),today,String(data.get('taskId')),ids);
+      const taskId=String(data.get('taskId'));
+      const task=classroom().tasks.find(t=>t.id===taskId);
+      if(!task||(C.taskPoints(task)<0)!==(form.dataset.kind==='development'))return;
+      const results=C.rewardGroup(classroom(),today,taskId,ids);
       if(!results.length) return;
       form.dataset.submitted = 'true';
       closeModal(); commit();
       // One sound and a bounded number of effects keep large classes quiet and responsive.
       const fed=results.filter(r=>r.fed); fed.forEach((r,i)=>feedEffect(r.id,r.points,{particles:i<6}));
       if(fed.length && state.settings.feedSound) {Audio.setVolume(state.settings.volume);Audio.feed().catch(e=>toast(e.message));}
-      toast(results.length+' öğrenciye toplam +'+results.reduce((n,r)=>n+r.points,0)+' puan verildi · '+fed.length+' balık beslendi.');
+      const deductions=results.filter(r=>r.points<0);
+      if(deductions.length){
+        for(const entry of deductions)startTeacherVisit(classroom().students.find(s=>s.id===entry.id));
+        if(state.settings.feedSound){Audio.setVolume(state.settings.volume);Audio.negative?.().catch(e=>toast(e.message));}
+      }
+      toast(results.length+' öğrenciye toplam '+signed(results.reduce((n,r)=>n+r.points,0))+' puan işlendi.'+(fed.length?' · '+fed.length+' balık beslendi.':''));
     } else if(form.id==='reefForm'){
       if(form.dataset.classId!==classroom().id)return;
       const cls=classroom(),thresholds=C.reef.PARTS.map((part,i)=>cls.reefCollection?.earned[part.id]?cls.reefCollection.thresholds[i]:Number(data.get('threshold'+i)));

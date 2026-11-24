@@ -69,6 +69,8 @@
       dy+=Math.sin(t-x*4.8)*(.032+b*.027)*tail;
       dx+=w2*(.016+b*.012)*tail;
       rotate(.58,.59,-w*(5+b*5),region(x,y,.43,.76,.27,.20));
+      // Only the lower snout opens. Keep the eye, upper jaw and gill roots fixed.
+      dy+=b*.13*smooth(.755,.84,x)*(1-smooth(.97,1,x))*smooth(.52,.60,y)*(1-smooth(.70,.82,y));
     }else if(id==='seal'){
       const rear=1-smooth(.12,.59,x);
       dy+=Math.sin(t-x*4.3)*(.044+b*.024)*rear;
@@ -178,15 +180,39 @@
     oval(.484,.430,.006,.013,'#703d39');
     ctx.restore();
   }
+  function megalodonMouth(ctx,width,height,amount){
+    if(!(amount>0)||typeof ctx.bezierCurveTo!=='function')return;
+    const a=clamp(amount,0,1),x=v=>v*width,y=v=>v*height;
+    ctx.save();ctx.globalAlpha=smooth(0,.12,a);
+    const gradient=ctx.createLinearGradient(x(.86),y(.52),x(.88),y(.59+.09*a));
+    gradient.addColorStop(0,'#101d25');gradient.addColorStop(.6,'#172127');gradient.addColorStop(1,'#63434a');
+    ctx.beginPath();ctx.moveTo(x(.805),y(.541));
+    ctx.bezierCurveTo(x(.837),y(.516),x(.902),y(.512),x(.939),y(.529));
+    ctx.bezierCurveTo(x(.948),y(.548),x(.939),y(.561+.052*a),x(.919),y(.565+.085*a));
+    ctx.bezierCurveTo(x(.892),y(.581+.09*a),x(.838),y(.567+.065*a),x(.805),y(.541));
+    ctx.closePath();ctx.fillStyle=gradient;ctx.fill();
+    // Small triangular teeth follow both curved jaw edges, never the eye or skin.
+    ctx.save();ctx.clip();
+    for(let i=0;i<7;i++){
+      const u=i/6,cx=.824+u*.103,upper=.529-.009*Math.sin(u*Math.PI),lower=.568+.083*a-.016*Math.abs(u-.5)*2;
+      ctx.fillStyle=i%2?'#d4d4bf':'#ece9d3';
+      ctx.beginPath();ctx.moveTo(x(cx-.006),y(upper-.009));ctx.lineTo(x(cx+.006),y(upper-.009));ctx.lineTo(x(cx),y(upper+.018+.012*a));ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(x(cx-.005),y(lower+.01));ctx.lineTo(x(cx+.005),y(lower+.01));ctx.lineTo(x(cx),y(lower-.018));ctx.closePath();ctx.fill();
+    }
+    ctx.restore();ctx.restore();
+  }
   function render(canvas,image,id,phase,{moving=false,boost=0,lite=false,width=120,dpr=1,walking=false}={}){
     if(!supports(id)||!image?.complete||!(image.naturalWidth>0&&image.naturalHeight>0))return false;
     const doc=canvas.ownerDocument,ctx=context(canvas);if(!doc?.createElement||!ctx)return false;
     if(cacheLite!==lite){frames.clear();bases.clear();pixels=0;cacheLite=lite;}
     const size=lite?112:width*clamp(dpr||1,1,2)>180?224:160,height=Math.round(size/1.5);
-    const steps=lite?12:20,cycle=Math.PI*2;
+    // At this shark's slow cadence, 12 poses showed only a few tail changes
+    // per second. More shared poses keep its stroke smooth without another loop.
+    const steps=id==='megalodon'?(lite?60:90):(lite?12:20),cycle=Math.PI*2;
     const t=(Number.isFinite(phase)?phase:0)*(framedStrokeRates[id]??1);
     const frame=moving?Math.round((((t%cycle)+cycle)%cycle)/cycle*steps)%steps:0;
-    const power=moving?Math.round(clamp(boost||0,0,1)*3)/3:0,source=sourceKey(image),key=[source,id,size,moving?frame:'rest',power,lite,walking].join('|');
+    const powerSteps=id==='megalodon'?24:3;
+    const power=moving?Math.round(clamp(boost||0,0,1)*powerSteps)/powerSteps:0,source=sourceKey(image),key=[source,id,size,moving?frame:'rest',power,lite,walking].join('|');
     try{
       let rendered=frames.get(key);
       if(!rendered){
@@ -204,7 +230,9 @@
         while(frames.size>MAX_FRAMES||pixels>MAX_PIXELS){const first=frames.keys().next().value,old=frames.get(first);pixels-=old.width*old.height;frames.delete(first);}
       }else{frames.delete(key);frames.set(key,rendered);}
       if(canvas.width!==size||canvas.height!==height){canvas.width=size;canvas.height=height;}
-      ctx.clearRect(0,0,size,height);ctx.drawImage(rendered,0,0);return true;
+      ctx.clearRect(0,0,size,height);ctx.drawImage(rendered,0,0);
+      if(id==='megalodon'&&moving)megalodonMouth(ctx,size,height,boost);
+      return true;
     }catch(_){return false;}
   }
   // Transient surrounding accents: no particles, timers or pupil data retained.

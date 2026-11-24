@@ -8,7 +8,8 @@
   if(!['auto','lite','full'].includes(mode)) mode='auto';
   const constrained=(navigator.hardwareConcurrency>0 && navigator.hardwareConcurrency<=4) ||
     (navigator.deviceMemory>0 && navigator.deviceMemory<=4) ||
-    (window.matchMedia('(pointer:coarse) and (min-width:1000px)').matches);
+    window.matchMedia('(any-pointer:coarse) and (min-width:1000px)').matches ||
+    (navigator.maxTouchPoints>1 && window.matchMedia('(min-width:1000px)').matches);
   function apply() {
     root.classList.toggle('performance-lite',mode==='lite'||(mode==='auto'&&(constrained||slow)));
     window.dispatchEvent(new Event('site-performance-change'));

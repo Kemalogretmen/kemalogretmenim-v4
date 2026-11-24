@@ -15,9 +15,9 @@
   <link rel="icon" href="/gorseller/logo.png">
   <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home">
   <link rel="stylesheet" href="/css/whiteboard-fonts.css?v=20261010">
-  <link rel="stylesheet" href="/css/whiteboard-icons.css?v=20260926-math1">
+  <link rel="stylesheet" href="/css/whiteboard-icons.css?v=20261124-pdf">
   <link rel="stylesheet" href="/css/whiteboard-math.css?v=20260928-math3">
-  <link rel="stylesheet" href="/css/smartboard-studio.css?v=20261104-score-teams">
+  <link rel="stylesheet" href="/css/smartboard-studio.css?v=20261124-pdf-tabs-2">
     <title>Akıllı Tahta — Kemal Öğretmenim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@500;700;800;900&display=swap');
@@ -1020,6 +1020,8 @@
     .sand-mini-actions .sand-mini-btn { min-height: 40px; padding: 0 8px; font-size: 12px; }
   }
 </style>
+<link rel="stylesheet" href="/css/smartboard-pdf.css?v=20261124-pdf-tabs-2">
+<link rel="stylesheet" href="/css/smartboard-pdf-reading.css?v=20261124-pdf-reading-3">
 <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
 <link rel="stylesheet" href="/css/theme-control.css?v=20261029">
 <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
@@ -1065,6 +1067,7 @@
               </div>
             </div>
             <button class="btn btn-secondary sb-launch" type="button" id="boardAddonsBtn" aria-controls="smartboardCatalog" aria-expanded="false"><span class="sb-icon" style="--sb-icon:url(/assets/smartboard-icons/puzzle.svg)" aria-hidden="true"></span>Eklentiler</button>
+            <button class="btn btn-secondary" type="button" id="boardPdfOpenBtn"><span class="pdf-open-icon" aria-hidden="true"></span>PDF aç</button>
             <button class="btn btn-secondary" type="button" id="boardSaveBtn"><i class="fas fa-save"></i> Kaydet</button>
             <button class="btn btn-secondary" type="button" id="boardPrintBtn"><i class="fas fa-print"></i> Yazdır</button>
             <button class="btn btn-secondary" type="button" id="boardClearBtn"><i class="fas fa-trash-alt"></i> Temizle</button>
@@ -1076,6 +1079,7 @@
 
         <div class="board-shell">
           <div class="board-stage" id="whiteboardStage">
+            <button type="button" id="boardStageExitFs" class="board-exit-fullscreen" title="Tam ekrandan çık" aria-label="Tam ekrandan çık" hidden><i class="fas fa-compress-arrows-alt" aria-hidden="true"></i></button>
             <div class="board-plane board-paper-white" id="boardPlane">
               <canvas class="board-surface" id="whiteboardCanvas"></canvas>
               <canvas class="board-surface" id="whiteboardPreviewCanvas" aria-hidden="true"></canvas>
@@ -1152,6 +1156,7 @@
                     <button class="toolbar-btn" type="button" id="pageGroupBtn" title="Sayfa Yönetimi">
                       <i class="fas fa-file-alt"></i>
                     </button>
+                    <button class="toolbar-btn" type="button" id="boardPdfToolBtn" title="PDF veya tahta dosyası aç" aria-label="PDF veya tahta dosyası aç"><span class="pdf-open-icon" aria-hidden="true"></span></button>
 
                     <button class="toolbar-btn" type="button" id="clearBoardBtn" title="Sayfayı Temizle" style="color:#dc2626;">
                       <i class="fas fa-trash"></i>
@@ -1440,7 +1445,11 @@
   <script src="/js/smartboard-sand-guide.js?v=20261102-sand-practice-1"></script>
   <script src="/js/smartboard-sand.js?v=20261102-sand-practice-1"></script>
   <script src="/js/smartboard-roster.js?v=20261104-picker"></script>
-  <script src="/js/smartboard-studio.js?v=20261104-score-teams"></script>
+  <script src="/js/smartboard-icons.js?v=20261124-pdf-reading-3"></script>
+  <script src="/js/smartboard-studio.js?v=20261124-pdf-tabs-2"></script>
+  <script src="/js/smartboard-pdf-views.js?v=20261124-pdf-reading-3"></script>
+  <script src="/js/smartboard-pdf-interactions.js?v=20261124-pdf-reading-3"></script>
+  <script src="/js/smartboard-pdf.js?v=20261124-pdf-reading-3"></script>
   <script src="/js/smartboard-ink.js?v=20261029-1"></script>
   <script>
 (function(){
@@ -1629,7 +1638,9 @@
     }
     function normalizeBoardPage(page) {
       var items = (page && page.items ? page.items : []).map(optimizeBoardItem);
-      return { items: items, undoStack: [cloneBoardItems(items)], undoIndex: 0 };
+      var normalized = { items: items, undoStack: [cloneBoardItems(items)], undoIndex: 0 };
+      if(page && page.pdf) normalized.pdf = Object.assign({}, page.pdf);
+      return normalized;
     }
     function scheduleBoardAutosave() {
       if(S.board.autosaveTimer) clearTimeout(S.board.autosaveTimer);
@@ -1637,6 +1648,7 @@
     }
     function saveBoardToMemory() {
       if(S.board.autosaveTimer) { clearTimeout(S.board.autosaveTimer); S.board.autosaveTimer = null; }
+      if(pdfTools && pdfTools.active()) { pdfTools.changed(); return; }
       if(S.board.drawing || Object.keys(S.board.activeStrokes).length || S.board.pinch.active || S.sand.drawing) {
         scheduleBoardAutosave();
         return;
@@ -1690,13 +1702,13 @@
       } catch(err) {}
     }
     function syncPageUI() { if(E.pageInfoDisplay) E.pageInfoDisplay.textContent = (S.board.pageIndex + 1) + ' / ' + S.board.pages.length; }
-    function addPage() { S.board.pages.splice(S.board.pageIndex + 1, 0, { items: [], undoStack: [[]], undoIndex: 0 }); S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
-    function deletePage() { if (S.board.pages.length <= 1) { clearBoard(); return; } S.board.pages.splice(S.board.pageIndex, 1); if (S.board.pageIndex >= S.board.pages.length) S.board.pageIndex = S.board.pages.length - 1; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
-    function prevPage() { if (S.board.pageIndex > 0) { S.board.pageIndex--; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
-    function nextPage() { if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
+    function addPage() { if(pdfTools && pdfTools.active()) { pdfTools.pageAction('add'); return; } S.board.pages.splice(S.board.pageIndex + 1, 0, { items: [], undoStack: [[]], undoIndex: 0 }); S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
+    function deletePage() { if(pdfTools && pdfTools.active()) { pdfTools.pageAction('delete'); return; } if (S.board.pages.length <= 1) { clearBoard(); return; } S.board.pages.splice(S.board.pageIndex, 1); if (S.board.pageIndex >= S.board.pages.length) S.board.pageIndex = S.board.pages.length - 1; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); }
+    function prevPage() { if(pdfTools && pdfTools.active()) { pdfTools.pageAction('prev'); return; } if (S.board.pageIndex > 0) { S.board.pageIndex--; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
+    function nextPage() { if(pdfTools && pdfTools.active()) { pdfTools.pageAction('next'); return; } if (S.board.pageIndex < S.board.pages.length - 1) { S.board.pageIndex++; S.board.selectedItem = null; clearPreview(); redrawBoard(); syncPageUI(); scheduleBoardAutosave(); } }
     function setPageSize(val) { S.board.pageSize = val; syncPageUI(); resizeBoard(); if(S.sand.active)centerSandbox(false);scheduleBoardAutosave(); }
 
-    var boardCtx = null; var boardPreviewCtx = null; var sandCtx = null; var mathTools = null; var studioTools = null;
+    var boardCtx = null; var boardPreviewCtx = null; var sandCtx = null; var mathTools = null; var studioTools = null; var pdfTools = null; var previousBoard = null;
     var sandEngine = window.createSmartSand(E.sandCanvas);
     var sandGuideMeasure = document.createElement('canvas').getContext('2d');
     var boardImages = new Map();
@@ -1714,7 +1726,7 @@
     }
     function resizeBoard() {
       if(!E.boardPlane || !E.boardCanvas || !E.boardPreview) return;
-      var conf = PAGE_DIMENSIONS[S.board.pageSize]; var w, h;
+      var conf = pdfTools && pdfTools.active() ? {w:pdfTools.dimensions().width,h:pdfTools.dimensions().height} : PAGE_DIMENSIONS[S.board.pageSize]; var w, h;
       var zoom = clampBoardZoom(S.board.zoom || 1);
       S.board.zoom = zoom;
       if(conf.w && conf.h) {
@@ -1754,6 +1766,7 @@
       if(mathTools) mathTools.resize();
       positionBoardToolbar();
       updateBoardZoomUi();
+      if(pdfTools && pdfTools.active()) pdfTools.sync();
     }
     function clearPreview() { if(boardPreviewCtx && E.boardPreview) { boardPreviewCtx.clearRect(0, 0, S.board.logicalWidth || E.boardPreview.width, S.board.logicalHeight || E.boardPreview.height); } }
     function getBoardPoint(evt) {
@@ -1786,21 +1799,23 @@
       var rect = E.boardPlane.getBoundingClientRect();
       return { x: evt.clientX - rect.left, y: evt.clientY - rect.top };
     }
-    function clampBoardZoom(value) { return Math.max(S.board.minZoom || 0.6, Math.min(S.board.maxZoom || 3, Number(value) || 1)); }
+    function clampBoardZoom(value) { return Math.max(pdfTools && pdfTools.active() ? 0.1 : (S.board.minZoom || 0.6), Math.min(S.board.maxZoom || 3, Number(value) || 1)); }
     function updateBoardZoomUi() {
       if(E.boardZoomValue) E.boardZoomValue.textContent = '%' + Math.round((S.board.zoom || 1) * 100);
     }
     function setBoardZoom(nextZoom, center) {
       if(!E.boardStage || !E.boardCanvas) return;
+      if(pdfTools && pdfTools.active())pdfTools.manualZoom();
       var stageRect = E.boardStage.getBoundingClientRect();
       var cx = center && typeof center.clientX === 'number' ? center.clientX : stageRect.left + E.boardStage.clientWidth / 2;
       var cy = center && typeof center.clientY === 'number' ? center.clientY : stageRect.top + E.boardStage.clientHeight / 2;
       var anchor = getBoardPoint({ clientX: cx, clientY: cy });
+      var pdfAnchor=pdfTools&&pdfTools.active()?pdfTools.zoomAnchor({clientX:cx,clientY:cy}):null;
       S.board.zoom = clampBoardZoom(nextZoom);
       resizeBoard();
       syncActiveTextStyles();
-      E.boardStage.scrollLeft = Math.max(0, anchor.x * S.board.zoom - (cx - stageRect.left));
-      E.boardStage.scrollTop = Math.max(0, anchor.y * S.board.zoom - (cy - stageRect.top));
+      if(pdfAnchor)pdfTools.restoreZoomAnchor(pdfAnchor);
+      else { E.boardStage.scrollLeft = Math.max(0, anchor.x * S.board.zoom - (cx - stageRect.left));E.boardStage.scrollTop = Math.max(0, anchor.y * S.board.zoom - (cy - stageRect.top)); }
       positionBoardToolbar();
       scheduleBoardAutosave();
     }
@@ -2249,6 +2264,7 @@
       updateBoardZoomUi();
       syncActiveTextStyles(); syncPageUI();
       positionBoardToolbar();
+      if(pdfTools && pdfTools.active())pdfTools.sync();
     }
 
     function boardStrokeStyle(item) {
@@ -2404,6 +2420,7 @@
 
     function redrawBoard() {
       if(!boardCtx || !E.boardCanvas) return;
+      if(pdfTools && pdfTools.active()) pdfTools.sync();
       boardCtx.clearRect(0, 0, S.board.logicalWidth || E.boardCanvas.width, S.board.logicalHeight || E.boardCanvas.height);
       var page = getActivePage();
       page.items.forEach(function(item) { drawBoardItem(boardCtx, item); });
@@ -2601,6 +2618,7 @@
         if(S.sand.guideLayout)window.SmartSandGuide.paint(ctx,S.sand.guideLayout,m.lines,S.sand.guideColor,S.sand.guideVisible,boardFontFamily(S.sand.font));
         return comp.toDataURL('image/png');
       }
+      if(pdfTools && pdfTools.active()) { ctx.fillStyle='#ffffff';ctx.fillRect(0,0,comp.width,comp.height);pdfTools.paint(ctx,comp.width,comp.height);ctx.drawImage(E.boardCanvas,0,0);return comp.toDataURL('image/png'); }
       ctx.fillStyle = S.board.backgroundColor || (S.board.paper === 'guide' ? '#e6f8ff' : '#ffffff'); ctx.fillRect(0, 0, comp.width, comp.height);
       var ratio = window.devicePixelRatio || 1; var step = 34 * ratio;
       if (S.board.paper === 'lined') { ctx.strokeStyle = 'rgba(115,128,255,0.16)'; ctx.lineWidth = 1.5 * ratio; ctx.beginPath(); for (var y = step; y < comp.height; y += step) { ctx.moveTo(0, y); ctx.lineTo(comp.width, y); } ctx.stroke(); } 
@@ -2622,9 +2640,10 @@
           ctx.stroke();
         }
       }
+      if(pdfTools && pdfTools.active()) pdfTools.paint(ctx,comp.width,comp.height);
       ctx.drawImage(E.boardCanvas, 0, 0); return comp.toDataURL('image/png');
     }
-    function saveBoard() { var link = document.createElement('a'); link.download = 'Tahta_' + new Date().toISOString().slice(0,10) + '.png'; link.href = getCompositeDataURL(); link.click(); }
+    function saveBoard() { if(pdfTools && pdfTools.active() && !S.sand.active) { pdfTools.export(); return; } var link = document.createElement('a'); link.download = 'Tahta_' + new Date().toISOString().slice(0,10) + '.png'; link.href = getCompositeDataURL(); link.click(); }
     function printBoard() { var dataUrl = getCompositeDataURL(); var win = window.open(''); win.document.write('<!DOCTYPE html><html><head><title>Yazdır - Tahta</ti' + 'tle></he' + 'ad><body style="margin:0;display:flex;justify-content:center;align-items:center;">'); win.document.write('<img src="' + dataUrl + '" style="max-width:100%; max-height:100vh;" onload="window.print();window.close();"/>'); win.document.write('</bo' + 'dy></ht' + 'ml>'); win.document.close(); }
 
     function initBoardDrag() {
@@ -2873,9 +2892,10 @@
     }
     function selectTool(n){}
     function syncFsBtn(){}
-    function reqFs(el){return (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el);}
-    function exitFs(){return (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);}
-    function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement;}
+    function focusBoard(){E.boardStage.classList.add('is-board-fullscreen');document.body.classList.add('has-board-fullscreen');document.dispatchEvent(new Event('fullscreenchange'));}
+    function reqFs(el){var enter=el.requestFullscreen||el.webkitRequestFullscreen;if(!enter){focusBoard();return Promise.resolve();}return Promise.resolve(enter.call(el)).catch(function(){focusBoard();});}
+    function exitFs(){if(E.boardStage.classList.contains('is-board-fullscreen')){E.boardStage.classList.remove('is-board-fullscreen');document.body.classList.remove('has-board-fullscreen');document.dispatchEvent(new Event('fullscreenchange'));return Promise.resolve();}var exit=document.exitFullscreen||document.webkitExitFullscreen;return exit?Promise.resolve(exit.call(document)):Promise.resolve();}
+    function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement||(E.boardStage.classList.contains('is-board-fullscreen')?E.boardStage:null);}
 
     function setBoardToolbarCollapsed(collapsed) {
       S.board.toolbarCollapsed = !!collapsed;
@@ -3381,7 +3401,7 @@
     });
     ['selectstart', 'dragstart', 'contextmenu'].forEach(function(eventName) {
       document.addEventListener(eventName, function(evt) {
-        if(isEditableTarget(evt.target)) return;
+        if(isEditableTarget(evt.target)||evt.target.closest&&evt.target.closest('.pdf-text-layer')) return;
         if(evt.target.closest && evt.target.closest('#whiteboardStage')) {
           evt.preventDefault();
         }
@@ -3397,8 +3417,10 @@
 
     function toggleStageFs(){fsEl()===E.boardStage?exitFs():reqFs(E.boardStage);setTimeout(syncFsBtn,300);}
     if(E.boardFullscreenBtn) E.boardFullscreenBtn.addEventListener('click',toggleStageFs);
+    document.getElementById('boardStageExitFs').addEventListener('click',function(){exitFs().catch(function(){});});
     ['fullscreenchange', 'webkitfullscreenchange'].forEach(function(eventName) {
       document.addEventListener(eventName, function() {
+        document.getElementById('boardStageExitFs').hidden=fsEl()!==E.boardStage;
         mountBoardToolbar();
         setTimeout(function() {
           resizeBoard();
@@ -3430,7 +3452,7 @@
       togglePanel: togglePanel,
       commit: function(item) { pushBoardItem(item, true); drawBoardItem(boardCtx, item); }
     });
-    studioTools = window.SmartboardStudio.init({
+    var studioConfig = {
       stage: E.boardStage,
       activate: function() { if(S.sand.active) setSandboxMode(false); mathTools.hide(); commitTextOverlay(true); },
       addImage: function(file) {
@@ -3460,6 +3482,55 @@
           }; image.src = url;
         });
       }
+    };
+    studioTools = window.SmartboardStudio.init(studioConfig);
+    document.querySelectorAll('.pdf-open-icon').forEach(function(el) { el.innerHTML = window.SmartboardIcons.html('file-up'); });
+    E.boardToolbar.setAttribute('aria-label','Akıllı Tahta araç kutusu');
+    E.boardToolbar.querySelectorAll('button[title]').forEach(function(el) { if(!el.getAttribute('aria-label')) el.setAttribute('aria-label',el.title); });
+    pdfTools = window.SmartboardPDF.init({
+      stage:E.boardStage, plane:E.boardPlane,
+      pages:function(){return S.board.pages;}, index:function(){return S.board.pageIndex;},
+      view:function(){return {zoom:S.board.zoom};}, zoom:setBoardZoom, fullscreen:toggleBoardFs,
+      sandbox:function(){return S.sand.active;},
+      tool:function(value){if(value)setBoardTool(value);return S.board.tool;},
+      selected:function(){return S.board.selectedItem;},
+      removeSelected:function(){var item=S.board.selectedItem;if(!item)return;getActivePage().items=getActivePage().items.filter(function(i){return i!==item;});S.board.selectedItem=null;saveSnapshot();redrawBoard();},
+      paste:function(source){
+        commitTextOverlay(true);var item=JSON.parse(JSON.stringify(source)),r=E.boardStage.getBoundingClientRect(),point=getBoardPoint({clientX:r.left+r.width/2,clientY:Math.max(0,r.top)+Math.min(r.height,innerHeight-Math.max(0,r.top))*.5});
+        point.x=Math.max(16,Math.min(S.board.logicalWidth-60,point.x));point.y=Math.max(16,Math.min(S.board.logicalHeight-60,point.y));
+        if(item.kind==='text'&&!Number.isFinite(item.fontSize))item={kind:'text',text:String(item.text||'').slice(0,20000),x:point.x,y:point.y,color:S.board.strokeColor,fontSize:S.board.textSize,textFont:S.board.textFont,textAlign:'left',textWeight:S.board.textWeight,textStyle:S.board.textStyle,boxWidth:Math.min(400,S.board.logicalWidth-point.x)};
+        else{var b=getBounds(item),dx=point.x-b.x,dy=point.y-b.y;if(item.kind==='path')item.points.forEach(function(p){p.x+=dx;p.y+=dy;});else if(item.kind==='shape'){item.start.x+=dx;item.start.y+=dy;item.end.x+=dx;item.end.y+=dy;}else{item.x+=dx;item.y+=dy;}}
+        pushBoardItem(item);setBoardTool('select');S.board.selectedItem=item;redrawBoard();
+      },
+      image:studioConfig.addImage,undo:undoBoard,redo:redoBoard,print:printBoard,
+      cancelTouch:function(){cancelTouchDrawingForPinch();Object.keys(S.board.touchPointers).forEach(releaseBoardTouchPointer);S.board.pinch.active=false;S.board.activePointerId=null;},
+      forward:function(e){E.boardPreview.dispatchEvent(new PointerEvent(e.type,{bubbles:true,cancelable:true,pointerId:e.pointerId,pointerType:e.pointerType,clientX:e.clientX,clientY:e.clientY,button:e.button,buttons:e.buttons,pressure:e.pressure,isPrimary:e.isPrimary}));},
+      drawing:function(){return S.board.drawing || Object.keys(S.board.activeStrokes).length>0;},
+      commit:function(){commitTextOverlay(true);}, normalize:normalizeBoardPage,
+      begin:function(){
+        if(!previousBoard) { saveBoardToMemory(); previousBoard={pages:S.board.pages,index:S.board.pageIndex,zoom:S.board.zoom,paper:S.board.paper,background:S.board.backgroundColor,pageSize:S.board.pageSize,color:S.board.strokeColor}; }
+        if(S.sand.active)setSandboxMode(false); if(mathTools)mathTools.hide();commitTextOverlay(true); closeAllSubPanels();
+        S.board.selectedItem=null; S.board.strokeColor='#1f2142';syncBoardUI();
+        E.pageSizeSelect.disabled=true;E.boardPaperBtns.concat(E.boardBgBtns).forEach(function(b){b.disabled=true;});
+      },
+      replace:function(pages,index,zoom){
+        S.board.pages=pages.map(function(p){return p.undoStack?p:normalizeBoardPage(p);});S.board.pageIndex=index;S.board.selectedItem=null;S.board.zoom=zoom;
+        var used=new Set();S.board.pages.concat(previousBoard?previousBoard.pages:[]).forEach(function(p){p.items.forEach(function(i){if(i.kind==='image')used.add(i.src);});});boardImages.forEach(function(_,key){if(!used.has(key))boardImages.delete(key);});
+        clearPreview();resizeBoard();redrawBoard();syncPageUI();
+      },
+      end:function(){
+        if(previousBoard){S.board.pages=previousBoard.pages;S.board.pageIndex=previousBoard.index;S.board.zoom=previousBoard.zoom;S.board.paper=previousBoard.paper;S.board.backgroundColor=previousBoard.background;S.board.pageSize=previousBoard.pageSize;S.board.strokeColor=previousBoard.color;previousBoard=null;}
+        E.pageSizeSelect.disabled=false;E.boardPaperBtns.concat(E.boardBgBtns).forEach(function(b){b.disabled=false;});
+        S.board.selectedItem=null;clearPreview();resizeBoard();redrawBoard();syncBoardUI();
+      },
+      paintNotes:function(page,canvas,pixels){var size=window.SmartboardPDF.bounds(page.pdf.width,page.pdf.height,pixels||300000);canvas.width=size.width;canvas.height=size.height;var ctx=canvas.getContext('2d');ctx.setTransform(canvas.width/page.pdf.width,0,0,canvas.height/page.pdf.height,0,0);page.items.forEach(function(item){drawBoardItem(ctx,item);});},
+      annotationCanvas:async function(page,pixels){
+        var images=page.items.filter(function(i){return i.kind==='image';});
+        await Promise.all(images.map(function(i){var cached=boardImages.get(i.src);if(cached&&cached.complete)return Promise.resolve();return new Promise(function(resolve,reject){var image=new Image();image.onload=function(){boardImages.set(i.src,image);resolve();};image.onerror=function(){reject(new Error('Sayfadaki görsel okunamadı.'));};image.src=i.src;});}));
+        if(document.fonts)await document.fonts.ready;
+        var size=window.SmartboardPDF.bounds(page.pdf.width,page.pdf.height,pixels||2800000), c=document.createElement('canvas');c.width=size.width;c.height=size.height;
+        var ctx=c.getContext('2d');ctx.setTransform(c.width/page.pdf.width,0,0,c.height/page.pdf.height,0,0);page.items.forEach(function(item){drawBoardItem(ctx,item);});return c;
+      }
     });
     var boardResizeTimer;
     window.addEventListener('resize', function() {
@@ -3472,8 +3543,11 @@
     });
     window.addEventListener('scroll', positionBoardToolbar, { passive: true });
     document.addEventListener('keydown',function(e){
-      if(isEditableTarget(e.target)) return;
+      if(e.key==='Escape'&&E.boardStage.classList.contains('is-board-fullscreen'))exitFs();
+      if(e.defaultPrevented||isEditableTarget(e.target)) return;
       var k=e.key.toLowerCase();
+      if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();if(e.shiftKey)redoBoard();else undoBoard();return;}
+      if(e.ctrlKey||e.metaKey||e.altKey)return;
       if(k==='p') setBoardTool('pen');
       if(k==='h') setBoardTool('highlighter');
       if(k==='c') setBoardTool('chalk');

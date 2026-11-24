@@ -98,3 +98,11 @@
 .bubble-game-paused .reef-shell{animation-play-state:paused!important}
 @media(max-width:800px){.reef-lights{gap:9px;padding:12px 4px}.reef-lights .light-orb{width:22%;padding:7px}.light-orb .game-orb-content b{font-size:24px}.light-orb .game-orb-content small{font-size:11px}.reef-duel .reef-lights{gap:4px;padding:8px 0}.reef-duel .light-orb{min-width:0;width:23%;max-width:23%;padding:3px}.reef-duel .light-orb .game-orb-content{gap:2px}.reef-duel .light-orb .game-orb-content b{font-size:16px}.reef-duel .light-orb .game-orb-content small{font-size:8px}.reef-floating-orb{width:66px;height:66px;max-width:23%;padding:6px}.reef-floating-content{font-size:31px}.reef-duel .reef-floating-orb{width:50px;height:50px;max-width:30%;padding:5px}.reef-duel .reef-floating-content{font-size:25px}.reef-shell .shell-pearl{width:23px;height:23px}.reef-duel .reef-shell .shell-pearl{width:16px;height:16px}.reef-shell .shell-number{font-size:11px}.memory-orb .memory-picture{inset:4%}}
 @media(prefers-reduced-motion:reduce){.reef-lights .light-orb.is-lit{filter:brightness(1.2);box-shadow:inset 0 0 18px #fff8}.reef-shell>span.reef-shell-dome{transition:none}.light-orb.light-popped{opacity:0!important;animation:none!important}}
+
+/* Keep independent touches inside each play lane; menus can still scroll. */
+.bubble-games .reef-play-lanes,.bubble-games .reef-play-lanes button{touch-action:none;-webkit-user-select:none;user-select:none}
+.bubble-games .reef-play-lanes img{-webkit-user-drag:none;pointer-events:none}
+html.performance-lite .bubble-games{backdrop-filter:none;-webkit-backdrop-filter:none}
+html.performance-lite .bubble-games .game-orb{box-shadow:inset 0 0 9px #ddffff30}
+html.performance-lite .bubble-games .memory-picture img{filter:none}
+.bubble-game-open .bubble,.bubble-game-open .seasonal-flake{animation-play-state:paused}

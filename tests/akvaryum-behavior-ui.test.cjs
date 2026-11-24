@@ -303,7 +303,7 @@ async function harness({absent=false,sound=true,reduced=false,extraNames=[],dele
   })};
   const modelCalls=[];let modelCreates=0,modelDisposes=0,modelFail=false;
   let motionSpeeds=[];
-  const rayPaints=[],expressionPaints={draws:0,transforms:0,strokes:0};if(raySurface||expressiveSurface){const create=document.createElement.bind(document);document.createElement=(tag,...args)=>{const el=create(tag,...args);if(tag==='canvas')el.getContext=()=>expressiveUnavailable?null:({clearRect(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(){expressionPaints.transforms++;},fillRect(){},stroke(){expressionPaints.strokes++;},createRadialGradient(){return {addColorStop(){}};},drawImage(...args){if(raySurface)rayPaints.push(args.slice(1));expressionPaints.draws++;}});return el;};}
+  const rayPaints=[],expressionPaints={draws:0,transforms:0,strokes:0,mouthCurves:0};if(raySurface||expressiveSurface){const create=document.createElement.bind(document);document.createElement=(tag,...args)=>{const el=create(tag,...args);if(tag==='canvas')el.getContext=()=>expressiveUnavailable?null:({clearRect(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(){expressionPaints.transforms++;},fillRect(){},fill(){},bezierCurveTo(){expressionPaints.mouthCurves++;},createLinearGradient(){return {addColorStop(){}};},stroke(){expressionPaints.strokes++;},createRadialGradient(){return {addColorStop(){}};},drawImage(...args){if(raySurface)rayPaints.push(args.slice(1));expressionPaints.draws++;}});return el;};}
   const waterPaints={};
   window.AquariumSeasonal={...require('../js/akvaryum-seasonal.js'),suggestion:()=>require('../js/akvaryum-seasonal.js').suggestion(seasonalDate?new Date(seasonalDate):new Date())};
   window.AquariumWater=require('../js/akvaryum-water.js');
@@ -1902,4 +1902,72 @@ test('teacher starts reef construction in activities and can hide a permanently 
  h.submit(settings);
  assert.equal(h.document.getElementById('reefShip'),null);
  assert.equal(C.reef.stage(h.saved().classes[0].reefCollection),4);
+});
+
+test('group development behavior preserves eligible selections, previews capped deductions and never feeds or celebrates',async()=>{
+ const h=await harness({ageDays:0,extraNames:['Ada','Ece','Sıfır'],configure:(state,cls)=>{
+  cls.tasks.push({id:'group-negative',title:'Söz sıramı beklemeliyim',points:-10});
+  for(const [index,s] of cls.students.entries()){
+   C.ensureDay(s,cls);
+   if(index<3)C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id);
+   if(index===1)C.awardBehavior(s,cls,C.dayKey(),cls.tasks[0].id);
+  }
+  cls.students[2].days[C.dayKey()].absent=true;
+ }}),d=h.document,before=h.saved(),pupils=before.classes[0].students;
+ const feeds=JSON.stringify(pupils.map(s=>s.feeds));
+ h.click('[data-action="activities"]');h.click('[data-action="group-reward"]');
+ const selectFirst=()=>{
+  const select=d.getElementById('groupTask');select.querySelector('option').selected=true;
+  select.dispatchEvent(new h.window.Event('change',{bubbles:true}));
+ };
+ selectFirst();h.click('[data-action="group-select"]');
+ h.click('[data-action="group-behavior-type"][data-kind="development"]');
+ selectFirst();h.click('[data-action="group-select"]');
+ assert.match(d.querySelector('#groupStudents input[value="'+pupils[0].id+'"]').closest('label').textContent,/-7 puan/);
+ assert.equal(d.querySelector('#groupStudents input[value="'+pupils[2].id+'"]').disabled,true);
+ assert.equal(d.querySelector('#groupStudents input[value="'+pupils[3].id+'"]').disabled,true);
+ assert.match(d.getElementById('groupSummary').textContent,/2 öğrenci seçildi.*-17 puan/);
+ assert.match(d.getElementById('groupSubmit').textContent,/Puanı düşür|puanı düşür/);
+ const form=d.getElementById('groupRewardForm');h.submit(form);
+ assert.equal(h.modal.open,false);
+ const saved=h.saved();
+ assert.deepEqual(saved.classes[0].students.map(C.earned),[0,4,7,0]);
+ assert.equal(JSON.stringify(saved.classes[0].students.map(s=>s.feeds)),feeds);
+ assert.equal(h.sounds(),0);assert.equal(h.negativeSounds(),1);
+ assert.equal(d.querySelectorAll('.fish.is-rewarding').length,0);
+ h.submit(form);assert.deepEqual(h.saved(),saved);assert.equal(h.negativeSounds(),1);
+ h.click('[data-id="'+pupils[0].id+'"]');h.click('[data-action="history"]');
+ assert.match(d.getElementById('modalContent').textContent,/-7/);
+});
+test('empty group development behaviors offer editing and cannot submit a deduction',async()=>{
+ const h=await harness(),d=h.document,before=h.saved();
+ h.click('[data-action="activities"]');h.click('[data-action="group-reward"]');
+ h.click('[data-action="group-behavior-type"][data-kind="development"]');
+ assert.equal(d.getElementById('groupTask').disabled,true);
+ assert.equal(d.getElementById('groupSubmit').disabled,true);
+ assert.ok(d.querySelector('[data-action="tasks"]'));
+ h.click('[data-action="group-select"]');h.submit(d.getElementById('groupRewardForm'));
+ assert.deepEqual(h.saved(),before);
+ h.click('[data-action="group-behavior-type"][data-kind="positive"]');
+ assert.equal(d.getElementById('groupTask').disabled,false);
+ assert.match(d.getElementById('groupSubmit').textContent,/Puan ver ve besle/);
+});
+
+
+test('arcade reduces background work before drawing while keeping fish swimming and restoring their normal rate on close',async()=>{
+ let steps=0;const h=await harness({ageDays:0,water:true,chatTest:()=>steps++});
+ const frames=(start)=>{const before=steps;for(let i=0;i<60;i++)h.frames.shift()?.(start+i*1000/60);return steps-before;};
+ const normal=frames(100);h.click('#bubbleGamesButton');const playing=frames(1100);
+ assert.ok(normal>=50,normal);assert.ok(playing>=10&&playing<=16,playing);assert.equal(h.frames.length,1);
+ h.click('#bubbleGames [data-game-action="close"]');assert.ok(frames(2100)>=50);assert.equal(h.frames.length,1);
+});
+
+test('megalodon opens its jaw after a saved reward and returns to a closed mouth with no stored animation state',async()=>{
+ for(const lite of [false,true]){
+  const h=await harness({species:'megalodon',ageDays:0,expressiveSurface:true,lite});h.frames.pop()(100);
+  assert.equal(h.expressionPaints.mouthCurves,0);h.click('.fish');h.click('.behavior-choice');h.frames.pop()(2100);
+  assert.ok(h.expressionPaints.mouthCurves>0);assert.ok(h.document.querySelector('.fish').classList.contains('has-expressive-surface'));
+  const curves=h.expressionPaints.mouthCurves,saved=h.saved();h.frames.pop()(7000);assert.equal(h.expressionPaints.mouthCurves,curves);
+  assert.equal(h.document.querySelector('.fish').classList.contains('is-rewarding'),false);assert.deepEqual(h.saved(),saved);
+ }
 });

@@ -24,11 +24,11 @@ test('deductions repeat, cap at available score, reject absent/zero-score awards
  s.days[date].absent=true;assert.equal(C.awardBehavior(s,cls,date,negative.id),null);
  assert.equal(s.feeds.length,1);assert.equal(s.feeds[0].creditReversed,undefined);
 });
-test('editing a behavior type preserves awarded history and never turns a deduction into feed credit or a bulk reward',()=>{
+test('editing a behavior type preserves awarded history and never turns a deduction into feed credit',()=>{
  const {state,cls,s,negative,date}=setup();C.awardBehavior(s,cls,date,cls.tasks[0].id);
  C.awardBehavior(s,cls,date,negative.id);const entry=s.days[date].tasks.at(-1);
  assert.equal(C.setTask(s,date,entry.id,'pending'),false);
- assert.deepEqual(C.rewardGroup(cls,date,negative.id,[s.id]),[]);
+ assert.deepEqual(C.rewardGroup(cls,date,negative.id,[s.id]),[{id:s.id,points:-10,fed:false}]);
  C.updateTask(cls,negative.id,{title:'Yeni ad',icon:'🎯',points:-3},date);
  assert.equal(entry.points,-10);assert.equal(C.awardBehavior(s,cls,date,negative.id).points,-3);
  const pending=cls.tasks[1];C.updateTask(cls,pending.id,{title:pending.title,points:-2,icon:''},date);

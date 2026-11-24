@@ -580,6 +580,7 @@ function initPopup3DViewer() {
 }
 
 function togglePopupSpin() {
+  if (!popupRenderer) return;
   popupAutoSpin = !popupAutoSpin;
   const btn = document.getElementById('popupSpinBtn');
   btn.textContent = popupAutoSpin ? '⏸️ 3B Döndürmeyi Durdur' : '▶️ 3B Modeli Döndür (Kapalı)';
@@ -622,6 +623,7 @@ function openOrganellePopup(orgId) {
   popupOpen = true;
 
   setTimeout(() => {
+    if (!popupRenderer) return;
     const holder = document.getElementById('popup3DHolder');
     if (popupRenderer && holder.clientWidth > 0) {
       popupCamera.aspect = holder.clientWidth / holder.clientHeight;
@@ -666,11 +668,12 @@ let selectedSpecimen = 'animal';
 let currentMicStep = 0;
 let micLightOn = false;
 let currentObjective = 10;
-let micCamTarget = new THREE.Vector3(0, 1.3, 0);
+let micCamTarget;
 let micCamSpherical = { radius: 5.8, theta: 0.55, phi: 1.2 };
 let isDraggingMic = false, prevMicMouse = { x: 0, y: 0 };
 
 function initMicroscope3D() {
+  micCamTarget = new THREE.Vector3(0, 1.3, 0);
   const holder = document.getElementById('microscopeCanvasHolder');
   const w = holder.clientWidth || 1000;
   const h = holder.clientHeight || 600;
@@ -803,11 +806,10 @@ function initMicroscope3D() {
     updateMicCameraPosition();
   }, { passive: false });
 
-  buildMicroscopePartChipsAndLabels();
-  drawEyepieceMicroscopyView();
 }
 
 function toggleMicroscopeAutoSpin() {
+  if (!micRenderer) return;
   micAutoSpin = !micAutoSpin;
   const btn = document.getElementById('micAutoSpinBtn');
   btn.textContent = micAutoSpin ? '⏸️ Döndür (Açık)' : '▶️ Döndür (Kapalı)';
@@ -824,6 +826,7 @@ function updateMicCameraPosition() {
 }
 
 function resetMicroscopeCamera() {
+  if (!micRenderer) return;
   micGroup.rotation.y = 0;
   micCamTarget.set(0, 1.3, 0);
   micCamSpherical = { radius: 5.8, theta: 0.55, phi: 1.2 };
@@ -900,6 +903,7 @@ function runNextMicroscopeStep() {
 }
 
 function jumpToMicroscopeStep(step) {
+  if (!micRenderer && step <= 4) return;
   currentMicStep = step;
   playTone(500 + step * 60, 0.12, 'triangle', 0.09);
 
@@ -1006,7 +1010,7 @@ function setObjective(mag) {
 }
 
 function setMicroscopeViewMode(mode) {
-  const isEye = mode === 'eyepiece';
+  const isEye = mode === 'eyepiece' || !micRenderer;
   document.getElementById('micView3DBtn').classList.toggle('active', !isEye);
   document.getElementById('micViewEyepieceBtn').classList.toggle('active', isEye);
   document.getElementById('eyepieceHud').classList.toggle('active', isEye);
@@ -1160,8 +1164,8 @@ function zoomFromEyepieceToCellLab() {
 function resetMicroscopeSim() {
   currentMicStep = 0;
   eyepieceZoomFactor = 1.0;
-  micSlideMesh.visible = false;
-  micCoverSlipMesh.visible = false;
+  if (micSlideMesh) micSlideMesh.visible = false;
+  if (micCoverSlipMesh) micCoverSlipMesh.visible = false;
   toggleMicroscopeLight(false);
   setMicroscopeViewMode('3d');
   document.getElementById('coarseSlider').value = 20;
@@ -1211,9 +1215,7 @@ function initCellLab3D() {
   cellRootGroup.rotation.x = 0.28;
   cellScene.add(cellRootGroup);
 
-  buildSidebarOrganelleButtons();
   rebuildCell3DModels();
-  render2DCellDiagrams();
 
   const dom = cellRenderer.domElement;
   dom.addEventListener('pointerdown', e => {
@@ -1291,6 +1293,7 @@ function resetCellZoom() {
 }
 
 function resetCellCamera() {
+  if (!cellRenderer) return;
   cellRootGroup.rotation.set(0.28, 0, 0);
   cellCamSpherical = { radius: getBaseCellRadius(), theta: 0.0, phi: 0.72 };
   resetCellZoom();
@@ -1662,6 +1665,7 @@ function setCellType(type) {
 }
 
 function setCellDimension(dim) {
+  if (!cellRenderer) dim = '2d';
   currentCellDim = dim;
   playTone(640, 0.08, 'sine', 0.07);
   document.getElementById('btnDim3D').classList.toggle('active', dim === '3d');
@@ -1678,6 +1682,7 @@ function toggleCellLabels() {
 }
 
 function toggleCellAutoSpin() {
+  if (!cellRenderer) return;
   cellAutoSpin = !cellAutoSpin;
   const btn = document.getElementById('btnCellSpin');
   btn.textContent = cellAutoSpin ? '⏸️ Döndür (Açık)' : '▶️ Döndür (Kapalı)';
@@ -3545,10 +3550,68 @@ function onWindowResize() {
 
 window.addEventListener('resize', onWindowResize);
 
+function initializeLab3D() {
+  function start(initialize, holderId) {
+    try {
+      if (typeof THREE === 'undefined') return false;
+      initialize();
+      return true;
+    } catch (_) {
+      document.getElementById(holderId).querySelectorAll('canvas').forEach(canvas => canvas.remove());
+      return false;
+    }
+  }
+  function disableControls(section, selector) {
+    document.querySelectorAll(section + ' ' + selector).forEach(button => { button.disabled = true; });
+  }
+  function notice(sectionId, message) {
+    const note = document.createElement('p');
+    note.className = 'cell-lab-fallback';
+    note.setAttribute('role', 'status');
+    note.textContent = message;
+    document.getElementById(sectionId).prepend(note);
+  }
+
+  // Each WebGL context can fail independently; none owns the shared 2D content.
+  if (!start(initMicroscope3D, 'microscopeCanvasHolder')) {
+    micRenderer?.dispose();
+    micRenderer = micCamera = micScene = micGroup = null;
+    micSlideMesh = micCoverSlipMesh = micBulbMesh = micLightBeamMesh = micStageGroup = micRevolverGroup = null;
+    disableControls('#mod-microscope', ':is(#micView3DBtn, #micLabelsBtn, #micAutoSpinBtn, #startMicAnimBtn, [onclick="resetMicroscopeCamera()"], [onclick^="jumpToMicroscopeStep("])');
+    // Focusing and the transition to the 2D cell view do not need WebGL.
+    document.getElementById('mstep-5').disabled = false;
+    document.getElementById('mstep-6').disabled = false;
+    document.getElementById('microscopeLabelsOverlay').style.display = 'none';
+    document.getElementById('micStatusBanner').hidden = true;
+    document.querySelector('#mod-microscope .stage-footer-hint').hidden = true;
+    notice('mod-microscope', '3B mikroskop açılamadı. 2B oküler görünümü, netleme ve hücre incelemesi kullanılabilir.');
+    setMicroscopeViewMode('eyepiece');
+  }
+  if (!start(initCellLab3D, 'cellCanvasHolder')) {
+    cellRenderer?.dispose();
+    cellRenderer = cellCamera = cellScene = cellRootGroup = null;
+    cellClickables = [];
+    cellLabelAnchors = [];
+    disableControls('#mod-cell', ':is(#btnDim3D, #btnCellSpin, [onclick="resetCellCamera()"])');
+    notice('mod-cell', '3B hücre modeli açılamadı. 2B diyagramlar, organel bilgileri ve değerlendirmeler kullanılabilir.');
+    document.querySelectorAll('[onclick="zoomFromEyepieceToCellLab()"]').forEach(button => { button.textContent = 'Hücreyi 2B incele'; });
+    setCellDimension('2d');
+  }
+  if (!start(initPopup3DViewer, 'popup3DHolder')) {
+    popupRenderer?.dispose();
+    popupRenderer = popupCamera = popupScene = popupMeshGroup = null;
+    document.getElementById('popupSpinBtn').disabled = true;
+    document.querySelector('#mod-cell .stage-footer-hint').textContent = 'Organel adı veya etiketi: görsel ve açıklamalar';
+    notice('popup3DHolder', '3B organel modeli açılamadı. Organel görseli ve açıklamaları kullanılabilir.');
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-  initMicroscope3D();
-  initCellLab3D();
-  initPopup3DViewer();
+  buildMicroscopePartChipsAndLabels();
+  buildSidebarOrganelleButtons();
+  render2DCellDiagrams();
+  initializeLab3D();
+  drawEyepieceMicroscopyView();
   setHierarchyStage(1);
   initOrderGame();
   initFillBlanks();

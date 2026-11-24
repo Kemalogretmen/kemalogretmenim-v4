@@ -225,7 +225,7 @@ dialog .button:hover:not(:disabled),dialog .activity-card:hover,dialog .behavior
 .behavior-profile{margin:8px 0;padding-bottom:8px}.behavior-profile img{width:64px;height:48px}
 .behavior-modal .student-facts{padding:12px;margin-bottom:12px}.behavior-modal .growth-summary{padding:10px;margin:10px 0}
 .behavior-tabs{display:flex;gap:8px;margin:0 0 14px}.behavior-tabs button{min-height:44px;padding:10px 14px;border:1px solid #b4dedb55;border-radius:10px;background:#0b2e40;color:#d9edef;font-weight:700}
-.behavior-tabs [aria-selected=true]{background:#a5e6ce;color:#133d45;border-color:#a5e6ce}
+.behavior-tabs [aria-selected=true],.behavior-tabs [aria-pressed=true]{background:#a5e6ce;color:#133d45;border-color:#a5e6ce}
 .device-quality{margin-bottom:22px}.device-quality small{font-size:12px;line-height:1.5;color:#d3e7e6}
 dialog *,.fish-name,.fish-points,.fish-hunger{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .dialog-open dialog *{animation-play-state:running!important}

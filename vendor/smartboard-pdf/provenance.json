@@ -1,0 +1,7 @@
+{
+  "purpose": "Local-only smartboard PDF rendering, editable project archives and PDF export",
+  "pdfjs-dist": {"version":"6.5.438","source":"https://www.npmjs.com/package/pdfjs-dist/v/6.5.438","build":"legacy/build","license":"Apache-2.0","licenseFile":"PDFJS-LICENSE"},
+  "pdf-lib": {"version":"1.17.1","source":"https://www.npmjs.com/package/pdf-lib/v/1.17.1","license":"MIT","licenseFile":"PDFLIB-LICENSE"},
+  "fflate": {"version":"0.8.2","source":"https://www.npmjs.com/package/fflate/v/0.8.2","license":"MIT","licenseFile":"FFLATE-LICENSE"},
+  "icons": {"package":"lucide-static","version":"1.78.0","license":"ISC","licenseFile":"/assets/smartboard-icons/LICENSE"}
+}

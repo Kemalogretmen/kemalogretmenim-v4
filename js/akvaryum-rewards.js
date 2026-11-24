@@ -18,7 +18,7 @@
     lina:['veil-fan',3.8,1],spongebob:['sponge-dance',4.2,1],patrick:['star-dance',4,1],mrkrabs:['claw-clap',3.8,1],
     plankton:['antenna-dance',3.7,1],gary:['snail-greet',4.1,1],squidward:['tentacle-ballet',4.3,1],sandy:['squirrel-cheer',4.2,1],
     hammerhead:['hammer-glide',3.8,1],axolotl:['gill-wave',4.2,1],
-    catfish:['ripple',3.4,1],megalodon:['hammer-glide',4.2,.8],seal:['arc',3.6,1],penguin:['paddle',3.2,1.3]
+    catfish:['ripple',3.4,1],megalodon:['jaw-open',4.2,.8],seal:['arc',3.6,1],penguin:['paddle',3.2,1.3]
   };
   function makeProfile(id){
     const n=C.SPECIES.findIndex(s=>s.id===id),p=profiles[id]||['wiggle',2.9+(Math.max(0,n)%4)*.15,.8+(Math.max(0,n)%3)*.12];
@@ -66,6 +66,9 @@
       result.x=wave*2.3*a;result.y=-2*a;result.bank=wave*2.2*a;result.joints=1.6*envelope;
     }else if(p.kind==='side-step'){
       result.lateral=Math.sin(u*Math.PI*6)*.23*a;result.x=Math.sin(u*Math.PI*6)*4.2*a;result.bank=wave*.8*a;result.joints=1.5*envelope;
+    }else if(p.kind==='jaw-open'){
+      // The celebration opens the jaw; body size and swimming cadence stay stable.
+      result.y=-2*a;result.tail=.35*envelope;result.phase=0;
     }else if(p.kind==='hammer-glide'){
       result.x=Math.sin(u*Math.PI*2)*4*a;result.y=-8*a;result.bank=Math.sin(u*Math.PI*2)*4*a;result.tail=1.7*envelope;result.joints=1.25*envelope;
     }else if(p.kind==='gill-wave'){

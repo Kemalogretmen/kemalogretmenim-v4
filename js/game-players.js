@@ -41,7 +41,7 @@
  let activeApi=null;
  function mount(win){
   const doc=win.document,path=win.location.pathname.split('/').pop(),config=configs[path];if(!config)return;
-  const initialized=new WeakSet(),controls=new Map(),remembered=new Map();let state=null,classes=[],loading=false,revision=0,key='',queued=false,fieldSerial=0,rosterStatus='ready';
+  const initialized=new WeakSet(),knownFields=new Set(),controls=new Map(),remembered=new Map();let state=null,classes=[],loading=false,revision=0,key='',queued=false,fieldSerial=0,rosterStatus='ready';
   const fields=g=>[...new Set(config.groups[g].flatMap(sel=>[...doc.querySelectorAll(sel)]))];
   const computer=f=>(f.readOnly&&!f.dataset.gpLocked)||(f.id==='sagIsimInput'&&doc.getElementById('sagSetupRole')?.textContent.includes('Bilgisayar'));
   function visible(e){if(e.disabled||computer(e))return false;for(let p=e;p&&p!==doc;p=p.parentElement){if(p.hidden||p.classList?.contains('hidden')||p.classList?.contains('is-hidden'))return false;const cs=win.getComputedStyle?.(p);if(cs?.display==='none'||cs?.visibility==='hidden')return false;}return true;}
@@ -51,7 +51,7 @@
   function activeStudent(){return state?.user&&state.profile?.role==='student'&&state.profile.active!==false;}
   function studentName(){return clean(state?.profile?.full_name||[state?.profile?.first_name,state?.profile?.last_name].filter(Boolean).join(' '));}
   function initialize(f,g,index){
-   if(computer(f))return;if(!initialized.has(f)){initialized.add(f);f.dataset.gameName='true';f.dataset.gpKey=String(++fieldSerial);if(!f.placeholder)f.placeholder='Öğrencinin adı';if(/^Oyuncu\s*\d+$|^Öğrenci$|^Sen$|^Mavi Şimşek$|^Kırmızı Ateş$|^Kırmızı Takım$|^Mavi Takım$/i.test(clean(f.value)))f.value='';const old=remembered.get(g+':'+index);if(!f.value&&old)setName(f,old,false);f.addEventListener('input',()=>{f.setCustomValidity?.('');remembered.set(g+':'+index,clean(f.value));delete f.dataset.gpStudent;});}
+   knownFields.add(f);if(computer(f))return;if(!initialized.has(f)){initialized.add(f);f.dataset.gameName='true';f.dataset.gpKey=String(++fieldSerial);if(!f.placeholder)f.placeholder='Öğrencinin adı';if(/^Oyuncu\s*\d+$|^Öğrenci$|^Sen$|^Mavi Şimşek$|^Kırmızı Ateş$|^Kırmızı Takım$|^Mavi Takım$/i.test(clean(f.value)))f.value='';const old=remembered.get(g+':'+index);if(!f.value&&old)setName(f,old,false);f.addEventListener('input',()=>{f.setCustomValidity?.('');remembered.set(g+':'+index,clean(f.value));delete f.dataset.gpStudent;});}
    if(index===0&&activeStudent()&&f.id!=='winnerNameDuo'&&studentName()){setName(f,studentName(),true);if(!f.readOnly)f.readOnly=true;f.dataset.gpLocked='true';}
    else if(f.dataset.gpLocked){f.readOnly=false;delete f.dataset.gpLocked;}
   }
@@ -77,7 +77,18 @@
   // Covers keyboard-triggered legacy score saving as well as clicking.
   doc.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('[data-game-name]')&&!validate()){e.preventDefault();e.stopImmediatePropagation();}},true);
   doc.addEventListener('focusin',e=>{if(e.target.matches('[data-game-name]'))scan();});
-  new win.MutationObserver(schedule).observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','style','disabled','readonly']});
+  // Moving sprites and live scores do not change the name form. Observing
+  // every animation used to rescan all fields (and their computed styles)
+  // on every frame across the games that share this player picker.
+  const fieldSelector=config.groups.flat().join(',');
+  const containsField=node=>node.nodeType===1&&(node.matches(fieldSelector)||node.querySelector(fieldSelector));
+  new win.MutationObserver(records=>{
+   for(const field of knownFields)if(!field.isConnected)knownFields.delete(field);
+   const changed=records.some(record=>record.type==='attributes'
+    ?[...knownFields].some(field=>record.target===field||record.target.contains(field))
+    :[...record.addedNodes,...record.removedNodes].some(containsField));
+   if(changed)schedule();
+  }).observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','style','disabled','readonly']});
   win.addEventListener('kemal-user-auth-ready',()=>update(win.kemalUserAuth));win.addEventListener('kemal-user-auth-changed',()=>update(win.kemalUserAuth));
   activeApi={validate,owner:()=>owner(state),refresh:scan};scan();if(win.kemalUserAuth)win.kemalUserAuth.ready().then(()=>update(win.kemalUserAuth)).catch(()=>{});
  }

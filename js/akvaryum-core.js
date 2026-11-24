@@ -55,7 +55,7 @@
     { id: 'hammerhead', name: 'Çekiç başlı köpekbalığı', file: 'cekic-basli-kopekbaligi.png', detail: 'Güçlü kuyruğuyla yüzer, ödülde zarifçe süzülür', size: 174 },
     { id: 'axolotl', name: 'Aksolotl', file: 'aksolotl.png', detail: 'Pembe solungaçları kıpırdar, ödülde el sallar', size: 145 },
     { id: 'catfish', name: 'Yayın balığı', file: 'yayin-baligi.png', detail: 'Uzun bıyıklarıyla zemine yakın süzülür', size: 155 },
-    { id: 'megalodon', name: 'Megalodon', file: 'megalodon.png', detail: 'Geniş gövdesiyle güçlü ve sakin yüzer', size: 246 },
+    { id: 'megalodon', name: 'Megalodon', file: 'megalodon.png', detail: 'Güçlü kuyruğuyla süzülür, sevinince ağzını açar', size: 172.2 },
     { id: 'seal', name: 'Fok', file: 'fok.png', detail: 'Yumuşak kavislerle suyun içinde süzülür', size: 161 },
     { id: 'penguin', name: 'Penguen', file: 'penguen.png', detail: 'Yüzgeçleriyle çevikçe yüzer', size: 148 },
     { id: 'spongebob', name: 'SüngerBob', file: 'sungerbob.png', detail: 'Akvaryumun neşeli sünger dostu', size: 152, unlockAt: 100, category: 'character' },
@@ -268,9 +268,9 @@
     const stage = thresholds.filter(n => points >= n).length;
     return {stage, scale:stage ? Math.pow(1.1,stage-10) : .5, egg:stage===0, trophy:stage===10, next:thresholds[stage] ?? null};
   }
-  // Bulk rewards use the same per-student rules as a fish click.
+  // Bulk behavior entries use the same per-student rules as a fish click.
   function rewardGroup(classroom, date, taskId, studentIds) {
-    if(!classroom.tasks.some(t=>t.id===taskId && taskPoints(t)>0)) return [];
+    if(!classroom.tasks.some(t=>t.id===taskId && validScore(taskPoints(t)))) return [];
     const chosen = new Set(studentIds);
     return classroom.students.filter(s => chosen.has(s.id)).flatMap(s => {
       const result = awardBehavior(s, classroom, date, taskId);

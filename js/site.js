@@ -1,5 +1,5 @@
 // Shared device-local rendering fallback, loaded once on all site-shell pages.
-(function(){if(!document.querySelector('script[data-site-performance]')){const script=document.createElement('script');script.dataset.sitePerformance='';script.src='/js/site-performance.js?v=20261012';document.head.append(script);}})();
+(function(){if(!document.querySelector('script[data-site-performance]')){const script=document.createElement('script');script.dataset.sitePerformance='';script.src='/js/site-performance.js?v=20261123-board-input';document.head.append(script);}})();
 /* ================================================
    KEMAL OGRETMENIM — SITE.JS v5.0
    Ortak navbar/footer, eski menu yapisi ve rota eslemeleri
@@ -795,7 +795,7 @@
     const protocol = String(window.location.protocol || '').toLowerCase();
     const host = String(window.location.hostname || '').toLowerCase();
 
-    if ((document.body && document.body.dataset.kemalAnalytics === 'off') || !/^https?:$/.test(protocol)) {
+    if (isLocalActivity() || document.body?.dataset.kemalAnalytics === 'off' || !/^https?:$/.test(protocol)) {
       return false;
     }
 
@@ -942,6 +942,9 @@
     if (gameUrl.origin !== window.location.origin || gameUrl.pathname.indexOf('/oyun/') !== 0) {
       return Promise.resolve();
     }
+    if (/^\/oyun\/(roket-arena-3d|ritmik-yilan-3d)(?:\.html)?$/.test(gameUrl.pathname)) {
+      return Promise.resolve();
+    }
 
     return sendAnalyticsEvent(eventType, {
       url: gameUrl.toString(),
@@ -1040,6 +1043,7 @@
   }
 
   function initGameProgressTracking() {
+    if (isLocalActivity()) return;
     const path = String(window.location.pathname || '').toLowerCase();
     if (path.indexOf('/oyun/') !== 0 || path === '/oyun/oyunlar.html' || path === '/oyun/iframe-oyun.html') {
       return;
@@ -1556,6 +1560,7 @@
   }
 
   function scanContentControls(root) {
+    if (isLocalActivity()) return;
     ensureContentReactions().then(function(api) {
       if (api && typeof api.scheduleScan === 'function') api.scheduleScan(root || document);
     });
@@ -1589,7 +1594,10 @@
       { uid: 'static:smart-board', title: 'Akıllı Tahta', href: '/ogretmen/beyaztahta.html', icon: '🖊️', gradeLabel: 'Öğretmen', subjectLabel: 'Akıllı Tahta', contentTypeLabel: 'Araç' },
       { uid: 'static:tools', title: 'Öğretmen Araçları', href: '/ogretmen-araclari.html', icon: '⏱️', gradeLabel: 'Öğretmen', subjectLabel: 'Araçlar', contentTypeLabel: 'Sayfa' },
       { uid: 'static:focus-strip', title: 'Odak Şeridi', href: '/ogretmen/odak-seridi.html', icon: '🎯', gradeLabel: 'Öğretmen', subjectLabel: 'Okuma Takibi', contentTypeLabel: 'Araç' },
-      { uid: 'static:word-search', title: 'Kelime Avı Tasarla', href: '/ogretmen/kelime-avi.html', icon: '🔎', gradeLabel: 'Öğretmen', subjectLabel: 'Bulmaca', contentTypeLabel: 'Araç' },
+      { uid: 'static:word-search', title: 'Kelime Avı Atölyesi', href: '/ogretmen/kelime-avi.html', icon: '🔎', gradeLabel: 'Öğretmen', subjectLabel: 'Bulmaca', contentTypeLabel: 'Araç' },
+      { uid: 'static:poster-printer', title: 'Poster Yazıcı', href: '/ogretmen/poster-yazici.html', icon: '🖨️', gradeLabel: 'Öğretmen', subjectLabel: 'PDF ve Baskı', contentTypeLabel: 'Araç' },
+      { uid: 'static:rocket-arena', title: 'Roket Arena 3D', href: '/oyun/roket-arena-3d.html', icon: '🚗', grades: ['2', '3', '4'], gradeLabel: '2–4. Sınıf', subjectLabel: 'Yuvarlama', contentTypeLabel: 'Oyun' },
+      { uid: 'static:rhythmic-snake', title: 'Ritmik Yılan 3D', href: '/oyun/ritmik-yilan-3d.html', icon: '🐍', grades: ['1', '2', '3', '4'], gradeLabel: 'İlkokul', subjectLabel: 'Ritmik Sayma', contentTypeLabel: 'Oyun' },
       { uid: 'static:number-writing', title: 'Sayı Yazma Atölyesi', href: '/ogretmen/sayi-yazma-atolyesi.html', icon: '✏️', gradeLabel: '1. Sınıf', subjectLabel: 'Sayı Yazma', contentTypeLabel: 'Araç' },
       { uid: 'static:certificate-studio', title: 'Belge ve Sertifika Stüdyosu', href: '/ogretmen/belge-studyo.html', icon: '🏅', gradeLabel: 'Öğretmen', subjectLabel: 'Belge Tasarımı', contentTypeLabel: 'Araç' },
       { uid: 'static:agenda', title: 'Öğretmen Ajandası', href: '/ogretmen-ajandasi/index.html', icon: '📒', gradeLabel: 'Öğretmen', subjectLabel: 'Ajanda ve Takip', contentTypeLabel: 'Araç' },
@@ -1647,11 +1655,13 @@
     renderSiteSearch();
 
     let dynamicItems = [];
-    try {
-      const feed = await ensureContentFeed();
-      dynamicItems = await feed.getAllItems({ forceRefresh: false });
-    } catch (error) {
-      dynamicItems = [];
+    if (!isLocalActivity()) {
+      try {
+        const feed = await ensureContentFeed();
+        dynamicItems = await feed.getAllItems({ forceRefresh: false });
+      } catch (error) {
+        dynamicItems = [];
+      }
     }
 
     const lockedGrade = getLockedStudentGrade();
@@ -1946,6 +1956,10 @@
   }
 
   function initSiteAccount() {
+    if (isLocalActivity()) {
+      document.getElementById('siteAccountBar')?.setAttribute('hidden', '');
+      return;
+    }
     const logout = document.getElementById('siteAccountLogout');
     if (document.body && document.body.dataset.kemalAccountBound !== '1') {
       document.body.dataset.kemalAccountBound = '1';
@@ -2698,6 +2712,10 @@
     return !document.body || document.body.dataset.kemalChrome !== 'off';
   }
 
+  function isLocalActivity() {
+    return document.body?.dataset.kemalLocal === 'true';
+  }
+
   async function fetchDynamicMenuItems() {
     try {
       if (!window.kemalSiteStore) return;
@@ -2853,7 +2871,7 @@
   }
 
   const seoState = initSeo();
-  initContentSafety();
+  if (!isLocalActivity()) initContentSafety();
   initAnalytics();
   initGameProgressTracking();
   const ready = hydrateChrome();

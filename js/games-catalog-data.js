@@ -4,6 +4,8 @@
 })(typeof window!=='undefined'?window:this,function(){
   'use strict';
   const covers={
+    'roket-arena-3d.html':'roket-arena-3d.webp',
+    'ritmik-yilan-3d.html':'ritmik-yilan-3d.webp',
     'onluk-kaydiragi.html':'onluk-kaydiragi.svg',
     'sayi-atolyesi.html':'sayi-atolyesi.svg',
     'zitlar-atolyesi.html':'zitlar-atolyesi.webp',
@@ -44,7 +46,7 @@
     'minik-kodlamaci.html':['robot','→','↑','#baa6e9','#e8d7f4'],
     'geometri-kasifi.html':['shapes','□','△','#95cedf','#d5e7ee']
   };
-  const titleOverrides={'esini-bul-hafiza.html':'Eşini Bul','saat-oyunu.html':'Saat Sahnesi','oyun2.html':'Ritmik Sayma','sekil-avcisi-3d.html':'Şekil Avcısı 3D'};
+  const titleOverrides={'esini-bul-hafiza.html':'Eşini Bul','saat-oyunu.html':'Saat Sahnesi','oyun2.html':'Ritmik Sayma','sekil-avcisi-3d.html':'Şekil Avcısı 3D','ritmik-yilan-3d.html':'Ritmik Yılan 3D'};
   function normalizePath(value,origin){
     try{
       const base=origin||'https://kemalogretmenim.com.tr';

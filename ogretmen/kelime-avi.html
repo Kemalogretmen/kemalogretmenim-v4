@@ -1,186 +1,736 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-<script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
-<script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kelime Avı Tasarla — Kemal Öğretmenim</title>
-  <meta name="description" content="Öğretmenin kendi kelimeleriyle akıllı tahta ve çıktı uyumlu kelime avı hazırlama aracı.">
-  <link rel="icon" href="/gorseller/logo.png">
-  <link rel="stylesheet" href="/css/style.css?v=20260926-dock-size-buttons">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root{--ink:#14213d;--muted:#64748b;--line:#dbe5f4;--blue:#2563eb;--violet:#6c3ded;--teal:#0f9f75;--amber:#f59e0b}
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(135deg,#f8fbff,#f4efff 48%,#fffaf1);font-family:'Nunito',system-ui,sans-serif;color:var(--ink)}
-    .sub-back{height:56px;background:rgba(255,255,255,.94);border-bottom:1px solid rgba(227,214,255,.85);display:flex;align-items:center;gap:14px;padding:0 22px;box-shadow:0 2px 18px rgba(108,61,237,.08)}
-    .sub-back a{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:10px;background:rgba(108,61,237,.09);color:#6c3ded;font-weight:900;text-decoration:none}.sub-back-title{font-weight:900}
-    .word-app{width:min(1380px,calc(100% - 28px));margin:0 auto;padding:24px 0 34px;display:grid;grid-template-columns:380px 1fr;gap:18px}
-    .panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:18px;box-shadow:0 16px 38px rgba(20,33,61,.09)}
-    .builder{padding:20px;display:grid;gap:14px;align-self:start;position:sticky;top:14px}.chip{display:inline-flex;width:max-content;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;background:#f0ebff;border:1px solid #ddd2ff;color:#6c3ded;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
-    h1{font-size:34px;line-height:1.05;margin:0}.lead{margin:0;color:var(--muted);font-weight:800;line-height:1.45}
-    label{font-size:12px;font-weight:900;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
-    textarea,select,input{width:100%;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-weight:800;outline:none}
-    textarea{min-height:170px;padding:13px;line-height:1.5;resize:vertical;text-transform:uppercase}select,input{height:44px;padding:0 12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    button{border:1.5px solid var(--line);border-radius:12px;min-height:44px;padding:0 14px;background:#fff;color:var(--ink);font:inherit;font-weight:900;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer}.primary{background:linear-gradient(135deg,var(--violet),var(--blue));border-color:transparent;color:#fff;box-shadow:0 14px 24px rgba(37,99,235,.2)}.success{background:linear-gradient(135deg,var(--teal),#18b889);border-color:transparent;color:#fff}.btn-row{display:flex;flex-wrap:wrap;gap:9px}
-    .stage{padding:20px;display:grid;gap:16px}.stage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.stage-head h2{font-size:30px;margin:0}.status{display:flex;gap:8px;flex-wrap:wrap}.pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-weight:900;font-size:13px}
-    .puzzle-wrap{display:grid;grid-template-columns:minmax(360px,1fr) 260px;gap:16px;align-items:start}.puzzle{display:grid;gap:4px;max-width:760px;margin:auto;padding:14px;border-radius:20px;background:#f8fbff;border:1px solid var(--line)}
-    .cell{aspect-ratio:1;border:1px solid #dbe5f4;border-radius:8px;background:#fff;display:grid;place-items:center;font-size:clamp(14px,2.1vw,24px);font-weight:900;color:#14213d;user-select:none}.cell.solution{background:#dff7ef;border-color:#8de1c5;color:#0f7d5d}.cell.selected{background:#eaf1ff;border-color:#8bb5ff;color:#2563eb}
-    .word-list{padding:16px;display:grid;gap:10px}.word-list h3{margin:0;font-size:18px}.words{display:flex;flex-wrap:wrap;gap:8px}.word-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 10px;font-weight:900;color:var(--muted)}.word-chip.found{background:#ecfdf5;color:#0f7d5d;border-color:#a7f3d0}
-    .hint{padding:12px 14px;border-radius:14px;background:#fff7ed;color:#9a5b00;font-weight:850;line-height:1.45}
-    @media(max-width:980px){.word-app{grid-template-columns:1fr}.builder{position:static}.puzzle-wrap{grid-template-columns:1fr}.word-list{order:-1}}
-    @media print{.site-header,.site-footer,.sub-back,.builder,.stage-head .btn-row{display:none!important}.word-app{display:block;width:100%;padding:0}.stage{box-shadow:none;border:0}.puzzle-wrap{grid-template-columns:1fr}.word-list{box-shadow:none;border:0}.cell{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
-  </style>
-<link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles>
-<link rel="stylesheet" href="/css/theme-control.css?v=20261029">
-<link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelime Avı Atölyesi — Kemal Öğretmenim</title>
+  <meta name="description" content="Kendi kelimelerinle veya hazır ses gruplarıyla kelime avı hazırla. Akıllı tahtada oyna, QR kodla paylaş veya cevap anahtarlı A4 çalışma kâğıdı oluştur." />
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/ogretmen/kelime-avi.html" />
+  <link rel="icon" href="/gorseller/logo.png" />
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home" />
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles />
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029" />
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles />
+  <link rel="stylesheet" href="/css/kelime-avi.css?v=20261124" />
 </head>
-<body>
-  <div class="sub-back">
-    <a href="../ogretmen-araclari.html"><i class="fas fa-arrow-left"></i> Araçlar</a>
-    <span style="font-size:20px">🔎</span>
-    <span class="sub-back-title">Kelime Avı Tasarla</span>
-  </div>
-  <main class="word-app">
-    <section class="builder panel">
-      <span class="chip"><i class="fas fa-puzzle-piece"></i> Bulmaca Atölyesi</span>
-      <h1>Kelime avını sınıfa göre kur.</h1>
-      <p class="lead">Ses grubu, tema, öğrenci isimleri veya haftanın kelimeleriyle hızlıca akıllı tahta ve çıktı uyumlu kelime avı üret.</p>
-      <div><label for="wordsInput">Kelimeler</label><textarea id="wordsInput">Jale
-Kalem
-Okuma
-Sınıf
-Ses
-Kitap
-Defter
-Hece</textarea></div>
-      <div class="grid-2">
-        <div><label for="gridSize">Izgara</label><select id="gridSize"><option value="8">8 x 8</option><option value="10" selected>10 x 10</option><option value="12">12 x 12</option><option value="14">14 x 14</option><option value="16">16 x 16</option></select></div>
-        <div><label for="directionMode">Yön</label><select id="directionMode"><option value="easy">Kolay</option><option value="normal" selected>Normal</option><option value="mixed">Karışık</option></select></div>
+<body class="kelime-avi-page" data-kemal-local="true">
+  <main id="main-content" class="word-hunt" aria-labelledby="wordHuntTitle" data-word-theme="light">
+  <div id="app" class="app-shell">
+    <!-- ==================== ÜST ÇUBUK (TOPBAR) ==================== -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+            <rect x="2.5" y="2.5" width="16.5" height="16.5" rx="4.5" fill="currentColor" fill-opacity="0.12" stroke="currentColor" stroke-width="1.9" />
+            <path d="M7.8 13.5L10.75 7.4L13.7 13.5M8.75 11.75H12.75" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="19.2" cy="19.2" r="4.8" fill="var(--bg-card)" stroke="var(--accent-2)" stroke-width="2.1" />
+            <path d="M22.8 22.8L25.6 25.6" stroke="var(--accent-2)" stroke-width="2.3" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 id="wordHuntTitle" class="brand-name">Kelime Avı Atölyesi</h1>
+          <span class="brand-sub">Bulmaca Stüdyosu · Akıllı Tahta &amp; A4 Baskı</span>
+        </div>
       </div>
-      <div class="grid-2">
-        <div><label for="letterCase">Harf</label><select id="letterCase"><option value="upper" selected>Büyük</option><option value="lower">Küçük</option></select></div>
-        <div><label for="fillMode">Boş kareler</label><select id="fillMode"><option value="random" selected>Rastgele</option><option value="vowels">Sesliler ağırlıklı</option></select></div>
-      </div>
-      <div class="btn-row">
-        <button class="primary" id="generateBtn" type="button"><i class="fas fa-wand-magic-sparkles"></i> Oluştur</button>
-        <button id="solutionBtn" type="button"><i class="fas fa-eye"></i> Çözüm</button>
-        <button class="success" id="pngBtn" type="button"><i class="fas fa-download"></i> PNG</button>
-        <button id="printBtn" type="button"><i class="fas fa-print"></i> Yazdır</button>
-      </div>
-      <p class="hint">İpucu: Kelime listesindeki bir kelimeye tıklayınca çözüm konumu tahtada vurgulanır.</p>
-    </section>
 
-    <section class="stage panel" aria-label="Kelime avı çalışma alanı">
-      <div class="stage-head">
-        <div>
-          <span class="chip"><i class="fas fa-table-cells"></i> Hazır bulmaca</span>
-          <h2 id="puzzleTitle">Kelime Avı</h2>
-        </div>
-        <div class="status">
-          <span class="pill" id="placedCount">0 kelime</span>
-          <span class="pill" id="gridLabel">10 x 10</span>
-        </div>
-        <div class="btn-row">
-          <button id="clearSelectBtn" type="button"><i class="fas fa-eraser"></i> Seçimi Temizle</button>
-        </div>
+      <!-- 3 Mod Geçişi -->
+      <nav class="mode-tabs" role="tablist" aria-label="Çalışma modu">
+        <button class="mode-tab active" data-mode="design" role="tab" aria-selected="true" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Tasarım</span>
+        </button>
+        <button class="mode-tab" data-mode="play" role="tab" aria-selected="false" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><polygon points="10 7.5 15 10 10 12.5 10 7.5" fill="currentColor" stroke="none"/></svg>
+          <span>Akıllı Tahta</span>
+        </button>
+        <button class="mode-tab" data-mode="sheet" role="tab" aria-selected="false" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          <span>Çalışma Kağıdı</span>
+        </button>
+      </nav>
+
+      <!-- Hızlı Aksiyonlar -->
+      <div class="topbar-actions">
+        <a class="btn btn-ghost word-hunt-back" href="/ogretmen-araclari.html" aria-label="Öğretmen araçlarına dön">← Araçlar</a>
+        <button id="btnOpenPacks" class="btn btn-soft" type="button" title="Hazır MEB ve tematik kelime paketleri">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span class="hide-sm">Paketler</span>
+        </button>
+        <button id="btnOpenLibrary" class="btn btn-ghost" type="button" title="Kayıtlı bulmacalar ve JSON yedek">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span class="hide-md">Kayıtlar</span>
+        </button>
+        <button id="btnOpenShare" class="btn btn-ghost" type="button" title="Öğrenci linki ve QR Kod">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3zM14 20h2"/></svg>
+          <span class="hide-md">Paylaş</span>
+        </button>
+        <span class="topbar-divider" aria-hidden="true"></span>
+        <button id="btnCycleTheme" class="btn btn-icon btn-ghost" type="button" title="Tema değiştir (Açık / Koyu / Akıllı Tahta)">
+          <svg id="themeIconSvg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/></svg>
+        </button>
+        <button id="btnQuickPdf" class="btn btn-primary" type="button" title="2 Sayfalık A4 PDF (Bulmaca + Cevap Anahtarı) İndir">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>PDF İndir</span>
+        </button>
       </div>
-      <div class="puzzle-wrap">
-        <div class="puzzle" id="puzzleGrid" aria-label="Kelime avı ızgarası"></div>
-        <aside class="word-list panel">
-          <h3>Kelime Listesi</h3>
-          <div class="words" id="wordList"></div>
+    </header>
+
+    <!-- Öğrenci Paylaşım Modu Bilgi Bandı -->
+    <div id="sharedBanner" class="shared-banner hidden">
+      <div class="shared-banner-copy">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        <span>Öğretmeninin paylaştığı bulmaca açıldı. Kelimeleri sürükleyerek veya ilk ve son harfe dokunarak bul.</span>
+      </div>
+      <button id="btnExitSharedMode" class="btn btn-sm btn-secondary" type="button">Tasarım Moduna Geç</button>
+    </div>
+
+    <!-- ==================== ANA ÇALIŞMA ALANI ==================== -->
+    <div class="workspace-container">
+
+      <!-- ==================== 1. TASARIM (STÜDYO) GÖRÜNÜMÜ ==================== -->
+      <section id="viewDesign" class="view view-design active" aria-label="Bulmaca Tasarım Stüdyosu">
+        <!-- Sol Ayarlar Paneli -->
+        <aside class="sidebar">
+          <!-- Kart 1: Başlık & Kelimeler -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-group">
+                <span class="step-num">1</span>
+                <h2>Başlık ve Kelimeler</h2>
+              </div>
+              <div class="card-mini-actions">
+                <button id="btnAutoEmoji" class="link-btn" type="button" title="Tanınan kelimelere otomatik görsel emoji ekle">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2L12 3z"/></svg>
+                  <span>Emoji Öner</span>
+                </button>
+                <button id="btnClearWords" class="link-btn danger" type="button">Temizle</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="titleInput">Bulmaca Başlığı</label>
+              <input id="titleInput" type="text" placeholder="Örn: 1. Sınıf ANETİL Kelime Avı" value="Okul ve Sınıfımız" />
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="wordsInput">Kelime Listesi</label>
+                <span id="wordInputCount" class="mini-badge">10 kelime</span>
+              </div>
+              <textarea id="wordsInput" rows="7" spellcheck="false" placeholder="Her satıra bir kelime yazın.&#10;İpucu eklemek için: KELİME : İpucu&#10;Görsel eklemek için: KELİME | 🍎 | İpucu"></textarea>
+              <p class="field-hint">İpuçlu soru için <code>KELİME : İpucu</code>, görselli için <code>KELİME | ✏️ | İpucu</code> kullanın.</p>
+            </div>
+
+            <div class="field">
+              <label for="wordBankMode">Liste Gösterim Biçimi</label>
+              <select id="wordBankMode">
+                <option value="list" selected>Klasik Kelime Listesi</option>
+                <option value="clues">İpuçları / Sorular (Cevabı Bul)</option>
+                <option value="emoji">Görselli (Emojiden Kelimeyi Bul)</option>
+                <option value="masked">Eksik Harfli (K _ L _ M)</option>
+                <option value="anagram">Karışık Harfli (Anagram)</option>
+                <option value="hidden">Gizli Liste (Sadece Sayı)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Kart 2: Izgara, Şekil ve Yönler -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-group">
+                <span class="step-num">2</span>
+                <h2>Izgara, Şekil ve Yönler</h2>
+              </div>
+              <label class="inline-switch" title="Kare ızgara kilidi">
+                <input id="lockSquare" type="checkbox" checked />
+                <span class="switch-track"></span>
+                <span class="switch-label">Kare</span>
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="rowsSelect">Satır</label>
+                <select id="rowsSelect"></select>
+              </div>
+              <div class="field">
+                <label for="colsSelect">Sütun</label>
+                <select id="colsSelect"></select>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label>Izgara Şekli</label>
+                <button id="btnOpenMaskEditor" class="link-btn" type="button">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <span>Özel Çiz</span>
+                </button>
+              </div>
+              <div id="shapePicker" class="shape-picker" role="radiogroup" aria-label="Izgara şekli"></div>
+            </div>
+
+            <div class="field">
+              <label>Kelime Yönleri</label>
+              <div class="segmented-bar" id="dirPresetPills">
+                <button type="button" class="pill-btn" data-preset="easy">1. Sınıf</button>
+                <button type="button" class="pill-btn active" data-preset="normal">Standart</button>
+                <button type="button" class="pill-btn" data-preset="hard">Çapraz</button>
+                <button type="button" class="pill-btn" data-preset="expert">8 Yön</button>
+              </div>
+              <div class="compass-wrap">
+                <div class="compass-grid" id="compassGrid" aria-label="Yön pusulası">
+                  <button type="button" class="dir-btn" data-dir="NW" title="Sol Yukarı Çapraz (Ters)">↖</button>
+                  <button type="button" class="dir-btn" data-dir="N"  title="Aşağıdan Yukarı (Ters)">↑</button>
+                  <button type="button" class="dir-btn" data-dir="NE" title="Sağ Yukarı Çapraz">↗</button>
+                  <button type="button" class="dir-btn" data-dir="W"  title="Sağdan Sola (Ters)">←</button>
+                  <div class="compass-center" aria-hidden="true"><span></span></div>
+                  <button type="button" class="dir-btn active" data-dir="E"  title="Soldan Sağa">→</button>
+                  <button type="button" class="dir-btn" data-dir="SW" title="Sol Aşağı Çapraz (Ters)">↙</button>
+                  <button type="button" class="dir-btn active" data-dir="S"  title="Yukarıdan Aşağı">↓</button>
+                  <button type="button" class="dir-btn active" data-dir="SE" title="Sağ Aşağı Çapraz">↘</button>
+                </div>
+                <div class="compass-meta">
+                  <span class="compass-kicker">Aktif Yönler</span>
+                  <p id="dirSummaryText" class="compass-desc">3 yön aktif: → ↓ ↘</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kart 3: Harf, Dolgu & Algoritma -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-group">
+                <span class="step-num">3</span>
+                <h2>Tipografi ve Dolgu</h2>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="languageSelect">Alfabe</label>
+                <select id="languageSelect">
+                  <option value="tr" selected>Türkçe (29 Harf)</option>
+                  <option value="en">İngilizce (26 Harf)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="letterCaseSelect">Harf Biçimi</label>
+                <select id="letterCaseSelect">
+                  <option value="upper" selected>BÜYÜK HARF</option>
+                  <option value="lower">küçük harf</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="fontStyleSelect">Yazı Tipi</label>
+                <select id="fontStyleSelect">
+                  <option value="modern" selected>Modern Yuvarlak</option>
+                  <option value="primary">İlkokul Dik Temel</option>
+                  <option value="mono">Klasik Kare (Mono)</option>
+                  <option value="dyslexia">Disleksi Dostu</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="densitySelect">Kesişim Yoğunluğu</label>
+                <select id="densitySelect">
+                  <option value="low">Ayrık (Kolay)</option>
+                  <option value="balanced" selected>Dengeli</option>
+                  <option value="high">Sıkı (Çok Kesişim)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="fillModeSelect">Boş Kare Dolgu Stratejisi</label>
+              <select id="fillModeSelect">
+                <option value="tr_freq" selected>Türkçe Harf Sıklığı (Doğal)</option>
+                <option value="meb_group">Sadece Seçili MEB 1. Sınıf Ses Grubu</option>
+                <option value="word_letters">Şaşırtmacalı (Sadece Kelime Harfleri)</option>
+                <option value="vowels">Sesli Harfler Ağırlıklı</option>
+                <option value="random">Eşit Rastgele Tüm Alfabe</option>
+                <option value="en_freq">İngilizce Harf Sıklığı</option>
+              </select>
+            </div>
+
+            <div id="mebGroupField" class="field hidden">
+              <label for="mebGroupSelect">MEB Yeni Ses Grubu Sınırı</label>
+              <select id="mebGroupSelect"></select>
+              <p class="field-hint">Öğrencinin henüz öğrenmediği harfler boş karelerde yer almaz.</p>
+            </div>
+          </div>
+
+          <!-- Kart 4: Gizli Şifre -->
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-group">
+                <span class="step-num">4</span>
+                <h2>Gizli Şifre</h2>
+              </div>
+              <span class="mini-badge accent">Opsiyonel</span>
+            </div>
+            <div class="field">
+              <label for="secretMessageInput">Kalan Harflerden Çıkacak Mesaj</label>
+              <input id="secretMessageInput" type="text" placeholder="Örn: OKULUMU SEVİYORUM" value="OKULUMU SEVİYORUM" />
+              <div id="secretStatusBadge" class="secret-status ok"></div>
+            </div>
+          </div>
         </aside>
+
+        <!-- Sağ Canlı Stüdyo Sahnesi -->
+        <div class="stage design-stage">
+          <!-- Uyarı Bandı -->
+          <div id="warningBanner" class="warning-banner hidden">
+            <div class="warning-text" id="warningText"></div>
+            <button id="btnAutoFitGrid" class="btn btn-sm btn-amber" type="button">Izgarayı Büyüt</button>
+          </div>
+
+          <!-- Üst Kontrol Barı -->
+          <div class="stage-toolbar">
+            <div class="stage-metrics">
+              <span class="metric-pill" id="statPlaced">10 / 10 Kelime</span>
+              <span class="metric-pill" id="statGrid">10 × 10</span>
+              <span class="metric-pill" id="statIntersections">0 Kesişim</span>
+              <span class="metric-pill muted" id="statSeed" title="Tekrar üretilebilir bulmaca kodu">#00000000</span>
+            </div>
+            <div class="stage-actions">
+              <button id="btnRegenerate" class="btn btn-secondary" type="button" title="Yeni yerleşimle karıştır">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <span>Karıştır</span>
+              </button>
+              <button id="btnToggleSolution" class="btn btn-secondary" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>Çözüm</span>
+              </button>
+              <div class="btn-split-group">
+                <button id="btnDownloadSvg" class="btn btn-secondary" type="button" title="Vektör SVG indir">SVG</button>
+                <button id="btnDownloadPng" class="btn btn-secondary" type="button" title="Yüksek çözünürlüklü PNG indir">PNG</button>
+              </div>
+              <button id="btnGoPlay" class="btn btn-success" type="button">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                <span>Tahtada Oyna</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Canlı Etkileşimli Önizleme + Liste -->
+          <div class="design-board-layout">
+            <div class="board-card">
+              <div class="board-header-row">
+                <div>
+                  <h1 id="designBoardTitle" class="board-title">Okul ve Sınıfımız</h1>
+                  <p class="board-sub">Harfleri sürükleyerek test edin veya sağdaki listeden kelimenin konumunu görün.</p>
+                </div>
+                <div id="designLiveSelection" class="live-selection-pill hidden"></div>
+              </div>
+
+              <div class="puzzle-stage-wrap">
+                <div id="designPuzzleContainer" class="puzzle-container font-modern">
+                  <svg id="designOverlaySvg" class="puzzle-overlay-svg" aria-hidden="true"></svg>
+                  <div id="designPuzzleGrid" class="puzzle-grid" role="grid" aria-label="Kelime avı ızgarası"></div>
+                </div>
+              </div>
+
+              <!-- Tasarım Modu Gizli Şifre Çubuğu -->
+              <div id="designSecretBar" class="secret-preview-bar hidden">
+                <span class="secret-tag">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <span>Gizli Şifre</span>
+                </span>
+                <div id="designSecretBoxes" class="secret-boxes"></div>
+              </div>
+            </div>
+
+            <aside class="word-bank-card">
+              <div class="word-bank-head">
+                <h3 id="designWordBankTitle">Kelime Listesi</h3>
+                <span id="designFoundCounter" class="mini-badge">0 / 10</span>
+              </div>
+              <div id="designWordList" class="word-bank-list"></div>
+              <div class="word-bank-foot">
+                <button id="btnResetDesignFound" class="btn btn-sm btn-ghost btn-block" type="button">Test İşaretlerini Temizle</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 2. AKILLI TAHTA (OYNA) GÖRÜNÜMÜ ==================== -->
+      <section id="viewPlay" class="view view-play" aria-label="Akıllı Tahta Oyun Modu">
+        <!-- Akıllı Tahta Üst HUD -->
+        <div class="play-hud">
+          <div class="play-hud-left">
+            <h2 id="playTitle" class="play-title">Okul ve Sınıfımız</h2>
+            <div class="play-progress-wrap">
+              <div class="play-progress-track">
+                <div id="playProgressBar" class="play-progress-fill" style="width: 0%"></div>
+              </div>
+              <span id="playProgressText" class="play-progress-text">0 / 10</span>
+            </div>
+          </div>
+
+          <div class="play-hud-center">
+            <!-- Zamanlayıcı -->
+            <div class="hud-control-group">
+              <select id="timerModeSelect" class="compact-select" aria-label="Zamanlayıcı modu">
+                <option value="stopwatch" selected>Kronometre</option>
+                <option value="down-60">1 Dakika</option>
+                <option value="down-120">2 Dakika</option>
+                <option value="down-180">3 Dakika</option>
+                <option value="down-300">5 Dakika</option>
+                <option value="off">Süresiz</option>
+              </select>
+              <div id="timerDisplay" class="timer-display">00:00</div>
+              <button id="btnTimerToggle" class="btn btn-icon-sm btn-secondary" type="button" title="Duraklat / Devam Et" aria-label="Duraklat / Devam Et"></button>
+            </div>
+
+            <!-- Takım Modu -->
+            <div class="hud-control-group">
+              <select id="teamCountSelect" class="compact-select" aria-label="Oyun modu">
+                <option value="1" selected>Tekli / Sınıfça</option>
+                <option value="2">2 Takım Yarışı</option>
+                <option value="3">3 Takım Yarışı</option>
+                <option value="4">4 Takım Yarışı</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tahta Araçları -->
+          <div class="play-actions">
+            <button id="btnPlayHint" class="btn btn-amber-soft" type="button" title="İlk harf ipucu ver">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>
+              <span>İpucu</span>
+            </button>
+            <button id="btnPlaySolution" class="btn btn-secondary" type="button" title="Çözümü göster/gizle">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>Çözüm</span>
+            </button>
+            <button id="btnSoundToggle" class="btn btn-icon-sm btn-secondary" type="button" title="Sesi aç/kapat" aria-label="Sesi aç/kapat"></button>
+            <button id="btnPlayRestart" class="btn btn-icon-sm btn-secondary" type="button" title="Oyunu sıfırla" aria-label="Oyunu sıfırla">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            </button>
+            <button id="btnFullscreen" class="btn btn-primary" type="button" title="Tam Ekran Akıllı Tahta Modu">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <span>Tam Ekran</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Takım Skor Tablosu -->
+        <div id="teamScoreboard" class="team-scoreboard hidden"></div>
+
+        <!-- Oyun Sahnesi -->
+        <div class="play-stage-grid">
+          <div class="play-board-area">
+            <div class="play-selection-dock">
+              <div id="playLiveSelection" class="play-selection-pill">
+                <span class="sel-placeholder">İlk ve son harfi seç. Klavyede ok tuşları ve Enter kullan.</span>
+              </div>
+              <div id="playScorePill" class="play-score-badge">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span id="playScoreVal">0 Puan</span>
+              </div>
+            </div>
+
+            <div class="puzzle-stage-wrap play-wrap">
+              <div id="playPuzzleContainer" class="puzzle-container font-modern play-mode-grid">
+                <svg id="playOverlaySvg" class="puzzle-overlay-svg" aria-hidden="true"></svg>
+                <div id="playPuzzleGrid" class="puzzle-grid" role="grid" aria-label="Akıllı tahta kelime avı"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sağ Oyun Bilgi & Kelime Paneli -->
+          <aside class="play-side-panel">
+            <div class="word-bank-head">
+              <h3 id="playWordBankTitle">Bulunacak Kelimeler</h3>
+              <span id="playRemainingBadge" class="mini-badge accent">10 kaldı</span>
+            </div>
+            <div id="playWordList" class="word-bank-list play-word-list"></div>
+
+            <!-- Gizli Şifre Çözme Kutusu -->
+            <div id="playSecretPanel" class="play-secret-panel hidden">
+              <div class="play-secret-head">
+                <span class="play-secret-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <strong>Gizli Şifreyi Çöz</strong>
+                </span>
+                <button id="btnHighlightSecret" class="link-btn" type="button">Harfleri Parlat</button>
+              </div>
+              <div id="playSecretSlots" class="secret-boxes compact"></div>
+              <div class="secret-guess-row">
+                <input id="secretGuessInput" type="text" placeholder="Şifreyi yazın..." autocomplete="off" />
+                <button id="btnCheckSecret" class="btn btn-sm btn-primary" type="button">Kontrol</button>
+              </div>
+              <div id="secretGuessFeedback" class="secret-feedback"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ==================== 3. ÇALIŞMA KAĞIDI (A4) GÖRÜNÜMÜ ==================== -->
+      <section id="viewSheet" class="view view-sheet" aria-label="A4 Çalışma Kağıdı Stüdyosu">
+        <!-- Sol Kağıt Özelleştirme Paneli -->
+        <aside class="sidebar">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-group">
+                <span class="step-num">1</span>
+                <h2>A4 Sayfa Düzeni</h2>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="sheetLayoutSelect">Kağıt Yerleşimi</label>
+              <select id="sheetLayoutSelect">
+                <option value="full" selected>Tam A4 (Tek Büyük Çalışma Kağıdı)</option>
+                <option value="half">A4'te 2'li Yarım Sayfa (Kesim Çizgili)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="subtitleInput">Yönerge / Alt Başlık</label>
+              <input id="subtitleInput" type="text" value="Aşağıdaki kelimeleri bulmacada bulup renkli kalemle işaretleyiniz." />
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="frameStyleSelect">Çerçeve Stili</label>
+                <select id="frameStyleSelect">
+                  <option value="modern" selected>Modern Temiz</option>
+                  <option value="notebook">Defter / Spiralli</option>
+                  <option value="stars">Yıldızlı / Eğlenceli</option>
+                  <option value="none">Çerçevesiz</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="extraActivitySelect">Alt Ek Etkinlik</label>
+                <select id="extraActivitySelect">
+                  <option value="none">Yok</option>
+                  <option value="sentences" selected>Cümle Kurma (3 Satır)</option>
+                  <option value="selfeval">Öz-Değerlendirme</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="footerTextInput">Altbilgi / Öğretmen İmzası</label>
+              <input id="footerTextInput" type="text" value="Kemal Öğretmenim · Kelime Avı Atölyesi" />
+            </div>
+
+            <div class="switch-stack">
+              <label class="switch-row">
+                <span>Adı Soyadı / Sınıf / Tarih şeridi</span>
+                <span class="inline-switch"><input id="chkStudentBar" type="checkbox" checked /><span class="switch-track"></span></span>
+              </label>
+              <label class="switch-row">
+                <span>2. sayfada Cevap Anahtarı ekle</span>
+                <span class="inline-switch"><input id="chkIncludeAnswerKey" type="checkbox" checked /><span class="switch-track"></span></span>
+              </label>
+              <label class="switch-row">
+                <span>Siyah-Beyaz (Fotokopi Dostu)</span>
+                <span class="inline-switch"><input id="chkBwMode" type="checkbox" /><span class="switch-track"></span></span>
+              </label>
+              <label class="switch-row">
+                <span>Kağıda dijital çözüm QR Kodu ekle</span>
+                <span class="inline-switch"><input id="chkShowQrOnSheet" type="checkbox" checked /><span class="switch-track"></span></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title-group">
+                <span class="step-num">2</span>
+                <h2>İndir ve Yazdır</h2>
+              </div>
+            </div>
+            <div class="export-btn-stack">
+              <button id="btnSheetPdf" class="btn btn-primary btn-block" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>PDF İndir (A4 · 200 DPI)</span>
+              </button>
+              <button id="btnSheetPrint" class="btn btn-secondary btn-block" type="button">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Doğrudan Yazdır</span>
+              </button>
+              <div class="grid-2">
+                <button id="btnSheetPng" class="btn btn-secondary" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span>A4 PNG</span>
+                </button>
+                <button id="btnSheetSvg" class="btn btn-secondary" type="button">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                  <span>Vektör SVG</span>
+                </button>
+              </div>
+            </div>
+            <p class="field-hint">PDF tarayıcınızda yerel olarak üretilir, sunucuya veri gönderilmez.</p>
+          </div>
+        </aside>
+
+        <!-- Sağ Canlı A4 Önizleme Alanı -->
+        <div class="stage sheet-stage">
+          <div class="sheet-preview-bar">
+            <div class="segmented-bar sheet-page-tabs">
+              <button class="pill-btn active" data-sheet-page="1" type="button">Sayfa 1 · Çalışma Kağıdı</button>
+              <button class="pill-btn" data-sheet-page="2" type="button">Sayfa 2 · Cevap Anahtarı</button>
+            </div>
+            <span class="metric-pill muted">A4 · 210 × 297 mm</span>
+          </div>
+
+          <div class="a4-paper-viewport">
+            <div class="a4-paper-frame">
+              <canvas id="sheetPreviewCanvas" class="a4-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Yazdırma için gizli A4 görselleri -->
+  <div id="printMount" class="print-mount" aria-hidden="true"></div>
+
+  <!-- Konfeti Canvas -->
+  <canvas id="confettiCanvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- Toast Bildirim -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ==================== MODALLAR ==================== -->
+
+  <!-- 1. Hazır Müfredat Paketleri Modalı -->
+  <div id="modalPacks" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalPacksTitle">
+    <div class="modal modal-lg">
+      <div class="modal-head">
+        <div>
+          <h3 id="modalPacksTitle">Hazır MEB Müfredat ve Tema Paketleri</h3>
+          <p class="modal-sub">Türkiye Yüzyılı Maarif Modeli 1. sınıf yeni ses grupları ve ilkokul temaları — tek tıkla yükleyin.</p>
+        </div>
+        <button class="modal-close" data-close-modal="modalPacks" type="button" aria-label="Kapat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
-    </section>
+      <div id="packCategoryTabs" class="pack-cat-tabs"></div>
+      <div id="packGrid" class="pack-grid"></div>
+    </div>
+  </div>
+
+  <!-- 2. Özel Şekil Maskesi Çizim Modalı -->
+  <div id="modalMask" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalMaskTitle">
+    <div class="modal modal-md">
+      <div class="modal-head">
+        <div>
+          <h3 id="modalMaskTitle">Özel Bulmaca Şekli Çiz</h3>
+          <p class="modal-sub">Hücrelere tıklayıp sürükleyerek aktif/pasif yapın. Yalnızca işaretli kareler bulmacada kullanılır.</p>
+        </div>
+        <button class="modal-close" data-close-modal="modalMask" type="button" aria-label="Kapat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="mask-toolbar">
+        <button id="btnMaskFillAll" class="btn btn-sm btn-secondary" type="button">Tümünü Aç</button>
+        <button id="btnMaskClear" class="btn btn-sm btn-secondary" type="button">Tümünü Kapat</button>
+        <button id="btnMaskInvert" class="btn btn-sm btn-secondary" type="button">Ters Çevir</button>
+        <span id="maskActiveInfo" class="mini-badge">0 aktif hücre</span>
+      </div>
+      <div id="maskEditorGrid" class="mask-editor-grid"></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close-modal="modalMask" type="button">Vazgeç</button>
+        <button id="btnApplyMask" class="btn btn-primary" type="button">Şekli Uygula</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Paylaş & QR Kod Modalı -->
+  <div id="modalShare" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalShareTitle">
+    <div class="modal modal-sm">
+      <div class="modal-head">
+        <div>
+          <h3 id="modalShareTitle">Öğrencilerle Paylaş &amp; QR Kod</h3>
+          <p class="modal-sub">Bağlantı veya QR kod bulmacayı doğrudan Akıllı Tahta oyun modunda açar.</p>
+        </div>
+        <button class="modal-close" data-close-modal="modalShare" type="button" aria-label="Kapat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="share-body">
+        <div id="shareQrWrap" class="share-qr-wrap"></div>
+        <div class="field">
+          <label for="shareUrlInput">Öğrenci Bağlantısı</label>
+          <div class="copy-row">
+            <input id="shareUrlInput" type="text" readonly />
+            <button id="btnCopyShareUrl" class="btn btn-primary" type="button">Kopyala</button>
+          </div>
+        </div>
+        <p id="shareUrlNote" class="field-hint"></p>
+      </div>
+      <div class="modal-foot">
+        <button id="btnDownloadQrPng" class="btn btn-secondary" type="button">QR Kodu PNG İndir</button>
+        <button class="btn btn-ghost" data-close-modal="modalShare" type="button">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Kayıtlı Bulmacalarım Modalı -->
+  <div id="modalLibrary" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalLibraryTitle">
+    <div class="modal modal-md">
+      <div class="modal-head">
+        <div>
+          <h3 id="modalLibraryTitle">Kayıtlı Bulmacalarım</h3>
+          <p class="modal-sub">Bulmacalarınızı tarayıcınızda saklayın veya JSON dosyası olarak dışa aktarın.</p>
+        </div>
+        <button class="modal-close" data-close-modal="modalLibrary" type="button" aria-label="Kapat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="library-save-row">
+        <input id="saveNameInput" type="text" placeholder="Kayıt adı (ör: 2-A Haftalık Kelimeler)" />
+        <button id="btnSaveCurrent" class="btn btn-primary" type="button">Kaydet</button>
+      </div>
+      <div id="libraryList" class="library-list"></div>
+      <div class="modal-foot space-between">
+        <div class="btn-group">
+          <button id="btnExportJson" class="btn btn-sm btn-secondary" type="button">JSON İndir</button>
+          <button id="btnImportJson" class="btn btn-sm btn-secondary" type="button">JSON Yükle</button>
+          <input id="importJsonInput" type="file" accept="application/json,.json" hidden />
+        </div>
+        <button class="btn btn-ghost" data-close-modal="modalLibrary" type="button">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Zafer Kutlaması Modalı -->
+  <div id="modalVictory" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalVictoryTitle">
+    <div class="modal modal-sm victory-modal">
+      <div class="victory-trophy" aria-hidden="true">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      </div>
+      <h3 id="modalVictoryTitle">Tebrikler! Tüm Kelimeler Bulundu</h3>
+      <p id="victorySummary" class="victory-summary"></p>
+      <div id="victoryStats" class="victory-stats"></div>
+      <div id="victorySecretReveal" class="victory-secret hidden"></div>
+      <div class="modal-foot center">
+        <button id="btnVictoryReplay" class="btn btn-secondary" type="button">Yeni Düzenle Oyna</button>
+        <button class="btn btn-primary" data-close-modal="modalVictory" type="button">Tamam</button>
+      </div>
+    </div>
+  </div>
+
   </main>
-  <script src="/js/site-data.js"></script>
-  <script src="/js/site.js?v=20261030-icons"></script>
-  <script>
-    (function(){
-      const alphabet = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
-      const vowels = 'AEIİOÖUÜ';
-      const dirs = {
-        easy: [[1,0],[0,1]],
-        normal: [[1,0],[0,1],[1,1]],
-        mixed: [[1,0],[0,1],[1,1],[-1,1],[1,-1],[-1,0],[0,-1]]
-      };
-      const state = { size:10, grid:[], placed:[], show:false, selected:null };
-      const el = id => document.getElementById(id);
-      function cleanWord(word){
-        return word.trim().replace(/[^A-Za-zÇĞİÖŞÜçğıöşü]/g,'').toLocaleUpperCase('tr-TR');
-      }
-      function words(){
-        return el('wordsInput').value.split(/\n|,|;/).map(cleanWord).filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
-      }
-      function emptyGrid(size){ return Array.from({length:size},()=>Array.from({length:size},()=>'')); }
-      function canPlace(word,x,y,dx,dy){
-        for(let i=0;i<word.length;i++){ const nx=x+dx*i, ny=y+dy*i; if(nx<0||ny<0||nx>=state.size||ny>=state.size) return false; const cell=state.grid[ny][nx]; if(cell && cell!==word[i]) return false; }
-        return true;
-      }
-      function place(word){
-        const options = dirs[el('directionMode').value] || dirs.normal;
-        for(let attempt=0;attempt<220;attempt++){
-          const [dx,dy] = options[Math.floor(Math.random()*options.length)];
-          const x = Math.floor(Math.random()*state.size), y = Math.floor(Math.random()*state.size);
-          if(!canPlace(word,x,y,dx,dy)) continue;
-          const cells=[]; for(let i=0;i<word.length;i++){ const nx=x+dx*i, ny=y+dy*i; state.grid[ny][nx]=word[i]; cells.push(`${nx}-${ny}`); }
-          state.placed.push({ word, cells }); return true;
-        }
-        return false;
-      }
-      function fill(){
-        const source = el('fillMode').value === 'vowels' ? alphabet + vowels + vowels : alphabet;
-        for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++) if(!state.grid[y][x]) state.grid[y][x]=source[Math.floor(Math.random()*source.length)];
-      }
-      function generate(){
-        state.size = Number(el('gridSize').value); state.grid = emptyGrid(state.size); state.placed=[]; state.show=false; state.selected=null;
-        words().sort((a,b)=>b.length-a.length).forEach(word => { if(word.length <= state.size) place(word); });
-        fill(); render();
-      }
-      function render(){
-        const lower = el('letterCase').value === 'lower';
-        const selectedCells = state.selected ? new Set(state.selected.cells) : new Set();
-        const solutionCells = new Set(state.show ? state.placed.flatMap(w=>w.cells) : []);
-        el('puzzleGrid').style.gridTemplateColumns = `repeat(${state.size}, minmax(0,1fr))`;
-        el('puzzleGrid').innerHTML = '';
-        for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++){
-          const key=`${x}-${y}`; const cell=document.createElement('button'); cell.type='button'; cell.className='cell';
-          if(solutionCells.has(key)) cell.classList.add('solution'); if(selectedCells.has(key)) cell.classList.add('selected');
-          cell.textContent = lower ? state.grid[y][x].toLocaleLowerCase('tr-TR') : state.grid[y][x];
-          cell.setAttribute('aria-label', `${x+1}. sütun ${y+1}. satır ${cell.textContent}`); el('puzzleGrid').appendChild(cell);
-        }
-        el('wordList').innerHTML = '';
-        state.placed.forEach(item => {
-          const chip=document.createElement('button'); chip.type='button'; chip.className='word-chip'; chip.textContent = lower ? item.word.toLocaleLowerCase('tr-TR') : item.word;
-          chip.addEventListener('click',()=>{ state.selected = state.selected === item ? null : item; render(); });
-          el('wordList').appendChild(chip);
-        });
-        el('placedCount').textContent = `${state.placed.length} kelime`;
-        el('gridLabel').textContent = `${state.size} x ${state.size}`;
-        el('solutionBtn').innerHTML = state.show ? '<i class="fas fa-eye-slash"></i> Gizle' : '<i class="fas fa-eye"></i> Çözüm';
-      }
-      function downloadPng(){
-        const cell=54, pad=42, side=state.size*cell+pad*2;
-        const canvas=document.createElement('canvas'); canvas.width=side; canvas.height=side+96; const ctx=canvas.getContext('2d');
-        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-        ctx.fillStyle='#14213d'; ctx.font='900 32px Nunito, Arial'; ctx.fillText('Kelime Avı', pad, 44);
-        ctx.font='800 16px Nunito, Arial'; ctx.fillStyle='#64748b'; ctx.fillText(state.placed.map(x=>x.word).join('  ·  '), pad, side+62);
-        const solutions=new Set(state.show ? state.placed.flatMap(w=>w.cells) : []);
-        for(let y=0;y<state.size;y++) for(let x=0;x<state.size;x++){
-          const px=pad+x*cell, py=70+y*cell; ctx.fillStyle=solutions.has(`${x}-${y}`)?'#dff7ef':'#f8fbff'; ctx.fillRect(px,py,cell-4,cell-4); ctx.strokeStyle='#dbe5f4'; ctx.strokeRect(px,py,cell-4,cell-4);
-          ctx.fillStyle='#14213d'; ctx.font='900 24px Nunito, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(state.grid[y][x], px+cell/2-2, py+cell/2-2);
-        }
-        const a=document.createElement('a'); a.href=canvas.toDataURL('image/png'); a.download='kelime-avi.png'; a.click();
-      }
-      el('generateBtn').addEventListener('click', generate);
-      el('solutionBtn').addEventListener('click',()=>{ state.show=!state.show; render(); });
-      el('clearSelectBtn').addEventListener('click',()=>{ state.selected=null; state.show=false; render(); });
-      el('pngBtn').addEventListener('click', downloadPng);
-      el('printBtn').addEventListener('click',()=>window.print());
-      ['gridSize','directionMode','letterCase','fillMode'].forEach(id=>el(id).addEventListener('change',generate));
-      generate();
-    })();
-  </script>
+  <script src="/js/site.js?v=20261124-local"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
+  <script src="/js/kelime-avi/word-packs.js?v=20261123"></script>
+  <script src="/js/kelime-avi/engine.js?v=20261123"></script>
+  <script src="/js/kelime-avi/qr.js?v=20261123"></script>
+  <script src="/js/kelime-avi/sound.js?v=20261123"></script>
+  <script src="/js/kelime-avi/export.js?v=20261123"></script>
+  <script src="/js/kelime-avi/app.js?v=20261124"></script>
 </body>
 </html>

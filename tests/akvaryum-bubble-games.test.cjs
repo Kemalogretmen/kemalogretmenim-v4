@@ -73,7 +73,7 @@ test('membrane fragments and droplets animate briefly and every canvas frame is 
  const h=harness(),frames=new Map(),draws=[];let frameId=0;
  h.window.requestAnimationFrame=fn=>{frames.set(++frameId,fn);return frameId;};h.window.cancelAnimationFrame=id=>frames.delete(id);
  const create=h.document.createElement.bind(h.document);h.document.createElement=(tag,...args)=>{const el=create(tag,...args);if(tag==='canvas')el.getContext=()=>new Proxy({createRadialGradient:()=>({addColorStop(){}})},{get:(target,key)=>target[key]||((...args)=>draws.push([key,...args]))});return el;};
- h.api.open();h.root.getBoundingClientRect=()=>({left:10,top:20,width:500,height:400});const button=h.root.querySelector('[data-game-id="multiply"]');button.getBoundingClientRect=()=>({left:80,top:90,width:120,height:120});h.click('[data-game-id="multiply"]');assert.ok(h.document.getElementById('bubbleGamesPop'));assert.equal(frames.size,1);
+ h.api.open();h.root.getBoundingClientRect=()=>({left:10,top:20,width:3840,height:2160});const button=h.root.querySelector('[data-game-id="multiply"]');button.getBoundingClientRect=()=>({left:80,top:90,width:120,height:120});h.click('[data-game-id="multiply"]');const pop=h.document.getElementById('bubbleGamesPop');assert.ok(pop);assert.ok(pop.width*pop.height<=1002001);assert.ok(parseFloat(pop.style.width)<600&&parseFloat(pop.style.height)<600);assert.equal(frames.size,1);
  const frame=stamp=>{const [id,fn]=[...frames][0];frames.delete(id);fn(stamp);};frame(0);frame(100);assert.ok(draws.filter(d=>d[0]==='ellipse').length>=44);assert.ok(draws.filter(d=>d[0]==='stroke').length>=11);
  h.run(280);assert.ok(h.document.getElementById('bubbleGamesPop'),'effect survives the menu to question transition');h.api.close();assert.equal(frames.size,0);assert.equal(h.document.getElementById('bubbleGamesPop'),null);
  h.api.open();const again=h.root.querySelector('[data-game-id="multiply"]');again.getBoundingClientRect=button.getBoundingClientRect;h.click('[data-game-id="multiply"]');frame(0);frame(600);assert.equal(h.document.getElementById('bubbleGamesPop'),null);assert.equal(frames.size,0);h.api.dispose();
@@ -158,4 +158,52 @@ test('cleanup UI contains clickable rising trash and protected life, with no dra
 test('shell animation gates input until every swap finishes, then exposes position-based keys',()=>{
  const h=harness({motion:false});h.api.open();h.click('[data-page="1"]');h.click('[data-game-id="shells"]');assert.ok([...h.root.querySelectorAll('.reef-shell')].every(b=>b.disabled));
  const jobs=[...h.jobs].filter(([,j])=>!j.interval).sort((a,b)=>a[1].ms-b[1].ms);for(const [id,job] of jobs){h.jobs.delete(id);job.fn();}assert.ok([...h.root.querySelectorAll('.reef-shell')].every(b=>!b.disabled));assert.deepEqual([...h.root.querySelectorAll('.shell-number')].map(b=>b.textContent).sort(),['1','2','3']);h.api.dispose();assert.equal(h.jobs.size,0);
+});
+
+function pointer(h,target,type,id,extra={}){
+ const event=new h.window.Event(type,{bubbles:true,cancelable:true});Object.assign(event,{pointerId:id,pointerType:'touch',button:0,...extra});target.dispatchEvent(event);
+}
+function duelGame(h,game){h.api.open(null,{duel:true});h.click('[data-page="1"]');h.click('[data-game-id="'+game+'"]');}
+test('interleaved fingers on two musical lanes never count their generated clicks as new notes',()=>{
+ const h=harness({motion:false});duelGame(h,'lights');h.run(1620);
+ const buttons=[0,1].map(p=>h.root.querySelector('[data-activity-board="'+p+'"] .light-1'));
+ buttons.forEach((b,p)=>pointer(h,b,'pointerdown',p+1));
+ buttons.forEach((b,p)=>{pointer(h,h.root,'pointerup',p+1);const click=new h.window.Event('click',{bubbles:true});click.detail=1;b.dispatchEvent(click);});
+ assert.deepEqual([...h.root.querySelectorAll('[data-player-score]')].map(e=>e.textContent),['0','0']);
+ pointer(h,buttons[1],'pointerdown',3);assert.equal(h.root.querySelector('[data-player-score="1"]').textContent,'10');
+ assert.equal(h.root.querySelector('[data-player-score="0"]').textContent,'0');h.api.dispose();
+});
+test('two simultaneous memory touches reveal both players cards without waiting for a primary click',()=>{
+ const h=harness({motion:false});duelGame(h,'memory');
+ for(const p of [0,1])pointer(h,h.root.querySelector('[data-memory-board="'+p+'"] [data-index="0"]'),'pointerdown',p+1);
+ for(const p of [0,1])assert.equal(h.root.querySelectorAll('[data-memory-board="'+p+'"] .memory-revealed').length,1);
+ pointer(h,h.root,'pointercancel',1);pointer(h,h.root,'lostpointercapture',2);h.api.dispose();assert.equal(h.jobs.size,0);
+});
+test('surf tracks every finger and keyboard key separately and releases canceled or blurred input',()=>{
+ const h=harness({motion:false});duelGame(h,'surf');let time=0;
+ const step=()=>{h.setTime(time+=100);h.tick();return [0,1].map(p=>Number(h.root.querySelector('[data-activity-board="'+p+'"] .surf-fish').style.transform.match(/,([\d.]+)px/)[1]));};
+ const hold=p=>h.root.querySelector('[data-game-action="hold"][data-player="'+p+'"]');
+ const initial=step();pointer(h,hold(0),'pointerdown',1);pointer(h,hold(0),'pointerdown',2);pointer(h,hold(1),'pointerdown',3);
+ const both=step();assert.ok(both.every((y,p)=>y<initial[p]));pointer(h,h.root,'pointerup',1);
+ const still=step();assert.ok(still.every((y,p)=>y<both[p]));
+ pointer(h,h.root,'lostpointercapture',2);const separate=step();assert.ok(separate[0]>still[0]);assert.ok(separate[1]<still[1]);
+ const key=new h.window.Event('keydown',{bubbles:true,cancelable:true});key.key='ArrowUp';h.root.dispatchEvent(key);
+ pointer(h,h.root,'pointercancel',3);const keyboard=step();assert.ok(keyboard[1]<separate[1]);
+ const up=new h.window.Event('keyup');up.key='ArrowUp';h.window.dispatchEvent(up);const released=step();assert.ok(released[1]>keyboard[1]);
+ pointer(h,hold(0),'pointerdown',4);h.window.dispatchEvent(new h.window.Event('blur'));const blurred=step();assert.ok(blurred[0]>released[0]);
+ pointer(h,hold(1),'pointerdown',5);h.api.pause();h.click('[data-game-action="resume"]');const resumed=step();assert.ok(resumed[1]>blurred[1]);h.api.dispose();
+});
+test('cleanup reads geometry only at layout and never awards a bubble while clearing input',()=>{
+ const h=harness({motion:false});duelGame(h,'cleanup');let reads=0;
+ h.root.querySelectorAll('[data-activity-board]').forEach(area=>area.getBoundingClientRect=()=>{reads++;return {width:460,height:500};});h.api.layout();assert.equal(reads,2);
+ for(let i=1;i<=10;i++){h.setTime(i*50);h.tick();}
+ assert.equal(reads,2);assert.match(h.root.querySelector('.reef-floating-orb').style.transform,/translate3d/);
+ assert.equal(h.root.querySelector('.reef-floating-orb').style.bottom,'-85px');h.api.pause();h.click('[data-game-action="resume"]');
+ assert.deepEqual([...h.root.querySelectorAll('[data-player-score]')].map(e=>e.textContent),['0','0']);h.api.dispose();
+});
+test('surf reuses obstacle nodes instead of rebuilding each play lane every frame',()=>{
+ const h=harness({motion:false});duelGame(h,'surf');for(let i=1;i<=20;i++){h.setTime(i*100);h.tick();}
+ const obstacle=h.root.querySelector('.reef-obstacles i');assert.ok(obstacle);const position=obstacle.style.transform;
+ for(let i=21;i<=25;i++){h.setTime(i*100);h.tick();}
+ assert.equal(h.root.querySelector('.reef-obstacles i'),obstacle);assert.notEqual(obstacle.style.transform,position);h.api.dispose();
 });

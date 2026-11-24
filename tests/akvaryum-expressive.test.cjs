@@ -34,8 +34,8 @@ test('new swimmers visibly move both tail and fins during normal strokes and str
  }
 });
 function renderer(){
- const stats={created:0,transforms:0,draws:0,glows:0,strokes:0};
- const doc={createElement(){stats.created++;return {ownerDocument:doc,width:0,height:0,getContext(){return {clearRect(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(...args){assert.ok(args.every(Number.isFinite));stats.transforms++;},drawImage(){stats.draws++;},fillRect(){},stroke(){stats.strokes++;},createRadialGradient(){stats.glows++;return {addColorStop(){}};}};}};}};
+ const stats={created:0,transforms:0,draws:0,glows:0,strokes:0,mouths:0,images:[]};
+ const doc={createElement(){stats.created++;return {ownerDocument:doc,width:0,height:0,getContext(){return {clearRect(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},clip(){},transform(...args){assert.ok(args.every(Number.isFinite));stats.transforms++;},drawImage(image){stats.draws++;stats.images.push(image);},fillRect(){},fill(){},bezierCurveTo(){stats.mouths++;},createLinearGradient(){return {addColorStop(){}};},stroke(){stats.strokes++;},createRadialGradient(){stats.glows++;return {addColorStop(){}};}};}};}};
  return {doc,canvas:doc.createElement('canvas'),image:{src:'fixture-'+Math.random(),complete:true,naturalWidth:640,naturalHeight:426},stats};
 }
 test('render caches one shared frame across pupils, draws an intact rest image and handles missing canvas/source safely',()=>{
@@ -130,4 +130,20 @@ test('SpongeBob eyes grow only for a reward, while Patrick and Gary produce roun
   assert.equal(E.effects(id,2,1,{lite:true}).length,2);
   assert.deepEqual(E.effects(id,2,0),[]);
  }
+});
+
+test('megalodon tail has frequent intermediate poses even in lightweight mode and its jaw closes without growing the body',()=>{
+ for(const lite of [false,true]){
+  const h=renderer(),frames=new Set();
+  for(let i=0;i<30;i++){assert.equal(E.render(h.canvas,h.image,'megalodon',i*.05,{moving:true,lite}),true);frames.add(h.stats.images.at(-1));}
+  assert.ok(frames.size>=16,'slow tail strokes must not freeze across several draw frames');
+  const painted=h.stats.mouths;
+  E.render(h.canvas,h.image,'megalodon',1,{moving:true,boost:1,lite});assert.ok(h.stats.mouths>painted);
+  const open=h.stats.mouths;E.render(h.canvas,h.image,'megalodon',1.1,{moving:true,boost:0,lite});assert.equal(h.stats.mouths,open);
+  E.render(h.canvas,h.image,'megalodon',1.2,{moving:false,boost:1,lite});assert.equal(h.stats.mouths,open);
+ }
+ const closed=E.point('megalodon',.89,.62,1,{boost:0}),open=E.point('megalodon',.89,.62,1,{boost:1});assert.ok(open.y-closed.y>.08);
+ assert.deepEqual(E.point('megalodon',.85,.41,1,{boost:1}),{x:.85,y:.41});
+ for(let elapsed=0;elapsed<=4.3;elapsed+=.03){const pose=R.pose('megalodon',elapsed);assert.equal(pose.scaleX,1);assert.equal(pose.scaleY,1);assert.equal(pose.phase,0);}
+ assert.equal(R.profile('megalodon').kind,'jaw-open');
 });

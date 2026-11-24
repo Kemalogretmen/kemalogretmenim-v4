@@ -1,8 +1,8 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');const {parseHTML}=require('linkedom');
-function setup({cores=8,memory=8,touch=false,stored=null,blocked=false}={}) {
+function setup({cores=8,memory=8,touch=false,wide=false,touches=0,stored=null,blocked=false}={}) {
  const {window,document}=parseHTML('<html><head></head><body></body></html>'),frames=[],writes=[];
- delete window.SitePerformance;window.matchMedia=()=>({matches:touch});
- vm.runInNewContext(fs.readFileSync('js/site-performance.js','utf8'),{window,document,navigator:{hardwareConcurrency:cores,deviceMemory:memory},Event:window.Event,requestAnimationFrame:fn=>frames.push(fn),localStorage:{getItem(){if(blocked)throw Error();return stored;},setItem(k,v){if(blocked)throw Error();writes.push([k,v]);}}});
+ delete window.SitePerformance;window.matchMedia=query=>({matches:query==='(min-width:1000px)'?wide:touch});
+ vm.runInNewContext(fs.readFileSync('js/site-performance.js','utf8'),{window,document,navigator:{hardwareConcurrency:cores,deviceMemory:memory,maxTouchPoints:touches},Event:window.Event,requestAnimationFrame:fn=>frames.push(fn),localStorage:{getItem(){if(blocked)throw Error();return stored;},setItem(k,v){if(blocked)throw Error();writes.push([k,v]);}}});
  return {window,document,frames,writes,api:window.SitePerformance};
 }
 test('low-spec or large touch devices receive lightweight rendering, with an explicit local override',()=>{
@@ -16,4 +16,11 @@ test('one bounded scroll sample detects sustained slowness without a permanent a
  h.window.dispatchEvent(new h.window.Event('scroll'));assert.equal(h.frames.length,0);
  const fast=setup();fast.window.dispatchEvent(new fast.window.Event('scroll'));n=0;while(fast.frames.length && n<150)fast.frames.shift()((++n)*16.67);
  assert.equal(fast.api.lite(),false);
+});
+
+test('a multi-touch smartboard with a fine primary pointer is detected without slowing ordinary desktops or phones',()=>{
+ const board=setup({wide:true,touches:10});assert.equal(board.api.lite(),true);
+ board.api.set('full');assert.equal(board.api.lite(),false);
+ assert.equal(setup({wide:true}).api.lite(),false);
+ assert.equal(setup({touches:5}).api.lite(),false);
 });

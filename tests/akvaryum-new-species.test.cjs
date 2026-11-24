@@ -59,15 +59,23 @@ test('new animals keep whole silhouettes, normal bounds and distinct natural swi
  assert.ok(Motion.profile('hammerhead').speed>Motion.profile('axolotl').speed*2);
 });
 
-test('megalodon is larger on wide and narrow scenes without shrinking other animals',()=>{
- for(const [width,height] of [[320,240],[1280,600]]){
+test('megalodon is thirty percent smaller on wide and narrow scenes without shrinking other animals',()=>{
+ for(const [width,height,previousSize] of [[320,240,125.90666666666667],[1280,600,234.09714285714284]]){
   const shark=C.species('shark'),megalodon=C.species('megalodon');
   const ordinary=Array.from({length:24},(_,i)=>({id:'fish-'+i,species:shark.id,size:shark.size}));
   const normal=Motion.layout(ordinary,width,height);
   const mixed=Motion.layout([...ordinary.slice(0,-1),{id:megalodon.id,species:megalodon.id,size:megalodon.size}],width,height);
   const big=mixed.get(megalodon.id);
   assert.equal(mixed.get('fish-0').size,normal.get('fish-0').size);
-  assert.ok(big.size>normal.get('fish-0').size*1.25);
+  assert.ok(Math.abs(big.size-previousSize*.7)<.000001);
   assert.ok(big.x>=0&&big.x+big.size<=width&&big.y>=big.minY&&big.y<=big.maxY);
+ }
+});
+
+test('megalodon compact and single-fish layouts retain the same thirty percent reduction',()=>{
+ for(const [width,height,count,previousSize] of [[1280,600,1,244.24],[390,500,8,159.04]]){
+  const items=Array.from({length:count-1},(_,i)=>({id:'f'+i,species:'shark',size:C.species('shark').size}));
+  items.push({id:'m',species:'megalodon',size:C.species('megalodon').size});
+  assert.ok(Math.abs(Motion.layout(items,width,height).get('m').size-previousSize*.7)<.000001);
  }
 });

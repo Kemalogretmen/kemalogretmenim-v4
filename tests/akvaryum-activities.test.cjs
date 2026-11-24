@@ -74,3 +74,23 @@ test('birthdays keep only a valid day/month, support leap days, and stay out of 
  for(const birthday of [{day:31,month:4},{day:0,month:1},{day:10,month:13},{day:1.5,month:1}]) {s.birthday=birthday;assert.throws(()=>C.validate(state),/Doğum günü/);}
  s.birthday={day:9,month:10};s.agendaStudentId='private-agenda-id';const window={AquariumCore:C};vm.runInNewContext(fs.readFileSync('js/akvaryum-sharing.js','utf8'),{window});assert.doesNotMatch(JSON.stringify(window.AquariumSharing.snapshot(state.classes[0],state.settings)),/birthday|agendaStudentId|private-agenda-id/);
 });
+
+test('bulk deductions cap each pupil, skip absent and zero-score pupils, record once and allow individual undo',()=>{
+ const cls=classroom(),[a,b,c]=cls.students;
+ const negative={id:C.uid(),title:'Söz sıramı beklemeliyim',points:-8};
+ cls.tasks.push(negative);
+ for(const student of cls.students)C.ensureDay(student,cls,date);
+ C.awardBehavior(a,cls,date,cls.tasks[0].id);
+ C.awardBehavior(b,cls,date,cls.tasks[0].id);
+ C.awardBehavior(b,cls,date,cls.tasks[0].id);
+ C.awardBehavior(c,cls,date,cls.tasks[0].id);
+ c.days[date].absent=true;
+ const zero=C.newStudent('Sıfır puan');cls.students.push(zero);C.ensureDay(zero,cls,date);
+ const feeds=JSON.stringify(cls.students.map(s=>s.feeds));
+ const result=C.rewardGroup(cls,date,negative.id,[a.id,a.id,b.id,c.id,zero.id,'missing']);
+ assert.deepEqual(result,[{id:a.id,points:-5,fed:false},{id:b.id,points:-8,fed:false}]);
+ assert.deepEqual(cls.students.map(C.earned),[0,2,5,0]);
+ assert.equal(JSON.stringify(cls.students.map(s=>s.feeds)),feeds);
+ assert.equal(C.correctAward(a,date,a.days[date].tasks.at(-1).id,true),true);
+ assert.deepEqual(cls.students.map(C.earned),[5,2,5,0]);
+});

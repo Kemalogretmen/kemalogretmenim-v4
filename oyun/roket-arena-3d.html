@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Roket Arena 3D | Kemal Öğretmenim</title>
+  <meta name="description" content="Roket arabayla gol at veya balon patlat. Onluğa ve yüzlüğe yuvarlamayı tek başına ya da aynı ekranda iki kişi pekiştir." />
+  <link rel="canonical" href="https://kemalogretmenim.com.tr/oyun/roket-arena-3d.html" />
+  <link rel="icon" href="/gorseller/logo.png" />
+  <script src="/js/site-theme.js?v=20261029" data-site-theme-bootstrap></script>
+  <script src="/js/platform-icons.js?v=20261030" data-platform-icons-script></script>
+  <link rel="stylesheet" href="/css/style.css?v=20261010-dock-home" />
+  <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles />
+  <link rel="stylesheet" href="/css/theme-control.css?v=20261029" />
+  <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles />
+  <link rel="stylesheet" href="/css/roket-arena-3d.css?v=20261124-controls" />
+</head>
+<body class="roket-arena-3d-page" data-kemal-local="true">
+  <main id="main-content" class="rocket-arena" aria-label="Roket Arena 3D">
+    <canvas id="gameCanvas" tabindex="-1" aria-label="Oyun alanı"></canvas>
+    <canvas id="overlayCanvas" aria-hidden="true"></canvas>
+    <p id="rocketUnavailable" class="arena-notice" hidden>Oyun alanı bu tarayıcıda açılamadı. <a href="/oyun/oyunlar.html">Oyunlara dön</a></p>
+
+    <!-- ==================== 1-PLAYER IN-GAME HUD ==================== -->
+    <div id="hudSingle" class="hud-layer hidden">
+      <div class="hud-top-left">
+        <div class="stat-panel">
+          <div class="stat-head">
+            <span id="singleModeTag" class="mode-tag">2. SINIF • ONLUK</span>
+            <span id="singleTimer" class="timer-tag">00:00</span>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-box accent">
+              <span id="sStat1Lbl" class="stat-lbl">PUAN</span>
+              <strong id="sStat1Val" class="stat-val">0</strong>
+            </div>
+            <div class="stat-box">
+              <span id="sStat2Lbl" class="stat-lbl">SORU</span>
+              <strong id="sStat2Val" class="stat-val">1 / 12</strong>
+            </div>
+            <div class="stat-box gold">
+              <span id="sStat3Lbl" class="stat-lbl">SERİ</span>
+              <strong id="sStat3Val" class="stat-val">x1</strong>
+            </div>
+          </div>
+          <div class="stat-sub-row">
+            <span id="singlePlayerName" class="player-name-tag">Oyuncu 1</span>
+            <span id="singleBestTag" class="best-mini-tag">🏆 Rekor: 0</span>
+          </div>
+          <div class="progress-track">
+            <div id="singleProgressBar" class="progress-fill"></div>
+          </div>
+          <div id="singlePowerStrip" class="power-strip hidden">
+            <span class="chip-dot"></span>
+            <span id="singlePowerText">GÜÇ AKTİF</span>
+            <strong id="singlePowerTime">5.0s</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top-Center: Dynamic Question Banner (EDU) OR Match Scoreboard (FUN) -->
+      <div class="hud-top-center">
+        <div id="eduQuestionBanner" class="question-banner hidden">
+          <div class="qb-top-row">
+            <span id="qbTypeBadge" class="qb-badge ten">EN YAKIN ONLUĞA YUVARLA</span>
+            <span id="qbStreakPill" class="qb-streak hidden">🔥 x2</span>
+          </div>
+          <div class="qb-number-row">
+            <span id="qbNumberDisplay" class="qb-number">4<span class="hl-digit">7</span></span>
+            <span class="qb-arrow">➜</span>
+            <span class="qb-qmark">?</span>
+          </div>
+          <div id="qbSubHint" class="qb-sub">Doğru numaralı kaleye gol at!</div>
+        </div>
+
+        <div id="funSoccerBanner" class="match-banner hidden">
+          <div class="team-pill p1">
+            <span id="funSoccerP1Name">MAVİ</span>
+            <strong id="funSoccerP1Score">0</strong>
+          </div>
+          <div class="match-clock-pill">
+            <span class="mc-label">ROKET MAÇI</span>
+            <strong id="funSoccerClock">01:30</strong>
+          </div>
+          <div class="team-pill p2">
+            <strong id="funSoccerP2Score">0</strong>
+            <span id="funSoccerP2Name">BOT</span>
+          </div>
+        </div>
+
+        <div id="funPaintBanner" class="paint-banner hidden">
+          <span class="pb-chip">🎨 BOYA FESTİVALİ</span>
+          <strong id="funPaintClock" class="pb-clock">01:30</strong>
+          <span id="funPaintCombo" class="pb-combo">KOMBO x1</span>
+        </div>
+
+        <div id="singleControlHint" class="hint-pill">
+          <strong>W/S</strong> Gaz &bull; <strong>A/D</strong> Dön &bull; <strong>Shift</strong> Turbo &bull; <strong>Space</strong> Zıpla &bull; <strong>E</strong> Özel Yetenek
+        </div>
+      </div>
+
+      <!-- Top-Right: Arena Radar + Quick Buttons -->
+      <div class="hud-top-right">
+        <div class="radar-wrap">
+          <canvas id="radarSingle" width="144" height="144"></canvas>
+          <span class="radar-label">ARENA RADAR</span>
+        </div>
+        <div class="quick-actions">
+          <button id="btnMusicHud" class="icon-btn" title="Müziği Aç/Kapat (N)">
+            🎵 <span id="musicHudLabel">Açık</span>
+          </button>
+          <button id="btnCamera" class="icon-btn" title="Kamera Açısı (C)">
+            <span class="key-cap">C</span> Kamera
+          </button>
+          <button id="btnSettingsHud" class="icon-btn" title="Ayarlar &amp; Garaj">⚙</button>
+          <button id="btnPause" class="icon-btn" title="Duraklat (P)">
+            <span class="key-cap">P</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom-Center Action Bar with Special Ability! -->
+      <div class="hud-bottom-center">
+        <div class="action-bar">
+          <div class="meter-group">
+            <div class="meter-header">
+              <span id="actionMeterLabel">ROKET TURBO <kbd>Shift</kbd></span>
+              <span id="p1SpeedReadout">0 km/s</span>
+            </div>
+            <div class="meter-track">
+              <div id="p1TurboBar" class="meter-fill"></div>
+            </div>
+          </div>
+          <div class="action-divider"></div>
+          <div id="p1SpecialPill" class="ability-pill special ready">
+            <span id="p1SpecialTitle" class="ability-title">⚡ NİTRO ATILIM <kbd>E</kbd></span>
+            <span id="p1SpecialState" class="ability-state">HAZIR!</span>
+          </div>
+          <div class="action-divider"></div>
+          <div id="p1ActionPill" class="ability-pill ready">
+            <span id="p1ActionTitle" class="ability-title">ZIPLA / ŞUT <kbd>Space</kbd></span>
+            <span id="p1ActionState" class="ability-state">HAZIR</span>
+          </div>
+          <div class="action-divider"></div>
+          <div class="ability-pill cam-pill">
+            <span class="ability-title">KAMERA</span>
+            <span id="camModeLabel" class="ability-state">KLASİK TPS</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Responsive Multi-Touch / Smartboard Controls (1P) -->
+      <div id="touchSingle" class="touch-single hidden">
+        <div class="joy-zone">
+          <div id="joyBase" class="joy-base">
+            <div class="joy-arrows"><span>◀</span><span>▶</span></div>
+            <div id="joyKnob" class="joy-knob"></div>
+          </div>
+          <span class="joy-caption">YÖNLENDİR</span>
+        </div>
+        <div class="touch-actions">
+          <button id="t1Reverse" class="t-btn brake">GERİ</button>
+          <button id="t1Special" class="t-btn special">⚡ ÖZEL</button>
+          <button id="t1Turbo" class="t-btn turbo">TURBO</button>
+          <button id="t1Primary" class="t-btn jump">ZIPLA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2-PLAYER SPLIT-SCREEN HUD ==================== -->
+    <div id="hudSplit" class="hud-layer hidden">
+      <div class="split-divider"></div>
+
+      <div class="split-center-stack">
+        <div class="split-center-bar">
+          <span id="splitModeTag" class="split-mode-chip">2P ARENA</span>
+          <span id="splitTimer" class="split-timer-chip">01:30</span>
+          <button id="btnMusicSplit" class="mini-icon-btn" title="Müzik (N)">🎵</button>
+          <button id="btnSettingsSplit" class="mini-icon-btn" title="Ayarlar">⚙</button>
+          <button id="btnPauseSplit" class="mini-icon-btn" title="Duraklat (P)">⏸</button>
+        </div>
+
+        <div id="splitEduBanner" class="question-banner compact hidden">
+          <span id="splitQbBadge" class="qb-badge ten">EN YAKIN ONLUK</span>
+          <div class="qb-number-row">
+            <span id="splitQbNumber" class="qb-number">4<span class="hl-digit">7</span></span>
+            <span class="qb-arrow">➜</span>
+            <span class="qb-qmark">?</span>
+          </div>
+          <span id="splitQbProgress" class="split-prog-chip">1 / 12</span>
+        </div>
+      </div>
+
+      <!-- Left Half: Player 1 -->
+      <div class="split-pane left">
+        <div class="split-top">
+          <div class="split-card p1">
+            <div class="split-card-head">
+              <span class="p-dot p1"></span>
+              <strong id="sp1Name">1. OYUNCU</strong>
+              <span id="sp1ScoreBadge" class="sp-score">0</span>
+            </div>
+            <div class="split-sub-info">
+              <span id="sp1Detail">Seri: x1</span>
+              <span id="sp1SpecialTag" class="sp-special-tag ready">⚡ HAZIR (E)</span>
+            </div>
+          </div>
+          <div class="radar-wrap small">
+            <canvas id="radarP1" width="104" height="104"></canvas>
+            <span class="radar-label">P1</span>
+          </div>
+        </div>
+
+        <div class="split-bottom-wrap">
+          <div class="split-action">
+            <div class="meter-track thin"><div id="sp1Turbo" class="meter-fill"></div></div>
+            <span id="sp1KeysHint" class="split-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> &bull; <kbd>Shift</kbd> Turbo &bull; <kbd>Space</kbd> Zıpla &bull; <kbd>E</kbd> Özel</span>
+          </div>
+          <div id="touchSplitP1" class="touch-split hidden">
+            <div class="ts-group">
+              <button id="tp1Left" class="ts-btn" aria-label="1. oyuncu sola dön">◀</button>
+              <button id="tp1Reverse" class="ts-btn" aria-label="1. oyuncu geri">↓</button>
+              <button id="tp1Right" class="ts-btn" aria-label="1. oyuncu sağa dön">▶</button>
+            </div>
+            <div class="ts-group">
+              <button aria-label="1. oyuncu ileri" id="tp1Gas" class="ts-btn gas">İLERİ</button>
+              <button id="tp1Special" class="ts-btn special">⚡</button>
+              <button id="tp1Turbo" class="ts-btn turbo">HIZ</button>
+              <button id="tp1Primary" class="ts-btn jump">ZIPLA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Half: Player 2 -->
+      <div class="split-pane right">
+        <div class="split-top">
+          <div class="split-card p2">
+            <div class="split-card-head">
+              <span class="p-dot p2"></span>
+              <strong id="sp2Name">2. OYUNCU</strong>
+              <span id="sp2ScoreBadge" class="sp-score p2">0</span>
+            </div>
+            <div class="split-sub-info">
+              <span id="sp2Detail">Seri: x1</span>
+              <span id="sp2SpecialTag" class="sp-special-tag ready">⚡ HAZIR (K)</span>
+            </div>
+          </div>
+          <div class="radar-wrap small">
+            <canvas id="radarP2" width="104" height="104"></canvas>
+            <span class="radar-label">P2</span>
+          </div>
+        </div>
+
+        <div class="split-bottom-wrap">
+          <div class="split-action">
+            <div class="meter-track thin"><div id="sp2Turbo" class="meter-fill p2"></div></div>
+            <span id="sp2KeysHint" class="split-keys"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> &bull; <kbd>M</kbd> Turbo &bull; <kbd>Enter</kbd> Zıpla &bull; <kbd>K</kbd> Özel</span>
+          </div>
+          <div id="touchSplitP2" class="touch-split hidden">
+            <div class="ts-group">
+              <button id="tp2Left" class="ts-btn" aria-label="2. oyuncu sola dön">◀</button>
+              <button id="tp2Reverse" class="ts-btn" aria-label="2. oyuncu geri">↓</button>
+              <button id="tp2Right" class="ts-btn" aria-label="2. oyuncu sağa dön">▶</button>
+            </div>
+            <div class="ts-group">
+              <button aria-label="2. oyuncu ileri" id="tp2Gas" class="ts-btn gas p2">İLERİ</button>
+              <button id="tp2Special" class="ts-btn special">⚡</button>
+              <button id="tp2Turbo" class="ts-btn turbo p2">HIZ</button>
+              <button id="tp2Primary" class="ts-btn jump">ZIPLA</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Event Toasts -->
+    <div id="toastCenter" class="toast-container center"></div>
+    <div id="toastLeft" class="toast-container left"></div>
+    <div id="toastRight" class="toast-container right"></div>
+
+    <!-- ==================== CLEAN & PROFESSIONAL STUDIO ENTRY SCREEN ==================== -->
+    <div id="startOverlay" class="title-screen clean-hero">
+      <div class="cover-bg">
+        <img src="/assets/game-covers/roket-arena-3d.webp" alt="" class="cover-img" />
+        <div class="cover-vignette clean"></div>
+        <div class="cover-sparkles" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+
+      <div class="clean-shell">
+        <!-- Minimal Top Bar -->
+        <header class="title-topbar">
+          <div class="studio-logo">
+            <div class="logo-emblem">⚽</div>
+            <div class="logo-text">
+              <span class="logo-sub">3D STADYUM &amp; BOYA ARENASI</span>
+              <h1 class="logo-title">Roket Arena <span>3D</span></h1>
+            </div>
+          </div>
+
+          <nav class="title-nav" aria-label="Oyun menüsü">
+            <a class="nav-pill" href="/oyun/oyunlar.html">← Oyunlar</a>
+            <span id="rocketRenderMode" class="nav-pill" role="status" hidden>Üstten görünüm</span>
+            <button id="btnMusicTitle" class="nav-pill" title="Müziği Aç/Kapat">
+              <span class="nav-ico">🎵</span>
+              <span id="musicTitleLabel">Müzik: Açık</span>
+            </button>
+            <button id="btnOpenScoreboard" class="nav-pill gold">
+              <span class="nav-ico">🏆</span>
+              <span>Skor Tablosu</span>
+            </button>
+          </nav>
+        </header>
+
+        <!-- Open Center Artwork Showcase + Bottom Sleek Command Dock -->
+        <section class="hero-bottom-dock">
+          <div class="hero-copy">
+            <div class="hero-eyebrow">EĞİTİM &amp; EĞLENCE • 6 FARKLI ARABA • 3D ARENA</div>
+            <h2 class="hero-headline">Sahaya Çık, Özel Gücünü Kullan, <span>Şampiyon Ol!</span></h2>
+          </div>
+
+          <div class="command-dock">
+            <!-- Quick Mode & Arena Pills -->
+            <div class="dock-quick-row">
+              <div class="seg-group" id="quickModeSelector" aria-label="Mod Seçimi">
+                <button class="seg-btn active" data-gametype="edu">🎓 Eğitim (Yuvarlama)</button>
+                <button class="seg-btn" data-gametype="fun">🎮 Eğlence Modu</button>
+              </div>
+
+              <div class="seg-group" id="quickVersionSelector" aria-label="Arena Seçimi">
+                <button class="seg-btn active" data-version="soccer">⚽ Roket Gol</button>
+                <button class="seg-btn" data-version="paint">🎨 Boya Topu</button>
+              </div>
+            </div>
+
+            <!-- Active Configuration Summary Ribbon -->
+            <div class="setup-summary-bar">
+              <div id="activeSetupChips" class="summary-chips">
+                <span class="s-chip" id="chipGrade">🎓 2. Sınıf • Onluk</span>
+                <span class="s-chip" id="chipPlayers">👤 1 Oyuncu</span>
+                <span class="s-chip car" id="chipCar">🏎️ Şimşek GT (⚡ Nitro Atılım)</span>
+                <span class="s-chip" id="chipWeather">☀️ Gündüz</span>
+              </div>
+              <button id="btnOpenGarageDirect" class="mini-link-btn">🏎️ Araba Değiştir</button>
+            </div>
+
+            <!-- Two Clean Primary Studio Actions -->
+            <div class="dock-cta-row">
+              <button id="btnOpenSettings" class="setup-trigger-btn" type="button">
+                <span class="setup-trigger-icon" aria-hidden="true">⚙</span>
+                <span class="setup-trigger-label">
+                  <strong>AYARLAR &amp; KURULUM</strong>
+                  <small>Sınıf, Yuvarlama, Araba, Atmosfer &amp; Kontroller</small>
+                </span>
+              </button>
+              <button id="btnStart" class="cta-btn arena-start-btn" type="button">▶ OYUNA BAŞLA</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== 3-TAB STUDIO SETUP, GARAGE & SETTINGS MODAL ==================== -->
+    <div id="settingsOverlay" class="modal-backdrop hidden">
+      <div class="modal-card studio-modal">
+        <div class="modal-header-row">
+          <div>
+            <div class="brand-badge">OYUN KURULUMU &amp; GARAJ</div>
+            <h2 class="modal-heading left">Ayarlar &amp; Araba Garajı</h2>
+          </div>
+          <button id="btnCloseSettings" class="close-x-btn" title="Kapat">✕</button>
+        </div>
+
+        <!-- 3 Clean Tabs -->
+        <div class="modal-tabs" id="settingsTabs">
+          <button class="m-tab active" data-stab="setup">🎯 Oyun &amp; Eğitim</button>
+          <button class="m-tab" data-stab="garage">🏎️ Araba Garajı (6)</button>
+          <button class="m-tab" data-stab="system">⚙ Ses &amp; Kontroller</button>
+        </div>
+
+        <div class="studio-modal-body">
+          <!-- TAB 1: GAME & EDUCATION SETUP -->
+          <div id="stabSetup" class="stab-pane">
+            <div class="setting-group">
+              <label class="option-label">OYUN SEKMESİ</label>
+              <div class="pillar-grid compact-pillars" id="gameTypeSelector">
+                <button class="pillar-card active" data-gametype="edu">
+                  <div class="pillar-ico edu">🎓</div>
+                  <div class="pillar-body">
+                    <strong>EĞİTİM SEKMESİ</strong>
+                    <p>2., 3. ve 4. sınıf onluğa &amp; yüzlüğe yuvarlama</p>
+                  </div>
+                </button>
+                <button class="pillar-card" data-gametype="fun">
+                  <div class="pillar-ico fun">🎮</div>
+                  <div class="pillar-body">
+                    <strong>EĞLENCE SEKMESİ</strong>
+                    <p>Serbest 3D Roket Futbol maçı veya Boya Festivali</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="option-label">ARENA VERSİYONU</label>
+              <div class="version-grid" id="arenaVersionSelector">
+                <button class="version-card active" data-version="soccer">
+                  <span class="ver-icon">⚽</span>
+                  <div class="ver-text">
+                    <strong>Roket Gol 3D</strong>
+                    <small id="soccerVerDesc">Geniş 3D stadyumda roket arabanla gol at!</small>
+                  </div>
+                </button>
+                <button class="version-card" data-version="paint">
+                  <span class="ver-icon">🎨</span>
+                  <div class="ver-text">
+                    <strong>Boya Topu 3D</strong>
+                    <small id="paintVerDesc">Nişan al veya dokun, 3D balonları boyayla patlat!</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Education Grade & Rounding Rules -->
+            <div id="eduConfigPanel" class="setting-group edu-highlight">
+              <div class="option-label-row">
+                <label class="option-label">SINIF SEVİYESİ &amp; KAZANIM</label>
+                <span id="gradeRulePreview" class="seq-preview">2. Sınıf: 100'e kadar sadece onluğa yuvarlama</span>
+              </div>
+              <div class="option-grid three" id="gradeSelector">
+                <button class="opt-btn grade-btn active" data-grade="2">
+                  <strong>2. Sınıf</strong>
+                  <small>100'e kadar • Onluk</small>
+                </button>
+                <button class="opt-btn grade-btn" data-grade="3">
+                  <strong>3. Sınıf</strong>
+                  <small>1.000'e kadar • Onluk/Yüzlük</small>
+                </button>
+                <button class="opt-btn grade-btn" data-grade="4">
+                  <strong>4. Sınıf</strong>
+                  <small>10.000'e kadar • Onluk/Yüzlük</small>
+                </button>
+              </div>
+
+              <div class="sub-field-row">
+                <label class="option-label">YUVARLAMA TÜRÜ</label>
+                <div class="option-grid three" id="roundTypeSelector">
+                  <button class="opt-btn compact active" data-rtype="ten">Onluğa Yuvarlama</button>
+                  <button class="opt-btn compact" data-rtype="hundred" id="btnRoundHundred">Yüzlüğe Yuvarlama</button>
+                  <button class="opt-btn compact" data-rtype="mixed" id="btnRoundMixed">Karışık</button>
+                </div>
+              </div>
+
+              <div class="two-col-grid">
+                <div>
+                  <label class="option-label">SORU SAYISI</label>
+                  <div class="option-grid three" id="questionCountSelector">
+                    <button class="opt-btn compact" data-qcount="8">8</button>
+                    <button class="opt-btn compact active" data-qcount="12">12</button>
+                    <button class="opt-btn compact" data-qcount="16">16</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="option-label">ZORLUK</label>
+                  <div class="option-grid three" id="diffSelectorEdu">
+                    <button class="opt-btn compact active" data-diff="easy">Kolay</button>
+                    <button class="opt-btn compact" data-diff="normal">Orta</button>
+                    <button class="opt-btn compact" data-diff="hard">Zor</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fun Duration & Difficulty -->
+            <div id="funConfigPanel" class="setting-group fun-highlight hidden">
+              <div class="two-col-grid">
+                <div>
+                  <label class="option-label">MAÇ / OYUN SÜRESİ</label>
+                  <div class="option-grid three" id="funDurationSelector">
+                    <button class="opt-btn compact" data-dur="60">60 sn</button>
+                    <button class="opt-btn compact active" data-dur="90">90 sn</button>
+                    <button class="opt-btn compact" data-dur="120">120 sn</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="option-label">ZORLUK / RAKİP BOT</label>
+                  <div class="option-grid three" id="diffSelectorFun">
+                    <button class="opt-btn compact active" data-diff="easy">Kolay</button>
+                    <button class="opt-btn compact" data-diff="normal">Orta</button>
+                    <button class="opt-btn compact" data-diff="hard">Zor</button>
+                  </div>
+                </div>
+              </div>
+              <div class="fun-record-pill">
+                🏆 Eğlence Modu En Yüksek Skor: <strong id="titleFunBest">0</strong>
+              </div>
+            </div>
+
+            <!-- Players, Nicknames & Stadium Atmosphere -->
+            <div class="setting-group">
+              <div class="two-col-grid">
+                <div>
+                  <label class="option-label">OYUNCU SAYISI</label>
+                  <div class="option-grid two" id="playerCountSelector">
+                    <button class="opt-btn compact active" data-players="1">👤 1 Oyuncu</button>
+                    <button class="opt-btn compact" data-players="2">👥 2 Oyuncu</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="option-label">STADYUM ATMOSFERİ</label>
+                  <div class="option-grid three" id="themeSelector">
+                    <button class="opt-btn compact active" data-theme="day">☀️ Gündüz</button>
+                    <button class="opt-btn compact" data-theme="sunset">🌅 Batım</button>
+                    <button class="opt-btn compact" data-theme="night">🌙 Gece</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sub-field-row">
+                <label class="option-label">OYUNCU İSİMLERİ (SKOR TABLOSU)</label>
+                <div class="name-inputs">
+                  <div class="input-wrap p1">
+                    <span class="p-dot p1"></span>
+                    <input id="inputNameP1" type="text" maxlength="18" placeholder="1. Oyuncu Adı" autocomplete="off" />
+                  </div>
+                  <div id="inputWrapP2" class="input-wrap p2 hidden">
+                    <span class="p-dot p2"></span>
+                    <input id="inputNameP2" type="text" maxlength="18" placeholder="2. Oyuncu Adı" autocomplete="off" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: 6-CAR GARAGE WITH BALANCED STATS & ACTIVE SPECIALS -->
+          <div id="stabGarage" class="stab-pane hidden">
+            <div class="garage-header-bar">
+              <p class="garage-intro">Tüm arabalar dengeli performanslıdır; her arabanın oyunda <strong>E</strong> (2. Oyuncu: <strong>K</strong>) veya <strong>⚡ ÖZEL</strong> butonuyla kullanabileceği benzersiz bir özel gücü vardır!</p>
+              <div id="garagePlayerToggle" class="option-grid two compact-toggle hidden">
+                <button class="opt-btn compact active" data-gplayer="1">🔵 1. Oyuncu Arabası</button>
+                <button class="opt-btn compact" data-gplayer="2">🟠 2. Oyuncu Arabası</button>
+              </div>
+            </div>
+
+            <div id="carGarageGrid" class="car-grid"></div>
+          </div>
+
+          <!-- TAB 3: CONTROLS, SPEED & AUDIO -->
+          <div id="stabSystem" class="stab-pane hidden">
+            <div class="setting-group">
+              <div class="setting-title-row">
+                <span class="setting-title">⚡ Oyun &amp; Araç Hızı</span>
+                <span id="setSpeedVal" class="setting-value-pill">%100 (Normal)</span>
+              </div>
+              <input id="sliderSpeed" type="range" min="65" max="140" step="5" value="100" class="studio-slider" />
+              <div class="preset-chips" id="speedPresets">
+                <button class="preset-chip" data-spd="75">Yavaş (%75)</button>
+                <button class="preset-chip" data-spd="100">Normal (%100)</button>
+                <button class="preset-chip" data-spd="125">Hızlı (%125)</button>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <span class="setting-title">🎵 Müzik, Ses &amp; Türkçe Okuma</span>
+
+              <div class="setting-switch-row">
+                <div class="sw-info">
+                  <strong>Stadyum Arcade Müziği</strong>
+                  <span>Neşeli ritmik arena müziği</span>
+                </div>
+                <button id="swMusic" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+              </div>
+              <div class="vol-row">
+                <span>Müzik Sesi</span>
+                <input id="sliderMusicVol" type="range" min="0" max="100" step="5" value="48" class="studio-slider slim" />
+                <strong id="setMusicVolVal">%48</strong>
+              </div>
+
+              <div class="setting-switch-row">
+                <div class="sw-info">
+                  <strong>Ses Efektleri (SFX)</strong>
+                  <span>Gol kornası, direk sesi, özel güçler ve boya patlaması</span>
+                </div>
+                <button id="swSfx" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+              </div>
+              <div class="vol-row">
+                <span>Efekt Sesi</span>
+                <input id="sliderSfxVol" type="range" min="0" max="100" step="5" value="85" class="studio-slider slim" />
+                <strong id="setSfxVolVal">%85</strong>
+              </div>
+
+              <div class="setting-switch-row">
+                <div class="sw-info">
+                  <strong>Türkçe Sesli Soru Okuma (Eğitim)</strong>
+                  <span>Yuvarlanacak sayıyı ve tebrikleri sesli okur</span>
+                </div>
+                <button id="swSpeech" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <span class="setting-title">📱 Akıllı Tahta, İpucu &amp; Kamera</span>
+
+              <div class="setting-switch-row">
+                <div class="sw-info">
+                  <strong>Basamak Vurgusu İpucu (Eğitim)</strong>
+                  <span>Yuvarlamayı belirleyen basamağı renkli vurgular (ör. 34<b>7</b>)</span>
+                </div>
+                <button id="swHint" class="studio-switch on" role="switch" aria-checked="true"><span></span></button>
+              </div>
+
+              <div class="sub-field-row">
+                <label class="option-label">DOKUNMATİK / AKILLI TAHTA BUTONLARI</label>
+                <div class="option-grid three" id="touchModeSelector">
+                  <button class="opt-btn compact active" data-touch="auto">Otomatik</button>
+                  <button class="opt-btn compact" data-touch="on">Her Zaman Açık</button>
+                  <button class="opt-btn compact" data-touch="off">Kapalı</button>
+                </div>
+              </div>
+
+              <div class="sub-field-row">
+                <label class="option-label">3D KAMERA AÇISI</label>
+                <div class="option-grid three" id="camSelector">
+                  <button class="opt-btn compact active" data-cam="0">Klasik TPS</button>
+                  <button class="opt-btn compact" data-cam="1">Top Odaklı</button>
+                  <button class="opt-btn compact" data-cam="2">Geniş Stadyum</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="studio-modal-footer">
+          <button id="btnSaveSettings" class="secondary-btn">KAYDET</button>
+          <button id="btnSaveAndPlay" class="cta-btn">▶ KAYDET VE OYUNA BAŞLA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TOP-10 SCOREBOARD MODAL ==================== -->
+    <div id="scoreboardOverlay" class="modal-backdrop hidden">
+      <div class="modal-card scoreboard-card">
+        <div class="modal-header-row">
+          <div>
+            <div class="brand-badge gold">YEREL İLK 10 LİDERLİK TABLOSU</div>
+            <h2 class="modal-heading left">🏆 Skor Tablosu</h2>
+          </div>
+          <button id="btnCloseScoreboard" class="close-x-btn" title="Kapat">✕</button>
+        </div>
+
+        <div class="sb-tabs" id="sbTabs">
+          <button class="sb-tab active" data-sbtab="edu">🎓 Eğitim Modu (İlk 10)</button>
+          <button class="sb-tab" data-sbtab="fun">🎮 Eğlence Modu (İlk 10)</button>
+        </div>
+
+        <div id="sbListWrap" class="sb-list-wrap"></div>
+
+        <div class="sb-footer">
+          <button id="btnClearSb" class="ghost-btn danger-txt">Bu Tabloyu Sıfırla</button>
+          <button id="btnCloseSbBottom" class="secondary-btn auto-w">Kapat</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PAUSE MODAL ==================== -->
+    <div id="pauseOverlay" class="modal-backdrop hidden">
+      <div class="modal-card narrow">
+        <div class="brand-badge">DURAKLATILDI</div>
+        <h2 class="modal-heading">Oyun Duraklatıldı</h2>
+        <p class="modal-desc">Devam etmek için <strong>P</strong> veya <strong>ESC</strong> tuşuna basabilirsin.</p>
+        <div class="modal-btn-stack">
+          <button id="btnResume" class="cta-btn">▶ DEVAM ET</button>
+          <button id="btnSettingsPause" class="secondary-btn">⚙ AYARLAR &amp; ARABA GARAJI</button>
+          <button id="btnRestartPause" class="secondary-btn">↻ YENİDEN BAŞLAT (R)</button>
+          <button id="btnMenuPause" class="ghost-btn">ANA MENÜYE DÖN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== END / VICTORY MODAL ==================== -->
+    <div id="endOverlay" class="modal-backdrop hidden">
+      <div class="modal-card narrow">
+        <div id="endBadge" class="brand-badge">TUR TAMAMLANDI</div>
+        <div id="endRecordBanner" class="record-banner hidden">🏆 YENİ REKOR! İLK 10'DA 1. SIRADASIN!</div>
+        <h2 id="endTitle" class="modal-heading">Tebrikler!</h2>
+        <p id="endDesc" class="modal-desc">Harika bir arena performansı!</p>
+
+        <div id="endSummarySingle" class="summary-grid">
+          <div class="summary-box">
+            <span id="endStat1Lbl">PUAN</span>
+            <strong id="endStat1Val">0</strong>
+          </div>
+          <div class="summary-box">
+            <span id="endStat2Lbl">DOĞRU</span>
+            <strong id="endStat2Val">12 / 12</strong>
+          </div>
+          <div class="summary-box">
+            <span id="endStat3Lbl">SÜRE</span>
+            <strong id="endStat3Val">01:05</strong>
+          </div>
+          <div class="summary-box">
+            <span id="endStat4Lbl">EN İYİ SERİ</span>
+            <strong id="endStat4Val">x5</strong>
+          </div>
+        </div>
+
+        <div id="endSummarySplit" class="split-summary hidden">
+          <div class="race-box p1">
+            <span class="race-who"><span class="p-dot p1"></span> <span id="endP1Name">1. OYUNCU</span></span>
+            <strong id="endP1Val">0</strong>
+            <small id="endP1Detail">—</small>
+          </div>
+          <div class="race-box p2">
+            <span class="race-who"><span class="p-dot p2"></span> <span id="endP2Name">2. OYUNCU</span></span>
+            <strong id="endP2Val">0</strong>
+            <small id="endP2Detail">—</small>
+          </div>
+        </div>
+
+        <div class="modal-btn-stack">
+          <button id="btnPlayAgain" class="cta-btn">↻ TEKRAR OYNA (R)</button>
+          <button id="btnEndScoreboard" class="secondary-btn">🏆 SKOR TABLOSUNU GÖR</button>
+          <button id="btnMenuEnd" class="ghost-btn">ANA MENÜYE DÖN</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/site.js?v=20261124-local"></script>
+  <script src="/js/game-viewport.js?v=20261103-fit2"></script>
+  <script src="/js/roket-arena-3d/math3d.js?v=20261124"></script>
+  <script src="/js/roket-arena-3d/rounding.js?v=20261124"></script>
+  <script src="/js/roket-arena-3d/cars.js?v=20261124"></script>
+  <script src="/js/roket-arena-3d/scoreboard.js?v=20261124"></script>
+  <script src="/js/roket-arena-3d/audio.js?v=20261124"></script>
+  <script src="/js/roket-arena-3d/engine3d.js?v=20261124"></script>
+  <script src="/js/roket-arena-3d/game.js?v=20261124"></script>
+</body>
+</html>
