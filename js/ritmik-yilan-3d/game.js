@@ -60,6 +60,7 @@
     sfxEnabled: true,
     sfxVol: 85,          // 0..100
     touchMode: 'auto',   // 'auto' | 'on' | 'off'
+    graphics: 'auto',    // 'auto' | 'top-down'
     camIndex: 0,
     nameP1: '',
     nameP2: '',
@@ -219,12 +220,38 @@
 
   const gameArea = $('main-content');
   window.GameViewport.watch(window, gameArea);
-  let renderer;
-  function useTopDown() {
-    renderer = null;
-    gameArea.classList.add('is-top-down');
-    gameCanvas.setAttribute('aria-label', 'Üstten görünümlü oyun alanı');
-    $('snakeRenderMode').hidden = false;
+  const renderMode = $('snakeRenderMode');
+  let hardwareRenderer;
+  let renderer = null;
+  let quality;
+  let autoQuality = (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4) ||
+    (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4) ? 'top-down' : 'full';
+  let slowFrameTime = 0;
+  let needsPaint = true;
+
+  function applyQuality(next) {
+    if (next === quality) return;
+    if (next !== 'top-down' && hardwareRenderer === undefined) {
+      try { hardwareRenderer = Engine3D.createRenderer(gameCanvas); }
+      catch { hardwareRenderer = null; autoQuality = 'top-down'; }
+    }
+    quality = hardwareRenderer && next !== 'top-down' ? next : 'top-down';
+    renderer = quality === 'top-down' ? null : hardwareRenderer;
+    if (!renderer) hardwareRenderer?.beginFrame();
+    slowFrameTime = 0;
+    needsPaint = true;
+    gameArea.classList.toggle('is-top-down', !renderer);
+    gameArea.classList.toggle('is-lite-render', quality !== 'full');
+    gameCanvas.setAttribute('aria-label', renderer ? 'Üç boyutlu oyun alanı' : 'Üstten görünümlü oyun alanı');
+    camModeLabel.textContent = renderer ? TPS_CAMERAS[settings.camIndex].label : 'ÜSTTEN GÖRÜNÜM';
+    renderMode.hidden = quality === 'full';
+    renderMode.textContent = renderer ? 'Hafif 3B' : 'Üstten görünüm';
+  }
+
+  function preferredQuality() {
+    if (settings.graphics === 'top-down') return 'top-down';
+    if (autoQuality === 'full' && (settings.players === 2 || settings.touchMode === 'on' || isTouchDevice())) return 'light-3d';
+    return autoQuality;
   }
 
   if (!overlayCtx) {
@@ -232,12 +259,13 @@
     $('snakeUnavailable').hidden = false;
     return;
   }
-  try {
-    renderer = Engine3D.createRenderer(gameCanvas);
-  } catch {
-    useTopDown();
-  }
-  gameCanvas.addEventListener('webglcontextlost', useTopDown);
+  gameCanvas.addEventListener('webglcontextlost', () => {
+    hardwareRenderer = null;
+    autoQuality = 'top-down';
+    applyQuality('top-down');
+  });
+  if (typeof ResizeObserver === 'function') new ResizeObserver(() => { needsPaint = true; }).observe(gameArea);
+  window.addEventListener('resize', () => { needsPaint = true; });
 
   // ==================== GAME RUNTIME STATE ====================
 
@@ -269,6 +297,7 @@
   let endCamFocus = [0, 2, 0];
   let endCamAngle = 0;
   let endWasVictory = false;
+  let funRecord = 0;
 
   // ==================== INPUT & MULTI-TOUCH / SMARTBOARD ====================
 
@@ -286,10 +315,15 @@
     { left: false, right: false, turbo: false },
     { left: false, right: false, turbo: false },
   ];
+  const gestures = Array.from({ length: 2 }, () => ({
+    pointerId: null, steer: 0, turbo: false, brake: false, lastTap: null,
+  }));
+  const resetTouchButtons = [];
+  let receivedTouch = false;
 
   function isTouchDevice() {
     const coarse = typeof window.matchMedia === 'function' && window.matchMedia('(any-pointer: coarse)').matches;
-    return (navigator.maxTouchPoints > 0) || coarse;
+    return receivedTouch || navigator.maxTouchPoints > 0 || coarse;
   }
 
   function shouldShowTouchControls() {
@@ -303,6 +337,85 @@
     touchSingle.classList.toggle('hidden', !show || settings.players !== 1);
     touchSplitP1.classList.toggle('hidden', !show || settings.players !== 2);
     touchSplitP2.classList.toggle('hidden', !show || settings.players !== 2);
+    gameArea.classList.toggle('has-touch-controls', show);
+    updatePointerHint();
+  }
+
+  function clearGesture(gesture) {
+    const id = gesture.pointerId;
+    gesture.pointerId = null;
+    gesture.steer = 0;
+    gesture.turbo = false;
+    gesture.brake = false;
+    if (id !== null && gameCanvas.hasPointerCapture?.(id)) gameCanvas.releasePointerCapture(id);
+  }
+
+  function resetTouchInput() {
+    for (const gesture of gestures) {
+      clearGesture(gesture);
+      gesture.lastTap = null;
+    }
+    resetTouchButtons.forEach(reset => reset());
+  }
+
+  gameArea.addEventListener('pointerdown', event => {
+    if (!receivedTouch && (event.pointerType === 'touch' || event.pointerType === 'pen')) {
+      receivedTouch = true;
+      refreshTouchVisibility();
+    }
+  }, true);
+
+  gameCanvas.addEventListener('pointerdown', event => {
+    if (state !== 'playing' || event.button !== 0 || event.pointerType === 'mouse' && settings.touchMode !== 'on') return;
+    if (settings.touchMode === 'off') return;
+    const bounds = gameCanvas.getBoundingClientRect();
+    const player = settings.players === 2 && event.clientX >= bounds.left + bounds.width / 2 ? 1 : 0;
+    const gesture = gestures[player];
+    if (gesture.pointerId !== null) return;
+    event.preventDefault();
+    SoundFX.unlock();
+    Object.assign(gesture, {
+      pointerId: event.pointerId, x: event.clientX, y: event.clientY,
+      started: event.timeStamp, moved: false, range: clamp(bounds.width / settings.players * 0.16, 36, 76),
+    });
+    try { gameCanvas.setPointerCapture(event.pointerId); } catch (_) {}
+  });
+
+  gameCanvas.addEventListener('pointermove', event => {
+    const gesture = gestures.find(input => input.pointerId === event.pointerId);
+    if (!gesture) return;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    gesture.moved ||= Math.abs(dx) > 10 || Math.abs(dy) > 10;
+    gesture.steer = Math.abs(dx) <= 9 ? 0 : -Math.sign(dx) * clamp((Math.abs(dx) - 9) / gesture.range, 0, 1);
+    gesture.turbo = dy < -Math.min(35, gesture.range * 0.65);
+    gesture.brake = dy > Math.min(40, gesture.range * 0.8);
+  });
+
+  gameCanvas.addEventListener('pointerup', event => {
+    const player = gestures.findIndex(input => input.pointerId === event.pointerId);
+    if (player < 0) return;
+    const gesture = gestures[player];
+    const tap = state === 'playing' && !gesture.moved && event.timeStamp - gesture.started <= 250 &&
+      Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) <= 12;
+    const previous = gesture.lastTap;
+    if (tap && previous && event.timeStamp - previous.time <= 350 &&
+      Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 48) {
+      gesture.lastTap = null;
+      tryJump(players[player]);
+    } else {
+      gesture.lastTap = tap ? { x: event.clientX, y: event.clientY, time: event.timeStamp } : null;
+    }
+    clearGesture(gesture);
+  });
+
+  for (const type of ['pointercancel', 'lostpointercapture']) {
+    gameCanvas.addEventListener(type, event => {
+      const gesture = gestures.find(input => input.pointerId === event.pointerId);
+      if (!gesture) return;
+      gesture.lastTap = null;
+      clearGesture(gesture);
+    });
   }
 
   // Virtual Analog Joystick for 1P (PointerEvent -> works on Phone, Tablet, Stylus & Smartboard!)
@@ -358,7 +471,7 @@
         if (e.pointerId === touch1P.joyPointerId) resetStick();
       });
     }
-    window.addEventListener('blur', resetStick);
+    resetTouchButtons.push(resetStick);
   }
 
   function bindHoldButton(id, onDown, onUp) {
@@ -383,7 +496,7 @@
     el.addEventListener('pointerup', release);
     el.addEventListener('pointercancel', release);
     el.addEventListener('lostpointercapture', release);
-    window.addEventListener('blur', () => release());
+    resetTouchButtons.push(release);
   }
 
   setupVirtualJoystick();
@@ -477,16 +590,17 @@
 
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-  window.addEventListener('blur', () => {
+  function resetInputs() {
     for (const k in keys) keys[k] = false;
     mouseBoosting = false;
     mouseDragging = false;
-    touch1P.steer = 0; touch1P.turbo = false; touch1P.brake = false;
-    touch2P.forEach((t) => { t.left = false; t.right = false; t.turbo = false; });
-  });
+    mouseYawAccum = mousePitchAccum = 0;
+    resetTouchInput();
+  }
+  window.addEventListener('blur', resetInputs);
 
-  gameCanvas.addEventListener('mousedown', (e) => {
-    if (state !== 'playing' || settings.players !== 1) return;
+  gameCanvas.addEventListener('pointerdown', (e) => {
+    if (state !== 'playing' || settings.players !== 1 || e.pointerType !== 'mouse' || settings.touchMode === 'on') return;
     SoundFX.unlock();
     if (e.button === 0) {
       if (!pointerLocked) {
@@ -550,6 +664,9 @@
     if (pointerLocked) {
       pointerHint.classList.add('locked');
       pointerHint.innerHTML = 'TPS Fare Aktif &bull; <strong>Sol Tık</strong> Turbo &bull; <strong>S</strong> Yavaşla &bull; <strong>Space</strong> Zıpla &bull; <strong>ESC</strong> Çık';
+    } else if (shouldShowTouchControls()) {
+      pointerHint.classList.remove('locked');
+      pointerHint.textContent = 'Sürükle: ← → Dön · ↑ Hızlan · ↓ Yavaşla · Çift dokun: Zıpla';
     } else {
       pointerHint.classList.remove('locked');
       pointerHint.innerHTML = '<strong>A/D</strong> Dön &bull; <strong>S</strong> Yavaşla &bull; <strong>Shift</strong> Turbo &bull; <strong>Space</strong> Zıpla &bull; <strong>N</strong> Müzik';
@@ -638,13 +755,18 @@
     document.querySelectorAll('#touchModeSelector .opt-btn').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-touch') === settings.touchMode);
     });
+    document.querySelectorAll('#graphicsSelector [data-graphics]').forEach(button => {
+      const active = button.dataset.graphics === settings.graphics;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
     document.querySelectorAll('#camSelector .opt-btn').forEach((b) => {
       b.classList.toggle('active', Number(b.getAttribute('data-cam')) === settings.camIndex);
     });
 
     const effSpd = getEffectiveBaseSpeed().toFixed(1);
     titleSpeedSummary.textContent = `%${settings.speedPct} • ${effSpd} m/s`;
-    camModeLabel.textContent = TPS_CAMERAS[settings.camIndex].label;
+    camModeLabel.textContent = quality === 'top-down' ? 'ÜSTTEN GÖRÜNÜM' : TPS_CAMERAS[settings.camIndex].label;
   }
 
   function openSettings(fromState) {
@@ -653,6 +775,7 @@
     settingsReturnState = fromState;
     if (fromState === 'playing') {
       state = 'paused';
+      resetInputs();
       SoundFX.updateBoost(false);
       if (document.pointerLockElement === gameCanvas && document.exitPointerLock) {
         document.exitPointerLock();
@@ -668,6 +791,14 @@
     persistSettings();
     refreshTitleUI();
     refreshTouchVisibility();
+    if (settingsReturnState !== 'menu') {
+      const previous = renderer;
+      applyQuality(preferredQuality());
+      if (!previous && renderer) {
+        if (settings.gameType === 'edu') renderer.updateNumberAtlas(sequence);
+        for (const player of players) updateTPSCamera(player, 1);
+      }
+    }
     if (settingsReturnState === 'playing') {
       state = 'playing';
     }
@@ -865,8 +996,17 @@
     btn.addEventListener('click', () => {
       SoundFX.playClick();
       settings.touchMode = btn.getAttribute('data-touch');
+      resetTouchInput();
       syncSettingsUI();
       refreshTouchVisibility();
+    });
+  });
+
+  document.querySelectorAll('#graphicsSelector [data-graphics]').forEach(button => {
+    button.addEventListener('click', () => {
+      SoundFX.playClick();
+      settings.graphics = button.dataset.graphics;
+      syncSettingsUI();
     });
   });
 
@@ -905,6 +1045,7 @@
   });
 
   function cycleCamera() {
+    if (!renderer) return;
     settings.camIndex = (settings.camIndex + 1) % TPS_CAMERAS.length;
     persistSettings();
     const preset = TPS_CAMERAS[settings.camIndex];
@@ -1053,7 +1194,11 @@
 
       const minGroundY = Terrain.height(px, pz) + radius * 0.90;
       const py = Math.max(by, minGroundY);
-      p.segments[i] = { pos: [px, py, pz], fwd: [tx, ty, tz], radius, tNorm };
+      const segment = p.segments[i] ||= { pos: [0, 0, 0], fwd: [0, 0, 0] };
+      segment.pos[0] = px; segment.pos[1] = py; segment.pos[2] = pz;
+      segment.fwd[0] = tx; segment.fwd[1] = ty; segment.fwd[2] = tz;
+      segment.radius = radius;
+      segment.tNorm = tNorm;
     }
 
     const minKeepS = p.totalDist - (count + 8) * SEG_SPACING;
@@ -1100,7 +1245,7 @@
     });
   }
 
-  function buildOpenWorld(forMenu = false) {
+  function buildOpenWorld() {
     trees = [];
     rocks = [];
     hurdles = [];
@@ -1225,7 +1370,7 @@
 
       for (let i = 0; i < sequence.length; i++) {
         let ax = 0, az = -11;
-        if (i === 0 && !forMenu) {
+        if (i === 0) {
           ax = settings.players === 2 ? 0 : (Math.random() - 0.5) * 4;
           az = -11;
         } else {
@@ -1264,6 +1409,8 @@
   // ==================== PARTICLES & FX ====================
 
   function spawnBurst(pos, color, count = 20, speed = 8.5, size = 0.24, life = 0.65) {
+    if (!renderer) return;
+    count = Math.min(count, quality === 'full' ? 96 - particles.length : Math.min(5, 16 - particles.length));
     for (let i = 0; i < count; i++) {
       const th = Math.random() * Math.PI * 2;
       const ph = Math.acos(2 * Math.random() - 1);
@@ -1277,19 +1424,11 @@
   }
 
   function spawnShockwave(pos, color, maxRadius = 3.8, life = 0.42) {
+    if (!renderer || shockwaves.length >= (quality === 'full' ? 16 : 4)) return;
     shockwaves.push({ pos: [pos[0], pos[1], pos[2]], color, radius: 0.4, maxRadius, life, maxLife: life });
   }
 
   // ==================== GAME LIFECYCLE ====================
-
-  function setupDemoWorld() {
-    particles = [];
-    shockwaves = [];
-    buildOpenWorld(true);
-    players = [createPlayer(0, 0, 10, Math.PI)];
-    players[0].targetLength = 16;
-    rebuildSegments(players[0]);
-  }
 
   function startGame() {
     settings.nameP1 = getPlayerName(0);
@@ -1297,6 +1436,9 @@
     persistSettings();
 
     state = 'playing';
+    resetInputs();
+    applyQuality(preferredQuality());
+    needsPaint = true;
     elapsed = 0;
     particles = [];
     shockwaves = [];
@@ -1306,7 +1448,7 @@
 
     applyAudioSettings();
     SoundFX.setMusicIntensity(settings.gameType === 'fun' ? 'fun' : 'edu');
-    buildOpenWorld(false);
+    buildOpenWorld();
 
     if (settings.players === 1) {
       players = [createPlayer(0, 0, 10, Math.PI)];
@@ -1319,8 +1461,9 @@
       p1ModeTag.textContent = `${STEP_LABELS[settings.step].toUpperCase()} RİTMİK SAYMA`;
       eduPlayerNameTag.textContent = players[0].name;
       funPlayerNameTag.textContent = players[0].name;
-      funBestEl.textContent = String(Scoreboard.getBest('fun'));
-      camModeLabel.textContent = TPS_CAMERAS[settings.camIndex].label;
+      funRecord = Scoreboard.getBest('fun');
+      funBestEl.textContent = String(funRecord);
+      camModeLabel.textContent = renderer ? TPS_CAMERAS[settings.camIndex].label : 'ÜSTTEN GÖRÜNÜM';
       updatePointerHint();
     } else {
       players = [
@@ -1358,6 +1501,7 @@
   function pauseGame() {
     if (state !== 'playing') return;
     state = 'paused';
+    resetInputs();
     SoundFX.updateBoost(false);
     if (document.pointerLockElement === gameCanvas && document.exitPointerLock) {
       document.exitPointerLock();
@@ -1373,6 +1517,7 @@
 
   function goToMenu() {
     state = 'menu';
+    resetInputs();
     SoundFX.updateBoost(false);
     SoundFX.setMusicIntensity('menu');
     if (document.pointerLockElement === gameCanvas && document.exitPointerLock) {
@@ -1386,13 +1531,13 @@
     scoreboardOverlay.classList.add('hidden');
     startOverlay.classList.remove('hidden');
     refreshTitleUI();
-    setupDemoWorld();
     $('btnStart').focus({ preventScroll: true });
   }
 
   function finishRound({ victory, winnerId = 0, badge, title, desc, focusPos }) {
     if (state === 'ended') return;
     state = 'ended';
+    resetInputs();
     window.dispatchEvent(new CustomEvent('kemal-game-complete', { detail: { source: 'ritmik_yilan_round' } }));
     endWasVictory = victory;
     SoundFX.updateBoost(false);
@@ -1521,30 +1666,6 @@
     }
   }
 
-  function updateDemo(dt) {
-    updatePatrollers(dt);
-    const p = players[0];
-    if (!p) return;
-    const targetYaw = time * 0.28 + Math.sin(time * 0.45) * 0.7;
-    p.yaw = lerpAngle(p.yaw, targetYaw, 1 - Math.exp(-3.0 * dt));
-    const spd = 7.2;
-    p.head[0] = clamp(p.head[0] + Math.sin(p.yaw) * spd * dt, -42, 42);
-    p.head[2] = clamp(p.head[2] + Math.cos(p.yaw) * spd * dt, -42, 42);
-    const gy = Terrain.height(p.head[0], p.head[2]) + 0.85;
-    p.head[1] = gy;
-
-    const last = p.trail[p.trail.length - 1];
-    const d = Vec3.dist(p.head, [last.x, last.y, last.z]);
-    if (d > 0.14) {
-      p.totalDist += d;
-      p.trail.push({ x: p.head[0], y: p.head[1], z: p.head[2], s: p.totalDist });
-      rebuildSegments(p);
-    }
-    const a = time * 0.2;
-    p.cam.pos = [p.head[0] + Math.sin(a) * 18, p.head[1] + 9.2, p.head[2] + Math.cos(a) * 18];
-    p.cam.target = [p.head[0], p.head[1] + 1.0, p.head[2]];
-  }
-
   function updatePlaying(dt) {
     elapsed += dt;
     updatePatrollers(dt);
@@ -1613,6 +1734,10 @@
       wantBrake = !!keys['ArrowDown'];
     }
 
+    const gesture = gestures[p.id];
+    turnInput = clamp(turnInput + gesture.steer, -1, 1);
+    wantBoost ||= gesture.turbo;
+    wantBrake ||= gesture.brake;
     const scaledTurnRate = diffCfg.turnRate * lerp(0.85, 1.15, clamp((speedFactor - 0.5) / 1.1, 0, 1));
     p.turnVel = lerp(p.turnVel, turnInput * scaledTurnRate, 1 - Math.exp(-15 * dt));
     p.yaw += p.turnVel * dt;
@@ -1878,7 +2003,7 @@
     checkPlayerCollisions(p, toastSlot);
 
     // ---- 8. TPS Camera ----
-    updateTPSCamera(p, dt);
+    if (renderer) updateTPSCamera(p, dt);
   }
 
   function handlePlayerCrash(p, badge, reasonSingle, reasonSplit) {
@@ -2083,10 +2208,10 @@
 
   // ==================== 3D OPEN-WORLD RENDERING ====================
 
-  function renderScene() {
+  function renderScene(width, height) {
     if (!renderer) return;
-    const { width, height } = renderer.prepareCanvas();
-    if (state === 'menu') return; // Title screen displays rich animated studio cover art directly!
+    renderer.prepareCanvas(width, height);
+    const detailed = quality === 'full';
 
     renderer.beginFrame();
 
@@ -2094,13 +2219,14 @@
     renderer.submit({ mesh: 'terrain', model: Mat4.create(), color: [0.22, 0.58, 0.20], matType: 1, castShadow: false });
 
     // 2. Continuous Wooden Valley Fence
-    for (let i = 0; i < fencePosts.length; i++) {
+    for (let i = 0; i < fencePosts.length; i += detailed ? 1 : 3) {
       const fp = fencePosts[i];
       renderer.submit({
         mesh: 'cylinder',
         model: Mat4.fromTRS(Mat4.create(), [fp.x, fp.y + 1.0, fp.z], 0, 0, 0, [0.24, 2.2, 0.24]),
         color: [0.46, 0.30, 0.16], color2: [0.36, 0.22, 0.12], extra: [1, 0, 0, 0], castShadow: false,
       });
+      if (!detailed) continue;
       const nxt = fencePosts[(i + 1) % fencePosts.length];
       const dx = nxt.x - fp.x, dy = nxt.y - fp.y, dz = nxt.z - fp.z;
       const span = Math.hypot(dx, dy, dz);
@@ -2127,6 +2253,7 @@
 
     // 4. Trees
     for (const t of trees) {
+      if (!detailed && t.scenic) continue;
       const s = t.scale;
       renderer.submit({
         mesh: 'taperTrunk',
@@ -2136,6 +2263,7 @@
       if (t.kind === 'pine') {
         renderer.submit({ mesh: 'cone', model: Mat4.fromTRS(Mat4.create(), [t.x, t.y + 3.8 * s, t.z], 0, 0, 0, [2.3 * s, 3.2 * s, 2.3 * s]), color: [0.10, 0.42, 0.18], color2: [0.16, 0.56, 0.22], extra: [1, 0, 0, 0], castShadow: !t.scenic });
         renderer.submit({ mesh: 'cone', model: Mat4.fromTRS(Mat4.create(), [t.x, t.y + 5.7 * s, t.z], 0.5, 0, 0, [1.8 * s, 2.7 * s, 1.8 * s]), color: [0.13, 0.50, 0.21], color2: [0.22, 0.64, 0.26], extra: [1, 0, 0, 0], castShadow: !t.scenic });
+        if (!detailed) continue;
         renderer.submit({ mesh: 'cone', model: Mat4.fromTRS(Mat4.create(), [t.x, t.y + 7.2 * s, t.z], 1.1, 0, 0, [1.15 * s, 2.1 * s, 1.15 * s]), color: [0.18, 0.58, 0.24], color2: [0.28, 0.72, 0.28], extra: [1, 0, 0, 0], castShadow: false });
       } else {
         renderer.submit({ mesh: 'sphere', model: Mat4.fromTRS(Mat4.create(), [t.x, t.y + 4.4 * s, t.z], 0, 0, 0, [2.2 * s, 1.9 * s, 2.2 * s]), color: [0.18, 0.56, 0.20], color2: [0.34, 0.74, 0.25], extra: [1, 0, 0, 0], castShadow: !t.scenic });
@@ -2176,7 +2304,7 @@
     }
 
     // 8. Wildflowers
-    for (const fl of flowers) {
+    if (detailed) for (const fl of flowers) {
       renderer.submit({
         mesh: 'lowSphere',
         model: Mat4.fromTRS(Mat4.create(), [fl.x, fl.y, fl.z], 0, 0, 0, [fl.scale, fl.scale * 0.55, fl.scale]),
@@ -2192,8 +2320,8 @@
 
       const rot = time * (a.kind === 'golden' ? 2.4 : 1.35) + a.phase;
       const appleR = a.kind === 'golden' ? 1.18 : 1.12;
-      const gAt = Terrain.height(a.pos[0], a.pos[2]) + 0.12;
-      const gNorm = Terrain.normal(a.pos[0], a.pos[2]);
+      const gAt = detailed ? Terrain.height(a.pos[0], a.pos[2]) + 0.12 : 0;
+      const gNorm = detailed ? Terrain.normal(a.pos[0], a.pos[2]) : null;
 
       if (a.kind === 'magnet') {
         renderer.submit({
@@ -2201,7 +2329,7 @@
           model: Mat4.fromTRS(Mat4.create(), a.pos, rot, Math.sin(time * 2.2) * 0.2, 0, [1.05, 1.45, 1.05]),
           color: [0.14, 0.78, 0.98], color2: [0.75, 0.98, 1.0], matType: 3, viewerMask: vMask, castShadow: false,
         });
-        renderer.submit({
+        if (detailed) renderer.submit({
           mesh: 'ring', model: Mat4.fromBasis(Mat4.create(), [a.pos[0], gAt, a.pos[2]], [0, 0, 1], gNorm, [1.65, 1, 1.65]),
           color: [0.22, 0.88, 1.0], emissive: [0.2, 0.85, 1.0], alpha: 0.72, matType: 5, extra: [2, a.phase, 0, 0],
           additive: true, doubleSided: true, viewerMask: vMask, castShadow: false,
@@ -2215,12 +2343,12 @@
           color2: isGold ? [1.0, 0.96, 0.55] : [1.0, 0.36, 0.16],
           matType: 3, viewerMask: vMask, castShadow: settings.players === 1,
         });
-        renderer.submit({
+        if (detailed) renderer.submit({
           mesh: 'cylinder',
           model: Mat4.fromTRS(Mat4.create(), [a.pos[0], a.pos[1] + appleR * 0.92, a.pos[2]], rot, 0.16, 0, [0.11, 0.50, 0.11]),
           color: [0.38, 0.22, 0.10], viewerMask: vMask, castShadow: false,
         });
-        renderer.submit({
+        if (detailed) renderer.submit({
           mesh: 'lowSphere',
           model: Mat4.fromTRS(Mat4.create(), [a.pos[0] + Math.cos(rot) * 0.36, a.pos[1] + appleR * 1.06, a.pos[2] - Math.sin(rot) * 0.36], rot, 0.3, 0.4, [0.42, 0.10, 0.22]),
           color: [0.16, 0.72, 0.24], emissive: [0.04, 0.18, 0.06], viewerMask: vMask, castShadow: false,
@@ -2243,7 +2371,7 @@
           });
         }
 
-        renderer.submit({
+        if (detailed) renderer.submit({
           mesh: 'ring', model: Mat4.fromBasis(Mat4.create(), [a.pos[0], gAt, a.pos[2]], [0, 0, 1], gNorm, [isGold ? 1.9 : 1.5, 1, isGold ? 1.9 : 1.5]),
           color: isGold ? [1.0, 0.86, 0.24] : [1.0, 0.82, 0.28],
           emissive: isGold ? [1.0, 0.72, 0.15] : [0.85, 0.40, 0.14],
@@ -2273,10 +2401,9 @@
     }
 
     // Shadow Map Pass
-    const shadowCenter = settings.players === 2 ? [0, 0, 0] : [players[0].head[0], 0, players[0].head[2]];
-    renderer.renderShadowPass(shadowCenter, settings.players === 2 ? 74 : 52);
+    if (detailed) renderer.renderShadowPass(players[0].head, 52);
 
-    const sceneInfo = { time, fogColor: [0.64, 0.84, 0.96], fogDensity: 0.0052 };
+    const sceneInfo = { time, detailed, fogColor: [0.64, 0.84, 0.96], fogDensity: 0.0052 };
 
     if (settings.players === 1) {
       players[0].lastVP = renderer.renderViewport(players[0].cam, { x: 0, y: 0, w: width, h: height }, sceneInfo, 1);
@@ -2305,7 +2432,7 @@
       const isSwollenBelly = settings.gameType === 'edu' && i === 2 && p.lastEatenAtlasIdx >= 0;
 
       renderer.submit({
-        mesh: 'sphere',
+        mesh: quality === 'full' ? 'sphere' : 'lowSphere',
         model: Mat4.fromBasis(
           Mat4.create(), seg.pos, seg.fwd, [0, 1, 0],
           isTail ? [r * 0.9, r * 0.85, r * 2.1]
@@ -2404,16 +2531,16 @@
 
   // ==================== 2D OVERLAY & ROTATING TPS RADAR ====================
 
-  function drawOverlay2D() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.max(1, Math.floor(overlayCanvas.clientWidth * dpr));
-    const h = Math.max(1, Math.floor(overlayCanvas.clientHeight * dpr));
+  function drawOverlay2D(w, h, dpr) {
     if (overlayCanvas.width !== w || overlayCanvas.height !== h) {
       overlayCanvas.width = w; overlayCanvas.height = h;
     }
     const ctx = overlayCtx;
+    if (!renderer) {
+      drawTopDown(ctx, w, h, dpr);
+      return;
+    }
     ctx.clearRect(0, 0, w, h);
-    if (!renderer && state !== 'menu') drawTopDown(ctx, w, h, dpr);
     if (state !== 'playing') return;
 
     const rects = settings.players === 1
@@ -2426,7 +2553,7 @@
       ctx.save();
       ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
 
-      if (p.boosting || p.boostPadTimer > 0) {
+      if (quality === 'full' && (p.boosting || p.boostPadTimer > 0)) {
         ctx.strokeStyle = p.boostPadTimer > 0 ? 'rgba(140, 245, 255, 0.45)' : 'rgba(255, 255, 255, 0.32)';
         ctx.lineWidth = 1.6 * dpr;
         const outerR = Math.hypot(r.w * 0.5, r.h * 0.5);
@@ -2440,7 +2567,7 @@
         }
       }
 
-      if (p.wallDanger > 0.02) {
+      if (quality === 'full' && p.wallDanger > 0.02) {
         const grad = ctx.createRadialGradient(cx, cy, Math.min(r.w, r.h) * 0.34, cx, cy, Math.hypot(r.w * 0.5, r.h * 0.5));
         grad.addColorStop(0, 'rgba(255, 50, 65, 0)');
         grad.addColorStop(1, `rgba(255, 50, 65, ${(p.wallDanger * 0.38).toFixed(3)})`);
@@ -2489,9 +2616,12 @@
       const xAt = x => left + share / 2 + (x - p.head[0]) * scale;
       const yAt = z => height / 2 + (z - p.head[2]) * scale;
       const circle = (x, z, size, color) => {
+        const cx = xAt(x), cy = yAt(z);
+        const r = Math.max(2 * dpr, size * scale);
+        if (cx + r < left || cx - r > left + share || cy + r < 0 || cy - r > height) return;
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(xAt(x), yAt(z), Math.max(2 * dpr, size * scale), 0, Math.PI * 2);
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.fill();
       };
 
@@ -2518,8 +2648,16 @@
         ctx.restore();
       }
       for (const snake of players) {
-        for (const seg of snake.segments) circle(seg.pos[0], seg.pos[2], 0.75, snake.skin.radar);
         const [x, y, z] = snake.head;
+        ctx.strokeStyle = snake.skin.radar;
+        ctx.lineWidth = Math.max(4 * dpr, 1.5 * scale);
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(xAt(x), yAt(z));
+        for (const seg of snake.segments) ctx.lineTo(xAt(seg.pos[0]), yAt(seg.pos[2]));
+        ctx.stroke();
+        if (snake.boosting || snake.boostPadTimer > 0) circle(x, z, 1.9, '#8de5ff');
         circle(x, z, 1.1 + Math.max(0, y - Terrain.height(x, z)) * 0.12, snake.skin.radar);
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2 * dpr;
@@ -2528,18 +2666,20 @@
         ctx.lineTo(xAt(x + Math.sin(snake.yaw) * 2.5), yAt(z + Math.cos(snake.yaw) * 2.5));
         ctx.stroke();
       }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold ' + Math.max(12 * dpr, 2.15 * scale) + 'px system-ui';
       for (const item of apples) {
         if (item.collected?.[p.id]) continue;
         const [x, , z] = item.pos;
+        const sx = xAt(x), sy = yAt(z);
+        if (sx < left - 3 * scale || sx > left + share + 3 * scale || sy < -3 * scale || sy > height + 3 * scale) continue;
         const next = settings.showHint && settings.diff === 'easy' && item.num === sequence[p.nextIdx];
         if (next) circle(x, z, 2.4, '#ffd147');
         circle(x, z, 1.65, item.kind === 'golden' ? '#ffc540' : item.kind === 'magnet' ? '#58cefa' : '#bd324b');
         if (item.kind === 'edu') {
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.font = 'bold ' + Math.max(12 * dpr, 2.15 * scale) + 'px system-ui';
           ctx.fillStyle = '#fff';
-          ctx.fillText(item.num, xAt(x), yAt(z));
+          ctx.fillText(item.num, sx, sy);
         }
       }
       if (settings.gameType === 'edu' && settings.diff === 'easy' && settings.showHint && apples[p.nextIdx]) {
@@ -2657,7 +2797,7 @@
       } else {
         funScoreEl.textContent = String(p.score);
         funLengthEl.textContent = String(p.targetLength);
-        funBestEl.textContent = String(Math.max(p.score, Scoreboard.getBest('fun')));
+        funBestEl.textContent = String(Math.max(p.score, funRecord));
         if (p.combo > 1 && p.comboTimer > 0) {
           funComboBadge.classList.remove('hidden');
           funComboText.textContent = `KOMBO x${p.combo}`;
@@ -2714,29 +2854,75 @@
   // ==================== MAIN LOOP ====================
 
   let lastFrame = performance.now();
+  let paintedState;
+  let nextPaint = 0;
+  let nextHud = 0;
+  let nextRadar = 0;
+
+  document.addEventListener('visibilitychange', () => {
+    lastFrame = performance.now();
+    slowFrameTime = 0;
+    if (document.hidden) {
+      resetInputs();
+      SoundFX.updateBoost(false);
+    } else needsPaint = true;
+  });
 
   function tick(now) {
-    const rawDt = (now - lastFrame) / 1000;
+    requestAnimationFrame(tick);
+    const frameMs = Math.max(0, now - lastFrame);
     lastFrame = now;
-    const dt = Math.min(0.05, Math.max(0.001, rawDt));
+    if (document.hidden || state === 'menu') return;
 
-    if (state !== 'paused') time += dt;
-
-    if (state === 'menu') {
-      updateDemo(dt);
-    } else if (state === 'playing') {
-      updatePlaying(dt);
-      updateParticles(dt);
-      syncHud();
-    } else if (state === 'ended') {
+    const dt = Math.min(0.10, frameMs / 1000);
+    if (state === 'playing') {
+      if (renderer && settings.graphics !== 'top-down') {
+        const threshold = quality === 'full' ? 26 : 43;
+        const sample = Math.min(frameMs, 125);
+        slowFrameTime = frameMs > threshold ? slowFrameTime + sample : Math.max(0, slowFrameTime - sample);
+        if (slowFrameTime >= (quality === 'full' ? 700 : 1000)) {
+          autoQuality = quality === 'full' ? 'light-3d' : 'top-down';
+          applyQuality(autoQuality);
+        }
+      }
+      // Small simulation steps keep collisions and steering consistent at lower frame rates.
+      const steps = Math.max(1, Math.ceil(dt * 35));
+      const step = dt / steps;
+      for (let i = 0; i < steps && state === 'playing'; i++) {
+        time += step;
+        updatePlaying(step);
+      }
+      if (renderer) updateParticles(dt);
+    } else if (state === 'ended' && renderer) {
+      time += dt;
       updateEndCamera(dt);
       updateParticles(dt * (endWasVictory ? 0.85 : 0.45));
     }
 
-    renderScene();
-    drawOverlay2D();
+    const animated = state === 'playing' || (state === 'ended' && renderer);
+    if (needsPaint || paintedState !== state || (animated && now >= nextPaint - 1)) {
+      const frameInterval = state === 'ended' ? 50 : quality === 'full' ? 1000 / 60 : 1000 / 30;
+      nextPaint = needsPaint || paintedState !== state || now > nextPaint + frameInterval
+        ? now + frameInterval : nextPaint + frameInterval;
+      paintedState = state;
+      needsPaint = false;
+      const cssWidth = Math.max(1, overlayCanvas.clientWidth);
+      const cssHeight = Math.max(1, overlayCanvas.clientHeight);
+      const maxPixels = quality === 'full' ? 1650000 : 650000;
+      const dpr = Math.min(window.devicePixelRatio || 1, quality === 'full' ? 1.25 : 1,
+        Math.sqrt(maxPixels / (cssWidth * cssHeight)));
+      const width = Math.max(1, Math.floor(cssWidth * dpr));
+      const height = Math.max(1, Math.floor(cssHeight * dpr));
+      renderScene(width, height);
+      drawOverlay2D(width, height, dpr);
+    }
 
-    if (state === 'playing') {
+    if (state === 'playing' && now >= nextHud) {
+      syncHud();
+      nextHud = now + 100;
+    }
+    if (state === 'playing' && renderer && now >= nextRadar) {
+      nextRadar = now + 100;
       if (settings.players === 1) drawRadarForPlayer(radarSingle, players[0]);
       else {
         drawRadarForPlayer(radarP1, players[0]);
@@ -2744,7 +2930,6 @@
       }
     }
 
-    requestAnimationFrame(tick);
   }
 
   // Boot!
@@ -2753,6 +2938,5 @@
   applyAudioSettings();
   refreshTitleUI();
   syncSettingsUI();
-  setupDemoWorld();
   requestAnimationFrame(tick);
 })();

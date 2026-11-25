@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/site-theme.css?v=20261030-glass" data-site-theme-styles />
   <link rel="stylesheet" href="/css/theme-control.css?v=20261029" />
   <link rel="stylesheet" href="/css/platform-icons.css?v=20261030" data-platform-icons-styles />
-  <link rel="stylesheet" href="/css/ritmik-yilan-3d.css?v=20261124-controls" />
+  <link rel="stylesheet" href="/css/ritmik-yilan-3d.css?v=20261125-touch" />
 </head>
 <body class="snake-page" data-kemal-local="true">
   <main id="main-content" class="snake-game" aria-label="Ritmik Yılan 3D">
@@ -21,7 +21,7 @@
     <canvas id="overlayCanvas" aria-hidden="true"></canvas>
     <section id="snakeUnavailable" class="snake-unavailable" hidden>
       <h1>Ritmik Yılan 3D</h1>
-      <p>3B oyun alanı açılamadı. WebGL 2 desteği olan bir tarayıcıda yeniden deneyebilirsin.</p>
+      <p>Oyun alanı açılamadı. Güncel bir tarayıcıda yeniden deneyebilirsin.</p>
       <a class="nav-pill" href="/oyun/oyunlar.html">← Oyunlara dön</a>
     </section>
 
@@ -198,6 +198,7 @@
           <div class="split-action">
             <div class="meter-track thin"><div id="sp1Turbo" class="meter-fill"></div></div>
             <span class="split-keys"><kbd>A</kbd><kbd>D</kbd> Dön &bull; <kbd>W</kbd>/<kbd>S</kbd> Hız &bull; <kbd>Space</kbd> Zıpla</span>
+            <span class="split-touch-hint">Sol alanda sürükle · Çift dokun ve zıpla</span>
           </div>
           <!-- Smartboard / Tablet 2P Multi-Touch (Left) -->
           <div id="touchSplitP1" class="touch-split hidden">
@@ -240,6 +241,7 @@
           <div class="split-action">
             <div class="meter-track thin"><div id="sp2Turbo" class="meter-fill p2"></div></div>
             <span class="split-keys"><kbd>←</kbd><kbd>→</kbd> Dön &bull; <kbd>↑</kbd>/<kbd>↓</kbd> Hız &bull; <kbd>Enter</kbd> Zıpla</span>
+            <span class="split-touch-hint">Sağ alanda sürükle · Çift dokun ve zıpla</span>
           </div>
           <!-- Smartboard / Tablet 2P Multi-Touch (Right) -->
           <div id="touchSplitP2" class="touch-split hidden">
@@ -505,6 +507,16 @@
                 <button class="opt-btn compact" data-touch="on">Her Zaman Açık</button>
                 <button class="opt-btn compact" data-touch="off">Kapalı</button>
               </div>
+              <p class="snake-setting-note">Oyun alanında sağa veya sola sürükleyerek dön. Yukarı sürükleyip tutunca hızlanır, aşağı sürükleyince yavaşlar. Çift dokununca zıplar. İki kişilik oyunda herkes kendi yarısını kullanır.</p>
+            </div>
+
+            <div class="setting-sub-block">
+              <label class="option-label">GRAFİKLER</label>
+              <div class="option-grid two" id="graphicsSelector">
+                <button class="opt-btn compact active" data-graphics="auto" aria-pressed="true">Otomatik</button>
+                <button class="opt-btn compact" data-graphics="top-down" aria-pressed="false">Üstten Görünüm</button>
+              </div>
+              <p class="snake-setting-note">Otomatik ayar cihaz zorlandığında çizimi sadeleştirir. Üstten görünüm daha az işlemci ve grafik gücü kullanır.</p>
             </div>
 
             <div class="setting-sub-block">
@@ -624,8 +636,8 @@
   <script src="/js/game-viewport.js?v=20261103-fit2"></script>
   <script src="/js/ritmik-yilan-3d/math3d.js?v=20261123"></script>
   <script src="/js/ritmik-yilan-3d/scoreboard.js?v=20261123"></script>
-  <script src="/js/ritmik-yilan-3d/audio.js?v=20261123"></script>
-  <script src="/js/ritmik-yilan-3d/engine3d.js?v=20261123"></script>
-  <script src="/js/ritmik-yilan-3d/game.js?v=20261124"></script>
+  <script src="/js/ritmik-yilan-3d/audio.js?v=20261125"></script>
+  <script src="/js/ritmik-yilan-3d/engine3d.js?v=20261125"></script>
+  <script src="/js/ritmik-yilan-3d/game.js?v=20261125-touch"></script>
 </body>
 </html>

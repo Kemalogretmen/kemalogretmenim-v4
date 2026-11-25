@@ -65,6 +65,14 @@ body.snake-page {
 #gameCanvas { z-index: 1; cursor: crosshair; }
 #overlayCanvas { z-index: 2; pointer-events: none; }
 
+.snake-game.is-top-down #gameCanvas { opacity: 0; }
+.snake-game.is-top-down :is(.radar-wrap, #btnCamera) { display: none; }
+.snake-game.is-lite-render :is(.edu-panel, .hint-pill, .icon-btn, .action-bar, .t-btn, .split-card, .split-action, .modal-backdrop) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.snake-game.is-lite-render .hud-layer { --bg-glass: rgba(9, 23, 35, 0.90); }
+
 .snake-game .hidden, .snake-game [hidden] { display: none !important; }
 
 .snake-unavailable {
@@ -875,7 +883,7 @@ body.snake-page {
   justify-content: space-between;
   align-items: center;
   padding: 0 4px;
-  pointer-events: auto;
+  pointer-events: none;
   touch-action: none;
 }
 
@@ -891,6 +899,7 @@ body.snake-page {
   font-size: clamp(13px, 1.5vw, 18px);
   font-weight: 900;
   touch-action: none;
+  pointer-events: auto;
   cursor: pointer;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
@@ -953,6 +962,10 @@ body.snake-page {
   backdrop-filter: blur(10px); display: flex; flex-direction: column; gap: 5px; min-width: min(240px, 85%);
 }
 .split-keys { font-size: 10.5px; color: #d7ecf7; text-align: center; }
+.split-touch-hint { display: none; color: #d7ecf7; text-align: center; font-size: 11px; }
+.has-touch-controls .split-keys { display: none; }
+.has-touch-controls .split-touch-hint { display: block; }
+.snake-setting-note { margin: 6px 0 0; color: var(--text-muted); font-size: 12px; line-height: 1.5; }
 
 /* ==================== TOASTS ==================== */
 
@@ -1394,6 +1407,18 @@ body.snake-page {
   .step-grid { grid-template-columns: repeat(5, 1fr); }
   .step-btn { font-size: 11.5px; padding: 7px 2px; }
   .split-action { display: none; }
+  .split-pane { padding-inline: 6px; }
+  .split-card { width: 100%; min-width: 0; }
+  .split-top .radar-wrap { display: none; }
+  .touch-split { padding-inline: 0; }
+  .ts-group { gap: 4px; }
+  .ts-btn { width: clamp(34px, 10vw, 54px); height: clamp(44px, 10vw, 54px); padding: 0; }
+  .split-mode-chip { display: none; }
+}
+
+@media (max-width: 399px) {
+  .touch-split { display: grid; justify-content: center; gap: 4px; }
+  .ts-btn { width: 48px; }
 }
 
 /* Large Classroom Interactive Smartboards (1920px+ / 4K) */

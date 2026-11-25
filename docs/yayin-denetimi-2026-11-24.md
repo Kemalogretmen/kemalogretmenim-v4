@@ -46,8 +46,10 @@ Kullanıcı, AdSense'in “Düşük değere sahip içerik” sonucu sonrasında 
 
 ### 26 Kasım · Yayın öncesi doğrulama
 
-- Çalışma klasöründe **1.063/1.063**, güncel `origin/main` üzerine yalnızca bu işin değişikliklerinin uygulandığı ayrı yayın kopyasında **1.060/1.060** test geçti. Aradaki fark, bu görevden bağımsız yerel çalışmalardır; yayına eklenmedi.
+- Çalışma klasöründe **1.063/1.063** test geçti. Kullanıcının 26 Kasım tarihli açık yayın onayı bütün bekleyen web güncellemelerini kapsıyor; güncel yayın kopyasıyla karşılaştırmada bekleyen Ritmik Yılan değişiklikleri ve ilgili testleri birleşik pakete eklendi. Birleşik yayın kopyasında da **1.063/1.063** test geçti; 922 dosya, 1.817 bağlantı ve 277 betik denetimi hatasız tamamlandı. Ritmik Yılan iki oyuncu görünümü 390×844 önizlemede açıldı; yeniden başlatma ve duraklatma doğrulandı, aktif oyunda reklam birimi veya Google reklam betiği yok.
 - Yayın paketi **922** genel dosya; **1.817** yerel bağlantı ve **277** betik/inline betik kontrolünde hata yok.
 - Tarayıcı önizlemesinde 390×844 ve 1440×900, açık/koyu tema, dört rehber ve iki gizlilik sayfası kontrol edildi; yatay taşma yok. Açıklamalı cevaplar açılıyor. Hızlı okumada sınıf seçilince giriş açıklaması gizleniyor; çalışma alanında Google reklam betiği yüklenmiyor.
 - Google hesabında Türkçe “Kemal Öğretmenim – Ziyaretçi reklam tercihleri” mesajı **Taslak** durumunda kaydedildi. İlk katmanda reddetme tüm bölgeler için açık; kapatma reddetme olarak açık; mesaj optimizasyonu kapalı. Canlı gizlilik sayfası doğrulandıktan sonra mesaj yayımlanacak.
 - AdSense incelemesi ve gerçek ziyaretçi izin akışının son kontrolü henüz tamamlanmadı; reklamlar etkinleştirilmedi.
+
+- **Birleşik yayın kapsamı:** Ritmik Yılan oyunundaki telefon/tablet dokunmatik yönlendirme, iki oyuncu için ayrı dokunma alanları, hareketli düğmeler, otomatik hafif grafik ve üstten görünüm, gölge/çizim yükünün azaltılması ve ses güncellemesi de bu yayına dahil. Diğer web dosyaları içerik özetiyle yayın kopyasıyla karşılaştırıldı; Unicode dosya adı farkı aynı görselin ikinci kopyası olarak eklenmedi.

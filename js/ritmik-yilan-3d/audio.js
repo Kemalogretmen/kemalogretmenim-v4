@@ -16,6 +16,7 @@ const SoundFX = (() => {
   let boostGain = null;
   let boostOsc = null;
   let boostFilter = null;
+  let boostPlaying = null;
   let lastSliderTick = 0;
 
   // Musical pentatonic scale for gameplay eat feedback
@@ -434,6 +435,8 @@ const SoundFX = (() => {
   function updateBoost(active) {
     if (!ctx || !boostGain || !boostOsc || !boostFilter) return;
     const on = active && sfxEnabled;
+    if (on === boostPlaying) return;
+    boostPlaying = on;
     const now = ctx.currentTime;
     boostGain.gain.setTargetAtTime(on ? 0.045 : 0.0001, now, 0.06);
     boostOsc.frequency.setTargetAtTime(on ? 115 : 68, now, 0.08);

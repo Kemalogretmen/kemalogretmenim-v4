@@ -213,6 +213,7 @@ in vec4 vShadowPos;
 out vec4 fragColor;
 
 uniform sampler2D uShadowMap;
+uniform bool uShadows;
 uniform sampler2D uNumberAtlas;
 uniform vec3 uCamPos;
 uniform vec3 uLightDir;
@@ -243,7 +244,7 @@ float sampleShadow(vec4 sp, vec3 N, vec3 L) {
     return 1.0;
   }
   float bias = max(0.0024 * (1.0 - max(dot(N, L), 0.0)), 0.0008);
-  vec2 texelSize = vec2(1.0 / 2048.0);
+  vec2 texelSize = 1.0 / vec2(textureSize(uShadowMap, 0));
   float lit = 0.0;
   for (int x = -1; x <= 1; x++) {
     for (int y = -1; y <= 1; y++) {
@@ -404,7 +405,7 @@ void main() {
 
   // Bright natural outdoor sunlight + sky-ground hemisphere ambient + PCF soft shadows
   float NdotL = max(dot(N, L), 0.0);
-  float shadow = sampleShadow(vShadowPos, N, L);
+  float shadow = uShadows ? sampleShadow(vShadowPos, N, L) : 1.0;
 
   vec3 skyAmb = vec3(0.32, 0.38, 0.46);
   vec3 gndAmb = vec3(0.16, 0.20, 0.14);
@@ -880,9 +881,9 @@ void main() {
 
   function createRenderer(canvas) {
     const gl = canvas.getContext('webgl2', {
-      antialias: true,
+      antialias: false,
       alpha: false,
-      powerPreference: 'high-performance',
+      failIfMajorPerformanceCaveat: true,
     });
     if (!gl) {
       throw new Error('Tarayıcınız WebGL2 desteklemiyor.');
@@ -914,6 +915,7 @@ void main() {
       uModel: gl.getUniformLocation(mainProg, 'uModel'),
       uNormalMat: gl.getUniformLocation(mainProg, 'uNormalMat'),
       uShadowMap: gl.getUniformLocation(mainProg, 'uShadowMap'),
+      uShadows: gl.getUniformLocation(mainProg, 'uShadows'),
       uNumberAtlas: gl.getUniformLocation(mainProg, 'uNumberAtlas'),
       uCamPos: gl.getUniformLocation(mainProg, 'uCamPos'),
       uCamRight: gl.getUniformLocation(mainProg, 'uCamRight'),
@@ -933,8 +935,7 @@ void main() {
       uFogDensity: gl.getUniformLocation(mainProg, 'uFogDensity'),
     };
 
-    // 2048x2048 Shadow Map FBO
-    const SHADOW_SIZE = 2048;
+    const SHADOW_SIZE = 1024;
     const shadowTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, shadowTex);
     gl.texImage2D(
@@ -1059,10 +1060,7 @@ void main() {
 
     let width = 1, height = 1;
 
-    function prepareCanvas() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
-      const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+    function prepareCanvas(w, h) {
       if (canvas.width !== w || canvas.height !== h) {
         canvas.width = w;
         canvas.height = h;
@@ -1144,23 +1142,22 @@ void main() {
       gl.clearColor(0.55, 0.80, 0.96, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      // PASS 1: Sunny Sky Dome
-      gl.disable(gl.DEPTH_TEST);
-      gl.depthMask(false);
-      gl.disable(gl.CULL_FACE);
       gl.disable(gl.BLEND);
-
-      gl.useProgram(skyProg);
-      gl.uniform3fv(skyLoc.uCamForward, camFwd);
-      gl.uniform3fv(skyLoc.uCamRight, camRight);
-      gl.uniform3fv(skyLoc.uCamUp, camUp);
-      gl.uniform1f(skyLoc.uTanHalfFov, Math.tan(fovRad * 0.5));
-      gl.uniform1f(skyLoc.uAspect, aspect);
-      gl.uniform3fv(skyLoc.uLightDir, lightDir);
-      gl.uniform1f(skyLoc.uTime, sceneInfo.time);
-
-      gl.bindVertexArray(emptyVao);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (sceneInfo.detailed) {
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
+        gl.disable(gl.CULL_FACE);
+        gl.useProgram(skyProg);
+        gl.uniform3fv(skyLoc.uCamForward, camFwd);
+        gl.uniform3fv(skyLoc.uCamRight, camRight);
+        gl.uniform3fv(skyLoc.uCamUp, camUp);
+        gl.uniform1f(skyLoc.uTanHalfFov, Math.tan(fovRad * 0.5));
+        gl.uniform1f(skyLoc.uAspect, aspect);
+        gl.uniform3fv(skyLoc.uLightDir, lightDir);
+        gl.uniform1f(skyLoc.uTime, sceneInfo.time);
+        gl.bindVertexArray(emptyVao);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
 
       // PASS 2: Opaque 3D World
       gl.enable(gl.DEPTH_TEST);
@@ -1183,6 +1180,7 @@ void main() {
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, shadowTex);
       gl.uniform1i(mainLoc.uShadowMap, 0);
+      gl.uniform1i(mainLoc.uShadows, sceneInfo.detailed ? 1 : 0);
 
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, numberTex);
