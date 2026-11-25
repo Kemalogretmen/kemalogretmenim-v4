@@ -53,3 +53,9 @@ Kullanıcı, AdSense'in “Düşük değere sahip içerik” sonucu sonrasında 
 - AdSense incelemesi ve gerçek ziyaretçi izin akışının son kontrolü henüz tamamlanmadı; reklamlar etkinleştirilmedi.
 
 - **Birleşik yayın kapsamı:** Ritmik Yılan oyunundaki telefon/tablet dokunmatik yönlendirme, iki oyuncu için ayrı dokunma alanları, hareketli düğmeler, otomatik hafif grafik ve üstten görünüm, gölge/çizim yükünün azaltılması ve ses güncellemesi de bu yayına dahil. Diğer web dosyaları içerik özetiyle yayın kopyasıyla karşılaştırıldı; Unicode dosya adı farkı aynı görselin ikinci kopyası olarak eklenmedi.
+
+### Bölgesel ziyaretçi tercihi
+
+Google’ın Avrupa mesajı Türkiye için küresel bir CMP gibi varsayılmadı. Gerçek Google TCF API’si `gdprApplies=false` bildirdiğinde site, sayfa içinde birinci taraf reklam çerezi tercihi sunar. Bu sinyal kendiliğinden izin sayılmaz; ziyaretçi açıkça izin verene kadar reklam birimi isteği yapılmaz. İzin/ret, sürüm ve zaman 90 gün cihazda saklanır; depolama veya bölge sinyali belirsizse kapalı kalır. GDPR uygulanıyorsa yerel tercih hiçbir zaman gerçek TCF izninin yerine geçmez. Geri alma başka açık sekmedeki birimi de kaldırır. Her iki yolda NPA/PPT ve TFAT=1 korunur. Bu akış ziyaretçinin veya yetkili temsilcisinin geçerli tercih vermesi gerekliliğinin yerine geçmez.
+
+- Bölgesel tercih eklendikten sonraki son birleşik kontrolde **1.066/1.066** test geçti; 922 dosya, 1.818 bağlantı ve 277 betik denetimi hatasız. `052ce2e` birleşik sürümünün Netlify kaydı **Published** olarak görüldü (26 Kasım 00:10, dağıtım `6b074ed16661fbc8bc278527`). Bölgesel tercih sürümü aynı onay kapsamında güncelleniyor.

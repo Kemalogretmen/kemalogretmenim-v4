@@ -17,3 +17,13 @@
 @container (min-width: 728px) {
   .site-ad-unit { width: 728px; height: 90px; }
 }
+
+.site-ad-preferences{max-width:728px;margin:24px auto;padding:20px;border:1px solid var(--theme-border,#d9dce5);border-radius:14px;background:var(--theme-surface,#fff);color:var(--theme-text,#263149);font-size:1rem;line-height:1.65;text-align:left}
+.site-ad-preferences h2{font-size:1.125rem;margin:0 0 12px;color:inherit}
+.site-ad-preferences p{font-size:1rem;line-height:1.65;margin:0 0 14px;color:inherit}
+.site-ad-preferences>div{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.site-ad-preferences button{padding:10px 18px;min-height:44px;border:1px solid #706b89;border-radius:9px;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.site-ad-preferences a{font-size:.9375rem;text-decoration:underline;text-underline-offset:3px;color:inherit}
+.site-ad-preferences :focus-visible{outline:3px solid #7953c4;outline-offset:3px}
+.site-ad-preferences [role="status"]:empty{display:none}
+html[data-theme="dark"] .site-ad-preferences{background:#20283a;color:#edf0f8;border-color:#56617a}

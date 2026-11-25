@@ -11,12 +11,19 @@ const configured = { enabled: true, publisher_id: publisher, slot_id: '987654321
 const adsScript = fs.readFileSync('js/site-adsense.js', 'utf8');
 
 async function page({ settings = configured, origin = 'https://kemalogretmenim.com.tr', hasCmp = true,
-  placement = 'article', pathname = '/makale.html', search = placement === 'article' ? '?id=' + articleId : '', profile } = {}) {
+  placement = 'article', pathname = '/makale.html', search = placement === 'article' ? '?id=' + articleId : '', profile, localChoice = null, blockedStorage = false } = {}) {
   const { document, window } = parseHTML('<html><head></head><body><main><div id="anchor" data-site-ad="' + placement + '"></div></main></body></html>');
   const anchor = document.getElementById('anchor');
   delete window.__tcfapi;
   delete window.googlefc;
   delete window.adsbygoogle;
+  const saved = new Map();
+  const choiceKey = 'kemal:ad-cookie-choice:v1';
+  if (localChoice !== null) saved.set(choiceKey, JSON.stringify({ version: 1, allowed: localChoice, at: Date.now() }));
+  window.localStorage = {
+    getItem: key => saved.get(key) || null,
+    setItem: (key, value) => { if (blockedStorage) throw Error('Storage blocked'); saved.set(key, value); },
+  };
   Object.defineProperty(anchor, 'clientWidth', { value: 320 });
   window.location = { origin, pathname, search };
   window.kemalSiteStore = { getConfig: () => ({ supabaseUrl: 'https://example.test', supabaseAnonKey: 'test' }) };
@@ -41,7 +48,7 @@ async function page({ settings = configured, origin = 'https://kemalogretmenim.c
   if (placement === 'article') await window.KemalSiteAdSense.mount(anchor, articleId);
   await tick();
   return {
-    document, window, requests, anchor, installCmp,
+    document, window, requests, anchor, installCmp, saved, choiceKey,
     setSettings: value => { settings = value; },
     near: async () => { intersectionListener?.([{ isIntersecting: true }]); await tick(); await tick(); },
     consent: async (granted, overrides = {}) => {
@@ -145,6 +152,57 @@ test('only selected entry pages and authorized panel homes can request a unit', 
     await h.near(); await h.consent(true);
     assert.equal(Boolean(h.document.querySelector('ins.adsbygoogle')), allowed, options.pathname);
   }
+});
+
+test('outside GDPR, applicability is not consent; an inline choice can be declined without any ad request', async () => {
+  const h = await page();
+  await h.near();
+  await h.consent(false, { gdprApplies: false, tcString: '' });
+  assert.ok(h.document.querySelector('.site-ad-preferences'));
+  assert.equal(h.document.querySelector('ins'), null);
+  h.document.querySelector('[data-ad-choice="deny"]').click();
+  await tick();
+  assert.equal(JSON.parse(h.saved.get(h.choiceKey)).allowed, false);
+  assert.equal(h.document.querySelector('.site-ad-preferences'), null);
+  assert.equal(h.document.querySelector('ins'), null);
+  assert.equal(h.window.adsbygoogle.pauseAdRequests, 1);
+  await h.near();
+  assert.equal(h.document.querySelector('.site-ad-preferences'), null);
+});
+
+test('an explicit non-GDPR cookie choice permits only NPA; revoking in another tab removes the unit', async () => {
+  const h = await page();
+  await h.near();
+  await h.consent(false, { gdprApplies: false, tcString: '' });
+  h.document.querySelector('[data-ad-choice="allow"]').click();
+  await tick(); await tick();
+  assert.equal(h.document.querySelectorAll('ins').length, 1);
+  assert.equal(h.window.adsbygoogle.requestNonPersonalizedAds, 1);
+  assert.equal(h.document.querySelector('ins').dataset.tagForAgeTreatment, '1');
+  assert.equal(JSON.parse(h.saved.get(h.choiceKey)).allowed, true);
+  h.saved.set(h.choiceKey, JSON.stringify({ version: 1, allowed: false, at: Date.now() }));
+  const event = new h.window.Event('storage');
+  event.key = h.choiceKey;
+  h.window.dispatchEvent(event);
+  assert.equal(h.document.querySelector('ins'), null);
+  assert.equal(h.window.adsbygoogle.pauseAdRequests, 1);
+});
+
+test('a local preference never substitutes for GDPR consent or unknown applicability; blocked storage fails closed', async () => {
+  for (const gdprApplies of [true, undefined]) {
+    const h = await page({ localChoice: true });
+    await h.near();
+    await h.consent(false, { gdprApplies, tcString: '' });
+    assert.equal(h.document.querySelector('.site-ad-preferences'), null);
+    assert.equal(h.document.querySelector('ins'), null);
+  }
+  const h = await page({ blockedStorage: true });
+  await h.near();
+  await h.consent(false, { gdprApplies: false, tcString: '' });
+  h.document.querySelector('[data-ad-choice="allow"]').click();
+  await tick();
+  assert.equal(h.document.querySelector('ins'), null);
+  assert.match(h.document.querySelector('[role="status"]').textContent, /saklanamadı/);
 });
 
 test('ad containers only appear in the intended entry section', () => {

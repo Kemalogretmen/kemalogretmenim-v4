@@ -6,6 +6,59 @@
     'teacher-panel': '/ogretmen-paneli', 'student-panel': '/ogrenci-paneli', article: '/makale',
   };
   let googleScript;
+  const preferenceKey = 'kemal:ad-cookie-choice:v1';
+  const preferenceAge = 90 * 24 * 60 * 60 * 1000;
+  function readLocalChoice() {
+    try {
+      const value = JSON.parse(window.localStorage.getItem(preferenceKey) || 'null');
+      const age = Date.now() - value?.at;
+      return value?.version === 1 && typeof value.allowed === 'boolean' && Number.isFinite(age) && age >= 0 && age < preferenceAge
+        ? value.allowed : null;
+    } catch (_) { return null; }
+  }
+  function saveLocalChoice(allowed) {
+    try {
+      window.localStorage.setItem(preferenceKey, JSON.stringify({ version: 1, allowed, at: Date.now() }));
+      return readLocalChoice() === allowed;
+    } catch (_) { return false; }
+  }
+  function localPreference(onChoice) {
+    const box = document.createElement('section');
+    box.className = 'site-ad-preferences';
+    box.setAttribute('aria-label', 'Reklam çerezi tercihi');
+    const title = document.createElement('h2');
+    title.textContent = 'Reklam çerezleri';
+    const text = document.createElement('p');
+    text.textContent = 'Google’ın kişiselleştirilmemiş reklamlar sunmak, güvenliği sağlamak ve toplu ölçüm yapmak için çerez kullanmasına izin veriyor musun? İzin vermeden eğitim içeriklerini kullanabilirsin. Çocukların bu tercihi veli veya yetkili yetişkin desteğiyle yönetmesi gerekir.';
+    const actions = document.createElement('div');
+    const status = document.createElement('p');
+    status.setAttribute('role', 'status');
+    const saved = readLocalChoice();
+    if (saved !== null) status.textContent = saved ? 'Kayıtlı tercihin: izin verildi.' : 'Kayıtlı tercihin: izin verilmedi.';
+    for (const [label, allowed] of [['İzin verme', false], ['İzin ver', true]]) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.adChoice = allowed ? 'allow' : 'deny';
+      button.textContent = label;
+      button.addEventListener('click', () => {
+        const persisted = saveLocalChoice(allowed);
+        if (allowed && !persisted) {
+          status.textContent = 'Tercihin bu tarayıcıda saklanamadı. Reklam kapalı kalacak.';
+          onChoice(false);
+          return;
+        }
+        onChoice(allowed);
+        box.remove();
+      });
+      actions.append(button);
+    }
+    const more = document.createElement('a');
+    more.href = '/cerez-politikasi.html';
+    more.textContent = 'Çerez kullanımını incele';
+    actions.append(more);
+    box.append(title, text, actions, status);
+    return box;
+  }
   function isProduction() {
     return ['https://kemalogretmenim.com.tr', 'https://www.kemalogretmenim.com.tr'].includes(window.location.origin) && !window.ReactNativeWebView;
   }
@@ -109,10 +162,19 @@
       if (profile?.role !== placement.split('-')[0] || profile.active === false || profile.approval_status !== 'active') return;
     }
     host.dataset.adMounted = 'true';
-    let near = false, prepared = false, consent = false, requested = false, rendering = false, subscribed = false;
-    let section;
+    let near = false, prepared = false, consent = false, requested = false, rendering = false, subscribed = false, outsideGdpr = false;
+    let section, preference;
     const mayShow = () => near && isEligibleRoute(placement) && isVisible(host);
     const stop = () => { consent = false; adsQueue().pauseAdRequests = 1; section?.remove(); };
+    function showLocalPreference() {
+      if (!outsideGdpr || !mayShow() || readLocalChoice() !== null || preference?.isConnected) return;
+      preference = localPreference(allowed => {
+        consent = allowed;
+        if (allowed) maybeRender();
+        else stop();
+      });
+      host.append(preference);
+    }
     async function maybeRender() {
       if (!consent || !mayShow() || requested || rendering) return;
       rendering = true;
@@ -132,6 +194,18 @@
       subscribed = true;
       window.__tcfapi('addEventListener', 2, (data, success) => {
         if (success && data?.eventStatus === 'cmpuishown') return;
+        // A real CMP determines applicability. Outside GDPR, an explicit
+        // first-party cookie choice is used; no TC string is fabricated and
+        // gdprApplies=false is never treated as the visitor granting consent.
+        outsideGdpr = Boolean(success && data?.cmpStatus === 'loaded' && data.gdprApplies === false &&
+          ['tcloaded', 'useractioncomplete'].includes(data.eventStatus));
+        if (outsideGdpr) {
+          consent = readLocalChoice() === true;
+          if (consent) maybeRender();
+          else { stop(); showLocalPreference(); }
+          return;
+        }
+        preference?.remove();
         consent = hasConsent(data, success);
         if (!consent) stop();
         else maybeRender();
@@ -150,9 +224,15 @@
     }
     const observer = new IntersectionObserver(entries => {
       near = entries.some(entry => entry.isIntersecting);
-      if (near) { prepare(); maybeRender(); }
+      if (near) { prepare(); showLocalPreference(); maybeRender(); }
     }, { rootMargin: '400px 0px' });
     observer.observe(host);
+    window.addEventListener('storage', event => {
+      if (event.key !== preferenceKey || !outsideGdpr) return;
+      consent = readLocalChoice() === true;
+      if (consent) maybeRender();
+      else stop();
+    });
   }
   async function openPrivacy() {
     const status = document.getElementById('adPrivacyStatus');
@@ -164,10 +244,22 @@
       if (!validPublisher(settings)) { say('Reklam hizmeti şu anda yapılandırılmamış. Yeni reklam isteği yapılmıyor.'); return; }
       const fc = ensureMessaging(settings, () => true, () => say('Google tercih ekranı yüklenemedi. Reklam birimi isteği yapılmadı; daha sonra tekrar deneyebilirsin.'));
       fc.callbackQueue.push({ CONSENT_API_READY: () => {
-        if (typeof fc.showRevocationMessage === 'function') {
-          fc.showRevocationMessage();
-          say('Tercihini Google ekranında değiştirebilir veya iznini geri alabilirsin.');
-        } else say('Google tercih ekranı şu anda kullanılamıyor. Yeni reklam isteği yapılmadı.');
+        if (typeof window.__tcfapi !== 'function') { say('Tercih bölgesi doğrulanamadı. Reklam birimi isteği yapılmadı.'); return; }
+        let handled = false;
+        window.__tcfapi('addEventListener', 2, (data, success) => {
+          if (handled || !success || data?.cmpStatus !== 'loaded' || typeof data.gdprApplies !== 'boolean') return;
+          handled = true;
+          if (data.gdprApplies === false) {
+            document.getElementById('localAdPreference')?.remove();
+            const choice = localPreference(allowed => say(allowed ? 'Tercihin kaydedildi. Uygun giriş sayfalarında kişiselleştirilmemiş reklamlar istenebilir.' : 'İzin verilmedi. Yeni reklam birimi isteği yapılmayacak.'));
+            choice.id = 'localAdPreference';
+            status?.insertAdjacentElement('afterend', choice);
+            say('Aşağıdaki seçeneklerle reklam çerezi tercihini değiştirebilirsin.');
+          } else if (typeof fc.showRevocationMessage === 'function') {
+            fc.showRevocationMessage();
+            say('Tercihini Google ekranında değiştirebilir veya iznini geri alabilirsin.');
+          } else say('Google tercih ekranı şu anda kullanılamıyor. Yeni reklam isteği yapılmadı.');
+        });
       } });
     } catch (_) { say('Reklam tercihleri şu anda yüklenemedi. Eğitim içeriklerini kullanmaya devam edebilirsin.'); }
   }
