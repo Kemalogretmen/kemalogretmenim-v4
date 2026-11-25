@@ -6,6 +6,7 @@
   const field = id => document.getElementById('adsense' + id);
   const form = field('Form');
   const placements = Array.from(form.querySelectorAll('[name="adsensePlacement"]'));
+  const checks = Array.from(document.querySelectorAll('[name="adsenseCheck"]'));
   let client;
   let settings;
   let busy = false;
@@ -32,7 +33,8 @@
   function updateControls() {
     const ready = settings?.publisher_id && settings?.slot_id && (settings.placements.length || settings.article_ids.length);
     field('Fields').disabled = busy || !settings;
-    field('Enable').disabled = busy || !ready || settings.enabled;
+    const confirmed = checks.length > 0 && checks.every(input => input.checked);
+    field('Enable').disabled = busy || !ready || settings.enabled || !confirmed;
     field('Disable').disabled = busy || !settings;
   }
 
@@ -89,12 +91,16 @@
       field('Status').textContent = error.message;
     }
   });
-  field('Enable').addEventListener('click', () => save({ enabled: true }, true));
+  checks.forEach(input => input.addEventListener('change', updateControls));
+  field('Enable').addEventListener('click', () => {
+    if (checks.length && checks.every(input => input.checked)) save({ enabled: true }, true);
+  });
   field('Disable').addEventListener('click', () => save({ enabled: false }, false));
 
   window.KemalAdminAdSense = {
     open(adminClient) {
       client = adminClient;
+      checks.forEach(input => { input.checked = false; });
       return run(() => client.from(table).select(columns).eq('id', 1).single());
     },
   };

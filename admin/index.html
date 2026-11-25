@@ -2332,7 +2332,14 @@
             </fieldset>
           </form>
           <div style="margin-top:18px;">
-            <p id="adsenseEnableHint" class="admin-help-box">Reklamları açmadan önce sitenin AdSense durumu Hazır olmalı. Otomatik reklamları kapat, hassas kategorileri ve gizlilik ayarlarını kontrol et, ziyaretçi izin akışını doğrula.</p>
+            <p id="adsenseEnableHint" class="admin-help-box">Reklamlar kişiselleştirilmeden ve çocuklara yönelik yaş işaretiyle istenir. Gerekli ziyaretçi tercihi doğrulanamazsa reklam birimi açılmaz. AdSense onayı gelmeden reklamları etkinleştirme.</p>
+            <fieldset id="adsenseChecks" style="border:1px solid var(--border);border-radius:14px;padding:16px;margin:16px 0;">
+              <legend style="font-weight:800;">Yayına açmadan önce doğrula</legend>
+              <label style="display:block;margin:10px 0;"><input type="checkbox" name="adsenseCheck"> AdSense Siteler ekranında bu site Hazır görünüyor.</label>
+              <label style="display:block;margin:10px 0;"><input type="checkbox" name="adsenseCheck"> Google ziyaretçi tercih mesajı yayımlandı; izin verme, reddetme ve geri alma kontrol edildi.</label>
+              <label style="display:block;margin:10px 0;"><input type="checkbox" name="adsenseCheck"> Otomatik reklamlar kapalı; hassas reklam engelleri ve izin verilen sayfalar kontrol edildi.</label>
+              <p class="admin-help-box"><a href="/gizlilik-politikasi.html" target="_blank" rel="noopener">Gizlilik açıklaması</a> · <a href="/cerez-politikasi.html#tercihler" target="_blank" rel="noopener">Ziyaretçi tercihlerini kontrol et</a>. Bu işaretler Google onayı yerine geçmez; yalnızca açma işlemi öncesindeki son kontrol içindir.</p>
+            </fieldset>
             <div style="display:flex;flex-wrap:wrap;gap:10px;">
               <button id="adsenseEnable" class="btn-add" type="button" aria-describedby="adsenseEnableHint" disabled>Kontroller tamam, reklamları aç</button>
               <button id="adsenseDisable" class="btn-danger" type="button" disabled>Reklamları kapat</button>
@@ -2366,7 +2373,7 @@
 <script src="/js/admin-shell.js?v=20261119-reklam"></script>
 <script src="/js/content-reactions.js"></script>
 <script src="/js/admin-system-health.js?v=20260721-modular-1"></script>
-<script src="/js/admin-adsense.js?v=20261117"></script>
+<script src="/js/admin-adsense.js?v=20261125-consent"></script>
 <script src="/js/admin-dashboard.js?v=20261119-reklam"></script>
 </body>
 </html>

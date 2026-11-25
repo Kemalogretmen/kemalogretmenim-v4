@@ -187,8 +187,8 @@ test('feed failure keeps real static destinations and makes unavailable filters 
   assert.match(h.document.getElementById('homeLibraryStatus').textContent, /yüklenem|görüntülenem|ulaşılam|bağlantı/i);
   const live = h.document.getElementById('heroLiveList');
   assert.equal(live.getAttribute('aria-busy'), 'false');
-  assert.match(live.textContent, /görüntülenem/i);
-  assert.deepEqual(liveLinks(h.document), ['/sinif-kaynaklari.html']);
+  assert.match(live.textContent, /Bahçedeki küçük işaret/);
+  assert.deepEqual(liveLinks(h.document), ['/rehberler/okuma-anlama.html', '/rehberler/ritmik-sayma.html']);
 });
 
 test('demo records and unsafe destinations cannot replace useful static fallback links', async t => {
@@ -206,15 +206,15 @@ test('a stalled catalog falls back at the deadline and late recovery restores re
   const catalog = new Promise(resolve => { resolveCatalog = resolve; });
   const h = await setup(t, { feedResult: catalog, manualTimers: true });
   assert.equal(h.document.getElementById('homeResourceGrid').getAttribute('aria-busy'), 'true');
-  assert.equal(h.document.getElementById('heroLiveList').getAttribute('aria-busy'), 'true');
+  assert.equal(h.document.getElementById('heroLiveList').getAttribute('aria-busy'), 'false');
   h.fireTimer(10000);
   assert.deepEqual(resourceLinks(h.document), h.staticLinks);
   assert.equal(h.document.getElementById('homeResourceGrid').getAttribute('aria-busy'), 'false');
   assert.equal(h.document.getElementById('homeGradeFilter').disabled, true);
   assert.ok(Array.from(h.document.querySelectorAll('[data-content-type]')).every(button => button.disabled));
-  assert.match(h.document.getElementById('homeLibraryStatus').textContent, /görüntülenem/i);
+  assert.match(h.document.getElementById('homeLibraryStatus').textContent, /yüklenem/i);
   assert.equal(h.document.getElementById('heroLiveList').getAttribute('aria-busy'), 'false');
-  assert.deepEqual(liveLinks(h.document), ['/sinif-kaynaklari.html']);
+  assert.deepEqual(liveLinks(h.document), ['/rehberler/okuma-anlama.html', '/rehberler/ritmik-sayma.html']);
 
   resolveCatalog([item('recovered-document', 'document')]);
   for (let i = 0; i < 5; i++) await tick();

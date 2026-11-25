@@ -27,3 +27,27 @@ Ek denetimde 3B desteği olmadığında Hücre Laboratuvarı'nın 2B çalışmal
 Mevcut çalışma klasöründeki değişiklikler korunarak `origin/main` üzerine ayrı yayın kopyası hazırlandı. Netlify mevcut `scripts/build-web.cjs` ve `.publish` düzeniyle yayınlanır. Yayından sonra `scripts/verify-live-release.cjs` bütün genel dosyaların HTTP durumunu, JS/CSS/WASM türlerini, kritik yeni dosyaların içerik özetini, ana sayfa sürümünü ve `/ads.txt` işlevini doğrular. Canlı tarayıcıda ana sayfa, PDF, araç listesi ve çevrimdışı akış da yeniden sınanır.
 
 Gerçek öğrenci kayıtlarına test verisi yazılmadı; hesaplı işlemler örnek verilerle sınandı. Veritabanı değişikliği, reklam etkinleştirme veya Android/iOS mağaza yayını yapılmadı. Telefon/tablet kontrolleri tarayıcı benzetimidir; fiziksel okul akıllı tahtasında donanım testi yapılmadı.
+
+## 25 Kasım · AdSense düzeltmeleri için yayın listesi
+
+Kullanıcı, AdSense'in “Düşük değere sahip içerik” sonucu sonrasında sunulan sekiz maddelik planı onayladı. Google tekil sorunlu sayfaları belirtmedi; aşağıdaki içerik ve kurulum düzenlemeleri bu değerlendirmeyi iyileştirmek için hazırlanmıştır. Onay sonucu Google tarafından verilir.
+
+- **Özgün içerik:** Hesap istemeyen dört tamamlanmış etkinlik rehberi ve katalog: okuma-anlama (özgün hikâye ve kanıt soruları), ritmik sayma (sayı doğrusu ve açıklamalı diziler), kesirler (eş parçalar ve eşdeğerlik), akıllı tahtada ders (eşit paylaşma problemi ve çıkış sorusu). Sınıf düzeyi, uygulama adımları, açıklamalı cevaplar, yayın tarihi ve ilgili gerçek araç bağlantıları içerir.
+- **Giriş sayfaları:** Hızlı Okuma, Sınıf Kaynakları, Öğretmen Araçları ve Oyunlar girişlerine özgün açıklama, kullanım adımları ve rehber bağlantıları; E-Kitaplık'a çalışma önerisi eklendi. Aktif çalışma ekranlarına açıklama veya reklam eklenmedi.
+- **Başlangıçta görünür içerik:** Ana sayfa ilk HTML yanıtında gerçek rehber başlıklarını ve bağlantılarını sunar. Canlı katalog hata verdiğinde hazır içerikler korunur; hesap/sınıf erişim kuralları korunarak katalog toparlandığında güncel listeye geçilir.
+- **Sınıf ve ders yolları:** Beş sınıf sayfasına düzeye uygun özgün örnekler eklendi. Parametreli ders yönlendirme şablonu, tamamlanmamış makale şablonu ve özel hesap/sonuç ekranları arama dizininden hariç tutulur. Gezinme bağlantıları çalışmaya devam eder. Yayındaki metin türündeki eski vitrin makalesi sorgusu bu kontrolde sıfır kayıt döndürdü; yayımlanmamış içerik dizine açılmadı. Yeni rehberlerin tamamı ayrı ve taranabilir adreslerdedir.
+- **Gizlilik:** Gerçek hesap, çalışma, yerel depolama ve hizmet sağlayıcıları temel alan gizlilik ve çerez açıklamaları ile ortak alt menü bağlantıları eklendi. Öğrenci verileri reklam koduna hedefleme parametresi olarak eklenmez. Rehber ve gizlilik sayfalarında okuma alanını kapatan kısayol çubuğu gösterilmez.
+- **Reklam izin kodu:** Google etiketi, yalnızca etkin ve seçili, görünür bir giriş alanına yaklaşılınca reklam istekleri duraklatılmış hâlde yüklenir. Google'ın yayımlanmış CMP mesajı ve geç gelen gerçek TCF API'si desteklenir. İzin belirsiz/eksik/reddedilmişse birim isteği yoktur. İlk istek öncesinde ayar yeniden okunur; bu sıradaki admin kapatması da geçerlidir. Tüm birimler NPA/PPT kişiselleştirme kapalı ve çocuklara yönelik TFAT=1 işareti taşır. İzin geri alma bağlantısı çerez sayfasındadır.
+- **Admin kontrolü:** Reklamları açmadan önce AdSense “Hazır”, yayımlanmış ve sınanmış izin mesajı, otomatik reklamların kapalı ve hassas engellerin kontrol edilmiş olduğunu doğrulayan üç kontrol gerekir. Acil kapatma bunlara bağlı değildir. İnceleme sonucu gelene kadar reklam yayını kapalı kalır.
+- **Site haritası:** Özgün rehberler, gizlilik sayfaları ve öğretmen araçları eklendi; parametreli ders şablonları çıkarıldı. Ortak SEO kodu sayfanın açık `noindex` tercihini korur.
+
+**Son adımlar:** Yayın ve canlı doğrulama; AdSense içinde Türkçe Google ziyaretçi tercih mesajının ilk katmanda reddetme ve seçenek yönetimiyle kurulması; canlı izin akışının kontrolü; ardından yeniden inceleme isteği. Bu adımların gerçekleşen durumu aşağıdaki doğrulama kaydına işlenecek.
+
+
+### 26 Kasım · Yayın öncesi doğrulama
+
+- Çalışma klasöründe **1.063/1.063**, güncel `origin/main` üzerine yalnızca bu işin değişikliklerinin uygulandığı ayrı yayın kopyasında **1.060/1.060** test geçti. Aradaki fark, bu görevden bağımsız yerel çalışmalardır; yayına eklenmedi.
+- Yayın paketi **922** genel dosya; **1.817** yerel bağlantı ve **277** betik/inline betik kontrolünde hata yok.
+- Tarayıcı önizlemesinde 390×844 ve 1440×900, açık/koyu tema, dört rehber ve iki gizlilik sayfası kontrol edildi; yatay taşma yok. Açıklamalı cevaplar açılıyor. Hızlı okumada sınıf seçilince giriş açıklaması gizleniyor; çalışma alanında Google reklam betiği yüklenmiyor.
+- Google hesabında Türkçe “Kemal Öğretmenim – Ziyaretçi reklam tercihleri” mesajı **Taslak** durumunda kaydedildi. İlk katmanda reddetme tüm bölgeler için açık; kapatma reddetme olarak açık; mesaj optimizasyonu kapalı. Canlı gizlilik sayfası doğrulandıktan sonra mesaj yayımlanacak.
+- AdSense incelemesi ve gerçek ziyaretçi izin akışının son kontrolü henüz tamamlanmadı; reklamlar etkinleştirilmedi.

@@ -4,7 +4,6 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const { randomUUID } = require('node:crypto');
 const { parseHTML } = require('linkedom');
-
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const articleId = '12345678-1234-4234-8234-123456789abc';
 const publisher = 'ca-pub-1234567890123456';
@@ -13,15 +12,19 @@ const adsScript = fs.readFileSync('js/site-adsense.js', 'utf8');
 
 async function page({ settings = configured, origin = 'https://kemalogretmenim.com.tr', hasCmp = true,
   placement = 'article', pathname = '/makale.html', search = placement === 'article' ? '?id=' + articleId : '', profile } = {}) {
-  const { document, window } = parseHTML(`<html><head></head><body><main><div id="anchor" data-site-ad="${placement}"></div></main></body></html>`);
+  const { document, window } = parseHTML('<html><head></head><body><main><div id="anchor" data-site-ad="' + placement + '"></div></main></body></html>');
   const anchor = document.getElementById('anchor');
+  delete window.__tcfapi;
+  delete window.googlefc;
+  delete window.adsbygoogle;
   Object.defineProperty(anchor, 'clientWidth', { value: 320 });
   window.location = { origin, pathname, search };
   window.kemalSiteStore = { getConfig: () => ({ supabaseUrl: 'https://example.test', supabaseAnonKey: 'test' }) };
   window.kemalUserAuth = { ready: async () => {}, getProfile: () => profile };
   const requests = [];
   let consentListener, intersectionListener;
-  if (hasCmp) window.__tcfapi = (_command, _version, listener) => { consentListener = listener; };
+  function installCmp() { window.__tcfapi = (_command, _version, listener) => { consentListener = listener; }; }
+  if (hasCmp) installCmp();
   vm.runInNewContext(adsScript, {
     window, document, URLSearchParams,
     IntersectionObserver: class {
@@ -38,69 +41,109 @@ async function page({ settings = configured, origin = 'https://kemalogretmenim.c
   if (placement === 'article') await window.KemalSiteAdSense.mount(anchor, articleId);
   await tick();
   return {
-    document, requests,
-    near: () => intersectionListener?.([{ isIntersecting: true }]),
-    consent: granted => consentListener?.({
-      cmpStatus: 'loaded', tcString: 'test-consent', eventStatus: 'useractioncomplete',
-      purpose: { consents: { 1: granted } }, vendor: { consents: { 755: granted } },
-    }, true),
+    document, window, requests, anchor, installCmp,
+    setSettings: value => { settings = value; },
+    near: async () => { intersectionListener?.([{ isIntersecting: true }]); await tick(); await tick(); },
+    consent: async (granted, overrides = {}) => {
+      consentListener?.({
+        cmpStatus: 'loaded', tcString: 'real-provider-data-fixture', eventStatus: 'useractioncomplete',
+        purpose: { consents: { 1: granted, 2: granted, 7: granted, 9: granted, 10: granted } },
+        vendor: { consents: { 755: granted } }, ...overrides,
+      }, true);
+      await tick(); await tick();
+    },
   };
 }
 
-test('AdSense waits until the article ends and Google has visitor consent, then renders once', async () => {
+test('Google CMP boots paused; only a complete preference near a visible entry requests one child-treated NPA unit', async () => {
   const h = await page();
-  h.consent(true);
   assert.equal(h.requests.length, 0);
-  h.near();
-  h.near();
-  await tick();
+  await h.near();
   assert.equal(h.requests.length, 1);
-  assert.equal(h.requests[0].options.cache, 'no-store');
-  assert.equal(h.document.querySelectorAll('ins.adsbygoogle').length, 1);
-  assert.equal(h.document.querySelector('ins.adsbygoogle').dataset.adClient, publisher);
-  assert.equal(h.document.querySelector('ins.adsbygoogle').dataset.adSlot, '9876543210');
-  assert.equal(h.document.querySelectorAll('script[src*="googlesyndication"]').length, 1);
-  h.consent(false);
+  assert.equal(h.window.adsbygoogle.pauseAdRequests, 1);
+  assert.equal(h.window.adsbygoogle.length, 0);
   assert.equal(h.document.querySelector('ins.adsbygoogle'), null);
+  assert.equal(h.document.querySelectorAll('script[src*="googlesyndication"]').length, 1);
+  await h.consent(true);
+  await h.near();
+  assert.equal(h.requests.length, 2);
+  assert.ok(h.requests.every(r => r.options.cache === 'no-store'));
+  assert.equal(h.document.querySelectorAll('ins.adsbygoogle').length, 1);
+  const ad = h.document.querySelector('ins.adsbygoogle');
+  assert.equal(ad.dataset.adClient, publisher);
+  assert.equal(ad.dataset.adSlot, '9876543210');
+  assert.equal(ad.dataset.tagForAgeTreatment, '1');
+  assert.equal(h.window.adsbygoogle.requestNonPersonalizedAds, 1);
+  assert.equal(h.window.adsbygoogle[0].params.google_privacy_treatments, 'disablePersonalization');
+  assert.equal(h.window.adsbygoogle.pauseAdRequests, 0);
+  await h.consent(false);
+  assert.equal(h.document.querySelector('ins.adsbygoogle'), null);
+  assert.equal(h.window.adsbygoogle.pauseAdRequests, 1);
 });
 
-test('AdSense fails closed for missing consent, disabled settings, ineligible articles and preview domains', async () => {
-  for (const [options, consent, count] of [
-    [{}, false, 0],
-    [{ hasCmp: false }, true, 0],
-    [{ settings: { ...configured, enabled: false } }, true, 1],
-    [{ settings: { ...configured, article_ids: [] } }, true, 1],
-    [{ settings: { ...configured, publisher_id: 'invalid' } }, true, 1],
-    [{ origin: 'http://localhost:8087' }, true, 0],
+test('disabled, invalid or unselected settings never load Google; unknown consent never requests a unit', async () => {
+  for (const [options, fetches, sdk] of [
+    [{ settings: { ...configured, enabled: false } }, 1, false],
+    [{ settings: { ...configured, article_ids: [] } }, 1, false],
+    [{ settings: { ...configured, publisher_id: 'invalid' } }, 1, false],
+    [{ origin: 'http://localhost:8087' }, 0, false],
+    [{ hasCmp: false }, 1, true],
+    [{}, 1, true],
   ]) {
     const h = await page(options);
-    h.near();
-    h.consent(consent);
-    await tick();
-    assert.equal(h.requests.length, count);
-    assert.equal(h.document.querySelector('script[src*="googlesyndication"]'), null);
+    await h.near();
+    await h.consent(false);
+    assert.equal(h.requests.length, fetches);
+    assert.equal(Boolean(h.document.querySelector('script[src*="googlesyndication"]')), sdk);
     assert.equal(h.document.querySelector('ins.adsbygoogle'), null);
+    if (sdk) assert.equal(h.window.adsbygoogle.pauseAdRequests, 1);
   }
 });
 
-test('only selected entry pages and authorised panels request age-restricted ads', async () => {
+test('late CMP callbacks work without inventing a consent string or assuming missing legal bases', async () => {
+  const h = await page({ hasCmp: false });
+  await h.near();
+  h.installCmp();
+  h.window.googlefc.callbackQueue.forEach(callback => callback.CONSENT_API_READY?.());
+  await h.consent(true, { tcString: '' });
+  assert.equal(h.document.querySelector('ins'), null);
+  await h.consent(true, { purpose: { consents: { 1: true } } });
+  assert.equal(h.document.querySelector('ins'), null);
+  await h.consent(true);
+  assert.equal(h.document.querySelectorAll('ins').length, 1);
+});
+
+test('a hidden activity entry, changed route or shutdown during the consent dialog prevents the request', async () => {
+  for (const alter of [
+    h => { h.anchor.parentElement.hidden = true; },
+    h => { h.window.location.pathname = '/hizli-okuma/oku.html'; },
+    h => { h.setSettings({ ...configured, enabled: false }); },
+  ]) {
+    const h = await page();
+    await h.near();
+    alter(h);
+    await h.consent(true);
+    assert.equal(h.document.querySelector('ins'), null);
+    assert.equal(h.window.adsbygoogle.pauseAdRequests, 1);
+  }
+});
+
+test('only selected entry pages and authorized panel homes can request a unit', async () => {
   const student = { role: 'student', approval_status: 'active' };
-  for (const [options, ageTreatment] of [
-    [{ placement: 'home', pathname: '/' }, '1'],
-    [{ placement: 'reading', pathname: '/hizli-okuma/index.html' }, '1'],
-    [{ placement: 'student-panel', pathname: '/ogrenci-paneli', profile: student }, '1'],
-    [{ placement: 'student-panel', pathname: '/ogrenci-paneli' }, null],
-    [{ placement: 'reading', pathname: '/hizli-okuma/', search: '?metinId=123' }, null],
-    [{ placement: 'reading', pathname: '/hizli-okuma/oku.html' }, null],
-    [{ placement: 'exams', pathname: '/sinav_sitesi/sinav.html' }, null],
-    [{ placement: 'home', pathname: '/ogretmen/akvaryum.html' }, null],
-    [{ placement: 'games', pathname: '/oyun/oyunlar' }, null],
+  for (const [options, allowed] of [
+    [{ placement: 'home', pathname: '/' }, true],
+    [{ placement: 'reading', pathname: '/hizli-okuma/index.html' }, true],
+    [{ placement: 'student-panel', pathname: '/ogrenci-paneli', profile: student }, true],
+    [{ placement: 'student-panel', pathname: '/ogrenci-paneli' }, false],
+    [{ placement: 'reading', pathname: '/hizli-okuma/', search: '?metinId=123' }, false],
+    [{ placement: 'reading', pathname: '/hizli-okuma/oku.html' }, false],
+    [{ placement: 'exams', pathname: '/sinav_sitesi/sinav.html' }, false],
+    [{ placement: 'home', pathname: '/ogretmen/akvaryum.html' }, false],
+    [{ placement: 'games', pathname: '/oyun/oyunlar' }, false],
   ]) {
     const h = await page(options);
-    h.consent(true);
-    h.near();
-    await tick();
-    assert.equal(h.document.querySelector('ins.adsbygoogle')?.getAttribute('data-tag-for-age-treatment') ?? null, ageTreatment, options.pathname);
+    await h.near(); await h.consent(true);
+    assert.equal(Boolean(h.document.querySelector('ins.adsbygoogle')), allowed, options.pathname);
   }
 });
 
@@ -154,6 +197,8 @@ test('the admin shutdown uses only the enable flag and can stop a newer configur
   assert.equal(row.slot_id, '2222222222');
   assert.match(document.getElementById('adsenseStatus').textContent, /kapalı/);
   const revision = row.revision;
+  assert.equal(document.getElementById('adsenseEnable').disabled, true);
+  document.querySelectorAll('[name="adsenseCheck"]').forEach(input => { input.checked = true; input.dispatchEvent(new window.Event('change')); });
   document.getElementById('adsenseEnable').click();
   await tick();
   assert.equal(writes[1].conditions.revision, revision);

@@ -62,6 +62,7 @@
     const liveList = document.getElementById('heroLiveList');
     const controls = Array.from(document.querySelectorAll('[data-content-type]'));
     const fallbackMarkup = grid.innerHTML;
+    const fallbackLiveMarkup = liveList?.innerHTML || '';
     let items = [];
     let activeType = 'all';
     let lockedGrade = null;
@@ -71,12 +72,12 @@
       ready = false;
       grid.innerHTML = fallbackMarkup;
       grid.setAttribute('aria-busy', 'false');
-      status.textContent = 'İçerikler şu anda görüntülenemiyor. Bu alanlardan keşfetmeye devam edebilirsin.';
+      status.textContent = 'Güncel katalog şu anda yüklenemedi. Aşağıdaki hazır etkinlik rehberleriyle devam edebilirsin.';
       controls.forEach(function(control) { control.disabled = true; });
       grade.disabled = true;
       if (liveList) {
         liveList.setAttribute('aria-busy', 'false');
-        liveList.innerHTML = '<p class="home-live-state" role="status">Güncel içerikler şu anda görüntülenemiyor.<a href="/sinif-kaynaklari.html">Ders kaynaklarını keşfet →</a></p>';
+        liveList.innerHTML = fallbackLiveMarkup;
       }
     }
 

@@ -1,0 +1,38 @@
+.learning-note,.guide-page{--learn-ink:#202842;--learn-muted:#535d72;--learn-paper:#fff;--learn-line:#dedfec;--learn-soft:#f2f1fa;color:var(--learn-ink);background:var(--learn-paper);border:1px solid var(--learn-line);border-radius:22px;box-sizing:border-box;text-align:left}
+.learning-note{max-width:1160px;margin:24px auto;padding:clamp(20px,3vw,32px);font-size:1rem;line-height:1.75}
+.learning-note h2,.learning-note h3,.guide-page h1,.guide-page h2,.guide-page h3{color:var(--learn-ink);line-height:1.3;overflow-wrap:anywhere}
+.learning-note h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin:0 0 14px}
+.learning-note p{margin:0 0 14px;color:var(--learn-muted);font-size:1rem;line-height:1.75}
+.learning-note ol,.learning-note ul{padding-left:24px;margin:12px 0 20px}
+.learning-note li{margin:7px 0}
+.learning-note a,.guide-page a{color:#5438a1;text-decoration:underline;text-underline-offset:3px}
+.learning-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px;margin:20px 0 0}
+.learning-link{display:block;padding:18px;border:1px solid var(--learn-line);border-radius:14px;background:var(--learn-soft);text-decoration:none!important}
+.learning-link strong{display:block;margin-bottom:7px;font-size:1.0625rem;line-height:1.4}
+.learning-link span{display:block;color:var(--learn-muted);font-size:.9375rem;line-height:1.6}
+.learning-note :focus-visible,.guide-page :focus-visible{outline:3px solid #6c3ded;outline-offset:4px}
+.guide-shell{width:min(960px,calc(100% - 32px));margin:28px auto 56px}
+.guide-breadcrumb{display:flex;flex-wrap:wrap;gap:8px;font-size:.9375rem;margin-bottom:18px}
+.guide-page{padding:clamp(22px,5vw,54px);font-size:1.0625rem;line-height:1.85;overflow-wrap:anywhere}
+.guide-page h1{font-size:clamp(1.9rem,4vw,2.8rem);margin:14px 0 18px}
+.guide-page h2{font-size:1.5rem;margin:36px 0 16px}
+.guide-page h3{font-size:1.1875rem;margin:24px 0 12px}
+.guide-page p{margin:0 0 18px}
+.guide-page ol,.guide-page ul{padding-left:26px;margin:14px 0 24px}
+.guide-page li{margin:9px 0}
+.guide-meta{color:var(--learn-muted);font-size:.9375rem;line-height:1.7}
+.guide-kicker{display:inline-block;background:var(--learn-soft);color:#5438a1;border-radius:8px;padding:5px 12px;font-size:.9375rem;font-weight:700}
+.guide-example{border-left:4px solid #8161c0;background:var(--learn-soft);padding:20px 24px;border-radius:0 12px 12px 0;margin:22px 0}
+.guide-page details{border:1px solid var(--learn-line);border-radius:12px;padding:16px 20px;margin:16px 0}
+.guide-page summary{cursor:pointer;font-weight:700;min-height:28px}
+.guide-page details[open] summary{margin-bottom:14px}
+.guide-page table{border-collapse:collapse;width:100%;margin:22px 0;font-size:1rem}
+.guide-page th,.guide-page td{padding:12px;border:1px solid var(--learn-line);text-align:left;vertical-align:top}
+.guide-page th{background:var(--learn-soft)}
+.guide-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px;margin:26px 0}
+.guide-catalog .learning-link{--learn-line:#dedfec;--learn-soft:#f2f1fa;--learn-muted:#535d72;padding:24px}
+.guide-section-nav{border-top:1px solid var(--learn-line);margin-top:30px;padding-top:20px}
+html[data-theme="dark"] .learning-note,html[data-theme="dark"] .guide-page,html[data-theme="dark"] .guide-catalog .learning-link{--learn-ink:#edf0f8;--learn-muted:#c1c9da;--learn-paper:#1e2636;--learn-line:#46516b;--learn-soft:#29334a}
+html[data-theme="dark"] .learning-note a,html[data-theme="dark"] .guide-page a,html[data-theme="dark"] .guide-kicker{color:#c9b8ff}
+@media(max-width:560px){.guide-shell{width:calc(100% - 20px)}.learning-note{padding:20px;margin:18px auto}.guide-page{font-size:1rem;padding:22px}.guide-example{padding:16px}.guide-page th,.guide-page td{padding:8px;font-size:.9375rem}}
+@media print{.guide-shell{width:100%;margin:0}.guide-page{border:0;padding:0;box-shadow:none;color:#000;background:#fff}.platform-chrome,.guide-breadcrumb,.guide-section-nav{display:none!important}.guide-page details>*{display:block!important}.guide-page h2{break-after:avoid}.guide-page a{color:inherit}.guide-example{break-inside:avoid}}

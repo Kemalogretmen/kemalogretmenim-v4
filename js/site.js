@@ -686,7 +686,7 @@
     );
     const robots = options && options.robots
       ? options.robots
-      : (path === '/404.html' ? 'noindex,follow' : 'index,follow,max-image-preview:large');
+      : (readMetaContent('name', 'robots') || (path === '/404.html' ? 'noindex,follow' : 'index,follow,max-image-preview:large'));
 
     setMetaContent('name', 'description', description);
     setMetaContent('name', 'robots', robots);
@@ -2094,6 +2094,9 @@
           '<li><a href="/sinif-kaynaklari.html">Sınıf Kaynakları</a></li>' +
         '</ul></div>' +
         '<div class="footer-col"><h3>Platform</h3><ul class="footer-links">' +
+          '<li><a href="/rehberler/index.html">Etkinlik Rehberleri</a></li>' +
+          '<li><a href="/gizlilik-politikasi.html">Gizlilik</a></li>' +
+          '<li><a href="/cerez-politikasi.html#tercihler">Çerez ve Reklam Tercihleri</a></li>' +
           '<li><a href="/hakkimda.html">Hakkında</a></li>' +
           '<li><a href="/iletisim.html">İletişim</a></li>' +
           '<li><a href="/yeni.html">Son Eklenenler</a></li>' +
@@ -2107,6 +2110,7 @@
 
   function isShortcutDockAllowed() {
     const path = String(window.location.pathname || '').toLowerCase();
+    if (path.startsWith('/rehberler/') || /^\/(gizlilik-politikasi|cerez-politikasi)(\.html)?\/?$/.test(path)) return false;
     if (document.body?.dataset.kemalShortcutDock === 'reading-hub' && path.startsWith('/hizli-okuma/')) return true;
     return !(
       path.indexOf('/hizli-okuma/') === 0 ||
